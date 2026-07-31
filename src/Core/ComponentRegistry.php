@@ -1,0 +1,169 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Core;
+
+use Closure;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\InputLayer;
+use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
+use LogicException;
+use WeakMap;
+
+/**
+ * @internal validated, indexed component bindings for one App value
+ */
+final readonly class ComponentRegistry
+{
+    /**
+     * @var array<string, Component<Interactive>>
+     */
+    private array $byId;
+    /**
+     * @var list<Component<Interactive>>
+     */
+    private array $focusables;
+
+    /**
+     * @param list<Component<Interactive>>          $components
+     * @param array<string, Component<Interactive>> $byId
+     * @param list<Component<Interactive>>          $focusables
+     */
+    private function __construct(private array $components, array $byId, array $focusables)
+    {
+        $this->byId = $byId;
+        $this->focusables = $focusables;
+    }
+
+    /**
+     * Memoize bindings for one immutable App value.
+     *
+     * @param Closure(): Widget $view
+     */
+    public static function for(object $owner, Closure $view): self
+    {
+        /** @var WeakMap<object, self>|null $registries */
+        static $registries = null;
+        $registries ??= new WeakMap();
+
+        return $registries[$owner] ??= self::fromWidget($view());
+    }
+
+    public static function fromWidget(Widget $root): self
+    {
+        return self::from(self::collect($root));
+    }
+
+    /**
+     * @param array<array-key, mixed> $components
+     */
+    public static function from(array $components): self
+    {
+        $validated = [];
+        $byId = [];
+        $focusables = [];
+
+        foreach ($components as $index => $component) {
+            if (!$component instanceof Component) {
+                throw new LogicException(sprintf('Component collection entry %s must be a %s', $index, Component::class));
+            }
+            if (isset($byId[$component->id->value])) {
+                throw new LogicException(sprintf('Duplicate component ID "%s"', $component->id->value));
+            }
+
+            $validated[] = $component;
+            $byId[$component->id->value] = $component;
+            if ($component->widget instanceof Focusable) {
+                $focusables[] = $component;
+            }
+        }
+
+        return new self($validated, $byId, $focusables);
+    }
+
+    /**
+     * @return list<Component<Interactive>>
+     */
+    public function all(): array
+    {
+        return $this->components;
+    }
+
+    /**
+     * @return list<Component<Interactive>>
+     */
+    public function focusables(): array
+    {
+        return $this->focusables;
+    }
+
+    /**
+     * @return Component<Interactive>|null
+     */
+    public function get(ComponentId $id): ?Component
+    {
+        return $this->byId[$id->value] ?? null;
+    }
+
+    public function has(ComponentId $id): bool
+    {
+        return isset($this->byId[$id->value]);
+    }
+
+    /**
+     * @return list<Component<Interactive>>
+     */
+    private static function collect(Widget $widget): array
+    {
+        return self::collectLayer($widget)[0];
+    }
+
+    /**
+     * Components of a widget, and whether they sit in an input layer.
+     *
+     * A layer takes input for itself: once one is found, the components behind
+     * it are dropped, so an open modal cannot be tabbed or clicked past. The
+     * last layer in the tree wins — it is the one drawn on top.
+     *
+     * @return array{list<Component<Interactive>>, bool}
+     */
+    private static function collectLayer(Widget $widget): array
+    {
+        $components = [];
+
+        if ($widget instanceof Component) {
+            /** @var Component<Interactive> $widget */
+            $components[] = $widget;
+        }
+
+        $layerComponents = null;
+        if ($widget instanceof WidgetContainer) {
+            foreach ($widget->children() as $child) {
+                [$childComponents, $childIsLayered] = self::collectLayer($child);
+                if ($childIsLayered) {
+                    $layerComponents = $childComponents;
+                }
+
+                array_push($components, ...$childComponents);
+            }
+        }
+
+        if ($layerComponents !== null) {
+            return [[...self::ownComponent($widget), ...$layerComponents], true];
+        }
+
+        return [$components, $widget instanceof InputLayer];
+    }
+
+    /**
+     * @return list<Component<Interactive>>
+     */
+    private static function ownComponent(Widget $widget): array
+    {
+        /** @var list<Component<Interactive>> */
+        return $widget instanceof Component ? [$widget] : [];
+    }
+}

@@ -1,0 +1,290 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Widget;
+
+use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\Attr;
+use Elmphant\Tui\Rendering\Block;
+use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Runtime\ChildDispatcher;
+
+final readonly class Modal implements Interactive, WidgetContainer, Focusable, InputLayer, KeybindingsAware
+{
+    use Cloneable;
+    private const BORDERS = 2;
+
+    private function __construct(
+        private string $title,
+        private Widget $content,
+        private bool $sizedToContent,
+        private int $widthPercent,
+        private int $heightPercent,
+        private bool $dismissed,
+        private bool $focused = false,
+        private ?Style $borderStyleOverride = null,
+        private ?Style $titleStyleOverride = null,
+    ) {
+    }
+
+    public static function new(string $title, Widget $content): self
+    {
+        return new self(
+            title: $title,
+            content: $content,
+            sizedToContent: false,
+            widthPercent: 60,
+            heightPercent: 60,
+            dismissed: false,
+        );
+    }
+
+    public function withTitle(string $title): self
+    {
+        return $this->cloneWith(title: $title);
+    }
+
+    public function withContent(Widget $content): self
+    {
+        return $this->cloneWith(content: $content);
+    }
+
+    public function isDismissed(): bool
+    {
+        return $this->dismissed;
+    }
+
+    public function isFocused(): bool
+    {
+        return $this->focused;
+    }
+
+    public function withFocus(bool $focused): static
+    {
+        return $this->cloneWith(focused: $focused);
+    }
+
+    public static function defaultKeybindings(): Keybindings
+    {
+        return Keybindings::empty();
+    }
+
+    public function effectiveKeybindings(): Keybindings
+    {
+        return Keybindings::empty();
+    }
+
+    public function withKeybindings(?Keybindings $keybindings): static
+    {
+        return $this;
+    }
+
+    public function withGlobalKeybindings(?Keybindings $keybindings): static
+    {
+        if (!$this->content instanceof KeybindingsAware) {
+            return $this;
+        }
+        $newContent = $this->content->withGlobalKeybindings($keybindings);
+
+        return $this->cloneWith(content: $newContent);
+    }
+
+    /**
+     * Size the modal to its content instead of to a share of the screen.
+     *
+     * Content that reports neither MeasureWidth nor MeasureHeight keeps the
+     * percentage sizing for the dimension it cannot answer for.
+     */
+    public function sizedToContent(): self
+    {
+        return $this->cloneWith(sizedToContent: true);
+    }
+
+    public function withWidth(int $percent): self
+    {
+        return $this->cloneWith(widthPercent: max(10, min(100, $percent)));
+    }
+
+    public function withHeight(int $percent): self
+    {
+        return $this->cloneWith(heightPercent: max(10, min(100, $percent)));
+    }
+
+    public function withBorderStyle(Style $style): self
+    {
+        return $this->cloneWith(borderStyleOverride: $style);
+    }
+
+    public function withTitleStyle(Style $style): self
+    {
+        return $this->cloneWith(titleStyleOverride: $style);
+    }
+
+    /**
+     * @return list<Widget>
+     */
+    public function children(): array
+    {
+        return [$this->content];
+    }
+
+    /**
+     * @return list<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): array
+    {
+        return [[$this->content, $this->computeContentRect($area)]];
+    }
+
+    public function constraint(): Constraint
+    {
+        return Constraint::flex();
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return match (true) {
+            $message instanceof KeyMsg && $message->key === Key::Escape,
+            $message instanceof MouseMsg && $message->isClick() && !$message->inRect($this->computeModalRect($area)) => new UpdateResult(
+                $this->cloneWith(dismissed: true),
+                Cmd::message(new ModalDismissed($this->title)),
+            ),
+
+            $this->content instanceof Interactive => $this->updateContent($message, $area),
+
+            default => new UpdateResult($this),
+        };
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        if ($area->width < 5 || $area->height < 5) {
+            return;
+        }
+
+        $this->dimBackground($frame, $area);
+
+        $modalRect = $this->computeModalRect($area);
+        if ($modalRect->width < 3 || $modalRect->height < 3) {
+            return;
+        }
+
+        $baseBackground = $context->theme->base->backgroundValue();
+        $this->clearModalArea($frame, $modalRect, $baseBackground);
+
+        $theme = $context->theme;
+        $block = Block::new()
+            ->border($theme->border)
+            ->borderStyle($this->borderStyleOverride ?? $theme->focusedBorderStyle)
+            ->titleStyle($this->titleStyleOverride ?? $theme->titleStyle)
+            ->title($this->title);
+        $block->render($frame, $modalRect);
+        $contentRect = $block->inner($modalRect);
+
+        if ($contentRect->width > 0 && $contentRect->height > 0) {
+            foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+                $child->render($frame, $childArea, $context);
+            }
+        }
+    }
+
+    /**
+     * @return UpdateResult<static>
+     */
+    private function updateContent(Message $message, Rect $area): UpdateResult
+    {
+        assert($this->content instanceof Interactive);
+
+        $content = $this->content;
+        if ($content instanceof Focusable && $content->isFocused() !== $this->focused) {
+            $content = $content->withFocus($this->focused);
+        }
+
+        $result = (new ChildDispatcher())->dispatchOne($content, $message, $this->computeContentRect($area));
+
+        return new UpdateResult(
+            $this->cloneWith(content: $result->changed ? $result->child : $content),
+            $result->command,
+        );
+    }
+
+    private function computeModalRect(Rect $area): Rect
+    {
+        $modalWidth = $this->fittedWidth($area) ?? max(3, (int)($area->width * $this->widthPercent / 100));
+        $modalHeight = $this->fittedHeight($modalWidth - self::BORDERS)
+            ?? max(3, (int)($area->height * $this->heightPercent / 100));
+
+        $modalWidth = min($modalWidth, $area->width);
+        $modalHeight = min($modalHeight, $area->height);
+        $modalX = $area->x + (int)(($area->width - $modalWidth) / 2);
+        $modalY = $area->y + (int)(($area->height - $modalHeight) / 2);
+
+        return new Rect($modalX, $modalY, $modalWidth, $modalHeight);
+    }
+
+    private function fittedWidth(Rect $area): ?int
+    {
+        if (!$this->sizedToContent || !$this->content instanceof MeasureWidth) {
+            return null;
+        }
+
+        $title = CharWidth::stringWidth($this->title) + self::BORDERS;
+
+        return min($area->width, max(3, $this->content->measureWidth() + self::BORDERS, $title));
+    }
+
+    private function fittedHeight(int $contentWidth): ?int
+    {
+        if (!$this->sizedToContent || !$this->content instanceof MeasureHeight) {
+            return null;
+        }
+
+        return max(3, $this->content->measureHeight(max(1, $contentWidth)) + self::BORDERS);
+    }
+
+    private function computeContentRect(Rect $area): Rect
+    {
+        $modalRect = $this->computeModalRect($area);
+        $block = Block::new()->border(\Elmphant\Tui\Rendering\BorderStyle::Rounded);
+
+        return $block->inner($modalRect);
+    }
+
+    private function dimBackground(Frame $frame, Rect $area): void
+    {
+        for ($row = $area->y; $row < $area->bottom(); ++$row) {
+            for ($column = $area->x; $column < $area->right(); ++$column) {
+                $index = $row * $frame->width + $column;
+                if ($index >= 0 && $index < $frame->width * $frame->height) {
+                    $frame->putChar(
+                        $column,
+                        $row,
+                        $frame->characters[$index],
+                        $frame->foregrounds[$index],
+                        $frame->backgrounds[$index],
+                        $frame->attributes[$index] | Attr::FAINT,
+                    );
+                }
+            }
+        }
+    }
+
+    private function clearModalArea(Frame $frame, Rect $modalRect, int $background): void
+    {
+        $frame->fillRect($modalRect->x, $modalRect->y, $modalRect->width, $modalRect->height, 0, $background);
+    }
+}

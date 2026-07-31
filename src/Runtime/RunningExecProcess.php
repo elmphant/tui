@@ -1,0 +1,99 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Runtime;
+
+use Closure;
+use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\ProcessResultMsg;
+use Symfony\Component\Process\Process;
+use Throwable;
+
+/**
+ * @internal
+ */
+final class RunningExecProcess implements RunningProcess
+{
+    private bool $finished = false;
+    private string $stdout = '';
+    private string $stderr = '';
+
+    public function __construct(
+        private readonly Process $process,
+        private readonly ?EffectId $processId,
+        private readonly int $maxOutputBytes = 8_388_608,
+        /**
+         * @var Closure(Message): Message|null
+         */
+        private readonly ?Closure $wrap = null,
+    ) {
+    }
+
+    public function pump(): array
+    {
+        if ($this->finished) {
+            return [];
+        }
+
+        try {
+            $this->stdout .= $this->process->getIncrementalOutput();
+            $this->stderr .= $this->process->getIncrementalErrorOutput();
+            $this->process->clearOutput();
+            $this->process->clearErrorOutput();
+        } catch (Throwable $error) {
+            $this->finished = true;
+
+            return [$this->map(new ErrorMsg($error, 'process', $this->processId))];
+        }
+
+        if (strlen($this->stdout) + strlen($this->stderr) > $this->maxOutputBytes) {
+            $this->stop();
+
+            return [$this->map(new ErrorMsg(
+                new EffectOutputLimitExceeded($this->maxOutputBytes, 'Process'),
+                'process',
+                $this->processId,
+            ))];
+        }
+
+        if ($this->process->isRunning()) {
+            return [];
+        }
+
+        $this->finished = true;
+
+        return [$this->map(new ProcessResultMsg(
+            $this->stdout,
+            $this->stderr,
+            $this->process->getExitCode() ?? -1,
+            $this->process->isSuccessful(),
+            $this->processId,
+        ))];
+    }
+
+    public function map(Message $message): Message
+    {
+        return $this->wrap === null ? $message : ($this->wrap)($message);
+    }
+
+    public function stop(): void
+    {
+        if (!$this->finished) {
+            $this->process->stop();
+            $this->finished = true;
+        }
+    }
+
+    public function isRunning(): bool
+    {
+        return !$this->finished;
+    }
+
+    public function id(): ?EffectId
+    {
+        return $this->processId;
+    }
+}

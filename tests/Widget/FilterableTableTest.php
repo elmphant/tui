@@ -1,0 +1,389 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Widget;
+
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Attr;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Widget\FilterableTable;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class FilterableTableTest extends TestCase
+{
+    #[Test]
+    public function keepsOnlyRowsWhereEveryTermMatchesSomeCell(): void
+    {
+        $matched = $this->routes()->withQuery('ajax post')->matchingRows();
+
+        self::assertSame([['ajax_bookmark', 'POST', '/ajax/bookmark']], $matched);
+    }
+
+    #[Test]
+    public function matchesOnlyTheChosenColumn(): void
+    {
+        $matched = $this->routes()->withColumn(2)->withQuery('bookmark')->matchingRows();
+
+        self::assertSame([['ajax_bookmark', 'POST', '/ajax/bookmark']], $matched);
+
+        self::assertSame(
+            [],
+            $this->routes()->withColumn(1)->withQuery('bookmark')->matchingRows(),
+            'A term the chosen column does not hold matches nothing, however well another column holds it',
+        );
+    }
+
+    #[Test]
+    public function matchesBySubstring(): void
+    {
+        self::assertSame([['ajax_bookmark', 'POST', '/ajax/bookmark']], $this->routes()->withQuery('bookmark')->matchingRows());
+        self::assertSame([], $this->routes()->withQuery('bookmrk')->matchingRows());
+    }
+
+    #[Test]
+    public function filtersThroughTheMatcherItWasGiven(): void
+    {
+        $lastLetter = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return array_keys(array_filter(
+                    $haystack,
+                    static fn (string $entry): bool => str_ends_with($entry, $query),
+                ));
+            }
+        };
+
+        self::assertSame(
+            [['ajax_bookmark', 'POST', '/ajax/bookmark']],
+            $this->routes()->withMatcher($lastLetter)->withQuery('/ajax/bookmark')->matchingRows(),
+        );
+    }
+
+    #[Test]
+    public function ignoresCase(): void
+    {
+        self::assertCount(1, $this->routes()->withQuery('AJAX_BOOK')->matchingRows());
+    }
+
+    #[Test]
+    public function countsWhatItKeptOutOfWhatItHas(): void
+    {
+        self::assertSame('3 of 3', $this->routes()->summary());
+        self::assertSame('1 of 3', $this->routes()->withQuery('ajax post')->summary());
+        self::assertSame('0 of 3', $this->routes()->withQuery('nothing')->summary());
+    }
+
+    #[Test]
+    public function drawsTheFilterBarOnTheRowAboveTheTable(): void
+    {
+        $rows = $this->screen($this->routes(), 60, 12);
+
+        self::assertStringContainsString('All columns', $rows[0]);
+        self::assertStringContainsString('3 of 3', $rows[0]);
+        self::assertStringStartsWith('┌', ltrim($rows[1]), 'The table starts on the very next row');
+    }
+
+    #[Test]
+    public function offersAFieldToTypeIntoRatherThanEmptySpace(): void
+    {
+        $rows = $this->screen($this->routes(), 60, 12);
+
+        self::assertStringContainsString('Filter…', $rows[0], 'An empty query still reads as a field');
+        self::assertStringNotContainsString('Filter…', $this->screen($this->routes()->withQuery('ajax'), 60, 12)[0]);
+    }
+
+    #[Test]
+    public function putsTheFieldBeforeTheColumnItFiltersOn(): void
+    {
+        $bar = $this->screen($this->routes(), 60, 12)[0];
+
+        self::assertLessThan(
+            mb_strpos($bar, 'All columns'),
+            mb_strpos($bar, 'Filter…'),
+            'The field comes first: it is the control that does the work',
+        );
+    }
+
+    #[Test]
+    public function underlinesTheFieldWhileThePaneIsActive(): void
+    {
+        self::assertTrue($this->fieldIsUnderlined($this->routes()->withFocus(true)));
+        self::assertFalse($this->fieldIsUnderlined($this->routes()), 'An inactive pane draws no field to type into');
+    }
+
+    #[Test]
+    public function holdsTheColumnWidthsItStartedWithWhileFiltering(): void
+    {
+        $table = FilterableTable::new(
+            ['Alias', 'Namespace'],
+            [['core', 'Acme\Core\ViewHelpers'], ['f', 'X\Y']],
+        );
+
+        $unfiltered = $this->screen($table, 90, 12);
+        $filtered = $this->screen($table->withQuery('X\Y'), 90, 12);
+
+        self::assertSame(
+            mb_strlen($unfiltered[1]),
+            mb_strlen($filtered[1]),
+            'A table that resized under every keystroke would move the rows the user is reading',
+        );
+        self::assertSame(mb_strlen($unfiltered[0]), mb_strlen($filtered[0]), 'The bar holds still with it');
+    }
+
+    #[Test]
+    public function endsTheBarWhereTheTableEnds(): void
+    {
+        $narrower = FilterableTable::new(
+            ['Alias', 'Namespace'],
+            [['core', 'Acme\Core\ViewHelpers'], ['formvh', 'Acme\Form\ViewHelpers']],
+        );
+        $rows = $this->screen($narrower, 90, 12);
+
+        self::assertSame(
+            mb_strlen($rows[1]),
+            mb_strlen($rows[0]),
+            'The count sits at the table edge, not out in the empty pane',
+        );
+    }
+
+    #[Test]
+    public function drawsNoTableNarrowerThanItsOwnFilterBar(): void
+    {
+        $rows = $this->screen(FilterableTable::new(['Locale'], [['de_DE.utf8'], ['en_US.UTF-8']]), 90, 12);
+
+        self::assertSame(
+            mb_strlen($rows[0]),
+            mb_strlen($rows[1]),
+            'A table narrower than the bar above it reads as two unrelated things',
+        );
+    }
+
+    #[Test]
+    public function keepsTheBarWideEnoughForItsOwnControls(): void
+    {
+        $tiny = FilterableTable::new(['A'], [['x']]);
+        $bar = $this->screen($tiny, 90, 12)[0];
+
+        self::assertStringContainsString('Filter…', $bar);
+        self::assertStringContainsString('All columns', $bar);
+        self::assertStringContainsString('1 of 1', $bar);
+    }
+
+    #[Test]
+    public function leavesTheCaretAloneWhenTheBarIsScrolledOutOfSight(): void
+    {
+        $frame = new Frame(60, 12);
+        $frame->pushClip(new Rect(0, 4, 60, 8));
+
+        $this->routes()->withFocus(true)->render($frame, Rect::fromSize(60, 12), new RenderContext(Theme::dark()));
+
+        self::assertNull($frame->cursorPosition, 'A caret placed outside its pane is drawn on whatever is there');
+    }
+
+    #[Test]
+    public function drawsOnlyTheRowsTheFilterKept(): void
+    {
+        $screen = implode("\n", $this->screen($this->routes()->withQuery('ajax post'), 60, 12));
+
+        self::assertStringContainsString('ajax_bookmark', $screen);
+        self::assertStringNotContainsString('record_edit', $screen);
+    }
+
+    #[Test]
+    public function laysTheFieldLabelAndCountOutAcrossTheBar(): void
+    {
+        $bar = $this->barRow($this->routes(), 50);
+
+        self::assertSame('Filter…', mb_substr($bar, 0, 7), 'The field sits at the left edge');
+        self::assertSame('All columns', mb_substr($bar, 23, 11), 'The label ends a gap before the count');
+        self::assertSame('3 of 3', mb_substr($bar, 37, 6), 'The count ends where the table does, at column 43');
+    }
+
+    #[Test]
+    public function namesTheChosenColumnInTheLabel(): void
+    {
+        self::assertSame('Method', mb_substr($this->barRow($this->routes()->withColumn(1), 50), 28, 6));
+
+        self::assertSame(
+            'All columns',
+            mb_substr($this->barRow($this->routes()->withColumn(9), 50), 23, 11),
+            'A column the headers do not have falls back',
+        );
+    }
+
+    #[Test]
+    public function showsTheQueryInPlaceOfThePlaceholder(): void
+    {
+        $bar = $this->barRow($this->routes()->withQuery('ajax')->withFocus(true), 50);
+
+        self::assertSame('ajax', mb_substr($bar, 0, 4));
+        self::assertSame('2 of 3', mb_substr($bar, 37, 6), 'The count follows the filter');
+    }
+
+    #[Test]
+    public function drawsTheTableOnlyWithinTheHeightBelowTheBar(): void
+    {
+        $frame = new Frame(50, 6);
+        $this->routes()->render($frame, new Rect(0, 0, 50, 2), new RenderContext(Theme::dark()));
+
+        self::assertSame('┌', mb_substr($this->row($frame, 1, 50), 0, 1), 'One row of table fits below the bar');
+
+        for ($row = 2; $row < 6; ++$row) {
+            self::assertSame('', trim($this->row($frame, $row, 50)), "Nothing is drawn on row $row, past the area");
+        }
+    }
+
+    #[Test]
+    public function anAreaOnlyTallEnoughForTheBarDrawsNoTable(): void
+    {
+        $frame = new Frame(50, 4);
+        $this->routes()->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame('Filter…', mb_substr($this->row($frame, 0, 50), 0, 7));
+
+        for ($row = 1; $row < 4; ++$row) {
+            self::assertSame('', trim($this->row($frame, $row, 50)), "Row $row is left alone");
+        }
+    }
+
+    #[Test]
+    public function putsTheCursorAfterTheQueryWhileFocused(): void
+    {
+        $frame = new Frame(50, 1);
+        $this->routes()->withQuery('ajax')->withFocus(true)
+            ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+
+        self::assertNotNull($frame->cursorPosition);
+        self::assertSame(4, $frame->cursorPosition->col, 'One column past the four typed characters');
+        self::assertSame(0, $frame->cursorPosition->row);
+    }
+
+    #[Test]
+    public function theCursorStopsAtTheEndOfTheFieldHoweverLongTheQuery(): void
+    {
+        $frame = new Frame(50, 1);
+        // The field is 20 columns wide; a longer query cannot push the cursor out.
+        $this->routes()->withQuery(str_repeat('x', 40))->withFocus(true)
+            ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+
+        self::assertNotNull($frame->cursorPosition);
+        self::assertSame(19, $frame->cursorPosition->col);
+    }
+
+    #[Test]
+    public function anUnfocusedBarShowsNoCursorAndNoUnderline(): void
+    {
+        $frame = new Frame(50, 1);
+        $this->routes()->withQuery('ajax')
+            ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+
+        self::assertNull($frame->cursorPosition, 'Nothing is typing into a bar that is not focused');
+        self::assertSame(0, $frame->attributes[0] & Attr::UNDERLINE);
+    }
+
+    #[Test]
+    public function aFocusedFieldIsUnderlinedAcrossItsWholeWidth(): void
+    {
+        $frame = new Frame(50, 1);
+        $this->routes()->withQuery('ajax')->withFocus(true)
+            ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame(Attr::UNDERLINE, $frame->attributes[0] & Attr::UNDERLINE, 'Under the text');
+        self::assertSame(Attr::UNDERLINE, $frame->attributes[19] & Attr::UNDERLINE, 'And under the empty tail');
+        self::assertSame(0, $frame->attributes[20] & Attr::UNDERLINE, 'But no further than the field');
+    }
+
+    #[Test]
+    public function aTypedQueryIsBrighterThanThePlaceholder(): void
+    {
+        $typed = new Frame(50, 1);
+        $this->routes()->withQuery('ajax')->withFocus(true)
+            ->render($typed, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+
+        $placeholder = new Frame(50, 1);
+        $this->routes()->withFocus(true)
+            ->render($placeholder, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+
+        self::assertNotSame(
+            $placeholder->foregrounds[0],
+            $typed->foregrounds[0],
+            'A query is drawn in the base tone, the placeholder dim',
+        );
+    }
+
+    #[Test]
+    public function aQueryOfNothingButSpacesKeepsEveryRow(): void
+    {
+        $all = $this->routes()->matchingRows();
+
+        self::assertSame($all, $this->routes()->withQuery('')->matchingRows());
+        self::assertSame($all, $this->routes()->withQuery('   ')->matchingRows());
+        self::assertCount(3, $all);
+    }
+
+    private function fieldIsUnderlined(FilterableTable $table): bool
+    {
+        $frame = new Frame(60, 12);
+        $table->render($frame, Rect::fromSize(60, 12), new RenderContext(Theme::dark()));
+
+        for ($column = 0; $column < 60; ++$column) {
+            if (($frame->attributes[$column] & Attr::UNDERLINE) !== 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function screen(FilterableTable $table, int $width, int $height): array
+    {
+        $frame = new Frame($width, $height);
+        $table->render($frame, Rect::fromSize($width, $height), new RenderContext(Theme::dark()));
+
+        $rows = [];
+        for ($row = 0; $row < $height; ++$row) {
+            $rows[] = rtrim(implode('', array_slice($frame->characters, $row * $width, $width)));
+        }
+
+        return $rows;
+    }
+
+    private function barRow(FilterableTable $table, int $width): string
+    {
+        $frame = new Frame($width, 1);
+        $table->render($frame, new Rect(0, 0, $width, 1), new RenderContext(Theme::dark()));
+
+        return $this->row($frame, 0, $width);
+    }
+
+    private function row(Frame $frame, int $row, int $width): string
+    {
+        $line = '';
+
+        for ($column = 0; $column < $width; ++$column) {
+            $line .= $frame->characters[$row * $width + $column];
+        }
+
+        return $line;
+    }
+
+    private function routes(): FilterableTable
+    {
+        return FilterableTable::new(
+            ['Name', 'Method', 'Path'],
+            [
+                ['ajax_bookmark', 'POST', '/ajax/bookmark'],
+                ['ajax_flush', 'GET', '/ajax/flush'],
+                ['record_edit', 'POST', '/record/edit'],
+            ],
+        );
+    }
+}

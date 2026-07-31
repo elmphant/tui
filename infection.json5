@@ -1,0 +1,25 @@
+{
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    "source": {
+        "directories": ["src"],
+        "excludes": [
+            "Testing",
+            "Message",
+            "Input/Terminal.php",
+            "Rendering/Theme.php",
+            "Runtime/MonotonicClock.php",
+            "Runtime/ShutdownRestorer.php",
+            "Widget/StaticTable.php"
+        ]
+    },
+    "logs": {
+        "text": "infection.log"
+    },
+    "mutators": {
+        "@default": true
+    },
+    "minMsi": 92,
+    "minCoveredMsi": 93,
+    "testFramework": "phpunit",
+    "tmpDir": ".infection"
+}

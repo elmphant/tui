@@ -1,0 +1,215 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Layout;
+
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Layout;
+use Elmphant\Tui\Layout\LayoutPlan;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use RuntimeException;
+
+final class LayoutPlanTest extends TestCase
+{
+    #[Test]
+    public function reusedContainerIdentityKeepsDistinctPlacementsForEachArea(): void
+    {
+        $counter = new LayoutPlanCounter();
+        $container = new LayoutPlanContainer(Text::new('child'), $counter);
+        $root = Layout::horizontal($container, $container);
+        $area = Rect::fromSize(10, 4);
+
+        $plan = LayoutPlan::resolve($root, $area);
+
+        self::assertSame(2, $counter->count);
+        $left = $plan->childrenOf($container, new Rect(0, 0, 5, 4))[0][1] ?? null;
+        $right = $plan->childrenOf($container, new Rect(5, 0, 5, 4))[0][1] ?? null;
+        self::assertInstanceOf(Rect::class, $left);
+        self::assertInstanceOf(Rect::class, $right);
+        self::assertTrue($left->equals(new Rect(0, 0, 5, 4)));
+        self::assertTrue($right->equals(new Rect(5, 0, 5, 4)));
+
+        $frame = new Frame(10, 4);
+        (new RenderContext(Theme::dark()))
+            ->renderWithPlan($root, $frame, $area, $plan);
+
+        self::assertSame(2, $counter->count, 'Rendering must reuse both planned placements');
+        self::assertSame('child', implode('', array_slice($frame->characters, 0, 5)));
+        self::assertSame('child', implode('', array_slice($frame->characters, 5, 5)));
+    }
+
+    #[Test]
+    public function renderContextFallsBackToContainerLayoutWithoutAnActivePlan(): void
+    {
+        $counter = new LayoutPlanCounter();
+        $container = new LayoutPlanContainer(Text::new('child'), $counter);
+        $area = Rect::fromSize(10, 4);
+
+        $container->render(new Frame(10, 4), $area, new RenderContext(Theme::dark()));
+
+        self::assertSame(1, $counter->count);
+    }
+
+    #[Test]
+    public function plannedChildrenQueryDoesNotTriggerFallbackLayout(): void
+    {
+        $counter = new LayoutPlanCounter();
+        $container = new LayoutPlanContainer(Text::new('child'), $counter);
+        $context = new RenderContext(Theme::dark());
+
+        self::assertNull($context->plannedChildrenOf($container, Rect::fromSize(10, 4)));
+        self::assertSame(0, $counter->count);
+    }
+
+    #[Test]
+    public function plannedChildrenQueryReturnsTheActivePlanWithoutRecomputingLayout(): void
+    {
+        $counter = new LayoutPlanCounter();
+        $inspection = new LayoutPlanInspection();
+        $container = new InspectingLayoutPlanContainer(Text::new('child'), $counter, $inspection);
+        $area = Rect::fromSize(10, 4);
+        $plan = LayoutPlan::resolve($container, $area);
+
+        (new RenderContext(Theme::dark()))
+            ->renderWithPlan($container, new Frame(10, 4), $area, $plan);
+
+        self::assertSame(1, $counter->count);
+        self::assertCount(1, $inspection->children ?? []);
+        self::assertSame($container->children()[0], $inspection->children[0][0] ?? null);
+    }
+
+    #[Test]
+    public function renderContextRestoresItsPreviousPlanAfterRenderFailure(): void
+    {
+        $counter = new LayoutPlanCounter();
+        $container = new LayoutPlanContainer(new ThrowingLayoutWidget(), $counter);
+        $area = Rect::fromSize(10, 4);
+        $plan = LayoutPlan::resolve($container, $area);
+        $context = new RenderContext(Theme::dark());
+
+        try {
+            $context->renderWithPlan($container, new Frame(10, 4), $area, $plan);
+            self::fail('Precondition: child rendering must fail');
+        } catch (RuntimeException) {
+            // Expected: verify the context is usable without the failed plan.
+        }
+
+        foreach ($context->childrenOf($container, $area) as $_) {
+            // Consume a potential lazy container implementation.
+        }
+
+        self::assertSame(2, $counter->count);
+    }
+}
+
+final class LayoutPlanCounter
+{
+    public int $count = 0;
+}
+
+final class LayoutPlanInspection
+{
+    /**
+     * @var list<array{Widget, Rect}>|null
+     */
+    public ?array $children = null;
+}
+
+final readonly class LayoutPlanContainer implements Widget, WidgetContainer
+{
+    public function __construct(
+        private Widget $child,
+        private LayoutPlanCounter $counter,
+    ) {
+    }
+
+    public function constraint(): Constraint
+    {
+        return Constraint::flex();
+    }
+
+    /**
+     * @return list<Widget>
+     */
+    public function children(): array
+    {
+        return [$this->child];
+    }
+
+    /**
+     * @return list<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): array
+    {
+        ++$this->counter->count;
+
+        return [[$this->child, $area]];
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+            $child->render($frame, $childArea, $context);
+        }
+    }
+}
+
+final readonly class ThrowingLayoutWidget implements Widget
+{
+    public function constraint(): Constraint
+    {
+        return Constraint::flex();
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        throw new RuntimeException('render failed');
+    }
+}
+
+final readonly class InspectingLayoutPlanContainer implements Widget, WidgetContainer
+{
+    public function __construct(
+        private Widget $child,
+        private LayoutPlanCounter $counter,
+        private LayoutPlanInspection $inspection,
+    ) {
+    }
+
+    public function constraint(): Constraint
+    {
+        return Constraint::flex();
+    }
+
+    /**
+     * @return list<Widget>
+     */
+    public function children(): array
+    {
+        return [$this->child];
+    }
+
+    /**
+     * @return list<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): array
+    {
+        ++$this->counter->count;
+
+        return [[$this->child, $area]];
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        $this->inspection->children = $context->plannedChildrenOf($this, $area);
+    }
+}

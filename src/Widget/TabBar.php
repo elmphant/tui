@@ -1,0 +1,569 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Widget;
+
+use Closure;
+use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\BorderGlyphs;
+use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\ChildDispatcher;
+use LogicException;
+
+final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAware
+{
+    use Cloneable;
+    use KeybindingsAwareBehavior;
+
+    private const TAB_STRIP_HEIGHT = 3;
+
+    /**
+     * @param list<TabPage> $tabs
+     */
+    public function __construct(
+        private array $tabs = [],
+        private int $activeTab = 0,
+        private ?string $caption = null,
+        private ?string $shortCaption = null,
+        private bool $focused = false,
+        private ?Spacing $padding = null,
+        private bool $emphasizedBorder = false,
+        private ?Style $borderStyleOverride = null,
+        private ?Style $focusedBorderStyleOverride = null,
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
+    ) {
+    }
+
+    public static function defaultKeybindings(): Keybindings
+    {
+        return (new Keybindings([
+            Actions::TAB_NEXT => ['right'],
+            Actions::TAB_PREV => ['left'],
+        ]))->merge(ScrollPane::defaultKeybindings());
+    }
+
+    public static function new(): self
+    {
+        return new self();
+    }
+
+    public function addTab(string $label): self
+    {
+        return $this->cloneWith(tabs: [...$this->tabs, new TabPage($label)]);
+    }
+
+    public function add(Widget $child): self
+    {
+        if ($this->tabs === []) {
+            return $this;
+        }
+
+        $tabs = $this->tabs;
+        $lastIndex = count($tabs) - 1;
+        $tabs[$lastIndex] = $tabs[$lastIndex]->add($child);
+
+        return $this->cloneWith(tabs: $tabs);
+    }
+
+    public function activeTab(): int
+    {
+        return $this->activeTab;
+    }
+
+    /**
+     * @param list<TabPage> $tabs
+     */
+    public function withTabs(array $tabs): self
+    {
+        return $this->cloneWith(tabs: $tabs);
+    }
+
+    /**
+     * The chosen page takes the focus the old one had.
+     */
+    public function withActiveTab(int $activeTab): self
+    {
+        return $this->cloneWith(activeTab: $activeTab)->withFocus($this->focused);
+    }
+
+    /**
+     * Supplementary text for the tab strip, drawn when it fits.
+     *
+     * It replaces the switch hint the bar derives from its own keybindings,
+     * for applications that drive tab switching from somewhere else. Pass a
+     * short form to keep something readable on a narrow terminal.
+     */
+    public function withCaption(?string $caption, ?string $shortCaption = null): self
+    {
+        return $this->cloneWith(caption: $caption, shortCaption: $shortCaption);
+    }
+
+    public function constraint(): Constraint
+    {
+        return Constraint::flex();
+    }
+
+    public function withPadding(Spacing $padding): static
+    {
+        return $this->cloneWith(padding: $padding);
+    }
+
+    /**
+     * The frame can be drawn as active without the bar claiming the keyboard,
+     * which focus alone cannot express.
+     */
+    /**
+     * Draw the border the way a focused bar draws it, without taking focus.
+     *
+     * The style comes from the theme in use at render time, so it stays
+     * correct when the same bar is rendered with another theme.
+     */
+    public function withEmphasizedBorder(bool $emphasized = true): self
+    {
+        return $this->cloneWith(emphasizedBorder: $emphasized);
+    }
+
+    public function withBorderStyle(?Style $style): self
+    {
+        return $this->cloneWith(borderStyleOverride: $style);
+    }
+
+    public function withFocusedBorderStyle(?Style $style): self
+    {
+        return $this->cloneWith(focusedBorderStyleOverride: $style);
+    }
+
+    /**
+     * The keys this bar answers, for a footer to carry when the strip cannot.
+     *
+     * @return array<string, string> key label => what it does
+     */
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            Actions::TAB_PREV => 'previous tab',
+            Actions::TAB_NEXT => 'next tab',
+        ]);
+    }
+
+    public function isFocused(): bool
+    {
+        return $this->focused;
+    }
+
+    public function withFocus(bool $focused): static
+    {
+        return $this->cloneWith(focused: $focused, tabs: $this->tabsWithFocus(
+            static fn (ScrollPane $pane): ScrollPane => $focused ? $pane->withFocusAt(0) : $pane->withFocus(false),
+        ));
+    }
+
+    public function withFocusReversed(): static
+    {
+        return $this->cloneWith(focused: true, tabs: $this->tabsWithFocus(
+            static fn (ScrollPane $pane): ScrollPane => $pane->withFocusReversed(),
+        ));
+    }
+
+    /**
+     * @return list<Widget>
+     */
+    public function children(): array
+    {
+        return [...$this->activePane()->children()];
+    }
+
+    /**
+     * @return list<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): array
+    {
+        return [...$this->activePane()->childWidgets($this->contentArea($area))];
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($this->tabs === []) {
+            return new UpdateResult($this);
+        }
+
+        if ($message instanceof MouseMsg && $message->isClick() && $message->y >= $area->y && $message->y <= $area->y + 1) {
+            return $this->handleTabClick($message, $area);
+        }
+
+        if ($message instanceof KeyMsg && !$this->focused) {
+            return new UpdateResult($this);
+        }
+
+        $pane = $this->activePane();
+        $result = (new ChildDispatcher())->dispatchOne($pane, $message, $this->contentArea($area));
+
+        if ($result->changed) {
+            return new UpdateResult($this->withActivePane(self::requirePane($result->child)), $result->command);
+        }
+
+        return $message instanceof KeyMsg
+            ? $this->switchedTab($message) ?? new UpdateResult($this, $result->command)
+            : new UpdateResult($this, $result->command);
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        if ($this->tabs === [] || $area->width < 5 || $area->height < 5) {
+            return;
+        }
+
+        $theme = $context->theme;
+        $prominent = $this->focused || $this->emphasizedBorder;
+        $borderEnum = $prominent ? $theme->focusedBorder : $theme->border;
+        $glyphs = $borderEnum->glyphs();
+        $borderStyle = $prominent
+            ? ($this->focusedBorderStyleOverride ?? $theme->focusedBorderStyle)
+            : ($this->borderStyleOverride ?? $theme->borderStyle);
+
+        $this->renderContent($frame, $area, $context);
+        $this->renderTabStrip($frame, $area, $glyphs, $borderStyle, $theme);
+        $this->renderContentBox($frame, $area, $glyphs, $borderStyle);
+    }
+
+    public function withKeybindings(?Keybindings $keybindings): static
+    {
+        return $this->cloneWith(customKeybindings: $keybindings, tabs: $this->tabsWithPane(
+            static fn (ScrollPane $pane): ScrollPane => $pane->withKeybindings($keybindings),
+        ));
+    }
+
+    public function withGlobalKeybindings(?Keybindings $keybindings): static
+    {
+        return $this->cloneWith(globalKeybindings: $keybindings, tabs: $this->tabsWithPane(
+            static fn (ScrollPane $pane): ScrollPane => $pane->withGlobalKeybindings($keybindings),
+        ));
+    }
+
+    /**
+     * Focus belongs to the active page; every other page is blurred, so
+     * switching to one never arrives with two children lit.
+     *
+     * @param Closure(ScrollPane): ScrollPane $active
+     *
+     * @return list<TabPage>
+     */
+    private function tabsWithFocus(Closure $active): array
+    {
+        $tabs = [];
+
+        foreach ($this->tabs as $index => $tab) {
+            $tabs[] = $tab->withPane(
+                $index === $this->activeTab ? $active($tab->pane) : $tab->pane->withFocus(false),
+            );
+        }
+
+        return $tabs;
+    }
+
+    /**
+     * @param Closure(ScrollPane): ScrollPane $change
+     *
+     * @return list<TabPage>
+     */
+    private function tabsWithPane(Closure $change): array
+    {
+        return array_map(
+            static fn (TabPage $tab): TabPage => $tab->withPane($change($tab->pane)),
+            $this->tabs,
+        );
+    }
+
+    private function activePane(): ScrollPane
+    {
+        return $this->tabs[$this->activeTab]->pane ?? new ScrollPane();
+    }
+
+    private function withActivePane(ScrollPane $pane): self
+    {
+        $tabs = $this->tabs;
+        $tabs[$this->activeTab] = $tabs[$this->activeTab]->withPane($pane);
+
+        return $this->cloneWith(tabs: $tabs);
+    }
+
+    /**
+     * @return ?UpdateResult<static>
+     */
+    private function switchedTab(KeyMsg $message): ?UpdateResult
+    {
+        $bindings = $this->effectiveKeybindings();
+
+        return match (true) {
+            $bindings->matches($message, Actions::TAB_PREV) => $this->switchTab(-1),
+            $bindings->matches($message, Actions::TAB_NEXT) => $this->switchTab(1),
+            default => null,
+        };
+    }
+
+    private static function requirePane(object $model): ScrollPane
+    {
+        if (!$model instanceof ScrollPane) {
+            throw new LogicException('A ScrollPane must answer with a ScrollPane');
+        }
+
+        return $model;
+    }
+
+    /**
+     * @return UpdateResult<static>
+     */
+    private function switchTab(int $direction): UpdateResult
+    {
+        $count = count($this->tabs);
+        if ($count <= 1) {
+            return new UpdateResult($this);
+        }
+
+        $newIndex = ($this->activeTab + $direction + $count) % $count;
+
+        return new UpdateResult($this->cloneWith(activeTab: $newIndex)->withFocus(true));
+    }
+
+    /**
+     * @return UpdateResult<static>
+     */
+    private function handleTabClick(MouseMsg $message, Rect $area): UpdateResult
+    {
+        $tabX = $area->x + 1;
+
+        foreach ($this->tabs as $index => $tab) {
+            $cellWidth = CharWidth::stringWidth($tab->label) + 4;
+
+            if ($message->x >= $tabX && $message->x < $tabX + $cellWidth) {
+                if ($index === $this->activeTab) {
+                    return new UpdateResult($this);
+                }
+
+                return new UpdateResult($this->cloneWith(activeTab: $index)->withFocus($this->focused));
+            }
+
+            $tabX += $cellWidth;
+        }
+
+        return new UpdateResult($this);
+    }
+
+    private function renderTabStrip(
+        Frame $frame,
+        Rect $area,
+        BorderGlyphs $border,
+        Style $borderStyle,
+        Theme $theme,
+    ): void {
+        $borderForeground = $borderStyle->foregroundValue();
+        $borderBackground = $borderStyle->backgroundValue();
+        $borderAttributes = $borderStyle->attributes;
+
+        $tabX = $area->x;
+        $maxRight = $area->right();
+
+        foreach ($this->tabs as $tabIndex => $tab) {
+            $cellWidth = CharWidth::stringWidth($tab->label) + 4;
+            if ($tabX + $cellWidth > $maxRight) {
+                break;
+            }
+            $isActive = $tabIndex === $this->activeTab;
+
+            if ($isActive) {
+                $tabRight = $tabX + $cellWidth - 1;
+
+                $frame->putChar($tabX, $area->y, $border->topLeft, $borderForeground, $borderBackground, $borderAttributes);
+                for ($x = $tabX + 1; $x < $tabRight; ++$x) {
+                    $frame->putChar($x, $area->y, $border->horizontal, $borderForeground, $borderBackground, $borderAttributes);
+                }
+                $frame->putChar($tabRight, $area->y, $border->topRight, $borderForeground, $borderBackground, $borderAttributes);
+
+                $frame->putChar($tabX, $area->y + 1, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
+                $frame->putChar($tabX + 1, $area->y + 1, ' ', $borderForeground, $borderBackground);
+                $frame->putStyled($tabX + 2, $area->y + 1, $tab->label, $theme->titleStyle);
+                $frame->putChar($tabX + $cellWidth - 2, $area->y + 1, ' ', $borderForeground, $borderBackground);
+                $frame->putChar($tabRight, $area->y + 1, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
+            } else {
+                $frame->putStyled($tabX + 2, $area->y + 1, $tab->label, $theme->dim);
+            }
+
+            $tabX += $cellWidth;
+        }
+
+        $this->renderTabHint($frame, $area, $tabX, $theme);
+        $this->renderBaseline($frame, $area, $border, $borderStyle);
+    }
+
+    private function renderBaseline(
+        Frame $frame,
+        Rect $area,
+        BorderGlyphs $border,
+        Style $borderStyle,
+    ): void {
+        $foreground = $borderStyle->foregroundValue();
+        $background = $borderStyle->backgroundValue();
+        $attributes = $borderStyle->attributes;
+        $baselineY = $area->y + 2;
+
+        $isFirstActive = $this->activeTab === 0;
+        $baselineLeft = $isFirstActive ? $border->vertical : $border->topLeft;
+        $frame->putChar($area->x, $baselineY, $baselineLeft, $foreground, $background, $attributes);
+        for ($x = $area->x + 1; $x < $area->right() - 1; ++$x) {
+            $frame->putChar($x, $baselineY, $border->horizontal, $foreground, $background, $attributes);
+        }
+        $frame->putChar($area->right() - 1, $baselineY, $border->topRight, $foreground, $background, $attributes);
+
+        $tabX = $area->x;
+        $maxRight = $area->right();
+        foreach ($this->tabs as $tabIndex => $tab) {
+            $cellWidth = CharWidth::stringWidth($tab->label) + 4;
+            if ($tabX + $cellWidth > $maxRight) {
+                break;
+            }
+
+            if ($tabIndex === $this->activeTab) {
+                if ($tabIndex === 0) {
+                    $frame->putChar($tabX, $baselineY, $border->vertical, $foreground, $background, $attributes);
+                } else {
+                    $frame->putChar($tabX, $baselineY, $border->bottomRight, $foreground, $background, $attributes);
+                }
+
+                $tabRight = $tabX + $cellWidth - 1;
+                $frame->putChar($tabRight, $baselineY, $border->bottomLeft, $foreground, $background, $attributes);
+
+                $clearStart = $tabX + 1;
+                $clearEnd = $tabRight - 1;
+                for ($x = $clearStart; $x <= $clearEnd; ++$x) {
+                    $frame->putChar($x, $baselineY, ' ', 0, $background);
+                }
+            }
+
+            $tabX += $cellWidth;
+        }
+    }
+
+    private function renderTabHint(Frame $frame, Rect $area, int $afterTabsX, Theme $theme): void
+    {
+        $rightEdge = $area->right() - 1;
+        $text = $this->captionWithin($rightEdge - $afterTabsX);
+
+        if ($text === null) {
+            return;
+        }
+
+        $frame->putStyled($rightEdge - CharWidth::stringWidth($text) - 1, $area->y + 1, $text, $theme->dim);
+    }
+
+    private function captionWithin(int $availableWidth): ?string
+    {
+        if ($this->caption !== null) {
+            return match (true) {
+                self::fits($this->caption, $availableWidth) => $this->caption,
+                $this->shortCaption !== null && self::fits($this->shortCaption, $availableWidth) => $this->shortCaption,
+                default => null,
+            };
+        }
+
+        // An unfocused bar ignores keys, so advertising them would be a lie.
+        // Its hints() are still there for a footer to carry.
+        if (!$this->focused || count($this->tabs) < 2) {
+            return null;
+        }
+
+        $keys = $this->switchKeyLabels();
+        if ($keys === null) {
+            return null;
+        }
+
+        return match (true) {
+            self::fits($keys . ' to switch', $availableWidth) => $keys . ' to switch',
+            self::fits($keys, $availableWidth) => $keys,
+            default => null,
+        };
+    }
+
+    private static function fits(string $text, int $availableWidth): bool
+    {
+        return $availableWidth >= CharWidth::stringWidth($text) + 2;
+    }
+
+    private function switchKeyLabels(): ?string
+    {
+        $bindings = $this->effectiveKeybindings();
+        $previous = $bindings->get(Actions::TAB_PREV)[0] ?? null;
+        $next = $bindings->get(Actions::TAB_NEXT)[0] ?? null;
+
+        if ($previous === null || $next === null) {
+            return null;
+        }
+
+        return $previous->label() . ' ' . $next->label();
+    }
+
+    private function renderContentBox(
+        Frame $frame,
+        Rect $area,
+        BorderGlyphs $border,
+        Style $borderStyle,
+    ): void {
+        $foreground = $borderStyle->foregroundValue();
+        $background = $borderStyle->backgroundValue();
+        $attributes = $borderStyle->attributes;
+
+        for ($y = $area->y + 3; $y < $area->bottom() - 1; ++$y) {
+            $frame->putChar($area->x, $y, $border->vertical, $foreground, $background, $attributes);
+            $frame->putChar($area->right() - 1, $y, $border->vertical, $foreground, $background, $attributes);
+        }
+
+        $bottomY = $area->bottom() - 1;
+        $frame->putChar($area->x, $bottomY, $border->bottomLeft, $foreground, $background, $attributes);
+        for ($x = $area->x + 1; $x < $area->right() - 1; ++$x) {
+            $frame->putChar($x, $bottomY, $border->horizontal, $foreground, $background, $attributes);
+        }
+        $frame->putChar($area->right() - 1, $bottomY, $border->bottomRight, $foreground, $background, $attributes);
+    }
+
+    private function renderContent(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        $contentArea = $this->contentArea($area);
+        if ($contentArea->width < 1 || $contentArea->height < 1) {
+            return;
+        }
+
+        if (!isset($this->tabs[$this->activeTab])) {
+            return;
+        }
+
+        $this->activePane()->render($frame, $contentArea, $context);
+    }
+
+    private function contentArea(Rect $area): Rect
+    {
+        $inner = new Rect(
+            $area->x + 1,
+            $area->y + self::TAB_STRIP_HEIGHT,
+            $area->width - 2,
+            $area->height - self::TAB_STRIP_HEIGHT - 1,
+        );
+
+        return $this->padding !== null ? $this->padding->applyTo($inner) : $inner;
+    }
+}

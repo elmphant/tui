@@ -1,0 +1,14 @@
+/vendor/
+
+# A library pins nothing: consumers resolve their own versions
+/composer.lock
+
+.DS_Store
+.idea/
+*.swp
+.phpunit.result.cache
+infection.log
+/.infection/
+
+# php-cs-fixer
+.php-cs-fixer.cache

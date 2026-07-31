@@ -1,0 +1,839 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Widget;
+
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
+use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\CheckboxGroup;
+use Elmphant\Tui\Widget\Focusable;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class CheckboxGroupTest extends TestCase
+{
+    #[Test]
+    public function theCursorRowSkipsTheLabelAndItsBlankLine(): void
+    {
+        $area = new Rect(0, 0, 20, 8);
+        $labelled = CheckboxGroup::new('Toppings', ['Cheese', 'Onion', 'Pepper']);
+
+        self::assertSame(2, $labelled->cursorRow(), 'A label and its gap sit above the first option');
+
+        $moved = $labelled->withFocus(true)->update(new KeyMsg(Key::Down), $area)->model;
+        self::assertInstanceOf(CheckboxGroup::class, $moved);
+        self::assertSame(1, $moved->cursor());
+        self::assertSame(3, $moved->cursorRow(), 'Which the cursor row keeps accounting for');
+    }
+
+    #[Test]
+    public function withoutALabelTheCursorRowIsTheCursorItself(): void
+    {
+        $area = new Rect(0, 0, 20, 8);
+        $unlabelled = CheckboxGroup::new('', ['Cheese', 'Onion']);
+
+        self::assertSame(0, $unlabelled->cursorRow());
+
+        $moved = $unlabelled->withFocus(true)->update(new KeyMsg(Key::Down), $area)->model;
+        self::assertInstanceOf(CheckboxGroup::class, $moved);
+        self::assertSame(1, $moved->cursorRow());
+    }
+
+    #[Test]
+    public function theOptionsLabelAndTicksCanAllBeReplaced(): void
+    {
+        $area = new Rect(0, 0, 24, 8);
+        $group = CheckboxGroup::new('Toppings', ['Cheese'])
+            ->withOptions(['Olive', 'Caper'])
+            ->withLabel('Extras')
+            ->withChecked([1]);
+
+        $frame = new Frame(24, 8);
+        $group->render($frame, $area, new RenderContext(Theme::dark()));
+
+        $screen = '';
+        for ($cell = 0; $cell < 24 * 8; ++$cell) {
+            $screen .= $frame->characters[$cell];
+        }
+
+        self::assertStringContainsString('Extras', $screen);
+        self::assertStringContainsString('Olive', $screen);
+        self::assertStringContainsString('Caper', $screen);
+        self::assertStringNotContainsString('Cheese', $screen, 'The original option is gone');
+        self::assertSame(['Caper'], $group->checkedValues(), 'And the second option is the ticked one');
+    }
+
+    #[Test]
+    public function implementsFocusable(): void
+    {
+        self::assertInstanceOf(Focusable::class, CheckboxGroup::new('Toppings', ['Cheese', 'Onion', 'Pepper']));
+    }
+
+    #[Test]
+    public function constraintIncludesLabelAndSpacer(): void
+    {
+        $group = CheckboxGroup::new('Toppings', ['Cheese', 'Onion', 'Pepper']);
+        $constraint = $group->constraint();
+
+        self::assertSame(5, $constraint->min);
+        self::assertSame(5, $constraint->max);
+    }
+
+    #[Test]
+    public function constraintWithoutLabel(): void
+    {
+        $group = CheckboxGroup::new('', ['A', 'B']);
+        $constraint = $group->constraint();
+
+        self::assertSame(2, $constraint->min);
+        self::assertSame(2, $constraint->max);
+    }
+
+    #[Test]
+    public function cursorMovesDownWithArrowKey(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $area = Rect::fromSize(40, 4);
+
+        $result = $group->update(new KeyMsg(Key::Down), $area);
+
+        self::assertSame(1, $result->model->cursor());
+    }
+
+    #[Test]
+    public function cursorMovesUpWithArrowKey(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $area = Rect::fromSize(40, 4);
+
+        $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+        $result = $group->update(new KeyMsg(Key::Up), $area);
+
+        self::assertSame(0, $result->model->cursor());
+    }
+
+    #[Test]
+    public function cursorDoesNotGoBelowLastOption(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $area = Rect::fromSize(40, 3);
+
+        $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+        $result = $group->update(new KeyMsg(Key::Down), $area);
+
+        self::assertSame(1, $result->model->cursor());
+    }
+
+    #[Test]
+    public function cursorDoesNotGoAboveFirstOption(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $area = Rect::fromSize(40, 3);
+
+        $result = $group->update(new KeyMsg(Key::Up), $area);
+
+        self::assertSame(0, $result->model->cursor());
+    }
+
+    #[Test]
+    public function enterTogglesCheckedState(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $area = Rect::fromSize(40, 4);
+
+        $result = $group->update(new KeyMsg(Key::Enter), $area);
+
+        self::assertTrue($result->model->isChecked(0));
+    }
+
+    #[Test]
+    public function spaceTogglesCheckedState(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $area = Rect::fromSize(40, 3);
+
+        $result = $group->update(new KeyMsg(' '), $area);
+
+        self::assertTrue($result->model->isChecked(0));
+    }
+
+    #[Test]
+    public function toggleUnchecksAlreadyCheckedOption(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $area = Rect::fromSize(40, 3);
+
+        $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
+        $result = $group->update(new KeyMsg(Key::Enter), $area);
+
+        self::assertFalse($result->model->isChecked(0));
+    }
+
+    #[Test]
+    public function multipleOptionsCanBeChecked(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $area = Rect::fromSize(40, 4);
+
+        $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
+        $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+        $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
+
+        self::assertTrue($group->isChecked(0));
+        self::assertTrue($group->isChecked(1));
+        self::assertFalse($group->isChecked(2));
+    }
+
+    #[Test]
+    public function checkedValuesReturnsSelectedStrings(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $area = Rect::fromSize(40, 4);
+
+        $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
+        $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+        $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+        $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
+
+        self::assertSame(['A', 'C'], $group->checkedValues());
+    }
+
+    #[Test]
+    public function ignoresKeysWhenNotFocused(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B']);
+        $area = Rect::fromSize(40, 3);
+
+        $result = $group->update(new KeyMsg(Key::Down), $area);
+
+        self::assertSame($group, $result->model);
+    }
+
+    #[Test]
+    public function mouseClickTogglesOption(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C']);
+        $area = new Rect(0, 0, 40, 6);
+
+        $click = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertTrue($result->model->isChecked(1));
+        self::assertSame(1, $result->model->cursor());
+    }
+
+    #[Test]
+    public function mouseClickOutsideDoesNothing(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B']);
+        $area = new Rect(0, 0, 40, 3);
+
+        $click = new MouseMsg(5, 10, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertSame($group, $result->model);
+    }
+
+    #[Test]
+    public function rendersLabelAndOptions(): void
+    {
+        $group = CheckboxGroup::new('Toppings', ['Cheese', 'Onion'])->withFocus(true);
+        $frame = new Frame(30, 4);
+        $area = new Rect(0, 0, 30, 4);
+
+        $group->render($frame, $area, new RenderContext(Theme::dark()));
+
+        $labelRow = '';
+        for ($column = 0; $column < 10; ++$column) {
+            $labelRow .= $frame->characters[$column];
+        }
+        self::assertStringContainsString('Toppings', $labelRow);
+
+        // Options start at row 2 (label + blank line)
+        $optionRow = '';
+        for ($column = 0; $column < 15; ++$column) {
+            $optionRow .= $frame->characters[60 + $column];
+        }
+        self::assertStringContainsString('Cheese', $optionRow);
+        self::assertStringContainsString('[ ]', $optionRow);
+    }
+
+    #[Test]
+    public function rendersCheckedMark(): void
+    {
+        $group = CheckboxGroup::new('', ['A', 'B'])->withFocus(true);
+        $area = Rect::fromSize(30, 2);
+
+        $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
+
+        $frame = new Frame(30, 2);
+        $group->render($frame, new Rect(0, 0, 30, 2), new RenderContext(Theme::dark()));
+
+        $firstRow = '';
+        for ($column = 0; $column < 10; ++$column) {
+            $firstRow .= $frame->characters[$column];
+        }
+        self::assertStringContainsString('[x]', $firstRow);
+    }
+
+    // L91: MatchArmRemoval — Key::Up/'k' arm must reduce cursor
+    #[Test]
+    public function upKeyReturnsDifferentModelWhenCursorAboveZero(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $area = Rect::fromSize(40, 5);
+
+        $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+        self::assertSame(1, $group->cursor());
+
+        $result = $group->update(new KeyMsg(Key::Up), $area);
+        self::assertSame(0, $result->model->cursor());
+        self::assertNotSame($group, $result->model);
+    }
+
+    // L91: MatchArmRemoval — Key::Down/'j' arm must increase cursor
+    #[Test]
+    public function downKeyReturnsDifferentModelWhenNotAtEnd(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $area = Rect::fromSize(40, 4);
+
+        $result = $group->update(new KeyMsg(Key::Down), $area);
+        self::assertNotSame($group, $result->model);
+        self::assertSame(1, $result->model->cursor());
+    }
+
+    // L91: MatchArmRemoval — Enter/' ' arm must toggle
+    #[Test]
+    public function enterKeyReturnsDifferentModelWithToggle(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A'])->withFocus(true);
+        $area = Rect::fromSize(40, 3);
+
+        $result = $group->update(new KeyMsg(Key::Enter), $area);
+        self::assertNotSame($group, $result->model);
+        self::assertTrue($result->model->isChecked(0));
+    }
+
+    // L91: MatchArmRemoval — default arm returns self unchanged
+    #[Test]
+    public function unknownKeyReturnsSameModel(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $area = Rect::fromSize(40, 4);
+
+        $result = $group->update(new KeyMsg('z'), $area);
+        self::assertSame($group, $result->model);
+    }
+
+    // L115: Minus — click with non-zero area origin must compute correct local Y
+    #[Test]
+    public function mouseClickWithOffsetAreaComputesCorrectLocalY(): void
+    {
+        $group = CheckboxGroup::new('Label', ['A', 'B', 'C']);
+        $area = new Rect(5, 10, 30, 6);
+
+        // Label at y=10, blank at y=11, options at y=12,13,14
+        // Click option B at y=13 => localY=3, optionY=1
+        $click = new MouseMsg(10, 13, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertTrue($result->model->isChecked(1));
+        self::assertSame(1, $result->model->cursor());
+    }
+
+    // L118: GreaterThanOrEqualTo — clicking in label area (optionY < 0) does nothing
+    #[Test]
+    public function mouseClickOnLabelAreaDoesNotToggle(): void
+    {
+        $group = CheckboxGroup::new('Label', ['A', 'B']);
+        $area = new Rect(0, 0, 30, 4);
+
+        // Click on label row (y=0) => localY=0, optionY=0-2=-2 < 0
+        $click = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertSame($group, $result->model);
+    }
+
+    // L118: GreaterThanOrEqualTo — clicking on blank line after label does nothing
+    #[Test]
+    public function mouseClickOnBlankLineAfterLabelDoesNotToggle(): void
+    {
+        $group = CheckboxGroup::new('Label', ['A', 'B']);
+        $area = new Rect(0, 0, 30, 4);
+
+        // Click on blank line (y=1) => localY=1, optionY=1-2=-1 < 0
+        $click = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertSame($group, $result->model);
+    }
+
+    // L118: LessThan — clicking exactly at the last valid option works
+    #[Test]
+    public function mouseClickOnLastOptionTogglesIt(): void
+    {
+        $group = CheckboxGroup::new('', ['A', 'B', 'C']);
+        $area = new Rect(0, 0, 30, 3);
+
+        // No label, so optionY = localY = 2 (last option index)
+        $click = new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertTrue($result->model->isChecked(2));
+    }
+
+    // L118: LessThan — clicking one past last option does nothing
+    #[Test]
+    public function mouseClickBeyondLastOptionDoesNothing(): void
+    {
+        $group = CheckboxGroup::new('', ['A', 'B']);
+        $area = new Rect(0, 0, 30, 5);
+
+        // optionY=2, count=2 => 2 < 2 is false
+        $click = new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertSame($group, $result->model);
+    }
+
+    // L118: LogicalAnd — both conditions must hold
+    #[Test]
+    public function mouseClickRequiresBothBoundsToBeValid(): void
+    {
+        $group = CheckboxGroup::new('Label', ['A']);
+        $area = new Rect(0, 0, 30, 3);
+
+        // optionY = 0 - 2 = -2: fails >= 0
+        $click = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+        self::assertSame($group, $result->model);
+
+        // optionY = 3 - 2 = 1: fails < count (1)
+        $click2 = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
+        // This click is outside the area (area height=3, bottom=3, y=3 is out)
+        // so it won't even reach handleClick — let's use a bigger area
+        $group2 = CheckboxGroup::new('Label', ['A']);
+        $area2 = new Rect(0, 0, 30, 5);
+        $click3 = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
+        $result2 = $group2->update($click3, $area2);
+        self::assertSame($group2, $result2->model);
+    }
+
+    // L133: Assignment — $y += 2 must offset options below label
+    #[Test]
+    public function labelOffsetsOptionsRenderingByTwoRows(): void
+    {
+        $group = CheckboxGroup::new('Title', ['First', 'Second'])->withFocus(true);
+        $frame = new Frame(30, 5);
+        $area = new Rect(0, 0, 30, 5);
+
+        $group->render($frame, $area, new RenderContext(Theme::dark()));
+
+        // Row 0: label
+        self::assertStringContainsString('Title', $this->extractRow($frame, 0, 20));
+        // Row 1: blank
+        self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 1, 30));
+        // Row 2: first option
+        self::assertStringContainsString('First', $this->extractRow($frame, 2, 20));
+        // Row 3: second option
+        self::assertStringContainsString('Second', $this->extractRow($frame, 3, 20));
+    }
+
+    #[Test]
+    public function labelOffsetUsesIncrementNotAbsoluteAssignment(): void
+    {
+        $group = CheckboxGroup::new('Title', ['First'])->withFocus(true);
+        $frame = new Frame(30, 8);
+        $area = new Rect(0, 3, 30, 5);
+
+        $group->render($frame, $area, new RenderContext(Theme::dark()));
+
+        self::assertStringContainsString('Title', $this->extractRow($frame, 3, 20));
+        self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 4, 30));
+        self::assertStringContainsString('First', $this->extractRow($frame, 5, 20));
+        self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 2, 30), 'Row 2 must be empty (mutant $y=2 would render option here)');
+    }
+
+    // L137: GreaterThanOrEqualTo — rendering stops when area is exhausted
+    #[Test]
+    public function renderingStopsWhenAreaHeightExhausted(): void
+    {
+        $group = CheckboxGroup::new('', ['A', 'B', 'C'])->withFocus(true);
+        $frame = new Frame(30, 2);
+        $area = new Rect(0, 0, 30, 2);
+
+        $group->render($frame, $area, new RenderContext(Theme::dark()));
+
+        // Row 0 and 1 should have options
+        self::assertStringContainsString('A', $this->extractRow($frame, 0, 10));
+        self::assertStringContainsString('B', $this->extractRow($frame, 1, 10));
+        // No row 2 exists in buffer — C is not rendered (buffer only has 2 rows)
+    }
+
+    // L137: Verify the boundary option is NOT rendered when at exact bottom
+    #[Test]
+    public function thirdOptionNotRenderedWhenAreaHasOnlyTwoRows(): void
+    {
+        $group = CheckboxGroup::new('', ['A', 'B', 'C'])->withFocus(true);
+        $frame = new Frame(30, 3);
+        $area = new Rect(0, 0, 30, 2);
+
+        $group->render($frame, $area, new RenderContext(Theme::dark()));
+
+        // Row 2 should remain blank — C must not be rendered
+        self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 2, 30));
+    }
+
+    // L141: Identical + LogicalAnd — cursor style only at cursor index when focused
+    #[Test]
+    public function cursorStyleAppliedOnlyAtCursorIndexWhenFocused(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['A', 'B'])->withFocus(true);
+        $frame = new Frame(30, 2);
+        $area = new Rect(0, 0, 30, 2);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        $cursorFg = $theme->cursorStyle->foregroundValue();
+        $baseFg = $theme->base->foregroundValue();
+
+        // Row 0 (cursor=0): should use cursor style
+        self::assertSame($cursorFg, $this->foregroundAt($frame, 0, 0));
+        // Row 1 (not cursor): should use base style (focused but not cursor)
+        self::assertSame($baseFg, $this->foregroundAt($frame, 0, 1));
+    }
+
+    // L141: LogicalAndNegation — unfocused cursor index should NOT get cursor style
+    #[Test]
+    public function cursorStyleNotAppliedWhenUnfocused(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['A', 'B']);
+        $frame = new Frame(30, 2);
+        $area = new Rect(0, 0, 30, 2);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        $cursorFg = $theme->cursorStyle->foregroundValue();
+        // Row 0 is cursor index 0, but unfocused — must NOT use cursor style
+        self::assertNotSame($cursorFg, $this->foregroundAt($frame, 0, 0));
+    }
+
+    // L141: LogicalAndAllSubExprNegation — non-cursor index when focused uses base not cursor
+    #[Test]
+    public function nonCursorIndexWhenFocusedUsesBaseStyle(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['A', 'B', 'C'])->withFocus(true);
+        $frame = new Frame(30, 3);
+        $area = new Rect(0, 0, 30, 3);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        // Cursor is at 0 — rows 1 and 2 should use base style (focused, not checked, not cursor)
+        self::assertSame($theme->base->foregroundValue(), $this->foregroundAt($frame, 0, 1));
+        self::assertSame($theme->base->foregroundValue(), $this->foregroundAt($frame, 0, 2));
+    }
+
+    // L146: MatchArmRemoval — cursorStyle arm
+    #[Test]
+    public function styleMatchArmCursorStyleIsDistinct(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['A'])->withFocus(true);
+        $frame = new Frame(30, 1);
+        $area = new Rect(0, 0, 30, 1);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        self::assertSame($theme->cursorStyle->foregroundValue(), $this->foregroundAt($frame, 0, 0));
+    }
+
+    // L146: MatchArmRemoval — accent style for checked non-cursor
+    #[Test]
+    public function checkedNonCursorItemUsesAccentStyle(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['A', 'B'])->withFocus(true);
+        $area = Rect::fromSize(30, 2);
+
+        // Check A (cursor=0), then move to B
+        $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
+        $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+
+        $frame = new Frame(30, 2);
+        $group->render($frame, new Rect(0, 0, 30, 2), new RenderContext($theme));
+
+        // Row 0: checked but not cursor => accent
+        self::assertSame($theme->accent->foregroundValue(), $this->foregroundAt($frame, 0, 0));
+        // Row 1: cursor => cursorStyle
+        self::assertSame($theme->cursorStyle->foregroundValue(), $this->foregroundAt($frame, 0, 1));
+    }
+
+    // L146: MatchArmRemoval — base style for focused non-cursor unchecked
+    #[Test]
+    public function focusedNonCursorUncheckedItemUsesBaseStyle(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['A', 'B'])->withFocus(true);
+        $frame = new Frame(30, 2);
+        $area = new Rect(0, 0, 30, 2);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        // Row 1: focused, not cursor (cursor=0), not checked => base
+        self::assertSame($theme->base->foregroundValue(), $this->foregroundAt($frame, 0, 1));
+    }
+
+    // L146: MatchArmRemoval — dim style for unfocused unchecked
+    #[Test]
+    public function unfocusedUncheckedItemUsesDimStyle(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['A', 'B']);
+        $frame = new Frame(30, 2);
+        $area = new Rect(0, 0, 30, 2);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        // Unfocused, unchecked => dim
+        self::assertSame($theme->dim->foregroundValue(), $this->foregroundAt($frame, 0, 0));
+        self::assertSame($theme->dim->foregroundValue(), $this->foregroundAt($frame, 0, 1));
+    }
+
+    // L154: DecrementInteger/IncrementInteger — option text starts at x+4
+    #[Test]
+    public function optionTextRendersAtCorrectXOffset(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['Z'])->withFocus(true);
+        $frame = new Frame(30, 1);
+        $area = new Rect(0, 0, 30, 1);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        // Mark "[ ] " occupies columns 0-3, option text starts at column 4
+        self::assertSame('[', $frame->characters[0]);
+        self::assertSame(' ', $frame->characters[1]);
+        self::assertSame(']', $frame->characters[2]);
+        self::assertSame(' ', $frame->characters[3]);
+        self::assertSame('Z', $frame->characters[4]);
+    }
+
+    // L154: with non-zero area.x the offset must be area.x + 4
+    #[Test]
+    public function optionTextRendersAtCorrectXOffsetWithNonZeroAreaX(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['Q'])->withFocus(true);
+        $frame = new Frame(30, 1);
+        $area = new Rect(5, 0, 25, 1);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        // Mark at x=5, option text at x=9
+        self::assertSame('[', $frame->characters[5]);
+        self::assertSame('Q', $frame->characters[9]);
+        // Column 4 should still be blank (before the mark)
+        self::assertSame(' ', $frame->characters[4]);
+    }
+
+    // L155: Increment — each option rendered on successive rows
+    #[Test]
+    public function eachOptionRendersOnSuccessiveRows(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['A', 'B', 'C'])->withFocus(true);
+        $frame = new Frame(30, 3);
+        $area = new Rect(0, 0, 30, 3);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        self::assertStringContainsString('A', $this->extractRow($frame, 0, 10));
+        self::assertStringContainsString('B', $this->extractRow($frame, 1, 10));
+        self::assertStringContainsString('C', $this->extractRow($frame, 2, 10));
+    }
+
+    // L155: Without y++, second option would overwrite first row
+    #[Test]
+    public function secondOptionDoesNotOverwriteFirstRow(): void
+    {
+        $theme = Theme::dark();
+        $group = CheckboxGroup::new('', ['First', 'Second'])->withFocus(true);
+        $frame = new Frame(30, 2);
+        $area = new Rect(0, 0, 30, 2);
+
+        $group->render($frame, $area, new RenderContext($theme));
+
+        // Row 0 must contain "First" not "Second"
+        $row0 = $this->extractRow($frame, 0, 15);
+        self::assertStringContainsString('First', $row0);
+        self::assertStringNotContainsString('Second', $row0);
+
+        // Row 1 must contain "Second"
+        self::assertStringContainsString('Second', $this->extractRow($frame, 1, 15));
+    }
+
+    // L116: Minus on localY - 2 for label offset during click handling
+    #[Test]
+    public function mouseClickWithLabelComputesCorrectOptionIndex(): void
+    {
+        $group = CheckboxGroup::new('Title', ['X', 'Y']);
+        $area = new Rect(0, 0, 30, 4);
+
+        // With label: optionY = localY - 2
+        // Click at y=2 => localY=2, optionY=0 => first option
+        $click = new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertTrue($result->model->isChecked(0));
+        self::assertSame(0, $result->model->cursor());
+    }
+
+    // Without label: optionY = localY (no subtraction)
+    #[Test]
+    public function mouseClickWithoutLabelClicksCorrectOption(): void
+    {
+        $group = CheckboxGroup::new('', ['X', 'Y']);
+        $area = new Rect(0, 0, 30, 2);
+
+        $click = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
+        $result = $group->update($click, $area);
+
+        self::assertTrue($result->model->isChecked(1));
+        self::assertFalse($result->model->isChecked(0));
+    }
+
+    // Mouse click toggles (not just checks) — clicking already checked option unchecks it
+    #[Test]
+    public function mouseClickTogglesAlreadyCheckedOption(): void
+    {
+        $group = CheckboxGroup::new('', ['A', 'B']);
+        $area = new Rect(0, 0, 30, 2);
+
+        $click = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
+        $group = $group->update($click, $area)->model;
+        self::assertTrue($group->isChecked(0));
+
+        $group = $group->update($click, $area)->model;
+        self::assertFalse($group->isChecked(0));
+    }
+
+    #[Test]
+    public function supportsCustomFocusPrevKeybinding(): void
+    {
+        $area = Rect::fromSize(20, 10);
+        $widget = CheckboxGroup::new('lbl', ['a', 'b', 'c'])->withFocus(true)->withCursor(1);
+
+        $afterDefault = $widget->update(new KeyMsg(Key::Up), $area)->model;
+        self::assertSame(0, $afterDefault->cursor());
+
+        $custom = $widget->withKeybindings(new Keybindings([Actions::FOCUS_PREV => ['x']]));
+        self::assertSame($custom, $custom->update(new KeyMsg(Key::Up), $area)->model);
+
+        $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
+        self::assertSame(0, $afterCustom->cursor());
+    }
+
+    #[Test]
+    public function supportsCustomFocusNextKeybinding(): void
+    {
+        $area = Rect::fromSize(20, 10);
+        $widget = CheckboxGroup::new('lbl', ['a', 'b', 'c'])->withFocus(true);
+
+        $afterDefault = $widget->update(new KeyMsg(Key::Down), $area)->model;
+        self::assertSame(1, $afterDefault->cursor());
+
+        $custom = $widget->withKeybindings(new Keybindings([Actions::FOCUS_NEXT => ['x']]));
+        self::assertSame($custom, $custom->update(new KeyMsg(Key::Down), $area)->model);
+
+        $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
+        self::assertSame(1, $afterCustom->cursor());
+    }
+
+    #[Test]
+    public function supportsCustomToggleKeybinding(): void
+    {
+        $area = Rect::fromSize(20, 10);
+        $widget = CheckboxGroup::new('lbl', ['a', 'b', 'c'])->withFocus(true);
+
+        $afterDefault = $widget->update(new KeyMsg(Key::Enter), $area)->model;
+        self::assertTrue($afterDefault->isChecked(0));
+
+        $custom = $widget->withKeybindings(new Keybindings([Actions::TOGGLE => ['x']]));
+        $afterDefaultOnCustom = $custom->update(new KeyMsg(Key::Enter), $area)->model;
+        self::assertFalse($afterDefaultOnCustom->isChecked(0));
+
+        $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
+        self::assertTrue($afterCustom->isChecked(0));
+    }
+
+    #[Test]
+    public function labeledGroupRendersLabelBlankSpacerThenOptions(): void
+    {
+        $group = CheckboxGroup::new('Pick', ['Alpha', 'Beta']);
+        $frame = new Frame(20, 5);
+        $group->render($frame, new Rect(0, 0, 20, 5), new RenderContext(Theme::dark()));
+
+        self::assertSame('Pick', rtrim($this->extractRow($frame, 0, 20)), 'Label on row 0');
+        self::assertSame('', rtrim($this->extractRow($frame, 1, 20)), 'Row 1 is the spacer');
+        self::assertSame('[ ] Alpha', rtrim($this->extractRow($frame, 2, 20)), 'First option starts on row 2 — the label occupies exactly two rows');
+        self::assertSame('[ ] Beta', rtrim($this->extractRow($frame, 3, 20)));
+    }
+
+    #[Test]
+    public function scrollsToKeepTheCursorVisibleWhenOptionsExceedTheHeight(): void
+    {
+        $group = CheckboxGroup::new('', ['Alpha', 'Beta', 'Gamma', 'Delta'])
+            ->withCursor(3)
+            ->withFocus(true);
+        $frame = new Frame(12, 3);
+        $group->render($frame, new Rect(0, 0, 12, 3), new RenderContext(Theme::dark()));
+
+        self::assertSame('[ ] Beta', rtrim($this->extractRow($frame, 0, 12)), 'One row scrolled out: Beta is now the top row');
+        self::assertSame('[ ] Gamma', rtrim($this->extractRow($frame, 1, 12)));
+        self::assertSame('[ ] Delta', rtrim($this->extractRow($frame, 2, 12)), 'The cursor row is the last visible row');
+    }
+
+    #[Test]
+    public function labeledGroupScrollAccountsForExactlyTwoLabelRows(): void
+    {
+        $group = CheckboxGroup::new('Top', ['Alpha', 'Beta', 'Gamma', 'Delta'])
+            ->withCursor(3)
+            ->withFocus(true);
+        $frame = new Frame(12, 4);
+        $group->render($frame, new Rect(0, 0, 12, 4), new RenderContext(Theme::dark()));
+
+        self::assertSame('[ ] Alpha', rtrim($this->extractRow($frame, 0, 12)), 'Offset (2+3)-4+1=2 scrolls the label and spacer out; all four options fit');
+        self::assertSame('[ ] Delta', rtrim($this->extractRow($frame, 3, 12)), 'The cursor row lands on the last visible row');
+    }
+
+    private function extractRow(Frame $frame, int $row, int $columns): string
+    {
+        $text = '';
+        $base = $row * $frame->width;
+        for ($column = 0; $column < $columns; ++$column) {
+            $text .= $frame->characters[$base + $column];
+        }
+
+        return $text;
+    }
+
+    private function foregroundAt(Frame $frame, int $x, int $y): int
+    {
+        return $frame->foregrounds[$y * $frame->width + $x];
+    }
+}

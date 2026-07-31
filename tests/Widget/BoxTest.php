@@ -1,0 +1,377 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Widget;
+
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Rendering\Color;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Box;
+use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Widget;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class BoxTest extends TestCase
+{
+    #[Test]
+    public function implementsWidget(): void
+    {
+        self::assertInstanceOf(Widget::class, Box::new());
+    }
+
+    #[Test]
+    public function constraintIncludesBorderAndChildren(): void
+    {
+        $box = Box::new()
+            ->add(Text::new('Line 1'))
+            ->add(Text::new('Line 2'));
+
+        $constraint = $box->constraint();
+
+        self::assertSame(4, $constraint->min);
+        self::assertSame(4, $constraint->max);
+    }
+
+    #[Test]
+    public function constraintWithPadding(): void
+    {
+        $box = Box::new()
+            ->add(Text::new('Hello'))
+            ->withPadding(Spacing::vertical(1));
+
+        $constraint = $box->constraint();
+
+        self::assertSame(5, $constraint->min);
+    }
+
+    #[Test]
+    public function constraintEmptyBox(): void
+    {
+        $constraint = Box::new()->constraint();
+
+        self::assertSame(2, $constraint->min);
+    }
+
+    #[Test]
+    public function rendersBorder(): void
+    {
+        $box = Box::new();
+        $frame = new Frame(10, 3);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 10, 3), $context);
+
+        self::assertSame('─', $frame->characters[1]);
+        self::assertSame('─', $frame->characters[8]);
+    }
+
+    #[Test]
+    public function rendersTitle(): void
+    {
+        $box = Box::new('Info');
+        $frame = new Frame(20, 3);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 20, 3), $context);
+
+        self::assertSame('I', $frame->characters[2]);
+        self::assertSame('n', $frame->characters[3]);
+        self::assertSame('f', $frame->characters[4]);
+        self::assertSame('o', $frame->characters[5]);
+    }
+
+    #[Test]
+    public function rendersChildContent(): void
+    {
+        $box = Box::new()
+            ->add(Text::new('Hello'));
+        $frame = new Frame(20, 3);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 20, 3), $context);
+
+        self::assertSame('H', $frame->characters[20 + 1]);
+        self::assertSame('e', $frame->characters[20 + 2]);
+    }
+
+    #[Test]
+    public function paddingShiftsContent(): void
+    {
+        $box = Box::new()
+            ->add(Text::new('Hi'))
+            ->withPadding(Spacing::horizontal(1));
+        $frame = new Frame(20, 4);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 20, 4), $context);
+
+        self::assertSame('H', $frame->characters[20 + 2]);
+        self::assertSame('i', $frame->characters[20 + 3]);
+    }
+
+    #[Test]
+    public function skipsRenderWhenTooSmall(): void
+    {
+        $box = Box::new('Title');
+        $frame = new Frame(10, 2);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 2, 2), $context);
+
+        self::assertSame(' ', $frame->characters[0]);
+    }
+
+    #[Test]
+    public function multipleChildren(): void
+    {
+        $box = Box::new()
+            ->add(Text::new('Line 1'))
+            ->add(Text::new('Line 2'));
+        $frame = new Frame(20, 4);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 20, 4), $context);
+
+        self::assertSame('L', $frame->characters[20 + 1]);
+        self::assertSame('L', $frame->characters[40 + 1]);
+    }
+
+    #[Test]
+    public function childrenClippedToContentArea(): void
+    {
+        $box = Box::new()
+            ->add(Text::new('Line 1'))
+            ->add(Text::new('Line 2'))
+            ->add(Text::new('Line 3'));
+        $frame = new Frame(20, 4);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 20, 4), $context);
+
+        self::assertSame('L', $frame->characters[20 + 1]);
+        self::assertSame('L', $frame->characters[40 + 1]);
+        $bottomBorder = $frame->characters[60];
+        self::assertNotSame('L', $bottomBorder);
+    }
+
+    #[Test]
+    public function customBorderStyle(): void
+    {
+        $style = new Style(foreground: Color::hex('FF0000'));
+        $box = Box::new()->withBorderStyle($style);
+        $frame = new Frame(10, 3);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 10, 3), $context);
+
+        $foregroundValue = Color::hex('FF0000')->value;
+        self::assertSame($foregroundValue, $frame->foregrounds[0]);
+    }
+
+    #[Test]
+    public function addReturnsSelf(): void
+    {
+        $box = Box::new();
+        $updated = $box->add(Text::new('x'));
+
+        self::assertNotSame($box, $updated);
+    }
+
+    #[Test]
+    public function isNotInteractive(): void
+    {
+        self::assertNotInstanceOf(\Elmphant\Tui\Widget\Interactive::class, Box::new());
+    }
+
+    /**
+     * Kills L59 DecrementInteger: max(1, $constraint->min) → max(0, ...).
+     */
+    #[Test]
+    public function constraintTreatsZeroMinChildAsMinimumOneRow(): void
+    {
+        $zeroMinWidget = $this->createWidgetWithConstraint(Constraint::exact(0));
+
+        $box = Box::new()->add($zeroMinWidget);
+        $constraint = $box->constraint();
+
+        self::assertSame(3, $constraint->min, 'Zero-min child must still contribute 1 row');
+    }
+
+    /**
+     * Kills L72 LessThan: width < 3 → width <= 3.
+     */
+    #[Test]
+    public function rendersWithExactMinimumWidth(): void
+    {
+        $box = Box::new();
+        $frame = new Frame(3, 3);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 3, 3), $context);
+
+        self::assertNotSame(' ', $frame->characters[0], 'Width=3 must render border');
+    }
+
+    /**
+     * Kills L72 LogicalOr: || → && (only width too narrow should still skip).
+     */
+    #[Test]
+    public function skipsRenderWhenOnlyWidthTooNarrow(): void
+    {
+        $box = Box::new();
+        $frame = new Frame(10, 5);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 2, 5), $context);
+
+        self::assertSame(' ', $frame->characters[0], 'Width=2 must skip even when height is sufficient');
+    }
+
+    /**
+     * Kills L78 Coalesce: swaps ?? operands on titleStyleOverride.
+     */
+    #[Test]
+    public function customTitleStyleOverridesTheme(): void
+    {
+        $customTitleStyle = new Style(foreground: Color::hex('00FF00'));
+        $box = Box::new('Test')->withTitleStyle($customTitleStyle);
+        $frame = new Frame(20, 3);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 20, 3), $context);
+
+        $expectedForeground = Color::hex('00FF00')->value;
+        $themeTitleForeground = Theme::dark()->titleStyle->foregroundValue();
+        self::assertNotSame($expectedForeground, $themeTitleForeground, 'Precondition: custom differs from theme');
+        self::assertSame($expectedForeground, $frame->foregrounds[2], 'Title must use custom style, not theme');
+    }
+
+    /**
+     * Kills L94 GreaterThanOrEqualTo (>= to >) and L95 Break_ (removes break).
+     *
+     * Box height=4, border takes top+bottom rows, leaving 2 content rows.
+     * Two children each want 1 row — they exactly fill the content area.
+     * A third child should NOT render because childY == bottom().
+     * The mutant (>= to >) would allow one extra iteration; removing break would too.
+     */
+    #[Test]
+    public function childAtExactBoundaryIsNotRendered(): void
+    {
+        $renderCount = 0;
+        $spyWidget = $this->createSpyWidget(Constraint::exact(1), $renderCount);
+
+        $box = Box::new()
+            ->add(Text::new('A'))
+            ->add(Text::new('B'))
+            ->add($spyWidget);
+
+        $frame = new Frame(20, 4);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 20, 4), $context);
+
+        self::assertSame(0, $renderCount, 'Third child must not be rendered when content area is full');
+    }
+
+    /**
+     * Kills L99 DecrementInteger: max(1, $childConstraint->min) → max(0, ...) in render.
+     */
+    #[Test]
+    public function zeroMinChildRendersWithAtLeastOneRowHeight(): void
+    {
+        $zeroMinWidget = $this->createWidgetWithConstraint(Constraint::exact(0), 'X');
+
+        $box = Box::new()->add($zeroMinWidget);
+        $frame = new Frame(10, 4);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 10, 4), $context);
+
+        self::assertSame('X', $frame->characters[10 + 1], 'Zero-min child must still get 1 row for rendering');
+    }
+
+    /**
+     * Kills L100 Minus: bottom() - childY -> bottom() + childY (available space calculation).
+     */
+    #[Test]
+    public function childReceivesClippedHeightNotInflatedHeight(): void
+    {
+        $receivedHeight = null;
+        $spyWidget = new class(Constraint::exact(3), $receivedHeight) implements Widget {
+            public function __construct(
+                private readonly Constraint $widgetConstraint,
+                private ?int &$receivedHeight,
+            ) {
+            }
+
+            public function constraint(): Constraint
+            {
+                return $this->widgetConstraint;
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $this->receivedHeight = $area->height;
+            }
+        };
+
+        $box = Box::new()->add($spyWidget);
+        $frame = new Frame(10, 4);
+        $context = new RenderContext(Theme::dark());
+
+        $box->render($frame, new Rect(0, 0, 10, 4), $context);
+
+        self::assertSame(2, $receivedHeight, 'Child height must be clipped to available space (bottom - childY), not inflated');
+    }
+
+    private function createSpyWidget(Constraint $constraint, int &$renderCount): Widget
+    {
+        return new class($constraint, $renderCount) implements Widget {
+            public function __construct(
+                private readonly Constraint $widgetConstraint,
+                private int &$renderCount,
+            ) {
+            }
+
+            public function constraint(): Constraint
+            {
+                return $this->widgetConstraint;
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                ++$this->renderCount;
+            }
+        };
+    }
+
+    private function createWidgetWithConstraint(Constraint $constraint, string $fillChar = ' '): Widget
+    {
+        return new class($constraint, $fillChar) implements Widget {
+            public function __construct(
+                private readonly Constraint $widgetConstraint,
+                private readonly string $fillChar,
+            ) {
+            }
+
+            public function constraint(): Constraint
+            {
+                return $this->widgetConstraint;
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                for ($row = $area->y; $row < $area->y + $area->height; ++$row) {
+                    $frame->putString($area->x, $row, $this->fillChar);
+                }
+            }
+        };
+    }
+}

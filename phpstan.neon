@@ -1,0 +1,24 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
+parameters:
+    level: 9
+    paths:
+        - src
+        - tests/Stan
+    excludePaths:
+        # Deliberate violations: they are the input to the rule's own tests.
+        - tests/Stan/Fixtures
+    tmpDir: var/phpstan
+    reportUnmatchedIgnoredErrors: true
+    ignoreErrors:
+        - identifier: return.unusedType
+
+services:
+    -
+        class: Elmphant\Tui\Tests\Stan\CloneWithEncapsulationRule
+        arguments:
+            allowList:
+                - Elmphant\Tui\Core\App
+        tags:
+            - phpstan.rules.rule

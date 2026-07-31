@@ -1,0 +1,172 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Widget;
+
+use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Style;
+
+final readonly class Header implements Interactive
+{
+    use Cloneable;
+
+    private function __construct(
+        private string $title = '',
+        private ?Widget $leftSlot = null,
+        private ?Widget $centerSlot = null,
+        private ?Widget $rightSlot = null,
+        private ?Style $style = null,
+        private ?Spacing $padding = null,
+        private ?Spacing $margin = null,
+        private bool $divider = false,
+    ) {
+    }
+
+    public static function new(string $title = ''): self
+    {
+        return new self($title);
+    }
+
+    public function withTitle(string $title): self
+    {
+        return $this->cloneWith(title: $title);
+    }
+
+    public function center(Widget $widget): self
+    {
+        return $this->cloneWith(centerSlot: $widget);
+    }
+
+    public function left(Widget $widget): self
+    {
+        return $this->cloneWith(leftSlot: $widget);
+    }
+
+    public function right(Widget $widget): self
+    {
+        return $this->cloneWith(rightSlot: $widget);
+    }
+
+    public function style(Style $style): self
+    {
+        return $this->cloneWith(style: $style);
+    }
+
+    public function padding(Spacing $padding): self
+    {
+        return $this->cloneWith(padding: $padding);
+    }
+
+    public function margin(Spacing $margin): self
+    {
+        return $this->cloneWith(margin: $margin);
+    }
+
+    public function withDivider(): self
+    {
+        return $this->cloneWith(divider: true);
+    }
+
+    public function constraint(): Constraint
+    {
+        $padding = $this->padding ?? Spacing::none();
+        $margin = $this->margin ?? Spacing::none();
+        $dividerHeight = $this->divider ? 1 : 0;
+
+        return Constraint::exact(1 + $padding->top + $padding->bottom + $margin->top + $margin->bottom + $dividerHeight);
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
+        $padding = $this->padding ?? Spacing::none();
+        $barHeight = 1 + $padding->top + $padding->bottom;
+        $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
+        $contentArea = $padding->applyTo($barArea);
+
+        [$overrides, $command] = BarSlotRenderer::updateSlots([
+            'leftSlot' => $this->leftSlot,
+            'centerSlot' => $this->centerSlot,
+            'rightSlot' => $this->rightSlot,
+        ], $message, $contentArea);
+
+        if ($overrides !== []) {
+            return new UpdateResult($this->cloneWith(...$overrides), $command);
+        }
+
+        return new UpdateResult($this, $command);
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        if ($area->width < 1 || $area->height < 1) {
+            return;
+        }
+
+        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
+        if ($innerArea->width < 1 || $innerArea->height < 1) {
+            return;
+        }
+
+        $padding = $this->padding ?? Spacing::none();
+        $barHeight = 1 + $padding->top + $padding->bottom;
+        $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
+
+        $headerStyle = $this->style ?? $context->theme->headerStyle;
+        $barBg = $headerStyle->backgroundValue();
+        $frame->fillRect($barArea->x, $barArea->y, $barArea->width, $barArea->height, $headerStyle->foregroundValue(), $barBg, $headerStyle->attributes);
+
+        $contentArea = $padding->applyTo($barArea);
+        if ($contentArea->width < 1 || $contentArea->height < 1) {
+            return;
+        }
+
+        $contentX = $contentArea->x;
+        $contentY = $contentArea->y;
+        $contentWidth = $contentArea->width;
+
+        if ($this->leftSlot !== null) {
+            BarSlotRenderer::renderLeft($frame, $this->leftSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+        }
+
+        if ($this->centerSlot !== null) {
+            BarSlotRenderer::renderCentered($frame, $this->centerSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+        }
+
+        // The title is the bar's default content rather than a fourth slot: it
+        // centres while the centre is free, and steps left when a centre slot
+        // takes that place. Only an explicit left slot displaces it entirely —
+        // a caller-supplied title vanishing is never the useful answer.
+        $titleWidth = CharWidth::stringWidth($this->title);
+        $titleFits = $titleWidth > 0
+            && ($this->centerSlot === null || $this->leftSlot === null);
+
+        if ($titleFits) {
+            $titleX = $this->centerSlot === null
+                ? max($contentX, $contentX + (int)floor(($contentWidth - $titleWidth) / 2))
+                : $contentX;
+            $frame->putString($titleX, $contentY, $this->title, $headerStyle->foregroundValue(), $barBg, $headerStyle->attributes);
+        }
+
+        if ($this->rightSlot !== null) {
+            BarSlotRenderer::renderRight($frame, $this->rightSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+        }
+
+        if ($this->divider) {
+            $dividerY = $barArea->y + $barArea->height;
+            if ($dividerY < $area->y + $area->height) {
+                $dividerStyle = $context->theme->borderStyle;
+                $frame->putString($innerArea->x, $dividerY, str_repeat('─', $innerArea->width), $dividerStyle->foregroundValue(), $dividerStyle->backgroundValue());
+            }
+        }
+    }
+}

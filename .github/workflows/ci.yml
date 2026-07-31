@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: intl, mbstring, pcntl, posix
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+      - run: composer validate --strict
+      - run: composer audit
+      - run: composer analyse
+      - run: composer cs:check
+
+  test:
+    name: Tests (PHP ${{ matrix.php }}, ${{ matrix.dependencies }} deps)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+        dependencies: [highest]
+        include:
+          - php: '8.2'
+            dependencies: lowest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: intl, mbstring, pcntl, posix
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+      - run: composer test -- --no-output
+      - name: Verify terminal restoration in a PTY
+        if: matrix.php == '8.2' && matrix.dependencies == 'highest'
+        run: script -qefc 'sh tests/Integration/pty-smoke.sh' /dev/null >/dev/null
+
+  terminal-pty:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: intl, mbstring, pcntl, posix
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - name: Linux PTY hardening scenarios
+        if: runner.os == 'Linux'
+        run: script -qefc 'sh tests/Integration/pty-hardening.sh' /dev/null >/dev/null
+      # BSD script writes the session to its transcript, not to its own stdout,
+      # so a transcript of /dev/null throws away everything the scenarios report.
+      - name: macOS PTY hardening scenarios
+        if: runner.os == 'macOS'
+        run: |
+          set +e
+          script -q pty-transcript.txt sh tests/Integration/pty-hardening.sh
+          status=$?
+          set -e
+          cat pty-transcript.txt
+          exit $status
+
+  mutation:
+    name: Mutation
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      # The diff run needs history back to the merge base, not just one commit.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: intl, mbstring, pcntl, posix
+          coverage: xdebug
+      - uses: ramsey/composer-install@v3
+      - name: Changed lines only
+        if: github.event_name == 'pull_request'
+        run: composer mutation:diff
+      - name: Full profile
+        if: github.event_name != 'pull_request'
+        run: composer mutation
+      - name: Escaped mutants
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: infection-log
+          path: infection.log
