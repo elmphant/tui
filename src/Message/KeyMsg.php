@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Message;
 
+use Elmphant\Tui\Layout\Rect;
+
 final readonly class KeyMsg implements Message
 {
     public function __construct(
@@ -12,6 +14,7 @@ final readonly class KeyMsg implements Message
         public bool $alt = false,
         public bool $shift = false,
         public KeyEventType $eventType = KeyEventType::Press,
+        public ?Rect $screen = null,
     ) {
     }
 }

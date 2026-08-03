@@ -48,7 +48,6 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         private string $placeholder = '',
         private bool $freeText = false,
         private ?Matcher $matcher = null,
-        private ?Rect $viewport = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -88,15 +87,6 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     public function withFreeText(bool $freeText): self
     {
         return $this->cloneWith(freeText: $freeText);
-    }
-
-    /**
-     * The area the popup may use. Without it the popup still opens; only
-     * mouse hit-testing inside it needs the geometry.
-     */
-    public function withViewport(Rect $viewport): self
-    {
-        return $this->cloneWith(viewport: $viewport);
     }
 
     public function selectedValue(): ?string
@@ -194,15 +184,15 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         }
 
         $filtered = $this->filtered();
-        $placement = $this->placementIn($area, $filtered);
+        $placement = $this->placementIn($area, $filtered, $message->screen);
 
         if ($placement === null || !$message->inRect($placement)) {
             return $message->isClick() ? $this->closed() : $this;
         }
 
         return match (true) {
-            $message->action === MouseAction::WheelUp => $this->scrolledBy(-$message->wheelSteps(1), $filtered, $area),
-            $message->action === MouseAction::WheelDown => $this->scrolledBy($message->wheelSteps(1), $filtered, $area),
+            $message->action === MouseAction::WheelUp => $this->scrolledBy(-$message->wheelSteps(1), $filtered, $area, $message->screen),
+            $message->action === MouseAction::WheelDown => $this->scrolledBy($message->wheelSteps(1), $filtered, $area, $message->screen),
             $message->isClick() => $this->clickedRow($message->y - $placement->y, $placement, $filtered),
             default => $this,
         };
@@ -211,9 +201,9 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     /**
      * @param list<string> $filtered
      */
-    private function scrolledBy(int $steps, array $filtered, Rect $area): self
+    private function scrolledBy(int $steps, array $filtered, Rect $area, ?Rect $screen): self
     {
-        $rows = $this->visibleRows($filtered, $area);
+        $rows = $this->visibleRows($filtered, $area, $screen);
         $furthest = max(0, count($filtered) - $rows);
 
         return $this->cloneWith(scroll: max(0, min($furthest, $this->scroll + $steps)));
@@ -245,8 +235,8 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         return match (true) {
             $bindings->matches($message, Actions::CANCEL) => $this->closed(),
             $bindings->matches($message, Actions::SELECT) => $this->picked($filtered),
-            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->movedTo($this->cursor + 1, $filtered, $area),
-            $bindings->matches($message, Actions::FOCUS_PREV) => $this->movedTo($this->cursor - 1, $filtered, $area),
+            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->movedTo($this->cursor + 1, $filtered, $area, $message->screen),
+            $bindings->matches($message, Actions::FOCUS_PREV) => $this->movedTo($this->cursor - 1, $filtered, $area, $message->screen),
             $bindings->matches($message, Actions::DELETE_CHAR_BACKWARD) => $this->searchedFor(mb_substr($this->query, 0, -1)),
             \is_string($message->key) && !$message->ctrl && !$message->alt => $this->searchedFor($this->query . $message->key),
             default => $this,
@@ -277,7 +267,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     /**
      * @param list<string> $filtered
      */
-    private function movedTo(int $cursor, array $filtered, Rect $area): self
+    private function movedTo(int $cursor, array $filtered, Rect $area, ?Rect $screen): self
     {
         $last = count($filtered) - 1;
 
@@ -285,15 +275,15 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
             return $this;
         }
 
-        return $this->cloneWith(cursor: $cursor, scroll: $this->scrollShowing($cursor, $filtered, $area));
+        return $this->cloneWith(cursor: $cursor, scroll: $this->scrollShowing($cursor, $filtered, $area, $screen));
     }
 
     /**
      * @param list<string> $filtered
      */
-    private function scrollShowing(int $cursor, array $filtered, Rect $area): int
+    private function scrollShowing(int $cursor, array $filtered, Rect $area, ?Rect $screen): int
     {
-        $rows = $this->visibleRows($filtered, $area);
+        $rows = $this->visibleRows($filtered, $area, $screen);
 
         if ($rows < 1) {
             return $this->scroll;
@@ -309,9 +299,9 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     /**
      * @param list<string> $filtered
      */
-    private function visibleRows(array $filtered, Rect $area): int
+    private function visibleRows(array $filtered, Rect $area, ?Rect $screen): int
     {
-        $placement = $this->placementIn($area, $filtered);
+        $placement = $this->placementIn($area, $filtered, $screen);
 
         if ($placement === null) {
             return count($filtered);
@@ -323,14 +313,14 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     /**
      * @param list<string> $filtered
      */
-    private function placementIn(Rect $area, array $filtered): ?Rect
+    private function placementIn(Rect $area, array $filtered, ?Rect $screen): ?Rect
     {
-        if ($this->viewport === null) {
+        if ($screen === null) {
             return null;
         }
 
         return DropdownPopup::of($filtered, $this->labels, $this->cursor, $this->query, $this->scroll)
-            ->placement($area, $this->viewport);
+            ->placement($area, $screen);
     }
 
     /**

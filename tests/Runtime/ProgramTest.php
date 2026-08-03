@@ -13,7 +13,11 @@ use Elmphant\Tui\Core\ShutdownAware;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -1937,6 +1941,90 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
+    public function drainMessageQueueStampsTheCurrentScreenRectOntoAMouseMsgBeforeDispatch(): void
+    {
+        $observingModel = new class implements Model {
+            public ?MouseMsg $received = null;
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if ($message instanceof MouseMsg) {
+                    $this->received = $message;
+                }
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+
+        $program = Program::new($observingModel);
+        $reflection = new ReflectionClass($program);
+        $reflection->getProperty('model')->setValue($program, $observingModel);
+        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('width')->setValue($program, 120);
+        $reflection->getProperty('height')->setValue($program, 40);
+
+        $queue = new SplQueue();
+        $queue->enqueue(new MouseMsg(3, 4, MouseAction::Press, MouseButton::Left));
+        $reflection->getProperty('messageQueue')->setValue($program, $queue);
+
+        $reflection->getMethod('drainMessageQueue')->invoke($program);
+
+        self::assertNotNull($observingModel->received);
+        self::assertEquals(new Rect(0, 0, 120, 40), $observingModel->received->screen, 'The rect stamped on the message must match the one the frame will be built from');
+    }
+
+    #[Test]
+    public function drainMessageQueueStampsTheCurrentScreenRectOntoAKeyMsgBeforeDispatch(): void
+    {
+        $observingModel = new class implements Model {
+            public ?KeyMsg $received = null;
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if ($message instanceof KeyMsg) {
+                    $this->received = $message;
+                }
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+
+        $program = Program::new($observingModel);
+        $reflection = new ReflectionClass($program);
+        $reflection->getProperty('model')->setValue($program, $observingModel);
+        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('width')->setValue($program, 120);
+        $reflection->getProperty('height')->setValue($program, 40);
+
+        $queue = new SplQueue();
+        $queue->enqueue(new KeyMsg('x'));
+        $reflection->getProperty('messageQueue')->setValue($program, $queue);
+
+        $reflection->getMethod('drainMessageQueue')->invoke($program);
+
+        self::assertNotNull($observingModel->received);
+        self::assertEquals(new Rect(0, 0, 120, 40), $observingModel->received->screen, 'The rect stamped on the key message must match the one the frame will be built from');
+    }
+
+    #[Test]
     public function screenRectCacheInvalidatesForEachDimensionIndependently(): void
     {
         $program = Program::new($this->createMockModel());
@@ -2089,7 +2177,7 @@ final class ProgramTest extends TestCase
 
             public function update(Message $message, Rect $area): UpdateResult
             {
-                if ($message instanceof \Elmphant\Tui\Message\KeyMsg) {
+                if ($message instanceof KeyMsg) {
                     $this->keys[] = is_string($message->key) ? $message->key : $message->key->name;
                 }
 

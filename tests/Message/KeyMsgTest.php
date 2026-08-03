@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Message;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use PHPUnit\Framework\Attributes\Test;
@@ -75,5 +76,19 @@ final class KeyMsgTest extends TestCase
         self::assertFalse($msg->ctrl);
         self::assertFalse($msg->alt);
         self::assertFalse($msg->shift);
+    }
+
+    #[Test]
+    public function constructingWithoutAScreenRectLeavesItNull(): void
+    {
+        self::assertNull((new KeyMsg('a'))->screen);
+    }
+
+    #[Test]
+    public function aScreenRectCanBeCarriedAlongsideTheKey(): void
+    {
+        $screen = new Rect(0, 0, 80, 24);
+
+        self::assertSame($screen, (new KeyMsg('a', screen: $screen))->screen);
     }
 }

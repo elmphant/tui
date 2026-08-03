@@ -225,15 +225,15 @@ final class DropdownTest extends TestCase
     public function walkingALongListKeepsTheCursorInsideTheVisibleWindow(): void
     {
         $area = new Rect(0, 0, 40, 1);
+        $screen = Rect::fromSize(60, 14);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 36));
 
         $dropdown = Dropdown::new($options)
-            ->withViewport(Rect::fromSize(60, 14))
             ->withFocus(true)
             ->update(new KeyMsg(' '), $area)->model;
 
         for ($step = 0; $step < 20; ++$step) {
-            $dropdown = $dropdown->update(new KeyMsg(Key::Down), $area)->model;
+            $dropdown = $dropdown->update(new KeyMsg(Key::Down, screen: $screen), $area)->model;
         }
 
         $frame = new Frame(60, 14);
@@ -506,13 +506,13 @@ final class DropdownTest extends TestCase
     public function scrollFollowsTheCursorEvenWithOnlyOneVisibleRow(): void
     {
         $area = new Rect(0, 0, 20, 1);
+        $screen = Rect::fromSize(20, 6);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 10));
 
         $dropdown = Dropdown::new($options)
-            ->withViewport(Rect::fromSize(20, 6))
             ->withFocus(true)
             ->update(new KeyMsg(' '), $area)->model
-            ->update(new KeyMsg(Key::Down), $area)->model;
+            ->update(new KeyMsg(Key::Down, screen: $screen), $area)->model;
 
         $frame = new Frame(20, 6);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $area);
@@ -551,13 +551,13 @@ final class DropdownTest extends TestCase
     public function scrollDoesNotAdvanceOnTheFirstStepDownWithinAWideWindow(): void
     {
         $area = new Rect(0, 0, 20, 1);
+        $screen = Rect::fromSize(20, 8);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 10));
 
         $dropdown = Dropdown::new($options)
-            ->withViewport(Rect::fromSize(20, 8))
             ->withFocus(true)
             ->update(new KeyMsg(' '), $area)->model
-            ->update(new KeyMsg(Key::Down), $area)->model;
+            ->update(new KeyMsg(Key::Down, screen: $screen), $area)->model;
 
         $frame = new Frame(20, 8);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $area);
@@ -579,52 +579,52 @@ final class DropdownTest extends TestCase
     public function scrollShowingFollowsTheCursorWithExactArithmetic(): void
     {
         $area = new Rect(0, 0, 20, 1);
+        $screen = Rect::fromSize(20, 8);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 10));
 
         $dropdown = Dropdown::new($options)
-            ->withViewport(Rect::fromSize(20, 8))
             ->withFocus(true)
             ->update(new KeyMsg(' '), $area)->model;
 
         for ($step = 0; $step < 5; ++$step) {
-            $dropdown = $dropdown->update(new KeyMsg(Key::Down), $area)->model;
+            $dropdown = $dropdown->update(new KeyMsg(Key::Down, screen: $screen), $area)->model;
         }
 
         $frame = new Frame(20, 8);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $area);
-        $screen = ScreenBuffer::fromFrame($frame)->getPlainText();
+        $drawn = ScreenBuffer::fromFrame($frame)->getPlainText();
 
-        self::assertStringContainsString('option4', $screen, 'Scroll landed on exactly 3: cursor 5 minus 3 rows plus 1');
-        self::assertStringContainsString('option6', $screen, 'and the 3-row window still ends on option6');
-        self::assertStringNotContainsString('option3 ', $screen, 'option3 has scrolled just out of view');
-        self::assertStringNotContainsString('option7 ', $screen, 'and the window has not overshot past option6');
+        self::assertStringContainsString('option4', $drawn, 'Scroll landed on exactly 3: cursor 5 minus 3 rows plus 1');
+        self::assertStringContainsString('option6', $drawn, 'and the 3-row window still ends on option6');
+        self::assertStringNotContainsString('option3 ', $drawn, 'option3 has scrolled just out of view');
+        self::assertStringNotContainsString('option7 ', $drawn, 'and the window has not overshot past option6');
 
         $dropdown = $dropdown
-            ->update(new KeyMsg(Key::Up), $area)->model
-            ->update(new KeyMsg(Key::Up), $area)->model
-            ->update(new KeyMsg(Key::Up), $area)->model;
+            ->update(new KeyMsg(Key::Up, screen: $screen), $area)->model
+            ->update(new KeyMsg(Key::Up, screen: $screen), $area)->model
+            ->update(new KeyMsg(Key::Up, screen: $screen), $area)->model;
 
         $frame2 = new Frame(20, 8);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame2, $area);
-        $screen2 = ScreenBuffer::fromFrame($frame2)->getPlainText();
+        $drawn2 = ScreenBuffer::fromFrame($frame2)->getPlainText();
 
-        self::assertStringContainsString('option3', $screen2, 'Three ups from cursor 5 land on cursor 2, pulling scroll back to 2');
-        self::assertStringNotContainsString('option6 ', $screen2, 'and the window no longer reaches option6');
+        self::assertStringContainsString('option3', $drawn2, 'Three ups from cursor 5 land on cursor 2, pulling scroll back to 2');
+        self::assertStringNotContainsString('option6 ', $drawn2, 'and the window no longer reaches option6');
     }
 
     #[Test]
     public function typingAfterScrollingResetsTheWindowToTheTop(): void
     {
         $area = new Rect(0, 0, 40, 1);
+        $screen = Rect::fromSize(60, 14);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 36));
 
         $dropdown = Dropdown::new($options)
-            ->withViewport(Rect::fromSize(60, 14))
             ->withFocus(true)
             ->update(new KeyMsg(' '), $area)->model;
 
         for ($step = 0; $step < 20; ++$step) {
-            $dropdown = $dropdown->update(new KeyMsg(Key::Down), $area)->model;
+            $dropdown = $dropdown->update(new KeyMsg(Key::Down, screen: $screen), $area)->model;
         }
 
         $typed = $dropdown->update(new KeyMsg('o'), $area)->model;

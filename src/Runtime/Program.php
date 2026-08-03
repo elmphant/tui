@@ -30,6 +30,7 @@ use Elmphant\Tui\Input\Terminal;
 use Elmphant\Tui\Input\TerminalInterface;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
@@ -803,11 +804,12 @@ final class Program
 
             try {
                 $updateStart = $this->tracer === null ? 0 : hrtime(true);
-                $result = $this->model->update($message, $screenRect);
+                $stamped = self::stampScreen($message, $screenRect);
+                $result = $this->model->update($stamped, $screenRect);
                 $nextModel = self::requireModel($result->model);
                 if ($this->tracer !== null) {
                     $this->tracer->record(TraceEvent::Update, [
-                        'message' => $message::class,
+                        'message' => $stamped::class,
                         'ms' => (hrtime(true) - $updateStart) / 1e6,
                         'changed' => $nextModel !== $this->model,
                     ]);
@@ -845,6 +847,20 @@ final class Program
         }
 
         return $this->screenRect;
+    }
+
+    /**
+     * Hit-testing and scroll-clamping inside a widget must agree with what
+     * the drain actually drew, so every message routed through the widget
+     * tree carries the same rect the next render will use.
+     */
+    private static function stampScreen(Message $message, Rect $screenRect): Message
+    {
+        return match (true) {
+            $message instanceof MouseMsg => new MouseMsg($message->x, $message->y, $message->action, $message->button, $message->repeat, $screenRect),
+            $message instanceof KeyMsg => new KeyMsg($message->key, $message->ctrl, $message->alt, $message->shift, $message->eventType, $screenRect),
+            default => $message,
+        };
     }
 
     private static function requireModel(Reducer $model): Model

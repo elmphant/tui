@@ -19,6 +19,7 @@ final readonly class MouseMsg implements Message
         public MouseAction $action,
         public MouseButton $button,
         public int $repeat = 1,
+        public ?Rect $screen = null,
     ) {
     }
 
@@ -33,7 +34,7 @@ final readonly class MouseMsg implements Message
 
     public function mergedWith(self $next): self
     {
-        return new self($next->x, $next->y, $next->action, $next->button, $this->repeat + $next->repeat);
+        return new self($next->x, $next->y, $next->action, $next->button, $this->repeat + $next->repeat, $next->screen);
     }
 
     public function inRect(Rect $rect): bool

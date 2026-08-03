@@ -18,6 +18,7 @@ use Elmphant\Tui\Widget\Dropdown;
 use Elmphant\Tui\Widget\DropdownPopup;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class DropdownMouseTest extends TestCase
 {
@@ -28,7 +29,7 @@ final class DropdownMouseTest extends TestCase
         $firstOptionRow = self::placementOf($opened)->y + DropdownPopup::CHROME;
 
         $clicked = $opened->update(
-            new MouseMsg(2, $firstOptionRow + 1, MouseAction::Press, MouseButton::Left),
+            new MouseMsg(2, $firstOptionRow + 1, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -40,7 +41,7 @@ final class DropdownMouseTest extends TestCase
     public function clickingOutsideTheListClosesItWithoutPicking(): void
     {
         $clicked = self::opened()->update(
-            new MouseMsg(2, 9, MouseAction::Press, MouseButton::Left),
+            new MouseMsg(2, 9, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -56,7 +57,7 @@ final class DropdownMouseTest extends TestCase
         $row = self::placementOf($opened, $many)->y + DropdownPopup::CHROME;
 
         $scrolled = $opened->update(
-            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, repeat: 3),
+            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, repeat: 3, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -82,7 +83,7 @@ final class DropdownMouseTest extends TestCase
         $scrolled = $opened;
         for ($step = 0; $step < 40; ++$step) {
             $scrolled = $scrolled->update(
-                new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+                new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, screen: self::viewport()),
                 self::anchor(),
             )->model;
         }
@@ -101,7 +102,7 @@ final class DropdownMouseTest extends TestCase
         $placement = self::placementOf($opened, $many);
 
         $clicked = $opened->update(
-            new MouseMsg(2, $placement->bottom() - 1, MouseAction::Press, MouseButton::Left),
+            new MouseMsg(2, $placement->bottom() - 1, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -121,7 +122,6 @@ final class DropdownMouseTest extends TestCase
 
         $typed = Dropdown::new($options)
             ->withLabels($allMatch)
-            ->withViewport($viewport)
             ->withFocus(true)
             ->update(new KeyMsg(' '), $anchor)->model
             ->update(new KeyMsg('z'), $anchor)->model
@@ -134,7 +134,7 @@ final class DropdownMouseTest extends TestCase
         // Scroll to 1 while all 5 options still match "zzz". Nothing but the
         // wheel touches scroll, so it survives the relabeling below untouched.
         $scrolled = $typed->update(
-            new MouseMsg(2, $fiveItemRow, MouseAction::WheelDown, MouseButton::None),
+            new MouseMsg(2, $fiveItemRow, MouseAction::WheelDown, MouseButton::None, screen: $viewport),
             $anchor,
         )->model;
 
@@ -154,7 +154,7 @@ final class DropdownMouseTest extends TestCase
         $rowPastTheShrunkList = $newPlacement->y + DropdownPopup::CHROME + 1;
 
         $clicked = $shrunk->update(
-            new MouseMsg(2, $rowPastTheShrunkList, MouseAction::Press, MouseButton::Left),
+            new MouseMsg(2, $rowPastTheShrunkList, MouseAction::Press, MouseButton::Left, screen: $viewport),
             $anchor,
         )->model;
 
@@ -168,7 +168,7 @@ final class DropdownMouseTest extends TestCase
     }
 
     #[Test]
-    public function clickingAwayCancelsEvenWithoutAViewport(): void
+    public function clickingAwayCancelsEvenWithoutAScreenRectOnTheMessage(): void
     {
         $blind = Dropdown::new(['json', 'yaml'])
             ->withFocus(true)
@@ -190,7 +190,7 @@ final class DropdownMouseTest extends TestCase
         $opened = self::listOf($many);
 
         $elsewhere = $opened->update(
-            new MouseMsg(38, 9, MouseAction::WheelDown, MouseButton::None),
+            new MouseMsg(38, 9, MouseAction::WheelDown, MouseButton::None, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -204,7 +204,7 @@ final class DropdownMouseTest extends TestCase
         $firstOptionRow = self::placementOf($opened)->y + DropdownPopup::CHROME;
 
         $clicked = $opened->update(
-            new MouseMsg(2, $firstOptionRow, MouseAction::Press, MouseButton::Left),
+            new MouseMsg(2, $firstOptionRow, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -218,7 +218,7 @@ final class DropdownMouseTest extends TestCase
         $row = self::placementOf($opened)->y + DropdownPopup::CHROME;
 
         $result = $opened->update(
-            new MouseMsg(2, $row, MouseAction::Motion, MouseButton::None),
+            new MouseMsg(2, $row, MouseAction::Motion, MouseButton::None, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -234,7 +234,7 @@ final class DropdownMouseTest extends TestCase
         $row = self::placementOf($opened, $many)->y + DropdownPopup::CHROME;
 
         $scrolled = $opened->update(
-            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -253,13 +253,13 @@ final class DropdownMouseTest extends TestCase
         $scrolled = $opened;
         for ($step = 0; $step < 10; ++$step) {
             $scrolled = $scrolled->update(
-                new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+                new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, screen: self::viewport()),
                 self::anchor(),
             )->model;
         }
 
         $up = $scrolled->update(
-            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None),
+            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -276,7 +276,7 @@ final class DropdownMouseTest extends TestCase
         $row = self::placementOf($opened, $many)->y + DropdownPopup::CHROME;
 
         $up = $opened->update(
-            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None),
+            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -291,11 +291,11 @@ final class DropdownMouseTest extends TestCase
         $row = self::placementOf($opened, $many)->y + DropdownPopup::CHROME;
 
         $down = $opened->update(
-            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, screen: self::viewport()),
             self::anchor(),
         )->model;
         $backUp = $down->update(
-            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None),
+            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -310,7 +310,7 @@ final class DropdownMouseTest extends TestCase
         $row = $placement->y + DropdownPopup::CHROME;
 
         $scrolled = $opened->update(
-            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -333,12 +333,12 @@ final class DropdownMouseTest extends TestCase
         $row = $placement->y + DropdownPopup::CHROME;
 
         $scrolled = $opened->update(
-            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, repeat: 5),
+            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None, repeat: 5, screen: self::viewport()),
             self::anchor(),
         )->model;
 
         $onFilterRow = $scrolled->update(
-            new MouseMsg(2, $placement->y + 1, MouseAction::Press, MouseButton::Left),
+            new MouseMsg(2, $placement->y + 1, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
             self::anchor(),
         )->model;
 
@@ -347,6 +347,67 @@ final class DropdownMouseTest extends TestCase
             'Scrolled 5 rows in, the query row must not map through the scroll offset into a real option',
         );
         self::assertTrue($onFilterRow->isOpen(), 'and clicking inside the popup does not dismiss it');
+    }
+
+    #[Test]
+    public function clickingARowPicksWhicheverOptionTheDrainActuallyDrewThere(): void
+    {
+        $anchor = self::anchor();
+        $opened = Dropdown::new(['json', 'yaml'])
+            ->withFocus(true)
+            ->update(new KeyMsg(' '), $anchor)->model;
+
+        $frame = new Frame(40, 10);
+        (new RenderContext(Theme::dark()))->renderRoot($opened, $frame, $anchor);
+        $drawn = ScreenBuffer::fromFrame($frame);
+        $row = self::rowContaining($drawn, 'yaml');
+
+        $clicked = $opened->update(
+            new MouseMsg(2, $row, MouseAction::Press, MouseButton::Left, screen: $frame->area()),
+            $anchor,
+        )->model;
+
+        self::assertSame('yaml', $clicked->selectedValue(), 'The value picked must match the option drawn on the clicked row');
+    }
+
+    #[Test]
+    public function aKeyDrivenScrollPositionsAnOptionWhereAFollowingClickStillPicksIt(): void
+    {
+        $anchor = new Rect(0, 0, 40, 1);
+        $screen = Rect::fromSize(60, 14);
+        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 36));
+
+        $dropdown = Dropdown::new($options)->withFocus(true)->update(new KeyMsg(' '), $anchor)->model;
+        for ($step = 0; $step < 20; ++$step) {
+            $dropdown = $dropdown->update(new KeyMsg(Key::Down, screen: $screen), $anchor)->model;
+        }
+
+        $frame = new Frame(60, 14);
+        (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $anchor);
+        $drawn = ScreenBuffer::fromFrame($frame);
+        $row = self::rowContaining($drawn, 'option21', $frame->height);
+
+        $clicked = $dropdown->update(
+            new MouseMsg(2, $row, MouseAction::Press, MouseButton::Left, screen: $frame->area()),
+            $anchor,
+        )->model;
+
+        self::assertSame(
+            'option21',
+            $clicked->selectedValue(),
+            'The row the keyboard scrolled option21 into must be exactly where a click picks it',
+        );
+    }
+
+    private static function rowContaining(ScreenBuffer $drawn, string $needle, int $height = 10): int
+    {
+        for ($row = 0; $row < $height; ++$row) {
+            if (str_contains($drawn->getLine($row), $needle)) {
+                return $row;
+            }
+        }
+
+        throw new RuntimeException(sprintf('"%s" was never drawn', $needle));
     }
 
     private static function draw(Dropdown $dropdown): string
@@ -369,7 +430,6 @@ final class DropdownMouseTest extends TestCase
     private static function listOf(array $options): Dropdown
     {
         return Dropdown::new($options)
-            ->withViewport(self::viewport())
             ->withFocus(true)
             ->update(new KeyMsg(' '), self::anchor())->model;
     }

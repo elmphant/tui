@@ -71,4 +71,19 @@ final class MouseMsgTest extends TestCase
         self::assertTrue((new MouseMsg(0, 0, MouseAction::Motion, MouseButton::Left))->isDrag());
         self::assertFalse((new MouseMsg(0, 0, MouseAction::Motion, MouseButton::None))->isDrag());
     }
+
+    #[Test]
+    public function constructingWithoutAScreenRectLeavesItNull(): void
+    {
+        self::assertNull((new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left))->screen);
+    }
+
+    #[Test]
+    public function mergedWithCarriesForwardTheScreenRectOfTheNewerEvent(): void
+    {
+        $first = new MouseMsg(0, 0, MouseAction::WheelDown, MouseButton::None, screen: new Rect(0, 0, 80, 24));
+        $second = new MouseMsg(1, 1, MouseAction::WheelDown, MouseButton::None, screen: new Rect(0, 0, 100, 30));
+
+        self::assertSame($second->screen, $first->mergedWith($second)->screen);
+    }
 }
