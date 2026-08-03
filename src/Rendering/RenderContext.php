@@ -7,8 +7,10 @@ namespace Elmphant\Tui\Rendering;
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\Floating;
+use Elmphant\Tui\Widget\PointerFloating;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
+use LogicException;
 
 final class RenderContext
 {
@@ -16,11 +18,23 @@ final class RenderContext
     private ?LayoutPlan $layoutPlan = null;
     private float $now = 0.0;
     private ?float $repaintDelay = null;
+    private ?Frame $rootFrame = null;
+    private bool $rootPassRan = false;
 
     /**
      * @var list<array{Floating, Rect}>
      */
     private array $floats = [];
+
+    /**
+     * @var list<FloatPlacement>
+     */
+    private array $pendingPlacements = [];
+
+    /**
+     * @var list<FloatPlacement>
+     */
+    private array $placements = [];
 
     public function __construct(
         public readonly Theme $theme,
@@ -54,12 +68,16 @@ final class RenderContext
     }
 
     /**
-     * @internal runtime entry point: stamps the frame time and resets repaint requests
+     * @internal runtime entry point: stamps the frame time, resets repaint
+     * requests, and drops staged placements that were never committed, so a
+     * frame without renderRoot() cannot publish an old popup again
      */
     public function beginFrame(float $now): void
     {
         $this->now = $now;
         $this->repaintDelay = null;
+        $this->pendingPlacements = [];
+        $this->rootPassRan = false;
     }
 
     /**
@@ -72,6 +90,10 @@ final class RenderContext
 
     public function float(Frame $frame, Floating $popup, Rect $anchor): void
     {
+        if ($this->rootFrame !== null && $frame !== $this->rootFrame) {
+            return;
+        }
+
         $intersection = $frame->clip()->intersect($anchor);
         if ($intersection->width < 1 || $intersection->height < 1) {
             return;
@@ -131,28 +153,80 @@ final class RenderContext
         }
     }
 
+    /**
+     * @internal renderRoot() cannot nest: a nested drain would paint before the
+     * surrounding tree finishes, violating draw-last
+     *
+     * It also runs once per frame: a second pass would paint its tree over the
+     * first pass's popup, while that popup's placement still claims the input
+     */
     public function renderRoot(Widget $root, Frame $frame, Rect $area, ?LayoutPlan $plan = null): void
     {
-        $this->resetFloats();
-
-        if ($plan === null) {
-            $root->render($frame, $area, $this);
-        } else {
-            $this->renderWithPlan($root, $frame, $area, $plan);
+        if ($this->rootFrame !== null) {
+            throw new LogicException('renderRoot() cannot be nested inside another renderRoot() pass.');
         }
 
-        $queued = $this->floats;
+        if ($this->rootPassRan) {
+            throw new LogicException('renderRoot() may run only once per frame; compose a multi-part screen under one root.');
+        }
+
+        $this->rootPassRan = true;
         $this->floats = [];
+        $this->rootFrame = $frame;
 
-        foreach ($queued as [$popup, $anchor]) {
-            $placement = $popup->placement($anchor, $frame->area());
-
-            if ($placement->width < 1 || $placement->height < 1) {
-                continue;
+        try {
+            if ($plan === null) {
+                $root->render($frame, $area, $this);
+            } else {
+                $this->renderWithPlan($root, $frame, $area, $plan);
             }
 
-            $popup->render($frame, $placement, $this);
+            /** @var list<FloatPlacement> $recorded */
+            $recorded = [];
+
+            for ($iteration = 0; $iteration < 3 && $this->floats !== []; ++$iteration) {
+                $pending = $this->floats;
+                $this->floats = [];
+
+                foreach ($pending as [$popup, $anchor]) {
+                    $placement = $popup->placement($anchor, $frame->area());
+
+                    if ($placement->width < 1 || $placement->height < 1) {
+                        continue;
+                    }
+
+                    $popup->render($frame, $placement, $this);
+
+                    if ($popup instanceof PointerFloating) {
+                        $recorded[] = new FloatPlacement($popup, $anchor, $placement);
+                    }
+                }
+            }
+
+            $this->pendingPlacements = $recorded;
+        } finally {
+            $this->floats = [];
+            $this->rootFrame = null;
         }
+    }
+
+    /**
+     * @internal runtime entry point: called once the frame is on the screen, so
+     * input never routes over a frame the runtime could not show
+     */
+    public function commitFloatPlacements(): void
+    {
+        $this->placements = $this->pendingPlacements;
+    }
+
+    /**
+     * @internal the placements of the last committed frame
+     *
+     * @return list<FloatPlacement>
+     */
+    public function floatPlacements(): array
+    {
+        return $this->placements;
     }
 
     /**
