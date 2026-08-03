@@ -248,6 +248,51 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
+    public function reopeningLandsOnTheSelectedValueScrolledIntoView(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $screen = Rect::fromSize(20, 8);
+        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 20));
+
+        $dropdown = Dropdown::new($options)
+            ->withSelected('option18')
+            ->withFocus(true);
+
+        $reopened = $dropdown->update(new KeyMsg(' ', screen: $screen), $area)->model;
+
+        $frame = new Frame(20, 8);
+        (new RenderContext(Theme::dark()))->renderRoot($reopened, $frame, $area);
+
+        self::assertStringContainsString(
+            'option18',
+            self::popupBody($frame),
+            'The selection must be drawn inside the popup, scrolled into view, not merely cursored off-screen',
+        );
+    }
+
+    #[Test]
+    public function enterOpensAClosedDropdown(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $dropdown = Dropdown::new(['json', 'yaml'])->withFocus(true);
+
+        $opened = $dropdown->update(new KeyMsg(Key::Enter), $area)->model;
+
+        self::assertTrue($opened->isOpen(), 'Enter is the opener a reader actually tries');
+    }
+
+    #[Test]
+    public function rightNoLongerOpensTheDropdown(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $dropdown = Dropdown::new(['json', 'yaml'])->withFocus(true);
+
+        $result = $dropdown->update(new KeyMsg(Key::Right), $area)->model;
+
+        self::assertFalse($result->isOpen(), 'Right is tree/menu vocabulary, not this control\'s opener');
+    }
+
+    #[Test]
     public function everyActionCanBeRebound(): void
     {
         $area = new Rect(0, 0, 20, 1);
@@ -638,6 +683,23 @@ final class DropdownTest extends TestCase
             ScreenBuffer::fromFrame($frame)->getPlainText(),
             'Typing must reset the scroll to the top of the (still fully matching) list',
         );
+    }
+
+    /**
+     * The anchor row (row 0) always redraws the current selection, open or
+     * closed, so it would make a scroll-into-view assertion pass regardless
+     * of what the popup itself shows. Only rows below it prove the popup drew.
+     */
+    private static function popupBody(Frame $frame): string
+    {
+        $screen = ScreenBuffer::fromFrame($frame);
+        $rows = [];
+
+        for ($row = 1; $row < $frame->height; ++$row) {
+            $rows[] = $screen->getLine($row);
+        }
+
+        return implode("\n", $rows);
     }
 
     private static function neverMatches(): Matcher

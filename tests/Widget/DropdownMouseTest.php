@@ -38,6 +38,50 @@ final class DropdownMouseTest extends TestCase
     }
 
     #[Test]
+    public function clickingTheClosedRowOpensItOnTheSelectionScrolledIntoView(): void
+    {
+        $anchor = new Rect(0, 0, 20, 1);
+        $screen = Rect::fromSize(20, 8);
+        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 20));
+
+        $dropdown = Dropdown::new($options)->withSelected('option18')->withFocus(true);
+
+        $clicked = $dropdown->update(
+            new MouseMsg(2, 0, MouseAction::Press, MouseButton::Left, screen: $screen),
+            $anchor,
+        )->model;
+
+        self::assertTrue($clicked->isOpen(), 'A click on the closed row opens the popup');
+
+        $frame = new Frame(20, 8);
+        (new RenderContext(Theme::dark()))->renderRoot($clicked, $frame, $anchor);
+
+        $screenAfterRow0 = [];
+        for ($row = 1; $row < $frame->height; ++$row) {
+            $screenAfterRow0[] = ScreenBuffer::fromFrame($frame)->getLine($row);
+        }
+
+        self::assertStringContainsString(
+            'option18',
+            implode("\n", $screenAfterRow0),
+            'It opens on the selection, scrolled into view, exactly like 11a',
+        );
+    }
+
+    #[Test]
+    public function clickingElsewhereWhileClosedDoesNothing(): void
+    {
+        $dropdown = Dropdown::new(['json', 'yaml'])->withFocus(true);
+
+        $clicked = $dropdown->update(
+            new MouseMsg(2, 5, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
+            self::anchor(),
+        )->model;
+
+        self::assertFalse($clicked->isOpen(), 'A click away from the closed row must not open it');
+    }
+
+    #[Test]
     public function clickingOutsideTheListClosesItWithoutPicking(): void
     {
         $clicked = self::opened()->update(

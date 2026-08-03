@@ -117,7 +117,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     public static function defaultKeybindings(): Keybindings
     {
         return new Keybindings([
-            Actions::TOGGLE => ['space', 'right'],
+            Actions::TOGGLE => ['enter', 'space'],
             Actions::SELECT => ['enter'],
             Actions::CANCEL => ['esc'],
             Actions::FOCUS_NEXT => ['down'],
@@ -139,7 +139,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         if (!$this->open) {
             return new UpdateResult(
                 $this->effectiveKeybindings()->matches($message, Actions::TOGGLE)
-                    ? $this->cloneWith(open: true, cursor: 0, query: '', scroll: 0)
+                    ? $this->openedOn($area, $message->screen)
                     : $this,
             );
         }
@@ -177,10 +177,29 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         }
     }
 
+    /**
+     * The cursor lands on the current selection, scrolled into view; nothing
+     * selected, or a selection no longer in the list, falls back to the top.
+     */
+    private function openedOn(Rect $area, ?Rect $screen): self
+    {
+        $cursor = $this->selected === null ? false : array_search($this->selected, $this->options, true);
+        $cursor = $cursor === false ? 0 : $cursor;
+
+        return $this->cloneWith(
+            open: true,
+            cursor: $cursor,
+            query: '',
+            scroll: $this->scrollShowing($cursor, $this->options, $area, $screen),
+        );
+    }
+
     private function moused(MouseMsg $message, Rect $area): self
     {
         if (!$this->open) {
-            return $this;
+            return $message->isClick() && $message->inRect($area)
+                ? $this->openedOn($area, $message->screen)
+                : $this;
         }
 
         $filtered = $this->filtered();
