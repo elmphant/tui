@@ -358,7 +358,7 @@ final class DropdownMouseTest extends TestCase
             self::anchor(),
         )->model;
 
-        $frame = new Frame(40, 10);
+        $frame = new Frame(40, 18);
         (new RenderContext(Theme::dark()))->renderRoot($scrolled, $frame, self::anchor());
 
         self::assertStringContainsString(
@@ -401,7 +401,7 @@ final class DropdownMouseTest extends TestCase
             ->withFocus(true)
             ->update(new KeyMsg(' '), $anchor)->model;
 
-        $frame = new Frame(40, 10);
+        $frame = new Frame(40, 18);
         (new RenderContext(Theme::dark()))->renderRoot($opened, $frame, $anchor);
         $drawn = ScreenBuffer::fromFrame($frame);
         $row = self::rowContaining($drawn, 'yaml');
@@ -456,7 +456,7 @@ final class DropdownMouseTest extends TestCase
 
     private static function draw(Dropdown $dropdown): string
     {
-        $frame = new Frame(40, 10);
+        $frame = new Frame(40, 18);
         $context = new RenderContext(Theme::dark());
         $context->renderRoot($dropdown, $frame, self::anchor());
 
@@ -488,7 +488,7 @@ final class DropdownMouseTest extends TestCase
 
     private static function viewport(): Rect
     {
-        return Rect::fromSize(40, 10);
+        return Rect::fromSize(40, 18);
     }
 
     private static function anchor(): Rect

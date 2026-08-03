@@ -49,7 +49,7 @@ final readonly class DropdownPopup implements Floating
     {
         $below = max(0, $viewport->bottom() - $anchor->bottom());
         $above = max(0, $anchor->y - $viewport->y);
-        $wanted = $this->wantedHeight();
+        $wanted = $this->cappedWantedHeight($viewport->height);
 
         $opensDown = $wanted <= $below || $below >= $above;
         $height = min($wanted, $opensDown ? $below : $above);
@@ -117,6 +117,13 @@ final readonly class DropdownPopup implements Floating
                 $context->theme->optionStyle($index === $this->cursor, false, true),
             );
         }
+    }
+
+    private function cappedWantedHeight(int $viewportHeight): int
+    {
+        $half = intdiv($viewportHeight, 2);
+
+        return min($this->wantedHeight(), max($half, self::CHROME + 2));
     }
 
     private function wantedHeight(): int

@@ -596,7 +596,7 @@ final class DropdownTest extends TestCase
     public function scrollDoesNotAdvanceOnTheFirstStepDownWithinAWideWindow(): void
     {
         $area = new Rect(0, 0, 20, 1);
-        $screen = Rect::fromSize(20, 8);
+        $screen = Rect::fromSize(20, 14);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 10));
 
         $dropdown = Dropdown::new($options)
@@ -604,7 +604,7 @@ final class DropdownTest extends TestCase
             ->update(new KeyMsg(' '), $area)->model
             ->update(new KeyMsg(Key::Down, screen: $screen), $area)->model;
 
-        $frame = new Frame(20, 8);
+        $frame = new Frame(20, 14);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $area);
         $screen = ScreenBuffer::fromFrame($frame)->getPlainText();
 
@@ -624,7 +624,7 @@ final class DropdownTest extends TestCase
     public function scrollShowingFollowsTheCursorWithExactArithmetic(): void
     {
         $area = new Rect(0, 0, 20, 1);
-        $screen = Rect::fromSize(20, 8);
+        $screen = Rect::fromSize(20, 14);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 10));
 
         $dropdown = Dropdown::new($options)
@@ -635,7 +635,7 @@ final class DropdownTest extends TestCase
             $dropdown = $dropdown->update(new KeyMsg(Key::Down, screen: $screen), $area)->model;
         }
 
-        $frame = new Frame(20, 8);
+        $frame = new Frame(20, 14);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $area);
         $drawn = ScreenBuffer::fromFrame($frame)->getPlainText();
 
@@ -649,7 +649,7 @@ final class DropdownTest extends TestCase
             ->update(new KeyMsg(Key::Up, screen: $screen), $area)->model
             ->update(new KeyMsg(Key::Up, screen: $screen), $area)->model;
 
-        $frame2 = new Frame(20, 8);
+        $frame2 = new Frame(20, 14);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame2, $area);
         $drawn2 = ScreenBuffer::fromFrame($frame2)->getPlainText();
 
@@ -752,7 +752,7 @@ final class DropdownTest extends TestCase
 
     private static function screen(Dropdown $dropdown): ScreenBuffer
     {
-        $frame = new Frame(30, 8);
+        $frame = new Frame(30, 12);
         $context = new RenderContext(Theme::dark());
         $context->renderRoot($dropdown, $frame, new Rect(0, 0, 20, 1));
 

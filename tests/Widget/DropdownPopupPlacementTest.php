@@ -32,14 +32,14 @@ final class DropdownPopupPlacementTest extends TestCase
     }
 
     #[Test]
-    public function capsItsHeightAtTheRoomOnTheSideItOpened(): void
+    public function capsItsHeightAtHalfTheViewportRatherThanTheRoomOnTheSideItOpened(): void
     {
         $many = array_map(static fn (int $index): string => 'option ' . $index, range(1, 40));
+        $viewport = Rect::fromSize(80, 24);
 
-        $placement = self::popup($many)->placement(new Rect(0, 2, 20, 1), Rect::fromSize(80, 24));
+        $placement = self::popup($many)->placement(new Rect(0, 2, 20, 1), $viewport);
 
-        self::assertSame(21, $placement->height, 'Everything below the anchor, no more');
-        self::assertSame(24, $placement->bottom());
+        self::assertSame(intdiv($viewport->height, 2), $placement->height, 'Half the viewport, well short of the 21 rows actually free below');
     }
 
     #[Test]
@@ -105,19 +105,19 @@ final class DropdownPopupPlacementTest extends TestCase
     #[Test]
     public function theRoomAboveIsMeasuredFromTheViewportTopNotAddedToIt(): void
     {
-        // 16 options: wanted = 3 + 1 + 16 = 20. Room below (14) is real
-        // subtraction; room above (5) is real subtraction too. Since
-        // 20 > 14 and 14 >= 5, it opens below, capped at 14. If "above" were
-        // computed by addition instead (anchor.y + viewport.y = 15), it would
-        // read as 15 > 14 and the popup would flip upward with a smaller,
-        // wrong height.
+        // 16 options: wanted = 3 + 1 + 16 = 20, capped to half of 20 (10).
+        // Room below (14) and room above (5) are both real subtraction. If
+        // "above" were computed by addition instead (anchor.y + viewport.y
+        // = 15), it would read as 15 > 14 and the popup would flip upward
+        // with the wrong height.
         $options = array_map(static fn (int $index): string => 'o' . $index, range(1, 16));
+        $viewport = new Rect(0, 5, 80, 20);
 
         $placement = self::popup($options)
-            ->placement(new Rect(10, 10, 20, 1), new Rect(0, 5, 80, 20));
+            ->placement(new Rect(10, 10, 20, 1), $viewport);
 
         self::assertSame(11, $placement->y, 'Opens below the anchor');
-        self::assertSame(14, $placement->height, 'Capped to the 14 rows actually available below');
+        self::assertSame(intdiv($viewport->height, 2), $placement->height, 'Capped to half the viewport, well under the 14 rows actually available below');
     }
 
     #[Test]
@@ -174,6 +174,54 @@ final class DropdownPopupPlacementTest extends TestCase
             $placement->width,
             'The label the user sees must fit, not just the opaque value',
         );
+    }
+
+    #[Test]
+    public function stillShowsAtLeastOneOptionWhenHalfTheViewportFallsBelowTheChrome(): void
+    {
+        $many = array_map(static fn (int $index): string => 'option ' . $index, range(1, 40));
+        $viewport = Rect::fromSize(80, 7);
+
+        self::assertLessThanOrEqual(DropdownPopup::CHROME, intdiv($viewport->height, 2), 'Precondition: half the viewport is at or below the chrome');
+
+        $placement = self::popup($many)->placement(new Rect(0, 0, 20, 1), $viewport);
+
+        self::assertLessThanOrEqual($viewport->height, $placement->height, 'Never taller than the viewport itself');
+        self::assertGreaterThanOrEqual(1, $placement->height - DropdownPopup::CHROME - 1, 'At least one option row is visible');
+    }
+
+    #[Test]
+    public function letsTheAvailableRoomWinWhenItIsSmallerThanHalfTheViewport(): void
+    {
+        $many = array_map(static fn (int $index): string => 'option ' . $index, range(1, 40));
+        $viewport = Rect::fromSize(80, 30);
+        $anchor = new Rect(10, 10, 20, 8);
+
+        $below = $viewport->bottom() - $anchor->bottom();
+        self::assertLessThan(intdiv($viewport->height, 2), $below, 'Precondition: room below is tighter than half the viewport');
+
+        $placement = self::popup($many)->placement($anchor, $viewport);
+
+        self::assertSame($below, $placement->height);
+    }
+
+    #[Test]
+    public function decidesWhetherToFlipUsingTheCappedHeightNotTheRawWantedHeight(): void
+    {
+        $many = array_map(static fn (int $index): string => 'option ' . $index, range(1, 40));
+        $viewport = Rect::fromSize(80, 25);
+        $half = intdiv($viewport->height, 2);
+        $anchor = new Rect(10, $half + 1, 20, 0);
+
+        $below = $viewport->bottom() - $anchor->bottom();
+        $above = $anchor->y - $viewport->y;
+        self::assertSame($half, $below, 'Precondition: room below matches the capped height exactly');
+        self::assertGreaterThan($below, $above, 'Precondition: raw room above is bigger, tempting an unnecessary flip');
+
+        $placement = self::popup($many)->placement($anchor, $viewport);
+
+        self::assertSame($anchor->bottom(), $placement->y, 'Opens below: the capped height fits in the room below');
+        self::assertSame($half, $placement->height);
     }
 
     /**
