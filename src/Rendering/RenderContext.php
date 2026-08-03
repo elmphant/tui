@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Rendering;
 
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Widget\Floating;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
@@ -15,6 +16,11 @@ final class RenderContext
     private ?LayoutPlan $layoutPlan = null;
     private float $now = 0.0;
     private ?float $repaintDelay = null;
+
+    /**
+     * @var list<array{Floating, Rect}>
+     */
+    private array $floats = [];
 
     public function __construct(
         public readonly Theme $theme,
@@ -62,6 +68,34 @@ final class RenderContext
     public function repaintDelay(): ?float
     {
         return $this->repaintDelay;
+    }
+
+    public function float(Frame $frame, Floating $popup, Rect $anchor): void
+    {
+        $intersection = $frame->clip()->intersect($anchor);
+        if ($intersection->width < 1 || $intersection->height < 1) {
+            return;
+        }
+
+        $this->floats[] = [$popup, $anchor];
+    }
+
+    /**
+     * @internal drain order for the root render pass
+     *
+     * @return list<array{Floating, Rect}>
+     */
+    public function floats(): array
+    {
+        return $this->floats;
+    }
+
+    /**
+     * @internal
+     */
+    public function resetFloats(): void
+    {
+        $this->floats = [];
     }
 
     public function scratchBuffer(int $width, int $height): Frame
