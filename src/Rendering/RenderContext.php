@@ -131,6 +131,30 @@ final class RenderContext
         }
     }
 
+    public function renderRoot(Widget $root, Frame $frame, Rect $area, ?LayoutPlan $plan = null): void
+    {
+        $this->resetFloats();
+
+        if ($plan === null) {
+            $root->render($frame, $area, $this);
+        } else {
+            $this->renderWithPlan($root, $frame, $area, $plan);
+        }
+
+        $queued = $this->floats;
+        $this->floats = [];
+
+        foreach ($queued as [$popup, $anchor]) {
+            $placement = $popup->placement($anchor, $frame->area());
+
+            if ($placement->width < 1 || $placement->height < 1) {
+                continue;
+            }
+
+            $popup->render($frame, $placement, $this);
+        }
+    }
+
     /**
      * @return iterable<array{Widget, Rect}>
      */

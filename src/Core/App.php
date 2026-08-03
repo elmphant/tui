@@ -44,16 +44,13 @@ abstract readonly class App implements Model
     final public function render(Frame $frame, RenderContext $context): void
     {
         $area = $frame->area();
-        $view = $this->viewWidget();
-        $plan = LayoutSnapshot::existingPlanFor($this, $area);
 
-        if ($plan === null) {
-            $view->render($frame, $area, $context);
-
-            return;
-        }
-
-        $context->renderWithPlan($view, $frame, $area, $plan);
+        $context->renderRoot(
+            $this->viewWidget(),
+            $frame,
+            $area,
+            LayoutSnapshot::existingPlanFor($this, $area),
+        );
     }
 
     final public function update(Message $message, Rect $screenRect): UpdateResult
