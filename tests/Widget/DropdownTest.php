@@ -256,6 +256,384 @@ final class DropdownTest extends TestCase
         );
     }
 
+    #[Test]
+    public function isFocusedDefaultsToFalse(): void
+    {
+        self::assertFalse(Dropdown::new(['a', 'b'])->isFocused());
+    }
+
+    #[Test]
+    public function losingFocusClosesAnOpenDropdown(): void
+    {
+        $opened = self::opened(Dropdown::new(['json', 'yaml']));
+
+        $unfocused = $opened->withFocus(false);
+
+        self::assertFalse($unfocused->isOpen(), 'Losing focus must close it, never leave or force it open');
+    }
+
+    #[Test]
+    public function anUnfocusedDropdownIgnoresTheToggleKey(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $unfocused = Dropdown::new(['json', 'yaml']);
+
+        $result = $unfocused->update(new KeyMsg(' '), $area)->model;
+
+        self::assertFalse($result->isOpen(), 'A dropdown without focus must not react to keys at all');
+    }
+
+    #[Test]
+    public function openingSelectsTheFirstOptionAsTheStartingCursor(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $opened = self::opened(Dropdown::new(['json', 'yaml']));
+
+        $picked = $opened->update(new KeyMsg(Key::Enter), $area)->model;
+
+        self::assertSame('json', $picked->selectedValue(), 'Opening resets the cursor to the top option');
+    }
+
+    #[Test]
+    public function pressingUpAfterDownReturnsToTheFirstOption(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $opened = self::opened(Dropdown::new(['json', 'yaml']));
+
+        $backAtTop = $opened
+            ->update(new KeyMsg(Key::Down), $area)->model
+            ->update(new KeyMsg(Key::Up), $area)->model;
+
+        self::assertSame(
+            'json',
+            $backAtTop->update(new KeyMsg(Key::Enter), $area)->model->selectedValue(),
+            'Up must move the cursor back, not just fail to move it further down',
+        );
+    }
+
+    #[Test]
+    public function anUnboundControlKeyWhileOpenIsIgnoredWithoutError(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $opened = self::opened(Dropdown::new(['json', 'yaml']));
+
+        $result = $opened->update(new KeyMsg('z', ctrl: true), $area)->model;
+
+        self::assertTrue($result->isOpen(), 'An unbound key must be ignored, not left unhandled');
+        self::assertNull($result->selectedValue());
+    }
+
+    #[Test]
+    public function anAreaExactlyOneCellWideStillDrawsTheMarker(): void
+    {
+        $frame = new Frame(5, 5);
+        $context = new RenderContext(Theme::dark());
+
+        Dropdown::new(['a'])->withSelected('a')->render($frame, new Rect(0, 0, 1, 1), $context);
+
+        self::assertNotSame(' ', $frame->characters[0], 'A width of exactly 1 is still enough room to draw');
+    }
+
+    #[Test]
+    public function aZeroHeightAreaDrawsNothing(): void
+    {
+        $frame = new Frame(5, 3);
+        $context = new RenderContext(Theme::dark());
+
+        Dropdown::new(['a'])->withSelected('a')->render($frame, new Rect(0, 0, 5, 0), $context);
+
+        self::assertSame(' ', $frame->characters[0], 'Zero height is no room at all');
+    }
+
+    #[Test]
+    public function theClosedRowShowsTheLabelNotTheRawValue(): void
+    {
+        $dropdown = Dropdown::new(['x'])->withLabels(['x' => 'Nicer Label'])->withSelected('x');
+
+        self::assertStringContainsString('Nicer Label', self::screen($dropdown)->getPlainText());
+        self::assertStringNotContainsString('▾ x ', self::screen($dropdown)->getPlainText());
+    }
+
+    #[Test]
+    public function theMarkerPrecedesTheValueOnTheClosedRow(): void
+    {
+        $frame = self::frameFor(Dropdown::new(['json', 'yaml'])->withSelected('yaml'), Theme::dark());
+
+        self::assertSame('▾', ScreenBuffer::fromFrame($frame)->getTextAt(0, 0, 1));
+    }
+
+    #[Test]
+    public function anEmptyQueryNeverConsultsTheMatcher(): void
+    {
+        $opened = self::opened(Dropdown::new(['json', 'yaml'])->withMatcher(self::neverMatches()));
+
+        self::assertStringContainsString(
+            'yaml',
+            self::screen($opened)->getPlainText(),
+            'An empty query must short-circuit before the matcher runs',
+        );
+    }
+
+    #[Test]
+    public function aWhitespaceOnlyQueryIsTreatedAsEmptyNotPassedToTheMatcher(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+
+        $typed = self::opened(Dropdown::new(['json', 'yaml'])->withMatcher(self::neverMatches()))
+            ->update(new KeyMsg(' '), $area)->model;
+
+        self::assertStringContainsString(
+            'yaml',
+            self::screen($typed)->getPlainText(),
+            'Whitespace alone must also short-circuit before the matcher runs',
+        );
+    }
+
+    #[Test]
+    public function backspaceRemovesExactlyOneCharacterNotTheWholeQuery(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $seenQueries = [];
+
+        $dropdown = self::opened(Dropdown::new(['a', 'b'])->withMatcher(self::queryRecordingMatcher($seenQueries)))
+            ->update(new KeyMsg('y'), $area)->model
+            ->update(new KeyMsg('a'), $area)->model
+            ->update(new KeyMsg(Key::Backspace), $area)->model;
+
+        $dropdown->render(new Frame(20, 10), $area, new RenderContext(Theme::dark()));
+
+        self::assertSame('y', end($seenQueries), 'One character removed, not the whole query');
+    }
+
+    #[Test]
+    public function backspaceRemovesOneMultibyteCharacterNotOneByte(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $seenQueries = [];
+
+        $dropdown = self::opened(Dropdown::new(['a', 'b'])->withMatcher(self::queryRecordingMatcher($seenQueries)))
+            ->update(new KeyMsg('日'), $area)->model
+            ->update(new KeyMsg('本'), $area)->model
+            ->update(new KeyMsg(Key::Backspace), $area)->model;
+
+        $dropdown->render(new Frame(20, 10), $area, new RenderContext(Theme::dark()));
+
+        self::assertSame('日', end($seenQueries), 'One multibyte character removed, not one byte of it');
+    }
+
+    #[Test]
+    public function ctrlLetterWhileOpenIsNotTypedIntoTheQuery(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $seenQueries = [];
+
+        $dropdown = self::opened(Dropdown::new(['a', 'b'])->withMatcher(self::queryRecordingMatcher($seenQueries)))
+            ->update(new KeyMsg('x'), $area)->model
+            ->update(new KeyMsg('a', ctrl: true), $area)->model;
+
+        $dropdown->render(new Frame(20, 10), $area, new RenderContext(Theme::dark()));
+
+        self::assertSame('x', end($seenQueries), 'ctrl+a must not be typed into the filter');
+    }
+
+    #[Test]
+    public function altLetterWhileOpenIsNotTypedIntoTheQuery(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $seenQueries = [];
+
+        $dropdown = self::opened(Dropdown::new(['a', 'b'])->withMatcher(self::queryRecordingMatcher($seenQueries)))
+            ->update(new KeyMsg('x'), $area)->model
+            ->update(new KeyMsg('a', alt: true), $area)->model;
+
+        $dropdown->render(new Frame(20, 10), $area, new RenderContext(Theme::dark()));
+
+        self::assertSame('x', end($seenQueries), 'alt+a must not be typed into the filter');
+    }
+
+    #[Test]
+    public function freeTextRejectsAWhitespaceOnlyQuery(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+
+        $dropdown = self::opened(Dropdown::new([])->withFreeText(true))
+            ->update(new KeyMsg(' '), $area)->model;
+
+        $picked = $dropdown->update(new KeyMsg(Key::Enter), $area)->model;
+
+        self::assertNull($picked->selectedValue(), 'A whitespace-only query must not become the free-text selection');
+    }
+
+    #[Test]
+    public function scrollFollowsTheCursorEvenWithOnlyOneVisibleRow(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 10));
+
+        $dropdown = Dropdown::new($options)
+            ->withViewport(Rect::fromSize(20, 6))
+            ->withFocus(true)
+            ->update(new KeyMsg(' '), $area)->model
+            ->update(new KeyMsg(Key::Down), $area)->model;
+
+        $frame = new Frame(20, 6);
+        (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $area);
+
+        self::assertStringContainsString(
+            'option2',
+            ScreenBuffer::fromFrame($frame)->getPlainText(),
+            'A single visible row must still follow the cursor down',
+        );
+    }
+
+    #[Test]
+    public function movingUpAfterTheFilteredListShrinksSelfCorrectsAStaleCursor(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+
+        $opened = self::opened(Dropdown::new(['a', 'b'])->withLabels(['a' => 'q-a', 'b' => 'q-b']))
+            ->update(new KeyMsg('q'), $area)->model
+            ->update(new KeyMsg(Key::Down), $area)->model;
+
+        // Cursor is now legitimately 1 ('b'), with both options matching "q".
+        // Shrinking the match set to just "a" touches neither cursor nor scroll.
+        $shrunk = $opened->withLabels(['a' => 'q-a', 'b' => 'no-match']);
+
+        $corrected = $shrunk->update(new KeyMsg(Key::Up), $area)->model;
+        $picked = $corrected->update(new KeyMsg(Key::Enter), $area)->model;
+
+        self::assertSame(
+            'a',
+            $picked->selectedValue(),
+            'Up must self-correct a cursor left stale by a list that just shrank to one item',
+        );
+    }
+
+    #[Test]
+    public function scrollDoesNotAdvanceOnTheFirstStepDownWithinAWideWindow(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 10));
+
+        $dropdown = Dropdown::new($options)
+            ->withViewport(Rect::fromSize(20, 8))
+            ->withFocus(true)
+            ->update(new KeyMsg(' '), $area)->model
+            ->update(new KeyMsg(Key::Down), $area)->model;
+
+        $frame = new Frame(20, 8);
+        (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $area);
+        $screen = ScreenBuffer::fromFrame($frame)->getPlainText();
+
+        self::assertStringContainsString(
+            'option1 ',
+            $screen,
+            'Cursor moved to option2, still well within the 3-row window starting at option1',
+        );
+        self::assertStringNotContainsString(
+            'option10',
+            $screen,
+            'The window must not jump to the end of the list after a single step down',
+        );
+    }
+
+    #[Test]
+    public function scrollShowingFollowsTheCursorWithExactArithmetic(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 10));
+
+        $dropdown = Dropdown::new($options)
+            ->withViewport(Rect::fromSize(20, 8))
+            ->withFocus(true)
+            ->update(new KeyMsg(' '), $area)->model;
+
+        for ($step = 0; $step < 5; ++$step) {
+            $dropdown = $dropdown->update(new KeyMsg(Key::Down), $area)->model;
+        }
+
+        $frame = new Frame(20, 8);
+        (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $area);
+        $screen = ScreenBuffer::fromFrame($frame)->getPlainText();
+
+        self::assertStringContainsString('option4', $screen, 'Scroll landed on exactly 3: cursor 5 minus 3 rows plus 1');
+        self::assertStringContainsString('option6', $screen, 'and the 3-row window still ends on option6');
+        self::assertStringNotContainsString('option3 ', $screen, 'option3 has scrolled just out of view');
+        self::assertStringNotContainsString('option7 ', $screen, 'and the window has not overshot past option6');
+
+        $dropdown = $dropdown
+            ->update(new KeyMsg(Key::Up), $area)->model
+            ->update(new KeyMsg(Key::Up), $area)->model
+            ->update(new KeyMsg(Key::Up), $area)->model;
+
+        $frame2 = new Frame(20, 8);
+        (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame2, $area);
+        $screen2 = ScreenBuffer::fromFrame($frame2)->getPlainText();
+
+        self::assertStringContainsString('option3', $screen2, 'Three ups from cursor 5 land on cursor 2, pulling scroll back to 2');
+        self::assertStringNotContainsString('option6 ', $screen2, 'and the window no longer reaches option6');
+    }
+
+    #[Test]
+    public function typingAfterScrollingResetsTheWindowToTheTop(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 36));
+
+        $dropdown = Dropdown::new($options)
+            ->withViewport(Rect::fromSize(60, 14))
+            ->withFocus(true)
+            ->update(new KeyMsg(' '), $area)->model;
+
+        for ($step = 0; $step < 20; ++$step) {
+            $dropdown = $dropdown->update(new KeyMsg(Key::Down), $area)->model;
+        }
+
+        $typed = $dropdown->update(new KeyMsg('o'), $area)->model;
+
+        $frame = new Frame(60, 14);
+        $context = new RenderContext(Theme::dark());
+        $context->renderRoot($typed, $frame, $area);
+
+        self::assertStringContainsString(
+            'option1 ',
+            ScreenBuffer::fromFrame($frame)->getPlainText(),
+            'Typing must reset the scroll to the top of the (still fully matching) list',
+        );
+    }
+
+    private static function neverMatches(): Matcher
+    {
+        return new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return [];
+            }
+        };
+    }
+
+    /**
+     * @param list<string> $seenQueries
+     */
+    private static function queryRecordingMatcher(array &$seenQueries): Matcher
+    {
+        return new class($seenQueries) implements Matcher {
+            /**
+             * @param list<string> $seenQueries
+             */
+            public function __construct(private array &$seenQueries)
+            {
+            }
+
+            public function matching(string $query, array $haystack): array
+            {
+                $this->seenQueries[] = $query;
+
+                return array_keys($haystack);
+            }
+        };
+    }
+
     private static function frameFor(Dropdown $dropdown, Theme $theme): Frame
     {
         $frame = new Frame(30, 6);

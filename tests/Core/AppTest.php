@@ -133,6 +133,31 @@ final class AppTest extends TestCase
     }
 
     #[Test]
+    public function onComponentsChangedIsNotCalledWhenAMouseEventChangesNoComponent(): void
+    {
+        $app = new NoOpMouseApp(input: \Elmphant\Tui\Widget\TextInput::new('x')->withFocus(true));
+
+        $result = $app->update(
+            new MouseMsg(0, 0, MouseAction::WheelDown, MouseButton::None),
+            Rect::fromSize(80, 24),
+        );
+
+        self::assertNull($result->command, 'A wheel event the input ignores must not reach onComponentsChanged');
+    }
+
+    #[Test]
+    public function applicationKeybindingsIsResolvedOncePerAppInstance(): void
+    {
+        KeybindingsCallCounter::$calls = 0;
+        $app = new KeybindingsCountingApp();
+
+        $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $app->update(new KeyMsg('y'), Rect::fromSize(80, 24));
+
+        self::assertSame(1, KeybindingsCallCounter::$calls, 'applicationKeybindings() must be memoized per app instance');
+    }
+
+    #[Test]
     public function onResizeHookReceivesResizeMsg(): void
     {
         $app = new ResizeAwareApp();
@@ -702,5 +727,47 @@ final readonly class RectCapturingApp extends CopyableTestApp
             $this->widget,
             static fn (self $app, RectCapturingWidget $widget): self => $app->cloneWith(widget: $widget),
         );
+    }
+}
+
+final readonly class NoOpMouseApp extends CopyableTestApp
+{
+    public function __construct(
+        public \Elmphant\Tui\Widget\TextInput $input = new \Elmphant\Tui\Widget\TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            ComponentId::named('no-op-input'),
+            $this->input,
+            static fn (self $app, \Elmphant\Tui\Widget\TextInput $input): self => $app->cloneWith(input: $input),
+        );
+    }
+
+    protected function onComponentsChanged(array $ids): UpdateResult
+    {
+        return new UpdateResult($this, Cmd::quit());
+    }
+}
+
+final class KeybindingsCallCounter
+{
+    public static int $calls = 0;
+}
+
+final readonly class KeybindingsCountingApp extends CopyableTestApp
+{
+    public function view(): Widget
+    {
+        return Text::new('counting');
+    }
+
+    protected function applicationKeybindings(): Keybindings
+    {
+        ++KeybindingsCallCounter::$calls;
+
+        return new Keybindings(['quit' => ['ctrl+q']]);
     }
 }

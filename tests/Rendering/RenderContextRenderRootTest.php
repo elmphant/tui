@@ -32,6 +32,70 @@ final class RenderContextRenderRootTest extends TestCase
     }
 
     #[Test]
+    public function renderRootResetsAnyFloatQueuedBeforeItRuns(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $frame = new Frame(40, 10);
+        $context->float($frame, self::labelled('STALE'), new Rect(0, 0, 10, 1));
+
+        $context->renderRoot(self::emptyWidget(), $frame, $frame->area());
+
+        self::assertStringNotContainsString(
+            'STALE',
+            ScreenBuffer::fromFrame($frame)->getPlainText(),
+            'A float left over from before this call must not survive into this render',
+        );
+    }
+
+    #[Test]
+    public function aPlacementExactlyOneCellWideStillRenders(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $frame = new Frame(10, 5);
+
+        $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 1, 1)), $frame, $frame->area());
+
+        self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+    }
+
+    #[Test]
+    public function aZeroWidthPlacementIsSkippedEvenWhenTheHeightIsValid(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $frame = new Frame(10, 5);
+
+        $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 0, 3)), $frame, $frame->area());
+
+        self::assertStringNotContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+    }
+
+    #[Test]
+    public function aZeroHeightPlacementIsSkippedEvenWhenTheWidthIsValid(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $frame = new Frame(10, 5);
+
+        $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 3, 0)), $frame, $frame->area());
+
+        self::assertStringNotContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+    }
+
+    #[Test]
+    public function aSkippedFloatDoesNotStopLaterFloatsFromDrawing(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $frame = new Frame(10, 5);
+
+        $context->renderRoot(
+            self::widgetQueuingTwoPlacements(new Rect(0, 0, 0, 3), new Rect(0, 0, 3, 1)),
+            $frame,
+            $frame->area(),
+        );
+
+        self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+    }
+
+    #[Test]
     public function theLastFloatQueuedDrawsOverTheOnesBeforeIt(): void
     {
         $context = new RenderContext(Theme::dark());
@@ -45,6 +109,136 @@ final class RenderContextRenderRootTest extends TestCase
         );
 
         self::assertStringContainsString('second', ScreenBuffer::fromFrame($frame)->getLine(3));
+    }
+
+    private static function emptyWidget(): Widget
+    {
+        return new class implements Widget {
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+            }
+        };
+    }
+
+    private static function widgetQueuingPlacement(Rect $placement): Widget
+    {
+        return new class($placement) implements Widget {
+            public function __construct(private readonly Rect $placement)
+            {
+            }
+
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $context->float($frame, self::fixedAt($this->placement), new Rect(0, 0, 5, 1));
+            }
+
+            private static function fixedAt(Rect $placement): Floating
+            {
+                return new class($placement) implements Floating {
+                    public function __construct(private readonly Rect $placement)
+                    {
+                    }
+
+                    public function placement(Rect $anchor, Rect $viewport): Rect
+                    {
+                        return $this->placement;
+                    }
+
+                    public function constraint(): Constraint
+                    {
+                        return Constraint::exact(1);
+                    }
+
+                    public function render(Frame $frame, Rect $area, RenderContext $context): void
+                    {
+                        $frame->putString($area->x, $area->y, 'X');
+                    }
+                };
+            }
+        };
+    }
+
+    private static function widgetQueuingTwoPlacements(Rect $first, Rect $second): Widget
+    {
+        return new class($first, $second) implements Widget {
+            public function __construct(
+                private readonly Rect $first,
+                private readonly Rect $second,
+            ) {
+            }
+
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $anchor = new Rect(0, 0, 5, 1);
+                $context->float($frame, self::fixedAt($this->first, 'SKIPPED'), $anchor);
+                $context->float($frame, self::fixedAt($this->second, 'X'), $anchor);
+            }
+
+            private static function fixedAt(Rect $placement, string $text): Floating
+            {
+                return new class($placement, $text) implements Floating {
+                    public function __construct(
+                        private readonly Rect $placement,
+                        private readonly string $text,
+                    ) {
+                    }
+
+                    public function placement(Rect $anchor, Rect $viewport): Rect
+                    {
+                        return $this->placement;
+                    }
+
+                    public function constraint(): Constraint
+                    {
+                        return Constraint::exact(1);
+                    }
+
+                    public function render(Frame $frame, Rect $area, RenderContext $context): void
+                    {
+                        $frame->putString($area->x, $area->y, $this->text);
+                    }
+                };
+            }
+        };
+    }
+
+    private static function labelled(string $text): Floating
+    {
+        return new class($text) implements Floating {
+            public function __construct(private readonly string $text)
+            {
+            }
+
+            public function placement(Rect $anchor, Rect $viewport): Rect
+            {
+                return new Rect($anchor->x, $anchor->y + 3, 10, 1);
+            }
+
+            public function constraint(): Constraint
+            {
+                return Constraint::exact(1);
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $frame->putString($area->x, $area->y, $this->text);
+            }
+        };
     }
 
     private static function twoFloats(RenderContext $context, Rect $anchor): Widget

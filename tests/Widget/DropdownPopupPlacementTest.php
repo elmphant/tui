@@ -71,6 +71,111 @@ final class DropdownPopupPlacementTest extends TestCase
         self::assertSame(6, $placement->width, 'json/yaml is 4 wide, plus 2 for the borders');
     }
 
+    #[Test]
+    public function theRoomBelowNeverGoesNegativeWhenTheAnchorOverhangsTheViewport(): void
+    {
+        // No options: wanted = CHROME + 1 = 4. The anchor sticks out 15 rows
+        // past the bottom of the viewport, so the raw room below is negative
+        // and must clamp to 0, not go further negative — a further-negative
+        // floor would make "below >= above" false and flip the popup above
+        // the anchor with a phantom row of height instead of 0.
+        $placement = self::popup([])
+            ->placement(new Rect(10, 0, 20, 20), Rect::fromSize(80, 5));
+
+        self::assertSame(20, $placement->y, 'Still opens below the anchor, flush with its bottom');
+        self::assertSame(0, $placement->height, 'and there is no room for it at all');
+    }
+
+    #[Test]
+    public function theRoomAboveNeverGoesNegativeWhenTheAnchorStartsFarAboveTheViewport(): void
+    {
+        // No options: wanted = 4. Room below is exactly 0 (anchor bottom
+        // flush with the viewport bottom). Room above is deeply negative
+        // (anchor starts far above the viewport) and must clamp to 0, not a
+        // positive floor — a positive floor on "above" would make
+        // "below >= above" false and flip the popup upward with height 1
+        // instead of 0.
+        $placement = self::popup([])
+            ->placement(new Rect(10, -15, 20, 20), Rect::fromSize(80, 5));
+
+        self::assertSame(5, $placement->y, 'Still opens below the anchor, not above it');
+        self::assertSame(0, $placement->height);
+    }
+
+    #[Test]
+    public function theRoomAboveIsMeasuredFromTheViewportTopNotAddedToIt(): void
+    {
+        // 16 options: wanted = 3 + 1 + 16 = 20. Room below (14) is real
+        // subtraction; room above (5) is real subtraction too. Since
+        // 20 > 14 and 14 >= 5, it opens below, capped at 14. If "above" were
+        // computed by addition instead (anchor.y + viewport.y = 15), it would
+        // read as 15 > 14 and the popup would flip upward with a smaller,
+        // wrong height.
+        $options = array_map(static fn (int $index): string => 'o' . $index, range(1, 16));
+
+        $placement = self::popup($options)
+            ->placement(new Rect(10, 10, 20, 1), new Rect(0, 5, 80, 20));
+
+        self::assertSame(11, $placement->y, 'Opens below the anchor');
+        self::assertSame(14, $placement->height, 'Capped to the 14 rows actually available below');
+    }
+
+    #[Test]
+    public function theBoundaryWhereWantedExactlyFillsTheRoomBelowStillOpensDownward(): void
+    {
+        // 4 options: wanted = 3 + 1 + 4 = 8, exactly equal to the room below.
+        // The room above (20) is far larger, so only the "wanted <= below"
+        // boundary decides — and it must open downward at the boundary, not
+        // require strictly more room than needed.
+        $placement = self::popup(['a', 'b', 'c', 'd'])
+            ->placement(new Rect(10, 20, 20, 22), Rect::fromSize(80, 50));
+
+        self::assertSame(42, $placement->y, 'Opens below, flush with the anchor bottom');
+    }
+
+    #[Test]
+    public function theBoundaryWhereRoomBelowExactlyEqualsRoomAboveOpensDownward(): void
+    {
+        // 4 options: wanted = 8, bigger than either side (5 each), so only
+        // the "below >= above" boundary decides. Tied, it must still open
+        // downward.
+        $placement = self::popup(['a', 'b', 'c', 'd'])
+            ->placement(new Rect(10, 15, 20, 30), new Rect(0, 10, 80, 40));
+
+        self::assertSame(45, $placement->y, 'Tied room on both sides opens downward, not upward');
+    }
+
+    #[Test]
+    public function wantedHeightIsChromePlusOneRowPerOption(): void
+    {
+        $placement = self::popup(['a', 'b'])
+            ->placement(new Rect(0, 0, 20, 1), Rect::fromSize(80, 24));
+
+        self::assertSame(DropdownPopup::CHROME + 1 + 2, $placement->height);
+    }
+
+    #[Test]
+    public function widthNeverShrinksBelowTwoPlusBordersEvenWithNoOptions(): void
+    {
+        $placement = self::popup([])
+            ->placement(new Rect(0, 0, 1, 1), Rect::fromSize(80, 24));
+
+        self::assertSame(2, $placement->width, 'An empty list still reserves room for the two side borders');
+    }
+
+    #[Test]
+    public function widthAccountsForTheLabelNotJustTheRawValue(): void
+    {
+        $placement = DropdownPopup::of(['x'], ['x' => 'a much longer label'], 0, '', 0)
+            ->placement(new Rect(0, 0, 3, 1), Rect::fromSize(80, 24));
+
+        self::assertGreaterThanOrEqual(
+            mb_strlen('a much longer label') + 2,
+            $placement->width,
+            'The label the user sees must fit, not just the opaque value',
+        );
+    }
+
     /**
      * @param list<string> $options
      */

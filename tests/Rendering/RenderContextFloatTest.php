@@ -39,6 +39,30 @@ final class RenderContextFloatTest extends TestCase
         self::assertSame([], $context->floats(), 'A field scrolled out of its pane has no popup');
     }
 
+    #[Test]
+    public function anAnchorIntersectingTheClipByASingleCellIsStillQueued(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $frame = new Frame(80, 24);
+        $frame->pushClip(new Rect(0, 0, 5, 5));
+
+        $context->float($frame, self::popup(), new Rect(4, 4, 20, 20));
+
+        self::assertNotSame([], $context->floats(), 'A one-cell intersection is still an intersection, not nothing');
+    }
+
+    #[Test]
+    public function resetFloatsClearsAnyQueuedFloat(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $frame = new Frame(80, 24);
+        $context->float($frame, self::popup(), new Rect(4, 6, 20, 1));
+
+        $context->resetFloats();
+
+        self::assertSame([], $context->floats());
+    }
+
     private static function popup(): Floating
     {
         return new class implements Floating {

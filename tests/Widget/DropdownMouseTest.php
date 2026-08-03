@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
@@ -111,6 +112,62 @@ final class DropdownMouseTest extends TestCase
     }
 
     #[Test]
+    public function clickingARowMappedPastTheEndOfAListThatJustShrankPicksNothing(): void
+    {
+        $anchor = new Rect(0, 0, 20, 1);
+        $viewport = Rect::fromSize(20, 8);
+        $options = ['a', 'b', 'c', 'd', 'e'];
+        $allMatch = ['a' => 'zzz-a', 'b' => 'zzz-b', 'c' => 'zzz-c', 'd' => 'zzz-d', 'e' => 'zzz-e'];
+
+        $typed = Dropdown::new($options)
+            ->withLabels($allMatch)
+            ->withViewport($viewport)
+            ->withFocus(true)
+            ->update(new KeyMsg(' '), $anchor)->model
+            ->update(new KeyMsg('z'), $anchor)->model
+            ->update(new KeyMsg('z'), $anchor)->model
+            ->update(new KeyMsg('z'), $anchor)->model;
+
+        $fiveItemRow = DropdownPopup::of($options, $allMatch, 0, 'zzz', 0)
+            ->placement($anchor, $viewport)->y + DropdownPopup::CHROME;
+
+        // Scroll to 1 while all 5 options still match "zzz". Nothing but the
+        // wheel touches scroll, so it survives the relabeling below untouched.
+        $scrolled = $typed->update(
+            new MouseMsg(2, $fiveItemRow, MouseAction::WheelDown, MouseButton::None),
+            $anchor,
+        )->model;
+
+        // Shrink the match set to 2 without any key or mouse event that would
+        // reset scroll — the popup is now sized for 2 options, but scroll is
+        // still the stale 1 left over from when there were 5.
+        $twoMatch = [
+            'a' => 'zzz-a',
+            'b' => 'zzz-b',
+            'c' => 'no-match-c',
+            'd' => 'no-match-d',
+            'e' => 'no-match-e',
+        ];
+        $shrunk = $scrolled->withLabels($twoMatch);
+
+        $newPlacement = DropdownPopup::of(['a', 'b'], $twoMatch, 0, 'zzz', 1)->placement($anchor, $viewport);
+        $rowPastTheShrunkList = $newPlacement->y + DropdownPopup::CHROME + 1;
+
+        $clicked = $shrunk->update(
+            new MouseMsg(2, $rowPastTheShrunkList, MouseAction::Press, MouseButton::Left),
+            $anchor,
+        )->model;
+
+        $picked = $clicked->update(new KeyMsg(Key::Enter), $anchor)->model;
+
+        self::assertSame(
+            'a',
+            $picked->selectedValue(),
+            'The click maps to an index past the shrunk list and must be rejected, leaving the cursor untouched',
+        );
+    }
+
+    #[Test]
     public function clickingAwayCancelsEvenWithoutAViewport(): void
     {
         $blind = Dropdown::new(['json', 'yaml'])
@@ -138,6 +195,133 @@ final class DropdownMouseTest extends TestCase
         )->model;
 
         self::assertSame($opened, $elsewhere, 'A pane behind the list keeps its own wheel');
+    }
+
+    #[Test]
+    public function clickingExactlyTheFirstOptionRowPicksTheFirstOption(): void
+    {
+        $opened = self::opened();
+        $firstOptionRow = self::placementOf($opened)->y + DropdownPopup::CHROME;
+
+        $clicked = $opened->update(
+            new MouseMsg(2, $firstOptionRow, MouseAction::Press, MouseButton::Left),
+            self::anchor(),
+        )->model;
+
+        self::assertSame('json', $clicked->selectedValue(), 'The first option row itself must be clickable, not just the ones after it');
+    }
+
+    #[Test]
+    public function anUnhandledMouseActionInsideTheListIsIgnoredWithoutError(): void
+    {
+        $opened = self::opened();
+        $row = self::placementOf($opened)->y + DropdownPopup::CHROME;
+
+        $result = $opened->update(
+            new MouseMsg(2, $row, MouseAction::Motion, MouseButton::None),
+            self::anchor(),
+        )->model;
+
+        self::assertTrue($result->isOpen(), 'An action matching none of the arms must fall through, not throw');
+        self::assertNull($result->selectedValue());
+    }
+
+    #[Test]
+    public function wheelDownScrollsDownByExactlyOneNotch(): void
+    {
+        $many = array_map(static fn (int $index): string => 'option' . $index, range(1, 30));
+        $opened = self::listOf($many);
+        $row = self::placementOf($opened, $many)->y + DropdownPopup::CHROME;
+
+        $scrolled = $opened->update(
+            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+            self::anchor(),
+        )->model;
+
+        $screen = self::draw($scrolled);
+        self::assertStringContainsString('option2 ', $screen, 'Scrolled by exactly one notch, option2 is now first');
+        self::assertStringNotContainsString('option1 ', $screen, 'option1 has scrolled just out of view');
+    }
+
+    #[Test]
+    public function wheelUpScrollsUpByExactlyOneNotch(): void
+    {
+        $many = array_map(static fn (int $index): string => 'option' . $index, range(1, 30));
+        $opened = self::listOf($many);
+        $row = self::placementOf($opened, $many)->y + DropdownPopup::CHROME;
+
+        $scrolled = $opened;
+        for ($step = 0; $step < 10; ++$step) {
+            $scrolled = $scrolled->update(
+                new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+                self::anchor(),
+            )->model;
+        }
+
+        $up = $scrolled->update(
+            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None),
+            self::anchor(),
+        )->model;
+
+        $screen = self::draw($up);
+        self::assertStringContainsString('option10', $screen, 'One notch up from scroll 10 lands on option10');
+        self::assertStringNotContainsString('option9 ', $screen, 'Not moved further than one notch');
+    }
+
+    #[Test]
+    public function wheelUpAtTheTopOfTheListStaysAtTheTop(): void
+    {
+        $many = array_map(static fn (int $index): string => 'option' . $index, range(1, 30));
+        $opened = self::listOf($many);
+        $row = self::placementOf($opened, $many)->y + DropdownPopup::CHROME;
+
+        $up = $opened->update(
+            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None),
+            self::anchor(),
+        )->model;
+
+        self::assertStringContainsString('option1 ', self::draw($up), 'Already at the top, wheel up must not move past it');
+    }
+
+    #[Test]
+    public function wheelDownThenWheelUpReturnsToTheStartingScroll(): void
+    {
+        $many = array_map(static fn (int $index): string => 'option' . $index, range(1, 30));
+        $opened = self::listOf($many);
+        $row = self::placementOf($opened, $many)->y + DropdownPopup::CHROME;
+
+        $down = $opened->update(
+            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+            self::anchor(),
+        )->model;
+        $backUp = $down->update(
+            new MouseMsg(2, $row, MouseAction::WheelUp, MouseButton::None),
+            self::anchor(),
+        )->model;
+
+        self::assertStringContainsString('option1 ', self::draw($backUp), 'One down then one up returns exactly to the top');
+    }
+
+    #[Test]
+    public function wheelDownDoesNothingWhenTheWholeListAlreadyFits(): void
+    {
+        $opened = self::listOf(['a', 'b']);
+        $placement = self::placementOf($opened, ['a', 'b']);
+        $row = $placement->y + DropdownPopup::CHROME;
+
+        $scrolled = $opened->update(
+            new MouseMsg(2, $row, MouseAction::WheelDown, MouseButton::None),
+            self::anchor(),
+        )->model;
+
+        $frame = new Frame(40, 10);
+        (new RenderContext(Theme::dark()))->renderRoot($scrolled, $frame, self::anchor());
+
+        self::assertStringContainsString(
+            'a',
+            ScreenBuffer::fromFrame($frame)->getTextAt($row, 0, 10),
+            'Nothing to scroll: the first option must remain on its row',
+        );
     }
 
     #[Test]
