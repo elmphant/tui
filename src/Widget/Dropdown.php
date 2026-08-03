@@ -14,6 +14,8 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -136,6 +138,10 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        if ($message instanceof MouseMsg) {
+            return new UpdateResult($this->moused($message, $area));
+        }
+
         if (!$message instanceof KeyMsg || !$this->focused) {
             return new UpdateResult($this);
         }
@@ -175,6 +181,56 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
                 $area,
             );
         }
+    }
+
+    private function moused(MouseMsg $message, Rect $area): self
+    {
+        if (!$this->open) {
+            return $this;
+        }
+
+        $filtered = $this->filtered();
+        $placement = $this->placementIn($area, $filtered);
+
+        if ($placement === null || !$message->inRect($placement)) {
+            return $message->isClick() ? $this->closed() : $this;
+        }
+
+        return match (true) {
+            $message->action === MouseAction::WheelUp => $this->scrolledBy(-$message->wheelSteps(1), $filtered, $area),
+            $message->action === MouseAction::WheelDown => $this->scrolledBy($message->wheelSteps(1), $filtered, $area),
+            $message->isClick() => $this->clickedRow($message->y - $placement->y, $placement, $filtered),
+            default => $this,
+        };
+    }
+
+    /**
+     * @param list<string> $filtered
+     */
+    private function scrolledBy(int $steps, array $filtered, Rect $area): self
+    {
+        $rows = $this->visibleRows($filtered, $area);
+        $furthest = max(0, count($filtered) - $rows);
+
+        return $this->cloneWith(scroll: max(0, min($furthest, $this->scroll + $steps)));
+    }
+
+    /**
+     * @param list<string> $filtered
+     */
+    private function clickedRow(int $offsetInPopup, Rect $placement, array $filtered): self
+    {
+        if ($offsetInPopup < DropdownPopup::CHROME || $offsetInPopup >= $placement->height - 1) {
+            return $this;
+        }
+
+        $index = $this->scroll + $offsetInPopup - DropdownPopup::CHROME;
+
+        if ($index > count($filtered) - 1) {
+            return $this;
+        }
+
+        return $this->cloneWith(cursor: $index)->picked($filtered);
     }
 
     private function keyedWhileOpen(KeyMsg $message, Rect $area): self
