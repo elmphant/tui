@@ -9,6 +9,7 @@ final class Actions
     public const FOCUS_NEXT = 'focus_next';
     public const FOCUS_PREV = 'focus_prev';
     public const SELECT = 'select';
+    public const CANCEL = 'cancel';
     public const TOGGLE = 'toggle';
 
     public const PAGE_UP = 'page_up';
