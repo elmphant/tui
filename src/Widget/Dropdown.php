@@ -165,7 +165,11 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
 
         $value = $this->selected;
         $shown = $value === null ? $this->placeholder : ($this->labels[$value] ?? $value);
-        $style = $value === null ? $context->theme->dim : $context->theme->base;
+        $style = match (true) {
+            $this->focused => $context->theme->accent,
+            $value !== null => $context->theme->base,
+            default => $context->theme->dim,
+        };
 
         $frame->putStyled(
             $area->x,

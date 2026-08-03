@@ -135,6 +135,44 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
+    public function aFocusedEmptyDropdownRendersInAccentNotDim(): void
+    {
+        $theme = Theme::dark();
+
+        self::assertNotSame(
+            $theme->accent->foregroundValue(),
+            $theme->dim->foregroundValue(),
+            'The theme must distinguish the two, or this test proves nothing',
+        );
+
+        $focused = self::frameFor(Dropdown::new(['json'])->withFocus(true), $theme);
+        $unfocused = self::frameFor(Dropdown::new(['json']), $theme);
+
+        self::assertNotSame(
+            self::foregroundOfFirstCell($unfocused),
+            self::foregroundOfFirstCell($focused),
+            'Focus must change how the row renders',
+        );
+        self::assertSame($theme->accent->foregroundValue(), self::foregroundOfFirstCell($focused));
+    }
+
+    #[Test]
+    public function aFocusedDropdownWithAValueSelectedAlsoRendersInAccent(): void
+    {
+        $theme = Theme::dark();
+
+        self::assertNotSame(
+            $theme->accent->foregroundValue(),
+            $theme->base->foregroundValue(),
+            'The theme must distinguish the two, or this test proves nothing',
+        );
+
+        $frame = self::frameFor(Dropdown::new(['json'])->withSelected('json')->withFocus(true), $theme);
+
+        self::assertSame($theme->accent->foregroundValue(), self::foregroundOfFirstCell($frame));
+    }
+
+    #[Test]
     public function backspaceWidensTheListAgain(): void
     {
         $area = new Rect(0, 0, 20, 1);
