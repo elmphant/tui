@@ -334,12 +334,31 @@ final class DropdownMouseTest extends TestCase
     public function aSecondClickAfterThePickIsDiscarded(): void
     {
         $opened = self::opened();
-        $click = self::routed($opened, new MouseMsg(2, self::rowOf($opened, 'yaml'), MouseAction::Press, MouseButton::Left));
+        $firstClick = self::routed($opened, new MouseMsg(2, self::rowOf($opened, 'yaml'), MouseAction::Press, MouseButton::Left));
+        $clickOnTheOtherRow = self::routed($opened, new MouseMsg(2, self::rowOf($opened, 'json'), MouseAction::Press, MouseButton::Left));
 
-        $picked = $opened->update($click, self::anchor())->model;
-        $again = $picked->update($click, self::anchor())->model;
+        $picked = $opened->update($firstClick, self::anchor())->model;
+        $again = $picked->update($clickOnTheOtherRow, self::anchor())->model;
 
-        self::assertSame($picked, $again, 'the owner is closed, so the second half of a double click dies here');
+        self::assertSame('yaml', $again->selectedValue(), 'the owner is closed, so the second half of a double click dies here');
+    }
+
+    #[Test]
+    public function anActionThePopupDoesNotCaptureIsIgnoredEvenWhenItArrivesWrapped(): void
+    {
+        $opened = self::opened();
+        $placement = self::drawnPlacement($opened);
+        $drawn = self::drawnFloat($opened);
+
+        $wrapped = new FloatMouseMsg(
+            new MouseMsg(2, $placement->y + 3, MouseAction::Motion, MouseButton::Left, screen: self::viewport()),
+            $drawn,
+        );
+
+        $moved = $opened->update($wrapped, self::anchor())->model;
+
+        self::assertNull($moved->selectedValue(), 'only a press picks');
+        self::assertTrue($moved->isOpen());
     }
 
     #[Test]
@@ -347,7 +366,7 @@ final class DropdownMouseTest extends TestCase
     {
         $anchor = self::anchor();
         $mine = self::opened();
-        $foreign = self::listOf(['other1', 'other2']);
+        $foreign = self::listOf(['json', 'yaml']);
 
         $frame = new Frame(40, 18);
         $context = new RenderContext(Theme::dark());
@@ -364,7 +383,10 @@ final class DropdownMouseTest extends TestCase
             $foreignPopup,
         );
 
-        self::assertSame($mine, $mine->update($routed, $anchor)->model, 'a token that is not mine is not mine to act on');
+        $untouched = $mine->update($routed, $anchor)->model;
+
+        self::assertNull($untouched->selectedValue(), 'a token that is not mine is not mine to act on');
+        self::assertTrue($untouched->isOpen(), 'and my own popup stays open');
     }
 
     #[Test]

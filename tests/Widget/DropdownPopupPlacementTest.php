@@ -170,7 +170,7 @@ final class DropdownPopupPlacementTest extends TestCase
         $placement = $popup->placement(new Rect(0, 0, 20, 1), $viewport);
 
         self::assertLessThanOrEqual($viewport->height, $placement->height, 'Never taller than the viewport itself');
-        self::assertGreaterThanOrEqual(1, $popup->optionRowsIn($placement), 'At least one option row is visible');
+        self::assertSame(1, $popup->optionRowsIn($placement), 'The floor buys exactly one option row, no more');
     }
 
     #[Test]

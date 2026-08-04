@@ -88,7 +88,8 @@ final class DropdownPopupPointerTest extends TestCase
     {
         $placement = self::popup(['a', 'b'])->placement(new Rect(0, 0, 2, 1), Rect::fromSize(2, 20));
 
-        self::assertSame(0, $placement->width * $placement->height, 'a popup that paints nothing must not claim the cells');
+        self::assertSame(0, $placement->width, 'a popup that paints nothing must not claim the cells');
+        self::assertSame(0, $placement->height);
     }
 
     #[Test]
@@ -96,7 +97,26 @@ final class DropdownPopupPointerTest extends TestCase
     {
         $placement = self::popup(['a', 'b'])->placement(new Rect(0, 0, 10, 1), Rect::fromSize(10, 3));
 
-        self::assertSame(0, $placement->width * $placement->height);
+        self::assertSame(0, $placement->width);
+        self::assertSame(0, $placement->height);
+    }
+
+    #[Test]
+    public function aPlacementExactlyThreeCellsWideStillDraws(): void
+    {
+        $placement = self::popup(['a'])->placement(new Rect(0, 0, 3, 1), Rect::fromSize(3, 20));
+
+        self::assertSame(3, $placement->width, 'three cells is the narrowest the popup can draw in');
+        self::assertGreaterThanOrEqual(3, $placement->height);
+    }
+
+    #[Test]
+    public function aPlacementExactlyThreeRowsHighStillDraws(): void
+    {
+        $placement = self::popup(['a'])->placement(new Rect(0, 0, 10, 1), Rect::fromSize(10, 4));
+
+        self::assertSame(3, $placement->height, 'three rows is the shortest the popup can draw in');
+        self::assertGreaterThanOrEqual(3, $placement->width);
     }
 
     /**

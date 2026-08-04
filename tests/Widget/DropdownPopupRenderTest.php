@@ -60,13 +60,14 @@ final class DropdownPopupRenderTest extends TestCase
     #[Test]
     public function theBackgroundIsFilledEvenWhereNothingElseIsDrawn(): void
     {
-        $theme = Theme::dark();
+        $theme = Theme::solarizedDark();
         $frame = new Frame(30, 10);
 
         DropdownPopup::of(['a', 'b'], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 20, 10), new RenderContext($theme));
 
         $blankCellBelowTheOptions = 6 * $frame->width + 5;
 
+        self::assertNotSame(0, $theme->base->backgroundValue(), 'Precondition: this theme paints a background at all');
         self::assertSame(
             $theme->base->backgroundValue(),
             $frame->background($blankCellBelowTheOptions),
