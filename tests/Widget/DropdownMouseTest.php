@@ -456,7 +456,9 @@ final class DropdownMouseTest extends TestCase
         $context->commitFloatPlacements();
 
         $drawn = $context->floatPlacements()[0];
-        self::assertSame(0, $drawn->float->optionRowsIn($drawn->placement), 'this popup has chrome only');
+        $popup = $drawn->float;
+        self::assertInstanceOf(DropdownPopup::class, $popup);
+        self::assertSame(0, $popup->optionRowsIn($drawn->placement), 'this popup has chrome only');
 
         $routed = InputRouter::route(
             new MouseMsg(2, $drawn->placement->y + 3, MouseAction::Press, MouseButton::Left),
@@ -480,7 +482,7 @@ final class DropdownMouseTest extends TestCase
             ->withFocus(true)
             ->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
 
-        self::assertStringContainsString('alpha', self::drawIn($opened, $screen), 'nothing has scrolled yet');
+        self::assertStringContainsString('alpha', self::drawnOptionRows($opened, $screen), 'nothing has scrolled yet');
     }
 
     #[Test]
@@ -501,8 +503,30 @@ final class DropdownMouseTest extends TestCase
 
         self::assertStringContainsString(
             'alpha',
-            self::drawIn($reopened, $screen),
+            self::drawnOptionRows($reopened, $screen),
             'closing must leave no scroll behind for the next open to inherit',
+        );
+    }
+
+    #[Test]
+    public function reopeningOnTheFirstOptionStartsAtTheFirstOption(): void
+    {
+        $anchor = self::anchor();
+        $screen = Rect::fromSize(20, 12);
+
+        $picked = Dropdown::new(['alpha', 'bravo', 'charlie', 'delta'])
+            ->withFocus(true)
+            ->update(new KeyMsg(' ', screen: $screen), $anchor)->model
+            ->update(new KeyMsg(Key::Enter, screen: $screen), $anchor)->model;
+
+        self::assertSame('alpha', $picked->selectedValue());
+
+        $reopened = $picked->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
+
+        self::assertStringContainsString(
+            'alpha',
+            self::drawnOptionRows($reopened, $screen),
+            'a window offset must never count backwards from the end of the list',
         );
     }
 
@@ -578,6 +602,38 @@ final class DropdownMouseTest extends TestCase
     private static function drawnPlacement(Dropdown $dropdown): Rect
     {
         return self::drawnFloat($dropdown)->placement;
+    }
+
+    /**
+     * Only the option rows of the drawn popup, so an assertion cannot be
+     * satisfied by the closed row above it.
+     */
+    private static function drawnOptionRows(Dropdown $dropdown, Rect $viewport): string
+    {
+        $frame = new Frame($viewport->width, $viewport->height);
+        $context = new RenderContext(Theme::dark());
+        $context->beginFrame(0.0);
+        $context->renderRoot($dropdown, $frame, self::anchor());
+        $context->commitFloatPlacements();
+
+        $placements = $context->floatPlacements();
+
+        if ($placements === []) {
+            throw new RuntimeException('the dropdown drew no popup');
+        }
+
+        $popup = $placements[0]->float;
+        self::assertInstanceOf(DropdownPopup::class, $popup);
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        $firstOptionRow = $placements[0]->placement->y + 3;
+        $rows = [];
+
+        for ($offset = 0; $offset < $popup->optionRowsIn($placements[0]->placement); ++$offset) {
+            $rows[] = $screen->getLine($firstOptionRow + $offset);
+        }
+
+        return implode("\n", $rows);
     }
 
     private static function drawnTarget(Dropdown $dropdown): FloatTarget
