@@ -14,7 +14,9 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
 /**
- * The floating half of a Dropdown. Never `Dropdown` itself — the drain would redraw and requeue it.
+ * @internal the floating half of a Dropdown, queued by Dropdown::render()
+ *
+ * Never `Dropdown` itself — the drain would redraw and requeue it
  */
 final readonly class DropdownPopup implements PointerFloating
 {

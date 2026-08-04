@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\TerminalOutputInterface;
 use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
+use Elmphant\Tui\Rendering\CursorShape;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Screen;
+use Elmphant\Tui\Rendering\Style;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -114,10 +117,10 @@ final class ScreenTest extends TestCase
     {
         $capturedOutput = '';
         $terminal = $this->createTerminalMock($capturedOutput);
-        $screen = new Screen($terminal, \Elmphant\Tui\Input\ColorProfile::Ansi);
+        $screen = new Screen($terminal, ColorProfile::Ansi);
 
         $frame = new Frame(5, 1);
-        $frame->putStyled(0, 0, 'RED', new \Elmphant\Tui\Rendering\Style(foreground: Color::rgb(255, 0, 0)));
+        $frame->putStyled(0, 0, 'RED', new Style(foreground: Color::rgb(255, 0, 0)));
 
         $screen->flush($frame);
 
@@ -130,10 +133,10 @@ final class ScreenTest extends TestCase
     {
         $capturedOutput = '';
         $terminal = $this->createTerminalMock($capturedOutput);
-        $screen = new Screen($terminal, \Elmphant\Tui\Input\ColorProfile::Ascii);
+        $screen = new Screen($terminal, ColorProfile::Ascii);
 
         $frame = new Frame(5, 1);
-        $frame->putStyled(0, 0, 'X', new \Elmphant\Tui\Rendering\Style(foreground: Color::rgb(255, 0, 0), background: Color::rgb(0, 0, 255)));
+        $frame->putStyled(0, 0, 'X', new Style(foreground: Color::rgb(255, 0, 0), background: Color::rgb(0, 0, 255)));
 
         $screen->flush($frame);
 
@@ -2721,7 +2724,7 @@ final class ScreenTest extends TestCase
         $screen = new Screen($terminal);
 
         $frame = new Frame(10, 5);
-        $frame->setCursorPosition(3, 2, \Elmphant\Tui\Rendering\CursorShape::BlinkingBar);
+        $frame->setCursorPosition(3, 2, CursorShape::BlinkingBar);
 
         $screen->flush($frame);
 
@@ -2736,7 +2739,7 @@ final class ScreenTest extends TestCase
         $screen = new Screen($terminal);
 
         $frame = new Frame(10, 5);
-        $frame->setCursorPosition(3, 2, \Elmphant\Tui\Rendering\CursorShape::BlinkingBar);
+        $frame->setCursorPosition(3, 2, CursorShape::BlinkingBar);
 
         $screen->flush($frame);
 

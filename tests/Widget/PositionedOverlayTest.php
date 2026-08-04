@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\PositionedOverlay;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -144,10 +146,10 @@ final class PositionedOverlayTest extends TestCase
         $context = new RenderContext(Theme::dark());
 
         // Widget that fills every row of its given area with '#'
-        $widget = new class implements \Elmphant\Tui\Widget\Widget {
-            public function constraint(): \Elmphant\Tui\Layout\Constraint
+        $widget = new class implements Widget {
+            public function constraint(): Constraint
             {
-                return \Elmphant\Tui\Layout\Constraint::flex();
+                return Constraint::flex();
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

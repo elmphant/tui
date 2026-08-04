@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Input;
 
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeyPattern;
+use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
@@ -206,7 +207,7 @@ final class KeybindingsTest extends TestCase
         self::assertTrue($merged->matches(new KeyMsg('q'), 'quit'));
 
         // submit action added from extra
-        $enterKey = \Elmphant\Tui\Message\Key::Enter;
+        $enterKey = Key::Enter;
         self::assertTrue($merged->matches(new KeyMsg($enterKey), 'submit'));
     }
 
@@ -218,7 +219,7 @@ final class KeybindingsTest extends TestCase
 
         $merged = $defaults->append($extra);
 
-        self::assertTrue($merged->matches(new KeyMsg(\Elmphant\Tui\Message\Key::Down), 'focus_next'));
+        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'focus_next'));
         self::assertTrue($merged->matches(new KeyMsg('j'), 'focus_next'));
     }
 
@@ -231,7 +232,7 @@ final class KeybindingsTest extends TestCase
         $merged = $defaults->append($extra);
 
         self::assertTrue($merged->matches(new KeyMsg('?'), 'help'));
-        self::assertTrue($merged->matches(new KeyMsg(\Elmphant\Tui\Message\Key::Down), 'focus_next'));
+        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'focus_next'));
     }
 
     #[Test]
@@ -253,7 +254,7 @@ final class KeybindingsTest extends TestCase
         $merged = $defaults->append(Keybindings::empty());
 
         self::assertTrue($merged->matches(new KeyMsg('j'), 'focus_next'));
-        self::assertTrue($merged->matches(new KeyMsg(\Elmphant\Tui\Message\Key::Down), 'focus_next'));
+        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'focus_next'));
     }
 
     #[Test]
@@ -264,7 +265,7 @@ final class KeybindingsTest extends TestCase
 
         $merged = $defaults->append($extra);
 
-        self::assertTrue($merged->matches(new KeyMsg(\Elmphant\Tui\Message\Key::Down), 'focus_next'));
+        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'focus_next'));
         self::assertTrue($merged->matches(new KeyMsg('j'), 'focus_next'));
     }
 

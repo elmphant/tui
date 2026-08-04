@@ -75,11 +75,6 @@ final class DropdownPopupPlacementTest extends TestCase
     #[Test]
     public function theRoomBelowNeverGoesNegativeWhenTheAnchorOverhangsTheViewport(): void
     {
-        // No options: wanted = CHROME + 1 = 4. The anchor sticks out 15 rows
-        // past the bottom of the viewport, so the raw room below is negative
-        // and must clamp to 0, not go further negative — a further-negative
-        // floor would make "below >= above" false and flip the popup above
-        // the anchor with a phantom row of height instead of 0.
         $placement = self::popup([])
             ->placement(new Rect(10, 0, 20, 20), Rect::fromSize(80, 5));
 
@@ -90,12 +85,6 @@ final class DropdownPopupPlacementTest extends TestCase
     #[Test]
     public function theRoomAboveNeverGoesNegativeWhenTheAnchorStartsFarAboveTheViewport(): void
     {
-        // No options: wanted = 4. Room below is exactly 0 (anchor bottom
-        // flush with the viewport bottom). Room above is deeply negative
-        // (anchor starts far above the viewport) and must clamp to 0, not a
-        // positive floor — a positive floor on "above" would make
-        // "below >= above" false and flip the popup upward with height 1
-        // instead of 0.
         $placement = self::popup([])
             ->placement(new Rect(10, -15, 20, 20), Rect::fromSize(80, 5));
 
@@ -106,11 +95,6 @@ final class DropdownPopupPlacementTest extends TestCase
     #[Test]
     public function theRoomAboveIsMeasuredFromTheViewportTopNotAddedToIt(): void
     {
-        // 16 options: wanted = 3 + 1 + 16 = 20, capped to half of 20 (10).
-        // Room below (14) and room above (5) are both real subtraction. If
-        // "above" were computed by addition instead (anchor.y + viewport.y
-        // = 15), it would read as 15 > 14 and the popup would flip upward
-        // with the wrong height.
         $options = array_map(static fn (int $index): string => 'o' . $index, range(1, 16));
         $viewport = new Rect(0, 5, 80, 20);
 
@@ -124,10 +108,6 @@ final class DropdownPopupPlacementTest extends TestCase
     #[Test]
     public function theBoundaryWhereWantedExactlyFillsTheRoomBelowStillOpensDownward(): void
     {
-        // 4 options: wanted = 3 + 1 + 4 = 8, exactly equal to the room below.
-        // The room above (20) is far larger, so only the "wanted <= below"
-        // boundary decides — and it must open downward at the boundary, not
-        // require strictly more room than needed.
         $placement = self::popup(['a', 'b', 'c', 'd'])
             ->placement(new Rect(10, 20, 20, 22), Rect::fromSize(80, 50));
 
@@ -137,9 +117,6 @@ final class DropdownPopupPlacementTest extends TestCase
     #[Test]
     public function theBoundaryWhereRoomBelowExactlyEqualsRoomAboveOpensDownward(): void
     {
-        // 4 options: wanted = 8, bigger than either side (5 each), so only
-        // the "below >= above" boundary decides. Tied, it must still open
-        // downward.
         $placement = self::popup(['a', 'b', 'c', 'd'])
             ->placement(new Rect(10, 15, 20, 30), new Rect(0, 10, 80, 40));
 

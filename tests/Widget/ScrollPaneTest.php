@@ -20,6 +20,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\ScrollPane;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
@@ -687,7 +688,7 @@ final class MeasureTally
     public int $measurements = 0;
 }
 
-final readonly class TallyingWidget implements Widget, \Elmphant\Tui\Widget\MeasureHeight
+final readonly class TallyingWidget implements Widget, MeasureHeight
 {
     public function __construct(
         private int $height,

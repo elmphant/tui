@@ -419,7 +419,7 @@ final class RenderContextRenderRootTest extends TestCase
         $anchor = new Rect(0, 0, 10, 1);
 
         $context->renderRoot(
-            self::twoFloats($context, $anchor),
+            self::twoFloats($anchor),
             $frame,
             $frame->area(),
         );
@@ -578,7 +578,7 @@ final class RenderContextRenderRootTest extends TestCase
         };
     }
 
-    private static function twoFloats(RenderContext $context, Rect $anchor): Widget
+    private static function twoFloats(Rect $anchor): Widget
     {
         return new class($anchor) implements Widget {
             public function __construct(private readonly Rect $anchor)

@@ -13,6 +13,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Box;
+use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -187,7 +188,7 @@ final class BoxTest extends TestCase
     #[Test]
     public function isNotInteractive(): void
     {
-        self::assertNotInstanceOf(\Elmphant\Tui\Widget\Interactive::class, Box::new());
+        self::assertNotInstanceOf(Interactive::class, Box::new());
     }
 
     /**

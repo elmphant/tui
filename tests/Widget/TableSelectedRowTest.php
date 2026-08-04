@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Rendering\Span;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Widget\Column;
 use Elmphant\Tui\Widget\Row;
 use Elmphant\Tui\Widget\Table;
@@ -42,7 +43,7 @@ final class TableSelectedRowTest extends TestCase
     public function spanCellsAreReportedAsTheirText(): void
     {
         $table = Table::fromRows(self::columns(), [
-            Row::new(Span::styled('gamma', new \Elmphant\Tui\Rendering\Style()), 'eu-1c'),
+            Row::new(Span::styled('gamma', new Style()), 'eu-1c'),
         ])->withSelected(0);
 
         self::assertSame(['gamma', 'eu-1c'], $table->selectedRow());

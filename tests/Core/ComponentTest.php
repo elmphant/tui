@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\ComponentRegistry;
+use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Widget\Spinner;
@@ -153,12 +154,12 @@ final class ComponentTest extends TestCase
     public function replacementClosureMayCaptureEnums(): void
     {
         $app = new ComponentContractApp();
-        $direction = \Elmphant\Tui\Layout\Direction::Vertical;
+        $direction = Direction::Vertical;
 
         $component = Component::bind(
             ComponentId::named('enum-configured'),
             $app->input,
-            static fn (App $current, TextInput $input): App => new ComponentContractApp($input, $direction === \Elmphant\Tui\Layout\Direction::Vertical ? 1 : 2),
+            static fn (App $current, TextInput $input): App => new ComponentContractApp($input, $direction === Direction::Vertical ? 1 : 2),
         );
 
         self::assertSame('enum-configured', $component->id->value);

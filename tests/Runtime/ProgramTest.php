@@ -8,9 +8,16 @@ use ArrayObject;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\ExecCmd;
 use Elmphant\Tui\Core\Model;
+use Elmphant\Tui\Core\ProcessCmd;
+use Elmphant\Tui\Core\RenderRevisioned;
 use Elmphant\Tui\Core\ShutdownAware;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\ColorProfile;
+use Elmphant\Tui\Input\ColorScheme;
+use Elmphant\Tui\Input\StdinBuffer;
+use Elmphant\Tui\Input\TerminalInterface;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\FloatMouseMsg;
@@ -19,14 +26,25 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\QuitMsg;
+use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Rendering\Ansi;
+use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Screen;
+use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\AdaptiveTicker;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
+use Elmphant\Tui\Runtime\RunningProcess;
 use Elmphant\Tui\Runtime\TerminalSession;
 use Elmphant\Tui\Runtime\TickerRecord;
 use Elmphant\Tui\Runtime\TimerRecord;
+use Elmphant\Tui\Testing\TestClock;
+use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Support\FloatingModel;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TestPopup;
@@ -86,7 +104,7 @@ final class ProgramTest extends TestCase
             {
             }
         };
-        $program = Program::new($model)->withTerminal(new \Elmphant\Tui\Testing\VirtualTerminal(80, 24));
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
         $model->program = $program;
 
         self::assertSame($model, $program->start());
@@ -116,7 +134,7 @@ final class ProgramTest extends TestCase
             {
             }
         };
-        $program = Program::new($model)->withTerminal(new \Elmphant\Tui\Testing\VirtualTerminal(80, 24));
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
         $program->start();
 
         $this->expectException(LogicException::class);
@@ -142,7 +160,7 @@ final class ProgramTest extends TestCase
             {
             }
         };
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($model)->withTerminal($terminal);
 
         try {
@@ -413,7 +431,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function teardownIsIdempotent(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -433,7 +451,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function teardownWritesResetStyleAndShowCursor(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -444,14 +462,14 @@ final class ProgramTest extends TestCase
         $method->invoke($program);
 
         $output = $terminal->getOutput();
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::RESET_STYLE, $output, 'teardown must emit RESET_STYLE');
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::SHOW_CURSOR, $output, 'teardown must re-show cursor');
+        self::assertStringContainsString(Ansi::RESET_STYLE, $output, 'teardown must emit RESET_STYLE');
+        self::assertStringContainsString(Ansi::SHOW_CURSOR, $output, 'teardown must re-show cursor');
     }
 
     #[Test]
     public function teardownInlineModeMovesCursorToLastRow(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -462,13 +480,13 @@ final class ProgramTest extends TestCase
         $method->invoke($program);
 
         $output = $terminal->getOutput();
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::cursorToRowStart(23) . "\n", $output, 'inline mode must position cursor at height-1 row');
+        self::assertStringContainsString(Ansi::cursorToRowStart(23) . "\n", $output, 'inline mode must position cursor at height-1 row');
     }
 
     #[Test]
     public function teardownAltScreenModeDoesNotMoveCursor(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel())->altScreen();
         $session = new TerminalSession($terminal, true, false);
         $session->start();
@@ -479,7 +497,7 @@ final class ProgramTest extends TestCase
         $method->invoke($program);
 
         $output = $terminal->getOutput();
-        self::assertStringNotContainsString(\Elmphant\Tui\Rendering\Ansi::cursorToRowStart(23), $output, 'alt-screen mode must NOT emit cursor repositioning');
+        self::assertStringNotContainsString(Ansi::cursorToRowStart(23), $output, 'alt-screen mode must NOT emit cursor repositioning');
     }
 
     #[Test]
@@ -501,7 +519,7 @@ final class ProgramTest extends TestCase
             }
         };
 
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($quitOnFirstMessageModel)->withTerminal($terminal);
 
         $programFinished = false;
@@ -552,11 +570,11 @@ final class ProgramTest extends TestCase
             public function render(Frame $frame, RenderContext $context): void
             {
                 $this->hasRendered = true;
-                $frame->putStyled(0, 0, 'R', new \Elmphant\Tui\Rendering\Style(foreground: \Elmphant\Tui\Rendering\Color::rgb(255, 0, 0)));
+                $frame->putStyled(0, 0, 'R', new Style(foreground: Color::rgb(255, 0, 0)));
             }
         };
 
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24, \Elmphant\Tui\Input\ColorProfile::Ansi);
+        $terminal = new VirtualTerminal(80, 24, ColorProfile::Ansi);
         Program::new($renderThenQuitModel)->withTerminal($terminal)->start();
 
         self::assertStringContainsString('R', $terminal->getOutput(), 'Precondition: at least one frame must have rendered');
@@ -572,7 +590,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('running')->setValue($program, true);
 
         $queue = new SplQueue();
-        $queue->enqueue(\Elmphant\Tui\Message\QuitMsg::Quit);
+        $queue->enqueue(QuitMsg::Quit);
         $tickMsg = new TickMsg(0.0);
         $queue->enqueue($tickMsg);
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
@@ -699,7 +717,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $id = EffectId::named('download');
-        $process = new class($id) implements \Elmphant\Tui\Runtime\RunningProcess {
+        $process = new class($id) implements RunningProcess {
             public bool $stopped = false;
 
             public function __construct(private readonly EffectId $effectId)
@@ -1225,7 +1243,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function handlePendingResizeIsNoopWhenResizeNotPending(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
 
         $reflection = new ReflectionClass($program);
@@ -1255,7 +1273,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queueProperty->setValue($program, $queue);
 
-        $process = new class implements \Elmphant\Tui\Runtime\RunningProcess {
+        $process = new class implements RunningProcess {
             public function pump(): array
             {
                 return [new TestMessage('pumped-message')];
@@ -1328,18 +1346,18 @@ final class ProgramTest extends TestCase
     #[Test]
     public function setupRegistersAndTeardownCancelsAllSignalWatchers(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
 
         $reflection = new ReflectionClass($program);
         $terminalProperty = $reflection->getProperty('terminal');
         $terminalProperty->setValue($program, $terminal);
         $screenProperty = $reflection->getProperty('screen');
-        $screenProperty->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $screenProperty->setValue($program, new Screen($terminal));
         $queueProperty = $reflection->getProperty('messageQueue');
         $queueProperty->setValue($program, new SplQueue());
         $stdinBufferProperty = $reflection->getProperty('stdinBuffer');
-        $stdinBufferProperty->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $stdinBufferProperty->setValue($program, new StdinBuffer(fn () => null));
 
         $signalIdProperties = ['sigwinchCallbackId', 'sigintCallbackId', 'sigtermCallbackId', 'sigcontCallbackId', 'sigtstpCallbackId'];
 
@@ -1373,14 +1391,14 @@ final class ProgramTest extends TestCase
     #[Test]
     public function setupEnablesBracketedPaste(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
 
         $reflection->getMethod('setup')->invoke($program);
         $enabledAfterSetup = $terminal->isBracketedPasteEnabled();
@@ -1393,14 +1411,14 @@ final class ProgramTest extends TestCase
     #[Test]
     public function teardownDisablesBracketedPaste(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
 
         $reflection->getMethod('setup')->invoke($program);
         $reflection->getMethod('teardown')->invoke($program);
@@ -1411,14 +1429,14 @@ final class ProgramTest extends TestCase
     #[Test]
     public function suspensionRestoreDisablesAndResumeReEnablesBracketedPaste(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('terminalSession')->setValue($program, $session);
 
@@ -1434,22 +1452,22 @@ final class ProgramTest extends TestCase
     #[Test]
     public function setupEnqueuesInitialResizeMessage(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $queueProperty = $reflection->getProperty('messageQueue');
         $queue = new SplQueue();
         $queueProperty->setValue($program, $queue);
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
 
         $reflection->getMethod('setup')->invoke($program);
 
         $found = false;
         while (!$queue->isEmpty()) {
-            if ($queue->dequeue() instanceof \Elmphant\Tui\Message\ResizeMsg) {
+            if ($queue->dequeue() instanceof ResizeMsg) {
                 $found = true;
                 break;
             }
@@ -1462,7 +1480,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function restoreTerminalForSuspensionWritesShowCursorAndResetStyle(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -1472,19 +1490,19 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('restoreTerminalForSuspension')->invoke($program);
 
         $output = $terminal->getOutput();
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::SHOW_CURSOR, $output, 'restoreTerminalForSuspension must re-show cursor');
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::RESET_STYLE, $output, 'restoreTerminalForSuspension must reset SGR style');
+        self::assertStringContainsString(Ansi::SHOW_CURSOR, $output, 'restoreTerminalForSuspension must re-show cursor');
+        self::assertStringContainsString(Ansi::RESET_STYLE, $output, 'restoreTerminalForSuspension must reset SGR style');
     }
 
     #[Test]
     public function resumeRestoresTerminalAndMarksDirtyAndEnqueuesResize(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('isDirty')->setValue($program, false);
         $queueProperty = $reflection->getProperty('messageQueue');
         $queue = new SplQueue();
@@ -1497,14 +1515,14 @@ final class ProgramTest extends TestCase
 
         $found = false;
         while (!$queue->isEmpty()) {
-            if ($queue->dequeue() instanceof \Elmphant\Tui\Message\ResizeMsg) {
+            if ($queue->dequeue() instanceof ResizeMsg) {
                 $found = true;
                 break;
             }
         }
         self::assertTrue($found, 'resume must enqueue ResizeMsg so the model re-runs layout');
 
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::ERASE_DISPLAY, $terminal->getOutput(), 'resume must clear the screen so leftover content from another app does not show through');
+        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->getOutput(), 'resume must clear the screen so leftover content from another app does not show through');
     }
 
     #[Test]
@@ -1774,7 +1792,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function drainMessageQueueDoesNotMarkDirtyWhenRenderRevisionedModelRevisionIsUnchanged(): void
     {
-        $constantRevisionModel = new class implements Model, \Elmphant\Tui\Core\RenderRevisioned {
+        $constantRevisionModel = new class implements Model, RenderRevisioned {
             public int $internalCounter = 0;
 
             public function init(): ?Cmd
@@ -1819,7 +1837,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function drainMessageQueueMarksDirtyWhenRenderRevisionedRevisionChanges(): void
     {
-        $changingRevisionModel = new class implements Model, \Elmphant\Tui\Core\RenderRevisioned {
+        $changingRevisionModel = new class implements Model, RenderRevisioned {
             public int $rev = 0;
 
             public function init(): ?Cmd
@@ -2157,7 +2175,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function nextRenderDelayTracksTheExactFrameDeadline(): void
     {
-        $clock = new \Elmphant\Tui\Testing\TestClock(10.25);
+        $clock = new TestClock(10.25);
         $program = Program::new($this->createMockModel())
             ->withClock($clock)
             ->fps(2.0);
@@ -2217,7 +2235,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function runTickKeepsTickerScheduledWhenRenderErrorIsQueued(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $throwingRenderModel = new class implements Model {
             public function init(): ?Cmd
             {
@@ -2238,19 +2256,19 @@ final class ProgramTest extends TestCase
         $program = Program::new($throwingRenderModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingRenderModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
         $reflection->getProperty('isDirty')->setValue($program, true);
         $reflection->getProperty('lastRender')->setValue($program, 0.0);
 
-        $ticker = new \Elmphant\Tui\Runtime\AdaptiveTicker(fn () => null);
+        $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
 
         $reflection->getMethod('runTick')->invoke($program);
@@ -2297,20 +2315,20 @@ final class ProgramTest extends TestCase
 
         $program = $this->createRenderablePrgram($observer);
         $reflection = new ReflectionClass($program);
-        $ticker = new \Elmphant\Tui\Runtime\AdaptiveTicker(fn () => null);
+        $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
 
         $handler = $reflection->getMethod('handleInputSequence');
         $reflection->getProperty('stdinBuffer')->setValue(
             $program,
-            new \Elmphant\Tui\Input\StdinBuffer(
+            new StdinBuffer(
                 static fn (string $sequence): mixed => $handler->invoke($program, $sequence),
             ),
         );
 
         // Feed the lone Escape; it stays buffered.
         $buffer = $reflection->getProperty('stdinBuffer')->getValue($program);
-        self::assertInstanceOf(\Elmphant\Tui\Input\StdinBuffer::class, $buffer);
+        self::assertInstanceOf(StdinBuffer::class, $buffer);
         $buffer->process("\x1b");
         self::assertSame([], $observer->keys, 'A lone Escape waits for the disambiguation timeout');
 
@@ -2345,7 +2363,7 @@ final class ProgramTest extends TestCase
 
         $program = $this->createRenderablePrgram($observingModel);
         $reflection = new ReflectionClass($program);
-        $reflection->getProperty('clock')->setValue($program, new \Elmphant\Tui\Testing\TestClock(5.0));
+        $reflection->getProperty('clock')->setValue($program, new TestClock(5.0));
 
         $reflection->getMethod('renderFrame')->invoke($program);
 
@@ -2375,12 +2393,12 @@ final class ProgramTest extends TestCase
             }
         };
 
-        $clock = new \Elmphant\Tui\Testing\TestClock(1.0);
+        $clock = new TestClock(1.0);
         $program = $this->createRenderablePrgram($animatedModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('clock')->setValue($program, $clock);
 
-        $ticker = new \Elmphant\Tui\Runtime\AdaptiveTicker(fn () => null);
+        $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
 
         $reflection->getMethod('runTick')->invoke($program);
@@ -2418,12 +2436,12 @@ final class ProgramTest extends TestCase
             }
         };
 
-        $clock = new \Elmphant\Tui\Testing\TestClock(1.0);
+        $clock = new TestClock(1.0);
         $program = $this->createRenderablePrgram($animatedModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('clock')->setValue($program, $clock);
 
-        $ticker = new \Elmphant\Tui\Runtime\AdaptiveTicker(fn () => null);
+        $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
 
         $reflection->getMethod('runTick')->invoke($program);
@@ -2443,7 +2461,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function runTickKeepsFrameDirtyWhenRenderFails(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $throwingRenderModel = new class implements Model {
             public function init(): ?Cmd
             {
@@ -2464,19 +2482,19 @@ final class ProgramTest extends TestCase
         $program = Program::new($throwingRenderModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingRenderModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
         $reflection->getProperty('isDirty')->setValue($program, true);
         $reflection->getProperty('lastRender')->setValue($program, 0.0);
 
-        $ticker = new \Elmphant\Tui\Runtime\AdaptiveTicker(fn () => null);
+        $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
 
         $reflection->getMethod('runTick')->invoke($program);
@@ -2491,23 +2509,23 @@ final class ProgramTest extends TestCase
     #[Test]
     public function runTickStopsTickerWhenFullyIdle(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
         $reflection->getProperty('isDirty')->setValue($program, false);
         $reflection->getProperty('lastRender')->setValue($program, microtime(true));
 
-        $ticker = new \Elmphant\Tui\Runtime\AdaptiveTicker(fn () => null);
+        $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
 
         $reflection->getMethod('runTick')->invoke($program);
@@ -2527,9 +2545,9 @@ final class ProgramTest extends TestCase
         yield 'mouseTracking' => [fn (Program $program) => $program->mouseTracking()];
         yield 'fps' => [fn (Program $program) => $program->fps(30.0)];
         yield 'onError' => [fn (Program $program) => $program->onError(fn () => null)];
-        yield 'withTerminal' => [fn (Program $program) => $program->withTerminal(new \Elmphant\Tui\Testing\VirtualTerminal(80, 24))];
-        yield 'withTheme' => [fn (Program $program) => $program->withTheme(\Elmphant\Tui\Rendering\Theme::dark())];
-        yield 'withClock' => [fn (Program $program) => $program->withClock(new \Elmphant\Tui\Testing\TestClock())];
+        yield 'withTerminal' => [fn (Program $program) => $program->withTerminal(new VirtualTerminal(80, 24))];
+        yield 'withTheme' => [fn (Program $program) => $program->withTheme(Theme::dark())];
+        yield 'withClock' => [fn (Program $program) => $program->withClock(new TestClock())];
     }
 
     /**
@@ -2549,7 +2567,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function injectedClockDrivesTimerSchedulingDeterministically(): void
     {
-        $clock = new \Elmphant\Tui\Testing\TestClock(100.0);
+        $clock = new TestClock(100.0);
         $program = Program::new($this->createMockModel())->withClock($clock);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
@@ -2573,7 +2591,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function injectedClockDrivesTickerFiringDeterministically(): void
     {
-        $clock = new \Elmphant\Tui\Testing\TestClock(50.0);
+        $clock = new TestClock(50.0);
         $program = Program::new($this->createMockModel())->withClock($clock);
         $reflection = new ReflectionClass($program);
         $queue = new SplQueue();
@@ -2593,23 +2611,23 @@ final class ProgramTest extends TestCase
     #[Test]
     public function runTickKeepsTickerScheduledWhileProcessesActive(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
         $reflection->getProperty('isDirty')->setValue($program, false);
         $reflection->getProperty('lastRender')->setValue($program, microtime(true));
 
-        $stillRunningProcess = new class implements \Elmphant\Tui\Runtime\RunningProcess {
+        $stillRunningProcess = new class implements RunningProcess {
             public function pump(): array
             {
                 return [];
@@ -2636,7 +2654,7 @@ final class ProgramTest extends TestCase
         };
         $reflection->getProperty('processes')->setValue($program, [$stillRunningProcess]);
 
-        $ticker = new \Elmphant\Tui\Runtime\AdaptiveTicker(fn () => null);
+        $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
 
         $reflection->getMethod('runTick')->invoke($program);
@@ -2652,7 +2670,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameWritesContentToTerminal(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $rendered = false;
         $model = new class($rendered) implements Model {
             public function __construct(public bool &$rendered)
@@ -2679,12 +2697,12 @@ final class ProgramTest extends TestCase
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2696,17 +2714,17 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameReallocatesBackBufferWhenOnlyWidthChanges(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 100);
         $reflection->getProperty('height')->setValue($program, 24);
         $oldBuffer = new Frame(80, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $oldBuffer);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2717,7 +2735,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameClearsBackBufferBetweenFrames(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $sequenceModel = new class implements Model {
             public int $renderCount = 0;
 
@@ -2744,12 +2762,12 @@ final class ProgramTest extends TestCase
         $program = Program::new($sequenceModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $sequenceModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2762,7 +2780,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameDoesNotStartBlankFrameWithAllRowsDirty(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(20, 5);
+        $terminal = new VirtualTerminal(20, 5);
         $model = new class implements Model {
             /**
              * @var list<list<int>>
@@ -2788,12 +2806,12 @@ final class ProgramTest extends TestCase
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 20);
         $reflection->getProperty('height')->setValue($program, 5);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(20, 5));
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2804,7 +2822,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFramePreRenderClearMarksOnlyRowsThatErasePreviousContent(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(20, 5);
+        $terminal = new VirtualTerminal(20, 5);
         $model = new class implements Model {
             public int $renderCount = 0;
             /**
@@ -2837,12 +2855,12 @@ final class ProgramTest extends TestCase
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 20);
         $reflection->getProperty('height')->setValue($program, 5);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(20, 5));
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2855,7 +2873,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameReturnsEarlyAfterRenderErrorWithoutFlushingPartialBuffer(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $partialThrowingModel = new class implements Model {
             public function init(): ?Cmd
             {
@@ -2877,12 +2895,12 @@ final class ProgramTest extends TestCase
         $program = Program::new($partialThrowingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $partialThrowingModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2893,17 +2911,17 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameAllocatesNewBackBufferOnSizeMismatch(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 100);
         $reflection->getProperty('height')->setValue($program, 30);
         $oldBuffer = new Frame(80, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $oldBuffer);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2918,18 +2936,18 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameAppliesThemeBackgroundWhenNonZero(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
 
-        $coloredBg = \Elmphant\Tui\Rendering\Color::rgb(50, 50, 50)->value;
-        $themeWithBg = \Elmphant\Tui\Rendering\Theme::dark()->withBase(
-            new \Elmphant\Tui\Rendering\Style(background: \Elmphant\Tui\Rendering\Color::rgb(50, 50, 50)),
+        $coloredBg = Color::rgb(50, 50, 50)->value;
+        $themeWithBg = Theme::dark()->withBase(
+            new Style(background: Color::rgb(50, 50, 50)),
         );
 
         $frame = new Frame(80, 24);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $frame);
@@ -2945,7 +2963,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameDispatchesErrorMsgWhenModelRenderThrows(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $throwingModel = new class implements Model {
             public function init(): ?Cmd
             {
@@ -2966,12 +2984,12 @@ final class ProgramTest extends TestCase
         $program = Program::new($throwingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $queue = new SplQueue();
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
@@ -2984,7 +3002,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function resolveThemeReturnsLightForLightColorScheme(): void
     {
-        $lightTerminal = new class implements \Elmphant\Tui\Input\TerminalInterface {
+        $lightTerminal = new class implements TerminalInterface {
             public function enableRawMode(): void
             {
             }
@@ -3060,14 +3078,14 @@ final class ProgramTest extends TestCase
                 return [80, 24];
             }
 
-            public function colorProfile(): \Elmphant\Tui\Input\ColorProfile
+            public function colorProfile(): ColorProfile
             {
-                return \Elmphant\Tui\Input\ColorProfile::TrueColor;
+                return ColorProfile::TrueColor;
             }
 
-            public function detectColorScheme(): ?\Elmphant\Tui\Input\ColorScheme
+            public function detectColorScheme(): ?ColorScheme
             {
-                return \Elmphant\Tui\Input\ColorScheme::Light;
+                return ColorScheme::Light;
             }
 
             public function readInput(): string
@@ -3100,7 +3118,7 @@ final class ProgramTest extends TestCase
 
         $theme = $reflection->getMethod('resolveTheme')->invoke($program);
 
-        self::assertEquals(\Elmphant\Tui\Rendering\Theme::light(), $theme, 'Light color scheme must resolve to the light theme');
+        self::assertEquals(Theme::light(), $theme, 'Light color scheme must resolve to the light theme');
     }
 
     #[Test]
@@ -3269,7 +3287,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
 
-        $process = new class implements \Elmphant\Tui\Runtime\RunningProcess {
+        $process = new class implements RunningProcess {
             private bool $pumped = false;
 
             public function pump(): array
@@ -3339,7 +3357,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('model')->setValue($program, $countingModel);
 
         $queue = $reflection->getProperty('messageQueue')->getValue($program);
-        $queue->enqueue(\Elmphant\Tui\Message\QuitMsg::Quit);
+        $queue->enqueue(QuitMsg::Quit);
 
         $reflection->getProperty('isDirty')->setValue($program, true);
         $reflection->getProperty('lastRender')->setValue($program, 0.0);
@@ -3516,7 +3534,7 @@ final class ProgramTest extends TestCase
 
             public function update(Message $message, Rect $area): UpdateResult
             {
-                if ($message instanceof \Elmphant\Tui\Message\ResizeMsg) {
+                if ($message instanceof ResizeMsg) {
                     $this->resizeReceived = true;
                 }
 
@@ -3682,7 +3700,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function nextTimerDelayClampsNegativeFireTimesToZero(): void
     {
-        $program = Program::new($this->createMockModel())->withClock(new \Elmphant\Tui\Testing\TestClock(100.0));
+        $program = Program::new($this->createMockModel())->withClock(new TestClock(100.0));
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('tickers')->setValue($program, [new TickerRecord(95.0, 1.0)]);
         $reflection->getProperty('timers')->setValue($program, []);
@@ -3695,7 +3713,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function nextTimerDelayClampsNegativeTimerFireTimesToZero(): void
     {
-        $program = Program::new($this->createMockModel())->withClock(new \Elmphant\Tui\Testing\TestClock(100.0));
+        $program = Program::new($this->createMockModel())->withClock(new TestClock(100.0));
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('tickers')->setValue($program, []);
         $reflection->getProperty('timers')->setValue($program, [new TimerRecord(95.0, fn () => null)]);
@@ -3708,7 +3726,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function handlePendingResizeClearsPendingFlagSetsScreenClearAndMarksDirty(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(120, 40);
+        $terminal = new VirtualTerminal(120, 40);
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
@@ -3727,17 +3745,17 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameClearsScreenWhenResizeRequestsIt(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $screen = new \Elmphant\Tui\Rendering\Screen($terminal);
+        $screen = new Screen($terminal);
         $reflection->getProperty('screen')->setValue($program, $screen);
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         // First render to establish a stable front buffer in the Screen
@@ -3749,20 +3767,20 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('renderFrame')->invoke($program);
 
         self::assertFalse($reflection->getProperty('resizeNeedsScreenClear')->getValue($program), 'Flag must clear to false after consuming it (FalseValue mutant flips it to true → would re-clear forever)');
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::ERASE_DISPLAY, $terminal->getOutput(), 'Second render with resizeNeedsScreenClear=true must call screen->clear() which writes ERASE_DISPLAY; without it, renderDiff would not emit ERASE_DISPLAY for the unchanged content');
+        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->getOutput(), 'Second render with resizeNeedsScreenClear=true must call screen->clear() which writes ERASE_DISPLAY; without it, renderDiff would not emit ERASE_DISPLAY for the unchanged content');
     }
 
     #[Test]
     public function renderFrameSkipsBackgroundFillWhenThemeBaseHasNoBackground(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $frame = new Frame(80, 24);
         $frame->backgrounds[5] = 12345; // pre-existing background that should NOT be wiped
 
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $frame);
@@ -3781,8 +3799,8 @@ final class ProgramTest extends TestCase
             {
             }
         });
-        $themeNoBackground = \Elmphant\Tui\Rendering\Theme::dark()->withBase(
-            new \Elmphant\Tui\Rendering\Style(foreground: \Elmphant\Tui\Rendering\Color::rgb(200, 200, 200)),
+        $themeNoBackground = Theme::dark()->withBase(
+            new Style(foreground: Color::rgb(200, 200, 200)),
         );
         $reflection->getProperty('renderContext')->setValue($program, new RenderContext($themeNoBackground));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
@@ -3800,7 +3818,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('processes')->setValue($program, []);
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
-        $cmd = new \Elmphant\Tui\Core\ExecCmd(['sleep', '5'], workingDirectory: '/tmp');
+        $cmd = new ExecCmd(['sleep', '5'], workingDirectory: '/tmp');
         (new ReflectionMethod(Program::class, 'startExecProcess'))->invoke($program, $cmd);
 
         $processes = $reflection->getProperty('processes')->getValue($program);
@@ -3818,7 +3836,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('processes')->setValue($program, []);
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
-        $cmd = new \Elmphant\Tui\Core\ProcessCmd(['sleep', '5'], workingDirectory: '/tmp');
+        $cmd = new ProcessCmd(['sleep', '5'], workingDirectory: '/tmp');
         (new ReflectionMethod(Program::class, 'startStreamingProcess'))->invoke($program, $cmd);
 
         $processes = $reflection->getProperty('processes')->getValue($program);
@@ -3895,7 +3913,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
-        $stoppedProcess = new class implements \Elmphant\Tui\Runtime\RunningProcess {
+        $stoppedProcess = new class implements RunningProcess {
             public function pump(): array
             {
                 return [];
@@ -3920,7 +3938,7 @@ final class ProgramTest extends TestCase
                 return null;
             }
         };
-        $runningProcess = new class implements \Elmphant\Tui\Runtime\RunningProcess {
+        $runningProcess = new class implements RunningProcess {
             public function pump(): array
             {
                 return [];
@@ -3958,7 +3976,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function registerTimerSchedulesFireAtInTheFuture(): void
     {
-        $program = Program::new($this->createMockModel())->withClock(new \Elmphant\Tui\Testing\TestClock(100.0));
+        $program = Program::new($this->createMockModel())->withClock(new TestClock(100.0));
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('timers')->setValue($program, []);
 
@@ -3978,7 +3996,7 @@ final class ProgramTest extends TestCase
         $processesProperty = $reflection->getProperty('processes');
         $teardownMethod = $reflection->getMethod('teardown');
 
-        $mockProcess = new class implements \Elmphant\Tui\Runtime\RunningProcess {
+        $mockProcess = new class implements RunningProcess {
             public bool $stopped = false;
 
             public function pump(): array
@@ -4017,14 +4035,14 @@ final class ProgramTest extends TestCase
     #[Test]
     public function setupPropagatesTheDetectedTerminalHeightToTheSession(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 30);
+        $terminal = new VirtualTerminal(80, 30);
         $program = Program::new($this->createMockModel());
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
 
         $reflection->getMethod('setup')->invoke($program);
         $session = $reflection->getProperty('terminalSession')->getValue($program);
@@ -4032,7 +4050,7 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('cancelEventLoopWatchers')->invoke($program);
 
         self::assertStringContainsString(
-            \Elmphant\Tui\Rendering\Ansi::cursorToRowStart(29) . "\n",
+            Ansi::cursorToRowStart(29) . "\n",
             $terminal->getOutput(),
             'setup() must propagate the detected height to the session so a close before teardown parks the cursor on the last row of the 30-row terminal',
         );
@@ -4041,7 +4059,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function resumePropagatesTheReReadTerminalHeightToTheSession(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 40);
+        $terminal = new VirtualTerminal(80, 40);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -4049,7 +4067,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('terminalSession')->setValue($program, $session);
 
@@ -4058,7 +4076,7 @@ final class ProgramTest extends TestCase
         $session->close();
 
         self::assertStringContainsString(
-            \Elmphant\Tui\Rendering\Ansi::cursorToRowStart(39) . "\n",
+            Ansi::cursorToRowStart(39) . "\n",
             $terminal->getOutput(),
             'resume() must push the re-read terminal height into the session so the final cursor lands on the last row of the 40-row terminal',
         );
@@ -4067,7 +4085,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function teardownPushesTheCurrentHeightIntoTheSessionBeforeClosing(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -4079,7 +4097,7 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('teardown')->invoke($program);
 
         self::assertStringContainsString(
-            \Elmphant\Tui\Rendering\Ansi::cursorToRowStart(39) . "\n",
+            Ansi::cursorToRowStart(39) . "\n",
             $terminal->getOutput(),
             'teardown() must hand the latest height to the session so the shell prompt continues below the UI, not inside it',
         );
@@ -4088,7 +4106,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function handlePendingResizePushesTheNewHeightIntoTheSession(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 35);
+        $terminal = new VirtualTerminal(80, 35);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -4103,7 +4121,7 @@ final class ProgramTest extends TestCase
         $session->close();
 
         self::assertStringContainsString(
-            \Elmphant\Tui\Rendering\Ansi::cursorToRowStart(34) . "\n",
+            Ansi::cursorToRowStart(34) . "\n",
             $terminal->getOutput(),
             'A resize must propagate the new height to the session so the final cursor row matches the resized terminal',
         );
@@ -4112,7 +4130,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function secondTeardownLeavesTheSessionHeightUntouched(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -4145,7 +4163,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function teardownRestoresTheTerminalEvenWhenCleanupThrows(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $session = new TerminalSession($terminal, false, false);
         $session->start();
@@ -4163,8 +4181,8 @@ final class ProgramTest extends TestCase
         }
 
         $output = $terminal->getOutput();
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::RESET_STYLE, $output, 'The finally block must still close the session when watcher/process cleanup throws');
-        self::assertStringContainsString(\Elmphant\Tui\Rendering\Ansi::SHOW_CURSOR, $output, 'The cursor must be restored even when cleanup throws');
+        self::assertStringContainsString(Ansi::RESET_STYLE, $output, 'The finally block must still close the session when watcher/process cleanup throws');
+        self::assertStringContainsString(Ansi::SHOW_CURSOR, $output, 'The cursor must be restored even when cleanup throws');
     }
 
     #[Test]
@@ -4196,7 +4214,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('running')->setValue($program, true);
 
         $queue = new SplQueue();
-        $queue->enqueue(\Elmphant\Tui\Message\QuitMsg::Quit);
+        $queue->enqueue(QuitMsg::Quit);
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
@@ -4259,7 +4277,7 @@ final class ProgramTest extends TestCase
             {
             }
         };
-        $program = Program::new($quitModel)->withTerminal(new \Elmphant\Tui\Testing\VirtualTerminal(80, 24));
+        $program = Program::new($quitModel)->withTerminal(new VirtualTerminal(80, 24));
         $program->start();
 
         $reflection = new ReflectionClass($program);
@@ -4276,13 +4294,13 @@ final class ProgramTest extends TestCase
     #[Test]
     public function renderFrameRejectsAMissingBackBufferEvenWhenTheRenderContextExists(): void
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('backBuffer')->setValue($program, null);
 
@@ -4349,7 +4367,7 @@ final class ProgramTest extends TestCase
             }
         };
 
-        Program::new($model)->withTerminal(new \Elmphant\Tui\Testing\VirtualTerminal(80, 24))->start();
+        Program::new($model)->withTerminal(new VirtualTerminal(80, 24))->start();
 
         self::assertSame([1], $generations->getArrayCopy(), 'The model that survived the loop gets the last word, once');
     }
@@ -4383,7 +4401,7 @@ final class ProgramTest extends TestCase
             }
         };
 
-        Program::new($model)->withTerminal(new \Elmphant\Tui\Testing\VirtualTerminal(80, 24))->start();
+        Program::new($model)->withTerminal(new VirtualTerminal(80, 24))->start();
 
         self::assertSame(['shutdown'], $calls->getArrayCopy());
     }
@@ -4411,7 +4429,7 @@ final class ProgramTest extends TestCase
                 throw new RuntimeException('flush failed');
             }
         };
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($model)->withTerminal($terminal);
 
         try {
@@ -4456,7 +4474,7 @@ final class ProgramTest extends TestCase
         };
 
         try {
-            Program::new($model)->withTerminal(new \Elmphant\Tui\Testing\VirtualTerminal(80, 24))->start();
+            Program::new($model)->withTerminal(new VirtualTerminal(80, 24))->start();
         } catch (RuntimeException) {
         }
 
@@ -4482,18 +4500,18 @@ final class ProgramTest extends TestCase
 
     private function createRenderablePrgram(Model $model): Program
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
         $reflection->getProperty('isDirty')->setValue($program, true);
         $reflection->getProperty('lastRender')->setValue($program, 0.0);
@@ -4503,21 +4521,21 @@ final class ProgramTest extends TestCase
 
     private function buildTickableProgram(): Program
     {
-        $terminal = new \Elmphant\Tui\Testing\VirtualTerminal(80, 24);
+        $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel())->fps(30.0);
         $reflection = new ReflectionClass($program);
 
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
-        $reflection->getProperty('stdinBuffer')->setValue($program, new \Elmphant\Tui\Input\StdinBuffer(fn () => null));
+        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(\Elmphant\Tui\Rendering\Theme::dark()));
+        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('running')->setValue($program, true);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('adaptiveTicker')->setValue($program, new \Elmphant\Tui\Runtime\AdaptiveTicker(fn () => null));
+        $reflection->getProperty('adaptiveTicker')->setValue($program, new AdaptiveTicker(fn () => null));
 
         return $program;
     }

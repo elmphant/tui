@@ -7,6 +7,8 @@ namespace Elmphant\Tui\Message;
 use Elmphant\Tui\Rendering\FloatPlacement;
 
 /**
+ * A pointer event that landed on a float the last frame drew.
+ *
  * Composed rather than copying MouseMsg's fields: isClick()/wheelSteps()/inRect()
  * keep their one definition on MouseMsg, and a future MouseMsg field cannot be
  * dropped here by omission.

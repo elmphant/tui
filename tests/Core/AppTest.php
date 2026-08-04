@@ -35,6 +35,7 @@ use Elmphant\Tui\Tests\Support\TestPopup;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -139,7 +140,7 @@ final class AppTest extends TestCase
     #[Test]
     public function onComponentsChangedIsNotCalledWhenAMouseEventChangesNoComponent(): void
     {
-        $app = new NoOpMouseApp(input: \Elmphant\Tui\Widget\TextInput::new('x')->withFocus(true));
+        $app = new NoOpMouseApp(input: TextInput::new('x')->withFocus(true));
 
         $result = $app->update(
             new MouseMsg(0, 0, MouseAction::WheelDown, MouseButton::None),
@@ -473,7 +474,7 @@ final readonly class SearchApp extends CopyableTestApp
      * @param list<string> $changedIds
      */
     public function __construct(
-        public \Elmphant\Tui\Widget\TextInput $query = new \Elmphant\Tui\Widget\TextInput(),
+        public TextInput $query = new TextInput(),
         public string $lastSeenQuery = '',
         public array $changedIds = [],
     ) {
@@ -481,7 +482,7 @@ final readonly class SearchApp extends CopyableTestApp
 
     public static function create(): self
     {
-        return new self(query: \Elmphant\Tui\Widget\TextInput::new('search')->withFocus(true));
+        return new self(query: TextInput::new('search')->withFocus(true));
     }
 
     public function view(): Widget
@@ -489,7 +490,7 @@ final readonly class SearchApp extends CopyableTestApp
         return Component::bind(
             'search-input',
             $this->query,
-            static fn (self $app, \Elmphant\Tui\Widget\TextInput $input): self => $app->cloneWith(query: $input),
+            static fn (self $app, TextInput $input): self => $app->cloneWith(query: $input),
         );
     }
 
@@ -669,7 +670,7 @@ final readonly class MouseRectWithFocusablesApp extends CopyableTestApp
     public function __construct(
         public int $width = 0,
         public int $height = 0,
-        public \Elmphant\Tui\Widget\TextInput $input = new \Elmphant\Tui\Widget\TextInput(),
+        public TextInput $input = new TextInput(),
     ) {
     }
 
@@ -678,7 +679,7 @@ final readonly class MouseRectWithFocusablesApp extends CopyableTestApp
         return Component::bind(
             ComponentId::named('main-input'),
             $this->input,
-            static fn (self $app, \Elmphant\Tui\Widget\TextInput $input): self => $app->cloneWith(input: $input),
+            static fn (self $app, TextInput $input): self => $app->cloneWith(input: $input),
         );
     }
 
@@ -851,7 +852,7 @@ final readonly class RectCapturingApp extends CopyableTestApp
 final readonly class NoOpMouseApp extends CopyableTestApp
 {
     public function __construct(
-        public \Elmphant\Tui\Widget\TextInput $input = new \Elmphant\Tui\Widget\TextInput(),
+        public TextInput $input = new TextInput(),
     ) {
     }
 
@@ -860,7 +861,7 @@ final readonly class NoOpMouseApp extends CopyableTestApp
         return Component::bind(
             ComponentId::named('no-op-input'),
             $this->input,
-            static fn (self $app, \Elmphant\Tui\Widget\TextInput $input): self => $app->cloneWith(input: $input),
+            static fn (self $app, TextInput $input): self => $app->cloneWith(input: $input),
         );
     }
 

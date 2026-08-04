@@ -20,20 +20,25 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Panel;
+use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\ProgressBar;
 use Elmphant\Tui\Widget\Scrollbar;
 use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\Separator;
 use Elmphant\Tui\Widget\Spacer;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -1361,8 +1366,8 @@ final class PanelTest extends TestCase
     #[Test]
     public function renderWithBorderStyleOverride(): void
     {
-        $customStyle = new \Elmphant\Tui\Rendering\Style(
-            foreground: \Elmphant\Tui\Rendering\Color::hex('FF0000')
+        $customStyle = new Style(
+            foreground: Color::hex('FF0000')
         );
         $panel = new Panel(
             title: 'Test',
@@ -1384,8 +1389,8 @@ final class PanelTest extends TestCase
     #[Test]
     public function renderWithFocusedBorderStyleOverride(): void
     {
-        $customStyle = new \Elmphant\Tui\Rendering\Style(
-            foreground: \Elmphant\Tui\Rendering\Color::hex('00FF00')
+        $customStyle = new Style(
+            foreground: Color::hex('00FF00')
         );
         $panel = new Panel(
             title: 'Test',
@@ -1408,8 +1413,8 @@ final class PanelTest extends TestCase
     #[Test]
     public function renderWithTitleStyleOverride(): void
     {
-        $customTitleStyle = new \Elmphant\Tui\Rendering\Style(
-            foreground: \Elmphant\Tui\Rendering\Color::hex('00FFFF')
+        $customTitleStyle = new Style(
+            foreground: Color::hex('00FFFF')
         );
         $panel = new Panel(
             title: 'Hello',
@@ -3019,11 +3024,11 @@ final class PanelTest extends TestCase
         // viewport must allow scrolling — the panel must consult MeasureHeight.
         $lines = [];
         for ($i = 0; $i < 30; ++$i) {
-            $lines[] = \Elmphant\Tui\Rendering\Line::raw("paragraph-line-{$i}");
+            $lines[] = Line::raw("paragraph-line-{$i}");
         }
 
         $panel = Panel::new('About')
-            ->add(\Elmphant\Tui\Widget\Paragraph::fromLines($lines))
+            ->add(Paragraph::fromLines($lines))
             ->withFocus(true);
 
         $area = new Rect(0, 0, 40, 6);
@@ -3364,7 +3369,7 @@ final class PanelTest extends TestCase
     }
 }
 
-final readonly class PanelMultiLineWidget implements \Elmphant\Tui\Widget\Widget
+final readonly class PanelMultiLineWidget implements Widget
 {
     public function __construct(private int $lineCount)
     {

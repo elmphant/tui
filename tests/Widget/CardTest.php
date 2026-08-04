@@ -7,8 +7,10 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Card;
 use PHPUnit\Framework\Attributes\Test;
@@ -174,8 +176,8 @@ final class CardTest extends TestCase
     public function cardUsesExplicitBorderStyle(): void
     {
         // L90 Coalesce: $this->borderStyle ?? $theme->borderStyle — explicit must win
-        $explicit = new \Elmphant\Tui\Rendering\Style(
-            foreground: \Elmphant\Tui\Rendering\Color::ansi(2),
+        $explicit = new Style(
+            foreground: Color::ansi(2),
         );
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
@@ -185,7 +187,7 @@ final class CardTest extends TestCase
 
         // Top-left corner at index 0
         self::assertSame(
-            \Elmphant\Tui\Rendering\Color::ansi(2)->value,
+            Color::ansi(2)->value,
             $frame->foregrounds[0],
             'Card must use explicit borderStyle foreground, not theme default',
         );
@@ -195,8 +197,8 @@ final class CardTest extends TestCase
     public function cardUsesExplicitTitleStyle(): void
     {
         // L91 Coalesce: $this->titleStyle ?? $theme->base->bold()
-        $explicit = new \Elmphant\Tui\Rendering\Style(
-            foreground: \Elmphant\Tui\Rendering\Color::ansi(3),
+        $explicit = new Style(
+            foreground: Color::ansi(3),
         );
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
@@ -206,7 +208,7 @@ final class CardTest extends TestCase
 
         $titleIdx = 20 + 2; // row 1 col 2 — 'T'
         self::assertSame(
-            \Elmphant\Tui\Rendering\Color::ansi(3)->value,
+            Color::ansi(3)->value,
             $frame->foregrounds[$titleIdx],
             'Card must use explicit titleStyle foreground',
         );
@@ -216,8 +218,8 @@ final class CardTest extends TestCase
     public function cardUsesExplicitBodyStyle(): void
     {
         // L92 Coalesce: $this->bodyStyle ?? $theme->dim
-        $explicit = new \Elmphant\Tui\Rendering\Style(
-            foreground: \Elmphant\Tui\Rendering\Color::ansi(4),
+        $explicit = new Style(
+            foreground: Color::ansi(4),
         );
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
@@ -227,7 +229,7 @@ final class CardTest extends TestCase
 
         $bodyIdx = 40 + 2; // row 2 col 2 — 'b'
         self::assertSame(
-            \Elmphant\Tui\Rendering\Color::ansi(4)->value,
+            Color::ansi(4)->value,
             $frame->foregrounds[$bodyIdx],
             'Card must use explicit bodyStyle foreground',
         );

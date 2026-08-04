@@ -86,6 +86,10 @@
         "mutation:diff": [
             "@mutation:coverage",
             "XDEBUG_MODE=off ./vendor/bin/infection --coverage=.infection/coverage --with-uncovered --only-covering-test-cases --threads=max --git-diff-lines --git-diff-base=origin/main --logger-github"
+        ],
+        "mutation:dropdown": [
+            "@mutation:coverage",
+            "XDEBUG_MODE=off ./vendor/bin/infection --coverage=.infection/coverage --with-uncovered --only-covering-test-cases --threads=max --min-msi=96 --filter=src/Widget/Dropdown.php,src/Widget/DropdownPopup.php,src/Runtime/InputRouter.php,src/Rendering/RenderContext.php,src/Rendering/FloatPlacement.php"
         ]
     }
 }

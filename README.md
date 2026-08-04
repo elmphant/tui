@@ -533,6 +533,51 @@ Three levels, each extending the previous:
 - **Interactive** — adds `update(message, rect)` returning `UpdateResult` — responds to input
 - **Focusable** — adds `isFocused()` + `withFocus(bool)` — can receive keyboard focus
 
+A fourth, separate contract lets a widget draw outside its own rect:
+
+- **Floating** — `placement(anchor, viewport)` + `render(...)` — drawn after the whole
+  tree, so it may cover other widgets
+- **PointerFloating** — adds `target()` + `captures(action)` — takes pointer input over
+  the area it drew
+
+### The float layer
+
+A widget asks for a float while it renders:
+
+```php
+$context->float($frame, DropdownPopup::of(...), $area);   // $area is the anchor
+```
+
+The queue is drained once, after the tree has drawn, so floats always paint on top.
+Rules worth knowing:
+
+- **Never float yourself.** The float is a separate widget (`Dropdown` queues
+  `DropdownPopup`); a widget that queued itself would be redrawn and requeued forever.
+- **The drain is bounded.** A float may queue another float; after three rounds anything
+  still queued is dropped.
+- **One root pass per frame.** `renderRoot()` draws the tree and drains the queue.
+  Calling it twice in one frame throws: the second tree would paint over the first
+  pass's floats while their placements still claimed the input over them.
+- **Only what reached the screen can be clicked.** Every drawn `PointerFloating` is
+  recorded with the rect it painted, and the runtime publishes that list after the frame
+  is flushed. A frame that failed to render never becomes clickable.
+- **A float too small to draw must return an empty placement**, or it masks input over
+  blank cells.
+
+Pointer events are then routed over that list: a `Press`, `WheelUp` or `WheelDown` inside
+the topmost drawn float arrives as a `FloatMouseMsg` wrapping the original `MouseMsg`.
+`Motion` and `Release` always pass beneath as a plain `MouseMsg`, so a `Split` drag
+cannot latch on a popup. Ownership is a token (`FloatTarget`), not geometry — an
+`Overlay` hands two children the same rect, so only object identity can tell whose float
+it is. A `FloatMouseMsg` whose owner is closed, or whose token matches nobody, is
+discarded instead of falling through to whatever sits under the stale popup.
+
+**Host obligation:** a host that routes messages itself — an `App` overriding
+`onMessage()`, a shell dispatching to panes, any `update()` matching
+`instanceof MouseMsg` — MUST forward `FloatMouseMsg` wherever it forwards `MouseMsg`.
+Broadcasting it to every pane is safe: ownership is token-checked and foreign messages
+are dropped.
+
 ### Example: Settings Form
 
 ```php

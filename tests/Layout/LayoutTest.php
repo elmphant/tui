@@ -12,6 +12,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\DirectionalConstraint;
+use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -490,7 +491,7 @@ final class LayoutTest extends TestCase
     {
         // L53 mutants: per-child width = max(1, intdiv(width, count)) in horizontal layout.
         // Use a deterministic 10-char Paragraph with no spaces (so char-fallback wraps cleanly).
-        $paragraph = \Elmphant\Tui\Widget\Paragraph::fromText('abcdefghij');
+        $paragraph = Paragraph::fromText('abcdefghij');
 
         $layout = Layout::horizontal(
             $paragraph,

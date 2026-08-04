@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -3321,7 +3322,7 @@ final class FrameTest extends TestCase
     {
         // L93 clipRejects: x < clip.x — cells left of clip rejected
         $frame = new Frame(10, 5);
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(3, 2, 4, 2));
+        $frame->pushClip(new Rect(3, 2, 4, 2));
 
         $frame->putChar(2, 2, 'X'); // x=2 < clip.x=3 → rejected
         $frame->putChar(3, 1, 'Y'); // y=1 < clip.y=2 → rejected
@@ -3335,7 +3336,7 @@ final class FrameTest extends TestCase
     {
         // L93 clipRejects: x >= clip.right() and y >= clip.bottom() — cells right/below rejected
         $frame = new Frame(10, 5);
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(3, 2, 4, 2)); // covers (3..6, 2..3)
+        $frame->pushClip(new Rect(3, 2, 4, 2)); // covers (3..6, 2..3)
 
         $frame->putChar(7, 2, 'X'); // x=7 >= right()=7 → rejected
         $frame->putChar(3, 4, 'Y'); // y=4 >= bottom()=4 → rejected
@@ -3349,7 +3350,7 @@ final class FrameTest extends TestCase
     {
         // Verify clipRejects doesn't reject inside the clip area
         $frame = new Frame(10, 5);
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(3, 2, 4, 2));
+        $frame->pushClip(new Rect(3, 2, 4, 2));
 
         $frame->putChar(3, 2, 'A'); // top-left of clip
         $frame->putChar(6, 3, 'B'); // bottom-right inside clip (right()-1 = 6, bottom()-1 = 3)
@@ -3363,7 +3364,7 @@ final class FrameTest extends TestCase
     {
         // L139/L140: putString must reject and return 0 when y is outside clip's y range.
         $frame = new Frame(10, 5);
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(0, 2, 10, 2));
+        $frame->pushClip(new Rect(0, 2, 10, 2));
 
         $consumedAbove = $frame->putString(0, 0, 'hello'); // y=0 < clip.y=2
         $consumedBelow = $frame->putString(0, 4, 'world'); // y=4 >= clip.bottom()=4
@@ -3382,7 +3383,7 @@ final class FrameTest extends TestCase
         // L171 LogicalAnd: clipRejects check inside putString slow-path foreach.
         // Use a non-ASCII char to force the slow path (fast path bails on clipStack).
         $frame = new Frame(10, 5);
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(2, 1, 4, 2)); // (2..5, 1..2)
+        $frame->pushClip(new Rect(2, 1, 4, 2)); // (2..5, 1..2)
 
         // 'cát' — 'á' is non-ASCII, forces slow path. Render at (1, 1) — first char is outside clip.
         $frame->putString(1, 1, 'café');
@@ -3405,7 +3406,7 @@ final class FrameTest extends TestCase
         for ($i = 0; $i < 50; ++$i) {
             $frame->putChar($i % 10, intdiv($i, 10), '.');
         }
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(2, 1, 4, 2)); // covers cols 2..5
+        $frame->pushClip(new Rect(2, 1, 4, 2)); // covers cols 2..5
 
         // '中' is width 2. Place at col 5 — primary cell at 5 (inside clip), continuation at col 6 (outside).
         $frame->putString(5, 1, '中');
@@ -3426,7 +3427,7 @@ final class FrameTest extends TestCase
             $frame->putChar($i % 10, intdiv($i, 10), '.');
         }
         // Clip: cols 0..6 (right = 7, so valid cols 0..6). Wide char at col=5: col+1=6 (inside), col+2=7 (outside).
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(0, 0, 7, 5));
+        $frame->pushClip(new Rect(0, 0, 7, 5));
 
         $frame->putString(5, 1, '中');
 
@@ -3442,7 +3443,7 @@ final class FrameTest extends TestCase
         for ($i = 0; $i < 50; ++$i) {
             $frame->putChar($i % 10, intdiv($i, 10), '.');
         }
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(0, 0, 7, 5));
+        $frame->pushClip(new Rect(0, 0, 7, 5));
 
         $frame->putAnsi(5, 1, '中');
 
@@ -3458,7 +3459,7 @@ final class FrameTest extends TestCase
         for ($i = 0; $i < 50; ++$i) {
             $frame->putChar($i % 10, intdiv($i, 10), '.');
         }
-        $frame->pushClip(new \Elmphant\Tui\Layout\Rect(2, 1, 4, 2)); // cols 2..5
+        $frame->pushClip(new Rect(2, 1, 4, 2)); // cols 2..5
 
         $frame->putAnsi(5, 1, '中');
 

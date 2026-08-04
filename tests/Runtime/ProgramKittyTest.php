@@ -12,6 +12,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\TerminalSession;
 use Elmphant\Tui\Testing\VirtualTerminal;
@@ -287,7 +288,7 @@ final class ProgramKittyTest extends TestCase
         $terminalProperty = new ReflectionProperty(Program::class, 'terminal');
         $terminalProperty->setValue($program, $terminal);
         $screenProperty = new ReflectionProperty(Program::class, 'screen');
-        $screenProperty->setValue($program, new \Elmphant\Tui\Rendering\Screen($terminal));
+        $screenProperty->setValue($program, new Screen($terminal));
         $messageQueueProperty = new ReflectionProperty(Program::class, 'messageQueue');
         $messageQueueProperty->setValue($program, new SplQueue());
         (new ReflectionProperty(Program::class, 'terminalSession'))->setValue($program, $session);

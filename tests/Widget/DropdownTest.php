@@ -304,6 +304,8 @@ final class DropdownTest extends TestCase
                 Actions::SELECT => ['tab'],
                 Actions::CANCEL => ['ctrl+c'],
                 Actions::FOCUS_NEXT => ['ctrl+n'],
+                Actions::FOCUS_PREV => ['ctrl+p'],
+                Actions::DELETE_CHAR_BACKWARD => ['ctrl+h'],
             ]));
 
         $ignored = $rebound->update(new KeyMsg(' '), $area)->model;
@@ -318,12 +320,48 @@ final class DropdownTest extends TestCase
 
         self::assertSame('yaml', $picked->selectedValue(), 'Rebound move and select');
 
+        $movedBack = $opened
+            ->update(new KeyMsg('n', ctrl: true), $area)->model
+            ->update(new KeyMsg('p', ctrl: true), $area)->model
+            ->update(new KeyMsg(Key::Tab), $area)->model;
+
+        self::assertSame('json', $movedBack->selectedValue(), 'Rebound move back');
+
+        $queryDeleted = $opened
+            ->update(new KeyMsg('y'), $area)->model
+            ->update(new KeyMsg('h', ctrl: true), $area)->model
+            ->update(new KeyMsg(Key::Tab), $area)->model;
+
+        self::assertSame('json', $queryDeleted->selectedValue(), 'Rebound backspace emptied the query, so the first option is back');
+
         $cancelled = $opened->update(new KeyMsg('c', ctrl: true), $area)->model;
         self::assertFalse($cancelled->isOpen(), 'and rebound cancel');
     }
 
     #[Test]
-    public function anOpenDropdownQueuesOnePopupPerFrameAndNeverRedrawsItsRowBelow(): void
+    public function anOpenDropdownDrawsExactlyOnePopupPerFrame(): void
+    {
+        $opened = self::opened(Dropdown::new(['json', 'yaml'])->withSelected('json'));
+
+        $frame = new Frame(30, 6);
+        $context = new RenderContext(Theme::dark());
+        $context->beginFrame(0.0);
+        $context->renderRoot($opened, $frame, new Rect(0, 0, 20, 1));
+        $context->commitFloatPlacements();
+
+        $placements = $context->floatPlacements();
+
+        self::assertCount(1, $placements, 'one popup per frame — a self-queueing float would draw again');
+        self::assertSame(1, $placements[0]->placement->y, 'and it starts on the row below the anchor');
+        self::assertStringContainsString(
+            '╭',
+            ScreenBuffer::fromFrame($frame)->getLine(1),
+            'the popup top border is on that row',
+        );
+    }
+
+    #[Test]
+    public function anOpenDropdownNeverRedrawsItsClosedRowBelowTheAnchor(): void
     {
         $opened = self::opened(Dropdown::new(['json', 'yaml'])->withSelected('json'));
 
@@ -331,7 +369,6 @@ final class DropdownTest extends TestCase
         $context = new RenderContext(Theme::dark());
         $context->renderRoot($opened, $frame, new Rect(0, 0, 20, 1));
 
-        self::assertSame([], $context->floats(), 'The queue is drained, not left behind');
         self::assertStringNotContainsString(
             '▾ json',
             ScreenBuffer::fromFrame($frame)->getLine(2),

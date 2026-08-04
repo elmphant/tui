@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
@@ -20,8 +23,10 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Modal;
+use Elmphant\Tui\Widget\Panel;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Text;
 use PHPUnit\Framework\Attributes\Test;
@@ -70,7 +75,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function implementsFocusableSoAppCanRouteInputWhenModalIsOpen(): void
     {
-        self::assertInstanceOf(\Elmphant\Tui\Widget\Focusable::class, Modal::new('Title', Text::new('Content')));
+        self::assertInstanceOf(Focusable::class, Modal::new('Title', Text::new('Content')));
     }
 
     #[Test]
@@ -1232,23 +1237,23 @@ final class ModalTest extends TestCase
     #[Test]
     public function implementsKeybindingsAwareSoGlobalBindingsCanPropagate(): void
     {
-        self::assertInstanceOf(\Elmphant\Tui\Input\KeybindingsAware::class, Modal::new('T', Text::new('X')));
+        self::assertInstanceOf(KeybindingsAware::class, Modal::new('T', Text::new('X')));
     }
 
     #[Test]
     public function withGlobalKeybindingsPropagatesToKeybindingsAwareContent(): void
     {
-        $vimBindings = new \Elmphant\Tui\Input\Keybindings([
-            \Elmphant\Tui\Input\Actions::SCROLL_DOWN => ['j'],
+        $vimBindings = new Keybindings([
+            Actions::SCROLL_DOWN => ['j'],
         ]);
-        $panel = \Elmphant\Tui\Widget\Panel::new('inner');
+        $panel = Panel::new('inner');
         $modal = Modal::new('T', $panel);
 
         $modalWithBindings = $modal->withGlobalKeybindings($vimBindings);
 
         $newContent = (new ReflectionObject($modalWithBindings))->getProperty('content')->getValue($modalWithBindings);
         self::assertTrue(
-            $newContent->effectiveKeybindings()->matches(new KeyMsg('j'), \Elmphant\Tui\Input\Actions::SCROLL_DOWN),
+            $newContent->effectiveKeybindings()->matches(new KeyMsg('j'), Actions::SCROLL_DOWN),
             'Modal must forward global keybindings to KeybindingsAware content so vim/custom keys reach the inner widget',
         );
     }
@@ -1256,10 +1261,10 @@ final class ModalTest extends TestCase
     #[Test]
     public function withGlobalKeybindingsReturnsSameInstanceWhenContentKeybindingsUnchanged(): void
     {
-        $vimBindings = new \Elmphant\Tui\Input\Keybindings([
-            \Elmphant\Tui\Input\Actions::SCROLL_DOWN => ['j'],
+        $vimBindings = new Keybindings([
+            Actions::SCROLL_DOWN => ['j'],
         ]);
-        $panel = \Elmphant\Tui\Widget\Panel::new('inner');
+        $panel = Panel::new('inner');
         $modal = Modal::new('T', $panel)->withGlobalKeybindings($vimBindings);
 
         $result = $modal->withGlobalKeybindings($vimBindings);
@@ -1269,7 +1274,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function forwardsFocusToFocusableContentBeforeDelegating(): void
     {
-        $panel = \Elmphant\Tui\Widget\Panel::new('inner')
+        $panel = Panel::new('inner')
             ->add(Text::new('row 1'))
             ->add(Text::new('row 2'));
         self::assertFalse($panel->isFocused(), 'precondition: content panel starts unfocused');
@@ -1285,7 +1290,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function unfocusesFocusableContentWhenModalLosesFocus(): void
     {
-        $panel = \Elmphant\Tui\Widget\Panel::new('inner')
+        $panel = Panel::new('inner')
             ->add(Text::new('row'))
             ->withFocus(true);
 

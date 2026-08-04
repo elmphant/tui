@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -341,15 +343,15 @@ final class PanelRenderingTest extends TestCase
         $area = new Rect(0, 0, 30, 5);
 
         // Select cursor starts at 0. Pressing Down moves cursor within Select.
-        $result = $panel->update(new \Elmphant\Tui\Message\KeyMsg(\Elmphant\Tui\Message\Key::Down), $area);
+        $result = $panel->update(new KeyMsg(Key::Down), $area);
         $panel1 = $result->model;
-        $result = $panel1->update(new \Elmphant\Tui\Message\KeyMsg(\Elmphant\Tui\Message\Key::Down), $area);
+        $result = $panel1->update(new KeyMsg(Key::Down), $area);
         $panel2 = $result->model;
 
         // Now cursor is at last option (index 2). Another Down should NOT move
         // cursor (boundary), so Select returns same instance, and Panel should
         // fall through to scroll handling.
-        $result = $panel2->update(new \Elmphant\Tui\Message\KeyMsg(\Elmphant\Tui\Message\Key::Down), $area);
+        $result = $panel2->update(new KeyMsg(Key::Down), $area);
         $panel3 = $result->model;
 
         // Panel should have scrolled (new instance with different scrollOffset)
@@ -387,7 +389,7 @@ final class PanelRenderingTest extends TestCase
     {
         $current = $panel;
         for ($step = 0; $step < $scrollCount; ++$step) {
-            $result = $current->update(new \Elmphant\Tui\Message\KeyMsg(\Elmphant\Tui\Message\Key::Down), $area);
+            $result = $current->update(new KeyMsg(Key::Down), $area);
             $current = $result->model;
         }
 

@@ -16,6 +16,8 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\TickerRecord;
+use Elmphant\Tui\Runtime\TimerRecord;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -92,13 +94,13 @@ final class CmdMapTest extends TestCase
     {
         [$program, $queue] = $this->program();
         $this->dispatch($program, Cmd::tick(1.0)->map($this->wrap('ticker')));
-        /** @var list<\Elmphant\Tui\Runtime\TickerRecord> $records */
+        /** @var list<TickerRecord> $records */
         $records = (new ReflectionProperty(Program::class, 'tickers'))->getValue($program);
         self::assertCount(1, $records);
 
         $fire = new ReflectionMethod(Program::class, 'fireTickers');
         $fire->invoke($program, $records[0]->fireAt);
-        /** @var list<\Elmphant\Tui\Runtime\TickerRecord> $rescheduled */
+        /** @var list<TickerRecord> $rescheduled */
         $rescheduled = (new ReflectionProperty(Program::class, 'tickers'))->getValue($program);
         $fire->invoke($program, $rescheduled[0]->fireAt);
 
@@ -261,7 +263,7 @@ final class CmdMapTest extends TestCase
 
     private function fireOnlyTimer(Program $program): void
     {
-        /** @var list<\Elmphant\Tui\Runtime\TimerRecord> $timers */
+        /** @var list<TimerRecord> $timers */
         $timers = (new ReflectionProperty(Program::class, 'timers'))->getValue($program);
         self::assertCount(1, $timers);
         (new ReflectionMethod(Program::class, 'fireTimers'))->invoke($program, $timers[0]->fireAt);

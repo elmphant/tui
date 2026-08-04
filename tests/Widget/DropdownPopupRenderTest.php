@@ -68,9 +68,9 @@ final class DropdownPopupRenderTest extends TestCase
         $blankCellBelowTheOptions = 6 * $frame->width + 5;
 
         self::assertSame(
-            $theme->base->foregroundValue(),
-            $frame->foreground($blankCellBelowTheOptions),
-            'The base style must apply across the whole popup, not just where text is drawn',
+            $theme->base->backgroundValue(),
+            $frame->background($blankCellBelowTheOptions),
+            'The base background must fill the whole popup, not just where text is drawn',
         );
     }
 

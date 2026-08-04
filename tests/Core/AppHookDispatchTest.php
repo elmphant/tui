@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
@@ -108,9 +109,9 @@ final readonly class HookRecordingApp extends App
         return Text::new($this->trail);
     }
 
-    protected function setup(): ?\Elmphant\Tui\Core\Cmd
+    protected function setup(): ?Cmd
     {
-        return \Elmphant\Tui\Core\Cmd::tick(1.0);
+        return Cmd::tick(1.0);
     }
 
     protected function applicationKeybindings(): Keybindings

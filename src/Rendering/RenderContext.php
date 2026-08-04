@@ -112,14 +112,6 @@ final class RenderContext
         return $this->floats;
     }
 
-    /**
-     * @internal
-     */
-    public function resetFloats(): void
-    {
-        $this->floats = [];
-    }
-
     public function scratchBuffer(int $width, int $height): Frame
     {
         if ($this->scratch === null) {

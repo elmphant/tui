@@ -11,6 +11,7 @@ use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Rendering\Theme;
 
 final readonly class StatusBar implements Widget
 {
@@ -61,7 +62,7 @@ final readonly class StatusBar implements Widget
         $frame->putStyled($area->x, $area->y, CharWidth::truncateToWidth($this->content, $area->width), $barStyle);
     }
 
-    private function renderHints(Frame $frame, Rect $area, Style $barStyle, \Elmphant\Tui\Rendering\Theme $theme): void
+    private function renderHints(Frame $frame, Rect $area, Style $barStyle, Theme $theme): void
     {
         $keyStyle = $theme->accent->background($barStyle->background ?? Color::ansi(0))->bold();
         $x = $area->x;

@@ -11,6 +11,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
@@ -24,12 +25,15 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\BorderStyle;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Radio;
 use Elmphant\Tui\Widget\Scrollbar;
 use Elmphant\Tui\Widget\Select;
@@ -4850,12 +4854,12 @@ final class TabBarTest extends TestCase
         // scroll the tab so earlier lines disappear and later lines appear.
         $lines = [];
         for ($i = 0; $i < 30; ++$i) {
-            $lines[] = \Elmphant\Tui\Rendering\Line::raw("paragraph-line-{$i}");
+            $lines[] = Line::raw("paragraph-line-{$i}");
         }
 
         $tabBar = TabBar::new()
             ->addTab('About')
-            ->add(\Elmphant\Tui\Widget\Paragraph::fromLines($lines))
+            ->add(Paragraph::fromLines($lines))
             ->withFocus(true);
 
         $area = new Rect(0, 0, 40, 8);
@@ -4888,10 +4892,10 @@ final class TabBarTest extends TestCase
         // The TabBar must consult Layout's measureHeight (which sums children).
         $lines = [];
         for ($i = 0; $i < 30; ++$i) {
-            $lines[] = \Elmphant\Tui\Rendering\Line::raw("nested-line-{$i}");
+            $lines[] = Line::raw("nested-line-{$i}");
         }
-        $layout = \Elmphant\Tui\Layout\Layout::vertical(
-            \Elmphant\Tui\Widget\Paragraph::fromLines($lines),
+        $layout = Layout::vertical(
+            Paragraph::fromLines($lines),
         );
 
         $tabBar = TabBar::new()
@@ -5621,7 +5625,7 @@ final class TabBarTest extends TestCase
      */
     private function cursorJumpChild(int $row, int $jumpTarget): Interactive
     {
-        return new class($row, $jumpTarget, false) implements Interactive, Focusable, \Elmphant\Tui\Widget\CursorAware {
+        return new class($row, $jumpTarget, false) implements Interactive, Focusable, CursorAware {
             public function __construct(
                 public int $row,
                 public int $jumpTarget,

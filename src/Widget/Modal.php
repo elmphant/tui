@@ -17,6 +17,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Block;
+use Elmphant\Tui\Rendering\BorderStyle;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -259,7 +260,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     private function computeContentRect(Rect $area): Rect
     {
         $modalRect = $this->computeModalRect($area);
-        $block = Block::new()->border(\Elmphant\Tui\Rendering\BorderStyle::Rounded);
+        $block = Block::new()->border(BorderStyle::Rounded);
 
         return $block->inner($modalRect);
     }
