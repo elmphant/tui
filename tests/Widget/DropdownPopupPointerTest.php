@@ -67,10 +67,25 @@ final class DropdownPopupPointerTest extends TestCase
     }
 
     #[Test]
+    public function theRowUnderThePointerFollowsAWindowThatRefilled(): void
+    {
+        $grownBackAfterAResize = new Rect(0, 0, 20, 25);
+        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 20));
+
+        $popup = DropdownPopup::of($options, [], 0, '', 10, new FloatTarget());
+
+        self::assertSame(
+            'option1',
+            $popup->optionAt($grownBackAfterAResize, 3),
+            'a click must resolve against the window that was drawn, not the stale offset',
+        );
+    }
+
+    #[Test]
     public function theChromeRowsOfAScrolledPopupAnswerWithNothingToo(): void
     {
         $placement = new Rect(0, 4, 10, 8);
-        $popup = self::popup(['a', 'b', 'c', 'd', 'e', 'f'], scroll: 3);
+        $popup = self::popup(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], scroll: 3);
 
         self::assertNull($popup->optionAt($placement, 4), 'top border');
         self::assertNull($popup->optionAt($placement, 5), 'query row');

@@ -11,6 +11,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\DropdownPopup;
 use Elmphant\Tui\Widget\FloatTarget;
+use Elmphant\Tui\Widget\Scrollbar;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,6 +24,67 @@ final class DropdownPopupRenderTest extends TestCase
 
         self::assertStringContainsString('ya', $screen->getLine(1), 'The filter row');
         self::assertStringContainsString('yaml', $screen->getLine(3), 'and the options below the divider');
+    }
+
+    #[Test]
+    public function aListLongerThanTheWindowDrawsAScrollbarBesideTheOptions(): void
+    {
+        $area = new Rect(0, 0, 20, 10);
+
+        $column = self::scrollbarColumn(self::popupOf(self::manyOptions()), $area);
+
+        self::assertStringContainsString(Scrollbar::THUMB, $column, 'the thumb shows how much of the list is in view');
+        self::assertStringContainsString(Scrollbar::TRACK, $column, 'and the track shows what lies outside it');
+    }
+
+    #[Test]
+    public function aListThatFitsTheWindowDrawsNoScrollbar(): void
+    {
+        $area = new Rect(0, 0, 20, 10);
+
+        $column = self::scrollbarColumn(self::popupOf(['a', 'b']), $area);
+
+        self::assertStringNotContainsString(Scrollbar::THUMB, $column);
+        self::assertStringNotContainsString(Scrollbar::TRACK, $column, 'nothing to scroll, so no track either');
+    }
+
+    #[Test]
+    public function theThumbSitsFurtherDownTheTrackAsTheWindowScrolls(): void
+    {
+        $area = new Rect(0, 0, 20, 10);
+
+        $atTop = self::scrollbarColumn(self::popupOf(self::manyOptions()), $area);
+        $scrolledDown = self::scrollbarColumn(self::popupOf(self::manyOptions(), scroll: 24), $area);
+
+        self::assertSame(0, mb_strpos($atTop, Scrollbar::THUMB), 'at the top of the list the thumb starts on the first row');
+        self::assertGreaterThan(
+            0,
+            mb_strpos($scrolledDown, Scrollbar::THUMB),
+            'and it has moved down once the window has',
+        );
+    }
+
+    #[Test]
+    public function aWindowThatGrewRefillsFromTheTopOfTheList(): void
+    {
+        $grownBackAfterAResize = new Rect(0, 0, 20, 25);
+        $popup = self::popupOf(self::manyOptions(20), scroll: 10);
+
+        $rows = self::drawnOptionRows($popup, $grownBackAfterAResize);
+
+        self::assertStringContainsString('option1 ', $rows[0], 'the whole list fits now, so it is drawn from the start');
+        self::assertStringContainsString('option20', $rows[19], 'down to the last option');
+    }
+
+    #[Test]
+    public function aWheelScrolledWindowStaysWhereTheReaderPutIt(): void
+    {
+        $area = new Rect(0, 0, 20, 10);
+        $wheeledDownWhileTheCursorStayedAtTheTop = DropdownPopup::of(self::manyOptions(), [], 0, '', 8, new FloatTarget());
+
+        $rows = self::drawnOptionRows($wheeledDownWhileTheCursorStayedAtTheTop, $area);
+
+        self::assertStringContainsString('option9 ', $rows[0], 'the window follows the wheel, never the cursor it left behind');
     }
 
     #[Test]
@@ -228,6 +290,58 @@ final class DropdownPopupRenderTest extends TestCase
             $frame->foreground($bottomBorderIndex),
             'The bottom border keeps its own colour instead of a divider drawn over it',
         );
+    }
+
+    /**
+     * The scrollbar column of the option rows, read top to bottom.
+     */
+    private static function scrollbarColumn(DropdownPopup $popup, Rect $area): string
+    {
+        $frame = new Frame(30, 14);
+        $popup->render($frame, $area, new RenderContext(Theme::dark()));
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        $column = '';
+        for ($row = $area->y + 3; $row < $area->bottom() - 1; ++$row) {
+            $column .= $screen->getTextAt($row, $area->right() - 2, 1);
+        }
+
+        return $column;
+    }
+
+    /**
+     * @param list<string> $options
+     */
+    private static function popupOf(array $options, int $scroll = 0): DropdownPopup
+    {
+        return DropdownPopup::of($options, [], 0, '', $scroll, new FloatTarget());
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function manyOptions(int $count = 30): array
+    {
+        return array_map(static fn (int $index): string => 'option' . $index, range(1, $count));
+    }
+
+    /**
+     * The option rows the popup drew, top to bottom.
+     *
+     * @return list<string>
+     */
+    private static function drawnOptionRows(DropdownPopup $popup, Rect $area): array
+    {
+        $frame = new Frame(30, max(14, $area->bottom()));
+        $popup->render($frame, $area, new RenderContext(Theme::dark()));
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        $rows = [];
+        for ($row = $area->y + 3; $row < $area->bottom() - 1; ++$row) {
+            $rows[] = $screen->getLine($row);
+        }
+
+        return $rows;
     }
 
     private static function render(DropdownPopup $popup): ScreenBuffer

@@ -134,6 +134,26 @@ final class DropdownPopupPlacementTest extends TestCase
     }
 
     #[Test]
+    public function theScrollbarTakesItsColumnFromInsideRatherThanGrowingPastTheAnchor(): void
+    {
+        $shortLabelsThatScroll = array_map(static fn (int $index): string => 'option' . $index, range(1, 30));
+
+        $placement = self::popup($shortLabelsThatScroll)->placement(new Rect(0, 0, 30, 1), Rect::fromSize(80, 20));
+
+        self::assertSame(30, $placement->width, 'a popup as wide as its anchor already has room for the bar');
+    }
+
+    #[Test]
+    public function aScrollingListWhoseLabelsFillThePopupGetsAColumnForTheBar(): void
+    {
+        $longLabelsThatScroll = array_map(static fn (int $index): string => str_repeat('x', 20) . $index, range(1, 30));
+
+        $placement = self::popup($longLabelsThatScroll)->placement(new Rect(0, 0, 5, 1), Rect::fromSize(80, 12));
+
+        self::assertSame(25, $placement->width, 'the widest label, two borders and one column for the bar');
+    }
+
+    #[Test]
     public function widthReservesOneCellForEachBorderAroundTheWidestOption(): void
     {
         $placement = self::popup(['ab'])->placement(new Rect(0, 0, 1, 1), Rect::fromSize(80, 24));

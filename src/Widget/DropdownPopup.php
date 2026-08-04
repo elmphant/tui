@@ -73,7 +73,7 @@ final readonly class DropdownPopup implements PointerFloating
         $opensDown = $wanted <= $below || $below >= $above;
         $height = min($wanted, $opensDown ? $below : $above);
 
-        $width = min($viewport->width, $this->wantedWidth($anchor->width));
+        $width = min($viewport->width, $this->wantedWidth($anchor->width, $this->scrollbarColumns($height)));
         $x = max($viewport->x, min($anchor->x, $viewport->right() - $width));
         $y = $opensDown ? $anchor->bottom() : $anchor->y - $height;
 
@@ -86,7 +86,7 @@ final readonly class DropdownPopup implements PointerFloating
 
     public function optionRowsIn(Rect $placement): int
     {
-        return max(0, $placement->height - self::CHROME - 1);
+        return $this->optionRows($placement->height);
     }
 
     /**
@@ -101,7 +101,7 @@ final readonly class DropdownPopup implements PointerFloating
             return null;
         }
 
-        return $this->options[$this->scroll + $offset - self::CHROME] ?? null;
+        return $this->options[$this->windowStart($placement->height) + $offset - self::CHROME] ?? null;
     }
 
     public function constraint(): Constraint
@@ -143,18 +143,58 @@ final readonly class DropdownPopup implements PointerFloating
             $frame->putString($inner->x, $inner->y + 1, str_repeat('─', $inner->width));
         }
 
-        $window = array_slice($this->options, $this->scroll, $this->optionRowsIn($area));
+        $rows = $this->optionRowsIn($area);
+        $scrollbar = $this->scrollbarColumns($area->height);
+        $start = $this->windowStart($area->height);
+        $window = array_slice($this->options, $start, $rows);
 
         foreach ($window as $offset => $option) {
-            $index = $this->scroll + $offset;
+            $index = $start + $offset;
 
             $frame->putStyled(
                 $inner->x,
                 $area->y + self::CHROME + $offset,
-                CharWidth::truncateToWidth($this->labels[$option] ?? $option, $inner->width),
+                CharWidth::truncateToWidth($this->labels[$option] ?? $option, $inner->width - $scrollbar),
                 $context->theme->optionStyle($index === $this->cursor, false, true),
             );
         }
+
+        if ($scrollbar === 1) {
+            Scrollbar::render(
+                $frame,
+                $inner->right() - 1,
+                $area->y + self::CHROME,
+                $rows,
+                $start,
+                count($this->options),
+                $rows,
+                $context->theme->accent->foregroundValue(),
+                $context->theme->dim->foregroundValue(),
+                $context->theme->base->backgroundValue(),
+            );
+        }
+    }
+
+    /**
+     * The first option drawn at this size. A window that grew — a terminal
+     * resized back up — must fill with options again rather than keep the
+     * offset it needed while it was short.
+     */
+    private function windowStart(int $height): int
+    {
+        $furthest = max(0, count($this->options) - $this->optionRows($height));
+
+        return max(0, min($furthest, $this->scroll));
+    }
+
+    private function scrollbarColumns(int $height): int
+    {
+        return Scrollbar::needsScrollbar(count($this->options), $this->optionRows($height)) ? 1 : 0;
+    }
+
+    private function optionRows(int $height): int
+    {
+        return max(0, $height - self::CHROME - 1);
     }
 
     private function cappedWantedHeight(int $viewportHeight): int
@@ -169,7 +209,7 @@ final readonly class DropdownPopup implements PointerFloating
         return self::CHROME + 1 + count($this->options);
     }
 
-    private function wantedWidth(int $anchorWidth): int
+    private function wantedWidth(int $anchorWidth, int $scrollbarColumns): int
     {
         $widest = 0;
 
@@ -177,6 +217,6 @@ final readonly class DropdownPopup implements PointerFloating
             $widest = max($widest, CharWidth::stringWidth($this->labels[$option] ?? $option));
         }
 
-        return max($anchorWidth, $widest + 2);
+        return max($anchorWidth, $widest + 2 + $scrollbarColumns);
     }
 }
