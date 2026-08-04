@@ -63,6 +63,22 @@ final class DropdownAppAcceptanceTest extends TestCase
         self::assertTrue($app->first->isFocused(), 'and it ends up focused');
     }
 
+    #[Test]
+    public function aClickOpensTheDropdownThatDidNotHaveFocusYet(): void
+    {
+        $harness = ModelHarness::for(TwoDropdownApp::new(), 40, 18);
+        $harness->renderFrame();
+
+        self::assertFalse(self::appOf($harness)->second->isFocused(), 'the second row starts unfocused');
+
+        $harness->dispatch(new MouseMsg(2, 1, MouseAction::Press, MouseButton::Left));
+
+        $app = self::appOf($harness);
+        self::assertTrue($app->second->isOpen(), 'App applies click-focus AFTER dispatch, so the click must open it unfocused');
+        self::assertTrue($app->second->isFocused(), 'and focus lands on it in the same click');
+        self::assertFalse($app->first->isOpen(), 'the row that had focus is left alone');
+    }
+
     /**
      * @param ModelHarness<TwoDropdownApp> $harness
      */

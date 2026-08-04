@@ -217,7 +217,8 @@ final class ModelHarnessTest extends TestCase
         $model->askForRepaint = false;
         $harness->renderFrame();
 
-        self::assertNull($model->delaySeenByTheSecondRender);
+        self::assertSame(2, $model->renders, 'both frames rendered');
+        self::assertNull($model->delaySeenByTheSecondRender, 'and the second frame started with no repaint request');
     }
 }
 
@@ -275,7 +276,7 @@ final class RepaintOnceModel implements Model
 {
     public bool $askForRepaint = true;
     public ?float $delaySeenByTheSecondRender = null;
-    private bool $rendered = false;
+    public int $renders = 0;
 
     public function init(): ?Cmd
     {
@@ -289,11 +290,11 @@ final class RepaintOnceModel implements Model
 
     public function render(Frame $frame, RenderContext $context): void
     {
-        if ($this->rendered) {
+        ++$this->renders;
+
+        if ($this->renders > 1) {
             $this->delaySeenByTheSecondRender = $context->repaintDelay();
         }
-
-        $this->rendered = true;
 
         if ($this->askForRepaint) {
             $context->requestRepaint(0.5);

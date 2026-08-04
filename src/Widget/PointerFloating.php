@@ -21,7 +21,8 @@ interface PointerFloating extends Floating
     public function target(): FloatTarget;
 
     /**
-     * True only for actions this float captures while drawn; all others pass beneath.
+     * True only for actions this float captures while drawn. An action the
+     * topmost float declines reaches the widget tree, never a lower float.
      */
     public function captures(MouseAction $action): bool;
 }

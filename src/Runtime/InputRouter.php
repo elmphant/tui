@@ -14,8 +14,11 @@ use Elmphant\Tui\Rendering\FloatPlacement;
 /**
  * @internal one routing rule for every runtime: stamp the screen rect, then
  * hand a pointer event to the float drawn over that cell
+ *
+ * The stamp exists because hit-testing and scroll-clamping inside a widget must
+ * agree with the geometry the last render used
  */
-final readonly class InputRouter
+final class InputRouter
 {
     /**
      * @param list<FloatPlacement> $placements in paint order, so the last one covering a cell is the visible one

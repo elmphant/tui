@@ -75,6 +75,22 @@ final class DropdownMouseTest extends TestCase
     }
 
     #[Test]
+    public function clickingAnUnfocusedClosedRowOpensIt(): void
+    {
+        $unfocused = Dropdown::new(['json', 'yaml']);
+
+        $clicked = $unfocused->update(
+            new MouseMsg(2, 0, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
+            self::anchor(),
+        )->model;
+
+        self::assertTrue(
+            $clicked->isOpen(),
+            'a host may apply click-focus only after dispatch, so the click itself must open it',
+        );
+    }
+
+    #[Test]
     public function clickingElsewhereWhileClosedDoesNothing(): void
     {
         $dropdown = Dropdown::new(['json', 'yaml'])->withFocus(true);
@@ -163,7 +179,7 @@ final class DropdownMouseTest extends TestCase
     }
 
     #[Test]
-    public function anUnhandledMouseActionInsideTheListIsIgnoredWithoutError(): void
+    public function aMotionOverThePopupPassesBeneathAsAPlainMessage(): void
     {
         $opened = self::opened();
         $row = self::rowOf($opened, 'json');
@@ -407,6 +423,108 @@ final class DropdownMouseTest extends TestCase
     }
 
     #[Test]
+    public function aPressCarryingNoButtonPicksNothing(): void
+    {
+        $opened = self::opened();
+        $drawn = self::drawnFloat($opened);
+
+        $wrapped = new FloatMouseMsg(
+            new MouseMsg(2, $drawn->placement->y + 3, MouseAction::Press, MouseButton::None, screen: self::viewport()),
+            $drawn,
+        );
+
+        $clicked = $opened->update($wrapped, self::anchor())->model;
+
+        self::assertNull($clicked->selectedValue(), 'the closed row ignores a button-less press, and so does the popup');
+        self::assertTrue($clicked->isOpen());
+    }
+
+    #[Test]
+    public function aPopupWithNoRoomForOptionsPicksNothingAndStaysOpen(): void
+    {
+        $anchor = new Rect(0, 4, 20, 1);
+        $screen = Rect::fromSize(20, 9);
+
+        $opened = Dropdown::new(['a', 'b'])
+            ->withFocus(true)
+            ->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
+
+        $frame = new Frame($screen->width, $screen->height);
+        $context = new RenderContext(Theme::dark());
+        $context->beginFrame(0.0);
+        $context->renderRoot($opened, $frame, $anchor);
+        $context->commitFloatPlacements();
+
+        $drawn = $context->floatPlacements()[0];
+        self::assertSame(0, $drawn->float->optionRowsIn($drawn->placement), 'this popup has chrome only');
+
+        $routed = InputRouter::route(
+            new MouseMsg(2, $drawn->placement->y + 3, MouseAction::Press, MouseButton::Left),
+            $frame->area(),
+            $context->floatPlacements(),
+        );
+        $clicked = $opened->update($routed, $anchor)->model;
+
+        self::assertNull($clicked->selectedValue(), 'there is no option row to hit');
+        self::assertTrue($clicked->isOpen(), 'and the query row stays available');
+    }
+
+    #[Test]
+    public function aFreshlyOpenedListStartsAtItsFirstOption(): void
+    {
+        $anchor = self::anchor();
+        $screen = Rect::fromSize(20, 12);
+
+        $opened = Dropdown::new(['alpha', 'bravo', 'charlie', 'delta'])
+            ->withSelected('bravo')
+            ->withFocus(true)
+            ->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
+
+        self::assertStringContainsString('alpha', self::drawIn($opened, $screen), 'nothing has scrolled yet');
+    }
+
+    #[Test]
+    public function reopeningAfterAPickStartsAtTheTopWhenTheSelectionAlreadyFits(): void
+    {
+        $anchor = self::anchor();
+        $screen = Rect::fromSize(20, 12);
+
+        $picked = Dropdown::new(['alpha', 'bravo', 'charlie', 'delta'])
+            ->withFocus(true)
+            ->update(new KeyMsg(' ', screen: $screen), $anchor)->model
+            ->update(new KeyMsg(Key::Down, screen: $screen), $anchor)->model
+            ->update(new KeyMsg(Key::Enter, screen: $screen), $anchor)->model;
+
+        self::assertSame('bravo', $picked->selectedValue());
+
+        $reopened = $picked->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
+
+        self::assertStringContainsString(
+            'alpha',
+            self::drawIn($reopened, $screen),
+            'closing must leave no scroll behind for the next open to inherit',
+        );
+    }
+
+    #[Test]
+    public function openingWhereThePopupHasNoRoomForOptionsLeavesTheWindowAtTheTop(): void
+    {
+        $anchor = self::anchor();
+        $tooShortForAnyOption = Rect::fromSize(20, 4);
+        $options = array_map(static fn (int $index): string => sprintf('opt%02d', $index), range(1, 20));
+
+        $opened = Dropdown::new($options)
+            ->withSelected('opt18')
+            ->withFocus(true)
+            ->update(new KeyMsg(' ', screen: $tooShortForAnyOption), $anchor)->model;
+
+        $drawn = self::drawIn($opened, Rect::fromSize(20, 16));
+
+        self::assertStringContainsString('opt01', $drawn, 'with no option row to scroll into, the window stays where it is');
+        self::assertStringNotContainsString('opt20', $drawn, 'and never past the end of the list');
+    }
+
+    #[Test]
     public function theFloatTokenSurvivesEveryWither(): void
     {
         $opened = self::opened();
@@ -502,7 +620,12 @@ final class DropdownMouseTest extends TestCase
 
     private static function draw(Dropdown $dropdown): string
     {
-        $frame = new Frame(40, 18);
+        return self::drawIn($dropdown, self::viewport());
+    }
+
+    private static function drawIn(Dropdown $dropdown, Rect $viewport): string
+    {
+        $frame = new Frame($viewport->width, $viewport->height);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, self::anchor());
 
         return ScreenBuffer::fromFrame($frame)->getPlainText();

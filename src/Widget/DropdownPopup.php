@@ -84,9 +84,6 @@ final readonly class DropdownPopup implements PointerFloating
         return new Rect($x, $y, $width, $height);
     }
 
-    /**
-     * How many options the popup shows at this size.
-     */
     public function optionRowsIn(Rect $placement): int
     {
         return max(0, $placement->height - self::CHROME - 1);
@@ -146,15 +143,14 @@ final readonly class DropdownPopup implements PointerFloating
             $frame->putString($inner->x, $inner->y + 1, str_repeat('─', $inner->width));
         }
 
-        $rows = $inner->height - 2;
-        $window = array_slice($this->options, $this->scroll, max(0, $rows));
+        $window = array_slice($this->options, $this->scroll, $this->optionRowsIn($area));
 
         foreach ($window as $offset => $option) {
             $index = $this->scroll + $offset;
 
             $frame->putStyled(
                 $inner->x,
-                $inner->y + 2 + $offset,
+                $area->y + self::CHROME + $offset,
                 CharWidth::truncateToWidth($this->labels[$option] ?? $option, $inner->width),
                 $context->theme->optionStyle($index === $this->cursor, false, true),
             );

@@ -67,6 +67,21 @@ final class DropdownPopupPointerTest extends TestCase
     }
 
     #[Test]
+    public function theChromeRowsOfAScrolledPopupAnswerWithNothingToo(): void
+    {
+        $placement = new Rect(0, 4, 10, 8);
+        $popup = self::popup(['a', 'b', 'c', 'd', 'e', 'f'], scroll: 3);
+
+        self::assertNull($popup->optionAt($placement, 4), 'top border');
+        self::assertNull($popup->optionAt($placement, 5), 'query row');
+        self::assertNull(
+            $popup->optionAt($placement, 6),
+            'the divider must not answer with the option just above the drawn window',
+        );
+        self::assertSame('d', $popup->optionAt($placement, 7), 'and the first option row still answers');
+    }
+
+    #[Test]
     public function aRowPastTheLastOptionAnswersWithNothing(): void
     {
         $placement = new Rect(0, 4, 10, 8);
@@ -98,6 +113,15 @@ final class DropdownPopupPointerTest extends TestCase
         $placement = self::popup(['a', 'b'])->placement(new Rect(0, 0, 10, 1), Rect::fromSize(10, 3));
 
         self::assertSame(0, $placement->width);
+        self::assertSame(0, $placement->height);
+    }
+
+    #[Test]
+    public function anEmptyOptionListBehindANarrowAnchorIsNotPlaced(): void
+    {
+        $placement = self::popup([])->placement(new Rect(0, 0, 2, 1), Rect::fromSize(80, 24));
+
+        self::assertSame(0, $placement->width, 'two cells cannot hold two borders and a filter row');
         self::assertSame(0, $placement->height);
     }
 

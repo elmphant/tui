@@ -67,7 +67,7 @@ final class DropdownHostAcceptanceTest extends TestCase
     }
 
     #[Test]
-    public function clickingAClosedDropdownInsideAPaneOpensItWithoutBeingFocusedFirst(): void
+    public function clickingAClosedDropdownInsideAPaneOpensIt(): void
     {
         $pane = self::paneWithTwoDropdowns(openFirst: false);
 

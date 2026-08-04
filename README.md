@@ -545,16 +545,18 @@ A fourth, separate contract lets a widget draw outside its own rect:
 A widget asks for a float while it renders:
 
 ```php
-$context->float($frame, DropdownPopup::of(...), $area);   // $area is the anchor
+$context->float($frame, MyPopup::of(...), $area);   // $area is the anchor
 ```
 
-The queue is drained once, after the tree has drawn, so floats always paint on top.
+The queue is drained after the whole tree has drawn, so floats always paint on top.
 Rules worth knowing:
 
 - **Never float yourself.** The float is a separate widget (`Dropdown` queues
   `DropdownPopup`); a widget that queued itself would be redrawn and requeued forever.
-- **The drain is bounded.** A float may queue another float; after three rounds anything
-  still queued is dropped.
+- **The drain is bounded.** A float may queue another float, and that one draws in the
+  next round; after three rounds anything still queued is dropped.
+- **Only a `PointerFloating` is recorded.** A plain `Floating` draws and is forgotten, so
+  a decorative tooltip never eats a click.
 - **One root pass per frame.** `renderRoot()` draws the tree and drains the queue.
   Calling it twice in one frame throws: the second tree would paint over the first
   pass's floats while their placements still claimed the input over them.
@@ -564,19 +566,28 @@ Rules worth knowing:
 - **A float too small to draw must return an empty placement**, or it masks input over
   blank cells.
 
-Pointer events are then routed over that list: a `Press`, `WheelUp` or `WheelDown` inside
-the topmost drawn float arrives as a `FloatMouseMsg` wrapping the original `MouseMsg`.
-`Motion` and `Release` always pass beneath as a plain `MouseMsg`, so a `Split` drag
-cannot latch on a popup. Ownership is a token (`FloatTarget`), not geometry — an
-`Overlay` hands two children the same rect, so only object identity can tell whose float
-it is. A `FloatMouseMsg` whose owner is closed, or whose token matches nobody, is
-discarded instead of falling through to whatever sits under the stale popup.
+Pointer events are then routed over that list. The topmost float covering the cell
+decides: if its `captures()` accepts the action, the event arrives as a `FloatMouseMsg`
+wrapping the original `MouseMsg`; if it declines, the plain `MouseMsg` continues to the
+widget tree — never to a lower float, which the reader cannot see anyway. Which actions a
+float takes is its own choice: `DropdownPopup` captures `Press`, `WheelUp` and
+`WheelDown` and lets `Motion` and `Release` through, so a `Split` drag cannot latch on a
+popup.
+
+Ownership is a token (`FloatTarget`), not geometry — an `Overlay` hands two children the
+same rect, so only object identity can tell whose float it is. **The owner enforces
+this:** a widget receiving a `FloatMouseMsg` MUST check that the token is its own and
+that its float is still open, and discard the message otherwise rather than acting on it.
+That is what makes a fast double click safe — the first click picks and closes, the
+second arrives still wrapped and dies on the closed owner.
 
 **Host obligation:** a host that routes messages itself — an `App` overriding
 `onMessage()`, a shell dispatching to panes, any `update()` matching
 `instanceof MouseMsg` — MUST forward `FloatMouseMsg` wherever it forwards `MouseMsg`.
 Broadcasting it to every pane is safe: ownership is token-checked and foreign messages
-are dropped.
+are dropped. A host that drops unknown message types silently swallows every click in a
+popup: `FilterableList`, for one, forwards only `KeyMsg` today, so a `Dropdown` inside it
+would never see one.
 
 ### Example: Settings Form
 

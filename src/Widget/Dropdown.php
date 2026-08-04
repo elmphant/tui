@@ -214,14 +214,18 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         return match ($message->mouse->action) {
             MouseAction::WheelUp => $this->scrolledInDrawn(-$steps, $popup, $placement),
             MouseAction::WheelDown => $this->scrolledInDrawn($steps, $popup, $placement),
-            MouseAction::Press => $this->pickedFromDrawn($popup, $placement, $message->mouse->y),
+            MouseAction::Press => $this->pickedFromDrawn($message->mouse, $popup, $placement),
             default => $this,
         };
     }
 
-    private function pickedFromDrawn(DropdownPopup $popup, Rect $placement, int $row): self
+    private function pickedFromDrawn(MouseMsg $mouse, DropdownPopup $popup, Rect $placement): self
     {
-        $value = $popup->optionAt($placement, $row);
+        if (!$mouse->isClick()) {
+            return $this;
+        }
+
+        $value = $popup->optionAt($placement, $mouse->y);
 
         if ($value === null || !in_array($value, $this->options, true)) {
             return $this;

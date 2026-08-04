@@ -265,8 +265,8 @@ final class AppTest extends TestCase
         $result = $app->update($message, Rect::fromSize(80, 24));
 
         self::assertInstanceOf(FloatBroadcastApp::class, $result->model);
-        self::assertSame($message, $result->model->widget->receivedFloat, 'broadcast, not focus delegation');
-        self::assertNull($result->model->received, 'the hook runs, and the broadcast still happens');
+        self::assertSame($message, $result->model->received, 'the hook sees it first');
+        self::assertSame($message, $result->model->widget->receivedFloat, 'and it is broadcast, not focus-delegated');
     }
 
     #[Test]
@@ -802,6 +802,13 @@ final readonly class FloatBroadcastApp extends CopyableTestApp
             $this->widget,
             static fn (self $app, FloatRecordingWidget $widget): self => $app->cloneWith(widget: $widget),
         );
+    }
+
+    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    {
+        return $message instanceof FloatMouseMsg
+            ? UpdateResult::changed($this->cloneWith(received: $message))
+            : UpdateResult::keep($this);
     }
 }
 

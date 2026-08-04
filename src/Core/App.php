@@ -222,19 +222,11 @@ abstract readonly class App implements Model
         }
 
         if ($message instanceof TickMsg) {
-            $appResult = $this->onTick($message);
-            /** @var static $current */
-            $current = $appResult->model;
-
-            return $this->broadcastTo($appResult, $message, $screenRect, $current->componentRegistry()->all());
+            return $this->broadcastAfter($this->onTick($message), $message, $screenRect);
         }
 
         if ($message instanceof FloatMouseMsg) {
-            $appResult = $this->onMessage($message, $screenRect);
-            /** @var static $current */
-            $current = $appResult->model;
-
-            return $this->broadcastTo($appResult, $message, $screenRect, $current->componentRegistry()->all());
+            return $this->broadcastAfter($this->onMessage($message, $screenRect), $message, $screenRect);
         }
 
         return $this->onMessage($message, $screenRect);
@@ -260,19 +252,11 @@ abstract readonly class App implements Model
         }
 
         if ($message instanceof TickMsg) {
-            $appResult = $this->onTick($message);
-            /** @var static $current */
-            $current = $appResult->model;
-
-            return $this->broadcastTo($appResult, $message, $screenRect, $current->componentRegistry()->all());
+            return $this->broadcastAfter($this->onTick($message), $message, $screenRect);
         }
 
         if ($message instanceof FloatMouseMsg) {
-            $appResult = $this->onMessage($message, $screenRect);
-            /** @var static $current */
-            $current = $appResult->model;
-
-            return $this->broadcastTo($appResult, $message, $screenRect, $current->componentRegistry()->all());
+            return $this->broadcastAfter($this->onMessage($message, $screenRect), $message, $screenRect);
         }
 
         return $this->onMessage($message, $screenRect);
@@ -473,6 +457,22 @@ abstract readonly class App implements Model
             $next,
             self::combineCommands($appResult->command, $childCommand, $hookCommand),
         );
+    }
+
+    /**
+     * Every component sees the message, whatever the hook returned: hosts with
+     * no components at all would otherwise never see it.
+     *
+     * @param UpdateResult<static> $hookResult
+     *
+     * @return UpdateResult<static>
+     */
+    private function broadcastAfter(UpdateResult $hookResult, Message $message, Rect $screenRect): UpdateResult
+    {
+        /** @var static $current */
+        $current = $hookResult->model;
+
+        return $this->broadcastTo($hookResult, $message, $screenRect, $current->componentRegistry()->all());
     }
 
     /**

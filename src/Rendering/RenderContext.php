@@ -208,6 +208,10 @@ final class RenderContext
      */
     public function commitFloatPlacements(): void
     {
+        if ($this->rootFrame !== null) {
+            throw new LogicException('commitFloatPlacements() cannot run inside a root pass; the runtime commits once the frame is on the screen.');
+        }
+
         $this->placements = $this->pendingPlacements;
     }
 

@@ -73,6 +73,10 @@ final class ModelHarness
     }
 
     /**
+     * Stamps the harness area onto key and pointer messages, and wraps a
+     * pointer event that lands on a float the last render drew — exactly what
+     * the runtime does before a message reaches the model.
+     *
      * @return self<TModel>
      */
     public function dispatch(Message $message): self

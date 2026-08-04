@@ -111,7 +111,7 @@ final class RenderContextRenderRootTest extends TestCase
     }
 
     #[Test]
-    public function aRenderRootThatThrowsMidDrainLeavesTheLastCommittedList(): void
+    public function aRenderRootThatThrowsMidDrainStagesNothingToCommit(): void
     {
         $context = new RenderContext(Theme::dark());
         $frame = new Frame(10, 5);
@@ -129,7 +129,11 @@ final class RenderContextRenderRootTest extends TestCase
 
         try {
             $context->renderRoot(
-                self::widgetQueuingPointerFloats($anchor, self::throwingPointerFloat($anchor)),
+                self::widgetQueuingPointerFloats(
+                    $anchor,
+                    self::pointerFloat('drawn before the throw', $anchor),
+                    self::throwingPointerFloat($anchor),
+                ),
                 $frame,
                 $frame->area(),
             );
@@ -137,7 +141,15 @@ final class RenderContextRenderRootTest extends TestCase
         } catch (RuntimeException) {
         }
 
-        self::assertSame($committedBeforeTheThrow, $context->floatPlacements());
+        self::assertSame($committedBeforeTheThrow, $context->floatPlacements(), 'the published list is untouched');
+
+        $context->commitFloatPlacements();
+
+        self::assertSame(
+            [],
+            $context->floatPlacements(),
+            'a half-drawn frame stages nothing — not even the floats it managed to draw',
+        );
     }
 
     #[Test]
@@ -270,6 +282,7 @@ final class RenderContextRenderRootTest extends TestCase
             ScreenBuffer::fromFrame($frame)->getPlainText(),
             'A float left over from before this call must not survive into this render',
         );
+        self::assertSame([], $context->floats(), 'and it is discarded, never restored afterwards');
     }
 
     #[Test]
@@ -290,6 +303,18 @@ final class RenderContextRenderRootTest extends TestCase
         }
 
         self::assertSame([], $context->floats());
+    }
+
+    #[Test]
+    public function committingFromInsideARootPassThrows(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $frame = new Frame(10, 5);
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('commitFloatPlacements() cannot run inside a root pass; the runtime commits once the frame is on the screen.');
+
+        $context->renderRoot(self::widgetCommittingMidRender(), $frame, $frame->area());
     }
 
     #[Test]
@@ -446,6 +471,21 @@ final class RenderContextRenderRootTest extends TestCase
         $context->commitFloatPlacements();
 
         return $context;
+    }
+
+    private static function widgetCommittingMidRender(): Widget
+    {
+        return new class implements Widget {
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $context->commitFloatPlacements();
+            }
+        };
     }
 
     private static function emptyWidget(): Widget
