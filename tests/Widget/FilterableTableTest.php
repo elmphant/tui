@@ -83,7 +83,7 @@ final class FilterableTableTest extends TestCase
     {
         $rows = $this->screen($this->routes(), 60, 12);
 
-        self::assertStringContainsString('All columns', $rows[0]);
+        self::assertStringContainsString('Filter…', $rows[0]);
         self::assertStringContainsString('3 of 3', $rows[0]);
         self::assertStringStartsWith('┌', ltrim($rows[1]), 'The table starts on the very next row');
     }
@@ -100,10 +100,10 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function putsTheFieldBeforeTheColumnItFiltersOn(): void
     {
-        $bar = $this->screen($this->routes(), 60, 12)[0];
+        $bar = $this->screen($this->routes()->withColumn(1), 60, 12)[0];
 
         self::assertLessThan(
-            mb_strpos($bar, 'All columns'),
+            mb_strpos($bar, 'Method'),
             mb_strpos($bar, 'Filter…'),
             'The field comes first: it is the control that does the work',
         );
@@ -166,11 +166,11 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function keepsTheBarWideEnoughForItsOwnControls(): void
     {
-        $tiny = FilterableTable::new(['A'], [['x']]);
+        $tiny = FilterableTable::new(['A'], [['x']])->withColumn(0);
         $bar = $this->screen($tiny, 90, 12)[0];
 
         self::assertStringContainsString('Filter…', $bar);
-        self::assertStringContainsString('All columns', $bar);
+        self::assertStringContainsString('A', $bar);
         self::assertStringContainsString('1 of 1', $bar);
     }
 
@@ -195,25 +195,27 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
-    public function laysTheFieldLabelAndCountOutAcrossTheBar(): void
+    public function aBarSearchingEveryColumnShowsNoScopeLabel(): void
     {
         $bar = $this->barRow($this->routes(), 50);
 
         self::assertSame('Filter…', mb_substr($bar, 0, 7), 'The field sits at the left edge');
-        self::assertSame('All columns', mb_substr($bar, 23, 11), 'The label ends a gap before the count');
-        self::assertSame('3 of 3', mb_substr($bar, 37, 6), 'The count ends where the table does, at column 43');
+        self::assertSame('3 of 3', mb_substr($bar, 37, 6), 'and the count still ends where the table does');
+        self::assertSame('', trim(mb_substr($bar, 7, 30)), 'nothing between them claims a scope the reader cannot change');
+    }
+
+    #[Test]
+    public function aColumnTheHeadersDoNotHaveShowsNoScopeLabel(): void
+    {
+        $bar = $this->barRow($this->routes()->withColumn(9), 50);
+
+        self::assertSame('', trim(mb_substr($bar, 7, 30)), 'there is no column to name, and the search matches nothing');
     }
 
     #[Test]
     public function namesTheChosenColumnInTheLabel(): void
     {
         self::assertSame('Method', mb_substr($this->barRow($this->routes()->withColumn(1), 50), 28, 6));
-
-        self::assertSame(
-            'All columns',
-            mb_substr($this->barRow($this->routes()->withColumn(9), 50), 23, 11),
-            'A column the headers do not have falls back',
-        );
     }
 
     #[Test]
@@ -267,12 +269,15 @@ final class FilterableTableTest extends TestCase
     public function theCursorStopsAtTheEndOfTheFieldHoweverLongTheQuery(): void
     {
         $frame = new Frame(50, 1);
-        // The field is 20 columns wide; a longer query cannot push the cursor out.
+        // The bar is 43 wide, the count takes 6 and a gap of 3 sits before it,
+        // so the field spans 34 columns however long the query is.
+        $fieldWidth = 34;
+
         $this->routes()->withQuery(str_repeat('x', 40))->withFocus(true)
             ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
-        self::assertSame(19, $frame->cursorPosition->col);
+        self::assertSame($fieldWidth - 1, $frame->cursorPosition->col);
     }
 
     #[Test]
@@ -293,9 +298,15 @@ final class FilterableTableTest extends TestCase
         $this->routes()->withQuery('ajax')->withFocus(true)
             ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
 
+        $fieldWidth = 34;
+
         self::assertSame(Attr::UNDERLINE, $frame->attributes[0] & Attr::UNDERLINE, 'Under the text');
-        self::assertSame(Attr::UNDERLINE, $frame->attributes[19] & Attr::UNDERLINE, 'And under the empty tail');
-        self::assertSame(0, $frame->attributes[20] & Attr::UNDERLINE, 'But no further than the field');
+        self::assertSame(
+            Attr::UNDERLINE,
+            $frame->attributes[$fieldWidth - 1] & Attr::UNDERLINE,
+            'And under the empty tail',
+        );
+        self::assertSame(0, $frame->attributes[$fieldWidth] & Attr::UNDERLINE, 'But no further than the field');
     }
 
     #[Test]

@@ -140,8 +140,22 @@ final readonly class FilterableTable implements Widget, MeasureHeight
             $context,
             FilterBar::field($this->query, $this->focused),
             $this->summary(),
-            $this->column === null ? 'All columns' : ($this->headers[$this->column] ?? 'All columns'),
+            $this->scopeLabel(),
         );
+    }
+
+    /**
+     * Only a column the bar can name is labelled. With nothing scoped there is
+     * no scope to report, and an accent word the reader cannot change reads as
+     * a control that does not respond.
+     */
+    private function scopeLabel(): ?string
+    {
+        if ($this->column === null) {
+            return null;
+        }
+
+        return $this->headers[$this->column] ?? null;
     }
 
     /**
