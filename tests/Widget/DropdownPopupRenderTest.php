@@ -10,6 +10,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\DropdownPopup;
+use Elmphant\Tui\Widget\FloatTarget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +19,7 @@ final class DropdownPopupRenderTest extends TestCase
     #[Test]
     public function drawsTheQueryAboveTheOptionsItLeft(): void
     {
-        $screen = self::render(DropdownPopup::of(['yaml', 'yml'], [], 0, 'ya', 0));
+        $screen = self::render(DropdownPopup::of(['yaml', 'yml'], [], 0, 'ya', 0, new FloatTarget()));
 
         self::assertStringContainsString('ya', $screen->getLine(1), 'The filter row');
         self::assertStringContainsString('yaml', $screen->getLine(3), 'and the options below the divider');
@@ -29,7 +30,7 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 20));
 
-        $screen = self::render(DropdownPopup::of($options, [], 5, '', 5));
+        $screen = self::render(DropdownPopup::of($options, [], 5, '', 5, new FloatTarget()));
 
         self::assertStringContainsString('option6', $screen->getLine(3), 'The sixth option is the first drawn');
         self::assertStringContainsString('option7', $screen->getLine(4), 'The second row is scroll+1, ascending, not scroll-1');
@@ -41,7 +42,7 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $frame = new Frame(10, 10);
 
-        DropdownPopup::of([], [], 0, '', 0)->render($frame, new Rect(0, 0, 3, 3), new RenderContext(Theme::dark()));
+        DropdownPopup::of([], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 3, 3), new RenderContext(Theme::dark()));
 
         self::assertSame('╭', ScreenBuffer::fromFrame($frame)->getTextAt(0, 0, 1));
     }
@@ -51,7 +52,7 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $frame = new Frame(10, 10);
 
-        DropdownPopup::of([], [], 0, '', 0)->render($frame, new Rect(0, 0, 2, 10), new RenderContext(Theme::dark()));
+        DropdownPopup::of([], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 2, 10), new RenderContext(Theme::dark()));
 
         self::assertNotSame('╭', ScreenBuffer::fromFrame($frame)->getTextAt(0, 0, 1), 'Too narrow: neither dimension guard alone should let this through');
     }
@@ -62,7 +63,7 @@ final class DropdownPopupRenderTest extends TestCase
         $theme = Theme::dark();
         $frame = new Frame(30, 10);
 
-        DropdownPopup::of(['a', 'b'], [], 0, '', 0)->render($frame, new Rect(0, 0, 20, 10), new RenderContext($theme));
+        DropdownPopup::of(['a', 'b'], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 20, 10), new RenderContext($theme));
 
         $blankCellBelowTheOptions = 6 * $frame->width + 5;
 
@@ -78,7 +79,7 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $frame = new Frame(30, 10);
 
-        DropdownPopup::of([], [], 0, '', 0)->render($frame, new Rect(0, 0, 20, 10), new RenderContext(Theme::dark()));
+        DropdownPopup::of([], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 20, 10), new RenderContext(Theme::dark()));
 
         $dividerRow = ScreenBuffer::fromFrame($frame)->getLine(2);
 
@@ -93,7 +94,7 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $frame = new Frame(10, 4);
 
-        DropdownPopup::of([], [], 0, '', 0)->render($frame, new Rect(0, 0, 10, 4), new RenderContext(Theme::dark()));
+        DropdownPopup::of([], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 10, 4), new RenderContext(Theme::dark()));
 
         self::assertStringContainsString('─', ScreenBuffer::fromFrame($frame)->getLine(2), 'Two inner rows is exactly enough room for the divider');
     }
@@ -103,7 +104,7 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $query = 'Z' . str_repeat('x', 16);
 
-        $screen = self::render(DropdownPopup::of(['only'], [], 0, $query, 0));
+        $screen = self::render(DropdownPopup::of(['only'], [], 0, $query, 0, new FloatTarget()));
 
         self::assertStringNotContainsString(
             'Z',
@@ -117,7 +118,7 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $frame = new Frame(10, 10);
 
-        DropdownPopup::of(['a'], [], 0, '', 0)->render($frame, new Rect(0, 0, 4, 10), new RenderContext(Theme::dark()));
+        DropdownPopup::of(['a'], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 4, 10), new RenderContext(Theme::dark()));
 
         self::assertStringNotContainsString(
             '1',
@@ -137,7 +138,7 @@ final class DropdownPopupRenderTest extends TestCase
         );
 
         $frame = new Frame(30, 10);
-        DropdownPopup::of(['a', 'b'], [], 0, 'a', 0)->render($frame, new Rect(0, 0, 20, 7), new RenderContext($theme));
+        DropdownPopup::of(['a', 'b'], [], 0, 'a', 0, new FloatTarget())->render($frame, new Rect(0, 0, 20, 7), new RenderContext($theme));
 
         self::assertSame($theme->base->foregroundValue(), $frame->foreground($frame->width + 1));
     }
@@ -145,7 +146,7 @@ final class DropdownPopupRenderTest extends TestCase
     #[Test]
     public function theOptionCountIsShownAtItsExactColumn(): void
     {
-        $screen = self::render(DropdownPopup::of(['a', 'b', 'c'], [], 0, '', 0));
+        $screen = self::render(DropdownPopup::of(['a', 'b', 'c'], [], 0, '', 0, new FloatTarget()));
 
         self::assertSame('3', $screen->getTextAt(1, 18, 1), 'Three options, drawn at inner->right() minus its own width');
     }
@@ -156,7 +157,7 @@ final class DropdownPopupRenderTest extends TestCase
         $options = array_map(static fn (int $index): string => 'opt' . $index, range(1, 8));
         $frame = new Frame(30, 10);
 
-        DropdownPopup::of($options, [], 0, '', 0)->render($frame, new Rect(0, 0, 20, 10), new RenderContext(Theme::dark()));
+        DropdownPopup::of($options, [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 20, 10), new RenderContext(Theme::dark()));
 
         $screen = ScreenBuffer::fromFrame($frame)->getPlainText();
         self::assertStringContainsString('opt6', $screen, 'The sixth option fits in the six available rows');
@@ -168,7 +169,7 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $frame = new Frame(30, 10);
 
-        DropdownPopup::of(['yaml', 'yml', 'json'], [], 0, '', 0)->render($frame, new Rect(0, 0, 8, 3), new RenderContext(Theme::dark()));
+        DropdownPopup::of(['yaml', 'yml', 'json'], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 8, 3), new RenderContext(Theme::dark()));
 
         self::assertStringNotContainsString('yaml', ScreenBuffer::fromFrame($frame)->getPlainText());
     }
@@ -179,7 +180,7 @@ final class DropdownPopupRenderTest extends TestCase
         $theme = Theme::dark();
         $frame = new Frame(30, 10);
 
-        DropdownPopup::of(['yaml', 'yml', 'json'], [], 1, '', 0)->render($frame, new Rect(0, 0, 20, 8), new RenderContext($theme));
+        DropdownPopup::of(['yaml', 'yml', 'json'], [], 1, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 20, 8), new RenderContext($theme));
 
         $cursorRowCell = 4 * $frame->width + 1;
         $otherRowCell = 3 * $frame->width + 1;
@@ -204,7 +205,7 @@ final class DropdownPopupRenderTest extends TestCase
     #[Test]
     public function drawsTheLabelInsteadOfTheRawOptionValue(): void
     {
-        $screen = self::render(DropdownPopup::of(['yml'], ['yml' => 'YAML file'], 0, '', 0));
+        $screen = self::render(DropdownPopup::of(['yml'], ['yml' => 'YAML file'], 0, '', 0, new FloatTarget()));
 
         self::assertStringContainsString('YAML file', $screen->getLine(3));
         self::assertStringNotContainsString('yml', $screen->getLine(3));
@@ -216,7 +217,7 @@ final class DropdownPopupRenderTest extends TestCase
         $frame = new Frame(30, 10);
         $context = new RenderContext(Theme::dark());
 
-        DropdownPopup::of(['yaml'], [], 0, '', 0)->render($frame, new Rect(0, 0, 8, 3), $context);
+        DropdownPopup::of(['yaml'], [], 0, '', 0, new FloatTarget())->render($frame, new Rect(0, 0, 8, 3), $context);
 
         $bottomBorderRow = 2;
         $bottomBorderIndex = $bottomBorderRow * $frame->width + 1;

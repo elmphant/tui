@@ -12,6 +12,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -50,6 +51,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         private ?Matcher $matcher = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private FloatTarget $floatTarget = new FloatTarget(),
     ) {
     }
 
@@ -128,6 +130,10 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        if ($message instanceof FloatMouseMsg) {
+            return new UpdateResult($this->floatMoused($message));
+        }
+
         if ($message instanceof MouseMsg) {
             return new UpdateResult($this->moused($message, $area));
         }
@@ -169,11 +175,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         );
 
         if ($this->open) {
-            $context->float(
-                $frame,
-                DropdownPopup::of($this->filtered(), $this->labels, $this->cursor, $this->query, $this->scroll),
-                $area,
-            );
+            $context->float($frame, $this->popupOf($this->filtered()), $area);
         }
     }
 
@@ -194,56 +196,58 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         );
     }
 
-    private function moused(MouseMsg $message, Rect $area): self
+    /**
+     * The popup the drain drew answers, not the current state: the reader
+     * picked the row they saw, and the widget may have scrolled since.
+     */
+    private function floatMoused(FloatMouseMsg $message): self
     {
-        if (!$this->open) {
-            return $message->isClick() && $message->inRect($area)
-                ? $this->openedOn($area, $message->screen)
-                : $this;
+        $popup = $message->float->float;
+
+        if (!$this->open || !$popup instanceof DropdownPopup || $popup->target() !== $this->floatTarget) {
+            return $this;
         }
 
-        $filtered = $this->filtered();
-        $placement = $this->placementIn($area, $filtered, $message->screen);
+        $placement = $message->float->placement;
+        $steps = $message->mouse->wheelSteps(1);
 
-        if ($placement === null || !$message->inRect($placement)) {
-            return $message->isClick() ? $this->closed() : $this;
-        }
-
-        return match (true) {
-            $message->action === MouseAction::WheelUp => $this->scrolledBy(-$message->wheelSteps(1), $filtered, $area, $message->screen),
-            $message->action === MouseAction::WheelDown => $this->scrolledBy($message->wheelSteps(1), $filtered, $area, $message->screen),
-            $message->isClick() => $this->clickedRow($message->y - $placement->y, $placement, $filtered),
+        return match ($message->mouse->action) {
+            MouseAction::WheelUp => $this->scrolledInDrawn(-$steps, $popup, $placement),
+            MouseAction::WheelDown => $this->scrolledInDrawn($steps, $popup, $placement),
+            MouseAction::Press => $this->pickedFromDrawn($popup, $placement, $message->mouse->y),
             default => $this,
         };
     }
 
-    /**
-     * @param list<string> $filtered
-     */
-    private function scrolledBy(int $steps, array $filtered, Rect $area, ?Rect $screen): self
+    private function pickedFromDrawn(DropdownPopup $popup, Rect $placement, int $row): self
     {
-        $rows = $this->visibleRows($filtered, $area, $screen);
-        $furthest = max(0, count($filtered) - $rows);
+        $value = $popup->optionAt($placement, $row);
+
+        if ($value === null || !in_array($value, $this->options, true)) {
+            return $this;
+        }
+
+        return $this->cloneWith(selected: $value)->closed();
+    }
+
+    private function scrolledInDrawn(int $steps, DropdownPopup $popup, Rect $placement): self
+    {
+        $furthest = max(0, count($this->filtered()) - $popup->optionRowsIn($placement));
 
         return $this->cloneWith(scroll: max(0, min($furthest, $this->scroll + $steps)));
     }
 
-    /**
-     * @param list<string> $filtered
-     */
-    private function clickedRow(int $offsetInPopup, Rect $placement, array $filtered): self
+    private function moused(MouseMsg $message, Rect $area): self
     {
-        if ($offsetInPopup < DropdownPopup::CHROME || $offsetInPopup >= $placement->height - 1) {
+        if (!$message->isClick()) {
             return $this;
         }
 
-        $index = $this->scroll + $offsetInPopup - DropdownPopup::CHROME;
-
-        if ($index > count($filtered) - 1) {
-            return $this;
+        if (!$message->inRect($area)) {
+            return $this->open ? $this->closed() : $this;
         }
 
-        return $this->cloneWith(cursor: $index)->picked($filtered);
+        return $this->open ? $this->closed() : $this->openedOn($area, $message->screen);
     }
 
     private function keyedWhileOpen(KeyMsg $message, Rect $area): self
@@ -320,26 +324,21 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
      */
     private function visibleRows(array $filtered, Rect $area, ?Rect $screen): int
     {
-        $placement = $this->placementIn($area, $filtered, $screen);
-
-        if ($placement === null) {
+        if ($screen === null) {
             return count($filtered);
         }
 
-        return max(0, $placement->height - DropdownPopup::CHROME - 1);
+        $popup = $this->popupOf($filtered);
+
+        return $popup->optionRowsIn($popup->placement($area, $screen));
     }
 
     /**
      * @param list<string> $filtered
      */
-    private function placementIn(Rect $area, array $filtered, ?Rect $screen): ?Rect
+    private function popupOf(array $filtered): DropdownPopup
     {
-        if ($screen === null) {
-            return null;
-        }
-
-        return DropdownPopup::of($filtered, $this->labels, $this->cursor, $this->query, $this->scroll)
-            ->placement($area, $screen);
+        return DropdownPopup::of($filtered, $this->labels, $this->cursor, $this->query, $this->scroll, $this->floatTarget);
     }
 
     /**

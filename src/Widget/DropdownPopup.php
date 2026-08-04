@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
 use Elmphant\Tui\Rendering\CharWidth;
@@ -15,13 +16,15 @@ use Elmphant\Tui\Rendering\RenderContext;
 /**
  * The floating half of a Dropdown. Never `Dropdown` itself — the drain would redraw and requeue it.
  */
-final readonly class DropdownPopup implements Floating
+final readonly class DropdownPopup implements PointerFloating
 {
-    public const CHROME = 3;
+    private const CHROME = 3;
 
     private const PLACEHOLDER = 'Filter…';
 
     private const GAP = 1;
+
+    private const MIN_SIDE = 3;
 
     /**
      * @param list<string>          $options
@@ -33,6 +36,7 @@ final readonly class DropdownPopup implements Floating
         private int $cursor,
         private string $query,
         private int $scroll,
+        private FloatTarget $floatTarget,
     ) {
     }
 
@@ -40,9 +44,22 @@ final readonly class DropdownPopup implements Floating
      * @param list<string>          $options
      * @param array<string, string> $labels
      */
-    public static function of(array $options, array $labels, int $cursor, string $query, int $scroll): self
+    public static function of(array $options, array $labels, int $cursor, string $query, int $scroll, FloatTarget $target): self
     {
-        return new self($options, $labels, $cursor, $query, $scroll);
+        return new self($options, $labels, $cursor, $query, $scroll, $target);
+    }
+
+    public function target(): FloatTarget
+    {
+        return $this->floatTarget;
+    }
+
+    public function captures(MouseAction $action): bool
+    {
+        return match ($action) {
+            MouseAction::Press, MouseAction::WheelUp, MouseAction::WheelDown => true,
+            MouseAction::Motion, MouseAction::Release => false,
+        };
     }
 
     public function placement(Rect $anchor, Rect $viewport): Rect
@@ -56,13 +73,36 @@ final readonly class DropdownPopup implements Floating
 
         $width = min($viewport->width, $this->wantedWidth($anchor->width));
         $x = max($viewport->x, min($anchor->x, $viewport->right() - $width));
+        $y = $opensDown ? $anchor->bottom() : $anchor->y - $height;
 
-        return new Rect(
-            $x,
-            $opensDown ? $anchor->bottom() : $anchor->y - $height,
-            $width,
-            $height,
-        );
+        if ($width < self::MIN_SIDE || $height < self::MIN_SIDE) {
+            return new Rect($x, $y, 0, 0);
+        }
+
+        return new Rect($x, $y, $width, $height);
+    }
+
+    /**
+     * How many options the popup shows at this size.
+     */
+    public function optionRowsIn(Rect $placement): int
+    {
+        return max(0, $placement->height - self::CHROME - 1);
+    }
+
+    /**
+     * The option drawn on row $y, or null for the chrome rows and for rows
+     * past the end of the drawn window.
+     */
+    public function optionAt(Rect $placement, int $y): ?string
+    {
+        $offset = $y - $placement->y;
+
+        if ($offset < self::CHROME || $offset >= $placement->height - 1) {
+            return null;
+        }
+
+        return $this->options[$this->scroll + $offset - self::CHROME] ?? null;
     }
 
     public function constraint(): Constraint

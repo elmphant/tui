@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\DropdownPopup;
+use Elmphant\Tui\Widget\FloatTarget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -146,27 +147,27 @@ final class DropdownPopupPlacementTest extends TestCase
     }
 
     #[Test]
-    public function wantedHeightIsChromePlusOneRowPerOption(): void
+    public function wantedHeightLeavesExactlyOneRowPerOption(): void
     {
-        $placement = self::popup(['a', 'b'])
-            ->placement(new Rect(0, 0, 20, 1), Rect::fromSize(80, 24));
+        $popup = self::popup(['a', 'b']);
 
-        self::assertSame(DropdownPopup::CHROME + 1 + 2, $placement->height);
+        $placement = $popup->placement(new Rect(0, 0, 20, 1), Rect::fromSize(80, 24));
+
+        self::assertSame(2, $popup->optionRowsIn($placement), 'with room to spare every option gets a row, and none is spare');
     }
 
     #[Test]
-    public function widthNeverShrinksBelowTwoPlusBordersEvenWithNoOptions(): void
+    public function widthReservesOneCellForEachBorderAroundTheWidestOption(): void
     {
-        $placement = self::popup([])
-            ->placement(new Rect(0, 0, 1, 1), Rect::fromSize(80, 24));
+        $placement = self::popup(['ab'])->placement(new Rect(0, 0, 1, 1), Rect::fromSize(80, 24));
 
-        self::assertSame(2, $placement->width, 'An empty list still reserves room for the two side borders');
+        self::assertSame(4, $placement->width, 'two cells for the option, one for each border');
     }
 
     #[Test]
     public function widthAccountsForTheLabelNotJustTheRawValue(): void
     {
-        $placement = DropdownPopup::of(['x'], ['x' => 'a much longer label'], 0, '', 0)
+        $placement = DropdownPopup::of(['x'], ['x' => 'a much longer label'], 0, '', 0, new FloatTarget())
             ->placement(new Rect(0, 0, 3, 1), Rect::fromSize(80, 24));
 
         self::assertGreaterThanOrEqual(
@@ -177,17 +178,22 @@ final class DropdownPopupPlacementTest extends TestCase
     }
 
     #[Test]
-    public function stillShowsAtLeastOneOptionWhenHalfTheViewportFallsBelowTheChrome(): void
+    public function stillShowsAtLeastOneOptionWhenHalfTheViewportIsOnlyChrome(): void
     {
         $many = array_map(static fn (int $index): string => 'option ' . $index, range(1, 40));
         $viewport = Rect::fromSize(80, 7);
+        $popup = self::popup($many);
 
-        self::assertLessThanOrEqual(DropdownPopup::CHROME, intdiv($viewport->height, 2), 'Precondition: half the viewport is at or below the chrome');
+        self::assertSame(
+            0,
+            $popup->optionRowsIn(new Rect(0, 0, 20, intdiv($viewport->height, 2))),
+            'Precondition: half of this viewport is all chrome and no options',
+        );
 
-        $placement = self::popup($many)->placement(new Rect(0, 0, 20, 1), $viewport);
+        $placement = $popup->placement(new Rect(0, 0, 20, 1), $viewport);
 
         self::assertLessThanOrEqual($viewport->height, $placement->height, 'Never taller than the viewport itself');
-        self::assertGreaterThanOrEqual(1, $placement->height - DropdownPopup::CHROME - 1, 'At least one option row is visible');
+        self::assertGreaterThanOrEqual(1, $popup->optionRowsIn($placement), 'At least one option row is visible');
     }
 
     #[Test]
@@ -229,6 +235,6 @@ final class DropdownPopupPlacementTest extends TestCase
      */
     private static function popup(array $options): DropdownPopup
     {
-        return DropdownPopup::of($options, [], 0, '', 0);
+        return DropdownPopup::of($options, [], 0, '', 0, new FloatTarget());
     }
 }
