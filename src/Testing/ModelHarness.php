@@ -6,12 +6,15 @@ namespace Elmphant\Tui\Testing;
 
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Model;
+use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ResizeMsg;
+use Elmphant\Tui\Rendering\FloatPlacement;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\InputRouter;
 use InvalidArgumentException;
 use LogicException;
 
@@ -26,6 +29,7 @@ final class ModelHarness
 {
     private Rect $area;
     private ?Cmd $lastCommand = null;
+    private readonly RenderContext $context;
 
     /**
      * @param TModel $model
@@ -34,9 +38,10 @@ final class ModelHarness
         private Model $model,
         int $width,
         int $height,
-        private readonly Theme $theme,
+        Theme $theme,
     ) {
         $this->area = Rect::fromSize($width, $height);
+        $this->context = new RenderContext($theme);
     }
 
     /**
@@ -72,15 +77,11 @@ final class ModelHarness
      */
     public function dispatch(Message $message): self
     {
-        $result = $this->model->update($message, $this->area);
-
-        // @phpstan-ignore instanceof.alwaysTrue (runtime guard for implementations that violate their PHPDoc contract)
-        if (!$result->model instanceof Model) {
-            throw new LogicException(sprintf('ModelHarness update must return a Model, got %s', get_debug_type($result->model)));
-        }
+        $routed = InputRouter::route($message, $this->area, $this->context->floatPlacements());
+        $result = $this->model->update($routed, $this->area);
 
         /** @var TModel $next */
-        $next = $result->model;
+        $next = self::requireModel($result->model);
         $this->model = $next;
         $this->lastCommand = $result->command;
 
@@ -120,14 +121,36 @@ final class ModelHarness
     public function renderFrame(): Frame
     {
         $frame = new Frame($this->area->width, $this->area->height);
-        $this->model->render($frame, new RenderContext($this->theme));
+
+        $this->context->beginFrame(0.0);
+        $this->model->render($frame, $this->context);
+        $this->context->commitFloatPlacements();
 
         return $frame;
+    }
+
+    /**
+     * @internal the floats the last successful render drew, as input routes over them
+     *
+     * @return list<FloatPlacement>
+     */
+    public function floatPlacements(): array
+    {
+        return $this->context->floatPlacements();
     }
 
     public function renderScreen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
+    }
+
+    private static function requireModel(Reducer $model): Model
+    {
+        if (!$model instanceof Model) {
+            throw new LogicException(sprintf('ModelHarness update must return a Model, got %s', get_debug_type($model)));
+        }
+
+        return $model;
     }
 
     private static function assertDimensions(int $width, int $height): void

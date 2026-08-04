@@ -16,6 +16,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -24,11 +25,14 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Rendering\FloatPlacement;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
 use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Tests\Support\TestPopup;
+use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
@@ -240,6 +244,31 @@ final class AppTest extends TestCase
     }
 
     #[Test]
+    public function aFloatMouseMsgReachesTheOnMessageHookWhenNoComponentsAreBound(): void
+    {
+        $app = new FloatHookApp();
+        $message = self::floatMouse();
+
+        $result = $app->update($message, Rect::fromSize(80, 24));
+
+        self::assertInstanceOf(FloatHookApp::class, $result->model);
+        self::assertSame($message, $result->model->received);
+    }
+
+    #[Test]
+    public function aFloatMouseMsgReachesAnUnfocusedBoundComponent(): void
+    {
+        $app = new FloatBroadcastApp(new FloatRecordingWidget());
+        $message = self::floatMouse();
+
+        $result = $app->update($message, Rect::fromSize(80, 24));
+
+        self::assertInstanceOf(FloatBroadcastApp::class, $result->model);
+        self::assertSame($message, $result->model->widget->receivedFloat, 'broadcast, not focus delegation');
+        self::assertNull($result->model->received, 'the hook runs, and the broadcast still happens');
+    }
+
+    #[Test]
     public function onMessageReceivesCustomMessages(): void
     {
         $app = new CounterApp();
@@ -404,6 +433,16 @@ final class AppTest extends TestCase
     protected function setUp(): void
     {
         $this->context = new RenderContext(Theme::dark());
+    }
+
+    private static function floatMouse(): FloatMouseMsg
+    {
+        $placement = new Rect(5, 5, 10, 4);
+
+        return new FloatMouseMsg(
+            new MouseMsg(6, 6, MouseAction::Press, MouseButton::Left),
+            new FloatPlacement(new TestPopup($placement), $placement, $placement),
+        );
     }
 }
 
@@ -683,6 +722,85 @@ final readonly class ResizeTrackingApp extends CopyableTestApp
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
         return UpdateResult::changed($this->cloneWith(messageReceived: true));
+    }
+}
+
+final readonly class FloatHookApp extends CopyableTestApp
+{
+    public function __construct(public ?FloatMouseMsg $received = null)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Text::new('shell');
+    }
+
+    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    {
+        return $message instanceof FloatMouseMsg
+            ? UpdateResult::changed($this->cloneWith(received: $message))
+            : UpdateResult::keep($this);
+    }
+}
+
+final readonly class FloatRecordingWidget implements Focusable
+{
+    public function __construct(
+        public ?FloatMouseMsg $receivedFloat = null,
+        public int $plainMouseSeen = 0,
+        private bool $focused = false,
+    ) {
+    }
+
+    public function isFocused(): bool
+    {
+        return $this->focused;
+    }
+
+    public function withFocus(bool $focused): static
+    {
+        return new self($this->receivedFloat, $this->plainMouseSeen, $focused);
+    }
+
+    public function constraint(): Constraint
+    {
+        return Constraint::exact(1);
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof FloatMouseMsg) {
+            return UpdateResult::changed(new self($message, $this->plainMouseSeen, $this->focused));
+        }
+
+        if ($message instanceof MouseMsg) {
+            return UpdateResult::changed(new self($this->receivedFloat, $this->plainMouseSeen + 1, $this->focused));
+        }
+
+        return UpdateResult::keep($this);
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+    }
+}
+
+final readonly class FloatBroadcastApp extends CopyableTestApp
+{
+    public function __construct(
+        public FloatRecordingWidget $widget,
+        public ?FloatMouseMsg $received = null,
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            ComponentId::named('float-recording-widget'),
+            $this->widget,
+            static fn (self $app, FloatRecordingWidget $widget): self => $app->cloneWith(widget: $widget),
+        );
     }
 }
 

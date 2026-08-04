@@ -23,6 +23,16 @@ final readonly class MouseMsg implements Message
     ) {
     }
 
+    public function withScreen(Rect $screen): self
+    {
+        return new self($this->x, $this->y, $this->action, $this->button, $this->repeat, $screen);
+    }
+
+    public function withRepeat(int $repeat): self
+    {
+        return new self($this->x, $this->y, $this->action, $this->button, $repeat, $this->screen);
+    }
+
     /**
      * How far to scroll for this event. Always use this instead of the step on
      * its own: one event can stand for many notches.
@@ -34,7 +44,7 @@ final readonly class MouseMsg implements Message
 
     public function mergedWith(self $next): self
     {
-        return new self($next->x, $next->y, $next->action, $next->button, $this->repeat + $next->repeat, $next->screen);
+        return $next->withRepeat($this->repeat + $next->repeat);
     }
 
     public function inRect(Rect $rect): bool

@@ -10,18 +10,25 @@ use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Tests\Support\FloatingModel;
+use Elmphant\Tui\Tests\Support\TestPopup;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class ModelHarnessTest extends TestCase
 {
@@ -150,6 +157,68 @@ final class ModelHarnessTest extends TestCase
 
         $harness->dispatch(new KeyMsg('x'));
     }
+
+    #[Test]
+    public function aClickOverAFloatDrawnByTheLastRenderIsWrappedForThatFloat(): void
+    {
+        $popup = new TestPopup(new Rect(5, 5, 10, 4));
+        $model = new FloatingModel($popup);
+        $harness = ModelHarness::for($model);
+
+        $harness->renderFrame();
+
+        self::assertCount(1, $harness->floatPlacements(), 'the popup must be drawn before the click can land on it');
+
+        $harness->dispatch(new MouseMsg(6, 6, MouseAction::Press, MouseButton::Left));
+
+        self::assertInstanceOf(FloatMouseMsg::class, $model->received);
+        self::assertSame($popup, $model->received->float->float);
+    }
+
+    #[Test]
+    public function aClickBeforeTheFirstRenderIsPlain(): void
+    {
+        $model = new FloatingModel(new TestPopup(new Rect(5, 5, 10, 4)));
+        $harness = ModelHarness::for($model);
+
+        $harness->dispatch(new MouseMsg(6, 6, MouseAction::Press, MouseButton::Left));
+
+        self::assertInstanceOf(MouseMsg::class, $model->received);
+    }
+
+    #[Test]
+    public function aRenderThatThrowsLeavesTheFloatsOfTheFrameBeforeItRoutable(): void
+    {
+        $shown = new TestPopup(new Rect(0, 0, 4, 2), 'S');
+        $model = new FloatingModel($shown);
+        $harness = ModelHarness::for($model);
+
+        $harness->renderFrame();
+
+        $model->float = new TestPopup(new Rect(10, 10, 6, 3), 'N');
+        $model->throwAfterRenderRoot = true;
+
+        try {
+            $harness->renderFrame();
+            self::fail('renderFrame() should have propagated the render failure');
+        } catch (RuntimeException) {
+        }
+
+        self::assertSame($shown, $harness->floatPlacements()[0]->float);
+    }
+
+    #[Test]
+    public function everyRenderStartsAFreshFrameForRepaintRequests(): void
+    {
+        $model = new RepaintOnceModel();
+        $harness = ModelHarness::for($model);
+
+        $harness->renderFrame();
+        $model->askForRepaint = false;
+        $harness->renderFrame();
+
+        self::assertNull($model->delaySeenByTheSecondRender);
+    }
 }
 
 final readonly class HarnessCounter extends App
@@ -199,6 +268,36 @@ final readonly class AreaRecordingModel implements Model
     public function render(Frame $frame, RenderContext $context): void
     {
         $frame->putString(0, 0, "{$frame->width}x{$frame->height}");
+    }
+}
+
+final class RepaintOnceModel implements Model
+{
+    public bool $askForRepaint = true;
+    public ?float $delaySeenByTheSecondRender = null;
+    private bool $rendered = false;
+
+    public function init(): ?Cmd
+    {
+        return null;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return UpdateResult::keep($this);
+    }
+
+    public function render(Frame $frame, RenderContext $context): void
+    {
+        if ($this->rendered) {
+            $this->delaySeenByTheSecondRender = $context->repaintDelay();
+        }
+
+        $this->rendered = true;
+
+        if ($this->askForRepaint) {
+            $context->requestRepaint(0.5);
+        }
     }
 }
 

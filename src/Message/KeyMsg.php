@@ -17,4 +17,9 @@ final readonly class KeyMsg implements Message
         public ?Rect $screen = null,
     ) {
     }
+
+    public function withScreen(Rect $screen): self
+    {
+        return new self($this->key, $this->ctrl, $this->alt, $this->shift, $this->eventType, $screen);
+    }
 }

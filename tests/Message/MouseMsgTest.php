@@ -86,4 +86,38 @@ final class MouseMsgTest extends TestCase
 
         self::assertSame($second->screen, $first->mergedWith($second)->screen);
     }
+
+    #[Test]
+    public function withScreenChangesTheScreenRectAndNothingElse(): void
+    {
+        $screen = new Rect(0, 0, 100, 30);
+        $stamped = self::fullyPopulated()->withScreen($screen);
+
+        self::assertSame($screen, $stamped->screen);
+        self::assertSame(7, $stamped->x);
+        self::assertSame(9, $stamped->y);
+        self::assertSame(MouseAction::WheelDown, $stamped->action);
+        self::assertSame(MouseButton::Middle, $stamped->button);
+        self::assertSame(4, $stamped->repeat);
+    }
+
+    #[Test]
+    public function aMergeSumsTheRepeatCountAndKeepsEveryOtherFieldOfTheNewerEvent(): void
+    {
+        $newer = new MouseMsg(11, 13, MouseAction::WheelUp, MouseButton::Left, 2, new Rect(0, 0, 100, 30));
+
+        $merged = self::fullyPopulated()->mergedWith($newer);
+
+        self::assertSame(6, $merged->repeat);
+        self::assertSame(11, $merged->x);
+        self::assertSame(13, $merged->y);
+        self::assertSame(MouseAction::WheelUp, $merged->action);
+        self::assertSame(MouseButton::Left, $merged->button);
+        self::assertSame($newer->screen, $merged->screen);
+    }
+
+    private static function fullyPopulated(): MouseMsg
+    {
+        return new MouseMsg(7, 9, MouseAction::WheelDown, MouseButton::Middle, 4, new Rect(0, 0, 80, 24));
+    }
 }

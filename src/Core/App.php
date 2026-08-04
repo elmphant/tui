@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Core;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\LayoutSnapshot;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
@@ -228,6 +229,14 @@ abstract readonly class App implements Model
             return $this->broadcastTo($appResult, $message, $screenRect, $current->componentRegistry()->all());
         }
 
+        if ($message instanceof FloatMouseMsg) {
+            $appResult = $this->onMessage($message, $screenRect);
+            /** @var static $current */
+            $current = $appResult->model;
+
+            return $this->broadcastTo($appResult, $message, $screenRect, $current->componentRegistry()->all());
+        }
+
         return $this->onMessage($message, $screenRect);
     }
 
@@ -252,6 +261,14 @@ abstract readonly class App implements Model
 
         if ($message instanceof TickMsg) {
             $appResult = $this->onTick($message);
+            /** @var static $current */
+            $current = $appResult->model;
+
+            return $this->broadcastTo($appResult, $message, $screenRect, $current->componentRegistry()->all());
+        }
+
+        if ($message instanceof FloatMouseMsg) {
+            $appResult = $this->onMessage($message, $screenRect);
             /** @var static $current */
             $current = $appResult->model;
 

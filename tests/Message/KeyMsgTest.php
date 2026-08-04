@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Message;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -90,5 +91,20 @@ final class KeyMsgTest extends TestCase
         $screen = new Rect(0, 0, 80, 24);
 
         self::assertSame($screen, (new KeyMsg('a', screen: $screen))->screen);
+    }
+
+    #[Test]
+    public function withScreenChangesTheScreenRectAndNothingElse(): void
+    {
+        $screen = new Rect(0, 0, 100, 30);
+        $stamped = (new KeyMsg(Key::Enter, true, true, true, KeyEventType::Repeat, new Rect(0, 0, 80, 24)))
+            ->withScreen($screen);
+
+        self::assertSame($screen, $stamped->screen);
+        self::assertSame(Key::Enter, $stamped->key);
+        self::assertTrue($stamped->ctrl);
+        self::assertTrue($stamped->alt);
+        self::assertTrue($stamped->shift);
+        self::assertSame(KeyEventType::Repeat, $stamped->eventType);
     }
 }

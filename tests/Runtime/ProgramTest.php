@@ -13,6 +13,7 @@ use Elmphant\Tui\Core\ShutdownAware;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -26,7 +27,9 @@ use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Runtime\TerminalSession;
 use Elmphant\Tui\Runtime\TickerRecord;
 use Elmphant\Tui\Runtime\TimerRecord;
+use Elmphant\Tui\Tests\Support\FloatingModel;
 use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Tests\Support\TestPopup;
 use Error;
 use InvalidArgumentException;
 use LogicException;
@@ -2022,6 +2025,109 @@ final class ProgramTest extends TestCase
 
         self::assertNotNull($observingModel->received);
         self::assertEquals(new Rect(0, 0, 120, 40), $observingModel->received->screen, 'The rect stamped on the key message must match the one the frame will be built from');
+    }
+
+    #[Test]
+    public function theStampedScreenRectIsTheAreaTheFrameWasDrawnInto(): void
+    {
+        $observingModel = new class implements Model {
+            public ?MouseMsg $received = null;
+            public ?Rect $renderedArea = null;
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if ($message instanceof MouseMsg) {
+                    $this->received = $message;
+                }
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+                $this->renderedArea = $frame->area();
+            }
+        };
+
+        $program = $this->createRenderablePrgram($observingModel);
+        $reflection = new ReflectionClass($program);
+        $reflection->getMethod('renderFrame')->invoke($program);
+
+        $queue = new SplQueue();
+        $queue->enqueue(new MouseMsg(3, 4, MouseAction::Press, MouseButton::Left));
+        $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getMethod('drainMessageQueue')->invoke($program);
+
+        self::assertNotNull($observingModel->received);
+        self::assertEquals($observingModel->renderedArea, $observingModel->received->screen);
+    }
+
+    #[Test]
+    public function aPressOverADrawnFloatArrivesAsAFloatMouseMsg(): void
+    {
+        $popup = new TestPopup(new Rect(5, 5, 10, 4));
+        $model = new FloatingModel($popup);
+
+        $program = $this->createRenderablePrgram($model);
+        $reflection = new ReflectionClass($program);
+        $reflection->getMethod('renderFrame')->invoke($program);
+
+        $queue = new SplQueue();
+        $queue->enqueue(new MouseMsg(6, 6, MouseAction::Press, MouseButton::Left));
+        $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getMethod('drainMessageQueue')->invoke($program);
+
+        self::assertInstanceOf(FloatMouseMsg::class, $model->received);
+        self::assertSame($popup, $model->received->float->float);
+    }
+
+    #[Test]
+    public function twoQueuedWheelEventsOverAFloatArriveAsOneMessageWithBothNotches(): void
+    {
+        $popup = new TestPopup(new Rect(5, 5, 10, 4));
+        $model = new FloatingModel($popup);
+
+        $program = $this->createRenderablePrgram($model);
+        $reflection = new ReflectionClass($program);
+        $reflection->getMethod('renderFrame')->invoke($program);
+
+        $enqueue = $reflection->getMethod('enqueueInputMessage');
+        $enqueue->invoke($program, new MouseMsg(6, 6, MouseAction::WheelDown, MouseButton::None));
+        $enqueue->invoke($program, new MouseMsg(6, 6, MouseAction::WheelDown, MouseButton::None));
+
+        $reflection->getMethod('drainMessageQueue')->invoke($program);
+
+        self::assertInstanceOf(FloatMouseMsg::class, $model->received);
+        self::assertSame(2, $model->received->mouse->repeat);
+        self::assertSame(1, $model->messagesSeen, 'coalescing must still merge the run into one message');
+    }
+
+    #[Test]
+    public function aRenderThatThrowsAfterRenderRootKeepsRoutingOverTheFrameOnTheScreen(): void
+    {
+        $shown = new TestPopup(new Rect(0, 0, 4, 2), 'S');
+        $neverShown = new TestPopup(new Rect(10, 10, 6, 3), 'N');
+        $model = new FloatingModel($shown);
+
+        $program = $this->createRenderablePrgram($model);
+        $reflection = new ReflectionClass($program);
+        $reflection->getMethod('renderFrame')->invoke($program);
+
+        $model->float = $neverShown;
+        $model->throwAfterRenderRoot = true;
+        $reflection->getMethod('renderFrame')->invoke($program);
+
+        $queue = new SplQueue();
+        $queue->enqueue(new MouseMsg(11, 11, MouseAction::Press, MouseButton::Left));
+        $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getMethod('drainMessageQueue')->invoke($program);
+
+        self::assertInstanceOf(MouseMsg::class, $model->received, 'a frame that never reached the screen must not route input');
     }
 
     #[Test]
