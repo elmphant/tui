@@ -63,11 +63,8 @@ final class ModalTest extends TestCase
         }
 
         self::assertGreaterThan(0, $contentRow, 'Precondition: the content did draw inside the modal');
-        self::assertStringNotContainsString(
-            'X',
-            $screen->getLine($bottomBorderRow),
-            'the modal draws its border before its content, so the content must not paint over it',
-        );
+        self::assertStringNotContainsString('X', $screen->getLine($bottomBorderRow), 'nothing of it reached past the border');
+        self::assertStringContainsString('╰', $screen->getLine($bottomBorderRow), 'and the border ring is intact');
     }
 
     #[Test]
