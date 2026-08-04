@@ -188,8 +188,14 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
-            $child->render($frame, $childArea, $context);
+        $frame->pushClip($this->contentArea($area));
+
+        try {
+            foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+                $child->render($frame, $childArea, $context);
+            }
+        } finally {
+            $frame->popClip();
         }
 
         $this->block($context)->render($frame, $area);

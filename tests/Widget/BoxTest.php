@@ -12,6 +12,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Box;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Text;
@@ -21,6 +22,21 @@ use PHPUnit\Framework\TestCase;
 
 final class BoxTest extends TestCase
 {
+    #[Test]
+    public function aChildDrawingPastItsAreaIsCroppedByTheBoxBorder(): void
+    {
+        $frame = new Frame(40, 10);
+
+        Box::new('Held')->add(self::widgetDrawingPastItsArea())
+            ->render($frame, new Rect(0, 0, 12, 6), new RenderContext(Theme::dark()));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertStringContainsString('X', $screen->getLine(1), 'Precondition: the child did draw inside the box');
+        self::assertSame('', trim($screen->getTextAt(1, 12, 28)), 'and nothing of it reached past the right border');
+        self::assertSame('', trim($screen->getLine(8)), 'nor onto the rows below the box');
+    }
+
     #[Test]
     public function implementsWidget(): void
     {
@@ -330,6 +346,22 @@ final class BoxTest extends TestCase
         $box->render($frame, new Rect(0, 0, 10, 4), $context);
 
         self::assertSame(2, $receivedHeight, 'Child height must be clipped to available space (bottom - childY), not inflated');
+    }
+
+    private static function widgetDrawingPastItsArea(): Widget
+    {
+        return new class implements Widget {
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $frame->putString($area->x, $area->y, str_repeat('X', 36));
+                $frame->putString($area->x, $area->bottom(), str_repeat('X', 6));
+            }
+        };
     }
 
     private function createSpyWidget(Constraint $constraint, int &$renderCount): Widget

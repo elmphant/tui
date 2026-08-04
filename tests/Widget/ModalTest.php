@@ -29,6 +29,7 @@ use Elmphant\Tui\Widget\Modal;
 use Elmphant\Tui\Widget\Panel;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionObject;
@@ -36,6 +37,38 @@ use ReflectionObject;
 final class ModalTest extends TestCase
 {
     private RenderContext $context;
+
+    #[Test]
+    public function contentDrawingPastItsAreaIsCroppedByTheModalBorder(): void
+    {
+        $frame = new Frame(40, 20);
+
+        Modal::new('Held', self::widgetDrawingPastItsArea())
+            ->render($frame, new Rect(0, 0, 40, 20), new RenderContext(Theme::dark()));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        $bottomBorderRow = 0;
+        $contentRow = 0;
+
+        for ($row = 0; $row < 20; ++$row) {
+            $line = $screen->getLine($row);
+
+            if ($contentRow === 0 && str_contains($line, 'X')) {
+                $contentRow = $row;
+            }
+
+            if (str_contains($line, '╰')) {
+                $bottomBorderRow = $row;
+            }
+        }
+
+        self::assertGreaterThan(0, $contentRow, 'Precondition: the content did draw inside the modal');
+        self::assertStringNotContainsString(
+            'X',
+            $screen->getLine($bottomBorderRow),
+            'the modal draws its border before its content, so the content must not paint over it',
+        );
+    }
 
     #[Test]
     public function implementsInteractive(): void
@@ -1345,6 +1378,22 @@ final class ModalTest extends TestCase
     protected function setUp(): void
     {
         $this->context = new RenderContext(Theme::dark());
+    }
+
+    private static function widgetDrawingPastItsArea(): Widget
+    {
+        return new class implements Widget {
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $frame->putString($area->x, $area->y, str_repeat('X', 36));
+                $frame->putString($area->x, $area->bottom(), str_repeat('X', 6));
+            }
+        };
     }
 
     // ---------------------------------------------------------------

@@ -21,6 +21,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Container;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -35,6 +36,22 @@ use PHPUnit\Framework\TestCase;
 
 final class ContainerTest extends TestCase
 {
+    #[Test]
+    public function aChildDrawingPastItsAreaIsCroppedByTheContainerBorder(): void
+    {
+        $frame = new Frame(40, 10);
+        $container = Container::around(self::widgetDrawingPastItsArea())
+            ->withBorder(BorderStyle::Rounded);
+
+        $container->render($frame, new Rect(0, 0, 12, 6), new RenderContext(Theme::dark()));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertStringContainsString('X', $screen->getLine(1), 'Precondition: the child did draw inside the container');
+        self::assertSame('', trim($screen->getTextAt(1, 12, 28)), 'and nothing of it reached past the right border');
+        self::assertSame('', trim($screen->getLine(8)), 'nor onto the rows below the container');
+    }
+
     #[Test]
     public function itIsAnImmutableSingleChildContainer(): void
     {
@@ -436,6 +453,22 @@ final class ContainerTest extends TestCase
         [, $area] = iterator_to_array($container->childWidgets(Rect::fromSize(10, 5)))[0];
 
         self::assertTrue((new Rect(0, 0, 0, 0))->equals($area));
+    }
+
+    private static function widgetDrawingPastItsArea(): Widget
+    {
+        return new class implements Widget {
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $frame->putString($area->x, $area->y, str_repeat('X', 36));
+                $frame->putString($area->x, $area->bottom(), str_repeat('X', 6));
+            }
+        };
     }
 }
 

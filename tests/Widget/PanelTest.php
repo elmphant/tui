@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focusable;
@@ -46,6 +47,21 @@ use ReflectionMethod;
 final class PanelTest extends TestCase
 {
     use FocusableBehaviorTrait;
+
+    #[Test]
+    public function aChildDrawingPastItsAreaIsCroppedByThePanelBorder(): void
+    {
+        $frame = new Frame(40, 10);
+        $panel = Panel::new('Held')->withChildren([self::widgetDrawingPastItsArea()]);
+
+        $panel->render($frame, new Rect(0, 0, 12, 6), new RenderContext(Theme::dark()));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertStringContainsString('X', $screen->getLine(1), 'Precondition: the child did draw inside the panel');
+        self::assertSame('', trim($screen->getTextAt(1, 12, 28)), 'and nothing of it reached past the right border');
+        self::assertSame('', trim($screen->getLine(8)), 'nor onto the rows below the panel');
+    }
 
     #[Test]
     public function theTitleCanBeReplacedAfterConstruction(): void
@@ -3125,6 +3141,22 @@ final class PanelTest extends TestCase
     protected function createFocusable(): Focusable
     {
         return Panel::new('Test');
+    }
+
+    private static function widgetDrawingPastItsArea(): Widget
+    {
+        return new class implements Widget {
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                $frame->putString($area->x, $area->y, str_repeat('X', 36));
+                $frame->putString($area->x, $area->bottom(), str_repeat('X', 6));
+            }
+        };
     }
 
     private function screenWith(Panel $panel, Rect $area, Theme $theme): string

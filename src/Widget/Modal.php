@@ -197,8 +197,14 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
         $contentRect = $block->inner($modalRect);
 
         if ($contentRect->width > 0 && $contentRect->height > 0) {
-            foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
-                $child->render($frame, $childArea, $context);
+            $frame->pushClip($contentRect);
+
+            try {
+                foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+                    $child->render($frame, $childArea, $context);
+                }
+            } finally {
+                $frame->popClip();
             }
         }
     }
