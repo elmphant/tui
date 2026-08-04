@@ -52,6 +52,38 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
+    public function theFirstEscapeClearsATypedFilterAndKeepsTheListOpen(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+
+        $narrowed = self::opened(Dropdown::new(['json', 'yaml', 'toml']))
+            ->update(new KeyMsg('y'), $area)->model;
+
+        self::assertTrue($narrowed->hasFilterText(), 'Precondition: the field holds a query');
+        self::assertStringNotContainsString('json', self::screen($narrowed)->getPlainText(), 'Precondition: the query hid json');
+
+        $cleared = $narrowed->update(new KeyMsg(Key::Escape), $area)->model;
+
+        self::assertTrue($cleared->isOpen(), 'the first escape widens the list rather than throwing it away');
+        self::assertFalse($cleared->hasFilterText());
+        self::assertStringContainsString('json', self::screen($cleared)->getPlainText(), 'and the option it hid is offered again');
+    }
+
+    #[Test]
+    public function theSecondEscapeClosesTheDropdown(): void
+    {
+        $area = new Rect(0, 0, 20, 1);
+
+        $closed = self::opened(Dropdown::new(['json', 'yaml', 'toml']))
+            ->update(new KeyMsg('y'), $area)->model
+            ->update(new KeyMsg(Key::Escape), $area)->model
+            ->update(new KeyMsg(Key::Escape), $area)->model;
+
+        self::assertFalse($closed->isOpen());
+        self::assertNull($closed->selectedValue(), 'and cancelling twice still picks nothing');
+    }
+
+    #[Test]
     public function escapeClosesWithoutChangingTheValue(): void
     {
         $area = new Rect(0, 0, 20, 1);

@@ -399,7 +399,7 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `StaticTable` | Static bordered table: draws every row, no cursor or scrolling, columns sized to content |
 | `TabBar` | Tabbed container with keyboard/mouse tab switching |
 | `Modal` | Centered overlay with background dim |
-| `Dropdown` | Collapsed one-row control with a filterable option list that floats above the layout |
+| `Dropdown` | Collapsed one-row control with a filterable option list that floats above the layout. Enter/Space opens, typing filters, Enter picks, Escape clears a typed filter before it closes; `hasFilterText()` lets a host label that key |
 | `Overlay` / `PositionedOverlay` | Stack widgets above a base layer |
 | `Spinner` | Animated loading indicator (frame-clock driven, no wiring) |
 | `ActivityBar` | Bouncing activity indicator (frame-clock driven, no wiring) |

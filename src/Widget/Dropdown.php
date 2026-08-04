@@ -101,6 +101,15 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         return $this->open;
     }
 
+    /**
+     * Whether the reader has typed anything into the filter row. Hosts use it
+     * to label the cancel key, which clears the filter before it closes.
+     */
+    public function hasFilterText(): bool
+    {
+        return $this->query !== '';
+    }
+
     public function isFocused(): bool
     {
         return $this->focused;
@@ -260,7 +269,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         $bindings = $this->effectiveKeybindings();
 
         return match (true) {
-            $bindings->matches($message, Actions::CANCEL) => $this->closed(),
+            $bindings->matches($message, Actions::CANCEL) => $this->cancelled(),
             $bindings->matches($message, Actions::SELECT) => $this->picked($filtered),
             $bindings->matches($message, Actions::FOCUS_NEXT) => $this->movedTo($this->cursor + 1, $filtered, $area, $message->screen),
             $bindings->matches($message, Actions::FOCUS_PREV) => $this->movedTo($this->cursor - 1, $filtered, $area, $message->screen),
@@ -268,6 +277,15 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
             \is_string($message->key) && !$message->ctrl && !$message->alt => $this->searchedFor($this->query . $message->key),
             default => $this,
         };
+    }
+
+    /**
+     * A typed filter absorbs the first cancel, so a narrowed list widens again
+     * before the popup goes away.
+     */
+    private function cancelled(): self
+    {
+        return $this->hasFilterText() ? $this->searchedFor('') : $this->closed();
     }
 
     private function closed(): self
