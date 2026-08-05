@@ -142,6 +142,21 @@ final class FilterableListTest extends TestCase
         self::assertSame('2 of 3', $restored->summary(), 'the query narrowed the list again');
     }
 
+    #[Test]
+    public function filtersOncePerQueryHoweverOftenTheResultIsRead(): void
+    {
+        $matcher = new CountingMatcher();
+        $list = FilterableList::new($this->commandItems())->withMatcher($matcher)->withQuery('cache');
+
+        $matcher->calls = 0;
+        $list->sourceIndex();
+        $list->selectedItem();
+        $list->summary();
+        $list->sourceIndex();
+
+        self::assertSame(0, $matcher->calls, 'reading what the filter kept costs nothing');
+    }
+
     /**
      * @return list<SimpleListItem>
      */

@@ -37,7 +37,16 @@ final readonly class FilterableList implements Focusable
     private const LIST_KEYS = [Key::Up, Key::Down, Key::PageUp, Key::PageDown, Key::Enter];
 
     /**
+     * What the query kept, worked out once. Every read of the highlighted item
+     * asks for it, and matching a long list is far too costly to repeat per read.
+     *
+     * @var list<int>
+     */
+    private array $matching;
+
+    /**
      * @param list<ListItem> $items
+     * @param list<int>|null $matching
      */
     private function __construct(
         private array $items,
@@ -45,7 +54,12 @@ final readonly class FilterableList implements Focusable
         private ListView $list,
         private ?Matcher $matcher = null,
         private string $emptyText = 'No matches',
+        ?array $matching = null,
     ) {
+        $this->matching = $matching ?? ($matcher ?? new SubstringMatcher())->matching(
+            $field->value(),
+            array_map(static fn (ListItem $item): string => $item->filterValue(), $items),
+        );
     }
 
     /**
@@ -65,12 +79,12 @@ final readonly class FilterableList implements Focusable
      */
     public function withItems(array $items): self
     {
-        return $this->cloneWith(items: $items)->reFiltered();
+        return $this->cloneWith(items: $items, matching: null)->reFiltered();
     }
 
     public function withMatcher(Matcher $matcher): self
     {
-        return $this->cloneWith(matcher: $matcher)->reFiltered();
+        return $this->cloneWith(matcher: $matcher, matching: null)->reFiltered();
     }
 
     public function withPlaceholder(string $placeholder): self
@@ -109,7 +123,7 @@ final readonly class FilterableList implements Focusable
             return $this;
         }
 
-        return $this->cloneWith(field: $this->field->withValue($query))->reFiltered();
+        return $this->cloneWith(field: $this->field->withValue($query), matching: null)->reFiltered();
     }
 
     /**
@@ -175,7 +189,7 @@ final readonly class FilterableList implements Focusable
         return new UpdateResult(
             $field->value() === $this->field->value()
                 ? $this->cloneWith(field: $field)
-                : $this->cloneWith(field: $field)->reFiltered(),
+                : $this->cloneWith(field: $field, matching: null)->reFiltered(),
             $result->command,
         );
     }
@@ -244,10 +258,7 @@ final readonly class FilterableList implements Focusable
      */
     private function matchingIndexes(): array
     {
-        return ($this->matcher ?? new SubstringMatcher())->matching(
-            $this->query(),
-            array_map(static fn (ListItem $item): string => $item->filterValue(), $this->items),
-        );
+        return $this->matching;
     }
 
     private function barArea(Rect $area): Rect
