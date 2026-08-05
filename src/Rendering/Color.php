@@ -16,6 +16,11 @@ final readonly class Color
 
     private const CUBE_LEVELS = [0, 95, 135, 175, 215, 255];
 
+    /**
+     * The WCAG luminance where black text stops out-contrasting white.
+     */
+    private const CONTRAST_CROSSOVER = 0.179;
+
     private const ANSI16_PALETTE = [
         [0, 0, 0], [205, 0, 0], [0, 205, 0], [205, 205, 0],
         [0, 0, 238], [205, 0, 205], [0, 205, 205], [229, 229, 229],
@@ -98,6 +103,19 @@ final readonly class Color
         };
     }
 
+    /**
+     * Black or white, whichever reads better on this colour — and the terminal
+     * default on the default, whose luminance is unknowable.
+     */
+    public function contrastingText(): self
+    {
+        if ($this->value === 0) {
+            return self::none();
+        }
+
+        return $this->relativeLuminance() > self::CONTRAST_CROSSOVER ? self::ansi(0) : self::ansi(15);
+    }
+
     public function toSgr(bool $background): string
     {
         $base = $background ? 40 : 30;
@@ -124,6 +142,20 @@ final readonly class Color
         return (string)($base + $this->value - self::ANSI);
     }
 
+    private function relativeLuminance(): float
+    {
+        [$red, $green, $blue] = $this->channels();
+
+        return 0.2126 * self::linearize($red) + 0.7152 * self::linearize($green) + 0.0722 * self::linearize($blue);
+    }
+
+    private static function linearize(int $channel): float
+    {
+        $ratio = $channel / 255;
+
+        return $ratio <= 0.04045 ? $ratio / 12.92 : (($ratio + 0.055) / 1.055) ** 2.4;
+    }
+
     /**
      * @return array{int, int, int}
      */
@@ -135,7 +167,15 @@ final readonly class Color
             return [($rgb >> 16) & 0xFF, ($rgb >> 8) & 0xFF, $rgb & 0xFF];
         }
 
-        return self::index256ToRgb($this->value - self::C256);
+        if ($this->value >= self::C256) {
+            return self::index256ToRgb($this->value - self::C256);
+        }
+
+        if ($this->value >= self::BRIGHT) {
+            return self::ANSI16_PALETTE[$this->value - self::BRIGHT + 8];
+        }
+
+        return self::ANSI16_PALETTE[$this->value - self::ANSI];
     }
 
     /**

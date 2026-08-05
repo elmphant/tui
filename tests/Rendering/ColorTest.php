@@ -422,4 +422,30 @@ final class ColorTest extends TestCase
 
         self::assertSame(0, Color::none()->downsampleTo(ColorProfile::Ansi)->value, 'terminal default stays default');
     }
+
+    /**
+     * @return iterable<string, array{Color, int}>
+     */
+    public static function contrastingTextCases(): iterable
+    {
+        yield 'white' => [Color::hex('FFFFFF'), 0];
+        yield 'black' => [Color::hex('000000'), 15];
+        yield 'one dark theme amber' => [Color::hex('E5C07B'), 0];
+        yield 'one light theme dark red' => [Color::hex('9D0006'), 15];
+        yield 'a 256-color index' => [Color::color256(226), 0];
+        yield 'basic blue' => [Color::ansi(4), 15];
+    }
+
+    #[Test]
+    #[DataProvider('contrastingTextCases')]
+    public function contrastingTextCrossesOverWithBackgroundLuminance(Color $background, int $expectedAnsiIndex): void
+    {
+        self::assertSame(Color::ansi($expectedAnsiIndex)->value, $background->contrastingText()->value);
+    }
+
+    #[Test]
+    public function theTerminalDefaultHasNoKnowableContrast(): void
+    {
+        self::assertSame(0, Color::none()->contrastingText()->value);
+    }
 }
