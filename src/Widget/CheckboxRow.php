@@ -21,17 +21,20 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use LogicException;
 
-final readonly class CheckboxRow implements Focusable, KeybindingsAware
+final readonly class CheckboxRow implements Focusable, KeybindingsAware, MeasureHeight
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
 
+    public const CHECKED_MARK = '[x] ';
+    public const UNCHECKED_MARK = '[ ] ';
+
     /**
-     * @param list<string> $labels
+     * @param list<string> $options
      * @param list<bool>   $checked
      */
     public function __construct(
-        private array $labels = [],
+        private array $options = [],
         private array $checked = [],
         private int $cursor = 0,
         private bool $focused = false,
@@ -42,22 +45,22 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware
     }
 
     /**
-     * @param list<string> $labels
+     * @param list<string> $options
      */
-    public static function new(array $labels): self
+    public static function new(array $options): self
     {
         return new self(
-            labels: $labels,
-            checked: array_fill(0, count($labels), false),
+            options: $options,
+            checked: array_fill(0, count($options), false),
         );
     }
 
     /**
-     * @param list<string> $labels
+     * @param list<string> $options
      */
-    public function withLabels(array $labels): self
+    public function withOptions(array $options): self
     {
-        return $this->cloneWith(labels: $labels);
+        return $this->cloneWith(options: $options);
     }
 
     /**
@@ -112,7 +115,12 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware
 
     public function constraint(): Constraint
     {
-        return Constraint::exact(1);
+        return Constraint::min(1);
+    }
+
+    public function measureHeight(int $width): int
+    {
+        return OptionRowLayout::height($this->entries(), $width - CharWidth::stringWidth($this->prefix));
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -131,24 +139,25 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware
         }
 
         $theme = $context->theme;
-        $x = $area->x;
-        $y = $area->y;
 
         if ($this->prefix !== '') {
-            $x += $frame->putStyled($x, $y, $this->prefix, $theme->dim);
+            $frame->putStyled($area->x, $area->y, $this->prefix, $theme->dim);
         }
 
-        foreach ($this->labels as $index => $label) {
+        foreach (OptionRowLayout::placements($this->entries(), $this->optionsArea($area)) as $index => [$x, $y, $width]) {
+            if ($y >= $area->bottom()) {
+                return;
+            }
+
             $isChecked = $this->checked[$index] ?? false;
             $isCursor = $this->focused && $index === $this->cursor;
 
-            $mark = $isChecked ? '[x] ' : '[ ] ';
-
-            $style = $theme->optionStyle($isCursor, $isChecked, $this->focused);
-
-            $x += $frame->putStyled($x, $y, $mark, $style);
-            $x += $frame->putStyled($x, $y, $label, $style);
-            $x += $frame->putStyled($x, $y, '  ', $theme->dim);
+            $frame->putStyled(
+                $x,
+                $y,
+                ($isChecked ? self::CHECKED_MARK : self::UNCHECKED_MARK) . $this->options[$index],
+                $theme->optionStyle($isCursor, $isChecked, $this->focused),
+            );
         }
     }
 
@@ -157,11 +166,11 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware
      */
     private function handleKey(KeyMsg $message): UpdateResult
     {
-        if ($this->labels === []) {
+        if ($this->options === []) {
             return new UpdateResult($this);
         }
 
-        $count = count($this->labels);
+        $count = count($this->options);
         $bindings = $this->effectiveKeybindings();
 
         return match (true) {
@@ -192,18 +201,15 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware
      */
     private function handleClick(MouseMsg $message, Rect $area): UpdateResult
     {
-        $positions = $this->optionPositions($area->x);
+        $index = OptionRowLayout::indexAt($this->entries(), $this->optionsArea($area), $message->x, $message->y);
 
-        foreach ($positions as $index => [$startX, $endX]) {
-            if ($message->x >= $startX && $message->x < $endX) {
-                $toggled = $this->toggleAt($index);
-                $model = self::requireModel($toggled->model);
-
-                return new UpdateResult($model->withCursor($index));
-            }
+        if ($index === null) {
+            return new UpdateResult($this);
         }
 
-        return new UpdateResult($this);
+        $model = self::requireModel($this->toggleAt($index)->model);
+
+        return new UpdateResult($model->withCursor($index));
     }
 
     private static function requireModel(Reducer $model): self
@@ -216,23 +222,30 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware
     }
 
     /**
-     * @return list<array{int, int}> [startX, endX] for each option
+     * Every option as it is drawn. Both marks are the same width, so the
+     * columns hold whichever one a redraw puts there.
+     *
+     * @return list<string>
      */
-    private function optionPositions(int $baseX): array
+    private function entries(): array
     {
-        $x = $baseX;
-        if ($this->prefix !== '') {
-            $x += CharWidth::stringWidth($this->prefix);
+        return array_map(
+            static fn (string $label): string => self::UNCHECKED_MARK . $label,
+            $this->options,
+        );
+    }
+
+    /**
+     * The prefix keeps the columns it was drawn in, so the options start after it.
+     */
+    private function optionsArea(Rect $area): Rect
+    {
+        if ($this->prefix === '') {
+            return $area;
         }
 
-        $positions = [];
-        foreach ($this->labels as $label) {
-            $startX = $x;
-            $width = 4 + CharWidth::stringWidth($label) + 2;
-            $positions[] = [$startX, $startX + $width];
-            $x += $width;
-        }
+        $indent = CharWidth::stringWidth($this->prefix);
 
-        return $positions;
+        return new Rect($area->x + $indent, $area->y, max(0, $area->width - $indent), $area->height);
     }
 }

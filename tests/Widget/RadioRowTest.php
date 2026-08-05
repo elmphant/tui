@@ -58,6 +58,28 @@ final class RadioRowTest extends TestCase
     }
 
     #[Test]
+    public function asksForTheRowsItsOptionsNeedAtTheWidthItIsGiven(): void
+    {
+        $row = RadioRow::new(['system', 'pages', 'all']);
+
+        self::assertSame(1, $row->measureHeight(40));
+        self::assertSame(3, $row->measureHeight(10), 'a narrow pane must hand it the rows it wraps onto');
+        self::assertSame(1, $row->constraint()->min, 'one row is the floor, the measurement raises it');
+    }
+
+    #[Test]
+    public function showsWhereTheCursorRestsWhileItIsFocused(): void
+    {
+        $theme = Theme::dark();
+        $row = RadioRow::new(['system', 'pages'])->withFocus(true);
+        $frame = new Frame(40, 1);
+
+        $row->render($frame, new Rect(0, 0, 40, 1), new RenderContext($theme));
+
+        self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[0], 'the arrows would otherwise walk an invisible cursor');
+    }
+
+    #[Test]
     public function aClickPicksTheOptionUnderIt(): void
     {
         $row = RadioRow::new(['system', 'pages', 'all']);

@@ -15,7 +15,6 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
@@ -23,14 +22,13 @@ use Elmphant\Tui\Rendering\RenderContext;
  * One choice out of several, side by side on a row: the horizontal Radio, as
  * CheckboxRow is the horizontal CheckboxGroup.
  */
-final readonly class RadioRow implements Focusable, KeybindingsAware
+final readonly class RadioRow implements Focusable, KeybindingsAware, MeasureHeight
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
 
     public const PICKED_MARK = '● ';
     public const FREE_MARK = '○ ';
-    private const GAP = 2;
 
     /**
      * @param list<string> $options
@@ -79,7 +77,12 @@ final readonly class RadioRow implements Focusable, KeybindingsAware
 
     public function constraint(): Constraint
     {
-        return Constraint::exact(1);
+        return Constraint::min(1);
+    }
+
+    public function measureHeight(int $width): int
+    {
+        return OptionRowLayout::height($this->entries(), $width);
     }
 
     public function selected(): int
@@ -102,7 +105,7 @@ final readonly class RadioRow implements Focusable, KeybindingsAware
             return;
         }
 
-        foreach ($this->placements($area) as $index => [$x, $y, $width]) {
+        foreach (OptionRowLayout::placements($this->entries(), $area) as $index => [$x, $y, $width]) {
             if ($y >= $area->bottom()) {
                 return;
             }
@@ -113,7 +116,7 @@ final readonly class RadioRow implements Focusable, KeybindingsAware
                 $x,
                 $y,
                 ($picked ? self::PICKED_MARK : self::FREE_MARK) . $this->options[$index],
-                $context->theme->optionStyle(false, $picked, $this->focused),
+                $context->theme->optionStyle($this->focused && $index === $this->cursor, $picked, $this->focused),
             );
         }
     }
@@ -143,39 +146,26 @@ final readonly class RadioRow implements Focusable, KeybindingsAware
      */
     private function handleClick(MouseMsg $message, Rect $area): UpdateResult
     {
-        foreach ($this->placements($area) as $index => [$x, $y, $width]) {
-            if ($message->y === $y && $message->x >= $x && $message->x < $x + $width) {
-                return new UpdateResult($this->cloneWith(selected: $index, cursor: $index));
-            }
+        $index = OptionRowLayout::indexAt($this->entries(), $area, $message->x, $message->y);
+
+        if ($index === null) {
+            return new UpdateResult($this);
         }
 
-        return new UpdateResult($this);
+        return new UpdateResult($this->cloneWith(selected: $index, cursor: $index));
     }
 
     /**
-     * Where each option lands once the row has wrapped, so a click is measured
-     * against the same columns the marks were drawn in.
+     * Every option as it is drawn. Both marks are the same width, so the
+     * columns hold whichever one a redraw puts there.
      *
-     * @return list<array{int, int, int}> [x, y, width] for each option
+     * @return list<string>
      */
-    private function placements(Rect $area): array
+    private function entries(): array
     {
-        $x = $area->x;
-        $y = $area->y;
-        $placements = [];
-
-        foreach ($this->options as $option) {
-            $width = CharWidth::stringWidth(self::FREE_MARK . $option);
-
-            if ($x > $area->x && $x + $width > $area->right()) {
-                $x = $area->x;
-                ++$y;
-            }
-
-            $placements[] = [$x, $y, $width];
-            $x += $width + self::GAP;
-        }
-
-        return $placements;
+        return array_map(
+            static fn (string $option): string => self::FREE_MARK . $option,
+            $this->options,
+        );
     }
 }

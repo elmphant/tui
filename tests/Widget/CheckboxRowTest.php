@@ -12,11 +12,14 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\CheckboxRow;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\OptionRowLayout;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
@@ -27,7 +30,7 @@ final class CheckboxRowTest extends TestCase
     public function theLabelsCanBeReplacedAfterConstruction(): void
     {
         $frame = new Frame(30, 2);
-        $row = CheckboxRow::new(['Old'])->withLabels(['Fresh', 'Newer']);
+        $row = CheckboxRow::new(['Old'])->withOptions(['Fresh', 'Newer']);
 
         $row->render($frame, new Rect(0, 0, 30, 2), new RenderContext(Theme::dark()));
 
@@ -48,13 +51,26 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
-    public function constraintReturnsExactOne(): void
+    public function breaksOntoAFurtherRowRatherThanRunningOffTheEdge(): void
     {
-        $row = CheckboxRow::new(['A', 'B', 'C']);
-        $constraint = $row->constraint();
+        $row = CheckboxRow::new(['system', 'pages'])->withChecked([true, false]);
+        $frame = new Frame(12, 2);
 
-        self::assertSame(1, $constraint->min);
-        self::assertSame(1, $constraint->max);
+        $row->render($frame, new Rect(0, 0, 12, 2), new RenderContext(Theme::dark()));
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame('[x] system', trim($screen->getLine(0)));
+        self::assertSame('[ ] pages', trim($screen->getLine(1)), 'the box stays with the label it belongs to');
+    }
+
+    #[Test]
+    public function asksForTheRowsItsOptionsNeedAtTheWidthItIsGiven(): void
+    {
+        $row = CheckboxRow::new(['system', 'pages', 'all']);
+
+        self::assertSame(1, $row->measureHeight(40));
+        self::assertSame(3, $row->measureHeight(12), 'a narrow pane must hand it the rows it wraps onto');
+        self::assertSame(1, $row->constraint()->min, 'one row is the floor, the measurement raises it');
     }
 
     #[Test]
@@ -375,21 +391,21 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
-    public function mouseClickBoundaryExactlyAtOptionEnd(): void
+    public function aClickOnTheLastColumnOfAnOptionStillPicksIt(): void
     {
         $row = CheckboxRow::new(['AB', 'CD']);
         $area = new Rect(0, 0, 40, 1);
 
-        $optionWidth = 4 + 2 + 2;
+        $lastColumn = CharWidth::stringWidth(CheckboxRow::UNCHECKED_MARK . 'AB') - 1;
         $clickAtBoundary = $row->update(
-            new MouseMsg($optionWidth - 1, 0, MouseAction::Press, MouseButton::Left),
+            new MouseMsg($lastColumn, 0, MouseAction::Press, MouseButton::Left),
             $area,
         );
         self::assertTrue($clickAtBoundary->model->isChecked(0));
         self::assertFalse($clickAtBoundary->model->isChecked(1));
 
         $clickAtNextOption = $row->update(
-            new MouseMsg($optionWidth, 0, MouseAction::Press, MouseButton::Left),
+            new MouseMsg($lastColumn + 1 + OptionRowLayout::GAP, 0, MouseAction::Press, MouseButton::Left),
             $area,
         );
         self::assertTrue($clickAtNextOption->model->isChecked(1));
@@ -543,7 +559,7 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
-    public function renderSpacerBetweenOptionsUsesDimStyle(): void
+    public function leavesTheGapBetweenOptionsBlank(): void
     {
         $theme = Theme::dark();
         $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
@@ -551,8 +567,9 @@ final class CheckboxRowTest extends TestCase
 
         $row->render($frame, new Rect(0, 0, 40, 1), new RenderContext($theme));
 
-        $spacerPosition = 4 + 1;
-        self::assertSame($theme->dim->foregroundValue(), $frame->foregrounds[$spacerPosition]);
+        $gap = CharWidth::stringWidth(CheckboxRow::UNCHECKED_MARK . 'A');
+        self::assertSame(' ', $frame->characters[$gap], 'the gap carries no option, so it carries no mark');
+        self::assertSame('[', $frame->characters[$gap + OptionRowLayout::GAP], 'and the next option starts past it');
     }
 
     #[Test]
@@ -605,14 +622,12 @@ final class CheckboxRowTest extends TestCase
         $row = CheckboxRow::new(['漢字', 'B'])->withFocus(true);
         $area = new Rect(0, 0, 30, 1);
 
-        // With display width: option 0 = '[ ] '(4) + '漢字'(4 cols) + '  '(2) = 10 cols
-        // With mb_strlen bug: option 0 = '[ ] '(4) + '漢字'(2) + '  '(2) = 8 cols
-        // Click at x=8 lands inside option 0's trailing space with correct width,
-        // but wrongly hits option 1 with the mb_strlen bug
-        $click = new MouseMsg(8, 0, MouseAction::Press, MouseButton::Left);
+        // Each han character takes two columns, so the option ends at 7. Counted
+        // as one column each it would end at 5 and this click would miss.
+        $click = new MouseMsg(7, 0, MouseAction::Press, MouseButton::Left);
         $result = $row->update($click, $area);
 
-        self::assertTrue($result->model->isChecked(0), 'Click at x=8 should hit option 漢字 (display width 10)');
+        self::assertTrue($result->model->isChecked(0), 'the last column of 漢字 belongs to it');
         self::assertFalse($result->model->isChecked(1), 'Option B should not be checked');
     }
 
