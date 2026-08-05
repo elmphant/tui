@@ -82,6 +82,16 @@ final readonly class Theme
         return $this->cloneWith(success: $success);
     }
 
+    public function withWarning(Style $warning): self
+    {
+        return $this->cloneWith(warning: $warning);
+    }
+
+    public function withInfo(Style $info): self
+    {
+        return $this->cloneWith(info: $info);
+    }
+
     public function withBorderStyle(Style $style): self
     {
         return $this->cloneWith(borderStyle: $style);

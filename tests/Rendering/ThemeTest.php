@@ -108,6 +108,8 @@ final class ThemeTest extends TestCase
             'dim' => static fn (Theme $theme): Theme => $theme->withDim($marker),
             'error' => static fn (Theme $theme): Theme => $theme->withError($marker),
             'success' => static fn (Theme $theme): Theme => $theme->withSuccess($marker),
+            'warning' => static fn (Theme $theme): Theme => $theme->withWarning($marker),
+            'info' => static fn (Theme $theme): Theme => $theme->withInfo($marker),
             'headerStyle' => static fn (Theme $theme): Theme => $theme->withHeaderStyle($marker),
             'selectedStyle' => static fn (Theme $theme): Theme => $theme->withSelectedStyle($marker),
             'cursorStyle' => static fn (Theme $theme): Theme => $theme->withCursorStyle($marker),
