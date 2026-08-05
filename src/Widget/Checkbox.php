@@ -24,6 +24,9 @@ final readonly class Checkbox implements Focusable, KeybindingsAware
     use Cloneable;
     use KeybindingsAwareBehavior;
 
+    public const CHECKED_MARK = OptionMarks::CHECKED;
+    public const UNCHECKED_MARK = OptionMarks::UNCHECKED;
+
     public function __construct(
         private string $label = '',
         private bool $checked = false,
@@ -100,7 +103,7 @@ final readonly class Checkbox implements Focusable, KeybindingsAware
         }
 
         $theme = $context->theme;
-        $mark = $this->checked ? '[x] ' : '[ ] ';
+        $mark = $this->checked ? self::CHECKED_MARK : self::UNCHECKED_MARK;
 
         $style = match (true) {
             $this->focused => $theme->cursorStyle,

@@ -27,8 +27,8 @@ final readonly class RadioRow implements Focusable, KeybindingsAware, MeasureHei
     use Cloneable;
     use KeybindingsAwareBehavior;
 
-    public const PICKED_MARK = '● ';
-    public const FREE_MARK = '○ ';
+    public const PICKED_MARK = OptionMarks::PICKED;
+    public const FREE_MARK = OptionMarks::FREE;
 
     /**
      * @param list<string> $options

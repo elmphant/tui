@@ -26,8 +26,8 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware, Measure
     use Cloneable;
     use KeybindingsAwareBehavior;
 
-    public const CHECKED_MARK = '[x] ';
-    public const UNCHECKED_MARK = '[ ] ';
+    public const CHECKED_MARK = OptionMarks::CHECKED;
+    public const UNCHECKED_MARK = OptionMarks::UNCHECKED;
 
     /**
      * @param list<string> $options
