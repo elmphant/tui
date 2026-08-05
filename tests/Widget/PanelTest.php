@@ -27,6 +27,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focusable;
@@ -46,6 +47,8 @@ use ReflectionMethod;
 
 final class PanelTest extends TestCase
 {
+    use PerformanceBudget;
+
     use FocusableBehaviorTrait;
 
     #[Test]
@@ -2923,27 +2926,17 @@ final class PanelTest extends TestCase
     #[Test]
     public function panelBorderRenderPerformanceBudget(): void
     {
-        if (extension_loaded('xdebug')) {
-            self::markTestSkipped('Performance budgets are invalid under Xdebug instrumentation');
-        }
+        self::skipUnderXdebug();
 
         $frame = new Frame(80, 24);
         $rect = new Rect(0, 0, 80, 24);
         $context = new RenderContext(Theme::dark());
         $panel = Panel::new('Perf');
 
-        $iterations = 5_000;
-        $start = hrtime(true);
-        for ($i = 0; $i < $iterations; ++$i) {
-            $panel->render($frame, $rect, $context);
-        }
-        $elapsed = (hrtime(true) - $start) / 1e9;
-        $perCallUs = ($elapsed / $iterations) * 1e6;
-
-        self::assertLessThan(
+        self::assertWithinBudget(
             200.0,
-            $perCallUs,
-            sprintf('Panel::render (empty, 80x24) must be < 200µs; got %.2fµs', $perCallUs),
+            self::medianMicroseconds(static fn (): mixed => $panel->render($frame, $rect, $context)),
+            'Panel::render (empty, 80x24)',
         );
     }
 

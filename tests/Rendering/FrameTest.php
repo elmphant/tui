@@ -10,11 +10,14 @@ use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\SgrParser;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class FrameTest extends TestCase
 {
+    use PerformanceBudget;
+
     #[Test]
     public function ordinaryTextNeverStoresTerminalControlSequencesInCells(): void
     {
@@ -58,75 +61,73 @@ final class FrameTest extends TestCase
     #[Test]
     public function constructorPerformanceBudget(): void
     {
-        if (extension_loaded('xdebug')) {
-            self::markTestSkipped('Performance budgets are invalid under Xdebug instrumentation');
-        }
+        self::skipUnderXdebug();
 
-        $iterations = 2_000;
-        $start = hrtime(true);
-        for ($i = 0; $i < $iterations; ++$i) {
-            new Frame(200, 50);
-        }
-        $elapsed = (hrtime(true) - $start) / 1e9;
-        $perCallUs = ($elapsed / $iterations) * 1e6;
-
-        self::assertLessThan(
+        self::assertWithinBudget(
             600.0,
-            $perCallUs,
-            sprintf('Frame::__construct (200x50) must be < 600µs; got %.2fµs', $perCallUs),
+            self::medianMicroseconds(static fn (): Frame => new Frame(200, 50)),
+            'Frame::__construct (200x50)',
         );
     }
 
     #[Test]
     public function clearPerformanceBudget(): void
     {
-        if (extension_loaded('xdebug')) {
-            self::markTestSkipped('Performance budgets are invalid under Xdebug instrumentation');
-        }
+        self::skipUnderXdebug();
 
         $frame = new Frame(200, 50);
-        // Write some content to simulate real use
-        for ($y = 0; $y < 50; ++$y) {
-            $frame->putString(0, $y, str_repeat('x', 200));
-        }
+        $row = str_repeat('x', 200);
+        $dirtyEveryRow = static function () use ($frame, $row): void {
+            for ($y = 0; $y < 50; ++$y) {
+                $frame->putString(0, $y, $row);
+            }
+        };
 
-        $iterations = 2_000;
-        $start = hrtime(true);
-        for ($i = 0; $i < $iterations; ++$i) {
-            $frame->clear();
-        }
-        $elapsed = (hrtime(true) - $start) / 1e9;
-        $perCallUs = ($elapsed / $iterations) * 1e6;
-
-        self::assertLessThan(
-            500.0,
-            $perCallUs,
-            sprintf('Frame::clear (200x50) must be < 500µs; got %.2fµs', $perCallUs),
+        self::assertWithinBudget(
+            150.0,
+            self::medianMicrosecondsAfterSetup($dirtyEveryRow, static fn (): mixed => $frame->clear()),
+            'Frame::clear (200x50, every row dirty)',
         );
     }
 
     #[Test]
     public function putStringAsciiPerformanceBudget(): void
     {
-        if (extension_loaded('xdebug')) {
-            self::markTestSkipped('Performance budgets are invalid under Xdebug instrumentation');
-        }
+        self::skipUnderXdebug();
 
         $frame = new Frame(80, 24);
         $text = str_repeat('x', 80);
 
-        $iterations = 50_000;
-        $start = hrtime(true);
-        for ($i = 0; $i < $iterations; ++$i) {
-            $frame->putString(0, 0, $text);
-        }
-        $elapsed = (hrtime(true) - $start) / 1e9;
-        $perCallUs = ($elapsed / $iterations) * 1e6;
+        self::assertWithinBudget(
+            30.0,
+            self::medianMicroseconds(static fn (): int => $frame->putString(0, 0, $text)),
+            'Frame::putString (80-char ASCII)',
+        );
+    }
+
+    #[Test]
+    public function aLargerFrameDoesNotCostMoreToWriteTheSameString(): void
+    {
+        self::skipUnderXdebug();
+
+        $text = str_repeat('x', 80);
+        $small = new Frame(80, 24);
+        $large = new Frame(400, 200);
+
+        $onSmall = self::medianMicroseconds(static fn (): int => $small->putString(0, 0, $text));
+        $onLarge = self::medianMicroseconds(static fn (): int => $large->putString(0, 0, $text));
+        $ratio = $onLarge / $onSmall;
 
         self::assertLessThan(
-            30.0,
-            $perCallUs,
-            sprintf('Frame::putString must be < 30µs per 80-char ASCII call, got %.2fµs', $perCallUs),
+            self::MAX_RATIO,
+            $ratio,
+            sprintf(
+                'A 40x larger frame made putString %.1fx slower (%.1fµs vs %.1fµs). '
+                . 'The cost must track the string, never the frame.',
+                $ratio,
+                $onLarge,
+                $onSmall,
+            ),
         );
     }
 

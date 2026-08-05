@@ -4,20 +4,14 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
-use Closure;
 use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CharWidthPerfTest extends TestCase
 {
-    /**
-     * Ratios rather than absolute budgets: both sides run in the same process
-     * on the same machine, so speed cancels and only the complexity class
-     * remains. A correct implementation lands near 1; walking the whole string
-     * as graphemes scores ~50x on this input.
-     */
-    private const MAX_RATIO = 10.0;
+    use PerformanceBudget;
 
     #[Test]
     public function oneNonAsciiCharacterDoesNotSlowMeasuringTheWholeString(): void
@@ -66,29 +60,5 @@ final class CharWidthPerfTest extends TestCase
                 $plain,
             ),
         );
-    }
-
-    private static function skipUnderXdebug(): void
-    {
-        if (extension_loaded('xdebug')) {
-            self::markTestSkipped('Performance budgets are invalid under Xdebug instrumentation');
-        }
-    }
-
-    private static function medianMicroseconds(Closure $operation, int $iterations = 200): float
-    {
-        for ($index = 0; $index < 20; ++$index) {
-            $operation();
-        }
-
-        $samples = [];
-        for ($index = 0; $index < $iterations; ++$index) {
-            $start = hrtime(true);
-            $operation();
-            $samples[] = (hrtime(true) - $start) / 1_000.0;
-        }
-        sort($samples);
-
-        return $samples[intdiv($iterations, 2)];
     }
 }

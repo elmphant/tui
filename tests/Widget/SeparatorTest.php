@@ -8,36 +8,29 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use Elmphant\Tui\Widget\Separator;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SeparatorTest extends TestCase
 {
+    use PerformanceBudget;
+
     #[Test]
     public function renderPerformanceBudget(): void
     {
-        if (extension_loaded('xdebug')) {
-            self::markTestSkipped('Performance budgets are invalid under Xdebug instrumentation');
-        }
+        self::skipUnderXdebug();
 
         $frame = new Frame(80, 24);
         $rect = new Rect(0, 0, 40, 1);
         $context = new RenderContext(Theme::dark());
         $separator = Separator::new();
 
-        $iterations = 20_000;
-        $start = hrtime(true);
-        for ($i = 0; $i < $iterations; ++$i) {
-            $separator->render($frame, $rect, $context);
-        }
-        $elapsed = (hrtime(true) - $start) / 1e9;
-        $perCallUs = ($elapsed / $iterations) * 1e6;
-
-        self::assertLessThan(
+        self::assertWithinBudget(
             30.0,
-            $perCallUs,
-            sprintf('Separator::render must be < 30µs; got %.2fµs', $perCallUs),
+            self::medianMicroseconds(static fn (): mixed => $separator->render($frame, $rect, $context)),
+            'Separator::render',
         );
     }
 

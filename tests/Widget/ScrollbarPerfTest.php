@@ -5,33 +5,54 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use Elmphant\Tui\Widget\Scrollbar;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ScrollbarPerfTest extends TestCase
 {
+    use PerformanceBudget;
+
     #[Test]
     public function renderPerformanceBudget(): void
     {
-        if (extension_loaded('xdebug')) {
-            self::markTestSkipped('Performance budgets are invalid under Xdebug instrumentation');
-        }
+        self::skipUnderXdebug();
 
         $frame = new Frame(80, 50);
 
-        $iterations = 20_000;
-        $start = hrtime(true);
-        for ($i = 0; $i < $iterations; ++$i) {
-            Scrollbar::render($frame, 79, 0, 40, 10, 200, 40, 7, 8, 0);
-        }
-        $elapsed = (hrtime(true) - $start) / 1e9;
-        $perCallUs = ($elapsed / $iterations) * 1e6;
+        self::assertWithinBudget(
+            30.0,
+            self::medianMicroseconds(static fn (): null => Scrollbar::render($frame, 79, 0, 40, 10, 200, 40, 7, 8, 0)),
+            'Scrollbar::render',
+        );
+    }
+
+    #[Test]
+    public function aLongerContentListDoesNotCostMoreToDraw(): void
+    {
+        self::skipUnderXdebug();
+
+        $frame = new Frame(80, 50);
+
+        $short = self::medianMicroseconds(
+            static fn (): null => Scrollbar::render($frame, 79, 0, 40, 10, 200, 40, 7, 8, 0),
+        );
+        $long = self::medianMicroseconds(
+            static fn (): null => Scrollbar::render($frame, 79, 0, 40, 10, 2_000_000, 40, 7, 8, 0),
+        );
+        $ratio = $long / $short;
 
         self::assertLessThan(
-            30.0,
-            $perCallUs,
-            sprintf('Scrollbar::render must be < 30µs; got %.2fµs', $perCallUs),
+            self::MAX_RATIO,
+            $ratio,
+            sprintf(
+                'A 10000x longer list made Scrollbar::render %.1fx slower (%.1fµs vs %.1fµs). '
+                . 'The cost must track the track height, never the content.',
+                $ratio,
+                $long,
+                $short,
+            ),
         );
     }
 }
