@@ -55,6 +55,18 @@ final class SpinnerTest extends TestCase
     }
 
     #[Test]
+    public function theLabelFollowsTheSpinnerWhereverItIsDrawn(): void
+    {
+        $frame = new Frame(20, 1);
+        $context = new RenderContext(Theme::dark());
+
+        Spinner::new('Loading...')->render($frame, new Rect(5, 0, 15, 1), $context);
+
+        self::assertSame('L', $frame->characters[7], 'a column past the mark it belongs to');
+        self::assertSame(' ', $frame->characters[2], 'and nothing left behind at the left edge');
+    }
+
+    #[Test]
     public function frameTimeAdvancesTheSpinner(): void
     {
         $spinner = Spinner::new();

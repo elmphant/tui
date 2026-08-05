@@ -67,10 +67,10 @@ final readonly class Spinner implements Interactive
         $frames = $this->style->frames();
         $index = (int)floor($context->now() / $this->interval) % count($frames);
         $character = $frames[$index];
-        $x = $frame->putStyled($area->x, $area->y, $character, $context->theme->accent);
+        $width = $frame->putStyled($area->x, $area->y, $character, $context->theme->accent);
 
         if ($this->label !== '') {
-            $frame->putStyled($x + 1, $area->y, $this->label, $context->theme->base);
+            $frame->putStyled($area->x + $width + 1, $area->y, $this->label, $context->theme->base);
         }
     }
 }
