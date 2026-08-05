@@ -20,6 +20,13 @@ final readonly class Theme
      */
     public Style $footerStyle;
 
+    /**
+     * Defaults to the title amber, which is every bundled palette's warning hue.
+     */
+    public Style $warning;
+
+    public Style $info;
+
     public function __construct(
         public Style $base,
         public Style $accent,
@@ -36,6 +43,8 @@ final readonly class Theme
         public Style $emptyStyle,
         public Style $inputStyle,
         ?Style $footerStyle = null,
+        ?Style $warning = null,
+        ?Style $info = null,
         public BorderStyle $border = BorderStyle::Rounded,
         // Unicode has no heavy rounded corners; focus is carried by colour + bold.
         public BorderStyle $focusedBorder = BorderStyle::Rounded,
@@ -44,6 +53,8 @@ final readonly class Theme
             foreground: $base->foreground ?? Color::ansi(7),
             background: $selectedStyle->background ?? Color::ansi(0),
         );
+        $this->warning = $warning ?? $titleStyle->withAttributes($titleStyle->attributes & ~Attr::BOLD);
+        $this->info = $info ?? $accent;
     }
 
     public function withBase(Style $base): self

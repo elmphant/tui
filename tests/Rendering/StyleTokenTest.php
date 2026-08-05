@@ -23,6 +23,8 @@ final class StyleTokenTest extends TestCase
         yield 'dim' => [StyleToken::Dim, static fn (Theme $theme): Style => $theme->dim];
         yield 'error' => [StyleToken::Error, static fn (Theme $theme): Style => $theme->error];
         yield 'success' => [StyleToken::Success, static fn (Theme $theme): Style => $theme->success];
+        yield 'warning' => [StyleToken::Warning, static fn (Theme $theme): Style => $theme->warning];
+        yield 'info' => [StyleToken::Info, static fn (Theme $theme): Style => $theme->info];
         yield 'title' => [StyleToken::Title, static fn (Theme $theme): Style => $theme->titleStyle];
     }
 

@@ -11,6 +11,8 @@ enum StyleToken
     case Dim;
     case Error;
     case Success;
+    case Warning;
+    case Info;
     case Title;
 
     public function resolve(Theme $theme): Style
@@ -21,6 +23,8 @@ enum StyleToken
             self::Dim => $theme->dim,
             self::Error => $theme->error,
             self::Success => $theme->success,
+            self::Warning => $theme->warning,
+            self::Info => $theme->info,
             self::Title => $theme->titleStyle,
         };
     }
