@@ -286,7 +286,7 @@ final class Program
                 },
             );
             $this->setup();
-            $this->renderContext = new RenderContext($this->resolveTheme());
+            $this->renderContext = new RenderContext($this->resolveTheme(), $this->terminal->colorProfile());
             $this->running = true;
             $this->dispatchCommand($this->model->init());
             if ($this->running) {

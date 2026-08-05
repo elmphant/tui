@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
+use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\Floating;
@@ -38,6 +39,7 @@ final class RenderContext
 
     public function __construct(
         public readonly Theme $theme,
+        public readonly ColorProfile $colorProfile = ColorProfile::TrueColor,
     ) {
     }
 

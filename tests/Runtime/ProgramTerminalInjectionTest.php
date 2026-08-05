@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -17,9 +18,38 @@ use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 final class ProgramTerminalInjectionTest extends TestCase
 {
+    #[Test]
+    public function theRenderContextIsBuiltForTheTerminalsColourDepth(): void
+    {
+        $model = new class implements Model {
+            public function init(): ?Cmd
+            {
+                return Cmd::quit();
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24, ColorProfile::Ansi));
+        $program->start();
+
+        $context = (new ReflectionClass($program))->getProperty('renderContext')->getValue($program);
+
+        self::assertInstanceOf(RenderContext::class, $context);
+        self::assertSame(ColorProfile::Ansi, $context->colorProfile, 'A widget cannot ask the terminal itself');
+    }
+
     #[Test]
     public function startupUsesNonQueryTerminalSizeWithoutSendingACprProbe(): void
     {
