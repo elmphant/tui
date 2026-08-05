@@ -361,12 +361,8 @@ final readonly class ListView implements Focusable, KeybindingsAware
             $bindings->matches($message, Actions::FOCUS_NEXT) => $this->cursor < $count - 1 ? $this->cloneWith(cursor: $this->cursor + 1) : null,
             $bindings->matches($message, Actions::HOME) => $this->cursor > 0 ? $this->cloneWith(cursor: 0) : null,
             $bindings->matches($message, Actions::END) => $this->cursor < $count - 1 ? $this->cloneWith(cursor: $count - 1) : null,
-            $bindings->matches($message, Actions::PAGE_DOWN) => $this->cursor < $count - 1
-                    ? $this->cloneWith(cursor: $this->itemAPageAway(1, $area))
-                    : null,
-            $bindings->matches($message, Actions::PAGE_UP) => $this->cursor > 0
-                    ? $this->cloneWith(cursor: $this->itemAPageAway(-1, $area))
-                    : null,
+            $bindings->matches($message, Actions::PAGE_DOWN) => $this->cursor < $count - 1 ? $this->pagedBy(1, $area) : null,
+            $bindings->matches($message, Actions::PAGE_UP) => $this->cursor > 0 ? $this->pagedBy(-1, $area) : null,
             $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->cursor),
             default => null,
         };
@@ -423,9 +419,26 @@ final readonly class ListView implements Focusable, KeybindingsAware
     }
 
     /**
-     * Measured from the viewport, not from the cursor: an item the reader has
-     * already seen must be where a page lands, or paging would pass over the
-     * items between the cursor and the fold without ever drawing them.
+     * The landing item takes the edge the reader travels towards, so the fold it
+     * came from is a whole viewport behind and the next page moves as far again.
+     */
+    private function pagedBy(int $direction, Rect $area): self
+    {
+        $extents = $this->extents($area);
+        $cursor = $this->itemAPageAway($direction, $area);
+        $anchor = $direction > 0
+            ? $extents->startOf($cursor)
+            : $extents->startOf($cursor) + $extents->heightOf($cursor) - $area->height;
+
+        return $this->cloneWith(
+            cursor: $cursor,
+            scrollOffset: min(max(0, $anchor), $extents->maxOffset($area->height)),
+        );
+    }
+
+    /**
+     * Measured from the viewport, not from the cursor, so paging never passes
+     * over the items between the cursor and the fold without drawing them.
      */
     private function itemAPageAway(int $direction, Rect $area): int
     {

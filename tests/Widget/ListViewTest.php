@@ -193,6 +193,20 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
+    public function everyPageDownMovesAnotherWholePage(): void
+    {
+        $items = array_map(fn (int $index) => "Item $index", range(0, 19));
+        $list = ListView::fromStrings($items)->withFocus(true);
+        $area = Rect::fromSize(40, 5);
+
+        $first = $list->update(new KeyMsg(Key::PageDown), $area)->model;
+        $second = $first->update(new KeyMsg(Key::PageDown), $area)->model;
+        $third = $second->update(new KeyMsg(Key::PageDown), $area)->model;
+
+        self::assertSame([5, 10, 15], [$first->cursor(), $second->cursor(), $third->cursor()]);
+    }
+
+    #[Test]
     public function aPageIsAViewportOfRowsEvenWhenItemsAreTaller(): void
     {
         // Ten two-row items in a seven-row viewport: a page holds three of them.
