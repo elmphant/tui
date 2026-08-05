@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Input\ColorProfile;
+use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -55,6 +56,67 @@ final class AlertTest extends TestCase
     }
 
     #[Test]
+    public function anAlertAsksForExactlyOneRow(): void
+    {
+        self::assertEquals(Constraint::exact(1), Alert::warning('Low disk')->constraint());
+    }
+
+    #[Test]
+    public function anAreaWithNoHeightIsLeftAlone(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Alert::warning('Low disk')->render($frame, new Rect(0, 0, 20, 0), new RenderContext(Theme::dark()));
+
+        self::assertSame(0, $frame->backgrounds[0], 'a row of no height is still no row');
+        self::assertSame(' ', $frame->characters[0]);
+    }
+
+    #[Test]
+    public function anAlertPaintsItsOwnRowAndNoOther(): void
+    {
+        $frame = new Frame(20, 2);
+
+        Alert::warning('Low disk')->render($frame, new Rect(0, 0, 20, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame(Color::hex('E5C07B')->value, $frame->backgrounds[0], 'the row it was given');
+        self::assertSame(0, $frame->backgrounds[20], 'and the one below untouched');
+    }
+
+    #[Test]
+    public function aColumnTooNarrowForTextStillCarriesTheSeverityColour(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Alert::warning('Low disk')->render($frame, new Rect(0, 0, 1, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame(Color::hex('E5C07B')->value, $frame->backgrounds[0], 'one column is still worth colouring');
+        self::assertSame(' ', $frame->characters[0], 'but there is no room to say anything in it');
+    }
+
+    #[Test]
+    public function nothingIsPaintedOutsideTheAreaItWasGiven(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Alert::warning('Low disk')->render($frame, new Rect(0, 0, 1, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame(' ', $frame->characters[1], 'a one column alert must not reach into the second');
+        self::assertSame(0, $frame->backgrounds[1]);
+    }
+
+    #[Test]
+    public function aRowWithRoomForOneCharacterGetsOne(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Alert::warning('Low disk')->render($frame, new Rect(0, 0, 3, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame('L', $frame->characters[1], 'padding, one character, padding');
+        self::assertSame(' ', $frame->characters[2]);
+    }
+
+    #[Test]
     public function aMessageTooLongForTheRowKeepsItsTrailingPad(): void
     {
         $frame = new Frame(20, 1);
@@ -74,11 +136,31 @@ final class AlertTest extends TestCase
     }
 
     #[Test]
-    public function aPulseHasMovedTheFillByHalfItsPeriod(): void
+    public function aPulseHasFadedByItsFullDepthHalfWayThroughThePeriod(): void
     {
         $alert = Alert::warning('Low disk')->pulsing(1.0);
 
-        self::assertNotSame(self::fillAt($alert, 0.0), self::fillAt($alert, 0.5));
+        self::assertSame(Color::rgb(237, 211, 163)->value, self::fillAt($alert, 0.5));
+    }
+
+    #[Test]
+    public function aPulseIsPartWayThereAtAQuarterOfThePeriod(): void
+    {
+        $alert = Alert::warning('Low disk')->pulsing(1.0);
+
+        self::assertSame(Color::rgb(233, 201, 143)->value, self::fillAt($alert, 0.25));
+    }
+
+    #[Test]
+    public function aLongerPeriodStretchesTheSameFadeOverMoreTime(): void
+    {
+        $slow = Alert::warning('Low disk')->pulsing(2.0);
+
+        self::assertSame(
+            Color::rgb(233, 201, 143)->value,
+            self::fillAt($slow, 0.5),
+            'half a second into a two second breath is a quarter of the way round',
+        );
     }
 
     #[Test]
@@ -119,7 +201,7 @@ final class AlertTest extends TestCase
     {
         $context = self::renderedContext(Alert::warning('Low disk')->pulsing(1.0), 0.0, ColorProfile::TrueColor);
 
-        self::assertNotNull($context->repaintDelay());
+        self::assertSame(0.05, $context->repaintDelay(), 'twenty frames a second is enough to read as a fade');
     }
 
     #[Test]
@@ -133,27 +215,40 @@ final class AlertTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{Alert, callable(Theme): Style}>
+     * @return iterable<string, array{callable(): Alert, callable(Theme): Style}>
      */
     public static function severityToThemeStyle(): iterable
     {
-        yield 'warning' => [Alert::warning('careful'), static fn (Theme $theme): Style => $theme->warning];
-        yield 'error' => [Alert::error('broken'), static fn (Theme $theme): Style => $theme->error];
-        yield 'success' => [Alert::success('done'), static fn (Theme $theme): Style => $theme->success];
-        yield 'info' => [Alert::info('note'), static fn (Theme $theme): Style => $theme->info];
+        yield 'warning' => [
+            static fn (): Alert => Alert::warning('careful'),
+            static fn (Theme $theme): Style => $theme->warning,
+        ];
+        yield 'error' => [
+            static fn (): Alert => Alert::error('broken'),
+            static fn (Theme $theme): Style => $theme->error,
+        ];
+        yield 'success' => [
+            static fn (): Alert => Alert::success('done'),
+            static fn (Theme $theme): Style => $theme->success,
+        ];
+        yield 'info' => [
+            static fn (): Alert => Alert::info('note'),
+            static fn (Theme $theme): Style => $theme->info,
+        ];
     }
 
     /**
+     * @param callable(): Alert      $build
      * @param callable(Theme): Style $style
      */
     #[Test]
     #[DataProvider('severityToThemeStyle')]
-    public function eachSeverityFillsWithItsOwnThemeColour(Alert $alert, callable $style): void
+    public function eachSeverityFillsWithItsOwnThemeColour(callable $build, callable $style): void
     {
         $frame = new Frame(20, 1);
         $theme = Theme::dark();
 
-        $alert->render($frame, new Rect(0, 0, 20, 1), new RenderContext($theme));
+        $build()->render($frame, new Rect(0, 0, 20, 1), new RenderContext($theme));
 
         self::assertSame($style($theme)->foreground?->value, $frame->backgrounds[0]);
     }

@@ -78,11 +78,7 @@ final readonly class Alert implements Widget
         $style = new Style(foreground: $text, background: $this->pulsed($fill, $text, $context));
         $frame->fillRect($area->x, $area->y, $area->width, 1, $style->foregroundValue(), $style->backgroundValue(), $style->attributes);
 
-        $available = $area->width - 2 * self::PADDING;
-        if ($available < 1) {
-            return;
-        }
-
+        $available = max(0, $area->width - 2 * self::PADDING);
         $frame->putStyled($area->x + self::PADDING, $area->y, CharWidth::truncateToWidth($this->message, $available), $style);
     }
 
