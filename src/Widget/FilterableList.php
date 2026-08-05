@@ -103,6 +103,26 @@ final readonly class FilterableList implements Focusable
         return $this->field->value();
     }
 
+    public function withQuery(string $query): self
+    {
+        if ($query === $this->query()) {
+            return $this;
+        }
+
+        return $this->cloneWith(field: $this->field->withValue($query))->reFiltered();
+    }
+
+    /**
+     * Highlights the item at $index of the list handed in, ignoring one the
+     * query filtered away.
+     */
+    public function withSourceIndex(?int $index): self
+    {
+        $kept = array_search($index, $this->matchingIndexes(), true);
+
+        return $kept === false ? $this : $this->cloneWith(list: $this->list->withCursor($kept));
+    }
+
     /**
      * How much of the list the filter kept, so a query narrowing to nothing still reads as a query.
      */

@@ -128,6 +128,20 @@ final class FilterableListTest extends TestCase
         self::assertSame('cache', trim($bar));
     }
 
+    #[Test]
+    public function aQueryAndAHighlightPutBackReadOutAsTheyWentIn(): void
+    {
+        $narrowed = $this->press($this->typed($this->commands(), 'cache'), Key::Down);
+        self::assertSame('cache', $narrowed->query());
+        self::assertSame(1, $narrowed->sourceIndex());
+
+        $restored = $this->commands()->withQuery('cache')->withSourceIndex(1);
+
+        self::assertSame('cache', $restored->query());
+        self::assertSame(1, $restored->sourceIndex());
+        self::assertSame('2 of 3', $restored->summary(), 'the query narrowed the list again');
+    }
+
     /**
      * @return list<SimpleListItem>
      */
