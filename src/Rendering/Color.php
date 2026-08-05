@@ -116,6 +116,28 @@ final readonly class Color
         return $this->relativeLuminance() > self::CONTRAST_CROSSOVER ? self::ansi(0) : self::ansi(15);
     }
 
+    /**
+     * Mixes towards another colour, where 0 is this one and 1 is the other. The
+     * terminal default has no channels to mix, so a blend involving it is left
+     * alone rather than guessed at.
+     */
+    public function blend(self $other, float $amount): self
+    {
+        if ($this->value === 0 || $other->value === 0) {
+            return $this;
+        }
+
+        $amount = max(0.0, min(1.0, $amount));
+        [$red, $green, $blue] = $this->channels();
+        [$otherRed, $otherGreen, $otherBlue] = $other->channels();
+
+        return self::rgb(
+            (int)round($red + ($otherRed - $red) * $amount),
+            (int)round($green + ($otherGreen - $green) * $amount),
+            (int)round($blue + ($otherBlue - $blue) * $amount),
+        );
+    }
+
     public function toSgr(bool $background): string
     {
         $base = $background ? 40 : 30;

@@ -448,4 +448,40 @@ final class ColorTest extends TestCase
     {
         self::assertSame(0, Color::none()->contrastingText()->value);
     }
+
+    #[Test]
+    public function blendingWalksFromOneColourToTheOther(): void
+    {
+        $black = Color::hex('000000');
+        $white = Color::hex('FFFFFF');
+
+        self::assertSame($black->value, $black->blend($white, 0.0)->value, 'nothing of the other colour');
+        self::assertSame($white->value, $black->blend($white, 1.0)->value, 'all of it');
+        self::assertSame(Color::rgb(128, 128, 128)->value, $black->blend($white, 0.5)->value, 'and the midpoint between');
+    }
+
+    #[Test]
+    public function blendingClampsAnAmountOutsideTheUnitRange(): void
+    {
+        $black = Color::hex('000000');
+        $white = Color::hex('FFFFFF');
+
+        self::assertSame($black->value, $black->blend($white, -1.0)->value);
+        self::assertSame($white->value, $black->blend($white, 4.0)->value);
+    }
+
+    #[Test]
+    public function blendingAnIndexedColourResolvesItToItsPaletteRgb(): void
+    {
+        self::assertSame(Color::rgb(205, 0, 0)->value, Color::ansi(1)->blend(Color::ansi(1), 1.0)->value);
+    }
+
+    #[Test]
+    public function theTerminalDefaultCannotBeBlended(): void
+    {
+        $red = Color::hex('FF0000');
+
+        self::assertSame($red->value, $red->blend(Color::none(), 0.5)->value, 'nothing knowable to blend towards');
+        self::assertSame(0, Color::none()->blend($red, 0.5)->value, 'and nothing knowable to blend from');
+    }
 }
