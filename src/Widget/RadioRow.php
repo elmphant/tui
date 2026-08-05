@@ -8,7 +8,6 @@ use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
-use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -22,7 +21,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  * One choice out of several, side by side on a row: the horizontal Radio, as
  * CheckboxRow is the horizontal CheckboxGroup.
  */
-final readonly class RadioRow implements Focusable, KeybindingsAware, MeasureHeight
+final readonly class RadioRow implements OptionRow
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -60,6 +59,32 @@ final readonly class RadioRow implements Focusable, KeybindingsAware, MeasureHei
         ]);
     }
 
+    /**
+     * @return list<string>
+     */
+    public function options(): array
+    {
+        return $this->options;
+    }
+
+    /**
+     * @param list<string> $options
+     */
+    public function withOptions(array $options): static
+    {
+        return $this->cloneWith(options: $options);
+    }
+
+    public function cursor(): int
+    {
+        return $this->cursor;
+    }
+
+    public function withCursor(int $cursor): static
+    {
+        return $this->cloneWith(cursor: $cursor);
+    }
+
     public function withSelected(int $selected): self
     {
         return $this->cloneWith(selected: $selected);
@@ -88,6 +113,11 @@ final readonly class RadioRow implements Focusable, KeybindingsAware, MeasureHei
     public function selected(): int
     {
         return $this->selected;
+    }
+
+    public function selectedValue(): ?string
+    {
+        return $this->options[$this->selected] ?? null;
     }
 
     public function update(Message $message, Rect $area): UpdateResult

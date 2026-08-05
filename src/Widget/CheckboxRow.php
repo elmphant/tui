@@ -9,7 +9,6 @@ use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
-use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -21,7 +20,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use LogicException;
 
-final readonly class CheckboxRow implements Focusable, KeybindingsAware, MeasureHeight
+final readonly class CheckboxRow implements OptionRow
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -56,9 +55,17 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware, Measure
     }
 
     /**
+     * @return list<string>
+     */
+    public function options(): array
+    {
+        return $this->options;
+    }
+
+    /**
      * @param list<string> $options
      */
-    public function withOptions(array $options): self
+    public function withOptions(array $options): static
     {
         return $this->cloneWith(options: $options);
     }
@@ -85,7 +92,12 @@ final readonly class CheckboxRow implements Focusable, KeybindingsAware, Measure
         return $this->cloneWith(prefix: $prefix);
     }
 
-    public function withCursor(int $cursor): self
+    public function cursor(): int
+    {
+        return $this->cursor;
+    }
+
+    public function withCursor(int $cursor): static
     {
         return $this->cloneWith(cursor: $cursor);
     }

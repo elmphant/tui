@@ -61,6 +61,15 @@ final class RadioRowTest extends TestCase
     }
 
     #[Test]
+    public function namesTheOptionItHasPickedOrNothingWhileNoneIsPicked(): void
+    {
+        $row = RadioRow::new(['system', 'pages']);
+
+        self::assertNull($row->selectedValue());
+        self::assertSame('pages', $row->withSelected(1)->selectedValue());
+    }
+
+    #[Test]
     public function asksForTheRowsItsOptionsNeedAtTheWidthItIsGiven(): void
     {
         $row = RadioRow::new(['system', 'pages', 'all']);
