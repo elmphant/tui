@@ -222,6 +222,25 @@ final class ThemeTest extends TestCase
     }
 
     #[Test]
+    public function everyPresetKeepsItsFourSeverityColoursApart(): void
+    {
+        foreach (self::allPresets() as $name => $theme) {
+            $severities = [
+                'error' => $theme->error->foreground?->value,
+                'warning' => $theme->warning->foreground?->value,
+                'success' => $theme->success->foreground?->value,
+                'info' => $theme->info->foreground?->value,
+            ];
+
+            self::assertSameSize(
+                $severities,
+                array_unique($severities),
+                sprintf('%s gives two severities the same colour: %s', $name, implode(', ', array_keys($severities))),
+            );
+        }
+    }
+
+    #[Test]
     public function everyPresetDefinesAFooterStyleWithItsOwnBackground(): void
     {
         foreach (self::allPresets() as $name => $theme) {
@@ -272,17 +291,8 @@ final class ThemeTest extends TestCase
     private static function relativeLuminance(?Color $color): float
     {
         self::assertNotNull($color);
-        $rgb = $color->value - Color::TRUE;
-        self::assertGreaterThanOrEqual(0, $rgb, 'Contrast checks assume truecolor theme tokens');
+        self::assertGreaterThanOrEqual(Color::TRUE, $color->value, 'Contrast checks assume truecolor theme tokens');
 
-        $channels = [];
-        foreach ([($rgb >> 16) & 0xFF, ($rgb >> 8) & 0xFF, $rgb & 0xFF] as $channel) {
-            $normalized = $channel / 255;
-            $channels[] = $normalized <= 0.03928
-                ? $normalized / 12.92
-                : (($normalized + 0.055) / 1.055) ** 2.4;
-        }
-
-        return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+        return $color->relativeLuminance();
     }
 }

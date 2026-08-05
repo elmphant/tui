@@ -434,6 +434,9 @@ final class ColorTest extends TestCase
         yield 'one light theme dark red' => [Color::hex('9D0006'), 15];
         yield 'a 256-color index' => [Color::color256(226), 0];
         yield 'basic blue' => [Color::ansi(4), 15];
+        yield 'the first bright ansi index' => [Color::ansi(8), 0];
+        yield 'a grey dark enough for the linear part of the curve' => [Color::rgb(10, 10, 10), 15];
+        yield 'a mid tone carried by its blue' => [Color::rgb(120, 120, 220), 0];
     }
 
     #[Test]
@@ -441,6 +444,27 @@ final class ColorTest extends TestCase
     public function contrastingTextCrossesOverWithBackgroundLuminance(Color $background, int $expectedAnsiIndex): void
     {
         self::assertSame(Color::ansi($expectedAnsiIndex)->value, $background->contrastingText()->value);
+    }
+
+    /**
+     * @return iterable<string, array{Color, float}>
+     */
+    public static function referenceLuminances(): iterable
+    {
+        yield 'white is the top of the scale' => [Color::rgb(255, 255, 255), 1.0];
+        yield 'black is the bottom' => [Color::rgb(0, 0, 0), 0.0];
+        yield 'red carries its own weight' => [Color::rgb(255, 0, 0), 0.2126];
+        yield 'green carries most of the light' => [Color::rgb(0, 255, 0), 0.7152];
+        yield 'blue carries least' => [Color::rgb(0, 0, 255), 0.0722];
+        yield 'the last channel on the straight part of the curve' => [Color::rgb(10, 10, 10), 0.00303526983548837];
+        yield 'the first channel past the bend' => [Color::rgb(11, 11, 11), 0.00334653576389916];
+    }
+
+    #[Test]
+    #[DataProvider('referenceLuminances')]
+    public function luminanceFollowsTheWcagCurve(Color $color, float $expected): void
+    {
+        self::assertEqualsWithDelta($expected, $color->relativeLuminance(), 1e-12);
     }
 
     #[Test]
@@ -474,6 +498,22 @@ final class ColorTest extends TestCase
     public function blendingAnIndexedColourResolvesItToItsPaletteRgb(): void
     {
         self::assertSame(Color::rgb(205, 0, 0)->value, Color::ansi(1)->blend(Color::ansi(1), 1.0)->value);
+    }
+
+    #[Test]
+    public function blendingABrightIndexReachesTheUpperHalfOfThePalette(): void
+    {
+        self::assertSame(Color::rgb(127, 127, 127)->value, Color::ansi(8)->blend(Color::ansi(8), 1.0)->value);
+    }
+
+    #[Test]
+    public function blendingLandsOnTheNearestChannelRatherThanAlwaysTheSameWay(): void
+    {
+        $black = Color::rgb(0, 0, 0);
+        $ten = Color::rgb(10, 10, 10);
+
+        self::assertSame(Color::rgb(2, 2, 2)->value, $black->blend($ten, 0.24)->value, '2.4 goes down');
+        self::assertSame(Color::rgb(3, 3, 3)->value, $black->blend($ten, 0.26)->value, 'and 2.6 goes up');
     }
 
     #[Test]

@@ -337,6 +337,9 @@ final readonly class Theme
             fillStyle: new Style(foreground: Color::hex('8EC07C'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('928374'), background: $background),
             inputStyle: new Style(foreground: Color::hex('EBDBB2'), background: Color::hex('3C3836')),
+            // Gruvbox puts its yellow on both accent and title, so warning has
+            // to take the orange or it cannot be told apart from info.
+            warning: new Style(foreground: Color::hex('FE8019'), background: $background),
         );
     }
 
@@ -362,6 +365,7 @@ final readonly class Theme
             // The light selection background leaves the accent key hints at
             // 2.2:1, so this theme uses a dark bar to separate and stay legible.
             footerStyle: new Style(foreground: Color::hex('FBF1C7'), background: Color::hex('3C3836')),
+            warning: new Style(foreground: Color::hex('AF3A03'), background: $background),
         );
     }
 }

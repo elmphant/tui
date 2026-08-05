@@ -164,7 +164,11 @@ final readonly class Color
         return (string)($base + $this->value - self::ANSI);
     }
 
-    private function relativeLuminance(): float
+    /**
+     * WCAG relative luminance, 0 for black through 1 for white — the basis of
+     * every contrast ratio.
+     */
+    public function relativeLuminance(): float
     {
         [$red, $green, $blue] = $this->channels();
 
