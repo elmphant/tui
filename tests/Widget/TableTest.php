@@ -1924,7 +1924,46 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function typedHeaderRowTruncatesToTotalWidth(): void
+    public function aGroupHeaderWiderThanTheTableWrapsOntoASecondLine(): void
+    {
+        $table = Table::fromRows(
+            [Column::new('N', Constraint::exact(3))],
+            [Row::header('VeryLongGroupName')],
+        );
+        $frame = new Frame(20, 10);
+        $table->render($frame, Rect::fromSize(20, 10), new RenderContext(Theme::dark()));
+
+        self::assertSame('yLo', $this->rowText($frame, 20, 2, 0, 3));
+    }
+
+    #[Test]
+    public function aGroupHeaderReservesOnlyTheLinesItWrapsToAcrossAllColumns(): void
+    {
+        $table = Table::fromRows(
+            [Column::new('Name', Constraint::exact(6)), Column::new('Role', Constraint::exact(6))],
+            [Row::header('Engineering department'), Row::new('Ada', 'dev')],
+        );
+        $frame = new Frame(20, 9);
+        $table->render($frame, Rect::fromSize(20, 9), new RenderContext(Theme::dark()));
+
+        self::assertSame('Ada   dev', $this->rowText($frame, 20, 3, 0, 9));
+    }
+
+    #[Test]
+    public function aRowThatCannotBeSelectedStillShowsEveryColumn(): void
+    {
+        $table = Table::fromRows(
+            [Column::new('Name', Constraint::exact(6)), Column::new('Role', Constraint::exact(6))],
+            [Row::new('Ada', 'dev')->withSelectable(false)],
+        );
+        $frame = new Frame(20, 6);
+        $table->render($frame, Rect::fromSize(20, 6), new RenderContext(Theme::dark()));
+
+        self::assertSame('Ada   dev', $this->rowText($frame, 20, 1, 0, 9));
+    }
+
+    #[Test]
+    public function aGroupHeaderBreaksAtTheTotalWidthAndSpillsIntoNoColumn(): void
     {
         $table = Table::fromRows(
             [Column::new('N', Constraint::exact(3))],

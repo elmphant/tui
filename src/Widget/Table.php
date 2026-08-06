@@ -527,11 +527,10 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     private function renderRow(Frame $frame, int $startX, int $renderY, int $rowIndex, Row $row, array $columnWidths, int $totalWidth, Theme $theme, int $height): void
     {
-        if (!$row->selectable) {
-            $headerStyle = $theme->headerStyle;
-            $cell = $row->cells[0] ?? '';
-            $label = CharWidth::truncateToWidth($cell instanceof Span ? $cell->content : $cell, $totalWidth);
-            $frame->putStyled($startX, $renderY, $label, $headerStyle);
+        if ($row->spansAllColumns) {
+            foreach (TableLayout::spanningLines($columnWidths, $row) as $lineIndex => $line) {
+                $frame->putStyled($startX, $renderY + $lineIndex, $line, $theme->headerStyle);
+            }
 
             return;
         }
@@ -555,7 +554,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             $rowStyle = $rowStyle->reverse();
         }
 
-        $rowLines = TableLayout::linesOfRow($columnWidths, self::textOf($row));
+        $rowLines = TableLayout::linesOfRow($columnWidths, $row);
         $cellX = $startX;
 
         foreach (array_keys($this->columns) as $columnIndex) {
@@ -590,7 +589,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     {
         return $this->layoutMemo->at(
             implode(',', $columnWidths),
-            fn (): TableLayout => TableLayout::forRows($columnWidths, $this->cellText()),
+            fn (): TableLayout => TableLayout::forRows($columnWidths, $this->rows),
         );
     }
 
@@ -602,21 +601,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $showScrollbar = Scrollbar::needsScrollbar($this->rowCount(), max(1, $area->height - $this->headerHeight()));
 
         return $this->computeColumnWidths($showScrollbar ? $area->width - 1 : $area->width);
-    }
-
-    /**
-     * Cell text of every row, for measuring.
-     *
-     * @return list<list<string>>
-     */
-    private function cellText(): array
-    {
-        $rows = [];
-        foreach ($this->rows as $row) {
-            $rows[] = self::textOf($row);
-        }
-
-        return $rows;
     }
 
     /**

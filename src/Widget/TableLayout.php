@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Rendering\Span;
 
 /**
  * Row heights and wrapped cell lines, shared by rendering, hit-testing and
@@ -27,8 +28,8 @@ final class TableLayout
     }
 
     /**
-     * @param list<int>          $columnWidths
-     * @param list<list<string>> $rows         cell text per column
+     * @param list<int> $columnWidths
+     * @param list<Row> $rows
      */
     public static function forRows(array $columnWidths, array $rows): self
     {
@@ -42,15 +43,18 @@ final class TableLayout
     }
 
     /**
-     * @param list<int>    $columnWidths
-     * @param list<string> $cells
+     * @param list<int> $columnWidths
      */
-    public static function heightOfRow(array $columnWidths, array $cells): int
+    public static function heightOfRow(array $columnWidths, Row $row): int
     {
+        if ($row->spansAllColumns) {
+            return count(self::spanningLines($columnWidths, $row));
+        }
+
         $height = 1;
 
         foreach ($columnWidths as $columnIndex => $width) {
-            $text = $cells[$columnIndex] ?? '';
+            $text = self::textOf($row, $columnIndex);
 
             // Wrapping is the expensive part and most cells do not need it, so
             // ask how wide the text is before asking where to break it.
@@ -67,21 +71,32 @@ final class TableLayout
     /**
      * Wrapped lines for one row, indexed by column.
      *
-     * @param list<int>    $columnWidths
-     * @param list<string> $cells
+     * @param list<int> $columnWidths
      *
      * @return list<list<string>>
      */
-    public static function linesOfRow(array $columnWidths, array $cells): array
+    public static function linesOfRow(array $columnWidths, Row $row): array
     {
         $lines = [];
 
         foreach ($columnWidths as $columnIndex => $width) {
-            $text = $cells[$columnIndex] ?? '';
-            $lines[] = $width > 0 ? CharWidth::wrapToWidth($text, $width) : [''];
+            $lines[] = $width > 0 ? CharWidth::wrapToWidth(self::textOf($row, $columnIndex), $width) : [''];
         }
 
         return $lines;
+    }
+
+    /**
+     * A spanning row's label wrapped to the whole table, which is the width it
+     * is drawn across.
+     *
+     * @param list<int> $columnWidths
+     *
+     * @return list<string>
+     */
+    public static function spanningLines(array $columnWidths, Row $row): array
+    {
+        return CharWidth::wrapToWidth(self::textOf($row, 0), max(1, array_sum($columnWidths)));
     }
 
     public function heightOf(int $row): int
@@ -127,5 +142,12 @@ final class TableLayout
         }
 
         return $offset;
+    }
+
+    private static function textOf(Row $row, int $columnIndex): string
+    {
+        $cell = $row->cells[$columnIndex] ?? '';
+
+        return $cell instanceof Span ? $cell->content : $cell;
     }
 }

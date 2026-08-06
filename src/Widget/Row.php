@@ -19,6 +19,7 @@ final readonly class Row
         public array $cells = [],
         public ?Style $style = null,
         public bool $selectable = true,
+        public bool $spansAllColumns = false,
     ) {
     }
 
@@ -27,9 +28,12 @@ final readonly class Row
         return new self(cells: array_values($cells));
     }
 
+    /**
+     * A group label laid out across the whole table rather than per column.
+     */
     public static function header(string $label): self
     {
-        return new self(cells: [$label], selectable: false);
+        return new self(cells: [$label], selectable: false, spansAllColumns: true);
     }
 
     public function withStyle(Style $style): self
