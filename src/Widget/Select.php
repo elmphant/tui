@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
-use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -86,11 +84,6 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware
         return $this->cloneWith(focused: $focused);
     }
 
-    public function cursorRow(): int
-    {
-        return $this->cursor;
-    }
-
     public function constraint(): Constraint
     {
         return Constraint::exact(count($this->options));
@@ -100,9 +93,10 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware
     {
         $theme = $context->theme;
         $count = count($this->options);
+        $scrollOffset = $this->cursorScrollOffset($area->height);
 
-        for ($index = 0; $index < min($count, $area->height); ++$index) {
-            $y = $area->y + $index;
+        for ($index = $scrollOffset; $index < min($count, $scrollOffset + $area->height); ++$index) {
+            $y = $area->y + $index - $scrollOffset;
             $isCursor = $index === $this->cursor && $this->focused;
             $isSelected = $index === $this->selected;
 
@@ -110,18 +104,5 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware
 
             $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($this->options[$index], $area->width), $style);
         }
-    }
-
-    /**
-     * @return UpdateResult<static>
-     */
-    private function handleClick(MouseMsg $message, Rect $area, int $count): UpdateResult
-    {
-        $localY = $message->y - $area->y;
-        if ($localY >= 0 && $localY < $count) {
-            return new UpdateResult($this->cloneWith(cursor: $localY, selected: $localY));
-        }
-
-        return new UpdateResult($this);
     }
 }

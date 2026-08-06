@@ -317,6 +317,34 @@ final class SelectTest extends TestCase
         self::assertSame(' ', $frame->characters[10]);
     }
 
+    #[Test]
+    public function scrollsToKeepTheCursorVisibleWhenOptionsExceedTheHeight(): void
+    {
+        $select = Select::new(['Alpha', 'Beta', 'Gamma', 'Delta'])
+            ->withCursor(3)
+            ->withFocus(true);
+        $frame = new Frame(12, 3);
+        $select->render($frame, new Rect(0, 0, 12, 3), new RenderContext(Theme::dark()));
+
+        self::assertSame('Beta', rtrim($this->extractRow($frame, 0, 12)), 'One row scrolled out: Beta is now the top row');
+        self::assertSame('Gamma', rtrim($this->extractRow($frame, 1, 12)));
+        self::assertSame('Delta', rtrim($this->extractRow($frame, 2, 12)), 'The cursor row is the last visible row');
+    }
+
+    #[Test]
+    public function clickOnAScrolledListSelectsTheOptionUnderThePointer(): void
+    {
+        $select = Select::new(['Alpha', 'Beta', 'Gamma', 'Delta'])
+            ->withCursor(3)
+            ->withFocus(true);
+        $area = new Rect(0, 0, 12, 3);
+
+        $result = $select->update(new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left), $area);
+
+        self::assertSame('Beta', $result->model->selectedValue(), 'The top visible row is Beta once one row has scrolled out');
+        self::assertSame(1, $result->model->cursor());
+    }
+
     public static function selectKeybindingOverrideProvider(): iterable
     {
         yield Actions::FOCUS_PREV => [Actions::FOCUS_PREV, new KeyMsg(Key::Up),    new KeyMsg('x'), 1, 'cursor',   0];
@@ -353,5 +381,16 @@ final class SelectTest extends TestCase
     protected function createFocusable(): Focusable
     {
         return Select::new(['A', 'B']);
+    }
+
+    private function extractRow(Frame $frame, int $row, int $columns): string
+    {
+        $text = '';
+        $base = $row * $frame->width;
+        for ($column = 0; $column < $columns; ++$column) {
+            $text .= $frame->characters[$base + $column];
+        }
+
+        return $text;
     }
 }

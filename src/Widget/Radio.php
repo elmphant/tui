@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
-use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -95,32 +93,16 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware
         return $this->cloneWith(focused: $focused);
     }
 
-    public function cursorRow(): int
-    {
-        return ($this->label !== '' ? 2 : 0) + $this->cursor;
-    }
-
     public function constraint(): Constraint
     {
-        $labelHeight = $this->label !== '' ? 2 : 0;
-
-        return Constraint::exact(count($this->options) + $labelHeight);
+        return Constraint::exact(count($this->options) + $this->rowOffset());
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $theme = $context->theme;
 
-        $labelRows = $this->label !== '' ? 2 : 0;
-        $totalRows = $labelRows + count($this->options);
-        $cursorRow = $labelRows + $this->cursor;
-
-        $scrollOffset = 0;
-        if ($area->height > 0 && $totalRows > $area->height && $cursorRow >= $area->height) {
-            $scrollOffset = $cursorRow - $area->height + 1;
-        }
-
-        $y = $area->y - $scrollOffset;
+        $y = $area->y - $this->cursorScrollOffset($area->height);
 
         if ($this->label !== '') {
             $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($this->label, $area->width), $theme->titleStyle);
@@ -146,17 +128,8 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware
         }
     }
 
-    /**
-     * @return UpdateResult<static>
-     */
-    private function handleClick(MouseMsg $message, Rect $area, int $count): UpdateResult
+    protected function rowOffset(): int
     {
-        $localY = $message->y - $area->y;
-        $optionY = $this->label !== '' ? $localY - 2 : $localY;
-        if ($optionY >= 0 && $optionY < $count) {
-            return new UpdateResult($this->cloneWith(cursor: $optionY, selected: $optionY));
-        }
-
-        return new UpdateResult($this);
+        return $this->label !== '' ? 2 : 0;
     }
 }

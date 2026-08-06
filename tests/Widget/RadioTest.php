@@ -920,6 +920,20 @@ final class RadioTest extends TestCase
         self::assertSame(Radio::FREE_MARK . 'Delta', rtrim($this->extractRow($frame, 3, 12)), 'The cursor row lands on the last visible row');
     }
 
+    #[Test]
+    public function clickOnAScrolledLabelledRadioSelectsTheOptionUnderThePointer(): void
+    {
+        $radio = Radio::new('Top', ['Alpha', 'Beta', 'Gamma', 'Delta'])
+            ->withCursor(3)
+            ->withFocus(true);
+        $area = new Rect(0, 0, 12, 4);
+
+        $result = $radio->update(new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left), $area);
+
+        self::assertSame('Gamma', $result->model->selectedValue(), 'An offset of 2 scrolls the label and spacer out, so row 2 holds the third option');
+        self::assertSame(2, $result->model->cursor());
+    }
+
     protected function createFocusable(): Focusable
     {
         return Radio::new('Label', ['A', 'B']);

@@ -29,6 +29,11 @@ trait OptionListBehavior
         ]);
     }
 
+    public function cursorRow(): int
+    {
+        return $this->rowOffset() + $this->cursor;
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
         $count = count($this->options);
@@ -38,6 +43,41 @@ trait OptionListBehavior
             $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area, $count),
             default => new UpdateResult($this),
         };
+    }
+
+    /**
+     * Rows this widget draws above its options — a Radio's label and spacer.
+     */
+    protected function rowOffset(): int
+    {
+        return 0;
+    }
+
+    protected function cursorScrollOffset(int $areaHeight): int
+    {
+        $totalRows = $this->rowOffset() + count($this->options);
+        $cursorRow = $this->cursorRow();
+
+        if ($areaHeight > 0 && $totalRows > $areaHeight && $cursorRow >= $areaHeight) {
+            return $cursorRow - $areaHeight + 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * @return UpdateResult<static>
+     */
+    private function handleClick(MouseMsg $message, Rect $area, int $count): UpdateResult
+    {
+        $clickedRow = $message->y - $area->y + $this->cursorScrollOffset($area->height);
+        $optionIndex = $clickedRow - $this->rowOffset();
+
+        if ($optionIndex >= 0 && $optionIndex < $count) {
+            return new UpdateResult($this->cloneWith(cursor: $optionIndex, selected: $optionIndex));
+        }
+
+        return new UpdateResult($this);
     }
 
     /**
