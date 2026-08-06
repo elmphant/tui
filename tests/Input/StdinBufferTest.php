@@ -368,6 +368,44 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function pasteEndMarkerSplitAcrossChunksStillEndsThePaste(): void
+    {
+        $pastes = [];
+        $buffer = new StdinBuffer(
+            onSequence: fn () => null,
+            onPaste: function (string $content) use (&$pastes) { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~hello\x1b[2");
+        $this->assertSame([], $pastes, 'Paste not yet complete');
+
+        $buffer->process('01~');
+        $this->assertSame(['hello'], $pastes);
+    }
+
+    #[Test]
+    public function pasteEndMarkerArrivingOneByteAtATimeStillEndsThePaste(): void
+    {
+        $pastes = [];
+        $buffer = new StdinBuffer(
+            onSequence: fn () => null,
+            onPaste: function (string $content) use (&$pastes) { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~drip");
+
+        $marker = "\x1b[201~";
+        $lastByte = strlen($marker) - 1;
+        for ($index = 0; $index < $lastByte; ++$index) {
+            $buffer->process($marker[$index]);
+            $this->assertSame([], $pastes, "Byte $index of the split terminator must not complete the paste");
+        }
+
+        $buffer->process($marker[$lastByte]);
+        $this->assertSame(['drip'], $pastes);
+    }
+
+    #[Test]
     public function invalidUtf8LeadF8InChunkForwardedAsSingleByte(): void
     {
         $sequences = [];

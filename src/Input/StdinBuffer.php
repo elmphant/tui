@@ -41,11 +41,12 @@ final class StdinBuffer
             if ($this->inPaste) {
                 $endPos = strpos($this->buffer, self::PASTE_END);
                 if ($endPos === false) {
+                    $consumableLength = strlen($this->buffer) - $this->trailingPasteEndPrefixLength();
                     $remaining = self::MAX_PASTE_SIZE - strlen($this->pasteBuffer);
-                    if ($remaining > 0) {
-                        $this->pasteBuffer .= substr($this->buffer, 0, $remaining);
+                    if ($remaining > 0 && $consumableLength > 0) {
+                        $this->pasteBuffer .= substr($this->buffer, 0, min($consumableLength, $remaining));
                     }
-                    $this->buffer = '';
+                    $this->buffer = substr($this->buffer, $consumableLength);
                     break;
                 }
                 $remaining = self::MAX_PASTE_SIZE - strlen($this->pasteBuffer);
@@ -105,6 +106,23 @@ final class StdinBuffer
             ($this->onSequence)($this->buffer);
             $this->buffer = '';
         }
+    }
+
+    /**
+     * A read can split PASTE_END, so a tail that could still grow into it stays buffered
+     * rather than being swallowed as paste content — otherwise the paste never terminates.
+     */
+    private function trailingPasteEndPrefixLength(): int
+    {
+        $longestPrefix = min(strlen($this->buffer), strlen(self::PASTE_END) - 1);
+
+        for ($length = $longestPrefix; $length > 0; --$length) {
+            if (substr($this->buffer, -$length) === substr(self::PASTE_END, 0, $length)) {
+                return $length;
+            }
+        }
+
+        return 0;
     }
 
     private function extractEscapeSequence(): ?string
