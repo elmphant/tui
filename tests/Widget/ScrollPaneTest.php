@@ -460,14 +460,16 @@ final class ScrollPaneTest extends TestCase
     {
         $first = Text::new('one');
         $second = Text::new('two');
-        $pane = ScrollPane::of($first, $second)->withScrollOffset(1);
+        $third = Text::new('three');
+        $pane = ScrollPane::of($first, $second, $third)->withScrollOffset(1);
 
         $placed = [...$pane->childWidgets(Rect::fromSize(20, 2))];
 
-        self::assertSame([$first, $second], [...$pane->children()]);
+        self::assertSame([$first, $second, $third], [...$pane->children()]);
         self::assertSame($first, $placed[0][0]);
         self::assertSame(-1, $placed[0][1]->y, 'The scrolled-away child reports where it actually is');
         self::assertSame(0, $placed[1][1]->y);
+        self::assertSame(1, $placed[2][1]->y);
     }
 
     #[Test]

@@ -11,11 +11,7 @@ namespace Elmphant\Tui\Layout;
  */
 final readonly class VerticalStackLayout
 {
-    /**
-     * One row of slack below the content, so the last line never sits against
-     * the bottom border.
-     */
-    public const SCROLL_BOTTOM_PADDING = 1;
+    public const SCROLL_BOTTOM_PADDING = ScrollWindow::BOTTOM_PADDING;
 
     /**
      * @param list<int> $heights
@@ -30,11 +26,11 @@ final readonly class VerticalStackLayout
 
     public function maxScrollOffset(int $viewportHeight): int
     {
-        return max(0, $this->totalHeight - $viewportHeight + self::SCROLL_BOTTOM_PADDING);
+        return ScrollWindow::lastOffset($this->totalHeight, $viewportHeight);
     }
 
     public function clampScrollOffset(int $scrollOffset, int $viewportHeight): int
     {
-        return min($scrollOffset, $this->maxScrollOffset($viewportHeight));
+        return ScrollWindow::clamped($scrollOffset, $this->maxScrollOffset($viewportHeight));
     }
 }

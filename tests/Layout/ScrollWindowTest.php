@@ -11,6 +11,17 @@ use PHPUnit\Framework\TestCase;
 final class ScrollWindowTest extends TestCase
 {
     #[Test]
+    public function countsTheLastOffsetTheSameWayForEveryScrolledWidget(): void
+    {
+        self::assertSame(
+            13 - 8 + ScrollWindow::BOTTOM_PADDING,
+            ScrollWindow::lastOffset(13, 8),
+            'the last row may sit one above the floor of the viewport',
+        );
+        self::assertSame(0, ScrollWindow::lastOffset(4, 8), 'content that fits does not scroll');
+    }
+
+    #[Test]
     public function holdsAnOffsetBetweenTheFirstRowAndTheLastItCanReach(): void
     {
         self::assertSame(0, ScrollWindow::clamped(-5, 10), 'the first row is as far up as it goes');

@@ -13,6 +13,19 @@ namespace Elmphant\Tui\Layout;
 final class ScrollWindow
 {
     /**
+     * The last row may be scrolled one line above the floor of the viewport, so
+     * it is clear there is nothing under it.
+     */
+    public const BOTTOM_PADDING = 1;
+
+    public static function lastOffset(int $totalHeight, int $viewportHeight): int
+    {
+        return $totalHeight <= $viewportHeight
+            ? 0
+            : $totalHeight - $viewportHeight + self::BOTTOM_PADDING;
+    }
+
+    /**
      * An offset held between the first row and the last one it can reach.
      */
     public static function clamped(int $offset, int $maxOffset): int
