@@ -107,7 +107,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
      */
     public function withFocusReversed(): static
     {
-        return $this->cloneWith(focusIndex: max(0, $this->focusableCount() - 1), focused: true);
+        return $this->cloneWith(focusIndex: $this->tree()->focusAtEnd()->active(), focused: true);
     }
 
     /**
@@ -281,7 +281,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
         }
 
         $pane = $message->isClick() && $this->focused
-            ? $this->focusedByClick($message, $area) ?? $this
+            ? $this->focusedByClick($message, $area)
             : $this;
 
         return $pane->broadcast($message, $area);
@@ -446,33 +446,25 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
     }
 
     /**
-     * The pane with focus moved to the child under the pointer, or null when
-     * the click landed on none of them.
+     * A click that lands on no child leaves the focus where it was.
      */
-    private function focusedByClick(MouseMsg $message, Rect $area): ?self
+    private function focusedByClick(MouseMsg $message, Rect $area): self
     {
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $this->children, $area->width, $area->height);
         $y = $area->y - $this->resolvedOffset($layout, $area->height);
-        $focusableIndex = 0;
+        $areas = [];
 
         foreach ($this->children as $index => $child) {
             $height = $layout->heights[$index];
 
-            if ($child instanceof Focusable
-                && $message->y >= $y && $message->y < $y + $height
-                && $message->x >= $area->x && $message->x < $area->x + $layout->childWidth
-            ) {
-                return $this->withFocusAt($focusableIndex);
-            }
-
             if ($child instanceof Focusable) {
-                ++$focusableIndex;
+                $areas[] = new Rect($area->x, $y, $layout->childWidth, $height);
             }
 
             $y += $height;
         }
 
-        return null;
+        return $this->withFocusAt($this->tree()->focusByClick($message, ...$areas)->active());
     }
 
     /**
