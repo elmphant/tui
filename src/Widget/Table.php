@@ -30,6 +30,9 @@ use Elmphant\Tui\Rendering\Theme;
  * truncate or wrap rather than widening the table. Only the rows in view are
  * drawn, which is what makes it usable for unbounded row counts. For a bordered
  * table that just prints a small data set, see StaticTable.
+ *
+ * Rows given as plain cell text become Row values on the way in, so there is
+ * one key path and one row renderer whichever shape the caller used.
  */
 final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 {
@@ -48,14 +51,13 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
     /**
      * @param list<Column>            $columns
-     * @param list<list<string>>      $rows
-     * @param list<Row>               $typedRows
+     * @param list<Row>               $rows
      * @param KeyedCache<TableLayout> $layoutMemo
      */
     private function __construct(
         private array $columns = [],
         private array $rows = [],
-        private array $typedRows = [],
+        private bool $rowsAreTyped = false,
         private int $cursor = 0,
         private int $selected = -1,
         private int $scrollOffset = 0,
@@ -81,7 +83,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     {
         return new self(
             columns: $columns,
-            rows: $rows,
+            rows: self::asTypedRows($rows),
         );
     }
 
@@ -101,7 +103,8 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         return new self(
             columns: $columns,
-            typedRows: $rows,
+            rows: $rows,
+            rowsAreTyped: true,
             cursor: $initialCursor,
         );
     }
@@ -124,7 +127,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withRows(array $rows): self
     {
-        return $this->cloneWith(rows: $rows, typedRows: [], layoutMemo: self::newLayoutMemo());
+        return $this->cloneWith(rows: self::asTypedRows($rows), rowsAreTyped: false, layoutMemo: self::newLayoutMemo());
     }
 
     /**
@@ -132,7 +135,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withTypedRows(array $rows): self
     {
-        return $this->cloneWith(rows: [], typedRows: $rows, layoutMemo: self::newLayoutMemo());
+        return $this->cloneWith(rows: $rows, rowsAreTyped: true, layoutMemo: self::newLayoutMemo());
     }
 
     public function withSelected(int $selected): self
@@ -161,19 +164,15 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     }
 
     /**
-     * Cell text of the selected row, whichever row representation is in use.
+     * Cell text of the selected row.
      *
      * @return list<string>|null
      */
     public function selectedRow(): ?array
     {
-        if ($this->typedRows === []) {
-            return $this->rows[$this->selected] ?? null;
-        }
+        $row = $this->rows[$this->selected] ?? null;
 
-        $typedRow = $this->typedRows[$this->selected] ?? null;
-
-        return $typedRow === null ? null : self::textOf($typedRow);
+        return $row === null ? null : self::textOf($row);
     }
 
     /**
@@ -181,7 +180,11 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function selectedTypedRow(): ?Row
     {
-        return $this->typedRows[$this->selected] ?? null;
+        if (!$this->rowsAreTyped) {
+            return null;
+        }
+
+        return $this->rows[$this->selected] ?? null;
     }
 
     public function scrollOffset(): int
@@ -270,6 +273,21 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $cache;
     }
 
+    /**
+     * @param list<list<string>> $rows
+     *
+     * @return list<Row>
+     */
+    private static function asTypedRows(array $rows): array
+    {
+        $typedRows = [];
+        foreach ($rows as $cells) {
+            $typedRows[] = new Row(cells: $cells);
+        }
+
+        return $typedRows;
+    }
+
     private function headerHeight(): int
     {
         return $this->header ? 1 : 0;
@@ -277,18 +295,12 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
     private function rowCount(): int
     {
-        return $this->typedRows !== [] ? count($this->typedRows) : count($this->rows);
+        return count($this->rows);
     }
 
     private function isRowSelectable(int $index): bool
     {
-        if ($this->typedRows === []) {
-            return true;
-        }
-
-        $row = $this->typedRows[$index] ?? null;
-
-        return $row === null ? true : $row->selectable;
+        return $this->rows[$index]->selectable ?? true;
     }
 
     private function findNextSelectable(int $from, int $direction): ?int
@@ -313,44 +325,18 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     {
         $rowCount = $this->rowCount();
         $visibleRows = max(1, $area->height - $this->headerHeight());
-        $hasTypedRows = $this->typedRows !== [];
         $bindings = $this->effectiveKeybindings();
 
-        if ($hasTypedRows) {
-            $updated = match (true) {
-                $bindings->matches($message, Actions::FOCUS_PREV) => $this->findNextSelectable($this->cursor, -1) !== null
-                    ? $this->cloneWith(cursor: $this->findNextSelectable($this->cursor, -1))
-                    : null,
-                $bindings->matches($message, Actions::FOCUS_NEXT) => $this->findNextSelectable($this->cursor, 1) !== null
-                    ? $this->cloneWith(cursor: $this->findNextSelectable($this->cursor, 1))
-                    : null,
-                $bindings->matches($message, Actions::HOME) => $this->findNextSelectable(-1, 1) !== null && $this->findNextSelectable(-1, 1) !== $this->cursor
-                    ? $this->cloneWith(cursor: $this->findNextSelectable(-1, 1))
-                    : null,
-                $bindings->matches($message, Actions::END) => $this->findNextSelectable($rowCount, -1) !== null && $this->findNextSelectable($rowCount, -1) !== $this->cursor
-                    ? $this->cloneWith(cursor: $this->findNextSelectable($rowCount, -1))
-                    : null,
-                $bindings->matches($message, Actions::PAGE_DOWN) => $this->handlePageDown($this->rowAPageAway(1, $visibleRows, $area)),
-                $bindings->matches($message, Actions::PAGE_UP) => $this->handlePageUp($this->rowAPageAway(-1, $visibleRows, $area)),
-                $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->selected === $this->cursor ? -1 : $this->cursor),
-                default => null,
-            };
-        } else {
-            $updated = match (true) {
-                $bindings->matches($message, Actions::FOCUS_PREV) => $this->cursor > 0 ? $this->cloneWith(cursor: $this->cursor - 1) : null,
-                $bindings->matches($message, Actions::FOCUS_NEXT) => $this->cursor < $rowCount - 1 ? $this->cloneWith(cursor: $this->cursor + 1) : null,
-                $bindings->matches($message, Actions::HOME) => $this->cursor > 0 ? $this->cloneWith(cursor: 0) : null,
-                $bindings->matches($message, Actions::END) => $this->cursor < $rowCount - 1 ? $this->cloneWith(cursor: $rowCount - 1) : null,
-                $bindings->matches($message, Actions::PAGE_DOWN) => $this->cursor < $rowCount - 1
-                    ? $this->cloneWith(cursor: $this->rowAPageAway(1, $visibleRows, $area))
-                    : null,
-                $bindings->matches($message, Actions::PAGE_UP) => $this->cursor > 0
-                    ? $this->cloneWith(cursor: $this->rowAPageAway(-1, $visibleRows, $area))
-                    : null,
-                $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->selected === $this->cursor ? -1 : $this->cursor),
-                default => null,
-            };
-        }
+        $updated = match (true) {
+            $bindings->matches($message, Actions::FOCUS_PREV) => $this->withCursorAt($this->findNextSelectable($this->cursor, -1)),
+            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->withCursorAt($this->findNextSelectable($this->cursor, 1)),
+            $bindings->matches($message, Actions::HOME) => $this->withCursorAt($this->findNextSelectable(-1, 1)),
+            $bindings->matches($message, Actions::END) => $this->withCursorAt($this->findNextSelectable($rowCount, -1)),
+            $bindings->matches($message, Actions::PAGE_DOWN) => $this->withCursorAt($this->rowAPageAway(1, $visibleRows, $area)),
+            $bindings->matches($message, Actions::PAGE_UP) => $this->withCursorAt($this->rowAPageAway(-1, $visibleRows, $area)),
+            $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->selected === $this->cursor ? -1 : $this->cursor),
+            default => null,
+        };
 
         if ($updated !== null) {
             return new UpdateResult($updated->ensureCursorVisible($area));
@@ -359,15 +345,36 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return new UpdateResult($this);
     }
 
+    private function withCursorAt(?int $row): ?self
+    {
+        if ($row === null || $row === $this->cursor) {
+            return null;
+        }
+
+        return $this->cloneWith(cursor: $row);
+    }
+
+    /**
+     * The row a page away from the cursor, stepped back towards the cursor
+     * until it is one the cursor may rest on.
+     */
     private function rowAPageAway(int $direction, int $visibleRows, Rect $area): int
     {
         $layout = $this->layoutFor($this->columnWidthsFor($area));
-        $last = max(0, $this->rowCount() - 1);
 
-        if ($direction > 0) {
-            return $layout->rowAtLine($this->cursor, $visibleRows) ?? $last;
+        $target = $direction > 0
+            ? $layout->rowAtLine($this->cursor, $visibleRows) ?? max(0, $this->rowCount() - 1)
+            : $this->rowAPageAbove($layout, $visibleRows);
+
+        while ($target !== $this->cursor && !$this->isRowSelectable($target)) {
+            $target -= $direction;
         }
 
+        return $target;
+    }
+
+    private function rowAPageAbove(TableLayout $layout, int $visibleRows): int
+    {
         $lines = 0;
         for ($row = $this->cursor - 1; $row >= 0; --$row) {
             $lines += $layout->heightOf($row);
@@ -378,24 +385,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         }
 
         return 0;
-    }
-
-    private function handlePageDown(int $target): ?self
-    {
-        while ($target > $this->cursor && !$this->isRowSelectable($target)) {
-            --$target;
-        }
-
-        return $target !== $this->cursor ? $this->cloneWith(cursor: $target) : null;
-    }
-
-    private function handlePageUp(int $target): ?self
-    {
-        while ($target < $this->cursor && !$this->isRowSelectable($target)) {
-            ++$target;
-        }
-
-        return $target !== $this->cursor ? $this->cloneWith(cursor: $target) : null;
     }
 
     /**
@@ -502,11 +491,8 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     private function renderRows(Frame $frame, Rect $area, array $columnWidths, Theme $theme): void
     {
         $layout = $this->layoutFor($columnWidths);
-        $cells = $this->cellText();
-        $useTypedRows = $this->typedRows !== [];
         $totalWidth = array_sum($columnWidths);
-        $firstRowY = $area->y + $this->headerHeight();
-        $renderY = $firstRowY;
+        $renderY = $area->y + $this->headerHeight();
 
         // A scroll container sizes its child to the child's whole content and
         // clips the overflow, so the area is not the viewport — the clip is.
@@ -519,13 +505,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             }
 
             $height = $layout->heightOf($rowIndex);
-            $rowLines = TableLayout::linesOfRow($columnWidths, $cells[$rowIndex] ?? []);
-
-            if ($useTypedRows) {
-                $this->renderTypedRow($frame, $area->x, $renderY, $rowIndex, $this->typedRows[$rowIndex], $columnWidths, $totalWidth, $theme, $height, $rowLines);
-            } else {
-                $this->renderPlainRow($frame, $area->x, $renderY, $rowIndex, $columnWidths, $totalWidth, $theme, $height, $rowLines);
-            }
+            $this->renderRow($frame, $area->x, $renderY, $rowIndex, $this->rows[$rowIndex], $columnWidths, $totalWidth, $theme, $height);
 
             $renderY += $height;
         }
@@ -534,102 +514,11 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     /**
      * @param list<int> $columnWidths
      */
-    private function layoutFor(array $columnWidths): TableLayout
+    private function renderRow(Frame $frame, int $startX, int $renderY, int $rowIndex, Row $row, array $columnWidths, int $totalWidth, Theme $theme, int $height): void
     {
-        $rows = $this->cellText();
-
-        return $this->layoutMemo->at(
-            implode(',', $columnWidths),
-            static fn (): TableLayout => TableLayout::forRows($columnWidths, $rows),
-        );
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function columnWidthsFor(Rect $area): array
-    {
-        $showScrollbar = Scrollbar::needsScrollbar($this->rowCount(), max(1, $area->height - $this->headerHeight()));
-
-        return $this->computeColumnWidths($showScrollbar ? $area->width - 1 : $area->width);
-    }
-
-    /**
-     * Cell text for measuring, whichever row representation is in use.
-     *
-     * @return list<list<string>>
-     */
-    private function cellText(): array
-    {
-        if ($this->typedRows === []) {
-            return $this->rows;
-        }
-
-        $rows = [];
-        foreach ($this->typedRows as $typedRow) {
-            $rows[] = self::textOf($typedRow);
-        }
-
-        return $rows;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function textOf(Row $row): array
-    {
-        $cells = [];
-        foreach ($row->cells as $cell) {
-            $cells[] = $cell instanceof Span ? $cell->content : $cell;
-        }
-
-        return $cells;
-    }
-
-    /**
-     * @param list<int>          $columnWidths
-     * @param list<list<string>> $rowLines
-     */
-    private function renderPlainRow(Frame $frame, int $startX, int $renderY, int $rowIndex, array $columnWidths, int $totalWidth, Theme $theme, int $height, array $rowLines): void
-    {
-        $isCursor = $rowIndex === $this->cursor;
-        $isSelected = $rowIndex === $this->selected;
-        $reverse = ($isCursor && $this->focused) || $isSelected;
-
-        $cellStyle = match (true) {
-            $this->focused => $theme->base,
-            default => $theme->dim,
-        };
-
-        if ($reverse) {
-            $cellStyle = $cellStyle->reverse();
-            $cellStyle->apply($frame, new Rect($startX, $renderY, $totalWidth, $height));
-        }
-
-        $cellX = $startX;
-        foreach (array_keys($this->columns) as $columnIndex) {
-            $width = $columnWidths[$columnIndex] ?? 0;
-            if ($width <= 0) {
-                continue;
-            }
-
-            for ($line = 0; $line < $height; ++$line) {
-                $frame->putStyled($cellX, $renderY + $line, $rowLines[$columnIndex][$line] ?? '', $cellStyle);
-            }
-
-            $cellX += $width;
-        }
-    }
-
-    /**
-     * @param list<int>          $columnWidths
-     * @param list<list<string>> $rowLines
-     */
-    private function renderTypedRow(Frame $frame, int $startX, int $renderY, int $rowIndex, Row $typedRow, array $columnWidths, int $totalWidth, Theme $theme, int $height, array $rowLines): void
-    {
-        if (!$typedRow->selectable) {
+        if (!$row->selectable) {
             $headerStyle = $theme->headerStyle;
-            $cell = $typedRow->cells[0] ?? '';
+            $cell = $row->cells[0] ?? '';
             $label = CharWidth::truncateToWidth($cell instanceof Span ? $cell->content : $cell, $totalWidth);
             $frame->putStyled($startX, $renderY, $label, $headerStyle);
 
@@ -650,19 +539,21 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             $defaultStyle->apply($frame, new Rect($startX, $renderY, $totalWidth, $height));
         }
 
-        $rowStyle = $typedRow->style ?? $defaultStyle;
-        if ($reverse && $typedRow->style !== null) {
+        $rowStyle = $row->style ?? $defaultStyle;
+        if ($reverse && $row->style !== null) {
             $rowStyle = $rowStyle->reverse();
         }
 
+        $rowLines = TableLayout::linesOfRow($columnWidths, self::textOf($row));
         $cellX = $startX;
+
         foreach (array_keys($this->columns) as $columnIndex) {
             $width = $columnWidths[$columnIndex] ?? 0;
             if ($width <= 0) {
                 continue;
             }
 
-            $cell = $typedRow->cells[$columnIndex] ?? '';
+            $cell = $row->cells[$columnIndex] ?? '';
             $cellStyle = $cell instanceof Span
                 ? $cell->withResolvedToken($theme)->style
                 : null;
@@ -679,6 +570,55 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
             $cellX += $width;
         }
+    }
+
+    /**
+     * @param list<int> $columnWidths
+     */
+    private function layoutFor(array $columnWidths): TableLayout
+    {
+        return $this->layoutMemo->at(
+            implode(',', $columnWidths),
+            fn (): TableLayout => TableLayout::forRows($columnWidths, $this->cellText()),
+        );
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function columnWidthsFor(Rect $area): array
+    {
+        $showScrollbar = Scrollbar::needsScrollbar($this->rowCount(), max(1, $area->height - $this->headerHeight()));
+
+        return $this->computeColumnWidths($showScrollbar ? $area->width - 1 : $area->width);
+    }
+
+    /**
+     * Cell text of every row, for measuring.
+     *
+     * @return list<list<string>>
+     */
+    private function cellText(): array
+    {
+        $rows = [];
+        foreach ($this->rows as $row) {
+            $rows[] = self::textOf($row);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function textOf(Row $row): array
+    {
+        $cells = [];
+        foreach ($row->cells as $cell) {
+            $cells[] = $cell instanceof Span ? $cell->content : $cell;
+        }
+
+        return $cells;
     }
 
     private function ensureCursorVisible(Rect $area): self
