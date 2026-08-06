@@ -14,6 +14,7 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Runtime\PendingWheel;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,18 +26,20 @@ use SplQueue;
 final class WheelReversalTest extends TestCase
 {
     #[Test]
-    public function reversingTheWheelDropsTheScrollingThatHasNotHappenedYet(): void
+    public function aStrayNotchAgainstTheGestureNeverReachesTheModel(): void
     {
         $program = $this->program();
 
-        $this->enqueueWheel($program, MouseAction::WheelDown, 5);
-        $this->enqueueWheel($program, MouseAction::WheelUp, 1);
+        $this->enqueueWheel($program, MouseAction::WheelUp, 3);
+        $this->enqueueWheel($program, MouseAction::WheelDown, 1);
+        $this->enqueueWheel($program, MouseAction::WheelUp, 2);
+        $this->flushWheel($program);
 
-        self::assertSame(
-            [MouseAction::WheelUp],
-            $this->wheelActions($program),
-            'A backlog of down-scrolling the user has already reversed must not still be applied',
-        );
+        $wheels = $this->wheels($program);
+
+        self::assertCount(1, $wheels, 'the gesture moves the view once, not three times');
+        self::assertSame(MouseAction::WheelUp, $wheels[0]->action);
+        self::assertSame(4, $wheels[0]->repeat, 'five up against one down is four up');
     }
 
     #[Test]
@@ -51,61 +54,23 @@ final class WheelReversalTest extends TestCase
     }
 
     #[Test]
-    public function aWheelEventReachesTheQueueLikeAnyOther(): void
-    {
-        $program = $this->program();
-
-        $this->enqueueWheel($program, MouseAction::WheelDown, 1);
-
-        self::assertCount(1, $this->queue($program), 'Merging must not swallow the first event of a run');
-    }
-
-    #[Test]
-    public function aFlickBecomesOneMessageCarryingEveryNotch(): void
+    public function wheelingWaitsForTheFrameSoItArrivesAsOneMove(): void
     {
         $program = $this->program();
 
         $this->enqueueWheel($program, MouseAction::WheelDown, 70);
 
+        self::assertCount(0, $this->wheels($program), 'nothing is applied a notch at a time');
+
+        $this->flushWheel($program);
         $wheels = $this->wheels($program);
 
-        self::assertCount(1, $wheels, 'The terminal splits one gesture into a notch per event; the queue must not grow with them');
+        self::assertCount(1, $wheels);
         self::assertSame(70, $wheels[0]->repeat, 'Every notch is still a row the user asked for');
     }
 
     #[Test]
-    public function aReversalStartsANewRunRatherThanAddingToTheOldOne(): void
-    {
-        $program = $this->program();
-
-        $this->enqueueWheel($program, MouseAction::WheelDown, 3);
-        $this->enqueueWheel($program, MouseAction::WheelUp, 2);
-
-        $wheels = $this->wheels($program);
-
-        self::assertCount(1, $wheels);
-        self::assertSame(MouseAction::WheelUp, $wheels[0]->action);
-        self::assertSame(2, $wheels[0]->repeat);
-    }
-
-    #[Test]
-    public function aClickBetweenTwoRunsKeepsThemApart(): void
-    {
-        $program = $this->program();
-        $queue = $this->queue($program);
-
-        $this->enqueueWheel($program, MouseAction::WheelDown, 2);
-        $queue->enqueue(new MouseMsg(1, 1, MouseAction::Press, MouseButton::Left));
-        $this->enqueueWheel($program, MouseAction::WheelDown, 3);
-
-        $wheels = $this->wheels($program);
-
-        self::assertCount(2, $wheels, 'Scrolling either side of a click is two gestures, not one');
-        self::assertSame([2, 3], [$wheels[0]->repeat, $wheels[1]->repeat]);
-    }
-
-    #[Test]
-    public function reversingLeavesEverythingThatIsNotWheelingAlone(): void
+    public function wheelingLeavesEverythingThatIsNotWheelingAlone(): void
     {
         $program = $this->program();
         $queue = $this->queue($program);
@@ -113,6 +78,7 @@ final class WheelReversalTest extends TestCase
         $this->enqueueWheel($program, MouseAction::WheelDown, 2);
         $queue->enqueue(new TestMessage('keep me'));
         $this->enqueueWheel($program, MouseAction::WheelUp, 1);
+        $this->flushWheel($program);
 
         $kept = [];
         foreach ($queue as $message) {
@@ -125,7 +91,7 @@ final class WheelReversalTest extends TestCase
     }
 
     #[Test]
-    public function aClickIsNotWheelingAndSurvivesAReversal(): void
+    public function aClickIsNotWheelingAndSurvivesAGesture(): void
     {
         $program = $this->program();
         $queue = $this->queue($program);
@@ -133,6 +99,7 @@ final class WheelReversalTest extends TestCase
         $this->enqueueWheel($program, MouseAction::WheelDown, 2);
         $queue->enqueue(new MouseMsg(1, 1, MouseAction::Press, MouseButton::Left));
         $this->enqueueWheel($program, MouseAction::WheelUp, 1);
+        $this->flushWheel($program);
 
         $actions = [];
         foreach ($queue as $message) {
@@ -141,7 +108,7 @@ final class WheelReversalTest extends TestCase
             }
         }
 
-        self::assertSame([MouseAction::Press, MouseAction::WheelUp], $actions);
+        self::assertSame([MouseAction::Press, MouseAction::WheelDown], $actions);
     }
 
     /**
@@ -151,6 +118,7 @@ final class WheelReversalTest extends TestCase
     {
         $program = Program::new($this->idleModel());
         (new ReflectionProperty(Program::class, 'messageQueue'))->setValue($program, new SplQueue());
+        (new ReflectionProperty(Program::class, 'pendingWheel'))->setValue($program, new PendingWheel());
 
         return $program;
     }
@@ -179,6 +147,14 @@ final class WheelReversalTest extends TestCase
 
     /**
      * @param Program<Model> $program
+     */
+    private function flushWheel(Program $program): void
+    {
+        (new ReflectionMethod(Program::class, 'flushWheel'))->invoke($program);
+    }
+
+    /**
+     * @param Program<Model> $program
      *
      * @return list<MouseMsg>
      */
@@ -192,23 +168,6 @@ final class WheelReversalTest extends TestCase
         }
 
         return $wheels;
-    }
-
-    /**
-     * @param Program<Model> $program
-     *
-     * @return list<MouseAction>
-     */
-    private function wheelActions(Program $program): array
-    {
-        $actions = [];
-        foreach ($this->queue($program) as $message) {
-            if ($message instanceof MouseMsg && ($message->action === MouseAction::WheelUp || $message->action === MouseAction::WheelDown)) {
-                $actions[] = $message->action;
-            }
-        }
-
-        return $actions;
     }
 
     private function idleModel(): Model

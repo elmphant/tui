@@ -2120,6 +2120,7 @@ final class ProgramTest extends TestCase
         $enqueue->invoke($program, new MouseMsg(6, 6, MouseAction::WheelDown, MouseButton::None));
         $enqueue->invoke($program, new MouseMsg(6, 6, MouseAction::WheelDown, MouseButton::None));
 
+        $reflection->getMethod('flushWheel')->invoke($program);
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
         self::assertInstanceOf(FloatMouseMsg::class, $model->received);

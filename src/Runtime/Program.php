@@ -84,6 +84,8 @@ final class Program
      * @var SplQueue<Message>
      */
     private SplQueue $messageQueue;
+    private PendingWheel $pendingWheel;
+    private float $lastWheelFlush = 0.0;
     private Model $model;
     private ?Frame $backBuffer = null;
     private bool $running = false;
@@ -144,6 +146,7 @@ final class Program
     {
         $this->clock = new MonotonicClock();
         $this->screenRect = Rect::fromSize($this->width, $this->height);
+        $this->pendingWheel = new PendingWheel();
     }
 
     /**
@@ -280,6 +283,7 @@ final class Program
             $this->terminal = $this->injectedTerminal ?? new Terminal();
             $this->screen = new Screen($this->terminal, $this->terminal->colorProfile());
             $this->messageQueue = new SplQueue();
+            $this->pendingWheel = new PendingWheel();
             $this->model = $this->initialModel;
             $this->stdinBuffer = new StdinBuffer(
                 onSequence: $this->handleInputSequence(...),
@@ -493,7 +497,7 @@ final class Program
             nextRenderDelay: $this->nextRenderDelay(),
             nextTimerDelay: $this->nextTimerDelay(),
             processesActive: $this->processes !== [],
-            queuePending: !$this->messageQueue->isEmpty(),
+            queuePending: !$this->messageQueue->isEmpty() || !$this->pendingWheel->isEmpty(),
         );
 
         $inputStream = $this->terminal->inputStream();
@@ -544,24 +548,13 @@ final class Program
     }
 
     /**
-     * Scrolling the other way cancels whatever is still queued: applying it
-     * would move the view further from where the user just asked it to go.
+     * Wheeling waits for the next frame and is applied as one total, so notches
+     * the trackpad reports against the gesture cancel instead of moving the view.
      */
     private function enqueueInputMessage(Message $message): void
     {
-        if (!$message instanceof MouseMsg || self::wheelDirection($message) === null) {
-            $this->messageQueue->enqueue($message);
-
-            return;
-        }
-
-        $this->dropQueuedWheeling(self::opposite($message));
-
-        $last = $this->messageQueue->count() - 1;
-        $tail = $last < 0 ? null : $this->messageQueue[$last];
-
-        if ($tail instanceof MouseMsg && $tail->action === $message->action) {
-            $this->messageQueue[$last] = $tail->mergedWith($message);
+        if ($message instanceof MouseMsg && self::wheelDirection($message) !== null) {
+            $this->pendingWheel->add($message);
 
             return;
         }
@@ -569,18 +562,22 @@ final class Program
         $this->messageQueue->enqueue($message);
     }
 
-    private function dropQueuedWheeling(MouseAction $stale): void
+    private function flushWheelWhenDue(float $now): void
     {
-        $queued = $this->messageQueue->count();
+        if ($this->pendingWheel->isEmpty() || $now < $this->lastWheelFlush + 1.0 / $this->framesPerSecond) {
+            return;
+        }
 
-        for ($position = 0; $position < $queued; ++$position) {
-            $message = $this->messageQueue->dequeue();
+        $this->lastWheelFlush = $now;
+        $this->flushWheel();
+    }
 
-            if ($message instanceof MouseMsg && $message->action === $stale) {
-                continue;
-            }
+    private function flushWheel(): void
+    {
+        $wheeled = $this->pendingWheel->take();
 
-            $this->messageQueue->enqueue($message);
+        if ($wheeled !== null) {
+            $this->messageQueue->enqueue($wheeled);
         }
     }
 
@@ -590,13 +587,6 @@ final class Program
             MouseAction::WheelUp, MouseAction::WheelDown => $message->action,
             default => null,
         };
-    }
-
-    private static function opposite(MouseMsg $message): MouseAction
-    {
-        return $message->action === MouseAction::WheelUp
-            ? MouseAction::WheelDown
-            : MouseAction::WheelUp;
     }
 
     /**
@@ -636,6 +626,7 @@ final class Program
         $this->fireTickers($now);
         $this->fireTimers($now);
         $this->pumpProcesses();
+        $this->flushWheelWhenDue($now);
 
         $this->drainMessageQueue();
         if (!$this->running) {
@@ -679,7 +670,7 @@ final class Program
             nextRenderDelay: $this->nextRenderDelay(),
             nextTimerDelay: $this->nextTimerDelay(),
             processesActive: $this->processes !== [],
-            queuePending: !$this->messageQueue->isEmpty(),
+            queuePending: !$this->messageQueue->isEmpty() || !$this->pendingWheel->isEmpty(),
         );
     }
 
