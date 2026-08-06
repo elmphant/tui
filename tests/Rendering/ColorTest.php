@@ -382,7 +382,7 @@ final class ColorTest extends TestCase
         yield '256 palette passthrough of index 3' => [Color::color256(3), 3];
         yield '256 bright palette passthrough of index 12' => [Color::color256(12), 12];
         yield '256 index 0 (exact C256 boundary)' => [Color::color256(0), 0];
-        yield '256 mid-cube pastel decodes then reduces' => [Color::color256(110), 8];
+        yield '256 mid-cube pastel keeps its hue instead of reducing to gray' => [Color::color256(110), 4];
         yield '256 cube 87 decodes to pale cyan' => [Color::color256(87), 14];
         yield '256 first gray step (232 boundary) is near-black' => [Color::color256(232), 0];
         yield '256 cube origin (index 16) is black' => [Color::color256(16), 0];
@@ -390,6 +390,9 @@ final class ColorTest extends TestCase
         yield '256 gray 238 sits above the black/gray boundary' => [Color::color256(238), 8];
         yield '256 gray 249 ties silver vs gray and picks the first' => [Color::color256(249), 7];
         yield 'rgb equidistant between dark and bright red picks the first' => [Color::rgb(230, 0, 0), 1];
+        yield 'pastel red stays red' => [Color::rgb(255, 107, 107), 9];
+        yield 'pastel green stays green' => [Color::rgb(143, 203, 95), 2];
+        yield 'pastel blue stays blue' => [Color::rgb(95, 135, 175), 4];
     }
 
     #[Test]

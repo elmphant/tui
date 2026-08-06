@@ -21,6 +21,20 @@ final readonly class Color
      */
     private const CONTRAST_CROSSOVER = 0.179;
 
+    private const NEUTRAL_CHROMA = 24;
+
+    /**
+     * Midway between the palette's normal channel (205) and its bright one (255).
+     */
+    private const BRIGHT_CHANNEL = 230;
+
+    private const BRIGHT_OFFSET = 8;
+
+    /**
+     * Grey of each colourless entry, in palette order so a tie falls to the lower index.
+     */
+    private const ANSI16_NEUTRALS = [0 => 0, 7 => 229, 8 => 127, 15 => 255];
+
     private const ANSI16_PALETTE = [
         [0, 0, 0], [205, 0, 0], [0, 205, 0], [205, 205, 0],
         [0, 0, 238], [205, 0, 205], [0, 205, 205], [229, 229, 229],
@@ -229,12 +243,31 @@ final readonly class Color
         ];
     }
 
+    /**
+     * Hue first, brightness second, never nearest neighbour: sixteen colours hold
+     * no pastels, so #FF6B6B sits nearer the mid grey (17184) than bright red
+     * (22898). Matching by distance turns every soft colour grey.
+     */
     private static function rgbTo16(int $red, int $green, int $blue): int
+    {
+        $highest = max($red, $green, $blue);
+        $chroma = $highest - min($red, $green, $blue);
+
+        if ($chroma <= self::NEUTRAL_CHROMA) {
+            return self::nearestNeutral(intdiv($red + $green + $blue, 3));
+        }
+
+        $hue = self::hueSector($red, $green, $blue, $highest, $chroma);
+
+        return $highest > self::BRIGHT_CHANNEL ? $hue + self::BRIGHT_OFFSET : $hue;
+    }
+
+    private static function nearestNeutral(int $grey): int
     {
         $bestIndex = 0;
         $bestDistance = PHP_INT_MAX;
-        foreach (self::ANSI16_PALETTE as $index => [$paletteRed, $paletteGreen, $paletteBlue]) {
-            $distance = self::squaredDistance($red, $green, $blue, $paletteRed, $paletteGreen, $paletteBlue);
+        foreach (self::ANSI16_NEUTRALS as $index => $level) {
+            $distance = ($grey - $level) ** 2;
             if ($distance < $bestDistance) {
                 $bestDistance = $distance;
                 $bestIndex = $index;
@@ -242,6 +275,25 @@ final readonly class Color
         }
 
         return $bestIndex;
+    }
+
+    private static function hueSector(int $red, int $green, int $blue, int $highest, int $chroma): int
+    {
+        $turns = match ($highest) {
+            $red => fmod(($green - $blue) / $chroma + 6.0, 6.0),
+            $green => ($blue - $red) / $chroma + 2.0,
+            default => ($red - $green) / $chroma + 4.0,
+        };
+        $degrees = $turns * 60.0;
+
+        return match (true) {
+            $degrees < 30.0, $degrees >= 330.0 => 1,
+            $degrees < 90.0 => 3,
+            $degrees < 150.0 => 2,
+            $degrees < 210.0 => 6,
+            $degrees < 270.0 => 4,
+            default => 5,
+        };
     }
 
     private static function rgbTo256(int $red, int $green, int $blue): int
