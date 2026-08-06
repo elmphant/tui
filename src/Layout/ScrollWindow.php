@@ -13,12 +13,20 @@ namespace Elmphant\Tui\Layout;
 final class ScrollWindow
 {
     /**
+     * An offset held between the first row and the last one it can reach.
+     */
+    public static function clamped(int $offset, int $maxOffset): int
+    {
+        return min(max(0, $offset), max(0, $maxOffset));
+    }
+
+    /**
      * The offset that keeps $height rows from $top on screen, moving as little
      * as it can.
      */
     public static function showing(int $offset, int $top, int $height, int $viewportHeight, int $maxOffset): int
     {
-        $offset = min(max(0, $offset), max(0, $maxOffset));
+        $offset = self::clamped($offset, $maxOffset);
 
         if ($top < $offset) {
             return $top;

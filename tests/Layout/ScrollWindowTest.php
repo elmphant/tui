@@ -11,6 +11,14 @@ use PHPUnit\Framework\TestCase;
 final class ScrollWindowTest extends TestCase
 {
     #[Test]
+    public function holdsAnOffsetBetweenTheFirstRowAndTheLastItCanReach(): void
+    {
+        self::assertSame(0, ScrollWindow::clamped(-5, 10), 'the first row is as far up as it goes');
+        self::assertSame(10, ScrollWindow::clamped(99, 10), 'and the last offset is as far down');
+        self::assertSame(4, ScrollWindow::clamped(4, 10));
+    }
+
+    #[Test]
     public function leavesAnOffsetAloneWhileWhatMustBeSeenIsAlreadyOnScreen(): void
     {
         self::assertSame(2, ScrollWindow::showing(2, 3, 1, 4, 10), 'rows 2 to 5 are drawn, and row 3 is one of them');

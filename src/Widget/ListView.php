@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\RowExtents;
 use Elmphant\Tui\Layout\RowIndex;
+use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -467,11 +468,12 @@ final readonly class ListView implements Focusable, KeybindingsAware
     }
 
     /**
-     * An offset past the end would draw an empty list; a caller cannot overshoot into blankness.
+     * An offset past either end would draw blank rows; a caller cannot overshoot
+     * into them.
      */
     private function clampedScrollOffset(Rect $area): int
     {
-        return min($this->scrollOffset, $this->extents($area)->maxOffset($area->height));
+        return ScrollWindow::clamped($this->scrollOffset, $this->extents($area)->maxOffset($area->height));
     }
 
     private function cursorVisibleOffset(Rect $area): int
