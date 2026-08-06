@@ -1929,7 +1929,7 @@ final class TableTest extends TestCase
         $table = Table::fromRows(
             [Column::new('N', Constraint::exact(3))],
             [Row::header('VeryLongGroupName'), Row::new('A')],
-        );
+        )->withScrollOffset(0);
         $frame = new Frame(20, 4);
         $table->render($frame, Rect::fromSize(20, 4), new RenderContext(Theme::dark()));
 
@@ -3561,6 +3561,38 @@ final class TableTest extends TestCase
         $screen = $this->screenOfTable($table, $area);
         self::assertStringContainsString('row3', $screen, 'The offset row is the first one shown');
         self::assertStringNotContainsString('row2', $screen, 'And the one before it is not');
+    }
+
+    #[Test]
+    public function aCursorMovedFromOutsideIsOnScreenAtTheNextRender(): void
+    {
+        $area = new Rect(0, 0, 20, 5);
+        $rows = [];
+        for ($index = 0; $index < 10; ++$index) {
+            $rows[] = ["row{$index}"];
+        }
+        $table = Table::new([Column::new('A', Constraint::flex())], $rows)->withCursor(9);
+
+        $screen = $this->screenOfTable($table, $area);
+
+        self::assertStringContainsString('row9', $screen, 'The cursor row is shown although no key event moved it');
+    }
+
+    #[Test]
+    public function aCursorMovedBackToTheFirstRowFromOutsideScrollsTheViewUp(): void
+    {
+        $area = new Rect(0, 0, 20, 5);
+        $rows = [];
+        for ($index = 0; $index < 10; ++$index) {
+            $rows[] = ["row{$index}"];
+        }
+        $table = Table::new([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
+        $scrolled = $table->update(new KeyMsg(Key::End), $area)->model;
+        self::assertSame(6, $scrolled->scrollOffset());
+
+        $screen = $this->screenOfTable($scrolled->withCursor(0), $area);
+
+        self::assertStringContainsString('row0', $screen, 'The view comes back up to the row the cursor was moved to');
     }
 
     protected function createFocusable(): Focusable

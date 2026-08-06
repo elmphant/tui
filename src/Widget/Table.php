@@ -61,6 +61,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         private int $cursor = 0,
         private int $selected = -1,
         private int $scrollOffset = 0,
+        private bool $followCursor = true,
         private bool $focused = false,
         private bool $header = true,
         private ?Keybindings $customKeybindings = null,
@@ -143,9 +144,12 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $this->cloneWith(selected: $selected);
     }
 
+    /**
+     * Scroll explicitly; the view stops following the cursor until it moves again.
+     */
     public function withScrollOffset(int $scrollOffset): self
     {
-        return $this->cloneWith(scrollOffset: $scrollOffset);
+        return $this->cloneWith(scrollOffset: $scrollOffset, followCursor: false);
     }
 
     public function cursor(): int
@@ -153,9 +157,14 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $this->cursor;
     }
 
+    /**
+     * Move the cursor and keep it on screen at the next render, even when it is
+     * driven from outside the focused-key path — a search box may hold focus
+     * while the arrow keys navigate this table.
+     */
     public function withCursor(int $cursor): self
     {
-        return $this->cloneWith(cursor: $cursor);
+        return $this->cloneWith(cursor: $cursor, followCursor: true);
     }
 
     public function selected(): int
@@ -244,7 +253,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
                     $area->x + $area->width - 1,
                     $area->y + $this->headerHeight(),
                     $visibleRows,
-                    $this->scrollOffset,
+                    $this->displayScrollOffset($area),
                     $rowCount,
                     $visibleRows,
                     $theme->accent->foregroundValue(),
@@ -392,14 +401,16 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     private function handleMouse(MouseMsg $message, Rect $area, int $rowCount): UpdateResult
     {
+        $displayOffset = $this->displayScrollOffset($area);
+
         if ($message->isClick() && $message->inRect($area)) {
             $localY = $message->y - $area->y - $this->headerHeight();
             $rowIndex = $localY >= 0
-                ? $this->layoutFor($this->columnWidthsFor($area))->rowAtLine($this->scrollOffset, $localY)
+                ? $this->layoutFor($this->columnWidthsFor($area))->rowAtLine($displayOffset, $localY)
                 : null;
 
             if ($rowIndex !== null && $rowIndex < $rowCount && $this->isRowSelectable($rowIndex)) {
-                return new UpdateResult($this->cloneWith(cursor: $rowIndex, selected: $rowIndex));
+                return new UpdateResult($this->cloneWith(cursor: $rowIndex, selected: $rowIndex, followCursor: true));
             }
         }
 
@@ -407,11 +418,11 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             if ($message->action === MouseAction::WheelDown) {
                 $maxOffset = $this->layoutFor($this->columnWidthsFor($area))->maxOffset(max(1, $area->height - $this->headerHeight()));
 
-                return new UpdateResult($this->cloneWith(scrollOffset: min($maxOffset, $this->scrollOffset + $message->wheelSteps(self::WHEEL_SCROLL_STEP))));
+                return new UpdateResult($this->cloneWith(scrollOffset: min($maxOffset, $displayOffset + $message->wheelSteps(self::WHEEL_SCROLL_STEP)), followCursor: false));
             }
 
             if ($message->action === MouseAction::WheelUp) {
-                return new UpdateResult($this->cloneWith(scrollOffset: max(0, $this->scrollOffset - $message->wheelSteps(self::WHEEL_SCROLL_STEP))));
+                return new UpdateResult($this->cloneWith(scrollOffset: max(0, $displayOffset - $message->wheelSteps(self::WHEEL_SCROLL_STEP)), followCursor: false));
             }
         }
 
@@ -499,7 +510,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         // Reading rows past it would draw thousands of invisible lines.
         $lastVisibleY = $frame->clip()->bottom();
 
-        for ($rowIndex = $this->scrollOffset; $rowIndex < $this->rowCount(); ++$rowIndex) {
+        for ($rowIndex = $this->displayScrollOffset($area); $rowIndex < $this->rowCount(); ++$rowIndex) {
             if ($renderY >= $lastVisibleY) {
                 break;
             }
@@ -623,13 +634,26 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
     private function ensureCursorVisible(Rect $area): self
     {
+        return $this->cloneWith(scrollOffset: $this->cursorVisibleOffset($area));
+    }
+
+    /**
+     * The offset actually drawn: it follows the cursor unless the view was
+     * scrolled away from it, so a cursor moved from outside update() is still
+     * on screen at the next paint.
+     */
+    private function displayScrollOffset(Rect $area): int
+    {
+        return $this->followCursor
+            ? $this->cursorVisibleOffset($area)
+            : $this->scrollOffset;
+    }
+
+    private function cursorVisibleOffset(Rect $area): int
+    {
         $viewportHeight = max(1, $area->height - $this->headerHeight());
         $layout = $this->layoutFor($this->columnWidthsFor($area));
-        $offset = $this->scrollOffset;
-
-        if ($this->cursor < $offset) {
-            $offset = $this->cursor;
-        }
+        $offset = min($this->scrollOffset, $this->cursor);
 
         while ($offset < $this->cursor && $layout->rowAtLine($offset, $viewportHeight - 1) !== null
             && $layout->rowAtLine($offset, $viewportHeight - 1) < $this->cursor
@@ -637,6 +661,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             ++$offset;
         }
 
-        return $this->cloneWith(scrollOffset: $offset);
+        return $offset;
     }
 }
