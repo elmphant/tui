@@ -139,17 +139,6 @@ final readonly class ListView implements Focusable, KeybindingsAware
         return $this->cloneWith(scrollOffset: $scrollOffset, followCursor: false);
     }
 
-    /**
-     * Scrolled by rows from where it currently sits, clamped to its content.
-     *
-     * The offset it lands on is the one it will be drawn with, so a click that
-     * follows is measured against the view the user is looking at.
-     */
-    public function scrolledBy(int $rows): self
-    {
-        return $this->withScrollOffset(max(0, $this->scrollOffset + $rows));
-    }
-
     public function itemCount(): int
     {
         return count($this->items);

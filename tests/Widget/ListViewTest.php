@@ -46,19 +46,6 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
-    public function scrollingByADeltaNeverGoesAboveTheTop(): void
-    {
-        $list = ListView::new([
-            new SimpleListItem('a'), new SimpleListItem('b'),
-            new SimpleListItem('c'), new SimpleListItem('d'),
-        ]);
-
-        self::assertSame(2, $list->scrolledBy(2)->scrollOffset());
-        self::assertSame(3, $list->scrolledBy(2)->scrolledBy(1)->scrollOffset(), 'Deltas accumulate');
-        self::assertSame(0, $list->scrolledBy(-5)->scrollOffset(), 'And stop at the first row');
-    }
-
-    #[Test]
     public function aClickReportsTheItemUnderItAndNothingOutsideTheArea(): void
     {
         $area = new Rect(0, 0, 20, 4);
