@@ -184,6 +184,18 @@ final class ComponentTest extends TestCase
     }
 
     #[Test]
+    public function bindingAPropertyWritesTheUpdateBackToIt(): void
+    {
+        $app = new PropertyBoundApp(TextInput::new()->withFocus(true), version: 7);
+
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1));
+
+        self::assertInstanceOf(PropertyBoundApp::class, $result->model);
+        self::assertSame('x', $result->model->input->value());
+        self::assertSame(7, $result->model->version);
+    }
+
+    #[Test]
     public function aComponentCannotDisappearWhileItsUpdateIsBeingApplied(): void
     {
         $app = new DisappearingComponentApp(TextInput::new()->withFocus(true));
@@ -226,6 +238,20 @@ final readonly class ComponentContractApp extends App
     public function view(): Widget
     {
         return $this->binding();
+    }
+}
+
+final readonly class PropertyBoundApp extends App
+{
+    public function __construct(
+        public TextInput $input = new TextInput(),
+        public int $version = 0,
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return $this->bindProperty('input', $this->input);
     }
 }
 

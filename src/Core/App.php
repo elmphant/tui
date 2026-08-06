@@ -26,6 +26,8 @@ use WeakMap;
 
 abstract readonly class App implements Model
 {
+    use Cloneable;
+
     /**
      * Declare the widget tree for the current state.
      *
@@ -198,6 +200,25 @@ abstract readonly class App implements Model
     protected function globalKeybindings(): Keybindings
     {
         return Keybindings::empty();
+    }
+
+    /**
+     * Binds the property the widget already lives on, so the write-back cannot
+     * name a different one. The id defaults to the property name.
+     *
+     * @template TBoundWidget of Interactive
+     *
+     * @param TBoundWidget $widget
+     *
+     * @return Component<TBoundWidget>
+     */
+    protected function bindProperty(string $property, Interactive $widget, ComponentId|string|null $id = null): Component
+    {
+        return Component::bind(
+            $id ?? $property,
+            $widget,
+            static fn (self $app, Interactive $updated): self => $app->cloneWith(...[$property => $updated]),
+        );
     }
 
     /**

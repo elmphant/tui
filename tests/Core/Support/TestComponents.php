@@ -11,14 +11,14 @@ use Elmphant\Tui\Widget\Interactive;
 use LogicException;
 
 /**
- * @internal test-fixture shorthand; production examples use typed closures
+ * @internal test-fixture shorthand for fixtures whose id differs from its property
  */
 final class TestComponents
 {
     /**
      * @return Component<Interactive>
      */
-    public static function bind(CopyableTestApp $app, string $id, string $property, Interactive $widget): Component
+    public static function bind(string $id, string $property, Interactive $widget): Component
     {
         return Component::bind(
             ComponentId::named($id),
