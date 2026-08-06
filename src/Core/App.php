@@ -186,6 +186,10 @@ abstract readonly class App implements Model
         return UpdateResult::keep($this);
     }
 
+    /**
+     * Honoured only while no component holds focus, so a plain letter still
+     * types into a focused field instead of ending the program.
+     */
     protected function quitBindings(): Keybindings
     {
         return new Keybindings(['quit' => ['q']]);
@@ -301,6 +305,12 @@ abstract readonly class App implements Model
      */
     private function handleLayerTwoKey(KeyMsg $message, Rect $screenRect, array $focusables): UpdateResult
     {
+        if ($this->findFocusedComponent($focusables) === null
+            && $this->resolvedQuitBindings()->matches($message, 'quit')
+        ) {
+            return new UpdateResult($this, Cmd::quit());
+        }
+
         $appResult = $this->onKey($message, $screenRect);
 
         if ($appResult->model !== $this || $appResult->command !== null) {

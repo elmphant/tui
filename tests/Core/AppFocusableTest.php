@@ -109,6 +109,18 @@ final class AppFocusableTest extends TestCase
     }
 
     #[Test]
+    public function theQuitBindingStillQuitsWhileNoFocusableHoldsFocus(): void
+    {
+        $app = new TwoPanelApp(
+            left: Panel::new('Left')->withFocus(false),
+            right: Panel::new('Right')->withFocus(false),
+        );
+
+        $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
+        self::assertInstanceOf(QuitCmd::class, $result->command);
+    }
+
+    #[Test]
     public function ctrlCStillQuitsWithFocusables(): void
     {
         $app = TwoPanelApp::create();
