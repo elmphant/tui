@@ -13,6 +13,7 @@ use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\VerticalStack;
 use Elmphant\Tui\Layout\VerticalStackLayout;
 use Elmphant\Tui\Message\KeyMsg;
@@ -421,6 +422,10 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
     /**
      * The pane scrolled by the given rows, or null when it is already as far as
      * it goes.
+     *
+     * It counts from the rows on screen, not from the stored offset: following a
+     * child moves the view without moving that number, so counting from it would
+     * jump away from what the reader is looking at.
      */
     private function scrolledBy(int $rows, Rect $area): ?self
     {
@@ -430,9 +435,14 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
             return null;
         }
 
-        $offset = min($layout->maxScrollOffset($area->height), max(0, $this->scrollOffset + $rows));
+        $shown = $this->resolvedOffset($layout, $area->height);
+        $offset = min($layout->maxScrollOffset($area->height), max(0, $shown + $rows));
 
-        return $offset === $this->scrollOffset ? null : $this->cloneWith(scrollOffset: $offset);
+        if ($offset === $this->scrollOffset && $this->followChild === null) {
+            return null;
+        }
+
+        return $this->cloneWith(scrollOffset: $offset, followChild: null);
     }
 
     /**
@@ -478,20 +488,14 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
         }
 
         $first = max(0, $this->followChild);
-        $top = array_sum(array_slice($layout->heights, 0, $first));
-        $height = array_sum(array_slice($layout->heights, $first, $this->followSpan));
 
-        if ($top < $offset) {
-            return $top;
-        }
-
-        // The followed child ends inside the content, so neither result below
-        // can exceed the last legal offset.
-        if ($top + $height > $offset + $viewportHeight) {
-            return $height > $viewportHeight ? $top : $top + $height - $viewportHeight;
-        }
-
-        return $offset;
+        return ScrollWindow::showing(
+            $offset,
+            array_sum(array_slice($layout->heights, 0, $first)),
+            array_sum(array_slice($layout->heights, $first, $this->followSpan)),
+            $viewportHeight,
+            $layout->maxScrollOffset($viewportHeight),
+        );
     }
 
     private function tree(): FocusTree

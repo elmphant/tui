@@ -355,6 +355,30 @@ final class ScrollPaneTest extends TestCase
     }
 
     #[Test]
+    public function scrollingCarriesOnFromWhereFollowingAChildLeftTheView(): void
+    {
+        $pane = ScrollPane::of(
+            Text::new('one'),
+            Text::new('two'),
+            Text::new('three'),
+            Text::new('four'),
+            Text::new('five'),
+        )
+            ->withFocus(true)
+            ->withFollowChild(4);
+
+        self::assertStringStartsWith('five', $this->rows($pane, 20, 1)[0], 'following put the last child on screen');
+
+        $scrolled = $this->press($pane, Key::Up, Rect::fromSize(20, 1));
+
+        self::assertStringStartsWith(
+            'four',
+            $this->rows($scrolled, 20, 1)[0],
+            'one row up from what the reader is looking at, not from an offset left behind',
+        );
+    }
+
+    #[Test]
     public function aFollowedChildTallerThanTheViewportShowsItsTop(): void
     {
         $pane = ScrollPane::of(Text::new('one'), $this->fillsItsArea(4))

@@ -126,24 +126,15 @@ final readonly class RowExtents
 
     /**
      * The smallest scroll adjustment that brings $index into view.
-     *
-     * A row taller than the viewport cannot fit, so it aligns to its top rather
-     * than pinning its bottom edge and hiding the start.
      */
     public function offsetShowing(int $index, int $viewportHeight, int $currentOffset): int
     {
-        $offset = min(max(0, $currentOffset), $this->maxOffset($viewportHeight));
-        $start = $this->startOf($index);
-        $bottom = $start + $this->heightOf($index);
-
-        if ($bottom > $offset + $viewportHeight) {
-            $offset = $bottom - $viewportHeight;
-        }
-
-        if ($start < $offset) {
-            $offset = $start;
-        }
-
-        return max(0, $offset);
+        return ScrollWindow::showing(
+            $currentOffset,
+            $this->startOf($index),
+            $this->heightOf($index),
+            $viewportHeight,
+            $this->maxOffset($viewportHeight),
+        );
     }
 }
