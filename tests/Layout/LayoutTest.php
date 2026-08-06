@@ -376,6 +376,21 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
+    public function anOverflowingChildStopsAtTheEdgeOfTheArea(): void
+    {
+        $layout = Layout::vertical(
+            $this->createExactWidget(8),
+            $this->createExactWidget(5),
+        );
+
+        $rects = $layout->computeChildRects(new Rect(0, 0, 20, 10));
+
+        self::assertSame(8, $rects[0][1]->height);
+        self::assertSame(2, $rects[1][1]->height, 'The second child gets only the rows the area has left');
+        self::assertSame(10, $rects[1][1]->bottom(), 'No child may reach past the area it was given');
+    }
+
+    #[Test]
     public function reservedEqualsExactlyTotalSpaceLeavesZeroForFlex(): void
     {
         $layout = Layout::vertical(
@@ -487,10 +502,11 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
-    public function measureHeightHorizontalDividesWidthAmongChildrenForMeasurement(): void
+    public function measureHeightHorizontalWrapsAChildAtTheWidthLeftOverForIt(): void
     {
-        // L53 mutants: per-child width = max(1, intdiv(width, count)) in horizontal layout.
-        // Use a deterministic 10-char Paragraph with no spaces (so char-fallback wraps cleanly).
+        // A 10-character Paragraph with no spaces wraps by character, so its line
+        // count reads straight off the width it was granted: total minus the 1
+        // column its sibling reserves.
         $paragraph = Paragraph::fromText('abcdefghij');
 
         $layout = Layout::horizontal(
@@ -498,19 +514,26 @@ final class LayoutTest extends TestCase
             $this->createWidgetWithConstraint(Constraint::exact(1)),
         );
 
-        // Total width 20 → each child gets 10 → paragraph fits in 1 line.
-        self::assertSame(1, $layout->measureHeight(20), 'Per-child width=10 must fit "abcdefghij" in 1 line');
-        // Total width 10 → each child gets 5 → paragraph wraps to 2 lines.
-        self::assertSame(2, $layout->measureHeight(10), 'Per-child width=5 must wrap "abcdefghij" to 2 lines (kills Ternary swap mutant)');
-        // Total width 4 → each child gets 2 → paragraph wraps to 5 lines.
-        self::assertSame(5, $layout->measureHeight(4), 'Per-child width=2 must wrap "abcdefghij" to 5 lines (kills width-division mutants)');
-        // Total width 3 → intdiv(3,2)=1 → max(1,1)=1 → paragraph at width 1 wraps to 10 lines.
-        // With L53 IncrementInteger max(2,...): width=2 → 5 lines. With DecrementInteger max(0,...): width=1 → 10 lines.
-        // The IncrementInteger mutant max(2, intdiv(3,2)) = max(2, 1) = 2 → 5 lines (differs from current 10).
-        self::assertSame(10, $layout->measureHeight(3), 'Per-child width=1 must wrap to 10 lines (kills max(2,...) IncrementInteger)');
-        // Total width 1 → intdiv(1,2)=0 → max(1,0)=1 → paragraph at width 1 → 10 lines.
-        // With max(0,0)=0: paragraph at width 0 → 0. max(0, 1) = 1.
-        self::assertSame(10, $layout->measureHeight(1), 'Per-child width clamped to 1 when intdiv is 0 (kills max(0,...) DecrementInteger)');
+        self::assertSame(1, $layout->measureHeight(20), '19 columns hold all ten characters on one line');
+        self::assertSame(2, $layout->measureHeight(10), '9 columns wrap ten characters onto 2 lines');
+        self::assertSame(4, $layout->measureHeight(4), '3 columns wrap ten characters onto 4 lines');
+        self::assertSame(5, $layout->measureHeight(3), '2 columns wrap ten characters onto 5 lines');
+        self::assertSame(1, $layout->measureHeight(1), 'The sibling takes the only column, so its own height is all there is to report');
+    }
+
+    #[Test]
+    public function measureHeightHorizontalGivesEachChildTheWidthItWillReceive(): void
+    {
+        $fixed = $this->createDirectionalWidget(horizontalSize: 30, verticalSize: 1);
+        $paragraph = Paragraph::fromText('abcdefghijklmnopqrst');
+
+        $layout = Layout::horizontal($fixed, $paragraph);
+
+        self::assertSame(
+            2,
+            $layout->measureHeight(40),
+            'The fixed child takes 30 of the 40 columns, so the paragraph wraps in the 10 it is left',
+        );
     }
 
     #[Test]
@@ -586,6 +609,33 @@ final class LayoutTest extends TestCase
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
                 $frame->putChar($area->x, $area->y, $this->character);
+            }
+        };
+    }
+
+    private function createDirectionalWidget(int $horizontalSize, int $verticalSize): Widget
+    {
+        return new class($horizontalSize, $verticalSize) implements Widget, DirectionalConstraint {
+            public function __construct(
+                private readonly int $horizontalSize,
+                private readonly int $verticalSize,
+            ) {
+            }
+
+            public function constraint(): Constraint
+            {
+                return Constraint::exact($this->verticalSize);
+            }
+
+            public function constraintFor(Direction $direction): Constraint
+            {
+                return Constraint::exact($direction === Direction::Horizontal
+                    ? $this->horizontalSize
+                    : $this->verticalSize);
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
             }
         };
     }

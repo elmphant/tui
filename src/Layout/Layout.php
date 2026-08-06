@@ -49,10 +49,11 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         $isVertical = $this->direction === Direction::Vertical;
         $total = 0;
         $max = 0;
+        $columnWidths = $isVertical ? [] : $this->resolveSizes($width);
 
-        foreach ($this->children as $child) {
+        foreach ($this->children as $index => $child) {
             $childHeight = $child instanceof MeasureHeight
-                ? $child->measureHeight($isVertical ? $width : max(1, intdiv($width, max(1, count($this->children)))))
+                ? $child->measureHeight($isVertical ? $width : $columnWidths[$index])
                 : $this->constraintHeight(self::constraintFor($child, Direction::Vertical));
 
             if ($isVertical) {
@@ -71,8 +72,58 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     public function computeChildRects(Rect $area): array
     {
         $isVertical = $this->direction === Direction::Vertical;
-        $totalSpace = $isVertical ? $area->height : $area->width;
+        $sizes = $this->resolveSizes($isVertical ? $area->height : $area->width);
 
+        $result = [];
+        $cursor = $isVertical ? $area->y : $area->x;
+        $unplaced = max(0, $isVertical ? $area->height : $area->width);
+
+        foreach ($this->children as $index => $child) {
+            $size = min($sizes[$index], $unplaced);
+            $unplaced -= $size;
+
+            $childArea = $isVertical
+                ? new Rect($area->x, $cursor, $area->width, $size)
+                : new Rect($cursor, $area->y, $size, $area->height);
+
+            $result[] = [$child, $childArea];
+            $cursor += $size;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return list<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): array
+    {
+        return $this->computeChildRects($area);
+    }
+
+    /**
+     * @return list<Widget>
+     */
+    public function children(): array
+    {
+        return $this->children;
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+            $child->render($frame, $childArea, $context);
+        }
+    }
+
+    /**
+     * Declared minimums can ask for more than the area holds; the surplus is cut
+     * from the rearmost children so no child is placed outside it.
+     *
+     * @return list<int>
+     */
+    private function resolveSizes(int $totalSpace): array
+    {
         $reserved = 0;
         $totalFlexWeight = 0;
 
@@ -116,44 +167,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
             }
         }
 
-        $result = [];
-        $cursor = $isVertical ? $area->y : $area->x;
-
-        foreach ($this->children as $index => $child) {
-            $size = $sizes[$index];
-
-            $childArea = $isVertical
-                ? new Rect($area->x, $cursor, $area->width, $size)
-                : new Rect($cursor, $area->y, $size, $area->height);
-
-            $result[] = [$child, $childArea];
-            $cursor += $size;
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return list<array{Widget, Rect}>
-     */
-    public function childWidgets(Rect $area): array
-    {
-        return $this->computeChildRects($area);
-    }
-
-    /**
-     * @return list<Widget>
-     */
-    public function children(): array
-    {
-        return $this->children;
-    }
-
-    public function render(Frame $frame, Rect $area, RenderContext $context): void
-    {
-        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
-            $child->render($frame, $childArea, $context);
-        }
+        return array_values($sizes);
     }
 
     private function constraintHeight(Constraint $constraint): int
