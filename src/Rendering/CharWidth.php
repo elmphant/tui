@@ -67,6 +67,18 @@ final class CharWidth
         [0x20000, 0x2FFFD], [0x30000, 0x3FFFD],
     ];
 
+    /**
+     * A CJK-heavy 200x50 screenful holds 90 distinct clusters, and a full memo
+     * costs 285 KB. Overflow drops all of it rather than the oldest entry: one
+     * screenful of re-measuring, at a boundary real text does not reach.
+     */
+    private const GRAPHEME_BUDGET = 4_096;
+
+    /**
+     * @var array<string, int>
+     */
+    private static array $graphemeWidths = [];
+
     public static function of(string $char): int
     {
         if ($char === '' || $char === "\0") {
@@ -113,30 +125,17 @@ final class CharWidth
             return self::of($grapheme);
         }
 
-        if (!mb_check_encoding($grapheme, 'UTF-8')) {
-            if (strlen($grapheme) === 1 && ord($grapheme) >= 0x80 && ord($grapheme) <= 0x9F) {
-                return 0;
-            }
-
-            return 1;
+        if (isset(self::$graphemeWidths[$grapheme])) {
+            return self::$graphemeWidths[$grapheme];
         }
 
-        if (mb_strlen($grapheme) === 1) {
-            return self::of($grapheme);
+        $width = self::measureGrapheme($grapheme);
+
+        if (count(self::$graphemeWidths) >= self::GRAPHEME_BUDGET) {
+            self::$graphemeWidths = [];
         }
 
-        $firstCodepoint = mb_ord($grapheme);
-        if (self::inRanges($firstCodepoint, self::WIDE)) {
-            return 2;
-        }
-
-        if (str_contains($grapheme, self::EMOJI_VARIATION_SELECTOR)
-            && self::inRanges($firstCodepoint, self::EMOJI_PRESENTATION_BASE)
-        ) {
-            return 2;
-        }
-
-        return 1;
+        return self::$graphemeWidths[$grapheme] = $width;
     }
 
     public static function stringWidth(string $str): int
@@ -313,6 +312,34 @@ final class CharWidth
         }
 
         return $result;
+    }
+
+    private static function measureGrapheme(string $grapheme): int
+    {
+        if (!mb_check_encoding($grapheme, 'UTF-8')) {
+            if (strlen($grapheme) === 1 && ord($grapheme) >= 0x80 && ord($grapheme) <= 0x9F) {
+                return 0;
+            }
+
+            return 1;
+        }
+
+        if (mb_strlen($grapheme) === 1) {
+            return self::of($grapheme);
+        }
+
+        $firstCodepoint = mb_ord($grapheme);
+        if (self::inRanges($firstCodepoint, self::WIDE)) {
+            return 2;
+        }
+
+        if (str_contains($grapheme, self::EMOJI_VARIATION_SELECTOR)
+            && self::inRanges($firstCodepoint, self::EMOJI_PRESENTATION_BASE)
+        ) {
+            return 2;
+        }
+
+        return 1;
     }
 
     /**

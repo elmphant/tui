@@ -8,6 +8,7 @@ use Elmphant\Tui\Rendering\CharWidth;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 final class CharWidthTest extends TestCase
 {
@@ -678,6 +679,35 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
+    public function aWideIdeographIsTwoCellsAsAGrapheme(): void
+    {
+        self::assertSame(2, CharWidth::graphemeWidth("\u{4E16}"));
+    }
+
+    #[Test]
+    public function aLoneCombiningMarkIsAZeroWidthGrapheme(): void
+    {
+        self::assertSame(0, CharWidth::graphemeWidth("\u{0300}"));
+    }
+
+    #[Test]
+    public function clustersSharingEveryByteButTheLastAreMeasuredApart(): void
+    {
+        self::assertSame(1, CharWidth::graphemeWidth("\u{2714}"));
+        self::assertSame(2, CharWidth::graphemeWidth("\u{2714}\u{FE0F}"));
+        self::assertSame(1, CharWidth::graphemeWidth("\u{2714}\u{FE0E}"));
+    }
+
+    #[Test]
+    public function aClusterIsMeasuredApartFromTheOneItExtends(): void
+    {
+        self::assertSame(2, CharWidth::graphemeWidth("\u{270D}\u{FE0F}"));
+        self::assertSame(1, CharWidth::graphemeWidth("\u{270D}"));
+        self::assertSame(1, CharWidth::graphemeWidth('e'));
+        self::assertSame(1, CharWidth::graphemeWidth("e\u{0301}"));
+    }
+
+    #[Test]
     public function stringWidthWithCombiningMarkIsFour(): void
     {
         self::assertSame(4, CharWidth::stringWidth("cafe\u{0301}"));
@@ -773,5 +803,26 @@ final class CharWidthTest extends TestCase
 
         self::assertSame("\u{4E16}…", $result);
         self::assertLessThanOrEqual(4, CharWidth::stringWidth($result));
+    }
+
+    #[Test]
+    public function measuringMoreDistinctClustersThanTheBudgetLeavesTheMemoWithinIt(): void
+    {
+        for ($codepoint = 0x4E00; $codepoint < 0x4E00 + 5_000; ++$codepoint) {
+            CharWidth::graphemeWidth(mb_chr($codepoint, 'UTF-8'));
+        }
+
+        $remembered = self::rememberedWidthCount();
+
+        self::assertGreaterThan(0, $remembered, 'A memo that keeps nothing is not a memo');
+        self::assertLessThanOrEqual(4_096, $remembered, 'A long-running TUI would leak every cluster it ever drew');
+    }
+
+    private static function rememberedWidthCount(): int
+    {
+        $memo = (new ReflectionProperty(CharWidth::class, 'graphemeWidths'))->getValue();
+        self::assertIsArray($memo);
+
+        return count($memo);
     }
 }
