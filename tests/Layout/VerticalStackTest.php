@@ -5,27 +5,28 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout;
 
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\VerticalStack;
+use Elmphant\Tui\Layout\VerticalStackLayout;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 final class VerticalStackTest extends TestCase
 {
     #[Test]
-    public function reusesHeightsForTheSameImmutableOwnerAndViewport(): void
+    public function reusesHeightsForTheSameCacheAndViewport(): void
     {
         $calls = new VerticalStackCalls();
         $child = new CountingStackWidget(Constraint::exact(1), $calls);
-        $owner = new stdClass();
+        $memo = new KeyedCache();
 
-        self::assertSame([1], VerticalStack::heightsFor($owner, [$child], 80, 24));
-        self::assertSame([1], VerticalStack::heightsFor($owner, [$child], 80, 24));
+        self::assertSame([1], VerticalStack::layoutUsing($memo, [$child], 80, 24)->heights);
+        self::assertSame([1], VerticalStack::layoutUsing($memo, [$child], 80, 24)->heights);
         self::assertSame(1, $calls->constraints);
     }
 
@@ -34,22 +35,22 @@ final class VerticalStackTest extends TestCase
     {
         $calls = new VerticalStackCalls();
         $child = new CountingStackWidget(Constraint::flex(), $calls);
-        $owner = new stdClass();
+        $memo = new KeyedCache();
 
-        self::assertSame([24], VerticalStack::heightsFor($owner, [$child], 80, 24));
-        self::assertSame([24], VerticalStack::heightsFor($owner, [$child], 81, 24));
-        self::assertSame([25], VerticalStack::heightsFor($owner, [$child], 81, 25));
+        self::assertSame([24], VerticalStack::layoutUsing($memo, [$child], 80, 24)->heights);
+        self::assertSame([24], VerticalStack::layoutUsing($memo, [$child], 81, 24)->heights);
+        self::assertSame([25], VerticalStack::layoutUsing($memo, [$child], 81, 25)->heights);
         self::assertSame(3, $calls->constraints);
     }
 
     #[Test]
-    public function aNewImmutableOwnerGetsItsOwnMeasurement(): void
+    public function aFreshCacheMeasuresTheStackAgain(): void
     {
         $calls = new VerticalStackCalls();
         $child = new CountingStackWidget(Constraint::exact(1), $calls);
 
-        VerticalStack::heightsFor(new stdClass(), [$child], 80, 24);
-        VerticalStack::heightsFor(new stdClass(), [$child], 80, 24);
+        $this->heightsOf([$child], 80, 24);
+        $this->heightsOf([$child], 80, 24);
 
         self::assertSame(2, $calls->constraints);
     }
@@ -65,10 +66,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::flex(2), $calls),
         ];
 
-        self::assertSame(
-            [2, 3, 2, 4],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 11),
-        );
+        self::assertSame([2, 3, 2, 4], $this->heightsOf($children, 80, 11));
     }
 
     #[Test]
@@ -81,10 +79,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
-        self::assertSame(
-            [4, 1, 1],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 4),
-        );
+        self::assertSame([4, 1, 1], $this->heightsOf($children, 80, 4));
     }
 
     #[Test]
@@ -96,10 +91,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
-        self::assertSame(
-            [2, 3],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 5),
-        );
+        self::assertSame([2, 3], $this->heightsOf($children, 80, 5));
     }
 
     #[Test]
@@ -107,10 +99,10 @@ final class VerticalStackTest extends TestCase
     {
         $calls = new VerticalStackCalls();
         $child = new MeasuredStackWidget(Constraint::min(1), 4, $calls);
-        $owner = new stdClass();
+        $memo = new KeyedCache();
 
-        self::assertSame([4], VerticalStack::heightsFor($owner, [$child], 20, 1));
-        self::assertSame([4], VerticalStack::heightsFor($owner, [$child], 20, 1));
+        self::assertSame([4], VerticalStack::layoutUsing($memo, [$child], 20, 1)->heights);
+        self::assertSame([4], VerticalStack::layoutUsing($memo, [$child], 20, 1)->heights);
         self::assertSame(2, $calls->measurements);
     }
 
@@ -121,16 +113,10 @@ final class VerticalStackTest extends TestCase
         $exact = new MeasuredStackWidget(Constraint::exact(1), 4, $calls);
         $flex = new MeasuredStackWidget(Constraint::flex(), 4, $calls);
 
-        self::assertSame(
-            [1, 1],
-            VerticalStack::heightsFor(new stdClass(), [$exact, $flex], 0, 2),
-        );
+        self::assertSame([1, 1], $this->heightsOf([$exact, $flex], 0, 2));
         self::assertSame(0, $calls->measurements);
 
-        self::assertSame(
-            [1, 4],
-            VerticalStack::heightsFor(new stdClass(), [$exact, $flex], 20, 2),
-        );
+        self::assertSame([1, 4], $this->heightsOf([$exact, $flex], 20, 2));
         self::assertSame(2, $calls->measurements);
     }
 
@@ -140,16 +126,13 @@ final class VerticalStackTest extends TestCase
         $calls = new VerticalStackCalls();
         $child = new MeasuredStackWidget(Constraint::min(3), 1, $calls);
 
-        self::assertSame(
-            [3],
-            VerticalStack::heightsFor(new stdClass(), [$child], 20, 3),
-        );
+        self::assertSame([3], $this->heightsOf([$child], 20, 3));
     }
 
     #[Test]
     public function emptyStackHasNoHeights(): void
     {
-        self::assertSame([], VerticalStack::heightsFor(new stdClass(), [], 80, 24));
+        self::assertSame([], $this->heightsOf([], 80, 24));
     }
 
     #[Test]
@@ -158,7 +141,7 @@ final class VerticalStackTest extends TestCase
         $calls = new VerticalStackCalls();
         $child = new CountingStackWidget(Constraint::exact(1), $calls);
 
-        $layout = VerticalStack::layoutFor(new stdClass(), [$child], -5, 5);
+        $layout = $this->layoutOf([$child], -5, 5);
 
         self::assertSame([1], $layout->heights);
         self::assertFalse($layout->hasScrollbar);
@@ -168,7 +151,7 @@ final class VerticalStackTest extends TestCase
     #[Test]
     public function negativeAvailableHeightIsClampedToZero(): void
     {
-        $layout = VerticalStack::layoutFor(new stdClass(), [], 10, -4);
+        $layout = $this->layoutOf([], 10, -4);
 
         self::assertSame([], $layout->heights);
         self::assertFalse($layout->hasScrollbar);
@@ -181,7 +164,7 @@ final class VerticalStackTest extends TestCase
         $calls = new VerticalStackCalls();
         $child = new CountingStackWidget(Constraint::exact(1), $calls);
 
-        $layout = VerticalStack::layoutFor(new stdClass(), [$child], 10, 0);
+        $layout = $this->layoutOf([$child], 10, 0);
 
         self::assertTrue($layout->hasScrollbar);
         self::assertSame(9, $layout->childWidth);
@@ -193,8 +176,8 @@ final class VerticalStackTest extends TestCase
         $calls = new VerticalStackCalls();
         $child = new CountingStackWidget(Constraint::exact(3), $calls);
 
-        $oneColumn = VerticalStack::layoutFor(new stdClass(), [$child], 1, 1);
-        $zeroColumns = VerticalStack::layoutFor(new stdClass(), [$child], 0, 1);
+        $oneColumn = $this->layoutOf([$child], 1, 1);
+        $zeroColumns = $this->layoutOf([$child], 0, 1);
 
         self::assertTrue($oneColumn->hasScrollbar);
         self::assertSame(0, $oneColumn->childWidth);
@@ -208,7 +191,7 @@ final class VerticalStackTest extends TestCase
         $calls = new VerticalStackCalls();
         $child = new CountingStackWidget(Constraint::min(3), $calls);
 
-        $layout = VerticalStack::layoutFor(new stdClass(), [$child], 5, 2);
+        $layout = $this->layoutOf([$child], 5, 2);
 
         self::assertSame([3], $layout->heights);
         self::assertTrue($layout->hasScrollbar);
@@ -225,10 +208,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
-        self::assertSame(
-            [1, 1],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 1),
-        );
+        self::assertSame([1, 1], $this->heightsOf($children, 80, 1));
     }
 
     #[Test]
@@ -240,10 +220,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::exact(2), $calls),
         ];
 
-        self::assertSame(
-            [8, 2],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 10),
-        );
+        self::assertSame([8, 2], $this->heightsOf($children, 80, 10));
     }
 
     #[Test]
@@ -255,10 +232,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::exact(2), $calls),
         ];
 
-        self::assertSame(
-            [6, 2],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 4),
-        );
+        self::assertSame([6, 2], $this->heightsOf($children, 80, 4));
     }
 
     #[Test]
@@ -270,10 +244,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::min(2)->withFlex(1), $calls),
         ];
 
-        self::assertSame(
-            [8, 4],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 12),
-        );
+        self::assertSame([8, 4], $this->heightsOf($children, 80, 12));
     }
 
     #[Test]
@@ -285,7 +256,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::min(1)->withFlex(), $calls),
         ];
 
-        $heights = VerticalStack::heightsFor(new stdClass(), $children, 80, 9);
+        $heights = $this->heightsOf($children, 80, 9);
 
         self::assertSame([4, 5], $heights);
         self::assertSame(9, array_sum($heights), 'The stack leaves no row unused');
@@ -300,7 +271,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
-        $layout = VerticalStack::layoutFor(new stdClass(), $children, 40, 23);
+        $layout = $this->layoutOf($children, 40, 23);
 
         self::assertSame([6, 17], $layout->heights);
         self::assertSame(23, $layout->totalHeight, 'Content that fits must not report an overflow');
@@ -316,7 +287,7 @@ final class VerticalStackTest extends TestCase
             new MeasuredStackWidget(Constraint::flex(), 3, $calls),
         ];
 
-        $layout = VerticalStack::layoutFor(new stdClass(), $children, 40, 23);
+        $layout = $this->layoutOf($children, 40, 23);
 
         self::assertSame([6, 17], $layout->heights, 'Its measured height is a floor, not a cap');
         self::assertFalse($layout->hasScrollbar);
@@ -331,7 +302,7 @@ final class VerticalStackTest extends TestCase
             new MeasuredStackWidget(Constraint::min(2), 15, $calls),
         ];
 
-        $layout = VerticalStack::layoutFor(new stdClass(), $children, 40, 23);
+        $layout = $this->layoutOf($children, 40, 23);
 
         self::assertSame(30, $layout->totalHeight);
         self::assertTrue($layout->hasScrollbar, 'Real overflow must still be reported');
@@ -346,10 +317,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
-        self::assertSame(
-            [3, 17],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 20),
-        );
+        self::assertSame([3, 17], $this->heightsOf($children, 80, 20));
     }
 
     #[Test]
@@ -362,7 +330,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::min(2)->withFlex(), $calls),
         ];
 
-        $heights = VerticalStack::heightsFor(new stdClass(), $children, 80, 15);
+        $heights = $this->heightsOf($children, 80, 15);
 
         self::assertSame([5, 5, 5], $heights);
         self::assertSame(15, array_sum($heights), 'The stack leaves no row unused');
@@ -377,10 +345,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
-        self::assertSame(
-            [2, 2],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 4),
-        );
+        self::assertSame([2, 2], $this->heightsOf($children, 80, 4));
     }
 
     #[Test]
@@ -392,10 +357,7 @@ final class VerticalStackTest extends TestCase
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
-        self::assertSame(
-            [4, 2],
-            VerticalStack::heightsFor(new stdClass(), $children, 80, 6),
-        );
+        self::assertSame([4, 2], $this->heightsOf($children, 80, 6));
     }
 
     #[Test]
@@ -407,13 +369,33 @@ final class VerticalStackTest extends TestCase
             new WidthMeasuredStackWidget($calls),
         ];
 
-        $layout = VerticalStack::layoutFor(new stdClass(), $children, 8, 2);
+        $layout = $this->layoutOf($children, 8, 2);
 
         self::assertTrue($layout->hasScrollbar);
         self::assertSame(7, $layout->childWidth);
         self::assertSame([2, 2], $layout->heights);
         self::assertSame(4, $layout->totalHeight);
         self::assertSame([8, 7], $calls->measuredWidths);
+    }
+
+    // --- helpers ---
+
+    /**
+     * @param list<Widget> $children
+     *
+     * @return list<int>
+     */
+    private function heightsOf(array $children, int $availableWidth, int $availableHeight): array
+    {
+        return $this->layoutOf($children, $availableWidth, $availableHeight)->heights;
+    }
+
+    /**
+     * @param list<Widget> $children
+     */
+    private function layoutOf(array $children, int $availableWidth, int $availableHeight): VerticalStackLayout
+    {
+        return VerticalStack::layoutUsing(new KeyedCache(), $children, $availableWidth, $availableHeight);
     }
 }
 
