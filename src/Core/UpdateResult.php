@@ -19,6 +19,8 @@ final readonly class UpdateResult
     }
 
     /**
+     * Only model identity drives a re-render; this name states intent.
+     *
      * @template T of Reducer
      *
      * @param T $model
@@ -31,6 +33,8 @@ final readonly class UpdateResult
     }
 
     /**
+     * Only model identity drives a re-render; this name states intent.
+     *
      * @template T of Reducer
      *
      * @param T $model

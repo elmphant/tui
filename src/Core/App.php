@@ -32,8 +32,10 @@ abstract readonly class App implements Model
      * Must be a pure function of this instance: the framework memoizes the
      * result (and everything derived from it — component registry, layout)
      * per App value. Reading clocks, randomness, or other external state here
-     * yields silently stale renders. For animation, widgets read the frame
-     * clock via RenderContext::now() during render instead.
+     * yields silently stale renders — including a readonly property holding a
+     * mutable object, whose later mutations never reach the screen. For
+     * animation, widgets read the frame clock via RenderContext::now() during
+     * render instead.
      */
     abstract public function view(): Widget;
 
