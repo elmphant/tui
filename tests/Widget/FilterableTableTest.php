@@ -65,6 +65,26 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
+    public function keepsTheRowsInTheOrderTheyWereHandedInWhateverRankTheMatcherReturns(): void
+    {
+        $reversed = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return [2, 0];
+            }
+        };
+
+        self::assertSame(
+            [
+                ['ajax_bookmark', 'POST', '/ajax/bookmark'],
+                ['record_edit', 'POST', '/record/edit'],
+            ],
+            $this->routes()->withMatcher($reversed)->withQuery('post')->matchingRows(),
+            'a table reads down its rows, so source order survives the ranking',
+        );
+    }
+
+    #[Test]
     public function ignoresCase(): void
     {
         self::assertCount(1, $this->routes()->withQuery('AJAX_BOOK')->matchingRows());

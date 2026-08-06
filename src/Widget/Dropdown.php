@@ -25,6 +25,9 @@ use Elmphant\Tui\Search\SubstringMatcher;
 
 /**
  * One row showing a value, and a floating list to pick another from.
+ *
+ * An option is identified by its own string, so two equal options are one
+ * option: the selection and a click both resolve to the first of them.
  */
 final readonly class Dropdown implements Focusable, KeybindingsAware
 {
