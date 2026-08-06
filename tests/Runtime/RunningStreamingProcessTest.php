@@ -23,8 +23,8 @@ final class RunningStreamingProcessTest extends TestCase
     public function pumpWrapsEveryOutputAndFinishMessage(): void
     {
         $process = $this->createMock(Process::class);
-        $process->method('getIncrementalOutput')->willReturn('abcd');
-        $process->method('getIncrementalErrorOutput')->willReturn('ef');
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls('abcd', '');
+        $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('ef', '');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(0);
         $process->method('isSuccessful')->willReturn(true);
@@ -57,22 +57,11 @@ final class RunningStreamingProcessTest extends TestCase
     {
         $process = $this->createMock(Process::class);
 
-        // Setup mock sequence:
-        // 1. isRunning check (inside first pump) -> true
-        // 2. getIncrementalOutput (inside first pump) -> 'chunk1'
-        // 3. getIncrementalErrorOutput (inside first pump) -> ''
-        // 4. isRunning check (inside first pump - optional optimization check? no, standard pump check) -> true (loop continues? no, pump is single pass usually)
-
-        // Actually pump() logic is:
-        // $stdout = getIncrementalOutput();
-        // $stderr = getIncrementalErrorOutput();
-        // if (!isRunning()) { add FinishedMsg }
-
-        $process->expects($this->exactly(2))
+        $process->expects($this->exactly(3))
             ->method('getIncrementalOutput')
-            ->willReturnOnConsecutiveCalls('chunk1', 'chunk2');
+            ->willReturnOnConsecutiveCalls('chunk1', 'chunk2', '');
 
-        $process->expects($this->exactly(2))
+        $process->expects($this->exactly(3))
             ->method('getIncrementalErrorOutput')
             ->willReturn('');
 
@@ -85,18 +74,16 @@ final class RunningStreamingProcessTest extends TestCase
 
         $running = new RunningStreamingProcess($process, EffectId::named('stream-test'));
 
-        // First pump
-        $messages1 = $running->pump();
-        self::assertCount(1, $messages1);
-        self::assertInstanceOf(ProcessOutputMsg::class, $messages1[0]);
-        self::assertSame('chunk1', $messages1[0]->output);
+        $firstPump = $running->pump();
+        self::assertCount(1, $firstPump);
+        self::assertInstanceOf(ProcessOutputMsg::class, $firstPump[0]);
+        self::assertSame('chunk1', $firstPump[0]->output);
 
-        // Second pump
-        $messages2 = $running->pump();
-        self::assertCount(2, $messages2); // chunk2 + finished
-        self::assertInstanceOf(ProcessOutputMsg::class, $messages2[0]);
-        self::assertSame('chunk2', $messages2[0]->output);
-        self::assertInstanceOf(ProcessFinishedMsg::class, $messages2[1]);
+        $secondPump = $running->pump();
+        self::assertCount(2, $secondPump);
+        self::assertInstanceOf(ProcessOutputMsg::class, $secondPump[0]);
+        self::assertSame('chunk2', $secondPump[0]->output);
+        self::assertInstanceOf(ProcessFinishedMsg::class, $secondPump[1]);
     }
 
     #[Test]
@@ -270,6 +257,39 @@ final class RunningStreamingProcessTest extends TestCase
         self::assertCount(1, $messages);
         self::assertInstanceOf(ProcessFinishedMsg::class, $messages[0]);
         self::assertSame(-1, $messages[0]->exitCode);
+    }
+
+    #[Test]
+    public function theTailFlushedAsTheChildExitsArrivesBeforeTheFinishedMessage(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls('head', 'tail');
+        $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('', 'err-tail');
+        $process->method('isRunning')->willReturn(false);
+        $process->method('getExitCode')->willReturn(0);
+        $process->method('isSuccessful')->willReturn(true);
+
+        $messages = (new RunningStreamingProcess($process, null))->pump();
+
+        self::assertCount(4, $messages);
+        self::assertInstanceOf(ProcessOutputMsg::class, $messages[0]);
+        self::assertSame('head', $messages[0]->output);
+        self::assertInstanceOf(ProcessOutputMsg::class, $messages[1]);
+        self::assertSame('tail', $messages[1]->output);
+        self::assertSame(ProcessStream::Stdout, $messages[1]->stream);
+        self::assertInstanceOf(ProcessOutputMsg::class, $messages[2]);
+        self::assertSame('err-tail', $messages[2]->output);
+        self::assertSame(ProcessStream::Stderr, $messages[2]->stream);
+        self::assertInstanceOf(ProcessFinishedMsg::class, $messages[3]);
+    }
+
+    #[Test]
+    public function terminationEscalatesToKillAfterAGraceTooShortToStallTheLoop(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->expects(self::once())->method('stop')->with(0.05);
+
+        (new RunningStreamingProcess($process, null))->stop();
     }
 
     private static function envelope(Message $message): MessageEnvelope

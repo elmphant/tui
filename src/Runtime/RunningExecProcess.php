@@ -17,6 +17,13 @@ use Throwable;
  */
 final class RunningExecProcess implements RunningProcess
 {
+    /**
+     * Symfony's stop() blocks in a usleep loop until the child dies or this timeout
+     * expires, and only then escalates to SIGKILL; its 10s default would freeze the
+     * event loop for a child that ignores SIGTERM.
+     */
+    private const TERMINATION_GRACE_SECONDS = 0.05;
+
     private bool $finished = false;
     private string $stdout = '';
     private string $stderr = '';
@@ -39,28 +46,31 @@ final class RunningExecProcess implements RunningProcess
         }
 
         try {
-            $this->stdout .= $this->process->getIncrementalOutput();
-            $this->stderr .= $this->process->getIncrementalErrorOutput();
+            $this->collectOutput();
             $this->process->clearOutput();
             $this->process->clearErrorOutput();
+
+            if (strlen($this->stdout) + strlen($this->stderr) > $this->maxOutputBytes) {
+                $this->stop();
+
+                return [$this->map(new ErrorMsg(
+                    new EffectOutputLimitExceeded($this->maxOutputBytes, 'Process'),
+                    'process',
+                    $this->processId,
+                ))];
+            }
+
+            if ($this->process->isRunning()) {
+                return [];
+            }
+
+            // isRunning() reads the pipes into Symfony's own buffer, so a flush the
+            // child made between the read above and this check is only visible now.
+            $this->collectOutput();
         } catch (Throwable $error) {
             $this->finished = true;
 
             return [$this->map(new ErrorMsg($error, 'process', $this->processId))];
-        }
-
-        if (strlen($this->stdout) + strlen($this->stderr) > $this->maxOutputBytes) {
-            $this->stop();
-
-            return [$this->map(new ErrorMsg(
-                new EffectOutputLimitExceeded($this->maxOutputBytes, 'Process'),
-                'process',
-                $this->processId,
-            ))];
-        }
-
-        if ($this->process->isRunning()) {
-            return [];
         }
 
         $this->finished = true;
@@ -82,7 +92,7 @@ final class RunningExecProcess implements RunningProcess
     public function stop(): void
     {
         if (!$this->finished) {
-            $this->process->stop();
+            $this->process->stop(self::TERMINATION_GRACE_SECONDS);
             $this->finished = true;
         }
     }
@@ -95,5 +105,11 @@ final class RunningExecProcess implements RunningProcess
     public function id(): ?EffectId
     {
         return $this->processId;
+    }
+
+    private function collectOutput(): void
+    {
+        $this->stdout .= $this->process->getIncrementalOutput();
+        $this->stderr .= $this->process->getIncrementalErrorOutput();
     }
 }

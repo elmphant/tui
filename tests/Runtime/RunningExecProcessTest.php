@@ -109,8 +109,8 @@ final class RunningExecProcessTest extends TestCase
     public function pumpAccumulatesOutputAcrossPumpsAndClearsConsumedBuffers(): void
     {
         $process = $this->createMock(Process::class);
-        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls('out-first ', 'out-second');
-        $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('err-first ', 'err-second');
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls('out-first ', 'out-second', '');
+        $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('err-first ', 'err-second', '');
         $process->expects(self::exactly(2))->method('clearOutput');
         $process->expects(self::exactly(2))->method('clearErrorOutput');
         $process->method('isRunning')->willReturnOnConsecutiveCalls(true, false);
@@ -149,8 +149,8 @@ final class RunningExecProcessTest extends TestCase
     public function pumpAllowsCombinedOutputExactlyAtTheLimit(): void
     {
         $process = $this->createMock(Process::class);
-        $process->method('getIncrementalOutput')->willReturn('12');
-        $process->method('getIncrementalErrorOutput')->willReturn('34');
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls('12', '');
+        $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('34', '');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(0);
         $process->method('isSuccessful')->willReturn(true);
@@ -168,7 +168,7 @@ final class RunningExecProcessTest extends TestCase
     public function pumpDefaultsToAnEightMebibyteOutputLimit(): void
     {
         $atLimit = $this->createMock(Process::class);
-        $atLimit->method('getIncrementalOutput')->willReturn(str_repeat('x', 8_388_608));
+        $atLimit->method('getIncrementalOutput')->willReturnOnConsecutiveCalls(str_repeat('x', 8_388_608), '');
         $atLimit->method('getIncrementalErrorOutput')->willReturn('');
         $atLimit->method('isRunning')->willReturn(false);
         $atLimit->method('getExitCode')->willReturn(0);
@@ -204,6 +204,33 @@ final class RunningExecProcessTest extends TestCase
         self::assertCount(1, $messages);
         self::assertInstanceOf(ProcessResultMsg::class, $messages[0]);
         self::assertSame(-1, $messages[0]->exitCode);
+    }
+
+    #[Test]
+    public function theTailFlushedAsTheChildExitsReachesTheResult(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls('head ', 'tail');
+        $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('', 'err-tail');
+        $process->method('isRunning')->willReturn(false);
+        $process->method('getExitCode')->willReturn(0);
+        $process->method('isSuccessful')->willReturn(true);
+
+        $messages = (new RunningExecProcess($process, null))->pump();
+
+        self::assertCount(1, $messages);
+        self::assertInstanceOf(ProcessResultMsg::class, $messages[0]);
+        self::assertSame('head tail', $messages[0]->stdout);
+        self::assertSame('err-tail', $messages[0]->stderr);
+    }
+
+    #[Test]
+    public function terminationEscalatesToKillAfterAGraceTooShortToStallTheLoop(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->expects(self::once())->method('stop')->with(0.05);
+
+        (new RunningExecProcess($process, null))->stop();
     }
 
     #[Test]

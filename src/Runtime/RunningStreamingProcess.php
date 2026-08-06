@@ -17,6 +17,13 @@ use Symfony\Component\Process\Process;
  */
 final class RunningStreamingProcess implements RunningProcess
 {
+    /**
+     * Symfony's stop() blocks in a usleep loop until the child dies or this timeout
+     * expires, and only then escalates to SIGKILL; its 10s default would freeze the
+     * event loop for a child that ignores SIGTERM.
+     */
+    private const TERMINATION_GRACE_SECONDS = 0.05;
+
     private bool $finished = false;
 
     public function __construct(
@@ -36,6 +43,55 @@ final class RunningStreamingProcess implements RunningProcess
             return [];
         }
 
+        $messages = $this->drainOutput();
+
+        if ($this->process->isRunning()) {
+            return $messages;
+        }
+
+        $this->finished = true;
+
+        // isRunning() reads the pipes into Symfony's own buffer, so a flush the child
+        // made between the drain above and this check is only visible now.
+        $messages = [...$messages, ...$this->drainOutput()];
+
+        $messages[] = $this->map(new ProcessFinishedMsg(
+            $this->process->getExitCode() ?? -1,
+            $this->process->isSuccessful(),
+            $this->processId,
+        ));
+
+        return $messages;
+    }
+
+    public function map(Message $message): Message
+    {
+        return $this->wrap === null ? $message : ($this->wrap)($message);
+    }
+
+    public function stop(): void
+    {
+        if (!$this->finished) {
+            $this->process->stop(self::TERMINATION_GRACE_SECONDS);
+            $this->finished = true;
+        }
+    }
+
+    public function isRunning(): bool
+    {
+        return !$this->finished;
+    }
+
+    public function id(): ?EffectId
+    {
+        return $this->processId;
+    }
+
+    /**
+     * @return list<Message>
+     */
+    private function drainOutput(): array
+    {
         $messages = [];
 
         $stdout = $this->process->getIncrementalOutput();
@@ -54,38 +110,6 @@ final class RunningStreamingProcess implements RunningProcess
         }
         $this->process->clearErrorOutput();
 
-        if (!$this->process->isRunning()) {
-            $this->finished = true;
-            $messages[] = $this->map(new ProcessFinishedMsg(
-                $this->process->getExitCode() ?? -1,
-                $this->process->isSuccessful(),
-                $this->processId,
-            ));
-        }
-
         return $messages;
-    }
-
-    public function map(Message $message): Message
-    {
-        return $this->wrap === null ? $message : ($this->wrap)($message);
-    }
-
-    public function stop(): void
-    {
-        if (!$this->finished) {
-            $this->process->stop();
-            $this->finished = true;
-        }
-    }
-
-    public function isRunning(): bool
-    {
-        return !$this->finished;
-    }
-
-    public function id(): ?EffectId
-    {
-        return $this->processId;
     }
 }
