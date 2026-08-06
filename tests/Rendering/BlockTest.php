@@ -863,6 +863,47 @@ final class BlockTest extends TestCase
         self::assertSame('─', $frame->characters[0], 'Horizontal border must start at column 0 when left = -1 (max(0, left+1) = 0)');
     }
 
+    #[Test]
+    public function borderCellsOutsideAnActiveClipStayUntouched(): void
+    {
+        $frame = new Frame(10, 6);
+        $this->fillBuffer($frame, '.');
+        $frame->pushClip(new Rect(0, 2, 5, 2));
+        $block = Block::new()->border(BorderStyle::Solid);
+
+        $block->render($frame, new Rect(0, 0, 10, 6));
+
+        self::assertSame('│', $frame->characters[2 * 10 + 0], 'Left side inside the clip must render');
+        self::assertSame('│', $frame->characters[3 * 10 + 0], 'Left side inside the clip must render');
+
+        for ($y = 0; $y < 6; ++$y) {
+            for ($x = 0; $x < 10; ++$x) {
+                if ($y >= 2 && $y < 4 && $x < 5) {
+                    continue;
+                }
+                self::assertSame('.', $frame->characters[$y * 10 + $x], "Cell ({$x}, {$y}) is outside the clip");
+            }
+        }
+    }
+
+    #[Test]
+    public function aBorderDrawnOverWideCharactersLeavesNoHalfGlyph(): void
+    {
+        $frame = new Frame(10, 5);
+        $frame->putString(0, 2, "\u{4F60}");
+        $frame->putString(4, 2, "\u{597D}");
+        $block = Block::new()->border(BorderStyle::Solid);
+
+        $block->render($frame, new Rect(0, 0, 6, 5));
+
+        self::assertSame('│', $frame->characters[2 * 10 + 0]);
+        self::assertSame(' ', $frame->characters[2 * 10 + 1], 'Orphaned continuation must become a blank');
+        self::assertSame(1, $frame->widths[2 * 10 + 1]);
+        self::assertSame(' ', $frame->characters[2 * 10 + 4], 'Orphaned lead must become a blank');
+        self::assertSame(1, $frame->widths[2 * 10 + 4]);
+        self::assertSame('│', $frame->characters[2 * 10 + 5]);
+    }
+
     private function fillBuffer(Frame $frame, string $char): void
     {
         for ($y = 0; $y < $frame->height; ++$y) {

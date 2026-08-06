@@ -118,99 +118,28 @@ final readonly class Block
         $background = $this->borderStyle->backgroundValue();
         $attributes = $this->borderStyle->attributes;
         $glyphs = $border->glyphs();
-        $bufferWidth = $frame->width;
-        $bufferHeight = $frame->height;
 
         $left = $area->x;
         $right = $area->right() - 1;
         $top = $area->y;
         $bottom = $area->bottom() - 1;
+        $horizontalWidth = $right - $left - 1;
+        $verticalHeight = $bottom - $top - 1;
 
-        // Direct array access — box-drawing glyphs are all width-1, skip CharWidth entirely.
-        if ($top >= 0 && $top < $bufferHeight) {
-            $topBase = $top * $bufferWidth;
-            if ($left >= 0 && $left < $bufferWidth) {
-                $i = $topBase + $left;
-                $frame->characters[$i] = $glyphs->topLeft;
-                $frame->foregrounds[$i] = $foreground;
-                $frame->backgrounds[$i] = $background;
-                $frame->attributes[$i] = $attributes;
-                $frame->widths[$i] = 1;
-            }
-            if ($right >= 0 && $right < $bufferWidth) {
-                $i = $topBase + $right;
-                $frame->characters[$i] = $glyphs->topRight;
-                $frame->foregrounds[$i] = $foreground;
-                $frame->backgrounds[$i] = $background;
-                $frame->attributes[$i] = $attributes;
-                $frame->widths[$i] = 1;
-            }
-            $startX = max(0, $left + 1);
-            $endX = min($bufferWidth, $right);
-            for ($x = $startX; $x < $endX; ++$x) {
-                $i = $topBase + $x;
-                $frame->characters[$i] = $glyphs->horizontal;
-                $frame->foregrounds[$i] = $foreground;
-                $frame->backgrounds[$i] = $background;
-                $frame->attributes[$i] = $attributes;
-                $frame->widths[$i] = 1;
-            }
-            $frame->markRowDirty($top);
+        if ($top >= 0 && $top < $frame->height) {
+            $frame->putChar($left, $top, $glyphs->topLeft, $foreground, $background, $attributes);
+            $frame->putChar($right, $top, $glyphs->topRight, $foreground, $background, $attributes);
+            $frame->fillRect($left + 1, $top, $horizontalWidth, 1, $foreground, $background, $attributes, $glyphs->horizontal);
         }
 
-        if ($bottom >= 0 && $bottom < $bufferHeight && $bottom !== $top) {
-            $bottomBase = $bottom * $bufferWidth;
-            if ($left >= 0 && $left < $bufferWidth) {
-                $i = $bottomBase + $left;
-                $frame->characters[$i] = $glyphs->bottomLeft;
-                $frame->foregrounds[$i] = $foreground;
-                $frame->backgrounds[$i] = $background;
-                $frame->attributes[$i] = $attributes;
-                $frame->widths[$i] = 1;
-            }
-            if ($right >= 0 && $right < $bufferWidth) {
-                $i = $bottomBase + $right;
-                $frame->characters[$i] = $glyphs->bottomRight;
-                $frame->foregrounds[$i] = $foreground;
-                $frame->backgrounds[$i] = $background;
-                $frame->attributes[$i] = $attributes;
-                $frame->widths[$i] = 1;
-            }
-            $startX = max(0, $left + 1);
-            $endX = min($bufferWidth, $right);
-            for ($x = $startX; $x < $endX; ++$x) {
-                $i = $bottomBase + $x;
-                $frame->characters[$i] = $glyphs->horizontal;
-                $frame->foregrounds[$i] = $foreground;
-                $frame->backgrounds[$i] = $background;
-                $frame->attributes[$i] = $attributes;
-                $frame->widths[$i] = 1;
-            }
-            $frame->markRowDirty($bottom);
+        if ($bottom >= 0 && $bottom < $frame->height && $bottom !== $top) {
+            $frame->putChar($left, $bottom, $glyphs->bottomLeft, $foreground, $background, $attributes);
+            $frame->putChar($right, $bottom, $glyphs->bottomRight, $foreground, $background, $attributes);
+            $frame->fillRect($left + 1, $bottom, $horizontalWidth, 1, $foreground, $background, $attributes, $glyphs->horizontal);
         }
 
-        $startY = max(0, $top + 1);
-        $endY = min($bufferHeight, $bottom);
-        for ($y = $startY; $y < $endY; ++$y) {
-            $rowBase = $y * $bufferWidth;
-            if ($left >= 0 && $left < $bufferWidth) {
-                $i = $rowBase + $left;
-                $frame->characters[$i] = $glyphs->vertical;
-                $frame->foregrounds[$i] = $foreground;
-                $frame->backgrounds[$i] = $background;
-                $frame->attributes[$i] = $attributes;
-                $frame->widths[$i] = 1;
-            }
-            if ($right >= 0 && $right < $bufferWidth) {
-                $i = $rowBase + $right;
-                $frame->characters[$i] = $glyphs->vertical;
-                $frame->foregrounds[$i] = $foreground;
-                $frame->backgrounds[$i] = $background;
-                $frame->attributes[$i] = $attributes;
-                $frame->widths[$i] = 1;
-            }
-            $frame->markRowDirty($y);
-        }
+        $frame->fillRect($left, $top + 1, 1, $verticalHeight, $foreground, $background, $attributes, $glyphs->vertical);
+        $frame->fillRect($right, $top + 1, 1, $verticalHeight, $foreground, $background, $attributes, $glyphs->vertical);
     }
 
     private function renderTitle(Frame $frame, Rect $area): void
