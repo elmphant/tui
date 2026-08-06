@@ -13,6 +13,11 @@ parameters:
     reportUnmatchedIgnoredErrors: true
     ignoreErrors:
         - identifier: return.unusedType
+        # A keyed write-back names its constructor arguments at runtime, so no
+        # analyser can match them against each consumer's signature.
+        -
+            identifier: argument.type
+            path: src/Core/Cloneable.php
 
 services:
     -

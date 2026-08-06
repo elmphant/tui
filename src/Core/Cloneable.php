@@ -15,13 +15,43 @@ trait Cloneable
      */
     public function cloneWith(mixed ...$overrides): static
     {
-        $current = get_object_vars($this);
+        $current = $this->cloneableFields();
         foreach ($overrides as $name => $value) {
             if (!array_key_exists($name, $current) || $current[$name] !== $value) {
-                return new static(...[...$current, ...$overrides]); // @phpstan-ignore argument.type
+                return $this->rebuiltFrom([...$current, ...$overrides]);
             }
         }
 
         return $this;
+    }
+
+    /**
+     * get_object_vars() would run in the scope of the class that uses this trait,
+     * hiding properties a subclass declares private; the array cast sees them all,
+     * mangled as "\0Class\0name".
+     *
+     * @return array<string, mixed>
+     */
+    private function cloneableFields(): array
+    {
+        $fields = [];
+        foreach ((array)$this as $key => $value) {
+            $separator = strrpos($key, "\0");
+            $fields[$separator === false ? $key : substr($key, $separator + 1)] = $value;
+        }
+
+        return $fields;
+    }
+
+    /**
+     * `new static` rather than reflection: most consumers keep a private
+     * constructor behind static factories, which only same-scope construction
+     * can reach.
+     *
+     * @param array<string, mixed> $fields
+     */
+    private function rebuiltFrom(array $fields): static
+    {
+        return new static(...$fields);
     }
 }

@@ -154,4 +154,45 @@ final class CloneableTest extends TestCase
         self::assertSame(5, $changed->x);
         self::assertSame('bye', $changed->name);
     }
+
+    #[Test]
+    public function aPrivateFieldDeclaredBelowTheTraitHostSurvivesACopy(): void
+    {
+        $original = new SubclassWithPrivateField(x: 1, secret: 'kept');
+
+        $modified = $original->cloneWith(x: 2);
+
+        self::assertSame(2, $modified->x);
+        self::assertSame('kept', $modified->secret());
+    }
+
+    #[Test]
+    public function aPrivateFieldBelowTheTraitHostCanItselfBeOverridden(): void
+    {
+        $original = new SubclassWithPrivateField(x: 1, secret: 'kept');
+
+        $modified = $original->cloneWith(secret: 'changed');
+
+        self::assertSame(1, $modified->x);
+        self::assertSame('changed', $modified->secret());
+    }
+}
+
+abstract readonly class CloneableTraitHost
+{
+    use Cloneable;
+}
+
+final readonly class SubclassWithPrivateField extends CloneableTraitHost
+{
+    public function __construct(
+        public int $x,
+        private string $secret,
+    ) {
+    }
+
+    public function secret(): string
+    {
+        return $this->secret;
+    }
 }
