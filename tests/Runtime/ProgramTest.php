@@ -18,6 +18,8 @@ use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
 use Elmphant\Tui\Input\StdinBuffer;
 use Elmphant\Tui\Input\TerminalInterface;
+use Elmphant\Tui\Input\TerminalOutputInterface;
+use Elmphant\Tui\Input\TerminalWriteException;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\FloatMouseMsg;
@@ -2997,6 +2999,106 @@ final class ProgramTest extends TestCase
 
         self::assertFalse($queue->isEmpty(), 'Render throw must enqueue an ErrorMsg');
         self::assertInstanceOf(ErrorMsg::class, $queue->dequeue());
+    }
+
+    #[Test]
+    public function aRenderThatKeepsThrowingStopsTheProgramInsteadOfSpinning(): void
+    {
+        $alwaysThrowingModel = new class implements Model {
+            public int $renderAttempts = 0;
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+                ++$this->renderAttempts;
+
+                throw new RuntimeException('render boom');
+            }
+        };
+
+        $program = $this->createRenderablePrgram($alwaysThrowingModel);
+        $reflection = new ReflectionClass($program);
+        $clock = new TestClock(1.0);
+        $reflection->getProperty('clock')->setValue($program, $clock);
+        $ticker = new AdaptiveTicker(fn () => null);
+        $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
+        $runTick = $reflection->getMethod('runTick');
+        $running = $reflection->getProperty('running');
+
+        for ($tick = 0; $tick < 100 && $running->getValue($program) === true; ++$tick) {
+            $clock->advance(1.0);
+            $runTick->invoke($program);
+        }
+        $ticker->stop();
+
+        self::assertFalse($running->getValue($program), 'A render that fails every frame must end the program, not repaint nothing forever');
+        self::assertLessThanOrEqual(10, $alwaysThrowingModel->renderAttempts, 'The consecutive-failure threshold bounds the retries');
+    }
+
+    #[Test]
+    public function aStalledTerminalWriteReachesTheModelAsAnError(): void
+    {
+        $stalledOutput = new class implements TerminalOutputInterface {
+            public function write(string $data): void
+            {
+                throw new TerminalWriteException(0, strlen($data));
+            }
+
+            public function flush(): void
+            {
+            }
+        };
+
+        $errorObservingModel = new class implements Model {
+            /**
+             * @var list<string>
+             */
+            public array $errorSources = [];
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if ($message instanceof ErrorMsg) {
+                    $this->errorSources[] = $message->source;
+                }
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+                $frame->putString(0, 0, 'CONTENT');
+            }
+        };
+
+        $program = $this->createRenderablePrgram($errorObservingModel);
+        $reflection = new ReflectionClass($program);
+        $reflection->getProperty('screen')->setValue($program, new Screen($stalledOutput));
+        $clock = new TestClock(1.0);
+        $reflection->getProperty('clock')->setValue($program, $clock);
+        $ticker = new AdaptiveTicker(fn () => null);
+        $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
+        $runTick = $reflection->getMethod('runTick');
+
+        $runTick->invoke($program);
+        $clock->advance(1.0);
+        $runTick->invoke($program);
+        $ticker->stop();
+
+        self::assertSame(['render'], $errorObservingModel->errorSources, 'A write that stalls must become an ErrorMsg the app can act on, not unwind the loop');
     }
 
     #[Test]

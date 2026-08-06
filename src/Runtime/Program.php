@@ -61,6 +61,7 @@ final class Program
 {
     private const ESCAPE_TIMEOUT = 0.05;
     private const MAX_MESSAGES_PER_DRAIN = 1_024;
+    private const MAX_CONSECUTIVE_ERRORS = 10;
 
     /**
      * A count alone is not enough: one slow update times a thousand queued
@@ -87,6 +88,7 @@ final class Program
     private ?Frame $backBuffer = null;
     private bool $running = false;
     private bool $isDirty = true;
+    private int $consecutiveRenderFailures = 0;
     private bool $resizePending = false;
     private bool $resizeNeedsScreenClear = false;
     private int $width = 80;
@@ -658,6 +660,11 @@ final class Program
         if (($this->isDirty || $animationDue) && $now >= $this->lastRender + $frameBudget) {
             $this->tracedRenderFrame();
             $this->lastRender = $this->clock->now();
+            if (!$this->running) {
+                $this->resumeRunSuspension();
+
+                return;
+            }
         } elseif ($this->tracer !== null && ($this->isDirty || $animationDue)) {
             $this->tracer->record(TraceEvent::FrameSkipped, [
                 'waitMs' => ($this->lastRender + $frameBudget - $now) * 1000,
@@ -784,7 +791,7 @@ final class Program
 
             if ($message instanceof ErrorMsg && $this->errorHandler !== null) {
                 ++$consecutiveErrors;
-                if ($consecutiveErrors >= 10) {
+                if ($consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
                     $this->running = false;
 
                     return;
@@ -815,7 +822,7 @@ final class Program
                 }
             } catch (Throwable $error) {
                 ++$consecutiveErrors;
-                if ($consecutiveErrors >= 10) {
+                if ($consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
                     $this->running = false;
 
                     return;
@@ -881,15 +888,20 @@ final class Program
 
         try {
             $this->model->render($frame, $renderContext);
+            $this->paintedAt = $this->clock->now();
+            $this->screen->flush($frame);
         } catch (Throwable $error) {
             $this->animationRepaintAt = null;
+            ++$this->consecutiveRenderFailures;
+            if ($this->consecutiveRenderFailures >= self::MAX_CONSECUTIVE_ERRORS) {
+                $this->running = false;
+            }
             $this->messageQueue->enqueue(new ErrorMsg($error, 'render'));
 
             return false;
         }
 
-        $this->paintedAt = $this->clock->now();
-        $this->screen->flush($frame);
+        $this->consecutiveRenderFailures = 0;
         $renderContext->commitFloatPlacements();
 
         $repaintDelay = $renderContext->repaintDelay();
