@@ -688,8 +688,9 @@ one rectangle per off-screen row. Their immutable height measurements are
 weakly cached by container identity and viewport, with automatic invalidation
 when either changes. Wrapped content is finalized at the actual child width
 after reserving the scrollbar column, so scroll bounds and rendered lines stay
-in sync. Run `composer benchmark` for the checked-in cold/warm large-container
-plus narrow, medium, and wide end-to-end performance budgets.
+in sync. The `*PerfTest.php` files hold the cold/warm large-container plus
+narrow, medium, and wide end-to-end performance budgets, so `composer test`
+keeps them honest.
 
 ```php
 public function render(Frame $frame, RenderContext $context): void
