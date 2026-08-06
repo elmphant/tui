@@ -1103,11 +1103,11 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function putAnsiZeroWidthCharacterIsSkipped(): void
+    public function putAnsiZeroWidthCharacterComposesWithoutConsumingAColumn(): void
     {
         $frame = new Frame(20, 1);
         [$finalX, $finalY] = $frame->putAnsi(0, 0, "A\u{0300}B");
-        self::assertSame('A', $frame->characters[0]);
+        self::assertSame("A\u{0300}", $frame->characters[0]);
         self::assertSame('B', $frame->characters[1]);
         self::assertSame(2, $finalX);
     }
@@ -2570,7 +2570,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(10, 1);
         [$finalX, $_] = $frame->putAnsi(0, 0, "A\u{0300}B");
-        self::assertSame('A', $frame->characters[0]);
+        self::assertSame("A\u{0300}", $frame->characters[0]);
         self::assertSame('B', $frame->characters[1]);
         self::assertSame(2, $finalX);
     }
@@ -3401,7 +3401,6 @@ final class FrameTest extends TestCase
     public function putStringWithWideCharRejectsWhenContinuationOutsideClip(): void
     {
         // L179: wide-char (width=2) — the continuation cell (col+1) must also be inside the clip.
-        // If continuation is outside clip, the wide char must not write the continuation cell.
         $frame = new Frame(10, 5);
         // Pre-fill clipped cells so we can detect what was written
         for ($i = 0; $i < 50; ++$i) {
@@ -3409,12 +3408,11 @@ final class FrameTest extends TestCase
         }
         $frame->pushClip(new Rect(2, 1, 4, 2)); // covers cols 2..5
 
-        // '中' is width 2. Place at col 5 — primary cell at 5 (inside clip), continuation at col 6 (outside).
+        // '中' is width 2. Place at col 5 — lead at 5 (inside clip), continuation at col 6 (outside).
         $frame->putString(5, 1, '中');
 
-        // Primary cell at col 5: '中'
-        self::assertSame('中', $frame->characters[1 * 10 + 5], 'Wide-char primary cell must write inside clip');
-        // Continuation cell at col 6: must remain '.' (was pre-filled, then clip rejected the write)
+        self::assertSame('.', $frame->characters[1 * 10 + 5], 'Wide-char lead must not write when its continuation is outside the clip');
+        self::assertSame(1, $frame->widths[1 * 10 + 5], 'No width-2 lead may be left without a continuation');
         self::assertSame('.', $frame->characters[1 * 10 + 6], 'Wide-char continuation must not write when outside clip');
     }
 
@@ -3453,9 +3451,9 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function putAnsiWithWideCharRejectsContinuationOutsideClip(): void
+    public function putAnsiWithWideCharRejectsTheWholeCharWhenContinuationOutsideClip(): void
     {
-        // L325 IncrementInteger: column + 1 → column + 2. With column+2 outside clip, continuation skipped (wrongly).
+        // L325 IncrementInteger: column + 1 → column + 2. With column+2 outside clip, the char writes (wrongly).
         $frame = new Frame(10, 5);
         for ($i = 0; $i < 50; ++$i) {
             $frame->putChar($i % 10, intdiv($i, 10), '.');
@@ -3464,7 +3462,8 @@ final class FrameTest extends TestCase
 
         $frame->putAnsi(5, 1, '中');
 
-        self::assertSame('中', $frame->characters[1 * 10 + 5], 'putAnsi primary inside clip');
+        self::assertSame('.', $frame->characters[1 * 10 + 5], 'putAnsi must drop the lead when its continuation is outside the clip');
+        self::assertSame(1, $frame->widths[1 * 10 + 5], 'No width-2 lead may be left without a continuation');
         self::assertSame('.', $frame->characters[1 * 10 + 6], 'putAnsi continuation outside clip must not write');
     }
 
@@ -3519,5 +3518,75 @@ final class FrameTest extends TestCase
         $frame->clear();
 
         self::assertSame(1, $frame->widths[0], 'A lone stale cell width must defeat the already-blank shortcut and be cleared');
+    }
+
+    #[Test]
+    public function everyWriterDropsAWideCharWhoseContinuationFallsOutsideTheClip(): void
+    {
+        foreach (['putChar', 'putString', 'putAnsi'] as $writer) {
+            $frame = new Frame(10, 1);
+            for ($column = 0; $column < 10; ++$column) {
+                $frame->putChar($column, 0, '.');
+            }
+            $frame->pushClip(new Rect(2, 0, 4, 1));
+
+            match ($writer) {
+                'putChar' => $frame->putChar(5, 0, '中'),
+                'putString' => $frame->putString(5, 0, '中'),
+                'putAnsi' => $frame->putAnsi(5, 0, '中'),
+            };
+
+            self::assertSame('.', $frame->characters[5], "{$writer} must drop the whole wide char, not leave a lead without a continuation");
+            self::assertSame(1, $frame->widths[5], "{$writer} must not leave width 2 on a cell whose continuation was clipped");
+            self::assertSame('.', $frame->characters[6], "{$writer} must not write the continuation outside the clip");
+        }
+    }
+
+    #[Test]
+    public function putAnsiComposesACombiningMarkIntoThePrecedingCell(): void
+    {
+        $frame = new Frame(5, 1);
+
+        $frame->putAnsi(0, 0, "e\u{0301}f");
+
+        self::assertSame("e\u{0301}", $frame->characters[0], 'A combining mark must compose with the cell before it, as putString does');
+        self::assertSame('f', $frame->characters[1], 'A zero-width mark must not consume a column');
+    }
+
+    #[Test]
+    public function overlayDropsAWideLeadWithNoRoomForItsContinuation(): void
+    {
+        $source = new Frame(2, 1);
+        $source->putChar(0, 0, '中');
+        $destination = new Frame(5, 1);
+
+        $destination->overlay($source, 4, 0);
+
+        self::assertSame(' ', $destination->characters[4], 'A wide lead must not land in the last column, where its continuation cannot follow');
+        self::assertSame(1, $destination->widths[4], 'No width-2 lead may be left without a continuation');
+    }
+
+    #[Test]
+    public function putStringLeavesTheRowCleanWhenEveryCellWasClipped(): void
+    {
+        $frame = new Frame(10, 5);
+        $frame->pushClip(new Rect(5, 0, 5, 5));
+
+        $frame->putString(0, 0, 'ábc');
+
+        self::assertFalse($frame->isRowDirty(0), 'A row where every cell was clip-rejected must not be dirty');
+    }
+
+    #[Test]
+    public function aForcedFullRepaintSurvivesTheNextClear(): void
+    {
+        $frame = new Frame(4, 3);
+
+        $frame->markAllDirty();
+        $frame->clear();
+
+        for ($row = 0; $row < 3; ++$row) {
+            self::assertTrue($frame->isRowDirty($row), "Row {$row} was forced dirty, so clear() must keep it dirty");
+        }
     }
 }

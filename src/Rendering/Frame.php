@@ -139,7 +139,7 @@ final class Frame
         }
 
         $characterWidth = CharWidth::graphemeWidth($character);
-        if ($characterWidth > 1 && $x + $characterWidth > $this->width) {
+        if ($characterWidth > 1 && ($x + $characterWidth > $this->width || $this->clipRejects($x + 1, $y))) {
             return;
         }
 
@@ -192,6 +192,7 @@ final class Frame
 
         $column = $x;
         $rowBase = $y * $this->width;
+        $wroteAnything = false;
 
         foreach ($graphemes as $character) {
             if ($column >= $this->width) {
@@ -209,6 +210,13 @@ final class Frame
             }
 
             if ($column >= 0 && !$this->clipRejects($column, $y)) {
+                // A width-2 lead without its continuation makes Screen's diff draw the
+                // glyph past the clip while the buffer still shows the old cell there.
+                if ($characterWidth === 2 && $this->clipRejects($column + 1, $y)) {
+                    $column += $characterWidth;
+                    continue;
+                }
+
                 $this->repairOverwriteEdges($rowBase, $column, $column + $characterWidth);
                 $index = $rowBase + $column;
                 $this->characters[$index] = $character;
@@ -217,7 +225,7 @@ final class Frame
                 $this->attributes[$index] = $attributes;
                 $this->widths[$index] = $characterWidth;
 
-                if ($characterWidth === 2 && !$this->clipRejects($column + 1, $y)) {
+                if ($characterWidth === 2) {
                     $nextIndex = $index + 1;
                     $this->characters[$nextIndex] = '';
                     $this->foregrounds[$nextIndex] = $foreground;
@@ -225,12 +233,16 @@ final class Frame
                     $this->attributes[$nextIndex] = $attributes;
                     $this->widths[$nextIndex] = 0;
                 }
+
+                $wroteAnything = true;
             }
 
             $column += $characterWidth;
         }
 
-        $this->markRowDirty($y);
+        if ($wroteAnything) {
+            $this->markRowDirty($y);
+        }
 
         return $column - $x;
     }
@@ -259,6 +271,7 @@ final class Frame
         $column = $x;
         $length = strlen($text);
         $position = 0;
+        $previousIndex = null;
 
         while ($position < $length && $y < $this->height) {
             $byte = ord($text[$position]);
@@ -282,12 +295,14 @@ final class Frame
                 ++$y;
                 $column = 0;
                 ++$position;
+                $previousIndex = null;
                 continue;
             }
 
             if ($byte === 0x0D) {
                 $column = 0;
                 ++$position;
+                $previousIndex = null;
                 continue;
             }
 
@@ -298,6 +313,7 @@ final class Frame
                     ++$column;
                 }
                 ++$position;
+                $previousIndex = null;
                 continue;
             }
 
@@ -312,8 +328,13 @@ final class Frame
 
             $characterWidth = CharWidth::of($character);
             if ($characterWidth === 0) {
+                if ($previousIndex !== null) {
+                    $this->characters[$previousIndex] .= $character;
+                }
                 continue;
             }
+
+            $previousIndex = null;
             if ($column >= $this->width) {
                 continue;
             }
@@ -323,6 +344,11 @@ final class Frame
             }
 
             if ($column >= 0 && $y >= 0 && !$this->clipRejects($column, $y)) {
+                if ($characterWidth === 2 && $this->clipRejects($column + 1, $y)) {
+                    $column += $characterWidth;
+                    continue;
+                }
+
                 $rowBase = $y * $this->width;
                 $this->repairOverwriteEdges($rowBase, $column, $column + $characterWidth);
                 $index = $rowBase + $column;
@@ -332,7 +358,7 @@ final class Frame
                 $this->attributes[$index] = $parser->attributes;
                 $this->widths[$index] = $characterWidth;
 
-                if ($characterWidth === 2 && !$this->clipRejects($column + 1, $y)) {
+                if ($characterWidth === 2) {
                     $nextIndex = $index + 1;
                     $this->characters[$nextIndex] = '';
                     $this->foregrounds[$nextIndex] = $parser->foreground;
@@ -342,6 +368,7 @@ final class Frame
                 }
 
                 $this->markRowDirty($y);
+                $previousIndex = $index;
             }
             $column += $characterWidth;
         }
@@ -444,6 +471,10 @@ final class Frame
                     && $source->backgrounds[$sourceIndex] === 0
                     && $source->attributes[$sourceIndex] === 0
                 ) {
+                    continue;
+                }
+
+                if ($source->widths[$sourceIndex] === 2 && $destinationX + 1 >= $this->width) {
                     continue;
                 }
 
@@ -555,6 +586,7 @@ final class Frame
     {
         for ($row = 0; $row < $this->height; ++$row) {
             $this->dirtyRows[$row] = true;
+            $this->contentRows[$row] = true;
         }
     }
 
