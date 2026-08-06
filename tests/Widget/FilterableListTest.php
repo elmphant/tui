@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\ChildDispatcher;
+use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\FilterableList;
 use Elmphant\Tui\Widget\SimpleListItem;
@@ -140,6 +144,34 @@ final class FilterableListTest extends TestCase
         self::assertSame('cache', $restored->query());
         self::assertSame(1, $restored->sourceIndex());
         self::assertSame('2 of 3', $restored->summary(), 'the query narrowed the list again');
+    }
+
+    #[Test]
+    public function highlightsTheMatchersBestMatchRatherThanTheFirstSourceItem(): void
+    {
+        $ranked = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return [2, 0];
+            }
+        };
+
+        $list = FilterableList::new($this->commandItems())->withMatcher($ranked)->withQuery('anything');
+
+        self::assertSame(2, $list->sourceIndex(), 'user:create was ranked first');
+        self::assertSame('2 of 3', $list->summary());
+    }
+
+    #[Test]
+    public function aHostsGlobalRowNavigationWalksTheFilteredList(): void
+    {
+        $dispatcher = new ChildDispatcher(new Keybindings([Actions::FOCUS_NEXT => ['ctrl+n']]));
+
+        $moved = $dispatcher->dispatchOne($this->commands(), new KeyMsg('n', ctrl: true), $this->area())->child;
+        self::assertInstanceOf(FilterableList::class, $moved);
+
+        self::assertSame(1, $moved->sourceIndex(), 'ctrl+n reached the list');
+        self::assertSame('', $moved->query(), 'and was not typed into the field');
     }
 
     #[Test]

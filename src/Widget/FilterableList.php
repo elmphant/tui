@@ -7,9 +7,12 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -25,16 +28,23 @@ use Elmphant\Tui\Search\SubstringMatcher;
 /**
  * A scrollable list with a free-text filter over it.
  */
-final readonly class FilterableList implements Focusable
+final readonly class FilterableList implements Focusable, KeybindingsAware
 {
     use Cloneable;
+    use KeybindingsAwareBehavior;
 
     private const GAP_HEIGHT = 1;
 
     /**
-     * Keys the list takes; everything else is typing and belongs to the field.
+     * Actions the list takes; every other key is typing and belongs to the field.
      */
-    private const LIST_KEYS = [Key::Up, Key::Down, Key::PageUp, Key::PageDown, Key::Enter];
+    private const LIST_ACTIONS = [
+        Actions::FOCUS_PREV,
+        Actions::FOCUS_NEXT,
+        Actions::PAGE_UP,
+        Actions::PAGE_DOWN,
+        Actions::SELECT,
+    ];
 
     /**
      * What the query kept, worked out once. Every read of the highlighted item
@@ -55,6 +65,8 @@ final readonly class FilterableList implements Focusable
         private ?Matcher $matcher = null,
         private string $emptyText = 'No matches',
         ?array $matching = null,
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
     ) {
         $this->matching = $matching ?? ($matcher ?? new SubstringMatcher())->matching(
             $field->value(),
@@ -165,6 +177,21 @@ final readonly class FilterableList implements Focusable
         return Constraint::min(FilterBar::HEIGHT + self::GAP_HEIGHT + 1)->withFlex();
     }
 
+    /**
+     * Only the keys the list navigates with: `space` and Home/End stay with the
+     * field, where they type and move the caret.
+     */
+    public static function defaultKeybindings(): Keybindings
+    {
+        return new Keybindings([
+            Actions::FOCUS_PREV => ['up'],
+            Actions::FOCUS_NEXT => ['down'],
+            Actions::PAGE_UP => ['page_up'],
+            Actions::PAGE_DOWN => ['page_down'],
+            Actions::SELECT => ['enter'],
+        ]);
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
         if ($message instanceof MouseMsg) {
@@ -175,9 +202,9 @@ final readonly class FilterableList implements Focusable
             return new UpdateResult($this);
         }
 
-        $dispatcher = new ChildDispatcher();
+        $dispatcher = new ChildDispatcher($this->globalKeybindings);
 
-        if (\in_array($message->key, self::LIST_KEYS, true)) {
+        if ($this->belongsToTheList($message)) {
             $result = $dispatcher->dispatchOne($this->list, $message, $this->listArea($area));
 
             return new UpdateResult($this->cloneWith(list: $result->child), $result->command);
@@ -217,12 +244,25 @@ final readonly class FilterableList implements Focusable
         $this->list->render($frame, $body, $context);
     }
 
+    private function belongsToTheList(KeyMsg $message): bool
+    {
+        $bindings = $this->effectiveKeybindings();
+
+        foreach (self::LIST_ACTIONS as $action) {
+            if ($bindings->matches($message, $action)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @return UpdateResult<self>
      */
     private function withMouse(MouseMsg $message, Rect $area): UpdateResult
     {
-        $dispatcher = new ChildDispatcher();
+        $dispatcher = new ChildDispatcher($this->globalKeybindings);
         $field = $dispatcher->dispatchOne($this->field, $message, $this->fieldArea($area));
         $list = $dispatcher->dispatchOne($this->list, $message, $this->listArea($area));
 
