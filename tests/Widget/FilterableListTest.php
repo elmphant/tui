@@ -175,6 +175,15 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function shiftAndAnArrowPagesTheListLikeItDoesOnItsOwn(): void
+    {
+        $paged = $this->send($this->commands(), new KeyMsg(Key::Down, shift: true));
+
+        self::assertGreaterThan(0, $paged->sourceIndex(), 'the key the list pages on reaches it here too');
+        self::assertSame('', $paged->query(), 'and was not typed into the field');
+    }
+
+    #[Test]
     public function filtersOncePerQueryHoweverOftenTheResultIsRead(): void
     {
         $matcher = new CountingMatcher();

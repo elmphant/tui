@@ -186,8 +186,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
         return new Keybindings([
             Actions::FOCUS_PREV => ['up'],
             Actions::FOCUS_NEXT => ['down'],
-            Actions::PAGE_UP => ['page_up'],
-            Actions::PAGE_DOWN => ['page_down'],
+            Actions::PAGE_UP => ['shift+up', 'page_up'],
+            Actions::PAGE_DOWN => ['shift+down', 'page_down'],
             Actions::SELECT => ['enter'],
         ]);
     }
