@@ -7,11 +7,12 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -27,6 +28,7 @@ use Elmphant\Tui\Runtime\ChildDispatcher;
 final readonly class Modal implements Interactive, WidgetContainer, Focusable, InputLayer, KeybindingsAware
 {
     use Cloneable;
+    use KeybindingsAwareBehavior;
     private const BORDERS = 2;
 
     private function __construct(
@@ -39,6 +41,8 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
         private bool $focused = false,
         private ?Style $borderStyleOverride = null,
         private ?Style $titleStyleOverride = null,
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
     ) {
     }
 
@@ -76,32 +80,29 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
 
     public function withFocus(bool $focused): static
     {
-        return $this->cloneWith(focused: $focused);
+        return $this->cloneWith(
+            focused: $focused,
+            content: $this->content instanceof Focusable
+                ? $this->content->withFocus($focused)
+                : $this->content,
+        );
     }
 
     public static function defaultKeybindings(): Keybindings
     {
-        return Keybindings::empty();
-    }
-
-    public function effectiveKeybindings(): Keybindings
-    {
-        return Keybindings::empty();
-    }
-
-    public function withKeybindings(?Keybindings $keybindings): static
-    {
-        return $this;
+        return new Keybindings([
+            Actions::CANCEL => ['esc'],
+        ]);
     }
 
     public function withGlobalKeybindings(?Keybindings $keybindings): static
     {
-        if (!$this->content instanceof KeybindingsAware) {
-            return $this;
-        }
-        $newContent = $this->content->withGlobalKeybindings($keybindings);
-
-        return $this->cloneWith(content: $newContent);
+        return $this->cloneWith(
+            globalKeybindings: $keybindings,
+            content: $this->content instanceof KeybindingsAware
+                ? $this->content->withGlobalKeybindings($keybindings)
+                : $this->content,
+        );
     }
 
     /**
@@ -159,7 +160,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     public function update(Message $message, Rect $area): UpdateResult
     {
         return match (true) {
-            $message instanceof KeyMsg && $message->key === Key::Escape,
+            $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL),
             $message instanceof MouseMsg && $message->isClick() && !$message->inRect($this->computeModalRect($area)) => new UpdateResult(
                 $this->cloneWith(dismissed: true),
                 Cmd::message(new ModalDismissed($this->title)),
@@ -216,15 +217,10 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     {
         assert($this->content instanceof Interactive);
 
-        $content = $this->content;
-        if ($content instanceof Focusable && $content->isFocused() !== $this->focused) {
-            $content = $content->withFocus($this->focused);
-        }
-
-        $result = (new ChildDispatcher())->dispatchOne($content, $message, $this->computeContentRect($area));
+        $result = (new ChildDispatcher())->dispatchOne($this->content, $message, $this->computeContentRect($area));
 
         return new UpdateResult(
-            $this->cloneWith(content: $result->changed ? $result->child : $content),
+            $result->changed ? $this->cloneWith(content: $result->child) : $this,
             $result->command,
         );
     }

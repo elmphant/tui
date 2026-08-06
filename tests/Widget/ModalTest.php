@@ -119,6 +119,18 @@ final class ModalTest extends TestCase
     }
 
     #[Test]
+    public function focusReachesTheContentBeforeAnyMessageArrives(): void
+    {
+        $panel = Panel::new('inner')->add(Text::new('row'));
+
+        $modal = Modal::new('Title', $panel)->withFocus(true);
+
+        $content = $modal->childWidgets(Rect::fromSize(80, 24))[0][0];
+        self::assertInstanceOf(Focusable::class, $content);
+        self::assertTrue($content->isFocused(), 'the content is focused as soon as the modal is, so the very first frame draws it focused');
+    }
+
+    #[Test]
     public function typedTitleAndContentBuildersReplaceValuesAndElideNoOps(): void
     {
         $replacementContent = Text::new('After');
@@ -1271,6 +1283,18 @@ final class ModalTest extends TestCase
     }
 
     #[Test]
+    public function dismissalFollowsAReboundCancelKey(): void
+    {
+        $modal = Modal::new('Title', Text::new('Content'))
+            ->withKeybindings(new Keybindings([Actions::CANCEL => ['ctrl+g']]));
+
+        $result = $modal->update(new KeyMsg('g', ctrl: true), Rect::fromSize(80, 24));
+
+        self::assertTrue($result->model->isDismissed(), 'a rebound cancel key dismisses the modal');
+        self::assertNotNull($result->command);
+    }
+
+    #[Test]
     public function withGlobalKeybindingsPropagatesToKeybindingsAwareContent(): void
     {
         $vimBindings = new Keybindings([
@@ -1324,13 +1348,11 @@ final class ModalTest extends TestCase
             ->add(Text::new('row'))
             ->withFocus(true);
 
-        $modal = Modal::new('Title', $panel);
-        self::assertFalse($modal->isFocused());
+        $modal = Modal::new('Title', $panel)->withFocus(false);
 
-        $result = $modal->update(new KeyMsg('x'), Rect::fromSize(80, 24));
-
-        $newContent = (new ReflectionObject($result->model))->getProperty('content')->getValue($result->model);
-        self::assertFalse($newContent->isFocused(), 'When Modal is not focused, the content must also be unfocused');
+        $content = $modal->childWidgets(Rect::fromSize(80, 24))[0][0];
+        self::assertInstanceOf(Focusable::class, $content);
+        self::assertFalse($content->isFocused(), 'a modal losing focus blurs its content');
     }
 
     #[Test]
