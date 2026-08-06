@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Style;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use RuntimeException;
 
 final class ScreenTest extends TestCase
@@ -825,7 +826,7 @@ final class ScreenTest extends TestCase
         self::assertEmpty($frame->dirtyRows, 'dirtyRows must be cleared after full render');
     }
 
-    // --- Mutants #36-38: L151, 155, 169 — collectChangedRun while loop, break, advance ---
+    // --- Mutants #36-38: the diff run loop, its break, and its advance ---
     #[Test]
     public function diffCollectsConsecutiveChangedCellsIntoOneRun(): void
     {
@@ -2004,9 +2005,8 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('A', $terminal->output, 'Cell with only attributes changed must be re-emitted');
     }
 
-    // --- Test: the collectChangedRun breaks on style change to separate run ---
     #[Test]
-    public function collectChangedRunBreaksOnStyleChange(): void
+    public function aStyleChangeBreaksTheEmittedRun(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
@@ -2265,7 +2265,7 @@ final class ScreenTest extends TestCase
 
     // --- Mutants #26, 29 (L151, 185): While_ to false in collect runs ---
     #[Test]
-    public function collectChangedRunCollectsMultipleCharacters(): void
+    public function consecutiveChangesSharingOneStyleEmitAsOneRun(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
@@ -2279,7 +2279,7 @@ final class ScreenTest extends TestCase
         $frame->putString(0, 0, 'XYZWV', $foreground);
         $screen->flush($frame);
 
-        self::assertStringContainsString('XYZWV', $terminal->output, 'collectChangedRun while loop must collect multiple consecutive same-style changed characters');
+        self::assertStringContainsString('XYZWV', $terminal->output, 'Consecutive same-style changed characters must be emitted as one run');
 
         $fgSgr = "\x1b[" . Color::fromValue($foreground)->toSgr(false) . 'm';
         $fgCount = substr_count($terminal->output, $fgSgr);
@@ -2306,7 +2306,7 @@ final class ScreenTest extends TestCase
 
     // --- Mutants #27-28, 30 (L169, 183, 199): max(0,...) instead of max(1,...) ---
     #[Test]
-    public function collectChangedRunAdvancesCorrectlyForNarrowCharacters(): void
+    public function narrowCharactersEachAdvanceOneColumnInADiff(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
@@ -2748,6 +2748,87 @@ final class ScreenTest extends TestCase
         self::assertNotFalse($cursorToPosition);
         self::assertNotFalse($showCursorPosition);
         self::assertGreaterThan($cursorToPosition, $showCursorPosition, 'SHOW_CURSOR must come after cursorTo to avoid flashing the cursor at the previous location');
+    }
+
+    #[Test]
+    public function aDiffEmitsAWideCharacterInsideARunExactlyOnce(): void
+    {
+        $terminal = $this->createTerminal();
+        $screen = new Screen($terminal);
+
+        $frame = new Frame(8, 1);
+        $frame->putString(0, 0, '........');
+        $screen->flush($frame);
+
+        $terminal->output = '';
+        $frame->putString(0, 0, 'ab你好cd');
+        $screen->flush($frame);
+
+        self::assertStringContainsString('ab你好cd', $terminal->output, 'The changed row is one contiguous run');
+        self::assertSame(1, substr_count($terminal->output, '你'));
+        self::assertSame(1, substr_count($terminal->output, '好'));
+    }
+
+    #[Test]
+    public function everFreshColoursLeaveTheSgrCachesBounded(): void
+    {
+        $terminal = $this->createTerminal();
+        $screen = new Screen($terminal);
+        $frame = new Frame(1, 1);
+
+        for ($step = 0; $step < 6000; ++$step) {
+            $frame->putChar(
+                0,
+                0,
+                'X',
+                Color::rgb($step % 256, intdiv($step, 256), 1)->value,
+                Color::rgb(1, $step % 256, intdiv($step, 256))->value,
+            );
+            $screen->flush($frame);
+        }
+
+        self::assertLessThanOrEqual(4096, self::cacheSize($screen, 'foregroundSgrCache'));
+        self::assertLessThanOrEqual(4096, self::cacheSize($screen, 'backgroundSgrCache'));
+
+        $terminal->output = '';
+        $droppedEarlier = Color::rgb(0, 0, 1)->value;
+        $frame->putChar(0, 0, 'Y', $droppedEarlier);
+        $screen->flush($frame);
+
+        self::assertStringContainsString(
+            Color::fromValue($droppedEarlier)->toSgr(false),
+            $terminal->output,
+            'A colour the cache dropped is recomputed, not lost',
+        );
+    }
+
+    #[Test]
+    public function everFreshColoursLeaveTheDownsampleCacheBounded(): void
+    {
+        $terminal = $this->createTerminal();
+        $screen = new Screen($terminal, ColorProfile::Ansi);
+        $frame = new Frame(1, 1);
+
+        for ($step = 0; $step < 6000; ++$step) {
+            $frame->putChar(0, 0, 'X', Color::rgb($step % 256, intdiv($step, 256), 1)->value);
+            $screen->flush($frame);
+        }
+
+        self::assertLessThanOrEqual(4096, self::cacheSize($screen, 'downsampleCache'));
+
+        $terminal->output = '';
+        $frame->putChar(0, 0, 'Y', Color::rgb(255, 0, 0)->value);
+        $screen->flush($frame);
+
+        self::assertStringContainsString('91', $terminal->output, 'Downsampling still answers after the cache is dropped');
+    }
+
+    private static function cacheSize(Screen $screen, string $property): int
+    {
+        /** @var array<int, mixed> $cache */
+        $cache = (new ReflectionProperty(Screen::class, $property))->getValue($screen);
+
+        return count($cache);
     }
 
     private function createTerminalMock(string &$capturedOutput): object
