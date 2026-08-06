@@ -661,9 +661,14 @@ abstract readonly class App implements Model
         }
 
         $registry = $app->componentRegistry();
-        foreach ($updates as [$original]) {
-            if (!$registry->has($original->id)) {
+        foreach ($updates as [$original, $widget]) {
+            $rebound = $registry->get($original->id);
+            if ($rebound === null) {
                 throw new LogicException(sprintf('Component "%s" disappeared during an update', $original->id->value));
+            }
+
+            if ($rebound->widget !== $widget) {
+                throw new LogicException(sprintf('Component "%s" stored its update on another property', $original->id->value));
             }
         }
 

@@ -193,6 +193,17 @@ final class ComponentTest extends TestCase
 
         $app->update(new KeyMsg('x'), Rect::fromSize(20, 1));
     }
+
+    #[Test]
+    public function aReplacementWritingToTheWrongPropertyIsRefused(): void
+    {
+        $app = new MisdirectedComponentApp(TextInput::new()->withFocus(true));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Component "typed" stored its update on another property');
+
+        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1));
+    }
 }
 
 final readonly class ComponentContractApp extends App
@@ -215,6 +226,24 @@ final readonly class ComponentContractApp extends App
     public function view(): Widget
     {
         return $this->binding();
+    }
+}
+
+final readonly class MisdirectedComponentApp extends App
+{
+    public function __construct(
+        public TextInput $typed = new TextInput(),
+        public TextInput $other = new TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            ComponentId::named('typed'),
+            $this->typed,
+            static fn (self $app, TextInput $input): self => new self($app->typed, $input),
+        );
     }
 }
 
