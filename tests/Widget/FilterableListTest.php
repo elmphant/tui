@@ -9,6 +9,9 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
@@ -16,6 +19,7 @@ use Elmphant\Tui\Runtime\ChildDispatcher;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\FilterableList;
+use Elmphant\Tui\Widget\FilterBar;
 use Elmphant\Tui\Widget\SimpleListItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -243,6 +247,79 @@ final class FilterableListTest extends TestCase
 
         self::assertSame($list, $answered->model, 'nothing to clear, so nothing is claimed');
         self::assertNull($answered->command);
+    }
+
+    #[Test]
+    public function readsAsWhatWasChosenRatherThanHowManyMatched(): void
+    {
+        $list = $this->commands()->withEmptyCaption('choose a command');
+
+        self::assertSame('choose a command', $list->caption());
+        self::assertSame('cache:flush', $list->activated('cache:flush')->caption());
+        self::assertSame('3 of 3', $list->summary(), 'summary answers a different question and keeps doing so');
+    }
+
+    #[Test]
+    public function anOptionItNeverOfferedIsNotOneItCanChoose(): void
+    {
+        $list = $this->commands()->withPicked('cache:flush');
+
+        self::assertFalse($list->hasOption('user:delete'));
+        self::assertSame(
+            'cache:flush',
+            $list->activated('user:delete')->caption(),
+            'a name it does not hold leaves the choice alone',
+        );
+    }
+
+    #[Test]
+    public function namesTheItemUnderAPointerAsTheFilterLeftTheList(): void
+    {
+        $narrowed = $this->typed($this->commands(), 'cache');
+        $firstRow = $this->area()->y + FilterBar::HEIGHT + 1;
+        $itemRows = $this->commandItems()[0]->height(self::WIDTH);
+
+        self::assertSame(
+            'cache:flush',
+            $narrowed->optionAt(new MouseMsg(0, $firstRow + $itemRows, MouseAction::Press, MouseButton::Left), $this->area()),
+            'the rows below the first match belong to the second, addressed by its own name',
+        );
+        self::assertNull(
+            $narrowed->optionAt(new MouseMsg(0, $this->area()->y, MouseAction::Press, MouseButton::Left), $this->area()),
+            'the filter field is not part of the list',
+        );
+    }
+
+    #[Test]
+    public function measuresItsWidestTitleAndTheRowsItsMatchesNeed(): void
+    {
+        $list = $this->commands();
+        $itemRows = $this->commandItems()[0]->height(self::WIDTH);
+
+        self::assertSame(12, $list->measureWidth(), 'the widest title decides, since that is what the list draws');
+        self::assertSame(
+            FilterBar::HEIGHT + 1 + 3 * $itemRows,
+            $list->measureHeight(self::WIDTH),
+            'the field, its gap, and a row for every match',
+        );
+        self::assertSame(
+            FilterBar::HEIGHT + 1 + 1,
+            $this->typed($list, 'zzz')->measureHeight(self::WIDTH),
+            'a query that matched nothing still leaves a row to say so',
+        );
+    }
+
+    #[Test]
+    public function enterOverAQueryThatMatchedNothingFinishesNothing(): void
+    {
+        self::assertTrue(
+            $this->commands()->commits(new KeyMsg(Key::Enter)),
+            'with a match under the cursor, enter is what finishes the choice',
+        );
+        self::assertFalse(
+            $this->typed($this->commands(), 'zzz')->commits(new KeyMsg(Key::Enter)),
+            'enter still maps to SELECT, but there is nothing under the cursor to choose',
+        );
     }
 
     /**

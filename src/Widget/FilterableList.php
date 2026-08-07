@@ -16,6 +16,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -28,7 +29,7 @@ use Elmphant\Tui\Search\SubstringMatcher;
 /**
  * A scrollable list with a free-text filter over it.
  */
-final readonly class FilterableList implements Focusable, KeybindingsAware
+final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -65,6 +66,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
         private ?Matcher $matcher = null,
         private string $emptyText = 'No matches',
         private ?string $picked = null,
+        private string $emptyCaption = '',
         ?array $matching = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -108,6 +110,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
     public function withEmptyText(string $emptyText): self
     {
         return $this->cloneWith(emptyText: $emptyText);
+    }
+
+    public function withEmptyCaption(string $caption): self
+    {
+        return $this->cloneWith(emptyCaption: $caption);
     }
 
     public function isFocused(): bool
@@ -195,6 +202,65 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
         }
 
         return null;
+    }
+
+    public function caption(): string
+    {
+        return $this->pickedItem()?->title() ?? $this->emptyCaption;
+    }
+
+    public function optionAt(MouseMsg $message, Rect $area): ?string
+    {
+        $index = $this->list->indexAt($message, $this->listArea($area));
+
+        return $index === null ? null : ($this->matchingItems()[$index] ?? null)?->filterValue();
+    }
+
+    public function hasOption(string $option): bool
+    {
+        foreach ($this->items as $item) {
+            if ($item->filterValue() === $option) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function activated(string $option): static
+    {
+        return $this->hasOption($option) ? $this->withPicked($option) : $this;
+    }
+
+    public function measureWidth(): int
+    {
+        $widest = 0;
+        foreach ($this->items as $item) {
+            $widest = max($widest, CharWidth::stringWidth($item->title()));
+        }
+
+        return $widest;
+    }
+
+    public function measureHeight(int $width): int
+    {
+        $rows = 0;
+        foreach ($this->matchingItems() as $item) {
+            $rows += $item->height($width);
+        }
+
+        return FilterBar::HEIGHT + self::GAP_HEIGHT + max(1, $rows);
+    }
+
+    /**
+     * A query that matched nothing still binds enter to SELECT, so the binding
+     * alone would close a popup over nothing.
+     */
+    public function commits(Message $message): bool
+    {
+        return $message instanceof KeyMsg
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
+            && $this->cursorItem() !== null;
     }
 
     public function constraint(): Constraint
