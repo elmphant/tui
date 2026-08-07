@@ -944,6 +944,67 @@ final class RadioTest extends TestCase
         self::assertSame(2, $result->model->cursor());
     }
 
+    #[Test]
+    public function readsAsTheOptionItsDotSitsOn(): void
+    {
+        $radio = Radio::new(['all', '≥ warning', '≥ error']);
+
+        self::assertSame('all', $radio->caption(), 'a fresh radio rests on its first option');
+        self::assertSame('≥ warning', $radio->activated('≥ warning')->caption());
+    }
+
+    #[Test]
+    public function anEmptyRadioReadsAsItsEmptyCaption(): void
+    {
+        $empty = Radio::new([], 'Severity')->withEmptyCaption('none offered');
+
+        self::assertSame('none offered', $empty->caption());
+        self::assertSame(
+            'A',
+            Radio::new(['A'], 'Severity')->withEmptyCaption('none offered')->caption(),
+            'with an option to rest on, the empty caption never shows',
+        );
+    }
+
+    #[Test]
+    public function namesTheOptionUnderAPointerPastTheRowsItsLabelTakes(): void
+    {
+        $radio = Radio::new(['json', 'yaml', 'toml'], 'Format');
+        $area = Rect::fromSize(20, 5);
+
+        $named = $radio->optionAt(new MouseMsg(1, $area->y + 3, MouseAction::Press, MouseButton::Left), $area);
+
+        self::assertSame('yaml', $named, 'the label and its spacer sit above the first option');
+        self::assertNull(
+            $radio->optionAt(new MouseMsg(1, $area->bottom() + 1, MouseAction::Press, MouseButton::Left), $area),
+            'a pointer outside the drawn area addresses no option at all',
+        );
+        self::assertFalse($radio->hasOption('xml'), 'an option it never offered is not one it can act on');
+    }
+
+    #[Test]
+    public function measuresItsWidestOptionPlusItsMarkAndCountsItsLabelRows(): void
+    {
+        $bare = Radio::new(['json', 'yaml', 'ndjson']);
+
+        self::assertSame(6 + self::MARK_WIDTH, $bare->measureWidth(), 'every option is drawn behind a mark');
+        self::assertSame(3, $bare->measureHeight(20));
+        self::assertSame(5, Radio::new(['json', 'yaml', 'ndjson'], 'Format')->measureHeight(20), 'a label costs a row and a spacer');
+    }
+
+    #[Test]
+    public function enterOverAnEmptyRadioFinishesNothing(): void
+    {
+        self::assertTrue(
+            Radio::new(['A'], 'Severity')->withFocus(true)->commits(new KeyMsg(Key::Enter)),
+            'with something under the cursor, enter is what finishes the choice',
+        );
+        self::assertFalse(
+            Radio::new([], 'Severity')->withFocus(true)->commits(new KeyMsg(Key::Enter)),
+            'the binding matches, but there is nothing to choose, so the popup must not close',
+        );
+    }
+
     protected function createFocusable(): Focusable
     {
         return Radio::new(['A', 'B'], 'Label');

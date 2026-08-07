@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
-final readonly class Radio implements Focusable, KeybindingsAware, CursorAware
+final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, DropdownContent, Committing
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -32,6 +36,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware
         private int $selected = 0,
         private bool $focused = false,
         private string $label = '',
+        private string $emptyCaption = '',
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -63,6 +68,11 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware
         return $this->cloneWith(label: $label);
     }
 
+    public function withEmptyCaption(string $caption): self
+    {
+        return $this->cloneWith(emptyCaption: $caption);
+    }
+
     public function cursor(): int
     {
         return $this->cursor;
@@ -81,6 +91,64 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware
     public function selectedValue(): ?string
     {
         return $this->options[$this->selected] ?? null;
+    }
+
+    /**
+     * A radio rests on its first option from the start, so the empty caption
+     * only ever shows for a radio with nothing to offer.
+     */
+    public function caption(): string
+    {
+        return $this->options[$this->selected] ?? $this->emptyCaption;
+    }
+
+    public function optionAt(MouseMsg $message, Rect $area): ?string
+    {
+        if (!$message->inRect($area)) {
+            return null;
+        }
+
+        $row = $message->y - $area->y + $this->cursorScrollOffset($area->height) - $this->rowOffset();
+
+        return $this->options[$row] ?? null;
+    }
+
+    public function hasOption(string $option): bool
+    {
+        return in_array($option, $this->options, true);
+    }
+
+    public function activated(string $option): static
+    {
+        $index = array_search($option, $this->options, true);
+
+        return $index === false ? $this : $this->cloneWith(cursor: $index, selected: $index);
+    }
+
+    public function measureWidth(): int
+    {
+        $widest = 0;
+        foreach ($this->options as $option) {
+            $widest = max($widest, CharWidth::stringWidth($option));
+        }
+
+        return $widest + CharWidth::stringWidth(self::PICKED_MARK);
+    }
+
+    public function measureHeight(int $width): int
+    {
+        return $this->rowOffset() + count($this->options);
+    }
+
+    /**
+     * An empty list still binds enter to SELECT, so the binding alone would
+     * close a popup over nothing.
+     */
+    public function commits(Message $message): bool
+    {
+        return $message instanceof KeyMsg
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
+            && ($this->options[$this->cursor] ?? null) !== null;
     }
 
     public function isFocused(): bool
