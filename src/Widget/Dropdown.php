@@ -20,14 +20,14 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Search\Matcher;
-use Elmphant\Tui\Search\SubstringMatcher;
 
 /**
- * One row showing a value, and a floating list to pick another from.
+ * One row reading as what it holds, and a float to change that from.
  *
- * An option is identified by its own string, so two equal options are one
- * option: the selection and a click both resolve to the first of them.
+ * The row and the float are all this is; the options, their cursor and any
+ * filter over them belong to the content, which answers for itself.
+ *
+ * @template-covariant TContent of DropdownContent
  */
 final readonly class Dropdown implements Focusable, KeybindingsAware
 {
@@ -37,21 +37,12 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     private const MARKER = '▾ ';
 
     /**
-     * @param list<string>          $options
-     * @param array<string, string> $labels
+     * @param TContent $content
      */
     private function __construct(
-        private array $options,
-        private array $labels = [],
-        private ?string $selected = null,
+        private DropdownContent $content,
         private bool $open = false,
-        private int $cursor = 0,
-        private string $query = '',
-        private int $scroll = 0,
         private bool $focused = false,
-        private string $placeholder = '',
-        private bool $freeText = false,
-        private ?Matcher $matcher = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private FloatTarget $floatTarget = new FloatTarget(),
@@ -59,58 +50,28 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     }
 
     /**
-     * @param list<string> $options
+     * @template T of DropdownContent
+     *
+     * @param T $content
+     *
+     * @return self<T>
      */
-    public static function new(array $options): self
+    public static function new(DropdownContent $content): self
     {
-        return new self($options);
+        return new self($content);
     }
 
     /**
-     * @param array<string, string> $labels
+     * @return TContent
      */
-    public function withLabels(array $labels): self
+    public function content(): DropdownContent
     {
-        return $this->cloneWith(labels: $labels);
-    }
-
-    public function withSelected(?string $selected): self
-    {
-        return $this->cloneWith(selected: $selected);
-    }
-
-    public function withPlaceholder(string $placeholder): self
-    {
-        return $this->cloneWith(placeholder: $placeholder);
-    }
-
-    public function withMatcher(Matcher $matcher): self
-    {
-        return $this->cloneWith(matcher: $matcher);
-    }
-
-    public function withFreeText(bool $freeText): self
-    {
-        return $this->cloneWith(freeText: $freeText);
-    }
-
-    public function selectedValue(): ?string
-    {
-        return $this->selected;
+        return $this->content;
     }
 
     public function isOpen(): bool
     {
         return $this->open;
-    }
-
-    /**
-     * Whether the reader has typed anything into the filter row. Hosts use it
-     * to label the cancel key, which clears the filter before it closes.
-     */
-    public function hasFilterText(): bool
-    {
-        return $this->query !== '';
     }
 
     public function isFocused(): bool
@@ -120,7 +81,19 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
 
     public function withFocus(bool $focused): static
     {
-        return $this->cloneWith(focused: $focused, open: $focused ? $this->open : false);
+        return $focused
+            ? $this->cloneWith(focused: true)
+            : $this->cloneWith(focused: false)->closed();
+    }
+
+    public function withGlobalKeybindings(?Keybindings $keybindings): static
+    {
+        return $this->cloneWith(
+            globalKeybindings: $keybindings,
+            content: $this->content instanceof KeybindingsAware
+                ? $this->content->withGlobalKeybindings($keybindings)
+                : $this->content,
+        );
     }
 
     public function constraint(): Constraint
@@ -128,15 +101,15 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         return Constraint::exact(1);
     }
 
+    /**
+     * Only the two actions about the popup itself. Moving, choosing and typing
+     * are the content's, and reach it because the content is asked first.
+     */
     public static function defaultKeybindings(): Keybindings
     {
         return new Keybindings([
             Actions::TOGGLE => ['enter', 'space'],
-            Actions::SELECT => ['enter'],
             Actions::CANCEL => ['esc'],
-            Actions::FOCUS_NEXT => ['down'],
-            Actions::FOCUS_PREV => ['up'],
-            Actions::DELETE_CHAR_BACKWARD => ['backspace'],
         ]);
     }
 
@@ -157,12 +130,12 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         if (!$this->open) {
             return new UpdateResult(
                 $this->effectiveKeybindings()->matches($message, Actions::TOGGLE)
-                    ? $this->openedOn($area, $message->screen)
+                    ? $this->opened()
                     : $this,
             );
         }
 
-        return new UpdateResult($this->keyedWhileOpen($message, $area));
+        return $this->keyedWhileOpen($message, $area);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -171,48 +144,69 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
             return;
         }
 
-        $value = $this->selected;
-        $shown = $value === null ? $this->placeholder : ($this->labels[$value] ?? $value);
         $style = match (true) {
             $this->focused => $context->theme->accent,
-            $value !== null => $context->theme->base,
+            $this->content->hasChoice() => $context->theme->base,
             default => $context->theme->dim,
         };
 
         $frame->putStyled(
             $area->x,
             $area->y,
-            CharWidth::truncateToWidth(self::MARKER . $shown, $area->width),
+            CharWidth::truncateToWidth(self::MARKER . $this->content->caption(), $area->width),
             $style,
         );
 
         if ($this->open) {
-            $context->float($frame, $this->popupOf($this->filtered()), $area);
+            $context->float($frame, $this->popup(), $area);
         }
     }
 
     /**
-     * The cursor lands on the current selection, scrolled into view; nothing
-     * selected, or a selection no longer in the list, falls back to the top.
+     * Content is built unfocused, as every widget is, so opening has to hand it
+     * the keyboard or it would never answer one.
      */
-    private function openedOn(Rect $area, ?Rect $screen): self
+    private function opened(): static
     {
-        $cursor = $this->selected === null ? false : array_search($this->selected, $this->options, true);
-        $cursor = $cursor === false ? 0 : $cursor;
+        return $this->cloneWith(open: true, content: $this->content->withFocus(true));
+    }
 
-        return $this->cloneWith(
-            open: true,
-            cursor: $cursor,
-            query: '',
-            scroll: $this->scrollShowing($cursor, $this->options, $area, $screen),
-        );
+    private function closed(): static
+    {
+        return $this->cloneWith(open: false, content: $this->content->withFocus(false));
+    }
+
+    /**
+     * The content answers first; only a key it left alone is the popup's own.
+     * Consumption is a changed model or any command, as App defines it.
+     *
+     * @return UpdateResult<static>
+     */
+    private function keyedWhileOpen(KeyMsg $message, Rect $area): UpdateResult
+    {
+        $answered = $this->content->update($message, $this->popup()->contentArea($area));
+        $content = $answered->model;
+
+        if ($content instanceof Committing && $content->commits($message)) {
+            return new UpdateResult($this->cloneWith(content: $content)->closed(), $answered->command);
+        }
+
+        if ($content !== $this->content || $answered->command !== null) {
+            return new UpdateResult($this->cloneWith(content: $content), $answered->command);
+        }
+
+        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
+            return new UpdateResult($this->closed());
+        }
+
+        return new UpdateResult($this, $answered->command);
     }
 
     /**
      * The popup the drain drew answers, not the current state: the reader
-     * picked the row they saw, and the widget may have scrolled since.
+     * picked the row they saw, and the content may have moved on since.
      */
-    private function floatMoused(FloatMouseMsg $message): self
+    private function floatMoused(FloatMouseMsg $message): static
     {
         $popup = $message->float->float;
 
@@ -220,40 +214,43 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
             return $this;
         }
 
-        $placement = $message->float->placement;
-        $steps = $message->mouse->wheelSteps(1);
-
-        return match ($message->mouse->action) {
-            MouseAction::WheelUp => $this->scrolledInDrawn(-$steps, $popup, $placement),
-            MouseAction::WheelDown => $this->scrolledInDrawn($steps, $popup, $placement),
-            MouseAction::Press => $this->pickedFromDrawn($message->mouse, $popup, $placement),
-            default => $this,
-        };
+        return $message->mouse->action === MouseAction::Press
+            ? $this->pickedFromDrawn($message->mouse, $popup, $message->float->placement)
+            : $this->wheeledInDrawn($message->mouse, $popup, $message->float->placement);
     }
 
-    private function pickedFromDrawn(MouseMsg $mouse, DropdownPopup $popup, Rect $placement): self
+    /**
+     * Everything the popup captures that is not a pick is the content's own,
+     * answered against the area it was drawn in. Nothing here tells the content
+     * it is floating: a mouse message and an area is what any widget is handed.
+     */
+    private function wheeledInDrawn(MouseMsg $mouse, DropdownPopup $popup, Rect $placement): static
+    {
+        return $this->cloneWith(
+            content: $this->content->update($mouse, $popup->contentArea($placement))->model,
+        );
+    }
+
+    private function pickedFromDrawn(MouseMsg $mouse, DropdownPopup $popup, Rect $placement): static
     {
         if (!$mouse->isClick()) {
             return $this;
         }
 
-        $value = $popup->optionAt($placement, $mouse->y);
+        $option = $popup->content()->optionAt($mouse, $popup->contentArea($placement));
 
-        if ($value === null || !in_array($value, $this->options, true)) {
+        if ($option === null || !$this->content->hasOption($option)) {
             return $this;
         }
 
-        return $this->cloneWith(selected: $value)->closed();
+        $content = $this->content->activated($option);
+
+        return $content instanceof Committing
+            ? $this->cloneWith(content: $content)->closed()
+            : $this->cloneWith(content: $content);
     }
 
-    private function scrolledInDrawn(int $steps, DropdownPopup $popup, Rect $placement): self
-    {
-        $furthest = max(0, count($this->filtered()) - $popup->optionRowsIn($placement));
-
-        return $this->cloneWith(scroll: max(0, min($furthest, $this->scroll + $steps)));
-    }
-
-    private function moused(MouseMsg $message, Rect $area): self
+    private function moused(MouseMsg $message, Rect $area): static
     {
         if (!$message->isClick()) {
             return $this;
@@ -263,132 +260,11 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
             return $this->open ? $this->closed() : $this;
         }
 
-        return $this->open ? $this->closed() : $this->openedOn($area, $message->screen);
+        return $this->open ? $this->closed() : $this->opened();
     }
 
-    private function keyedWhileOpen(KeyMsg $message, Rect $area): self
+    private function popup(): DropdownPopup
     {
-        $filtered = $this->filtered();
-        $bindings = $this->effectiveKeybindings();
-
-        return match (true) {
-            $bindings->matches($message, Actions::CANCEL) => $this->cancelled(),
-            $bindings->matches($message, Actions::SELECT) => $this->picked($filtered),
-            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->movedTo($this->cursor + 1, $filtered, $area, $message->screen),
-            $bindings->matches($message, Actions::FOCUS_PREV) => $this->movedTo($this->cursor - 1, $filtered, $area, $message->screen),
-            $bindings->matches($message, Actions::DELETE_CHAR_BACKWARD) => $this->searchedFor(mb_substr($this->query, 0, -1)),
-            \is_string($message->key) && !$message->ctrl && !$message->alt => $this->searchedFor($this->query . $message->key),
-            default => $this,
-        };
-    }
-
-    /**
-     * A typed filter absorbs the first cancel, so a narrowed list widens again
-     * before the popup goes away.
-     */
-    private function cancelled(): self
-    {
-        return $this->hasFilterText() ? $this->searchedFor('') : $this->closed();
-    }
-
-    private function closed(): self
-    {
-        return $this->cloneWith(open: false, query: '', cursor: 0, scroll: 0);
-    }
-
-    /**
-     * @param list<string> $filtered
-     */
-    private function picked(array $filtered): self
-    {
-        $value = $filtered[$this->cursor] ?? null;
-
-        if ($value === null) {
-            return $this->freeText && trim($this->query) !== ''
-                ? $this->cloneWith(selected: $this->query)->closed()
-                : $this;
-        }
-
-        return $this->cloneWith(selected: $value)->closed();
-    }
-
-    /**
-     * @param list<string> $filtered
-     */
-    private function movedTo(int $cursor, array $filtered, Rect $area, ?Rect $screen): self
-    {
-        $last = count($filtered) - 1;
-
-        if ($last < 0 || $cursor < 0 || $cursor > $last) {
-            return $this;
-        }
-
-        return $this->cloneWith(cursor: $cursor, scroll: $this->scrollShowing($cursor, $filtered, $area, $screen));
-    }
-
-    /**
-     * @param list<string> $filtered
-     */
-    private function scrollShowing(int $cursor, array $filtered, Rect $area, ?Rect $screen): int
-    {
-        $rows = $this->visibleRows($filtered, $area, $screen);
-
-        if ($rows < 1) {
-            return $this->scroll;
-        }
-
-        return match (true) {
-            $cursor < $this->scroll => $cursor,
-            $cursor >= $this->scroll + $rows => $cursor - $rows + 1,
-            default => $this->scroll,
-        };
-    }
-
-    /**
-     * @param list<string> $filtered
-     */
-    private function visibleRows(array $filtered, Rect $area, ?Rect $screen): int
-    {
-        if ($screen === null) {
-            return count($filtered);
-        }
-
-        $popup = $this->popupOf($filtered);
-
-        return $popup->optionRowsIn($popup->placement($area, $screen));
-    }
-
-    /**
-     * @param list<string> $filtered
-     */
-    private function popupOf(array $filtered): DropdownPopup
-    {
-        return DropdownPopup::of($filtered, $this->labels, $this->cursor, $this->query, $this->scroll, $this->floatTarget);
-    }
-
-    /**
-     * A new query has a new best match, so the cursor goes back to the top.
-     */
-    private function searchedFor(string $query): self
-    {
-        return $this->cloneWith(query: $query, cursor: 0, scroll: 0);
-    }
-
-    /**
-     * Ranked, not sorted: Matcher::matching() returns best match first. Matches
-     * the label where there is one, otherwise the value.
-     *
-     * @return list<string>
-     */
-    private function filtered(): array
-    {
-        if (trim($this->query) === '') {
-            return $this->options;
-        }
-
-        $haystack = array_map(fn (string $option): string => $this->labels[$option] ?? $option, $this->options);
-        $matching = ($this->matcher ?? new SubstringMatcher())->matching($this->query, $haystack);
-
-        return array_map(fn (int $index): string => $this->options[$index], $matching);
+        return DropdownPopup::of($this->content, $this->floatTarget);
     }
 }

@@ -16,7 +16,9 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\InputRouter;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Dropdown;
+use Elmphant\Tui\Widget\DropdownPopup;
 use Elmphant\Tui\Widget\ScrollPane;
+use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\Text;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,8 +38,8 @@ final class DropdownHostAcceptanceTest extends TestCase
 
         $picked = self::deliver($pane, new MouseMsg(2, $row, MouseAction::Press, MouseButton::Left));
 
-        self::assertSame('yaml', self::dropdownAt($picked, 0)->selectedValue(), 'the popup owns the cell it drew on');
-        self::assertNull(self::dropdownAt($picked, 1)->selectedValue(), 'the sibling beneath the popup saw nothing');
+        self::assertSame('yaml', self::dropdownAt($picked, 0)->content()->selectedValue(), 'the popup owns the cell it drew on');
+        self::assertNull(self::dropdownAt($picked, 1)->content()->selectedValue(), 'the sibling beneath the popup saw nothing');
         self::assertFalse(self::dropdownAt($picked, 1)->isOpen());
         self::assertTrue(self::dropdownAt($picked, 0)->isFocused(), 'the picker keeps focus');
     }
@@ -90,14 +92,17 @@ final class DropdownHostAcceptanceTest extends TestCase
         $placements = $context->floatPlacements();
         self::assertCount(1, $placements, 'the popup is on the first frame, drawn through the fallback layout path');
 
+        $popup = $placements[0]->float;
+        self::assertInstanceOf(DropdownPopup::class, $popup);
+
         $routed = InputRouter::route(
-            new MouseMsg(2, $placements[0]->placement->y + 3, MouseAction::Press, MouseButton::Left),
+            new MouseMsg(2, $popup->contentArea($placements[0]->placement)->y, MouseAction::Press, MouseButton::Left),
             $firstFrame->area(),
             $placements,
         );
         $picked = $pane->update($routed, $firstFrame->area())->model;
 
-        self::assertSame('json', self::dropdownAt($picked, 0)->selectedValue());
+        self::assertSame('json', self::dropdownAt($picked, 0)->content()->selectedValue());
     }
 
     #[Test]
@@ -139,8 +144,8 @@ final class DropdownHostAcceptanceTest extends TestCase
 
     private static function paneWithTwoDropdowns(bool $openFirst): ScrollPane
     {
-        $first = Dropdown::new(['json', 'yaml'])->withFocus(true);
-        $pane = ScrollPane::of($first, Dropdown::new(['toml', 'ini']), Text::new('beneath'))->withFocus(true);
+        $first = Dropdown::new(Select::new(['json', 'yaml']))->withFocus(true);
+        $pane = ScrollPane::of($first, Dropdown::new(Select::new(['toml', 'ini'])), Text::new('beneath'))->withFocus(true);
 
         return $openFirst
             ? self::openedPane($pane)
@@ -151,7 +156,7 @@ final class DropdownHostAcceptanceTest extends TestCase
     {
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 30));
         $pane = ScrollPane::of(
-            Dropdown::new($options)->withFocus(true),
+            Dropdown::new(Select::new($options))->withFocus(true),
             ...array_map(static fn (int $row): Text => Text::new('row' . $row), range(1, 20)),
         )->withFocus(true);
 

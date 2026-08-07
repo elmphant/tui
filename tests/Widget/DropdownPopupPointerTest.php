@@ -6,8 +6,11 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Widget\DropdownPopup;
 use Elmphant\Tui\Widget\FloatTarget;
+use Elmphant\Tui\Widget\Select;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +21,7 @@ final class DropdownPopupPointerTest extends TestCase
     {
         $target = new FloatTarget();
 
-        self::assertSame($target, self::popup(['a'], target: $target)->target());
+        self::assertSame($target, self::popup(['a'], $target)->target());
     }
 
     #[Test]
@@ -34,83 +37,22 @@ final class DropdownPopupPointerTest extends TestCase
     }
 
     #[Test]
-    public function optionRowsAreTheRowsBetweenTheDividerAndTheBottomBorder(): void
+    public function theBorderIsAllThePopupKeepsForItselfAndTheContentAnswersTheRest(): void
     {
         $popup = self::popup(['a', 'b', 'c']);
+        $placement = new Rect(0, 4, 10, 5);
+        $inner = $popup->contentArea($placement);
 
-        self::assertSame(4, $popup->optionRowsIn(new Rect(0, 0, 10, 8)));
-        self::assertSame(0, $popup->optionRowsIn(new Rect(0, 0, 10, 4)));
-        self::assertSame(0, $popup->optionRowsIn(new Rect(0, 0, 0, 0)));
-    }
-
-    #[Test]
-    public function theRowUnderThePointerAnswersWithTheOptionDrawnThere(): void
-    {
-        $placement = new Rect(0, 4, 10, 8);
-        $popup = self::popup(['a', 'b', 'c']);
-
-        self::assertSame('a', $popup->optionAt($placement, 7));
-        self::assertSame('b', $popup->optionAt($placement, 8));
-        self::assertSame('c', $popup->optionAt($placement, 9));
-    }
-
-    #[Test]
-    public function theQueryRowTheDividerAndTheBordersAnswerWithNothing(): void
-    {
-        $placement = new Rect(0, 4, 10, 8);
-        $popup = self::popup(['a', 'b', 'c']);
-
-        self::assertNull($popup->optionAt($placement, 4), 'top border');
-        self::assertNull($popup->optionAt($placement, 5), 'query row');
-        self::assertNull($popup->optionAt($placement, 6), 'divider');
-        self::assertNull($popup->optionAt($placement, 11), 'bottom border');
-    }
-
-    #[Test]
-    public function theRowUnderThePointerFollowsAWindowThatRefilled(): void
-    {
-        $grownBackAfterAResize = new Rect(0, 0, 20, 25);
-        $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 20));
-
-        $popup = DropdownPopup::of($options, [], 0, '', 10, new FloatTarget());
-
+        self::assertEquals(new Rect(1, 5, 8, 3), $inner, 'the border is not the content to answer for');
         self::assertSame(
-            'option1',
-            $popup->optionAt($grownBackAfterAResize, 3),
-            'a click must resolve against the window that was drawn, not the stale offset',
+            'b',
+            $popup->content()->optionAt(new MouseMsg(2, 6, MouseAction::Press, MouseButton::Left), $inner),
+            'rows inside are addressed by the content, by name',
         );
-    }
-
-    #[Test]
-    public function theChromeRowsOfAScrolledPopupAnswerWithNothingToo(): void
-    {
-        $placement = new Rect(0, 4, 10, 8);
-        $popup = self::popup(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], scroll: 3);
-
-        self::assertNull($popup->optionAt($placement, 4), 'top border');
-        self::assertNull($popup->optionAt($placement, 5), 'query row');
         self::assertNull(
-            $popup->optionAt($placement, 6),
-            'the divider must not answer with the option just above the drawn window',
+            $popup->content()->optionAt(new MouseMsg(2, 4, MouseAction::Press, MouseButton::Left), $inner),
+            'and the border row is outside it',
         );
-        self::assertSame('d', $popup->optionAt($placement, 7), 'and the first option row still answers');
-    }
-
-    #[Test]
-    public function aRowPastTheLastOptionAnswersWithNothing(): void
-    {
-        $placement = new Rect(0, 4, 10, 8);
-
-        self::assertNull(self::popup(['a'])->optionAt($placement, 8));
-    }
-
-    #[Test]
-    public function theScrolledWindowDecidesWhichOptionARowHolds(): void
-    {
-        $placement = new Rect(0, 4, 10, 8);
-        $options = ['a', 'b', 'c', 'd', 'e', 'f'];
-
-        self::assertSame('c', self::popup($options, scroll: 2)->optionAt($placement, 7));
     }
 
     #[Test]
@@ -136,7 +78,7 @@ final class DropdownPopupPointerTest extends TestCase
     {
         $placement = self::popup([])->placement(new Rect(0, 0, 2, 1), Rect::fromSize(80, 24));
 
-        self::assertSame(0, $placement->width, 'two cells cannot hold two borders and a filter row');
+        self::assertSame(0, $placement->width, 'two cells cannot hold two borders and anything between them');
         self::assertSame(0, $placement->height);
     }
 
@@ -161,8 +103,8 @@ final class DropdownPopupPointerTest extends TestCase
     /**
      * @param list<string> $options
      */
-    private static function popup(array $options, int $scroll = 0, ?FloatTarget $target = null): DropdownPopup
+    private static function popup(array $options, ?FloatTarget $target = null): DropdownPopup
     {
-        return DropdownPopup::of($options, [], 0, '', $scroll, $target ?? new FloatTarget());
+        return DropdownPopup::of(Select::new($options), $target ?? new FloatTarget());
     }
 }

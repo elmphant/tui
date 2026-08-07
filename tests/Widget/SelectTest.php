@@ -425,9 +425,56 @@ final class SelectTest extends TestCase
         );
     }
 
+    #[Test]
+    public function theWheelWalksTheListAsManyNotchesAsTheEventCarries(): void
+    {
+        $select = Select::new(['a', 'b', 'c', 'd'])->withFocus(true);
+        $area = Rect::fromSize(20, 2);
+
+        $down = $select->update(self::wheel(MouseAction::WheelDown, $area), $area)->model;
+        self::assertSame(1, $down->cursor(), 'one notch, one option');
+
+        $far = $select->update(self::wheel(MouseAction::WheelDown, $area, repeat: 3), $area)->model;
+        self::assertSame(3, $far->cursor(), 'and a merged event carries all of its notches');
+
+        self::assertSame(2, $far->update(self::wheel(MouseAction::WheelUp, $area), $area)->model->cursor());
+    }
+
+    #[Test]
+    public function theWheelStopsAtBothEndsOfTheList(): void
+    {
+        $select = Select::new(['a', 'b'])->withFocus(true);
+        $area = Rect::fromSize(20, 2);
+
+        $answered = $select->update(self::wheel(MouseAction::WheelUp, $area), $area);
+
+        self::assertSame($select, $answered->model, 'already at the top, so nothing is claimed');
+        self::assertSame(
+            1,
+            $select->withCursor(1)->update(self::wheel(MouseAction::WheelDown, $area, repeat: 5), $area)->model->cursor(),
+            'and it stops at the last option however hard the wheel is spun',
+        );
+    }
+
+    #[Test]
+    public function theWheelIsIgnoredWhereThePointerIsNotOverTheList(): void
+    {
+        $select = Select::new(['a', 'b', 'c'])->withFocus(true);
+        $area = Rect::fromSize(20, 2);
+
+        $elsewhere = new MouseMsg(0, $area->bottom() + 1, MouseAction::WheelDown, MouseButton::None);
+
+        self::assertSame($select, $select->update($elsewhere, $area)->model, 'the wheel belongs to whatever is under it');
+    }
+
     protected function createFocusable(): Focusable
     {
         return Select::new(['A', 'B']);
+    }
+
+    private static function wheel(MouseAction $action, Rect $area, int $repeat = 1): MouseMsg
+    {
+        return new MouseMsg($area->x, $area->y, $action, MouseButton::None, $repeat);
     }
 
     private function extractRow(Frame $frame, int $row, int $columns): string

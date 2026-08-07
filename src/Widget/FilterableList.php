@@ -209,6 +209,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->pickedItem()?->title() ?? $this->emptyCaption;
     }
 
+    public function hasChoice(): bool
+    {
+        return $this->pickedItem() !== null;
+    }
+
     public function optionAt(MouseMsg $message, Rect $area): ?string
     {
         $index = $this->list->indexAt($message, $this->listArea($area));

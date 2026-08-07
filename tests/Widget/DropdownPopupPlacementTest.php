@@ -7,11 +7,30 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\DropdownPopup;
 use Elmphant\Tui\Widget\FloatTarget;
+use Elmphant\Tui\Widget\Select;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class DropdownPopupPlacementTest extends TestCase
 {
+    #[Test]
+    public function holdsOneContentWidgetAndSizesItselfAroundIt(): void
+    {
+        $content = Select::new(['json', 'yaml']);
+        $popup = DropdownPopup::of($content, new FloatTarget());
+
+        self::assertSame($content, $popup->content());
+
+        $placement = $popup->placement(new Rect(0, 5, 4, 1), Rect::fromSize(80, 24));
+
+        self::assertSame($content->measureWidth() + 2, $placement->width, 'a border is all the popup adds sideways');
+        self::assertSame(
+            $content->measureHeight($placement->width - 2) + 2,
+            $placement->height,
+            'and two rows of it downwards, with no filter row of its own',
+        );
+    }
+
     #[Test]
     public function opensDirectlyBelowTheAnchorWithoutCoveringIt(): void
     {
@@ -130,7 +149,7 @@ final class DropdownPopupPlacementTest extends TestCase
 
         $placement = $popup->placement(new Rect(0, 0, 20, 1), Rect::fromSize(80, 24));
 
-        self::assertSame(2, $popup->optionRowsIn($placement), 'with room to spare every option gets a row, and none is spare');
+        self::assertSame(2, $popup->contentArea($placement)->height, 'with room to spare every option gets a row, and none is spare');
     }
 
     #[Test]
@@ -140,7 +159,7 @@ final class DropdownPopupPlacementTest extends TestCase
 
         $placement = self::popup($shortLabelsThatScroll)->placement(new Rect(0, 0, 30, 1), Rect::fromSize(80, 20));
 
-        self::assertSame(30, $placement->width, 'a popup as wide as its anchor already has room for the bar');
+        self::assertSame(30, $placement->width, 'a popup already wider than its content finds the bar a column in the slack it has');
     }
 
     #[Test]
@@ -162,19 +181,6 @@ final class DropdownPopupPlacementTest extends TestCase
     }
 
     #[Test]
-    public function widthAccountsForTheLabelNotJustTheRawValue(): void
-    {
-        $placement = DropdownPopup::of(['x'], ['x' => 'a much longer label'], 0, '', 0, new FloatTarget())
-            ->placement(new Rect(0, 0, 3, 1), Rect::fromSize(80, 24));
-
-        self::assertGreaterThanOrEqual(
-            mb_strlen('a much longer label') + 2,
-            $placement->width,
-            'The label the user sees must fit, not just the opaque value',
-        );
-    }
-
-    #[Test]
     public function stillShowsAtLeastOneOptionWhenHalfTheViewportIsOnlyChrome(): void
     {
         $many = array_map(static fn (int $index): string => 'option ' . $index, range(1, 40));
@@ -182,15 +188,15 @@ final class DropdownPopupPlacementTest extends TestCase
         $popup = self::popup($many);
 
         self::assertSame(
-            0,
-            $popup->optionRowsIn(new Rect(0, 0, 20, intdiv($viewport->height, 2))),
-            'Precondition: half of this viewport is all chrome and no options',
+            1,
+            intdiv($viewport->height, 2) - 2,
+            'Precondition: half of this viewport is two rows of border and a single row over',
         );
 
         $placement = $popup->placement(new Rect(0, 0, 20, 1), $viewport);
 
         self::assertLessThanOrEqual($viewport->height, $placement->height, 'Never taller than the viewport itself');
-        self::assertSame(1, $popup->optionRowsIn($placement), 'The floor buys exactly one option row, no more');
+        self::assertSame(1, $popup->contentArea($placement)->height, 'The floor buys exactly one option row, no more');
     }
 
     #[Test]
@@ -232,6 +238,6 @@ final class DropdownPopupPlacementTest extends TestCase
      */
     private static function popup(array $options): DropdownPopup
     {
-        return DropdownPopup::of($options, [], 0, '', 0, new FloatTarget());
+        return DropdownPopup::of(Select::new($options), new FloatTarget());
     }
 }

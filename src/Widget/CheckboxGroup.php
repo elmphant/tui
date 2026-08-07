@@ -121,6 +121,11 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         return count($this->checkedValues()) . ' of ' . count($this->options);
     }
 
+    public function hasChoice(): bool
+    {
+        return $this->checkedValues() !== [];
+    }
+
     public function optionAt(MouseMsg $message, Rect $area): ?string
     {
         if (!$message->inRect($area)) {

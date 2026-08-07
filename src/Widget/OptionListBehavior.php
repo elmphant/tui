@@ -10,6 +10,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 
 /**
@@ -41,6 +42,7 @@ trait OptionListBehavior
         return match (true) {
             $message instanceof KeyMsg && $this->focused => $this->handleKey($message, $count),
             $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area, $count),
+            $message instanceof MouseMsg && $message->inRect($area) => $this->handleWheel($message, $count),
             default => new UpdateResult($this),
         };
     }
@@ -78,6 +80,29 @@ trait OptionListBehavior
         }
 
         return new UpdateResult($this);
+    }
+
+    /**
+     * The wheel walks the cursor, and the scroll offset derived from it follows.
+     * A view position of its own is what this list does not have yet.
+     *
+     * @return UpdateResult<static>
+     */
+    private function handleWheel(MouseMsg $message, int $count): UpdateResult
+    {
+        $steps = match ($message->action) {
+            MouseAction::WheelUp => -$message->wheelSteps(1),
+            MouseAction::WheelDown => $message->wheelSteps(1),
+            default => 0,
+        };
+
+        if ($steps === 0 || $count === 0) {
+            return new UpdateResult($this);
+        }
+
+        $moved = max(0, min($count - 1, $this->cursor + $steps));
+
+        return new UpdateResult($moved === $this->cursor ? $this : $this->cloneWith(cursor: $moved));
     }
 
     /**

@@ -118,6 +118,11 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         return in_array($option, $this->options, true);
     }
 
+    public function hasChoice(): bool
+    {
+        return $this->selectedValue() !== null;
+    }
+
     public function activated(string $option): static
     {
         $index = array_search($option, $this->options, true);

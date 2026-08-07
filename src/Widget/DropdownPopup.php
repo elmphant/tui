@@ -9,7 +9,6 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
-use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
@@ -18,37 +17,49 @@ use Elmphant\Tui\Rendering\RenderContext;
  *
  * Never `Dropdown` itself — the drain would redraw and requeue it
  */
-final readonly class DropdownPopup implements PointerFloating
+final readonly class DropdownPopup implements PointerFloating, WidgetContainer
 {
-    private const CHROME = 3;
+    private const BORDERS = 2;
 
-    private const PLACEHOLDER = 'Filter…';
-
-    private const GAP = 1;
+    private const SCROLLBAR = 1;
 
     private const MIN_SIDE = 3;
 
-    /**
-     * @param list<string>          $options
-     * @param array<string, string> $labels
-     */
     private function __construct(
-        private array $options,
-        private array $labels,
-        private int $cursor,
-        private string $query,
-        private int $scroll,
+        private DropdownContent $content,
         private FloatTarget $floatTarget,
     ) {
     }
 
-    /**
-     * @param list<string>          $options
-     * @param array<string, string> $labels
-     */
-    public static function of(array $options, array $labels, int $cursor, string $query, int $scroll, FloatTarget $target): self
+    public static function of(DropdownContent $content, FloatTarget $target): self
     {
-        return new self($options, $labels, $cursor, $query, $scroll, $target);
+        return new self($content, $target);
+    }
+
+    public function content(): DropdownContent
+    {
+        return $this->content;
+    }
+
+    public function contentArea(Rect $area): Rect
+    {
+        return $area->shrink(1, 1, 1, 1);
+    }
+
+    /**
+     * @return iterable<Widget> children in visual order, without resolving layout
+     */
+    public function children(): iterable
+    {
+        yield $this->content;
+    }
+
+    /**
+     * @return iterable<array{0: Widget, 1: Rect}>
+     */
+    public function childWidgets(Rect $area): iterable
+    {
+        yield [$this->content, $this->contentArea($area)];
     }
 
     public function target(): FloatTarget
@@ -68,12 +79,12 @@ final readonly class DropdownPopup implements PointerFloating
     {
         $below = max(0, $viewport->bottom() - $anchor->bottom());
         $above = max(0, $anchor->y - $viewport->y);
-        $wanted = $this->cappedWantedHeight($viewport->height);
+
+        [$width, $wanted] = $this->measured($anchor, $viewport, $this->cap($viewport->height));
 
         $opensDown = $wanted <= $below || $below >= $above;
         $height = min($wanted, $opensDown ? $below : $above);
 
-        $width = min($viewport->width, $this->wantedWidth($anchor->width, $this->scrollbarColumns($height)));
         $x = max($viewport->x, min($anchor->x, $viewport->right() - $width));
         $y = $opensDown ? $anchor->bottom() : $anchor->y - $height;
 
@@ -84,26 +95,6 @@ final readonly class DropdownPopup implements PointerFloating
         return new Rect($x, $y, $width, $height);
     }
 
-    public function optionRowsIn(Rect $placement): int
-    {
-        return $this->optionRows($placement->height);
-    }
-
-    /**
-     * The option drawn on row $y, or null for the chrome rows and for rows
-     * past the end of the drawn window.
-     */
-    public function optionAt(Rect $placement, int $y): ?string
-    {
-        $offset = $y - $placement->y;
-
-        if ($offset < self::CHROME || $offset >= $placement->height - 1) {
-            return null;
-        }
-
-        return $this->options[$this->windowStart($placement->height) + $offset - self::CHROME] ?? null;
-    }
-
     public function constraint(): Constraint
     {
         return Constraint::flex();
@@ -111,112 +102,49 @@ final readonly class DropdownPopup implements PointerFloating
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        if ($area->width < 3 || $area->height < 3) {
+        if ($area->width < self::MIN_SIDE || $area->height < self::MIN_SIDE) {
             return;
         }
 
         $context->theme->base->apply($frame, $area);
         Block::new()->border(BorderStyle::Rounded)->borderStyle($context->theme->borderStyle)->render($frame, $area);
 
-        $inner = $area->shrink(1, 1, 1, 1);
-
-        $count = (string)count($this->options);
-        $countWidth = mb_strlen($count);
-        $fieldWidth = $inner->width - ($countWidth + self::GAP);
-
-        if ($fieldWidth <= 0) {
-            $fieldWidth = $inner->width;
-            $countWidth = 0;
-        }
-
-        TextInput::new(self::PLACEHOLDER)
-            ->withValue($this->query)
-            ->withFocus(true)
-            ->withDecoration(InputDecoration::Underline)
-            ->render($frame, new Rect($inner->x, $inner->y, $fieldWidth, 1), $context);
-
-        if ($countWidth > 0) {
-            $frame->putStyled($inner->right() - $countWidth, $inner->y, $count, $context->theme->dim);
-        }
-
-        if ($inner->height >= 2) {
-            $frame->putString($inner->x, $inner->y + 1, str_repeat('─', $inner->width));
-        }
-
-        $rows = $this->optionRowsIn($area);
-        $scrollbar = $this->scrollbarColumns($area->height);
-        $start = $this->windowStart($area->height);
-        $window = array_slice($this->options, $start, $rows);
-
-        foreach ($window as $offset => $option) {
-            $index = $start + $offset;
-
-            $frame->putStyled(
-                $inner->x,
-                $area->y + self::CHROME + $offset,
-                CharWidth::truncateToWidth($this->labels[$option] ?? $option, $inner->width - $scrollbar),
-                $context->theme->optionStyle($index === $this->cursor, false, true),
-            );
-        }
-
-        if ($scrollbar === 1) {
-            Scrollbar::render(
-                $frame,
-                $inner->right() - 1,
-                $area->y + self::CHROME,
-                $rows,
-                $start,
-                count($this->options),
-                $rows,
-                $context->theme->accent->foregroundValue(),
-                $context->theme->dim->foregroundValue(),
-                $context->theme->base->backgroundValue(),
-            );
-        }
+        $this->content->render($frame, $this->contentArea($area), $context);
     }
 
     /**
-     * The first option drawn at this size. A window that grew — a terminal
-     * resized back up — must fill with options again rather than keep the
-     * offset it needed while it was short.
+     * Width first, then the height that width implies. Content the cap has to
+     * cut short needs a column for a scrollbar, which is asked for the same way
+     * as any other content column: a popup already wider than its content finds
+     * the column in the slack it has, and only one that does not grows.
+     *
+     * @return array{0: int, 1: int}
      */
-    private function windowStart(int $height): int
+    private function measured(Rect $anchor, Rect $viewport, int $cap): array
     {
-        $furthest = max(0, count($this->options) - $this->optionRows($height));
+        $width = $this->widthFor($anchor, $viewport, 0);
+        $height = self::BORDERS + $this->content->measureHeight($width - self::BORDERS);
 
-        return max(0, min($furthest, $this->scroll));
-    }
-
-    private function scrollbarColumns(int $height): int
-    {
-        return Scrollbar::needsScrollbar(count($this->options), $this->optionRows($height)) ? 1 : 0;
-    }
-
-    private function optionRows(int $height): int
-    {
-        return max(0, $height - self::CHROME - 1);
-    }
-
-    private function cappedWantedHeight(int $viewportHeight): int
-    {
-        $half = intdiv($viewportHeight, 2);
-
-        return min($this->wantedHeight(), max($half, self::CHROME + 2));
-    }
-
-    private function wantedHeight(): int
-    {
-        return self::CHROME + 1 + count($this->options);
-    }
-
-    private function wantedWidth(int $anchorWidth, int $scrollbarColumns): int
-    {
-        $widest = 0;
-
-        foreach ($this->options as $option) {
-            $widest = max($widest, CharWidth::stringWidth($this->labels[$option] ?? $option));
+        if ($height <= $cap) {
+            return [$width, $height];
         }
 
-        return max($anchorWidth, $widest + 2 + $scrollbarColumns);
+        $scrolling = $this->widthFor($anchor, $viewport, self::SCROLLBAR);
+        $inner = max(0, $scrolling - self::BORDERS - self::SCROLLBAR);
+
+        return [$scrolling, min($cap, self::BORDERS + $this->content->measureHeight($inner))];
+    }
+
+    private function widthFor(Rect $anchor, Rect $viewport, int $scrollbar): int
+    {
+        return min(
+            $viewport->width,
+            max($anchor->width, $this->content->measureWidth() + self::BORDERS + $scrollbar),
+        );
+    }
+
+    private function cap(int $viewportHeight): int
+    {
+        return max(intdiv($viewportHeight, 2), self::BORDERS + 1);
     }
 }

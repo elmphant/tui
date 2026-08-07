@@ -14,4 +14,11 @@ namespace Elmphant\Tui\Widget;
 interface Captioning
 {
     public function caption(): string;
+
+    /**
+     * Whether that caption names something chosen rather than standing in for a
+     * choice not yet made. Only the widget holding the choice can tell the two
+     * apart, and a host that draws a prompt differently has to ask.
+     */
+    public function hasChoice(): bool;
 }

@@ -89,6 +89,11 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $this->options[$this->selected] ?? $this->emptyCaption;
     }
 
+    public function hasChoice(): bool
+    {
+        return $this->selectedValue() !== null;
+    }
+
     public function optionAt(MouseMsg $message, Rect $area): ?string
     {
         if (!$message->inRect($area)) {

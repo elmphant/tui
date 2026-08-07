@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\Key;
@@ -22,6 +24,7 @@ use Elmphant\Tui\Widget\Dropdown;
 use Elmphant\Tui\Widget\DropdownPopup;
 use Elmphant\Tui\Widget\FloatTarget;
 use Elmphant\Tui\Widget\Overlay;
+use Elmphant\Tui\Widget\Select;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -35,7 +38,7 @@ final class DropdownMouseTest extends TestCase
 
         $clicked = self::clickRowOf($opened, 'yaml');
 
-        self::assertSame('yaml', $clicked->selectedValue());
+        self::assertSame('yaml', $clicked->content()->selectedValue());
         self::assertFalse($clicked->isOpen());
     }
 
@@ -44,7 +47,7 @@ final class DropdownMouseTest extends TestCase
     {
         $clicked = self::clickRowOf(self::opened(), 'json');
 
-        self::assertSame('json', $clicked->selectedValue(), 'the first option row itself must be clickable');
+        self::assertSame('json', $clicked->content()->selectedValue(), 'the first option row itself must be clickable');
     }
 
     #[Test]
@@ -54,7 +57,7 @@ final class DropdownMouseTest extends TestCase
         $screen = Rect::fromSize(20, 8);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 20));
 
-        $dropdown = Dropdown::new($options)->withSelected('option18')->withFocus(true);
+        $dropdown = Dropdown::new(Select::new($options)->activated('option18'))->withFocus(true);
 
         $clicked = $dropdown->update(
             new MouseMsg(2, 0, MouseAction::Press, MouseButton::Left, screen: $screen),
@@ -77,7 +80,7 @@ final class DropdownMouseTest extends TestCase
     #[Test]
     public function clickingAnUnfocusedClosedRowOpensIt(): void
     {
-        $unfocused = Dropdown::new(['json', 'yaml']);
+        $unfocused = Dropdown::new(Select::new(['json', 'yaml']));
 
         $clicked = $unfocused->update(
             new MouseMsg(2, 0, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
@@ -93,7 +96,7 @@ final class DropdownMouseTest extends TestCase
     #[Test]
     public function clickingElsewhereWhileClosedDoesNothing(): void
     {
-        $dropdown = Dropdown::new(['json', 'yaml'])->withFocus(true);
+        $dropdown = Dropdown::new(Select::new(['json', 'yaml']))->withFocus(true);
 
         $clicked = $dropdown->update(
             new MouseMsg(2, 5, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
@@ -112,7 +115,7 @@ final class DropdownMouseTest extends TestCase
         )->model;
 
         self::assertFalse($clicked->isOpen(), 'the closed row toggles');
-        self::assertNull($clicked->selectedValue());
+        self::assertNull($clicked->content()->selectedValue());
     }
 
     #[Test]
@@ -123,14 +126,14 @@ final class DropdownMouseTest extends TestCase
             self::anchor(),
         )->model;
 
-        self::assertNull($clicked->selectedValue());
+        self::assertNull($clicked->content()->selectedValue());
         self::assertFalse($clicked->isOpen());
     }
 
     #[Test]
     public function clickingAwayCancelsEvenWithoutAScreenRectOnTheMessage(): void
     {
-        $blind = Dropdown::new(['json', 'yaml'])
+        $blind = Dropdown::new(Select::new(['json', 'yaml']))
             ->withFocus(true)
             ->update(new KeyMsg(' '), self::anchor())->model;
 
@@ -140,7 +143,7 @@ final class DropdownMouseTest extends TestCase
         )->model;
 
         self::assertFalse($clicked->isOpen(), 'dismissing never needed the geometry');
-        self::assertNull($clicked->selectedValue());
+        self::assertNull($clicked->content()->selectedValue());
     }
 
     #[Test]
@@ -151,20 +154,20 @@ final class DropdownMouseTest extends TestCase
 
         $clicked = self::clickRow($opened, $placement->bottom() - 1);
 
-        self::assertNull($clicked->selectedValue(), 'the row below the last visible option is the border');
+        self::assertNull($clicked->content()->selectedValue(), 'the row below the last visible option is the border');
     }
 
     #[Test]
-    public function clickingTheFilterRowPicksNothing(): void
+    public function aClickInsideThePopupThatNamesNoOptionLeavesItOpen(): void
     {
         $opened = self::listOf(self::manyOptions());
         $scrolled = self::wheelRow($opened, self::rowOf($opened, 'option1'), MouseAction::WheelDown, 5);
         $placement = self::drawnPlacement($scrolled);
 
-        $onFilterRow = self::clickRow($scrolled, $placement->y + 1);
+        $onTheBorder = self::clickRow($scrolled, $placement->y);
 
-        self::assertNull($onFilterRow->selectedValue(), 'the query row must not map through the scroll offset');
-        self::assertTrue($onFilterRow->isOpen(), 'and clicking inside the popup does not dismiss it');
+        self::assertNull($onTheBorder->content()->selectedValue(), 'the border is not an option row however far the list has moved');
+        self::assertTrue($onTheBorder->isOpen(), 'and a click that chose nothing is not a click that dismisses');
     }
 
     #[Test]
@@ -175,7 +178,7 @@ final class DropdownMouseTest extends TestCase
 
         $clicked = self::clickRow($opened, $lastOptionRow + 1);
 
-        self::assertNull($clicked->selectedValue(), 'no option was drawn there');
+        self::assertNull($clicked->content()->selectedValue(), 'no option was drawn there');
     }
 
     #[Test]
@@ -190,7 +193,7 @@ final class DropdownMouseTest extends TestCase
         )->model;
 
         self::assertTrue($result->isOpen(), 'a motion over the popup must fall through, not throw');
-        self::assertNull($result->selectedValue());
+        self::assertNull($result->content()->selectedValue());
     }
 
     #[Test]
@@ -200,8 +203,7 @@ final class DropdownMouseTest extends TestCase
 
         $scrolled = self::wheelRow($opened, self::rowOf($opened, 'option1'), MouseAction::WheelDown, 3);
 
-        self::assertStringContainsString('option8', self::draw($scrolled), 'three notches moved three rows');
-        self::assertStringNotContainsString('option3 ', self::draw($scrolled), 'one notch would still show option3');
+        self::assertSame(3, $scrolled->content()->cursor(), 'a merged event carries all of its notches');
     }
 
     #[Test]
@@ -211,9 +213,7 @@ final class DropdownMouseTest extends TestCase
 
         $scrolled = self::wheelRow($opened, self::rowOf($opened, 'option1'), MouseAction::WheelDown);
 
-        $screen = self::draw($scrolled);
-        self::assertStringContainsString('option2 ', $screen, 'option2 is now first');
-        self::assertStringNotContainsString('option1 ', $screen, 'option1 scrolled out of view');
+        self::assertSame(1, $scrolled->content()->cursor(), 'one notch, one option');
     }
 
     #[Test]
@@ -229,9 +229,8 @@ final class DropdownMouseTest extends TestCase
 
         $up = self::wheelRow($scrolled, $row, MouseAction::WheelUp);
 
-        $screen = self::draw($up);
-        self::assertStringContainsString('option10', $screen, 'one notch up from scroll 10 lands on option10');
-        self::assertStringNotContainsString('option9 ', $screen, 'not moved further than one notch');
+        self::assertSame(9, $up->content()->cursor(), 'one notch back from ten, and no further');
+        self::assertStringContainsString('option10', self::draw($up), 'and the view came with it');
     }
 
     #[Test]
@@ -304,7 +303,7 @@ final class DropdownMouseTest extends TestCase
 
         $clicked = self::clickRow($opened, self::rowOf($opened, 'yaml'));
 
-        self::assertSame('yaml', $clicked->selectedValue(), 'the value picked matches the option drawn on that row');
+        self::assertSame('yaml', $clicked->content()->selectedValue(), 'the value picked matches the option drawn on that row');
     }
 
     #[Test]
@@ -314,7 +313,7 @@ final class DropdownMouseTest extends TestCase
         $screen = Rect::fromSize(60, 14);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 36));
 
-        $dropdown = Dropdown::new($options)->withFocus(true)->update(new KeyMsg(' '), $anchor)->model;
+        $dropdown = Dropdown::new(Select::new($options))->withFocus(true)->update(new KeyMsg(' '), $anchor)->model;
         for ($step = 0; $step < 20; ++$step) {
             $dropdown = $dropdown->update(new KeyMsg(Key::Down, screen: $screen), $anchor)->model;
         }
@@ -325,7 +324,7 @@ final class DropdownMouseTest extends TestCase
             $anchor,
         )->model;
 
-        self::assertSame('option21', $clicked->selectedValue(), 'the row the keyboard scrolled it into is where a click picks it');
+        self::assertSame('option21', $clicked->content()->selectedValue(), 'the row the keyboard scrolled it into is where a click picks it');
     }
 
     #[Test]
@@ -341,7 +340,7 @@ final class DropdownMouseTest extends TestCase
 
         self::assertSame(
             'option1',
-            $picked->selectedValue(),
+            $picked->content()->selectedValue(),
             'the click resolves against the popup that was drawn, never against what now sits on that row',
         );
     }
@@ -356,7 +355,7 @@ final class DropdownMouseTest extends TestCase
         $picked = $opened->update($firstClick, self::anchor())->model;
         $again = $picked->update($clickOnTheOtherRow, self::anchor())->model;
 
-        self::assertSame('yaml', $again->selectedValue(), 'the owner is closed, so the second half of a double click dies here');
+        self::assertSame('yaml', $again->content()->selectedValue(), 'the owner is closed, so the second half of a double click dies here');
     }
 
     #[Test]
@@ -373,7 +372,7 @@ final class DropdownMouseTest extends TestCase
 
         $moved = $opened->update($wrapped, self::anchor())->model;
 
-        self::assertNull($moved->selectedValue(), 'only a press picks');
+        self::assertNull($moved->content()->selectedValue(), 'only a press picks');
         self::assertTrue($moved->isOpen());
     }
 
@@ -401,7 +400,7 @@ final class DropdownMouseTest extends TestCase
 
         $untouched = $mine->update($routed, $anchor)->model;
 
-        self::assertNull($untouched->selectedValue(), 'a token that is not mine is not mine to act on');
+        self::assertNull($untouched->content()->selectedValue(), 'a token that is not mine is not mine to act on');
         self::assertTrue($untouched->isOpen(), 'and my own popup stays open');
     }
 
@@ -410,7 +409,7 @@ final class DropdownMouseTest extends TestCase
     {
         $opened = self::opened();
         $placement = self::drawnPlacement($opened);
-        $vanished = DropdownPopup::of(['gone'], [], 0, '', 0, self::drawnTarget($opened));
+        $vanished = DropdownPopup::of(Select::new(['gone']), self::drawnTarget($opened));
 
         $routed = new FloatMouseMsg(
             new MouseMsg(2, $placement->y + 3, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
@@ -419,7 +418,7 @@ final class DropdownMouseTest extends TestCase
 
         $clicked = $opened->update($routed, self::anchor())->model;
 
-        self::assertNull($clicked->selectedValue(), 'the drawn value is gone from the options, so nothing is picked');
+        self::assertNull($clicked->content()->selectedValue(), 'the drawn value is gone from the options, so nothing is picked');
     }
 
     #[Test]
@@ -435,40 +434,33 @@ final class DropdownMouseTest extends TestCase
 
         $clicked = $opened->update($wrapped, self::anchor())->model;
 
-        self::assertNull($clicked->selectedValue(), 'the closed row ignores a button-less press, and so does the popup');
+        self::assertNull($clicked->content()->selectedValue(), 'the closed row ignores a button-less press, and so does the popup');
         self::assertTrue($clicked->isOpen());
     }
 
+    /**
+     * The narrowest popup that draws at all is MIN_SIDE rows, of which the
+     * border takes two — so a drawn popup always has at least one row for its
+     * content, and a shorter one is placed empty and never drawn. The state
+     * this once guarded, chrome with no room for an option, cannot arise now
+     * that the filter row and separator belong to the content.
+     */
     #[Test]
-    public function aPopupWithNoRoomForOptionsPicksNothingAndStaysOpen(): void
+    public function aPopupTooShortForEvenOneContentRowIsNeverDrawn(): void
     {
-        $anchor = new Rect(0, 4, 20, 1);
-        $screen = Rect::fromSize(20, 9);
+        $anchor = new Rect(0, 1, 20, 1);
+        $popup = DropdownPopup::of(Select::new(['a', 'b']), new FloatTarget());
 
-        $opened = Dropdown::new(['a', 'b'])
-            ->withFocus(true)
-            ->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
-
-        $frame = new Frame($screen->width, $screen->height);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->renderRoot($opened, $frame, $anchor);
-        $context->commitFloatPlacements();
-
-        $drawn = $context->floatPlacements()[0];
-        $popup = $drawn->float;
-        self::assertInstanceOf(DropdownPopup::class, $popup);
-        self::assertSame(0, $popup->optionRowsIn($drawn->placement), 'this popup has chrome only');
-
-        $routed = InputRouter::route(
-            new MouseMsg(2, $drawn->placement->y + 3, MouseAction::Press, MouseButton::Left),
-            $frame->area(),
-            $context->floatPlacements(),
+        self::assertSame(
+            0,
+            $popup->placement($anchor, Rect::fromSize(20, 3))->height,
+            'a single row either side leaves nothing to draw',
         );
-        $clicked = $opened->update($routed, $anchor)->model;
-
-        self::assertNull($clicked->selectedValue(), 'there is no option row to hit');
-        self::assertTrue($clicked->isOpen(), 'and the query row stays available');
+        self::assertGreaterThanOrEqual(
+            1,
+            $popup->contentArea($popup->placement($anchor, Rect::fromSize(20, 9)))->height,
+            'and any popup that does draw has a row for its content',
+        );
     }
 
     #[Test]
@@ -477,8 +469,7 @@ final class DropdownMouseTest extends TestCase
         $anchor = self::anchor();
         $screen = Rect::fromSize(20, 12);
 
-        $opened = Dropdown::new(['alpha', 'bravo', 'charlie', 'delta'])
-            ->withSelected('bravo')
+        $opened = Dropdown::new(Select::new(['alpha', 'bravo', 'charlie', 'delta'])->activated('bravo'))
             ->withFocus(true)
             ->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
 
@@ -491,13 +482,13 @@ final class DropdownMouseTest extends TestCase
         $anchor = self::anchor();
         $screen = Rect::fromSize(20, 12);
 
-        $picked = Dropdown::new(['alpha', 'bravo', 'charlie', 'delta'])
+        $picked = Dropdown::new(Select::new(['alpha', 'bravo', 'charlie', 'delta']))
             ->withFocus(true)
             ->update(new KeyMsg(' ', screen: $screen), $anchor)->model
             ->update(new KeyMsg(Key::Down, screen: $screen), $anchor)->model
             ->update(new KeyMsg(Key::Enter, screen: $screen), $anchor)->model;
 
-        self::assertSame('bravo', $picked->selectedValue());
+        self::assertSame('bravo', $picked->content()->selectedValue());
 
         $reopened = $picked->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
 
@@ -514,12 +505,12 @@ final class DropdownMouseTest extends TestCase
         $anchor = self::anchor();
         $screen = Rect::fromSize(20, 12);
 
-        $picked = Dropdown::new(['alpha', 'bravo', 'charlie', 'delta'])
+        $picked = Dropdown::new(Select::new(['alpha', 'bravo', 'charlie', 'delta']))
             ->withFocus(true)
             ->update(new KeyMsg(' ', screen: $screen), $anchor)->model
             ->update(new KeyMsg(Key::Enter, screen: $screen), $anchor)->model;
 
-        self::assertSame('alpha', $picked->selectedValue());
+        self::assertSame('alpha', $picked->content()->selectedValue());
 
         $reopened = $picked->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
 
@@ -530,22 +521,25 @@ final class DropdownMouseTest extends TestCase
         );
     }
 
+    /**
+     * The window this once guarded against getting stuck is gone: the content
+     * derives its offset from its cursor and the room it is given, every frame,
+     * so opening in a popup too short to show the selection cannot leave a
+     * stale offset behind to catch up later.
+     */
     #[Test]
-    public function openingWhereThePopupHasNoRoomForOptionsLeavesTheWindowAtTheTop(): void
+    public function openingOnAFarSelectionScrollsItIntoViewWithoutRunningPastTheEnd(): void
     {
-        $anchor = self::anchor();
-        $tooShortForAnyOption = Rect::fromSize(20, 4);
         $options = array_map(static fn (int $index): string => sprintf('opt%02d', $index), range(1, 20));
 
-        $opened = Dropdown::new($options)
-            ->withSelected('opt18')
+        $opened = Dropdown::new(Select::new($options)->activated('opt18'))
             ->withFocus(true)
-            ->update(new KeyMsg(' ', screen: $tooShortForAnyOption), $anchor)->model;
+            ->update(new KeyMsg(' ', screen: Rect::fromSize(20, 4)), self::anchor())->model;
 
         $drawn = self::drawIn($opened, Rect::fromSize(20, 16));
 
-        self::assertStringContainsString('opt01', $drawn, 'with no option row to scroll into, the window stays where it is');
-        self::assertStringNotContainsString('opt20', $drawn, 'and never past the end of the list');
+        self::assertStringContainsString('opt18', $drawn, 'the selection is what the reader needs to see');
+        self::assertStringNotContainsString('opt20', $drawn, 'and the window never counts past the end of the list');
     }
 
     #[Test]
@@ -554,10 +548,8 @@ final class DropdownMouseTest extends TestCase
         $opened = self::opened();
 
         $withered = $opened
-            ->withLabels(['json' => 'JSON'])
-            ->withPlaceholder('pick one')
-            ->withFreeText(true)
-            ->withSelected('json');
+            ->withFocus(true)
+            ->withGlobalKeybindings(new Keybindings([Actions::CANCEL => ['q']]));
 
         self::assertSame(self::drawnTarget($opened), self::drawnTarget($withered), 'ownership is one token for the widget lifetime');
     }
@@ -626,11 +618,11 @@ final class DropdownMouseTest extends TestCase
         self::assertInstanceOf(DropdownPopup::class, $popup);
 
         $screen = ScreenBuffer::fromFrame($frame);
-        $firstOptionRow = $placements[0]->placement->y + 3;
+        $inner = $popup->contentArea($placements[0]->placement);
         $rows = [];
 
-        for ($offset = 0; $offset < $popup->optionRowsIn($placements[0]->placement); ++$offset) {
-            $rows[] = $screen->getLine($firstOptionRow + $offset);
+        for ($offset = 0; $offset < $inner->height; ++$offset) {
+            $rows[] = $screen->getLine($inner->y + $offset);
         }
 
         return implode("\n", $rows);
@@ -705,7 +697,7 @@ final class DropdownMouseTest extends TestCase
      */
     private static function listOf(array $options): Dropdown
     {
-        return Dropdown::new($options)
+        return Dropdown::new(Select::new($options))
             ->withFocus(true)
             ->update(new KeyMsg(' '), self::anchor())->model;
     }

@@ -15,6 +15,8 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Dropdown;
+use Elmphant\Tui\Widget\DropdownPopup;
+use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,12 +38,14 @@ final class DropdownAppAcceptanceTest extends TestCase
         $placements = $harness->floatPlacements();
         self::assertCount(1, $placements, 'the popup must be on the screen before the click can land on it');
 
-        $optionRow = $placements[0]->placement->y + 3;
+        $popup = $placements[0]->float;
+        self::assertInstanceOf(DropdownPopup::class, $popup);
+        $optionRow = $popup->contentArea($placements[0]->placement)->y;
         $harness->dispatch(new MouseMsg(2, $optionRow, MouseAction::Press, MouseButton::Left));
 
         $app = self::appOf($harness);
-        self::assertSame('json', $app->first->selectedValue(), 'the drawn popup owns that cell');
-        self::assertNull($app->second->selectedValue(), 'the sibling under the popup saw nothing');
+        self::assertSame('json', $app->first->content()->selectedValue(), 'the drawn popup owns that cell');
+        self::assertNull($app->second->content()->selectedValue(), 'the sibling under the popup saw nothing');
         self::assertTrue($app->first->isFocused(), 'the picker keeps focus');
 
         $harness->renderFrame();
@@ -107,8 +111,8 @@ final readonly class TwoDropdownApp extends App
     public static function new(): self
     {
         return new self(
-            Dropdown::new(['json', 'yaml'])->withFocus(true),
-            Dropdown::new(['toml', 'ini']),
+            Dropdown::new(Select::new(['json', 'yaml']))->withFocus(true),
+            Dropdown::new(Select::new(['toml', 'ini'])),
         );
     }
 
