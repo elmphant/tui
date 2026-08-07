@@ -143,16 +143,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     {
         $theme = $context->theme;
 
-        $labelRows = $this->label !== '' ? 2 : 0;
-        $totalRows = $labelRows + count($this->options);
-        $cursorRow = $labelRows + $this->cursor;
-
-        $scrollOffset = 0;
-        if ($area->height > 0 && $totalRows > $area->height && $cursorRow >= $area->height) {
-            $scrollOffset = $cursorRow - $area->height + 1;
-        }
-
-        $y = $area->y - $scrollOffset;
+        $y = $area->y - $this->scrollOffset($area->height);
 
         if ($this->label !== '') {
             $frame->putStyled($area->x, $y, $this->label, $theme->titleStyle);
@@ -211,8 +202,8 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
      */
     private function handleClick(MouseMsg $message, Rect $area, int $count): UpdateResult
     {
-        $localY = $message->y - $area->y;
-        $optionY = $this->label !== '' ? $localY - 2 : $localY;
+        $labelRows = $this->label !== '' ? 2 : 0;
+        $optionY = $message->y - $area->y + $this->scrollOffset($area->height) - $labelRows;
 
         if ($optionY >= 0 && $optionY < $count) {
             $toggled = $this->cloneWith(cursor: $optionY);
@@ -221,5 +212,18 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         }
 
         return new UpdateResult($this);
+    }
+
+    private function scrollOffset(int $areaHeight): int
+    {
+        $labelRows = $this->label !== '' ? 2 : 0;
+        $totalRows = $labelRows + count($this->options);
+        $cursorRow = $labelRows + $this->cursor;
+
+        if ($areaHeight > 0 && $totalRows > $areaHeight && $cursorRow >= $areaHeight) {
+            return $cursorRow - $areaHeight + 1;
+        }
+
+        return 0;
     }
 }

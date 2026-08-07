@@ -821,6 +821,29 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame('[ ] Delta', rtrim($this->extractRow($frame, 3, 12)), 'The cursor row lands on the last visible row');
     }
 
+    #[Test]
+    public function aClickTogglesTheBoxDrawnOnThatRowAfterTheListHasScrolled(): void
+    {
+        $group = new CheckboxGroup(options: ['one', 'two', 'three', 'four', 'five', 'six']);
+        $area = Rect::fromSize(20, 3);
+
+        $scrolled = $group->withFocus(true);
+        for ($step = 0; $step < 5; ++$step) {
+            $scrolled = $scrolled->update(new KeyMsg(Key::Down), $area)->model;
+        }
+
+        $clicked = $scrolled->update(
+            new MouseMsg(0, $area->y + 2, MouseAction::Press, MouseButton::Left),
+            $area,
+        )->model;
+
+        self::assertSame(
+            ['six'],
+            $clicked->checkedValues(),
+            'the bottom row shows the sixth option once the list has scrolled, so that is what a click there ticks',
+        );
+    }
+
     private function extractRow(Frame $frame, int $row, int $columns): string
     {
         $text = '';
