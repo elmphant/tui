@@ -40,7 +40,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware
     /**
      * @param list<string> $options
      */
-    public static function new(string $label, array $options): self
+    public static function new(array $options, string $label = ''): self
     {
         return new self(options: $options, label: $label);
     }

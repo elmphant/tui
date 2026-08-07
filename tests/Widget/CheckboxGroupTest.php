@@ -23,10 +23,20 @@ use PHPUnit\Framework\TestCase;
 final class CheckboxGroupTest extends TestCase
 {
     #[Test]
+    public function takesTheOptionsFirstAndLeavesTheLabelOptional(): void
+    {
+        $bare = CheckboxGroup::new(['A', 'B']);
+
+        self::assertSame(['A'], $bare->withChecked([0])->checkedValues(), 'the collection is what leads');
+        self::assertSame(0, $bare->cursorRow(), 'and an omitted label costs no rows');
+        self::assertSame(2, CheckboxGroup::new(['A', 'B'], 'Pick')->cursorRow(), 'a label still follows it, where there is one');
+    }
+
+    #[Test]
     public function theCursorRowSkipsTheLabelAndItsBlankLine(): void
     {
         $area = new Rect(0, 0, 20, 8);
-        $labelled = CheckboxGroup::new('Toppings', ['Cheese', 'Onion', 'Pepper']);
+        $labelled = CheckboxGroup::new(['Cheese', 'Onion', 'Pepper'], 'Toppings');
 
         self::assertSame(2, $labelled->cursorRow(), 'A label and its gap sit above the first option');
 
@@ -40,7 +50,7 @@ final class CheckboxGroupTest extends TestCase
     public function withoutALabelTheCursorRowIsTheCursorItself(): void
     {
         $area = new Rect(0, 0, 20, 8);
-        $unlabelled = CheckboxGroup::new('', ['Cheese', 'Onion']);
+        $unlabelled = CheckboxGroup::new(['Cheese', 'Onion']);
 
         self::assertSame(0, $unlabelled->cursorRow());
 
@@ -53,7 +63,7 @@ final class CheckboxGroupTest extends TestCase
     public function theOptionsLabelAndTicksCanAllBeReplaced(): void
     {
         $area = new Rect(0, 0, 24, 8);
-        $group = CheckboxGroup::new('Toppings', ['Cheese'])
+        $group = CheckboxGroup::new(['Cheese'], 'Toppings')
             ->withOptions(['Olive', 'Caper'])
             ->withLabel('Extras')
             ->withChecked([1]);
@@ -76,13 +86,13 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function implementsFocusable(): void
     {
-        self::assertInstanceOf(Focusable::class, CheckboxGroup::new('Toppings', ['Cheese', 'Onion', 'Pepper']));
+        self::assertInstanceOf(Focusable::class, CheckboxGroup::new(['Cheese', 'Onion', 'Pepper'], 'Toppings'));
     }
 
     #[Test]
     public function constraintIncludesLabelAndSpacer(): void
     {
-        $group = CheckboxGroup::new('Toppings', ['Cheese', 'Onion', 'Pepper']);
+        $group = CheckboxGroup::new(['Cheese', 'Onion', 'Pepper'], 'Toppings');
         $constraint = $group->constraint();
 
         self::assertSame(5, $constraint->min);
@@ -92,7 +102,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function constraintWithoutLabel(): void
     {
-        $group = CheckboxGroup::new('', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B']);
         $constraint = $group->constraint();
 
         self::assertSame(2, $constraint->min);
@@ -102,7 +112,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function cursorMovesDownWithArrowKey(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 4);
 
         $result = $group->update(new KeyMsg(Key::Down), $area);
@@ -113,7 +123,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function cursorMovesUpWithArrowKey(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 4);
 
         $group = $group->update(new KeyMsg(Key::Down), $area)->model;
@@ -125,7 +135,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function cursorDoesNotGoBelowLastOption(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 3);
 
         $group = $group->update(new KeyMsg(Key::Down), $area)->model;
@@ -137,7 +147,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function cursorDoesNotGoAboveFirstOption(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 3);
 
         $result = $group->update(new KeyMsg(Key::Up), $area);
@@ -148,7 +158,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function enterTogglesCheckedState(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 4);
 
         $result = $group->update(new KeyMsg(Key::Enter), $area);
@@ -159,7 +169,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function spaceTogglesCheckedState(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 3);
 
         $result = $group->update(new KeyMsg(' '), $area);
@@ -170,7 +180,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function toggleUnchecksAlreadyCheckedOption(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 3);
 
         $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
@@ -182,7 +192,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function multipleOptionsCanBeChecked(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 4);
 
         $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
@@ -197,7 +207,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function checkedValuesReturnsSelectedStrings(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 4);
 
         $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
@@ -211,7 +221,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function ignoresKeysWhenNotFocused(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B'], 'Pick');
         $area = Rect::fromSize(40, 3);
 
         $result = $group->update(new KeyMsg(Key::Down), $area);
@@ -222,7 +232,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickTogglesOption(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C']);
+        $group = CheckboxGroup::new(['A', 'B', 'C'], 'Pick');
         $area = new Rect(0, 0, 40, 6);
 
         $click = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
@@ -235,7 +245,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickOutsideDoesNothing(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B'], 'Pick');
         $area = new Rect(0, 0, 40, 3);
 
         $click = new MouseMsg(5, 10, MouseAction::Press, MouseButton::Left);
@@ -247,7 +257,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function rendersLabelAndOptions(): void
     {
-        $group = CheckboxGroup::new('Toppings', ['Cheese', 'Onion'])->withFocus(true);
+        $group = CheckboxGroup::new(['Cheese', 'Onion'], 'Toppings')->withFocus(true);
         $frame = new Frame(30, 4);
         $area = new Rect(0, 0, 30, 4);
 
@@ -271,7 +281,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function rendersCheckedMark(): void
     {
-        $group = CheckboxGroup::new('', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'])->withFocus(true);
         $area = Rect::fromSize(30, 2);
 
         $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
@@ -290,7 +300,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function upKeyReturnsDifferentModelWhenCursorAboveZero(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 5);
 
         $group = $group->update(new KeyMsg(Key::Down), $area)->model;
@@ -305,7 +315,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function downKeyReturnsDifferentModelWhenNotAtEnd(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 4);
 
         $result = $group->update(new KeyMsg(Key::Down), $area);
@@ -317,7 +327,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function enterKeyReturnsDifferentModelWithToggle(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A'])->withFocus(true);
+        $group = CheckboxGroup::new(['A'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 3);
 
         $result = $group->update(new KeyMsg(Key::Enter), $area);
@@ -329,7 +339,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function unknownKeyReturnsSameModel(): void
     {
-        $group = CheckboxGroup::new('Pick', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'], 'Pick')->withFocus(true);
         $area = Rect::fromSize(40, 4);
 
         $result = $group->update(new KeyMsg('z'), $area);
@@ -340,7 +350,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickWithOffsetAreaComputesCorrectLocalY(): void
     {
-        $group = CheckboxGroup::new('Label', ['A', 'B', 'C']);
+        $group = CheckboxGroup::new(['A', 'B', 'C'], 'Label');
         $area = new Rect(5, 10, 30, 6);
 
         // Label at y=10, blank at y=11, options at y=12,13,14
@@ -356,7 +366,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickOnLabelAreaDoesNotToggle(): void
     {
-        $group = CheckboxGroup::new('Label', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B'], 'Label');
         $area = new Rect(0, 0, 30, 4);
 
         // Click on label row (y=0) => localY=0, optionY=0-2=-2 < 0
@@ -370,7 +380,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickOnBlankLineAfterLabelDoesNotToggle(): void
     {
-        $group = CheckboxGroup::new('Label', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B'], 'Label');
         $area = new Rect(0, 0, 30, 4);
 
         // Click on blank line (y=1) => localY=1, optionY=1-2=-1 < 0
@@ -384,7 +394,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickOnLastOptionTogglesIt(): void
     {
-        $group = CheckboxGroup::new('', ['A', 'B', 'C']);
+        $group = CheckboxGroup::new(['A', 'B', 'C']);
         $area = new Rect(0, 0, 30, 3);
 
         // No label, so optionY = localY = 2 (last option index)
@@ -398,7 +408,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickBeyondLastOptionDoesNothing(): void
     {
-        $group = CheckboxGroup::new('', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B']);
         $area = new Rect(0, 0, 30, 5);
 
         // optionY=2, count=2 => 2 < 2 is false
@@ -412,7 +422,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickRequiresBothBoundsToBeValid(): void
     {
-        $group = CheckboxGroup::new('Label', ['A']);
+        $group = CheckboxGroup::new(['A'], 'Label');
         $area = new Rect(0, 0, 30, 3);
 
         // optionY = 0 - 2 = -2: fails >= 0
@@ -424,7 +434,7 @@ final class CheckboxGroupTest extends TestCase
         $click2 = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
         // This click is outside the area (area height=3, bottom=3, y=3 is out)
         // so it won't even reach handleClick — let's use a bigger area
-        $group2 = CheckboxGroup::new('Label', ['A']);
+        $group2 = CheckboxGroup::new(['A'], 'Label');
         $area2 = new Rect(0, 0, 30, 5);
         $click3 = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
         $result2 = $group2->update($click3, $area2);
@@ -435,7 +445,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function labelOffsetsOptionsRenderingByTwoRows(): void
     {
-        $group = CheckboxGroup::new('Title', ['First', 'Second'])->withFocus(true);
+        $group = CheckboxGroup::new(['First', 'Second'], 'Title')->withFocus(true);
         $frame = new Frame(30, 5);
         $area = new Rect(0, 0, 30, 5);
 
@@ -454,7 +464,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function labelOffsetUsesIncrementNotAbsoluteAssignment(): void
     {
-        $group = CheckboxGroup::new('Title', ['First'])->withFocus(true);
+        $group = CheckboxGroup::new(['First'], 'Title')->withFocus(true);
         $frame = new Frame(30, 8);
         $area = new Rect(0, 3, 30, 5);
 
@@ -470,7 +480,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function renderingStopsWhenAreaHeightExhausted(): void
     {
-        $group = CheckboxGroup::new('', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'])->withFocus(true);
         $frame = new Frame(30, 2);
         $area = new Rect(0, 0, 30, 2);
 
@@ -486,7 +496,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function thirdOptionNotRenderedWhenAreaHasOnlyTwoRows(): void
     {
-        $group = CheckboxGroup::new('', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'])->withFocus(true);
         $frame = new Frame(30, 3);
         $area = new Rect(0, 0, 30, 2);
 
@@ -501,7 +511,7 @@ final class CheckboxGroupTest extends TestCase
     public function cursorStyleAppliedOnlyAtCursorIndexWhenFocused(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'])->withFocus(true);
         $frame = new Frame(30, 2);
         $area = new Rect(0, 0, 30, 2);
 
@@ -521,7 +531,7 @@ final class CheckboxGroupTest extends TestCase
     public function cursorStyleNotAppliedWhenUnfocused(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B']);
         $frame = new Frame(30, 2);
         $area = new Rect(0, 0, 30, 2);
 
@@ -537,7 +547,7 @@ final class CheckboxGroupTest extends TestCase
     public function nonCursorIndexWhenFocusedUsesBaseStyle(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'])->withFocus(true);
         $frame = new Frame(30, 3);
         $area = new Rect(0, 0, 30, 3);
 
@@ -553,7 +563,7 @@ final class CheckboxGroupTest extends TestCase
     public function styleMatchArmCursorStyleIsDistinct(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['A'])->withFocus(true);
+        $group = CheckboxGroup::new(['A'])->withFocus(true);
         $frame = new Frame(30, 1);
         $area = new Rect(0, 0, 30, 1);
 
@@ -567,7 +577,7 @@ final class CheckboxGroupTest extends TestCase
     public function checkedNonCursorItemUsesAccentStyle(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'])->withFocus(true);
         $area = Rect::fromSize(30, 2);
 
         // Check A (cursor=0), then move to B
@@ -588,7 +598,7 @@ final class CheckboxGroupTest extends TestCase
     public function focusedNonCursorUncheckedItemUsesBaseStyle(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['A', 'B'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B'])->withFocus(true);
         $frame = new Frame(30, 2);
         $area = new Rect(0, 0, 30, 2);
 
@@ -603,7 +613,7 @@ final class CheckboxGroupTest extends TestCase
     public function unfocusedUncheckedItemUsesDimStyle(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B']);
         $frame = new Frame(30, 2);
         $area = new Rect(0, 0, 30, 2);
 
@@ -619,7 +629,7 @@ final class CheckboxGroupTest extends TestCase
     public function optionTextRendersAtCorrectXOffset(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['Z'])->withFocus(true);
+        $group = CheckboxGroup::new(['Z'])->withFocus(true);
         $frame = new Frame(30, 1);
         $area = new Rect(0, 0, 30, 1);
 
@@ -638,7 +648,7 @@ final class CheckboxGroupTest extends TestCase
     public function optionTextRendersAtCorrectXOffsetWithNonZeroAreaX(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['Q'])->withFocus(true);
+        $group = CheckboxGroup::new(['Q'])->withFocus(true);
         $frame = new Frame(30, 1);
         $area = new Rect(5, 0, 25, 1);
 
@@ -656,7 +666,7 @@ final class CheckboxGroupTest extends TestCase
     public function eachOptionRendersOnSuccessiveRows(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['A', 'B', 'C'])->withFocus(true);
+        $group = CheckboxGroup::new(['A', 'B', 'C'])->withFocus(true);
         $frame = new Frame(30, 3);
         $area = new Rect(0, 0, 30, 3);
 
@@ -672,7 +682,7 @@ final class CheckboxGroupTest extends TestCase
     public function secondOptionDoesNotOverwriteFirstRow(): void
     {
         $theme = Theme::dark();
-        $group = CheckboxGroup::new('', ['First', 'Second'])->withFocus(true);
+        $group = CheckboxGroup::new(['First', 'Second'])->withFocus(true);
         $frame = new Frame(30, 2);
         $area = new Rect(0, 0, 30, 2);
 
@@ -691,7 +701,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickWithLabelComputesCorrectOptionIndex(): void
     {
-        $group = CheckboxGroup::new('Title', ['X', 'Y']);
+        $group = CheckboxGroup::new(['X', 'Y'], 'Title');
         $area = new Rect(0, 0, 30, 4);
 
         // With label: optionY = localY - 2
@@ -707,7 +717,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickWithoutLabelClicksCorrectOption(): void
     {
-        $group = CheckboxGroup::new('', ['X', 'Y']);
+        $group = CheckboxGroup::new(['X', 'Y']);
         $area = new Rect(0, 0, 30, 2);
 
         $click = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
@@ -721,7 +731,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function mouseClickTogglesAlreadyCheckedOption(): void
     {
-        $group = CheckboxGroup::new('', ['A', 'B']);
+        $group = CheckboxGroup::new(['A', 'B']);
         $area = new Rect(0, 0, 30, 2);
 
         $click = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
@@ -736,7 +746,7 @@ final class CheckboxGroupTest extends TestCase
     public function supportsCustomFocusPrevKeybinding(): void
     {
         $area = Rect::fromSize(20, 10);
-        $widget = CheckboxGroup::new('lbl', ['a', 'b', 'c'])->withFocus(true)->withCursor(1);
+        $widget = CheckboxGroup::new(['a', 'b', 'c'], 'lbl')->withFocus(true)->withCursor(1);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Up), $area)->model;
         self::assertSame(0, $afterDefault->cursor());
@@ -752,7 +762,7 @@ final class CheckboxGroupTest extends TestCase
     public function supportsCustomFocusNextKeybinding(): void
     {
         $area = Rect::fromSize(20, 10);
-        $widget = CheckboxGroup::new('lbl', ['a', 'b', 'c'])->withFocus(true);
+        $widget = CheckboxGroup::new(['a', 'b', 'c'], 'lbl')->withFocus(true);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Down), $area)->model;
         self::assertSame(1, $afterDefault->cursor());
@@ -768,7 +778,7 @@ final class CheckboxGroupTest extends TestCase
     public function supportsCustomToggleKeybinding(): void
     {
         $area = Rect::fromSize(20, 10);
-        $widget = CheckboxGroup::new('lbl', ['a', 'b', 'c'])->withFocus(true);
+        $widget = CheckboxGroup::new(['a', 'b', 'c'], 'lbl')->withFocus(true);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Enter), $area)->model;
         self::assertTrue($afterDefault->isChecked(0));
@@ -784,7 +794,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function labeledGroupRendersLabelBlankSpacerThenOptions(): void
     {
-        $group = CheckboxGroup::new('Pick', ['Alpha', 'Beta']);
+        $group = CheckboxGroup::new(['Alpha', 'Beta'], 'Pick');
         $frame = new Frame(20, 5);
         $group->render($frame, new Rect(0, 0, 20, 5), new RenderContext(Theme::dark()));
 
@@ -797,7 +807,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function scrollsToKeepTheCursorVisibleWhenOptionsExceedTheHeight(): void
     {
-        $group = CheckboxGroup::new('', ['Alpha', 'Beta', 'Gamma', 'Delta'])
+        $group = CheckboxGroup::new(['Alpha', 'Beta', 'Gamma', 'Delta'])
             ->withCursor(3)
             ->withFocus(true);
         $frame = new Frame(12, 3);
@@ -811,7 +821,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function labeledGroupScrollAccountsForExactlyTwoLabelRows(): void
     {
-        $group = CheckboxGroup::new('Top', ['Alpha', 'Beta', 'Gamma', 'Delta'])
+        $group = CheckboxGroup::new(['Alpha', 'Beta', 'Gamma', 'Delta'], 'Top')
             ->withCursor(3)
             ->withFocus(true);
         $frame = new Frame(12, 4);

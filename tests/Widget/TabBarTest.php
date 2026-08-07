@@ -591,8 +591,8 @@ final class TabBarTest extends TestCase
     public function switchTabFocusesFirstFocusableInNewTab(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new('R1', ['A', 'B']))
-            ->addTab('Two')->add(Radio::new('R2', ['C', 'D']))
+            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
+            ->addTab('Two')->add(Radio::new(['C', 'D'], 'R2'))
             ->withFocus(true);
         $area = new Rect(0, 0, 40, 20);
         $switched = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
@@ -604,7 +604,7 @@ final class TabBarTest extends TestCase
     public function switchTabWithNoFocusableChildrenInNewTab(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new('R1', ['A', 'B']))
+            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
             ->addTab('Two')->add(Text::new('Plain'))
             ->withFocus(true);
         self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 20))->model->activeTab());
@@ -617,7 +617,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('Settings')
-            ->add(Radio::new('Theme', ['Dark', 'Light']))
+            ->add(Radio::new(['Dark', 'Light'], 'Theme'))
             ->add(Select::new(['A', 'B']))
             ->withFocus(true);
         self::assertNotSame($tabBar, $tabBar->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 20))->model);
@@ -628,7 +628,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
-            ->add(Radio::new('R', ['A', 'B']))
+            ->add(Radio::new(['A', 'B'], 'R'))
             ->add(Select::new(['X', 'Y']))
             ->withFocus(true);
         $area = new Rect(0, 0, 40, 20);
@@ -641,7 +641,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('One')
-            ->add(Radio::new('R', ['A', 'B']))
+            ->add(Radio::new(['A', 'B'], 'R'))
             ->withFocus(true);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 20))->model);
     }
@@ -651,7 +651,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('One')
-            ->add(Radio::new('R', ['A', 'B']))
+            ->add(Radio::new(['A', 'B'], 'R'))
             ->withFocus(true);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Tab, shift: true), new Rect(0, 0, 40, 20))->model);
     }
@@ -670,7 +670,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('One')
-            ->add(Radio::new('Theme', ['Dark', 'Light', 'Nord']))
+            ->add(Radio::new(['Dark', 'Light', 'Nord'], 'Theme'))
             ->withFocus(true);
         self::assertNotSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 40, 20))->model);
     }
@@ -690,7 +690,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
-            ->add(Radio::new('R', ['A', 'B', 'C']))
+            ->add(Radio::new(['A', 'B', 'C'], 'R'))
             ->withFocus(true);
         $result = $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 40, 20));
         self::assertNotSame($tabBar, $result->model);
@@ -841,8 +841,8 @@ final class TabBarTest extends TestCase
     public function clickOnTabWithFocusableChildrenFocusesThem(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new('R1', ['A', 'B']))
-            ->addTab('Two')->add(Radio::new('R2', ['C', 'D']))
+            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
+            ->addTab('Two')->add(Radio::new(['C', 'D'], 'R2'))
             ->withFocus(true);
         self::assertSame(1, $tabBar->update(new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
@@ -851,8 +851,8 @@ final class TabBarTest extends TestCase
     public function clickOnTabWhenNotFocusedDoesNotFocusChildren(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new('R1', ['A', 'B']))
-            ->addTab('Two')->add(Radio::new('R2', ['C', 'D']));
+            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
+            ->addTab('Two')->add(Radio::new(['C', 'D'], 'R2'));
         self::assertSame(1, $tabBar->update(new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
@@ -1357,7 +1357,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('Theme')
-            ->add(Radio::new('Theme', ['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine']));
+            ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine'], 'Theme'));
         $frame = new Frame(30, 9);
         $tabBar->render($frame, new Rect(0, 0, 30, 9), $this->context());
         $glyphs = Theme::dark()->border->glyphs();
@@ -1384,7 +1384,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('Theme')
-            ->add(Radio::new('Theme', ['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine']));
+            ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine'], 'Theme'));
 
         $width = 30;
         $areaHeight = 9;
@@ -1655,8 +1655,8 @@ final class TabBarTest extends TestCase
     public function switchingTabsBlursOldFocusedChildren(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new('R1', ['A', 'B']))
-            ->addTab('Two')->add(Radio::new('R2', ['C', 'D']))
+            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
+            ->addTab('Two')->add(Radio::new(['C', 'D'], 'R2'))
             ->withFocus(true);
         $area = new Rect(0, 0, 40, 20);
         $moved = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -3493,7 +3493,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('One')
-            ->add(Radio::new('Theme', ['Dark', 'Light', 'Nord']))
+            ->add(Radio::new(['Dark', 'Light', 'Nord'], 'Theme'))
             ->addTab('Two')
             ->withFocus(true);
         $area = new Rect(0, 0, 40, 20);
@@ -3732,7 +3732,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
-            ->add(Radio::new('R', ['A', 'B', 'C']))
+            ->add(Radio::new(['A', 'B', 'C'], 'R'))
             ->withFocus(true);
         $area = new Rect(0, 0, 40, 20);
         $result = $tabBar->update(new KeyMsg(Key::Down), $area);
@@ -4819,7 +4819,7 @@ final class TabBarTest extends TestCase
         // Radio cursor to the last option, the cursor row would otherwise be
         // outside the visible window — the TabBar must scroll its tab content
         // so the cursor stays in view.
-        $radio = Radio::new('Theme', ['Dark', 'Light', 'Dracula', 'Solarized', 'Rosé Pine'])
+        $radio = Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rosé Pine'], 'Theme')
             ->withFocus(true);
         $tabBar = TabBar::new()
             ->addTab('Theme')
@@ -4926,7 +4926,7 @@ final class TabBarTest extends TestCase
     public function switchingTabOnASingleTabBarIsIdentity(): void
     {
         $tabBar = TabBar::new()->addTab('One')
-            ->add(Radio::new('', ['a', 'b']))
+            ->add(Radio::new(['a', 'b']))
             ->withFocus(true);
 
         $result = $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15));
@@ -4938,7 +4938,7 @@ final class TabBarTest extends TestCase
     public function clickingTheActiveTabHeaderIsIdentity(): void
     {
         $tabBar = TabBar::new()->addTab('One')
-            ->add(Radio::new('', ['a', 'b']))
+            ->add(Radio::new(['a', 'b']))
             ->withFocus(true);
 
         $result = $tabBar->update(new MouseMsg(3, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15));
