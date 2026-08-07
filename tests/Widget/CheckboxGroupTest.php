@@ -854,6 +854,52 @@ final class CheckboxGroupTest extends TestCase
         );
     }
 
+    #[Test]
+    public function readsAsHowManyOfItsBoxesAreTicked(): void
+    {
+        $group = CheckboxGroup::new(['app.log', 'deprecations', 'sys_log', 'sys_history']);
+
+        self::assertSame('0 of 4', $group->caption());
+        self::assertSame('2 of 4', $group->activated('app.log')->activated('sys_log')->caption());
+    }
+
+    #[Test]
+    public function tickingTheSameNameTwiceLeavesItClear(): void
+    {
+        $group = CheckboxGroup::new(['one', 'two']);
+
+        self::assertSame(['one'], $group->activated('one')->checkedValues());
+        self::assertSame([], $group->activated('one')->activated('one')->checkedValues());
+    }
+
+    #[Test]
+    public function namesTheOptionUnderAPointerEvenAfterTheListHasScrolled(): void
+    {
+        $group = CheckboxGroup::new(['one', 'two', 'three', 'four', 'five', 'six'])->withCursor(5);
+        $area = Rect::fromSize(20, 3);
+
+        self::assertSame(
+            'six',
+            $group->optionAt(new MouseMsg(0, $area->y + 2, MouseAction::Press, MouseButton::Left), $area),
+            'the bottom row shows the sixth option once the list has scrolled',
+        );
+        self::assertNull(
+            $group->optionAt(new MouseMsg(0, $area->bottom() + 1, MouseAction::Press, MouseButton::Left), $area),
+            'a pointer outside the drawn area addresses no option at all',
+        );
+        self::assertFalse($group->hasOption('seven'), 'an option it never offered is not one it can act on');
+    }
+
+    #[Test]
+    public function measuresItsWidestOptionPlusItsBoxAndCountsItsLabelRows(): void
+    {
+        $bare = CheckboxGroup::new(['json', 'yaml', 'ndjson']);
+
+        self::assertSame(6 + 4, $bare->measureWidth(), 'every option is drawn behind a box');
+        self::assertSame(3, $bare->measureHeight(20));
+        self::assertSame(5, CheckboxGroup::new(['json', 'yaml', 'ndjson'], 'Format')->measureHeight(20), 'a label costs a row and a spacer');
+    }
+
     private function extractRow(Frame $frame, int $row, int $columns): string
     {
         $text = '';

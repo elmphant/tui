@@ -15,10 +15,11 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
-final readonly class CheckboxGroup implements Focusable, KeybindingsAware, CursorAware
+final readonly class CheckboxGroup implements Focusable, KeybindingsAware, CursorAware, DropdownContent
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -78,7 +79,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
 
     public function cursorRow(): int
     {
-        return ($this->label !== '' ? 2 : 0) + $this->cursor;
+        return $this->rowOffset() + $this->cursor;
     }
 
     public function cursor(): int
@@ -111,6 +112,62 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         return $values;
     }
 
+    /**
+     * A count, never "all": that no box ticked means every source is a filter
+     * rule belonging to the application, not to a checkbox group.
+     */
+    public function caption(): string
+    {
+        return count($this->checkedValues()) . ' of ' . count($this->options);
+    }
+
+    public function optionAt(MouseMsg $message, Rect $area): ?string
+    {
+        if (!$message->inRect($area)) {
+            return null;
+        }
+
+        $labelRows = $this->rowOffset();
+        $row = $message->y - $area->y + $this->scrollOffset($area->height) - $labelRows;
+
+        return $this->options[$row] ?? null;
+    }
+
+    public function hasOption(string $option): bool
+    {
+        return in_array($option, $this->options, true);
+    }
+
+    public function activated(string $option): static
+    {
+        $index = array_search($option, $this->options, true);
+        if ($index === false) {
+            return $this;
+        }
+
+        return $this->isChecked($index)
+            ? $this->cloneWith(checked: array_values(array_filter(
+                $this->checked,
+                static fn (int $checked): bool => $checked !== $index,
+            )))
+            : $this->cloneWith(checked: [...$this->checked, $index]);
+    }
+
+    public function measureWidth(): int
+    {
+        $widest = 0;
+        foreach ($this->options as $option) {
+            $widest = max($widest, CharWidth::stringWidth($option));
+        }
+
+        return $widest + CharWidth::stringWidth(OptionMarks::CHECKED);
+    }
+
+    public function measureHeight(int $width): int
+    {
+        return $this->rowOffset() + count($this->options);
+    }
+
     public function isFocused(): bool
     {
         return $this->focused;
@@ -123,9 +180,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
 
     public function constraint(): Constraint
     {
-        $labelHeight = $this->label !== '' ? 2 : 0;
-
-        return Constraint::exact(count($this->options) + $labelHeight);
+        return Constraint::exact(count($this->options) + $this->rowOffset());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -202,7 +257,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
      */
     private function handleClick(MouseMsg $message, Rect $area, int $count): UpdateResult
     {
-        $labelRows = $this->label !== '' ? 2 : 0;
+        $labelRows = $this->rowOffset();
         $optionY = $message->y - $area->y + $this->scrollOffset($area->height) - $labelRows;
 
         if ($optionY >= 0 && $optionY < $count) {
@@ -214,9 +269,17 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         return new UpdateResult($this);
     }
 
+    /**
+     * Rows this widget draws above its options — its label and the spacer under it.
+     */
+    private function rowOffset(): int
+    {
+        return $this->label !== '' ? 2 : 0;
+    }
+
     private function scrollOffset(int $areaHeight): int
     {
-        $labelRows = $this->label !== '' ? 2 : 0;
+        $labelRows = $this->rowOffset();
         $totalRows = $labelRows + count($this->options);
         $cursorRow = $labelRows + $this->cursor;
 
