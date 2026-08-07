@@ -408,8 +408,8 @@ final class SelectTest extends TestCase
     {
         $select = Select::new(['json', 'yaml', 'ndjson']);
 
-        self::assertSame(6, $select->measureWidth(), 'the widest option decides the width');
-        self::assertSame(3, $select->measureHeight(20), 'and a plain list adds no rows of its own');
+        self::assertSame(6, $select->popupWidth(), 'the widest option decides the width');
+        self::assertSame(3, $select->popupHeight(20), 'and a plain list adds no rows of its own');
     }
 
     #[Test]

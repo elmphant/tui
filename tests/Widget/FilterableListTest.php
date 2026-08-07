@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -296,15 +297,15 @@ final class FilterableListTest extends TestCase
         $list = $this->commands();
         $itemRows = $this->commandItems()[0]->height(self::WIDTH);
 
-        self::assertSame(12, $list->measureWidth(), 'the widest title decides, since that is what the list draws');
+        self::assertSame(12, $list->popupWidth(), 'the widest title decides, since that is what the list draws');
         self::assertSame(
             FilterBar::HEIGHT + 1 + 3 * $itemRows,
-            $list->measureHeight(self::WIDTH),
+            $list->popupHeight(self::WIDTH),
             'the field, its gap, and a row for every match',
         );
         self::assertSame(
             FilterBar::HEIGHT + 1 + 1,
-            $this->typed($list, 'zzz')->measureHeight(self::WIDTH),
+            $this->typed($list, 'zzz')->popupHeight(self::WIDTH),
             'a query that matched nothing still leaves a row to say so',
         );
     }
@@ -342,6 +343,18 @@ final class FilterableListTest extends TestCase
 
         self::assertSame(0, $matcher->calls, 'a reader who typed only spaces has narrowed nothing');
         self::assertSame('3 of 3', $list->summary());
+    }
+
+    #[Test]
+    public function inALayoutItAsksForNoMoreRoomThanItsConstraintClaims(): void
+    {
+        $stack = Layout::vertical($this->commands());
+
+        self::assertSame(
+            FilterBar::HEIGHT + 1 + 1,
+            $stack->measureHeight(self::WIDTH),
+            'a flexible list scrolls, so it must not tell a layout it needs every row its items would fill',
+        );
     }
 
     /**

@@ -13,6 +13,6 @@ namespace Elmphant\Tui\Widget;
  * Committing is deliberately not part of this: lacking it is not a defect, it
  * is what makes content multiple choice.
  */
-interface DropdownContent extends Focusable, Captioning, MeasureHeight, MeasureWidth, PointerOptions
+interface DropdownContent extends Focusable, Captioning, PopupSizing, PointerOptions
 {
 }

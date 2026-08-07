@@ -234,7 +234,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->hasOption($option) ? $this->withPicked($option) : $this;
     }
 
-    public function measureWidth(): int
+    public function popupWidth(): int
     {
         $widest = 0;
         foreach ($this->items as $item) {
@@ -244,7 +244,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $widest;
     }
 
-    public function measureHeight(int $width): int
+    public function popupHeight(int $width): int
     {
         $rows = 0;
         foreach ($this->matchingItems() as $item) {

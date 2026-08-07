@@ -123,7 +123,7 @@ final readonly class DropdownPopup implements PointerFloating, WidgetContainer
     private function measured(Rect $anchor, Rect $viewport, int $cap): array
     {
         $width = $this->widthFor($anchor, $viewport, 0);
-        $height = self::BORDERS + $this->content->measureHeight($width - self::BORDERS);
+        $height = self::BORDERS + $this->content->popupHeight($width - self::BORDERS);
 
         if ($height <= $cap) {
             return [$width, $height];
@@ -132,14 +132,14 @@ final readonly class DropdownPopup implements PointerFloating, WidgetContainer
         $scrolling = $this->widthFor($anchor, $viewport, self::SCROLLBAR);
         $inner = max(0, $scrolling - self::BORDERS - self::SCROLLBAR);
 
-        return [$scrolling, min($cap, self::BORDERS + $this->content->measureHeight($inner))];
+        return [$scrolling, min($cap, self::BORDERS + $this->content->popupHeight($inner))];
     }
 
     private function widthFor(Rect $anchor, Rect $viewport, int $scrollbar): int
     {
         return min(
             $viewport->width,
-            max($anchor->width, $this->content->measureWidth() + self::BORDERS + $scrollbar),
+            max($anchor->width, $this->content->popupWidth() + self::BORDERS + $scrollbar),
         );
     }
 

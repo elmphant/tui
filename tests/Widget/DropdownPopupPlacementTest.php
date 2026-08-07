@@ -23,9 +23,9 @@ final class DropdownPopupPlacementTest extends TestCase
 
         $placement = $popup->placement(new Rect(0, 5, 4, 1), Rect::fromSize(80, 24));
 
-        self::assertSame($content->measureWidth() + 2, $placement->width, 'a border is all the popup adds sideways');
+        self::assertSame($content->popupWidth() + 2, $placement->width, 'a border is all the popup adds sideways');
         self::assertSame(
-            $content->measureHeight($placement->width - 2) + 2,
+            $content->popupHeight($placement->width - 2) + 2,
             $placement->height,
             'and two rows of it downwards, with no filter row of its own',
         );

@@ -895,9 +895,9 @@ final class CheckboxGroupTest extends TestCase
     {
         $bare = CheckboxGroup::new(['json', 'yaml', 'ndjson']);
 
-        self::assertSame(6 + 4, $bare->measureWidth(), 'every option is drawn behind a box');
-        self::assertSame(3, $bare->measureHeight(20));
-        self::assertSame(5, CheckboxGroup::new(['json', 'yaml', 'ndjson'], 'Format')->measureHeight(20), 'a label costs a row and a spacer');
+        self::assertSame(6 + 4, $bare->popupWidth(), 'every option is drawn behind a box');
+        self::assertSame(3, $bare->popupHeight(20));
+        self::assertSame(5, CheckboxGroup::new(['json', 'yaml', 'ndjson'], 'Format')->popupHeight(20), 'a label costs a row and a spacer');
     }
 
     private function extractRow(Frame $frame, int $row, int $columns): string

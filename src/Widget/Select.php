@@ -117,7 +117,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $index === false ? $this : $this->cloneWith(cursor: $index, selected: $index);
     }
 
-    public function measureWidth(): int
+    public function popupWidth(): int
     {
         $widest = 0;
         foreach ($this->options as $option) {
@@ -127,7 +127,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $widest;
     }
 
-    public function measureHeight(int $width): int
+    public function popupHeight(int $width): int
     {
         return $this->rowOffset() + count($this->options);
     }

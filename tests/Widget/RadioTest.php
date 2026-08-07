@@ -987,9 +987,9 @@ final class RadioTest extends TestCase
     {
         $bare = Radio::new(['json', 'yaml', 'ndjson']);
 
-        self::assertSame(6 + self::MARK_WIDTH, $bare->measureWidth(), 'every option is drawn behind a mark');
-        self::assertSame(3, $bare->measureHeight(20));
-        self::assertSame(5, Radio::new(['json', 'yaml', 'ndjson'], 'Format')->measureHeight(20), 'a label costs a row and a spacer');
+        self::assertSame(6 + self::MARK_WIDTH, $bare->popupWidth(), 'every option is drawn behind a mark');
+        self::assertSame(3, $bare->popupHeight(20));
+        self::assertSame(5, Radio::new(['json', 'yaml', 'ndjson'], 'Format')->popupHeight(20), 'a label costs a row and a spacer');
     }
 
     #[Test]
