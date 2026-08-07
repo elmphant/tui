@@ -191,7 +191,7 @@ final class FilterableListTest extends TestCase
 
         $matcher->calls = 0;
         $list->sourceIndex();
-        $list->selectedItem();
+        $list->cursorItem();
         $list->summary();
         $list->sourceIndex();
 

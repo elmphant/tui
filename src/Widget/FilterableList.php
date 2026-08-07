@@ -165,7 +165,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
         return $this->matchingIndexes()[$this->list->cursor()] ?? null;
     }
 
-    public function selectedItem(): ?ListItem
+    public function cursorItem(): ?ListItem
     {
         $index = $this->sourceIndex();
 
