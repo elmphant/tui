@@ -71,10 +71,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
-        $this->matching = $matching ?? ($matcher ?? new SubstringMatcher())->matching(
-            $field->value(),
-            array_map(static fn (ListItem $item): string => $item->filterValue(), $items),
-        );
+        $this->matching = $matching ?? self::matching($matcher, $field->value(), $items);
     }
 
     /**
@@ -345,6 +342,27 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         }
 
         $this->list->render($frame, $body, $context);
+    }
+
+    /**
+     * A query of nothing keeps everything, in the order it was handed in. That
+     * is not a matcher's answer to work out — asking one would cost a pass over
+     * the whole list on every keystroke back to empty.
+     *
+     * @param list<ListItem> $items
+     *
+     * @return list<int>
+     */
+    private static function matching(?Matcher $matcher, string $query, array $items): array
+    {
+        if (trim($query) === '') {
+            return array_keys($items);
+        }
+
+        return ($matcher ?? new SubstringMatcher())->matching(
+            $query,
+            array_map(static fn (ListItem $item): string => $item->filterValue(), $items),
+        );
     }
 
     private function belongsToTheList(KeyMsg $message): bool

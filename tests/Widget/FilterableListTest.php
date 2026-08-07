@@ -322,6 +322,28 @@ final class FilterableListTest extends TestCase
         );
     }
 
+    #[Test]
+    public function anEmptyQueryNeverConsultsTheMatcher(): void
+    {
+        $matcher = new CountingMatcher();
+
+        $list = FilterableList::new($this->commandItems())->withMatcher($matcher);
+
+        self::assertSame(0, $matcher->calls, 'everything matches an empty query, so there is nothing to ask');
+        self::assertSame('3 of 3', $list->summary(), 'and the list comes through whole');
+    }
+
+    #[Test]
+    public function aWhitespaceOnlyQueryIsTreatedAsEmptyRatherThanPassedToTheMatcher(): void
+    {
+        $matcher = new CountingMatcher();
+
+        $list = FilterableList::new($this->commandItems())->withMatcher($matcher)->withQuery('   ');
+
+        self::assertSame(0, $matcher->calls, 'a reader who typed only spaces has narrowed nothing');
+        self::assertSame('3 of 3', $list->summary());
+    }
+
     /**
      * @return list<SimpleListItem>
      */
