@@ -288,6 +288,19 @@ final class DropdownTest extends TestCase
         );
     }
 
+    #[Test]
+    public function tellsAHostWhatItsClosedRowReadsSoTheHostCanMeasureIt(): void
+    {
+        $dropdown = Dropdown::new(Select::new(['json', 'yaml'])->withEmptyCaption('none yet'));
+
+        self::assertSame('▾ none yet', $dropdown->caption());
+        self::assertStringContainsString(
+            $dropdown->caption(),
+            self::screen($dropdown)->getPlainText(),
+            'and that is exactly what it draws',
+        );
+    }
+
     /**
      * The anchor row (row 0) always redraws the current selection, open or
      * closed, so it would make a scroll-into-view assertion pass regardless

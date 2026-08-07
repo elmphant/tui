@@ -69,6 +69,15 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         return $this->content;
     }
 
+    /**
+     * What the closed row reads, marker and all, so a host laying a row out can
+     * measure it without knowing how a dropdown draws itself.
+     */
+    public function caption(): string
+    {
+        return self::MARKER . $this->content->caption();
+    }
+
     public function isOpen(): bool
     {
         return $this->open;
@@ -153,7 +162,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         $frame->putStyled(
             $area->x,
             $area->y,
-            CharWidth::truncateToWidth(self::MARKER . $this->content->caption(), $area->width),
+            CharWidth::truncateToWidth($this->caption(), $area->width),
             $style,
         );
 
