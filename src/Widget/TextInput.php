@@ -52,6 +52,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware
             Actions::DELETE_CHAR_BACKWARD => ['backspace'],
             Actions::DELETE_CHAR_FORWARD => ['delete'],
             Actions::DELETE_WORD_BACKWARD => ['ctrl+backspace'],
+            Actions::CLEAR_LINE => ['ctrl+u'],
             Actions::DELETE_WORD_FORWARD => ['ctrl+delete'],
         ]);
     }
@@ -221,6 +222,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware
             $bindings->matches($message, Actions::CURSOR_RIGHT) => $this->moveCursorRight(),
             $bindings->matches($message, Actions::LINE_START) => $this->cursor > 0 ? $this->cloneWith(cursor: 0) : null,
             $bindings->matches($message, Actions::LINE_END) => $this->cursor < self::graphemeLength($this->value) ? $this->cloneWith(cursor: self::graphemeLength($this->value)) : null,
+            $bindings->matches($message, Actions::CLEAR_LINE) => $this->value === '' ? null : $this->cloneWith(value: '', cursor: 0),
             $bindings->matches($message, Actions::DELETE_WORD_BACKWARD) => $this->deleteWordBackward(),
             $bindings->matches($message, Actions::DELETE_CHAR_BACKWARD) => $this->deleteCharBackward(),
             $bindings->matches($message, Actions::DELETE_WORD_FORWARD) => $this->deleteWordForward(),

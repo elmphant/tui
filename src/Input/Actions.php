@@ -32,5 +32,6 @@ final class Actions
     public const DELETE_CHAR_BACKWARD = 'delete_char_backward';
     public const DELETE_CHAR_FORWARD = 'delete_char_forward';
     public const DELETE_WORD_BACKWARD = 'delete_word_backward';
+    public const CLEAR_LINE = 'clear_line';
     public const DELETE_WORD_FORWARD = 'delete_word_forward';
 }

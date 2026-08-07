@@ -2137,6 +2137,17 @@ final class TextInputTest extends TestCase
         self::assertSame(5, $this->viewportOffsetOf($result), 'Ctrl+Backspace at position 0 has nothing to delete and must change nothing');
     }
 
+    #[Test]
+    public function controlUEmptiesTheFieldTheWayItDoesAtAnyPrompt(): void
+    {
+        $filled = TextInput::new()->withFocus(true)->withValue('one two')->withCursor(3);
+
+        $cleared = $filled->update(new KeyMsg('u', ctrl: true), Rect::fromSize(40, 1))->model;
+
+        self::assertSame('', $cleared->value());
+        self::assertSame(0, $cleared->cursor(), 'and the caret comes back to the start with it');
+    }
+
     protected function createFocusable(): Focusable
     {
         return TextInput::new();
