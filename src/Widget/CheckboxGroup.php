@@ -34,6 +34,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         private array $checked = [],
         private bool $focused = false,
         private string $label = '',
+        private string $emptyCaption = '',
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -66,6 +67,11 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     public function withLabel(string $label): self
     {
         return $this->cloneWith(label: $label);
+    }
+
+    public function withEmptyCaption(string $caption): self
+    {
+        return $this->cloneWith(emptyCaption: $caption);
     }
 
     public static function defaultKeybindings(): Keybindings
@@ -113,11 +119,16 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     }
 
     /**
-     * A count, never "all": that no box ticked means every source is a filter
-     * rule belonging to the application, not to a checkbox group.
+     * A count of the ticks. What no tick at all means is the host's to say: a
+     * group deciding on its own that none reads as "all" would be inventing a
+     * filter rule it knows nothing about.
      */
     public function caption(): string
     {
+        if (!$this->hasChoice() && $this->emptyCaption !== '') {
+            return $this->emptyCaption;
+        }
+
         return count($this->checkedValues()) . ' of ' . count($this->options);
     }
 

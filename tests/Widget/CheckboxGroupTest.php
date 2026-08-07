@@ -864,6 +864,15 @@ final class CheckboxGroupTest extends TestCase
     }
 
     #[Test]
+    public function readsAsTheHostsOwnWordForNothingTickedWhenItGivesOne(): void
+    {
+        $group = CheckboxGroup::new(['app.log', 'sys_log'])->withEmptyCaption('all');
+
+        self::assertSame('all', $group->caption());
+        self::assertSame('1 of 2', $group->activated('sys_log')->caption(), 'and back to counting once a box is ticked');
+    }
+
+    #[Test]
     public function tickingTheSameNameTwiceLeavesItClear(): void
     {
         $group = CheckboxGroup::new(['one', 'two']);
