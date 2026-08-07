@@ -61,4 +61,10 @@ final class AnsiTest extends TestCase
         self::assertSame("\x1b[2 q", Ansi::cursorShape(CursorShape::SteadyBlock));
         self::assertSame("\x1b[4 q", Ansi::cursorShape(CursorShape::SteadyUnderline));
     }
+
+    #[Test]
+    public function clipboardCarriesTheTextToTheTerminalBase64Encoded(): void
+    {
+        self::assertSame("\x1b]52;c;" . base64_encode('one two') . "\x07", Ansi::clipboard('one two'));
+    }
 }

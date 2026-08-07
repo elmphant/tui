@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\AfterCmd;
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\CallCmd;
 use Elmphant\Tui\Core\CancelCmd;
+use Elmphant\Tui\Core\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\ExecCmd;
@@ -37,6 +38,7 @@ use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Screen;
@@ -934,6 +936,7 @@ final class Program
 
         match (true) {
             $command instanceof QuitCmd => $this->running = false,
+            $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
             $command instanceof TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
             $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
             $command instanceof CancelCmd => $this->cancelEffect($command->id, $wrap),

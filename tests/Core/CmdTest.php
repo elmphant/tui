@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\CallCmd;
+use Elmphant\Tui\Core\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\ExecCmd;
@@ -28,6 +29,15 @@ final class CmdTest extends TestCase
         $command = Cmd::quit();
         self::assertInstanceOf(Cmd::class, $command);
         self::assertInstanceOf(QuitCmd::class, $command);
+    }
+
+    #[Test]
+    public function copyCarriesTheTextTheTerminalIsToPutOnTheClipboard(): void
+    {
+        $command = Cmd::copy('one two');
+
+        self::assertInstanceOf(ClipboardCmd::class, $command);
+        self::assertSame('one two', $command->text);
     }
 
     #[Test]

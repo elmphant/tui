@@ -14,6 +14,16 @@ abstract readonly class Cmd
         return new QuitCmd();
     }
 
+    /**
+     * Asks the terminal to put the text on the system clipboard. It travels as an
+     * escape sequence, so it crosses a container boundary or an ssh hop that a
+     * clipboard library could not.
+     */
+    public static function copy(string $text): self
+    {
+        return new ClipboardCmd($text);
+    }
+
     public static function tick(float $interval, ?EffectId $id = null): self
     {
         return new TickCmd($interval, $id);

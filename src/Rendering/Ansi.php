@@ -75,4 +75,14 @@ final class Ansi
     {
         return "\x1b[" . $shape->value . ' q';
     }
+
+    /**
+     * OSC 52. The terminal at the far end of the pipe is what puts this on the
+     * system clipboard, which is how it reaches a desktop from inside a container
+     * or an ssh session, where a clipboard library could not.
+     */
+    public static function clipboard(string $text): string
+    {
+        return "\x1b]52;c;" . base64_encode($text) . "\x07";
+    }
 }
