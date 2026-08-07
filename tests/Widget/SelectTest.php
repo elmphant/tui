@@ -378,6 +378,53 @@ final class SelectTest extends TestCase
         self::assertSame($expected, $afterCustom->$observedField());
     }
 
+    #[Test]
+    public function readsAsItsChosenOptionOnceOneIsChosen(): void
+    {
+        $select = Select::new(['json', 'yaml'])->withEmptyCaption('choose a format');
+
+        self::assertSame('choose a format', $select->caption(), 'nothing chosen yet');
+        self::assertSame('yaml', $select->activated('yaml')->caption());
+    }
+
+    #[Test]
+    public function namesTheOptionUnderAPointerAndActsOnItByName(): void
+    {
+        $select = Select::new(['json', 'yaml', 'toml']);
+        $area = Rect::fromSize(20, 3);
+
+        $named = $select->optionAt(new MouseMsg(1, $area->y + 1, MouseAction::Press, MouseButton::Left), $area);
+
+        self::assertSame('yaml', $named);
+        self::assertNull(
+            $select->optionAt(new MouseMsg(1, $area->bottom() + 1, MouseAction::Press, MouseButton::Left), $area),
+            'a pointer outside the drawn area addresses no option at all',
+        );
+        self::assertFalse($select->hasOption('xml'), 'an option it never offered is not one it can act on');
+    }
+
+    #[Test]
+    public function measuresItselfByItsWidestOptionAndOneRowEach(): void
+    {
+        $select = Select::new(['json', 'yaml', 'ndjson']);
+
+        self::assertSame(6, $select->measureWidth(), 'the widest option decides the width');
+        self::assertSame(3, $select->measureHeight(20), 'and a plain list adds no rows of its own');
+    }
+
+    #[Test]
+    public function enterOverAnEmptyListFinishesNothing(): void
+    {
+        self::assertTrue(
+            Select::new(['json'])->withFocus(true)->commits(new KeyMsg(Key::Enter)),
+            'with something under the cursor, enter is what finishes the choice',
+        );
+        self::assertFalse(
+            Select::new([])->withFocus(true)->commits(new KeyMsg(Key::Enter)),
+            'the binding matches, but there is nothing to choose, so the popup must not close',
+        );
+    }
+
     protected function createFocusable(): Focusable
     {
         return Select::new(['A', 'B']);
