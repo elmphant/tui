@@ -198,6 +198,31 @@ final class FilterableListTest extends TestCase
         self::assertSame(0, $matcher->calls, 'reading what the filter kept costs nothing');
     }
 
+    #[Test]
+    public function aChoiceSurvivesTheReaderTypingOnInTheFilter(): void
+    {
+        $picked = $this->commands()->withPicked('cache:flush');
+
+        $typed = $this->typed($picked, 'user');
+
+        self::assertSame(
+            'cache:flush',
+            $typed->pickedItem()?->title(),
+            'narrowing the list is not choosing from it, so the choice holds still',
+        );
+    }
+
+    #[Test]
+    public function theHighlightFollowsTheFilterWhileTheChoiceDoesNot(): void
+    {
+        $list = $this->commands()->withPicked('cache:flush');
+
+        $typed = $this->typed($list, 'user');
+
+        self::assertSame('user:create', $typed->cursorItem()?->title(), 'the cursor sits on the only match');
+        self::assertSame('cache:flush', $typed->pickedItem()?->title(), 'and the choice is elsewhere, which is the point');
+    }
+
     /**
      * @return list<SimpleListItem>
      */

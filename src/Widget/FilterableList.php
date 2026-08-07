@@ -64,6 +64,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
         private ListView $list,
         private ?Matcher $matcher = null,
         private string $emptyText = 'No matches',
+        private ?string $picked = null,
         ?array $matching = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -170,6 +171,30 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
         $index = $this->sourceIndex();
 
         return $index === null ? null : $this->items[$index] ?? null;
+    }
+
+    /**
+     * An item is chosen by its own filter value, so narrowing the list to
+     * nothing cannot erase a choice already made.
+     */
+    public function withPicked(?string $filterValue): self
+    {
+        return $this->cloneWith(picked: $filterValue);
+    }
+
+    public function pickedItem(): ?ListItem
+    {
+        if ($this->picked === null) {
+            return null;
+        }
+
+        foreach ($this->items as $item) {
+            if ($item->filterValue() === $this->picked) {
+                return $item;
+            }
+        }
+
+        return null;
     }
 
     public function constraint(): Constraint
