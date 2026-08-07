@@ -11,6 +11,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Widget\FilterableTable;
+use Elmphant\Tui\Widget\FilterBar;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -355,6 +356,16 @@ final class FilterableTableTest extends TestCase
         self::assertSame($all, $this->routes()->withQuery('')->matchingRows());
         self::assertSame($all, $this->routes()->withQuery('   ')->matchingRows());
         self::assertCount(3, $all);
+    }
+
+    #[Test]
+    public function drawsTheFilterFieldItIsGivenSoACaretCanSitWhereTheReaderPutIt(): void
+    {
+        $field = FilterBar::field('ajax', true)->withCursor(2);
+        $table = $this->routes()->withField($field);
+
+        self::assertSame('ajax', $table->query(), 'the field it is given is the query it filters by');
+        self::assertSame(2, $table->field()->cursor(), 'and the caret is where the field says, not at the end');
     }
 
     private function fieldIsUnderlined(FilterableTable $table): bool

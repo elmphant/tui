@@ -30,7 +30,35 @@ final readonly class FilterableTable implements Widget, MeasureHeight
         private ?int $column = null,
         private bool $focused = false,
         private ?Matcher $matcher = null,
+        private ?TextInput $field = null,
     ) {
+    }
+
+    /**
+     * The field a host is already editing, so the caret sits where the reader put
+     * it instead of being rebuilt at the end of the text on every frame.
+     */
+    public function withField(TextInput $field): self
+    {
+        return new self(
+            $this->headers,
+            $this->rows,
+            $field->value(),
+            $this->column,
+            $this->focused,
+            $this->matcher,
+            $field,
+        );
+    }
+
+    public function field(): TextInput
+    {
+        return $this->field ?? FilterBar::field($this->query, $this->focused);
+    }
+
+    public function query(): string
+    {
+        return $this->query;
     }
 
     /**
@@ -138,7 +166,7 @@ final readonly class FilterableTable implements Widget, MeasureHeight
             $frame,
             $area,
             $context,
-            FilterBar::field($this->query, $this->focused),
+            $this->field(),
             $this->summary(),
             $this->scopeLabel(),
         );
