@@ -214,6 +214,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
             Actions::PAGE_UP => ['shift+up', 'page_up'],
             Actions::PAGE_DOWN => ['shift+down', 'page_down'],
             Actions::SELECT => ['enter'],
+            Actions::CANCEL => ['esc'],
         ]);
     }
 
@@ -225,6 +226,12 @@ final readonly class FilterableList implements Focusable, KeybindingsAware
 
         if (!$message instanceof KeyMsg || !$this->isFocused()) {
             return new UpdateResult($this);
+        }
+
+        // With nothing to clear the model comes back untouched, which is how a
+        // host above learns the escape is still going spare.
+        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL) && $this->query() !== '') {
+            return new UpdateResult($this->withQuery(''));
         }
 
         $dispatcher = new ChildDispatcher($this->globalKeybindings);

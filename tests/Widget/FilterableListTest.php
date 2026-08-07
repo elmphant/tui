@@ -223,6 +223,28 @@ final class FilterableListTest extends TestCase
         self::assertSame('cache:flush', $typed->pickedItem()?->title(), 'and the choice is elsewhere, which is the point');
     }
 
+    #[Test]
+    public function escapeClearsATypedQueryAndKeepsEverythingElseWhereItWas(): void
+    {
+        $list = $this->commands()->withQuery('cache');
+
+        $cleared = $this->press($list, Key::Escape);
+
+        self::assertSame('', $cleared->query(), 'the first escape belongs to the query');
+        self::assertNotSame($list, $cleared, 'and a changed model is how it says it took the key');
+    }
+
+    #[Test]
+    public function escapeOverAnEmptyQueryIsLeftForWhoeverIsAbove(): void
+    {
+        $list = $this->commands();
+
+        $answered = $list->update(new KeyMsg(Key::Escape), $this->area());
+
+        self::assertSame($list, $answered->model, 'nothing to clear, so nothing is claimed');
+        self::assertNull($answered->command);
+    }
+
     /**
      * @return list<SimpleListItem>
      */
