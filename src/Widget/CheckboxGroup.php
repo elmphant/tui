@@ -213,12 +213,12 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
             $isCursor = $index === $this->cursor && $this->focused;
             $isChecked = $this->isChecked($index);
 
-            $mark = $isChecked ? '[x] ' : '[ ] ';
+            $mark = $isChecked ? OptionMarks::CHECKED : OptionMarks::UNCHECKED;
 
             $style = $theme->optionStyle($isCursor, $isChecked, $this->focused);
 
             $frame->putStyled($area->x, $y, $mark, $style);
-            $frame->putStyled($area->x + 4, $y, $option, $style);
+            $frame->putStyled($area->x + CharWidth::stringWidth($mark), $y, $option, $style);
             ++$y;
         }
     }
