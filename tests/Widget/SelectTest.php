@@ -83,6 +83,18 @@ final class SelectTest extends TestCase
     }
 
     #[Test]
+    public function aClearableSelectLetsThePickedOptionBePutBackDown(): void
+    {
+        $select = Select::new(['A', 'B', 'C'])->clearable()->withSelected(0)->withFocus(true);
+        $area = Rect::fromSize(40, 10);
+
+        $cleared = $select->update(new KeyMsg(Key::Enter), $area)->model;
+
+        self::assertSame(-1, $cleared->selected(), 'pressing the one already picked puts it back down');
+        self::assertNull($cleared->selectedValue());
+    }
+
+    #[Test]
     public function rendersCursorStyleWhenFocused(): void
     {
         $select = Select::new(['Alpha', 'Beta'])->withFocus(true);

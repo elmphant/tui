@@ -39,6 +39,7 @@ final readonly class RadioRow implements OptionRow
         private bool $focused = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private bool $clearable = false,
     ) {
     }
 
@@ -48,6 +49,19 @@ final readonly class RadioRow implements OptionRow
     public static function new(array $options): self
     {
         return new self(options: $options);
+    }
+
+    /**
+     * For a choice that may also be none: pressing the option already picked puts
+     * it back down rather than picking it again.
+     *
+     * Off by default, because a row that must answer should not be emptiable by a
+     * stray keypress. Nothing picked is a state this row can already hold and draw
+     * — this is how a reader reaches it.
+     */
+    public function clearable(): self
+    {
+        return $this->cloneWith(clearable: true);
     }
 
     public static function defaultKeybindings(): Keybindings
@@ -166,9 +180,18 @@ final readonly class RadioRow implements OptionRow
         return match (true) {
             $bindings->matches($message, Actions::CURSOR_LEFT) => new UpdateResult($this->cloneWith(cursor: ($this->cursor - 1 + $count) % $count)),
             $bindings->matches($message, Actions::CURSOR_RIGHT) => new UpdateResult($this->cloneWith(cursor: ($this->cursor + 1) % $count)),
-            $bindings->matches($message, Actions::SELECT) => new UpdateResult($this->cloneWith(selected: $this->cursor)),
+            $bindings->matches($message, Actions::SELECT) => new UpdateResult($this->cloneWith(selected: $this->picking($this->cursor))),
             default => new UpdateResult($this),
         };
+    }
+
+    /**
+     * What a press lands on: the option it went to, or nothing at all when that is
+     * the one already picked and this row may be cleared.
+     */
+    private function picking(int $index): int
+    {
+        return $this->clearable && $this->selected === $index ? -1 : $index;
     }
 
     /**
@@ -182,7 +205,7 @@ final readonly class RadioRow implements OptionRow
             return new UpdateResult($this);
         }
 
-        return new UpdateResult($this->cloneWith(selected: $index, cursor: $index));
+        return new UpdateResult($this->cloneWith(selected: $this->picking($index), cursor: $index));
     }
 
     /**

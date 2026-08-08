@@ -252,6 +252,29 @@ final class RadioTest extends TestCase
         self::assertSame(1, $result->model->selected());
     }
 
+    #[Test]
+    public function aClearableRadioLetsThePickedOptionBePutBackDown(): void
+    {
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->clearable()->withSelected(0)->withFocus(true);
+        $area = Rect::fromSize(40, 10);
+
+        $cleared = $radio->update(new KeyMsg(' '), $area)->model;
+
+        self::assertSame(-1, $cleared->selected(), 'pressing the one already picked puts it back down');
+    }
+
+    #[Test]
+    public function clickingTheOptionAClearableRadioHoldsPutsItBackDown(): void
+    {
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->clearable()->withSelected(1);
+        $area = new Rect(0, 5, 40, 8);
+
+        $cleared = $radio->update(new MouseMsg(5, 8, MouseAction::Press, MouseButton::Left), $area)->model;
+
+        self::assertSame(-1, $cleared->selected());
+        self::assertSame(1, $cleared->cursor(), 'the cursor still rests where the pointer left it');
+    }
+
     /**
      * L93: Minus — click localY uses area.y offset for correct option mapping.
      */

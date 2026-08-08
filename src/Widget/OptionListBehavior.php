@@ -48,6 +48,19 @@ trait OptionListBehavior
     }
 
     /**
+     * For a choice that may also be none: pressing the option already picked puts
+     * it back down rather than picking it again.
+     *
+     * Off by default, because a list that must answer should not be emptiable by a
+     * stray keypress. Nothing picked is a state these widgets can already hold and
+     * draw — this is how a reader reaches it.
+     */
+    public function clearable(): static
+    {
+        return $this->cloneWith(clearable: true);
+    }
+
+    /**
      * Rows this widget draws above its options — a Radio's label and spacer.
      */
     protected function rowOffset(): int
@@ -76,7 +89,10 @@ trait OptionListBehavior
         $optionIndex = $clickedRow - $this->rowOffset();
 
         if ($optionIndex >= 0 && $optionIndex < $count) {
-            return new UpdateResult($this->cloneWith(cursor: $optionIndex, selected: $optionIndex));
+            return new UpdateResult($this->cloneWith(
+                cursor: $optionIndex,
+                selected: $this->picking($optionIndex),
+            ));
         }
 
         return new UpdateResult($this);
@@ -115,10 +131,19 @@ trait OptionListBehavior
         $updated = match (true) {
             $bindings->matches($message, Actions::FOCUS_PREV) => $this->cursor > 0 ? $this->cloneWith(cursor: $this->cursor - 1) : null,
             $bindings->matches($message, Actions::FOCUS_NEXT) => $this->cursor < $count - 1 ? $this->cloneWith(cursor: $this->cursor + 1) : null,
-            $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->cursor),
+            $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->picking($this->cursor)),
             default => null,
         };
 
         return new UpdateResult($updated ?? $this);
+    }
+
+    /**
+     * What a press lands on: the option it went to, or nothing at all when that is
+     * the one already picked and this list may be cleared.
+     */
+    private function picking(int $index): int
+    {
+        return $this->clearable && $this->selected === $index ? -1 : $index;
     }
 }

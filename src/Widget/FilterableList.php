@@ -70,6 +70,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         ?array $matching = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private bool $clearable = false,
     ) {
         $this->matching = $matching ?? self::matching($matcher, $field->value(), $items);
     }
@@ -231,7 +232,24 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
     public function activated(string $option): static
     {
-        return $this->hasOption($option) ? $this->withPicked($option) : $this;
+        if (!$this->hasOption($option)) {
+            return $this;
+        }
+
+        return $this->withPicked($this->clearable && $this->picked === $option ? null : $option);
+    }
+
+    /**
+     * For a choice that may also be none: choosing the row already picked puts it
+     * back down rather than picking it again.
+     *
+     * Off by default, because a list that must answer should not be emptiable by a
+     * stray press. Nothing picked is a state this list can already hold and name
+     * through its empty caption — this is how a reader reaches it.
+     */
+    public function clearable(): self
+    {
+        return $this->cloneWith(clearable: true);
     }
 
     public function popupWidth(): int
@@ -300,6 +318,14 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         // host above learns the escape is still going spare.
         if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL) && $this->query() !== '') {
             return new UpdateResult($this->withQuery(''));
+        }
+
+        // Choosing is the list's own move, but the choice is this widget's to keep:
+        // the rows are whatever the query left, so only a filter value survives it.
+        if ($this->effectiveKeybindings()->matches($message, Actions::SELECT)) {
+            $cursor = $this->cursorItem();
+
+            return new UpdateResult($cursor === null ? $this : $this->activated($cursor->filterValue()));
         }
 
         $dispatcher = new ChildDispatcher($this->globalKeybindings);

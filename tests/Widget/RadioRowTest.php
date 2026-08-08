@@ -61,6 +61,34 @@ final class RadioRowTest extends TestCase
     }
 
     #[Test]
+    public function aClearableRowLetsThePickedOptionBePutBackDown(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->clearable()->withSelected(0)->withFocus(true);
+
+        $cleared = $row->update(new KeyMsg(' '), $area)->model;
+
+        self::assertInstanceOf(RadioRow::class, $cleared);
+        self::assertSame(-1, $cleared->selected(), 'pressing the one already picked puts it back down');
+        self::assertNull($cleared->selectedValue());
+    }
+
+    #[Test]
+    public function clickingTheOptionAClearableRowHoldsPutsItBackDown(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->clearable()->withSelected(0);
+
+        $cleared = $row->update(
+            new MouseMsg(1, 0, MouseAction::Press, MouseButton::Left),
+            $area,
+        )->model;
+
+        self::assertInstanceOf(RadioRow::class, $cleared);
+        self::assertSame(-1, $cleared->selected());
+    }
+
+    #[Test]
     public function namesTheOptionItHasPickedOrNothingWhileNoneIsPicked(): void
     {
         $row = RadioRow::new(['system', 'pages']);

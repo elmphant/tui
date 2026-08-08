@@ -311,6 +311,28 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function chosingWithTheKeyboardRecordsTheRowUnderTheCursor(): void
+    {
+        $list = $this->send($this->commands(), new KeyMsg(Key::Down));
+
+        $picked = $this->send($list, new KeyMsg(Key::Enter));
+
+        self::assertSame('cache:flush', $picked->pickedItem()?->filterValue());
+    }
+
+    #[Test]
+    public function aClearableListLetsThePickedRowBePutBackDown(): void
+    {
+        $list = $this->commands()->clearable()->withPicked('cache:warmup');
+
+        $cleared = $list->activated('cache:warmup');
+        $moved = $list->activated('user:create');
+
+        self::assertNull($cleared->pickedItem(), 'choosing the row it already holds puts it back down');
+        self::assertSame('user:create', $moved->pickedItem()?->filterValue(), 'any other row still picks');
+    }
+
+    #[Test]
     public function enterOverAQueryThatMatchedNothingFinishesNothing(): void
     {
         self::assertTrue(
