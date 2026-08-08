@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout;
 
 use Elmphant\Tui\Layout\Constraint;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -99,5 +100,14 @@ final class ConstraintTest extends TestCase
     {
         self::assertNotSame(Constraint::exact(2), Constraint::exact(2));
         self::assertNotSame(Constraint::flex(2), Constraint::flex(2));
+    }
+
+    #[Test]
+    public function aCeilingBelowTheFloorIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Constraint max must be greater than or equal to min');
+
+        new Constraint(min: 8, max: 2);
     }
 }

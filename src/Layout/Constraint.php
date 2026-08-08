@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use InvalidArgumentException;
+
 final readonly class Constraint
 {
     public function __construct(
@@ -11,6 +13,9 @@ final readonly class Constraint
         public int $max = PHP_INT_MAX,
         public int $flex = 0,
     ) {
+        if ($max < $min) {
+            throw new InvalidArgumentException(sprintf('Constraint max must be greater than or equal to min, got max %d and min %d', $max, $min));
+        }
     }
 
     public static function exact(int $size): self
