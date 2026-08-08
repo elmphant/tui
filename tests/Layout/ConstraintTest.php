@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Layout;
 
 use Elmphant\Tui\Layout\Constraint;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -109,5 +110,24 @@ final class ConstraintTest extends TestCase
         $this->expectExceptionMessage('Constraint max must be greater than or equal to min');
 
         new Constraint(min: 8, max: 2);
+    }
+
+    /**
+     * @return iterable<string, array{int, int}>
+     */
+    public static function negativeBoundsProvider(): iterable
+    {
+        yield 'floor below zero' => [-1, PHP_INT_MAX];
+        yield 'ceiling below zero' => [-5, -1];
+    }
+
+    #[Test]
+    #[DataProvider('negativeBoundsProvider')]
+    public function aBoundBelowZeroIsRefused(int $min, int $max): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Constraint bounds must be non-negative');
+
+        new Constraint(min: $min, max: $max);
     }
 }

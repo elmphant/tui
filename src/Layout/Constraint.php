@@ -13,6 +13,9 @@ final readonly class Constraint
         public int $max = PHP_INT_MAX,
         public int $flex = 0,
     ) {
+        if ($min < 0 || $max < 0) {
+            throw new InvalidArgumentException(sprintf('Constraint bounds must be non-negative, got min %d and max %d', $min, $max));
+        }
         if ($max < $min) {
             throw new InvalidArgumentException(sprintf('Constraint max must be greater than or equal to min, got max %d and min %d', $max, $min));
         }
