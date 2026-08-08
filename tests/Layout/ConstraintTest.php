@@ -130,4 +130,13 @@ final class ConstraintTest extends TestCase
 
         new Constraint(min: $min, max: $max);
     }
+
+    #[Test]
+    public function aGrowthWeightBelowZeroIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Constraint flex weight must be non-negative');
+
+        new Constraint(flex: -1);
+    }
 }

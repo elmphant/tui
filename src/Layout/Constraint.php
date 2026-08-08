@@ -19,6 +19,9 @@ final readonly class Constraint
         if ($max < $min) {
             throw new InvalidArgumentException(sprintf('Constraint max must be greater than or equal to min, got max %d and min %d', $max, $min));
         }
+        if ($flex < 0) {
+            throw new InvalidArgumentException(sprintf('Constraint flex weight must be non-negative, got %d', $flex));
+        }
     }
 
     public static function exact(int $size): self
