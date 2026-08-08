@@ -253,6 +253,19 @@ final class RadioTest extends TestCase
     }
 
     #[Test]
+    public function aWrappingRadioCarriesTheCursorRoundEitherEnd(): void
+    {
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->wrapping()->withFocus(true);
+        $area = Rect::fromSize(40, 10);
+
+        $up = $radio->update(new KeyMsg(Key::Up), $area)->model;
+        self::assertSame(2, $up->cursor(), 'off the near end is the far one');
+
+        $down = $radio->withCursor(2)->update(new KeyMsg(Key::Down), $area)->model;
+        self::assertSame(0, $down->cursor(), 'and off the far end is the near one');
+    }
+
+    #[Test]
     public function aClearableRadioLetsThePickedOptionBePutBackDown(): void
     {
         $radio = Radio::new(['A', 'B', 'C'], 'Label')->clearable()->withSelected(0)->withFocus(true);

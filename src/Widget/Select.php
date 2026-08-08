@@ -36,6 +36,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
+        private bool $wrapping = false,
     ) {
     }
 

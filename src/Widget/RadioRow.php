@@ -40,6 +40,7 @@ final readonly class RadioRow implements OptionRow
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
+        private bool $wrapping = true,
     ) {
     }
 
@@ -62,6 +63,17 @@ final readonly class RadioRow implements OptionRow
     public function clearable(): self
     {
         return $this->cloneWith(clearable: true);
+    }
+
+    /**
+     * A row comes round by default: it is short enough that walking off one end
+     * onto the other is quicker than turning back. Say `wrapping(false)` for a row
+     * whose ends should hold — a form field, where an arrow held down would
+     * otherwise cycle the value forever.
+     */
+    public function wrapping(bool $wrapping = true): self
+    {
+        return $this->cloneWith(wrapping: $wrapping);
     }
 
     public static function defaultKeybindings(): Keybindings
@@ -178,11 +190,23 @@ final readonly class RadioRow implements OptionRow
         $bindings = $this->effectiveKeybindings();
 
         return match (true) {
-            $bindings->matches($message, Actions::CURSOR_LEFT) => new UpdateResult($this->cloneWith(cursor: ($this->cursor - 1 + $count) % $count)),
-            $bindings->matches($message, Actions::CURSOR_RIGHT) => new UpdateResult($this->cloneWith(cursor: ($this->cursor + 1) % $count)),
+            $bindings->matches($message, Actions::CURSOR_LEFT) => new UpdateResult($this->cloneWith(cursor: $this->walked(-1, $count))),
+            $bindings->matches($message, Actions::CURSOR_RIGHT) => new UpdateResult($this->cloneWith(cursor: $this->walked(1, $count))),
             $bindings->matches($message, Actions::SELECT) => new UpdateResult($this->cloneWith(selected: $this->picking($this->cursor))),
             default => new UpdateResult($this),
         };
+    }
+
+    /**
+     * Where an arrow leaves the cursor. It rests at either end, which is what a
+     * row of two or three marks wants: circling back past the last one reads as a
+     * jump rather than a step.
+     */
+    private function walked(int $step, int $count): int
+    {
+        return $this->wrapping
+            ? ($this->cursor + $step + $count) % $count
+            : max(0, min($count - 1, $this->cursor + $step));
     }
 
     /**

@@ -61,6 +61,16 @@ trait OptionListBehavior
     }
 
     /**
+     * A list rests at its ends by default: it runs down the screen and may be long
+     * enough that coming round reads as a jump. Say `wrapping()` for one short
+     * enough that it reads as a step.
+     */
+    public function wrapping(bool $wrapping = true): static
+    {
+        return $this->cloneWith(wrapping: $wrapping);
+    }
+
+    /**
      * Rows this widget draws above its options — a Radio's label and spacer.
      */
     protected function rowOffset(): int
@@ -129,13 +139,30 @@ trait OptionListBehavior
         $bindings = $this->effectiveKeybindings();
 
         $updated = match (true) {
-            $bindings->matches($message, Actions::FOCUS_PREV) => $this->cursor > 0 ? $this->cloneWith(cursor: $this->cursor - 1) : null,
-            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->cursor < $count - 1 ? $this->cloneWith(cursor: $this->cursor + 1) : null,
+            $bindings->matches($message, Actions::FOCUS_PREV) => $this->walked(-1, $count),
+            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->walked(1, $count),
             $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->picking($this->cursor)),
             default => null,
         };
 
         return new UpdateResult($updated ?? $this);
+    }
+
+    /**
+     * Where an arrow leaves the cursor, or null when it has nowhere to go and the
+     * message is still going spare.
+     */
+    private function walked(int $step, int $count): ?static
+    {
+        if ($count === 0) {
+            return null;
+        }
+
+        $moved = $this->wrapping
+            ? ($this->cursor + $step + $count) % $count
+            : max(0, min($count - 1, $this->cursor + $step));
+
+        return $moved === $this->cursor ? null : $this->cloneWith(cursor: $moved);
     }
 
     /**

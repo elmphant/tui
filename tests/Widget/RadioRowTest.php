@@ -61,6 +61,21 @@ final class RadioRowTest extends TestCase
     }
 
     #[Test]
+    public function aRowToldNotToWrapRestsAtEitherEndInstead(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->wrapping(false)->withFocus(true);
+
+        $left = $row->update(new KeyMsg(Key::Left), $area)->model;
+        self::assertInstanceOf(RadioRow::class, $left);
+        self::assertSame(0, $left->cursor(), 'the near end holds');
+
+        $right = $row->withCursor(2)->update(new KeyMsg(Key::Right), $area)->model;
+        self::assertInstanceOf(RadioRow::class, $right);
+        self::assertSame(2, $right->cursor(), 'and so does the far one');
+    }
+
+    #[Test]
     public function aClearableRowLetsThePickedOptionBePutBackDown(): void
     {
         $area = new Rect(0, 0, 40, 1);
