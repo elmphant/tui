@@ -909,6 +909,23 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame(5, CheckboxGroup::new(['json', 'yaml', 'ndjson'], 'Format')->popupHeight(20), 'a label costs a row and a spacer');
     }
 
+    #[Test]
+    public function theWheelWalksTheCursorTheWayItDoesInAnyOtherOptionList(): void
+    {
+        $group = CheckboxGroup::new(['one', 'two', 'three', 'four'])->withFocus(true);
+        $area = Rect::fromSize(20, 4);
+
+        $wheeled = $group->update(new MouseMsg(0, 0, MouseAction::WheelDown, MouseButton::None, 2), $area)->model;
+
+        self::assertInstanceOf(CheckboxGroup::class, $wheeled);
+        self::assertSame(2, $wheeled->cursor(), 'two notches down is two options down');
+        self::assertSame(
+            ['three'],
+            $wheeled->update(new KeyMsg(' '), $area)->model->checkedValues(),
+            'and the box the wheel left the cursor on is the one space ticks',
+        );
+    }
+
     private function extractRow(Frame $frame, int $row, int $columns): string
     {
         $text = '';
