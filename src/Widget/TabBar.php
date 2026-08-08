@@ -557,12 +557,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
     private function contentArea(Rect $area): Rect
     {
-        $inner = new Rect(
-            $area->x + 1,
-            $area->y + self::TAB_STRIP_HEIGHT,
-            $area->width - 2,
-            $area->height - self::TAB_STRIP_HEIGHT - 1,
-        );
+        $inner = $area->shrink(self::TAB_STRIP_HEIGHT, 1, 1, 1);
 
         return $this->padding !== null ? $this->padding->applyTo($inner) : $inner;
     }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout;
 
 use Elmphant\Tui\Layout\Rect;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -18,6 +20,25 @@ final class RectTest extends TestCase
         self::assertSame(0, $rect->y);
         self::assertSame(80, $rect->width);
         self::assertSame(24, $rect->height);
+    }
+
+    /**
+     * @return iterable<string, array{int, int}>
+     */
+    public static function negativeExtentProvider(): iterable
+    {
+        yield 'negative width' => [-1, 10];
+        yield 'negative height' => [10, -1];
+    }
+
+    #[Test]
+    #[DataProvider('negativeExtentProvider')]
+    public function anExtentBelowZeroIsRefused(int $width, int $height): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Rect extent must be non-negative');
+
+        new Rect(0, 0, $width, $height);
     }
 
     #[Test]

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use InvalidArgumentException;
+
 final readonly class Rect
 {
     public function __construct(
@@ -12,6 +14,9 @@ final readonly class Rect
         public int $width,
         public int $height,
     ) {
+        if ($width < 0 || $height < 0) {
+            throw new InvalidArgumentException(sprintf('Rect extent must be non-negative, got width %d and height %d', $width, $height));
+        }
     }
 
     public static function fromSize(int $width, int $height): self

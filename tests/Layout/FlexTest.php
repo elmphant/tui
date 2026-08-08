@@ -163,11 +163,8 @@ final class FlexTest extends TestCase
     }
 
     #[Test]
-    public function negativeAndCrossAxisStarvedAreasCollapseToSafeRectangles(): void
+    public function crossAxisStarvedAreasCollapseToSafeRectangles(): void
     {
-        $single = Flex::row()->add(Text::new('single'), basis: 2);
-        self::assertEquals(new Rect(3, 4, 0, 0), $single->computeChildRects(new Rect(3, 4, -2, -3))[0][1]);
-
         $wrapped = Flex::row()
             ->withWrap()
             ->withGap(5)

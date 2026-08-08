@@ -466,28 +466,6 @@ final class ListViewTest extends TestCase
         self::assertSame(' ', $frame->characters[0]);
     }
 
-    // --- L104: LessThanOrEqualTo — negative width/height should also skip render ---
-
-    #[Test]
-    public function renderDoesNothingWithNegativeWidth(): void
-    {
-        $list = ListView::fromStrings(['A'])->withFocus(true);
-        $frame = new Frame(20, 5);
-        $area = new Rect(0, 0, -1, 5);
-        $list->render($frame, $area, new RenderContext(Theme::dark()));
-        self::assertSame(' ', $frame->characters[0]);
-    }
-
-    #[Test]
-    public function renderDoesNothingWithNegativeHeight(): void
-    {
-        $list = ListView::fromStrings(['A'])->withFocus(true);
-        $frame = new Frame(20, 5);
-        $area = new Rect(0, 0, 20, -1);
-        $list->render($frame, $area, new RenderContext(Theme::dark()));
-        self::assertSame(' ', $frame->characters[0]);
-    }
-
     // --- L118-127: renderY >= area->bottom() break, cursor identity, renderY += height ---
 
     #[Test]

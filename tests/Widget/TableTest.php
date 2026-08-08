@@ -697,24 +697,6 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function renderWithNegativeWidthDoesNothing(): void
-    {
-        $table = $this->createTable();
-        $frame = new Frame(20, 5);
-        $table->render($frame, new Rect(0, 0, -1, 5), new RenderContext(Theme::dark()));
-        self::assertSame(' ', $frame->characters[0]);
-    }
-
-    #[Test]
-    public function renderWithNegativeHeightDoesNothing(): void
-    {
-        $table = $this->createTable();
-        $frame = new Frame(20, 5);
-        $table->render($frame, new Rect(0, 0, 20, -1), new RenderContext(Theme::dark()));
-        self::assertSame(' ', $frame->characters[0]);
-    }
-
-    #[Test]
     public function renderWithWidthOneRendersContent(): void
     {
         $table = Table::new(
