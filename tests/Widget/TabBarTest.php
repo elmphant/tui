@@ -1872,33 +1872,6 @@ final class TabBarTest extends TestCase
         self::assertSame('B', $frame->characters[8 * 20 + 1]);
     }
 
-    // ── L647: totalFlex += max(1, flex) ──
-
-    #[Test]
-    public function resolveFlexZeroCountsAsOneInTotalFlex(): void
-    {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::flex(0)))
-            ->add($this->createMarkerWidget('B', Constraint::flex(2)));
-        $frame = new Frame(20, 13);
-        $tabBar->render($frame, new Rect(0, 0, 20, 13), $this->context());
-        self::assertSame('A', $frame->characters[3 * 20 + 1]);
-        self::assertSame('B', $frame->characters[6 * 20 + 1]);
-    }
-
-    #[Test]
-    public function resolveFlexWeightZeroEquivalentToOne(): void
-    {
-        $tabBar1 = TabBar::new()->addTab('T')->add($this->createMarkerWidget('A', Constraint::flex(0)));
-        $tabBar2 = TabBar::new()->addTab('T')->add($this->createMarkerWidget('A', Constraint::flex(1)));
-        $area = new Rect(0, 0, 20, 10);
-        $buffer1 = new Frame(20, 10);
-        $buffer2 = new Frame(20, 10);
-        $tabBar1->render($buffer1, $area, $this->context());
-        $tabBar2->render($buffer2, $area, $this->context());
-        self::assertSame($buffer1->characters, $buffer2->characters);
-    }
-
     // ── L651: remaining = max(0, availableHeight - fixedTotal) ──
 
     #[Test]

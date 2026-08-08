@@ -439,41 +439,56 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             return [];
         }
 
-        $widths = array_fill(0, $columnCount, 0);
-        $remaining = $totalWidth;
-        $totalFlex = 0;
+        $constraints = [];
+        foreach ($this->columns as $column) {
+            $constraints[] = $column->constraint();
+        }
 
-        foreach ($this->columns as $index => $column) {
-            $constraint = $column->constraint();
-            if ($constraint->min === $constraint->max) {
-                $widths[$index] = $constraint->min;
-                $remaining -= $constraint->min;
-            } else {
-                $totalFlex += max(1, $constraint->flex);
+        return self::allocate($constraints, $totalWidth);
+    }
+
+    /**
+     * Every floor is reserved first, the rest is shared by weight and clamped
+     * to each ceiling, and the cells integer division leaves over go to the
+     * rearmost columns that still have headroom.
+     *
+     * @param list<Constraint> $constraints
+     *
+     * @return list<int>
+     */
+    private static function allocate(array $constraints, int $available): array
+    {
+        $reserved = 0;
+        $totalWeight = 0;
+
+        foreach ($constraints as $constraint) {
+            $reserved += $constraint->min;
+            $totalWeight += $constraint->flex;
+        }
+
+        $remaining = max(0, $available - $reserved);
+        $sizes = [];
+        $granted = 0;
+
+        foreach ($constraints as $index => $constraint) {
+            $size = $constraint->min;
+            if ($constraint->flex > 0 && $totalWeight > 0) {
+                $size = min($constraint->min + intdiv($remaining * $constraint->flex, $totalWeight), $constraint->max);
+                $granted += $size - $constraint->min;
+            }
+            $sizes[$index] = $size;
+        }
+
+        $leftover = $remaining - $granted;
+        foreach (array_reverse(array_keys($sizes)) as $index) {
+            if ($constraints[$index]->flex > 0) {
+                $grant = min($leftover, $constraints[$index]->max - $sizes[$index]);
+                $sizes[$index] += $grant;
+                $leftover -= $grant;
             }
         }
 
-        if ($totalFlex > 0 && $remaining > 0) {
-            $lastFlexIndex = -1;
-            $flexUsed = 0;
-
-            foreach ($this->columns as $index => $column) {
-                $constraint = $column->constraint();
-                if ($constraint->min !== $constraint->max) {
-                    $flex = max(1, $constraint->flex);
-                    $size = (int)floor($remaining * $flex / $totalFlex);
-                    $widths[$index] = $size;
-                    $flexUsed += $size;
-                    $lastFlexIndex = $index;
-                }
-            }
-
-            if ($lastFlexIndex >= 0 && $flexUsed < $remaining) {
-                $widths[$lastFlexIndex] += $remaining - $flexUsed;
-            }
-        }
-
-        return array_values($widths);
+        return array_values($sizes);
     }
 
     /**

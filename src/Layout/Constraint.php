@@ -58,6 +58,10 @@ final readonly class Constraint
 
     public static function flex(int $weight = 1): self
     {
+        if ($weight < 1) {
+            throw new InvalidArgumentException(sprintf('Constraint::flex() needs a weight above zero, got %d; a size that does not grow is exact() or min()', $weight));
+        }
+
         return $weight === 1
             ? self::flexOne()
             : new self(flex: $weight);

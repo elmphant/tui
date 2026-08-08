@@ -414,6 +414,31 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function aColumnFloorIsReservedBeforeTheFlexColumnsShare(): void
+    {
+        $frame = new Frame(21, 3);
+        $table = Table::new(
+            [
+                Column::new('A', Constraint::min(10)),
+                Column::new('B', Constraint::flex(1)),
+                Column::new('C', Constraint::flex(1)),
+            ],
+            [['one', 'two', 'three']],
+        );
+
+        $table->render($frame, new Rect(0, 0, 21, 3), new RenderContext(Theme::dark()));
+
+        $header = '';
+        for ($column = 0; $column < 21; ++$column) {
+            $header .= $frame->characters[$column];
+        }
+
+        self::assertSame('A', $header[0]);
+        self::assertSame('B', $header[10], 'The floor is reserved before anything is shared');
+        self::assertSame('C', $header[15], 'The eleven cells left over split five and six');
+    }
+
+    #[Test]
     public function flexColumnsShareWhatTheFixedColumnsLeaveAndTheLastTakesTheRemainder(): void
     {
         $frame = new Frame(41, 3);
@@ -1320,24 +1345,6 @@ final class TableTest extends TestCase
         self::assertSame('4', $frame->characters[20 + 3]);
         self::assertSame('5', $frame->characters[20 + 4]);
         self::assertSame('F', $frame->characters[20 + 5]);
-    }
-
-    #[Test]
-    public function flexWithZeroWeightDefaultsToOne(): void
-    {
-        $table = Table::new(
-            [Column::new('A', Constraint::flex(0)), Column::new('B', Constraint::flex(0))],
-            [['AAAA', 'BBBB']],
-        );
-        $frame = new Frame(20, 3);
-        $table->render($frame, Rect::fromSize(20, 3), new RenderContext(Theme::dark()));
-
-        $dataRow = '';
-        for ($column = 0; $column < 20; ++$column) {
-            $dataRow .= $frame->characters[20 + $column];
-        }
-        self::assertStringContainsString('A', $dataRow);
-        self::assertStringContainsString('B', $dataRow);
     }
 
     #[Test]

@@ -132,6 +132,15 @@ final class ConstraintTest extends TestCase
     }
 
     #[Test]
+    public function growingOnNoWeightIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Constraint::flex() needs a weight above zero');
+
+        Constraint::flex(0);
+    }
+
+    #[Test]
     public function aGrowthWeightBelowZeroIsRefused(): void
     {
         $this->expectException(InvalidArgumentException::class);

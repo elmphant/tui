@@ -75,7 +75,7 @@ final class VerticalStackTest extends TestCase
         $calls = new VerticalStackCalls();
         $children = [
             new CountingStackWidget(Constraint::exact(4), $calls),
-            new CountingStackWidget(Constraint::flex(0), $calls),
+            new CountingStackWidget(Constraint::flex(), $calls),
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
