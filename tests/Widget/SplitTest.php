@@ -213,14 +213,6 @@ final class SplitTest extends TestCase
     }
 
     #[Test]
-    public function sharesAddingUpToNothingStillFillTheAxis(): void
-    {
-        $split = Split::row(new SplitState([0, 0]), Text::new('a'), Text::new('b'));
-
-        self::assertSame([1, 9], $this->paneWidths($split, Rect::fromSize(11, 4)));
-    }
-
-    #[Test]
     public function panesAndMinimumsAreIndexedByPositionWhateverTheCallerSpread(): void
     {
         $area = Rect::fromSize(21, 10);

@@ -133,8 +133,8 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         }
 
         $isRow = $this->direction === Direction::Horizontal;
-        $mainSize = max(0, $isRow ? $area->width : $area->height);
-        $crossSize = max(0, $isRow ? $area->height : $area->width);
+        $mainSize = $isRow ? $area->width : $area->height;
+        $crossSize = $isRow ? $area->height : $area->width;
         $lines = $this->packLines($mainSize);
         $lineGap = $this->effectiveGap(count($lines), $crossSize);
         $crossAvailable = $crossSize - $lineGap * (count($lines) - 1);

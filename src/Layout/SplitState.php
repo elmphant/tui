@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use InvalidArgumentException;
+
 /**
  * How a Split divides its area, as permille of the axis.
  */
@@ -12,13 +14,16 @@ final readonly class SplitState
     public const TOTAL = 1000;
 
     /**
-     * @param list<int> $shares   one per pane, summing to TOTAL
+     * @param list<int> $shares   one weight per pane, divided in proportion
      * @param ?int      $dragging the divider being dragged, if any
      */
     public function __construct(
         public array $shares,
         public ?int $dragging = null,
     ) {
+        if ($shares === [] || min($shares) < 0 || array_sum($shares) < 1) {
+            throw new InvalidArgumentException(sprintf('SplitState shares must be non-negative with at least one above zero, got [%s]', implode(', ', $shares)));
+        }
     }
 
     public function withDragging(?int $divider): self

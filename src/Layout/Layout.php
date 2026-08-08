@@ -76,7 +76,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
 
         $result = [];
         $cursor = $isVertical ? $area->y : $area->x;
-        $unplaced = max(0, $isVertical ? $area->height : $area->width);
+        $unplaced = $isVertical ? $area->height : $area->width;
 
         foreach ($this->children as $index => $child) {
             $size = min($sizes[$index], $unplaced);

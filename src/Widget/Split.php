@@ -286,7 +286,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
         $minimums = $this->resolvedMinimums($panes);
 
         $weights = array_sum($minimums) > $available ? $minimums : $this->state->shares;
-        $total = max(1, array_sum($weights));
+        $total = array_sum($weights);
         $sizes = [];
 
         foreach ($weights as $index => $weight) {
