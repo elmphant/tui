@@ -106,6 +106,42 @@ final class ScreenCursorEmissionTest extends TestCase
         self::assertStringContainsString(Ansi::HIDE_CURSOR, $this->terminal->getOutput());
     }
 
+    #[Test]
+    public function aCaretThatKeptItsShapeIsNotToldWhatShapeToBeAgain(): void
+    {
+        $this->paintWithCursor('one', 3, 0);
+        $this->terminal->clearOutput();
+
+        $this->paintWithCursor('two', 3, 0);
+
+        self::assertStringNotContainsString(
+            Ansi::cursorShape(CursorShape::BlinkingBar),
+            $this->terminal->getOutput(),
+            'that sequence restarts the blink, so a repaint beside the caret would stop it ever blinking',
+        );
+        self::assertStringContainsString(
+            Ansi::cursorTo(0, 3),
+            $this->terminal->getOutput(),
+            'it still goes back where it belongs once the cells have been written',
+        );
+    }
+
+    #[Test]
+    public function aClearedScreenSaysWhatShapeTheCaretIsAgain(): void
+    {
+        $this->paintWithCursor('one', 3, 0);
+        $this->screen->clear();
+        $this->terminal->clearOutput();
+
+        $this->paintWithCursor('one', 3, 0);
+
+        self::assertStringContainsString(
+            Ansi::cursorShape(CursorShape::BlinkingBar),
+            $this->terminal->getOutput(),
+            'the screen was given up and whatever had it since may have left the caret another shape',
+        );
+    }
+
     protected function setUp(): void
     {
         $this->terminal = new VirtualTerminal(20, 3);

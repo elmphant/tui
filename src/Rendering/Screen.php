@@ -45,6 +45,7 @@ final class Screen
     private ?CursorPosition $lastCursor = null;
 
     private bool $cursorAsserted = false;
+    private ?CursorShape $lastShape = null;
 
     public function __construct(
         private readonly TerminalOutputInterface $terminal,
@@ -73,6 +74,7 @@ final class Screen
     {
         $this->front = null;
         $this->cursorAsserted = false;
+        $this->lastShape = null;
         $this->resetCurrentStyle();
         $this->terminal->write(Ansi::ERASE_DISPLAY . Ansi::CURSOR_HOME . Ansi::RESET_STYLE);
         $this->terminal->flush();
@@ -88,10 +90,28 @@ final class Screen
 
         $this->terminal->write($position === null
             ? Ansi::HIDE_CURSOR
-            : Ansi::cursorShape($position->shape) . Ansi::cursorTo($position->row, $position->col) . Ansi::SHOW_CURSOR);
+            : $this->shapeChangeTo($position->shape)
+                . Ansi::cursorTo($position->row, $position->col)
+                . Ansi::SHOW_CURSOR);
 
         $this->lastCursor = $position;
         $this->cursorAsserted = true;
+    }
+
+    /**
+     * Nothing when the caret already has this shape. Writing the sequence again
+     * restarts the blink, so a caret beside anything that repaints — a spinner, a
+     * clock, an arriving log line — would sit steady and never blink at all.
+     */
+    private function shapeChangeTo(CursorShape $shape): string
+    {
+        if ($this->lastShape === $shape) {
+            return '';
+        }
+
+        $this->lastShape = $shape;
+
+        return Ansi::cursorShape($shape);
     }
 
     private function matchesLastCursor(?CursorPosition $position): bool
