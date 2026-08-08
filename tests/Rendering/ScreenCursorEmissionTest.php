@@ -80,7 +80,7 @@ final class ScreenCursorEmissionTest extends TestCase
 
         $this->paintWithCursor('steady', 5, 1);
 
-        self::assertStringContainsString(Ansi::SHOW_CURSOR, $this->terminal->getOutput());
+        self::assertStringContainsString(Ansi::cursorTo(1, 5), $this->terminal->getOutput());
     }
 
     #[Test]
@@ -139,6 +139,21 @@ final class ScreenCursorEmissionTest extends TestCase
             Ansi::cursorShape(CursorShape::BlinkingBar),
             $this->terminal->getOutput(),
             'the screen was given up and whatever had it since may have left the caret another shape',
+        );
+    }
+
+    #[Test]
+    public function aCaretAlreadyOnScreenIsNotToldToAppearAgain(): void
+    {
+        $this->paintWithCursor('one', 3, 0);
+        $this->terminal->clearOutput();
+
+        $this->paintWithCursor('two', 3, 0);
+
+        self::assertStringNotContainsString(
+            Ansi::SHOW_CURSOR,
+            $this->terminal->getOutput(),
+            'showing a caret that is already showing is another sequence that disturbs its blink',
         );
     }
 

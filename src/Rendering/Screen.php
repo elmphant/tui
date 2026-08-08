@@ -46,6 +46,7 @@ final class Screen
 
     private bool $cursorAsserted = false;
     private ?CursorShape $lastShape = null;
+    private bool $shown = false;
 
     public function __construct(
         private readonly TerminalOutputInterface $terminal,
@@ -75,6 +76,7 @@ final class Screen
         $this->front = null;
         $this->cursorAsserted = false;
         $this->lastShape = null;
+        $this->shown = false;
         $this->resetCurrentStyle();
         $this->terminal->write(Ansi::ERASE_DISPLAY . Ansi::CURSOR_HOME . Ansi::RESET_STYLE);
         $this->terminal->flush();
@@ -92,8 +94,9 @@ final class Screen
             ? Ansi::HIDE_CURSOR
             : $this->shapeChangeTo($position->shape)
                 . Ansi::cursorTo($position->row, $position->col)
-                . Ansi::SHOW_CURSOR);
+                . ($this->shown ? '' : Ansi::SHOW_CURSOR));
 
+        $this->shown = $position !== null;
         $this->lastCursor = $position;
         $this->cursorAsserted = true;
     }
