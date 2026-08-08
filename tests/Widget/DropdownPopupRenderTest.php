@@ -65,6 +65,26 @@ final class DropdownPopupRenderTest extends TestCase
         );
     }
 
+    #[Test]
+    public function theBorderIsDrawnTheWayAnythingHoldingTheKeyboardIs(): void
+    {
+        $theme = Theme::dark();
+        $frame = new Frame(30, 10);
+
+        self::popupOf(['json', 'yaml'])->render($frame, new Rect(0, 0, 20, 7), new RenderContext($theme));
+
+        self::assertNotSame(
+            $theme->borderStyle->foregroundValue(),
+            $theme->focusedBorderStyle->foregroundValue(),
+            'precondition: this theme tells the two apart',
+        );
+        self::assertSame(
+            $theme->focusedBorderStyle->foregroundValue(),
+            $frame->foregrounds[0],
+            'an open list is what the reader is working in, so it is lit like a focused pane',
+        );
+    }
+
     /**
      * @param list<string> $options
      */
