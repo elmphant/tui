@@ -337,8 +337,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
             ++$handedOut;
         }
 
-        ksort($sizes);
-
         return array_values($sizes);
     }
 }
