@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Layout\Axis;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
+use Elmphant\Tui\Layout\Axis\Distribution;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Axis\Overflow;
@@ -219,6 +220,16 @@ final class AllocatorTest extends TestCase
         $resolved = Allocator::resolve($policies, 9, new AxisSpecification(overflow: Overflow::SqueezeToFloor));
 
         self::assertSame([8, 1], $resolved->sizes, 'Both sit at their floors, and the one that said it was ten times more willing gives up the columns');
+    }
+
+    #[Test]
+    public function sharingAcrossTheWholeAxisTreatsAFloorAsAMinimumRatherThanAReservation(): void
+    {
+        $policies = [new ItemPolicy(basis: 2, min: 2, grow: 1), new ItemPolicy(basis: 10, min: 10, grow: 1)];
+
+        $resolved = Allocator::resolve($policies, 20, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([10, 10], $resolved->sizes, 'Equal weights take equal shares of the whole, and the taller floor is simply already satisfied');
     }
 
     #[Test]

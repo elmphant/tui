@@ -26,37 +26,18 @@ final class Allocator
             $wanted = $size > PHP_INT_MAX - $wanted ? PHP_INT_MAX : $wanted + $size;
         }
 
-        if ($wanted <= $forSlots) {
-            $sizes = self::grown($policies, $forSlots - $wanted, $specification->remainder);
-        } elseif ($specification->overflow === Overflow::ClipTail) {
-            $sizes = [];
-            $unplaced = $forSlots;
-            foreach ($policies as $policy) {
-                $size = min($policy->initialSize(), max(0, $unplaced));
-                $sizes[] = $size;
-                $unplaced -= $size;
-            }
-        } elseif ($specification->overflow === Overflow::Retain) {
-            $sizes = array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies);
-        } elseif ($wanted === PHP_INT_MAX) {
-            // The declared sizes are past counting, so a deficit means nothing
-            // and only their proportions can be honoured.
-            $sizes = self::evenlyWithin(
-                array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies),
-                $policies,
-                $forSlots,
-            );
-        } else {
-            $sizes = self::shrunk($policies, $wanted - $forSlots);
+        $asked = array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies);
 
-            if ($specification->overflow === Overflow::SqueezeToFloor && self::totalOf($sizes) > $forSlots) {
-                $sizes = self::squeezedPastFloors($sizes, $policies, self::totalOf($sizes) - $forSlots);
-
-                if (self::totalOf($sizes) > $forSlots) {
-                    $sizes = self::evenlyWithin($sizes, $policies, $forSlots);
-                }
-            }
-        }
+        $sizes = match (true) {
+            $wanted <= $forSlots && $specification->distribution === Distribution::AcrossTheWholeAxis => self::sharedAcross($policies, $forSlots, $specification->remainder),
+            $wanted <= $forSlots => self::grown($policies, $forSlots - $wanted, $specification->remainder),
+            $specification->overflow === Overflow::ClipTail => self::clippedTail($asked, $forSlots),
+            $specification->overflow === Overflow::Retain => $asked,
+            // Sizes past counting make a deficit meaningless, so only their
+            // proportions can be honoured.
+            $wanted === PHP_INT_MAX => self::evenlyWithin($asked, $policies, $forSlots),
+            default => self::compressed($policies, $specification->overflow, $wanted - $forSlots, $forSlots),
+        };
 
         $unclaimed = max(0, $forSlots - self::totalOf($sizes));
         [$leading, $between] = self::spread($specification->justification, count($sizes), $unclaimed);
@@ -72,6 +53,90 @@ final class Allocator
         }
 
         return new AxisResult($sizes, $offsets, max(0, self::totalOf($sizes) - $forSlots));
+    }
+
+    /**
+     * @param list<int> $asked
+     *
+     * @return list<int>
+     */
+    private static function clippedTail(array $asked, int $forSlots): array
+    {
+        $sizes = [];
+        $unplaced = $forSlots;
+
+        foreach ($asked as $size) {
+            $kept = min($size, max(0, $unplaced));
+            $sizes[] = $kept;
+            $unplaced -= $kept;
+        }
+
+        return $sizes;
+    }
+
+    /**
+     * @param list<ItemPolicy> $policies
+     *
+     * @return list<int>
+     */
+    private static function compressed(array $policies, Overflow $overflow, int $deficit, int $forSlots): array
+    {
+        $sizes = self::shrunk($policies, $deficit);
+
+        if ($overflow !== Overflow::SqueezeToFloor || self::totalOf($sizes) <= $forSlots) {
+            return $sizes;
+        }
+
+        $sizes = self::squeezedPastFloors($sizes, $policies, self::totalOf($sizes) - $forSlots);
+
+        return self::totalOf($sizes) > $forSlots
+            ? self::evenlyWithin($sizes, $policies, $forSlots)
+            : $sizes;
+    }
+
+    /**
+     * The weights divide the whole axis, and each floor is applied afterwards to
+     * whichever slots came out below theirs.
+     *
+     * @param list<ItemPolicy> $policies
+     *
+     * @return list<int>
+     */
+    private static function sharedAcross(array $policies, int $available, Remainder $remainder): array
+    {
+        $weight = 0;
+        foreach ($policies as $policy) {
+            $weight += $policy->grow;
+        }
+
+        if ($weight === 0) {
+            return array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies);
+        }
+
+        $sizes = [];
+        $claims = [];
+        $handedOut = 0;
+
+        foreach ($policies as $index => $policy) {
+            $exact = $available * $policy->grow;
+            $whole = intdiv($exact, $weight);
+            $sizes[$index] = min($whole, $policy->max);
+            $claims[$index] = $exact - $whole * $weight;
+            $handedOut += $sizes[$index];
+        }
+
+        $spare = $available - $handedOut;
+        if ($spare > 0) {
+            $remainder === Remainder::StrongestClaim
+                ? self::byStrongestClaim($sizes, $policies, $claims, $spare)
+                : self::nudgeRearmost($sizes, $policies, $spare, true);
+        }
+
+        foreach ($policies as $index => $policy) {
+            $sizes[$index] = max($sizes[$index], $policy->initialSize());
+        }
+
+        return array_values($sizes);
     }
 
     /**

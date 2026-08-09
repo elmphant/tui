@@ -16,6 +16,7 @@ final readonly class AxisSpecification
         public Justification $justification = Justification::Start,
         public Overflow $overflow = Overflow::Compress,
         public Remainder $remainder = Remainder::RearmostFirst,
+        public Distribution $distribution = Distribution::AfterReservingFloors,
     ) {
     }
 }
