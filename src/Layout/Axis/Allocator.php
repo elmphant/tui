@@ -14,8 +14,12 @@ final class Allocator
     /**
      * @param list<ItemPolicy> $policies
      */
-    public static function resolve(array $policies, int $available): AxisResult
+    public static function resolve(array $policies, int $available, ?AxisSpec $spec = null): AxisResult
     {
+        $spec ??= new AxisSpec();
+        $gaps = max(0, count($policies) - 1) * $spec->gap;
+        $available = max(0, $available - $gaps);
+
         $reserved = 0;
         $totalGrow = 0;
 
@@ -50,7 +54,7 @@ final class Allocator
         $cursor = 0;
         foreach ($sizes as $size) {
             $offsets[] = $cursor;
-            $cursor += $size;
+            $cursor += $size + $spec->gap;
         }
 
         return new AxisResult(array_values($sizes), $offsets);

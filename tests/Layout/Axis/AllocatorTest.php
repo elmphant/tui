@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout\Axis;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\AxisSpec;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Tests\Layout\Invariant\ConstraintSweep;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -26,6 +27,20 @@ final class AllocatorTest extends TestCase
             Constraint::allocate($constraints, $extent),
             Allocator::resolve($policies, $extent)->sizes,
         );
+    }
+
+    #[Test]
+    public function aGapTakesItsCellsFromWhatTheSlotsHaveToShare(): void
+    {
+        $policies = array_map(
+            static fn (Constraint $constraint) => $constraint->policy(),
+            [Constraint::flex(), Constraint::flex()],
+        );
+
+        $resolved = Allocator::resolve($policies, 11, new AxisSpec(gap: 1));
+
+        self::assertSame([5, 5], $resolved->sizes, 'The gap column is not one of theirs to take');
+        self::assertSame([0, 6], $resolved->offsets, 'So the second slot starts one column further along');
     }
 
     #[Test]

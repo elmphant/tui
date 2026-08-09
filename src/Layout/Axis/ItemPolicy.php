@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout\Axis;
 
+use InvalidArgumentException;
+
 /**
  * What one slot along an axis asks for: where it starts, how far it may move in
  * either direction, and how eagerly it takes or gives up space.
@@ -19,5 +21,8 @@ final readonly class ItemPolicy
         public int $grow = 0,
         public int $shrink = 0,
     ) {
+        if ($max < $min) {
+            throw new InvalidArgumentException(sprintf('ItemPolicy max must be greater than or equal to min, got max %d and min %d', $max, $min));
+        }
     }
 }
