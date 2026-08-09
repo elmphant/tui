@@ -201,7 +201,7 @@ final class AllocatorTest extends TestCase
     #[Test]
     public function sizesBeyondCountingAreStillFittedToTheAxis(): void
     {
-        $policies = [new ItemPolicy(basis: PHP_INT_MAX), new ItemPolicy(basis: PHP_INT_MAX)];
+        $policies = [new ItemPolicy(basis: PHP_INT_MAX, shrink: 1), new ItemPolicy(basis: PHP_INT_MAX, shrink: 1)];
 
         $resolved = Allocator::resolve($policies, 10, new AxisSpecification(overflow: Overflow::SqueezeToFloor));
 

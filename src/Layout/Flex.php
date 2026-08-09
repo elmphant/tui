@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\AxisSpecification;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Axis\Justification;
+use Elmphant\Tui\Layout\Axis\Overflow;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -252,179 +256,26 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
      */
     private function resolveMainPlacements(array $line, int $mainSize): array
     {
-        $count = count($line);
-        $gap = $this->effectiveGap($count, $mainSize);
-        $available = $mainSize - $gap * ($count - 1);
-        /** @var array<int, int> $sizes */
-        $sizes = [];
-
+        $policies = [];
         foreach ($line as $itemIndex) {
-            $sizes[$itemIndex] = $this->items[$itemIndex]->initialSize();
+            $item = $this->items[$itemIndex];
+            $policies[] = new ItemPolicy($item->basis, $item->min, $item->max, $item->grow, $item->shrink);
         }
 
-        $used = self::saturatingSum($sizes);
-        if (self::sumExceeds($sizes, PHP_INT_MAX)) {
-            $forced = self::fitSizes(
-                array_map(static fn (int $itemIndex): int => $sizes[$itemIndex], $line),
-                $available,
-            );
-            foreach ($line as $lineIndex => $itemIndex) {
-                $sizes[$itemIndex] = $forced[$lineIndex];
-            }
-        } elseif ($used < $available) {
-            $this->growSizes($sizes, $line, $available - $used);
-        } elseif (self::sumExceeds($sizes, $available)) {
-            $this->shrinkSizes($sizes, $line, $used - $available, true);
-            if (self::sumExceeds($sizes, $available)) {
-                $this->shrinkSizes($sizes, $line, self::saturatingSum($sizes) - $available, false);
-            }
-            if (self::sumExceeds($sizes, $available)) {
-                // Terminal safety is stronger than a no-shrink preference:
-                // children must never receive Rects outside their container.
-                $forced = self::fitSizes(
-                    array_map(static fn (int $itemIndex): int => $sizes[$itemIndex], $line),
-                    $available,
-                );
-                foreach ($line as $lineIndex => $itemIndex) {
-                    $sizes[$itemIndex] = $forced[$lineIndex];
-                }
-            }
-        }
+        // Terminal safety is stronger than a no-shrink preference: children must
+        // never receive Rects outside their container.
+        $resolved = Allocator::resolve($policies, $mainSize, new AxisSpecification(
+            gap: $this->gap,
+            justification: $this->justify,
+            overflow: Overflow::SqueezeToFloor,
+        ));
 
-        $unused = $available - array_sum($sizes);
-        [$leading, $gapExtras] = $this->justify($count, $unused);
         $placements = [];
-        $cursor = $leading;
-
         foreach ($line as $lineIndex => $itemIndex) {
-            if ($lineIndex > 0) {
-                $cursor += $gap + ($gapExtras[$lineIndex - 1] ?? 0);
-            }
-            $size = $sizes[$itemIndex];
-            $placements[] = [$itemIndex, $cursor, $size];
-            $cursor += $size;
+            $placements[] = [$itemIndex, $resolved->offsets[$lineIndex], $resolved->sizes[$lineIndex]];
         }
 
         return $placements;
-    }
-
-    /**
-     * @param array<int, int> $sizes
-     *
-     * @param-out array<int, int> $sizes
-     *
-     * @param list<int> $line
-     */
-    private function growSizes(array &$sizes, array $line, int $free): void
-    {
-        for ($round = 0, $maxRounds = count($line) + 1; $free > 0 && $round < $maxRounds; ++$round) {
-            $eligible = array_filter(
-                $line,
-                fn (int $index): bool => $this->items[$index]->grow > 0
-                    && $sizes[$index] < $this->items[$index]->max,
-            );
-            if ($eligible === []) {
-                return;
-            }
-
-            $totalWeight = array_sum(array_map(fn (int $index): int => $this->items[$index]->grow, $eligible));
-            $roundFree = $free;
-            foreach ($eligible as $index) {
-                $headroom = $this->items[$index]->max - $sizes[$index];
-                $grant = min($headroom, (int)floor($roundFree * ($this->items[$index]->grow / $totalWeight)));
-                $sizes[$index] += $grant;
-                $free -= $grant;
-            }
-
-            if ($free === $roundFree) {
-                foreach (array_reverse($eligible) as $index) {
-                    if ($free === 0) {
-                        break;
-                    }
-                    ++$sizes[$index];
-                    --$free;
-                }
-            }
-        }
-    }
-
-    /**
-     * @param array<int, int> $sizes
-     *
-     * @param-out array<int, int> $sizes
-     *
-     * @param list<int> $line
-     */
-    private function shrinkSizes(array &$sizes, array $line, int $deficit, bool $respectMin): void
-    {
-        for ($round = 0, $maxRounds = count($line) + 1; $deficit > 0 && $round < $maxRounds; ++$round) {
-            $eligible = array_filter(
-                $line,
-                function (int $index) use ($sizes, $respectMin): bool {
-                    $floor = $respectMin ? $this->items[$index]->min : 0;
-
-                    return $this->items[$index]->shrink > 0 && $sizes[$index] > $floor;
-                },
-            );
-            if ($eligible === []) {
-                return;
-            }
-
-            $weights = [];
-            foreach ($eligible as $index) {
-                $weights[$index] = (float)$this->items[$index]->shrink * $sizes[$index];
-            }
-            $totalWeight = array_sum($weights);
-            $roundDeficit = $deficit;
-
-            foreach ($eligible as $index) {
-                $floor = $respectMin ? $this->items[$index]->min : 0;
-                $capacity = $sizes[$index] - $floor;
-                $take = min($capacity, (int)floor($roundDeficit * ($weights[$index] / $totalWeight)));
-                $sizes[$index] -= $take;
-                $deficit -= $take;
-            }
-
-            if ($deficit === $roundDeficit) {
-                foreach (array_reverse($eligible) as $index) {
-                    if ($deficit === 0) {
-                        break;
-                    }
-                    $floor = $respectMin ? $this->items[$index]->min : 0;
-                    if ($sizes[$index] > $floor) {
-                        --$sizes[$index];
-                        --$deficit;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * @return array{int, list<int>} leading cells and per-gap extra cells
-     */
-    private function justify(int $count, int $unused): array
-    {
-        if ($unused === 0 || $this->justify === Justification::Start) {
-            return [0, []];
-        }
-
-        if ($this->justify === Justification::End) {
-            return [$unused, []];
-        }
-
-        if ($this->justify === Justification::Center) {
-            return [intdiv($unused, 2), []];
-        }
-
-        if ($this->justify === Justification::SpaceBetween) {
-            return [0, self::spread($unused, $count - 1)];
-        }
-
-        $slots = self::spread($unused, $count + 1);
-        $gapExtras = array_slice($slots, 1);
-
-        return [$slots[0], $gapExtras];
     }
 
     /**
@@ -501,22 +352,6 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         }
 
         return $total;
-    }
-
-    /**
-     * @param array<int, int> $sizes
-     */
-    private static function sumExceeds(array $sizes, int $available): bool
-    {
-        $remaining = $available;
-        foreach ($sizes as $size) {
-            if ($size > $remaining) {
-                return true;
-            }
-            $remaining -= $size;
-        }
-
-        return false;
     }
 
     private function effectiveGap(int $count, int $available): int

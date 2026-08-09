@@ -38,6 +38,14 @@ final class Allocator
             }
         } elseif ($specification->overflow === Overflow::Retain) {
             $sizes = array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies);
+        } elseif ($wanted === PHP_INT_MAX) {
+            // The declared sizes are past counting, so a deficit means nothing
+            // and only their proportions can be honoured.
+            $sizes = self::evenlyWithin(
+                array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies),
+                $policies,
+                $forSlots,
+            );
         } else {
             $sizes = self::shrunk($policies, $wanted - $forSlots);
 
@@ -110,11 +118,11 @@ final class Allocator
             $weight = 0;
             foreach ($policies as $index => $policy) {
                 if ($policy->shrink > 0 && $sizes[$index] > 0) {
-                    $weight += $policy->shrink * $sizes[$index];
+                    $weight += (float)$policy->shrink * $sizes[$index];
                 }
             }
 
-            if ($weight === 0) {
+            if ($weight <= 0.0) {
                 return $sizes;
             }
 
@@ -122,7 +130,7 @@ final class Allocator
             $roundDeficit = $deficit;
             foreach ($policies as $index => $policy) {
                 if ($policy->shrink > 0 && $sizes[$index] > 0) {
-                    $give = min(intdiv($roundDeficit * $policy->shrink * $sizes[$index], $weight), $sizes[$index]);
+                    $give = min((int)floor($roundDeficit * ((float)$policy->shrink * $sizes[$index] / $weight)), $sizes[$index]);
                     $sizes[$index] -= $give;
                     $taken += $give;
                 }
@@ -259,7 +267,7 @@ final class Allocator
                 }
             }
 
-            if ($weight === 0) {
+            if ($weight <= 0.0) {
                 break;
             }
 
@@ -382,11 +390,11 @@ final class Allocator
             $weight = 0;
             foreach ($policies as $index => $policy) {
                 if ($policy->shrink > 0 && $sizes[$index] > $policy->min) {
-                    $weight += $policy->shrink * $sizes[$index];
+                    $weight += (float)$policy->shrink * $sizes[$index];
                 }
             }
 
-            if ($weight === 0) {
+            if ($weight <= 0.0) {
                 break;
             }
 
@@ -394,7 +402,7 @@ final class Allocator
             $roundDeficit = $deficit;
             foreach ($policies as $index => $policy) {
                 if ($policy->shrink > 0 && $sizes[$index] > $policy->min) {
-                    $give = min(intdiv($roundDeficit * $policy->shrink * $sizes[$index], $weight), $sizes[$index] - $policy->min);
+                    $give = min((int)floor($roundDeficit * ((float)$policy->shrink * $sizes[$index] / $weight)), $sizes[$index] - $policy->min);
                     $sizes[$index] -= $give;
                     $taken += $give;
                 }
