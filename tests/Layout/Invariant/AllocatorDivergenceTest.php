@@ -25,6 +25,17 @@ final class AllocatorDivergenceTest extends TestCase
     use RectInvariants;
 
     #[Test]
+    public function aStackLeavesRowsUnusedWhenItsLastGrowingChildIsCapped(): void
+    {
+        $constraints = [Constraint::min(5), Constraint::min(0), Constraint::flex(2), new Constraint(2, 6, 1)];
+
+        $heights = VerticalStack::layoutUsing(new KeyedCache(), self::childrenFor($constraints), 40, 80)->heights;
+
+        self::assertSame(65, array_sum($heights), 'The share the capped child could not take is not offered to anyone else');
+        self::assertSame(80, array_sum(Layout::vertical(...self::childrenFor($constraints))->sizesFor(80)), 'A layout column redistributes it instead');
+    }
+
+    #[Test]
     public function aStackGrowsAChildThatHasNeitherWeightNorFloor(): void
     {
         $children = [
@@ -88,6 +99,16 @@ final class AllocatorDivergenceTest extends TestCase
         $children = [self::paragraphOf(3), self::paragraphOf(7)];
 
         self::assertSame([3, 7], VerticalStack::layoutUsing(new KeyedCache(), $children, 40, 10)->heights);
+    }
+
+    /**
+     * @param list<Constraint> $constraints
+     *
+     * @return list<Widget>
+     */
+    private static function childrenFor(array $constraints): array
+    {
+        return array_map(static fn (Constraint $constraint): Widget => new ConstrainedWidget($constraint), $constraints);
     }
 
     private static function paragraphOf(int $lines): Widget
