@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout\Axis;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
-use Elmphant\Tui\Layout\Axis\AxisSpec;
+use Elmphant\Tui\Layout\Axis\AxisSpecification;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Tests\Layout\Invariant\ConstraintSweep;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -30,6 +31,24 @@ final class AllocatorTest extends TestCase
     }
 
     #[Test]
+    public function slotsThatMayGiveWayGiveUpCellsByTheirWeight(): void
+    {
+        $wide = new ItemPolicy(basis: 6, shrink: 1);
+        $stubborn = new ItemPolicy(basis: 6);
+
+        self::assertSame([4, 4], Allocator::resolve([$wide, new ItemPolicy(basis: 6, shrink: 1)], 8)->sizes);
+        self::assertSame([2, 6], Allocator::resolve([$wide, $stubborn], 8)->sizes, 'A slot with no shrink weight keeps what it asked for');
+    }
+
+    #[Test]
+    public function aSlotGivingWayStopsAtItsFloorAndTheRestIsTakenElsewhere(): void
+    {
+        $policies = [new ItemPolicy(basis: 6, min: 5, shrink: 1), new ItemPolicy(basis: 6, shrink: 1)];
+
+        self::assertSame([5, 3], Allocator::resolve($policies, 8)->sizes);
+    }
+
+    #[Test]
     public function aGapTakesItsCellsFromWhatTheSlotsHaveToShare(): void
     {
         $policies = array_map(
@@ -37,7 +56,7 @@ final class AllocatorTest extends TestCase
             [Constraint::flex(), Constraint::flex()],
         );
 
-        $resolved = Allocator::resolve($policies, 11, new AxisSpec(gap: 1));
+        $resolved = Allocator::resolve($policies, 11, new AxisSpecification(gap: 1));
 
         self::assertSame([5, 5], $resolved->sizes, 'The gap column is not one of theirs to take');
         self::assertSame([0, 6], $resolved->offsets, 'So the second slot starts one column further along');

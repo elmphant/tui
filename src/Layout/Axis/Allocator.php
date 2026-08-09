@@ -14,21 +14,47 @@ final class Allocator
     /**
      * @param list<ItemPolicy> $policies
      */
-    public static function resolve(array $policies, int $available, ?AxisSpec $spec = null): AxisResult
+    public static function resolve(array $policies, int $available, ?AxisSpecification $specification = null): AxisResult
     {
-        $spec ??= new AxisSpec();
-        $gaps = max(0, count($policies) - 1) * $spec->gap;
-        $available = max(0, $available - $gaps);
+        $specification ??= new AxisSpecification();
+        $gaps = max(0, count($policies) - 1) * $specification->gap;
+        $forSlots = max(0, $available - $gaps);
 
-        $reserved = 0;
-        $totalGrow = 0;
-
+        $wanted = 0;
         foreach ($policies as $policy) {
-            $reserved += $policy->basis;
+            $wanted += $policy->basis;
+        }
+
+        $sizes = $wanted > $forSlots
+            ? self::shrunk($policies, $wanted - $forSlots)
+            : self::grown($policies, $forSlots - $wanted);
+
+        $offsets = [];
+        $cursor = 0;
+        foreach ($sizes as $size) {
+            $offsets[] = $cursor;
+            $cursor += $size + $specification->gap;
+        }
+
+        return new AxisResult($sizes, $offsets);
+    }
+
+    /**
+     * The spare cells are shared by growth weight and clamped to each ceiling,
+     * then whatever integer division left over goes to the rearmost slots that
+     * still have room below their ceiling.
+     *
+     * @param list<ItemPolicy> $policies
+     *
+     * @return list<int>
+     */
+    private static function grown(array $policies, int $spare): array
+    {
+        $totalGrow = 0;
+        foreach ($policies as $policy) {
             $totalGrow += $policy->grow;
         }
 
-        $spare = max(0, $available - $reserved);
         $sizes = [];
         $granted = 0;
 
@@ -50,13 +76,50 @@ final class Allocator
             }
         }
 
-        $offsets = [];
-        $cursor = 0;
-        foreach ($sizes as $size) {
-            $offsets[] = $cursor;
-            $cursor += $size + $spec->gap;
+        return array_values($sizes);
+    }
+
+    /**
+     * The mirror of grown(): the missing cells are taken by shrink weight and
+     * stopped at each floor, and what floors and rounding leave unpaid is taken
+     * from the rearmost slots that are still above their floor.
+     *
+     * @param list<ItemPolicy> $policies
+     *
+     * @return list<int>
+     */
+    private static function shrunk(array $policies, int $deficit): array
+    {
+        $sizes = [];
+        $totalShrink = 0;
+
+        foreach ($policies as $index => $policy) {
+            $sizes[$index] = $policy->basis;
+            $totalShrink += $policy->shrink;
         }
 
-        return new AxisResult(array_values($sizes), $offsets);
+        if ($totalShrink === 0) {
+            return array_values($sizes);
+        }
+
+        $taken = 0;
+        foreach ($policies as $index => $policy) {
+            if ($policy->shrink > 0) {
+                $give = min(intdiv($deficit * $policy->shrink, $totalShrink), $sizes[$index] - $policy->min);
+                $sizes[$index] -= $give;
+                $taken += $give;
+            }
+        }
+
+        $unpaid = $deficit - $taken;
+        foreach (array_reverse(array_keys($sizes)) as $index) {
+            if ($policies[$index]->shrink > 0) {
+                $give = min($unpaid, $sizes[$index] - $policies[$index]->min);
+                $sizes[$index] -= $give;
+                $unpaid -= $give;
+            }
+        }
+
+        return array_values($sizes);
     }
 }

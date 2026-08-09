@@ -9,7 +9,7 @@ namespace Elmphant\Tui\Layout\Axis;
  *
  * @internal
  */
-final readonly class AxisSpec
+final readonly class AxisSpecification
 {
     public function __construct(
         public int $gap = 0,
