@@ -74,13 +74,13 @@ final class FlexAllocationInvariantTest extends TestCase
     }
 
     #[Test]
-    public function everySweptRowTakesTheWidthsRecordedForIt(): void
+    public function everySweptRowPutsEachItemWhereRecordedForIt(): void
     {
         $resolved = [];
 
         foreach (self::rows() as $name => [$items, $wrap, $gap, $justify, $extent]) {
             $rects = $this->rectsFor($items, $wrap, $gap, $justify, new Rect(3, 1, $extent, 6));
-            $resolved[$name] = self::extentsAlong($rects, Direction::Horizontal);
+            $resolved[$name] = self::coordinatesOf($rects);
         }
 
         self::assertSame(AllocationBaseline::flexRows(), $resolved);

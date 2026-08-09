@@ -99,6 +99,19 @@ trait RectInvariants
         );
     }
 
+    /**
+     * @param list<Rect> $rects
+     *
+     * @return list<array{int, int, int, int}>
+     */
+    private static function coordinatesOf(array $rects): array
+    {
+        return array_map(
+            static fn (Rect $rect): array => [$rect->x, $rect->y, $rect->width, $rect->height],
+            $rects,
+        );
+    }
+
     private static function describe(Rect $rect): string
     {
         return sprintf('[%d,%d %dx%d]', $rect->x, $rect->y, $rect->width, $rect->height);
