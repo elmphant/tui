@@ -16,11 +16,21 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Split;
 use Elmphant\Tui\Widget\Text;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SplitTest extends TestCase
 {
+    #[Test]
+    public function refusesFewerSharesThanChildren(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Split needs as many shares as children, got 3 children and 2 shares');
+
+        Split::row(SplitState::even(2), Text::new('a'), Text::new('b'), Text::new('c'));
+    }
+
     #[Test]
     public function dividesItsAreaEvenlyByDefault(): void
     {

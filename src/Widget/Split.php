@@ -15,6 +15,7 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use InvalidArgumentException;
 
 /**
  * Children side by side, divided where the application says.
@@ -37,6 +38,12 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
         private Direction $direction = Direction::Horizontal,
         private array $minimums = [],
     ) {
+        $childCount = count($this->children);
+        $shareCount = count($this->state->shares);
+
+        if ($childCount !== $shareCount) {
+            throw new InvalidArgumentException(sprintf('Split needs as many shares as children, got %d children and %d shares', $childCount, $shareCount));
+        }
     }
 
     public static function row(SplitState $state, Widget ...$children): self
