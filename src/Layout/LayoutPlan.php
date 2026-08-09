@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
+use LogicException;
 use SplObjectStorage;
 
 /**
@@ -73,6 +75,10 @@ final class LayoutPlan
 
     private function walk(Widget $widget, Rect $area): void
     {
+        if ($widget instanceof SingleMount && $this->rects->offsetExists($widget)) {
+            throw new LogicException(sprintf('Widget "%s" is mounted more than once in the same widget tree. Give each place its own instance: the rect is found by object identity, so a second mount would replace the first.', $widget->mountName()));
+        }
+
         $this->rects[$widget] = $area;
 
         if (!$widget instanceof WidgetContainer) {

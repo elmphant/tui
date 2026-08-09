@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Layout;
 
+use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\LayoutPlan;
@@ -11,9 +13,13 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Modal;
+use Elmphant\Tui\Widget\Overlay;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -108,6 +114,22 @@ final class LayoutPlanTest extends TestCase
         }
 
         self::assertSame(2, $counter->count);
+    }
+
+    #[Test]
+    public function aComponentMountedBothBehindAndInsideAModalIsRefused(): void
+    {
+        $field = Component::bind(
+            'field',
+            TextInput::new(),
+            static fn (App $app, TextInput $input): App => $app,
+        );
+        $root = Overlay::new($field, Modal::new('Edit', $field));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Widget "field" is mounted more than once');
+
+        LayoutPlan::resolve($root, Rect::fromSize(40, 20));
     }
 }
 

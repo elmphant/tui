@@ -10,6 +10,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
@@ -22,7 +23,7 @@ use UnitEnum;
  *
  * @template TWidget of Interactive
  */
-final readonly class Component implements Widget, WidgetContainer
+final readonly class Component implements Widget, WidgetContainer, SingleMount
 {
     /**
      * @param TWidget $widget
@@ -53,6 +54,11 @@ final readonly class Component implements Widget, WidgetContainer
             $widget,
             $replace,
         );
+    }
+
+    public function mountName(): string
+    {
+        return $this->id->value;
     }
 
     public function constraint(): Constraint
