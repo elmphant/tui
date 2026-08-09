@@ -259,7 +259,7 @@ final class Allocator
             $weight = 0;
             foreach ($policies as $index => $policy) {
                 if ($policy->shrink > 0 && $sizes[$index] > $policy->min) {
-                    $weight += $policy->shrink;
+                    $weight += $policy->shrink * $sizes[$index];
                 }
             }
 
@@ -268,9 +268,10 @@ final class Allocator
             }
 
             $taken = 0;
+            $roundDeficit = $deficit;
             foreach ($policies as $index => $policy) {
                 if ($policy->shrink > 0 && $sizes[$index] > $policy->min) {
-                    $give = min(intdiv($deficit * $policy->shrink, $weight), $sizes[$index] - $policy->min);
+                    $give = min(intdiv($roundDeficit * $policy->shrink * $sizes[$index], $weight), $sizes[$index] - $policy->min);
                     $sizes[$index] -= $give;
                     $taken += $give;
                 }

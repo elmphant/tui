@@ -166,6 +166,14 @@ final class AllocatorTest extends TestCase
     }
 
     #[Test]
+    public function aWideSlotGivesUpMoreThanANarrowOneOfTheSameWillingness(): void
+    {
+        $policies = [new ItemPolicy(basis: 10, shrink: 1), new ItemPolicy(basis: 2, shrink: 1)];
+
+        self::assertSame([5, 1], Allocator::resolve($policies, 6)->sizes, 'Willingness is weighed against what a slot holds, so the wide one carries most of the loss');
+    }
+
+    #[Test]
     public function slotsThatMayGiveWayGiveUpCellsByTheirWeight(): void
     {
         $wide = new ItemPolicy(basis: 6, shrink: 1);
