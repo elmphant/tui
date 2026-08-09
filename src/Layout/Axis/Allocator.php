@@ -25,9 +25,25 @@ final class Allocator
             $wanted += $policy->basis;
         }
 
-        $sizes = $wanted > $forSlots
-            ? self::shrunk($policies, $wanted - $forSlots)
-            : self::grown($policies, $forSlots - $wanted);
+        if ($wanted <= $forSlots) {
+            $sizes = self::grown($policies, $forSlots - $wanted);
+        } elseif ($specification->overflow === Overflow::ClipTail) {
+            $sizes = [];
+            $unplaced = $forSlots;
+            foreach ($policies as $policy) {
+                $size = min($policy->basis, max(0, $unplaced));
+                $sizes[] = $size;
+                $unplaced -= $size;
+            }
+        } elseif ($specification->overflow === Overflow::Retain) {
+            $sizes = array_map(static fn (ItemPolicy $policy): int => $policy->basis, $policies);
+        } else {
+            $sizes = self::shrunk($policies, $wanted - $forSlots);
+
+            if ($specification->overflow === Overflow::SqueezeToFloor && array_sum($sizes) > $forSlots) {
+                $sizes = self::evenlyWithin($sizes, $forSlots);
+            }
+        }
 
         $unclaimed = max(0, $forSlots - array_sum($sizes));
         [$leading, $between] = self::spread($specification->justification, count($sizes), $unclaimed);
@@ -39,7 +55,38 @@ final class Allocator
             $cursor += $size + $specification->gap + $between;
         }
 
-        return new AxisResult($sizes, $offsets);
+        return new AxisResult($sizes, $offsets, max(0, array_sum($sizes) - $forSlots));
+    }
+
+    /**
+     * Floors are a request, and this is the case where the axis cannot honour
+     * them: every slot is cut in proportion to what it held, so the total fits.
+     *
+     * @param list<int> $sizes
+     *
+     * @return list<int>
+     */
+    private static function evenlyWithin(array $sizes, int $forSlots): array
+    {
+        $held = array_sum($sizes);
+        $cut = [];
+        $placed = 0;
+
+        foreach ($sizes as $size) {
+            $share = $held === 0 ? 0 : intdiv($size * $forSlots, $held);
+            $cut[] = $share;
+            $placed += $share;
+        }
+
+        foreach (array_keys($cut) as $index) {
+            if ($placed >= $forSlots) {
+                break;
+            }
+            ++$cut[$index];
+            ++$placed;
+        }
+
+        return $cut;
     }
 
     /**

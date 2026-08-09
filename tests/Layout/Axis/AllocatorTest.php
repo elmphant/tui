@@ -8,6 +8,7 @@ use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Axis\Justification;
+use Elmphant\Tui\Layout\Axis\Overflow;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Tests\Layout\Invariant\ConstraintSweep;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -70,6 +71,38 @@ final class AllocatorTest extends TestCase
         $resolved = Allocator::resolve($policies, 13, new AxisSpecification(justification: Justification::SpaceEvenly));
 
         self::assertSame([3, 8], $resolved->offsets, 'Nine cells spare over three openings is three each');
+    }
+
+    #[Test]
+    public function clippingTheTailCutsTheLastSlotsRatherThanNarrowingThemAll(): void
+    {
+        $policies = [new ItemPolicy(basis: 6), new ItemPolicy(basis: 6)];
+
+        $resolved = Allocator::resolve($policies, 8, new AxisSpecification(overflow: Overflow::ClipTail));
+
+        self::assertSame([6, 2], $resolved->sizes);
+    }
+
+    #[Test]
+    public function retainingKeepsEverySizeAndReportsTheOverrun(): void
+    {
+        $policies = [new ItemPolicy(basis: 6, shrink: 1), new ItemPolicy(basis: 6, shrink: 1)];
+
+        $resolved = Allocator::resolve($policies, 8, new AxisSpecification(overflow: Overflow::Retain));
+
+        self::assertSame([6, 6], $resolved->sizes, 'A slot willing to give way is not asked to');
+        self::assertSame(4, $resolved->overflow);
+    }
+
+    #[Test]
+    public function squeezingTakesTheFloorsThemselvesWhenEvenTheyDoNotFit(): void
+    {
+        $policies = [new ItemPolicy(basis: 6, min: 6), new ItemPolicy(basis: 6, min: 6)];
+
+        $resolved = Allocator::resolve($policies, 8, new AxisSpecification(overflow: Overflow::SqueezeToFloor));
+
+        self::assertSame([4, 4], $resolved->sizes);
+        self::assertSame(0, $resolved->overflow, 'Nothing is left outside the axis');
     }
 
     #[Test]

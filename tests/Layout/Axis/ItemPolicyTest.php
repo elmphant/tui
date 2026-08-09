@@ -13,6 +13,15 @@ use PHPUnit\Framework\TestCase;
 final class ItemPolicyTest extends TestCase
 {
     #[Test]
+    public function refusesAWeightBelowZero(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('ItemPolicy weights must be non-negative, got grow 1 and shrink -1');
+
+        new ItemPolicy(grow: 1, shrink: -1);
+    }
+
+    #[Test]
     public function refusesACeilingBelowItsFloor(): void
     {
         $this->expectException(InvalidArgumentException::class);
