@@ -174,6 +174,18 @@ final class AllocatorTest extends TestCase
     }
 
     #[Test]
+    public function theCellsNoShareDividesGoOneEachToTheRearmostSlots(): void
+    {
+        $policies = array_fill(0, 12, new ItemPolicy(grow: 1));
+
+        self::assertSame(
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            Allocator::resolve($policies, 11)->sizes,
+            'Eleven cells over twelve equal slots is one each for all but the foremost, never eleven for the last',
+        );
+    }
+
+    #[Test]
     public function slotsThatMayGiveWayGiveUpCellsByTheirWeight(): void
     {
         $wide = new ItemPolicy(basis: 6, shrink: 1);

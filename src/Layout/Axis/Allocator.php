@@ -220,20 +220,32 @@ final class Allocator
     {
         $moved = 0;
 
-        foreach (array_reverse(array_keys($sizes)) as $index) {
-            if ($cells <= 0) {
-                break;
+        while ($cells > 0) {
+            $movedThisPass = 0;
+
+            foreach (array_reverse(array_keys($sizes)) as $index) {
+                if ($cells <= 0) {
+                    break;
+                }
+
+                $policy = $policies[$index];
+                $room = $growing
+                    ? ($policy->grow > 0 ? $policy->max - $sizes[$index] : 0)
+                    : ($policy->shrink > 0 ? $sizes[$index] - $policy->min : 0);
+
+                if ($room < 1) {
+                    continue;
+                }
+
+                $sizes[$index] += $growing ? 1 : -1;
+                --$cells;
+                ++$moved;
+                ++$movedThisPass;
             }
 
-            $policy = $policies[$index];
-            $room = $growing
-                ? ($policy->grow > 0 ? $policy->max - $sizes[$index] : 0)
-                : ($policy->shrink > 0 ? $sizes[$index] - $policy->min : 0);
-
-            $step = min($cells, $room);
-            $sizes[$index] += $growing ? $step : -$step;
-            $cells -= $step;
-            $moved += $step;
+            if ($movedThisPass === 0) {
+                break;
+            }
         }
 
         return $moved;

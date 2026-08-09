@@ -69,7 +69,7 @@ final class AllocationBaseline
             'between2and6+min5+exact1+between2and6+floor2grow1 in 1' => [2, 5, 1, 2, 2],
             'between2and6+min5+exact1+between2and6+floor2grow1 in 3' => [2, 5, 1, 2, 2],
             'between2and6+min5+exact1+between2and6+floor2grow1 in 7' => [2, 5, 1, 2, 2],
-            'between2and6+min5+exact1+between2and6+floor2grow1 in 20' => [4, 5, 1, 4, 6],
+            'between2and6+min5+exact1+between2and6+floor2grow1 in 20' => [4, 5, 1, 5, 5],
             'between2and6+min5+exact1+between2and6+floor2grow1 in 80' => [6, 5, 1, 6, 62],
             'exact1+flex3+max12+flex2 in 0' => [1, 0, 0, 0],
             'exact1+flex3+max12+flex2 in 1' => [1, 0, 0, 0],

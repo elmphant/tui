@@ -32,16 +32,10 @@ final class SplitTest extends TestCase
     }
 
     #[Test]
-    public function theLastColumnGoesToThePaneWithTheLargestClaimOnIt(): void
+    public function theSpareColumnGoesToThePaneWithTheLargestClaimOnItWhereverItSits(): void
     {
-        $split = Split::row(new SplitState([3, 1, 1]), Text::new('a'), Text::new('b'), Text::new('c'));
-
-        $widths = [];
-        foreach ($split->childWidgets(new Rect(0, 0, 3, 4)) as [$pane, $rect]) {
-            $widths[] = $rect->width;
-        }
-
-        self::assertSame([1, 0, 0], $widths, 'Two dividers leave one column, and the widest share has the strongest claim on it');
+        self::assertSame([4, 1, 1], $this->paneWidthsForShares([3, 1, 1]), 'Six columns over shares of three, one and one leaves one spare, and the widest pane has the strongest claim on it');
+        self::assertSame([1, 1, 4], $this->paneWidthsForShares([1, 1, 3]), 'Moving the widest share to the end moves the spare column with it');
     }
 
     #[Test]
@@ -434,6 +428,18 @@ final class SplitTest extends TestCase
                 self::assertGreaterThanOrEqual(0, $pane, 'No pane is drawn backwards');
             }
         }
+    }
+
+    /**
+     * @param list<int> $shares
+     *
+     * @return list<int>
+     */
+    private function paneWidthsForShares(array $shares): array
+    {
+        $split = Split::row(new SplitState($shares), Text::new('a'), Text::new('b'), Text::new('c'));
+
+        return $this->paneWidths($split, Rect::fromSize(8, 4));
     }
 
     private function dividerUnder(Split $split, Rect $area, int $column): ?int
