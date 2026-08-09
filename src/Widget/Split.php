@@ -296,13 +296,49 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
         $total = array_sum($weights);
         $sizes = [];
 
-        foreach ($weights as $index => $weight) {
-            $wanted = (int)round($available * $weight / $total);
+        $claimed = self::byLargestRemainder($weights, $total, $available);
+
+        foreach ($claimed as $index => $wanted) {
             $sizes[] = $weights === $minimums ? $wanted : max($minimums[$index], $wanted);
         }
 
-        // Rounding each share independently misses the axis by a column either
-        // way, so the panes with room absorb the difference.
         return self::settled($sizes, $weights === $minimums ? array_fill(0, $panes, 0) : $minimums, $available);
+    }
+
+    /**
+     * Whole columns first, then the columns left over go to the panes with the
+     * strongest claim on them, so the widest share is never the one left empty.
+     *
+     * @param list<int> $weights
+     *
+     * @return list<int>
+     */
+    private static function byLargestRemainder(array $weights, int $total, int $available): array
+    {
+        $sizes = [];
+        $remainders = [];
+        $handedOut = 0;
+
+        foreach ($weights as $index => $weight) {
+            $exact = $available * $weight;
+            $whole = intdiv($exact, $total);
+            $sizes[$index] = $whole;
+            $remainders[$index] = $exact - $whole * $total;
+            $handedOut += $whole;
+        }
+
+        arsort($remainders);
+
+        foreach (array_keys($remainders) as $index) {
+            if ($handedOut >= $available) {
+                break;
+            }
+            ++$sizes[$index];
+            ++$handedOut;
+        }
+
+        ksort($sizes);
+
+        return array_values($sizes);
     }
 }

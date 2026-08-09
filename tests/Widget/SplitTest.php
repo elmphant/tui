@@ -32,6 +32,19 @@ final class SplitTest extends TestCase
     }
 
     #[Test]
+    public function theLastColumnGoesToThePaneWithTheLargestClaimOnIt(): void
+    {
+        $split = Split::row(new SplitState([3, 1, 1]), Text::new('a'), Text::new('b'), Text::new('c'));
+
+        $widths = [];
+        foreach ($split->childWidgets(new Rect(0, 0, 3, 4)) as [$pane, $rect]) {
+            $widths[] = $rect->width;
+        }
+
+        self::assertSame([1, 0, 0], $widths, 'Two dividers leave one column, and the widest share has the strongest claim on it');
+    }
+
+    #[Test]
     public function refusesMoreSharesThanChildren(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -260,7 +273,7 @@ final class SplitTest extends TestCase
         $split = Split::row(SplitState::even(3), Text::new('a'), Text::new('b'), Text::new('c'))
             ->withMinimums(10, 10, 10);
 
-        self::assertSame([9, 10, 10], $this->paneWidths($split, Rect::fromSize(31, 4)), 'One column short of the minimums');
+        self::assertSame([10, 10, 9], $this->paneWidths($split, Rect::fromSize(31, 4)), 'One column short, and the last pane is the one that goes without');
         self::assertSame([10, 10, 10], $this->paneWidths($split, Rect::fromSize(32, 4)), 'Exactly enough for them');
     }
 
