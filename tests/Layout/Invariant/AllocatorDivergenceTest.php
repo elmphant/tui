@@ -25,25 +25,25 @@ final class AllocatorDivergenceTest extends TestCase
     use RectInvariants;
 
     #[Test]
-    public function aStackLeavesRowsUnusedWhenItsLastGrowingChildIsCapped(): void
+    public function aStackFillsItsAxisWhenItsLastGrowingChildIsCapped(): void
     {
         $constraints = [Constraint::min(5), Constraint::min(0), Constraint::flex(2), new Constraint(2, 6, 1)];
 
         $heights = VerticalStack::layoutUsing(new KeyedCache(), self::childrenFor($constraints), 40, 80)->heights;
 
-        self::assertSame(65, array_sum($heights), 'The share the capped child could not take is not offered to anyone else');
-        self::assertSame(80, array_sum(Layout::vertical(...self::childrenFor($constraints))->sizesFor(80)), 'A layout column redistributes it instead');
+        self::assertSame(80, array_sum($heights), 'The share the capped child could not take is offered to the others');
+        self::assertSame(80, array_sum(Layout::vertical(...self::childrenFor($constraints))->sizesFor(80)), 'A layout column fills it the same way');
     }
 
     #[Test]
-    public function aStackGrowsAChildThatHasNeitherWeightNorFloor(): void
+    public function aStackLeavesAChildWithNeitherWeightNorFloorEmptyJustAsALayoutColumnDoes(): void
     {
         $children = [
             new ConstrainedWidget(Constraint::min(0)),
             new ConstrainedWidget(Constraint::exact(2)),
         ];
 
-        self::assertSame([8, 2], VerticalStack::layoutUsing(new KeyedCache(), $children, 40, 10)->heights);
+        self::assertSame([0, 2], VerticalStack::layoutUsing(new KeyedCache(), $children, 40, 10)->heights);
     }
 
     #[Test]

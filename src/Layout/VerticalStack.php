@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 
@@ -116,21 +118,28 @@ final class VerticalStack
             }
         }
 
-        $remaining = $availableHeight - $fixedTotal;
-        $lastFlexIndex = array_key_last($flexWeights);
-        $shareUsed = 0;
-
-        foreach ($flexWeights as $index => $flex) {
+        $policies = [];
+        foreach ($constraints as $index => $constraint) {
             $floor = $floors[$index];
-            $share = $index === $lastFlexIndex
-                ? $remaining - $shareUsed
-                : intdiv($remaining * $flex, $totalFlex);
-            $grown = min($constraints[$index]->max, max(1, $floor + max(0, $share)));
-            $shareUsed += $grown - $floor;
-            $heights[$index] = $grown;
+
+            $policies[] = new ItemPolicy(
+                basis: $floor,
+                min: $floor,
+                max: max($floor, $constraint->max),
+                grow: $constraint->flex,
+            );
         }
 
-        /** @var list<int> $heights */
+        $heights = Allocator::resolve($policies, $availableHeight)->sizes;
+
+        // A stack that scrolls may overrun its viewport, and a child left at no
+        // rows cannot be scrolled to, so one that wanted to grow keeps a row.
+        foreach ($constraints as $index => $constraint) {
+            if ($heights[$index] === 0 && $constraint->flex > 0 && $constraint->max > 0) {
+                $heights[$index] = 1;
+            }
+        }
+
         return [$heights, $hasWidthAwareChildren];
     }
 }
