@@ -199,6 +199,29 @@ final class AllocatorTest extends TestCase
     }
 
     #[Test]
+    public function sizesBeyondCountingAreStillFittedToTheAxis(): void
+    {
+        $policies = [new ItemPolicy(basis: PHP_INT_MAX), new ItemPolicy(basis: PHP_INT_MAX)];
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(overflow: Overflow::SqueezeToFloor));
+
+        self::assertSame([5, 5], $resolved->sizes, 'Two slots asking for more than can be counted still divide ten columns evenly');
+    }
+
+    #[Test]
+    public function squeezingPastTheFloorsStillHeedsHowWillingEachSlotWas(): void
+    {
+        $policies = [
+            new ItemPolicy(basis: 8, min: 8, shrink: 1),
+            new ItemPolicy(basis: 4, min: 4, shrink: 10),
+        ];
+
+        $resolved = Allocator::resolve($policies, 9, new AxisSpecification(overflow: Overflow::SqueezeToFloor));
+
+        self::assertSame([8, 1], $resolved->sizes, 'Both sit at their floors, and the one that said it was ten times more willing gives up the columns');
+    }
+
+    #[Test]
     public function slotsThatMayGiveWayGiveUpCellsByTheirWeight(): void
     {
         $wide = new ItemPolicy(basis: 6, shrink: 1);

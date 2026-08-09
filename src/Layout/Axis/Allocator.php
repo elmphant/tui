@@ -22,7 +22,8 @@ final class Allocator
 
         $wanted = 0;
         foreach ($policies as $policy) {
-            $wanted += $policy->initialSize();
+            $size = $policy->initialSize();
+            $wanted = $size > PHP_INT_MAX - $wanted ? PHP_INT_MAX : $wanted + $size;
         }
 
         if ($wanted <= $forSlots) {
@@ -40,12 +41,16 @@ final class Allocator
         } else {
             $sizes = self::shrunk($policies, $wanted - $forSlots);
 
-            if ($specification->overflow === Overflow::SqueezeToFloor && array_sum($sizes) > $forSlots) {
-                $sizes = self::evenlyWithin($sizes, $policies, $forSlots);
+            if ($specification->overflow === Overflow::SqueezeToFloor && self::totalOf($sizes) > $forSlots) {
+                $sizes = self::squeezedPastFloors($sizes, $policies, self::totalOf($sizes) - $forSlots);
+
+                if (self::totalOf($sizes) > $forSlots) {
+                    $sizes = self::evenlyWithin($sizes, $policies, $forSlots);
+                }
             }
         }
 
-        $unclaimed = max(0, $forSlots - array_sum($sizes));
+        $unclaimed = max(0, $forSlots - self::totalOf($sizes));
         [$leading, $between] = self::spread($specification->justification, count($sizes), $unclaimed);
 
         $offsets = [];
@@ -58,7 +63,23 @@ final class Allocator
             $cursor += $size;
         }
 
-        return new AxisResult($sizes, $offsets, max(0, array_sum($sizes) - $forSlots));
+        return new AxisResult($sizes, $offsets, max(0, self::totalOf($sizes) - $forSlots));
+    }
+
+    /**
+     * Declared sizes can reach PHP_INT_MAX, so adding them up has to stop there
+     * rather than tip over into a float.
+     *
+     * @param list<int> $sizes
+     */
+    private static function totalOf(array $sizes): int
+    {
+        $total = 0;
+        foreach ($sizes as $size) {
+            $total = $size > PHP_INT_MAX - $total ? PHP_INT_MAX : $total + $size;
+        }
+
+        return $total;
     }
 
     /**
@@ -75,6 +96,59 @@ final class Allocator
     }
 
     /**
+     * The floors themselves have to give way, and a slot that said it was more
+     * willing to shrink still gives up more of them.
+     *
+     * @param list<int>        $sizes
+     * @param list<ItemPolicy> $policies
+     *
+     * @return list<int>
+     */
+    private static function squeezedPastFloors(array $sizes, array $policies, int $deficit): array
+    {
+        while ($deficit > 0) {
+            $weight = 0;
+            foreach ($policies as $index => $policy) {
+                if ($policy->shrink > 0 && $sizes[$index] > 0) {
+                    $weight += $policy->shrink * $sizes[$index];
+                }
+            }
+
+            if ($weight === 0) {
+                return $sizes;
+            }
+
+            $taken = 0;
+            $roundDeficit = $deficit;
+            foreach ($policies as $index => $policy) {
+                if ($policy->shrink > 0 && $sizes[$index] > 0) {
+                    $give = min(intdiv($roundDeficit * $policy->shrink * $sizes[$index], $weight), $sizes[$index]);
+                    $sizes[$index] -= $give;
+                    $taken += $give;
+                }
+            }
+
+            $deficit -= $taken;
+
+            if ($taken === 0) {
+                foreach (array_reverse(array_keys($sizes)) as $index) {
+                    if ($deficit <= 0) {
+                        break;
+                    }
+                    if ($policies[$index]->shrink > 0 && $sizes[$index] > 0) {
+                        --$sizes[$index];
+                        --$deficit;
+                    }
+                }
+
+                return $sizes;
+            }
+        }
+
+        return $sizes;
+    }
+
+    /**
      * Floors are a request, and this is the case where the axis cannot honour
      * them: every slot is cut in proportion to what it held, so the total fits.
      *
@@ -85,18 +159,20 @@ final class Allocator
      */
     private static function evenlyWithin(array $sizes, array $policies, int $forSlots): array
     {
+        // Float division, because the declared sizes may be large enough that
+        // multiplying them before dividing would overflow.
         $held = array_sum($sizes);
         $cut = [];
         $placed = 0;
 
         foreach ($sizes as $index => $size) {
-            $share = $held === 0 ? 0 : intdiv($size * $forSlots, $held);
+            $share = $held <= 0 ? 0 : (int)floor($size / $held * $forSlots);
             $share = min($share, $policies[$index]->max);
             $cut[] = $share;
             $placed += $share;
         }
 
-        foreach (array_keys($cut) as $index) {
+        foreach (array_reverse(array_keys($cut)) as $index) {
             if ($placed >= $forSlots) {
                 break;
             }
