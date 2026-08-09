@@ -347,23 +347,21 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
      */
     private function handleTabClick(MouseMsg $message, Rect $area): UpdateResult
     {
-        $tabX = $area->x + 1;
+        $index = $this->tabStripLayout($area)->indexAt($message->x);
 
-        foreach ($this->tabs as $index => $tab) {
-            $cellWidth = CharWidth::stringWidth($tab->label) + 4;
-
-            if ($message->x >= $tabX && $message->x < $tabX + $cellWidth) {
-                if ($index === $this->activeTab) {
-                    return new UpdateResult($this);
-                }
-
-                return new UpdateResult($this->cloneWith(activeTab: $index)->withFocus($this->focused));
-            }
-
-            $tabX += $cellWidth;
+        if ($index === null || $index === $this->activeTab) {
+            return new UpdateResult($this);
         }
 
-        return new UpdateResult($this);
+        return new UpdateResult($this->cloneWith(activeTab: $index)->withFocus($this->focused));
+    }
+
+    private function tabStripLayout(Rect $area): TabStripLayout
+    {
+        return TabStripLayout::across(
+            array_map(static fn (TabPage $tab): string => $tab->label, $this->tabs),
+            $area,
+        );
     }
 
     private function renderTabStrip(
@@ -377,44 +375,43 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $borderBackground = $borderStyle->backgroundValue();
         $borderAttributes = $borderStyle->attributes;
 
-        $tabX = $area->x;
-        $maxRight = $area->right();
+        $layout = $this->tabStripLayout($area);
 
         foreach ($this->tabs as $tabIndex => $tab) {
-            $cellWidth = CharWidth::stringWidth($tab->label) + 4;
-            if ($tabX + $cellWidth > $maxRight) {
+            $cell = $layout->rectOf($tabIndex);
+            if ($cell === null) {
                 break;
             }
-            $isActive = $tabIndex === $this->activeTab;
 
-            if ($isActive) {
-                $tabRight = $tabX + $cellWidth - 1;
+            $labelRow = $cell->y + 1;
 
-                $frame->putChar($tabX, $area->y, $border->topLeft, $borderForeground, $borderBackground, $borderAttributes);
-                for ($x = $tabX + 1; $x < $tabRight; ++$x) {
-                    $frame->putChar($x, $area->y, $border->horizontal, $borderForeground, $borderBackground, $borderAttributes);
+            if ($tabIndex === $this->activeTab) {
+                $tabRight = $cell->right() - 1;
+
+                $frame->putChar($cell->x, $cell->y, $border->topLeft, $borderForeground, $borderBackground, $borderAttributes);
+                for ($x = $cell->x + 1; $x < $tabRight; ++$x) {
+                    $frame->putChar($x, $cell->y, $border->horizontal, $borderForeground, $borderBackground, $borderAttributes);
                 }
-                $frame->putChar($tabRight, $area->y, $border->topRight, $borderForeground, $borderBackground, $borderAttributes);
+                $frame->putChar($tabRight, $cell->y, $border->topRight, $borderForeground, $borderBackground, $borderAttributes);
 
-                $frame->putChar($tabX, $area->y + 1, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
-                $frame->putChar($tabX + 1, $area->y + 1, ' ', $borderForeground, $borderBackground);
-                $frame->putStyled($tabX + 2, $area->y + 1, $tab->label, $theme->titleStyle);
-                $frame->putChar($tabX + $cellWidth - 2, $area->y + 1, ' ', $borderForeground, $borderBackground);
-                $frame->putChar($tabRight, $area->y + 1, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
+                $frame->putChar($cell->x, $labelRow, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
+                $frame->putChar($cell->x + 1, $labelRow, ' ', $borderForeground, $borderBackground);
+                $frame->putStyled($cell->x + 2, $labelRow, $tab->label, $theme->titleStyle);
+                $frame->putChar($tabRight - 1, $labelRow, ' ', $borderForeground, $borderBackground);
+                $frame->putChar($tabRight, $labelRow, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
             } else {
-                $frame->putStyled($tabX + 2, $area->y + 1, $tab->label, $theme->dim);
+                $frame->putStyled($cell->x + 2, $labelRow, $tab->label, $theme->dim);
             }
-
-            $tabX += $cellWidth;
         }
 
-        $this->renderTabHint($frame, $area, $tabX, $theme);
-        $this->renderBaseline($frame, $area, $border, $borderStyle);
+        $this->renderTabHint($frame, $area, $layout->columnAfterLastTab(), $theme);
+        $this->renderBaseline($frame, $area, $layout, $border, $borderStyle);
     }
 
     private function renderBaseline(
         Frame $frame,
         Rect $area,
+        TabStripLayout $layout,
         BorderGlyphs $border,
         Style $borderStyle,
     ): void {
@@ -431,32 +428,25 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         }
         $frame->putChar($area->right() - 1, $baselineY, $border->topRight, $foreground, $background, $attributes);
 
-        $tabX = $area->x;
-        $maxRight = $area->right();
-        foreach ($this->tabs as $tabIndex => $tab) {
-            $cellWidth = CharWidth::stringWidth($tab->label) + 4;
-            if ($tabX + $cellWidth > $maxRight) {
-                break;
-            }
+        $cell = $layout->rectOf($this->activeTab);
+        if ($cell === null) {
+            return;
+        }
 
-            if ($tabIndex === $this->activeTab) {
-                if ($tabIndex === 0) {
-                    $frame->putChar($tabX, $baselineY, $border->vertical, $foreground, $background, $attributes);
-                } else {
-                    $frame->putChar($tabX, $baselineY, $border->bottomRight, $foreground, $background, $attributes);
-                }
+        $frame->putChar(
+            $cell->x,
+            $baselineY,
+            $this->activeTab === 0 ? $border->vertical : $border->bottomRight,
+            $foreground,
+            $background,
+            $attributes,
+        );
 
-                $tabRight = $tabX + $cellWidth - 1;
-                $frame->putChar($tabRight, $baselineY, $border->bottomLeft, $foreground, $background, $attributes);
+        $tabRight = $cell->right() - 1;
+        $frame->putChar($tabRight, $baselineY, $border->bottomLeft, $foreground, $background, $attributes);
 
-                $clearStart = $tabX + 1;
-                $clearEnd = $tabRight - 1;
-                for ($x = $clearStart; $x <= $clearEnd; ++$x) {
-                    $frame->putChar($x, $baselineY, ' ', 0, $background);
-                }
-            }
-
-            $tabX += $cellWidth;
+        for ($x = $cell->x + 1; $x <= $tabRight - 1; ++$x) {
+            $frame->putChar($x, $baselineY, ' ', 0, $background);
         }
     }
 

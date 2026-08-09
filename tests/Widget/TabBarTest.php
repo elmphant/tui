@@ -810,6 +810,40 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
+    public function aClickOnTheFirstColumnOfATabActivatesThatTab(): void
+    {
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $area = new Rect(0, 0, 40, 15);
+
+        self::assertSame(
+            1,
+            $tabBar->update(new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left), $area)->model->activeTab(),
+            'The second tab is painted from x=7 onwards',
+        );
+    }
+
+    #[Test]
+    public function aClickWhereALabelIsPaintedActivatesTheTabItBelongsTo(): void
+    {
+        $labels = ['One', 'Two', 'Three'];
+        $area = new Rect(0, 0, 40, 10);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->addTab('Three')->withFocus(true);
+
+        $frame = new Frame(40, 10);
+        $tabBar->render($frame, $area, $this->context());
+
+        foreach ($labels as $index => $label) {
+            $column = $this->columnOfLabel($frame, 40, 1, $label);
+
+            self::assertSame(
+                $index,
+                $tabBar->update(new MouseMsg($column, 1, MouseAction::Press, MouseButton::Left), $area)->model->activeTab(),
+                sprintf('Column %d carries the label of tab %d', $column, $index),
+            );
+        }
+    }
+
+    #[Test]
     public function clickOnTabAtYEqualsAreaY(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
@@ -867,7 +901,7 @@ final class TabBarTest extends TestCase
     public function clickAtLastCellOfFirstTab(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
-        self::assertSame(0, $tabBar->update(new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
+        self::assertSame(0, $tabBar->update(new MouseMsg(6, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
     #[Test]
@@ -3659,7 +3693,7 @@ final class TabBarTest extends TestCase
         );
         self::assertSame(1, $clickOnSecond->model->activeTab());
         $clickOnFirst = $tabBar->update(
-            new MouseMsg(6, 1, MouseAction::Press, MouseButton::Left),
+            new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
         self::assertSame(0, $clickOnFirst->model->activeTab());
@@ -5086,6 +5120,20 @@ final class TabBarTest extends TestCase
         }
 
         return $result;
+    }
+
+    private function columnOfLabel(Frame $frame, int $width, int $row, string $label): int
+    {
+        $characters = mb_str_split($label);
+
+        for ($column = 0; $column + count($characters) <= $width; ++$column) {
+            $painted = array_slice($frame->characters, $row * $width + $column, count($characters));
+            if ($painted === $characters) {
+                return $column;
+            }
+        }
+
+        self::fail(sprintf('The strip carries no label "%s"', $label));
     }
 
     private function createOverflowingTabBar(): TabBar
