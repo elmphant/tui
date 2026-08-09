@@ -102,6 +102,18 @@ final class SplitAllocationInvariantTest extends TestCase
         );
     }
 
+    #[Test]
+    public function everySweptSplitPutsEachPaneWhereRecordedForIt(): void
+    {
+        $resolved = [];
+
+        foreach (self::splits() as $name => [$shares, $minimums, $extent]) {
+            $resolved[$name] = self::coordinatesOf($this->paneRects($shares, $minimums, $extent));
+        }
+
+        self::assertSame(AllocationBaseline::splitPanes(), $resolved);
+    }
+
     /**
      * @return iterable<string, array{list<int>, list<int>, int}>
      */
