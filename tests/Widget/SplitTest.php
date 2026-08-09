@@ -32,6 +32,15 @@ final class SplitTest extends TestCase
     }
 
     #[Test]
+    public function refusesMoreSharesThanChildren(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Split needs as many shares as children, got 2 children and 3 shares');
+
+        Split::row(SplitState::even(3), Text::new('a'), Text::new('b'));
+    }
+
+    #[Test]
     public function dividesItsAreaEvenlyByDefault(): void
     {
         $split = Split::row(SplitState::even(2), Text::new('left'), Text::new('right'));
