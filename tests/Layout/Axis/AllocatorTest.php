@@ -9,6 +9,7 @@ use Elmphant\Tui\Layout\Axis\AxisSpecification;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Axis\Overflow;
+use Elmphant\Tui\Layout\Axis\Remainder;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Tests\Layout\Invariant\ConstraintSweep;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -182,6 +183,18 @@ final class AllocatorTest extends TestCase
             [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             Allocator::resolve($policies, 11)->sizes,
             'Eleven cells over twelve equal slots is one each for all but the foremost, never eleven for the last',
+        );
+    }
+
+    #[Test]
+    public function theCellsNoShareDividesCanGoToTheStrongestClaimsInstead(): void
+    {
+        $policies = array_fill(0, 12, new ItemPolicy(grow: 1));
+
+        self::assertSame(
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            Allocator::resolve($policies, 11, new AxisSpecification(remainder: Remainder::StrongestClaim))->sizes,
+            'Twelve equal claims on eleven cells: one each from the front, and the last goes without',
         );
     }
 

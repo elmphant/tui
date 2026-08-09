@@ -26,7 +26,7 @@ final class Allocator
         }
 
         if ($wanted <= $forSlots) {
-            $sizes = self::grown($policies, $forSlots - $wanted);
+            $sizes = self::grown($policies, $forSlots - $wanted, $specification->remainder);
         } elseif ($specification->overflow === Overflow::ClipTail) {
             $sizes = [];
             $unplaced = $forSlots;
@@ -168,7 +168,7 @@ final class Allocator
      *
      * @return list<int>
      */
-    private static function grown(array $policies, int $spare): array
+    private static function grown(array $policies, int $spare, Remainder $remainder): array
     {
         $sizes = [];
         foreach ($policies as $index => $policy) {
@@ -188,23 +188,58 @@ final class Allocator
             }
 
             $handedOut = 0;
+            $claims = [];
             foreach ($policies as $index => $policy) {
                 if ($policy->grow > 0 && $sizes[$index] < $policy->max) {
-                    $grant = min(intdiv($spare * $policy->grow, $weight), $policy->max - $sizes[$index]);
+                    $exact = $spare * $policy->grow;
+                    $whole = intdiv($exact, $weight);
+                    $grant = min($whole, $policy->max - $sizes[$index]);
                     $sizes[$index] += $grant;
                     $handedOut += $grant;
+                    $claims[$index] = $exact - $whole * $weight;
                 }
             }
 
             $spare -= $handedOut;
 
             if ($handedOut === 0) {
-                $spare -= self::nudgeRearmost($sizes, $policies, $spare, true);
+                $spare -= $remainder === Remainder::StrongestClaim
+                    ? self::byStrongestClaim($sizes, $policies, $claims, $spare)
+                    : self::nudgeRearmost($sizes, $policies, $spare, true);
                 break;
             }
         }
 
         return array_values($sizes);
+    }
+
+    /**
+     * @param array<int, int>  $sizes
+     * @param list<ItemPolicy> $policies
+     * @param array<int, int>  $claims
+     *
+     * @param-out array<int, int> $sizes
+     */
+    private static function byStrongestClaim(array &$sizes, array $policies, array $claims, int $cells): int
+    {
+        arsort($claims);
+        $moved = 0;
+
+        foreach (array_keys($claims) as $index) {
+            if ($cells <= 0) {
+                break;
+            }
+
+            if ($policies[$index]->max - $sizes[$index] < 1) {
+                continue;
+            }
+
+            ++$sizes[$index];
+            --$cells;
+            ++$moved;
+        }
+
+        return $moved;
     }
 
     /**

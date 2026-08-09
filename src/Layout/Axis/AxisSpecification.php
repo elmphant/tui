@@ -15,6 +15,7 @@ final readonly class AxisSpecification
         public int $gap = 0,
         public Justification $justification = Justification::Start,
         public Overflow $overflow = Overflow::Compress,
+        public Remainder $remainder = Remainder::RearmostFirst,
     ) {
     }
 }
