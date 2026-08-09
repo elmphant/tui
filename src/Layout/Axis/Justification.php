@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Layout;
+namespace Elmphant\Tui\Layout\Axis;
 
 /**
- * Distribution of unused cells on a flex line after item sizing.
+ * Where the cells nobody claimed end up once every slot has its size.
  */
-enum FlexJustify
+enum Justification
 {
     case Start;
     case Center;

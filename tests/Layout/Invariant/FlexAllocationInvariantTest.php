@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Layout\Invariant;
 
+use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Flex;
-use Elmphant\Tui\Layout\FlexJustify;
 use Elmphant\Tui\Layout\Rect;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,7 +21,7 @@ final class FlexAllocationInvariantTest extends TestCase
 
     #[Test]
     #[DataProvider('rows')]
-    public function everyItemStaysInsideTheArea(array $items, bool $wrap, int $gap, FlexJustify $justify, int $extent): void
+    public function everyItemStaysInsideTheArea(array $items, bool $wrap, int $gap, Justification $justify, int $extent): void
     {
         $area = new Rect(3, 1, $extent, 6);
 
@@ -30,7 +30,7 @@ final class FlexAllocationInvariantTest extends TestCase
 
     #[Test]
     #[DataProvider('rows')]
-    public function itemsNeverOverlap(array $items, bool $wrap, int $gap, FlexJustify $justify, int $extent): void
+    public function itemsNeverOverlap(array $items, bool $wrap, int $gap, Justification $justify, int $extent): void
     {
         $area = new Rect(3, 1, $extent, 6);
 
@@ -39,7 +39,7 @@ final class FlexAllocationInvariantTest extends TestCase
 
     #[Test]
     #[DataProvider('rows')]
-    public function theSameRowResolvesTheSameWayTwice(array $items, bool $wrap, int $gap, FlexJustify $justify, int $extent): void
+    public function theSameRowResolvesTheSameWayTwice(array $items, bool $wrap, int $gap, Justification $justify, int $extent): void
     {
         $area = new Rect(3, 1, $extent, 6);
 
@@ -54,7 +54,7 @@ final class FlexAllocationInvariantTest extends TestCase
     public function itemsPackedFromTheStartTileTheRow(array $items, int $extent): void
     {
         $area = new Rect(3, 1, $extent, 6);
-        $rects = $this->rectsFor($items, false, 0, FlexJustify::Start, $area);
+        $rects = $this->rectsFor($items, false, 0, Justification::Start, $area);
 
         self::assertAdjacentAlong($rects, $area, Direction::Horizontal);
         self::assertSame($extent, array_sum(self::extentsAlong($rects, Direction::Horizontal)));
@@ -62,7 +62,7 @@ final class FlexAllocationInvariantTest extends TestCase
 
     #[Test]
     #[DataProvider('rowsThatHoldEveryMinimum')]
-    public function everyItemLandsBetweenItsMinimumAndItsMaximum(array $items, bool $wrap, int $gap, FlexJustify $justify, int $extent): void
+    public function everyItemLandsBetweenItsMinimumAndItsMaximum(array $items, bool $wrap, int $gap, Justification $justify, int $extent): void
     {
         $area = new Rect(3, 1, $extent, 6);
         $widths = self::extentsAlong($this->rectsFor($items, $wrap, $gap, $justify, $area), Direction::Horizontal);
@@ -87,15 +87,15 @@ final class FlexAllocationInvariantTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{list<array{basis: int, min: int, max: int, grow: int, shrink: int}>, bool, int, FlexJustify, int}>
+     * @return iterable<string, array{list<array{basis: int, min: int, max: int, grow: int, shrink: int}>, bool, int, Justification, int}>
      */
     public static function rows(): iterable
     {
         $options = [
-            'packed' => [false, 0, FlexJustify::Start],
-            'spaced centre' => [false, 1, FlexJustify::Center],
-            'wrapped apart' => [true, 0, FlexJustify::SpaceBetween],
-            'wrapped end' => [true, 2, FlexJustify::End],
+            'packed' => [false, 0, Justification::Start],
+            'spaced centre' => [false, 1, Justification::Center],
+            'wrapped apart' => [true, 0, Justification::SpaceBetween],
+            'wrapped end' => [true, 2, Justification::End],
         ];
 
         foreach (self::itemLists() as $listName => $items) {
@@ -108,7 +108,7 @@ final class FlexAllocationInvariantTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{list<array{basis: int, min: int, max: int, grow: int, shrink: int}>, bool, int, FlexJustify, int}>
+     * @return iterable<string, array{list<array{basis: int, min: int, max: int, grow: int, shrink: int}>, bool, int, Justification, int}>
      */
     public static function rowsThatHoldEveryMinimum(): iterable
     {
@@ -185,7 +185,7 @@ final class FlexAllocationInvariantTest extends TestCase
      *
      * @return list<Rect>
      */
-    private function rectsFor(array $items, bool $wrap, int $gap, FlexJustify $justify, Rect $area): array
+    private function rectsFor(array $items, bool $wrap, int $gap, Justification $justify, Rect $area): array
     {
         $flex = Flex::row()->withWrap($wrap)->withGap($gap)->withJustify($justify);
 

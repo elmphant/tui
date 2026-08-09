@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout;
 
 use Closure;
+use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Flex;
-use Elmphant\Tui\Layout\FlexJustify;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\WidgetTree;
 use Elmphant\Tui\Rendering\Frame;
@@ -60,8 +60,8 @@ final class FlexTest extends TestCase
 
         self::assertSame($flex, $flex->withWrap(false));
         self::assertSame($flex, $flex->withGap(0));
-        self::assertSame($flex, $flex->withJustify(FlexJustify::Start));
-        self::assertNotSame($flex, $flex->withJustify(FlexJustify::End));
+        self::assertSame($flex, $flex->withJustify(Justification::Start));
+        self::assertNotSame($flex, $flex->withJustify(Justification::End));
     }
 
     /**
@@ -212,7 +212,7 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withGap(2)
-            ->withJustify(FlexJustify::Center)
+            ->withJustify(Justification::Center)
             ->add(Text::new('first'), basis: 10, max: 10)
             ->add(Text::new('second'), basis: 10, max: 10);
 
@@ -227,7 +227,7 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withGap(2)
-            ->withJustify(FlexJustify::SpaceBetween)
+            ->withJustify(Justification::SpaceBetween)
             ->add(Text::new('first'), basis: 5, max: 5)
             ->add(Text::new('second'), basis: 5, max: 5)
             ->add(Text::new('third'), basis: 5, max: 5);
@@ -243,20 +243,20 @@ final class FlexTest extends TestCase
     #[Test]
     public function everyJustificationModeHasDeterministicIntegerRemainders(): void
     {
-        $make = static fn (FlexJustify $justify): Flex => Flex::row()
+        $make = static fn (Justification $justify): Flex => Flex::row()
             ->withJustify($justify)
             ->add(Text::new('first'), basis: 2, max: 2, grow: 0)
             ->add(Text::new('second'), basis: 2, max: 2, grow: 0);
 
-        self::assertSame([0, 2], $this->mainOffsets($make(FlexJustify::Start), Rect::fromSize(9, 1)));
-        self::assertSame([5, 7], $this->mainOffsets($make(FlexJustify::End), Rect::fromSize(9, 1)));
-        self::assertSame([2, 4], $this->mainOffsets($make(FlexJustify::Center), Rect::fromSize(9, 1)));
-        self::assertSame([0, 7], $this->mainOffsets($make(FlexJustify::SpaceBetween), Rect::fromSize(9, 1)));
-        self::assertSame([1, 5], $this->mainOffsets($make(FlexJustify::SpaceEvenly), Rect::fromSize(9, 1)));
-        self::assertSame([1, 4], $this->mainOffsets($make(FlexJustify::SpaceEvenly), Rect::fromSize(8, 1)));
+        self::assertSame([0, 2], $this->mainOffsets($make(Justification::Start), Rect::fromSize(9, 1)));
+        self::assertSame([5, 7], $this->mainOffsets($make(Justification::End), Rect::fromSize(9, 1)));
+        self::assertSame([2, 4], $this->mainOffsets($make(Justification::Center), Rect::fromSize(9, 1)));
+        self::assertSame([0, 7], $this->mainOffsets($make(Justification::SpaceBetween), Rect::fromSize(9, 1)));
+        self::assertSame([1, 5], $this->mainOffsets($make(Justification::SpaceEvenly), Rect::fromSize(9, 1)));
+        self::assertSame([1, 4], $this->mainOffsets($make(Justification::SpaceEvenly), Rect::fromSize(8, 1)));
 
         $single = Flex::row()
-            ->withJustify(FlexJustify::SpaceBetween)
+            ->withJustify(Justification::SpaceBetween)
             ->add(Text::new('only'), basis: 2, max: 2, grow: 0);
         self::assertSame([0], $this->mainOffsets($single, Rect::fromSize(9, 1)));
     }
@@ -300,7 +300,7 @@ final class FlexTest extends TestCase
     public function zeroGrowItemsWithHeadroomLeaveSpaceForJustification(): void
     {
         $flex = Flex::row()
-            ->withJustify(FlexJustify::End)
+            ->withJustify(Justification::End)
             ->add(Text::new('fixed'), basis: 2, max: 10, grow: 0);
 
         self::assertEquals(new Rect(3, 0, 2, 1), $flex->computeChildRects(Rect::fromSize(5, 1))[0][1]);

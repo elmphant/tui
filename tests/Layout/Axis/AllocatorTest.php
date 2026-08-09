@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Layout\Axis;
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
+use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Tests\Layout\Invariant\ConstraintSweep;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,6 +29,47 @@ final class AllocatorTest extends TestCase
             Constraint::allocate($constraints, $extent),
             Allocator::resolve($policies, $extent)->sizes,
         );
+    }
+
+    #[Test]
+    public function theCellsNobodyClaimedSitBeforeTheSlotsWhenTheyArePushedToTheEnd(): void
+    {
+        $policies = [new ItemPolicy(basis: 3), new ItemPolicy(basis: 3)];
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(justification: Justification::End));
+
+        self::assertSame([3, 3], $resolved->sizes, 'Nothing grows, so the spare cells stay unclaimed');
+        self::assertSame([4, 7], $resolved->offsets);
+    }
+
+    #[Test]
+    public function centringLeavesTheOddCellAfterTheSlots(): void
+    {
+        $policies = [new ItemPolicy(basis: 3), new ItemPolicy(basis: 3)];
+
+        $resolved = Allocator::resolve($policies, 11, new AxisSpecification(justification: Justification::Center));
+
+        self::assertSame([2, 5], $resolved->offsets, 'Five cells spare puts two before the slots and three after');
+    }
+
+    #[Test]
+    public function spacingBetweenPushesTheOutermostSlotsToTheEdges(): void
+    {
+        $policies = [new ItemPolicy(basis: 2), new ItemPolicy(basis: 2), new ItemPolicy(basis: 2)];
+
+        $resolved = Allocator::resolve($policies, 12, new AxisSpecification(justification: Justification::SpaceBetween));
+
+        self::assertSame([0, 5, 10], $resolved->offsets);
+    }
+
+    #[Test]
+    public function spacingEvenlyLeavesAsMuchRoomAtTheEdgesAsBetweenTheSlots(): void
+    {
+        $policies = [new ItemPolicy(basis: 2), new ItemPolicy(basis: 2)];
+
+        $resolved = Allocator::resolve($policies, 13, new AxisSpecification(justification: Justification::SpaceEvenly));
+
+        self::assertSame([3, 8], $resolved->offsets, 'Nine cells spare over three openings is three each');
     }
 
     #[Test]

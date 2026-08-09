@@ -29,14 +29,37 @@ final class Allocator
             ? self::shrunk($policies, $wanted - $forSlots)
             : self::grown($policies, $forSlots - $wanted);
 
+        $unclaimed = max(0, $forSlots - array_sum($sizes));
+        [$leading, $between] = self::spread($specification->justification, count($sizes), $unclaimed);
+
         $offsets = [];
-        $cursor = 0;
+        $cursor = $leading;
         foreach ($sizes as $size) {
             $offsets[] = $cursor;
-            $cursor += $size + $specification->gap;
+            $cursor += $size + $specification->gap + $between;
         }
 
         return new AxisResult($sizes, $offsets);
+    }
+
+    /**
+     * How many cells sit before the first slot, and how many between each pair.
+     *
+     * @return array{int, int}
+     */
+    private static function spread(Justification $justification, int $count, int $unclaimed): array
+    {
+        if ($unclaimed === 0 || $count === 0) {
+            return [0, 0];
+        }
+
+        return match ($justification) {
+            Justification::End => [$unclaimed, 0],
+            Justification::Center => [intdiv($unclaimed, 2), 0],
+            Justification::SpaceBetween => $count === 1 ? [0, 0] : [0, intdiv($unclaimed, $count - 1)],
+            Justification::SpaceEvenly => [intdiv($unclaimed, $count + 1), intdiv($unclaimed, $count + 1)],
+            Justification::Start => [0, 0],
+        };
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -28,7 +29,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         private array $items = [],
         private bool $wrap = false,
         private int $gap = 0,
-        private FlexJustify $justify = FlexJustify::Start,
+        private Justification $justify = Justification::Start,
     ) {
     }
 
@@ -60,7 +61,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             : new self($this->direction, $this->items, $this->wrap, $gap, $this->justify);
     }
 
-    public function withJustify(FlexJustify $justify): self
+    public function withJustify(Justification $justify): self
     {
         return $justify === $this->justify
             ? $this
@@ -404,19 +405,19 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
      */
     private function justify(int $count, int $unused): array
     {
-        if ($unused === 0 || $this->justify === FlexJustify::Start) {
+        if ($unused === 0 || $this->justify === Justification::Start) {
             return [0, []];
         }
 
-        if ($this->justify === FlexJustify::End) {
+        if ($this->justify === Justification::End) {
             return [$unused, []];
         }
 
-        if ($this->justify === FlexJustify::Center) {
+        if ($this->justify === Justification::Center) {
             return [intdiv($unused, 2), []];
         }
 
-        if ($this->justify === FlexJustify::SpaceBetween) {
+        if ($this->justify === Justification::SpaceBetween) {
             return [0, self::spread($unused, $count - 1)];
         }
 

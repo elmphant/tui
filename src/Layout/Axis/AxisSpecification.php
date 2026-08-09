@@ -13,6 +13,7 @@ final readonly class AxisSpecification
 {
     public function __construct(
         public int $gap = 0,
+        public Justification $justification = Justification::Start,
     ) {
     }
 }
