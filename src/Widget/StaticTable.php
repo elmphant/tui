@@ -109,7 +109,7 @@ final class StaticTable implements Widget, MeasureHeight
     {
         $lines = $this->linesFor($width);
 
-        return $lines === [] ? 0 : mb_strlen($lines[0]);
+        return $lines === [] ? 0 : min($width, mb_strlen($lines[0]));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -124,8 +124,14 @@ final class StaticTable implements Widget, MeasureHeight
         $first = max(0, $clip->y - $area->y);
         $last = min(count($lines), $area->height, $clip->bottom() - $area->y);
 
-        for ($row = $first; $row < $last; ++$row) {
-            $frame->putStyled($area->x, $area->y + $row, $lines[$row], $style);
+        $frame->pushClip($area);
+
+        try {
+            for ($row = $first; $row < $last; ++$row) {
+                $frame->putStyled($area->x, $area->y + $row, $lines[$row], $style);
+            }
+        } finally {
+            $frame->popClip();
         }
     }
 

@@ -18,12 +18,12 @@ final class FilterableCheckboxGroupPointerTest extends TestCase
     #[Test]
     public function aPressNamesTheBoxDrawnOnThatRowOfTheNarrowedList(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sys_log', 'sys_history'])
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail'])
             ->withFocus(true);
         $area = Rect::fromSize(30, 8);
 
         $narrowed = $group;
-        foreach ([new KeyMsg('s'), new KeyMsg('y'), new KeyMsg('s')] as $key) {
+        foreach ([new KeyMsg('s'), new KeyMsg('y'), new KeyMsg('n')] as $key) {
             $narrowed = $narrowed->update($key, $area)->model;
         }
         self::assertInstanceOf(FilterableCheckboxGroup::class, $narrowed);
@@ -31,11 +31,11 @@ final class FilterableCheckboxGroupPointerTest extends TestCase
         $onTheSecondBox = new MouseMsg(0, $area->y + 3, MouseAction::Press, MouseButton::Left);
 
         self::assertSame(
-            'sys_history',
+            'sync_trail',
             $narrowed->optionAt($onTheSecondBox, $area),
-            'the query moved sys_history up a row, and a press answers against the rows on the screen',
+            'the query moved sync_trail up a row, and a press answers against the rows on the screen',
         );
         self::assertTrue($narrowed->hasOption('app.log'), 'an option the query is hiding is still one it offers');
-        self::assertSame(['sys_history'], $narrowed->activated('sys_history')->checkedValues());
+        self::assertSame(['sync_trail'], $narrowed->activated('sync_trail')->checkedValues());
     }
 }

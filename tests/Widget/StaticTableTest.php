@@ -69,12 +69,27 @@ final class StaticTableTest extends TestCase
     #[Test]
     public function aLoneColumnTakesTheWholeWidthAndWrapsItsContent(): void
     {
-        $table = StaticTable::new(['Method'], [['Georgringer\\Numberedpages\\Hooks\\PageRenderer']]);
+        $table = StaticTable::new(['Method'], [['Acme\\NumberedPages\\Hooks\\PageRenderer']]);
 
         $rows = explode("\n", $this->render($table, 12, 10));
 
         self::assertSame('┌──────────┐', rtrim($rows[0]), 'The lone column takes all eight columns the border and padding leave it');
-        self::assertStringContainsString('Georgrin', $rows[3], 'The content wraps into that width');
+        self::assertStringContainsString('Acme\\Nu', $rows[3], 'The content wraps into that width');
+    }
+
+    #[Test]
+    public function drawsNothingBeyondTheAreaEvenWhenOneColumnWillNotFit(): void
+    {
+        $table = StaticTable::new(['Class'], [['Acme\\NumberedPages\\Hooks\\PageRenderer']]);
+        $frame = new Frame(40, 8);
+
+        $table->render($frame, new Rect(0, 0, 8, 8), new RenderContext(Theme::dark()));
+
+        for ($row = 0; $row < 8; ++$row) {
+            for ($column = 8; $column < 40; ++$column) {
+                self::assertSame(' ', $frame->characters[$row * 40 + $column], sprintf('Cell %d,%d lies outside the eight columns it was given', $column, $row));
+            }
+        }
     }
 
     #[Test]
@@ -95,7 +110,7 @@ final class StaticTableTest extends TestCase
     {
         $table = StaticTable::new(
             ['Pkg', 'Main level', 'Path'],
-            [['acme/cms-core', 'content', '/module/content']],
+            [['acme/core', 'content', '/module/content']],
         );
 
         $screen = $this->render($table, 40, 10);
@@ -128,7 +143,7 @@ final class StaticTableTest extends TestCase
     {
         $table = StaticTable::new(
             ['Name', 'Method', 'Target', 'Type'],
-            [['about', 'ANY', 'Backend\Controller\AboutController::handleRequest', 'Module']],
+            [['about', 'ANY', 'Acme\Controller\AboutController::handleRequest', 'Module']],
         );
 
         $rows = explode("\n", $this->render($table, 24, 10));
@@ -138,7 +153,7 @@ final class StaticTableTest extends TestCase
         self::assertStringContainsString('Name', $rows[1], 'The columns that fit stay tabular');
         self::assertStringContainsString('Target', $screen, 'A stacked column keeps its label in the header');
         self::assertStringContainsString('Type', $screen);
-        self::assertStringContainsString('Backend', $screen, 'Its value sits under the value above');
+        self::assertStringContainsString('Acme', $screen, 'Its value sits under the value above');
     }
 
     #[Test]
@@ -146,7 +161,7 @@ final class StaticTableTest extends TestCase
     {
         $table = StaticTable::new(
             ['Name', 'Method', 'Target', 'Type'],
-            [['about', 'ANY', 'Backend\Controller\AboutController::handleRequest', 'Module']],
+            [['about', 'ANY', 'Acme\Controller\AboutController::handleRequest', 'Module']],
         )->withOverflow(Overflow::Wrap);
 
         $header = explode("\n", $this->render($table, 46, 10))[1];

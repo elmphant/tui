@@ -857,19 +857,19 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function readsAsHowManyOfItsBoxesAreTicked(): void
     {
-        $group = CheckboxGroup::new(['app.log', 'deprecations', 'sys_log', 'sys_history']);
+        $group = CheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail']);
 
         self::assertSame('0 of 4', $group->caption());
-        self::assertSame('2 of 4', $group->activated('app.log')->activated('sys_log')->caption());
+        self::assertSame('2 of 4', $group->activated('app.log')->activated('sync_log')->caption());
     }
 
     #[Test]
     public function readsAsTheHostsOwnWordForNothingTickedWhenItGivesOne(): void
     {
-        $group = CheckboxGroup::new(['app.log', 'sys_log'])->withEmptyCaption('all');
+        $group = CheckboxGroup::new(['app.log', 'sync_log'])->withEmptyCaption('all');
 
         self::assertSame('all', $group->caption());
-        self::assertSame('1 of 2', $group->activated('sys_log')->caption(), 'and back to counting once a box is ticked');
+        self::assertSame('1 of 2', $group->activated('sync_log')->caption(), 'and back to counting once a box is ticked');
     }
 
     #[Test]

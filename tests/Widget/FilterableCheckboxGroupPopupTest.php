@@ -15,7 +15,7 @@ final class FilterableCheckboxGroupPopupTest extends TestCase
     #[Test]
     public function itAsksForRoomForItsFieldTheGapAndTheBoxesTheQueryLeft(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sys_log', 'sys_history'])
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail'])
             ->withFocus(true);
         $area = Rect::fromSize(30, 8);
 

@@ -28,8 +28,10 @@ final class StaticTableAllocationInvariantTest extends TestCase
         $frame = $this->drawn($table, $area);
         $drawn = $table->drawnWidth($width);
 
+        // A line cut short by the area can end on one of its padding spaces, so
+        // the ink reaches at most as far as the table says it drew.
         for ($row = 0; $row < $table->measureHeight($width); ++$row) {
-            self::assertSame($area->x + $drawn - 1, $this->rightmostInk($frame, $area->y + $row));
+            self::assertLessThanOrEqual($area->x + $drawn - 1, $this->rightmostInk($frame, $area->y + $row));
         }
     }
 
@@ -48,14 +50,14 @@ final class StaticTableAllocationInvariantTest extends TestCase
 
     #[Test]
     #[DataProvider('gridsWiderThanTheirWidth')]
-    public function aTableTooWideForTheAreaDrawsPastItsRightEdge(array $headers, array $rows, int $width): void
+    public function aTableTooWideForTheAreaIsCutOffAtItsRightEdge(array $headers, array $rows, int $width): void
     {
         $table = StaticTable::new($headers, $rows);
         $area = self::areaOf($width);
         $frame = $this->drawn($table, $area);
 
-        self::assertGreaterThan($width, $table->drawnWidth($width));
-        self::assertGreaterThanOrEqual($area->right(), $this->rightmostInk($frame, $area->y));
+        self::assertSame($width, $table->drawnWidth($width), 'It reports only the width it was offered');
+        self::assertLessThan($area->right(), $this->rightmostInk($frame, $area->y), 'and draws nothing beyond it');
     }
 
     #[Test]
@@ -73,14 +75,14 @@ final class StaticTableAllocationInvariantTest extends TestCase
     }
 
     #[Test]
-    public function aTableOfferedNoWidthDrawsNothingAndStillMeasuresAGrid(): void
+    public function aTableOfferedNoWidthDrawsNothingAndReportsNoWidth(): void
     {
         $table = StaticTable::new(['Name', 'Size'], [['alpha', '10']]);
         $area = self::areaOf(0);
 
-        self::assertGreaterThan(0, $table->measureHeight(0));
-        self::assertGreaterThan(0, $table->drawnWidth(0));
+        self::assertSame(0, $table->drawnWidth(0));
         self::assertSame(-1, $this->rightmostInk($this->drawn($table, $area), $area->y));
+        self::assertGreaterThan(0, $table->measureHeight(0), 'It still reserves rows for a grid it cannot draw');
     }
 
     /**
@@ -142,7 +144,11 @@ final class StaticTableAllocationInvariantTest extends TestCase
     public static function gridsWiderThanTheirWidth(): iterable
     {
         foreach (self::gridsWithAWidthToDrawIn() as $name => [$headers, $rows, $width]) {
-            if (StaticTable::new($headers, $rows)->drawnWidth($width) > $width) {
+            $table = StaticTable::new($headers, $rows);
+
+            // The grid it would draw unclipped, which is what makes the area cut
+            // it off; drawnWidth() reports only what survives the cut.
+            if ($table->drawnWidth(PHP_INT_MAX) > $width) {
                 yield $name => [$headers, $rows, $width];
             }
         }

@@ -18,7 +18,7 @@ final class FilterableCheckboxGroupInDropdownTest extends TestCase
     public function aDropdownHoldsItAndReadsTheClosedRowFromIt(): void
     {
         $dropdown = Dropdown::new(
-            FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sys_log', 'sys_history']),
+            FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail']),
         )->withFocus(true);
         $area = Rect::fromSize(40, 12);
 

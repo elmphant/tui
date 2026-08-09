@@ -2067,20 +2067,20 @@ final class ListViewTest extends TestCase
     #[Test]
     public function longItemTextWrapsInsteadOfBeingCutOff(): void
     {
-        $list = ListView::new([new SimpleListItem('cache:flushtags', 'Flush stale caches with tags')]);
+        $list = ListView::new([new SimpleListItem('cache:flushtags', 'Flush saved caches with tags')]);
         $frame = new Frame(20, 6);
 
         $list->render($frame, new Rect(0, 0, 20, 6), new RenderContext(Theme::dark()));
 
         self::assertSame('cache:flushtags', self::row($frame, 0, 20));
-        self::assertSame('Flush stale caches', self::row($frame, 1, 20));
+        self::assertSame('Flush saved caches', self::row($frame, 1, 20));
         self::assertSame('with tags', self::row($frame, 2, 20), 'The tail of the description keeps its own row');
     }
 
     #[Test]
     public function aWrappedItemReportsTheRowsItOccupies(): void
     {
-        $item = new SimpleListItem('cache:flushtags', 'Flush stale caches with tags');
+        $item = new SimpleListItem('cache:flushtags', 'Flush saved caches with tags');
 
         self::assertSame(2, $item->height(60), 'Title and description fit one row each');
         self::assertSame(3, $item->height(20), 'The description needs a second row when narrow');

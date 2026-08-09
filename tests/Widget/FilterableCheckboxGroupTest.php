@@ -16,20 +16,20 @@ final class FilterableCheckboxGroupTest extends TestCase
     #[Test]
     public function aTickOutlivesTheQueryThatWasNarrowingTheBoxesWhenItWasMade(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sys_log', 'sys_history'])
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail'])
             ->withFocus(true);
 
         $ticked = self::pressed(
             $group,
             new KeyMsg('s'),
             new KeyMsg('y'),
-            new KeyMsg('s'),
+            new KeyMsg('n'),
             new KeyMsg(' '),
             new KeyMsg('u', ctrl: true),
         );
 
         self::assertSame(
-            ['sys_log'],
+            ['sync_log'],
             $ticked->checkedValues(),
             'a box is ticked by name, so clearing the query cannot hand the tick to whoever holds that row now',
         );

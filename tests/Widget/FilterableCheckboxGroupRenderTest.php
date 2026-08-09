@@ -19,7 +19,7 @@ final class FilterableCheckboxGroupRenderTest extends TestCase
     #[Test]
     public function drawsTheFieldAboveOnlyTheBoxesTheQueryLeft(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sys_log', 'sys_history'])
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail'])
             ->withFocus(true);
         $area = Rect::fromSize(30, 8);
 
@@ -30,7 +30,7 @@ final class FilterableCheckboxGroupRenderTest extends TestCase
 
         self::assertStringContainsString('d', $rows[0], 'the query is on the top row, where it was typed');
         self::assertStringContainsString('[ ] deprecations', $rows[2], 'a blank row, then what the query kept');
-        self::assertStringNotContainsString('sys_log', implode("\n", $rows), 'and nothing it did not');
+        self::assertStringNotContainsString('sync_log', implode("\n", $rows), 'and nothing it did not');
     }
 
     /**

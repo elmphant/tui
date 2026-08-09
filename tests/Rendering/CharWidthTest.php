@@ -735,8 +735,8 @@ final class CharWidthTest extends TestCase
     public function wrapToWidthBreaksOnWordBoundaries(): void
     {
         self::assertSame(
-            ['Flush stale', 'caches with tags'],
-            CharWidth::wrapToWidth('Flush stale caches with tags', 16),
+            ['Flush saved', 'caches with tags'],
+            CharWidth::wrapToWidth('Flush saved caches with tags', 16),
         );
     }
 
