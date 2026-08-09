@@ -17,12 +17,12 @@ final class Allocator
     public static function resolve(array $policies, int $available, ?AxisSpecification $specification = null): AxisResult
     {
         $specification ??= new AxisSpecification();
-        $gaps = max(0, count($policies) - 1) * $specification->gap;
-        $forSlots = max(0, $available - $gaps);
+        $gap = self::gapWithin($specification->gap, count($policies), $available);
+        $forSlots = max(0, $available - max(0, count($policies) - 1) * $gap);
 
         $wanted = 0;
         foreach ($policies as $policy) {
-            $wanted += $policy->basis;
+            $wanted += $policy->initialSize();
         }
 
         if ($wanted <= $forSlots) {
@@ -31,17 +31,17 @@ final class Allocator
             $sizes = [];
             $unplaced = $forSlots;
             foreach ($policies as $policy) {
-                $size = min($policy->basis, max(0, $unplaced));
+                $size = min($policy->initialSize(), max(0, $unplaced));
                 $sizes[] = $size;
                 $unplaced -= $size;
             }
         } elseif ($specification->overflow === Overflow::Retain) {
-            $sizes = array_map(static fn (ItemPolicy $policy): int => $policy->basis, $policies);
+            $sizes = array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies);
         } else {
             $sizes = self::shrunk($policies, $wanted - $forSlots);
 
             if ($specification->overflow === Overflow::SqueezeToFloor && array_sum($sizes) > $forSlots) {
-                $sizes = self::evenlyWithin($sizes, $forSlots);
+                $sizes = self::evenlyWithin($sizes, $policies, $forSlots);
             }
         }
 
@@ -52,28 +52,43 @@ final class Allocator
         $cursor = $leading;
         foreach ($sizes as $size) {
             $offsets[] = $cursor;
-            $cursor += $size + $specification->gap + $between;
+            $cursor += $size + $gap + $between;
         }
 
         return new AxisResult($sizes, $offsets, max(0, array_sum($sizes) - $forSlots));
     }
 
     /**
+     * A gap wider than the axis would place slots outside it, so it gives way
+     * to what is actually there.
+     */
+    private static function gapWithin(int $gap, int $count, int $available): int
+    {
+        if ($count < 2) {
+            return 0;
+        }
+
+        return min($gap, intdiv(max(0, $available), $count - 1));
+    }
+
+    /**
      * Floors are a request, and this is the case where the axis cannot honour
      * them: every slot is cut in proportion to what it held, so the total fits.
      *
-     * @param list<int> $sizes
+     * @param list<int>        $sizes
+     * @param list<ItemPolicy> $policies
      *
      * @return list<int>
      */
-    private static function evenlyWithin(array $sizes, int $forSlots): array
+    private static function evenlyWithin(array $sizes, array $policies, int $forSlots): array
     {
         $held = array_sum($sizes);
         $cut = [];
         $placed = 0;
 
-        foreach ($sizes as $size) {
+        foreach ($sizes as $index => $size) {
             $share = $held === 0 ? 0 : intdiv($size * $forSlots, $held);
+            $share = min($share, $policies[$index]->max);
             $cut[] = $share;
             $placed += $share;
         }
@@ -81,6 +96,9 @@ final class Allocator
         foreach (array_keys($cut) as $index) {
             if ($placed >= $forSlots) {
                 break;
+            }
+            if ($cut[$index] >= $policies[$index]->max) {
+                continue;
             }
             ++$cut[$index];
             ++$placed;
@@ -120,33 +138,73 @@ final class Allocator
      */
     private static function grown(array $policies, int $spare): array
     {
-        $totalGrow = 0;
-        foreach ($policies as $policy) {
-            $totalGrow += $policy->grow;
-        }
-
         $sizes = [];
-        $granted = 0;
-
         foreach ($policies as $index => $policy) {
-            $size = $policy->basis;
-            if ($policy->grow > 0 && $totalGrow > 0) {
-                $size = min($policy->basis + intdiv($spare * $policy->grow, $totalGrow), $policy->max);
-                $granted += $size - $policy->basis;
-            }
-            $sizes[$index] = $size;
+            $sizes[$index] = $policy->initialSize();
         }
 
-        $leftover = $spare - $granted;
-        foreach (array_reverse(array_keys($sizes)) as $index) {
-            if ($policies[$index]->grow > 0) {
-                $grant = min($leftover, $policies[$index]->max - $sizes[$index]);
-                $sizes[$index] += $grant;
-                $leftover -= $grant;
+        while ($spare > 0) {
+            $weight = 0;
+            foreach ($policies as $index => $policy) {
+                if ($policy->grow > 0 && $sizes[$index] < $policy->max) {
+                    $weight += $policy->grow;
+                }
+            }
+
+            if ($weight === 0) {
+                break;
+            }
+
+            $handedOut = 0;
+            foreach ($policies as $index => $policy) {
+                if ($policy->grow > 0 && $sizes[$index] < $policy->max) {
+                    $grant = min(intdiv($spare * $policy->grow, $weight), $policy->max - $sizes[$index]);
+                    $sizes[$index] += $grant;
+                    $handedOut += $grant;
+                }
+            }
+
+            $spare -= $handedOut;
+
+            if ($handedOut === 0) {
+                $spare -= self::nudgeRearmost($sizes, $policies, $spare, true);
+                break;
             }
         }
 
         return array_values($sizes);
+    }
+
+    /**
+     * The last cell or two, which no share divides evenly, go to the rearmost
+     * slot that can still hold them.
+     *
+     * @param array<int, int>  $sizes
+     * @param list<ItemPolicy> $policies
+     *
+     * @param-out array<int, int> $sizes
+     */
+    private static function nudgeRearmost(array &$sizes, array $policies, int $cells, bool $growing): int
+    {
+        $moved = 0;
+
+        foreach (array_reverse(array_keys($sizes)) as $index) {
+            if ($cells <= 0) {
+                break;
+            }
+
+            $policy = $policies[$index];
+            $room = $growing
+                ? ($policy->grow > 0 ? $policy->max - $sizes[$index] : 0)
+                : ($policy->shrink > 0 ? $sizes[$index] - $policy->min : 0);
+
+            $step = min($cells, $room);
+            $sizes[$index] += $growing ? $step : -$step;
+            $cells -= $step;
+            $moved += $step;
+        }
+
+        return $moved;
     }
 
     /**
@@ -161,32 +219,36 @@ final class Allocator
     private static function shrunk(array $policies, int $deficit): array
     {
         $sizes = [];
-        $totalShrink = 0;
-
         foreach ($policies as $index => $policy) {
-            $sizes[$index] = $policy->basis;
-            $totalShrink += $policy->shrink;
+            $sizes[$index] = $policy->initialSize();
         }
 
-        if ($totalShrink === 0) {
-            return array_values($sizes);
-        }
-
-        $taken = 0;
-        foreach ($policies as $index => $policy) {
-            if ($policy->shrink > 0) {
-                $give = min(intdiv($deficit * $policy->shrink, $totalShrink), $sizes[$index] - $policy->min);
-                $sizes[$index] -= $give;
-                $taken += $give;
+        while ($deficit > 0) {
+            $weight = 0;
+            foreach ($policies as $index => $policy) {
+                if ($policy->shrink > 0 && $sizes[$index] > $policy->min) {
+                    $weight += $policy->shrink;
+                }
             }
-        }
 
-        $unpaid = $deficit - $taken;
-        foreach (array_reverse(array_keys($sizes)) as $index) {
-            if ($policies[$index]->shrink > 0) {
-                $give = min($unpaid, $sizes[$index] - $policies[$index]->min);
-                $sizes[$index] -= $give;
-                $unpaid -= $give;
+            if ($weight === 0) {
+                break;
+            }
+
+            $taken = 0;
+            foreach ($policies as $index => $policy) {
+                if ($policy->shrink > 0 && $sizes[$index] > $policy->min) {
+                    $give = min(intdiv($deficit * $policy->shrink, $weight), $sizes[$index] - $policy->min);
+                    $sizes[$index] -= $give;
+                    $taken += $give;
+                }
+            }
+
+            $deficit -= $taken;
+
+            if ($taken === 0) {
+                $deficit -= self::nudgeRearmost($sizes, $policies, $deficit, false);
+                break;
             }
         }
 

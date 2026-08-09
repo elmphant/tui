@@ -28,4 +28,13 @@ final readonly class ItemPolicy
             throw new InvalidArgumentException(sprintf('ItemPolicy max must be greater than or equal to min, got max %d and min %d', $max, $min));
         }
     }
+
+    /**
+     * A basis outside the slot's own bounds is a request it cannot have, so the
+     * slot starts at the nearest size it may hold.
+     */
+    public function initialSize(): int
+    {
+        return min($this->max, max($this->min, $this->basis));
+    }
 }

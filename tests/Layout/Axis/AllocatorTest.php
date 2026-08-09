@@ -106,6 +106,66 @@ final class AllocatorTest extends TestCase
     }
 
     #[Test]
+    public function aSlotStartsAtItsFloorEvenWhenItAsksForLess(): void
+    {
+        $policies = [new ItemPolicy(basis: 0, min: 10, grow: 1)];
+
+        self::assertSame([10], Allocator::resolve($policies, 4)->sizes, 'A floor of ten cannot be honoured in four cells, and is not quietly dropped');
+    }
+
+    #[Test]
+    public function aGapWiderThanTheAxisGivesWayToWhatIsThere(): void
+    {
+        $policies = [new ItemPolicy(basis: 2), new ItemPolicy(basis: 2), new ItemPolicy(basis: 2)];
+
+        $resolved = Allocator::resolve($policies, 4, new AxisSpecification(gap: 5, overflow: Overflow::SqueezeToFloor));
+
+        self::assertSame([0, 2, 4], $resolved->offsets, 'Two gap columns is all four cells can carry between three slots');
+
+        foreach ($resolved->offsets as $index => $offset) {
+            self::assertLessThanOrEqual(4, $offset + $resolved->sizes[$index], sprintf('Slot %d ends outside the axis', $index));
+        }
+    }
+
+    #[Test]
+    public function whatACappedSlotCannotTakeIsSharedByTheRest(): void
+    {
+        $policies = [
+            new ItemPolicy(basis: 0, max: 4, grow: 1),
+            new ItemPolicy(basis: 0, grow: 1),
+            new ItemPolicy(basis: 0, grow: 1),
+        ];
+
+        self::assertSame([4, 8, 8], Allocator::resolve($policies, 20)->sizes, 'The two uncapped slots are identical, so they end the same size');
+    }
+
+    #[Test]
+    public function whatAFlooredSlotCannotGiveIsSharedByTheRest(): void
+    {
+        $policies = [
+            new ItemPolicy(basis: 10, min: 8, shrink: 1),
+            new ItemPolicy(basis: 10, shrink: 1),
+            new ItemPolicy(basis: 10, shrink: 1),
+        ];
+
+        self::assertSame([8, 4, 3], Allocator::resolve($policies, 15)->sizes, 'The cells the first slot could not give are split between the two that can');
+    }
+
+    #[Test]
+    public function squeezingNeverHandsACellToASlotThatWillNotHoldOne(): void
+    {
+        $policies = [
+            new ItemPolicy(basis: 0, min: 0, max: 0),
+            new ItemPolicy(basis: 10, min: 1, shrink: 1),
+            new ItemPolicy(basis: 10, min: 1, shrink: 1),
+        ];
+
+        $resolved = Allocator::resolve($policies, 1, new AxisSpecification(overflow: Overflow::SqueezeToFloor));
+
+        self::assertSame(0, $resolved->sizes[0], 'A slot whose ceiling is zero stays at zero however scarce the axis is');
+    }
+
+    #[Test]
     public function slotsThatMayGiveWayGiveUpCellsByTheirWeight(): void
     {
         $wide = new ItemPolicy(basis: 6, shrink: 1);
