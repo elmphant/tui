@@ -67,6 +67,53 @@ final readonly class Constraint
             : new self(flex: $weight);
     }
 
+    /**
+     * Every floor is reserved first, what is left is shared by weight and
+     * clamped to each ceiling, and the cells integer division leaves over go to
+     * the rearmost weighted entries that still have room below their ceiling.
+     *
+     * Declared floors can ask for more than there is, so the sizes can sum to
+     * more than $available; keeping the result inside an area is the caller's.
+     *
+     * @param list<self> $constraints
+     *
+     * @return list<int>
+     */
+    public static function allocate(array $constraints, int $available): array
+    {
+        $reserved = 0;
+        $totalWeight = 0;
+
+        foreach ($constraints as $constraint) {
+            $reserved += $constraint->min;
+            $totalWeight += $constraint->flex;
+        }
+
+        $remaining = max(0, $available - $reserved);
+        $sizes = [];
+        $granted = 0;
+
+        foreach ($constraints as $index => $constraint) {
+            $size = $constraint->min;
+            if ($constraint->flex > 0 && $totalWeight > 0) {
+                $size = min($constraint->min + intdiv($remaining * $constraint->flex, $totalWeight), $constraint->max);
+                $granted += $size - $constraint->min;
+            }
+            $sizes[$index] = $size;
+        }
+
+        $leftover = $remaining - $granted;
+        foreach (array_reverse(array_keys($sizes)) as $index) {
+            if ($constraints[$index]->flex > 0) {
+                $grant = min($leftover, $constraints[$index]->max - $sizes[$index]);
+                $sizes[$index] += $grant;
+                $leftover -= $grant;
+            }
+        }
+
+        return array_values($sizes);
+    }
+
     private static function exactZero(): self
     {
         static $constraint;

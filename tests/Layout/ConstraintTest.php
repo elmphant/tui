@@ -13,6 +13,14 @@ use PHPUnit\Framework\TestCase;
 final class ConstraintTest extends TestCase
 {
     #[Test]
+    public function allocationReservesEveryFloorThenSharesTheRestByWeight(): void
+    {
+        $sizes = Constraint::allocate([Constraint::min(5), Constraint::flex(), Constraint::flex(3)], 25);
+
+        self::assertSame([5, 5, 15], $sizes);
+    }
+
+    #[Test]
     public function exact(): void
     {
         $constraint = Constraint::exact(5);

@@ -124,50 +124,12 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
      */
     public function sizesFor(int $totalSpace): array
     {
-        $reserved = 0;
-        $totalFlexWeight = 0;
-
+        $constraints = [];
         foreach ($this->children as $child) {
-            $constraint = self::constraintFor($child, $this->direction);
-
-            $reserved += $constraint->min;
-            if ($constraint->flex > 0) {
-                $totalFlexWeight += $constraint->flex;
-            }
+            $constraints[] = self::constraintFor($child, $this->direction);
         }
 
-        $remaining = max(0, $totalSpace - $reserved);
-
-        $sizes = [];
-        $flexUsed = 0;
-
-        $hasFlexBudget = $totalFlexWeight > 0;
-        foreach ($this->children as $index => $child) {
-            $constraint = self::constraintFor($child, $this->direction);
-
-            $size = $constraint->min;
-            if ($constraint->flex > 0 && $hasFlexBudget) {
-                $share = (int)($remaining * $constraint->flex / $totalFlexWeight);
-                $size = min($constraint->min + $share, $constraint->max);
-                $flexUsed += $size - $constraint->min;
-            }
-            $sizes[$index] = $size;
-        }
-
-        // Integer-division and max-clamp leftovers go to the rearmost flex
-        // children that still have headroom below their max. Once leftover
-        // reaches 0 every remaining grant is min(0, headroom) = 0.
-        $leftover = $remaining - $flexUsed;
-        foreach (array_reverse(array_keys($this->children), true) as $reverseIndex) {
-            $constraint = self::constraintFor($this->children[$reverseIndex], $this->direction);
-            if ($constraint->flex > 0) {
-                $grant = min($leftover, $constraint->max - $sizes[$reverseIndex]);
-                $sizes[$reverseIndex] += $grant;
-                $leftover -= $grant;
-            }
-        }
-
-        return array_values($sizes);
+        return Constraint::allocate($constraints, $totalSpace);
     }
 
     private function constraintHeight(Constraint $constraint): int
