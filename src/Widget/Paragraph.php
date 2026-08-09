@@ -150,11 +150,10 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
             return count($this->lines);
         }
 
-        $baseStyle = $this->style ?? new Style();
         $rows = 0;
 
         foreach ($this->lines as $line) {
-            $rows += $this->rowsOfLine($line, $width, $baseStyle);
+            $rows += $this->rowsOfLine($line, $width);
         }
 
         return $rows;
@@ -183,8 +182,8 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         // A scroll container sizes its child to the whole document and clips
         // the overflow, so the visible band is the clip, not the area. Every
         // source line yields at least one visual line, so slicing that many
-        // source lines is always enough to fill it — and it keeps resolving,
-        // wrapping AND the cache key proportional to the viewport.
+        // source lines is always enough to fill it — and it keeps resolving
+        // and wrapping proportional to the viewport.
         $visible = $area->intersect($frame->clip());
         if ($visible->height < 1) {
             return;
@@ -194,7 +193,7 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         // A wrapped source line covers several visual rows, so the first
         // visible row is not the nth source line. Find which line owns it, and
         // how many of its rows sit above the band.
-        [$firstLine, $rowsBefore] = $this->lineAtVisualRow($skipped, $area->width, $baseStyle);
+        [$firstLine, $rowsBefore] = $this->lineAtVisualRow($skipped, $area->width);
         $dropped = $skipped - $rowsBefore;
 
         $lines = array_map(
@@ -245,7 +244,7 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
      *
      * @return array{int, int}
      */
-    private function lineAtVisualRow(int $target, int $width, Style $baseStyle): array
+    private function lineAtVisualRow(int $target, int $width): array
     {
         if ($target <= 0) {
             return [0, 0];
@@ -257,7 +256,7 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
 
         $rows = 0;
         foreach ($this->lines as $index => $line) {
-            $height = $this->rowsOfLine($line, $width, $baseStyle);
+            $height = $this->rowsOfLine($line, $width);
 
             if ($rows + $height > $target) {
                 return [$index, $rows];
@@ -271,13 +270,85 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
 
     /**
      * Wrapping is the expensive part and a line narrower than the column
-     * cannot wrap, so ask how wide it is before decomposing it.
+     * cannot wrap, so ask how wide it is before wrapping it.
      */
-    private function rowsOfLine(Line $line, int $width, Style $baseStyle): int
+    private function rowsOfLine(Line $line, int $width): int
     {
         return $line->width() <= $width
             ? 1
-            : count($this->wrapGraphemes($this->decomposeLineToGraphemes($line, $baseStyle), $width));
+            : count($this->wrappedRows($line, $width));
+    }
+
+    /**
+     * Where a line breaks depends on its characters and the width alone, so
+     * measuring and rendering the same text share one cached entry.
+     *
+     * A row is an offset and a length into the line's characters. Rows do not
+     * always tile: a break at a space drops that space, but a space that is
+     * itself too wide for the row starts the next one instead.
+     *
+     * @return list<array{int, int}>
+     */
+    private function wrappedRows(Line $line, int $width): array
+    {
+        $text = '';
+        foreach ($line->spans as $span) {
+            $text .= $span->content;
+        }
+
+        /** @var list<array{int, int}> */
+        return WrapCache::remember(
+            $width . ':' . hash('xxh3', $text),
+            static fn (): array => self::rowBounds(mb_str_split($text), $width),
+        );
+    }
+
+    /**
+     * @param list<string> $characters
+     *
+     * @return list<array{int, int}>
+     */
+    private static function rowBounds(array $characters, int $maxWidth): array
+    {
+        $rows = [];
+        $rowStart = 0;
+        $currentWidth = 0;
+        $lastSpaceOffset = -1;
+        $widthAtLastSpace = 0;
+
+        foreach ($characters as $index => $character) {
+            $characterWidth = CharWidth::of($character);
+
+            if ($characterWidth === 0) {
+                continue;
+            }
+
+            if ($character === ' ') {
+                $lastSpaceOffset = $index - $rowStart;
+                $widthAtLastSpace = $currentWidth;
+            }
+
+            if ($currentWidth + $characterWidth > $maxWidth && $index > $rowStart) {
+                if ($lastSpaceOffset >= 0) {
+                    $rows[] = [$rowStart, $lastSpaceOffset];
+                    $rowStart += $character === ' ' ? $lastSpaceOffset : $lastSpaceOffset + 1;
+                    $currentWidth = $currentWidth - $widthAtLastSpace - 1 + $characterWidth;
+                } else {
+                    $rows[] = [$rowStart, $index - $rowStart];
+                    $rowStart = $index;
+                    $currentWidth = $characterWidth;
+                }
+                $lastSpaceOffset = -1;
+                $widthAtLastSpace = 0;
+                continue;
+            }
+
+            $currentWidth += $characterWidth;
+        }
+
+        $rows[] = [$rowStart, count($characters) - $rowStart];
+
+        return $rows;
     }
 
     /**
@@ -287,12 +358,9 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
      */
     private function visualLines(int $width, Style $baseStyle, array $lines, ?int $limit = null): array
     {
-        $key = hash('xxh3', serialize([$lines, $this->wrap, $this->alignment, $baseStyle, $width, $limit]));
-
-        /** @var list<list<array{string, Style}>> */
-        return WrapCache::remember($key, fn (): array => $this->wrap === Wrap::WordWrap
+        return $this->wrap === Wrap::WordWrap
             ? $this->wrapLines($width, $baseStyle, $lines, $limit)
-            : $this->noWrapLines($baseStyle, $lines, $limit));
+            : $this->noWrapLines($baseStyle, $lines, $limit);
     }
 
     /**
@@ -324,9 +392,12 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         $result = [];
         foreach ($lines as $line) {
             $graphemes = $this->decomposeLineToGraphemes($line, $baseStyle);
-            $wrapped = $this->wrapGraphemes($graphemes, $maxWidth);
-            foreach ($wrapped as $visualLine) {
-                $result[] = $visualLine;
+            $rows = $line->width() <= $maxWidth
+                ? [[0, count($graphemes)]]
+                : $this->wrappedRows($line, $maxWidth);
+
+            foreach ($rows as [$start, $length]) {
+                $result[] = array_slice($graphemes, $start, $length);
             }
 
             if ($limit !== null && count($result) >= $limit) {
@@ -359,63 +430,6 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         }
 
         return $graphemes;
-    }
-
-    /**
-     * @param list<array{string, Style}> $graphemes
-     *
-     * @return list<list<array{string, Style}>>
-     */
-    private function wrapGraphemes(array $graphemes, int $maxWidth): array
-    {
-        if ($graphemes === []) {
-            return [[]];
-        }
-
-        $lines = [];
-        $currentLine = [];
-        $currentWidth = 0;
-        $lastSpaceIndex = -1;
-        $widthAtLastSpace = 0;
-
-        foreach ($graphemes as $grapheme) {
-            [$character] = $grapheme;
-            $characterWidth = CharWidth::of($character);
-
-            if ($characterWidth === 0) {
-                $currentLine[] = $grapheme;
-                continue;
-            }
-
-            if ($character === ' ') {
-                $lastSpaceIndex = count($currentLine);
-                $widthAtLastSpace = $currentWidth;
-            }
-
-            if ($currentWidth + $characterWidth > $maxWidth && $currentLine !== []) {
-                if ($lastSpaceIndex >= 0) {
-                    $lines[] = array_slice($currentLine, 0, $lastSpaceIndex);
-                    $remaining = array_slice($currentLine, $lastSpaceIndex + 1);
-                    $currentLine = $remaining;
-                    $currentLine[] = $grapheme;
-                    $currentWidth = $currentWidth - $widthAtLastSpace - 1 + $characterWidth;
-                } else {
-                    $lines[] = $currentLine;
-                    $currentLine = [$grapheme];
-                    $currentWidth = $characterWidth;
-                }
-                $lastSpaceIndex = -1;
-                $widthAtLastSpace = 0;
-                continue;
-            }
-
-            $currentLine[] = $grapheme;
-            $currentWidth += $characterWidth;
-        }
-
-        $lines[] = $currentLine;
-
-        return $lines;
     }
 
     /**

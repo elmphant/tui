@@ -27,6 +27,8 @@ final class WrapCache
 
     private static int $rows = 0;
 
+    private static int $wraps = 0;
+
     /**
      * @param Closure(): list<mixed> $wrap
      *
@@ -38,6 +40,7 @@ final class WrapCache
             return self::$entries[$key];
         }
 
+        ++self::$wraps;
         $wrapped = $wrap();
         self::$entries[$key] = $wrapped;
         self::$rows += count($wrapped);
@@ -51,9 +54,18 @@ final class WrapCache
         return $wrapped;
     }
 
+    /**
+     * How many wraps ran since the last clear, so a caller can show it never re-wraps.
+     */
+    public static function wraps(): int
+    {
+        return self::$wraps;
+    }
+
     public static function clear(): void
     {
         self::$entries = [];
         self::$rows = 0;
+        self::$wraps = 0;
     }
 }

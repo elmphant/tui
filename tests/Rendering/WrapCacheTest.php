@@ -26,6 +26,18 @@ final class WrapCacheTest extends TestCase
     }
 
     #[Test]
+    public function countsEveryWrapItHadToRun(): void
+    {
+        self::assertSame(0, WrapCache::wraps(), 'Clearing the cache resets the count');
+
+        WrapCache::remember('one', static fn (): array => ['a']);
+        WrapCache::remember('one', static fn (): array => ['a']);
+        WrapCache::remember('two', static fn (): array => ['b']);
+
+        self::assertSame(2, WrapCache::wraps());
+    }
+
+    #[Test]
     public function keepsKeysApart(): void
     {
         WrapCache::remember('narrow', static fn (): array => ['a', 'b']);

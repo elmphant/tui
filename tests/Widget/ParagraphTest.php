@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Rendering\WrapCache;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Wrap;
@@ -435,6 +436,19 @@ final class ParagraphTest extends TestCase
         $second = Paragraph::fromText($text)->measureHeight(40);
 
         self::assertSame($first, $second);
+        self::assertSame(1, WrapCache::wraps(), 'The second instance found the wrap the first one made');
+    }
+
+    #[Test]
+    public function renderingAfterMeasuringDoesNotWrapAgain(): void
+    {
+        $paragraph = Paragraph::fromText('alpha bravo charlie delta echo foxtrot golf hotel');
+        $paragraph->measureHeight(12);
+        $afterMeasuring = WrapCache::wraps();
+
+        $paragraph->render(new Frame(12, 20), new Rect(0, 0, 12, 20), $this->context());
+
+        self::assertSame($afterMeasuring, WrapCache::wraps(), 'Measuring left the render nothing to wrap');
     }
 
     #[Test]
@@ -909,6 +923,20 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function aSpaceThatOverflowsTheRowOpensTheNextOne(): void
+    {
+        $frame = new Frame(5, 2);
+        for ($index = 0; $index < 10; ++$index) {
+            $frame->putChar($index % 5, intdiv($index, 5), '.');
+        }
+
+        Paragraph::fromText('abcde fg')->render($frame, new Rect(0, 0, 5, 2), $this->context());
+
+        self::assertSame(' ', $frame->characters[5], 'The space filled the row it broke, so it leads the next one');
+        self::assertSame('f', $frame->characters[6]);
+    }
+
+    #[Test]
     public function aTokenSpanInALineAdoptsTheThemesStyle(): void
     {
         $frame = new Frame(6, 1);
@@ -958,6 +986,16 @@ final class ParagraphTest extends TestCase
         $plain = Paragraph::fromLines([new Line([new Span('hello world')])])->withWrap(Wrap::WordWrap);
 
         self::assertSame($plain->measureHeight(5), $themed->measureHeight(5));
+    }
+
+    protected function setUp(): void
+    {
+        WrapCache::clear();
+    }
+
+    protected function tearDown(): void
+    {
+        WrapCache::clear();
     }
 
     private function context(): RenderContext
