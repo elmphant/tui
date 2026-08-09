@@ -117,8 +117,9 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     }
 
     /**
-     * Declared minimums can ask for more than the area holds; the surplus is cut
-     * from the rearmost children so no child is placed outside it.
+     * Declared minimums can ask for more than the area holds, so these sizes can
+     * sum to more than $totalSpace. It is computeChildRects() that cuts the
+     * surplus, so no child is given a rect outside the area.
      *
      * @return list<int>
      */

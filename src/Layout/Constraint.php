@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use InvalidArgumentException;
 
@@ -95,37 +96,12 @@ final readonly class Constraint
      */
     public static function allocate(array $constraints, int $available): array
     {
-        $reserved = 0;
-        $totalWeight = 0;
-
+        $policies = [];
         foreach ($constraints as $constraint) {
-            $reserved += $constraint->min;
-            $totalWeight += $constraint->flex;
+            $policies[] = $constraint->policy();
         }
 
-        $remaining = max(0, $available - $reserved);
-        $sizes = [];
-        $granted = 0;
-
-        foreach ($constraints as $index => $constraint) {
-            $size = $constraint->min;
-            if ($constraint->flex > 0 && $totalWeight > 0) {
-                $size = min($constraint->min + intdiv($remaining * $constraint->flex, $totalWeight), $constraint->max);
-                $granted += $size - $constraint->min;
-            }
-            $sizes[$index] = $size;
-        }
-
-        $leftover = $remaining - $granted;
-        foreach (array_reverse(array_keys($sizes)) as $index) {
-            if ($constraints[$index]->flex > 0) {
-                $grant = min($leftover, $constraints[$index]->max - $sizes[$index]);
-                $sizes[$index] += $grant;
-                $leftover -= $grant;
-            }
-        }
-
-        return array_values($sizes);
+        return Allocator::resolve($policies, $available)->sizes;
     }
 
     private static function exactZero(): self
