@@ -28,9 +28,27 @@ final class VerticalStack
         $height = max(0, $availableHeight);
 
         return $memo->at(
-            $width . ':' . $height,
+            self::keyFor($children, $width, $height),
             static fn (): VerticalStackLayout => self::compute($children, $width, $height),
         );
+    }
+
+    /**
+     * Widgets are immutable, so a child that changed is a different object.
+     * Identity is therefore enough to tell two child lists apart, and it costs
+     * no traversal of their contents.
+     *
+     * @param list<Widget> $children
+     */
+    private static function keyFor(array $children, int $width, int $height): string
+    {
+        $key = $width . ':' . $height;
+
+        foreach ($children as $child) {
+            $key .= ':' . spl_object_id($child);
+        }
+
+        return $key;
     }
 
     /**

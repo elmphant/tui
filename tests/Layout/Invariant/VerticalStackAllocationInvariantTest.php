@@ -68,15 +68,15 @@ final class VerticalStackAllocationInvariantTest extends TestCase
     }
 
     #[Test]
-    public function aSharedCacheAnswersASecondChildListWithTheHeightsOfTheFirst(): void
+    public function aSharedCacheTellsTwoChildListsApart(): void
     {
         $shared = new KeyedCache();
         $first = $this->widgetsFor([Constraint::exact(2), Constraint::flex()]);
         $second = $this->widgetsFor([Constraint::exact(5), Constraint::flex()]);
 
         self::assertSame([2, 8], VerticalStack::layoutUsing($shared, $first, 40, 10)->heights);
-        self::assertSame([2, 8], VerticalStack::layoutUsing($shared, $second, 40, 10)->heights);
-        self::assertSame([5, 5], VerticalStack::layoutUsing(new KeyedCache(), $second, 40, 10)->heights);
+        self::assertSame([5, 5], VerticalStack::layoutUsing($shared, $second, 40, 10)->heights);
+        self::assertSame([2, 8], VerticalStack::layoutUsing($shared, $first, 40, 10)->heights);
     }
 
     #[Test]
