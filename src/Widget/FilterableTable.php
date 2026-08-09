@@ -53,7 +53,13 @@ final readonly class FilterableTable implements Widget, MeasureHeight
 
     public function field(): TextInput
     {
-        return $this->field ?? FilterBar::field($this->query, $this->focused);
+        if ($this->field === null) {
+            return FilterBar::field($this->query, $this->focused);
+        }
+
+        return $this->field
+            ->withFocus($this->focused)
+            ->withDecoration($this->focused ? InputDecoration::Underline : InputDecoration::None);
     }
 
     public function query(): string

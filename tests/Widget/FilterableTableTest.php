@@ -18,6 +18,17 @@ use PHPUnit\Framework\TestCase;
 final class FilterableTableTest extends TestCase
 {
     #[Test]
+    public function anUnfocusedTableClaimsNoCaretForAFieldItWasHandedFocused(): void
+    {
+        $table = $this->routes()->withFocus(false)->withField(FilterBar::field('', true));
+
+        $frame = new Frame(60, 12);
+        $table->render($frame, new Rect(0, 0, 60, 12), new RenderContext(Theme::dark()));
+
+        self::assertNull($frame->cursorPosition, 'Only the pane the reader is typing in may show the caret');
+    }
+
+    #[Test]
     public function keepsOnlyRowsWhereEveryTermMatchesSomeCell(): void
     {
         $matched = $this->routes()->withQuery('ajax post')->matchingRows();
