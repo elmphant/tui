@@ -221,7 +221,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
             $area->y,
             $area->height,
             $offset,
-            $layout->totalHeight + VerticalStackLayout::SCROLL_BOTTOM_PADDING,
+            $layout->totalHeight + ScrollWindow::BOTTOM_PADDING,
             $area->height,
             $context->theme->accent->foregroundValue(),
             $context->theme->dim->foregroundValue(),

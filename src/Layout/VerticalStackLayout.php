@@ -11,8 +11,6 @@ namespace Elmphant\Tui\Layout;
  */
 final readonly class VerticalStackLayout
 {
-    public const SCROLL_BOTTOM_PADDING = ScrollWindow::BOTTOM_PADDING;
-
     /**
      * @param list<int> $heights
      */
