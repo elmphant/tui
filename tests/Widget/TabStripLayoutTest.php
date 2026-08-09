@@ -16,7 +16,7 @@ final class TabStripLayoutTest extends TestCase
     {
         $layout = TabStripLayout::across(['One', 'Two'], new Rect(0, 0, 40, 15));
 
-        self::assertEquals(new Rect(0, 0, 7, 2), $layout->rectOf(0));
+        self::assertEquals(new Rect(0, 0, 7, 1), $layout->rectOf(0));
     }
 
     #[Test]

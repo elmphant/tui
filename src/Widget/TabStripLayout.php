@@ -11,8 +11,6 @@ final readonly class TabStripLayout
 {
     private const BORDER_AND_PADDING = 4;
 
-    private const CELL_HEIGHT = 2;
-
     /**
      * @param list<Rect> $cells
      */
@@ -34,7 +32,7 @@ final readonly class TabStripLayout
                 break;
             }
 
-            $cells[] = new Rect($column, $area->y, $width, self::CELL_HEIGHT);
+            $cells[] = new Rect($column, $area->y, $width, 1);
             $column += $width;
         }
 
