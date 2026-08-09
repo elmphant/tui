@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use InvalidArgumentException;
 
 final readonly class Constraint
@@ -65,6 +66,19 @@ final readonly class Constraint
         return $weight === 1
             ? self::flexOne()
             : new self(flex: $weight);
+    }
+
+    /**
+     * A constraint starts at its floor, so its floor is also its basis.
+     */
+    public function policy(): ItemPolicy
+    {
+        return new ItemPolicy(
+            basis: $this->min,
+            min: $this->min,
+            max: $this->max,
+            grow: $this->flex,
+        );
     }
 
     /**
