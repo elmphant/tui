@@ -85,15 +85,6 @@ final class AllocatorSweep
     /**
      * @return iterable<string, array{list<ItemPolicy>, AxisSpecification, int}>
      */
-    public static function casesWithRoomForTheGaps(): iterable
-    {
-        foreach (self::cases() as $name => [$policies, $specification, $extent]) {
-            if ($extent >= self::gapCells($policies, $specification)) {
-                yield $name => [$policies, $specification, $extent];
-            }
-        }
-    }
-
     /**
      * A handful of unrelated axes, to be resolved between two runs of the axis
      * under test.
@@ -195,6 +186,9 @@ final class AllocatorSweep
             ['zeroWidth', 'wideAndYielding', 'wideAndYielding'],
             ['eagerFloorTwo', 'fixedFour', 'wideAndYielding', 'zeroWidth'],
             ['growFromNothing'],
+            ['floorAboveItsBasis', 'growFromNothing'],
+            ['ceilingBelowItsBasis', 'wideAndYielding'],
+            ['floorAboveItsBasis', 'ceilingBelowItsBasis', 'fixedFour'],
         ];
 
         $named = [];
@@ -222,6 +216,8 @@ final class AllocatorSweep
             'flooredThree' => new ItemPolicy(basis: 3, min: 3, max: PHP_INT_MAX, grow: 1, shrink: 2),
             'zeroWidth' => new ItemPolicy(basis: 0, min: 0, max: 0),
             'eagerFloorTwo' => new ItemPolicy(basis: 2, min: 2, max: 8, grow: 3, shrink: 1),
+            'floorAboveItsBasis' => new ItemPolicy(basis: 0, min: 6, max: PHP_INT_MAX, grow: 1, shrink: 1),
+            'ceilingBelowItsBasis' => new ItemPolicy(basis: 10, min: 0, max: 4, grow: 1, shrink: 1),
         ];
     }
 }

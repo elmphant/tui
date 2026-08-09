@@ -58,9 +58,9 @@ final class AllocatorTest extends TestCase
     {
         $policies = [new ItemPolicy(basis: 2), new ItemPolicy(basis: 2), new ItemPolicy(basis: 2)];
 
-        $resolved = Allocator::resolve($policies, 12, new AxisSpecification(justification: Justification::SpaceBetween));
+        $resolved = Allocator::resolve($policies, 13, new AxisSpecification(justification: Justification::SpaceBetween));
 
-        self::assertSame([0, 5, 10], $resolved->offsets);
+        self::assertSame([0, 5, 11], $resolved->offsets, 'Seven spare cells over two openings is three then four, so the last slot still ends at the edge');
     }
 
     #[Test]
@@ -68,9 +68,9 @@ final class AllocatorTest extends TestCase
     {
         $policies = [new ItemPolicy(basis: 2), new ItemPolicy(basis: 2)];
 
-        $resolved = Allocator::resolve($policies, 13, new AxisSpecification(justification: Justification::SpaceEvenly));
+        $resolved = Allocator::resolve($policies, 14, new AxisSpecification(justification: Justification::SpaceEvenly));
 
-        self::assertSame([3, 8], $resolved->offsets, 'Nine cells spare over three openings is three each');
+        self::assertSame([3, 8], $resolved->offsets, 'Ten cells over three openings is three, three, then four, so the run still ends at the edge');
     }
 
     #[Test]

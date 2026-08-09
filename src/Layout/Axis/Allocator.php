@@ -50,9 +50,12 @@ final class Allocator
 
         $offsets = [];
         $cursor = $leading;
-        foreach ($sizes as $size) {
+        foreach ($sizes as $index => $size) {
+            if ($index > 0) {
+                $cursor += $gap + ($between[$index - 1] ?? 0);
+            }
             $offsets[] = $cursor;
-            $cursor += $size + $gap + $between;
+            $cursor += $size;
         }
 
         return new AxisResult($sizes, $offsets, max(0, array_sum($sizes) - $forSlots));
@@ -108,23 +111,52 @@ final class Allocator
     }
 
     /**
-     * How many cells sit before the first slot, and how many between each pair.
+     * How many cells sit before the first slot, and how many at each opening
+     * between a pair.
      *
-     * @return array{int, int}
+     * @return array{int, list<int>}
      */
     private static function spread(Justification $justification, int $count, int $unclaimed): array
     {
         if ($unclaimed === 0 || $count === 0) {
-            return [0, 0];
+            return [0, []];
+        }
+
+        if ($justification === Justification::SpaceEvenly) {
+            $openings = self::shared($unclaimed, $count + 1);
+
+            return [$openings[0], array_slice($openings, 1)];
         }
 
         return match ($justification) {
-            Justification::End => [$unclaimed, 0],
-            Justification::Center => [intdiv($unclaimed, 2), 0],
-            Justification::SpaceBetween => $count === 1 ? [0, 0] : [0, intdiv($unclaimed, $count - 1)],
-            Justification::SpaceEvenly => [intdiv($unclaimed, $count + 1), intdiv($unclaimed, $count + 1)],
-            Justification::Start => [0, 0],
+            Justification::End => [$unclaimed, []],
+            Justification::Center => [intdiv($unclaimed, 2), []],
+            Justification::SpaceBetween => [0, self::shared($unclaimed, $count - 1)],
+            Justification::Start => [0, []],
         };
+    }
+
+    /**
+     * Cells that do not divide evenly go to the last openings, so the run still
+     * ends exactly where the axis does.
+     *
+     * @return list<int>
+     */
+    private static function shared(int $amount, int $openings): array
+    {
+        if ($openings < 1) {
+            return [];
+        }
+
+        $each = intdiv($amount, $openings);
+        $extraFrom = $openings - $amount % $openings;
+        $shares = [];
+
+        for ($index = 0; $index < $openings; ++$index) {
+            $shares[] = $each + ($index >= $extraFrom ? 1 : 0);
+        }
+
+        return $shares;
     }
 
     /**

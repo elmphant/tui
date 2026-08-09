@@ -142,7 +142,7 @@ final class AllocatorInvariantTest extends TestCase
      * @param list<ItemPolicy> $policies
      */
     #[Test]
-    #[DataProvider('casesOtherThanSqueezingToTheFloor')]
+    #[DataProvider('cases')]
     public function noSlotIsSizedPastItsCeiling(array $policies, AxisSpecification $specification, int $extent): void
     {
         $sizes = Allocator::resolve($policies, $extent, $specification)->sizes;
@@ -193,18 +193,6 @@ final class AllocatorInvariantTest extends TestCase
     /**
      * @return iterable<string, array{list<ItemPolicy>, AxisSpecification, int}>
      */
-    public static function casesOtherThanSqueezingToTheFloor(): iterable
-    {
-        foreach (AllocatorSweep::cases() as $name => [$policies, $specification, $extent]) {
-            if ($specification->overflow !== Overflow::SqueezeToFloor) {
-                yield $name => [$policies, $specification, $extent];
-            }
-        }
-    }
-
-    /**
-     * @return iterable<string, array{list<ItemPolicy>, AxisSpecification, int}>
-     */
     public static function casesWhereEveryFloorFitsAndNothingIsClippedOrSqueezed(): iterable
     {
         foreach (AllocatorSweep::casesWhereEveryFloorFits() as $name => [$policies, $specification, $extent]) {
@@ -235,7 +223,7 @@ final class AllocatorInvariantTest extends TestCase
      */
     public static function casesWhoseSlotsFitTheAxis(): iterable
     {
-        foreach (AllocatorSweep::casesWithRoomForTheGaps() as $name => [$policies, $specification, $extent]) {
+        foreach (AllocatorSweep::cases() as $name => [$policies, $specification, $extent]) {
             if (Allocator::resolve($policies, $extent, $specification)->overflow === 0) {
                 yield $name => [$policies, $specification, $extent];
             }
