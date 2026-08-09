@@ -67,6 +67,17 @@ final class StaticTableTest extends TestCase
     }
 
     #[Test]
+    public function aLoneColumnTakesTheWholeWidthAndWrapsItsContent(): void
+    {
+        $table = StaticTable::new(['Method'], [['Georgringer\\Numberedpages\\Hooks\\PageRenderer']]);
+
+        $rows = explode("\n", $this->render($table, 12, 10));
+
+        self::assertSame('┌──────────┐', rtrim($rows[0]), 'The lone column takes all eight columns the border and padding leave it');
+        self::assertStringContainsString('Georgrin', $rows[3], 'The content wraps into that width');
+    }
+
+    #[Test]
     public function keepsEveryHeaderOnOneLine(): void
     {
         $table = StaticTable::new(
