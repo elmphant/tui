@@ -238,7 +238,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $visibleRows = $area->height - $this->headerHeight();
         $showScrollbar = Scrollbar::needsScrollbar($rowCount, $visibleRows);
 
-        $columnWidths = $this->computeColumnWidths($showScrollbar ? $area->width - 1 : $area->width);
+        $columnWidths = $this->columnWidths($showScrollbar ? $area->width - 1 : $area->width);
 
         $frame->pushClip($area);
         try {
@@ -268,7 +268,25 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
     public function measureHeight(int $width): int
     {
-        return $this->headerHeight() + $this->layoutFor($this->computeColumnWidths($width))->totalHeight;
+        return $this->headerHeight() + $this->layoutFor($this->columnWidths($width))->totalHeight;
+    }
+
+    /**
+     * @return list<int>
+     */
+    public function columnWidths(int $totalWidth): array
+    {
+        $columnCount = count($this->columns);
+        if ($columnCount === 0) {
+            return [];
+        }
+
+        $constraints = [];
+        foreach ($this->columns as $column) {
+            $constraints[] = $column->constraint();
+        }
+
+        return self::allocate($constraints, $totalWidth);
     }
 
     /**
@@ -427,24 +445,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         }
 
         return new UpdateResult($this);
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function computeColumnWidths(int $totalWidth): array
-    {
-        $columnCount = count($this->columns);
-        if ($columnCount === 0) {
-            return [];
-        }
-
-        $constraints = [];
-        foreach ($this->columns as $column) {
-            $constraints[] = $column->constraint();
-        }
-
-        return self::allocate($constraints, $totalWidth);
     }
 
     /**
@@ -615,7 +615,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     {
         $showScrollbar = Scrollbar::needsScrollbar($this->rowCount(), max(1, $area->height - $this->headerHeight()));
 
-        return $this->computeColumnWidths($showScrollbar ? $area->width - 1 : $area->width);
+        return $this->columnWidths($showScrollbar ? $area->width - 1 : $area->width);
     }
 
     /**

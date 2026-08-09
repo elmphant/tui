@@ -49,7 +49,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         $isVertical = $this->direction === Direction::Vertical;
         $total = 0;
         $max = 0;
-        $columnWidths = $isVertical ? [] : $this->resolveSizes($width);
+        $columnWidths = $isVertical ? [] : $this->sizesFor($width);
 
         foreach ($this->children as $index => $child) {
             $childHeight = $child instanceof MeasureHeight
@@ -72,7 +72,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     public function computeChildRects(Rect $area): array
     {
         $isVertical = $this->direction === Direction::Vertical;
-        $sizes = $this->resolveSizes($isVertical ? $area->height : $area->width);
+        $sizes = $this->sizesFor($isVertical ? $area->height : $area->width);
 
         $result = [];
         $cursor = $isVertical ? $area->y : $area->x;
@@ -122,7 +122,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
      *
      * @return list<int>
      */
-    private function resolveSizes(int $totalSpace): array
+    public function sizesFor(int $totalSpace): array
     {
         $reserved = 0;
         $totalFlexWeight = 0;
