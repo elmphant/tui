@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\AxisSpecification;
+use Elmphant\Tui\Layout\Axis\Distribution;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
+use Elmphant\Tui\Layout\Axis\Remainder;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
@@ -292,51 +297,20 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
 
         $minimums = $this->resolvedMinimums($panes);
 
-        $weights = array_sum($minimums) > $available ? $minimums : $this->state->shares;
-        $total = array_sum($weights);
-        $sizes = [];
+        $floorsDoNotFit = array_sum($minimums) > $available;
+        $weights = $floorsDoNotFit ? $minimums : $this->state->shares;
+        $floors = $floorsDoNotFit ? array_fill(0, $panes, 0) : $minimums;
 
-        $claimed = self::byLargestRemainder($weights, $total, $available);
-
-        foreach ($claimed as $index => $wanted) {
-            $sizes[] = $weights === $minimums ? $wanted : max($minimums[$index], $wanted);
-        }
-
-        return self::settled($sizes, $weights === $minimums ? array_fill(0, $panes, 0) : $minimums, $available);
-    }
-
-    /**
-     * Whole columns first, then the columns left over go to the panes with the
-     * strongest claim on them, so the widest share is never the one left empty.
-     *
-     * @param list<int> $weights
-     *
-     * @return list<int>
-     */
-    private static function byLargestRemainder(array $weights, int $total, int $available): array
-    {
-        $sizes = [];
-        $remainders = [];
-        $handedOut = 0;
-
+        $policies = [];
         foreach ($weights as $index => $weight) {
-            $exact = $available * $weight;
-            $whole = intdiv($exact, $total);
-            $sizes[$index] = $whole;
-            $remainders[$index] = $exact - $whole * $total;
-            $handedOut += $whole;
+            $policies[] = new ItemPolicy(min: $floors[$index], grow: max(1, $weight));
         }
 
-        arsort($remainders);
+        $sizes = Allocator::resolve($policies, $available, new AxisSpecification(
+            remainder: Remainder::StrongestClaim,
+            distribution: Distribution::AcrossTheWholeAxis,
+        ))->sizes;
 
-        foreach (array_keys($remainders) as $index) {
-            if ($handedOut >= $available) {
-                break;
-            }
-            ++$sizes[$index];
-            ++$handedOut;
-        }
-
-        return array_values($sizes);
+        return self::settled($sizes, $floors, $available);
     }
 }
