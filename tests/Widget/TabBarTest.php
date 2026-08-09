@@ -905,6 +905,15 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
+    public function aClickWhereATabTooWideToBeDrawnWouldSitChangesNothing(): void
+    {
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tooNarrowForBoth = new Rect(0, 0, 13, 15);
+
+        self::assertSame(0, $tabBar->update(new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left), $tooNarrowForBoth)->model->activeTab());
+    }
+
+    #[Test]
     public function clickOnTabWithAreaOffset(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
