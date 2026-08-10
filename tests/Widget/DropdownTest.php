@@ -215,27 +215,30 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
-    public function aFocusedEmptyDropdownRendersInAccentNotDim(): void
+    public function aFocusedEmptyRowIsMarkedLikeAnythingElseUnderTheCursor(): void
     {
         $dropdown = Dropdown::new(Select::new(['json']))->withFocus(true);
         $theme = Theme::dark();
 
         self::assertSame(
-            $theme->accent->foregroundValue(),
+            $theme->cursorStyle->foregroundValue(),
             self::foregroundOfFirstCell(self::frameFor($dropdown, $theme)),
+            'accent means a value was chosen, so focus cannot borrow it',
         );
     }
 
     #[Test]
-    public function aFocusedDropdownWithAValueSelectedAlsoRendersInAccent(): void
+    public function aFocusedRowHoldingAValueIsMarkedTheSameAndNamesItInTheCaption(): void
     {
         $dropdown = Dropdown::new(Select::new(['json'])->activated('json'))->withFocus(true);
         $theme = Theme::dark();
 
         self::assertSame(
-            $theme->accent->foregroundValue(),
+            $theme->cursorStyle->foregroundValue(),
             self::foregroundOfFirstCell(self::frameFor($dropdown, $theme)),
+            'the mark says where the keys are',
         );
+        self::assertStringContainsString('json', $dropdown->caption(), 'and the caption says what is held');
     }
 
     #[Test]

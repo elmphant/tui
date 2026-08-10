@@ -153,8 +153,10 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
             return;
         }
 
+        // Accent says a value was chosen, so focus is marked the way every other
+        // row under the cursor is; the caption is what tells the two apart.
         $style = match (true) {
-            $this->focused => $context->theme->accent,
+            $this->focused => $context->theme->cursorStyle,
             $this->content->hasChoice() => $context->theme->base,
             default => $context->theme->dim,
         };
