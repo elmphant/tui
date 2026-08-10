@@ -26,7 +26,7 @@ final class FocusGutterTest extends TestCase
         FocusGutter::around(TextInput::new('')->withFocus(true))
             ->render($frame, new Rect(0, 0, 12, 1), new RenderContext($theme));
 
-        self::assertSame(FocusGutter::BAR, $frame->characters[0], 'the bar says where the keys land');
+        self::assertSame(FocusGutter::BAR, $frame->characters[0], "the bar says where the keys land");
         self::assertSame($theme->focusedGutterStyle->foregroundValue(), $frame->foregrounds[0]);
     }
 
@@ -55,6 +55,17 @@ final class FocusGutterTest extends TestCase
         $typed->render($frame, new Rect(0, 0, 20, 1), new RenderContext(Theme::dark()));
 
         self::assertSame('h', $frame->characters[2], 'the keystroke reached the field and stayed there');
+    }
+
+    #[Test]
+    public function itSaysWhatItHoldsAndWhereThatLandsForAHostWalkingTheTree(): void
+    {
+        $field = TextInput::new('type here')->withFocus(true);
+
+        $gutter = FocusGutter::around($field);
+
+        self::assertSame($field, $gutter->holds(), 'the track does not hide the field behind it');
+        self::assertSame(2, $gutter->contentRectIn(new Rect(0, 0, 20, 1))->x, 'nor where the field was drawn');
     }
 
     #[Test]

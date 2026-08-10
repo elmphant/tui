@@ -16,7 +16,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  * Marks where the keyboard is, so every field says it the same way instead of
  * each inventing a colour of its own.
  */
-final readonly class FocusGutter implements Focusable
+final readonly class FocusGutter implements Interactive
 {
     use Cloneable;
     /**
@@ -57,16 +57,28 @@ final readonly class FocusGutter implements Focusable
         return $this->child->constraint();
     }
 
-    public function isFocused(): bool
+    /**
+     * Deliberately not Focusable: a pane that hands focus to focusable children
+     * would pick the track instead of the field inside it. The gutter only draws
+     * what the field or its container already knows.
+     */
+    public function isHeld(): bool
     {
         return $this->held ?? ($this->child instanceof Focusable && $this->child->isFocused());
     }
 
-    public function withFocus(bool $focused): static
+    /**
+     * What it wraps, and where that lands — so a host walking the tree for one of
+     * its own widgets still finds it behind the track.
+     */
+    public function holds(): Widget
     {
-        return $this->child instanceof Focusable
-            ? $this->cloneWith(child: $this->child->withFocus($focused))
-            : $this->cloneWith(held: $focused);
+        return $this->child;
+    }
+
+    public function contentRectIn(Rect $area): Rect
+    {
+        return self::contentIn($area);
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -86,7 +98,7 @@ final readonly class FocusGutter implements Focusable
             return;
         }
 
-        $held = $this->isFocused();
+        $held = $this->isHeld();
 
         for ($row = $area->y; $row < $area->bottom(); ++$row) {
             $frame->putStyled(
