@@ -69,11 +69,23 @@ final class AppTest extends TestCase
     }
 
     #[Test]
-    public function quitOnQKey(): void
+    public function theQuitHintNamesTheKeyThatActuallyLeaves(): void
+    {
+        self::assertSame(
+            ['Ctrl+Q' => 'quit'],
+            (new CounterApp())->quitHints(),
+            'a footer asks rather than repeating a key that can drift out of step',
+        );
+    }
+
+    #[Test]
+    public function aPlainLetterReachesTheAppRatherThanLeavingIt(): void
     {
         $app = new CounterApp();
+
         $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
-        self::assertInstanceOf(QuitCmd::class, $result->command);
+
+        self::assertNull($result->command, 'nothing printable ends the program unless an app asks for it');
     }
 
     #[Test]

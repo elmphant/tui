@@ -89,6 +89,19 @@ abstract readonly class App implements Model
         return $this->handleLayerTwo($message, $screenRect, $focusables);
     }
 
+    /**
+     * How to label the keys that really leave, for a footer to show rather than
+     * repeat: a hardcoded hint outlives the binding it was copied from.
+     *
+     * @return array<string, string>
+     */
+    public function quitHints(string $description = 'quit'): array
+    {
+        return $this->applicationKeybindings()
+            ->append($this->resolvedQuitBindings())
+            ->hints(['quit' => $description]);
+    }
+
     protected function setup(): ?Cmd
     {
         return null;
@@ -189,12 +202,15 @@ abstract readonly class App implements Model
     }
 
     /**
-     * Honoured only while no component holds focus, so a plain letter still
-     * types into a focused field instead of ending the program.
+     * Extra keys that leave, on top of the ctrl chords applicationKeybindings()
+     * already reserves. Empty by default: an unmodified letter here is honoured
+     * only while no component holds focus, and an app that routes the keyboard
+     * itself registers no components, so the letter would never reach what is
+     * being typed into.
      */
     protected function quitBindings(): Keybindings
     {
-        return new Keybindings(['quit' => ['q']]);
+        return new Keybindings([]);
     }
 
     protected function globalKeybindings(): Keybindings

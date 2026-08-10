@@ -872,6 +872,11 @@ final readonly class TwoPanelApp extends CopyableTestApp
             TestComponents::bind('right-panel', 'right', $this->right),
         );
     }
+
+    protected function quitBindings(): Keybindings
+    {
+        return new Keybindings(['quit' => ['q']]);
+    }
 }
 
 final readonly class InterceptApp extends CopyableTestApp
@@ -971,6 +976,11 @@ final readonly class SimpleCounterApp extends CopyableTestApp
     public function view(): Widget
     {
         return Text::new("Count: {$this->count}");
+    }
+
+    protected function quitBindings(): Keybindings
+    {
+        return new Keybindings(['quit' => ['q']]);
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
