@@ -89,6 +89,10 @@ final class Frame
 
     public function setCursorPosition(int $x, int $y, CursorShape $shape): void
     {
+        if (!$this->clip()->contains($x, $y)) {
+            return;
+        }
+
         $this->cursorPosition = new CursorPosition($y, $x, $shape);
     }
 
