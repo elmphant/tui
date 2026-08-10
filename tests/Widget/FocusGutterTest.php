@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\FocusGutter;
+use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\TextInput;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,6 +28,33 @@ final class FocusGutterTest extends TestCase
 
         self::assertSame(FocusGutter::BAR, $frame->characters[0], 'the bar says where the keys land');
         self::assertSame($theme->focusedGutterStyle->foregroundValue(), $frame->foregrounds[0]);
+    }
+
+    #[Test]
+    public function aBlockIsMarkedOnEveryRowWithoutBeingFocusableItself(): void
+    {
+        $frame = new Frame(20, 2);
+        $theme = Theme::dark();
+
+        FocusGutter::beside(Text::new("label\nfield"), held: true)
+            ->render($frame, new Rect(0, 0, 20, 2), new RenderContext($theme));
+
+        self::assertSame(FocusGutter::BAR, $frame->characters[0], 'the container knows, so the container says');
+        self::assertSame(FocusGutter::BAR, $frame->characters[20], 'and the track runs the height of the block');
+    }
+
+    #[Test]
+    public function whatItHoldsStillTakesTheKeysAndKeepsWhatTheyDid(): void
+    {
+        $wrapped = FocusGutter::around(TextInput::new('type here')->withFocus(true));
+
+        $typed = $wrapped->update(new KeyMsg('h'), new Rect(0, 0, 20, 1))->model;
+        self::assertInstanceOf(FocusGutter::class, $typed);
+
+        $frame = new Frame(20, 1);
+        $typed->render($frame, new Rect(0, 0, 20, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame('h', $frame->characters[2], 'the keystroke reached the field and stayed there');
     }
 
     #[Test]

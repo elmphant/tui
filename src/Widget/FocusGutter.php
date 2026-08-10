@@ -31,13 +31,25 @@ final readonly class FocusGutter implements Focusable
 
     private const COLUMNS = 2;
 
-    private function __construct(private Focusable $child)
+    private function __construct(private Widget $child, private ?bool $held = null)
     {
     }
 
+    /**
+     * For a field that answers for itself.
+     */
     public static function around(Focusable $child): self
     {
         return new self($child);
+    }
+
+    /**
+     * For a block that cannot — a label and its field together, or the row a
+     * container's cursor rests on. Whoever composed it knows, so it says.
+     */
+    public static function beside(Widget $child, bool $held): self
+    {
+        return new self($child, $held);
     }
 
     public function constraint(): Constraint
@@ -47,17 +59,25 @@ final readonly class FocusGutter implements Focusable
 
     public function isFocused(): bool
     {
-        return $this->child->isFocused();
+        return $this->held ?? ($this->child instanceof Focusable && $this->child->isFocused());
     }
 
     public function withFocus(bool $focused): static
     {
-        return $this->cloneWith(child: $this->child->withFocus($focused));
+        return $this->child instanceof Focusable
+            ? $this->cloneWith(child: $this->child->withFocus($focused))
+            : $this->cloneWith(held: $focused);
     }
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return new UpdateResult($this);
+        if (!$this->child instanceof Interactive) {
+            return new UpdateResult($this);
+        }
+
+        $result = $this->child->update($message, self::contentIn($area));
+
+        return new UpdateResult($this->cloneWith(child: $result->model), $result->command);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -66,7 +86,7 @@ final readonly class FocusGutter implements Focusable
             return;
         }
 
-        $held = $this->child->isFocused();
+        $held = $this->isFocused();
 
         for ($row = $area->y; $row < $area->bottom(); ++$row) {
             $frame->putStyled(
