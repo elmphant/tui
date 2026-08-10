@@ -14,6 +14,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
@@ -51,17 +52,87 @@ final class ButtonTest extends TestCase
     }
 
     #[Test]
-    public function aClickInsideTheAreaEmitsTheMessage(): void
+    public function aPressAndAReleaseOverTheButtonRunsIt(): void
     {
-        $pressed = new TestMessage('run');
-        $button = Button::new('Run', $pressed);
+        $wanted = new TestMessage('run');
+        $area = new Rect(0, 0, 10, 3);
+        $button = Button::new('Run', $wanted);
+
+        $armed = $button->update(new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left), $area)->model;
+        self::assertInstanceOf(Button::class, $armed);
+
+        $result = $armed->update(new MouseMsg(5, 1, MouseAction::Release, MouseButton::Left), $area);
+
+        self::assertEmitted($wanted, $result);
+    }
+
+    #[Test]
+    public function aPressOnItsOwnCommitsNothing(): void
+    {
+        $button = Button::new('Run', new TestMessage('run'));
 
         $result = $button->update(
             new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left),
             new Rect(0, 0, 10, 3),
         );
 
-        self::assertEmitted($pressed, $result);
+        self::assertNull($result->command, 'a reader who has not let go can still drag off to cancel');
+    }
+
+    #[Test]
+    public function aReleaseTheButtonNeverSawPressedIsIgnored(): void
+    {
+        $button = Button::new('Run', new TestMessage('run'));
+
+        $result = $button->update(
+            new MouseMsg(5, 1, MouseAction::Release, MouseButton::Left),
+            new Rect(0, 0, 10, 3),
+        );
+
+        self::assertNull($result->command, 'the press that would have armed it happened elsewhere');
+    }
+
+    #[Test]
+    public function lettingGoAwayFromTheButtonCancelsTheRun(): void
+    {
+        $area = new Rect(0, 0, 10, 3);
+        $armed = Button::new('Run', new TestMessage('run'))
+            ->update(new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left), $area)->model;
+        self::assertInstanceOf(Button::class, $armed);
+
+        $result = $armed->update(new MouseMsg(50, 20, MouseAction::Release, MouseButton::Left), $area);
+
+        self::assertNull($result->command, 'a reader who thought better of it dragged off first');
+    }
+
+    #[Test]
+    public function aCancelledPressLeavesNothingArmedForTheNextRelease(): void
+    {
+        $area = new Rect(0, 0, 10, 3);
+        $armed = Button::new('Run', new TestMessage('run'))
+            ->update(new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left), $area)->model;
+        self::assertInstanceOf(Button::class, $armed);
+
+        $cancelled = $armed->update(new MouseMsg(50, 20, MouseAction::Release, MouseButton::Left), $area)->model;
+        self::assertInstanceOf(Button::class, $cancelled);
+
+        $result = $cancelled->update(new MouseMsg(5, 1, MouseAction::Release, MouseButton::Left), $area);
+
+        self::assertNull($result->command);
+    }
+
+    #[Test]
+    public function theButtonSaysWhetherItIsBeingHeldDown(): void
+    {
+        $area = new Rect(0, 0, 10, 3);
+        $button = Button::new('Run', new TestMessage('run'));
+
+        self::assertFalse($button->isArmed());
+
+        $armed = $button->update(new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left), $area)->model;
+        self::assertInstanceOf(Button::class, $armed);
+
+        self::assertTrue($armed->isArmed(), 'so a host that draws it need not track the press itself');
     }
 
     #[Test]
@@ -176,6 +247,20 @@ final class ButtonTest extends TestCase
 
         self::assertSame(0, $frame->backgrounds[11 + 2], 'beside the label');
         self::assertSame(0, $frame->backgrounds[11 + 4], 'and behind it');
+    }
+
+    #[Test]
+    public function aButtonHeldDownStandsOutEvenWithoutTheFocus(): void
+    {
+        $frame = new Frame(11, 3);
+        $theme = Theme::dark();
+
+        Button::new('Run', new TestMessage('run'))
+            ->withArmed(true)
+            ->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));
+
+        self::assertSame($theme->focusedBorderStyle->foregroundValue(), $frame->foregrounds[0], 'the press is loud');
+        self::assertSame(Attr::BOLD, $frame->attributes[0] & Attr::BOLD, 'and louder than the focus alone');
     }
 
     #[Test]

@@ -16,6 +16,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\CharWidth;
@@ -35,6 +36,7 @@ final readonly class Button implements Focusable, KeybindingsAware, MeasureWidth
         private ButtonTone $tone = ButtonTone::Default,
         private bool $focused = false,
         private bool $disabled = false,
+        private bool $armed = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -60,6 +62,19 @@ final readonly class Button implements Focusable, KeybindingsAware, MeasureWidth
     public function withDisabled(bool $disabled = true): self
     {
         return $this->cloneWith(disabled: $disabled);
+    }
+
+    /**
+     * Held down over the button, where only letting go over it commits.
+     */
+    public function withArmed(bool $armed): self
+    {
+        return $this->cloneWith(armed: $armed);
+    }
+
+    public function isArmed(): bool
+    {
+        return $this->armed;
     }
 
     public function isFocused(): bool
@@ -93,8 +108,11 @@ final readonly class Button implements Focusable, KeybindingsAware, MeasureWidth
                 && $this->focused
                 && $this->effectiveKeybindings()->matches($message, Actions::SELECT) => new UpdateResult($this, Cmd::message($this->message)),
             $message instanceof MouseMsg
-                && $message->isClick()
-                && $message->inRect($area) => new UpdateResult($this, Cmd::message($this->message)),
+                && $message->action === MouseAction::Press => new UpdateResult($this->withArmed($message->inRect($area))),
+            $message instanceof MouseMsg
+                && $message->action === MouseAction::Release => $this->armed && $message->inRect($area)
+                    ? new UpdateResult($this->withArmed(false), Cmd::message($this->message))
+                    : new UpdateResult($this->withArmed(false)),
             default => new UpdateResult($this),
         };
     }
@@ -113,13 +131,17 @@ final readonly class Button implements Focusable, KeybindingsAware, MeasureWidth
             $this->tone === ButtonTone::Danger => $theme->error,
             default => $theme->borderStyle,
         };
-        $showsFocus = $this->focused && !$this->disabled;
+        $showsFocus = ($this->focused || $this->armed) && !$this->disabled;
 
         $borderStyle = match (true) {
             !$showsFocus => $toneStyle,
             $this->tone === ButtonTone::Default => $theme->focusedBorderStyle,
             default => $toneStyle->bold(),
         };
+
+        if ($this->armed && !$this->disabled) {
+            $borderStyle = $borderStyle->bold();
+        }
 
         $block = Block::new()
             ->border($showsFocus ? $theme->focusedBorder : $theme->border)
