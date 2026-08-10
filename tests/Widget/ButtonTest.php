@@ -224,6 +224,21 @@ final class ButtonTest extends TestCase
     }
 
     #[Test]
+    public function aFocusedButtonIsOutlinedInAHeavierStrokeThanAnIdleOne(): void
+    {
+        $idle = new Frame(11, 3);
+        $focused = new Frame(11, 3);
+        $context = new RenderContext(Theme::dark());
+        $area = new Rect(0, 0, 11, 3);
+
+        Button::new('Run', new TestMessage('run'))->render($idle, $area, $context);
+        Button::new('Run', new TestMessage('run'))->withFocus(true)->render($focused, $area, $context);
+
+        self::assertSame('╭', $idle->characters[0], 'idle keeps the rounded corner every other box uses');
+        self::assertSame('┏', $focused->characters[0], 'and focus thickens the whole outline');
+    }
+
+    #[Test]
     public function aFocusedButtonOutlinesItselfInTheThemesFocusedBorderStyle(): void
     {
         $frame = new Frame(11, 3);

@@ -19,6 +19,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Block;
+use Elmphant\Tui\Rendering\BorderStyle;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -143,8 +144,11 @@ final readonly class Button implements Focusable, KeybindingsAware, MeasureWidth
             $borderStyle = $borderStyle->bold();
         }
 
+        // The theme keeps its focused border rounded because Unicode has no heavy
+        // rounded corner; a button is small enough that the heavier stroke reads as
+        // pressable rather than as a mismatched box.
         $block = Block::new()
-            ->border($showsFocus ? $theme->focusedBorder : $theme->border)
+            ->border($showsFocus ? BorderStyle::Thick : $theme->border)
             ->borderStyle($borderStyle)
             ->padding(Spacing::horizontal(1));
         $block->render($frame, $area);
