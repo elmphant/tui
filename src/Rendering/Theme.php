@@ -27,12 +27,6 @@ final readonly class Theme
 
     public Style $info;
 
-    /**
-     * The bar beside whatever the keyboard is on. Defaults to the focused border
-     * colour, so recolouring focus moves this with it.
-     */
-    public Style $focusedGutterStyle;
-
     public function __construct(
         public Style $base,
         public Style $accent,
@@ -51,7 +45,6 @@ final readonly class Theme
         ?Style $footerStyle = null,
         ?Style $warning = null,
         ?Style $info = null,
-        ?Style $focusedGutterStyle = null,
         public BorderStyle $border = BorderStyle::Rounded,
         // Unicode has no heavy rounded corners; focus is carried by colour + bold.
         public BorderStyle $focusedBorder = BorderStyle::Rounded,
@@ -62,7 +55,16 @@ final readonly class Theme
         );
         $this->warning = $warning ?? $titleStyle->withAttributes($titleStyle->attributes & ~Attr::BOLD);
         $this->info = $info ?? $accent;
-        $this->focusedGutterStyle = $focusedGutterStyle ?? $focusedBorderStyle;
+    }
+
+    /**
+     * The track beside whatever the keyboard is on. Derived on every read rather
+     * than resolved once, so a palette that recolours focus afterwards — as every
+     * withX() builder does — cannot leave the track behind in the old hue.
+     */
+    public function focusedGutterStyle(): Style
+    {
+        return $this->focusedBorderStyle;
     }
 
     public function withBase(Style $base): self

@@ -26,8 +26,8 @@ final class FocusGutterTest extends TestCase
         FocusGutter::around(TextInput::new('')->withFocus(true))
             ->render($frame, new Rect(0, 0, 12, 1), new RenderContext($theme));
 
-        self::assertSame(FocusGutter::BAR, $frame->characters[0], "the bar says where the keys land");
-        self::assertSame($theme->focusedGutterStyle->foregroundValue(), $frame->foregrounds[0]);
+        self::assertSame(FocusGutter::BAR, $frame->characters[0], 'the bar says where the keys land');
+        self::assertSame($theme->focusedGutterStyle()->foregroundValue(), $frame->foregrounds[0]);
     }
 
     #[Test]

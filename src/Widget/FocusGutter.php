@@ -105,7 +105,7 @@ final readonly class FocusGutter implements Interactive
                 $area->x,
                 $row,
                 $held ? self::BAR : self::RAIL,
-                $held ? $context->theme->focusedGutterStyle : $context->theme->dim,
+                $held ? $context->theme->focusedGutterStyle() : $context->theme->dim,
             );
         }
 
