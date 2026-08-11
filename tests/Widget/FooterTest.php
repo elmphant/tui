@@ -166,6 +166,16 @@ final class FooterTest extends TestCase
     }
 
     #[Test]
+    public function updateLeavesSlotsAloneInAnAreaTooSmallToDrawThem(): void
+    {
+        $footer = Footer::new()->right(new TickTally());
+
+        $result = $footer->update(new TickMsg(1.0), Rect::fromSize(80, 0));
+
+        self::assertSame($footer, $result->model, 'A slot the footer never draws must not be fed input either');
+    }
+
+    #[Test]
     public function updateReturnsUnchangedWhenNoInteractiveSlots(): void
     {
         $footer = Footer::new()->right(Text::new('static'));

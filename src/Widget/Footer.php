@@ -97,7 +97,16 @@ final readonly class Footer implements Interactive
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        if ($area->width < 1 || $area->height < 1) {
+            return new UpdateResult($this);
+        }
+
         $barArea = ($this->margin ?? Spacing::none())->applyTo($area);
+
+        if ($barArea->width < 1 || $barArea->height < 1) {
+            return new UpdateResult($this);
+        }
+
         $contentArea = ($this->padding ?? Spacing::none())->applyTo($barArea);
 
         [$overrides, $command] = BarSlotRenderer::updateSlots([

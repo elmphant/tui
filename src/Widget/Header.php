@@ -87,7 +87,16 @@ final readonly class Header implements Interactive
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        if ($area->width < 1 || $area->height < 1) {
+            return new UpdateResult($this);
+        }
+
         $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
+
+        if ($innerArea->width < 1 || $innerArea->height < 1) {
+            return new UpdateResult($this);
+        }
+
         $padding = $this->padding ?? Spacing::none();
         $barHeight = 1 + $padding->top + $padding->bottom;
         $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));

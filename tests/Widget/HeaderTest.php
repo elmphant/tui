@@ -271,6 +271,16 @@ final class HeaderTest extends TestCase
     }
 
     #[Test]
+    public function updateLeavesSlotsAloneInAnAreaTooSmallToDrawThem(): void
+    {
+        $header = Header::new()->right(new TickTally());
+
+        $result = $header->update(new TickMsg(1.0), Rect::fromSize(80, 0));
+
+        self::assertSame($header, $result->model, 'A slot the header never draws must not be fed input either');
+    }
+
+    #[Test]
     public function updateReturnsUnchangedWhenNoInteractiveSlots(): void
     {
         $header = Header::new('Title')->right(Text::new('static'));
