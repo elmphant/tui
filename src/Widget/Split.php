@@ -20,6 +20,7 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Runtime\ChildDispatcher;
 use InvalidArgumentException;
 
 /**
@@ -79,23 +80,27 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
      */
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if (!$message instanceof MouseMsg || $message->button !== MouseButton::Left) {
-            return new UpdateResult($this);
+        if ($message instanceof MouseMsg && $message->button === MouseButton::Left) {
+            if ($message->action === MouseAction::Release) {
+                return $this->state->dragging === null
+                    ? $this->toPanes($message, $area)
+                    : new UpdateResult($this->with($this->state->withDragging(null)));
+            }
+
+            if ($message->action === MouseAction::Press) {
+                $divider = $this->dividerAt($message, $area);
+
+                return $divider === null
+                    ? $this->toPanes($message, $area)
+                    : new UpdateResult($this->with($this->state->withDragging($divider)));
+            }
+
+            if ($message->action === MouseAction::Motion && $this->state->dragging !== null) {
+                return new UpdateResult($this->with($this->dragged($message, $area)));
+            }
         }
 
-        if ($message->action === MouseAction::Release) {
-            return new UpdateResult($this->state->dragging === null ? $this : $this->with($this->state->withDragging(null)));
-        }
-
-        if ($message->action === MouseAction::Press) {
-            $divider = $this->dividerAt($message, $area);
-
-            return new UpdateResult($divider === null ? $this : $this->with($this->state->withDragging($divider)));
-        }
-
-        return $message->action === MouseAction::Motion && $this->state->dragging !== null
-            ? new UpdateResult($this->with($this->dragged($message, $area)))
-            : new UpdateResult($this);
+        return $this->toPanes($message, $area);
     }
 
     /**
@@ -168,6 +173,37 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
 
             ++$index;
         }
+    }
+
+    /**
+     * @return UpdateResult<static>
+     */
+    private function toPanes(Message $message, Rect $area): UpdateResult
+    {
+        $panes = [];
+        $rects = [];
+
+        foreach ($this->childWidgets($area) as $index => [$child, $rect]) {
+            if ($child instanceof Interactive) {
+                $panes[$index] = $child;
+                $rects[$index] = $rect;
+            }
+        }
+
+        if ($panes === []) {
+            return new UpdateResult($this);
+        }
+
+        $batch = (new ChildDispatcher())->dispatchList($panes, $rects, $message);
+
+        if ($batch->overrides === []) {
+            return new UpdateResult($this, $batch->command);
+        }
+
+        return new UpdateResult(
+            new self($this->state, array_values(array_replace($this->children, $batch->overrides)), $this->direction, $this->minimums),
+            $batch->command,
+        );
     }
 
     /**

@@ -17,12 +17,27 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Split;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\TextInput;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SplitTest extends TestCase
 {
+    #[Test]
+    public function aPaneReceivesTheKeysTypedIntoIt(): void
+    {
+        $area = new Rect(0, 0, 40, 6);
+        $split = Split::row(SplitState::even(2), TextInput::new()->withFocus(true), Text::new('right'));
+
+        $updated = $split->update(new KeyMsg('h'), $area)->model;
+
+        self::assertInstanceOf(Split::class, $updated);
+        $first = [...$updated->childWidgets($area)][0][0];
+        self::assertInstanceOf(TextInput::class, $first);
+        self::assertSame('h', $first->value(), 'A split that swallows input is a dead end for anything interactive');
+    }
+
     #[Test]
     public function aPreResolvedLayoutPlanDrawsExactlyWhatDirectLayoutDraws(): void
     {
