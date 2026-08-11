@@ -12,6 +12,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -379,20 +380,16 @@ final readonly class TextInput implements Focusable, KeybindingsAware
             return 0;
         }
 
-        $cursorDisplayWidth = CharWidth::stringWidth(
-            self::graphemeSubstring($this->echoMode->mask($this->value), 0, $this->cursor)
+        $displayText = $this->echoMode->mask($this->value);
+        $cursorDisplayWidth = CharWidth::stringWidth(self::graphemeSubstring($displayText, 0, $this->cursor));
+
+        return ScrollWindow::showing(
+            $this->viewportOffset,
+            $cursorDisplayWidth,
+            1,
+            $availableWidth,
+            ScrollWindow::lastOffset(CharWidth::stringWidth($displayText), $availableWidth),
         );
-        $offset = $this->viewportOffset;
-
-        if ($cursorDisplayWidth < $offset) {
-            $offset = $cursorDisplayWidth;
-        }
-
-        if ($cursorDisplayWidth >= $offset + $availableWidth) {
-            $offset = $cursorDisplayWidth - $availableWidth + 1;
-        }
-
-        return max(0, $offset);
     }
 
     private static function graphemeLength(string $value): int
