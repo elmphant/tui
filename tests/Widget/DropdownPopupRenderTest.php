@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -83,6 +84,21 @@ final class DropdownPopupRenderTest extends TestCase
             $frame->foregrounds[0],
             'an open list is what the reader is working in, so it is lit like a focused pane',
         );
+    }
+
+    #[Test]
+    public function aPreResolvedLayoutPlanDrawsExactlyWhatDirectLayoutDraws(): void
+    {
+        $area = new Rect(0, 0, 20, 7);
+        $popup = self::popupOf(['json', 'yaml', 'toml']);
+
+        $planned = new Frame(30, 10);
+        (new RenderContext(Theme::dark()))->renderWithPlan($popup, $planned, $area, LayoutPlan::resolve($popup, $area));
+
+        $direct = new Frame(30, 10);
+        $popup->render($direct, $area, new RenderContext(Theme::dark()));
+
+        self::assertSame($direct->characters, $planned->characters);
     }
 
     /**

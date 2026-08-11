@@ -109,7 +109,9 @@ final readonly class DropdownPopup implements PointerFloating, WidgetContainer
         $context->theme->base->apply($frame, $area);
         Block::new()->border(BorderStyle::Rounded)->borderStyle($context->theme->focusedBorderStyle)->render($frame, $area);
 
-        $this->content->render($frame, $this->contentArea($area), $context);
+        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+            $child->render($frame, $childArea, $context);
+        }
     }
 
     /**
