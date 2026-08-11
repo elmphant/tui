@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\DirectionalConstraint;
@@ -72,7 +74,9 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     public function computeChildRects(Rect $area): array
     {
         $isVertical = $this->direction === Direction::Vertical;
-        $sizes = $this->sizesFor($isVertical ? $area->height : $area->width);
+        $sizes = $isVertical
+            ? $this->sizesFor($area->height, $area->width)
+            : $this->sizesFor($area->width);
 
         $result = [];
         $cursor = $isVertical ? $area->y : $area->x;
@@ -121,16 +125,39 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
      * sum to more than $totalSpace. It is computeChildRects() that cuts the
      * surplus, so no child is given a rect outside the area.
      *
+     * $acrossExtent is the other axis; without it a content-sized child cannot
+     * be measured and only its declared minimum counts.
+     *
      * @return list<int>
      */
-    public function sizesFor(int $totalSpace): array
+    public function sizesFor(int $totalSpace, ?int $acrossExtent = null): array
     {
-        $constraints = [];
+        $policies = [];
+
         foreach ($this->children as $child) {
-            $constraints[] = self::constraintFor($child, $this->direction);
+            $constraint = self::constraintFor($child, $this->direction);
+            $floor = $this->floorFor($child, $constraint, $acrossExtent);
+
+            $policies[] = new ItemPolicy(
+                basis: $floor,
+                min: $constraint->min,
+                max: $constraint->max,
+                grow: $constraint->flex,
+                shrink: 1,
+            );
         }
 
-        return Constraint::allocate($constraints, $totalSpace);
+        return Allocator::resolve($policies, $totalSpace)->sizes;
+    }
+
+    private function floorFor(Widget $child, Constraint $constraint, ?int $acrossExtent): int
+    {
+        return match (true) {
+            null === $acrossExtent || $acrossExtent < 1,
+            $constraint->min === $constraint->max,
+            !$child instanceof MeasureHeight => $constraint->min,
+            default => max($constraint->min, $child->measureHeight($acrossExtent)),
+        };
     }
 
     private function constraintHeight(Constraint $constraint): int

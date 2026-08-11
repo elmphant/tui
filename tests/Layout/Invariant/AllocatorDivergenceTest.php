@@ -16,6 +16,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Column;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Table;
+use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -81,16 +82,31 @@ final class AllocatorDivergenceTest extends TestCase
     }
 
     #[Test]
-    public function aLayoutColumnSplitsTwoParagraphsByWeightAndIgnoresTheirLines(): void
+    public function aColumnGivesItsChildrenTheHeightItSaidTheyNeeded(): void
     {
-        $column = Layout::vertical(self::paragraphOf(3), self::paragraphOf(7));
+        $children = [self::paragraphOf(3), self::paragraphOf(7)];
+        $column = Layout::vertical(...$children);
 
         $heights = self::extentsAlong(
             self::rectsOf($column->computeChildRects(new Rect(0, 0, 40, 10))),
             Direction::Vertical,
         );
 
-        self::assertSame([5, 5], $heights);
+        self::assertSame(10, $column->measureHeight(40), 'Three lines and seven need ten rows');
+        self::assertSame([3, 7], $heights, 'and in ten rows that is what each one gets');
+    }
+
+    #[Test]
+    public function aChildTallerThanTheColumnStillLeavesAFixedSiblingItsRows(): void
+    {
+        $column = Layout::vertical(self::paragraphOf(30), Text::new('footer'));
+
+        $heights = self::extentsAlong(
+            self::rectsOf($column->computeChildRects(new Rect(0, 0, 40, 10))),
+            Direction::Vertical,
+        );
+
+        self::assertSame([9, 1], $heights);
     }
 
     #[Test]
