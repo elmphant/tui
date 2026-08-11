@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
+use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Block;
@@ -211,11 +212,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
 
     private function contentArea(Rect $area): Rect
     {
-        $inner = ($this->margin ?? Spacing::none())->applyTo($area);
-        if ($this->border !== null) {
-            $inner = $inner->inner();
-        }
-        $inner = ($this->padding ?? Spacing::none())->applyTo($inner);
+        $inner = (new Inset($this->margin, $this->border !== null, $this->padding))->inner($area);
 
         $width = $this->contentWidth === null
             ? $inner->width

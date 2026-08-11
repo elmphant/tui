@@ -10,6 +10,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Message;
@@ -217,7 +218,12 @@ final readonly class Panel implements Focusable, WidgetContainer, KeybindingsAwa
      */
     public function contentArea(Rect $area): Rect
     {
-        return $this->effectivePadding()->applyTo($this->effectiveMargin()->applyTo($area)->inner());
+        return $this->inset()->inner($area);
+    }
+
+    private function inset(): Inset
+    {
+        return new Inset($this->margin, border: true, padding: $this->padding);
     }
 
     private function block(RenderContext $context): Block
@@ -248,11 +254,6 @@ final readonly class Panel implements Focusable, WidgetContainer, KeybindingsAwa
     private function withPane(ScrollPane $pane): self
     {
         return $this->cloneWith(pane: $pane->withFocus($this->focused));
-    }
-
-    private function effectivePadding(): Spacing
-    {
-        return $this->padding ?? Spacing::none();
     }
 
     private function effectiveMargin(): Spacing

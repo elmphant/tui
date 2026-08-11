@@ -12,6 +12,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\KeyMsg;
@@ -547,8 +548,10 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
     private function contentArea(Rect $area): Rect
     {
-        $inner = $area->shrink(self::TAB_STRIP_HEIGHT, 1, 1, 1);
-
-        return $this->padding !== null ? $this->padding->applyTo($inner) : $inner;
+        return (new Inset(
+            margin: Spacing::only(top: self::TAB_STRIP_HEIGHT - 1),
+            border: true,
+            padding: $this->padding,
+        ))->inner($area);
     }
 }

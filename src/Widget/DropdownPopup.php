@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Block;
@@ -43,7 +44,7 @@ final readonly class DropdownPopup implements PointerFloating, WidgetContainer
 
     public function contentArea(Rect $area): Rect
     {
-        return $area->shrink(1, 1, 1, 1);
+        return (new Inset(border: true))->inner($area);
     }
 
     /**

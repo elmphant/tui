@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Rendering;
 
 use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
 
@@ -59,31 +60,7 @@ final readonly class Block
 
     public function inner(Rect $area): Rect
     {
-        $result = $area;
-
-        if ($this->margin !== null) {
-            $result = $result->shrink(
-                $this->margin->top,
-                $this->margin->right,
-                $this->margin->bottom,
-                $this->margin->left,
-            );
-        }
-
-        if ($this->border !== null) {
-            $result = $result->shrink(1, 1, 1, 1);
-        }
-
-        if ($this->padding !== null) {
-            $result = $result->shrink(
-                $this->padding->top,
-                $this->padding->right,
-                $this->padding->bottom,
-                $this->padding->left,
-            );
-        }
-
-        return $result;
+        return $this->inset()->inner($area);
     }
 
     public function render(Frame $frame, Rect $area): void
@@ -106,6 +83,11 @@ final readonly class Block
         if ($this->title !== null && $this->title !== '' && $this->border !== null) {
             $this->renderTitle($frame, $borderArea);
         }
+    }
+
+    private function inset(): Inset
+    {
+        return new Inset($this->margin, $this->border !== null, $this->padding);
     }
 
     private function renderBorder(Frame $frame, Rect $area): void
