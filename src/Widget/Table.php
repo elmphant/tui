@@ -62,6 +62,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         private int $cursor = 0,
         private int $selected = -1,
         private int $scrollOffset = 0,
+        private int $lineOffset = 0,
         private bool $followCursor = true,
         private bool $focused = false,
         private bool $header = true,
@@ -435,13 +436,11 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         if ($message->inRect($area)) {
             if ($message->action === MouseAction::WheelDown) {
-                $maxOffset = $this->layoutFor($this->columnWidthsFor($area))->maxOffset(max(1, $area->height - $this->headerHeight()));
-
-                return new UpdateResult($this->cloneWith(scrollOffset: min($maxOffset, $displayOffset + $message->wheelSteps(self::WHEEL_SCROLL_STEP)), followCursor: false));
+                return new UpdateResult($this->scrolledDown($message->wheelSteps(self::WHEEL_SCROLL_STEP), $displayOffset, $area));
             }
 
             if ($message->action === MouseAction::WheelUp) {
-                return new UpdateResult($this->cloneWith(scrollOffset: max(0, $displayOffset - $message->wheelSteps(self::WHEEL_SCROLL_STEP)), followCursor: false));
+                return new UpdateResult($this->scrolledUp($message->wheelSteps(self::WHEEL_SCROLL_STEP), $displayOffset, $area));
             }
         }
 
@@ -481,16 +480,26 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         // clips the overflow, so the area is not the viewport — the clip is.
         // Reading rows past it would draw thousands of invisible lines.
         $lastVisibleY = $frame->clip()->bottom();
+        $firstRow = $this->displayScrollOffset($area);
+        $renderY -= $firstRow === $this->scrollOffset ? $this->lineOffset : 0;
 
-        for ($rowIndex = $this->displayScrollOffset($area); $rowIndex < $this->rowCount(); ++$rowIndex) {
-            if ($renderY >= $lastVisibleY) {
-                break;
+        // The first row may start above the body when it is taller than the
+        // viewport, and the header sits in the same clip as the rows.
+        $frame->pushClip(new Rect($area->x, $area->y + $this->headerHeight(), $area->width, max(0, $area->height - $this->headerHeight())));
+
+        try {
+            for ($rowIndex = $firstRow; $rowIndex < $this->rowCount(); ++$rowIndex) {
+                if ($renderY >= $lastVisibleY) {
+                    break;
+                }
+
+                $height = $layout->heightOf($rowIndex);
+                $this->renderRow($frame, $area->x, $renderY, $rowIndex, $this->rows[$rowIndex], $columnWidths, $totalWidth, $theme, $height);
+
+                $renderY += $height;
             }
-
-            $height = $layout->heightOf($rowIndex);
-            $this->renderRow($frame, $area->x, $renderY, $rowIndex, $this->rows[$rowIndex], $columnWidths, $totalWidth, $theme, $height);
-
-            $renderY += $height;
+        } finally {
+            $frame->popClip();
         }
     }
 
@@ -609,6 +618,61 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      * An offset past the end would draw blank rows the reader cannot scroll
      * back from.
      */
+    /**
+     * A row taller than the viewport cannot be read by stepping over it, so the
+     * wheel walks down its lines first and only then moves to the next row.
+     */
+    private function scrolledDown(int $steps, int $fromRow, Rect $area): self
+    {
+        $viewportHeight = max(1, $area->height - $this->headerHeight());
+        $layout = $this->layoutFor($this->columnWidthsFor($area));
+        $maxOffset = $layout->maxOffset($viewportHeight);
+        $row = $fromRow;
+        $line = $row === $this->scrollOffset ? $this->lineOffset : 0;
+
+        for ($step = 0; $step < $steps; ++$step) {
+            $remaining = $layout->heightOf($row) - $line - $viewportHeight;
+
+            if ($remaining > 0) {
+                ++$line;
+                continue;
+            }
+
+            if ($row >= $maxOffset) {
+                break;
+            }
+
+            ++$row;
+            $line = 0;
+        }
+
+        return $this->cloneWith(scrollOffset: $row, lineOffset: $line, followCursor: false);
+    }
+
+    private function scrolledUp(int $steps, int $fromRow, Rect $area): self
+    {
+        $viewportHeight = max(1, $area->height - $this->headerHeight());
+        $layout = $this->layoutFor($this->columnWidthsFor($area));
+        $row = $fromRow;
+        $line = $row === $this->scrollOffset ? $this->lineOffset : 0;
+
+        for ($step = 0; $step < $steps; ++$step) {
+            if ($line > 0) {
+                --$line;
+                continue;
+            }
+
+            if ($row === 0) {
+                break;
+            }
+
+            --$row;
+            $line = max(0, $layout->heightOf($row) - $viewportHeight);
+        }
+
+        return $this->cloneWith(scrollOffset: $row, lineOffset: $line, followCursor: false);
+    }
+
     private function clampedScrollOffset(Rect $area): int
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());

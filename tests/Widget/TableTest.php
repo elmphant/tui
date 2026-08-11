@@ -3624,6 +3624,22 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function scrollingInsideARowTallerThanTheViewportRevealsItsLaterLines(): void
+    {
+        $long = implode(' ', array_map(static fn (int $index): string => "word{$index}", range(1, 40)));
+        $table = Table::new(
+            [Column::new('text', Constraint::flex())],
+            [[$long], ['second']],
+        )->withHeader(false);
+        $area = new Rect(0, 0, 12, 4);
+
+        $scrolled = $table->update(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None), $area)->model;
+
+        self::assertInstanceOf(Table::class, $scrolled);
+        self::assertStringContainsString('word9', $this->screenOfTable($scrolled, $area), 'A cell taller than the viewport must not hide its later lines from every scroll position');
+    }
+
+    #[Test]
     public function anOffsetPastTheLastRowStillShowsTheEndOfTheTable(): void
     {
         $table = Table::new(
