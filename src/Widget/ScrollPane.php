@@ -376,12 +376,9 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
         }
 
         $row = array_sum(array_slice($layout->heights, 0, $index)) + $child->cursorRow();
+        $offset = ScrollWindow::showing($this->scrollOffset, $row, 1, $height, $layout->maxScrollOffset($height));
 
-        return match (true) {
-            $row < $this->scrollOffset => $this->cloneWith(scrollOffset: max(0, $row)),
-            $row >= $this->scrollOffset + $height => $this->cloneWith(scrollOffset: max(0, $row - $height + 1)),
-            default => $this,
-        };
+        return $offset === $this->scrollOffset ? $this : $this->cloneWith(scrollOffset: $offset);
     }
 
     /**

@@ -5000,12 +5000,13 @@ final class TabBarTest extends TestCase
             ->add($this->cursorJumpChild(4, 5))
             ->withFocus(true);
         $tabs = (new ReflectionProperty(TabBar::class, 'tabs'))->getValue($tabBar);
-        $tabBar = $tabBar->withTabs([$tabs[0]->withPane($tabs[0]->pane->withScrollOffset(4))]);
-        $area = new Rect(0, 0, 40, 8); // viewport 4, cursor lands on abs row 5 ∈ [4, 8)
+        // Six rows of content in a four-row viewport, so three is as far as it scrolls.
+        $tabBar = $tabBar->withTabs([$tabs[0]->withPane($tabs[0]->pane->withScrollOffset(3))]);
+        $area = new Rect(0, 0, 40, 8);
 
         $result = $tabBar->update(new KeyMsg('x'), $area)->model;
 
-        self::assertSame(4, $this->activeTabScrollOffset($result), 'A cursor that stays visible must not move the scroll offset');
+        self::assertSame(3, $this->activeTabScrollOffset($result), 'A cursor that stays visible must not move the scroll offset');
     }
 
     #[Test]
