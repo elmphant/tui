@@ -109,7 +109,7 @@ final class StaticTable implements Widget, MeasureHeight
     {
         $lines = $this->linesFor($width);
 
-        return $lines === [] ? 0 : min($width, mb_strlen($lines[0]));
+        return $lines === [] ? 0 : min($width, CharWidth::stringWidth($lines[0]));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -282,7 +282,7 @@ final class StaticTable implements Widget, MeasureHeight
             static fn (string $value): string => CharWidth::ellipsize(trim($value), $width),
             $values,
         );
-        $lines[0] = str_pad($lines[0], $width + strlen($lines[0]) - mb_strlen($lines[0]));
+        $lines[0] = str_pad($lines[0], $width + strlen($lines[0]) - CharWidth::stringWidth($lines[0]));
 
         return implode("\n", $lines);
     }
@@ -302,7 +302,7 @@ final class StaticTable implements Widget, MeasureHeight
         $padded = [];
 
         foreach ($cells as $column => $cell) {
-            $padded[] = $cell . str_repeat(' ', max(0, ($widths[$column] ?? 0) - mb_strlen($cell)));
+            $padded[] = $cell . str_repeat(' ', max(0, ($widths[$column] ?? 0) - CharWidth::stringWidth($cell)));
         }
 
         return $padded;
@@ -394,7 +394,7 @@ final class StaticTable implements Widget, MeasureHeight
 
         foreach ($this->measured ?? $this->rows as $row) {
             foreach ($row as $column => $cell) {
-                $lengths[$column][] = mb_strlen($cell);
+                $lengths[$column][] = CharWidth::stringWidth($cell);
             }
         }
 
@@ -404,7 +404,7 @@ final class StaticTable implements Widget, MeasureHeight
             $widths = $lengths[$column] ?? [];
             sort($widths);
             $index = max(0, (int)ceil($share * count($widths)) - 1);
-            $demands[] = max(mb_strlen($header), $widths[$index] ?? 0);
+            $demands[] = max(CharWidth::stringWidth($header), $widths[$index] ?? 0);
         }
 
         return $demands;
@@ -459,7 +459,7 @@ final class StaticTable implements Widget, MeasureHeight
         foreach ($this->measured ?? $this->rows as $row) {
             foreach ($row as $column => $cell) {
                 foreach (self::words($cell) as $word) {
-                    $floors[$column] = max($floors[$column] ?? self::MIN_COLUMN, mb_strlen($word));
+                    $floors[$column] = max($floors[$column] ?? self::MIN_COLUMN, CharWidth::stringWidth($word));
                 }
             }
         }
@@ -503,7 +503,7 @@ final class StaticTable implements Widget, MeasureHeight
 
         for ($column = 0; $column < $count; ++$column) {
             $words = self::words($this->headers[$column] ?? '');
-            $floors[] = max(self::MIN_COLUMN, ...array_map(mb_strlen(...), $words === [] ? [''] : $words));
+            $floors[] = max(self::MIN_COLUMN, ...array_map(CharWidth::stringWidth(...), $words === [] ? [''] : $words));
         }
 
         return $floors;

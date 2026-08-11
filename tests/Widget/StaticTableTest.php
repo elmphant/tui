@@ -29,6 +29,14 @@ final class StaticTableTest extends TestCase
     }
 
     #[Test]
+    public function sizesAColumnByWhatItsWidestCellOccupiesOnScreen(): void
+    {
+        $screen = $this->render(StaticTable::new(['name', 'note'], [['ab', 'x'], ['日本語', 'y']]), 30, 8);
+
+        self::assertStringContainsString('│ 日本語 │', $screen, 'A cell of double-width characters must sit on one row, not spill onto the next');
+    }
+
+    #[Test]
     public function fitsWhateverWidthItIsGiven(): void
     {
         foreach ([30, 44, 80] as $width) {
