@@ -157,13 +157,16 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $last = count($this->children) - 1;
+        $index = 0;
 
-        foreach ($this->childWidgets($area) as $index => [$child, $pane]) {
+        foreach ($context->childrenOf($this, $area) as [$child, $pane]) {
             $child->render($frame, $pane, $context);
 
             if ($index < $last) {
                 $this->renderDivider($frame, $area, $pane, $index, $context);
             }
+
+            ++$index;
         }
     }
 

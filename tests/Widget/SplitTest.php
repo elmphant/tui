@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\SplitState;
 use Elmphant\Tui\Message\Key;
@@ -22,6 +23,29 @@ use PHPUnit\Framework\TestCase;
 
 final class SplitTest extends TestCase
 {
+    #[Test]
+    public function aPreResolvedLayoutPlanDrawsExactlyWhatDirectLayoutDraws(): void
+    {
+        $area = new Rect(0, 0, 24, 6);
+
+        foreach ([[1, 1], [3, 1, 1], [1, 4]] as $shares) {
+            $children = array_map(static fn (int $share): Text => Text::new(str_repeat('x', $share + 2)), $shares);
+            $split = Split::row(new SplitState($shares), ...$children);
+
+            $planned = new Frame(24, 6);
+            (new RenderContext(Theme::dark()))->renderWithPlan($split, $planned, $area, LayoutPlan::resolve($split, $area));
+
+            $direct = new Frame(24, 6);
+            $split->render($direct, $area, new RenderContext(Theme::dark()));
+
+            self::assertSame(
+                $direct->characters,
+                $planned->characters,
+                'The two layout paths must agree for shares ' . implode('/', $shares),
+            );
+        }
+    }
+
     #[Test]
     public function refusesFewerSharesThanChildren(): void
     {
