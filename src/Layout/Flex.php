@@ -12,6 +12,7 @@ use Elmphant\Tui\Layout\Axis\Overflow;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\MeasureWidth;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
@@ -150,14 +151,12 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             $placements = $this->resolveMainPlacements($line, $mainSize);
             $linePlacements[] = $placements;
 
-            if (!$isRow) {
-                $desiredCrossSizes[] = 1;
-                continue;
-            }
-
             $desired = 0;
-            foreach ($placements as [$itemIndex, , $itemWidth]) {
-                $desired = max($desired, $this->intrinsicHeight($this->items[$itemIndex]->widget, $itemWidth));
+            foreach ($placements as [$itemIndex, , $itemMainSize]) {
+                $widget = $this->items[$itemIndex]->widget;
+                $desired = max($desired, $isRow
+                    ? $this->intrinsicHeight($widget, $itemMainSize)
+                    : $this->intrinsicWidth($widget));
             }
             $desiredCrossSizes[] = $desired;
         }
@@ -361,6 +360,13 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         }
 
         return min($this->gap, intdiv(max(0, $available), $count - 1));
+    }
+
+    private function intrinsicWidth(Widget $widget): int
+    {
+        return $widget instanceof MeasureWidth
+            ? max(1, $widget->measureWidth())
+            : 1;
     }
 
     private function intrinsicHeight(Widget $widget, int $width): int

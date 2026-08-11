@@ -14,6 +14,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\MeasureWidth;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
@@ -449,6 +450,21 @@ final class FlexTest extends TestCase
     }
 
     #[Test]
+    public function columnCrossSizesFollowIntrinsicChildWidths(): void
+    {
+        $flex = Flex::column()
+            ->withWrap()
+            ->withGap(1)
+            ->add($this->widthMeasuredWidget(2), basis: 2, max: 2, grow: 0)
+            ->add($this->widthMeasuredWidget(4), basis: 2, max: 2, grow: 0);
+
+        $children = $flex->computeChildRects(Rect::fromSize(7, 2));
+
+        self::assertEquals(new Rect(0, 0, 2, 2), $children[0][1]);
+        self::assertEquals(new Rect(3, 0, 4, 2), $children[1][1]);
+    }
+
+    #[Test]
     public function rowCrossSizesFollowIntrinsicChildHeights(): void
     {
         $flex = Flex::row()
@@ -595,6 +611,29 @@ final class FlexTest extends TestCase
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
                 ($this->record)($area);
+            }
+        };
+    }
+
+    private function widthMeasuredWidget(int $width): Widget
+    {
+        return new class($width) implements MeasureWidth, Widget {
+            public function __construct(private int $width)
+            {
+            }
+
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function measureWidth(): int
+            {
+                return $this->width;
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
             }
         };
     }
