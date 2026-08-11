@@ -14,7 +14,6 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
-use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
@@ -23,6 +22,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 final readonly class CheckboxGroup implements Focusable, KeybindingsAware, CursorAware, DropdownContent
 {
     use Cloneable;
+    use OptionCursor;
     use KeybindingsAwareBehavior;
 
     /**
@@ -36,6 +36,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         private bool $focused = false,
         private string $label = '',
         private string $emptyCaption = '',
+        private bool $wrapping = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -82,11 +83,6 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
             Actions::FOCUS_PREV => ['up'],
             Actions::TOGGLE => ['enter', 'space'],
         ]);
-    }
-
-    public function cursorRow(): int
-    {
-        return $this->rowOffset() + $this->cursor;
     }
 
     public function cursor(): int
@@ -144,10 +140,9 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
             return null;
         }
 
-        $labelRows = $this->rowOffset();
-        $row = $message->y - $area->y + $this->scrollOffset($area->height) - $labelRows;
+        $index = $this->optionIndexAt($message, $area, count($this->options));
 
-        return $this->options[$row] ?? null;
+        return $index === null ? null : $this->options[$index];
     }
 
     public function hasOption(string $option): bool
@@ -216,7 +211,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     {
         $theme = $context->theme;
 
-        $y = $area->y - $this->scrollOffset($area->height);
+        $y = $area->y - $this->cursorScrollOffset($area->height);
 
         if ($this->label !== '') {
             $frame->putStyled($area->x, $y, $this->label, $theme->titleStyle);
@@ -242,6 +237,14 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     }
 
     /**
+     * Rows this widget draws above its options — its label and the spacer under it.
+     */
+    protected function rowOffset(): int
+    {
+        return $this->label !== '' ? 2 : 0;
+    }
+
+    /**
      * @return UpdateResult<static>
      */
     private function handleKey(KeyMsg $message, int $count): UpdateResult
@@ -249,8 +252,8 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         $bindings = $this->effectiveKeybindings();
 
         $updated = match (true) {
-            $bindings->matches($message, Actions::FOCUS_PREV) => $this->cursor > 0 ? $this->cloneWith(cursor: $this->cursor - 1) : null,
-            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->cursor < $count - 1 ? $this->cloneWith(cursor: $this->cursor + 1) : null,
+            $bindings->matches($message, Actions::FOCUS_PREV) => $this->walked(-1, $count),
+            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->walked(1, $count),
             $bindings->matches($message, Actions::TOGGLE) => $this->toggleCurrent(),
             default => null,
         };
@@ -275,58 +278,12 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
      */
     private function handleClick(MouseMsg $message, Rect $area, int $count): UpdateResult
     {
-        $labelRows = $this->rowOffset();
-        $optionY = $message->y - $area->y + $this->scrollOffset($area->height) - $labelRows;
+        $optionIndex = $this->optionIndexAt($message, $area, $count);
 
-        if ($optionY >= 0 && $optionY < $count) {
-            $toggled = $this->cloneWith(cursor: $optionY);
-
-            return new UpdateResult($toggled->toggleCurrent());
-        }
-
-        return new UpdateResult($this);
-    }
-
-    /**
-     * The wheel walks the cursor, and the scroll offset derived from it follows.
-     *
-     * @return UpdateResult<static>
-     */
-    private function handleWheel(MouseMsg $message, int $count): UpdateResult
-    {
-        $steps = match ($message->action) {
-            MouseAction::WheelUp => -$message->wheelSteps(1),
-            MouseAction::WheelDown => $message->wheelSteps(1),
-            default => 0,
-        };
-
-        if ($steps === 0 || $count === 0) {
+        if ($optionIndex === null) {
             return new UpdateResult($this);
         }
 
-        $moved = max(0, min($count - 1, $this->cursor + $steps));
-
-        return new UpdateResult($moved === $this->cursor ? $this : $this->cloneWith(cursor: $moved));
-    }
-
-    /**
-     * Rows this widget draws above its options — its label and the spacer under it.
-     */
-    private function rowOffset(): int
-    {
-        return $this->label !== '' ? 2 : 0;
-    }
-
-    private function scrollOffset(int $areaHeight): int
-    {
-        $labelRows = $this->rowOffset();
-        $totalRows = $labelRows + count($this->options);
-        $cursorRow = $labelRows + $this->cursor;
-
-        if ($areaHeight > 0 && $totalRows > $areaHeight && $cursorRow >= $areaHeight) {
-            return $cursorRow - $areaHeight + 1;
-        }
-
-        return 0;
+        return new UpdateResult($this->cloneWith(cursor: $optionIndex)->toggleCurrent());
     }
 }

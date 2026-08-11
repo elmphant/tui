@@ -23,6 +23,17 @@ use PHPUnit\Framework\TestCase;
 final class CheckboxGroupTest extends TestCase
 {
     #[Test]
+    public function aWrappingGroupComesRoundFromItsFirstOptionToItsLast(): void
+    {
+        $group = CheckboxGroup::new(['a', 'b', 'c'])->wrapping()->withFocus(true);
+
+        $moved = $group->update(new KeyMsg(Key::Up), new Rect(0, 0, 20, 6))->model;
+
+        self::assertInstanceOf(CheckboxGroup::class, $moved);
+        self::assertSame(2, $moved->cursor(), 'A short list a reader may wrap should wrap here too, not only in a Select');
+    }
+
+    #[Test]
     public function takesTheOptionsFirstAndLeavesTheLabelOptional(): void
     {
         $bare = CheckboxGroup::new(['A', 'B']);
