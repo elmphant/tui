@@ -13,16 +13,12 @@ final readonly class FlexItem
 {
     public function __construct(
         public Widget $widget,
-        public int $basis,
-        public int $min,
-        public int $max,
-        public int $grow,
-        public int $shrink,
+        public Constraint $constraint,
     ) {
     }
 
     public function initialSize(): int
     {
-        return min($this->max, max($this->min, $this->basis));
+        return $this->constraint->policy()->initialSize();
     }
 }

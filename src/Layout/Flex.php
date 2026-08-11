@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Layout;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
-use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Axis\Overflow;
 use Elmphant\Tui\Rendering\Frame;
@@ -73,23 +72,10 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             : new self($this->direction, $this->items, $this->wrap, $this->gap, $justify);
     }
 
-    public function add(
-        Widget $widget,
-        int $basis = 0,
-        int $min = 0,
-        int $max = PHP_INT_MAX,
-        int $grow = 1,
-        int $shrink = 1,
-    ): self {
-        if ($basis < 0 || $min < 0 || $max < 0 || $grow < 0 || $shrink < 0) {
-            throw new InvalidArgumentException('Flex item sizes and weights must be non-negative');
-        }
-        if ($max < $min) {
-            throw new InvalidArgumentException('Flex item max must be greater than or equal to min');
-        }
-
+    public function add(Widget $widget, ?Constraint $constraint = null): self
+    {
         $items = $this->items;
-        $items[] = new FlexItem($widget, $basis, $min, $max, $grow, $shrink);
+        $items[] = new FlexItem($widget, $constraint ?? Constraint::flex());
 
         return new self($this->direction, $items, $this->wrap, $this->gap, $this->justify);
     }
@@ -257,8 +243,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
     {
         $policies = [];
         foreach ($line as $itemIndex) {
-            $item = $this->items[$itemIndex];
-            $policies[] = new ItemPolicy($item->basis, $item->min, $item->max, $item->grow, $item->shrink);
+            $policies[] = $this->items[$itemIndex]->constraint->policy();
         }
 
         // Terminal safety is stronger than a no-shrink preference: children must
