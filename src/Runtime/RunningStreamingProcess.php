@@ -17,14 +17,7 @@ use Symfony\Component\Process\Process;
  */
 final class RunningStreamingProcess implements RunningProcess
 {
-    /**
-     * Symfony's stop() blocks in a usleep loop until the child dies or this timeout
-     * expires, and only then escalates to SIGKILL; its 10s default would freeze the
-     * event loop for a child that ignores SIGTERM.
-     */
-    private const TERMINATION_GRACE_SECONDS = 0.05;
-
-    private bool $finished = false;
+    use ChildProcessLifecycle;
 
     public function __construct(
         private readonly Process $process,
@@ -62,29 +55,6 @@ final class RunningStreamingProcess implements RunningProcess
         ));
 
         return $messages;
-    }
-
-    public function map(Message $message): Message
-    {
-        return $this->wrap === null ? $message : ($this->wrap)($message);
-    }
-
-    public function stop(): void
-    {
-        if (!$this->finished) {
-            $this->process->stop(self::TERMINATION_GRACE_SECONDS);
-            $this->finished = true;
-        }
-    }
-
-    public function isRunning(): bool
-    {
-        return !$this->finished;
-    }
-
-    public function id(): ?EffectId
-    {
-        return $this->processId;
     }
 
     /**

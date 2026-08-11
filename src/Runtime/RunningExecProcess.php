@@ -17,14 +17,8 @@ use Throwable;
  */
 final class RunningExecProcess implements RunningProcess
 {
-    /**
-     * Symfony's stop() blocks in a usleep loop until the child dies or this timeout
-     * expires, and only then escalates to SIGKILL; its 10s default would freeze the
-     * event loop for a child that ignores SIGTERM.
-     */
-    private const TERMINATION_GRACE_SECONDS = 0.05;
+    use ChildProcessLifecycle;
 
-    private bool $finished = false;
     private string $stdout = '';
     private string $stderr = '';
 
@@ -82,29 +76,6 @@ final class RunningExecProcess implements RunningProcess
             $this->process->isSuccessful(),
             $this->processId,
         ))];
-    }
-
-    public function map(Message $message): Message
-    {
-        return $this->wrap === null ? $message : ($this->wrap)($message);
-    }
-
-    public function stop(): void
-    {
-        if (!$this->finished) {
-            $this->process->stop(self::TERMINATION_GRACE_SECONDS);
-            $this->finished = true;
-        }
-    }
-
-    public function isRunning(): bool
-    {
-        return !$this->finished;
-    }
-
-    public function id(): ?EffectId
-    {
-        return $this->processId;
     }
 
     private function collectOutput(): void
