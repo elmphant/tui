@@ -82,7 +82,7 @@ final class StaticTableAllocationInvariantTest extends TestCase
 
         self::assertSame(0, $table->drawnWidth(0));
         self::assertSame(-1, $this->rightmostInk($this->drawn($table, $area), $area->y));
-        self::assertGreaterThan(0, $table->measureHeight(0), 'It still reserves rows for a grid it cannot draw');
+        self::assertSame(0, $table->measureHeight(0), 'and reserves no rows for a grid it cannot draw');
     }
 
     /**

@@ -99,7 +99,7 @@ final class StaticTable implements Widget, MeasureHeight
 
     public function measureHeight(int $width): int
     {
-        return count($this->linesFor($width));
+        return $width < 1 ? 0 : count($this->linesFor($width));
     }
 
     /**

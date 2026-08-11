@@ -93,6 +93,14 @@ final class StaticTableTest extends TestCase
     }
 
     #[Test]
+    public function reservesNoRowsForAGridItCannotDraw(): void
+    {
+        $table = StaticTable::new(['Name', 'Size'], [['alpha', '10']]);
+
+        self::assertSame(0, $table->measureHeight(0), 'Nothing is drawn at no width, so nothing is reserved for it');
+    }
+
+    #[Test]
     public function keepsEveryHeaderOnOneLine(): void
     {
         $table = StaticTable::new(
