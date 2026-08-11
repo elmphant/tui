@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Widget\Widget;
+
 /**
  * Resolved height and scrollbar geometry for one vertical stack viewport.
  *
@@ -12,13 +14,17 @@ namespace Elmphant\Tui\Layout;
 final readonly class VerticalStackLayout
 {
     /**
-     * @param list<int> $heights
+     * @param list<int>    $heights
+     * @param list<Widget> $children the layout is keyed by their identity, so it
+     *                               keeps them alive to stop those identifiers
+     *                               being handed to anything else
      */
     public function __construct(
         public array $heights,
         public int $totalHeight,
         public int $childWidth,
         public bool $hasScrollbar,
+        public array $children = [],
     ) {
     }
 

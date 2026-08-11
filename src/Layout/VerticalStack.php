@@ -70,7 +70,7 @@ final class VerticalStack
             $totalHeight = array_sum($heights);
         }
 
-        return new VerticalStackLayout($heights, $totalHeight, $childWidth, $hasScrollbar);
+        return new VerticalStackLayout($heights, $totalHeight, $childWidth, $hasScrollbar, $children);
     }
 
     /**

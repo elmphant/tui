@@ -80,6 +80,19 @@ final class VerticalStackAllocationInvariantTest extends TestCase
     }
 
     #[Test]
+    public function aCachedLayoutHoldsTheChildrenItWasMeasuredFor(): void
+    {
+        $children = $this->widgetsFor([Constraint::exact(2), Constraint::flex()]);
+
+        $layout = VerticalStack::layoutUsing(new KeyedCache(), $children, 40, 10);
+
+        // The cache is keyed by object identity, and PHP hands a freed object's
+        // identifier to the next one allocated. Holding the children keeps those
+        // identifiers spoken for.
+        self::assertSame($children, $layout->children);
+    }
+
+    #[Test]
     public function everySweptStackTakesTheHeightsRecordedForIt(): void
     {
         $resolved = [];
