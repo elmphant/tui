@@ -63,7 +63,7 @@ final readonly class Constraint
      */
     public function withFlex(int $weight = 1): self
     {
-        return new self(min: $this->min, max: $this->max, flex: $weight);
+        return new self(min: $this->min, max: $this->max, flex: $weight, basis: $this->basis, shrink: $this->shrink);
     }
 
     /**

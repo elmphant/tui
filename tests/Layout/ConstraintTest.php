@@ -92,6 +92,15 @@ final class ConstraintTest extends TestCase
     }
 
     #[Test]
+    public function withFlexKeepsTheStartingSizeAndTheGivingWeight(): void
+    {
+        $constraint = (new Constraint(min: 2, max: 40, flex: 1, basis: 12, shrink: 0))->withFlex(3);
+
+        self::assertSame(12, $constraint->basis);
+        self::assertSame(0, $constraint->shrink);
+    }
+
+    #[Test]
     public function withFlexTakesAnExplicitWeight(): void
     {
         self::assertSame(4, Constraint::min(3)->withFlex(4)->flex);
