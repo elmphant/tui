@@ -201,7 +201,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($this->tabs === []) {
+        if (!$this->fitsIn($area)) {
             return new UpdateResult($this);
         }
 
@@ -227,7 +227,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        if ($this->tabs === [] || $area->width < 5 || $area->height < 5) {
+        if (!$this->fitsIn($area)) {
             return;
         }
 
@@ -544,6 +544,15 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         }
 
         $this->activePane()->render($frame, $contentArea, $context);
+    }
+
+    /**
+     * A tab bar needs room for its strip, its baseline and a row of content
+     * under them; below that it draws nothing, so it takes no input either.
+     */
+    private function fitsIn(Rect $area): bool
+    {
+        return $this->tabs !== [] && $area->width >= 5 && $area->height >= 5;
     }
 
     private function contentArea(Rect $area): Rect

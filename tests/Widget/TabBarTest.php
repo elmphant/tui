@@ -588,6 +588,18 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
+    public function updateLeavesPanesAloneInAnAreaTooSmallToDrawThem(): void
+    {
+        $tabBar = TabBar::new()
+            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
+            ->withFocus(true);
+
+        $result = $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 40, 3));
+
+        self::assertSame($tabBar, $result->model, 'A pane the tab bar never draws must not be fed input either');
+    }
+
+    #[Test]
     public function switchTabFocusesFirstFocusableInNewTab(): void
     {
         $tabBar = TabBar::new()
