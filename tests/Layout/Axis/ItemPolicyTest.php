@@ -13,6 +13,15 @@ use PHPUnit\Framework\TestCase;
 final class ItemPolicyTest extends TestCase
 {
     #[Test]
+    public function refusesASizeBelowZero(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('ItemPolicy sizes must be non-negative, got basis -1, min 0 and max 4');
+
+        new ItemPolicy(basis: -1, max: 4);
+    }
+
+    #[Test]
     public function refusesAWeightBelowZero(): void
     {
         $this->expectException(InvalidArgumentException::class);

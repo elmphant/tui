@@ -21,6 +21,9 @@ final readonly class ItemPolicy
         public int $grow = 0,
         public int $shrink = 0,
     ) {
+        if ($basis < 0 || $min < 0 || $max < 0) {
+            throw new InvalidArgumentException(sprintf('ItemPolicy sizes must be non-negative, got basis %d, min %d and max %d', $basis, $min, $max));
+        }
         if ($grow < 0 || $shrink < 0) {
             throw new InvalidArgumentException(sprintf('ItemPolicy weights must be non-negative, got grow %d and shrink %d', $grow, $shrink));
         }
