@@ -136,21 +136,20 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
 
         foreach ($this->children as $child) {
             $constraint = self::constraintFor($child, $this->direction);
-            $floor = $this->floorFor($child, $constraint, $acrossExtent);
 
             $policies[] = new ItemPolicy(
-                basis: $floor,
+                basis: $constraint->basis ?? $this->measuredBasis($child, $constraint, $acrossExtent),
                 min: $constraint->min,
                 max: $constraint->max,
                 grow: $constraint->flex,
-                shrink: 1,
+                shrink: $constraint->shrink,
             );
         }
 
         return Allocator::resolve($policies, $totalSpace)->sizes;
     }
 
-    private function floorFor(Widget $child, Constraint $constraint, ?int $acrossExtent): int
+    private function measuredBasis(Widget $child, Constraint $constraint, ?int $acrossExtent): int
     {
         return match (true) {
             null === $acrossExtent || $acrossExtent < 1,

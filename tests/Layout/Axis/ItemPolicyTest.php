@@ -48,6 +48,6 @@ final class ItemPolicyTest extends TestCase
         self::assertSame(4, $policy->min);
         self::assertSame(PHP_INT_MAX, $policy->max);
         self::assertSame(3, $policy->grow);
-        self::assertSame(0, $policy->shrink);
+        self::assertSame(1, $policy->shrink, 'A slot gives space back unless its author says otherwise');
     }
 }

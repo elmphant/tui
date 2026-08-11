@@ -65,6 +65,23 @@ final class ConstraintTest extends TestCase
     }
 
     #[Test]
+    public function aStartingSizeAndAGivingWeightReachThePolicy(): void
+    {
+        $policy = (new Constraint(min: 2, max: 8, flex: 1, basis: 5, shrink: 3))->policy();
+
+        self::assertSame(5, $policy->basis, 'The declared starting size is where the slot begins');
+        self::assertSame(3, $policy->shrink, 'and this is how readily it gives that size back');
+    }
+
+    #[Test]
+    public function aSlotGivesBackTheStartingSizeItCannotKeep(): void
+    {
+        $constraints = [new Constraint(min: 0, basis: 8), Constraint::exact(2)];
+
+        self::assertSame([2, 2], Constraint::allocate($constraints, 4));
+    }
+
+    #[Test]
     public function withFlexKeepsTheBoundsAndDefaultsToWeightOne(): void
     {
         $constraint = Constraint::min(3)->withFlex();

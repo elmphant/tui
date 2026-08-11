@@ -14,7 +14,15 @@ final readonly class Constraint
         public int $min = 0,
         public int $max = PHP_INT_MAX,
         public int $flex = 0,
+        public ?int $basis = null,
+        public int $shrink = 1,
     ) {
+        if (null !== $basis && $basis < 0) {
+            throw new InvalidArgumentException(sprintf('Constraint basis must be non-negative, got %d', $basis));
+        }
+        if ($shrink < 0) {
+            throw new InvalidArgumentException(sprintf('Constraint shrink weight must be non-negative, got %d', $shrink));
+        }
         if ($min < 0 || $max < 0) {
             throw new InvalidArgumentException(sprintf('Constraint bounds must be non-negative, got min %d and max %d', $min, $max));
         }
@@ -79,15 +87,16 @@ final readonly class Constraint
     }
 
     /**
-     * A constraint starts at its floor, so its floor is also its basis.
+     * Without a declared basis a constraint starts at its floor.
      */
     public function policy(): ItemPolicy
     {
         return new ItemPolicy(
-            basis: $this->min,
+            basis: $this->basis ?? $this->min,
             min: $this->min,
             max: $this->max,
             grow: $this->flex,
+            shrink: $this->shrink,
         );
     }
 
