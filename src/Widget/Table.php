@@ -13,6 +13,7 @@ use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -601,7 +602,19 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     {
         return $this->followCursor
             ? $this->cursorVisibleOffset($area)
-            : $this->scrollOffset;
+            : $this->clampedScrollOffset($area);
+    }
+
+    /**
+     * An offset past the end would draw blank rows the reader cannot scroll
+     * back from.
+     */
+    private function clampedScrollOffset(Rect $area): int
+    {
+        $viewportHeight = max(1, $area->height - $this->headerHeight());
+        $layout = $this->layoutFor($this->columnWidthsFor($area));
+
+        return ScrollWindow::clamped($this->scrollOffset, $layout->maxOffset($viewportHeight));
     }
 
     private function cursorVisibleOffset(Rect $area): int

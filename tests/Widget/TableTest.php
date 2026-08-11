@@ -3623,6 +3623,19 @@ final class TableTest extends TestCase
         self::assertStringContainsString('row0', $screen, 'The view comes back up to the row the cursor was moved to');
     }
 
+    #[Test]
+    public function anOffsetPastTheLastRowStillShowsTheEndOfTheTable(): void
+    {
+        $table = Table::new(
+            [Column::new('name', Constraint::flex())],
+            [['alpha'], ['bravo'], ['charlie'], ['delta'], ['echo']],
+        )->withHeader(false);
+
+        $screen = $this->screenOfTable($table->withScrollOffset(9999), new Rect(0, 0, 10, 4));
+
+        self::assertStringContainsString('echo', $screen, 'An offset nobody can scroll back from must settle on the last rows');
+    }
+
     protected function createFocusable(): Focusable
     {
         return $this->createTable();
