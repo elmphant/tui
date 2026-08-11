@@ -58,6 +58,15 @@ final readonly class Constraint
         return new self(min: $this->min, max: $this->max, flex: $weight);
     }
 
+    /**
+     * As tall or wide as what the child holds, and no further. A child that
+     * cannot measure itself has no content to go by and stays at nothing.
+     */
+    public static function content(): self
+    {
+        return new self();
+    }
+
     public static function flex(int $weight = 1): self
     {
         if ($weight < 1) {

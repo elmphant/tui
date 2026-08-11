@@ -97,6 +97,22 @@ final class AllocatorDivergenceTest extends TestCase
     }
 
     #[Test]
+    public function aContentSizedChildTakesItsLinesAndLeavesTheRestToItsSibling(): void
+    {
+        $column = Layout::vertical(
+            self::paragraphOf(3)->withConstraint(Constraint::content()),
+            self::paragraphOf(7),
+        );
+
+        $heights = self::extentsAlong(
+            self::rectsOf($column->computeChildRects(new Rect(0, 0, 40, 20))),
+            Direction::Vertical,
+        );
+
+        self::assertSame([3, 17], $heights);
+    }
+
+    #[Test]
     public function aChildTallerThanTheColumnStillLeavesAFixedSiblingItsRows(): void
     {
         $column = Layout::vertical(self::paragraphOf(30), Text::new('footer'));
@@ -127,7 +143,7 @@ final class AllocatorDivergenceTest extends TestCase
         return array_map(static fn (Constraint $constraint): Widget => new ConstrainedWidget($constraint), $constraints);
     }
 
-    private static function paragraphOf(int $lines): Widget
+    private static function paragraphOf(int $lines): Paragraph
     {
         return Paragraph::fromText(implode("\n", array_fill(0, $lines, 'text')));
     }
