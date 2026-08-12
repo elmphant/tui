@@ -218,7 +218,7 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
                 if ($x >= $area->x + $area->width) {
                     break;
                 }
-                $characterWidth = CharWidth::of($character);
+                $characterWidth = CharWidth::graphemeWidth($character);
                 if ($characterWidth > 0) {
                     $frame->putChar(
                         $x,
@@ -299,7 +299,7 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         /** @var list<array{int, int}> */
         return WrapCache::remember(
             $width . ':' . hash('xxh3', $text),
-            static fn (): array => self::rowBounds(mb_str_split($text), $width),
+            static fn (): array => self::rowBounds(Grapheme::split($text), $width),
         );
     }
 
@@ -317,7 +317,7 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         $widthAtLastSpace = 0;
 
         foreach ($characters as $index => $character) {
-            $characterWidth = CharWidth::of($character);
+            $characterWidth = CharWidth::graphemeWidth($character);
 
             if ($characterWidth === 0) {
                 continue;
@@ -417,16 +417,26 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
             ? $line->style->inherit($baseStyle)
             : $baseStyle;
 
-        $graphemes = [];
+        // Split the whole line rather than each span, so a cluster that straddles
+        // a span boundary stays whole and these offsets match wrappedRows().
+        $text = '';
+        $spanStarts = [];
         foreach ($line->spans as $span) {
-            $spanStyle = $span->style !== null
-                ? $span->style->inherit($lineStyle)
-                : $lineStyle;
+            $spanStarts[] = [strlen($text), $span->style !== null ? $span->style->inherit($lineStyle) : $lineStyle];
+            $text .= $span->content;
+        }
 
-            $characters = mb_str_split($span->content);
-            foreach ($characters as $character) {
-                $graphemes[] = [$character, $spanStyle];
+        $graphemes = [];
+        $offset = 0;
+        $spanIndex = 0;
+
+        foreach (Grapheme::split($text) as $grapheme) {
+            while (isset($spanStarts[$spanIndex + 1]) && $spanStarts[$spanIndex + 1][0] <= $offset) {
+                ++$spanIndex;
             }
+
+            $graphemes[] = [$grapheme, $spanStarts[$spanIndex][1] ?? $lineStyle];
+            $offset += strlen($grapheme);
         }
 
         return $graphemes;
@@ -439,7 +449,7 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
     {
         $width = 0;
         foreach ($visualLine as [$character]) {
-            $width += CharWidth::of($character);
+            $width += CharWidth::graphemeWidth($character);
         }
 
         return $width;

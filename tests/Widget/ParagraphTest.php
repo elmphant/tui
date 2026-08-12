@@ -604,6 +604,18 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function keepsAJoinedEmojiClusterInOneCell(): void
+    {
+        $cluster = "\u{1F469}\u{1F3FD}\u{200D}\u{1F4BB}";
+        $frame = new Frame(6, 1);
+        $paragraph = Paragraph::fromText($cluster);
+
+        $paragraph->render($frame, new Rect(0, 0, 6, 1), $this->context());
+
+        self::assertSame($cluster, $frame->characters[0]);
+    }
+
+    #[Test]
     public function renderWithZeroHeightWritesNothing(): void
     {
         // L152 LogicalOr: && instead of || would let height=0 + width>0 fall through.
@@ -858,11 +870,8 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
-    public function zeroWidthCombiningCharacterDoesNotOverwritePreviousCell(): void
+    public function aCombiningMarkStaysWithItsBaseInOneCell(): void
     {
-        // L179/L182 `> 0` → `>= 0`: zero-width chars (combining marks) should not invoke putChar.
-        // Combining acute U+0301 has width 0. Use it as the LAST char to detect overwrite —
-        // if a width>0 char follows, it overwrites whatever the mutation wrote.
         $frame = new Frame(3, 1);
         for ($i = 0; $i < 3; ++$i) {
             $frame->putChar($i, 0, '.');
@@ -871,9 +880,8 @@ final class ParagraphTest extends TestCase
 
         $paragraph->render($frame, new Rect(0, 0, 3, 1), $this->context());
 
-        self::assertSame('a', $frame->characters[0]);
-        // Cell 1 must remain '.' — the combining char must not write to the buffer at all.
-        self::assertSame('.', $frame->characters[1], 'Zero-width char must NOT be written to the buffer (skipped via `> 0` guard)');
+        self::assertSame("a\u{0301}", $frame->characters[0]);
+        self::assertSame('.', $frame->characters[1], 'A combining mark claims no cell of its own');
     }
 
     #[Test]
