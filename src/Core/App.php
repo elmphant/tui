@@ -19,6 +19,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\ChildDispatcher;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\FocusTree;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 use LogicException;
@@ -413,14 +414,8 @@ abstract readonly class App implements Model
      */
     private function cycleFocus(array $focusables, bool $reverse): UpdateResult
     {
-        $currentIndex = $this->findFocusedIndex($focusables);
-        $count = count($focusables);
-        $nextIndex = match (true) {
-            $currentIndex === null => $reverse ? $count - 1 : 0,
-            $reverse => ($currentIndex - 1 + $count) % $count,
-            default => ($currentIndex + 1) % $count,
-        };
-
+        $tree = new FocusTree(count($focusables), $this->findFocusedIndex($focusables));
+        $nextIndex = ($reverse ? $tree->prev() : $tree->next())->active();
         $updates = [];
         foreach ($focusables as $index => $component) {
             /** @var Focusable $widget */

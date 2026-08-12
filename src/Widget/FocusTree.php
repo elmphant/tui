@@ -12,15 +12,19 @@ final readonly class FocusTree
 {
     use Cloneable;
 
+    /**
+     * $active is null while nothing holds the focus yet, which is where a tree
+     * starts before a reader has reached it.
+     */
     public function __construct(
         private int $count = 0,
-        private int $active = 0,
+        private ?int $active = 0,
     ) {
     }
 
     public function active(): int
     {
-        return $this->active;
+        return $this->active ?? 0;
     }
 
     public function wouldWrap(bool $reverse): bool
@@ -38,7 +42,7 @@ final readonly class FocusTree
             return $this;
         }
 
-        return $this->cloneWith(active: ($this->active + 1) % $this->count);
+        return $this->cloneWith(active: $this->active === null ? 0 : ($this->active + 1) % $this->count);
     }
 
     public function prev(): self
@@ -47,7 +51,9 @@ final readonly class FocusTree
             return $this;
         }
 
-        return $this->cloneWith(active: ($this->active - 1 + $this->count) % $this->count);
+        return $this->cloneWith(active: $this->active === null
+            ? $this->count - 1
+            : ($this->active - 1 + $this->count) % $this->count);
     }
 
     public function focusAt(int $index): self

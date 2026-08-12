@@ -23,6 +23,15 @@ use RuntimeException;
 final class FocusTreeTest extends TestCase
 {
     #[Test]
+    public function aTreeWithNothingFocusedStepsOntoTheEndItCameFrom(): void
+    {
+        $tree = new FocusTree(3, null);
+
+        self::assertSame(0, $tree->next()->active(), 'Stepping forward from nothing lands on the first node');
+        self::assertSame(2, $tree->prev()->active(), 'and stepping back from nothing lands on the last');
+    }
+
+    #[Test]
     public function reportsWhichNodeIsActive(): void
     {
         $tree = new FocusTree(3);
