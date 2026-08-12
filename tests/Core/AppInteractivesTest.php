@@ -16,6 +16,9 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -86,6 +89,37 @@ final readonly class PanelAndFooterApp extends CopyableTestApp
 
 final class AppInteractivesTest extends TestCase
 {
+    #[Test]
+    public function aPressReachesABoundInteractiveThatTakesNoFocus(): void
+    {
+        $app = new PressCountingApp(widget: new PressCountingWidget());
+
+        $result = $app->update(
+            new MouseMsg(2, 0, MouseAction::Press, MouseButton::Left),
+            Rect::fromSize(80, 24),
+        );
+
+        self::assertInstanceOf(PressCountingApp::class, $result->model);
+        self::assertSame(1, $result->model->widget->presses, 'bind() accepts it, so routing must reach it');
+    }
+
+    #[Test]
+    public function aPressReachesAnUnfocusableWidgetSharingTheScreenWithAFocusableOne(): void
+    {
+        $app = new PressCountingBesidePanelApp(
+            panel: Panel::new('Test')->withFocus(true),
+            widget: new PressCountingWidget(),
+        );
+
+        $result = $app->update(
+            new MouseMsg(2, 23, MouseAction::Press, MouseButton::Left),
+            Rect::fromSize(80, 24),
+        );
+
+        self::assertInstanceOf(PressCountingBesidePanelApp::class, $result->model);
+        self::assertSame(1, $result->model->widget->presses, 'a focusable sibling must not swallow the pointer');
+    }
+
     #[Test]
     public function layerOneTickBroadcastsToInteractives(): void
     {
@@ -234,6 +268,72 @@ final class ViewCallProbe
 {
     public int $count = 0;
     public int $bindingsCount = 0;
+}
+
+final readonly class PressCountingWidget implements Interactive
+{
+    public function __construct(public int $presses = 0)
+    {
+    }
+
+    public function constraint(): Constraint
+    {
+        return Constraint::exact(1);
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof MouseMsg && $message->isClick()) {
+            return new UpdateResult(new self(presses: $this->presses + 1));
+        }
+
+        return new UpdateResult($this);
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+    }
+}
+
+final readonly class PressCountingApp extends CopyableTestApp
+{
+    public function __construct(public PressCountingWidget $widget)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            ComponentId::named('presses'),
+            $this->widget,
+            static fn (self $app, PressCountingWidget $widget): self => $app->cloneWith(widget: $widget),
+        );
+    }
+}
+
+final readonly class PressCountingBesidePanelApp extends CopyableTestApp
+{
+    public function __construct(
+        public Panel $panel,
+        public PressCountingWidget $widget,
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind(
+                ComponentId::named('panel'),
+                $this->panel,
+                static fn (self $app, Panel $panel): self => $app->cloneWith(panel: $panel),
+            ),
+            Component::bind(
+                ComponentId::named('presses'),
+                $this->widget,
+                static fn (self $app, PressCountingWidget $widget): self => $app->cloneWith(widget: $widget),
+            ),
+        );
+    }
 }
 
 final readonly class RectCapturingInteractive implements Interactive

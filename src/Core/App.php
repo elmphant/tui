@@ -275,7 +275,7 @@ abstract readonly class App implements Model
         }
 
         if ($message instanceof MouseMsg) {
-            return $this->onMouse($message, $screenRect);
+            return $this->delegateMouse($message, $screenRect, $components);
         }
 
         if ($message instanceof TickMsg) {
@@ -313,7 +313,7 @@ abstract readonly class App implements Model
         }
 
         if ($message instanceof MouseMsg) {
-            return $this->delegateMouseToFocusables($message, $screenRect, $focusables);
+            return $this->delegateMouse($message, $screenRect, $this->componentRegistry()->all());
         }
 
         if ($message instanceof TickMsg) {
@@ -483,32 +483,32 @@ abstract readonly class App implements Model
     }
 
     /**
-     * @param list<Component<Interactive>> $focusables
+     * @param list<Component<Interactive>> $components
      *
      * @return UpdateResult<static>
      */
-    private function delegateMouseToFocusables(MouseMsg $message, Rect $screenRect, array $focusables): UpdateResult
+    private function delegateMouse(MouseMsg $message, Rect $screenRect, array $components): UpdateResult
     {
         $appResult = $this->onMouse($message, $screenRect);
         $current = $this->appModel($appResult);
 
         if ($current !== $this) {
-            $focusables = $current->componentRegistry()->focusables();
+            $components = $current->componentRegistry()->all();
         }
-        $rects = $current->findComponentRects($screenRect, $focusables);
+        $rects = $current->findComponentRects($screenRect, $components);
         [$updates, $childCommand] = $current->dispatchComponents(
-            $focusables,
+            $components,
             $rects,
             $message,
             $current->childDispatcher(),
         );
 
+        // Where the pointer landed is a question about the screen, so every bound
+        // widget is asked. Only one that can hold focus has its focus moved.
         if ($message->isClick()) {
-            foreach ($focusables as $component) {
-                /** @var Focusable $widget */
-                $widget = $component->widget;
+            foreach ($components as $component) {
                 $shouldFocus = $message->inRect($rects[$component->id->value]);
-                $existing = $updates[$component->id->value][1] ?? $widget;
+                $existing = $updates[$component->id->value][1] ?? $component->widget;
 
                 if ($existing instanceof Focusable && $existing->isFocused() !== $shouldFocus) {
                     $updates[$component->id->value] = [$component, $existing->withFocus($shouldFocus)];
