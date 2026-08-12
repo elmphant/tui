@@ -215,17 +215,12 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
             return;
         }
 
-        Scrollbar::render(
+        Scrollbar::renderFor(
             $frame,
-            $area->right() - 1,
-            $area->y,
-            $area->height,
+            $area,
             $offset,
             $layout->totalHeight + ScrollWindow::BOTTOM_PADDING,
-            $area->height,
-            $context->theme->accent->foregroundValue(),
-            $context->theme->dim->foregroundValue(),
-            $context->theme->base->backgroundValue(),
+            $context->theme,
         );
     }
 

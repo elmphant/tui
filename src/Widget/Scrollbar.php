@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Theme;
 
 final class Scrollbar
 {
@@ -18,6 +20,27 @@ final class Scrollbar
     public static function needsScrollbar(int $totalContent, int $visibleHeight): bool
     {
         return $totalContent > $visibleHeight;
+    }
+
+    /**
+     * Down the right-hand column of $track, in the one set of colours a
+     * scrollbar is drawn in. What the track can show is its own height, so a
+     * caller cannot state the two inconsistently.
+     */
+    public static function renderFor(Frame $frame, Rect $track, int $scrollOffset, int $totalContent, Theme $theme): void
+    {
+        self::render(
+            $frame,
+            $track->right() - 1,
+            $track->y,
+            $track->height,
+            $scrollOffset,
+            $totalContent,
+            $track->height,
+            $theme->accent->foregroundValue(),
+            $theme->dim->foregroundValue(),
+            $theme->base->backgroundValue(),
+        );
     }
 
     public static function render(

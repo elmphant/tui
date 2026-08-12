@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Scrollbar;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +16,20 @@ final class ScrollbarTest extends TestCase
 {
     private int $thumbColor;
     private int $trackColor;
+
+    #[Test]
+    public function drawsDownTheRightHandColumnOfTheTrackItIsGiven(): void
+    {
+        $frame = new Frame(6, 4);
+
+        Scrollbar::renderFor($frame, new Rect(0, 0, 6, 4), 0, 40, Theme::dark());
+
+        $marks = [Scrollbar::THUMB, Scrollbar::TRACK];
+        for ($row = 0; $row < 4; ++$row) {
+            self::assertContains($frame->characters[$row * 6 + 5], $marks, "The bar occupies the rightmost column on row $row");
+            self::assertNotContains($frame->characters[$row * 6], $marks, "and nothing else on row $row");
+        }
+    }
 
     #[Test]
     public function rendersTrackAndThumb(): void

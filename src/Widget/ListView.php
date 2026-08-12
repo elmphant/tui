@@ -238,18 +238,7 @@ final readonly class ListView implements Focusable, KeybindingsAware
         }
 
         if ($hasScrollbar) {
-            Scrollbar::render(
-                $frame,
-                $area->x + $area->width - 1,
-                $area->y,
-                $area->height,
-                $displayOffset,
-                $totalRows,
-                $area->height,
-                $theme->accent->foregroundValue(),
-                $theme->dim->foregroundValue(),
-                $theme->base->backgroundValue(),
-            );
+            Scrollbar::renderFor($frame, $area, $displayOffset, $totalRows, $theme);
         }
     }
 

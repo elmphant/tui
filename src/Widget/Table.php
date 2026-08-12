@@ -250,17 +250,12 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             $this->renderRows($frame, $area, $columnWidths, $theme);
 
             if ($showScrollbar) {
-                Scrollbar::render(
+                Scrollbar::renderFor(
                     $frame,
-                    $area->x + $area->width - 1,
-                    $area->y + $this->headerHeight(),
-                    $visibleRows,
+                    new Rect($area->x, $area->y + $this->headerHeight(), $area->width, $visibleRows),
                     $this->displayScrollOffset($area),
                     $rowCount,
-                    $visibleRows,
-                    $theme->accent->foregroundValue(),
-                    $theme->dim->foregroundValue(),
-                    $theme->base->backgroundValue(),
+                    $theme,
                 );
             }
         } finally {
