@@ -16,7 +16,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  * Marks where the keyboard is, so every field says it the same way instead of
  * each inventing a colour of its own.
  */
-final readonly class FocusGutter implements Interactive
+final readonly class FocusGutter implements Interactive, MeasureHeight
 {
     use Cloneable;
     /**
@@ -50,6 +50,20 @@ final readonly class FocusGutter implements Interactive
     public static function beside(Widget $child, bool $held): self
     {
         return new self($child, $held);
+    }
+
+    /**
+     * As tall as what it runs beside; the track itself costs columns, not rows.
+     */
+    public function measureHeight(int $width): int
+    {
+        $inner = $width - self::COLUMNS;
+
+        if ($inner < 1 || !$this->child instanceof MeasureHeight) {
+            return 0;
+        }
+
+        return $this->child->measureHeight($inner);
     }
 
     public function constraint(): Constraint
