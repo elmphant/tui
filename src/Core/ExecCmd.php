@@ -6,9 +6,6 @@ namespace Elmphant\Tui\Core;
 
 use InvalidArgumentException;
 
-/**
- * @internal
- */
 final readonly class ExecCmd extends Cmd
 {
     use Cloneable;

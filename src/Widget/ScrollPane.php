@@ -45,6 +45,8 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     /**
      * @param list<Widget>                         $children
      * @param KeyedCache<VerticalStackLayout>|null $layoutMemo
+     *
+     * @internal use ScrollPane::of()
      */
     public function __construct(
         private array $children = [],

@@ -15,6 +15,9 @@ use Elmphant\Tui\Rendering\FloatPlacement;
  */
 final readonly class FloatMouseMsg implements Message
 {
+    /**
+     * @internal the runtime mints these; an application receives them
+     */
     public function __construct(
         public MouseMsg $mouse,
         public FloatPlacement $float,

@@ -45,6 +45,8 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
 
     /**
      * @param list<ListItem> $items
+     *
+     * @internal use ListView::new()
      */
     public function __construct(
         private array $items = [],

@@ -88,6 +88,8 @@ final readonly class Constraint
 
     /**
      * Without a declared basis a constraint starts at its floor.
+     *
+     * @internal
      */
     public function policy(): ItemPolicy
     {
