@@ -18,7 +18,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  *
  * Never `Dropdown` itself — the drain would redraw and requeue it
  */
-final readonly class DropdownPopup implements PointerFloating, WidgetContainer
+final readonly class DropdownPopup implements PopupFrame
 {
     private const BORDERS = 2;
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
+use Closure;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
@@ -46,7 +47,21 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private FloatTarget $floatTarget = new FloatTarget(),
+        private ?Closure $frame = null,
     ) {
+    }
+
+    /**
+     * The chrome drawn around the open list. Without one the list gets a rounded
+     * border; supply a factory to put something else around it.
+     *
+     * @param Closure(DropdownContent, FloatTarget): PopupFrame $frame
+     *
+     * @return self<TContent>
+     */
+    public function withFrame(Closure $frame): self
+    {
+        return $this->cloneWith(frame: $frame);
     }
 
     /**
@@ -221,7 +236,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
     {
         $popup = $message->float->float;
 
-        if (!$this->open || !$popup instanceof DropdownPopup || $popup->target() !== $this->floatTarget) {
+        if (!$this->open || !$popup instanceof PopupFrame || $popup->target() !== $this->floatTarget) {
             return $this;
         }
 
@@ -235,14 +250,14 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
      * answered against the area it was drawn in. Nothing here tells the content
      * it is floating: a mouse message and an area is what any widget is handed.
      */
-    private function wheeledInDrawn(MouseMsg $mouse, DropdownPopup $popup, Rect $placement): static
+    private function wheeledInDrawn(MouseMsg $mouse, PopupFrame $popup, Rect $placement): static
     {
         return $this->cloneWith(
             content: $this->content->update($mouse, $popup->contentArea($placement))->model,
         );
     }
 
-    private function pickedFromDrawn(MouseMsg $mouse, DropdownPopup $popup, Rect $placement): static
+    private function pickedFromDrawn(MouseMsg $mouse, PopupFrame $popup, Rect $placement): static
     {
         if (!$mouse->isClick()) {
             return $this;
@@ -274,8 +289,10 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         return $this->open ? $this->closed() : $this->opened();
     }
 
-    private function popup(): DropdownPopup
+    private function popup(): PopupFrame
     {
-        return DropdownPopup::of($this->content, $this->floatTarget);
+        return $this->frame === null
+            ? DropdownPopup::of($this->content, $this->floatTarget)
+            : ($this->frame)($this->content, $this->floatTarget);
     }
 }
