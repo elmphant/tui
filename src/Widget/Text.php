@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
@@ -13,7 +14,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\StyleToken;
 
-final readonly class Text implements Widget
+final readonly class Text implements Widget, DirectionalConstraint
 {
     /**
      * @param list<Span> $spans
@@ -74,6 +75,24 @@ final readonly class Text implements Widget
     public function constraint(): Constraint
     {
         return Constraint::exact(1);
+    }
+
+    /**
+     * One row tall, and as wide as it reads: constraint() alone cannot say both.
+     */
+    public function constraintFor(Direction $direction): Constraint
+    {
+        if ($direction === Direction::Vertical) {
+            return $this->constraint();
+        }
+
+        $width = 0;
+
+        foreach ($this->spans as $span) {
+            $width += $span->width();
+        }
+
+        return Constraint::exact($width);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

@@ -80,6 +80,16 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
+    public function aTextLaidOutSidewaysIsAsWideAsItsText(): void
+    {
+        $placements = Layout::horizontal(Text::new('left text'), Text::new('right'))
+            ->computeChildRects(new Rect(0, 0, 40, 1));
+
+        self::assertSame(9, $placements[0][1]->width);
+        self::assertSame(5, $placements[1][1]->width);
+    }
+
+    #[Test]
     public function directionalChildrenReceiveTheParentMainAxis(): void
     {
         $widget = new class implements Widget, DirectionalConstraint {
