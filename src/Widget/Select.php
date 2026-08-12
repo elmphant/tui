@@ -13,7 +13,6 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
-use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -96,29 +95,6 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $this->selectedValue() !== null;
     }
 
-    public function optionAt(MouseMsg $message, Rect $area): ?string
-    {
-        if (!$message->inRect($area)) {
-            return null;
-        }
-
-        $row = $message->y - $area->y + $this->cursorScrollOffset($area->height) - $this->rowOffset();
-
-        return $this->options[$row] ?? null;
-    }
-
-    public function hasOption(string $option): bool
-    {
-        return in_array($option, $this->options, true);
-    }
-
-    public function activated(string $option): static
-    {
-        $index = array_search($option, $this->options, true);
-
-        return $index === false ? $this : $this->cloneWith(cursor: $index, selected: $index);
-    }
-
     public function popupWidth(): int
     {
         $widest = 0;
@@ -127,11 +103,6 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         }
 
         return $widest;
-    }
-
-    public function popupHeight(int $width): int
-    {
-        return $this->rowOffset() + count($this->options);
     }
 
     /**

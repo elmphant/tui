@@ -40,6 +40,14 @@ final class RadioTest extends TestCase
     }
 
     #[Test]
+    public function activatingThePickedOptionOfAClearableRadioPutsItBackDown(): void
+    {
+        $radio = Radio::new(['A', 'B', 'C'])->clearable()->withSelected(0);
+
+        self::assertSame(-1, $radio->activated('A')->selected(), 'a pointer pick must clear what a key press clears');
+    }
+
+    #[Test]
     public function constraintReturnsExactOptionCountPlusLabelAndSpacer(): void
     {
         $radio = Radio::new(['A', 'B', 'C'], 'Pick one');

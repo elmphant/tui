@@ -95,6 +95,14 @@ final class SelectTest extends TestCase
     }
 
     #[Test]
+    public function activatingThePickedOptionOfAClearableSelectPutsItBackDown(): void
+    {
+        $select = Select::new(['A', 'B', 'C'])->clearable()->withSelected(0);
+
+        self::assertSame(-1, $select->activated('A')->selected(), 'a pointer pick must clear what a key press clears');
+    }
+
+    #[Test]
     public function rendersCursorStyleWhenFocused(): void
     {
         $select = Select::new(['Alpha', 'Beta'])->withFocus(true);

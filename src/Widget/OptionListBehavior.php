@@ -56,6 +56,37 @@ trait OptionListBehavior
         return $this->cloneWith(clearable: true);
     }
 
+    public function optionAt(MouseMsg $message, Rect $area): ?string
+    {
+        if (!$message->inRect($area)) {
+            return null;
+        }
+
+        $row = $message->y - $area->y + $this->cursorScrollOffset($area->height) - $this->rowOffset();
+
+        return $this->options[$row] ?? null;
+    }
+
+    public function hasOption(string $option): bool
+    {
+        return in_array($option, $this->options, true);
+    }
+
+    public function popupHeight(int $width): int
+    {
+        return $this->rowOffset() + count($this->options);
+    }
+
+    /**
+     * A pointer pick lands where a key press lands, clearable list included.
+     */
+    public function activated(string $option): static
+    {
+        $index = array_search($option, $this->options, true);
+
+        return $index === false ? $this : $this->cloneWith(cursor: $index, selected: $this->picking($index));
+    }
+
     /**
      * @return UpdateResult<static>
      */
