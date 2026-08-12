@@ -36,6 +36,15 @@ final class StaticTableTest extends TestCase
     }
 
     #[Test]
+    public function aTableRebuiltFromADrawnOneDrawsItsOwnMinimumWidth(): void
+    {
+        $drawn = StaticTable::new(['memo'], [['a']])->withMinWidth(30);
+        $drawn->drawnWidth(60);
+
+        self::assertSame(50, $drawn->withMinWidth(50)->drawnWidth(60));
+    }
+
+    #[Test]
     public function drawsABorderedTable(): void
     {
         $screen = $this->render($this->table(), 40, 8);

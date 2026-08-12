@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
+use Elmphant\Tui\Core\Cloneable;
+
 final readonly class Line
 {
+    use Cloneable;
+
     /**
      * @param list<Span> $spans
      */
@@ -27,7 +31,7 @@ final readonly class Line
             $resolved[] = $span->withResolvedToken($theme);
         }
 
-        return $resolved === $this->spans ? $this : new self($resolved, $this->style);
+        return $this->cloneWith(spans: $resolved);
     }
 
     public function width(): int

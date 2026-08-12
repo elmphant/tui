@@ -76,6 +76,7 @@ final readonly class Span
         return new self(
             content: $this->content,
             style: $this->style?->inherit($resolved) ?? $resolved,
+            token: null,
         );
     }
 

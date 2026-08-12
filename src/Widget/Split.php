@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
+use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
@@ -32,6 +33,8 @@ use InvalidArgumentException;
  */
 final readonly class Split implements Widget, WidgetContainer, Interactive
 {
+    use Cloneable;
+
     private const GAP = 1;
 
     /**
@@ -67,7 +70,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
      */
     public function withMinimums(int ...$minimums): self
     {
-        return new self($this->state, $this->children, $this->direction, array_values($minimums));
+        return $this->cloneWith(minimums: array_values($minimums));
     }
 
     public function state(): SplitState
@@ -318,7 +321,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
 
     private function with(SplitState $state): self
     {
-        return new self($state, $this->children, $this->direction, $this->minimums);
+        return $this->cloneWith(state: $state);
     }
 
     /**

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Message;
 
+use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Rect;
 
 final readonly class MouseMsg implements Message
 {
+    use Cloneable;
+
     /**
      * @param int $repeat how many notches this event stands for. A terminal
      *                    sends one event per notch, so the runtime merges a run
@@ -25,12 +28,12 @@ final readonly class MouseMsg implements Message
 
     public function withScreen(Rect $screen): self
     {
-        return new self($this->x, $this->y, $this->action, $this->button, $this->repeat, $screen);
+        return $this->cloneWith(screen: $screen);
     }
 
     public function withRepeat(int $repeat): self
     {
-        return new self($this->x, $this->y, $this->action, $this->button, $repeat, $this->screen);
+        return $this->cloneWith(repeat: $repeat);
     }
 
     /**

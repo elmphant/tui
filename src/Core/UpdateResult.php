@@ -9,6 +9,8 @@ namespace Elmphant\Tui\Core;
  */
 final readonly class UpdateResult
 {
+    use Cloneable;
+
     /**
      * @param TModel $model
      */
@@ -51,9 +53,7 @@ final readonly class UpdateResult
      */
     public function withCommand(?Cmd $command): self
     {
-        return $command === $this->command
-            ? $this
-            : new self($this->model, $command);
+        return $this->cloneWith(command: $command);
     }
 
     /**

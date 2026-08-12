@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
+use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
@@ -17,6 +18,8 @@ use Elmphant\Tui\Rendering\RenderContext;
  */
 final readonly class PositionedOverlay implements Widget
 {
+    use Cloneable;
+
     private function __construct(
         private int $x,
         private int $y,
@@ -33,12 +36,12 @@ final readonly class PositionedOverlay implements Widget
 
     public function content(Widget $widget): self
     {
-        return new self($this->x, $this->y, $widget, $this->width, $this->height);
+        return $this->cloneWith(widget: $widget);
     }
 
     public function withSize(int $width, int $height): self
     {
-        return new self($this->x, $this->y, $this->widget, $width, $height);
+        return $this->cloneWith(width: $width, height: $height);
     }
 
     public function constraint(): Constraint

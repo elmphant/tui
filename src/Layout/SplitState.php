@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Core\Cloneable;
 use InvalidArgumentException;
 
 /**
@@ -11,6 +12,8 @@ use InvalidArgumentException;
  */
 final readonly class SplitState
 {
+    use Cloneable;
+
     public const TOTAL = 1000;
 
     /**
@@ -28,7 +31,7 @@ final readonly class SplitState
 
     public function withDragging(?int $divider): self
     {
-        return $divider === $this->dragging ? $this : new self($this->shares, $divider);
+        return $this->cloneWith(dragging: $divider);
     }
 
     public static function even(int $panes): self
@@ -84,6 +87,6 @@ final readonly class SplitState
         $shares = $this->shares;
         array_splice($shares, $divider, 2, [$firstShare, $pair - $firstShare]);
 
-        return new self($shares, $this->dragging);
+        return $this->cloneWith(shares: $shares);
     }
 }

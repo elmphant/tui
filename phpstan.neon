@@ -25,6 +25,14 @@ parameters:
 
 services:
     -
+        class: Elmphant\Tui\Tests\Stan\CompleteRebuildRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: Elmphant\Tui\Tests\Stan\NamedRebuildRule
+        tags:
+            - phpstan.rules.rule
+    -
         class: Elmphant\Tui\Tests\Stan\CloneWithEncapsulationRule
         arguments:
             allowList:

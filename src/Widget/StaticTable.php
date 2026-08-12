@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
+use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\BorderStyle;
@@ -22,6 +23,8 @@ use Elmphant\Tui\Rendering\WrapCache;
  */
 final class StaticTable implements Widget, MeasureHeight
 {
+    use Cloneable;
+
     /**
      * Frame, dividers, and one space either side of every cell.
      */
@@ -29,17 +32,11 @@ final class StaticTable implements Widget, MeasureHeight
 
     private const MIN_COLUMN = 4;
 
-    private ?int $builtFor = null;
-
-    /**
-     * @var list<string>
-     */
-    private array $built = [];
-
     /**
      * @param list<string>        $headers
      * @param list<list<string>>  $rows
      * @param ?list<list<string>> $measured rows the columns are sized for, when not the rows drawn
+     * @param list<string>        $built    lines already drawn, for $builtFor columns
      */
     private function __construct(
         private readonly array $headers,
@@ -48,6 +45,8 @@ final class StaticTable implements Widget, MeasureHeight
         private readonly Overflow $overflow = Overflow::Stack,
         private readonly ?array $measured = null,
         private readonly int $minWidth = 0,
+        private array $built = [],
+        private ?int $builtFor = null,
     ) {
     }
 
@@ -62,7 +61,7 @@ final class StaticTable implements Widget, MeasureHeight
 
     public function withBorder(BorderStyle $border): self
     {
-        return new self($this->headers, $this->rows, $border, $this->overflow, $this->measured, $this->minWidth);
+        return $this->rebuiltWith(border: $border);
     }
 
     /**
@@ -70,7 +69,7 @@ final class StaticTable implements Widget, MeasureHeight
      */
     public function withOverflow(Overflow $overflow): self
     {
-        return new self($this->headers, $this->rows, $this->border, $overflow, $this->measured, $this->minWidth);
+        return $this->rebuiltWith(overflow: $overflow);
     }
 
     /**
@@ -81,7 +80,7 @@ final class StaticTable implements Widget, MeasureHeight
      */
     public function withWidthsFrom(array $rows): self
     {
-        return new self($this->headers, $this->rows, $this->border, $this->overflow, $rows, $this->minWidth);
+        return $this->rebuiltWith(measured: $rows);
     }
 
     /**
@@ -89,7 +88,7 @@ final class StaticTable implements Widget, MeasureHeight
      */
     public function withMinWidth(int $columns): self
     {
-        return new self($this->headers, $this->rows, $this->border, $this->overflow, $this->measured, $columns);
+        return $this->rebuiltWith(minWidth: $columns);
     }
 
     public function constraint(): Constraint
@@ -133,6 +132,14 @@ final class StaticTable implements Widget, MeasureHeight
         } finally {
             $frame->popClip();
         }
+    }
+
+    /**
+     * The memo keys on width alone, so a copy must start without it.
+     */
+    private function rebuiltWith(mixed ...$overrides): self
+    {
+        return $this->cloneWith(...$overrides, built: [], builtFor: null);
     }
 
     /**

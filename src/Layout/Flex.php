@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
@@ -26,6 +27,8 @@ use InvalidArgumentException;
  */
 final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 {
+    use Cloneable;
+
     /**
      * @param list<FlexItem> $items
      */
@@ -50,9 +53,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 
     public function withWrap(bool $wrap = true): self
     {
-        return $wrap === $this->wrap
-            ? $this
-            : new self($this->direction, $this->items, $wrap, $this->gap, $this->justify);
+        return $this->cloneWith(wrap: $wrap);
     }
 
     public function withGap(int $gap): self
@@ -61,16 +62,12 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             throw new InvalidArgumentException('Flex gap must be non-negative');
         }
 
-        return $gap === $this->gap
-            ? $this
-            : new self($this->direction, $this->items, $this->wrap, $gap, $this->justify);
+        return $this->cloneWith(gap: $gap);
     }
 
     public function withJustify(Justification $justify): self
     {
-        return $justify === $this->justify
-            ? $this
-            : new self($this->direction, $this->items, $this->wrap, $this->gap, $justify);
+        return $this->cloneWith(justify: $justify);
     }
 
     public function add(Widget $widget, ?Constraint $constraint = null): self
