@@ -15,6 +15,8 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\ChildDispatcher;
+use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Search\SubstringMatcher;
 
 /**
  * Boxes to tick with a free-text filter over them, for a list too long to walk.
@@ -43,7 +45,17 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
         private array $checked = [],
         private int $cursor = 0,
         private bool $focused = false,
+        private ?Matcher $matcher = null,
     ) {
+    }
+
+    /**
+     * How a query narrows the boxes. Substring matching by default; supply a
+     * matcher for fuzzy or remote search, as the other filterable widgets take.
+     */
+    public function withMatcher(Matcher $matcher): self
+    {
+        return $this->cloneWith(matcher: $matcher);
     }
 
     /**
@@ -233,9 +245,8 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
             return $this->options;
         }
 
-        return array_values(array_filter(
-            $this->options,
-            static fn (string $option): bool => mb_stripos($option, $query) !== false,
-        ));
+        $matching = ($this->matcher ?? new SubstringMatcher())->matching($query, $this->options);
+
+        return array_map(fn (int $index): string => $this->options[$index], $matching);
     }
 }
