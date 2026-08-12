@@ -19,6 +19,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\ListItem;
 use Elmphant\Tui\Widget\ListItemLayout;
 use Elmphant\Tui\Widget\ListView;
 use Elmphant\Tui\Widget\Scrollbar;
@@ -2130,6 +2131,24 @@ final class ListViewTest extends TestCase
         self::assertSame(1, $result->model->cursor());
     }
 
+    #[Test]
+    public function stopsMeasuringOnceItIsCertainTheContentOverflows(): void
+    {
+        $counter = new MeasurementCounter();
+        $items = [];
+        for ($index = 0; $index < 200; ++$index) {
+            $items[] = new CountingListItem("Item-$index", $counter);
+        }
+
+        ListView::new($items)->render(new Frame(20, 10), new Rect(0, 0, 20, 10), new RenderContext(Theme::dark()));
+
+        self::assertLessThan(
+            count($items) * 2,
+            $counter->count,
+            'Deciding on a scrollbar must not measure the whole collection a second time',
+        );
+    }
+
     protected function createFocusable(): Focusable
     {
         return ListView::new([]);
@@ -2193,5 +2212,39 @@ final class ListViewTest extends TestCase
         }
 
         return trim($text);
+    }
+}
+
+final class MeasurementCounter
+{
+    public int $count = 0;
+}
+
+final readonly class CountingListItem implements ListItem
+{
+    public function __construct(private string $title, private MeasurementCounter $counter)
+    {
+    }
+
+    public function title(): string
+    {
+        return $this->title;
+    }
+
+    public function description(): string
+    {
+        return '';
+    }
+
+    public function filterValue(): string
+    {
+        return $this->title;
+    }
+
+    public function height(int $width): int
+    {
+        ++$this->counter->count;
+
+        return ListItemLayout::height($this, $width);
     }
 }

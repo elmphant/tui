@@ -28,6 +28,10 @@ final class RowIndex
      */
     private readonly KeyedCache $byKey;
 
+    private ?string $overflowQuestion = null;
+
+    private bool $overflowAnswer = false;
+
     private function __construct(private readonly int $rowCount)
     {
         $this->byKey = self::newCache();
@@ -51,6 +55,32 @@ final class RowIndex
         $rowCount = $this->rowCount;
 
         return $this->byKey->at($key, static fn (): RowExtents => RowExtents::measure($rowCount, $heightOf));
+    }
+
+    /**
+     * Whether the rows are taller than $height, stopping at the row that
+     * settles it rather than measuring the whole collection for a total the
+     * caller does not want.
+     *
+     * @param Closure(int): int $heightOf
+     */
+    public function exceeds(int|string $key, int $height, Closure $heightOf): bool
+    {
+        $question = $key . ':' . $height;
+
+        if ($question === $this->overflowQuestion) {
+            return $this->overflowAnswer;
+        }
+
+        $total = 0;
+
+        for ($index = 0; $index < $this->rowCount && $total <= $height; ++$index) {
+            $total += max(0, $heightOf($index));
+        }
+
+        $this->overflowQuestion = $question;
+
+        return $this->overflowAnswer = $total > $height;
     }
 
     /**

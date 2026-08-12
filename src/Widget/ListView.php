@@ -286,9 +286,20 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     {
         $full = $area->width;
 
-        return Scrollbar::needsScrollbar($this->extentsAt($full)->totalHeight(), $area->height)
+        return $this->overflowsAt($full, $area->height)
             ? max(1, $full - self::SCROLLBAR_GUTTER)
             : $full;
+    }
+
+    /**
+     * Whether a scrollbar is needed. Its own total is never used — the items
+     * are measured again at the width that leaves room for the bar.
+     */
+    private function overflowsAt(int $width, int $height): bool
+    {
+        $items = $this->items;
+
+        return $this->rowIndex->exceeds($width, $height, static fn (int $index): int => $items[$index]->height($width));
     }
 
     private function extents(Rect $area): RowExtents
