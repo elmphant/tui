@@ -26,6 +26,7 @@ declare(strict_types=1);
 require __DIR__ . '/vendor/autoload.php';
 
 use Elmphant\Tui\Core\{App, Cmd, UpdateResult};
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Widget\{Text, Widget};
@@ -39,7 +40,7 @@ final readonly class Counter extends App
         return $count === $this->count ? $this : new self($count);
     }
 
-    protected function onKey(KeyMsg $message): UpdateResult
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
             'k' => UpdateResult::changed($this->withCount($this->count + 1)),
@@ -89,10 +90,10 @@ abstract readonly class App
     abstract public function view(): Widget;                  // pure UI description
 
     protected function setup(): ?Cmd { return null; }         // initial commands
-    protected function onKey(KeyMsg $message): UpdateResult { return UpdateResult::keep($this); }
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
     protected function onTick(TickMsg $message): UpdateResult { return UpdateResult::keep($this); }
-    protected function onMessage(Message $message): UpdateResult { return UpdateResult::keep($this); }
+    protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
 }
 ```
 
@@ -157,18 +158,20 @@ compositions. Use `Flex` when sibling widgets should reflow as the terminal
 width changes:
 
 ```php
+use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Flex;
 
 $content = Flex::row()
     ->withWrap()
     ->withGap(1)
-    ->add($sidebar, basis: 28, min: 22, grow: 1)
-    ->add($main, basis: 48, min: 30, grow: 2)
-    ->add($details, basis: 28, min: 22, grow: 1);
+    ->add($sidebar, new Constraint(min: 22, flex: 1, basis: 28))
+    ->add($main, new Constraint(min: 30, flex: 2, basis: 48))
+    ->add($details, new Constraint(min: 22, flex: 1, basis: 28));
 ```
 
+Every child is sized by the same `Constraint` the stacking layouts use.
 `basis` is the preferred main-axis size used when deciding where to wrap.
-`grow` and `shrink` are relative weights; `min` and `max` bound normal
+`flex` and `shrink` are relative weights; `min` and `max` bound normal
 resizing. If declared minimums cannot fit, terminal bounds take precedence so
 children never receive rectangles outside their container. Builders are
 immutable, so a layout remains a pure value in `view()`.
@@ -341,9 +344,14 @@ $message instanceof ProcessFinishedMsg
 
 ### Configuration
 
-Both `exec()` and `process()` support typed fluent configuration:
+Both `exec()` and `process()` take the same typed fluent configuration, and each
+adds one option of its own. `exec()` collects the whole output, so it caps the
+total:
 
 ```php
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\EffectId;
+
 Cmd::exec(['npm', 'install'])
     ->withId(EffectId::named('npm-install'))
     ->withWorkingDirectory('/app')
@@ -353,7 +361,23 @@ Cmd::exec(['npm', 'install'])
     ->withMaxOutputBytes(4 * 1024 * 1024);
 ```
 
-The same `EffectId` instance appears as `$message->processId`, allowing precise routing and cancellation. `process()` additionally accepts `outputChunkBytes`.
+`process()` streams instead, so it sizes the chunk each `ProcessOutputMsg`
+carries:
+
+```php
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\EffectId;
+
+Cmd::process(['npm', 'run', 'build'])
+    ->withId(EffectId::named('npm-build'))
+    ->withWorkingDirectory('/app')
+    ->withTimeout(120)
+    ->withEnv(['NODE_ENV' => 'production'])
+    ->withInput('yes')
+    ->withOutputChunkBytes(64 * 1024);
+```
+
+The same `EffectId` instance appears as `$message->processId`, allowing precise routing and cancellation.
 
 ## HTTP Requests
 
