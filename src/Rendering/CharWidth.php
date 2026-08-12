@@ -8,9 +8,9 @@ final class CharWidth
 {
     private const ELLIPSIS = '…';
 
-    private const PLAIN = '/[\x20-\x7e]/';
-
     private const NON_PLAIN = '/[^\x20-\x7e]/';
+
+    private const PLAIN_PAIR = '/[\x20-\x7e][\x20-\x7e]/';
 
     private const EMOJI_VARIATION_SELECTOR = "\u{FE0F}";
 
@@ -117,19 +117,19 @@ final class CharWidth
 
     public static function graphemeWidth(string $grapheme): int
     {
-        if ($grapheme === '') {
-            return 0;
-        }
-
-        if (strlen($grapheme) === 1 && ord($grapheme) < 0x80) {
-            return self::of($grapheme);
-        }
-
+        // The memo comes first so a repeated cluster costs one lookup, whether it
+        // is ASCII or not; measuring is what the rest of this method is for.
         if (isset(self::$graphemeWidths[$grapheme])) {
             return self::$graphemeWidths[$grapheme];
         }
 
-        $width = self::measureGrapheme($grapheme);
+        if ($grapheme === '') {
+            return 0;
+        }
+
+        $width = strlen($grapheme) === 1 && ord($grapheme) < 0x80
+            ? self::of($grapheme)
+            : self::measureGrapheme($grapheme);
 
         if (count(self::$graphemeWidths) >= self::GRAPHEME_BUDGET) {
             self::$graphemeWidths = [];
@@ -361,17 +361,9 @@ final class CharWidth
      */
     private static function spanToNextPlainRun(string $text, int $offset, int $length): int
     {
-        $cursor = $offset;
-
-        do {
-            $cursor = self::nextPlain($text, $cursor + 1, $length);
-            if ($cursor >= $length) {
-                return $length - $offset;
-            }
-            ++$cursor;
-        } while ($cursor < $length && !self::isPlain($text, $cursor));
-
-        return $cursor - $offset;
+        return preg_match(self::PLAIN_PAIR, $text, $match, PREG_OFFSET_CAPTURE, min($offset + 1, $length)) === 1
+            ? $match[0][1] + 1 - $offset
+            : $length - $offset;
     }
 
     private static function nextNonPlain(string $text, int $offset, int $length): int
@@ -379,20 +371,6 @@ final class CharWidth
         return preg_match(self::NON_PLAIN, $text, $match, PREG_OFFSET_CAPTURE, $offset) === 1
             ? $match[0][1]
             : $length;
-    }
-
-    private static function nextPlain(string $text, int $offset, int $length): int
-    {
-        return preg_match(self::PLAIN, $text, $match, PREG_OFFSET_CAPTURE, $offset) === 1
-            ? $match[0][1]
-            : $length;
-    }
-
-    private static function isPlain(string $text, int $index): bool
-    {
-        $byte = ord($text[$index]);
-
-        return $byte >= 0x20 && $byte <= 0x7E;
     }
 
     private static function graphemeRunWidth(string $run): int
