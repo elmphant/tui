@@ -18,6 +18,14 @@ use PHPUnit\Framework\TestCase;
 final class FilterableTableTest extends TestCase
 {
     #[Test]
+    public function takingFocusKeepsTheFieldTheCaretSitsIn(): void
+    {
+        $table = $this->routes()->withField(FilterBar::field('ajax', true)->withCursor(1));
+
+        self::assertSame(1, $table->withFocus(true)->field()->cursor(), 'a later builder must not drop the field');
+    }
+
+    #[Test]
     public function filtersItsRowsOnceForOneFrame(): void
     {
         $counting = new class implements Matcher {

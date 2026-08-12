@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
+use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
@@ -16,6 +17,8 @@ use Elmphant\Tui\Search\SubstringMatcher;
  */
 final readonly class FilterableTable implements Widget, MeasureHeight
 {
+    use Cloneable;
+
     private const BAR_HEIGHT = FilterBar::HEIGHT;
     private const MIN_BAR = FilterBar::MIN_WIDTH;
 
@@ -40,15 +43,7 @@ final readonly class FilterableTable implements Widget, MeasureHeight
      */
     public function withField(TextInput $field): self
     {
-        return new self(
-            $this->headers,
-            $this->rows,
-            $field->value(),
-            $this->column,
-            $this->focused,
-            $this->matcher,
-            $field,
-        );
+        return $this->cloneWith(query: $field->value(), field: $field);
     }
 
     public function field(): TextInput
@@ -78,7 +73,7 @@ final readonly class FilterableTable implements Widget, MeasureHeight
 
     public function withQuery(string $query): self
     {
-        return new self($this->headers, $this->rows, $query, $this->column, $this->focused, $this->matcher);
+        return $this->cloneWith(query: $query);
     }
 
     /**
@@ -86,7 +81,7 @@ final readonly class FilterableTable implements Widget, MeasureHeight
      */
     public function withColumn(?int $column): self
     {
-        return new self($this->headers, $this->rows, $this->query, $column, $this->focused, $this->matcher);
+        return $this->cloneWith(column: $column);
     }
 
     /**
@@ -94,12 +89,12 @@ final readonly class FilterableTable implements Widget, MeasureHeight
      */
     public function withFocus(bool $focused): self
     {
-        return new self($this->headers, $this->rows, $this->query, $this->column, $focused, $this->matcher);
+        return $this->cloneWith(focused: $focused);
     }
 
     public function withMatcher(Matcher $matcher): self
     {
-        return new self($this->headers, $this->rows, $this->query, $this->column, $this->focused, $matcher);
+        return $this->cloneWith(matcher: $matcher);
     }
 
     /**
