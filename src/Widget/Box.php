@@ -9,11 +9,12 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Block;
+use Elmphant\Tui\Rendering\BorderStyle;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 
-final readonly class Box implements Widget
+final readonly class Box implements Widget, WidgetContainer
 {
     use Cloneable;
 
@@ -83,6 +84,42 @@ final readonly class Box implements Widget
         return Constraint::exact($childHeight + $overhead);
     }
 
+    /**
+     * @return iterable<Widget>
+     */
+    public function children(): iterable
+    {
+        yield from $this->children;
+    }
+
+    /**
+     * @return iterable<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): iterable
+    {
+        if ($area->width < 3 || $area->height < 3) {
+            return;
+        }
+
+        $contentArea = $this->contentArea($area);
+        $childY = $contentArea->y;
+
+        foreach ($this->children as $child) {
+            if ($childY >= $contentArea->bottom()) {
+                return;
+            }
+
+            $childHeight = max(1, $child->constraint()->min);
+
+            yield [
+                $child,
+                new Rect($contentArea->x, $childY, $contentArea->width, min($childHeight, $contentArea->bottom() - $childY)),
+            ];
+
+            $childY += $childHeight;
+        }
+    }
+
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         if ($area->width < 3 || $area->height < 3) {
@@ -126,5 +163,15 @@ final readonly class Box implements Widget
         }
 
         $block->render($frame, $area);
+    }
+
+    /**
+     * A Box always draws a border, so the inset does not depend on the theme.
+     */
+    private function contentArea(Rect $area): Rect
+    {
+        $block = Block::new()->border(BorderStyle::Solid);
+
+        return ($this->padding === null ? $block : $block->padding($this->padding))->inner($area);
     }
 }

@@ -18,6 +18,19 @@ use PHPUnit\Framework\TestCase;
 final class PositionedOverlayTest extends TestCase
 {
     #[Test]
+    public function itExposesItsContentAtTheAbsolutePositionItDrawsIt(): void
+    {
+        $content = Text::new('Hi');
+        $overlay = PositionedOverlay::at(5, 3)->content($content)->withSize(4, 2);
+
+        $placements = iterator_to_array($overlay->childWidgets(new Rect(0, 0, 20, 10)));
+
+        self::assertCount(1, $placements);
+        self::assertSame($content, $placements[0][0]);
+        self::assertTrue((new Rect(5, 3, 4, 2))->equals($placements[0][1]));
+    }
+
+    #[Test]
     public function rendersContentAtAbsoluteCoordinates(): void
     {
         $frame = new Frame(20, 10);

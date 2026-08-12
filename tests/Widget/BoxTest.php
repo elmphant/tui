@@ -23,6 +23,19 @@ use PHPUnit\Framework\TestCase;
 final class BoxTest extends TestCase
 {
     #[Test]
+    public function itExposesEachChildStackedInsideTheBorder(): void
+    {
+        $first = Text::new('one');
+        $second = Text::new('two');
+
+        $placements = iterator_to_array(Box::new('Held')->add($first)->add($second)->childWidgets(new Rect(0, 0, 12, 6)));
+
+        self::assertSame([$first, $second], [$placements[0][0], $placements[1][0]]);
+        self::assertTrue((new Rect(1, 1, 10, 1))->equals($placements[0][1]));
+        self::assertTrue((new Rect(1, 2, 10, 1))->equals($placements[1][1]));
+    }
+
+    #[Test]
     public function aChildDrawingPastItsAreaIsCroppedByTheBoxBorder(): void
     {
         $frame = new Frame(40, 10);

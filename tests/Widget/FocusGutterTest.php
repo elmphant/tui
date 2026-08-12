@@ -18,6 +18,19 @@ use PHPUnit\Framework\TestCase;
 final class FocusGutterTest extends TestCase
 {
     #[Test]
+    public function itExposesWhatItWrapsBesideTheTrack(): void
+    {
+        $child = Text::new('field');
+        $gutter = FocusGutter::beside($child, held: false);
+
+        $placements = iterator_to_array($gutter->childWidgets(new Rect(0, 0, 12, 2)));
+
+        self::assertCount(1, $placements);
+        self::assertSame($child, $placements[0][0]);
+        self::assertTrue((new Rect(2, 0, 10, 2))->equals($placements[0][1]));
+    }
+
+    #[Test]
     public function aFocusedWidgetGetsABarBesideIt(): void
     {
         $frame = new Frame(12, 1);

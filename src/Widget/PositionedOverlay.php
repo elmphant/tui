@@ -16,7 +16,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  * Useful for drag ghosts, tooltips, popovers — anything that should float on top
  * of normal layout at a specific position rather than flow with parent layout.
  */
-final readonly class PositionedOverlay implements Widget
+final readonly class PositionedOverlay implements Widget, WidgetContainer
 {
     use Cloneable;
 
@@ -49,14 +49,46 @@ final readonly class PositionedOverlay implements Widget
         return Constraint::flex();
     }
 
-    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    /**
+     * @return iterable<Widget>
+     */
+    public function children(): iterable
+    {
+        if ($this->widget !== null) {
+            yield $this->widget;
+        }
+    }
+
+    /**
+     * @return iterable<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): iterable
     {
         if ($this->widget === null) {
             return;
         }
 
-        $child = $this->widget;
-        $constraint = $child->constraint();
+        $placement = $this->placementIn($area);
+
+        if ($placement !== null) {
+            yield [$this->widget, $placement];
+        }
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+            $child->render($frame, $childArea, $context);
+        }
+    }
+
+    private function placementIn(Rect $area): ?Rect
+    {
+        $constraint = $this->widget?->constraint();
+
+        if ($constraint === null) {
+            return null;
+        }
 
         $width = $this->width ?? max(0, $area->width - ($this->x - $area->x));
         $height = $this->height ?? (
@@ -65,10 +97,6 @@ final readonly class PositionedOverlay implements Widget
                 : max(0, $area->height - ($this->y - $area->y))
         );
 
-        if ($width <= 0 || $height <= 0) {
-            return;
-        }
-
-        $child->render($frame, new Rect($this->x, $this->y, $width, $height), $context);
+        return $width <= 0 || $height <= 0 ? null : new Rect($this->x, $this->y, $width, $height);
     }
 }

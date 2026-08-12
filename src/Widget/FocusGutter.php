@@ -16,7 +16,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  * Marks where the keyboard is, so every field says it the same way instead of
  * each inventing a colour of its own.
  */
-final readonly class FocusGutter implements Interactive, MeasureHeight
+final readonly class FocusGutter implements Interactive, WidgetContainer, MeasureHeight
 {
     use Cloneable;
     /**
@@ -95,6 +95,22 @@ final readonly class FocusGutter implements Interactive, MeasureHeight
         return self::contentIn($area);
     }
 
+    /**
+     * @return iterable<Widget>
+     */
+    public function children(): iterable
+    {
+        yield $this->child;
+    }
+
+    /**
+     * @return iterable<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): iterable
+    {
+        yield [$this->child, self::contentIn($area)];
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
         if (!$this->child instanceof Interactive) {
@@ -124,7 +140,9 @@ final readonly class FocusGutter implements Interactive, MeasureHeight
         }
 
         if ($area->width > self::COLUMNS) {
-            $this->child->render($frame, self::contentIn($area), $context);
+            foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+                $child->render($frame, $childArea, $context);
+            }
         }
     }
 
