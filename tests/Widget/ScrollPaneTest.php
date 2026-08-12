@@ -31,6 +31,14 @@ use RuntimeException;
 final class ScrollPaneTest extends TestCase
 {
     #[Test]
+    public function measuresTheRowsItsChildrenNeed(): void
+    {
+        $pane = ScrollPane::of(Text::new('first'), Text::new('second'), Text::new('third'));
+
+        self::assertSame(3, $pane->measureHeight(20), 'Three one-row children need three rows');
+    }
+
+    #[Test]
     public function drawsItsChildrenOneUnderTheOther(): void
     {
         $rows = $this->rows(ScrollPane::of(Text::new('first'), Text::new('second')), 20, 4);

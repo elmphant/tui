@@ -20,10 +20,15 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Runtime\ChildDispatcher;
 
-final readonly class Panel implements Focusable, WidgetContainer, KeybindingsAware
+final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
+    /**
+     * Tall enough that no chrome can clamp it away, so the rows it takes can be
+     * read off the difference.
+     */
+    private const CHROME_PROBE_HEIGHT = 1_000;
 
     public function __construct(
         private string $title = '',
@@ -206,6 +211,24 @@ final readonly class Panel implements Focusable, WidgetContainer, KeybindingsAwa
         }
 
         $this->block($context)->render($frame, $area);
+    }
+
+    /**
+     * What its content needs, plus the border and padding drawn around it, so a
+     * parent can give a panel exactly the rows it will fill.
+     */
+    public function measureHeight(int $width): int
+    {
+        // Measured off a probe rather than assumed: the rows the chrome takes are
+        // not the columns it takes once padding is uneven.
+        $probe = new Rect(0, 0, $width, self::CHROME_PROBE_HEIGHT);
+        $inner = $this->inset()->inner($probe);
+
+        if ($inner->width < 1) {
+            return 0;
+        }
+
+        return $this->pane->measureHeight($inner->width) + ($probe->height - $inner->height);
     }
 
     /**

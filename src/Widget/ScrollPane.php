@@ -27,7 +27,7 @@ use Elmphant\Tui\Runtime\ChildDispatcher;
 /**
  * A vertical stack of children in a scrolling viewport.
  */
-final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetContainer
+final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -159,6 +159,19 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, WidgetCo
     public function children(): iterable
     {
         return $this->focusedChildren();
+    }
+
+    /**
+     * Every row its children need, which is more than a viewport may show. A
+     * caller sizing a pane to its content asks this and then decides.
+     */
+    public function measureHeight(int $width): int
+    {
+        if ($width < 1) {
+            return 0;
+        }
+
+        return VerticalStack::layoutUsing($this->layoutMemo, $this->focusedChildren(), $width, 0)->totalHeight;
     }
 
     /**

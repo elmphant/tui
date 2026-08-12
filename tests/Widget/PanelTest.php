@@ -52,6 +52,12 @@ final class PanelTest extends TestCase
     use FocusableBehaviorTrait;
 
     #[Test]
+    public function measuresItsChildrenPlusTheChromeAroundThem(): void
+    {
+        self::assertSame(5, $this->panelOfLines(3)->measureHeight(20), 'Three rows of content plus the border above and below');
+    }
+
+    #[Test]
     public function aChildDrawingPastItsAreaIsCroppedByThePanelBorder(): void
     {
         $frame = new Frame(40, 10);
