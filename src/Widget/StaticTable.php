@@ -70,7 +70,7 @@ final class StaticTable implements Widget, MeasureHeight
      */
     public function withOverflow(Overflow $overflow): self
     {
-        return new self($this->headers, $this->rows, $this->border, $overflow, $this->measured);
+        return new self($this->headers, $this->rows, $this->border, $overflow, $this->measured, $this->minWidth);
     }
 
     /**
@@ -145,7 +145,17 @@ final class StaticTable implements Widget, MeasureHeight
         }
 
         // 320 rows: 18ms to draw, 0.1ms to key, and view() rebuilds per frame.
-        $key = hash('xxh3', serialize([$this->headers, $this->rows, $this->measured, $this->border, $width]));
+        // Every field draw() reads belongs in the key: the cache outlives the
+        // value, so anything left out lets one table be drawn as another.
+        $key = hash('xxh3', serialize([
+            $this->headers,
+            $this->rows,
+            $this->measured,
+            $this->border,
+            $this->overflow,
+            $this->minWidth,
+            $width,
+        ]));
 
         /** @var list<string> $lines */
         $lines = WrapCache::remember($key, fn (): array => $this->draw($width));

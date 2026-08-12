@@ -17,6 +17,25 @@ use PHPUnit\Framework\TestCase;
 final class StaticTableTest extends TestCase
 {
     #[Test]
+    public function choosingAnOverflowPolicyKeepsTheMinimumWidth(): void
+    {
+        $stacking = StaticTable::new(['keepmin'], [['a']])->withMinWidth(30);
+
+        self::assertSame(30, $stacking->withOverflow(Overflow::Wrap)->drawnWidth(60));
+    }
+
+    #[Test]
+    public function aTableDrawsItsOwnMinimumWidthWhateverWasDrawnBefore(): void
+    {
+        $headers = ['cachekey'];
+        $rows = [['a']];
+
+        StaticTable::new($headers, $rows)->drawnWidth(60);
+
+        self::assertSame(30, StaticTable::new($headers, $rows)->withMinWidth(30)->drawnWidth(60));
+    }
+
+    #[Test]
     public function drawsABorderedTable(): void
     {
         $screen = $this->render($this->table(), 40, 8);
