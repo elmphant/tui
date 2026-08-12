@@ -25,7 +25,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 
-final readonly class ListView implements Focusable, KeybindingsAware
+final readonly class ListView implements Focusable, KeybindingsAware, MeasureHeight
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -242,6 +242,18 @@ final readonly class ListView implements Focusable, KeybindingsAware
         }
     }
 
+    /**
+     * The width available to items, once any scrollbar gutter is reserved.
+     */
+    /**
+     * Every row its items need. A caller that sizes a list to its content asks
+     * this; the viewport it is then given may still be shorter.
+     */
+    public function measureHeight(int $width): int
+    {
+        return $width < 1 ? 0 : $this->extentsAt($width)->totalHeight();
+    }
+
     private function renderItem(Frame $frame, int $x, int $y, int $width, ListItem $item, bool $isCursor, bool $isSelected, Theme $theme): void
     {
         $style = match (true) {
@@ -270,9 +282,6 @@ final readonly class ListView implements Focusable, KeybindingsAware
         }
     }
 
-    /**
-     * The width available to items, once any scrollbar gutter is reserved.
-     */
     private function itemWidth(Rect $area): int
     {
         $full = $area->width;

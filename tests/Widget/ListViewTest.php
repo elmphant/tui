@@ -32,6 +32,14 @@ final class ListViewTest extends TestCase
     use FocusableBehaviorTrait;
 
     #[Test]
+    public function measuresTheRowsItsItemsNeed(): void
+    {
+        $list = ListView::new([new SimpleListItem('a'), new SimpleListItem('b'), new SimpleListItem('c')]);
+
+        self::assertSame(3, $list->measureHeight(20), 'Three one-row items need three rows, not a share of the pane');
+    }
+
+    #[Test]
     public function theItemsAndSelectionCanBeReplacedAfterConstruction(): void
     {
         $list = ListView::new([new SimpleListItem('first')]);
