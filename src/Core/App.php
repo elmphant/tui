@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Core;
 
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\LayoutSnapshot;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FloatMouseMsg;
-use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -246,6 +246,19 @@ abstract readonly class App implements Model
     }
 
     /**
+     * Which keys move the focus from one bound component to the next. Override
+     * to put focus cycling somewhere else; a form that types tab characters is
+     * the usual reason.
+     */
+    protected function focusCycleBindings(): Keybindings
+    {
+        return new Keybindings([
+            Actions::FOCUS_CYCLE => ['tab'],
+            Actions::FOCUS_PREV_CYCLE => ['shift+tab'],
+        ]);
+    }
+
+    /**
      * @param list<Component<Interactive>> $components
      *
      * @return UpdateResult<static>
@@ -282,8 +295,16 @@ abstract readonly class App implements Model
      */
     private function handleLayerTwo(Message $message, Rect $screenRect, array $focusables): UpdateResult
     {
-        if ($message instanceof KeyMsg && $message->key === Key::Tab) {
-            return $this->handleTab($message, $screenRect, $focusables);
+        if ($message instanceof KeyMsg) {
+            $bindings = $this->focusCycleBindings();
+
+            if ($bindings->matches($message, Actions::FOCUS_PREV_CYCLE)) {
+                return $this->handleTab($message, $screenRect, $focusables, true);
+            }
+
+            if ($bindings->matches($message, Actions::FOCUS_CYCLE)) {
+                return $this->handleTab($message, $screenRect, $focusables, $message->shift);
+            }
         }
 
         if ($message instanceof KeyMsg) {
@@ -310,7 +331,7 @@ abstract readonly class App implements Model
      *
      * @return UpdateResult<static>
      */
-    private function handleTab(KeyMsg $message, Rect $screenRect, array $focusables): UpdateResult
+    private function handleTab(KeyMsg $message, Rect $screenRect, array $focusables, bool $reverse): UpdateResult
     {
         $focused = $this->findFocusedComponent($focusables);
 
@@ -332,7 +353,7 @@ abstract readonly class App implements Model
             }
         }
 
-        return $this->cycleFocus($focusables, $message->shift);
+        return $this->cycleFocus($focusables, $reverse);
     }
 
     /**
