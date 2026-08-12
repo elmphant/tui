@@ -144,13 +144,19 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if (!$message instanceof KeyMsg || !$this->focused) {
+        if (!$this->focused) {
+            return new UpdateResult($this);
+        }
+
+        if (!$message instanceof KeyMsg && !$message instanceof MouseMsg) {
             return new UpdateResult($this);
         }
 
         $dispatcher = new ChildDispatcher();
 
-        if ($this->isForTheBoxes($message)) {
+        // The boxes own the pointer as well as the keys that walk them: they are
+        // the rows drawn, so they are what a press and a wheel land on.
+        if ($message instanceof MouseMsg || $this->isForTheBoxes($message)) {
             $boxes = $dispatcher->dispatchOne($this->boxes(), $message, $this->boxesArea($area))->child;
 
             return new UpdateResult($this->cloneWith(checked: $this->checkedAfter($boxes), cursor: $boxes->cursor()));
