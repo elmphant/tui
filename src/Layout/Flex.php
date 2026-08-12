@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Layout;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Axis\Overflow;
 use Elmphant\Tui\Rendering\Frame;
@@ -134,7 +135,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         $linePlacements = [];
         $desiredCrossSizes = [];
         foreach ($lines as $line) {
-            $placements = $this->resolveMainPlacements($line, $mainSize);
+            $placements = $this->resolveMainPlacements($line, $mainSize, $crossAvailable);
             $linePlacements[] = $placements;
 
             $desired = 0;
@@ -239,11 +240,11 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
      *
      * @return list<array{int, int, int}> [item index, main offset, main size]
      */
-    private function resolveMainPlacements(array $line, int $mainSize): array
+    private function resolveMainPlacements(array $line, int $mainSize, ?int $acrossExtent = null): array
     {
         $policies = [];
         foreach ($line as $itemIndex) {
-            $policies[] = $this->items[$itemIndex]->constraint->policy();
+            $policies[] = $this->policyFor($this->items[$itemIndex], $acrossExtent);
         }
 
         // Terminal safety is stronger than a no-shrink preference: children must
@@ -260,6 +261,32 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         }
 
         return $placements;
+    }
+
+    /**
+     * A slot asking for neither a size nor a share is asking for its content, so
+     * a column measures the child to find out how much that is.
+     */
+    private function policyFor(FlexItem $item, ?int $acrossExtent): ItemPolicy
+    {
+        $constraint = $item->constraint;
+        $policy = $constraint->policy();
+
+        if ($this->direction === Direction::Horizontal
+            || $constraint->basis !== null
+            || $constraint->flex !== 0
+            || null === $acrossExtent || $acrossExtent < 1
+        ) {
+            return $policy;
+        }
+
+        return new ItemPolicy(
+            basis: max($policy->min, $this->intrinsicHeight($item->widget, $acrossExtent)),
+            min: $policy->min,
+            max: $policy->max,
+            grow: $policy->grow,
+            shrink: $policy->shrink,
+        );
     }
 
     /**

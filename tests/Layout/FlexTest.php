@@ -450,6 +450,19 @@ final class FlexTest extends TestCase
     }
 
     #[Test]
+    public function aColumnGivesAContentSizedChildTheHeightItMeasures(): void
+    {
+        $flex = Flex::column()
+            ->add($this->measuredWidget(static fn (): int => 3), Constraint::content())
+            ->add(Text::new('rest'), new Constraint(flex: 1));
+
+        $children = $flex->computeChildRects(Rect::fromSize(20, 10));
+
+        self::assertSame(3, $children[0][1]->height, 'A child sized to its content takes the rows it measures');
+        self::assertSame(7, $children[1][1]->height, 'and its sibling absorbs the rest');
+    }
+
+    #[Test]
     public function columnCrossSizesFollowIntrinsicChildWidths(): void
     {
         $flex = Flex::column()
