@@ -34,4 +34,10 @@ final class GraphemeTest extends TestCase
     {
         $this->assertSame(['H', 'i', "\u{1F44B}"], Grapheme::split("Hi\u{1F44B}"));
     }
+
+    #[Test]
+    public function firstTakesTheLeadingClusterWhole(): void
+    {
+        $this->assertSame("\u{1F469}\u{1F3FD}\u{200D}\u{1F4BB}", Grapheme::first("\u{1F469}\u{1F3FD}\u{200D}\u{1F4BB}tail"));
+    }
 }

@@ -228,6 +228,13 @@ final class CharWidth
 
             while (self::stringWidth($word) > $maxWidth) {
                 $head = self::truncateToWidth($word, $maxWidth);
+
+                // A grapheme wider than the whole column fits nowhere: it gets a
+                // row of its own and overflows it, or the loop cannot advance.
+                if ($head === '') {
+                    $head = Grapheme::first($word);
+                }
+
                 $lines[] = $head;
                 $word = substr($word, strlen($head));
             }
@@ -235,7 +242,9 @@ final class CharWidth
             $current = $word;
         }
 
-        $lines[] = $current;
+        if ($current !== '' || $lines === []) {
+            $lines[] = $current;
+        }
 
         return $lines;
     }

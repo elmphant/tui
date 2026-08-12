@@ -25,6 +25,17 @@ final class Grapheme
     }
 
     /**
+     * The leading cluster, for callers that must advance past one without
+     * splitting everything behind it.
+     */
+    public static function first(string $string): string
+    {
+        $grapheme = $string === '' ? false : grapheme_extract($string, 1, GRAPHEME_EXTR_COUNT);
+
+        return $grapheme === false ? substr($string, 0, 1) : $grapheme;
+    }
+
+    /**
      * @return list<string>
      */
     public static function split(string $string): array

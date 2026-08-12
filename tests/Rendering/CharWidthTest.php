@@ -773,6 +773,12 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
+    public function wrapToWidthGivesAGraphemeWiderThanTheColumnItsOwnRow(): void
+    {
+        self::assertSame(["\u{4E16}", "\u{754C}"], CharWidth::wrapToWidth("\u{4E16}\u{754C}", 1));
+    }
+
+    #[Test]
     public function ellipsizeReturnsShortTextUnchanged(): void
     {
         self::assertSame('Hello', CharWidth::ellipsize('Hello', 10));
