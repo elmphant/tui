@@ -107,7 +107,7 @@ final readonly class FilterableTable implements Widget, MeasureHeight
      */
     public function summary(): string
     {
-        return count($this->matchingRows()) . ' of ' . count($this->rows);
+        return $this->summaryOf($this->matchingRows());
     }
 
     public function constraint(): Constraint
@@ -126,18 +126,23 @@ final readonly class FilterableTable implements Widget, MeasureHeight
             return;
         }
 
+        // Filtered once and handed to both halves: the bar reports what the
+        // table shows, so running the query twice could only make them differ.
+        $matching = $this->matchingRows();
+        $table = $this->tableOf($matching);
         $clip = $frame->clip();
 
         if ($area->y >= $clip->y && $area->y < $clip->bottom()) {
             $this->renderBar(
                 $frame,
-                new Rect($area->x, $area->y, $this->barWidth($area->width), self::BAR_HEIGHT),
+                new Rect($area->x, $area->y, $this->barWidth($area->width, $table), self::BAR_HEIGHT),
                 $context,
+                $this->summaryOf($matching),
             );
         }
 
         if ($area->height > self::BAR_HEIGHT) {
-            $this->table()->render(
+            $table->render(
                 $frame,
                 new Rect($area->x, $area->y + self::BAR_HEIGHT, $area->width, $area->height - self::BAR_HEIGHT),
                 $context,
@@ -166,16 +171,24 @@ final readonly class FilterableTable implements Widget, MeasureHeight
         return array_map(fn (int $index): array => $this->rows[$index], $matching);
     }
 
-    private function renderBar(Frame $frame, Rect $area, RenderContext $context): void
+    private function renderBar(Frame $frame, Rect $area, RenderContext $context, string $summary): void
     {
         FilterBar::render(
             $frame,
             $area,
             $context,
             $this->field(),
-            $this->summary(),
+            $summary,
             $this->scopeLabel(),
         );
+    }
+
+    /**
+     * @param list<list<string>> $matching
+     */
+    private function summaryOf(array $matching): string
+    {
+        return count($matching) . ' of ' . count($this->rows);
     }
 
     /**
@@ -195,14 +208,22 @@ final readonly class FilterableTable implements Widget, MeasureHeight
     /**
      * The bar belongs to the table, so it ends where the table does — but never so short that its own controls do not fit.
      */
-    private function barWidth(int $available): int
+    private function barWidth(int $available, StaticTable $table): int
     {
-        return max(self::MIN_BAR, min($available, $this->table()->drawnWidth($available)));
+        return max(self::MIN_BAR, min($available, $table->drawnWidth($available)));
     }
 
     private function table(): StaticTable
     {
-        return StaticTable::new($this->headers, $this->matchingRows())
+        return $this->tableOf($this->matchingRows());
+    }
+
+    /**
+     * @param list<list<string>> $matching
+     */
+    private function tableOf(array $matching): StaticTable
+    {
+        return StaticTable::new($this->headers, $matching)
             ->withWidthsFrom($this->rows)
             ->withMinWidth(self::MIN_BAR);
     }

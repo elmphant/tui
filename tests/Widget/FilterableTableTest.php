@@ -18,6 +18,26 @@ use PHPUnit\Framework\TestCase;
 final class FilterableTableTest extends TestCase
 {
     #[Test]
+    public function filtersItsRowsOnceForOneFrame(): void
+    {
+        $counting = new class implements Matcher {
+            public int $calls = 0;
+
+            public function matching(string $query, array $haystack): array
+            {
+                ++$this->calls;
+
+                return array_keys($haystack);
+            }
+        };
+
+        $table = $this->routes()->withMatcher($counting)->withQuery('ajax');
+        $table->render(new Frame(60, 12), new Rect(0, 0, 60, 12), new RenderContext(Theme::dark()));
+
+        self::assertSame(1, $counting->calls, 'One frame must run the filter once');
+    }
+
+    #[Test]
     public function anUnfocusedTableClaimsNoCaretForAFieldItWasHandedFocused(): void
     {
         $table = $this->routes()->withFocus(false)->withField(FilterBar::field('', true));

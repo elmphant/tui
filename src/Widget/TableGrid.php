@@ -31,14 +31,23 @@ final class TableGrid
         $lines = [self::rule($widths, $glyphs, $glyphs->topLeft, $glyphs->teeDown, $glyphs->topRight)];
 
         if ($headers !== []) {
-            $lines = [...$lines, ...self::cells($headers, $widths, $glyphs)];
+            foreach (self::cells($headers, $widths, $glyphs) as $line) {
+                $lines[] = $line;
+            }
+
             $lines[] = self::rule($widths, $glyphs, $glyphs->teeRight, $glyphs->cross, $glyphs->teeLeft);
         }
 
         foreach ($rows as $row) {
-            $lines = $row === null
-                ? [...$lines, self::rule($widths, $glyphs, $glyphs->teeRight, $glyphs->cross, $glyphs->teeLeft)]
-                : [...$lines, ...self::cells($row, $widths, $glyphs)];
+            if ($row === null) {
+                $lines[] = self::rule($widths, $glyphs, $glyphs->teeRight, $glyphs->cross, $glyphs->teeLeft);
+
+                continue;
+            }
+
+            foreach (self::cells($row, $widths, $glyphs) as $line) {
+                $lines[] = $line;
+            }
         }
 
         $lines[] = self::rule($widths, $glyphs, $glyphs->bottomLeft, $glyphs->teeUp, $glyphs->bottomRight);
@@ -102,7 +111,9 @@ final class TableGrid
 
         foreach (explode("\n", $cell) as $line) {
             foreach (CharWidth::wrapToWidth($line, max(1, $width)) as $wrapped) {
-                $lines = [...$lines, ...self::hardWrapped($wrapped, $width)];
+                foreach (self::hardWrapped($wrapped, $width) as $hardWrapped) {
+                    $lines[] = $hardWrapped;
+                }
             }
         }
 
