@@ -857,7 +857,7 @@ final class HeaderTest extends TestCase
     }
 
     #[Test]
-    public function updatePassesContentAreaToSlots(): void
+    public function updateRoutesToASlotInTheRectItDrawsIn(): void
     {
         $receivedArea = null;
         $spy = new AreaCapturingInteractive($receivedArea);
@@ -870,8 +870,8 @@ final class HeaderTest extends TestCase
 
         self::assertNotNull($receivedArea);
         self::assertSame(1, $receivedArea->height);
-        self::assertSame(76, $receivedArea->width);
-        self::assertSame(2, $receivedArea->x);
+        self::assertSame(2, $receivedArea->x, 'Inside the margin and the padding');
+        self::assertSame(1, $receivedArea->width, 'The width the slot declares, not the whole row');
     }
 
     #[Test]

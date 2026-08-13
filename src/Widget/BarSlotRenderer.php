@@ -12,10 +12,16 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\ChildDispatcher;
 
 /**
- * @internal shared slot rendering and routing for the Header and Footer bars
+ * @internal shared slot placement, drawing and routing for the Header and Footer bars
  */
 final class BarSlotRenderer
 {
+    private const ALIGNMENTS = [
+        'leftSlot' => Alignment::Left,
+        'centerSlot' => Alignment::Center,
+        'rightSlot' => Alignment::Right,
+    ];
+
     public static function renderLeft(
         Frame $frame,
         Widget $widget,
@@ -55,7 +61,7 @@ final class BarSlotRenderer
     /**
      * Route a message to whichever bar slots are interactive.
      *
-     * @param array<string, ?Widget> $slots keyed by the constructor property to override
+     * @param array{leftSlot: ?Widget, centerSlot: ?Widget, rightSlot: ?Widget} $slots keyed by the constructor property to override
      *
      * @return array{array<string, Interactive>, ?Cmd}
      */
@@ -63,13 +69,41 @@ final class BarSlotRenderer
     {
         /** @var array<string, Interactive> $interactive */
         $interactive = array_filter($slots, static fn (?Widget $slot): bool => $slot instanceof Interactive);
-        $result = (new ChildDispatcher())->dispatchMap(
-            $interactive,
-            array_fill_keys(array_keys($interactive), $contentArea),
-            $message,
-        );
+
+        $areas = [];
+        foreach ($interactive as $key => $slot) {
+            // A slot with no width of its own is still on the bar and still takes
+            // keys; only a click has nowhere to land.
+            $areas[$key] = self::rectFor($slot, self::ALIGNMENTS[$key], $contentArea)
+                ?? new Rect($contentArea->x, $contentArea->y, 0, 1);
+        }
+
+        $result = (new ChildDispatcher())->dispatchMap($interactive, $areas, $message);
 
         return [$result->overrides, $result->command];
+    }
+
+    /**
+     * A bar is not an allocator: it reads the width the slot declares and never
+     * grows it by its flex weight, which would stretch every slot to the whole
+     * row and leave nothing for the centre and right to align against.
+     */
+    private static function rectFor(Widget $widget, Alignment $alignment, Rect $contentArea): ?Rect
+    {
+        $columns = $widget->sizing()->columns;
+        $width = min($columns->basis ?? $columns->min, $contentArea->width);
+
+        if ($width < 1) {
+            return null;
+        }
+
+        $offsetX = match ($alignment) {
+            Alignment::Left => $contentArea->x,
+            Alignment::Right => $contentArea->x + $contentArea->width - $width,
+            Alignment::Center => $contentArea->x + intdiv($contentArea->width - $width, 2),
+        };
+
+        return new Rect($offsetX, $contentArea->y, $width, 1);
     }
 
     private static function render(
@@ -82,65 +116,37 @@ final class BarSlotRenderer
         int $barBackground,
         RenderContext $context,
     ): void {
-        $tempBuffer = $context->scratchBuffer($contentWidth, 1);
-        $widget->render($tempBuffer, Rect::fromSize($contentWidth, 1), $context);
+        $rect = self::rectFor($widget, $alignment, new Rect($contentX, $contentY, $contentWidth, 1));
 
-        $renderedWidth = self::measureRenderedWidth($tempBuffer, $contentWidth);
-        if ($renderedWidth === 0) {
+        if (null === $rect) {
             return;
         }
 
-        $offsetX = match ($alignment) {
-            Alignment::Left => $contentX,
-            Alignment::Right => $contentX + $contentWidth - $renderedWidth,
-            Alignment::Center => max($contentX, $contentX + (int)floor(($contentWidth - $renderedWidth) / 2)),
-        };
+        $frame->pushClip($rect);
+        $widget->render($frame, $rect, $context);
+        $frame->popClip();
 
-        self::copyWithBackground($tempBuffer, $frame, 0, $offsetX, $contentY, $renderedWidth, $barBackground);
+        self::keepBarBackground($frame, $rect, $barBackground);
     }
 
     /**
-     * Where the slot's text ends.
-     *
-     * Measured by character alone: a widget that paints its style across the
-     * whole row — StatusBar does — leaves every trailing cell carrying a colour,
-     * and counting those as content made the slot measure full width, collapsing
-     * the centre and right offsets to zero.
+     * Frame writes carry a background unconditionally, so a slot styled without
+     * one would punch its own text out of the bar's fill.
      */
-    private static function measureRenderedWidth(Frame $tempBuffer, int $maxWidth): int
+    private static function keepBarBackground(Frame $frame, Rect $rect, int $barBackground): void
     {
-        for ($x = $maxWidth - 1; $x >= 0; --$x) {
-            if ($tempBuffer->characters[$x] !== ' ' && $tempBuffer->characters[$x] !== '') {
-                return $x + 1;
-            }
+        if (0 === $barBackground || $rect->y < 0 || $rect->y >= $frame->height) {
+            return;
         }
 
-        return 0;
-    }
+        $rowBase = $rect->y * $frame->width;
 
-    private static function copyWithBackground(
-        Frame $source,
-        Frame $destination,
-        int $sourceStartX,
-        int $destinationX,
-        int $destinationY,
-        int $width,
-        int $fallbackBackground,
-    ): void {
-        for ($x = 0; $x < $width; ++$x) {
-            $sourceIndex = $sourceStartX + $x;
-            $destX = $destinationX + $x;
-            if ($destX < 0 || $destX >= $destination->width) {
-                continue;
+        for ($x = max(0, $rect->x); $x < min($frame->width, $rect->right()); ++$x) {
+            $index = $rowBase + $x;
+            if (0 === $frame->backgrounds[$index]) {
+                $frame->backgrounds[$index] = $barBackground;
+                $frame->markRowDirty($rect->y);
             }
-            $destIndex = $destinationY * $destination->width + $destX;
-            $destination->characters[$destIndex] = $source->characters[$sourceIndex];
-            $destination->foregrounds[$destIndex] = $source->foregrounds[$sourceIndex];
-            $destination->backgrounds[$destIndex] = $source->backgrounds[$sourceIndex] !== 0
-                ? $source->backgrounds[$sourceIndex]
-                : $fallbackBackground;
-            $destination->attributes[$destIndex] = $source->attributes[$sourceIndex];
         }
-        $destination->markRowDirty($destinationY);
     }
 }

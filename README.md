@@ -465,6 +465,18 @@ public function view(): Widget
 (`ctrl+q` → `Ctrl+Q`, `up` → `↑`); `KeyPattern::label()` formats a single
 pattern.
 
+A bar places each slot in the width the slot's own `Sizing` declares — a bar is
+not an allocator, so a flexible slot is not stretched to the row. A widget with
+no width of its own (`ProgressBar`, `Separator`, and the other fill-only ones)
+therefore has nothing to draw in; give it one:
+
+```php
+Footer::new()->right(
+    Container::around(ProgressBar::new($ratio))
+        ->withSizing(Sizing::of(Constraint::exact(20), Constraint::exact(1))),
+);
+```
+
 ### Input timing
 
 A lone `Escape` is held for `ESCAPE_TIMEOUT` to see whether it begins a CSI

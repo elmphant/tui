@@ -15,7 +15,6 @@ use LogicException;
 
 final class RenderContext
 {
-    private ?Frame $scratch = null;
     private ?LayoutPlan $layoutPlan = null;
     private float $now = 0.0;
     private ?float $repaintDelay = null;
@@ -112,24 +111,6 @@ final class RenderContext
     public function floats(): array
     {
         return $this->floats;
-    }
-
-    public function scratchBuffer(int $width, int $height): Frame
-    {
-        if ($this->scratch === null) {
-            return $this->scratch = new Frame($width, $height);
-        }
-
-        if ($this->scratch->width < $width || $this->scratch->height < $height) {
-            $this->scratch = new Frame(
-                max($width, $this->scratch->width),
-                max($height, $this->scratch->height),
-            );
-        } else {
-            $this->scratch->clear();
-        }
-
-        return $this->scratch;
     }
 
     /**
