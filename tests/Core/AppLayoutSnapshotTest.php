@@ -11,6 +11,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\LayoutSnapshot;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -118,9 +119,9 @@ final readonly class CountingWidgetContainer implements Widget, WidgetContainer
     ) {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     /**

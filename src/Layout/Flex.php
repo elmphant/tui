@@ -13,7 +13,6 @@ use Elmphant\Tui\Layout\Axis\Overflow;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\MeasureHeight;
-use Elmphant\Tui\Widget\MeasureWidth;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
@@ -78,9 +77,9 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         return new self($this->direction, $items, $this->wrap, $this->gap, $this->justify);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function measureHeight(int $width): int
@@ -373,9 +372,9 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 
     private function intrinsicWidth(Widget $widget): int
     {
-        return $widget instanceof MeasureWidth
-            ? max(1, $widget->measureWidth())
-            : 1;
+        $columns = $widget->sizing()->columns;
+
+        return max(1, $columns->basis ?? $columns->min);
     }
 
     private function intrinsicHeight(Widget $widget, int $width): int
@@ -387,7 +386,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             return max(0, $widget->measureHeight($width));
         }
 
-        $constraint = $widget->constraint();
+        $constraint = $widget->sizing()->rows;
         if ($constraint->min === $constraint->max) {
             return max(0, $constraint->min);
         }

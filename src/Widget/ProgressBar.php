@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\TickMsg;
@@ -100,9 +101,9 @@ final readonly class ProgressBar implements Interactive
         return $this->display ?? $this->progress;
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

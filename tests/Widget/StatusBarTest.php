@@ -23,7 +23,7 @@ final class StatusBarTest extends TestCase
     public function constraintIsExactOne(): void
     {
         $bar = StatusBar::new('hello');
-        self::assertEquals(Constraint::exact(1), $bar->constraint());
+        self::assertEquals(Constraint::exact(1), $bar->sizing()->rows);
     }
 
     #[Test]
@@ -70,7 +70,7 @@ final class StatusBarTest extends TestCase
     public function hintsConstraintIsExactOne(): void
     {
         $bar = StatusBar::hints(['Tab' => 'cycle']);
-        self::assertEquals(Constraint::exact(1), $bar->constraint());
+        self::assertEquals(Constraint::exact(1), $bar->sizing()->rows);
     }
 
     // --- L46: Coalesce x2 — kills mutants that swap ?? operands ---

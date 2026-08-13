@@ -58,7 +58,7 @@ final class AlertTest extends TestCase
     #[Test]
     public function anAlertAsksForExactlyOneRow(): void
     {
-        self::assertEquals(Constraint::exact(1), Alert::warning('Low disk')->constraint());
+        self::assertEquals(Constraint::exact(1), Alert::warning('Low disk')->sizing()->rows);
     }
 
     #[Test]

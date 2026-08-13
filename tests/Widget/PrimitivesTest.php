@@ -25,7 +25,7 @@ final class PrimitivesTest extends TestCase
     public function textConstraintIsExactOne(): void
     {
         $text = Text::new('Hello');
-        $constraint = $text->constraint();
+        $constraint = $text->sizing()->rows;
         self::assertSame(1, $constraint->min);
         self::assertSame(1, $constraint->max);
     }
@@ -57,21 +57,21 @@ final class PrimitivesTest extends TestCase
     public function spacerConstraintIsExactOne(): void
     {
         $spacer = Spacer::new();
-        self::assertSame(1, $spacer->constraint()->min);
+        self::assertSame(1, $spacer->sizing()->rows->min);
     }
 
     #[Test]
     public function spacerCustomSize(): void
     {
         $spacer = Spacer::of(3);
-        self::assertSame(3, $spacer->constraint()->min);
+        self::assertSame(3, $spacer->sizing()->rows->min);
     }
 
     #[Test]
     public function separatorConstraintIsExactOne(): void
     {
         $separator = Separator::new();
-        self::assertSame(1, $separator->constraint()->min);
+        self::assertSame(1, $separator->sizing()->rows->min);
     }
 
     #[Test]
@@ -89,7 +89,7 @@ final class PrimitivesTest extends TestCase
     public function statusBarConstraintIsExactOne(): void
     {
         $statusBar = StatusBar::new('help text');
-        self::assertSame(1, $statusBar->constraint()->min);
+        self::assertSame(1, $statusBar->sizing()->rows->min);
     }
 
     #[Test]
@@ -124,8 +124,8 @@ final class PrimitivesTest extends TestCase
     public function lineConstraintIsExactOne(): void
     {
         $text = Text::line('hello', Span::styled('world', new Style()));
-        self::assertSame(1, $text->constraint()->min);
-        self::assertSame(1, $text->constraint()->max);
+        self::assertSame(1, $text->sizing()->rows->min);
+        self::assertSame(1, $text->sizing()->rows->max);
     }
 
     #[Test]

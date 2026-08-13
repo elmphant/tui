@@ -30,7 +30,7 @@ final class SelectTest extends TestCase
     public function constraintReturnsExactOptionCount(): void
     {
         $select = Select::new(['A', 'B', 'C']);
-        $constraint = $select->constraint();
+        $constraint = $select->sizing()->rows;
         self::assertSame(3, $constraint->min);
         self::assertSame(3, $constraint->max);
     }
@@ -186,8 +186,8 @@ final class SelectTest extends TestCase
     public function emptySelectConstraintIsZero(): void
     {
         $select = Select::new([]);
-        self::assertSame(0, $select->constraint()->min);
-        self::assertSame(0, $select->constraint()->max);
+        self::assertSame(0, $select->sizing()->rows->min);
+        self::assertSame(0, $select->sizing()->rows->max);
     }
 
     #[Test]

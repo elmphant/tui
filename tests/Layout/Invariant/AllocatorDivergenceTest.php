@@ -9,6 +9,7 @@ use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\VerticalStack;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -100,7 +101,7 @@ final class AllocatorDivergenceTest extends TestCase
     public function aContentSizedChildTakesItsLinesAndLeavesTheRestToItsSibling(): void
     {
         $column = Layout::vertical(
-            self::paragraphOf(3)->withConstraint(Constraint::content()),
+            self::paragraphOf(3)->withSizing(Sizing::of(Constraint::flex(), Constraint::content())),
             self::paragraphOf(7),
         );
 

@@ -16,6 +16,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
@@ -776,9 +777,9 @@ final readonly class FloatRecordingWidget implements Focusable
         return new self($this->receivedFloat, $this->plainMouseSeen, $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -832,9 +833,9 @@ final readonly class RectCapturingWidget implements Interactive
     ) {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult

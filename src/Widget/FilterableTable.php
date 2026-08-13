@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Search\Matcher;
@@ -105,9 +106,9 @@ final readonly class FilterableTable implements Widget, MeasureHeight
         return $this->summaryOf($this->matchingRows());
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::min(self::BAR_HEIGHT + 1);
+        return Sizing::of(Constraint::flex(), Constraint::min(self::BAR_HEIGHT + 1));
     }
 
     public function measureHeight(int $width): int

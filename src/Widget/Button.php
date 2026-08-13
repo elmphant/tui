@@ -13,6 +13,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -26,7 +27,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 
-final readonly class Button implements Focusable, KeybindingsAware, MeasureWidth
+final readonly class Button implements Focusable, KeybindingsAware
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -88,14 +89,12 @@ final readonly class Button implements Focusable, KeybindingsAware, MeasureWidth
         return $this->cloneWith(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(3);
-    }
-
-    public function measureWidth(): int
-    {
-        return CharWidth::stringWidth($this->label) + 4;
+        return Sizing::of(
+            Constraint::flex()->withBasis(CharWidth::stringWidth($this->label) + 4),
+            Constraint::exact(3),
+        );
     }
 
     public function update(Message $message, Rect $area): UpdateResult

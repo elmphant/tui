@@ -27,7 +27,7 @@ final class ProgressBarTest extends TestCase
     public function constraintReturnsExactOne(): void
     {
         $progressBar = ProgressBar::new();
-        $constraint = $progressBar->constraint();
+        $constraint = $progressBar->sizing()->rows;
         self::assertSame(1, $constraint->min);
         self::assertSame(1, $constraint->max);
     }

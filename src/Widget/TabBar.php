@@ -14,6 +14,7 @@ use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -116,9 +117,9 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         return $this->cloneWith(caption: $caption, shortCaption: $shortCaption);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function withPadding(Spacing $padding): static

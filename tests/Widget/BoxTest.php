@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -63,7 +64,7 @@ final class BoxTest extends TestCase
             ->add(Text::new('Line 1'))
             ->add(Text::new('Line 2'));
 
-        $constraint = $box->constraint();
+        $constraint = $box->sizing()->rows;
 
         self::assertSame(4, $constraint->min);
         self::assertSame(4, $constraint->max);
@@ -76,7 +77,7 @@ final class BoxTest extends TestCase
             ->add(Text::new('Hello'))
             ->withPadding(Spacing::vertical(1));
 
-        $constraint = $box->constraint();
+        $constraint = $box->sizing()->rows;
 
         self::assertSame(5, $constraint->min);
     }
@@ -84,7 +85,7 @@ final class BoxTest extends TestCase
     #[Test]
     public function constraintEmptyBox(): void
     {
-        $constraint = Box::new()->constraint();
+        $constraint = Box::new()->sizing()->rows;
 
         self::assertSame(2, $constraint->min);
     }
@@ -229,7 +230,7 @@ final class BoxTest extends TestCase
         $zeroMinWidget = $this->createWidgetWithConstraint(Constraint::exact(0));
 
         $box = Box::new()->add($zeroMinWidget);
-        $constraint = $box->constraint();
+        $constraint = $box->sizing()->rows;
 
         self::assertSame(3, $constraint->min, 'Zero-min child must still contribute 1 row');
     }
@@ -341,9 +342,9 @@ final class BoxTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return $this->widgetConstraint;
+                return Sizing::of($this->widgetConstraint, $this->widgetConstraint);
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -364,9 +365,9 @@ final class BoxTest extends TestCase
     private static function widgetDrawingPastItsArea(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -386,9 +387,9 @@ final class BoxTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return $this->widgetConstraint;
+                return Sizing::of($this->widgetConstraint, $this->widgetConstraint);
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -407,9 +408,9 @@ final class BoxTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return $this->widgetConstraint;
+                return Sizing::of($this->widgetConstraint, $this->widgetConstraint);
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

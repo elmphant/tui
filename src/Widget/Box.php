@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
@@ -68,12 +69,11 @@ final readonly class Box implements Widget, WidgetContainer
         return $this->cloneWith(titleStyleOverride: $style);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
         $childHeight = 0;
         foreach ($this->children as $child) {
-            $constraint = $child->constraint();
-            $childHeight += max(1, $constraint->min);
+            $childHeight += max(1, $child->sizing()->rows->min);
         }
 
         $overhead = 2;
@@ -81,7 +81,7 @@ final readonly class Box implements Widget, WidgetContainer
             $overhead += $this->padding->top + $this->padding->bottom;
         }
 
-        return Constraint::exact($childHeight + $overhead);
+        return Sizing::of(Constraint::flex(), Constraint::exact($childHeight + $overhead));
     }
 
     /**
@@ -109,7 +109,7 @@ final readonly class Box implements Widget, WidgetContainer
                 return;
             }
 
-            $childHeight = max(1, $child->constraint()->min);
+            $childHeight = max(1, $child->sizing()->rows->min);
 
             yield [
                 $child,
@@ -151,8 +151,7 @@ final readonly class Box implements Widget, WidgetContainer
                     break;
                 }
 
-                $childConstraint = $child->constraint();
-                $childHeight = max(1, $childConstraint->min);
+                $childHeight = max(1, $child->sizing()->rows->min);
                 $available = $contentArea->bottom() - $childY;
                 $childArea = new Rect($contentArea->x, $childY, $contentArea->width, min($childHeight, $available));
                 $child->render($frame, $childArea, $context);

@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
@@ -356,9 +357,9 @@ final class FocusTreeTest extends TestCase
                 return new static($focused);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

@@ -10,13 +10,13 @@ final readonly class Column
 {
     private function __construct(
         private string $title,
-        private Constraint $constraint,
+        private Constraint $width,
     ) {
     }
 
-    public static function new(string $title, Constraint $constraint): self
+    public static function new(string $title, Constraint $width): self
     {
-        return new self($title, $constraint);
+        return new self($title, $width);
     }
 
     public function title(): string
@@ -24,8 +24,8 @@ final readonly class Column
         return $this->title;
     }
 
-    public function constraint(): Constraint
+    public function width(): Constraint
     {
-        return $this->constraint;
+        return $this->width;
     }
 }

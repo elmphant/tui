@@ -10,6 +10,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -99,7 +100,7 @@ final class ModalTest extends TestCase
         ));
 
         self::assertCount($content->measureHeight(100) + 2, $drawn, 'content plus both borders');
-        self::assertSame($content->measureWidth() + 2, mb_strlen(trim($drawn[0])), 'content plus both borders');
+        self::assertSame($content->sizing()->columns->basis + 2, mb_strlen(trim($drawn[0])), 'content plus both borders');
     }
 
     #[Test]
@@ -151,7 +152,7 @@ final class ModalTest extends TestCase
     public function constraintReturnsFlex(): void
     {
         $modal = Modal::new('Title', Text::new('Content'));
-        self::assertSame(1, $modal->constraint()->flex);
+        self::assertSame(1, $modal->sizing()->rows->flex);
     }
 
     // ---------------------------------------------------------------
@@ -1402,9 +1403,9 @@ final class ModalTest extends TestCase
     private static function widgetDrawingPastItsArea(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -1422,9 +1423,9 @@ final class ModalTest extends TestCase
     private function createStableInteractiveWidget(): Interactive
     {
         return new class implements Interactive {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -1443,9 +1444,9 @@ final class ModalTest extends TestCase
         return new class implements Interactive {
             public int $counter = 0;
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

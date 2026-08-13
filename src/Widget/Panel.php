@@ -12,6 +12,7 @@ use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Block;
@@ -166,9 +167,9 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
         );
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult

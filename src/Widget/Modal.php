@@ -13,6 +13,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -152,9 +153,9 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
         return [[$this->content, $this->computeContentRect($area)]];
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -241,13 +242,16 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
 
     private function fittedWidth(Rect $area): ?int
     {
-        if (!$this->sizedToContent || !$this->content instanceof MeasureWidth) {
+        $columns = $this->content->sizing()->columns;
+        $contentWidth = $columns->basis ?? $columns->min;
+
+        if (!$this->sizedToContent || $contentWidth === 0) {
             return null;
         }
 
         $title = CharWidth::stringWidth($this->title) + self::BORDERS;
 
-        return min($area->width, max(3, $this->content->measureWidth() + self::BORDERS, $title));
+        return min($area->width, max(3, $contentWidth + self::BORDERS, $title));
     }
 
     private function fittedHeight(int $contentWidth): ?int

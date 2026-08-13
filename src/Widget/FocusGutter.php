@@ -6,8 +6,8 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -66,9 +66,9 @@ final readonly class FocusGutter implements Interactive, WidgetContainer, Measur
         return $this->child->measureHeight($inner);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return $this->child->constraint();
+        return $this->child->sizing();
     }
 
     /**

@@ -66,7 +66,7 @@ final class TextInputTest extends TestCase
     public function constraintReturnsExactOne(): void
     {
         $input = TextInput::new();
-        $constraint = $input->constraint();
+        $constraint = $input->sizing()->rows;
         self::assertSame(1, $constraint->min);
         self::assertSame(1, $constraint->max);
     }

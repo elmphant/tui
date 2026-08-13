@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
@@ -96,9 +97,9 @@ final readonly class DropdownPopup implements PopupFrame
         return new Rect($x, $y, $width, $height);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

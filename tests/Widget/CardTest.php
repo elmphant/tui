@@ -82,12 +82,12 @@ final class CardTest extends TestCase
     public function cardConstraintExposesHeight(): void
     {
         $card = Card::new('x', 'y');
-        self::assertSame(4, $card->constraint()->min);
-        self::assertSame(4, $card->constraint()->max);
+        self::assertSame(4, $card->sizing()->rows->min);
+        self::assertSame(4, $card->sizing()->rows->max);
 
         $taller = $card->withHeight(7);
-        self::assertSame(7, $taller->constraint()->min);
-        self::assertSame(7, $taller->constraint()->max);
+        self::assertSame(7, $taller->sizing()->rows->min);
+        self::assertSame(7, $taller->sizing()->rows->max);
     }
 
     #[Test]

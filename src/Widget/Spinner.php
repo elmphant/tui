@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -46,9 +47,9 @@ final readonly class Spinner implements Interactive
         return $this->cloneWith(interval: max(0.01, $seconds));
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

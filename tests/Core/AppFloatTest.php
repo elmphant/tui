@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Core;
 use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
@@ -36,9 +37,9 @@ final readonly class FloatingApp extends App
     public function view(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -54,9 +55,9 @@ final readonly class FloatingApp extends App
                         return new Rect(0, 3, 10, 1);
                     }
 
-                    public function constraint(): Constraint
+                    public function sizing(): Sizing
                     {
-                        return Constraint::exact(1);
+                        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
                     }
 
                     public function render(Frame $frame, Rect $area, RenderContext $context): void

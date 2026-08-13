@@ -35,8 +35,8 @@ final class RadioTest extends TestCase
         $bare = Radio::new(['A', 'B']);
 
         self::assertSame('A', $bare->selectedValue(), 'the collection is what leads');
-        self::assertSame(2, $bare->constraint()->min, 'and an omitted label costs no rows');
-        self::assertSame(4, Radio::new(['A', 'B'], 'Pick one')->constraint()->min, 'a label still follows it, where there is one');
+        self::assertSame(2, $bare->sizing()->rows->min, 'and an omitted label costs no rows');
+        self::assertSame(4, Radio::new(['A', 'B'], 'Pick one')->sizing()->rows->min, 'a label still follows it, where there is one');
     }
 
     #[Test]
@@ -51,7 +51,7 @@ final class RadioTest extends TestCase
     public function constraintReturnsExactOptionCountPlusLabelAndSpacer(): void
     {
         $radio = Radio::new(['A', 'B', 'C'], 'Pick one');
-        $constraint = $radio->constraint();
+        $constraint = $radio->sizing()->rows;
         self::assertSame(5, $constraint->min);
         self::assertSame(5, $constraint->max);
     }
@@ -60,7 +60,7 @@ final class RadioTest extends TestCase
     public function constraintWithoutLabelReturnsExactOptionCount(): void
     {
         $radio = Radio::new(['A', 'B', 'C']);
-        $constraint = $radio->constraint();
+        $constraint = $radio->sizing()->rows;
         self::assertSame(3, $constraint->min);
         self::assertSame(3, $constraint->max);
     }
@@ -222,8 +222,8 @@ final class RadioTest extends TestCase
     public function emptyRadioConstraintHandlesLabel(): void
     {
         $radio = Radio::new([], 'Label');
-        self::assertSame(2, $radio->constraint()->min);
-        self::assertSame(2, $radio->constraint()->max);
+        self::assertSame(2, $radio->sizing()->rows->min);
+        self::assertSame(2, $radio->sizing()->rows->max);
     }
 
     #[Test]

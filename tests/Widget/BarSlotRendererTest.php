@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -88,9 +89,9 @@ final class BarSlotRendererTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -176,9 +177,9 @@ final class BarSlotRendererTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -249,9 +250,9 @@ final class BarSlotRendererTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -293,9 +294,9 @@ final class BarSlotRendererTest extends TestCase
     public function measureRenderedWidthDetectsContentInLastColumn(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -322,9 +323,9 @@ final class BarSlotRendererTest extends TestCase
     public function aCellCarryingOnlyColourIsNotContent(): void
     {
         $painter = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -350,9 +351,9 @@ final class BarSlotRendererTest extends TestCase
     public function aSlotOfNothingButColourDrawsNothing(): void
     {
         $blank = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -379,9 +380,9 @@ final class BarSlotRendererTest extends TestCase
     public function measureDetectsNonSpaceCharacterOnly(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -410,9 +411,9 @@ final class BarSlotRendererTest extends TestCase
     public function copyWithBackgroundCopiesExactWidth(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -445,9 +446,9 @@ final class BarSlotRendererTest extends TestCase
         // Widget writes to positions 0-4 (5 chars), place right-aligned so it tries
         // to write beyond buffer width
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -478,9 +479,9 @@ final class BarSlotRendererTest extends TestCase
     public function copyWithBackgroundSkipsNegativeDestX(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -533,9 +534,9 @@ final class BarSlotRendererTest extends TestCase
     public function copyWithBackgroundUsesFallbackWhenSourceBackgroundIsZero(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -560,9 +561,9 @@ final class BarSlotRendererTest extends TestCase
     public function copyWithBackgroundPreservesSourceBackgroundWhenNonZero(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -618,9 +619,9 @@ final class BarSlotRendererTest extends TestCase
     public function measureRenderedWidthIncludesLastColumnContent(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -686,9 +687,9 @@ final class BarSlotRendererTest extends TestCase
     public function boundsCheckPreventsWriteAtExactBufferWidth(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -710,9 +711,9 @@ final class BarSlotRendererTest extends TestCase
     public function boundsCheckSkipsCellWithNegativeDestX(): void
     {
         $widget = new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -739,9 +740,9 @@ final class BarSlotRendererTest extends TestCase
     private function createEmptyWidget(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

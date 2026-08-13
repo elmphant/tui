@@ -88,7 +88,7 @@ final class VerticalStack
         $floors = [];
 
         foreach ($children as $child) {
-            $constraint = $child->constraint();
+            $constraint = $child->sizing()->rows;
             $constraints[] = $constraint;
             $isFixed = $constraint->min === $constraint->max;
             $hasWidthAwareChildren = $hasWidthAwareChildren || ($child instanceof MeasureHeight && !$isFixed);

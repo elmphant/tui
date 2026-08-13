@@ -81,7 +81,7 @@ final class ListViewTest extends TestCase
     public function constraintReturnsFlex(): void
     {
         $list = ListView::new([]);
-        self::assertSame(1, $list->constraint()->flex);
+        self::assertSame(1, $list->sizing()->rows->flex);
     }
 
     #[Test]

@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
@@ -22,9 +23,9 @@ final readonly class Overlay implements Widget, WidgetContainer
         return new self($base, $overlay);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     /**

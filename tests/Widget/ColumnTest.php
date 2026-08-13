@@ -19,25 +19,25 @@ final class ColumnTest extends TestCase
     }
 
     #[Test]
-    public function constraintReturnsSetValue(): void
+    public function widthReturnsSetValue(): void
     {
-        $constraint = Constraint::exact(10);
-        $column = Column::new('ID', $constraint);
-        self::assertSame($constraint, $column->constraint());
+        $width = Constraint::exact(10);
+        $column = Column::new('ID', $width);
+        self::assertSame($width, $column->width());
     }
 
     #[Test]
     public function flexColumn(): void
     {
         $column = Column::new('Name', Constraint::flex(3));
-        self::assertSame(3, $column->constraint()->flex);
+        self::assertSame(3, $column->width()->flex);
     }
 
     #[Test]
     public function exactColumn(): void
     {
         $column = Column::new('ID', Constraint::exact(5));
-        self::assertSame(5, $column->constraint()->min);
-        self::assertSame(5, $column->constraint()->max);
+        self::assertSame(5, $column->width()->min);
+        self::assertSame(5, $column->width()->max);
     }
 }

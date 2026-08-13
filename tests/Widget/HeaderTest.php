@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
@@ -40,7 +41,7 @@ final class HeaderTest extends TestCase
     public function constraintIsExactOne(): void
     {
         $header = Header::new('Title');
-        self::assertEquals(Constraint::exact(1), $header->constraint());
+        self::assertEquals(Constraint::exact(1), $header->sizing()->rows);
     }
 
     #[Test]
@@ -151,7 +152,7 @@ final class HeaderTest extends TestCase
         $header = Header::new('Title')
             ->padding(Spacing::vertical(1));
 
-        self::assertEquals(Constraint::exact(3), $header->constraint());
+        self::assertEquals(Constraint::exact(3), $header->sizing()->rows);
     }
 
     #[Test]
@@ -160,7 +161,7 @@ final class HeaderTest extends TestCase
         $header = Header::new('Title')
             ->margin(Spacing::vertical(1));
 
-        self::assertEquals(Constraint::exact(3), $header->constraint());
+        self::assertEquals(Constraint::exact(3), $header->sizing()->rows);
     }
 
     #[Test]
@@ -210,7 +211,7 @@ final class HeaderTest extends TestCase
     public function dividerAddsOneRowToConstraint(): void
     {
         $header = Header::new('Title')->withDivider();
-        self::assertEquals(Constraint::exact(2), $header->constraint());
+        self::assertEquals(Constraint::exact(2), $header->sizing()->rows);
     }
 
     #[Test]
@@ -220,7 +221,7 @@ final class HeaderTest extends TestCase
             ->padding(Spacing::vertical(1))
             ->withDivider();
 
-        self::assertEquals(Constraint::exact(4), $header->constraint());
+        self::assertEquals(Constraint::exact(4), $header->sizing()->rows);
     }
 
     #[Test]
@@ -933,9 +934,9 @@ final class HeaderTest extends TestCase
                 $this->command = $command;
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function update(Message $message, Rect $area): UpdateResult
@@ -959,9 +960,9 @@ final readonly class HeaderCommandWidget implements Interactive
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -980,9 +981,9 @@ final class AreaCapturingInteractive implements Interactive
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

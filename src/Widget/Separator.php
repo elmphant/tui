@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
@@ -20,9 +21,9 @@ final readonly class Separator implements Widget
         return new self();
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

@@ -70,7 +70,7 @@ final class CheckboxRowTest extends TestCase
 
         self::assertSame(1, $row->measureHeight(40));
         self::assertSame(3, $row->measureHeight(12), 'a narrow pane must hand it the rows it wraps onto');
-        self::assertSame(1, $row->constraint()->min, 'one row is the floor, the measurement raises it');
+        self::assertSame(1, $row->sizing()->rows->min, 'one row is the floor, the measurement raises it');
     }
 
     #[Test]

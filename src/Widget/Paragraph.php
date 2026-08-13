@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -19,7 +20,7 @@ use Elmphant\Tui\Rendering\SpanRenderer;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\WrapCache;
 
-final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
+final readonly class Paragraph implements Widget, MeasureHeight
 {
     use Cloneable;
 
@@ -31,7 +32,7 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         public Alignment $alignment = Alignment::Left,
         public Wrap $wrap = Wrap::WordWrap,
         public ?Style $style = null,
-        public ?Constraint $constraint = null,
+        public ?Sizing $sizingOverride = null,
     ) {
     }
 
@@ -58,9 +59,9 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         return $this->cloneWith(style: $style);
     }
 
-    public function withConstraint(?Constraint $constraint): self
+    public function withSizing(?Sizing $sizing): self
     {
-        return $this->cloneWith(constraint: $constraint);
+        return $this->cloneWith(sizingOverride: $sizing);
     }
 
     public static function fromText(string $text): self
@@ -135,9 +136,12 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         return new self($lines);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return $this->constraint ?? Constraint::flex();
+        return $this->sizingOverride ?? Sizing::of(
+            Constraint::flex()->withBasis($this->widestLine()),
+            Constraint::flex(),
+        );
     }
 
     public function measureHeight(int $width): int
@@ -157,16 +161,6 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
         }
 
         return $rows;
-    }
-
-    public function measureWidth(): int
-    {
-        $width = 0;
-        foreach ($this->lines as $line) {
-            $width = max($width, $line->width());
-        }
-
-        return $width;
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -234,6 +228,16 @@ final readonly class Paragraph implements Widget, MeasureHeight, MeasureWidth
 
             ++$row;
         }
+    }
+
+    private function widestLine(): int
+    {
+        $width = 0;
+        foreach ($this->lines as $line) {
+            $width = max($width, $line->width());
+        }
+
+        return $width;
     }
 
     /**

@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -63,9 +64,9 @@ final class FloatingModel implements Model
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

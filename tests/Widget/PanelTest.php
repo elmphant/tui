@@ -12,6 +12,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -336,7 +337,7 @@ final class PanelTest extends TestCase
     public function constraintReturnsFlex(): void
     {
         $panel = Panel::new('Test');
-        $constraint = $panel->constraint();
+        $constraint = $panel->sizing()->rows;
 
         self::assertSame(1, $constraint->flex);
     }
@@ -626,7 +627,7 @@ final class PanelTest extends TestCase
             ->add(Text::new('Footer'));
 
         self::assertInstanceOf(Panel::class, $panel);
-        self::assertSame(1, $panel->constraint()->flex);
+        self::assertSame(1, $panel->sizing()->rows->flex);
     }
 
     #[Test]
@@ -3145,9 +3146,9 @@ final class PanelTest extends TestCase
     private static function widgetDrawingPastItsArea(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -3253,9 +3254,9 @@ final class PanelTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(6);
+                return Sizing::of(Constraint::exact(6), Constraint::exact(6));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -3308,9 +3309,9 @@ final class PanelTest extends TestCase
                 return new static($focused);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(3);
+                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -3341,9 +3342,9 @@ final class PanelTest extends TestCase
                 return new static($focused);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(3);
+                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -3376,9 +3377,9 @@ final class PanelTest extends TestCase
                 return new static($focused, $this->updateCount);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(3);
+                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -3406,9 +3407,9 @@ final readonly class PanelMultiLineWidget implements Widget
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact($this->lineCount);
+        return Sizing::of(Constraint::exact($this->lineCount), Constraint::exact($this->lineCount));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -3425,9 +3426,9 @@ final readonly class PanelCommandWidget implements Interactive
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function update(mixed $message, Rect $area): UpdateResult
@@ -3446,9 +3447,9 @@ final readonly class TabConsumingWidget implements Focusable
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function isFocused(): bool

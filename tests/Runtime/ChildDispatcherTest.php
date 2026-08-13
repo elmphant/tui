@@ -12,6 +12,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -193,9 +194,9 @@ final class DispatchProbe implements Interactive
     ) {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -251,9 +252,9 @@ final readonly class BindingAwareDispatchProbe implements Interactive, Keybindin
         return new self($this->state, $keybindings);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult

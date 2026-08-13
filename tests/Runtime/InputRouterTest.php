@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -171,9 +172,9 @@ final class InputRouterTest extends TestCase
                 return $anchor;
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

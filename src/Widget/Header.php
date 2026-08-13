@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\CharWidth;
@@ -76,13 +77,16 @@ final readonly class Header implements Interactive
         return $this->cloneWith(divider: true);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
         $padding = $this->padding ?? Spacing::none();
         $margin = $this->margin ?? Spacing::none();
         $dividerHeight = $this->divider ? 1 : 0;
 
-        return Constraint::exact(1 + $padding->top + $padding->bottom + $margin->top + $margin->bottom + $dividerHeight);
+        return Sizing::of(
+            Constraint::flex(),
+            Constraint::exact(1 + $padding->top + $padding->bottom + $margin->top + $margin->bottom + $dividerHeight),
+        );
     }
 
     public function update(Message $message, Rect $area): UpdateResult

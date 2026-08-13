@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
@@ -44,9 +45,9 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
         return $this->cloneWith(width: $width, height: $height);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     /**
@@ -84,7 +85,7 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
 
     private function placementIn(Rect $area): ?Rect
     {
-        $constraint = $this->widget?->constraint();
+        $constraint = $this->widget?->sizing()->rows;
 
         if ($constraint === null) {
             return null;

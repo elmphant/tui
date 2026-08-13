@@ -9,6 +9,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
@@ -20,7 +21,7 @@ use InvalidArgumentException;
 /**
  * Immutable layout and surface decoration around one widget.
  */
-final readonly class Container implements Widget, WidgetContainer, MeasureHeight, MeasureWidth, DirectionalConstraint
+final readonly class Container implements Widget, WidgetContainer, MeasureHeight
 {
     use Cloneable;
 
@@ -31,7 +32,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         private ?Style $style = null,
         private ?BorderStyle $border = null,
         private ?Style $borderStyle = null,
-        private ?Constraint $constraintOverride = null,
+        private ?Sizing $sizingOverride = null,
         private ?int $contentWidth = null,
         private ?int $contentHeight = null,
         private Alignment $horizontalAlignment = Alignment::Left,
@@ -69,9 +70,9 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         return $this->cloneWith(borderStyle: $style);
     }
 
-    public function withConstraint(Constraint $constraint): self
+    public function withSizing(Sizing $sizing): self
     {
-        return $this->cloneWith(constraintOverride: $constraint);
+        return $this->cloneWith(sizingOverride: $sizing);
     }
 
     public function withContentWidth(int $width): self
@@ -106,45 +107,12 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         return $this->cloneWith(verticalAlignment: $alignment);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return $this->constraintFor(Direction::Vertical);
-    }
-
-    public function constraintFor(Direction $direction): Constraint
-    {
-        if ($this->constraintOverride !== null) {
-            return $this->constraintOverride;
-        }
-
-        $isVertical = $direction === Direction::Vertical;
-        $overhead = $isVertical
-            ? $this->verticalOverhead()
-            : $this->horizontalOverhead();
-        $contentSize = $isVertical ? $this->contentHeight : $this->contentWidth;
-        if ($contentSize !== null) {
-            return Constraint::exact($contentSize + $overhead);
-        }
-
-        $child = $this->child instanceof DirectionalConstraint
-            ? $this->child->constraintFor($direction)
-            : $this->child->constraint();
-
-        return new Constraint(
-            min: $child->min + $overhead,
-            max: self::grownBy($child->max, $overhead),
-            flex: $child->flex,
-            basis: $child->basis === null ? null : self::grownBy($child->basis, $overhead),
-            shrink: $child->shrink,
+        return $this->sizingOverride ?? Sizing::of(
+            $this->axis(Direction::Horizontal),
+            $this->axis(Direction::Vertical),
         );
-    }
-
-    public function measureWidth(): int
-    {
-        $contentWidth = $this->contentWidth
-            ?? ($this->child instanceof MeasureWidth ? $this->child->measureWidth() : 0);
-
-        return $contentWidth + $this->horizontalOverhead();
     }
 
     public function measureHeight(int $width): int
@@ -158,15 +126,15 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         if ($contentHeight === null) {
             $contentHeight = $this->child instanceof MeasureHeight
                 ? $this->child->measureHeight($availableWidth)
-                : self::naturalHeight($this->child->constraint());
+                : self::naturalHeight($this->child->sizing()->rows);
         }
 
         $measured = $contentHeight + $this->verticalOverhead();
-        if ($this->constraintOverride === null) {
+        if ($this->sizingOverride === null) {
             return $measured;
         }
 
-        return min($this->constraintOverride->max, max($this->constraintOverride->min, $measured));
+        return min($this->sizingOverride->rows->max, max($this->sizingOverride->rows->min, $measured));
     }
 
     /**
@@ -206,6 +174,28 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
                 $this->style,
             );
         }
+    }
+
+    private function axis(Direction $direction): Constraint
+    {
+        $isVertical = $direction === Direction::Vertical;
+        $overhead = $isVertical
+            ? $this->verticalOverhead()
+            : $this->horizontalOverhead();
+        $contentSize = $isVertical ? $this->contentHeight : $this->contentWidth;
+        if ($contentSize !== null) {
+            return Constraint::exact($contentSize + $overhead);
+        }
+
+        $child = $this->child->sizing()->on($direction);
+
+        return new Constraint(
+            min: $child->min + $overhead,
+            max: self::grownBy($child->max, $overhead),
+            flex: $child->flex,
+            basis: $child->basis === null ? null : self::grownBy($child->basis, $overhead),
+            shrink: $child->shrink,
+        );
     }
 
     private function contentArea(Rect $area): Rect

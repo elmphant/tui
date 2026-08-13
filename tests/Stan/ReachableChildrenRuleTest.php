@@ -21,7 +21,7 @@ final class ReachableChildrenRuleTest extends RuleTestCase
             [
                 [
                     'OptionalChildWidget holds a Widget in $slot but does not implement WidgetContainer, so anything bound inside it is invisible to discovery and cannot take focus.',
-                    15,
+                    16,
                 ],
             ],
         );
@@ -35,7 +35,7 @@ final class ReachableChildrenRuleTest extends RuleTestCase
             [
                 [
                     'OpaqueWidget holds a Widget in $content but does not implement WidgetContainer, so anything bound inside it is invisible to discovery and cannot take focus.',
-                    15,
+                    16,
                 ],
             ],
         );

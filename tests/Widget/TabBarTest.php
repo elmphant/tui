@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -380,7 +381,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function constraintReturnsFlex(): void
     {
-        self::assertSame(1, TabBar::new()->constraint()->flex);
+        self::assertSame(1, TabBar::new()->sizing()->rows->flex);
     }
 
     #[Test]
@@ -5197,9 +5198,9 @@ final class TabBarTest extends TestCase
                 return new static($focused, $this->consumed);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5239,9 +5240,9 @@ final class TabBarTest extends TestCase
                 return new static($this->label, $focused);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5276,9 +5277,9 @@ final class TabBarTest extends TestCase
                 return new static($focused, $this->counter);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(3);
+                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5309,9 +5310,9 @@ final class TabBarTest extends TestCase
                 return new static($focused);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(3);
+                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5343,9 +5344,9 @@ final class TabBarTest extends TestCase
                 return $clone;
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(3);
+                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5368,9 +5369,9 @@ final class TabBarTest extends TestCase
         return new class implements Interactive {
             private int $counter = 0;
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5398,9 +5399,9 @@ final class TabBarTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex($this->weight);
+                return Sizing::of(Constraint::flex($this->weight), Constraint::flex($this->weight));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5416,9 +5417,9 @@ final class TabBarTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::min($this->min);
+                return Sizing::of(Constraint::min($this->min), Constraint::min($this->min));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5436,9 +5437,9 @@ final class TabBarTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return $this->constraint;
+                return Sizing::of($this->constraint, $this->constraint);
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5469,9 +5470,9 @@ final class TabBarTest extends TestCase
                 return new static($this->label, $this->height, $focused, $this->receivedY);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact($this->height);
+                return Sizing::of(Constraint::exact($this->height), Constraint::exact($this->height));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5494,9 +5495,9 @@ final class TabBarTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact($this->height);
+                return Sizing::of(Constraint::exact($this->height), Constraint::exact($this->height));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5519,9 +5520,9 @@ final class TabBarTest extends TestCase
         return new class implements Interactive {
             private int $counter = 0;
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5549,9 +5550,9 @@ final class TabBarTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact($this->height);
+                return Sizing::of(Constraint::exact($this->height), Constraint::exact($this->height));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5579,9 +5580,9 @@ final class TabBarTest extends TestCase
                 return new static($this->expectedY, $focused);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(2);
+                return Sizing::of(Constraint::exact(2), Constraint::exact(2));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5606,9 +5607,9 @@ final class TabBarTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(2);
+                return Sizing::of(Constraint::exact(2), Constraint::exact(2));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5645,9 +5646,9 @@ final class TabBarTest extends TestCase
                 return new static($this->label, $focused);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(3);
+                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5676,9 +5677,9 @@ final class TabBarTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(6);
+                return Sizing::of(Constraint::exact(6), Constraint::exact(6));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5725,9 +5726,9 @@ final readonly class MultiLineTestWidget implements Widget
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact($this->lineCount);
+        return Sizing::of(Constraint::exact($this->lineCount), Constraint::exact($this->lineCount));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -5744,9 +5745,9 @@ final readonly class TabBarCommandWidget implements Interactive
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -5773,9 +5774,9 @@ final readonly class NotAWidgetModel implements Reducer
 
 final readonly class NotAWidgetReturningChild implements Interactive
 {
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

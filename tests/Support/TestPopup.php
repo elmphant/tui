@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Support;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -44,9 +45,9 @@ final class TestPopup implements PointerFloating
         return $this->placement;
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact($this->placement->height);
+        return Sizing::of(Constraint::exact($this->placement->height), Constraint::exact($this->placement->height));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

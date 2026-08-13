@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\ScrollWindow;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\VerticalStack;
 use Elmphant\Tui\Layout\VerticalStackLayout;
 use Elmphant\Tui\Message\KeyMsg;
@@ -150,9 +151,9 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
         return $this->broadcast($message, $area);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     /**

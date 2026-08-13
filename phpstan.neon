@@ -33,6 +33,10 @@ services:
         tags:
             - phpstan.rules.rule
     -
+        class: Elmphant\Tui\Tests\Stan\WidgetDoesNotPublishAnAxisPolicyRule
+        tags:
+            - phpstan.rules.rule
+    -
         class: Elmphant\Tui\Tests\Stan\CloneWithEncapsulationRule
         arguments:
             allowList:

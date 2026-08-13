@@ -15,6 +15,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -1048,9 +1049,9 @@ final class BindingCapturingFocusable implements Focusable, KeybindingsAware
         return new self(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1163,9 +1164,9 @@ final readonly class CountingFocusable implements Focusable
         return new self(count: $this->count, focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1296,9 +1297,9 @@ final readonly class RectCapturingFocusable implements Focusable
         return new self(capturedWidth: $this->capturedWidth, capturedHeight: $this->capturedHeight, focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1354,9 +1355,9 @@ final readonly class UnchangedFocusable implements Focusable
         return new self(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1467,9 +1468,9 @@ final readonly class ClickTrackingFocusable implements Focusable
         return new self(count: $this->count, focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1548,9 +1549,9 @@ final readonly class TabConsumingFocusable implements Focusable
         return new self(tabCount: $this->tabCount, focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1606,9 +1607,9 @@ final readonly class CommandOnClickFocusable implements Focusable
         return new self(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1719,9 +1720,9 @@ final readonly class TabCommandOnlyFocusable implements Focusable
         return new self(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1778,9 +1779,9 @@ final readonly class MarkerFocusable implements Focusable
         return new self(marker: $this->marker, focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult

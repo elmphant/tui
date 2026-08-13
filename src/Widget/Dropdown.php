@@ -13,6 +13,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -120,9 +121,9 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         );
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
     }
 
     /**

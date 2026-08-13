@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Core;
 
 use Closure;
-use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Interactive;
@@ -61,9 +61,9 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
         return $this->id->value;
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return $this->widget->constraint();
+        return $this->widget->sizing();
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

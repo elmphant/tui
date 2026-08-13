@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
@@ -81,9 +82,9 @@ final readonly class Card implements Widget
         return $this->dimmed($dimmed);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact($this->height);
+        return Sizing::of(Constraint::flex(), Constraint::exact($this->height));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

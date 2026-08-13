@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Frame;
@@ -85,9 +86,9 @@ final readonly class MarkedFrame implements PopupFrame
         return new Rect($anchor->x, min($anchor->y + 1, max(0, $viewport->bottom() - 4)), 10, 4);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     /**

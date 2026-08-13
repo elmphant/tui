@@ -37,7 +37,7 @@ final class DropdownTest extends TestCase
     {
         $dropdown = Dropdown::new(Select::new(['json', 'yaml'])->activated('yaml'));
 
-        self::assertSame(1, $dropdown->constraint()->min);
+        self::assertSame(1, $dropdown->sizing()->rows->min);
         self::assertStringContainsString('yaml', self::screen($dropdown)->getLine(0));
     }
 

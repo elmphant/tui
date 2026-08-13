@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Layout;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\VerticalStack;
 use Elmphant\Tui\Layout\VerticalStackLayout;
 use Elmphant\Tui\Rendering\Frame;
@@ -429,11 +430,11 @@ final readonly class CountingStackWidget implements Widget
     ) {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
         ++$this->calls->constraints;
 
-        return $this->layoutConstraint;
+        return Sizing::of($this->layoutConstraint, $this->layoutConstraint);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -450,11 +451,11 @@ final readonly class MeasuredStackWidget implements Widget, MeasureHeight
     ) {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
         ++$this->calls->constraints;
 
-        return $this->layoutConstraint;
+        return Sizing::of($this->layoutConstraint, $this->layoutConstraint);
     }
 
     public function measureHeight(int $width): int
@@ -476,11 +477,11 @@ final readonly class WidthMeasuredStackWidget implements Widget, MeasureHeight
     ) {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
         ++$this->calls->constraints;
 
-        return Constraint::min(1);
+        return Sizing::of(Constraint::min(1), Constraint::min(1));
     }
 
     public function measureHeight(int $width): int

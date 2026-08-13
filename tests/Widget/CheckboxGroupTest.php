@@ -104,7 +104,7 @@ final class CheckboxGroupTest extends TestCase
     public function constraintIncludesLabelAndSpacer(): void
     {
         $group = CheckboxGroup::new(['Cheese', 'Onion', 'Pepper'], 'Toppings');
-        $constraint = $group->constraint();
+        $constraint = $group->sizing()->rows;
 
         self::assertSame(5, $constraint->min);
         self::assertSame(5, $constraint->max);
@@ -114,7 +114,7 @@ final class CheckboxGroupTest extends TestCase
     public function constraintWithoutLabel(): void
     {
         $group = CheckboxGroup::new(['A', 'B']);
-        $constraint = $group->constraint();
+        $constraint = $group->sizing()->rows;
 
         self::assertSame(2, $constraint->min);
         self::assertSame(2, $constraint->max);

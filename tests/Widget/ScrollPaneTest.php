@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -543,9 +544,9 @@ final class ScrollPaneTest extends TestCase
     private function throwingChild(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -565,9 +566,9 @@ final class ScrollPaneTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function isFocused(): bool
@@ -639,9 +640,9 @@ final class ScrollPaneTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function isFocused(): bool
@@ -673,9 +674,9 @@ final class ScrollPaneTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact($this->height);
+                return Sizing::of(Constraint::exact($this->height), Constraint::exact($this->height));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -730,9 +731,9 @@ final readonly class TallyingWidget implements Widget, MeasureHeight
     ) {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::min(1);
+        return Sizing::of(Constraint::min(1), Constraint::min(1));
     }
 
     public function measureHeight(int $width): int

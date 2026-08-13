@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Layout;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\WidgetTree;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -181,9 +182,9 @@ final class WidgetTreeTest extends TestCase
     private function createFlexWidget(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

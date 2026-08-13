@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Rendering;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -476,9 +477,9 @@ final class RenderContextRenderRootTest extends TestCase
     private static function widgetCommittingMidRender(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -491,9 +492,9 @@ final class RenderContextRenderRootTest extends TestCase
     private static function emptyWidget(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -509,9 +510,9 @@ final class RenderContextRenderRootTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -531,9 +532,9 @@ final class RenderContextRenderRootTest extends TestCase
                         return $this->placement;
                     }
 
-                    public function constraint(): Constraint
+                    public function sizing(): Sizing
                     {
-                        return Constraint::exact(1);
+                        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
                     }
 
                     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -554,9 +555,9 @@ final class RenderContextRenderRootTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -580,9 +581,9 @@ final class RenderContextRenderRootTest extends TestCase
                         return $this->placement;
                     }
 
-                    public function constraint(): Constraint
+                    public function sizing(): Sizing
                     {
-                        return Constraint::exact(1);
+                        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
                     }
 
                     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -606,9 +607,9 @@ final class RenderContextRenderRootTest extends TestCase
                 return new Rect($anchor->x, $anchor->y + 3, 10, 1);
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -625,9 +626,9 @@ final class RenderContextRenderRootTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -648,9 +649,9 @@ final class RenderContextRenderRootTest extends TestCase
                         return new Rect($anchor->x, $anchor->y + 3, 10, 1);
                     }
 
-                    public function constraint(): Constraint
+                    public function sizing(): Sizing
                     {
-                        return Constraint::exact(1);
+                        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
                     }
 
                     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -674,9 +675,9 @@ final class RenderContextRenderRootTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -701,9 +702,9 @@ final class RenderContextRenderRootTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -724,9 +725,9 @@ final class RenderContextRenderRootTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -750,9 +751,9 @@ final class RenderContextRenderRootTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             /**
@@ -809,9 +810,9 @@ final class RenderContextRenderRootTest extends TestCase
                 return $this->placement;
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -846,9 +847,9 @@ final class RenderContextRenderRootTest extends TestCase
                 return $this->placement;
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -893,9 +894,9 @@ final class RenderContextRenderRootTest extends TestCase
                 return $this->placement;
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -918,9 +919,9 @@ final class RenderContextRenderRootTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -955,9 +956,9 @@ final class RenderContextRenderRootTest extends TestCase
                         return $this->anchor;
                     }
 
-                    public function constraint(): Constraint
+                    public function sizing(): Sizing
                     {
-                        return Constraint::exact(1);
+                        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
                     }
 
                     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -983,9 +984,9 @@ final class RenderContextRenderRootTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -1012,9 +1013,9 @@ final class RenderContextRenderRootTest extends TestCase
                         return new Rect($anchor->x, $anchor->y + 3, 10, 1);
                     }
 
-                    public function constraint(): Constraint
+                    public function sizing(): Sizing
                     {
-                        return Constraint::exact(1);
+                        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
                     }
 
                     public function render(Frame $frame, Rect $area, RenderContext $context): void

@@ -7,8 +7,8 @@ namespace Elmphant\Tui\Tests\Integration;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -147,9 +147,9 @@ final readonly class SearchBox implements Focusable
         return new self(TextInput::new('Search'));
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return $this->input->constraint();
+        return Sizing::of($this->input->sizing()->rows, $this->input->sizing()->rows);
     }
 
     public function isFocused(): bool

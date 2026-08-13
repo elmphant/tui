@@ -9,9 +9,9 @@ use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentRegistry;
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Layout\WidgetTree;
 use Elmphant\Tui\Rendering\Attr;
@@ -71,7 +71,7 @@ final class ContainerTest extends TestCase
             ->withPadding(Spacing::vertical(1))
             ->withBorder(BorderStyle::Rounded);
 
-        $constraint = $container->constraint();
+        $constraint = $container->sizing()->rows;
 
         self::assertSame(9, $constraint->min);
         self::assertSame(12, $constraint->max);
@@ -83,7 +83,7 @@ final class ContainerTest extends TestCase
     {
         $constraint = Container::around(new ContainerProbe(Constraint::flex()))
             ->withPadding(Spacing::vertical(2))
-            ->constraint();
+            ->sizing()->rows;
 
         self::assertSame(PHP_INT_MAX, $constraint->max);
     }
@@ -95,8 +95,8 @@ final class ContainerTest extends TestCase
 
         $actual = Container::around(new ContainerProbe())
             ->withPadding(Spacing::all(3))
-            ->withConstraint($expected)
-            ->constraint();
+            ->withSizing(Sizing::of(Constraint::flex(), $expected))
+            ->sizing()->rows;
 
         self::assertSame($expected, $actual);
     }
@@ -106,7 +106,7 @@ final class ContainerTest extends TestCase
     {
         $expected = new Constraint(min: 2, max: 8, flex: 3);
 
-        $actual = Container::around(new ContainerProbe($expected))->constraint();
+        $actual = Container::around(new ContainerProbe($expected))->sizing()->rows;
 
         self::assertSame($expected->min, $actual->min);
         self::assertSame($expected->max, $actual->max);
@@ -140,8 +140,8 @@ final class ContainerTest extends TestCase
             ->withPadding(Spacing::only(top: 2, right: 1, bottom: 1, left: 1))
             ->withContentSize(width: 7, height: 2);
 
-        $horizontal = $container->constraintFor(Direction::Horizontal);
-        $vertical = $container->constraintFor(Direction::Vertical);
+        $horizontal = $container->sizing()->columns;
+        $vertical = $container->sizing()->rows;
 
         self::assertSame(9, $horizontal->min);
         self::assertSame(9, $horizontal->max);
@@ -155,8 +155,8 @@ final class ContainerTest extends TestCase
         $container = Container::around(new ContainerProbe(Constraint::flex()->withBasis(12)))
             ->withPadding(Spacing::xy(horizontal: 2, vertical: 1));
 
-        self::assertSame(16, $container->constraintFor(Direction::Horizontal)->basis);
-        self::assertSame(14, $container->constraintFor(Direction::Vertical)->basis);
+        self::assertSame(16, $container->sizing()->columns->basis);
+        self::assertSame(14, $container->sizing()->rows->basis);
     }
 
     #[Test]
@@ -164,7 +164,7 @@ final class ContainerTest extends TestCase
     {
         $container = Container::around(new ContainerProbe(new Constraint(min: 4, max: 40, flex: 1, shrink: 0)));
 
-        self::assertSame(0, $container->constraintFor(Direction::Vertical)->shrink);
+        self::assertSame(0, $container->sizing()->rows->shrink);
     }
 
     #[Test]
@@ -379,7 +379,10 @@ final class ContainerTest extends TestCase
             ->withBorder(BorderStyle::Rounded)
             ->withPadding(Spacing::xy(horizontal: 2, vertical: 1));
 
-        self::assertSame($child->measureWidth() + 2 + 2 + 4, $container->measureWidth());
+        self::assertSame(
+            $child->sizing()->columns->basis + 2 + 2 + 4,
+            $container->sizing()->columns->basis,
+        );
     }
 
     #[Test]
@@ -476,9 +479,9 @@ final class ContainerTest extends TestCase
     private static function widgetDrawingPastItsArea(): Widget
     {
         return new class implements Widget {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -498,9 +501,9 @@ final class ContainerProbe implements Widget
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return $this->size;
+        return Sizing::of($this->size, $this->size);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -514,9 +517,9 @@ final class MeasuringContainerProbe implements Widget, MeasureHeight
 {
     public ?int $measuredWidth = null;
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function measureHeight(int $width): int
@@ -537,9 +540,9 @@ final readonly class StyledContainerProbe implements Widget
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -550,9 +553,9 @@ final readonly class StyledContainerProbe implements Widget
 
 final readonly class EmptyContainerProbe implements Widget
 {
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

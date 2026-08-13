@@ -8,7 +8,6 @@ use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\DirectionalConstraint;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -37,9 +36,9 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         return new self(Direction::Horizontal, ...$children);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function measureHeight(int $width): int
@@ -56,7 +55,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         foreach ($this->children as $index => $child) {
             $childHeight = $child instanceof MeasureHeight
                 ? $child->measureHeight($isVertical ? $width : $columnWidths[$index])
-                : $this->constraintHeight(self::constraintFor($child, Direction::Vertical));
+                : $this->constraintHeight($child->sizing()->rows);
 
             if ($isVertical) {
                 $total += $childHeight;
@@ -135,7 +134,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         $policies = [];
 
         foreach ($this->children as $child) {
-            $constraint = self::constraintFor($child, $this->direction);
+            $constraint = $child->sizing()->on($this->direction);
 
             $policies[] = new ItemPolicy(
                 basis: $constraint->basis ?? $this->measuredBasis($child, $constraint, $acrossExtent),
@@ -171,12 +170,5 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         }
 
         return max(1, $constraint->min);
-    }
-
-    private static function constraintFor(Widget $widget, Direction $direction): Constraint
-    {
-        return $widget instanceof DirectionalConstraint
-            ? $widget->constraintFor($direction)
-            : $widget->constraint();
     }
 }

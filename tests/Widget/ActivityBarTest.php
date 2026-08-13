@@ -27,7 +27,7 @@ final class ActivityBarTest extends TestCase
     #[Test]
     public function constraintIsExactOne(): void
     {
-        self::assertEquals(Constraint::exact(1), ActivityBar::new()->constraint());
+        self::assertEquals(Constraint::exact(1), ActivityBar::new()->sizing()->rows);
     }
 
     #[Test]

@@ -9,12 +9,12 @@ use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Flex;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\WidgetTree;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\MeasureHeight;
-use Elmphant\Tui\Widget\MeasureWidth;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
@@ -616,9 +616,9 @@ final class FlexTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -630,19 +630,14 @@ final class FlexTest extends TestCase
 
     private function widthMeasuredWidget(int $width): Widget
     {
-        return new class($width) implements MeasureWidth, Widget {
+        return new class($width) implements Widget {
             public function __construct(private int $width)
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
-            }
-
-            public function measureWidth(): int
-            {
-                return $this->width;
+                return Sizing::of(Constraint::flex()->withBasis($this->width), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -658,9 +653,9 @@ final class FlexTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function measureHeight(int $width): int
@@ -681,9 +676,9 @@ final class FlexTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return $this->constraint;
+                return Sizing::of($this->constraint, $this->constraint);
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

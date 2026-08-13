@@ -13,6 +13,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -283,9 +284,12 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             && $this->cursorItem() !== null;
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::min(FilterBar::HEIGHT + self::GAP_HEIGHT + 1)->withFlex();
+        return Sizing::of(
+            Constraint::flex(),
+            Constraint::min(FilterBar::HEIGHT + self::GAP_HEIGHT + 1)->withFlex(),
+        );
     }
 
     /**

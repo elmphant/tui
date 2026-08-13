@@ -28,8 +28,8 @@ final class SpinnerTest extends TestCase
     public function constraintIsExactOne(): void
     {
         $spinner = Spinner::new();
-        self::assertSame(1, $spinner->constraint()->min);
-        self::assertSame(1, $spinner->constraint()->max);
+        self::assertSame(1, $spinner->sizing()->rows->min);
+        self::assertSame(1, $spinner->sizing()->rows->max);
     }
 
     #[Test]

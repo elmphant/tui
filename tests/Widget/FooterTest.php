@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
@@ -40,7 +41,7 @@ final class FooterTest extends TestCase
     public function constraintIsExactOne(): void
     {
         $footer = Footer::new();
-        self::assertEquals(Constraint::exact(1), $footer->constraint());
+        self::assertEquals(Constraint::exact(1), $footer->sizing()->rows);
     }
 
     #[Test]
@@ -143,7 +144,7 @@ final class FooterTest extends TestCase
         $footer = Footer::new()
             ->padding(Spacing::vertical(1));
 
-        self::assertEquals(Constraint::exact(3), $footer->constraint());
+        self::assertEquals(Constraint::exact(3), $footer->sizing()->rows);
     }
 
     #[Test]
@@ -228,7 +229,7 @@ final class FooterTest extends TestCase
     public function constraintWithoutPaddingUsesZeroFallback(): void
     {
         $footer = Footer::new();
-        self::assertEquals(Constraint::exact(1), $footer->constraint());
+        self::assertEquals(Constraint::exact(1), $footer->sizing()->rows);
     }
 
     /**
@@ -242,7 +243,7 @@ final class FooterTest extends TestCase
             ->margin(Spacing::vertical(1));
 
         // 1 (content) + 1 (padding top) + 1 (padding bottom) + 1 (margin top) + 1 (margin bottom) = 5
-        self::assertEquals(Constraint::exact(5), $footer->constraint());
+        self::assertEquals(Constraint::exact(5), $footer->sizing()->rows);
     }
 
     /**
@@ -650,7 +651,7 @@ final class FooterTest extends TestCase
             ->margin(Spacing::vertical(1));
 
         // 1 (content) + 1 (margin top) + 1 (margin bottom) = 3
-        self::assertEquals(Constraint::exact(3), $footer->constraint());
+        self::assertEquals(Constraint::exact(3), $footer->sizing()->rows);
     }
 
     /**
@@ -944,9 +945,9 @@ final class FooterTest extends TestCase
                 $this->command = $command;
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function update(Message $message, Rect $area): UpdateResult
@@ -966,9 +967,9 @@ final class FooterTest extends TestCase
     private function createInteractiveReturningSelf(): Interactive
     {
         return new class implements Interactive {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
+                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
             public function update(Message $message, Rect $area): UpdateResult
@@ -989,9 +990,9 @@ final readonly class FooterCommandWidget implements Interactive
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -1010,9 +1011,9 @@ final class FooterAreaCapturingInteractive implements Interactive
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

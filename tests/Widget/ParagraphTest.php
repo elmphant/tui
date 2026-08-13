@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -29,7 +30,7 @@ final class ParagraphTest extends TestCase
     {
         $paragraph = Paragraph::fromText("short\na much longer line\nmid");
 
-        self::assertSame(18, $paragraph->measureWidth());
+        self::assertSame(18, $paragraph->sizing()->columns->basis);
     }
 
     #[Test]
@@ -107,7 +108,7 @@ final class ParagraphTest extends TestCase
     {
         $paragraph = Paragraph::fromText('Hello');
 
-        $constraint = $paragraph->constraint();
+        $constraint = $paragraph->sizing()->rows;
 
         self::assertSame(1, $constraint->flex);
     }
@@ -300,12 +301,12 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
-    public function customConstraintOverridesDefault(): void
+    public function customSizingOverridesDefault(): void
     {
         $paragraph = Paragraph::fromText('Hello')
-            ->withConstraint(Constraint::exact(5));
+            ->withSizing(Sizing::of(Constraint::flex(), Constraint::exact(5)));
 
-        $constraint = $paragraph->constraint();
+        $constraint = $paragraph->sizing()->rows;
 
         self::assertSame(5, $constraint->min);
         self::assertSame(5, $constraint->max);

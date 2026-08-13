@@ -34,7 +34,7 @@ final class CheckboxTest extends TestCase
     public function constraintReturnsExactOne(): void
     {
         $checkbox = Checkbox::new('Accept');
-        $constraint = $checkbox->constraint();
+        $constraint = $checkbox->sizing()->rows;
         self::assertSame(1, $constraint->min);
         self::assertSame(1, $constraint->max);
     }

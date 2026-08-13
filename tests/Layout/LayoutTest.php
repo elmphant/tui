@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout;
 
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\DirectionalConstraint;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Text;
@@ -94,9 +93,9 @@ final class LayoutTest extends TestCase
     public function aTallChildIsNotWideBecauseOfIt(): void
     {
         $tall = new class implements Widget, MeasureHeight {
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function measureHeight(int $width): int
@@ -113,19 +112,12 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
-    public function directionalChildrenReceiveTheParentMainAxis(): void
+    public function eachAxisIsTakenFromTheAnswerForThatAxis(): void
     {
-        $widget = new class implements Widget, DirectionalConstraint {
-            public function constraint(): Constraint
+        $widget = new class implements Widget {
+            public function sizing(): Sizing
             {
-                return Constraint::exact(1);
-            }
-
-            public function constraintFor(Direction $direction): Constraint
-            {
-                return $direction === Direction::Horizontal
-                    ? Constraint::exact(7)
-                    : Constraint::exact(3);
+                return Sizing::of(Constraint::exact(7), Constraint::exact(3));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -171,7 +163,7 @@ final class LayoutTest extends TestCase
     public function layoutConstraintIsFlex(): void
     {
         $layout = Layout::vertical(Text::new('test'));
-        self::assertSame(1, $layout->constraint()->flex);
+        self::assertSame(1, $layout->sizing()->rows->flex);
     }
 
     #[Test]
@@ -184,9 +176,9 @@ final class LayoutTest extends TestCase
                 {
                 }
 
-                public function constraint(): Constraint
+                public function sizing(): Sizing
                 {
-                    return Constraint::flex();
+                    return Sizing::of(Constraint::flex(), Constraint::flex());
                 }
 
                 public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -219,9 +211,9 @@ final class LayoutTest extends TestCase
                 {
                 }
 
-                public function constraint(): Constraint
+                public function sizing(): Sizing
                 {
-                    return Constraint::flex();
+                    return Sizing::of(Constraint::flex(), Constraint::flex());
                 }
 
                 public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -634,9 +626,9 @@ final class LayoutTest extends TestCase
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return $this->constraint;
+                return Sizing::of($this->constraint, $this->constraint);
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -648,23 +640,19 @@ final class LayoutTest extends TestCase
 
     private function createDirectionalWidget(int $horizontalSize, int $verticalSize): Widget
     {
-        return new class($horizontalSize, $verticalSize) implements Widget, DirectionalConstraint {
+        return new class($horizontalSize, $verticalSize) implements Widget {
             public function __construct(
                 private readonly int $horizontalSize,
                 private readonly int $verticalSize,
             ) {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact($this->verticalSize);
-            }
-
-            public function constraintFor(Direction $direction): Constraint
-            {
-                return Constraint::exact($direction === Direction::Horizontal
-                    ? $this->horizontalSize
-                    : $this->verticalSize);
+                return Sizing::of(
+                    Constraint::exact($this->horizontalSize),
+                    Constraint::exact($this->verticalSize),
+                );
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -680,9 +668,9 @@ final class LayoutTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::flex();
+                return Sizing::of(Constraint::flex(), Constraint::flex());
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -699,9 +687,9 @@ final class LayoutTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return Constraint::exact($this->size);
+                return Sizing::of(Constraint::exact($this->size), Constraint::exact($this->size));
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -717,9 +705,9 @@ final class LayoutTest extends TestCase
             {
             }
 
-            public function constraint(): Constraint
+            public function sizing(): Sizing
             {
-                return $this->constraint;
+                return Sizing::of($this->constraint, $this->constraint);
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

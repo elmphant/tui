@@ -46,7 +46,7 @@ final class TableTest extends TestCase
     public function constraintReturnsFlex(): void
     {
         $table = $this->createTable();
-        self::assertSame(1, $table->constraint()->flex);
+        self::assertSame(1, $table->sizing()->rows->flex);
     }
 
     #[Test]

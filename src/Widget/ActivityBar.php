@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
@@ -49,9 +50,9 @@ final readonly class ActivityBar implements Interactive
         return $this->cloneWith(speed: max(0.01, $speed));
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

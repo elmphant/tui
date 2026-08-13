@@ -11,6 +11,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -126,9 +127,9 @@ final readonly class RadioRow implements OptionRow
         return $this->cloneWith(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::min(1);
+        return Sizing::of(Constraint::flex(), Constraint::min(1));
     }
 
     public function measureHeight(int $width): int

@@ -169,7 +169,9 @@ $content = Flex::row()
     ->add($details, new Constraint(min: 22, flex: 1, basis: 28));
 ```
 
-Every child is sized by the same `Constraint` the stacking layouts use.
+Every child is sized by the same `Constraint` the stacking layouts use — here for
+the row's own axis. A widget asked how big it wants to be answers with a `Sizing`,
+which pairs one `Constraint` per axis so neither side has to guess which was meant.
 `basis` is the preferred main-axis size used when deciding where to wrap.
 `flex` and `shrink` are relative weights; `min` and `max` bound normal
 resizing. If declared minimums cannot fit, terminal bounds take precedence so
@@ -188,7 +190,7 @@ Wrap any widget in an immutable `Container` when spacing and presentation
 belong to the composition rather than the widget itself:
 
 ```php
-use Elmphant\Tui\Layout\{Constraint, Spacing};
+use Elmphant\Tui\Layout\{Constraint, Sizing, Spacing};
 use Elmphant\Tui\Rendering\{BorderStyle, Color, Style};
 use Elmphant\Tui\Widget\{Alignment, Container, VerticalAlignment};
 
@@ -197,11 +199,11 @@ $card = Container::around($content)
     ->withMargin(Spacing::only(bottom: 1))
     ->withStyle(new Style(background: Color::hex('20242C')))
     ->withBorder(BorderStyle::Rounded)
-    ->withConstraint(Constraint::min(5));
+    ->withSizing(Sizing::of(Constraint::flex(), Constraint::min(5)));
 ```
 
 `Container` supports padding, margin, inherited foreground/background style,
-borders, outer main-axis constraints, and explicitly sized/aligned content. For
+borders, an outer size for both axes, and explicitly sized/aligned content. For
 example, `withContentWidth(30)->withHorizontalAlignment(Alignment::Center)`
 centers a 30-column child area, while `withContentHeight(3)` and
 `VerticalAlignment` do the same vertically.
@@ -553,7 +555,7 @@ view animates without `Cmd::tick()`, bindings, or extra state.
 
 Three levels, each extending the previous:
 
-- **Widget** — `constraint()` + `render(buffer, rect, context)` — passive rendering only
+- **Widget** — `sizing()` + `render(buffer, rect, context)` — passive rendering only
 - **Interactive** — adds `update(message, rect)` returning `UpdateResult` — responds to input
 - **Focusable** — adds `isFocused()` + `withFocus(bool)` — can receive keyboard focus
 

@@ -15,6 +15,7 @@ use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -79,9 +80,9 @@ final readonly class GlobalObserverWidget implements Focusable, KeybindingsAware
         return $this->cloneWith(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

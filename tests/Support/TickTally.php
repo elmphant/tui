@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Support;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
@@ -23,9 +24,9 @@ final readonly class TickTally implements Interactive
     {
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::exact(1);
+        return Sizing::of(Constraint::exact(1), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

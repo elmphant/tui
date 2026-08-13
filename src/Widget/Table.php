@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\ScrollWindow;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -213,9 +214,9 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $this->cloneWith(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -280,7 +281,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         $constraints = [];
         foreach ($this->columns as $column) {
-            $constraints[] = $column->constraint();
+            $constraints[] = $column->width();
         }
 
         return Constraint::allocate($constraints, $totalWidth);

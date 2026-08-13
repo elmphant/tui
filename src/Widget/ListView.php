@@ -15,6 +15,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\RowExtents;
 use Elmphant\Tui\Layout\RowIndex;
 use Elmphant\Tui\Layout\ScrollWindow;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -157,9 +158,9 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         return $this->cloneWith(focused: $focused);
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     public function update(Message $message, Rect $area): UpdateResult

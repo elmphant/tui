@@ -295,9 +295,9 @@ final class ButtonTest extends TestCase
     }
 
     #[Test]
-    public function measureWidthCoversTheLabelBorderAndPadding(): void
+    public function theWantedWidthCoversTheLabelBorderAndPadding(): void
     {
-        self::assertSame(7, Button::new('Run', new TestMessage('run'))->measureWidth());
+        self::assertSame(7, Button::new('Run', new TestMessage('run'))->sizing()->columns->basis);
     }
 
     #[Test]
@@ -315,7 +315,7 @@ final class ButtonTest extends TestCase
     #[Test]
     public function constraintReturnsExactThree(): void
     {
-        $constraint = Button::new('Run', new TestMessage('run'))->constraint();
+        $constraint = Button::new('Run', new TestMessage('run'))->sizing()->rows;
 
         self::assertSame(3, $constraint->min);
         self::assertSame(3, $constraint->max);

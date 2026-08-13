@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Axis\Remainder;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\SplitState;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -133,9 +134,9 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
         return null;
     }
 
-    public function constraint(): Constraint
+    public function sizing(): Sizing
     {
-        return Constraint::flex();
+        return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
     /**

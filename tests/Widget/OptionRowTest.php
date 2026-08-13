@@ -96,7 +96,7 @@ final class OptionRowTest extends TestCase
     {
         self::assertSame(1, $row->measureHeight(80), 'three short options sit on one row');
         self::assertGreaterThan(1, $row->measureHeight(12), 'and take more rows once the width runs out');
-        self::assertSame(1, $row->constraint()->min, 'one row is the floor, the measurement raises it');
+        self::assertSame(1, $row->sizing()->rows->min, 'one row is the floor, the measurement raises it');
     }
 
     #[Test]
