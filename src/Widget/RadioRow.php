@@ -129,7 +129,10 @@ final readonly class RadioRow implements OptionRow
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::min(1));
+        return Sizing::of(
+            Constraint::flex()->withBasis(OptionRowLayout::width($this->entries())),
+            Constraint::min(1),
+        );
     }
 
     public function measureHeight(int $width): int

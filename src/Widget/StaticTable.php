@@ -94,7 +94,10 @@ final class StaticTable implements Widget, MeasureHeight
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::min(1));
+        return Sizing::of(
+            Constraint::flex()->withBasis(max($this->minWidth, self::widthOf($this->demands()))),
+            Constraint::min(1),
+        );
     }
 
     public function measureHeight(int $width): int

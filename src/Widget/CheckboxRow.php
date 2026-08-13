@@ -128,7 +128,12 @@ final readonly class CheckboxRow implements OptionRow
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::min(1));
+        return Sizing::of(
+            Constraint::flex()->withBasis(
+                CharWidth::stringWidth($this->prefix) + OptionRowLayout::width($this->entries()),
+            ),
+            Constraint::min(1),
+        );
     }
 
     public function measureHeight(int $width): int

@@ -41,6 +41,26 @@ final class OptionRowLayout
     }
 
     /**
+     * The room the entries want on one line, gaps included. Laid out unbounded
+     * so the answer comes from placements() rather than a second copy of its
+     * spacing rules.
+     *
+     * @param list<string> $entries
+     */
+    public static function width(array $entries): int
+    {
+        $placements = self::placements($entries, new Rect(0, 0, PHP_INT_MAX, 1));
+
+        if ($placements === []) {
+            return 0;
+        }
+
+        [$x, , $width] = end($placements);
+
+        return $x + $width;
+    }
+
+    /**
      * @param list<string> $entries
      */
     public static function height(array $entries, int $width): int

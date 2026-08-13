@@ -52,7 +52,9 @@ final readonly class ActivityBar implements Interactive
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+        $label = $this->label === '' ? 0 : CharWidth::stringWidth($this->label) + 1;
+
+        return Sizing::of(Constraint::flex()->withBasis($label + $this->barWidth), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

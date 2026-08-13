@@ -193,7 +193,10 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(count($this->options) + $this->rowOffset()));
+        return Sizing::of(
+            Constraint::flex()->withBasis(max($this->popupWidth(), CharWidth::stringWidth($this->label))),
+            Constraint::exact(count($this->options) + $this->rowOffset()),
+        );
     }
 
     public function update(Message $message, Rect $area): UpdateResult

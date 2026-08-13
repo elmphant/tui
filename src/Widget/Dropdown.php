@@ -123,7 +123,10 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+        return Sizing::of(
+            Constraint::flex()->withBasis(CharWidth::stringWidth(rtrim($this->caption()))),
+            Constraint::exact(1),
+        );
     }
 
     /**

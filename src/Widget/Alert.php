@@ -65,7 +65,10 @@ final readonly class Alert implements Widget
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+        return Sizing::of(
+            Constraint::flex()->withBasis(self::PADDING + CharWidth::stringWidth($this->message)),
+            Constraint::exact(1),
+        );
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
