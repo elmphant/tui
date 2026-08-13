@@ -260,8 +260,8 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
     }
 
     /**
-     * A slot asking for neither a size nor a share is asking for its content, so
-     * a column measures the child to find out how much that is.
+     * A slot that declares no basis is asking for its content, so a column
+     * measures the child to find out how much that is.
      */
     private function policyFor(FlexItem $item, ?int $acrossExtent): ItemPolicy
     {
@@ -270,7 +270,6 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 
         if ($this->direction === Direction::Horizontal
             || $constraint->basis !== null
-            || $constraint->flex !== 0
             || null === $acrossExtent || $acrossExtent < 1
         ) {
             return $policy;

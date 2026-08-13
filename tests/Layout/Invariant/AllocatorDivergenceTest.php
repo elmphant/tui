@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Layout\Invariant;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
+use Elmphant\Tui\Layout\Flex;
 use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
@@ -124,6 +125,21 @@ final class AllocatorDivergenceTest extends TestCase
         );
 
         self::assertSame([9, 1], $heights);
+    }
+
+    #[Test]
+    public function aFlexColumnGivesTheSameTwoParagraphsTheHeightTheirLinesNeed(): void
+    {
+        $column = Flex::column()
+            ->add(self::paragraphOf(3))
+            ->add(self::paragraphOf(7));
+
+        $heights = self::extentsAlong(
+            self::rectsOf($column->computeChildRects(new Rect(0, 0, 40, 10))),
+            Direction::Vertical,
+        );
+
+        self::assertSame([3, 7], $heights);
     }
 
     #[Test]

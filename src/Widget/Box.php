@@ -140,22 +140,11 @@ final readonly class Box implements Widget, WidgetContainer
             $block = $block->padding($this->padding);
         }
 
-        $contentArea = $block->inner($area);
-        $childY = $contentArea->y;
-
-        $frame->pushClip($contentArea);
+        $frame->pushClip($this->contentArea($area));
 
         try {
-            foreach ($this->children as $child) {
-                if ($childY >= $contentArea->bottom()) {
-                    break;
-                }
-
-                $childHeight = max(1, $child->sizing()->rows->min);
-                $available = $contentArea->bottom() - $childY;
-                $childArea = new Rect($contentArea->x, $childY, $contentArea->width, min($childHeight, $available));
+            foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
                 $child->render($frame, $childArea, $context);
-                $childY += $childHeight;
             }
         } finally {
             $frame->popClip();

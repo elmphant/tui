@@ -81,7 +81,12 @@ final readonly class Checkbox implements Focusable, KeybindingsAware
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+        $mark = $this->checked ? self::CHECKED_MARK : self::UNCHECKED_MARK;
+
+        return Sizing::of(
+            Constraint::flex()->withBasis(CharWidth::stringWidth($mark) + CharWidth::stringWidth($this->label)),
+            Constraint::exact(1),
+        );
     }
 
     public function update(Message $message, Rect $area): UpdateResult

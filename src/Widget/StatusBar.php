@@ -45,7 +45,7 @@ final readonly class StatusBar implements Widget
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+        return Sizing::of(Constraint::flex()->withBasis($this->inkWidth()), Constraint::exact(1));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -61,6 +61,25 @@ final readonly class StatusBar implements Widget
         }
 
         $frame->putStyled($area->x, $area->y, CharWidth::truncateToWidth($this->content, $area->width), $barStyle);
+    }
+
+    /**
+     * The bar paints its style across the whole row, so its width is the ink:
+     * the last hint's trailing pad separates it from a next one that is not there.
+     */
+    private function inkWidth(): int
+    {
+        if ($this->hints === []) {
+            return CharWidth::stringWidth($this->content);
+        }
+
+        $width = 0;
+
+        foreach ($this->hints as [$key, $description]) {
+            $width += CharWidth::stringWidth(' ' . $key . '  ' . $description . '  ');
+        }
+
+        return $width - 2;
     }
 
     private function renderHints(Frame $frame, Rect $area, Style $barStyle, Theme $theme): void
