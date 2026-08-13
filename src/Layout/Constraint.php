@@ -67,6 +67,15 @@ final readonly class Constraint
     }
 
     /**
+     * The size the content wants, before any sharing out. A null basis means
+     * "measure me", which only the vertical axis has a device for.
+     */
+    public function withBasis(int $basis): self
+    {
+        return new self(min: $this->min, max: $this->max, flex: $this->flex, basis: $basis, shrink: $this->shrink);
+    }
+
+    /**
      * As tall or wide as what the child holds, and no further. A child that
      * cannot measure itself has no content to go by and stays at nothing.
      */

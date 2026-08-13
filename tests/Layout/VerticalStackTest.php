@@ -70,6 +70,18 @@ final class VerticalStackTest extends TestCase
     }
 
     #[Test]
+    public function aDeclaredStartingSizeIsServedBeforeTheSharingOut(): void
+    {
+        $calls = new VerticalStackCalls();
+        $children = [
+            new CountingStackWidget(Constraint::flex()->withBasis(10), $calls),
+            new CountingStackWidget(Constraint::flex(), $calls),
+        ];
+
+        self::assertSame([17, 7], $this->heightsOf($children, 80, 24));
+    }
+
+    #[Test]
     public function assignsOneRowWhenNoSpaceRemainsForFlexChildren(): void
     {
         $calls = new VerticalStackCalls();

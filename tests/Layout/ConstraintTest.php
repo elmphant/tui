@@ -107,6 +107,18 @@ final class ConstraintTest extends TestCase
     }
 
     #[Test]
+    public function withBasisDeclaresTheStartingSizeAndKeepsTheRest(): void
+    {
+        $constraint = (new Constraint(min: 2, max: 40, flex: 3, shrink: 0))->withBasis(12);
+
+        self::assertSame(12, $constraint->basis);
+        self::assertSame(2, $constraint->min);
+        self::assertSame(40, $constraint->max);
+        self::assertSame(3, $constraint->flex);
+        self::assertSame(0, $constraint->shrink);
+    }
+
+    #[Test]
     public function exactWithZero(): void
     {
         $constraint = Constraint::exact(0);

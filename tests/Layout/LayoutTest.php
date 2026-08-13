@@ -12,6 +12,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\DirectionalConstraint;
+use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
@@ -87,6 +88,28 @@ final class LayoutTest extends TestCase
 
         self::assertSame(9, $placements[0][1]->width);
         self::assertSame(5, $placements[1][1]->width);
+    }
+
+    #[Test]
+    public function aTallChildIsNotWideBecauseOfIt(): void
+    {
+        $tall = new class implements Widget, MeasureHeight {
+            public function constraint(): Constraint
+            {
+                return Constraint::flex();
+            }
+
+            public function measureHeight(int $width): int
+            {
+                return 8;
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+            }
+        };
+
+        self::assertSame([10, 10], Layout::horizontal($tall, $this->createFlexWidget('x'))->sizesFor(20, 10));
     }
 
     #[Test]

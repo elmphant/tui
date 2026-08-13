@@ -80,20 +80,14 @@ final class VerticalStack
      */
     private static function resolve(array $children, int $availableWidth, int $availableHeight): array
     {
-        /** @var list<int> $heights */
-        $heights = [];
         /** @var list<Constraint> $constraints */
         $constraints = [];
-        /** @var array<int, int> $flexWeights */
-        $flexWeights = [];
-        $fixedTotal = 0;
-        $totalFlex = 0;
         $hasWidthAwareChildren = false;
 
         /** @var list<int> $floors */
         $floors = [];
 
-        foreach ($children as $index => $child) {
+        foreach ($children as $child) {
             $constraint = $child->constraint();
             $constraints[] = $constraint;
             $isFixed = $constraint->min === $constraint->max;
@@ -104,18 +98,11 @@ final class VerticalStack
             // were already given, and the stack reports an overflow it does not
             // have.
             $floor = $constraint->min;
-            if (!$isFixed && $availableWidth > 0 && $child instanceof MeasureHeight) {
+            if (null === $constraint->basis && !$isFixed && $availableWidth > 0 && $child instanceof MeasureHeight) {
                 $floor = max($floor, $child->measureHeight($availableWidth));
             }
 
             $floors[] = $floor;
-            $heights[] = $floor;
-            $fixedTotal += $floor;
-
-            if (!$isFixed && !($constraint->min > 0 && $constraint->flex === 0)) {
-                $flexWeights[$index] = max(1, $constraint->flex);
-                $totalFlex += $flexWeights[$index];
-            }
         }
 
         $policies = [];
@@ -123,7 +110,7 @@ final class VerticalStack
             $floor = $floors[$index];
 
             $policies[] = new ItemPolicy(
-                basis: $floor,
+                basis: $constraint->basis ?? $floor,
                 min: $floor,
                 max: max($floor, $constraint->max),
                 grow: $constraint->flex,

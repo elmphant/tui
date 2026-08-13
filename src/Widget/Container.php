@@ -129,15 +129,13 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         $child = $this->child instanceof DirectionalConstraint
             ? $this->child->constraintFor($direction)
             : $this->child->constraint();
-        $maximum = match ($child->max <=> PHP_INT_MAX - $overhead) {
-            1 => PHP_INT_MAX,
-            default => $child->max + $overhead,
-        };
 
         return new Constraint(
             min: $child->min + $overhead,
-            max: $maximum,
+            max: self::grownBy($child->max, $overhead),
             flex: $child->flex,
+            basis: $child->basis === null ? null : self::grownBy($child->basis, $overhead),
+            shrink: $child->shrink,
         );
     }
 
@@ -300,6 +298,11 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         return ($this->margin === null ? 0 : $this->margin->top + $this->margin->bottom)
             + ($this->padding === null ? 0 : $this->padding->top + $this->padding->bottom)
             + ($this->border === null ? 0 : 2);
+    }
+
+    private static function grownBy(int $size, int $overhead): int
+    {
+        return $size > PHP_INT_MAX - $overhead ? PHP_INT_MAX : $size + $overhead;
     }
 
     private static function naturalHeight(Constraint $constraint): int

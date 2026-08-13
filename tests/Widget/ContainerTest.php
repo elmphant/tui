@@ -150,6 +150,24 @@ final class ContainerTest extends TestCase
     }
 
     #[Test]
+    public function theChildsWantedSizeSurvivesTheOverheadAroundIt(): void
+    {
+        $container = Container::around(new ContainerProbe(Constraint::flex()->withBasis(12)))
+            ->withPadding(Spacing::xy(horizontal: 2, vertical: 1));
+
+        self::assertSame(16, $container->constraintFor(Direction::Horizontal)->basis);
+        self::assertSame(14, $container->constraintFor(Direction::Vertical)->basis);
+    }
+
+    #[Test]
+    public function theChildsRefusalToShrinkSurvivesTheOverheadAroundIt(): void
+    {
+        $container = Container::around(new ContainerProbe(new Constraint(min: 4, max: 40, flex: 1, shrink: 0)));
+
+        self::assertSame(0, $container->constraintFor(Direction::Vertical)->shrink);
+    }
+
+    #[Test]
     public function itResolvesMarginBorderPaddingAndCenteredContentOnce(): void
     {
         $child = new ContainerProbe();

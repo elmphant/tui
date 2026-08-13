@@ -149,9 +149,14 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         return Allocator::resolve($policies, $totalSpace)->sizes;
     }
 
+    /**
+     * `MeasureHeight` answers rows, so it can only fill in the basis of a
+     * vertical stack; across a row it would report a height as a width.
+     */
     private function measuredBasis(Widget $child, Constraint $constraint, ?int $acrossExtent): int
     {
         return match (true) {
+            $this->direction === Direction::Horizontal,
             null === $acrossExtent || $acrossExtent < 1,
             $constraint->min === $constraint->max,
             !$child instanceof MeasureHeight => $constraint->min,
