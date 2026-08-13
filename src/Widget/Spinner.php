@@ -10,6 +10,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
@@ -49,7 +50,7 @@ final readonly class Spinner implements Interactive
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+        return Sizing::of(Constraint::flex()->withBasis($this->inkWidth()), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -73,5 +74,20 @@ final readonly class Spinner implements Interactive
         if ($this->label !== '') {
             $frame->putStyled($area->x + $width + 1, $area->y, $this->label, $context->theme->base);
         }
+    }
+
+    /**
+     * The widest frame rather than the current one: a width that changed as it
+     * animated would shift whatever sits beside it every tick.
+     */
+    private function inkWidth(): int
+    {
+        $glyph = 0;
+
+        foreach ($this->style->frames() as $character) {
+            $glyph = max($glyph, CharWidth::stringWidth($character));
+        }
+
+        return $this->label === '' ? $glyph : $glyph + 1 + CharWidth::stringWidth($this->label);
     }
 }

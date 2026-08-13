@@ -129,7 +129,10 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(count($this->options)));
+        return Sizing::of(
+            Constraint::flex()->withBasis($this->popupWidth()),
+            Constraint::exact(count($this->options)),
+        );
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
