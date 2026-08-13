@@ -4,21 +4,66 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Api;
 
+use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Flex;
+use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\SplitState;
+use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\ActivityBar;
+use Elmphant\Tui\Widget\Alert;
+use Elmphant\Tui\Widget\Box;
+use Elmphant\Tui\Widget\Button;
+use Elmphant\Tui\Widget\Card;
 use Elmphant\Tui\Widget\Checkbox;
+use Elmphant\Tui\Widget\CheckboxGroup;
+use Elmphant\Tui\Widget\CheckboxRow;
+use Elmphant\Tui\Widget\Column;
+use Elmphant\Tui\Widget\Container;
+use Elmphant\Tui\Widget\Dropdown;
+use Elmphant\Tui\Widget\DropdownPopup;
+use Elmphant\Tui\Widget\FilterableCheckboxGroup;
+use Elmphant\Tui\Widget\FilterableList;
+use Elmphant\Tui\Widget\FilterableTable;
+use Elmphant\Tui\Widget\FloatTarget;
+use Elmphant\Tui\Widget\FocusGutter;
+use Elmphant\Tui\Widget\Footer;
+use Elmphant\Tui\Widget\Header;
+use Elmphant\Tui\Widget\ListView;
+use Elmphant\Tui\Widget\Modal;
+use Elmphant\Tui\Widget\Overlay;
+use Elmphant\Tui\Widget\Panel;
+use Elmphant\Tui\Widget\Paragraph;
+use Elmphant\Tui\Widget\PositionedOverlay;
+use Elmphant\Tui\Widget\ProgressBar;
+use Elmphant\Tui\Widget\Radio;
+use Elmphant\Tui\Widget\RadioRow;
+use Elmphant\Tui\Widget\ScrollPane;
 use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\Separator;
+use Elmphant\Tui\Widget\SimpleListItem;
 use Elmphant\Tui\Widget\Spacer;
 use Elmphant\Tui\Widget\Spinner;
+use Elmphant\Tui\Widget\Split;
+use Elmphant\Tui\Widget\StaticTable;
 use Elmphant\Tui\Widget\StatusBar;
+use Elmphant\Tui\Widget\TabBar;
+use Elmphant\Tui\Widget\Table;
+use Elmphant\Tui\Widget\TabPage;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ReflectionClass;
+use SplFileInfo;
 
 /**
  * A bar slot is placed at the width its content declares, so a widget that
@@ -32,6 +77,38 @@ final class IntrinsicWidthTest extends TestCase
     private const GENEROUS_HEIGHT = 12;
     private const NARROW_WIDTH = 17;
 
+    /**
+     * The classification is only worth anything if it is exhaustive: an
+     * unclassified widget reports no width and would silently vanish from a bar
+     * slot. So the lists have to cover every widget in src, and a new one fails
+     * here until somebody decides which kind it is.
+     */
+    #[Test]
+    public function everyWidgetIsClassified(): void
+    {
+        $classified = [];
+
+        $kinds = [
+            self::contentSizedWidgets(),
+            self::widgetsPreferringAWidth(),
+            self::rowTakers(),
+            self::proportionalWidgets(),
+            self::fillOnlyWidgets(),
+            self::spaceReservers(),
+        ];
+
+        foreach ($kinds as $kind) {
+            foreach ($kind as [$widget]) {
+                $classified[$widget::class] = true;
+            }
+        }
+
+        $unclassified = array_values(array_diff(self::widgetClasses(), array_keys($classified)));
+        sort($unclassified);
+
+        self::assertSame([], $unclassified, "Every Widget needs a width kind:\n" . implode("\n", $unclassified));
+    }
+
     #[Test]
     #[DataProvider('contentSizedWidgets')]
     public function aContentSizedWidgetDeclaresTheWidthItPaints(Widget $widget): void
@@ -41,6 +118,90 @@ final class IntrinsicWidthTest extends TestCase
             self::declaredWidth($widget),
             'declared width must be the width it draws',
         );
+    }
+
+    /**
+     * A width it would rather have, and decoration that stretches to whatever it
+     * is actually given — a Button's border reaches the edge however wide the
+     * area is. So its ink is not its content, and a slot placing it reads the
+     * declaration instead.
+     */
+    #[Test]
+    #[DataProvider('widgetsPreferringAWidth')]
+    public function aWidgetPreferringAWidthStillPaintsWhatItIsGiven(Widget $widget): void
+    {
+        self::assertGreaterThan(0, self::declaredWidth($widget), 'it has a width it prefers');
+        self::assertSame(self::GENEROUS_WIDTH, self::inkWidth($widget, self::GENEROUS_WIDTH));
+        self::assertSame(self::NARROW_WIDTH, self::inkWidth($widget, self::NARROW_WIDTH));
+    }
+
+    /**
+     * @return iterable<string, array{Widget}>
+     */
+    public static function widgetsPreferringAWidth(): iterable
+    {
+        yield 'Button' => [Button::new('Run', QuitMsg::Quit)];
+    }
+
+    /**
+     * A share of the room rather than all of it or a fixed amount of it, so it
+     * grows with the area without ever reaching the edge. A slot cannot place one
+     * by width: there is no width until the area is known.
+     */
+    #[Test]
+    #[DataProvider('proportionalWidgets')]
+    public function aProportionalWidgetTakesAShareOfTheRoom(Widget $widget): void
+    {
+        self::assertSame(0, self::declaredWidth($widget), 'it has no width of its own');
+
+        $wide = self::inkWidth($widget, self::GENEROUS_WIDTH);
+
+        self::assertGreaterThan(self::inkWidth($widget, self::NARROW_WIDTH), $wide, 'it grows with the room');
+        self::assertLessThan(self::GENEROUS_WIDTH, $wide, 'without ever filling it');
+    }
+
+    /**
+     * @return iterable<string, array{Widget}>
+     */
+    public static function proportionalWidgets(): iterable
+    {
+        yield 'Modal' => [Modal::new('title', Text::new('body'))];
+        yield 'Header' => [Header::new('title')];
+        yield 'FilterableTable' => [FilterableTable::new(['A'], [['1']])];
+    }
+
+    /**
+     * A field takes the row it is given and writes into part of it. Sizing one to
+     * its own text is not an option: the caret sits a column past the last
+     * character, so a field exactly as wide as its content scrolls by one and
+     * hides its own first letter. Its ink therefore does not grow with the room,
+     * which is what separates it from a widget that fills.
+     */
+    #[Test]
+    #[DataProvider('rowTakers')]
+    public function aRowTakerDeclaresNothingAndItsInkIgnoresTheRoom(Widget $widget): void
+    {
+        self::assertSame(0, self::declaredWidth($widget), 'it has no width of its own');
+        self::assertSame(
+            self::inkWidth($widget, self::NARROW_WIDTH),
+            self::inkWidth($widget, self::GENEROUS_WIDTH),
+            'and paints the same either way',
+        );
+    }
+
+    /**
+     * @return iterable<string, array{Widget}>
+     */
+    public static function rowTakers(): iterable
+    {
+        yield 'TextInput' => [TextInput::new()->withValue('typed')];
+        yield 'FocusGutter' => [FocusGutter::around(TextInput::new()->withValue('typed'))];
+        yield 'Table' => [Table::new([Column::new('A', Constraint::flex())], [['x']])];
+        yield 'FilterableCheckboxGroup' => [FilterableCheckboxGroup::new(['alpha'])];
+        yield 'Footer' => [Footer::new()];
+        yield 'ListView' => [ListView::new([new SimpleListItem('alpha')])];
+        yield 'FilterableList' => [FilterableList::new([new SimpleListItem('alpha')])];
+        yield 'Component' => [Component::bind('field', TextInput::new()->withValue('typed'), static fn (object $app, object $widget): object => $app)];
     }
 
     /**
@@ -64,6 +225,18 @@ final class IntrinsicWidthTest extends TestCase
     public static function fillOnlyWidgets(): iterable
     {
         yield 'Separator' => [Separator::new()];
+        yield 'Panel' => [Panel::new()];
+        yield 'Box' => [Box::new()];
+        yield 'Card' => [Card::new('title', 'body')];
+        yield 'ProgressBar' => [ProgressBar::new()];
+        yield 'TabBar' => [TabBar::new()->withTabs([new TabPage('one')])];
+        yield 'PositionedOverlay' => [PositionedOverlay::at(0, 0)->content(Separator::new())];
+        yield 'DropdownPopup' => [DropdownPopup::of(Select::new(['alpha']), new FloatTarget())];
+        yield 'Layout' => [Layout::vertical(Separator::new())];
+        yield 'Flex' => [Flex::row()->add(Separator::new())];
+        yield 'ScrollPane' => [ScrollPane::of(Separator::new())];
+        yield 'Overlay' => [Overlay::new(Separator::new(), Separator::new())];
+        yield 'Split' => [Split::row(new SplitState([1, 1]), Separator::new(), Separator::new())];
     }
 
     /**
@@ -98,6 +271,52 @@ final class IntrinsicWidthTest extends TestCase
         yield 'StatusBar' => [StatusBar::new('ready')];
         yield 'Spinner' => [Spinner::new('loading')];
         yield 'Select' => [Select::new(['short', 'a much longer option'])];
+        yield 'Alert' => [Alert::warning('disk almost full')];
+        yield 'Radio' => [Radio::new(['short', 'a much longer option'])];
+        yield 'Radio with a label wider than its options' => [Radio::new(['yes', 'no'], 'a considerably longer label')];
+        yield 'Paragraph' => [Paragraph::fromText("short\na much longer line")];
+        yield 'CheckboxGroup' => [CheckboxGroup::new(['short', 'a much longer option'])];
+        yield 'CheckboxRow' => [CheckboxRow::new(['yes', 'no'])];
+        yield 'RadioRow' => [RadioRow::new(['yes', 'no'])];
+        yield 'Dropdown' => [Dropdown::new(Select::new(['short', 'a much longer option']))];
+        yield 'Dropdown showing a selection' => [Dropdown::new(Select::new(['short', 'a much longer option'])->withSelected(1))];
+        yield 'Container' => [Container::around(Text::new('a label'))];
+        yield 'StaticTable' => [StaticTable::new(['A', 'B'], [['1', '2']])];
+        yield 'ActivityBar' => [ActivityBar::new()];
+    }
+
+    /**
+     * @return list<class-string>
+     */
+    private static function widgetClasses(): array
+    {
+        $root = dirname(__DIR__, 2) . '/src';
+        $names = [];
+
+        /** @var iterable<SplFileInfo> $files */
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root));
+
+        foreach ($files as $file) {
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $name = 'Elmphant\\Tui\\' . str_replace('/', '\\', substr($file->getPathname(), strlen($root) + 1, -4));
+
+            if (!class_exists($name)) {
+                continue;
+            }
+
+            $class = new ReflectionClass($name);
+
+            if ($class->isAbstract() || !$class->implementsInterface(Widget::class)) {
+                continue;
+            }
+
+            $names[] = $name;
+        }
+
+        return $names;
     }
 
     private static function declaredWidth(Widget $widget): int
