@@ -9,6 +9,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Widget\FilterableCheckboxGroup;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -63,6 +64,15 @@ final class FilterableCheckboxGroupTest extends TestCase
             $ticked->checkedValues(),
             'a box is ticked by name, so clearing the query cannot hand the tick to whoever holds that row now',
         );
+    }
+
+    #[Test]
+    public function twoOptionsReadingTheSameAreRefusedWhereTheyAreHandedIn(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('FilterableCheckboxGroup options must read differently; "Yes" is at 0 and 2');
+
+        FilterableCheckboxGroup::new(['Yes', 'No', 'Yes']);
     }
 
     private static function pressed(FilterableCheckboxGroup $group, Message ...$messages): FilterableCheckboxGroup

@@ -390,6 +390,15 @@ final class FilterableListTest extends TestCase
         FilterableList::new(self::itemsFromUntypedData());
     }
 
+    #[Test]
+    public function aFloatIsToldEveryRowTheMatchesNeedWhereAStackIsNot(): void
+    {
+        $list = $this->commands();
+
+        self::assertSame(8, $list->popupHeight(self::WIDTH), 'the bar, a blank row, and two rows per item');
+        self::assertSame(4, $this->typed($list, 'warm')->popupHeight(self::WIDTH), 'and it shrinks to what the query kept');
+    }
+
     /**
      * @return list<SimpleListItem>
      */

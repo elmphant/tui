@@ -64,6 +64,8 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
      */
     public static function new(array $options): self
     {
+        Options::assertDistinct($options, 'FilterableCheckboxGroup');
+
         return new self($options, TextInput::new(FilterBar::PLACEHOLDER));
     }
 
