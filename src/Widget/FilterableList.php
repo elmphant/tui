@@ -81,6 +81,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      */
     public static function new(array $items): self
     {
+        ListItems::assertAll($items, 'FilterableList');
+
         return new self(
             $items,
             TextInput::new(FilterBar::PLACEHOLDER)->withDecoration(InputDecoration::None),
@@ -93,6 +95,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      */
     public function withItems(array $items): self
     {
+        ListItems::assertAll($items, 'FilterableList');
+
         return $this->cloneWith(items: $items, matching: null)->reFiltered();
     }
 

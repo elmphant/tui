@@ -24,6 +24,7 @@ use Elmphant\Tui\Widget\ListItemLayout;
 use Elmphant\Tui\Widget\ListView;
 use Elmphant\Tui\Widget\Scrollbar;
 use Elmphant\Tui\Widget\SimpleListItem;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -2149,9 +2150,32 @@ final class ListViewTest extends TestCase
         );
     }
 
+    #[Test]
+    public function aPlainStringIsRefusedWhereItIsHandedIn(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('ListView takes ListItem instances; item 0 is string');
+
+        ListView::new(self::itemsFromUntypedData());
+    }
+
     protected function createFocusable(): Focusable
     {
         return ListView::new([]);
+    }
+
+    /**
+     * What a caller reading rows out of JSON or a config file hands in: the
+     * signature says ListItem, the value never was one.
+     *
+     * @return list<ListItem>
+     */
+    private static function itemsFromUntypedData(): array
+    {
+        /** @var list<ListItem> $items */
+        $items = ['plain'];
+
+        return $items;
     }
 
     /**

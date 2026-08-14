@@ -21,7 +21,9 @@ use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\FilterableList;
 use Elmphant\Tui\Widget\FilterBar;
+use Elmphant\Tui\Widget\ListItem;
 use Elmphant\Tui\Widget\SimpleListItem;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -379,6 +381,15 @@ final class FilterableListTest extends TestCase
         );
     }
 
+    #[Test]
+    public function aPlainStringIsRefusedWhereItIsHandedIn(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('FilterableList takes ListItem instances; item 1 is string');
+
+        FilterableList::new(self::itemsFromUntypedData());
+    }
+
     /**
      * @return list<SimpleListItem>
      */
@@ -416,6 +427,20 @@ final class FilterableListTest extends TestCase
         self::assertInstanceOf(FilterableList::class, $updated);
 
         return $updated;
+    }
+
+    /**
+     * What a caller reading rows out of JSON or a config file hands in: the
+     * signature says ListItem, the value never was one.
+     *
+     * @return list<ListItem>
+     */
+    private static function itemsFromUntypedData(): array
+    {
+        /** @var list<ListItem> $items */
+        $items = [new SimpleListItem('kept'), 'plain'];
+
+        return $items;
     }
 
     private function area(): Rect

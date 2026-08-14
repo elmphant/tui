@@ -73,12 +73,17 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
      */
     public static function new(array $items): self
     {
+        ListItems::assertAll($items, 'ListView');
+
         return new self(
             items: $items,
         );
     }
 
     /**
+     * Not checked here the way new() checks: a filterable list replaces these
+     * on every keystroke, and they are the items it was already handed.
+     *
      * @param list<ListItem> $items
      */
     public function withItems(array $items): self
