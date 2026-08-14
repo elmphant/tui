@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Runtime\ChildDispatcher;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
 
 /**
  * A table with a free-text filter over its rows.
  */
-final readonly class FilterableTable implements Widget, MeasureHeight
+final readonly class FilterableTable implements Focusable, MeasureHeight
 {
     use Cloneable;
 
@@ -88,9 +92,25 @@ final readonly class FilterableTable implements Widget, MeasureHeight
     /**
      * Drawn as a field to type into only while the pane holding it is active.
      */
-    public function withFocus(bool $focused): self
+    public function withFocus(bool $focused): static
     {
         return $this->cloneWith(focused: $focused);
+    }
+
+    public function isFocused(): bool
+    {
+        return $this->focused;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if (!$message instanceof KeyMsg || !$this->focused) {
+            return new UpdateResult($this);
+        }
+
+        $result = (new ChildDispatcher())->dispatchOne($this->field(), $message, $this->fieldArea($area));
+
+        return new UpdateResult($this->withField($result->child), $result->command);
     }
 
     public function withMatcher(Matcher $matcher): self
@@ -204,6 +224,11 @@ final readonly class FilterableTable implements Widget, MeasureHeight
     /**
      * The bar belongs to the table, so it ends where the table does — but never so short that its own controls do not fit.
      */
+    private function fieldArea(Rect $area): Rect
+    {
+        return new Rect($area->x, $area->y, $this->barWidth($area->width, $this->table()), self::BAR_HEIGHT);
+    }
+
     private function barWidth(int $available, StaticTable $table): int
     {
         return max(self::MIN_BAR, min($available, $table->drawnWidth($available)));

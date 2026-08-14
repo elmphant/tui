@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -405,6 +408,37 @@ final class FilterableTableTest extends TestCase
 
         self::assertSame('ajax', $table->query(), 'the field it is given is the query it filters by');
         self::assertSame(2, $table->field()->cursor(), 'and the caret is where the field says, not at the end');
+    }
+
+    #[Test]
+    public function typingIntoAFocusedTableNarrowsIt(): void
+    {
+        $table = $this->routes()->withFocus(true);
+
+        $narrowed = $table->update(new KeyMsg('f'), Rect::fromSize(40, 10))->model;
+
+        self::assertSame('f', $narrowed->query());
+        self::assertSame([['ajax_flush', 'GET', '/ajax/flush']], $narrowed->matchingRows());
+    }
+
+    #[Test]
+    public function typingPastAnUnfocusedTableLeavesItAlone(): void
+    {
+        $table = $this->routes();
+
+        $result = $table->update(new KeyMsg('f'), Rect::fromSize(40, 10));
+
+        self::assertSame($table, $result->model);
+    }
+
+    #[Test]
+    public function aHostCanBindItLikeAnyOtherInteractiveWidget(): void
+    {
+        $table = $this->routes();
+
+        $component = Component::bind('routes', $table, static fn (Model $app, FilterableTable $replacement): Model => $app);
+
+        self::assertEquals($table->sizing(), $component->sizing(), 'The component stands in for the table it was given');
     }
 
     private function fieldIsUnderlined(FilterableTable $table): bool
