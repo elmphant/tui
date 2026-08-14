@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
-use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
-use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -114,13 +111,6 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
      * An empty list still binds enter to SELECT, so the binding alone would
      * close a popup over nothing.
      */
-    public function commits(Message $message): bool
-    {
-        return $message instanceof KeyMsg
-            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            && ($this->options[$this->cursor] ?? null) !== null;
-    }
-
     public function isFocused(): bool
     {
         return $this->focused;

@@ -77,6 +77,13 @@ trait OptionListBehavior
         return $this->rowOffset() + count($this->options);
     }
 
+    public function commits(Message $message): bool
+    {
+        return $message instanceof KeyMsg
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
+            && ($this->options[$this->cursor] ?? null) !== null;
+    }
+
     /**
      * A pointer pick lands where a key press lands, clearable list included.
      */
