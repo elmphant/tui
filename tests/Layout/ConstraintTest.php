@@ -119,6 +119,18 @@ final class ConstraintTest extends TestCase
     }
 
     #[Test]
+    public function theIntrinsicSizeIsTheDeclaredBasis(): void
+    {
+        self::assertSame(12, Constraint::flex()->withBasis(12)->intrinsic());
+    }
+
+    #[Test]
+    public function withoutABasisTheIntrinsicSizeIsTheFloor(): void
+    {
+        self::assertSame(3, Constraint::min(3)->withFlex(2)->intrinsic());
+    }
+
+    #[Test]
     public function exactWithZero(): void
     {
         $constraint = Constraint::exact(0);

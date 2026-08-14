@@ -373,7 +373,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
     {
         $columns = $widget->sizing()->columns;
 
-        return max(1, $columns->basis ?? $columns->min);
+        return max(1, $columns->intrinsic());
     }
 
     private function intrinsicHeight(Widget $widget, int $width): int

@@ -242,8 +242,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
 
     private function fittedWidth(Rect $area): ?int
     {
-        $columns = $this->content->sizing()->columns;
-        $contentWidth = $columns->basis ?? $columns->min;
+        $contentWidth = $this->content->sizing()->columns->intrinsic();
 
         if (!$this->sizedToContent || $contentWidth === 0) {
             return null;

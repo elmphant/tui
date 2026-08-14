@@ -96,6 +96,14 @@ final readonly class Constraint
     }
 
     /**
+     * The size the content wants, before anything is shared out.
+     */
+    public function intrinsic(): int
+    {
+        return $this->basis ?? $this->min;
+    }
+
+    /**
      * Without a declared basis a constraint starts at its floor.
      *
      * @internal
@@ -103,7 +111,7 @@ final readonly class Constraint
     public function policy(): ItemPolicy
     {
         return new ItemPolicy(
-            basis: $this->basis ?? $this->min,
+            basis: $this->intrinsic(),
             min: $this->min,
             max: $this->max,
             grow: $this->flex,

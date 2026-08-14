@@ -90,8 +90,7 @@ final class BarSlotRenderer
      */
     private static function rectFor(Widget $widget, Alignment $alignment, Rect $contentArea): ?Rect
     {
-        $columns = $widget->sizing()->columns;
-        $width = min($columns->basis ?? $columns->min, $contentArea->width);
+        $width = min($widget->sizing()->columns->intrinsic(), $contentArea->width);
 
         if ($width < 1) {
             return null;
