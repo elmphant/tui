@@ -20,7 +20,15 @@ final readonly class FloatMouseMsg implements Message
      */
     public function __construct(
         public MouseMsg $mouse,
-        public FloatPlacement $float,
+        private FloatPlacement $float,
     ) {
+    }
+
+    /**
+     * @internal which drawn float caught this, for the widget that owns it
+     */
+    public function float(): FloatPlacement
+    {
+        return $this->float;
     }
 }

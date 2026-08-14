@@ -2103,7 +2103,7 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
         self::assertInstanceOf(FloatMouseMsg::class, $model->received);
-        self::assertSame($popup, $model->received->float->float);
+        self::assertSame($popup, $model->received->float()->float);
     }
 
     #[Test]

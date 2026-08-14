@@ -11,6 +11,7 @@ use RecursiveIteratorIterator;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
+use ReflectionProperty;
 use ReflectionType;
 use ReflectionUnionType;
 use SplFileInfo;
@@ -44,6 +45,18 @@ final class InternalTypeExposureTest extends TestCase
                 foreach (self::referencedTypes($method) as $referenced) {
                     if (isset($internal[$referenced])) {
                         $exposures[] = sprintf('%s::%s() exposes %s', self::shortName($name), $method->getName(), self::shortName($referenced));
+                    }
+                }
+            }
+
+            foreach ((new ReflectionClass($name))->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+                if ($property->getDeclaringClass()->getName() !== $name || self::marksInternal($property->getDocComment())) {
+                    continue;
+                }
+
+                foreach (self::namesOf($property->getType()) as $referenced) {
+                    if (isset($internal[$referenced])) {
+                        $exposures[] = sprintf('%s::$%s exposes %s', self::shortName($name), $property->getName(), self::shortName($referenced));
                     }
                 }
             }

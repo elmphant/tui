@@ -57,7 +57,7 @@ final class InputRouterTest extends TestCase
         $routed = InputRouter::route(self::press(6, 6), $screen, [$placement]);
 
         self::assertInstanceOf(FloatMouseMsg::class, $routed);
-        self::assertSame($placement, $routed->float);
+        self::assertSame($placement, $routed->float());
         self::assertSame($screen, $routed->mouse->screen, 'the wrapped message must be the stamped one');
         self::assertSame(6, $routed->mouse->x);
     }
@@ -71,7 +71,7 @@ final class InputRouterTest extends TestCase
         $routed = InputRouter::route(self::press(6, 6), new Rect(0, 0, 80, 24), [$under, $over]);
 
         self::assertInstanceOf(FloatMouseMsg::class, $routed);
-        self::assertSame($over, $routed->float);
+        self::assertSame($over, $routed->float());
     }
 
     #[Test]
