@@ -20,13 +20,17 @@ final class TableGrid
     /**
      * Rows are cells, or null for a rule across the table.
      *
+     * $upTo stops once that many lines exist, so a small window onto a long
+     * table does not pay for the rows below it. The closing rule is part of the
+     * table, not of the window, so a stopped draw does not carry one.
+     *
      * @param list<string>            $headers
      * @param list<list<string>|null> $rows
      * @param list<int>               $widths
      *
      * @return list<string>
      */
-    public static function draw(array $headers, array $rows, array $widths, BorderGlyphs $glyphs): array
+    public static function draw(array $headers, array $rows, array $widths, BorderGlyphs $glyphs, ?int $upTo = null): array
     {
         $lines = [self::rule($widths, $glyphs, $glyphs->topLeft, $glyphs->teeDown, $glyphs->topRight)];
 
@@ -39,6 +43,10 @@ final class TableGrid
         }
 
         foreach ($rows as $row) {
+            if (null !== $upTo && count($lines) >= $upTo) {
+                return $lines;
+            }
+
             if ($row === null) {
                 $lines[] = self::rule($widths, $glyphs, $glyphs->teeRight, $glyphs->cross, $glyphs->teeLeft);
 

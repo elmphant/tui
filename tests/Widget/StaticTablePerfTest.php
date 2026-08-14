@@ -25,6 +25,13 @@ final class StaticTablePerfTest extends TestCase
      */
     private const MAX_COST_OF_DOUBLING = 3.0;
 
+    /**
+     * Measuring 32k rows' cells costs about 11ms and cannot be avoided while the
+     * columns size themselves to their content; drawing all of them cost 78ms on
+     * top. Set for a loaded machine, to catch drawing rows no one can see.
+     */
+    private const MAX_MICROSECONDS_FOR_A_HUGE_TABLE = 30_000.0;
+
     #[Test]
     public function twiceTheRowsCostAboutTwiceAsMuchToDraw(): void
     {

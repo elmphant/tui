@@ -241,6 +241,56 @@ final class StaticTableTest extends TestCase
         self::assertStringContainsString('╯', $screen);
     }
 
+    /**
+     * A ten-row viewport shows ten rows whatever the table holds, and this table
+     * has no scrolling to reach the rest, so building them is work for nobody.
+     * Measured in bytes rather than time: the lines are kept once built, so what
+     * a render holds on to says how many it built.
+     */
+    #[Test]
+    public function aSmallViewportOntoAHugeTableKeepsOnlyTheLinesItShows(): void
+    {
+        $rows = [];
+        for ($index = 0; $index < 20_000; ++$index) {
+            $rows[] = ['row-' . $index, 'title ' . $index];
+        }
+
+        $table = StaticTable::new(['Identifier', 'Title'], $rows);
+
+        $before = memory_get_usage();
+        $this->render($table, 60, 10);
+        $held = memory_get_usage() - $before;
+
+        self::assertLessThan(
+            200_000,
+            $held,
+            sprintf('A ten-row window kept %d bytes of drawn lines', $held),
+        );
+    }
+
+    /**
+     * A stack asks how tall the table is before it draws anything, so answering
+     * must not cost drawing it. Where every column is wide enough for its widest
+     * cell nothing wraps, and the count follows from the row count alone.
+     */
+    #[Test]
+    public function sayingHowTallItIsDoesNotDrawIt(): void
+    {
+        $rows = [];
+        for ($index = 0; $index < 20_000; ++$index) {
+            $rows[] = ['row-' . $index, 'title ' . $index];
+        }
+
+        $table = StaticTable::new(['Identifier', 'Title'], $rows);
+
+        $before = memory_get_usage();
+        $height = $table->measureHeight(60);
+        $held = memory_get_usage() - $before;
+
+        self::assertSame(20_004, $height, 'a top rule, the headers and their rule, every row, and a closing rule');
+        self::assertLessThan(200_000, $held, sprintf('Answering held %d bytes of drawn lines', $held));
+    }
+
     private function table(): StaticTable
     {
         return StaticTable::new(

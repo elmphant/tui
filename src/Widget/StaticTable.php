@@ -48,6 +48,7 @@ final class StaticTable implements Widget, MeasureHeight
         private readonly int $minWidth = 0,
         private array $built = [],
         private ?int $builtFor = null,
+        private ?int $builtUpTo = null,
     ) {
     }
 
@@ -102,7 +103,11 @@ final class StaticTable implements Widget, MeasureHeight
 
     public function measureHeight(int $width): int
     {
-        return $width < 1 ? 0 : count($this->linesFor($width));
+        if ($width < 1) {
+            return 0;
+        }
+
+        return $this->unwrappedLineCount($width) ?? count($this->linesFor($width));
     }
 
     /**
@@ -110,7 +115,8 @@ final class StaticTable implements Widget, MeasureHeight
      */
     public function drawnWidth(int $width): int
     {
-        $lines = $this->linesFor($width);
+        // Only the opening rule is read, and every line is the same width.
+        $lines = $this->linesFor($width, 1);
 
         return $lines === [] ? 0 : min($width, CharWidth::stringWidth($lines[0]));
     }
@@ -122,9 +128,9 @@ final class StaticTable implements Widget, MeasureHeight
         }
 
         $style = $context->theme->base;
-        $lines = $this->linesFor($area->width);
         $clip = $frame->clip();
         $first = max(0, $clip->y - $area->y);
+        $lines = $this->linesFor($area->width, min($area->height, $clip->bottom() - $area->y));
         $last = min(count($lines), $area->height, $clip->bottom() - $area->y);
 
         $frame->pushClip($area);
@@ -139,19 +145,41 @@ final class StaticTable implements Widget, MeasureHeight
     }
 
     /**
+     * Every column is grown from the widest cell it holds, so where the table
+     * fits nothing wraps and the lines follow from the row count. Null where the
+     * columns had to be squeezed, since then only drawing knows.
+     */
+    private function unwrappedLineCount(int $width): ?int
+    {
+        $widest = $this->demands();
+
+        if (self::spaceFor($widest, $width) < 0) {
+            return null;
+        }
+
+        $rules = $this->headers === [] ? 2 : 3;
+
+        return $rules + ($this->headers === [] ? 0 : 1) + count($this->rows);
+    }
+
+    /**
      * The memo keys on width alone, so a copy must start without it.
      */
     private function rebuiltWith(mixed ...$overrides): self
     {
-        return $this->cloneWith(...$overrides, built: [], builtFor: null);
+        return $this->cloneWith(...$overrides, built: [], builtFor: null, builtUpTo: null);
     }
 
     /**
      * @return list<string>
      */
-    private function linesFor(int $width): array
+    private function linesFor(int $width, ?int $upTo = null): array
     {
-        if ($this->builtFor === $width) {
+        // A window held from an earlier render answers a smaller one, never a
+        // larger one and never a question about the whole table.
+        if ($this->builtFor === $width
+            && (null === $this->builtUpTo || (null !== $upTo && $this->builtUpTo >= $upTo))
+        ) {
             return $this->built;
         }
 
@@ -166,28 +194,34 @@ final class StaticTable implements Widget, MeasureHeight
             $this->overflow,
             $this->minWidth,
             $width,
+            $upTo,
         ]));
 
         /** @var list<string> $lines */
-        $lines = WrapCache::remember($key, fn (): array => $this->draw($width));
+        $lines = WrapCache::remember($key, fn (): array => $this->draw($width, $upTo));
 
         $this->built = $lines;
         $this->builtFor = $width;
+        $this->builtUpTo = $upTo;
 
         return $lines;
     }
 
     /**
+     * The columns are still sized from every row — that is what sizing to their
+     * content means — but only the rows $upTo can reach are drawn.
+     *
      * @return list<string>
      */
-    private function draw(int $width): array
+    private function draw(int $width, ?int $upTo = null): array
     {
         $widest = $this->demands();
+        $rows = null === $upTo ? $this->rows : array_slice($this->rows, 0, $upTo);
 
         if (self::spaceFor($widest, $width) >= 0) {
             $widths = self::grown($widest, min($width, max($this->minWidth, self::widthOf($widest))), $widest);
 
-            return $this->drawn($this->held($widths), $this->rows, $widths);
+            return $this->drawn($this->held($widths), $rows, $widths, $upTo);
         }
 
         $floors = self::capped($this->wordFloors(), $width);
@@ -196,20 +230,21 @@ final class StaticTable implements Widget, MeasureHeight
             $kept = $this->keptColumns($floors, $width);
 
             if ($kept !== [] && count($kept) < count($floors)) {
-                return $this->drawnWithStackedColumns($kept, $floors, $width);
+                return $this->drawnWithStackedColumns($kept, $floors, $width, $rows, $upTo);
             }
         }
 
         if (self::spaceFor($floors, $width) < 0) {
-            return $this->drawn($this->headers, $this->rows, $this->sharedWidths($width));
+            return $this->drawn($this->headers, $rows, $this->sharedWidths($width), $upTo);
         }
 
         $widths = self::grown($floors, $width, $widest);
 
         return $this->drawn(
             self::padded($this->headers, $widths),
-            array_map(static fn (array $row): array => self::folded($row, $widths), $this->rows),
+            array_map(static fn (array $row): array => self::folded($row, $widths), $rows),
             $widths,
+            $upTo,
         );
     }
 
@@ -262,12 +297,13 @@ final class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * @param list<int> $kept
-     * @param list<int> $demands
+     * @param list<int>          $kept
+     * @param list<int>          $demands
+     * @param list<list<string>> $sourceRows
      *
      * @return list<string>
      */
-    private function drawnWithStackedColumns(array $kept, array $demands, int $width): array
+    private function drawnWithStackedColumns(array $kept, array $demands, int $width, array $sourceRows, ?int $upTo = null): array
     {
         $demoted = array_values(array_diff(array_keys($demands), $kept));
         $kepts = self::at($demands, $kept, 0);
@@ -277,7 +313,7 @@ final class StaticTable implements Widget, MeasureHeight
         $headers[0] = self::stacked([$headers[0], ...self::at($this->headers, $demoted)], $host);
         $rows = [];
 
-        foreach ($this->rows as $index => $row) {
+        foreach ($sourceRows as $index => $row) {
             if ($index > 0) {
                 $rows[] = null;
             }
@@ -287,7 +323,7 @@ final class StaticTable implements Widget, MeasureHeight
             $rows[] = $cells;
         }
 
-        return $this->drawn($headers, $rows, $widths);
+        return $this->drawn($headers, $rows, $widths, $upTo);
     }
 
     /**
@@ -336,9 +372,9 @@ final class StaticTable implements Widget, MeasureHeight
      *
      * @return list<string>
      */
-    private function drawn(array $headers, array $rows, array $widths): array
+    private function drawn(array $headers, array $rows, array $widths, ?int $upTo = null): array
     {
-        return TableGrid::draw($headers, $rows, $widths, $this->border->glyphs());
+        return TableGrid::draw($headers, $rows, $widths, $this->border->glyphs(), $upTo);
     }
 
     /**
