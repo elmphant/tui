@@ -212,21 +212,27 @@ final class CharWidth
 
         $lines = [];
         $current = '';
+        $currentWidth = 0;
 
         foreach (explode(' ', $text) as $word) {
-            $candidate = $current === '' ? $word : $current . ' ' . $word;
+            // Measured once per word and carried, not re-measured over the whole
+            // line each time: a space ends a grapheme cluster, so the widths add.
+            $wordWidth = self::stringWidth($word);
+            $candidateWidth = $current === '' ? $wordWidth : $currentWidth + 1 + $wordWidth;
 
-            if (self::stringWidth($candidate) <= $maxWidth) {
-                $current = $candidate;
+            if ($candidateWidth <= $maxWidth) {
+                $current = $current === '' ? $word : $current . ' ' . $word;
+                $currentWidth = $candidateWidth;
                 continue;
             }
 
             if ($current !== '') {
                 $lines[] = $current;
                 $current = '';
+                $currentWidth = 0;
             }
 
-            while (self::stringWidth($word) > $maxWidth) {
+            while ($wordWidth > $maxWidth) {
                 $head = self::truncateToWidth($word, $maxWidth);
 
                 // A grapheme wider than the whole column fits nowhere: it gets a
@@ -237,9 +243,11 @@ final class CharWidth
 
                 $lines[] = $head;
                 $word = substr($word, strlen($head));
+                $wordWidth = self::stringWidth($word);
             }
 
             $current = $word;
+            $currentWidth = $wordWidth;
         }
 
         if ($current !== '' || $lines === []) {
