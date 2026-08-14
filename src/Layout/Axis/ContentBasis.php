@@ -10,7 +10,7 @@ use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 
 /**
- * @internal the one rule the three stackers share for where a child starts
+ * @internal
  */
 final class ContentBasis
 {

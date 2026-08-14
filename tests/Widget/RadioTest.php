@@ -19,6 +19,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Radio;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -1047,6 +1048,24 @@ final class RadioTest extends TestCase
             Radio::new([], 'Severity')->withFocus(true)->commits(new KeyMsg(Key::Enter)),
             'the binding matches, but there is nothing to choose, so the popup must not close',
         );
+    }
+
+    #[Test]
+    public function twoOptionsReadingTheSameAreRefusedWhereTheyAreHandedIn(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Radio options must read differently; "Yes" is at 0 and 2');
+
+        Radio::new(['Yes', 'No', 'Yes']);
+    }
+
+    #[Test]
+    public function optionsPutInLaterAreHeldToTheSameRule(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Radio options must read differently');
+
+        Radio::new(['Yes', 'No'])->withOptions(['Same', 'Same']);
     }
 
     protected function createFocusable(): Focusable

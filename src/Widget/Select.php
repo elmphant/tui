@@ -45,6 +45,8 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
      */
     public static function new(array $options): self
     {
+        Options::assertDistinct($options, 'Select');
+
         return new self(options: $options);
     }
 
@@ -53,6 +55,8 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
      */
     public function withOptions(array $options): self
     {
+        Options::assertDistinct($options, 'Select');
+
         return $this->cloneWith(options: $options);
     }
 

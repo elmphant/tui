@@ -112,9 +112,8 @@ final class BarSlotRenderer
     }
 
     /**
-     * A bar is not an allocator: it reads the width the slot declares and never
-     * grows it by its flex weight, which would stretch every slot to the whole
-     * row and leave nothing for the centre and right to align against.
+     * Never grown by flex: a stretched slot leaves the centre and right nothing
+     * to align against.
      */
     public static function rectFor(Widget $widget, Alignment $alignment, Rect $contentArea): ?Rect
     {

@@ -48,6 +48,8 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
      */
     public static function new(array $options, string $label = ''): self
     {
+        Options::assertDistinct($options, 'CheckboxGroup');
+
         return new self(options: $options, label: $label);
     }
 
@@ -56,6 +58,8 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
      */
     public function withOptions(array $options): self
     {
+        Options::assertDistinct($options, 'CheckboxGroup');
+
         return $this->cloneWith(options: $options);
     }
 

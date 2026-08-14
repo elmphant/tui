@@ -81,8 +81,8 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Not checked here the way new() checks: a filterable list replaces these
-     * on every keystroke, and they are the items it was already handed.
+     * Unchecked where new() checks: a filterable list replaces these per
+     * keystroke, with items it was already handed.
      *
      * @param list<ListItem> $items
      */

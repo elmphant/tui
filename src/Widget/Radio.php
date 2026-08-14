@@ -49,6 +49,8 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
      */
     public static function new(array $options, string $label = ''): self
     {
+        Options::assertDistinct($options, 'Radio');
+
         return new self(options: $options, label: $label);
     }
 
@@ -57,6 +59,8 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
      */
     public function withOptions(array $options): self
     {
+        Options::assertDistinct($options, 'Radio');
+
         return $this->cloneWith(options: $options);
     }
 

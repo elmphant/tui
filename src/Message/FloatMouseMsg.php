@@ -26,17 +26,13 @@ final readonly class FloatMouseMsg implements Message
     ) {
     }
 
-    /**
-     * The float this landed on, so the widget that queued it can tell whether
-     * the float is its own.
-     */
     public function popup(): PointerFloating
     {
         return $this->float->float;
     }
 
     /**
-     * Where that float was drawn, which is what the reader was pointing at —
+     * Where the float was drawn last frame, which is what the reader pointed at;
      * the content may have moved on since.
      */
     public function drawnIn(): Rect

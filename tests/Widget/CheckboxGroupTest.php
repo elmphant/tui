@@ -17,6 +17,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\CheckboxGroup;
 use Elmphant\Tui\Widget\Focusable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -935,6 +936,24 @@ final class CheckboxGroupTest extends TestCase
             $wheeled->update(new KeyMsg(' '), $area)->model->checkedValues(),
             'and the box the wheel left the cursor on is the one space ticks',
         );
+    }
+
+    #[Test]
+    public function twoOptionsReadingTheSameAreRefusedWhereTheyAreHandedIn(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CheckboxGroup options must read differently; "Yes" is at 0 and 2');
+
+        CheckboxGroup::new(['Yes', 'No', 'Yes']);
+    }
+
+    #[Test]
+    public function optionsPutInLaterAreHeldToTheSameRule(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CheckboxGroup options must read differently');
+
+        CheckboxGroup::new(['Yes', 'No'])->withOptions(['Same', 'Same']);
     }
 
     private function extractRow(Frame $frame, int $row, int $columns): string

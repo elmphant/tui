@@ -18,6 +18,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Select;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -485,6 +486,24 @@ final class SelectTest extends TestCase
         $elsewhere = new MouseMsg(0, $area->bottom() + 1, MouseAction::WheelDown, MouseButton::None);
 
         self::assertSame($select, $select->update($elsewhere, $area)->model, 'the wheel belongs to whatever is under it');
+    }
+
+    #[Test]
+    public function twoOptionsReadingTheSameAreRefusedWhereTheyAreHandedIn(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Select options must read differently; "Yes" is at 0 and 2');
+
+        Select::new(['Yes', 'No', 'Yes']);
+    }
+
+    #[Test]
+    public function optionsPutInLaterAreHeldToTheSameRule(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Select options must read differently');
+
+        Select::new(['Yes', 'No'])->withOptions(['Same', 'Same']);
     }
 
     protected function createFocusable(): Focusable

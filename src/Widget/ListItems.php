@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Widget;
 use InvalidArgumentException;
 
 /**
- * @internal the one check that what a caller handed in really is items
+ * @internal
  */
 final class ListItems
 {
