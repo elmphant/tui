@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Layout;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
+use Elmphant\Tui\Layout\Axis\ContentBasis;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Axis\Overflow;
@@ -265,18 +266,10 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
      */
     private function policyFor(FlexItem $item, ?int $acrossExtent): ItemPolicy
     {
-        $constraint = $item->constraint;
-        $policy = $constraint->policy();
-
-        if ($this->direction === Direction::Horizontal
-            || $constraint->basis !== null
-            || null === $acrossExtent || $acrossExtent < 1
-        ) {
-            return $policy;
-        }
+        $policy = $item->constraint->policy();
 
         return new ItemPolicy(
-            basis: max($policy->min, $this->intrinsicHeight($item->widget, $acrossExtent)),
+            basis: ContentBasis::of($item->widget, $item->constraint, $this->direction, $acrossExtent),
             min: $policy->min,
             max: $policy->max,
             grow: $policy->grow,

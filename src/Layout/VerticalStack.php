@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\ContentBasis;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
@@ -84,8 +85,8 @@ final class VerticalStack
         $constraints = [];
         $hasWidthAwareChildren = false;
 
-        /** @var list<int> $floors */
-        $floors = [];
+        /** @var list<int> $bases */
+        $bases = [];
 
         foreach ($children as $child) {
             $constraint = $child->sizing()->rows;
@@ -97,20 +98,17 @@ final class VerticalStack
             // honest: a child grown afterwards spends space the flex siblings
             // were already given, and the stack reports an overflow it does not
             // have.
-            $floor = $constraint->min;
-            if (null === $constraint->basis && !$isFixed && $availableWidth > 0 && $child instanceof MeasureHeight) {
-                $floor = max($floor, $child->measureHeight($availableWidth));
-            }
-
-            $floors[] = $floor;
+            $bases[] = ContentBasis::of($child, $constraint, Direction::Vertical, $availableWidth);
         }
 
         $policies = [];
         foreach ($constraints as $index => $constraint) {
-            $floor = $floors[$index];
+            // What was measured is a floor, so a stack never shrinks a child
+            // below the rows it needs; a declared basis is only a starting size.
+            $floor = null === $constraint->basis ? $bases[$index] : $constraint->min;
 
             $policies[] = new ItemPolicy(
-                basis: $constraint->basis ?? $floor,
+                basis: $bases[$index],
                 min: $floor,
                 max: max($floor, $constraint->max),
                 grow: $constraint->flex,
