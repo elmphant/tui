@@ -16,7 +16,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 
-final readonly class Header implements Interactive
+final readonly class Header implements Interactive, WidgetContainer
 {
     use Cloneable;
 
@@ -89,28 +89,37 @@ final readonly class Header implements Interactive
         );
     }
 
+    /**
+     * @return list<Widget>
+     */
+    public function children(): array
+    {
+        return array_values(array_filter([$this->leftSlot, $this->centerSlot, $this->rightSlot]));
+    }
+
+    /**
+     * @return list<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): array
+    {
+        $contentArea = $this->contentArea($area);
+
+        if (null === $contentArea) {
+            return [];
+        }
+
+        return array_values(BarSlotRenderer::placements($this->slots(), $contentArea));
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($area->width < 1 || $area->height < 1) {
+        $contentArea = $this->contentArea($area);
+
+        if (null === $contentArea) {
             return new UpdateResult($this);
         }
 
-        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
-
-        if ($innerArea->width < 1 || $innerArea->height < 1) {
-            return new UpdateResult($this);
-        }
-
-        $padding = $this->padding ?? Spacing::none();
-        $barHeight = 1 + $padding->top + $padding->bottom;
-        $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
-        $contentArea = $padding->applyTo($barArea);
-
-        [$overrides, $command] = BarSlotRenderer::updateSlots([
-            'leftSlot' => $this->leftSlot,
-            'centerSlot' => $this->centerSlot,
-            'rightSlot' => $this->rightSlot,
-        ], $message, $contentArea);
+        [$overrides, $command] = BarSlotRenderer::updateSlots($this->slots(), $message, $contentArea);
 
         if ($overrides !== []) {
             return new UpdateResult($this->cloneWith(...$overrides), $command);
@@ -181,5 +190,37 @@ final readonly class Header implements Interactive
                 $frame->putString($innerArea->x, $dividerY, str_repeat('─', $innerArea->width), $dividerStyle->foregroundValue(), $dividerStyle->backgroundValue());
             }
         }
+    }
+
+    /**
+     * @return array{leftSlot: ?Widget, centerSlot: ?Widget, rightSlot: ?Widget}
+     */
+    private function slots(): array
+    {
+        return [
+            'leftSlot' => $this->leftSlot,
+            'centerSlot' => $this->centerSlot,
+            'rightSlot' => $this->rightSlot,
+        ];
+    }
+
+    private function contentArea(Rect $area): ?Rect
+    {
+        if ($area->width < 1 || $area->height < 1) {
+            return null;
+        }
+
+        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
+
+        if ($innerArea->width < 1 || $innerArea->height < 1) {
+            return null;
+        }
+
+        $padding = $this->padding ?? Spacing::none();
+        $barHeight = 1 + $padding->top + $padding->bottom;
+        $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
+        $contentArea = $padding->applyTo($barArea);
+
+        return $contentArea->width < 1 || $contentArea->height < 1 ? null : $contentArea;
     }
 }

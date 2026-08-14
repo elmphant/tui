@@ -41,8 +41,14 @@ final class ReachableChildrenRuleTest extends RuleTestCase
         );
     }
 
+    #[Test]
+    public function anAllowedWidgetReachesItsChildSomeOtherWay(): void
+    {
+        $this->analyse([__DIR__ . '/Fixtures/FloatingChildWidget.php'], []);
+    }
+
     protected function getRule(): Rule
     {
-        return new ReachableChildrenRule();
+        return new ReachableChildrenRule([Fixtures\FloatingChildWidget::class]);
     }
 }

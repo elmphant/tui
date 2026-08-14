@@ -23,6 +23,13 @@ use PHPStan\Type\TypeCombinator;
  */
 final class ReachableChildrenRule implements Rule
 {
+    /**
+     * @param list<class-string> $allowList widgets whose child is reached some other way
+     */
+    public function __construct(private array $allowList = [])
+    {
+    }
+
     public function getNodeType(): string
     {
         return ClassPropertyNode::class;
@@ -33,6 +40,10 @@ final class ReachableChildrenRule implements Rule
         $class = $node->getClassReflection();
 
         if (!$class->implementsInterface(Widget::class) || $class->implementsInterface(WidgetContainer::class)) {
+            return [];
+        }
+
+        if (in_array($class->getName(), $this->allowList, true)) {
             return [];
         }
 

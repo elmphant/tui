@@ -853,6 +853,18 @@ final class FooterTest extends TestCase
     }
 
     #[Test]
+    public function exposesEachSlotInTheRectItDrawsIn(): void
+    {
+        $left = Text::new('Hi');
+        $right = Text::new('Bye');
+
+        $children = [...Footer::new()->left($left)->right($right)->childWidgets(new Rect(0, 0, 20, 1))];
+
+        self::assertSame([$left, $right], array_column($children, 0));
+        self::assertSame([0, 17], array_map(static fn (array $child): int => $child[1]->x, $children));
+    }
+
+    #[Test]
     public function updateRoutesToASlotInTheRectItDrawsIn(): void
     {
         $receivedArea = null;

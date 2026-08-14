@@ -59,6 +59,34 @@ final class BarSlotRenderer
     }
 
     /**
+     * Where each slot draws, in the order the bar draws them.
+     *
+     * @param array{leftSlot: ?Widget, centerSlot: ?Widget, rightSlot: ?Widget} $slots
+     *
+     * @return array<string, array{Widget, Rect}> only the slots with a width to draw in
+     */
+    public static function placements(array $slots, Rect $contentArea): array
+    {
+        $placements = [];
+
+        foreach (self::ALIGNMENTS as $key => $alignment) {
+            $slot = $slots[$key];
+
+            if (null === $slot) {
+                continue;
+            }
+
+            $rect = self::rectFor($slot, $alignment, $contentArea);
+
+            if (null !== $rect) {
+                $placements[$key] = [$slot, $rect];
+            }
+        }
+
+        return $placements;
+    }
+
+    /**
      * Route a message to whichever bar slots are interactive.
      *
      * @param array{leftSlot: ?Widget, centerSlot: ?Widget, rightSlot: ?Widget} $slots keyed by the constructor property to override
@@ -88,7 +116,7 @@ final class BarSlotRenderer
      * grows it by its flex weight, which would stretch every slot to the whole
      * row and leave nothing for the centre and right to align against.
      */
-    private static function rectFor(Widget $widget, Alignment $alignment, Rect $contentArea): ?Rect
+    public static function rectFor(Widget $widget, Alignment $alignment, Rect $contentArea): ?Rect
     {
         $width = min($widget->sizing()->columns->intrinsic(), $contentArea->width);
 
