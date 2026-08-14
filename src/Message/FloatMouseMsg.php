@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Message;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\FloatPlacement;
+use Elmphant\Tui\Widget\PointerFloating;
 
 /**
  * A pointer event that landed on a float the last frame drew.
@@ -25,10 +27,20 @@ final readonly class FloatMouseMsg implements Message
     }
 
     /**
-     * @internal which drawn float caught this, for the widget that owns it
+     * The float this landed on, so the widget that queued it can tell whether
+     * the float is its own.
      */
-    public function float(): FloatPlacement
+    public function popup(): PointerFloating
     {
-        return $this->float;
+        return $this->float->float;
+    }
+
+    /**
+     * Where that float was drawn, which is what the reader was pointing at —
+     * the content may have moved on since.
+     */
+    public function drawnIn(): Rect
+    {
+        return $this->float->placement;
     }
 }

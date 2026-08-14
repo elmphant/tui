@@ -238,16 +238,15 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
      */
     private function floatMoused(FloatMouseMsg $message): static
     {
-        $placement = $message->float();
-        $popup = $placement->float;
+        $popup = $message->popup();
 
         if (!$this->open || !$popup instanceof PopupFrame || $popup->target() !== $this->floatTarget) {
             return $this;
         }
 
         return $message->mouse->action === MouseAction::Press
-            ? $this->pickedFromDrawn($message->mouse, $popup, $placement->placement)
-            : $this->wheeledInDrawn($message->mouse, $popup, $placement->placement);
+            ? $this->pickedFromDrawn($message->mouse, $popup, $message->drawnIn())
+            : $this->wheeledInDrawn($message->mouse, $popup, $message->drawnIn());
     }
 
     /**

@@ -172,7 +172,7 @@ final class ModelHarnessTest extends TestCase
         $harness->dispatch(new MouseMsg(6, 6, MouseAction::Press, MouseButton::Left));
 
         self::assertInstanceOf(FloatMouseMsg::class, $model->received);
-        self::assertSame($popup, $model->received->float()->float);
+        self::assertSame($popup, $model->received->popup());
     }
 
     #[Test]
