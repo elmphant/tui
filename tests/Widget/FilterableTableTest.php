@@ -411,6 +411,22 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
+    public function aMatcherNamingTheSameRowTwiceStillKeepsItOnce(): void
+    {
+        $repeating = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return [0, 0];
+            }
+        };
+
+        $table = $this->routes()->withMatcher($repeating)->withQuery('anything');
+
+        self::assertSame([['ajax_bookmark', 'POST', '/ajax/bookmark']], $table->matchingRows());
+        self::assertSame('1 of 3', $table->summary());
+    }
+
+    #[Test]
     public function typingIntoAFocusedTableNarrowsIt(): void
     {
         $table = $this->routes()->withFocus(true);

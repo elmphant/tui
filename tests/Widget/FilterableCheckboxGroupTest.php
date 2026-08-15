@@ -7,7 +7,11 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\FilterableCheckboxGroup;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +36,33 @@ final class LastOptionOnlyMatcher implements Matcher
 
 final class FilterableCheckboxGroupTest extends TestCase
 {
+    #[Test]
+    public function aMatcherNamingTheSameOptionTwiceStillDrawsOneBoxForIt(): void
+    {
+        $repeating = new class implements Matcher {
+            /**
+             * @param list<string> $haystack
+             *
+             * @return list<int>
+             */
+            public function matching(string $query, array $haystack): array
+            {
+                return $haystack === [] ? [] : [0, 0];
+            }
+        };
+
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
+            ->withMatcher($repeating)
+            ->withFocus(true);
+
+        $typed = self::pressed($group, new KeyMsg('a'));
+
+        $frame = new Frame(30, 8);
+        $typed->render($frame, Rect::fromSize(30, 8), new RenderContext(Theme::dark()));
+
+        self::assertSame(1, substr_count(ScreenBuffer::fromFrame($frame)->getPlainText(), 'alpha'));
+    }
+
     #[Test]
     public function narrowsTheBoxesWithTheMatcherItWasGiven(): void
     {

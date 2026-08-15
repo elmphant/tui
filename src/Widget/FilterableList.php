@@ -393,10 +393,17 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return array_keys($items);
         }
 
-        return ($matcher ?? new SubstringMatcher())->matching(
+        $matching = ($matcher ?? new SubstringMatcher())->matching(
             $query,
             array_map(static fn (ListItem $item): string => $item->filterValue(), $items),
         );
+
+        // A matcher may name the same item twice — nothing in the port forbids
+        // it — and a row drawn twice is one row the cursor could not address.
+        return array_values(array_unique(array_filter(
+            $matching,
+            static fn (int $index): bool => isset($items[$index]),
+        )));
     }
 
     private function belongsToTheList(KeyMsg $message): bool

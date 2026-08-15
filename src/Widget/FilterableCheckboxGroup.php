@@ -256,6 +256,10 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
 
         $matching = ($this->matcher ?? new SubstringMatcher())->matching($query, $this->options);
 
-        return array_map(fn (int $index): string => $this->options[$index], $matching);
+        // A matcher may name the same option twice — nothing in the port forbids
+        // it — and the same box drawn twice is one box the reader can tick apart.
+        return array_values(array_unique(
+            array_map(fn (int $index): string => $this->options[$index] ?? '', $matching),
+        ));
     }
 }

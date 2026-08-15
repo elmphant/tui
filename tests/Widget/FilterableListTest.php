@@ -409,6 +409,22 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function aMatcherNamingTheSameItemTwiceStillShowsItOnce(): void
+    {
+        $repeating = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return [0, 0];
+            }
+        };
+
+        $list = FilterableList::new($this->commandItems())->withMatcher($repeating)->withQuery('anything');
+
+        self::assertSame('1 of 3', $list->summary(), 'One item named twice is one match');
+        self::assertSame(1, substr_count($this->render($list), 'cache:warmup'));
+    }
+
+    #[Test]
     public function aPlainStringIsRefusedWhereItIsHandedIn(): void
     {
         $this->expectException(InvalidArgumentException::class);
