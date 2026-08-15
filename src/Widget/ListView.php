@@ -346,13 +346,16 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
      * Selection shown while another widget holds focus: accented, bold text on
      * the selection background, so it never blends into the surrounding rows.
      */
+    /**
+     * Visible, so a list a sibling widget is driving does not look inert, but
+     * never as loud as the focused cursor: two rows shouting equally read as two
+     * things chosen, and the reader cannot tell which one their keys reach.
+     */
     private static function unfocusedCursorStyle(Theme $theme): Style
     {
         $selected = $theme->selectedStyle;
 
-        return $theme->accent
-            ->background($selected->background ?? Color::ansi(0))
-            ->bold();
+        return $theme->base->background($selected->background ?? Color::ansi(0));
     }
 
     /**

@@ -1851,7 +1851,33 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
-    public function theSelectedTitleIsAccentedSoItDoesNotBlendIntoTheList(): void
+    public function anUnfocusedCursorReadsAsQuieterThanTheFocusedOne(): void
+    {
+        $theme = Theme::dark();
+        $items = self::numberedItems(3);
+
+        $focused = new Frame(20, 3);
+        ListView::new($items)->withCursor(1)->withFocus(true)
+            ->render($focused, new Rect(0, 0, 20, 3), new RenderContext($theme));
+
+        $unfocused = new Frame(20, 3);
+        ListView::new($items)->withCursor(1)
+            ->render($unfocused, new Rect(0, 0, 20, 3), new RenderContext($theme));
+
+        self::assertSame(
+            $theme->selectedStyle->backgroundValue(),
+            $unfocused->backgrounds[1 * 20],
+            'The row a sibling widget is driving stays visible',
+        );
+        self::assertNotSame(
+            [$focused->foregrounds[1 * 20], $focused->attributes[1 * 20]],
+            [$unfocused->foregrounds[1 * 20], $unfocused->attributes[1 * 20]],
+            'An unfocused cursor drawn like the focused one reads as a second thing chosen',
+        );
+    }
+
+    #[Test]
+    public function theUnfocusedCursorTitleReadsAgainstItsHighlight(): void
     {
         $theme = Theme::dark();
         $list = ListView::new(self::numberedItems(3))->withCursor(1);
@@ -1859,8 +1885,8 @@ final class ListViewTest extends TestCase
 
         $list->render($frame, new Rect(0, 0, 20, 3), new RenderContext($theme));
 
-        self::assertSame($theme->accent->foregroundValue(), $frame->foregrounds[1 * 20]);
-        self::assertSame(Attr::BOLD, $frame->attributes[1 * 20] & Attr::BOLD);
+        self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[1 * 20]);
+        self::assertNotSame($theme->dim->foregroundValue(), $frame->foregrounds[1 * 20], 'and does not fade into the rest');
     }
 
     #[Test]
@@ -1875,7 +1901,7 @@ final class ListViewTest extends TestCase
 
         $descriptionForeground = $frame->foregrounds[1 * 20 + 2];
         self::assertNotSame($theme->dim->foregroundValue(), $descriptionForeground);
-        self::assertSame($theme->accent->foregroundValue(), $descriptionForeground, 'The description takes the row colour');
+        self::assertSame($theme->base->foregroundValue(), $descriptionForeground, 'The description takes the row colour');
     }
 
     #[Test]
