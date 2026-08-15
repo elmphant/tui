@@ -427,6 +427,18 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
+    public function aFieldHandedInIsUnderlinedByTheSameRuleAsOneBuiltHere(): void
+    {
+        $handedIn = FilterBar::field('ajax', false);
+
+        self::assertTrue($this->fieldIsUnderlined($this->routes()->withFocus(true)->withField($handedIn)));
+        self::assertFalse(
+            $this->fieldIsUnderlined($this->routes()->withField($handedIn)),
+            'A host driving the caret does not decide whether the pane is active',
+        );
+    }
+
+    #[Test]
     public function typingIntoAFocusedTableNarrowsIt(): void
     {
         $table = $this->routes()->withFocus(true);

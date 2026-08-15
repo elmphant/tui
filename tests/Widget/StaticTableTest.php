@@ -201,6 +201,28 @@ final class StaticTableTest extends TestCase
     }
 
     #[Test]
+    public function aSecondStackedRowIsDrawnUnderARuleOfItsOwn(): void
+    {
+        $table = StaticTable::new(
+            ['Name', 'Method', 'Target'],
+            [
+                ['about', 'ANY', 'Acme\Controller\AboutController::handleRequest'],
+                ['login', 'POST', 'Acme\Controller\LoginController::handleRequest'],
+            ],
+        );
+
+        $screen = $this->render($table, 24, 16);
+
+        self::assertStringContainsString('about', $screen);
+        self::assertStringContainsString('login', $screen, 'A stacked table draws every row it was given, not only the first');
+        self::assertLessThan(
+            mb_strpos($screen, 'login'),
+            mb_strpos($screen, 'about'),
+            'in the order they were handed in',
+        );
+    }
+
+    #[Test]
     public function keepsEveryColumnWhenAskedToWrapInstead(): void
     {
         $table = StaticTable::new(
