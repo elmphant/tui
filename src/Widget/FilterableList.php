@@ -413,6 +413,10 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
+     * A click moves the cursor, and nothing else: what this list holds as chosen
+     * is its picked item, so a mark the list makes on its own would outlive the
+     * cursor and read as a second choice.
+     *
      * @return UpdateResult<self>
      */
     private function withMouse(MouseMsg $message, Rect $area): UpdateResult
@@ -422,7 +426,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         $list = $dispatcher->dispatchOne($this->list, $message, $this->listArea($area));
 
         return new UpdateResult(
-            $this->cloneWith(field: $field->child, list: $list->child),
+            $this->cloneWith(field: $field->child, list: $list->child->withSelected(-1)),
             Cmd::combine(array_values(array_filter([$field->command, $list->command]))),
         );
     }

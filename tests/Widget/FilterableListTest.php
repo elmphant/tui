@@ -32,6 +32,11 @@ final class FilterableListTest extends TestCase
     private const WIDTH = 40;
     private const HEIGHT = 10;
 
+    /**
+     * The bar, a blank row, then the first item's title.
+     */
+    private const FIRST_ITEM_ROW = 2;
+
     #[Test]
     public function narrowsToTheItemsMatchingTheQuery(): void
     {
@@ -378,6 +383,28 @@ final class FilterableListTest extends TestCase
             FilterBar::HEIGHT + 1 + 1,
             $stack->measureHeight(self::WIDTH),
             'a flexible list scrolls, so it must not tell a layout it needs every row its items would fill',
+        );
+    }
+
+    #[Test]
+    public function aClickLeavesNoMarkerBehindOnceTheCursorMovesOn(): void
+    {
+        $theme = Theme::dark();
+        $clicked = $this->commands()->update(
+            new MouseMsg(1, self::FIRST_ITEM_ROW, MouseAction::Press, MouseButton::Left),
+            $this->area(),
+        )->model;
+
+        self::assertInstanceOf(FilterableList::class, $clicked);
+
+        $moved = $this->press($clicked, Key::Down);
+        $frame = new Frame(self::WIDTH, self::HEIGHT);
+        $moved->render($frame, $this->area(), new RenderContext($theme));
+
+        self::assertNotSame(
+            $theme->accent->foregroundValue(),
+            $frame->foregrounds[self::FIRST_ITEM_ROW * self::WIDTH + 1],
+            'The row a click left behind must not stay marked once the cursor has moved on',
         );
     }
 
