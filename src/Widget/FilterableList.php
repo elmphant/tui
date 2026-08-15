@@ -72,6 +72,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
+        private ?int $pickedIndex = null,
     ) {
         $this->matching = $matching ?? self::matching($matcher, $field->value(), $items);
     }
@@ -189,13 +190,19 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      */
     public function withPicked(?string $filterValue): self
     {
-        return $this->cloneWith(picked: $filterValue);
+        return $this->cloneWith(picked: $filterValue, pickedIndex: null);
     }
 
     public function pickedItem(): ?ListItem
     {
         if ($this->picked === null) {
             return null;
+        }
+
+        $atIndex = $this->pickedIndex === null ? null : ($this->items[$this->pickedIndex] ?? null);
+
+        if ($atIndex !== null && $atIndex->filterValue() === $this->picked) {
+            return $atIndex;
         }
 
         foreach ($this->items as $item) {
@@ -330,10 +337,19 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
         // Choosing is the list's own move, but the choice is this widget's to keep:
         // the rows are whatever the query left, so only a filter value survives it.
+        // The row it was made on rides along, so choosing the second of two that
+        // read the same picks that one and not the first.
         if ($this->effectiveKeybindings()->matches($message, Actions::SELECT)) {
             $cursor = $this->cursorItem();
 
-            return new UpdateResult($cursor === null ? $this : $this->activated($cursor->filterValue()));
+            if ($cursor === null) {
+                return new UpdateResult($this);
+            }
+
+            $value = $cursor->filterValue();
+            $clearing = $this->clearable && $this->picked === $value;
+
+            return new UpdateResult($this->pickedAt($clearing ? null : $value, $this->sourceIndex()));
         }
 
         $dispatcher = new ChildDispatcher($this->globalKeybindings);
@@ -376,6 +392,19 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         }
 
         $this->list->render($frame, $body, $context);
+    }
+
+    /**
+     * The same choice, with the row it was made on. The value still decides:
+     * the row is only consulted while it still reads the same, so a list that
+     * moved on behind the choice falls back to finding it by value.
+     */
+    private function pickedAt(?string $filterValue, ?int $index): self
+    {
+        return $this->cloneWith(
+            picked: $filterValue,
+            pickedIndex: $filterValue === null ? null : $index,
+        );
     }
 
     /**

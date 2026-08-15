@@ -425,6 +425,22 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function pickingTheSecondOfTwoItemsThatReadTheSamePicksThatOne(): void
+    {
+        $list = FilterableList::new([
+            new SimpleListItem('Same', 'first'),
+            new SimpleListItem('Same', 'second'),
+        ])->withFocus(true);
+
+        $onSecond = $this->press($list, Key::Down);
+        self::assertSame(1, $onSecond->sourceIndex(), 'the cursor is on the second');
+
+        $picked = $this->press($onSecond, Key::Enter);
+
+        self::assertSame('second', $picked->pickedItem()?->description());
+    }
+
+    #[Test]
     public function aPlainStringIsRefusedWhereItIsHandedIn(): void
     {
         $this->expectException(InvalidArgumentException::class);
