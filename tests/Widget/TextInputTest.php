@@ -32,6 +32,22 @@ final class TextInputTest extends TestCase
 {
     use FocusableBehaviorTrait;
 
+    /**
+     * Left from a cursor past the end only counts down towards the text, so the
+     * field reads as frozen for as many presses as the cursor was out by.
+     */
+    #[Test]
+    public function aCursorSetPastTheEndOfTheValueSitsAtTheEnd(): void
+    {
+        self::assertSame(3, TextInput::new()->withValue('abc')->withCursor(99)->cursor());
+    }
+
+    #[Test]
+    public function aCursorSetBeforeTheStartSitsAtTheStart(): void
+    {
+        self::assertSame(0, TextInput::new()->withValue('abc')->withCursor(-5)->cursor());
+    }
+
     #[Test]
     public function thePlaceholderCanBeReplacedAfterConstruction(): void
     {

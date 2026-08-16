@@ -12,6 +12,18 @@ use PHPUnit\Framework\TestCase;
 
 final class SplitStateTest extends TestCase
 {
+    /**
+     * A drag reads the pane either side of the divider, so one that lies outside
+     * the panes reaches for array keys that are not there.
+     */
+    #[Test]
+    public function aDividerThatLiesOutsideThePanesIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        SplitState::even(2)->withDragging(99);
+    }
+
     #[Test]
     public function survivesTheTripThroughASessionFile(): void
     {

@@ -76,7 +76,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware
 
     public function withCursor(int $cursor): self
     {
-        return $this->cloneWith(cursor: $cursor);
+        return $this->cloneWith(cursor: max(0, min($cursor, self::graphemeLength($this->value))));
     }
 
     /**

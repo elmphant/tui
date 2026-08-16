@@ -25,8 +25,10 @@ final readonly class ProgressBar implements Interactive
 
     private const BLOCKS = [' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'];
 
+    private float $progress;
+
     public function __construct(
-        private float $progress = 0.0,
+        float $progress = 0.0,
         private ?float $display = null,
         private ?Style $fillStyleOverride = null,
         private ?Style $emptyStyleOverride = null,
@@ -35,6 +37,7 @@ final readonly class ProgressBar implements Interactive
         private bool $clickable = true,
         private float $springFactor = 0.15,
     ) {
+        $this->progress = max(0.0, min(1.0, $progress));
     }
 
     public static function new(): self

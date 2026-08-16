@@ -31,6 +31,10 @@ final readonly class SplitState
 
     public function withDragging(?int $divider): self
     {
+        if (null !== $divider && ($divider < 0 || $divider > count($this->shares) - 2)) {
+            throw new InvalidArgumentException(sprintf('A divider lies between two panes, so it must be 0-%d, got %d', count($this->shares) - 2, $divider));
+        }
+
         return $this->cloneWith(dragging: $divider);
     }
 

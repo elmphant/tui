@@ -23,6 +23,20 @@ final class ProgressBarTest extends TestCase
 {
     private RenderContext $context;
 
+    /**
+     * The builder clamps, so only the constructor can hold a share above one —
+     * and the fill is drawn from it, past the end of the area it was given.
+     */
+    #[Test]
+    public function aShareAboveOneDoesNotPaintPastTheAreaGiven(): void
+    {
+        $frame = new Frame(14, 1);
+
+        (new ProgressBar(progress: 2.5))->render($frame, new Rect(2, 0, 10, 1), $this->context);
+
+        self::assertSame(' ', $frame->characters[12]);
+    }
+
     #[Test]
     public function constraintReturnsExactOne(): void
     {

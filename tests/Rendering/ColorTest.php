@@ -112,6 +112,59 @@ final class ColorTest extends TestCase
     }
 
     /**
+     * A channel is packed into eight bits below the truecolor tag, so one that
+     * does not fit rewrites the tag and the colour comes back as another kind
+     * of colour entirely.
+     */
+    #[Test]
+    public function aChannelOutsideItsRangeIsRefusedRatherThanPackedOverTheTag(): void
+    {
+        $tooLarge = null;
+        $negative = null;
+
+        try {
+            Color::rgb(300, 0, 0);
+        } catch (InvalidArgumentException $refused) {
+            $tooLarge = $refused;
+        }
+
+        try {
+            Color::rgb(0, -1, 0);
+        } catch (InvalidArgumentException $refused) {
+            $negative = $refused;
+        }
+
+        self::assertNotNull($tooLarge, 'A red channel of 300 must be refused');
+        self::assertNotNull($negative, 'A green channel of -1 must be refused');
+    }
+
+    #[Test]
+    public function aPaletteIndexOutsideItsRangeIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Color::color256(999);
+    }
+
+    /**
+     * hexdec() takes the digits it recognises and raises a deprecation about the
+     * rest, and that goes to the display the TUI is drawing on.
+     */
+    #[Test]
+    public function textThatIsNotAColourIsRefusedInsteadOfPartlyRead(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Color::hex('not-a-color');
+    }
+
+    #[Test]
+    public function aThreeDigitHexReadsAsTheSixDigitColourItAbbreviates(): void
+    {
+        self::assertSame(Color::hex('FFAA00')->value, Color::hex('#FA0')->value);
+    }
+
+    /**
      * Kills L70 DecrementInteger/IncrementInteger: 48→47/49 or 38→37/39.
      */
     #[Test]

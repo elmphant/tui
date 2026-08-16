@@ -71,17 +71,36 @@ final readonly class Color
 
     public static function color256(int $index): self
     {
+        if ($index < 0 || $index > 255) {
+            throw new InvalidArgumentException("A 256-colour index must be 0-255, got {$index}");
+        }
+
         return new self(self::C256 + $index);
     }
 
     public static function rgb(int $red, int $green, int $blue): self
     {
+        foreach (['red' => $red, 'green' => $green, 'blue' => $blue] as $channel => $level) {
+            if ($level < 0 || $level > 255) {
+                throw new InvalidArgumentException("The {$channel} channel must be 0-255, got {$level}");
+            }
+        }
+
         return new self(self::TRUE + ($red << 16) + ($green << 8) + $blue);
     }
 
     public static function hex(string $hex): self
     {
         $hex = ltrim($hex, '#');
+
+        if (strlen($hex) === 3 && ctype_xdigit($hex)) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+
+        if (strlen($hex) !== 6 || !ctype_xdigit($hex)) {
+            throw new InvalidArgumentException("A hex colour must be six hex digits, got \"{$hex}\"");
+        }
+
         $value = (int)hexdec($hex);
 
         return self::rgb(($value >> 16) & 0xFF, ($value >> 8) & 0xFF, $value & 0xFF);
