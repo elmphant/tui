@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
+use Closure;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
@@ -16,6 +19,8 @@ use LogicException;
 final class RenderContext
 {
     private ?LayoutPlan $layoutPlan = null;
+    private FocusState $focus;
+    private int $focusDepth = 0;
     private float $now = 0.0;
     private ?float $repaintDelay = null;
     private ?Frame $rootFrame = null;
@@ -40,6 +45,7 @@ final class RenderContext
         public readonly Theme $theme,
         public readonly ColorProfile $colorProfile = ColorProfile::TrueColor,
     ) {
+        $this->focus = new FocusState();
     }
 
     /**
@@ -73,12 +79,45 @@ final class RenderContext
      * requests, and drops staged placements that were never committed, so a
      * frame without renderRoot() cannot publish an old popup again
      */
-    public function beginFrame(float $now): void
+    public function beginFrame(float $now, FocusState $focus = new FocusState()): void
     {
         $this->now = $now;
         $this->repaintDelay = null;
         $this->pendingPlacements = [];
         $this->rootPassRan = false;
+        $this->focus = $focus;
+        $this->focusDepth = 0;
+    }
+
+    /**
+     * Whether the keyboard is in the widget being rendered. A widget asks rather
+     * than remembers, so it cannot disagree with where the keys are routed.
+     */
+    public function hasFocus(): bool
+    {
+        return $this->focusDepth > 0;
+    }
+
+    /**
+     * @internal opened by Component around the subtree the keyboard is in
+     *
+     * @param Closure(): void $render
+     */
+    public function withinComponent(ComponentId $id, Closure $render): void
+    {
+        $holdsFocus = $this->focus->focused()?->equals($id) ?? false;
+
+        if ($holdsFocus) {
+            ++$this->focusDepth;
+        }
+
+        try {
+            $render();
+        } finally {
+            if ($holdsFocus) {
+                --$this->focusDepth;
+            }
+        }
     }
 
     /**

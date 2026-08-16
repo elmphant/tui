@@ -68,7 +68,9 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $this->widget->render($frame, $area, $context);
+        $context->withinComponent($this->id, function () use ($frame, $area, $context): void {
+            $this->widget->render($frame, $area, $context);
+        });
     }
 
     /**

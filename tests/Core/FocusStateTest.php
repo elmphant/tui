@@ -1,0 +1,63 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Core;
+
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class FocusStateTest extends TestCase
+{
+    #[Test]
+    public function aTreeStartsWithTheKeyboardOnNothing(): void
+    {
+        self::assertNull((new FocusState())->focused());
+    }
+
+    #[Test]
+    public function theFirstMoveFromNothingLandsOnTheFirstComponent(): void
+    {
+        $moved = (new FocusState())->next(self::order('search', 'results'));
+
+        self::assertEquals(ComponentId::named('search'), $moved->focused());
+    }
+
+    #[Test]
+    public function aMoveLandsOnTheComponentAfterTheFocusedOne(): void
+    {
+        $moved = (new FocusState(ComponentId::named('search')))->next(self::order('search', 'results'));
+
+        self::assertEquals(ComponentId::named('results'), $moved->focused());
+    }
+
+    /**
+     * A focused component can leave the tree between frames — a tab switches, a
+     * modal closes, a row is filtered away. The keyboard cannot stay with it.
+     */
+    #[Test]
+    public function focusOnAComponentThatLeftTheTreeFallsBackToTheFirstOne(): void
+    {
+        $gone = new FocusState(ComponentId::named('modal-field'));
+
+        $resolved = $gone->resolvedAgainst(self::order('search', 'results'));
+
+        self::assertEquals(ComponentId::named('search'), $resolved->focused());
+    }
+
+    #[Test]
+    public function aTreeWithNothingFocusableKeepsTheKeyboardOnNothing(): void
+    {
+        self::assertNull((new FocusState(ComponentId::named('search')))->resolvedAgainst([])->focused());
+    }
+
+    /**
+     * @return list<ComponentId>
+     */
+    private static function order(string ...$names): array
+    {
+        return array_map(ComponentId::named(...), $names);
+    }
+}
