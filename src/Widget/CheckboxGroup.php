@@ -23,6 +23,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 final readonly class CheckboxGroup implements Focusable, KeybindingsAware, CursorAware, DropdownContent
 {
     use Cloneable;
+    use DrawsFocus;
     use OptionCursor;
     use KeybindingsAwareBehavior;
 
@@ -231,12 +232,12 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
                 break;
             }
 
-            $isCursor = $index === $this->cursor && $this->focused;
+            $isCursor = $index === $this->cursor && $this->drawsFocused($context);
             $isChecked = $this->isChecked($index);
 
             $mark = $isChecked ? OptionMarks::CHECKED : OptionMarks::UNCHECKED;
 
-            $style = $theme->optionStyle($isCursor, $isChecked, $this->focused);
+            $style = $theme->optionStyle($isCursor, $isChecked, $this->drawsFocused($context));
 
             $frame->putStyled($area->x, $y, $mark, $style);
             $frame->putStyled($area->x + CharWidth::stringWidth($mark), $y, $option, $style);

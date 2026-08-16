@@ -23,6 +23,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 final readonly class Checkbox implements Focusable, KeybindingsAware
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     public const CHECKED_MARK = OptionMarks::CHECKED;
@@ -112,7 +113,7 @@ final readonly class Checkbox implements Focusable, KeybindingsAware
         $mark = $this->checked ? self::CHECKED_MARK : self::UNCHECKED_MARK;
 
         $style = match (true) {
-            $this->focused => $theme->cursorStyle,
+            $this->drawsFocused($context) => $theme->cursorStyle,
             $this->checked => $theme->accent,
             default => $theme->dim,
         };

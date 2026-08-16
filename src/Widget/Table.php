@@ -39,6 +39,7 @@ use Elmphant\Tui\Rendering\Theme;
 final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     private const WHEEL_SCROLL_STEP = 1;
@@ -248,7 +249,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             if ($this->header) {
                 $this->renderHeader($frame, $area, $columnWidths, $theme);
             }
-            $this->renderRows($frame, $area, $columnWidths, $theme);
+            $this->renderRows($frame, $area, $columnWidths, $theme, $this->drawsFocused($context));
 
             if ($showScrollbar) {
                 Scrollbar::renderFor(
@@ -466,7 +467,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     /**
      * @param list<int> $columnWidths
      */
-    private function renderRows(Frame $frame, Rect $area, array $columnWidths, Theme $theme): void
+    private function renderRows(Frame $frame, Rect $area, array $columnWidths, Theme $theme, bool $focused): void
     {
         $layout = $this->layoutFor($columnWidths);
         $totalWidth = array_sum($columnWidths);
@@ -490,7 +491,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
                 }
 
                 $height = $layout->heightOf($rowIndex);
-                $this->renderRow($frame, $area->x, $renderY, $rowIndex, $this->rows[$rowIndex], $columnWidths, $totalWidth, $theme, $height);
+                $this->renderRow($frame, $area->x, $renderY, $rowIndex, $this->rows[$rowIndex], $columnWidths, $totalWidth, $theme, $height, $focused);
 
                 $renderY += $height;
             }
@@ -502,7 +503,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     /**
      * @param list<int> $columnWidths
      */
-    private function renderRow(Frame $frame, int $startX, int $renderY, int $rowIndex, Row $row, array $columnWidths, int $totalWidth, Theme $theme, int $height): void
+    private function renderRow(Frame $frame, int $startX, int $renderY, int $rowIndex, Row $row, array $columnWidths, int $totalWidth, Theme $theme, int $height, bool $focused): void
     {
         if ($row->spansAllColumns) {
             foreach (TableLayout::spanningLines($columnWidths, $row) as $lineIndex => $line) {
@@ -514,10 +515,10 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         $isCursor = $rowIndex === $this->cursor;
         $isSelected = $rowIndex === $this->selected;
-        $reverse = ($isCursor && $this->focused) || $isSelected;
+        $reverse = ($isCursor && $focused) || $isSelected;
 
         $defaultStyle = match (true) {
-            $this->focused => $theme->base,
+            $focused => $theme->base,
             default => $theme->dim,
         };
 

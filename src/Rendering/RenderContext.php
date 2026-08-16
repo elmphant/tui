@@ -108,6 +108,23 @@ final class RenderContext
     }
 
     /**
+     * Draw a part as the one the keyboard reaches. Production opens this through
+     * Component; a test that renders one widget on its own says so directly.
+     *
+     * @param Closure(): void $render
+     */
+    public function withFocusHere(Closure $render): void
+    {
+        ++$this->focusDepth;
+
+        try {
+            $render();
+        } finally {
+            --$this->focusDepth;
+        }
+    }
+
+    /**
      * Draw a part that must not show the focus its container holds — the list
      * beside the field, the pane that is not the active one.
      *

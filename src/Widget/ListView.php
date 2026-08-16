@@ -29,6 +29,7 @@ use Elmphant\Tui\Rendering\Theme;
 final readonly class ListView implements Focusable, KeybindingsAware, MeasureHeight
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     private const WHEEL_SCROLL_STEP = 1;
@@ -237,6 +238,7 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
                     $index === $this->cursor,
                     $index === $this->selected,
                     $theme,
+                    $this->drawsFocused($context),
                 );
 
                 $renderY += $extents->heightOf($index);
@@ -262,13 +264,13 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         return $width < 1 ? 0 : $this->extentsAt($width)->totalHeight();
     }
 
-    private function renderItem(Frame $frame, int $x, int $y, int $width, ListItem $item, bool $isCursor, bool $isSelected, Theme $theme): void
+    private function renderItem(Frame $frame, int $x, int $y, int $width, ListItem $item, bool $isCursor, bool $isSelected, Theme $theme, bool $focused): void
     {
         $style = match (true) {
-            $isCursor && $this->focused => $theme->cursorStyle,
+            $isCursor && $focused => $theme->cursorStyle,
             $isCursor => self::unfocusedCursorStyle($theme),
             $isSelected => $theme->accent,
-            $this->focused => $theme->base,
+            $focused => $theme->base,
             default => $theme->dim,
         };
 

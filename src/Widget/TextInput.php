@@ -27,6 +27,7 @@ use Elmphant\Tui\Rendering\Style;
 final readonly class TextInput implements Focusable, KeybindingsAware
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     public function __construct(
@@ -185,7 +186,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware
 
         $frame->putStyled($area->x, $area->y, $content, $fieldStyle);
 
-        if ($this->focused) {
+        if ($this->drawsFocused($context)) {
             $cursorDisplayX = CharWidth::stringWidth(self::graphemeSubstring($displayText, 0, $this->cursor));
             $cursorScreenX = $area->x + $cursorDisplayX - $viewportOffset;
             if ($cursorScreenX >= $area->x && $cursorScreenX < $area->right()) {
@@ -201,7 +202,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware
     private function fieldStyle(RenderContext $context, bool $showPlaceholder): Style
     {
         $theme = $context->theme;
-        $tone = $showPlaceholder || !$this->focused ? $theme->dim : $theme->base;
+        $tone = $showPlaceholder || !$this->drawsFocused($context) ? $theme->dim : $theme->base;
 
         return match ($this->decoration) {
             InputDecoration::Underline => $tone->underline(),

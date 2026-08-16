@@ -18,6 +18,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 final readonly class Select implements Focusable, KeybindingsAware, CursorAware, DropdownContent, Committing
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
     use OptionListBehavior;
 
@@ -137,10 +138,10 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
 
         for ($index = $scrollOffset; $index < min($count, $scrollOffset + $area->height); ++$index) {
             $y = $area->y + $index - $scrollOffset;
-            $isCursor = $index === $this->cursor && $this->focused;
+            $isCursor = $index === $this->cursor && $this->drawsFocused($context);
             $isSelected = $index === $this->selected;
 
-            $style = $theme->optionStyle($isCursor, $isSelected, $this->focused);
+            $style = $theme->optionStyle($isCursor, $isSelected, $this->drawsFocused($context));
 
             $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($this->options[$index], $area->width), $style);
         }

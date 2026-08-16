@@ -30,6 +30,7 @@ use Elmphant\Tui\Rendering\Style;
 final readonly class Button implements Focusable, KeybindingsAware
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     private function __construct(
@@ -131,7 +132,7 @@ final readonly class Button implements Focusable, KeybindingsAware
             $this->tone === ButtonTone::Danger => $theme->error,
             default => $theme->borderStyle,
         };
-        $showsFocus = ($this->focused || $this->armed) && !$this->disabled;
+        $showsFocus = ($this->drawsFocused($context) || $this->armed) && !$this->disabled;
 
         $borderStyle = match (true) {
             !$showsFocus => $toneStyle,

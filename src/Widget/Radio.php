@@ -18,6 +18,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, DropdownContent, Committing
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
     use OptionListBehavior;
 
@@ -158,13 +159,13 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
                 break;
             }
 
-            $isCursor = $index === $this->cursor && $this->focused;
+            $isCursor = $index === $this->cursor && $this->drawsFocused($context);
             $isSelected = $index === $this->selected;
 
             $mark = $isSelected ? self::PICKED_MARK : self::FREE_MARK;
             $markWidth = CharWidth::stringWidth($mark);
 
-            $style = $theme->optionStyle($isCursor, $isSelected, $this->focused);
+            $style = $theme->optionStyle($isCursor, $isSelected, $this->drawsFocused($context));
 
             $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($mark, $area->width), $style);
             $frame->putStyled($area->x + $markWidth, $y, CharWidth::truncateToWidth($option, max(0, $area->width - $markWidth)), $style);
