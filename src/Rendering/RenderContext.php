@@ -79,12 +79,21 @@ final class RenderContext
      * requests, and drops staged placements that were never committed, so a
      * frame without renderRoot() cannot publish an old popup again
      */
-    public function beginFrame(float $now, FocusState $focus = new FocusState()): void
+    public function beginFrame(float $now): void
     {
         $this->now = $now;
         $this->repaintDelay = null;
         $this->pendingPlacements = [];
         $this->rootPassRan = false;
+        $this->focus = new FocusState();
+        $this->focusDepth = 0;
+    }
+
+    /**
+     * @internal installed once per frame by the tree that knows its components
+     */
+    public function focusOn(FocusState $focus): void
+    {
         $this->focus = $focus;
         $this->focusDepth = 0;
     }
@@ -96,6 +105,24 @@ final class RenderContext
     public function hasFocus(): bool
     {
         return $this->focusDepth > 0;
+    }
+
+    /**
+     * Draw a part that must not show the focus its container holds — the list
+     * beside the field, the pane that is not the active one.
+     *
+     * @param Closure(): void $render
+     */
+    public function withoutFocus(Closure $render): void
+    {
+        $held = $this->focusDepth;
+        $this->focusDepth = 0;
+
+        try {
+            $render();
+        } finally {
+            $this->focusDepth = $held;
+        }
     }
 
     /**
