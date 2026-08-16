@@ -25,13 +25,6 @@ final class StaticTablePerfTest extends TestCase
      */
     private const MAX_COST_OF_DOUBLING = 3.0;
 
-    /**
-     * Measuring 32k rows' cells costs about 11ms and cannot be avoided while the
-     * columns size themselves to their content; drawing all of them cost 78ms on
-     * top. Set for a loaded machine, to catch drawing rows no one can see.
-     */
-    private const MAX_MICROSECONDS_FOR_A_HUGE_TABLE = 30_000.0;
-
     #[Test]
     public function twiceTheRowsCostAboutTwiceAsMuchToDraw(): void
     {
@@ -78,6 +71,54 @@ final class StaticTablePerfTest extends TestCase
                 $ratio,
                 $largeCost,
                 $smallCost,
+            ),
+        );
+    }
+
+    #[Test]
+    public function aRebuiltTableDrawsAtANewWidthWithoutMeasuringItsCellsAgain(): void
+    {
+        self::skipUnderXdebug();
+
+        $context = new RenderContext(Theme::dark());
+        $rows = self::rows(16_000);
+        $headers = ['A', 'B', 'C'];
+
+        $cold = self::medianMicrosecondsAfterSetup(
+            static function (): void {
+                WrapCache::clear();
+            },
+            static function () use ($headers, $rows, $context): void {
+                StaticTable::new($headers, $rows)->render(new Frame(60, 10), new Rect(0, 0, 60, 10), $context);
+            },
+            10,
+        );
+
+        // A new width, so the drawing is genuinely new work and only the
+        // measuring can come from the cache.
+        StaticTable::new($headers, $rows)->render(new Frame(60, 10), new Rect(0, 0, 60, 10), $context);
+        $width = 61;
+        $warm = self::medianMicroseconds(
+            static function () use ($headers, $rows, $context, &$width): void {
+                ++$width;
+                StaticTable::new($headers, $rows)
+                    ->render(new Frame($width, 10), new Rect(0, 0, $width, 10), $context);
+            },
+            10,
+        );
+
+        $ratio = $warm / $cold;
+
+        self::assertLessThan(
+            0.6,
+            $ratio,
+            sprintf(
+                'Drawing the same rows at a new width cost %.2f of a cold draw (%.0fµs vs '
+                . '%.0fµs). The column widths do not change with the area, so measuring '
+                . 'them must not run again for every frame.',
+                $ratio,
+                $warm,
+                $cold,
             ),
         );
     }

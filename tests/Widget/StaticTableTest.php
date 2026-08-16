@@ -45,6 +45,19 @@ final class StaticTableTest extends TestCase
     }
 
     /**
+     * FilterableTable sizes its columns from every row while drawing only the
+     * matching ones, so the rows it draws must not be the rows it measured.
+     */
+    #[Test]
+    public function sizingRowsGivenAfterADrawWidenTheColumnsForRowsItDoesNotDraw(): void
+    {
+        $drawn = StaticTable::new(['A'], [['x']]);
+        $narrow = $drawn->drawnWidth(60);
+
+        self::assertGreaterThan($narrow, $drawn->withWidthsFrom([['a far longer value']])->drawnWidth(60));
+    }
+
+    /**
      * Cell by cell, because every width the table works out — the widest cell, the
      * padding either side, the dividers, and what is left for the column that has
      * to wrap — only shows as geometry.

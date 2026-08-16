@@ -38,6 +38,7 @@ final class StaticTable implements Widget, MeasureHeight
      * @param list<list<string>>  $rows
      * @param ?list<list<string>> $measured rows the columns are sized for, when not the rows drawn
      * @param list<string>        $built    lines already drawn, for $builtFor columns
+     * @param ?list<int>          $demanded column widths already measured
      */
     private function __construct(
         private readonly array $headers,
@@ -49,6 +50,8 @@ final class StaticTable implements Widget, MeasureHeight
         private array $built = [],
         private ?int $builtFor = null,
         private ?int $builtUpTo = null,
+        private ?array $demanded = null,
+        private ?string $keyed = null,
     ) {
     }
 
@@ -167,7 +170,31 @@ final class StaticTable implements Widget, MeasureHeight
      */
     private function rebuiltWith(mixed ...$overrides): self
     {
-        return $this->cloneWith(...$overrides, built: [], builtFor: null, builtUpTo: null);
+        return $this->cloneWith(
+            ...$overrides,
+            built: [],
+            builtFor: null,
+            builtUpTo: null,
+            demanded: null,
+            keyed: null,
+        );
+    }
+
+    /**
+     * 32k rows: 10ms to measure, 2ms to key, and view() rebuilds per frame.
+     * Every field the drawing reads belongs in it: the cache outlives the value,
+     * so anything left out lets one table be drawn as another.
+     */
+    private function contentKey(): string
+    {
+        return $this->keyed ??= hash('xxh3', serialize([
+            $this->headers,
+            $this->rows,
+            $this->measured,
+            $this->border,
+            $this->overflow,
+            $this->minWidth,
+        ]));
     }
 
     /**
@@ -183,22 +210,11 @@ final class StaticTable implements Widget, MeasureHeight
             return $this->built;
         }
 
-        // 320 rows: 18ms to draw, 0.1ms to key, and view() rebuilds per frame.
-        // Every field draw() reads belongs in the key: the cache outlives the
-        // value, so anything left out lets one table be drawn as another.
-        $key = hash('xxh3', serialize([
-            $this->headers,
-            $this->rows,
-            $this->measured,
-            $this->border,
-            $this->overflow,
-            $this->minWidth,
-            $width,
-            $upTo,
-        ]));
-
         /** @var list<string> $lines */
-        $lines = WrapCache::remember($key, fn (): array => $this->draw($width, $upTo));
+        $lines = WrapCache::remember(
+            $this->contentKey() . ':lines:' . $width . ':' . ($upTo ?? 'all'),
+            fn (): array => $this->draw($width, $upTo),
+        );
 
         $this->built = $lines;
         $this->builtFor = $width;
@@ -446,6 +462,21 @@ final class StaticTable implements Widget, MeasureHeight
      * @return list<int>
      */
     private function demands(): array
+    {
+        if (null !== $this->demanded) {
+            return $this->demanded;
+        }
+
+        /** @var list<int> $demanded */
+        $demanded = WrapCache::remember($this->contentKey() . ':columns', $this->measuring(...));
+
+        return $this->demanded = $demanded;
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function measuring(): array
     {
         $widest = [];
 
