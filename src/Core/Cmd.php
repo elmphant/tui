@@ -15,6 +15,23 @@ abstract readonly class Cmd
     }
 
     /**
+     * Puts the keyboard on a component. The tree owns which one that is, so an
+     * app asks rather than setting a flag on the widget.
+     */
+    public static function focus(ComponentId $target): self
+    {
+        return new FocusCmd($target);
+    }
+
+    /**
+     * Moves the keyboard one component along, wrapping at the end.
+     */
+    public static function focusNext(): self
+    {
+        return new FocusCmd(move: FocusMove::Next);
+    }
+
+    /**
      * Asks the terminal to put the text on the system clipboard. It travels as an
      * escape sequence, so it crosses a container boundary or an ssh hop that a
      * clipboard library could not.
