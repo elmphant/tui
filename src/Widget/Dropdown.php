@@ -34,6 +34,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 final readonly class Dropdown implements Focusable, KeybindingsAware
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     private const MARKER = '▾ ';
@@ -175,7 +176,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
         // Accent says a value was chosen, so focus is marked the way every other
         // row under the cursor is; the caption is what tells the two apart.
         $style = match (true) {
-            $this->focused => $context->theme->cursorStyle,
+            $this->drawsFocused($context) => $context->theme->cursorStyle,
             $this->content->hasChoice() => $context->theme->base,
             default => $context->theme->dim,
         };

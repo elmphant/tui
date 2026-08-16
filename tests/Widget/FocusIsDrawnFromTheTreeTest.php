@@ -14,6 +14,7 @@ use Elmphant\Tui\Widget\Button;
 use Elmphant\Tui\Widget\Checkbox;
 use Elmphant\Tui\Widget\CheckboxGroup;
 use Elmphant\Tui\Widget\Column;
+use Elmphant\Tui\Widget\Dropdown;
 use Elmphant\Tui\Widget\ListView;
 use Elmphant\Tui\Widget\Radio;
 use Elmphant\Tui\Widget\Select;
@@ -66,6 +67,7 @@ final class FocusIsDrawnFromTheTreeTest extends TestCase
         yield 'CheckboxGroup' => [CheckboxGroup::new(['one', 'two'])];
         yield 'ListView' => [ListView::new([new SimpleListItem('one'), new SimpleListItem('two')])];
         yield 'Table' => [Table::new([Column::new('A', Constraint::exact(8))], [['one'], ['two']])];
+        yield 'Dropdown' => [Dropdown::new(Select::new(['one', 'two']))];
     }
 
     private static function snapshot(Frame $frame): string

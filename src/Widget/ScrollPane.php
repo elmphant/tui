@@ -214,7 +214,17 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
                 $height = $layout->heights[$index];
 
                 if ($y + $height > $area->y && $y < $area->bottom()) {
-                    $child->render($frame, new Rect($area->x, $y, $layout->childWidth, $height), $context);
+                    $childArea = new Rect($area->x, $y, $layout->childWidth, $height);
+
+                    // The pane holds the keyboard for one child; the rest sit in
+                    // the same focused subtree and must not read it as their own.
+                    if (self::holdsKeyboard($child)) {
+                        $child->render($frame, $childArea, $context);
+                    } else {
+                        $context->withoutFocus(static function () use ($child, $frame, $childArea, $context): void {
+                            $child->render($frame, $childArea, $context);
+                        });
+                    }
                 }
 
                 $y += $height;
@@ -517,6 +527,11 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
             $this->children,
             static fn (Widget $child): bool => $child instanceof Focusable,
         ));
+    }
+
+    private static function holdsKeyboard(Widget $child): bool
+    {
+        return $child instanceof Focusable && $child->isFocused();
     }
 
     /**
