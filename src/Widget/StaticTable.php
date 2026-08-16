@@ -536,8 +536,13 @@ final class StaticTable implements Widget, MeasureHeight
         $floors = $this->columnFloors($count);
         $budget = $width - ($count * self::OVERHEAD_PER_COLUMN + 1);
 
+        // Past this point the floors are what a reader would like, not what there
+        // is: handing them back would draw a table wider than the pane, losing the
+        // side of its frame. An even share of what is left keeps it whole — down
+        // to a column apiece, below which there is no table to draw and the area
+        // cuts off whatever is attempted.
         if ($budget < array_sum($floors)) {
-            return $floors;
+            return $budget < $count ? $floors : self::spread($budget, $count);
         }
 
         $share = intdiv($budget, $count);
@@ -546,6 +551,25 @@ final class StaticTable implements Widget, MeasureHeight
         $widths[$last] = max($floors[$last], $widths[$last] + $budget - array_sum($widths));
 
         return array_values($widths);
+    }
+
+    /**
+     * $budget columns over $count columns, the remainder going to the leftmost,
+     * so the sum is exactly the budget.
+     *
+     * @return list<int>
+     */
+    private static function spread(int $budget, int $count): array
+    {
+        $share = intdiv($budget, $count);
+        $remainder = $budget % $count;
+
+        $widths = [];
+        for ($column = 0; $column < $count; ++$column) {
+            $widths[] = $share + ($column < $remainder ? 1 : 0);
+        }
+
+        return $widths;
     }
 
     /**

@@ -8,8 +8,7 @@
             "Input/Terminal.php",
             "Rendering/Theme.php",
             "Runtime/MonotonicClock.php",
-            "Runtime/ShutdownRestorer.php",
-            "Widget/StaticTable.php"
+            "Runtime/ShutdownRestorer.php"
         ]
     },
     "logs": {

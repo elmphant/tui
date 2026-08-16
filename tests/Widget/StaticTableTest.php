@@ -44,6 +44,36 @@ final class StaticTableTest extends TestCase
         self::assertSame(50, $drawn->withMinWidth(50)->drawnWidth(60));
     }
 
+    /**
+     * Cell by cell, because every width the table works out — the widest cell, the
+     * padding either side, the dividers, and what is left for the column that has
+     * to wrap — only shows as geometry.
+     */
+    #[Test]
+    public function drawsEveryColumnToTheWidthItWorkedOut(): void
+    {
+        $squeezed = <<<'TABLE'
+            ┌────────────────────┬─────────────────┐
+            │ Identifier         │ Title           │
+            ├────────────────────┼─────────────────┤
+            │ setup_userSettings │ migrate the     │
+            │                    │ user settings   │
+            └────────────────────┴─────────────────┘
+            TABLE;
+
+        self::assertSame($squeezed, $this->drawnRows($this->table(), 40, 8));
+
+        $roomy = <<<'TABLE'
+            ┌────────────────────┬───────────────────────────┐
+            │ Identifier         │ Title                     │
+            ├────────────────────┼───────────────────────────┤
+            │ setup_userSettings │ migrate the user settings │
+            └────────────────────┴───────────────────────────┘
+            TABLE;
+
+        self::assertSame($roomy, $this->drawnRows($this->table(), 60, 8), 'Given room, the columns take what they need and no more');
+    }
+
     #[Test]
     public function drawsABorderedTable(): void
     {
@@ -180,6 +210,27 @@ final class StaticTableTest extends TestCase
 
         self::assertStringContainsString('setup_userSettings', $screen);
         self::assertStringContainsString('migrate the user settings', $screen, 'Nothing wraps while there is room');
+    }
+
+    /**
+     * Wrapping keeps every column, but the table still has to end inside the
+     * width it was given: a border drawn past the edge loses its closing side.
+     */
+    #[Test]
+    public function aWrappingTableStillEndsInsideTheWidthItWasGiven(): void
+    {
+        $table = StaticTable::new(
+            ['Name', 'Method', 'Target'],
+            [['about', 'ANY', 'Acme\Controller\AboutController::handleRequest']],
+        )->withOverflow(Overflow::Wrap);
+
+        foreach ([20, 24, 30] as $width) {
+            $rows = explode("\n", $this->drawnRows($table, $width, 30));
+
+            self::assertLessThanOrEqual($width, mb_strlen($rows[0]), sprintf('The head rule fits %d columns', $width));
+            self::assertStringEndsWith('┐', $rows[0], 'so it keeps its right-hand corner');
+            self::assertStringEndsWith('┘', $rows[array_key_last($rows)], 'and closes at the bottom');
+        }
     }
 
     #[Test]
@@ -319,6 +370,19 @@ final class StaticTableTest extends TestCase
             ['Identifier', 'Title'],
             [['setup_userSettings', 'migrate the user settings']],
         );
+    }
+
+    /**
+     * The drawn rows alone, so a golden table reads as the table it draws.
+     */
+    private function drawnRows(StaticTable $table, int $width, int $height): string
+    {
+        $rows = array_filter(
+            explode("\n", $this->render($table, $width, $height)),
+            static fn (string $row): bool => trim($row) !== '',
+        );
+
+        return implode("\n", array_map(rtrim(...), $rows));
     }
 
     private function render(StaticTable $table, int $width, int $height): string
