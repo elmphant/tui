@@ -773,9 +773,9 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
-    public function wrapToWidthGivesAGraphemeWiderThanTheColumnItsOwnRow(): void
+    public function wrapToWidthMarksAGraphemeWiderThanTheColumnAsCut(): void
     {
-        self::assertSame(["\u{4E16}", "\u{754C}"], CharWidth::wrapToWidth("\u{4E16}\u{754C}", 1));
+        self::assertSame(['…', '…'], CharWidth::wrapToWidth("\u{4E16}\u{754C}", 1));
     }
 
     #[Test]
