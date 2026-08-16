@@ -61,7 +61,7 @@ abstract readonly class App implements Model
         );
     }
 
-    final public function update(Message $message, Rect $screenRect): UpdateResult
+    final public function update(Message $message, Rect $screenRect, ?ComponentId $focused = null): UpdateResult
     {
         // Kitty keyboard protocol reports Press AND Release for each
         // keystroke; without dropping Release here, every onKey handler
@@ -89,7 +89,7 @@ abstract readonly class App implements Model
             return $this->handleLayerOne($message, $screenRect, $components);
         }
 
-        return $this->handleLayerTwo($message, $screenRect, $focusables);
+        return $this->handleLayerTwo($message, $screenRect, self::holdingTheKeyboard($focusables, $focused));
     }
 
     /**
@@ -259,6 +259,28 @@ abstract readonly class App implements Model
             Actions::FOCUS_CYCLE => ['tab'],
             Actions::FOCUS_PREV_CYCLE => ['shift+tab'],
         ]);
+    }
+
+    /**
+     * The tree names the component the keys belong to. Its own flag does not.
+     *
+     * @param list<Component<Interactive>> $focusables
+     *
+     * @return list<Component<Interactive>>
+     */
+    private static function holdingTheKeyboard(array $focusables, ?ComponentId $focused): array
+    {
+        if ($focused === null) {
+            return $focusables;
+        }
+
+        foreach ($focusables as $component) {
+            if ($component->id->equals($focused)) {
+                return [$component];
+            }
+        }
+
+        return $focusables;
     }
 
     /**
