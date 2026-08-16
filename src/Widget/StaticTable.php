@@ -440,28 +440,29 @@ final class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * The width each column would take unwrapped, or what the given share of
-     * its rows would take — never below what its header needs.
+     * The width each column would take unwrapped, never below what its header
+     * needs.
      *
      * @return list<int>
      */
-    private function demands(float $share = 1.0): array
+    private function demands(): array
     {
-        $lengths = [];
+        $widest = [];
 
         foreach ($this->measured ?? $this->rows as $row) {
             foreach ($row as $column => $cell) {
-                $lengths[$column][] = CharWidth::stringWidth($cell);
+                $width = CharWidth::stringWidth($cell);
+
+                if ($width > ($widest[$column] ?? 0)) {
+                    $widest[$column] = $width;
+                }
             }
         }
 
         $demands = [];
 
         foreach ($this->headers as $column => $header) {
-            $widths = $lengths[$column] ?? [];
-            sort($widths);
-            $index = max(0, (int)ceil($share * count($widths)) - 1);
-            $demands[] = max(CharWidth::stringWidth($header), $widths[$index] ?? 0);
+            $demands[] = max(CharWidth::stringWidth($header), $widest[$column] ?? 0);
         }
 
         return $demands;
