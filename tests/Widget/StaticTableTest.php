@@ -87,6 +87,44 @@ final class StaticTableTest extends TestCase
         self::assertSame($roomy, $this->drawnRows($this->table(), 60, 8), 'Given room, the columns take what they need and no more');
     }
 
+    /**
+     * The filtered case: the columns are sized for every row so they hold still
+     * while a query narrows them, and only the matching row is drawn — so the
+     * header has to be padded out to widths its own text never asked for.
+     */
+    #[Test]
+    public function headersAreWidenedToColumnsSizedFromRowsThatAreNotDrawn(): void
+    {
+        $sizedForAll = StaticTable::new(['Id', 'Title'], [['1', 'alpha']])
+            ->withWidthsFrom([['1', 'alpha'], ['200', 'a considerably longer title']]);
+
+        $expected = <<<'TABLE'
+            ┌─────┬─────────────────────────────┐
+            │ Id  │ Title                       │
+            ├─────┼─────────────────────────────┤
+            │ 1   │ alpha                       │
+            └─────┴─────────────────────────────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($sizedForAll, 44, 8));
+    }
+
+    #[Test]
+    public function headersAreWidenedToColumnsGrownByAMinimumWidth(): void
+    {
+        $widened = StaticTable::new(['Id', 'Title'], [['1', 'alpha']])->withMinWidth(40);
+
+        $expected = <<<'TABLE'
+            ┌────┬─────────────────────────────────┐
+            │ Id │ Title                           │
+            ├────┼─────────────────────────────────┤
+            │ 1  │ alpha                           │
+            └────┴─────────────────────────────────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($widened, 44, 8));
+    }
+
     #[Test]
     public function drawsABorderedTable(): void
     {
@@ -262,6 +300,29 @@ final class StaticTableTest extends TestCase
         self::assertStringContainsString('Target', $screen, 'A stacked column keeps its label in the header');
         self::assertStringContainsString('Type', $screen);
         self::assertStringContainsString('Acme', $screen, 'Its value sits under the value above');
+    }
+
+    #[Test]
+    public function aStackedColumnKeepsItsLabelAboveItsValueAndTheRestTabular(): void
+    {
+        $table = StaticTable::new(
+            ['Name', 'Method', 'Target', 'Type'],
+            [['about', 'ANY', 'Acme\Controller\AboutController::handleRequest', 'Module']],
+        );
+
+        $expected = <<<'TABLE'
+            ┌─────────────┬────────┐
+            │ Name        │ Method │
+            │ Target      │        │
+            │ Type        │        │
+            ├─────────────┼────────┤
+            │ about       │ ANY    │
+            │ Acme\Contr… │        │
+            │ Module      │        │
+            └─────────────┴────────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 24, 10));
     }
 
     #[Test]

@@ -237,7 +237,7 @@ final class StaticTable implements Widget, MeasureHeight
         if (self::spaceFor($widest, $width) >= 0) {
             $widths = self::grown($widest, min($width, max($this->minWidth, self::widthOf($widest))), $widest);
 
-            return $this->drawn($this->held($widths), $rows, $widths, $upTo);
+            return $this->drawn($this->headers, $rows, $widths, $upTo);
         }
 
         $floors = self::capped($this->wordFloors(), $width);
@@ -257,27 +257,11 @@ final class StaticTable implements Widget, MeasureHeight
         $widths = self::grown($floors, $width, $widest);
 
         return $this->drawn(
-            self::padded($this->headers, $widths),
+            $this->headers,
             array_map(static fn (array $row): array => self::folded($row, $widths), $rows),
             $widths,
             $upTo,
         );
-    }
-
-    /**
-     * Headers padded to the widths the columns were sized for. A maximum width
-     * is all the renderer accepts, so without content of that width the columns
-     * would shrink to whatever rows are on show.
-     *
-     * @param list<int> $widths
-     *
-     * @return list<string>
-     */
-    private function held(array $widths): array
-    {
-        return $this->measured === null && $this->minWidth === 0
-            ? $this->headers
-            : self::padded($this->headers, $widths);
     }
 
     /**
@@ -325,7 +309,7 @@ final class StaticTable implements Widget, MeasureHeight
         $kepts = self::at($demands, $kept, 0);
         $widths = self::grown($kepts, $width, [$width, ...array_slice($kepts, 1)]);
         $host = $widths[0];
-        $headers = self::padded(self::at($this->headers, $kept), $widths);
+        $headers = self::at($this->headers, $kept);
         $headers[0] = self::stacked([$headers[0], ...self::at($this->headers, $demoted)], $host);
         $rows = [];
 
@@ -334,7 +318,7 @@ final class StaticTable implements Widget, MeasureHeight
                 $rows[] = null;
             }
 
-            $cells = self::padded(self::at($row, $kept), $widths);
+            $cells = self::at($row, $kept);
             $cells[0] = self::stacked([$cells[0], ...self::at($row, $demoted)], $host);
             $rows[] = $cells;
         }
@@ -358,27 +342,6 @@ final class StaticTable implements Widget, MeasureHeight
         $lines[0] = str_pad($lines[0], $width + strlen($lines[0]) - CharWidth::stringWidth($lines[0]));
 
         return implode("\n", $lines);
-    }
-
-    /**
-     * Cells padded to the width their column should take, because
-     * Table::calculateColumnsWidth() overwrites columnWidths while sharing a
-     * spanning cell out and so discards a configured minimum width.
-     *
-     * @param list<string> $cells
-     * @param list<int>    $widths
-     *
-     * @return list<string>
-     */
-    private static function padded(array $cells, array $widths): array
-    {
-        $padded = [];
-
-        foreach ($cells as $column => $cell) {
-            $padded[] = $cell . str_repeat(' ', max(0, ($widths[$column] ?? 0) - CharWidth::stringWidth($cell)));
-        }
-
-        return $padded;
     }
 
     /**
