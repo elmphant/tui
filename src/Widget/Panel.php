@@ -24,6 +24,7 @@ use Elmphant\Tui\Runtime\ChildDispatcher;
 final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
     /**
      * Tall enough that no chrome can clamp it away, so the rows it takes can be
@@ -254,7 +255,7 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
     {
         $theme = $context->theme;
 
-        $prominent = $this->focused || $this->emphasizedBorder;
+        $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
 
         $block = Block::new()
             ->border($prominent ? $theme->focusedBorder : $theme->border)
