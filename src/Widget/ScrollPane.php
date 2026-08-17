@@ -31,6 +31,7 @@ use Elmphant\Tui\Runtime\ChildDispatcher;
 final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     private const WHEEL_STEP = 1;
@@ -201,7 +202,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
             return;
         }
 
-        $children = $this->focusedChildren();
+        $children = $this->childrenFocused($this->drawsFocused($context));
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $children, $area->width, $area->height);
         $offset = $this->resolvedOffset($layout, $area->height);
 
@@ -542,6 +543,14 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
      */
     private function focusedChildren(): array
     {
+        return $this->childrenFocused($this->focused);
+    }
+
+    /**
+     * @return list<Widget>
+     */
+    private function childrenFocused(bool $focused): array
+    {
         $focusable = $this->focusable();
 
         if ($focusable === []) {
@@ -550,7 +559,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
 
         return FocusTree::merge(
             $this->children,
-            $this->focused
+            $focused
                 ? $this->tree()->apply($focusable)
                 : array_map(static fn (Focusable $child): Focusable => $child->withFocus(false), $focusable),
         );

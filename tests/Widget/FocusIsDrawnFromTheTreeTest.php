@@ -18,6 +18,7 @@ use Elmphant\Tui\Widget\Dropdown;
 use Elmphant\Tui\Widget\ListView;
 use Elmphant\Tui\Widget\Panel;
 use Elmphant\Tui\Widget\Radio;
+use Elmphant\Tui\Widget\ScrollPane;
 use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\SimpleListItem;
 use Elmphant\Tui\Widget\TabBar;
@@ -72,6 +73,7 @@ final class FocusIsDrawnFromTheTreeTest extends TestCase
         yield 'Dropdown' => [Dropdown::new(Select::new(['one', 'two']))];
         yield 'Panel' => [Panel::new('Title')];
         yield 'TabBar' => [TabBar::new()->addTab('One')->addTab('Two')];
+        yield 'ScrollPane' => [ScrollPane::of(TextInput::new()->withValue('abc'))];
     }
 
     private static function snapshot(Frame $frame): string
