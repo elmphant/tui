@@ -21,6 +21,7 @@ final class RenderContext
     private ?LayoutPlan $layoutPlan = null;
     private FocusState $focus;
     private int $focusDepth = 0;
+    private bool $focusRouted = false;
     private float $now = 0.0;
     private ?float $repaintDelay = null;
     private ?Frame $rootFrame = null;
@@ -87,6 +88,7 @@ final class RenderContext
         $this->rootPassRan = false;
         $this->focus = new FocusState();
         $this->focusDepth = 0;
+        $this->focusRouted = false;
     }
 
     /**
@@ -96,6 +98,18 @@ final class RenderContext
     {
         $this->focus = $focus;
         $this->focusDepth = 0;
+        $this->focusRouted = true;
+    }
+
+    /**
+     * Whether the widget being rendered shows focus, given the flag it still
+     * carries. Where a tree has routed focus this frame its answer is the only
+     * one, so a flag left on some other widget cannot paint a second. Where none
+     * has — a widget rendered on its own in a test — the flag still answers.
+     */
+    public function showsFocus(bool $flagged): bool
+    {
+        return $this->hasFocus() || (!$this->focusRouted && $flagged);
     }
 
     /**

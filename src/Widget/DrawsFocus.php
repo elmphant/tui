@@ -15,6 +15,6 @@ trait DrawsFocus
 {
     protected function drawsFocused(RenderContext $context): bool
     {
-        return $context->hasFocus() || $this->isFocused();
+        return $context->showsFocus($this->isFocused());
     }
 }
