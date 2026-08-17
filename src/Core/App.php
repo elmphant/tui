@@ -51,8 +51,6 @@ abstract readonly class App implements RoutesFocus
     {
         $area = $frame->area();
 
-        $context->focusOn($this->focusState());
-
         $context->renderRoot(
             $this->viewWidget(),
             $frame,
@@ -426,19 +424,6 @@ abstract readonly class App implements RoutesFocus
         $index = $this->findFocusedIndex($focusables);
 
         return $index === null ? null : $focusables[$index];
-    }
-
-    /**
-     * Derived from the focusables rather than stored, so the context cannot
-     * disagree with the widget the keys are routed to while both mechanisms
-     * are live.
-     */
-    private function focusState(): FocusState
-    {
-        $focusables = $this->componentRegistry()->focusables();
-        $focused = $this->findFocusedIndex($focusables);
-
-        return new FocusState(null === $focused ? null : $focusables[$focused]->id);
     }
 
     /**

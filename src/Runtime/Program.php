@@ -886,6 +886,7 @@ final class Program
         $frame->clear($baseBackground);
 
         $renderContext->beginFrame($this->clock->now());
+        $renderContext->focusOn($this->focus);
 
         try {
             $this->model->render($frame, $renderContext);

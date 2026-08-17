@@ -7,6 +7,8 @@ namespace Elmphant\Tui\Tests\Core;
 use ArrayObject;
 use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
@@ -24,8 +26,7 @@ use PHPUnit\Framework\TestCase;
 final class AppFocusScopeTest extends TestCase
 {
     /**
-     * The context has to agree with where the keys actually go, or a widget that
-     * asks and a widget that remembers would draw two different screens.
+     * Neither field carries a focus flag: only the placement decides.
      */
     #[Test]
     public function theRenderedTreeIsToldWhichComponentTheKeyboardIsIn(): void
@@ -35,11 +36,12 @@ final class AppFocusScopeTest extends TestCase
 
         $app = new ScopedFocusApp(
             new RecordingField('first', $seen),
-            new RecordingField('second', $seen, true),
+            new RecordingField('second', $seen),
         );
 
         $context = new RenderContext(Theme::dark());
         $context->beginFrame(0.0);
+        $context->focusOn(new FocusState(ComponentId::named('second')));
         $app->render(new Frame(20, 4), $context);
 
         self::assertSame(['first' => false, 'second' => true], $seen->getArrayCopy());
