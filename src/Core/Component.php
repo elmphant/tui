@@ -104,7 +104,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     /**
      * @internal
      *
-     * @param Closure(App, Reducer): App $mount
+     * @param Closure $mount validated by Mount::of()
      *
      * @return self<TWidget>
      */

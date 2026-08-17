@@ -16,11 +16,15 @@ use Elmphant\Tui\Widget\WidgetContainer;
  * A sub-model embedded in an App, with the drawing it asked for and the way back
  * into the App. What it mounts binds its own components, so an App may host a
  * model it knows nothing about.
+ *
+ * @template TApp of App
+ * @template TModel of Reducer
  */
 final readonly class Mount implements Widget, WidgetContainer
 {
     /**
-     * @param Closure(App, Reducer): App $mount
+     * @param TModel                      $model
+     * @param Closure(TApp, TModel): TApp $mount
      */
     private function __construct(
         public Reducer $model,
@@ -30,7 +34,13 @@ final readonly class Mount implements Widget, WidgetContainer
     }
 
     /**
-     * @param Closure(App, Reducer): App $mount
+     * @template TBoundApp of App
+     * @template TBoundModel of Reducer
+     *
+     * @param TBoundModel                                $model
+     * @param Closure(TBoundApp, TBoundModel): TBoundApp $mount
+     *
+     * @return self<TBoundApp, TBoundModel>
      */
     public static function of(Reducer $model, Widget $content, Closure $mount): self
     {
