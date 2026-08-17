@@ -242,7 +242,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
             : ($this->borderStyleOverride ?? $theme->borderStyle);
 
         $this->renderContent($frame, $area, $context);
-        $this->renderTabStrip($frame, $area, $glyphs, $borderStyle, $theme);
+        $this->renderTabStrip($frame, $area, $glyphs, $borderStyle, $theme, $this->drawsFocused($context));
         $this->renderContentBox($frame, $area, $glyphs, $borderStyle);
     }
 
@@ -373,6 +373,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         BorderGlyphs $border,
         Style $borderStyle,
         Theme $theme,
+        bool $focused,
     ): void {
         $borderForeground = $borderStyle->foregroundValue();
         $borderBackground = $borderStyle->backgroundValue();
@@ -407,7 +408,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
             }
         }
 
-        $this->renderTabHint($frame, $area, $layout->columnAfterLastTab(), $theme);
+        $this->renderTabHint($frame, $area, $layout->columnAfterLastTab(), $theme, $focused);
         $this->renderBaseline($frame, $area, $layout, $border, $borderStyle);
     }
 
@@ -453,10 +454,10 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         }
     }
 
-    private function renderTabHint(Frame $frame, Rect $area, int $afterTabsX, Theme $theme): void
+    private function renderTabHint(Frame $frame, Rect $area, int $afterTabsX, Theme $theme, bool $focused): void
     {
         $rightEdge = $area->right() - 1;
-        $text = $this->captionWithin($rightEdge - $afterTabsX);
+        $text = $this->captionWithin($rightEdge - $afterTabsX, $focused);
 
         if ($text === null) {
             return;
@@ -465,7 +466,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $frame->putStyled($rightEdge - CharWidth::stringWidth($text) - 1, $area->y + 1, $text, $theme->dim);
     }
 
-    private function captionWithin(int $availableWidth): ?string
+    private function captionWithin(int $availableWidth, bool $focused): ?string
     {
         if ($this->caption !== null) {
             return match (true) {
@@ -477,7 +478,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
         // An unfocused bar ignores keys, so advertising them would be a lie.
         // Its hints() are still there for a footer to carry.
-        if (!$this->focused || count($this->tabs) < 2) {
+        if (!$focused || count($this->tabs) < 2) {
             return null;
         }
 
