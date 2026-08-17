@@ -102,6 +102,24 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
+     * @internal
+     *
+     * @param Closure(App, Reducer): App $mount
+     *
+     * @return self<TWidget>
+     */
+    public function nestedIn(Reducer $owner, Closure $mount): self
+    {
+        $replace = $this->replace;
+
+        return new self(
+            id: $this->id,
+            widget: $this->widget,
+            replace: static fn (App $app, Interactive $widget): App => $mount($app, $replace($owner, $widget)),
+        );
+    }
+
+    /**
      * @param TWidget $widget
      */
     public function replaceIn(App $app, Interactive $widget): App
