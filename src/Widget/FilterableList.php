@@ -33,6 +33,7 @@ use Elmphant\Tui\Search\SubstringMatcher;
 final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     private const GAP_HEIGHT = 1;
@@ -377,7 +378,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return;
         }
 
-        FilterBar::render($frame, $this->barArea($area), $context, $this->field);
+        FilterBar::render($frame, $this->barArea($area), $context, $this->fieldDrawnBy($context));
 
         $body = $this->listArea($area);
         if ($body->height < 1) {
@@ -392,6 +393,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         }
 
         $this->list->render($frame, $body, $context);
+    }
+
+    private function fieldDrawnBy(RenderContext $context): TextInput
+    {
+        return $this->field->withDecoration(
+            $this->drawsFocused($context) ? InputDecoration::Underline : InputDecoration::None,
+        );
     }
 
     /**
