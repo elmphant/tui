@@ -50,6 +50,66 @@ final class ProgramFocusTest extends TestCase
         self::assertSame('', $final->first->value());
         self::assertSame('x', $final->second->value());
     }
+
+    #[Test]
+    public function steppingBackFromNowhereLandsOnTheLastComponent(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('p');
+        $terminal->simulateInput('x');
+        $terminal->simulateInput('q');
+
+        $final = Program::new(new FocusCyclingApp())->withTerminal($terminal)->start();
+
+        self::assertInstanceOf(FocusCyclingApp::class, $final);
+        self::assertSame('', $final->first->value());
+        self::assertSame('x', $final->second->value());
+    }
+
+    #[Test]
+    public function tabStepsOnFromWhereTheRuntimePutTheKeyboard(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput("\t");
+        $terminal->simulateInput('x');
+        $terminal->simulateInput('q');
+
+        $final = Program::new(new TabFromAPlacedFocusApp())->withTerminal($terminal)->start();
+
+        self::assertInstanceOf(TabFromAPlacedFocusApp::class, $final);
+        self::assertSame('', $final->first->value());
+        self::assertSame('', $final->second->value());
+        self::assertSame('x', $final->third->value());
+    }
+}
+
+final readonly class TabFromAPlacedFocusApp extends App
+{
+    public function __construct(
+        public TextInput $first = new TextInput(),
+        public TextInput $second = new TextInput(),
+        public TextInput $third = new TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind('first', $this->first, static fn (self $app, TextInput $field): self => $app->cloneWith(first: $field)),
+            Component::bind('second', $this->second, static fn (self $app, TextInput $field): self => $app->cloneWith(second: $field)),
+            Component::bind('third', $this->third, static fn (self $app, TextInput $field): self => $app->cloneWith(third: $field)),
+        );
+    }
+
+    protected function setup(): ?Cmd
+    {
+        return Cmd::focus(ComponentId::named('second'));
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        return 'q' === $message->key ? $this->withCmd(Cmd::quit()) : UpdateResult::keep($this);
+    }
 }
 
 final readonly class FocusCyclingApp extends App
@@ -72,6 +132,7 @@ final readonly class FocusCyclingApp extends App
     {
         return match ($message->key) {
             'n' => $this->withCmd(Cmd::focusNext()),
+            'p' => $this->withCmd(Cmd::focusPrevious()),
             'q' => $this->withCmd(Cmd::quit()),
             default => UpdateResult::keep($this),
         };

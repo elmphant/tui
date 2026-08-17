@@ -26,6 +26,7 @@ final readonly class FocusCmd extends Cmd
         return match ($this->move) {
             FocusMove::To => new FocusState($this->target),
             FocusMove::Next => $focus->next($focusables),
+            FocusMove::Previous => $focus->previous($focusables),
         };
     }
 }

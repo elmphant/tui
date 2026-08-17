@@ -33,6 +33,22 @@ final class FocusStateTest extends TestCase
         self::assertEquals(ComponentId::named('results'), $moved->focused());
     }
 
+    #[Test]
+    public function aMoveOffTheLastComponentWrapsToTheFirst(): void
+    {
+        $moved = (new FocusState(ComponentId::named('results')))->next(self::order('search', 'results'));
+
+        self::assertEquals(ComponentId::named('search'), $moved->focused());
+    }
+
+    #[Test]
+    public function theFirstBackwardMoveFromNothingLandsOnTheLastComponent(): void
+    {
+        $moved = (new FocusState())->previous(self::order('search', 'results', 'preview'));
+
+        self::assertEquals(ComponentId::named('preview'), $moved->focused());
+    }
+
     /**
      * A focused component can leave the tree between frames — a tab switches, a
      * modal closes, a row is filtered away. The keyboard cannot stay with it.

@@ -48,6 +48,14 @@ final readonly class FocusState
     }
 
     /**
+     * @param list<ComponentId> $order the focusable components, in tree order
+     */
+    public function previous(array $order): self
+    {
+        return $this->movedBy(-1, $order);
+    }
+
+    /**
      * @param list<ComponentId> $order
      */
     private function movedBy(int $step, array $order): self

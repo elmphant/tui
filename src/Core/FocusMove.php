@@ -11,4 +11,5 @@ enum FocusMove
 {
     case To;
     case Next;
+    case Previous;
 }

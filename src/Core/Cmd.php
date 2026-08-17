@@ -32,6 +32,14 @@ abstract readonly class Cmd
     }
 
     /**
+     * Moves the keyboard one component back, wrapping at the start.
+     */
+    public static function focusPrevious(): self
+    {
+        return new FocusCmd(move: FocusMove::Previous);
+    }
+
+    /**
      * Asks the terminal to put the text on the system clipboard. It travels as an
      * escape sequence, so it crosses a container boundary or an ssh hop that a
      * clipboard library could not.

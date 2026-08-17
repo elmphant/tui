@@ -6,7 +6,10 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\ExecCmd;
+use Elmphant\Tui\Core\FocusCmd;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\QuitCmd;
 use Elmphant\Tui\Core\TickCmd;
 use Elmphant\Tui\Core\UpdateResult;
@@ -38,44 +41,16 @@ use PHPUnit\Framework\TestCase;
 final class AppFocusableTest extends TestCase
 {
     #[Test]
-    public function tabCyclesToNextFocusable(): void
+    public function aTabNoWidgetTookAsksForTheNextComponent(): void
     {
-        $app = TwoPanelApp::create();
-        self::assertTrue($app->left->isFocused());
-        self::assertFalse($app->right->isFocused());
+        $app = new ThreePanelApp();
 
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertFalse($result->model->left->isFocused());
-        self::assertTrue($result->model->right->isFocused());
-    }
+        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), ComponentId::named('second-panel'));
 
-    #[Test]
-    public function shiftTabCyclesToPreviousFocusable(): void
-    {
-        $app = TwoPanelApp::create();
-
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertTrue($result->model->right->isFocused());
-
-        $result = $result->model->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertTrue($result->model->left->isFocused());
-        self::assertFalse($result->model->right->isFocused());
-    }
-
-    #[Test]
-    public function tabWrapsAround(): void
-    {
-        $app = TwoPanelApp::create();
-
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertTrue($result->model->right->isFocused());
-
-        $result = $result->model->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertTrue($result->model->left->isFocused());
-        self::assertFalse($result->model->right->isFocused());
+        self::assertEquals(
+            ComponentId::named('third-panel'),
+            self::keyboardLandsOn($result->command, $app->focusableIds(), 'second-panel'),
+        );
     }
 
     #[Test]
@@ -184,46 +159,6 @@ final class AppFocusableTest extends TestCase
     }
 
     #[Test]
-    public function tabWhenNoWidgetIsFocusedEntersAtTheFirstFocusable(): void
-    {
-        $app = new TwoPanelApp(
-            left: Panel::new('Left')->withFocus(false),
-            right: Panel::new('Right')->withFocus(false),
-        );
-
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertTrue($result->model->left->isFocused());
-        self::assertFalse($result->model->right->isFocused());
-    }
-
-    #[Test]
-    public function shiftTabWhenNoWidgetIsFocusedEntersAtTheLastFocusable(): void
-    {
-        $app = new TwoPanelApp(
-            left: Panel::new('Left')->withFocus(false),
-            right: Panel::new('Right')->withFocus(false),
-        );
-
-        $result = $app->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertFalse($result->model->left->isFocused());
-        self::assertTrue($result->model->right->isFocused());
-    }
-
-    #[Test]
-    public function tabDelegatesToFocusedWidgetThenCycles(): void
-    {
-        $app = TwoPanelApp::create();
-        self::assertTrue($app->left->isFocused());
-
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertFalse($result->model->left->isFocused());
-        self::assertTrue($result->model->right->isFocused());
-    }
-
-    #[Test]
     public function tabDelegatedToFocusedWidgetWithInternalFocusables(): void
     {
         $innerLeft = Panel::new('Inner1')->withFocus(true);
@@ -236,54 +171,6 @@ final class AppFocusableTest extends TestCase
 
         self::assertInstanceOf(TwoPanelApp::class, $result->model);
         self::assertNotSame($app->left, $result->model->left);
-    }
-
-    #[Test]
-    public function shiftTabCyclesBackwardWithCorrectArithmetic(): void
-    {
-        $app = new ThreePanelApp(
-            first: Panel::new('First')->withFocus(false),
-            second: Panel::new('Second')->withFocus(true),
-            third: Panel::new('Third')->withFocus(false),
-        );
-
-        $result = $app->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(ThreePanelApp::class, $result->model);
-        self::assertTrue($result->model->first->isFocused());
-        self::assertFalse($result->model->second->isFocused());
-        self::assertFalse($result->model->third->isFocused());
-    }
-
-    #[Test]
-    public function forwardTabCyclesWithCorrectArithmetic(): void
-    {
-        $app = new ThreePanelApp(
-            first: Panel::new('First')->withFocus(false),
-            second: Panel::new('Second')->withFocus(true),
-            third: Panel::new('Third')->withFocus(false),
-        );
-
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertInstanceOf(ThreePanelApp::class, $result->model);
-        self::assertFalse($result->model->first->isFocused());
-        self::assertFalse($result->model->second->isFocused());
-        self::assertTrue($result->model->third->isFocused());
-    }
-
-    #[Test]
-    public function findFocusedIndexTracksCorrectPosition(): void
-    {
-        $app = new ThreePanelApp(
-            first: Panel::new('First')->withFocus(false),
-            second: Panel::new('Second')->withFocus(true),
-            third: Panel::new('Third')->withFocus(false),
-        );
-
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertTrue($result->model->third->isFocused());
-
-        $result = $result->model->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(80, 24));
-        self::assertTrue($result->model->second->isFocused());
     }
 
     #[Test]
@@ -499,92 +386,6 @@ final class AppFocusableTest extends TestCase
         $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
         self::assertSame($app, $result->model);
         self::assertNull($result->command);
-    }
-
-    #[Test]
-    public function forwardAndReverseTabProduceDifferentResults(): void
-    {
-        $app = new ThreePanelApp(
-            first: Panel::new('First')->withFocus(true),
-            second: Panel::new('Second')->withFocus(false),
-            third: Panel::new('Third')->withFocus(false),
-        );
-
-        $forwardResult = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        $reverseResult = $app->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(80, 24));
-
-        self::assertInstanceOf(ThreePanelApp::class, $forwardResult->model);
-        self::assertInstanceOf(ThreePanelApp::class, $reverseResult->model);
-
-        self::assertTrue($forwardResult->model->second->isFocused());
-        self::assertTrue($reverseResult->model->third->isFocused());
-    }
-
-    #[Test]
-    public function reverseTabFromFirstGoesToLast(): void
-    {
-        $app = new ThreePanelApp(
-            first: Panel::new('First')->withFocus(true),
-            second: Panel::new('Second')->withFocus(false),
-            third: Panel::new('Third')->withFocus(false),
-        );
-
-        $result = $app->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(ThreePanelApp::class, $result->model);
-        self::assertFalse($result->model->first->isFocused());
-        self::assertFalse($result->model->second->isFocused());
-        self::assertTrue($result->model->third->isFocused());
-    }
-
-    #[Test]
-    public function forwardTabFromLastGoesToFirst(): void
-    {
-        $app = new ThreePanelApp(
-            first: Panel::new('First')->withFocus(false),
-            second: Panel::new('Second')->withFocus(false),
-            third: Panel::new('Third')->withFocus(true),
-        );
-
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertInstanceOf(ThreePanelApp::class, $result->model);
-        self::assertTrue($result->model->first->isFocused());
-        self::assertFalse($result->model->second->isFocused());
-        self::assertFalse($result->model->third->isFocused());
-    }
-
-    #[Test]
-    public function cycleFocusForwardMathIsCorrect(): void
-    {
-        $app = new ThreePanelApp(
-            first: Panel::new('First')->withFocus(false),
-            second: Panel::new('Second')->withFocus(true),
-            third: Panel::new('Third')->withFocus(false),
-        );
-
-        $forwardResult = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertTrue($forwardResult->model->third->isFocused());
-        self::assertFalse($forwardResult->model->first->isFocused());
-        self::assertFalse($forwardResult->model->second->isFocused());
-
-        $reverseResult = $app->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(80, 24));
-        self::assertTrue($reverseResult->model->first->isFocused());
-        self::assertFalse($reverseResult->model->second->isFocused());
-        self::assertFalse($reverseResult->model->third->isFocused());
-    }
-
-    #[Test]
-    public function findFocusedIndexIncrementsCorrectly(): void
-    {
-        $app = new ThreePanelApp(
-            first: Panel::new('First')->withFocus(false),
-            second: Panel::new('Second')->withFocus(false),
-            third: Panel::new('Third')->withFocus(true),
-        );
-
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
-        self::assertTrue($result->model->first->isFocused());
-        self::assertFalse($result->model->second->isFocused());
-        self::assertFalse($result->model->third->isFocused());
     }
 
     #[Test]
@@ -847,6 +648,18 @@ final class AppFocusableTest extends TestCase
         self::assertSame('replaced-right', $updated->right->marker, 'right should be the replaced widget, not the original');
         self::assertTrue($updated->right->isFocused(), 'New right should gain focus from click');
         self::assertFalse($updated->left->isFocused(), 'left should lose focus');
+    }
+
+    /**
+     * @param list<ComponentId> $order
+     */
+    private static function keyboardLandsOn(?Cmd $command, array $order, ?string $from): ?ComponentId
+    {
+        self::assertInstanceOf(FocusCmd::class, $command);
+
+        $start = new FocusState(null === $from ? null : ComponentId::named($from));
+
+        return $command->applyTo($start, $order)->focused();
     }
 }
 

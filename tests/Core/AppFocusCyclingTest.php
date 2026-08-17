@@ -6,6 +6,9 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusCmd;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Layout;
@@ -21,13 +24,15 @@ final class AppFocusCyclingTest extends TestCase
     #[Test]
     public function anAppMayBindFocusCyclingToAKeyOfItsOwn(): void
     {
-        $app = new RebindableFocusApp(TextInput::new()->withFocus(true), TextInput::new());
+        $app = new RebindableFocusApp();
 
-        $cycled = $app->update(new KeyMsg('n', ctrl: true), new Rect(0, 0, 40, 6))->model;
+        $command = $app->update(new KeyMsg('n', ctrl: true), new Rect(0, 0, 40, 6), ComponentId::named('first'))->command;
 
-        self::assertInstanceOf(RebindableFocusApp::class, $cycled);
-        self::assertFalse($cycled->first->isFocused(), 'The bound key must move the focus off the first field');
-        self::assertTrue($cycled->second->isFocused(), 'and on to the second');
+        self::assertInstanceOf(FocusCmd::class, $command);
+        self::assertEquals(
+            ComponentId::named('second'),
+            $command->applyTo(new FocusState(ComponentId::named('first')), $app->focusableIds())->focused(),
+        );
     }
 }
 
