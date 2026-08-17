@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Core;
 
 use Closure;
+use Elmphant\Tui\Widget\AcceptsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\InputLayer;
 use Elmphant\Tui\Widget\Interactive;
@@ -76,7 +77,8 @@ final readonly class ComponentRegistry
 
             $validated[] = $component;
             $byId[$component->id->value] = $component;
-            if ($component->widget instanceof Focusable) {
+            $widget = $component->widget;
+            if ($widget instanceof Focusable && (!$widget instanceof AcceptsFocus || $widget->acceptsFocus())) {
                 $focusables[] = $component;
             }
         }
