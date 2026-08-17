@@ -31,6 +31,7 @@ use LogicException;
 final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAware
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     private const TAB_STRIP_HEIGHT = 3;
@@ -233,7 +234,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         }
 
         $theme = $context->theme;
-        $prominent = $this->focused || $this->emphasizedBorder;
+        $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
         $borderEnum = $prominent ? $theme->focusedBorder : $theme->border;
         $glyphs = $borderEnum->glyphs();
         $borderStyle = $prominent

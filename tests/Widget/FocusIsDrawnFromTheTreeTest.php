@@ -20,6 +20,7 @@ use Elmphant\Tui\Widget\Panel;
 use Elmphant\Tui\Widget\Radio;
 use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\SimpleListItem;
+use Elmphant\Tui\Widget\TabBar;
 use Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
@@ -37,12 +38,12 @@ final class FocusIsDrawnFromTheTreeTest extends TestCase
     #[DataProvider('focusableWidgets')]
     public function aWidgetTheTreeFocusesDrawsDifferentlyFromOneItDoesNot(Widget $widget): void
     {
-        $area = new Rect(0, 0, 24, 4);
+        $area = new Rect(0, 0, 24, 6);
 
-        $unfocused = new Frame(24, 4);
+        $unfocused = new Frame(24, 6);
         $widget->render($unfocused, $area, new RenderContext(Theme::dark()));
 
-        $focused = new Frame(24, 4);
+        $focused = new Frame(24, 6);
         $context = new RenderContext(Theme::dark());
         $context->withFocusHere(static function () use ($widget, $focused, $area, $context): void {
             $widget->render($focused, $area, $context);
@@ -70,6 +71,7 @@ final class FocusIsDrawnFromTheTreeTest extends TestCase
         yield 'Table' => [Table::new([Column::new('A', Constraint::exact(8))], [['one'], ['two']])];
         yield 'Dropdown' => [Dropdown::new(Select::new(['one', 'two']))];
         yield 'Panel' => [Panel::new('Title')];
+        yield 'TabBar' => [TabBar::new()->addTab('One')->addTab('Two')];
     }
 
     private static function snapshot(Frame $frame): string
