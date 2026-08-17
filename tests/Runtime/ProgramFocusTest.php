@@ -35,11 +35,27 @@ final class ProgramFocusTest extends TestCase
         self::assertSame('x', $final->second->value());
     }
 
+    /**
+     * An app that never places the keyboard still has one somewhere to type.
+     */
+    #[Test]
+    public function theKeyboardStartsOnTheFirstComponentWithoutBeingAsked(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('x');
+        $terminal->simulateInput('q');
+
+        $final = Program::new(new FocusCyclingApp())->withTerminal($terminal)->start();
+
+        self::assertInstanceOf(FocusCyclingApp::class, $final);
+        self::assertSame('x', $final->first->value());
+        self::assertSame('', $final->second->value());
+    }
+
     #[Test]
     public function focusNextWalksTheComponentsTheViewPublishes(): void
     {
         $terminal = new VirtualTerminal(80, 24);
-        $terminal->simulateInput('n');
         $terminal->simulateInput('n');
         $terminal->simulateInput('x');
         $terminal->simulateInput('q');
@@ -52,7 +68,7 @@ final class ProgramFocusTest extends TestCase
     }
 
     #[Test]
-    public function steppingBackFromNowhereLandsOnTheLastComponent(): void
+    public function steppingBackFromTheFirstComponentWrapsToTheLast(): void
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput('p');

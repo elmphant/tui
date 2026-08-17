@@ -810,6 +810,7 @@ final class Program
             try {
                 $updateStart = $this->tracer === null ? 0 : hrtime(true);
                 $stamped = InputRouter::route($message, $screenRect, $this->renderContext?->floatPlacements() ?? []);
+                $this->focus = $this->focus->resolvedAgainst($this->focusableIds());
                 $result = $this->model instanceof RoutesFocus
                     ? $this->model->update($stamped, $screenRect, $this->focus->focused())
                     : $this->model->update($stamped, $screenRect);
