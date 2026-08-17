@@ -23,6 +23,7 @@ use Elmphant\Tui\Search\SubstringMatcher;
 final readonly class FilterableTable implements Focusable, MeasureHeight
 {
     use Cloneable;
+    use DrawsFocus;
 
     private const BAR_HEIGHT = FilterBar::HEIGHT;
     private const MIN_BAR = FilterBar::MIN_WIDTH;
@@ -53,13 +54,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight
 
     public function field(): TextInput
     {
-        if ($this->field === null) {
-            return FilterBar::field($this->query, $this->focused);
-        }
-
-        return $this->field
-            ->withFocus($this->focused)
-            ->withDecoration($this->focused ? InputDecoration::Underline : InputDecoration::None);
+        return $this->fieldFocused($this->focused);
     }
 
     public function query(): string
@@ -189,13 +184,24 @@ final readonly class FilterableTable implements Focusable, MeasureHeight
         return array_map(fn (int $index): array => $this->rows[$index], $matching);
     }
 
+    private function fieldFocused(bool $focused): TextInput
+    {
+        if ($this->field === null) {
+            return FilterBar::field($this->query, $focused);
+        }
+
+        return $this->field
+            ->withFocus($focused)
+            ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None);
+    }
+
     private function renderBar(Frame $frame, Rect $area, RenderContext $context, string $summary): void
     {
         FilterBar::render(
             $frame,
             $area,
             $context,
-            $this->field(),
+            $this->fieldFocused($this->drawsFocused($context)),
             $summary,
             $this->scopeLabel(),
         );
