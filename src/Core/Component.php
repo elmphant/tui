@@ -37,11 +37,14 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
-     * @template TBoundApp of App
+     * The owner is whatever bound it: the root App, or a sub-model that a Mount
+     * joins to one.
+     *
+     * @template TBoundOwner of Reducer
      * @template TBoundWidget of Interactive
      *
-     * @param TBoundWidget                                $widget
-     * @param Closure(TBoundApp, TBoundWidget): TBoundApp $replace
+     * @param TBoundWidget                                    $widget
+     * @param Closure(TBoundOwner, TBoundWidget): TBoundOwner $replace
      *
      * @return self<TBoundWidget>
      */
