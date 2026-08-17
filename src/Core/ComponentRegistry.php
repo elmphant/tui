@@ -154,10 +154,30 @@ final readonly class ComponentRegistry
         }
 
         if ($layerComponents !== null) {
-            return [[...self::ownComponent($widget), ...$layerComponents], true];
+            return [self::reowned($widget, [...self::ownComponent($widget), ...$layerComponents]), true];
         }
 
-        return [$components, $widget instanceof InputLayer];
+        return [self::reowned($widget, $components), $widget instanceof InputLayer];
+    }
+
+    /**
+     * Components found under a mount belong to what it mounted, not to the App:
+     * the sub-model bound them, so it is the one a replacement has to reach.
+     *
+     * @param list<Component<Interactive>> $components
+     *
+     * @return list<Component<Interactive>>
+     */
+    private static function reowned(Widget $widget, array $components): array
+    {
+        if (!$widget instanceof Mount) {
+            return $components;
+        }
+
+        return array_map(
+            static fn (Component $component): Component => $widget->own($component),
+            $components,
+        );
     }
 
     /**

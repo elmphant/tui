@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Api;
 
 use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\Mount;
+use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Flex;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\SplitState;
+use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -202,6 +206,11 @@ final class IntrinsicWidthTest extends TestCase
         yield 'ListView' => [ListView::new([new SimpleListItem('alpha')])];
         yield 'FilterableList' => [FilterableList::new([new SimpleListItem('alpha')])];
         yield 'Component' => [Component::bind('field', TextInput::new()->withValue('typed'), static fn (object $app, object $widget): object => $app)];
+        yield 'Mount' => [Mount::of(
+            new MeasuredSubModel(),
+            TextInput::new()->withValue('typed'),
+            static fn (object $app, object $model): object => $app,
+        )];
     }
 
     /**
@@ -348,5 +357,13 @@ final class IntrinsicWidthTest extends TestCase
         }
 
         return $widest;
+    }
+}
+
+final readonly class MeasuredSubModel implements Reducer
+{
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return new UpdateResult($this);
     }
 }
