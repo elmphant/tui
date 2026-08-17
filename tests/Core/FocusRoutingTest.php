@@ -38,6 +38,22 @@ final class FocusRoutingTest extends TestCase
         self::assertSame('', $typed->model->first->value(), 'The first field must not receive a key it does not have');
         self::assertSame('x', $typed->model->second->value(), 'The focused component receives it');
     }
+
+    #[Test]
+    public function theNamedComponentReceivesKeysWithoutCarryingTheFlagItself(): void
+    {
+        $app = new RoutedFocusApp();
+
+        $typed = $app->update(
+            new KeyMsg('x'),
+            new Rect(0, 0, 40, 6),
+            ComponentId::named('second'),
+        );
+
+        self::assertInstanceOf(RoutedFocusApp::class, $typed->model);
+        self::assertSame('', $typed->model->first->value());
+        self::assertSame('x', $typed->model->second->value());
+    }
 }
 
 final readonly class RoutedFocusApp extends App

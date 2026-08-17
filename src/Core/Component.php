@@ -90,6 +90,18 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
+     * @internal
+     *
+     * @param TWidget $widget
+     *
+     * @return self<TWidget>
+     */
+    public function withWidget(Interactive $widget): self
+    {
+        return new self(id: $this->id, widget: $widget, replace: $this->replace);
+    }
+
+    /**
      * @param TWidget $widget
      */
     public function replaceIn(App $app, Interactive $widget): App

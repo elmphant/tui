@@ -93,6 +93,19 @@ abstract readonly class App implements Model
     }
 
     /**
+     * @internal
+     *
+     * @return list<ComponentId>
+     */
+    final public function focusableIds(): array
+    {
+        return array_map(
+            static fn (Component $component): ComponentId => $component->id,
+            $this->componentRegistry()->focusables(),
+        );
+    }
+
+    /**
      * How to label the keys that really leave, for a footer to show rather than
      * repeat: a hardcoded hint outlives the binding it was copied from.
      *
@@ -276,7 +289,9 @@ abstract readonly class App implements Model
 
         foreach ($focusables as $component) {
             if ($component->id->equals($focused)) {
-                return [$component];
+                $widget = $component->widget;
+
+                return [$widget instanceof Focusable ? $component->withWidget($widget->withFocus(true)) : $component];
             }
         }
 
@@ -477,13 +492,20 @@ abstract readonly class App implements Model
     private function findComponentRects(Rect $screenRect, array $components): array
     {
         $rectMap = LayoutSnapshot::rectsFor($this, $screenRect, $this->viewWidget(...));
+        $laidOut = [];
+
+        foreach ($rectMap as $widget) {
+            if ($widget instanceof Component) {
+                $laidOut[$widget->id->value] = $rectMap[$widget];
+            }
+        }
+
         $result = [];
 
         foreach ($components as $component) {
             $key = $component->id->value;
-            $result[$key] = $rectMap->offsetExists($component)
-                ? $rectMap[$component]
-                : throw new LogicException("Missing rect for component key '$key'");
+            $result[$key] = $laidOut[$key]
+                ?? throw new LogicException("Missing rect for component key '$key'");
         }
 
         return $result;

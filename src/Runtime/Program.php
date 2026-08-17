@@ -6,13 +6,17 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\AfterCmd;
+use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\CallCmd;
 use Elmphant\Tui\Core\CancelCmd;
 use Elmphant\Tui\Core\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\ExecCmd;
+use Elmphant\Tui\Core\FocusCmd;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\HttpCmd;
 use Elmphant\Tui\Core\MappedCmd;
 use Elmphant\Tui\Core\MessageCmd;
@@ -140,12 +144,14 @@ final class Program
     private float $lastRender = 0.0;
     private float $paintedAt = 0.0;
     private Clock $clock;
+    private FocusState $focus;
 
     /**
      * @param TModel $initialModel
      */
     private function __construct(private readonly Model $initialModel)
     {
+        $this->focus = new FocusState();
         $this->clock = new MonotonicClock();
         $this->screenRect = Rect::fromSize($this->width, $this->height);
         $this->pendingWheel = new PendingWheel();
@@ -804,7 +810,9 @@ final class Program
             try {
                 $updateStart = $this->tracer === null ? 0 : hrtime(true);
                 $stamped = InputRouter::route($message, $screenRect, $this->renderContext?->floatPlacements() ?? []);
-                $result = $this->model->update($stamped, $screenRect);
+                $result = $this->model instanceof App
+                    ? $this->model->update($stamped, $screenRect, $this->focus->focused())
+                    : $this->model->update($stamped, $screenRect);
                 $nextModel = self::requireModel($result->model);
                 if ($this->tracer !== null) {
                     $this->tracer->record(TraceEvent::Update, [
@@ -906,8 +914,13 @@ final class Program
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @return list<ComponentId>
      */
+    private function focusableIds(): array
+    {
+        return $this->model instanceof App ? $this->model->focusableIds() : [];
+    }
+
     private function dispatchCommand(?Cmd $command, ?Closure $wrap = null): void
     {
         if ($command === null) {
@@ -940,6 +953,7 @@ final class Program
             $command instanceof TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
             $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
             $command instanceof CancelCmd => $this->cancelEffect($command->id, $wrap),
+            $command instanceof FocusCmd => $this->focus = $command->applyTo($this->focus, $this->focusableIds()),
             $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
             $command instanceof CallCmd => $this->executeCall($command, $wrap),
             $command instanceof HttpCmd => $this->startHttpRequest($command, $wrap),
