@@ -25,7 +25,7 @@ use Elmphant\Tui\Widget\Widget;
 use LogicException;
 use WeakMap;
 
-abstract readonly class App implements Model
+abstract readonly class App implements RoutesFocus
 {
     use Cloneable;
 
@@ -93,8 +93,6 @@ abstract readonly class App implements Model
     }
 
     /**
-     * @internal
-     *
      * @return list<ComponentId>
      */
     final public function focusableIds(): array

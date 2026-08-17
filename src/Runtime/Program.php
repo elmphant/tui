@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\AfterCmd;
-use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\CallCmd;
 use Elmphant\Tui\Core\CancelCmd;
@@ -25,6 +24,7 @@ use Elmphant\Tui\Core\ProcessCmd;
 use Elmphant\Tui\Core\QuitCmd;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\RenderRevisioned;
+use Elmphant\Tui\Core\RoutesFocus;
 use Elmphant\Tui\Core\ShutdownAware;
 use Elmphant\Tui\Core\TickCmd;
 use Elmphant\Tui\Input\ColorScheme;
@@ -810,7 +810,7 @@ final class Program
             try {
                 $updateStart = $this->tracer === null ? 0 : hrtime(true);
                 $stamped = InputRouter::route($message, $screenRect, $this->renderContext?->floatPlacements() ?? []);
-                $result = $this->model instanceof App
+                $result = $this->model instanceof RoutesFocus
                     ? $this->model->update($stamped, $screenRect, $this->focus->focused())
                     : $this->model->update($stamped, $screenRect);
                 $nextModel = self::requireModel($result->model);
@@ -918,7 +918,7 @@ final class Program
      */
     private function focusableIds(): array
     {
-        return $this->model instanceof App ? $this->model->focusableIds() : [];
+        return $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [];
     }
 
     private function dispatchCommand(?Cmd $command, ?Closure $wrap = null): void
