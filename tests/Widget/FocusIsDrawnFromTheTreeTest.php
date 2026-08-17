@@ -13,11 +13,13 @@ use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Button;
 use Elmphant\Tui\Widget\Checkbox;
 use Elmphant\Tui\Widget\CheckboxGroup;
+use Elmphant\Tui\Widget\CheckboxRow;
 use Elmphant\Tui\Widget\Column;
 use Elmphant\Tui\Widget\Dropdown;
 use Elmphant\Tui\Widget\ListView;
 use Elmphant\Tui\Widget\Panel;
 use Elmphant\Tui\Widget\Radio;
+use Elmphant\Tui\Widget\RadioRow;
 use Elmphant\Tui\Widget\ScrollPane;
 use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\SimpleListItem;
@@ -74,6 +76,8 @@ final class FocusIsDrawnFromTheTreeTest extends TestCase
         yield 'Panel' => [Panel::new('Title')];
         yield 'TabBar' => [TabBar::new()->addTab('One')->addTab('Two')];
         yield 'ScrollPane' => [ScrollPane::of(TextInput::new()->withValue('abc'))];
+        yield 'CheckboxRow' => [CheckboxRow::new(['one', 'two'])];
+        yield 'RadioRow' => [RadioRow::new(['one', 'two'])];
     }
 
     private static function snapshot(Frame $frame): string

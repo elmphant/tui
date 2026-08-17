@@ -25,6 +25,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 final readonly class RadioRow implements OptionRow
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     public const PICKED_MARK = OptionMarks::PICKED;
@@ -171,12 +172,13 @@ final readonly class RadioRow implements OptionRow
             }
 
             $picked = $index === $this->selected;
+            $focused = $this->drawsFocused($context);
 
             $frame->putStyled(
                 $x,
                 $y,
                 ($picked ? self::PICKED_MARK : self::FREE_MARK) . $this->options[$index],
-                $context->theme->optionStyle($this->focused && $index === $this->cursor, $picked, $this->focused),
+                $context->theme->optionStyle($focused && $index === $this->cursor, $picked, $focused),
             );
         }
     }

@@ -24,6 +24,7 @@ use LogicException;
 final readonly class CheckboxRow implements OptionRow
 {
     use Cloneable;
+    use DrawsFocus;
     use KeybindingsAwareBehavior;
 
     public const CHECKED_MARK = OptionMarks::CHECKED;
@@ -168,13 +169,13 @@ final readonly class CheckboxRow implements OptionRow
             }
 
             $isChecked = $this->checked[$index] ?? false;
-            $isCursor = $this->focused && $index === $this->cursor;
+            $focused = $this->drawsFocused($context);
 
             $frame->putStyled(
                 $x,
                 $y,
                 ($isChecked ? self::CHECKED_MARK : self::UNCHECKED_MARK) . $this->options[$index],
-                $theme->optionStyle($isCursor, $isChecked, $this->focused),
+                $theme->optionStyle($focused && $index === $this->cursor, $isChecked, $focused),
             );
         }
     }
