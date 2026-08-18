@@ -40,6 +40,40 @@ final class ScreenBufferTest extends TestCase
     }
 
     #[Test]
+    public function aSkippedCellLeavesTheCharactersAfterItInPlace(): void
+    {
+        // Screen skips an unchanged cell with a cursor-forward rather than a
+        // reposition, so a capture that ignored it would shift the rest left.
+        $screen = new ScreenBuffer("\x1b[1;1Hab\x1b[Cd\x1b[2Cg", 8, 1);
+
+        self::assertSame('ab d  g', $screen->getTextAt(0, 0, 7));
+    }
+
+    #[Test]
+    public function aBackwardsMoveRewritesTheCellItLandsOn(): void
+    {
+        $screen = new ScreenBuffer("\x1b[1;1Habc\x1b[2DX", 8, 1);
+
+        self::assertSame('aXc', $screen->getTextAt(0, 0, 3));
+    }
+
+    #[Test]
+    public function aDownwardsMoveWritesOnTheRowItLandsOn(): void
+    {
+        $screen = new ScreenBuffer("\x1b[1;1Ha\x1b[2BX", 4, 4);
+
+        self::assertSame('X', $screen->getTextAt(2, 1, 1));
+    }
+
+    #[Test]
+    public function anUpwardsMoveWritesOnTheRowItLandsOn(): void
+    {
+        $screen = new ScreenBuffer("\x1b[4;1Ha\x1b[2AX", 4, 4);
+
+        self::assertSame('X', $screen->getTextAt(1, 1, 1));
+    }
+
+    #[Test]
     public function ansiCapturePreservesSpacesAndSkipsZeroWidthControls(): void
     {
         $screen = new ScreenBuffer(" \u{0080}A", 4, 1);

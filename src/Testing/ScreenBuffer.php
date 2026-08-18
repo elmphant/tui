@@ -173,6 +173,14 @@ final class ScreenBuffer
             $this->cursorCol = isset($parts[1])
                 ? max(0, min($this->width - 1, $parts[1] - 1))
                 : 0;
+        } elseif ($final === 'C') {
+            $this->cursorCol = min($this->width - 1, $this->cursorCol + max(1, $parts[0] ?? 1));
+        } elseif ($final === 'D') {
+            $this->cursorCol = max(0, $this->cursorCol - max(1, $parts[0] ?? 1));
+        } elseif ($final === 'B') {
+            $this->cursorRow = min($this->height - 1, $this->cursorRow + max(1, $parts[0] ?? 1));
+        } elseif ($final === 'A') {
+            $this->cursorRow = max(0, $this->cursorRow - max(1, $parts[0] ?? 1));
         } elseif ($final === 'K') {
             for ($c = $this->cursorCol; $c !== $this->width; ++$c) {
                 $this->cells[$this->cursorRow][$c] = ' ';
