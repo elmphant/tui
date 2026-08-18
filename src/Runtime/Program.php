@@ -28,6 +28,7 @@ use Elmphant\Tui\Core\RenderRevisioned;
 use Elmphant\Tui\Core\RoutesFocus;
 use Elmphant\Tui\Core\ShutdownAware;
 use Elmphant\Tui\Core\TickCmd;
+use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
 use Elmphant\Tui\Input\InputParser;
 use Elmphant\Tui\Input\ReportsOutputStats;
@@ -146,6 +147,7 @@ final class Program
     private ?Suspension $runSuspension = null;
     private bool $ticking = false;
     private ?Theme $theme = null;
+    private ?ColorProfile $colorProfile = null;
     private ?RenderContext $renderContext = null;
     private float $lastRender = 0.0;
     private float $paintedAt = 0.0;
@@ -251,6 +253,21 @@ final class Program
     }
 
     /**
+     * The colour depth to draw for, where the environment cannot be asked. A
+     * terminal reached over a shell that drops COLORTERM reports far less than
+     * it can show, and every colour is quantised to match what it admitted to.
+     *
+     * @return self<TModel>
+     */
+    public function withColorProfile(ColorProfile $profile): self
+    {
+        $this->assertConfigurable();
+        $this->colorProfile = $profile;
+
+        return $this;
+    }
+
+    /**
      * @return self<TModel>
      */
     public function withTheme(Theme $theme): self
@@ -295,7 +312,7 @@ final class Program
 
         try {
             $this->terminal = $this->injectedTerminal ?? new Terminal();
-            $this->screen = new Screen($this->terminal, $this->terminal->colorProfile());
+            $this->screen = new Screen($this->terminal, $this->resolveColorProfile());
             $this->messageQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();
             $this->model = $this->initialModel;
@@ -306,7 +323,7 @@ final class Program
                 },
             );
             $this->setup();
-            $this->renderContext = new RenderContext($this->resolveTheme(), $this->terminal->colorProfile());
+            $this->renderContext = new RenderContext($this->resolveTheme(), $this->resolveColorProfile());
             $this->running = true;
             $this->dispatchCommand($this->model->init());
             if ($this->running) {
@@ -493,6 +510,11 @@ final class Program
             $this->terminalSession?->updateHeight($this->height);
             $this->terminalSession?->close();
         }
+    }
+
+    private function resolveColorProfile(): ColorProfile
+    {
+        return $this->colorProfile ?? $this->terminal->colorProfile();
     }
 
     private function resolveTheme(): Theme
@@ -906,6 +928,7 @@ final class Program
 
         try {
             $this->model->render($frame, $renderContext);
+            $renderContext->drainFloatsFor($frame);
             $this->paintedAt = $this->clock->now();
             $this->screen->flush($frame);
         } catch (Throwable $error) {

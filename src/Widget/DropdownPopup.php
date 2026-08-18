@@ -108,7 +108,7 @@ final readonly class DropdownPopup implements PopupFrame
             return;
         }
 
-        $context->theme->base->apply($frame, $area);
+        $context->theme->raisedStyle()->apply($frame, $area);
         Block::new()->border(BorderStyle::Rounded)->borderStyle($context->theme->focusedBorderStyle)->render($frame, $area);
 
         foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {

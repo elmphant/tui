@@ -21,6 +21,8 @@ final readonly class Color
      */
     private const CONTRAST_CROSSOVER = 0.179;
 
+    private const READABILITY_STEPS = 32;
+
     private const NEUTRAL_CHROMA = 24;
 
     /**
@@ -195,6 +197,47 @@ final readonly class Color
         }
 
         return (string)($base + $this->value - self::ANSI);
+    }
+
+    /**
+     * This colour lifted away from a background until it reaches the ratio, and
+     * no further, so it keeps as much of its hue as the background allows. 4.5
+     * is the threshold for body text, 3 for text meant to stay quieter. Where
+     * even black or white falls short, that extreme is what comes back.
+     */
+    public function readableOn(self $background, float $minimumRatio = 4.5): self
+    {
+        if ($this->value === 0 || $background->value === 0 || $this->contrastRatio($background) >= $minimumRatio) {
+            return $this;
+        }
+
+        $extreme = $background->contrastingText();
+
+        for ($step = 1; $step < self::READABILITY_STEPS; ++$step) {
+            $lifted = $this->blend($extreme, $step / self::READABILITY_STEPS);
+            if ($lifted->contrastRatio($background) >= $minimumRatio) {
+                return $lifted;
+            }
+        }
+
+        return $extreme;
+    }
+
+    /**
+     * WCAG contrast, 1 for two colours that cannot be told apart through 21 for
+     * black on white. The terminal default has no luminance, so a ratio against
+     * it claims nothing.
+     */
+    public function contrastRatio(self $other): float
+    {
+        if ($this->value === 0 || $other->value === 0) {
+            return 1.0;
+        }
+
+        $lighter = max($this->relativeLuminance(), $other->relativeLuminance());
+        $darker = min($this->relativeLuminance(), $other->relativeLuminance());
+
+        return ($lighter + 0.05) / ($darker + 0.05);
     }
 
     /**

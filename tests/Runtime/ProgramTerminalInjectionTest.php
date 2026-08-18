@@ -51,6 +51,36 @@ final class ProgramTerminalInjectionTest extends TestCase
     }
 
     #[Test]
+    public function adeclaredColourDepthOutranksWhatTheEnvironmentAdmitsTo(): void
+    {
+        $model = new class implements Model {
+            public function init(): ?Cmd
+            {
+                return Cmd::quit();
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+
+        $program = Program::new($model)
+            ->withTerminal(new VirtualTerminal(80, 24, ColorProfile::Ansi))
+            ->withColorProfile(ColorProfile::TrueColor);
+        $program->start();
+
+        $context = (new ReflectionClass($program))->getProperty('renderContext')->getValue($program);
+
+        self::assertInstanceOf(RenderContext::class, $context);
+        self::assertSame(ColorProfile::TrueColor, $context->colorProfile);
+    }
+
+    #[Test]
     public function startupUsesNonQueryTerminalSizeWithoutSendingACprProbe(): void
     {
         $model = new class implements Model {

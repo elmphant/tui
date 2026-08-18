@@ -182,4 +182,28 @@ final class SpanTest extends TestCase
         $span = new Span("e\xCC\x81"); // e + combining acute accent (U+0301)
         self::assertSame(1, $span->width());
     }
+
+    #[Test]
+    public function aSpanCarryingNoInkOfItsOwnIsPlacedUnchanged(): void
+    {
+        $panel = new Style(background: Color::hex('3E4451'));
+        $inherited = new Span('plain');
+        $token = Span::token('accented', StyleToken::Accent);
+
+        self::assertNull($inherited->readableOn($panel)->style, 'nothing of its own to lift');
+        self::assertSame(StyleToken::Accent, $token->readableOn($panel)->token, 'a token still resolves later');
+    }
+
+    #[Test]
+    public function aSpanOnAPanelLiftsItsOwnInkOffThatBackground(): void
+    {
+        $panel = new Style(background: Color::hex('3E4451'));
+        $comment = Span::styled('// quiet', new Style(foreground: Color::hex('5C6370')));
+
+        $placed = $comment->readableOn($panel);
+
+        self::assertSame('// quiet', $placed->content);
+        self::assertNotNull($placed->style?->foreground);
+        self::assertGreaterThanOrEqual(4.5, $placed->style->foreground->contrastRatio(Color::hex('3E4451')));
+    }
 }

@@ -207,4 +207,40 @@ final class StyleTest extends TestCase
         self::assertNotSame(0, $style->foregroundValue());
         self::assertSame(0, $style->backgroundValue());
     }
+
+    #[Test]
+    public function aPanelWithNoFillOfItsOwnLeavesAnInkAsItIs(): void
+    {
+        $ink = new Style(foreground: Color::hex('5C6370'), attributes: Attr::ITALIC);
+
+        $placed = $ink->readableOn(new Style(foreground: Color::hex('ABB2BF')));
+
+        self::assertSame($ink->foregroundValue(), $placed->foregroundValue());
+        self::assertSame(0, $placed->backgroundValue(), 'nothing to sit on, so nothing is claimed');
+    }
+
+    #[Test]
+    public function aStyleWithNoInkOfItsOwnStillJoinsThePanelBackground(): void
+    {
+        $panel = new Style(background: Color::hex('3E4451'));
+
+        $placed = (new Style(attributes: Attr::BOLD))->readableOn($panel);
+
+        self::assertNull($placed->foreground, 'no ink to lift');
+        self::assertSame($panel->backgroundValue(), $placed->backgroundValue());
+    }
+
+    #[Test]
+    public function anInkPlacedOnAPanelTakesItsBackgroundAndStaysReadable(): void
+    {
+        $panel = new Style(background: Color::hex('3E4451'));
+        $dim = new Style(foreground: Color::hex('5C6370'), attributes: Attr::ITALIC);
+
+        $placed = $dim->readableOn($panel);
+
+        self::assertSame($panel->backgroundValue(), $placed->backgroundValue(), 'the row keeps its fill');
+        self::assertNotNull($placed->foreground);
+        self::assertGreaterThanOrEqual(4.5, $placed->foreground->contrastRatio(Color::hex('3E4451')));
+        self::assertSame(Attr::ITALIC, $placed->attributes);
+    }
 }

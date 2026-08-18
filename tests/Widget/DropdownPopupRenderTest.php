@@ -49,21 +49,26 @@ final class DropdownPopupRenderTest extends TestCase
     }
 
     #[Test]
-    public function theBackgroundIsFilledEvenWhereNothingElseIsDrawn(): void
+    public function theSurfaceIsFilledEvenWhereNothingElseIsDrawnAndStandsOffThePage(): void
     {
-        $theme = Theme::solarizedDark();
+        // A popup that paints the page it covers is only a border away from the
+        // content behind it, whatever the terminal background turns out to be.
+        $theme = Theme::dark();
         $frame = new Frame(30, 10);
 
         self::popupOf(['a', 'b'])->render($frame, new Rect(0, 0, 20, 10), new RenderContext($theme));
 
         $blankCellBelowTheOptions = 6 * $frame->width + 5;
+        $surface = $theme->raisedStyle()->background;
+        self::assertNotNull($surface);
+        self::assertNotNull($theme->page);
 
-        self::assertNotSame(0, $theme->base->backgroundValue(), 'Precondition: this theme paints a background at all');
         self::assertSame(
-            $theme->base->backgroundValue(),
+            $surface->value,
             $frame->background($blankCellBelowTheOptions),
-            'The base background must fill the whole popup, not just where text is drawn',
+            'The surface must fill the whole popup, not just where text is drawn',
         );
+        self::assertGreaterThanOrEqual(1.25, $surface->contrastRatio($theme->page));
     }
 
     #[Test]

@@ -34,6 +34,19 @@ final readonly class Line
         return $this->cloneWith(spans: $resolved);
     }
 
+    /**
+     * Every span drawn inside a panel. Resolve tokens first: they carry no ink yet.
+     */
+    public function readableOn(Style $panel, float $minimumRatio = 4.5): self
+    {
+        $placed = [];
+        foreach ($this->spans as $span) {
+            $placed[] = $span->readableOn($panel, $minimumRatio);
+        }
+
+        return $this->cloneWith(spans: $placed);
+    }
+
     public function width(): int
     {
         $width = 0;

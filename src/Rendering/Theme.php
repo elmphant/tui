@@ -11,6 +11,12 @@ final readonly class Theme
     use Cloneable;
 
     /**
+     * How far a float stands off the page. Enough to see the edge without
+     * reading as a second, brighter page.
+     */
+    private const RAISED_SEPARATION = 1.35;
+
+    /**
      * Bottom-bar style for Footer and StatusBar.
      *
      * Defaults to full-strength body text on the selection background, because
@@ -42,6 +48,12 @@ final readonly class Theme
         public Style $fillStyle,
         public Style $emptyStyle,
         public Style $inputStyle,
+        /**
+         * The background this palette was designed against. Nobody paints it —
+         * an app may want the terminal's own colour to show through — but a fill
+         * has nothing to stand out from until a theme says what is behind it.
+         */
+        public ?Color $page = null,
         ?Style $footerStyle = null,
         ?Style $warning = null,
         ?Style $info = null,
@@ -55,6 +67,23 @@ final readonly class Theme
         );
         $this->warning = $warning ?? $titleStyle->withAttributes($titleStyle->attributes & ~Attr::BOLD);
         $this->info = $info ?? $accent;
+    }
+
+    /**
+     * What a popup paints so it reads as above the page rather than part of it.
+     * Derived, so a palette that recolours the page takes its floats with it, and
+     * the ink comes lifted because one step off the page is not enough to write
+     * on. With no page declared there is nothing to stand off, and the selection
+     * fill is the only surface the palette can offer.
+     */
+    public function raisedStyle(): Style
+    {
+        $page = $this->page;
+        if ($page === null) {
+            return $this->base->readableOn($this->selectedStyle);
+        }
+
+        return $this->base->readableOn(new Style(background: $page->readableOn($page, self::RAISED_SEPARATION)));
     }
 
     /**
@@ -193,6 +222,7 @@ final readonly class Theme
             fillStyle: new Style(foreground: Color::hex('61AFEF')),
             emptyStyle: new Style(foreground: Color::hex('5C6370')),
             inputStyle: new Style(foreground: Color::hex('ABB2BF'), background: Color::hex('3E4451')),
+            page: Color::hex('282C34'),
         );
     }
 
@@ -208,11 +238,13 @@ final readonly class Theme
             focusedBorderStyle: new Style(foreground: Color::hex('4078F2'), attributes: Attr::BOLD),
             titleStyle: new Style(foreground: Color::hex('986801'), attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('986801'), attributes: Attr::BOLD),
-            selectedStyle: new Style(background: Color::hex('E5E5E6')),
-            cursorStyle: new Style(foreground: Color::hex('FAFAFA'), background: Color::hex('4078F2')),
+            selectedStyle: new Style(background: Color::hex('DEDEDF')),
+            // A darker blue than the accent: white on the accent itself is 3.88:1.
+            cursorStyle: new Style(foreground: Color::hex('FAFAFA'), background: Color::hex('3563D2')),
             fillStyle: new Style(foreground: Color::hex('4078F2')),
             emptyStyle: new Style(foreground: Color::hex('D3D3D3')),
-            inputStyle: new Style(foreground: Color::hex('383A42'), background: Color::hex('E5E5E6')),
+            inputStyle: new Style(foreground: Color::hex('383A42'), background: Color::hex('DEDEDF')),
+            page: Color::hex('FAFAFA'),
         );
     }
 
@@ -233,6 +265,7 @@ final readonly class Theme
             fillStyle: new Style(foreground: Color::hex('BD93F9')),
             emptyStyle: new Style(foreground: Color::hex('6272A4')),
             inputStyle: new Style(foreground: Color::hex('F8F8F2'), background: Color::hex('44475A')),
+            page: Color::hex('282A36'),
         );
     }
 
@@ -250,13 +283,16 @@ final readonly class Theme
             focusedBorderStyle: new Style(foreground: Color::hex('268BD2'), background: $background, attributes: Attr::BOLD),
             titleStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
-            selectedStyle: new Style(background: Color::hex('073642')),
-            cursorStyle: new Style(foreground: Color::hex('002B36'), background: Color::hex('268BD2')),
+            // base02 is only 1.15:1 against base03, so a bar wearing it does not
+            // read as a bar; this one is lifted to 1.26:1 and its ink with it.
+            selectedStyle: new Style(foreground: Color::hex('9EABAB'), background: Color::hex('0F3C48')),
+            // A lighter blue than the accent: base03 on the accent itself is 4.08:1.
+            cursorStyle: new Style(foreground: Color::hex('002B36'), background: Color::hex('3AA0E0')),
             fillStyle: new Style(foreground: Color::hex('268BD2'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('586E75'), background: $background),
-            inputStyle: new Style(foreground: Color::hex('839496'), background: Color::hex('073642')),
-            // base0 on the bar is only 4.11:1; base1 lifts it over WCAG AA.
-            footerStyle: new Style(foreground: Color::hex('93A1A1'), background: Color::hex('073642')),
+            inputStyle: new Style(foreground: Color::hex('9EABAB'), background: Color::hex('0F3C48')),
+            page: $background,
+            footerStyle: new Style(foreground: Color::hex('9EABAB'), background: Color::hex('0F3C48')),
         );
     }
 
@@ -274,13 +310,17 @@ final readonly class Theme
             focusedBorderStyle: new Style(foreground: Color::hex('268BD2'), background: $background, attributes: Attr::BOLD),
             titleStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
-            selectedStyle: new Style(background: Color::hex('EEE8D5')),
-            cursorStyle: new Style(foreground: Color::hex('FDF6E3'), background: Color::hex('268BD2')),
+            // base02 on base2 throughout: base00 on that bar is only 3.64:1.
+            selectedStyle: new Style(foreground: Color::hex('073642'), background: Color::hex('DFDAC8')),
+            // A darker blue than the accent: base3 on the accent itself is 3.41:1.
+            cursorStyle: new Style(foreground: Color::hex('FDF6E3'), background: Color::hex('1E73AE')),
             fillStyle: new Style(foreground: Color::hex('268BD2'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('93A1A1'), background: $background),
-            inputStyle: new Style(foreground: Color::hex('657B83'), background: Color::hex('EEE8D5')),
-            // base00 on the bar is only 3.64:1; base02 keeps hints legible.
-            footerStyle: new Style(foreground: Color::hex('073642'), background: Color::hex('EEE8D5')),
+            inputStyle: new Style(foreground: Color::hex('073642'), background: Color::hex('DFDAC8')),
+            page: $background,
+            // A light bar leaves the accent key hints at 2.6:1, so the bottom bar
+            // goes dark instead, as the other light palette does.
+            footerStyle: new Style(foreground: Color::hex('FDF6E3'), background: Color::hex('073642')),
         );
     }
 
@@ -302,7 +342,10 @@ final readonly class Theme
             cursorStyle: new Style(foreground: Color::hex('191724'), background: Color::hex('C4A7E7')),
             fillStyle: new Style(foreground: Color::hex('C4A7E7'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('6E6A86'), background: $background),
-            inputStyle: new Style(foreground: Color::hex('E0DEF4'), background: Color::hex('1F1D2E')),
+            // Overlay is only 1.07:1 against base, so a field wearing it would
+            // not look like a field at all.
+            inputStyle: new Style(foreground: Color::hex('E0DEF4'), background: Color::hex('2D2B3B')),
+            page: $background,
         );
     }
 
@@ -325,6 +368,7 @@ final readonly class Theme
             fillStyle: new Style(foreground: Color::hex('56B6C2'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('5C6370'), background: $background),
             inputStyle: new Style(foreground: Color::hex('ABB2BF'), background: Color::hex('3E4451')),
+            page: $background,
         );
     }
 
@@ -347,6 +391,7 @@ final readonly class Theme
             fillStyle: new Style(foreground: Color::hex('8EC07C'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('928374'), background: $background),
             inputStyle: new Style(foreground: Color::hex('EBDBB2'), background: Color::hex('3C3836')),
+            page: $background,
             // Gruvbox puts its yellow on both accent and title, so warning has
             // to take the orange or it cannot be told apart from info.
             warning: new Style(foreground: Color::hex('FE8019'), background: $background),
@@ -371,7 +416,8 @@ final readonly class Theme
             cursorStyle: new Style(foreground: Color::hex('FBF1C7'), background: Color::hex('AF3A03')),
             fillStyle: new Style(foreground: Color::hex('427B58'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('928374'), background: $background),
-            inputStyle: new Style(foreground: Color::hex('3C3836'), background: Color::hex('EBDBB2')),
+            inputStyle: new Style(foreground: Color::hex('3C3836'), background: Color::hex('E4D4AC')),
+            page: $background,
             // The light selection background leaves the accent key hints at
             // 2.2:1, so this theme uses a dark bar to separate and stay legible.
             footerStyle: new Style(foreground: Color::hex('FBF1C7'), background: Color::hex('3C3836')),

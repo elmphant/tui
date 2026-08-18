@@ -23,4 +23,18 @@ enum ColorProfile
             self::Ansi, self::Ascii => false,
         };
     }
+
+    /**
+     * Whether a contrast ratio worked out here still holds on the screen. The
+     * sixteen palette colours are the terminal's to define, so a colour sent as
+     * one of them arrives as a shade nobody here can measure: a widget that must
+     * stay readable there has to say so with an attribute, not a colour.
+     */
+    public function keepsContrast(): bool
+    {
+        return match ($this) {
+            self::TrueColor, self::Ansi256 => true,
+            self::Ansi, self::Ascii => false,
+        };
+    }
 }

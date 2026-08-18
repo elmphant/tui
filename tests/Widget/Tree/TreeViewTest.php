@@ -269,6 +269,16 @@ final class TreeViewTest extends TestCase
     }
 
     #[Test]
+    public function theTreeMeasuresTheRowsItCurrentlyShows(): void
+    {
+        $order = TreePath::root()->child('order');
+        $tree = self::orderTree();
+
+        self::assertSame(2, $tree->measureHeight(30), 'two roots while everything is closed');
+        self::assertSame(4, $tree->expand($order)->measureHeight(30), 'and its two children once one opens');
+    }
+
+    #[Test]
     public function roundedGuidesCloseTheLastBranchWithACurve(): void
     {
         $tree = self::orderTree()

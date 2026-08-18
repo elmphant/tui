@@ -23,9 +23,10 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\MeasureHeight;
 use WeakMap;
 
-final readonly class TreeView implements Focusable, KeybindingsAware
+final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHeight
 {
     use Cloneable;
     use DrawsFocus;
@@ -303,6 +304,15 @@ final readonly class TreeView implements Focusable, KeybindingsAware
     public function sizing(): Sizing
     {
         return Sizing::of(Constraint::flex(), Constraint::flex());
+    }
+
+    /**
+     * Every row the open nodes make visible, so a container can size itself to
+     * the tree instead of guessing.
+     */
+    public function measureHeight(int $width): int
+    {
+        return count($this->visibleRows());
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

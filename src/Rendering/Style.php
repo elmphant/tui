@@ -63,6 +63,23 @@ final readonly class Style
         return $this->cloneWith(attributes: $this->attributes | $attributes);
     }
 
+    /**
+     * This ink drawn inside a panel: it sits on the panel's background, so it
+     * cannot punch a hole in a filled row, and lifts off it far enough to read.
+     * Pass 3 for text that is meant to stay quieter than the body.
+     */
+    public function readableOn(self $panel, float $minimumRatio = 4.5): Style
+    {
+        if ($panel->background === null) {
+            return $this;
+        }
+
+        return $this->cloneWith(
+            foreground: $this->foreground?->readableOn($panel->background, $minimumRatio),
+            background: $panel->background,
+        );
+    }
+
     public function inherit(self $parent): Style
     {
         return new static(

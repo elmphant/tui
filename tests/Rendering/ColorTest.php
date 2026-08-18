@@ -580,4 +580,78 @@ final class ColorTest extends TestCase
         self::assertSame($red->value, $red->blend(Color::none(), 0.5)->value, 'nothing knowable to blend towards');
         self::assertSame(0, Color::none()->blend($red, 0.5)->value, 'and nothing knowable to blend from');
     }
+
+    #[Test]
+    public function blackAndWhiteAreTheWidestContrastThereIs(): void
+    {
+        self::assertEqualsWithDelta(21.0, Color::hex('000000')->contrastRatio(Color::hex('FFFFFF')), 1e-9);
+    }
+
+    #[Test]
+    public function anInkTooCloseToItsPanelIsLiftedUntilItReads(): void
+    {
+        $panel = Color::hex('3E4451');
+        $ink = Color::hex('5C6370');
+
+        self::assertGreaterThanOrEqual(4.5, $ink->readableOn($panel)->contrastRatio($panel));
+    }
+
+    #[Test]
+    public function theTerminalDefaultCannotBeLifted(): void
+    {
+        $panel = Color::hex('3E4451');
+
+        self::assertSame(0, Color::none()->readableOn($panel)->value, 'no channels to lift');
+        self::assertSame(
+            Color::hex('5C6370')->value,
+            Color::hex('5C6370')->readableOn(Color::none())->value,
+            'and nothing knowable to lift away from',
+        );
+    }
+
+    #[Test]
+    public function anInkExactlyAtTheThresholdIsLeftAlone(): void
+    {
+        $panel = Color::hex('3E4451');
+        $ink = Color::hex('ABB2BF');
+
+        self::assertSame($ink->value, $ink->readableOn($panel, $ink->contrastRatio($panel))->value);
+    }
+
+    #[Test]
+    public function anInkOneStepShortOfReadableMovesOnlyThatStep(): void
+    {
+        $panel = Color::hex('3E4451');
+        $lifted = Color::hex('61AFEF')->readableOn($panel, 4.2);
+
+        self::assertGreaterThanOrEqual(4.2, $lifted->contrastRatio($panel));
+        self::assertLessThan(4.3, $lifted->contrastRatio($panel), 'a second step would already be too far');
+    }
+
+    #[Test]
+    public function twoInksLiftedOffOnePanelStayDifferentColours(): void
+    {
+        $panel = Color::hex('3E4451');
+
+        self::assertNotSame(
+            Color::hex('E06C75')->readableOn($panel)->value,
+            Color::hex('98C379')->readableOn($panel, 6.0)->value,
+        );
+    }
+
+    #[Test]
+    public function anInkThatAlreadyReadsIsLeftAlone(): void
+    {
+        $panel = Color::hex('3E4451');
+        $ink = Color::hex('ABB2BF');
+
+        self::assertSame($ink->value, $ink->readableOn($panel)->value);
+    }
+
+    #[Test]
+    public function theTerminalDefaultHasNoContrastToClaim(): void
+    {
+        self::assertEqualsWithDelta(1.0, Color::none()->contrastRatio(Color::hex('FFFFFF')), 1e-9);
+        self::assertEqualsWithDelta(1.0, Color::hex('FFFFFF')->contrastRatio(Color::none()), 1e-9);
+    }
 }

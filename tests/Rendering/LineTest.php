@@ -72,4 +72,21 @@ final class LineTest extends TestCase
 
         self::assertSame(0, $line->width());
     }
+
+    #[Test]
+    public function aLineOnAPanelLiftsEverySpanItHolds(): void
+    {
+        $panel = new Style(background: Color::hex('3E4451'));
+        $line = new Line([
+            Span::styled('$total', new Style(foreground: Color::hex('E06C75'))),
+            Span::styled(' // running', new Style(foreground: Color::hex('5C6370'))),
+        ]);
+
+        $placed = $line->readableOn($panel);
+
+        foreach ($placed->spans as $index => $span) {
+            self::assertNotNull($span->style?->foreground, "span {$index} lost its ink");
+            self::assertGreaterThanOrEqual(4.5, $span->style->foreground->contrastRatio(Color::hex('3E4451')));
+        }
+    }
 }

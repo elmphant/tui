@@ -80,6 +80,18 @@ final readonly class Span
         );
     }
 
+    /**
+     * This span drawn inside a panel. A token carries no ink, so resolve first.
+     */
+    public function readableOn(Style $panel, float $minimumRatio = 4.5): self
+    {
+        if ($this->style === null) {
+            return $this;
+        }
+
+        return $this->cloneWith(style: $this->style->readableOn($panel, $minimumRatio));
+    }
+
     public function width(): int
     {
         return CharWidth::stringWidth($this->content);

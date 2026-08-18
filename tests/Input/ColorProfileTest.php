@@ -28,4 +28,22 @@ final class ColorProfileTest extends TestCase
     {
         self::assertSame($expected, $profile->blendsSmoothly());
     }
+
+    /**
+     * @return iterable<string, array{ColorProfile, bool}>
+     */
+    public static function paletteKnowledgePerProfile(): iterable
+    {
+        yield 'truecolor' => [ColorProfile::TrueColor, true];
+        yield '256 colours' => [ColorProfile::Ansi256, true];
+        yield '16 colours' => [ColorProfile::Ansi, false];
+        yield 'no colour' => [ColorProfile::Ascii, false];
+    }
+
+    #[Test]
+    #[DataProvider('paletteKnowledgePerProfile')]
+    public function onlyAKnownPaletteKeepsAContrastRatio(ColorProfile $profile, bool $expected): void
+    {
+        self::assertSame($expected, $profile->keepsContrast());
+    }
 }

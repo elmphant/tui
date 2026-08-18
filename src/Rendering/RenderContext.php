@@ -317,38 +317,6 @@ final class RenderContext
     }
 
     /**
-     * @return list<FloatPlacement>
-     */
-    private function drawFloats(Frame $frame): array
-    {
-        /** @var list<FloatPlacement> $recorded */
-        $recorded = [];
-
-        // A float may queue one of its own; three rounds is deeper than any
-        // sensible chain and stops a cycle from spinning.
-        for ($iteration = 0; $iteration < 3 && $this->floats !== []; ++$iteration) {
-            $pending = $this->floats;
-            $this->floats = [];
-
-            foreach ($pending as [$popup, $anchor]) {
-                $placement = $popup->placement($anchor, $frame->area());
-
-                if ($placement->width < 1 || $placement->height < 1) {
-                    continue;
-                }
-
-                $popup->render($frame, $placement, $this);
-
-                if ($popup instanceof PointerFloating) {
-                    $recorded[] = new FloatPlacement($popup, $anchor, $placement);
-                }
-            }
-        }
-
-        return $recorded;
-    }
-
-    /**
      * @internal runtime entry point: called once the frame is on the screen, so
      * input never routes over a frame the runtime could not show
      */
@@ -392,5 +360,37 @@ final class RenderContext
     public function plannedChildrenOf(WidgetContainer $container, Rect $area): ?array
     {
         return $this->layoutPlan?->childrenOf($container, $area);
+    }
+
+    /**
+     * @return list<FloatPlacement>
+     */
+    private function drawFloats(Frame $frame): array
+    {
+        /** @var list<FloatPlacement> $recorded */
+        $recorded = [];
+
+        // A float may queue one of its own; three rounds is deeper than any
+        // sensible chain and stops a cycle from spinning.
+        for ($iteration = 0; $iteration < 3 && $this->floats !== []; ++$iteration) {
+            $pending = $this->floats;
+            $this->floats = [];
+
+            foreach ($pending as [$popup, $anchor]) {
+                $placement = $popup->placement($anchor, $frame->area());
+
+                if ($placement->width < 1 || $placement->height < 1) {
+                    continue;
+                }
+
+                $popup->render($frame, $placement, $this);
+
+                if ($popup instanceof PointerFloating) {
+                    $recorded[] = new FloatPlacement($popup, $anchor, $placement);
+                }
+            }
+        }
+
+        return $recorded;
     }
 }

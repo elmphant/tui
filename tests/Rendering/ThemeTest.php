@@ -263,26 +263,12 @@ final class ThemeTest extends TestCase
     }
 
     #[Test]
-    public function everyPresetFooterTextMeetsWcagAaContrast(): void
-    {
-        foreach (self::allPresets() as $name => $theme) {
-            $ratio = self::contrastRatio($theme->footerStyle);
-
-            self::assertGreaterThanOrEqual(
-                4.5,
-                $ratio,
-                sprintf('%s footer contrast is %.2f:1; hint text must stay readable', $name, $ratio),
-            );
-        }
-    }
-
-    #[Test]
     public function everyPresetFooterKeyHintMeetsWcagAaContrast(): void
     {
         // StatusBar draws hint keys in the accent color over the footer bar.
         foreach (self::allPresets() as $name => $theme) {
-            $keyStyle = $theme->accent->background($theme->footerStyle->background ?? Color::ansi(0));
-            $ratio = self::contrastRatio($keyStyle);
+            $bar = $theme->footerStyle->background ?? Color::ansi(0);
+            $ratio = $theme->accent->foreground?->contrastRatio($bar) ?? 1.0;
 
             self::assertGreaterThanOrEqual(
                 3.0,
@@ -292,19 +278,96 @@ final class ThemeTest extends TestCase
         }
     }
 
-    private static function contrastRatio(Style $style): float
+    #[Test]
+    public function aRaisedSurfaceStandsOffThePageAndCarriesReadableInk(): void
     {
-        $lighter = max(self::relativeLuminance($style->foreground), self::relativeLuminance($style->background));
-        $darker = min(self::relativeLuminance($style->foreground), self::relativeLuminance($style->background));
+        foreach (self::allPresets() as $name => $theme) {
+            $page = $theme->page;
+            self::assertNotNull($page);
 
-        return ($lighter + 0.05) / ($darker + 0.05);
+            $raised = $theme->raisedStyle();
+            $background = $raised->background;
+            $ink = $raised->foreground;
+            self::assertNotNull($background, sprintf('%s raises nothing to float on', $name));
+            self::assertNotNull($ink);
+
+            $separation = $background->contrastRatio($page);
+            self::assertGreaterThanOrEqual(
+                1.25,
+                $separation,
+                sprintf('%s floats at %.2f:1 over its page', $name, $separation),
+            );
+
+            $readability = $ink->contrastRatio($background);
+            self::assertGreaterThanOrEqual(
+                4.5,
+                $readability,
+                sprintf('%s writes on its float at %.2f:1', $name, $readability),
+            );
+        }
     }
 
-    private static function relativeLuminance(?Color $color): float
+    #[Test]
+    public function everyPresetSaysWhichPageItWasDesignedAgainst(): void
     {
-        self::assertNotNull($color);
-        self::assertGreaterThanOrEqual(Color::TRUE, $color->value, 'Contrast checks assume truecolor theme tokens');
+        foreach (self::allPresets() as $name => $theme) {
+            self::assertNotNull($theme->page, sprintf('%s cannot tell a fill from its surroundings', $name));
+        }
+    }
 
-        return $color->relativeLuminance();
+    #[Test]
+    public function everyFilledRowInEveryPresetStandsOutFromThePage(): void
+    {
+        foreach (self::allPresets() as $name => $theme) {
+            $page = $theme->page;
+            self::assertNotNull($page);
+
+            $panels = [
+                'selected' => $theme->selectedStyle,
+                'cursor' => $theme->cursorStyle,
+                'input' => $theme->inputStyle,
+                'footer' => $theme->footerStyle,
+            ];
+
+            foreach ($panels as $panel => $style) {
+                $background = $style->background;
+                self::assertNotNull($background, sprintf('%s %s needs a background', $name, $panel));
+
+                $ratio = $background->contrastRatio($page);
+                self::assertGreaterThanOrEqual(
+                    1.25,
+                    $ratio,
+                    sprintf('%s draws %s at %.2f:1 against its page, which reads as no fill at all', $name, $panel, $ratio),
+                );
+            }
+        }
+    }
+
+    #[Test]
+    public function everyFilledRowInEveryPresetReadsWithTheInkDrawnOnIt(): void
+    {
+        foreach (self::allPresets() as $name => $theme) {
+            $panels = [
+                'selected' => $theme->selectedStyle,
+                'cursor' => $theme->cursorStyle,
+                'input' => $theme->inputStyle,
+                'footer' => $theme->footerStyle,
+            ];
+
+            foreach ($panels as $panel => $style) {
+                $background = $style->background;
+                self::assertNotNull($background, sprintf('%s %s needs a background', $name, $panel));
+
+                $ink = $style->foreground ?? $theme->base->foreground;
+                self::assertNotNull($ink, sprintf('%s has no ink for %s', $name, $panel));
+
+                $ratio = $ink->contrastRatio($background);
+                self::assertGreaterThanOrEqual(
+                    4.5,
+                    $ratio,
+                    sprintf('%s draws %s at %.2f:1', $name, $panel, $ratio),
+                );
+            }
+        }
     }
 }
