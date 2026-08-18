@@ -16,7 +16,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  * Marks where the keyboard is, so every field says it the same way instead of
  * each inventing a colour of its own.
  */
-final readonly class FocusGutter implements Interactive, WidgetContainer, MeasureHeight
+final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, WidgetContainer, MeasureHeight
 {
     use Cloneable;
     /**
@@ -72,9 +72,8 @@ final readonly class FocusGutter implements Interactive, WidgetContainer, Measur
     }
 
     /**
-     * Deliberately not Focusable: a pane that hands focus to focusable children
-     * would pick the track instead of the field inside it. The gutter only draws
-     * what the field or its container already knows.
+     * Deliberately not Focusable: a pane cycling its focusable children would stop
+     * on the track instead of the field inside it.
      */
     public function isHeld(): bool
     {

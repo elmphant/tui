@@ -532,7 +532,11 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
 
     private static function holdsKeyboard(Widget $child): bool
     {
-        return $child instanceof Focusable && $child->isFocused();
+        return match (true) {
+            $child instanceof HoldsTheKeyboard => $child->isHeld(),
+            $child instanceof Focusable => $child->isFocused(),
+            default => false,
+        };
     }
 
     /**
