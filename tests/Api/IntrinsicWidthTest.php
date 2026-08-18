@@ -35,6 +35,7 @@ use Elmphant\Tui\Widget\FilterableList;
 use Elmphant\Tui\Widget\FilterableTable;
 use Elmphant\Tui\Widget\FloatTarget;
 use Elmphant\Tui\Widget\FocusGutter;
+use Elmphant\Tui\Widget\FocusHints;
 use Elmphant\Tui\Widget\Footer;
 use Elmphant\Tui\Widget\Header;
 use Elmphant\Tui\Widget\ListView;
@@ -60,6 +61,8 @@ use Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Widget\TabPage;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\TextInput;
+use Elmphant\Tui\Widget\Tree\SimpleTreeNode;
+use Elmphant\Tui\Widget\Tree\TreeView;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -204,7 +207,9 @@ final class IntrinsicWidthTest extends TestCase
         yield 'FilterableCheckboxGroup' => [FilterableCheckboxGroup::new(['alpha'])];
         yield 'Footer' => [Footer::new()];
         yield 'ListView' => [ListView::new([new SimpleListItem('alpha')])];
+        yield 'TreeView' => [TreeView::new([new SimpleTreeNode('alpha', 'alpha')])];
         yield 'FilterableList' => [FilterableList::new([new SimpleListItem('alpha')])];
+        yield 'FocusHints' => [FocusHints::new()];
         yield 'Component' => [Component::bind('field', TextInput::new()->withValue('typed'), static fn (object $app, object $widget): object => $app)];
         yield 'Mount' => [Mount::of(
             new MeasuredSubModel(),
