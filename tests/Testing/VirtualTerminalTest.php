@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Testing;
 
+use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -74,7 +75,7 @@ final class VirtualTerminalTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->queryKittyProtocol();
-        $this->assertSame("\x1b[?u", $terminal->getOutput());
+        $this->assertSame(Ansi::QUERY_KITTY_KEYBOARD, $terminal->getOutput());
     }
 
     #[Test]
@@ -85,12 +86,12 @@ final class VirtualTerminalTest extends TestCase
 
         $terminal->enableKittyProtocol();
         $this->assertTrue($terminal->isKittyEnabled());
-        $this->assertStringContainsString("\x1b[>7u", $terminal->getOutput());
+        $this->assertStringContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $terminal->getOutput());
 
         $terminal->clearOutput();
         $terminal->disableKittyProtocol();
         $this->assertFalse($terminal->isKittyEnabled());
-        $this->assertStringContainsString("\x1b[<u", $terminal->getOutput());
+        $this->assertStringContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $terminal->getOutput());
     }
 
     #[Test]

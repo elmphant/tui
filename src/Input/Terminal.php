@@ -137,17 +137,17 @@ final class Terminal implements TerminalInterface, ReportsOutputStats
 
     public function queryKittyProtocol(): void
     {
-        $this->write("\x1b[?u");
+        $this->write(Ansi::QUERY_KITTY_KEYBOARD);
     }
 
     public function enableKittyProtocol(): void
     {
-        $this->write("\x1b[>7u");
+        $this->write(Ansi::ENABLE_KITTY_KEYBOARD);
     }
 
     public function disableKittyProtocol(): void
     {
-        $this->write("\x1b[<u");
+        $this->write(Ansi::DISABLE_KITTY_KEYBOARD);
     }
 
     public function bell(): void

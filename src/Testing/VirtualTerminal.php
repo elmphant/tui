@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Testing;
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
 use Elmphant\Tui\Input\TerminalInterface;
+use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\TerminalText;
 use RuntimeException;
 
@@ -125,19 +126,19 @@ final class VirtualTerminal implements TerminalInterface
 
     public function queryKittyProtocol(): void
     {
-        $this->write("\x1b[?u");
+        $this->write(Ansi::QUERY_KITTY_KEYBOARD);
     }
 
     public function enableKittyProtocol(): void
     {
         $this->kittyEnabled = true;
-        $this->write("\x1b[>7u");
+        $this->write(Ansi::ENABLE_KITTY_KEYBOARD);
     }
 
     public function disableKittyProtocol(): void
     {
         $this->kittyEnabled = false;
-        $this->write("\x1b[<u");
+        $this->write(Ansi::DISABLE_KITTY_KEYBOARD);
     }
 
     public function isKittyEnabled(): bool

@@ -380,6 +380,26 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function aWheelEventCarriesTheModifiersHeldWithIt(): void
+    {
+        // The button code adds 4 for shift, 8 for alt and 16 for ctrl on top of
+        // the 64 that marks a wheel.
+        $plain = InputParser::parse("\x1b[<64;10;5M")->messages[0];
+        $shifted = InputParser::parse("\x1b[<68;10;5M")->messages[0];
+        $ctrlAlt = InputParser::parse("\x1b[<88;10;5M")->messages[0];
+
+        self::assertInstanceOf(MouseMsg::class, $plain);
+        self::assertFalse($plain->shift);
+        self::assertInstanceOf(MouseMsg::class, $shifted);
+        self::assertSame(MouseAction::WheelUp, $shifted->action, 'the modifier does not change what happened');
+        self::assertTrue($shifted->shift);
+        self::assertInstanceOf(MouseMsg::class, $ctrlAlt);
+        self::assertTrue($ctrlAlt->ctrl);
+        self::assertTrue($ctrlAlt->alt);
+        self::assertFalse($ctrlAlt->shift);
+    }
+
+    #[Test]
     public function parseHomeEnd(): void
     {
         $home = InputParser::parse("\x1b[H")->messages;

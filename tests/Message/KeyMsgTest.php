@@ -24,6 +24,14 @@ final class KeyMsgTest extends TestCase
     }
 
     #[Test]
+    public function onlyAReleaseEventReportsItselfAsOne(): void
+    {
+        self::assertTrue((new KeyMsg('q', eventType: KeyEventType::Release))->isRelease());
+        self::assertFalse((new KeyMsg('q', eventType: KeyEventType::Press))->isRelease());
+        self::assertFalse((new KeyMsg('q', eventType: KeyEventType::Repeat))->isRelease());
+    }
+
+    #[Test]
     public function specialKey(): void
     {
         $msg = new KeyMsg(Key::Up);

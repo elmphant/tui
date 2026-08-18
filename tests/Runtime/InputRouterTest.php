@@ -9,6 +9,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
@@ -35,6 +36,18 @@ final class InputRouterTest extends TestCase
         self::assertInstanceOf(KeyMsg::class, $routed);
         self::assertSame($screen, $routed->screen);
         self::assertSame(Key::Up, $routed->key);
+    }
+
+    #[Test]
+    public function aKeyReleaseIsNotRoutedToTheModel(): void
+    {
+        $routed = InputRouter::route(
+            new KeyMsg('j', eventType: KeyEventType::Release),
+            new Rect(0, 0, 80, 24),
+            [],
+        );
+
+        self::assertNull($routed);
     }
 
     #[Test]

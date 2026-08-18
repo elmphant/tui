@@ -21,6 +21,15 @@ final readonly class KeyMsg implements Message
     ) {
     }
 
+    /**
+     * A terminal reporting key event types sends one of these for every press,
+     * so acting on it acts on the keystroke twice.
+     */
+    public function isRelease(): bool
+    {
+        return $this->eventType === KeyEventType::Release;
+    }
+
     public function withScreen(Rect $screen): self
     {
         return $this->cloneWith(screen: $screen);

@@ -18,6 +18,15 @@ final class Ansi
     public const ENTER_ALT_SCREEN = "\x1b[?1049h";
     public const LEAVE_ALT_SCREEN = "\x1b[?1049l";
 
+    public const QUERY_KITTY_KEYBOARD = "\x1b[?u";
+
+    /**
+     * Flag 1, escape disambiguation, and nothing else: flag 2 would add a
+     * release event for every press, and flag 4 alternates the parser ignores.
+     */
+    public const ENABLE_KITTY_KEYBOARD = "\x1b[>1u";
+    public const DISABLE_KITTY_KEYBOARD = "\x1b[<u";
+
     public const ENABLE_BRACKETED_PASTE = "\x1b[?2004h";
     public const DISABLE_BRACKETED_PASTE = "\x1b[?2004l";
 

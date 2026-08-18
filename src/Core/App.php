@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Core;
 
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\LayoutSnapshot;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FloatMouseMsg;
@@ -20,6 +21,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\ChildDispatcher;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
 use LogicException;
 use WeakMap;
@@ -50,6 +52,8 @@ abstract readonly class App implements RoutesFocus
     {
         $area = $frame->area();
 
+        $context->provideFocusedHints($this->hintsOfFocused($context->focusedComponent()));
+
         $context->renderRoot(
             $this->viewWidget(),
             $frame,
@@ -58,7 +62,7 @@ abstract readonly class App implements RoutesFocus
         );
     }
 
-    final public function update(Message $message, Rect $screenRect, ?ComponentId $focused = null): UpdateResult
+    final public function update(Message $message, Rect $screenRect, FocusState $focus = new FocusState()): UpdateResult
     {
         // Kitty keyboard protocol reports Press AND Release for each
         // keystroke; without dropping Release here, every onKey handler
@@ -86,7 +90,7 @@ abstract readonly class App implements RoutesFocus
             return $this->handleLayerOne($message, $screenRect, $components);
         }
 
-        return $this->handleLayerTwo($message, $screenRect, self::holdingTheKeyboard($focusables, $focused));
+        return $this->handleLayerTwo($message, $screenRect, self::holdingTheKeyboard($focusables, $focus));
     }
 
     /**
@@ -276,8 +280,14 @@ abstract readonly class App implements RoutesFocus
      *
      * @return list<Component<Interactive>>
      */
-    private static function holdingTheKeyboard(array $focusables, ?ComponentId $focused): array
+    private static function holdingTheKeyboard(array $focusables, FocusState $focus): array
     {
+        if ($focus->isNowhere()) {
+            return [];
+        }
+
+        $focused = $focus->focused();
+
         if ($focused === null) {
             return $focusables;
         }
@@ -477,7 +487,7 @@ abstract readonly class App implements RoutesFocus
     {
         $focused = $this->findFocusedComponent($focusables);
 
-        if ($focused === null) {
+        if ($focused === null || !$focused->writesBack()) {
             return new UpdateResult($this);
         }
 
@@ -521,12 +531,21 @@ abstract readonly class App implements RoutesFocus
 
         // Where the pointer landed is a question about the screen, so every bound
         // widget is asked. Only one that can hold focus has its focus moved.
+        $landedOn = null;
         if ($message->isClick()) {
             foreach ($components as $component) {
                 $shouldFocus = $message->inRect($rects[$component->id->value]);
                 $existing = $updates[$component->id->value][1] ?? $component->widget;
 
-                if ($existing instanceof Focusable && $existing->isFocused() !== $shouldFocus) {
+                if (!$existing instanceof Focusable) {
+                    continue;
+                }
+
+                if ($shouldFocus) {
+                    $landedOn = $component->id;
+                }
+
+                if ($component->writesBack() && $existing->isFocused() !== $shouldFocus) {
                     $updates[$component->id->value] = [$component, $existing->withFocus($shouldFocus)];
                 }
             }
@@ -536,8 +555,22 @@ abstract readonly class App implements RoutesFocus
 
         return new UpdateResult(
             $next,
-            self::combineCommands($appResult->command, $childCommand, $hookCommand),
+            self::combineCommands($appResult->command, $childCommand, $hookCommand, self::focusAfterClick($message, $landedOn)),
         );
+    }
+
+    /**
+     * A click moves the keyboard the same way a key does. Writing only the
+     * widget's flag would leave the runtime pointing where it pointed before,
+     * and a routed tree ignores flags.
+     */
+    private static function focusAfterClick(MouseMsg $message, ?ComponentId $landedOn): ?Cmd
+    {
+        if (!$message->isClick()) {
+            return null;
+        }
+
+        return $landedOn === null ? Cmd::focusNothing() : Cmd::focus($landedOn);
     }
 
     /**
@@ -600,6 +633,10 @@ abstract readonly class App implements RoutesFocus
         $widgets = [];
         $componentsById = [];
         foreach ($components as $component) {
+            if (!$component->writesBack()) {
+                continue;
+            }
+
             $key = $component->id->value;
             $widgets[$key] = $component->widget;
             $componentsById[$key] = $component;
@@ -628,6 +665,20 @@ abstract readonly class App implements RoutesFocus
             1 => $present[0],
             default => Cmd::batch(...$present),
         };
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function hintsOfFocused(?ComponentId $focused): array
+    {
+        if ($focused === null) {
+            return [];
+        }
+
+        $widget = $this->componentRegistry()->get($focused)?->widget;
+
+        return $widget instanceof PublishesHints ? $widget->hints() : [];
     }
 
     private function componentRegistry(): ComponentRegistry
@@ -736,11 +787,33 @@ abstract readonly class App implements RoutesFocus
                 throw new LogicException(sprintf('Component "%s" disappeared during an update', $original->id->value));
             }
 
-            if ($rebound->widget !== $widget) {
+            /*
+             * Equal, not identical: a model may keep what the component changed
+             * rather than the component, and build the widget back from it. The
+             * focus this routing applied is left out of the comparison — a model
+             * that lets the tree own focus rebuilds the widget without it.
+             */
+            if (self::asAuthored($rebound->widget) != self::asAuthored($widget)) {
                 throw new LogicException(sprintf('Component "%s" stored its update on another property', $original->id->value));
             }
         }
 
         return $app;
+    }
+
+    /**
+     * The widget without what routing put on it on the way in — focus and the
+     * app's global bindings. A model that lets the tree own those rebuilds the
+     * widget without them, and would otherwise never compare equal.
+     */
+    private static function asAuthored(Interactive $widget): Interactive
+    {
+        if ($widget instanceof Focusable) {
+            $widget = $widget->withFocus(false);
+        }
+
+        return $widget instanceof KeybindingsAware
+            ? $widget->withGlobalKeybindings(null)
+            : $widget;
     }
 }

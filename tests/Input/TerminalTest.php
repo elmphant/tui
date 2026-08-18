@@ -526,13 +526,15 @@ final class TerminalTest extends TestCase
     }
 
     #[Test]
-    public function enableKittyProtocolWritesEnableSequence(): void
+    public function enableKittyProtocolAsksOnlyForEscapeDisambiguation(): void
     {
         $terminal = new Terminal($this->stdin, $this->stdout);
         $terminal->enableKittyProtocol();
 
         rewind($this->stdout);
-        self::assertSame("\x1b[>7u", stream_get_contents($this->stdout));
+        // Flag 1 alone: asking for event types as well would have the terminal
+        // report a release for every press.
+        self::assertSame("\x1b[>1u", stream_get_contents($this->stdout));
     }
 
     #[Test]

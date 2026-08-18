@@ -416,6 +416,9 @@ final class InputParser
         }
 
         $buttonCode = ord($raw[$position]) - 32;
+        $shift = ($buttonCode & 4) !== 0;
+        $alt = ($buttonCode & 8) !== 0;
+        $ctrl = ($buttonCode & 16) !== 0;
         $column = ord($raw[$position + 1]) - 33;
         $row = ord($raw[$position + 2]) - 33;
         $position += 3;
@@ -423,12 +426,12 @@ final class InputParser
         if (($buttonCode & 64) !== 0) {
             $action = ($buttonCode & 3) === 0 ? MouseAction::WheelUp : MouseAction::WheelDown;
 
-            return [new MouseMsg($column, $row, $action, MouseButton::None), $position];
+            return [new MouseMsg($column, $row, $action, MouseButton::None, shift: $shift, alt: $alt, ctrl: $ctrl), $position];
         }
 
         $buttonBase = $buttonCode & 3;
         if ($buttonBase === 3) {
-            return [new MouseMsg($column, $row, MouseAction::Release, MouseButton::None), $position];
+            return [new MouseMsg($column, $row, MouseAction::Release, MouseButton::None, shift: $shift, alt: $alt, ctrl: $ctrl), $position];
         }
 
         $button = match ($buttonBase) {
@@ -439,7 +442,7 @@ final class InputParser
 
         $action = ($buttonCode & 32) !== 0 ? MouseAction::Motion : MouseAction::Press;
 
-        return [new MouseMsg($column, $row, $action, $button), $position];
+        return [new MouseMsg($column, $row, $action, $button, shift: $shift, alt: $alt, ctrl: $ctrl), $position];
     }
 
     /**
@@ -473,6 +476,9 @@ final class InputParser
         }
 
         $buttonCode = (int)$parts[0];
+        $shift = ($buttonCode & 4) !== 0;
+        $alt = ($buttonCode & 8) !== 0;
+        $ctrl = ($buttonCode & 16) !== 0;
         $column = (int)$parts[1] - 1;
         $row = (int)$parts[2] - 1;
         $hasMotion = (bool)($buttonCode & 32);
@@ -484,6 +490,9 @@ final class InputParser
                 $row,
                 $buttonBase === 0 ? MouseAction::WheelUp : MouseAction::WheelDown,
                 MouseButton::None,
+                shift: $shift,
+                alt: $alt,
+                ctrl: $ctrl,
             ), $position];
         }
 
@@ -494,14 +503,12 @@ final class InputParser
             default => MouseButton::None,
         };
 
-        if ($hasMotion) {
-            return [new MouseMsg($column, $row, MouseAction::Motion, $button), $position];
-        }
+        $action = match (true) {
+            $hasMotion => MouseAction::Motion,
+            $isRelease => MouseAction::Release,
+            default => MouseAction::Press,
+        };
 
-        if ($isRelease) {
-            return [new MouseMsg($column, $row, MouseAction::Release, $button), $position];
-        }
-
-        return [new MouseMsg($column, $row, MouseAction::Press, $button), $position];
+        return [new MouseMsg($column, $row, $action, $button, shift: $shift, alt: $alt, ctrl: $ctrl), $position];
     }
 }

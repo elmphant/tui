@@ -22,11 +22,13 @@ final class InputRouter
 {
     /**
      * @param list<FloatPlacement> $placements in paint order, so the last one covering a cell is the visible one
+     *
+     * @return Message|null null where the input must not reach the model at all
      */
-    public static function route(Message $message, Rect $screen, array $placements): Message
+    public static function route(Message $message, Rect $screen, array $placements): ?Message
     {
         if ($message instanceof KeyMsg) {
-            return $message->withScreen($screen);
+            return $message->isRelease() ? null : $message->withScreen($screen);
         }
 
         if (!$message instanceof MouseMsg) {

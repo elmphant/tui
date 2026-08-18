@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Screen;
@@ -53,7 +54,49 @@ final class ProgramKittyTest extends TestCase
         Program::new($model)->withTerminal($terminal)->start();
 
         $output = $terminal->getOutput();
-        $this->assertStringContainsString("\x1b[?u", $output, 'Should send Kitty query on startup');
+        $this->assertStringContainsString(Ansi::QUERY_KITTY_KEYBOARD, $output, 'Should send Kitty query on startup');
+    }
+
+    #[Test]
+    public function aKeyPressAndItsReleaseMoveTheModelOnce(): void
+    {
+        $model = new class implements Model {
+            /**
+             * @var list<string>
+             */
+            public array $keys = [];
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if (!$message instanceof KeyMsg) {
+                    return new UpdateResult($this);
+                }
+                if ($message->key === 'q') {
+                    return new UpdateResult($this, Cmd::quit());
+                }
+                $next = clone $this;
+                $next->keys = [...$this->keys, $message->eventType->name];
+
+                return new UpdateResult($next);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+
+        $terminal = new VirtualTerminal(80, 24);
+        // Kitty answers the capability query, then reports j pressed and j released.
+        $terminal->simulateInput("\x1b[?1u\x1b[106;1:1u\x1b[106;1:3uq");
+
+        $result = Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['Press'], $result->keys);
     }
 
     #[Test]
@@ -90,7 +133,7 @@ final class ProgramKittyTest extends TestCase
         $result = Program::new($model)->withTerminal($terminal)->start();
 
         $output = $terminal->getOutput();
-        $this->assertStringContainsString("\x1b[>7u", $output, 'Should enable Kitty after response');
+        $this->assertStringContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $output, 'Should enable Kitty after response');
         $this->assertTrue($result->receivedKey, 'Kitty Ctrl+A sequence should be parsed');
     }
 
@@ -123,7 +166,7 @@ final class ProgramKittyTest extends TestCase
         Program::new($model)->withTerminal($terminal)->start();
 
         $output = $terminal->getOutput();
-        $this->assertStringContainsString("\x1b[<u", $output, 'Should disable Kitty on teardown');
+        $this->assertStringContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $output, 'Should disable Kitty on teardown');
     }
 
     #[Test]
@@ -155,8 +198,8 @@ final class ProgramKittyTest extends TestCase
         Program::new($model)->withTerminal($terminal)->start();
 
         $output = $terminal->getOutput();
-        $this->assertStringNotContainsString("\x1b[>7u", $output, 'Should not enable without response');
-        $this->assertStringNotContainsString("\x1b[<u", $output, 'Should not disable if never enabled');
+        $this->assertStringNotContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $output, 'Should not enable without response');
+        $this->assertStringNotContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $output, 'Should not disable if never enabled');
     }
 
     #[Test]
@@ -227,7 +270,7 @@ final class ProgramKittyTest extends TestCase
         $method->invoke($program);
 
         $output = $terminal->getOutput();
-        $this->assertStringContainsString("\x1b[<u", $output, 'Suspension must disable Kitty protocol if active');
+        $this->assertStringContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $output, 'Suspension must disable Kitty protocol if active');
     }
 
     #[Test]
@@ -257,7 +300,7 @@ final class ProgramKittyTest extends TestCase
         $method->invoke($program);
 
         $output = $terminal->getOutput();
-        $this->assertStringNotContainsString("\x1b[<u", $output, 'Suspension must not disable Kitty if it was never active');
+        $this->assertStringNotContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $output, 'Suspension must not disable Kitty if it was never active');
     }
 
     #[Test]
@@ -298,7 +341,7 @@ final class ProgramKittyTest extends TestCase
         (new ReflectionMethod(Program::class, 'cancelEventLoopWatchers'))->invoke($program);
 
         $output = $terminal->getOutput();
-        $this->assertStringContainsString("\x1b[>7u", $output, 'Resume must re-enable Kitty protocol if it was active before suspend');
+        $this->assertStringContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $output, 'Resume must re-enable Kitty protocol if it was active before suspend');
         $session->close();
     }
 
@@ -331,7 +374,7 @@ final class ProgramKittyTest extends TestCase
         Program::new($model)->withTerminal($terminal)->start();
 
         $output = $terminal->getOutput();
-        $enableCount = substr_count($output, "\x1b[>7u");
+        $enableCount = substr_count($output, Ansi::ENABLE_KITTY_KEYBOARD);
         $this->assertSame(1, $enableCount, 'Enable should fire exactly once even with duplicate responses');
     }
 }

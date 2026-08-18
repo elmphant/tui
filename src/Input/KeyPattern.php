@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Input;
 
 use Elmphant\Tui\Message\Key;
-use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use InvalidArgumentException;
 
@@ -172,9 +171,9 @@ final readonly class KeyPattern
 
     public function matches(KeyMsg $msg): bool
     {
-        // Repeat events fire while a key is held (kitty keyboard protocol);
-        // they must keep triggering actions like list navigation.
-        if ($msg->eventType === KeyEventType::Release) {
+        // Repeat events fire while a key is held; they must keep triggering
+        // actions like list navigation.
+        if ($msg->isRelease()) {
             return false;
         }
 
