@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Core;
 use Closure;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Widget;
@@ -23,28 +24,35 @@ use Elmphant\Tui\Widget\WidgetContainer;
 final readonly class Mount implements Widget, WidgetContainer
 {
     /**
-     * @param TModel                      $model
-     * @param Closure(TApp, TModel): TApp $mount
+     * @param TModel                         $model
+     * @param Closure(TApp, TModel): TApp    $mount
+     * @param Closure(Message): Message|null $address
      */
     private function __construct(
         public Reducer $model,
         private Widget $content,
         private Closure $mount,
+        private ?Closure $address = null,
     ) {
     }
 
     /**
+     * A component this mounts speaks for the model, not for the App that hosts it.
+     * $address wraps whatever its commands emit, so a host with several mounted
+     * models can tell which one a message came from once it is out.
+     *
      * @template TBoundApp of App
      * @template TBoundModel of Reducer
      *
      * @param TBoundModel                                $model
      * @param Closure(TBoundApp, TBoundModel): TBoundApp $mount
+     * @param Closure(Message): Message|null             $address
      *
      * @return self<TBoundApp, TBoundModel>
      */
-    public static function of(Reducer $model, Widget $content, Closure $mount): self
+    public static function of(Reducer $model, Widget $content, Closure $mount, ?Closure $address = null): self
     {
-        return new self($model, $content, $mount);
+        return new self($model, $content, $mount, $address);
     }
 
     public function sizing(): Sizing
@@ -84,6 +92,6 @@ final readonly class Mount implements Widget, WidgetContainer
      */
     public function own(Component $component): Component
     {
-        return $component->nestedIn($this->model, $this->mount);
+        return $component->nestedIn($this->model, $this->mount, $this->address);
     }
 }

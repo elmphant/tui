@@ -30,10 +30,16 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      * @param TWidget      $widget
      * @param Closure|null $replace validated by bind(); null when named()
      */
+    /**
+     * @param TWidget      $widget
+     * @param Closure|null $replace validated by bind(); null when named()
+     * @param Closure|null $address set by the Mount that owns this, if any
+     */
     private function __construct(
         public ComponentId $id,
         public Widget $widget,
         private ?Closure $replace,
+        private ?Closure $address = null,
     ) {
     }
 
@@ -127,7 +133,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function withWidget(Widget $widget): self
     {
-        return new self(id: $this->id, widget: $widget, replace: $this->replace);
+        return new self(id: $this->id, widget: $widget, replace: $this->replace, address: $this->address);
     }
 
     /**
@@ -137,7 +143,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      *
      * @return self<TWidget>
      */
-    public function nestedIn(Reducer $owner, Closure $mount): self
+    public function nestedIn(Reducer $owner, Closure $mount, ?Closure $address = null): self
     {
         $replace = $this->replace;
 
@@ -149,7 +155,21 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
             id: $this->id,
             widget: $this->widget,
             replace: static fn (App $app, Interactive $widget): App => $mount($app, $replace($owner, $widget)),
+            address: $address,
         );
+    }
+
+    /**
+     * What this component's own effects say, marked as coming from it. A host that
+     * mounts several models cannot tell a bare message apart once it is out.
+     *
+     * @internal
+     */
+    public function addressed(?Cmd $command): ?Cmd
+    {
+        $address = $this->address;
+
+        return $command === null || $address === null ? $command : $command->map($address);
     }
 
     public function replaceIn(App $app, Interactive $widget): App

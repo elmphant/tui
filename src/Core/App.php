@@ -398,7 +398,7 @@ abstract readonly class App implements RoutesFocus
 
                 return new UpdateResult(
                     $current,
-                    self::combineCommands($dispatch->command, $hookCommand),
+                    self::combineCommands($focused->addressed($dispatch->command), $hookCommand),
                 );
             }
         }
@@ -505,11 +505,11 @@ abstract readonly class App implements RoutesFocus
 
             return new UpdateResult(
                 $current,
-                self::combineCommands($dispatch->command, $hookCommand),
+                self::combineCommands($focused->addressed($dispatch->command), $hookCommand),
             );
         }
 
-        return new UpdateResult($this, $dispatch->command);
+        return new UpdateResult($this, $focused->addressed($dispatch->command));
     }
 
     /**
@@ -660,25 +660,30 @@ abstract readonly class App implements RoutesFocus
         Message $message,
         ChildDispatcher $dispatcher,
     ): array {
-        $widgets = [];
-        $componentsById = [];
+        $updates = [];
+        $commands = [];
+
+        // One at a time rather than as a batch: a command is addressed by the
+        // component that answered, and a batch has already combined them.
         foreach ($components as $component) {
             if (!$component->writesBack()) {
                 continue;
             }
 
+            /** @var Interactive $widget */
+            $widget = $component->widget;
             $key = $component->id->value;
-            $widgets[$key] = $component->widget;
-            $componentsById[$key] = $component;
+            $rect = $rects[$key] ?? throw new LogicException("Missing rect for component key '$key'");
+            $dispatch = $dispatcher->dispatchOne($widget, $message, $rect);
+
+            if ($dispatch->changed) {
+                $updates[$key] = [$component, $dispatch->child];
+            }
+
+            $commands[] = $component->addressed($dispatch->command);
         }
 
-        $batch = $dispatcher->dispatchMap($widgets, $rects, $message);
-        $updates = [];
-        foreach ($batch->overrides as $key => $widget) {
-            $updates[$key] = [$componentsById[$key], $widget];
-        }
-
-        return [$updates, $batch->command];
+        return [$updates, self::combineCommands(...$commands)];
     }
 
     private static function combineCommands(?Cmd ...$commands): ?Cmd
