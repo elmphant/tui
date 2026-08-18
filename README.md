@@ -92,7 +92,7 @@ abstract readonly class App
     protected function setup(): ?Cmd { return null; }         // initial commands
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
-    protected function onTick(TickMsg $message): UpdateResult { return UpdateResult::keep($this); }
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
     protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
 }
 ```

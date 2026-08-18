@@ -252,7 +252,7 @@ final readonly class NoInteractivesTickApp extends CopyableTestApp
         return Text::new("Ticks: {$this->ticks}");
     }
 
-    protected function onTick(TickMsg $message): UpdateResult
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
         return UpdateResult::changed($this->cloneWith(ticks: $this->ticks + 1));
     }
@@ -445,7 +445,7 @@ final readonly class CommandWithTickApp extends CopyableTestApp
         );
     }
 
-    protected function onTick(TickMsg $message): UpdateResult
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
         return $this->withCmd(Cmd::tick(0.1));
     }

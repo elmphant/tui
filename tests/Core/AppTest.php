@@ -640,7 +640,7 @@ final readonly class TickingApp extends CopyableTestApp
         return Cmd::tick(0.05);
     }
 
-    protected function onTick(TickMsg $message): UpdateResult
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
         return UpdateResult::changed($this->cloneWith(ticks: $this->ticks + 1));
     }

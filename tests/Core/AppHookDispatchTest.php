@@ -75,7 +75,7 @@ final class AppHookDispatchTest extends TestCase
         $app = new HookRecordingApp();
         $screen = new Rect(0, 0, 37, 11);
 
-        foreach ([new KeyMsg('x'), new HookProbeMsg()] as $message) {
+        foreach ([new KeyMsg('x'), new HookProbeMsg(), new TickMsg(1.0)] as $message) {
             $model = $app->update($message, $screen)->model;
             self::assertInstanceOf(HookRecordingApp::class, $model);
             self::assertSame('37x11', $model->screen, $message::class);
@@ -134,9 +134,9 @@ final readonly class HookRecordingApp extends App
         return UpdateResult::keep(new self('mouse'));
     }
 
-    protected function onTick(TickMsg $message): UpdateResult
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::keep(new self('tick'));
+        return UpdateResult::keep(new self('tick', self::size($screen)));
     }
 
     protected function onResize(ResizeMsg $message): UpdateResult

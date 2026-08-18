@@ -203,7 +203,7 @@ abstract readonly class App implements RoutesFocus
     /**
      * @return UpdateResult<static>
      */
-    protected function onTick(TickMsg $message): UpdateResult
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
         return UpdateResult::keep($this);
     }
@@ -323,7 +323,7 @@ abstract readonly class App implements RoutesFocus
         }
 
         if ($message instanceof TickMsg) {
-            return $this->broadcastAfter($this->onTick($message), $message, $screenRect);
+            return $this->broadcastAfter($this->onTick($message, $screenRect), $message, $screenRect);
         }
 
         if ($message instanceof FloatMouseMsg) {
@@ -366,7 +366,7 @@ abstract readonly class App implements RoutesFocus
         }
 
         if ($message instanceof TickMsg) {
-            return $this->broadcastAfter($this->onTick($message), $message, $screenRect);
+            return $this->broadcastAfter($this->onTick($message, $screenRect), $message, $screenRect);
         }
 
         if ($message instanceof FloatMouseMsg) {

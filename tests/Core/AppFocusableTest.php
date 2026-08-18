@@ -942,7 +942,7 @@ final readonly class GlobalKeybindingsTickToggleApp extends CopyableTestApp
         return TestComponents::bind('binding-capture', 'widget', $this->widget);
     }
 
-    protected function onTick(TickMsg $message): UpdateResult
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
         return UpdateResult::changed($this->cloneWith(currentBindings: $this->nextBindings));
     }
