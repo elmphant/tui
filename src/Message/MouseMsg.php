@@ -23,6 +23,9 @@ final readonly class MouseMsg implements Message
         public MouseButton $button,
         public int $repeat = 1,
         public ?Rect $screen = null,
+        public bool $shift = false,
+        public bool $alt = false,
+        public bool $ctrl = false,
     ) {
     }
 
