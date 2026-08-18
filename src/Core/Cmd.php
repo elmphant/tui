@@ -24,6 +24,15 @@ abstract readonly class Cmd
     }
 
     /**
+     * Puts the keyboard down, so the app answers the keys itself until it hands
+     * them back. The runtime leaves it down rather than settling on a component.
+     */
+    public static function focusNothing(): self
+    {
+        return new FocusCmd(move: FocusMove::Nowhere);
+    }
+
+    /**
      * Moves the keyboard one component along, wrapping at the end.
      */
     public static function focusNext(): self
@@ -65,6 +74,21 @@ abstract readonly class Cmd
     public static function cancel(EffectId $id): self
     {
         return new CancelCmd($id);
+    }
+
+    /**
+     * Wake on the stream becoming readable and turn what it yields into messages.
+     *
+     * Ends when the stream reaches EOF, or when $id is cancelled. Closing the
+     * stream yourself needs `Cmd::cancel($id)` first, in that order: the driver
+     * cannot select over a closed stream and takes the loop down with it.
+     *
+     * @param resource                             $stream
+     * @param Closure(resource): iterable<Message> $onReadable
+     */
+    public static function listen(mixed $stream, Closure $onReadable, ?EffectId $id = null): self
+    {
+        return new ListenCmd($stream, $onReadable, $id);
     }
 
     public static function batch(self ...$commands): self

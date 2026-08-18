@@ -17,6 +17,7 @@ use Elmphant\Tui\Core\ExecCmd;
 use Elmphant\Tui\Core\FocusCmd;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\HttpCmd;
+use Elmphant\Tui\Core\ListenCmd;
 use Elmphant\Tui\Core\MappedCmd;
 use Elmphant\Tui\Core\MessageCmd;
 use Elmphant\Tui\Core\Model;
@@ -109,6 +110,11 @@ final class Program
      * @var list<RunningProcess>
      */
     private array $processes = [];
+
+    /**
+     * @var list<StreamSubscription>
+     */
+    private array $subscriptions = [];
 
     private ?HttpClientInterface $httpClient = null;
 
@@ -471,6 +477,11 @@ final class Program
         try {
             $this->cancelEventLoopWatchers();
 
+            foreach ($this->subscriptions as $subscription) {
+                $this->stopWatching($subscription);
+            }
+            $this->subscriptions = [];
+
             foreach ($this->processes as $process) {
                 try {
                     $process->stop();
@@ -634,6 +645,7 @@ final class Program
         $this->fireTickers($now);
         $this->fireTimers($now);
         $this->pumpProcesses();
+        $this->pumpSubscriptions();
         $this->flushWheelWhenDue($now);
 
         $this->drainMessageQueue();
@@ -810,9 +822,12 @@ final class Program
             try {
                 $updateStart = $this->tracer === null ? 0 : hrtime(true);
                 $stamped = InputRouter::route($message, $screenRect, $this->renderContext?->floatPlacements() ?? []);
+                if ($stamped === null) {
+                    continue;
+                }
                 $this->focus = $this->focus->resolvedAgainst($this->focusableIds());
                 $result = $this->model instanceof RoutesFocus
-                    ? $this->model->update($stamped, $screenRect, $this->focus->focused())
+                    ? $this->model->update($stamped, $screenRect, $this->focus)
                     : $this->model->update($stamped, $screenRect);
                 $nextModel = self::requireModel($result->model);
                 if ($this->tracer !== null) {
@@ -961,6 +976,7 @@ final class Program
             $command instanceof HttpCmd => $this->startHttpRequest($command, $wrap),
             $command instanceof ExecCmd => $this->startExecProcess($command, $wrap),
             $command instanceof ProcessCmd => $this->startStreamingProcess($command, $wrap),
+            $command instanceof ListenCmd => $this->subscribeToStream($command, $wrap),
             default => throw new LogicException(sprintf('Unknown command type "%s" — the runtime has no dispatcher for it', $command::class)),
         };
     }
@@ -987,6 +1003,65 @@ final class Program
                 new UnexpectedValueException('Cmd::call() callback must return Message, Cmd, or null'),
                 'call',
             ), $wrap));
+        }
+    }
+
+    /**
+     * @param Closure(Message): Message|null $wrap
+     */
+    private function subscribeToStream(ListenCmd $command, ?Closure $wrap = null): void
+    {
+        $subscription = new StreamSubscription($command->stream, $command->onReadable, $command->id, $wrap);
+        $subscription->watcherId = EventLoop::onReadable($command->stream, function () use ($subscription): void {
+            $subscription->readable = true;
+            $this->tick();
+        });
+        $this->subscriptions[] = $subscription;
+    }
+
+    private function pumpSubscriptions(): void
+    {
+        if ($this->subscriptions === []) {
+            return;
+        }
+
+        $remaining = [];
+        foreach ($this->subscriptions as $subscription) {
+            if (!$subscription->readable) {
+                $remaining[] = $subscription;
+                continue;
+            }
+            $subscription->readable = false;
+
+            try {
+                foreach ($subscription->read() as $message) {
+                    $this->messageQueue->enqueue(self::mapMessage($message, $subscription->wrap));
+                }
+            } catch (Throwable $error) {
+                $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'listen', $subscription->id), $subscription->wrap));
+                $this->stopWatching($subscription);
+                continue;
+            }
+
+            if (!$subscription->isOpen()) {
+                $this->stopWatching($subscription);
+                continue;
+            }
+            $remaining[] = $subscription;
+        }
+        $this->subscriptions = $remaining;
+    }
+
+    private function stopWatching(StreamSubscription $subscription): void
+    {
+        if ($subscription->watcherId === null) {
+            return;
+        }
+        $watcherId = $subscription->watcherId;
+        $subscription->watcherId = null;
+        try {
+            EventLoop::cancel($watcherId);
+        } catch (Throwable) {
         }
     }
 
@@ -1027,6 +1102,7 @@ final class Program
             $command instanceof AfterCmd,
             $command instanceof HttpCmd,
             $command instanceof ExecCmd,
+            $command instanceof ListenCmd,
             $command instanceof ProcessCmd => $command->id,
             default => null,
         };
@@ -1046,6 +1122,16 @@ final class Program
             $this->timers,
             static fn (TimerRecord $timer): bool => $timer->id === null || !$timer->id->equals($id),
         ));
+
+        $keptSubscriptions = [];
+        foreach ($this->subscriptions as $subscription) {
+            if ($subscription->id !== null && $subscription->id->equals($id)) {
+                $this->stopWatching($subscription);
+                continue;
+            }
+            $keptSubscriptions[] = $subscription;
+        }
+        $this->subscriptions = $keptSubscriptions;
 
         $remaining = [];
         foreach ($this->processes as $process) {

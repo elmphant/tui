@@ -62,6 +62,7 @@ use ReflectionMethod;
 use ReflectionObject;
 use ReflectionProperty;
 use ReflectionUnionType;
+use Revolt\EventLoop;
 use RuntimeException;
 use SplQueue;
 
@@ -72,6 +73,197 @@ final class ProgramTest extends TestCase
     {
         self::assertSame(Model::class, (string)(new ReflectionMethod(Program::class, 'run'))->getReturnType());
         self::assertSame(Model::class, (string)(new ReflectionMethod(Program::class, 'start'))->getReturnType());
+    }
+
+    #[Test]
+    public function aStreamSubscriptionDeliversWhatTheStreamProduces(): void
+    {
+        [$read, $write] = self::streamPair();
+        $model = $this->streamModel($read);
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+
+        EventLoop::defer(static function () use ($write): void {
+            fwrite($write, 'a frame');
+        });
+
+        $final = $program->start();
+        self::assertInstanceOf($model::class, $final);
+        self::assertSame(['a frame'], $final->received);
+    }
+
+    #[Test]
+    public function cancellingAStreamSubscriptionStopsItsMessages(): void
+    {
+        [$read, $write] = self::streamPair();
+        $id = EffectId::named('feed');
+        $model = $this->streamModel($read, $id);
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+
+        EventLoop::delay(0.05, static function () use ($write): void {
+            fwrite($write, 'first');
+        });
+        EventLoop::delay(0.15, static function () use ($write): void {
+            fwrite($write, 'second');
+        });
+
+        $final = $program->start();
+        self::assertInstanceOf($model::class, $final);
+        self::assertSame(['first'], $final->received);
+    }
+
+    #[Test]
+    public function cancellingASubscriptionFirstMakesItSafeToCloseTheStream(): void
+    {
+        [$read, $write] = self::streamPair();
+        $id = EffectId::named('feed');
+        $model = $this->closingStreamModel($read, $write, $id);
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+
+        EventLoop::delay(0.02, static function () use ($write): void {
+            fwrite($write, 'last word');
+        });
+
+        $program->start();
+
+        self::assertSame(ProgramState::Stopped, $program->state());
+    }
+
+    #[Test]
+    public function aStoppedProgramNoLongerReadsItsSubscribedStreams(): void
+    {
+        [$read, $write] = self::streamPair();
+        $reads = new ArrayObject(['count' => 0]);
+        $model = $this->countingStreamModel($read, $reads);
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+
+        EventLoop::defer(static function () use ($write): void {
+            fwrite($write, 'while running');
+        });
+        $program->start();
+        $afterStop = $reads['count'];
+
+        fwrite($write, 'after the program stopped');
+        $suspension = EventLoop::getSuspension();
+        EventLoop::delay(0.05, static function () use ($suspension): void {
+            $suspension->resume();
+        });
+        $suspension->suspend();
+
+        self::assertSame($afterStop, $reads['count']);
+    }
+
+    #[Test]
+    public function listeningTwiceUnderOneIdKeepsOnlyTheLatestStream(): void
+    {
+        [$firstRead, $firstWrite] = self::streamPair();
+        [$secondRead, $secondWrite] = self::streamPair();
+        $model = new class($firstRead, $secondRead) implements Model {
+            /**
+             * @var list<string>
+             */
+            public array $received = [];
+
+            /** @param resource $first
+             *  @param resource $second */
+            public function __construct(private readonly mixed $first, private readonly mixed $second)
+            {
+            }
+
+            public function init(): ?Cmd
+            {
+                $id = EffectId::named('feed');
+
+                return Cmd::batch(
+                    Cmd::listen($this->first, self::reader('first'), $id),
+                    Cmd::listen($this->second, self::reader('second'), $id),
+                    Cmd::after(0.25, static fn (): Cmd => Cmd::quit()),
+                );
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if (!$message instanceof TestMessage) {
+                    return new UpdateResult($this);
+                }
+                $next = clone $this;
+                $next->received = [...$this->received, $message->value];
+
+                return new UpdateResult($next);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+
+            private static function reader(string $label): Closure
+            {
+                return static function (mixed $stream) use ($label): iterable {
+                    $chunk = fread($stream, 1024);
+                    if ($chunk === false || $chunk === '') {
+                        return [];
+                    }
+
+                    return [new TestMessage($label)];
+                };
+            }
+        };
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+
+        EventLoop::delay(0.05, static function () use ($firstWrite, $secondWrite): void {
+            fwrite($firstWrite, 'x');
+            fwrite($secondWrite, 'y');
+        });
+
+        $final = $program->start();
+        self::assertInstanceOf($model::class, $final);
+        self::assertSame(['second'], $final->received);
+    }
+
+    #[Test]
+    public function aClosedStreamEndsItsSubscriptionInsteadOfSpinning(): void
+    {
+        [$read, $write] = self::streamPair();
+        $reads = new ArrayObject(['count' => 0]);
+        $model = new class($read, $reads) implements Model {
+            /**
+             * @param resource $stream
+             */
+            public function __construct(private readonly mixed $stream, private readonly ArrayObject $reads)
+            {
+            }
+
+            public function init(): ?Cmd
+            {
+                $reads = $this->reads;
+
+                return Cmd::batch(
+                    Cmd::listen($this->stream, static function (mixed $stream) use ($reads): iterable {
+                        $reads['count'] = $reads['count'] + 1;
+                        fread($stream, 1024);
+
+                        return [];
+                    }),
+                    Cmd::after(0.2, static fn (): Cmd => Cmd::quit()),
+                );
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+
+        EventLoop::defer(static function () use ($write): void {
+            fclose($write);
+        });
+
+        $program->start();
+        self::assertSame(1, $reads['count']);
     }
 
     #[Test]
@@ -527,19 +719,19 @@ final class ProgramTest extends TestCase
         $programFinished = false;
         $hostTimerFired = false;
 
-        \Revolt\EventLoop::queue(function () use ($program, &$programFinished): void {
+        EventLoop::queue(function () use ($program, &$programFinished): void {
             $program->start();
             $programFinished = true;
         });
         // The host timer doubles as the run() terminator so watchers leaked by
         // unrelated tests cannot keep the loop alive; if the program had stopped
         // the shared driver, run() would return before this ever fires.
-        \Revolt\EventLoop::delay(0.2, function () use (&$hostTimerFired): void {
+        EventLoop::delay(0.2, function () use (&$hostTimerFired): void {
             $hostTimerFired = true;
-            \Revolt\EventLoop::getDriver()->stop();
+            EventLoop::getDriver()->stop();
         });
 
-        \Revolt\EventLoop::run();
+        EventLoop::run();
 
         self::assertTrue($programFinished, 'Program embedded in a host loop must run to completion (nested EventLoop::run() is fatal in Revolt)');
         self::assertTrue($hostTimerFired, 'The host application timer must survive the program quitting — stopping the global driver kills unrelated watchers');
@@ -1384,7 +1576,7 @@ final class ProgramTest extends TestCase
             self::assertNull($value, "$name must be cancelled and nulled out by teardown()");
         }
 
-        $activeIds = \Revolt\EventLoop::getIdentifiers();
+        $activeIds = EventLoop::getIdentifiers();
         foreach ($registeredIds as $id) {
             self::assertNotContains($id, $activeIds, 'Watcher must be cancelled in EventLoop, not just nulled in the property');
         }
@@ -4599,6 +4791,163 @@ final class ProgramTest extends TestCase
             $source,
             'The SIGHUP watcher must be cancelled with the others, or a resumed program leaks it',
         );
+    }
+
+    /**
+     * Cancels its own subscription and closes the stream on the first message,
+     * which is the only order that is safe: a watcher left on a closed stream
+     * takes the driver down.
+     *
+     * @param resource $read
+     * @param resource $write
+     */
+    private function closingStreamModel(mixed $read, mixed $write, EffectId $id): Model
+    {
+        return new class($read, $write, $id) implements Model {
+            /** @param resource $read
+             *  @param resource $write */
+            public function __construct(
+                private readonly mixed $read,
+                private readonly mixed $write,
+                private readonly EffectId $id,
+            ) {
+            }
+
+            public function init(): ?Cmd
+            {
+                return Cmd::batch(
+                    Cmd::listen($this->read, static fn (mixed $stream): iterable => [new TestMessage((string)fread($stream, 64))], $this->id),
+                    Cmd::after(0.3, static fn (): Cmd => Cmd::quit()),
+                );
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if (!$message instanceof TestMessage) {
+                    return new UpdateResult($this);
+                }
+
+                return new UpdateResult($this, Cmd::batch(
+                    Cmd::cancel($this->id),
+                    Cmd::call(function (): ?Cmd {
+                        fclose($this->write);
+                        fclose($this->read);
+
+                        return Cmd::quit();
+                    }),
+                ));
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+    }
+
+    /**
+     * @param resource $stream
+     */
+    private function countingStreamModel(mixed $stream, ArrayObject $reads): Model
+    {
+        return new class($stream, $reads) implements Model {
+            /**
+             * @param resource $stream
+             */
+            public function __construct(private readonly mixed $stream, private readonly ArrayObject $reads)
+            {
+            }
+
+            public function init(): ?Cmd
+            {
+                $reads = $this->reads;
+
+                return Cmd::batch(
+                    Cmd::listen($this->stream, static function (mixed $stream) use ($reads): iterable {
+                        $reads['count'] = $reads['count'] + 1;
+                        fread($stream, 1024);
+
+                        return [];
+                    }),
+                    Cmd::after(0.1, static fn (): Cmd => Cmd::quit()),
+                );
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+    }
+
+    /**
+     * Collects what the subscription yields and quits on a deadline, so a
+     * subscription that never fires fails an assertion instead of hanging.
+     * With an id, it cancels the subscription after the first message.
+     *
+     * @param resource $stream
+     */
+    private function streamModel(mixed $stream, ?EffectId $id = null): Model
+    {
+        return new class($stream, $id) implements Model {
+            /**
+             * @var list<string>
+             */
+            public array $received = [];
+
+            /**
+             * @param resource $stream
+             */
+            public function __construct(private readonly mixed $stream, private readonly ?EffectId $id = null)
+            {
+            }
+
+            public function init(): ?Cmd
+            {
+                return Cmd::batch(
+                    Cmd::listen($this->stream, static function (mixed $stream): iterable {
+                        $chunk = fread($stream, 1024);
+                        if ($chunk === false || $chunk === '') {
+                            return [];
+                        }
+
+                        return [new TestMessage($chunk)];
+                    }, $this->id),
+                    Cmd::after(0.25, static fn (): Cmd => Cmd::quit()),
+                );
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if (!$message instanceof TestMessage) {
+                    return new UpdateResult($this);
+                }
+                $next = clone $this;
+                $next->received = [...$this->received, $message->value];
+
+                return new UpdateResult($next, $this->id === null ? null : Cmd::cancel($this->id));
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+    }
+
+    /**
+     * @return array{resource, resource}
+     */
+    private static function streamPair(): array
+    {
+        $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        self::assertIsArray($pair);
+        stream_set_blocking($pair[0], false);
+        stream_set_blocking($pair[1], false);
+
+        return [$pair[0], $pair[1]];
     }
 
     private function createRenderablePrgram(Model $model): Program

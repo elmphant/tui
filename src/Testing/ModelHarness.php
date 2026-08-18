@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Testing;
 
+use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\FocusCmd;
+use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Core\MappedCmd;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Core\RoutesFocus;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ResizeMsg;
@@ -29,6 +34,7 @@ final class ModelHarness
 {
     private Rect $area;
     private ?Cmd $lastCommand = null;
+    private FocusState $focus;
     private readonly RenderContext $context;
 
     /**
@@ -41,6 +47,7 @@ final class ModelHarness
         Theme $theme,
     ) {
         $this->area = Rect::fromSize($width, $height);
+        $this->focus = new FocusState();
         $this->context = new RenderContext($theme);
     }
 
@@ -69,6 +76,8 @@ final class ModelHarness
     {
         $this->lastCommand = $this->model->init();
 
+        $this->moveFocusFor($this->lastCommand);
+
         return $this;
     }
 
@@ -82,19 +91,25 @@ final class ModelHarness
     public function dispatch(Message $message): self
     {
         $routed = InputRouter::route($message, $this->area, $this->context->floatPlacements());
-        $result = $this->model->update($routed, $this->area);
+        if ($routed === null) {
+            return $this;
+        }
+        $this->focus = $this->focus->resolvedAgainst(
+            $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [],
+        );
+        $result = $this->model instanceof RoutesFocus
+            ? $this->model->update($routed, $this->area, $this->focus)
+            : $this->model->update($routed, $this->area);
 
         /** @var TModel $next */
         $next = self::requireModel($result->model);
         $this->model = $next;
         $this->lastCommand = $result->command;
+        $this->moveFocusFor($this->lastCommand);
 
         return $this;
     }
 
-    /**
-     * @return self<TModel>
-     */
     /**
      * Resizes the terminal the model believes it is running in: the new area
      * arrives as a ResizeMsg, exactly as the runtime delivers it.
@@ -127,6 +142,9 @@ final class ModelHarness
         $frame = new Frame($this->area->width, $this->area->height);
 
         $this->context->beginFrame(0.0);
+        $this->context->focusOn($this->focus->resolvedAgainst(
+            $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [],
+        ));
         $this->model->render($frame, $this->context);
         $this->context->commitFloatPlacements();
 
@@ -146,6 +164,35 @@ final class ModelHarness
     public function renderScreen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
+    }
+
+    /**
+     * The runtime keeps focus itself, and a command is how a model moves it, so
+     * the harness has to honour one or a test can never press one key to move
+     * the keyboard and a second to use it.
+     */
+    private function moveFocusFor(?Cmd $command): void
+    {
+        if ($command instanceof MappedCmd) {
+            $this->moveFocusFor($command->inner);
+
+            return;
+        }
+
+        if ($command instanceof BatchCmd) {
+            foreach ($command->commands as $child) {
+                $this->moveFocusFor($child);
+            }
+
+            return;
+        }
+
+        if ($command instanceof FocusCmd) {
+            $this->focus = $command->applyTo(
+                $this->focus,
+                $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [],
+            );
+        }
     }
 
     private static function requireModel(Reducer $model): Model
