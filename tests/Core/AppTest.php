@@ -160,7 +160,11 @@ final class AppTest extends TestCase
             Rect::fromSize(80, 24),
         );
 
-        self::assertNull($result->command, 'A wheel event the input ignores must not reach onComponentsChanged');
+        self::assertEquals(
+            Cmd::focus(ComponentId::named('no-op-input')),
+            $result->command,
+            'only the keyboard moved: the hook signals with a quit, and an ignored wheel never reaches it',
+        );
     }
 
     #[Test]

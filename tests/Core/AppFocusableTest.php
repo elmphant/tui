@@ -284,20 +284,16 @@ final class AppFocusableTest extends TestCase
     }
 
     #[Test]
-    public function clickOutsideWidgetRectDoesNotFocusIt(): void
+    public function aClickAsksForTheKeyboardOfThePanelItLandedIn(): void
     {
         $app = TwoPanelApp::create();
-        self::assertTrue($app->left->isFocused());
-        self::assertFalse($app->right->isFocused());
 
         $result = $app->update(
             new MouseMsg(79, 5, MouseAction::Press, MouseButton::Left),
             Rect::fromSize(80, 24),
         );
 
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertFalse($result->model->left->isFocused());
-        self::assertTrue($result->model->right->isFocused());
+        self::assertEquals(Cmd::focus(ComponentId::named('right-panel')), $result->command);
     }
 
     #[Test]
@@ -429,8 +425,7 @@ final class AppFocusableTest extends TestCase
 
         self::assertInstanceOf(ClickTrackingFocusableApp::class, $result->model);
         self::assertSame(1, $result->model->widget->count);
-        self::assertTrue($result->model->widget->isFocused());
-        self::assertFalse($result->model->other->isFocused());
+        self::assertEquals(Cmd::focus(ComponentId::named('click-tracker')), $result->command);
     }
 
     #[Test]
@@ -592,7 +587,6 @@ final class AppFocusableTest extends TestCase
         self::assertInstanceOf(MouseTrackingFocusableApp::class, $result->model);
         self::assertTrue($result->model->mouseTracked);
         self::assertSame(1, $result->model->widget->count);
-        self::assertTrue($result->model->widget->isFocused());
     }
 
     #[Test]
@@ -648,8 +642,11 @@ final class AppFocusableTest extends TestCase
 
         self::assertTrue($updated->swapped, 'onMouse should have triggered');
         self::assertSame('replaced-right', $updated->right->marker, 'right should be the replaced widget, not the original');
-        self::assertTrue($updated->right->isFocused(), 'New right should gain focus from click');
-        self::assertFalse($updated->left->isFocused(), 'left should lose focus');
+        self::assertEquals(
+            Cmd::focus(ComponentId::named('right-marker')),
+            $result->command,
+            'the keyboard is asked for on the widget that replaced the one clicked',
+        );
     }
 
     /**

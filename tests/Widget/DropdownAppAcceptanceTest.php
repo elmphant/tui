@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Layout\Layout;
+use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
@@ -79,8 +80,14 @@ final class DropdownAppAcceptanceTest extends TestCase
 
         $app = self::appOf($harness);
         self::assertTrue($app->second->isOpen(), 'App applies click-focus AFTER dispatch, so the click must open it unfocused');
-        self::assertTrue($app->second->isFocused(), 'and focus lands on it in the same click');
         self::assertFalse($app->first->isOpen(), 'the row that had focus is left alone');
+
+        $harness->dispatch(new KeyMsg(Key::Escape));
+
+        self::assertFalse(
+            self::appOf($harness)->second->isOpen(),
+            'the keyboard arrived on it in the same click, so the next key is its to answer',
+        );
     }
 
     /**

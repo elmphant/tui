@@ -357,7 +357,12 @@ abstract readonly class App implements RoutesFocus
         }
 
         if ($message instanceof MouseMsg) {
-            return $this->delegateMouse($message, $screenRect, $this->componentRegistry()->all());
+            return $this->delegateMouse(
+                $message,
+                $screenRect,
+                $this->componentRegistry()->all(),
+                $this->findFocusedComponent($focusables)?->id,
+            );
         }
 
         if ($message instanceof TickMsg) {
@@ -512,8 +517,12 @@ abstract readonly class App implements RoutesFocus
      *
      * @return UpdateResult<static>
      */
-    private function delegateMouse(MouseMsg $message, Rect $screenRect, array $components): UpdateResult
-    {
+    private function delegateMouse(
+        MouseMsg $message,
+        Rect $screenRect,
+        array $components,
+        ?ComponentId $holdingTheKeyboard = null,
+    ): UpdateResult {
         $appResult = $this->onMouse($message, $screenRect);
         $current = $this->appModel($appResult);
 
@@ -522,26 +531,22 @@ abstract readonly class App implements RoutesFocus
         }
         $rects = $current->findComponentRects($screenRect, $components);
         [$updates, $childCommand] = $current->dispatchComponents(
-            $components,
+            self::toldWhoHoldsTheKeyboard($components, $holdingTheKeyboard),
             $rects,
             $message,
             $current->childDispatcher(),
         );
 
         // Where the pointer landed is a question about the screen, so every bound
-        // widget is asked. Only one the keyboard can reach has its focus moved.
+        // widget the keyboard can reach is asked. Routing says where the keyboard
+        // goes and never edits a flag to do it: writing one back would run the
+        // closure of a component the pointer never touched, putting its untouched
+        // state on top of whatever the one that was touched just changed.
         $landedOn = null;
-        if ($message->isClick()) {
+        if ($message->isClick() || $message->isWheel()) {
             foreach ($current->componentRegistry()->focusables() as $component) {
-                $shouldFocus = $message->inRect($rects[$component->id->value]);
-                $existing = $updates[$component->id->value][1] ?? $component->widget;
-
-                if ($shouldFocus) {
+                if ($message->inRect($rects[$component->id->value])) {
                     $landedOn = $component->id;
-                }
-
-                if ($existing instanceof Focusable && $component->writesBack() && $existing->isFocused() !== $shouldFocus) {
-                    $updates[$component->id->value] = [$component, $existing->withFocus($shouldFocus)];
                 }
             }
         }
@@ -550,22 +555,52 @@ abstract readonly class App implements RoutesFocus
 
         return new UpdateResult(
             $next,
-            self::combineCommands($appResult->command, $childCommand, $hookCommand, self::focusAfterClick($message, $landedOn)),
+            self::combineCommands($appResult->command, $childCommand, $hookCommand, self::focusAfterPointer($message, $landedOn)),
         );
     }
 
     /**
-     * A click moves the keyboard the same way a key does. Writing only the
-     * widget's flag would leave the runtime pointing where it pointed before,
-     * and a routed tree ignores flags.
+     * A widget deciding what a press means may need to know whether the keyboard
+     * was already on it — the runtime holds that, so it is told here rather than
+     * left to read a flag its host wrote for some other purpose.
+     *
+     * @param list<Component<Interactive>> $components
+     *
+     * @return list<Component<Interactive>>
      */
-    private static function focusAfterClick(MouseMsg $message, ?ComponentId $landedOn): ?Cmd
+    private static function toldWhoHoldsTheKeyboard(array $components, ?ComponentId $holding): array
     {
-        if (!$message->isClick()) {
-            return null;
+        if ($holding === null) {
+            return $components;
         }
 
-        return $landedOn === null ? Cmd::focusNothing() : Cmd::focus($landedOn);
+        return array_map(
+            static function (Component $component) use ($holding): Component {
+                $widget = $component->widget;
+
+                return $component->id->equals($holding) && $widget instanceof Focusable && !$widget->isFocused()
+                    ? $component->withWidget($widget->withFocus(true))
+                    : $component;
+            },
+            $components,
+        );
+    }
+
+    /**
+     * A pointer moves the keyboard the same way a key does. Writing only the
+     * widget's flag would leave the runtime pointing where it pointed before,
+     * and a routed tree ignores flags.
+     *
+     * A click on empty space is a deliberate move away from whatever held it; a
+     * wheel that turned nothing has no such intent behind it.
+     */
+    private static function focusAfterPointer(MouseMsg $message, ?ComponentId $landedOn): ?Cmd
+    {
+        if ($landedOn !== null) {
+            return Cmd::focus($landedOn);
+        }
+
+        return $message->isClick() ? Cmd::focusNothing() : null;
     }
 
     /**
