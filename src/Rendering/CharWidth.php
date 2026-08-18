@@ -282,6 +282,29 @@ final class CharWidth
         return self::truncateToWidth($text, $maxWidth - 1) . self::ELLIPSIS;
     }
 
+    /**
+     * The text from $columns display columns on. A character straddling the cut
+     * goes with the part being dropped: half of one is not a character.
+     */
+    public static function dropColumns(string $text, int $columns): string
+    {
+        if ($columns <= 0) {
+            return $text;
+        }
+
+        $skipped = 0;
+        $kept = '';
+        foreach (Grapheme::split($text) as $grapheme) {
+            if ($skipped >= $columns) {
+                $kept .= $grapheme;
+                continue;
+            }
+            $skipped += self::graphemeWidth($grapheme);
+        }
+
+        return $kept;
+    }
+
     public static function truncateToWidth(string $text, int $maxWidth): string
     {
         if ($maxWidth <= 0) {

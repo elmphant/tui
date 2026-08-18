@@ -572,6 +572,19 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
+    public function droppingColumnsNeverLeavesHalfOfAWideCharacter(): void
+    {
+        self::assertSame('cdef', CharWidth::dropColumns('abcdef', 2));
+        self::assertSame('abc', CharWidth::dropColumns('abc', 0));
+        self::assertSame('', CharWidth::dropColumns('ab', 5));
+        self::assertSame(
+            'b',
+            CharWidth::dropColumns("a\u{4F60}b", 2),
+            'the wide character straddles the cut, so it goes rather than showing half',
+        );
+    }
+
+    #[Test]
     public function truncateToWidthEmptyString(): void
     {
         self::assertSame('', CharWidth::truncateToWidth('', 10));

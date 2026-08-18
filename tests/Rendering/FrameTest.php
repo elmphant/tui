@@ -8,7 +8,9 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\SgrParser;
+use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use PHPUnit\Framework\Attributes\Test;
@@ -568,6 +570,39 @@ final class FrameTest extends TestCase
         self::assertSame(Color::hex('FF0000')->value, $frame->foregrounds[0]);
         self::assertSame(Color::hex('00FF00')->value, $frame->backgrounds[0]);
         self::assertSame(Attr::BOLD, $frame->attributes[0]);
+    }
+
+    #[Test]
+    public function putLineDrawsEachSpanOverTheBaseStyle(): void
+    {
+        $frame = new Frame(20, 1);
+        $line = new Line([
+            Span::styled('ab', new Style(foreground: Color::hex('FF0000'))),
+            Span::styled('cd', new Style(foreground: Color::hex('0000FF'), attributes: Attr::ITALIC)),
+        ]);
+
+        $drawn = $frame->putLine(0, 0, $line, new Style(background: Color::hex('222222'), attributes: Attr::BOLD));
+
+        self::assertSame(4, $drawn);
+        self::assertSame('abcd', implode('', array_slice($frame->characters, 0, 4)));
+        self::assertSame(Color::hex('FF0000')->value, $frame->foregrounds[0], 'the span keeps its own colour');
+        self::assertSame(Color::hex('0000FF')->value, $frame->foregrounds[2]);
+        self::assertSame(Color::hex('222222')->value, $frame->backgrounds[2], 'the base background shows under every span');
+        self::assertSame(Attr::BOLD, $frame->attributes[0], 'the base attributes apply');
+        self::assertSame(Attr::BOLD | Attr::ITALIC, $frame->attributes[2], 'and combine with the span own attributes');
+    }
+
+    #[Test]
+    public function putLineClipsByDisplayWidthSoAWideGlyphNeverStraddlesTheLimit(): void
+    {
+        $frame = new Frame(20, 1);
+        $line = new Line([Span::styled('a世', new Style())]);
+
+        $drawn = $frame->putLine(0, 0, $line, new Style(), maxWidth: 2);
+
+        self::assertSame(1, $drawn, 'the wide glyph needs two columns and only one is left');
+        self::assertSame('a', $frame->characters[0]);
+        self::assertSame(' ', $frame->characters[1], 'nothing is written where the glyph would have straddled');
     }
 
     #[Test]

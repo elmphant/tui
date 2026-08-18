@@ -264,6 +264,32 @@ final class Frame
     }
 
     /**
+     * Draw a styled line, each span over $base, and return the width drawn.
+     *
+     * Spans carrying a StyleToken must be resolved first — `Line::withResolvedTokens()`
+     * — because a frame has no theme to resolve them against.
+     */
+    public function putLine(int $x, int $y, Line $line, Style $base = new Style(), ?int $maxWidth = null): int
+    {
+        $limit = $x + ($maxWidth ?? $this->width - $x);
+        $under = $line->style === null ? $base : self::spanStyleOver($line->style, $base);
+        $start = $x;
+
+        foreach ($line->spans as $span) {
+            if ($x >= $limit) {
+                break;
+            }
+            $content = CharWidth::truncateToWidth($span->content, $limit - $x);
+            if ($content === '') {
+                continue;
+            }
+            $x += $this->putStyled($x, $y, $content, self::spanStyleOver($span->style, $under));
+        }
+
+        return $x - $start;
+    }
+
+    /**
      * Write text with inline ANSI SGR sequences parsed into cell styles.
      * Handles multi-line (\n advances y). Returns final [x, y] position.
      *
@@ -622,6 +648,19 @@ final class Frame
         $other->contentRows = $temporaryContentRows;
         $other->blankBackground = $temporaryBlankBackground;
         $other->blankBackgrounds = $temporaryBlankBackgrounds;
+    }
+
+    private static function spanStyleOver(?Style $span, Style $base): Style
+    {
+        if ($span === null) {
+            return $base;
+        }
+
+        return new Style(
+            foreground: $span->foreground ?? $base->foreground,
+            background: $span->background ?? $base->background,
+            attributes: $base->attributes | $span->attributes,
+        );
     }
 
     private function clipRejects(int $x, int $y): bool
