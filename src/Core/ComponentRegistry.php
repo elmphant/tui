@@ -77,8 +77,7 @@ final readonly class ComponentRegistry
 
             $validated[] = $component;
             $byId[$component->id->value] = $component;
-            $widget = $component->widget;
-            if ($widget instanceof Focusable && (!$widget instanceof AcceptsFocus || $widget->acceptsFocus())) {
+            if (self::isSomewhereTheKeyboardCanGo($component)) {
                 $focusables[] = $component;
             }
         }
@@ -178,6 +177,21 @@ final readonly class ComponentRegistry
             static fn (Component $component): Component => $widget->own($component),
             $components,
         );
+    }
+
+    /**
+     * @param Component<Widget> $component
+     */
+    private static function isSomewhereTheKeyboardCanGo(Component $component): bool
+    {
+        if (!$component->writesBack()) {
+            return true;
+        }
+
+        $widget = $component->widget;
+
+        return $widget instanceof Focusable
+            && (!$widget instanceof AcceptsFocus || $widget->acceptsFocus());
     }
 
     /**

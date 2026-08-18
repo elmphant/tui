@@ -380,7 +380,7 @@ abstract readonly class App implements RoutesFocus
     {
         $focused = $this->findFocusedComponent($focusables);
 
-        if ($focused !== null) {
+        if ($focused !== null && $focused->writesBack()) {
             /** @var Focusable $widget */
             $widget = $focused->widget;
             $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value];
@@ -441,9 +441,8 @@ abstract readonly class App implements RoutesFocus
     private function findFocusedIndex(array $focusables): ?int
     {
         foreach ($focusables as $index => $component) {
-            /** @var Focusable $widget */
             $widget = $component->widget;
-            if ($widget->isFocused()) {
+            if ($widget instanceof Focusable && $widget->isFocused()) {
                 return $index;
             }
         }
@@ -530,22 +529,18 @@ abstract readonly class App implements RoutesFocus
         );
 
         // Where the pointer landed is a question about the screen, so every bound
-        // widget is asked. Only one that can hold focus has its focus moved.
+        // widget is asked. Only one the keyboard can reach has its focus moved.
         $landedOn = null;
         if ($message->isClick()) {
-            foreach ($components as $component) {
+            foreach ($current->componentRegistry()->focusables() as $component) {
                 $shouldFocus = $message->inRect($rects[$component->id->value]);
                 $existing = $updates[$component->id->value][1] ?? $component->widget;
-
-                if (!$existing instanceof Focusable) {
-                    continue;
-                }
 
                 if ($shouldFocus) {
                     $landedOn = $component->id;
                 }
 
-                if ($component->writesBack() && $existing->isFocused() !== $shouldFocus) {
+                if ($existing instanceof Focusable && $component->writesBack() && $existing->isFocused() !== $shouldFocus) {
                     $updates[$component->id->value] = [$component, $existing->withFocus($shouldFocus)];
                 }
             }

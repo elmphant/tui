@@ -19,9 +19,10 @@ use ReflectionFunction;
 use UnitEnum;
 
 /**
- * An interactive widget bound to a stable ID and an immutable App replacement.
+ * A widget the tree knows by a stable ID: bound to an immutable App replacement,
+ * or named for the keyboard's sake while its host drives it.
  *
- * @template TWidget of Interactive
+ * @template TWidget of Widget
  */
 final readonly class Component implements Widget, WidgetContainer, SingleMount
 {
@@ -31,7 +32,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     private function __construct(
         public ComponentId $id,
-        public Interactive $widget,
+        public Widget $widget,
         private ?Closure $replace,
     ) {
     }
@@ -41,13 +42,13 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      * takes its turn at the keyboard and draws focused like any other, but input
      * is the host's to route: nothing here can write the widget back.
      *
-     * @template TNamedWidget of Interactive
+     * @template TNamedWidget of Widget
      *
      * @param TNamedWidget $widget
      *
      * @return self<TNamedWidget>
      */
-    public static function named(ComponentId|string $id, Interactive $widget): self
+    public static function named(ComponentId|string $id, Widget $widget): self
     {
         return new self(
             is_string($id) ? ComponentId::named($id) : $id,
@@ -124,7 +125,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      *
      * @return self<TWidget>
      */
-    public function withWidget(Interactive $widget): self
+    public function withWidget(Widget $widget): self
     {
         return new self(id: $this->id, widget: $widget, replace: $this->replace);
     }
@@ -151,9 +152,6 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
         );
     }
 
-    /**
-     * @param TWidget $widget
-     */
     public function replaceIn(App $app, Interactive $widget): App
     {
         if ($this->replace === null) {

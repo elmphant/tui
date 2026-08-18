@@ -93,7 +93,18 @@ abstract readonly class Cmd
 
     public static function batch(self ...$commands): self
     {
-        return new BatchCmd(array_values($commands));
+        $flattened = [];
+        foreach ($commands as $command) {
+            if ($command instanceof BatchCmd) {
+                array_push($flattened, ...$command->commands);
+
+                continue;
+            }
+
+            $flattened[] = $command;
+        }
+
+        return new BatchCmd($flattened);
     }
 
     /**
