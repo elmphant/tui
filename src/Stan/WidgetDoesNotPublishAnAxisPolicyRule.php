@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Stan;
+namespace Elmphant\Tui\Stan;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Widget\Widget;

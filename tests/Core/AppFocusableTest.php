@@ -45,7 +45,7 @@ final class AppFocusableTest extends TestCase
     {
         $app = new ThreePanelApp();
 
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), ComponentId::named('second-panel'));
+        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), new FocusState(ComponentId::named('second-panel')));
 
         self::assertEquals(
             ComponentId::named('third-panel'),
@@ -478,9 +478,10 @@ final class AppFocusableTest extends TestCase
         );
 
         self::assertInstanceOf(BatchCmd::class, $result->command);
-        self::assertCount(2, $result->command->commands);
+        self::assertCount(3, $result->command->commands);
         self::assertInstanceOf(TickCmd::class, $result->command->commands[0]);
         self::assertInstanceOf(ExecCmd::class, $result->command->commands[1]);
+        self::assertInstanceOf(FocusCmd::class, $result->command->commands[2], 'the click moves the keyboard too');
     }
 
     #[Test]
@@ -500,7 +501,7 @@ final class AppFocusableTest extends TestCase
     }
 
     #[Test]
-    public function mouseDelegateWithSingleCommandReturnsCmdDirectly(): void
+    public function aClickCarriesWhatTheWidgetAskedForBesideTheFocusMove(): void
     {
         $app = new SingleCommandOnClickApp(
             widget: new CommandOnClickFocusable(focused: true),
@@ -511,9 +512,10 @@ final class AppFocusableTest extends TestCase
             Rect::fromSize(80, 24),
         );
 
-        self::assertNotNull($result->command);
-        self::assertNotInstanceOf(BatchCmd::class, $result->command);
-        self::assertInstanceOf(ExecCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertCount(2, $result->command->commands);
+        self::assertInstanceOf(ExecCmd::class, $result->command->commands[0]);
+        self::assertInstanceOf(FocusCmd::class, $result->command->commands[1]);
     }
 
     #[Test]

@@ -5,21 +5,43 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Core;
 
 /**
- * Which component the keyboard reaches. One field, so two can never claim it.
+ * Which component the keyboard reaches, or nobody. One field, so two can never
+ * claim it.
  *
- * @internal runtime state owned by Program; an app moves focus with a command
+ * The runtime owns it and hands it to update(); an app moves it with a command
+ * rather than writing to it.
  */
 final readonly class FocusState
 {
     use Cloneable;
 
-    public function __construct(private ?ComponentId $focused = null)
+    public function __construct(
+        private ?ComponentId $focused = null,
+        private bool $decided = false,
+    ) {
+    }
+
+    /**
+     * Nobody holds the keyboard, and that is an answer rather than a gap the
+     * runtime should fill.
+     */
+    public static function nowhere(): self
     {
+        return new self(decided: true);
     }
 
     public function focused(): ?ComponentId
     {
         return $this->focused;
+    }
+
+    /**
+     * Whether nobody holding the keyboard is the answer, rather than a gap left
+     * before the runtime placed it.
+     */
+    public function isNowhere(): bool
+    {
+        return null === $this->focused && $this->decided;
     }
 
     /**
@@ -32,6 +54,10 @@ final readonly class FocusState
     {
         if ($order === []) {
             return $this->cloneWith(focused: null);
+        }
+
+        if (null === $this->focused && $this->decided) {
+            return $this;
         }
 
         return null === $this->indexIn($order)

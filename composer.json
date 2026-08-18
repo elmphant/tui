@@ -29,7 +29,8 @@
     "suggest": {
         "ext-pcntl": "Required for signal handling (SIGWINCH resize detection, SIGINT/SIGTERM graceful quit, Ctrl-Z suspend/resume)",
         "ext-posix": "Required for Ctrl-Z suspend/resume support",
-        "league/commonmark": "Required for Paragraph::fromMarkdown() support"
+        "league/commonmark": "Required for Paragraph::fromMarkdown() support",
+        "phpstan/phpstan": "Required to include rules.neon, which enforces the widget and model invariants in your own app"
     },
     "autoload": {
         "psr-4": {
@@ -53,6 +54,7 @@
             "!/src",
             "!/src/**",
             "!/composer.json",
+            "!/rules.neon",
             "!/README.md",
             "!/LICENSE"
         ]

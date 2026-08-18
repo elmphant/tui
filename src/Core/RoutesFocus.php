@@ -13,7 +13,7 @@ use Elmphant\Tui\Message\Message;
  */
 interface RoutesFocus extends Model
 {
-    public function update(Message $message, Rect $area, ?ComponentId $focused = null): UpdateResult;
+    public function update(Message $message, Rect $area, FocusState $focus = new FocusState()): UpdateResult;
 
     /**
      * The components that can hold the keyboard, in tree order.

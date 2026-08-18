@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Core;
 use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
@@ -31,7 +32,7 @@ final class FocusRoutingTest extends TestCase
         $typed = $app->update(
             new KeyMsg('x'),
             new Rect(0, 0, 40, 6),
-            ComponentId::named('second'),
+            new FocusState(ComponentId::named('second')),
         );
 
         self::assertInstanceOf(RoutedFocusApp::class, $typed->model);
@@ -47,7 +48,7 @@ final class FocusRoutingTest extends TestCase
         $typed = $app->update(
             new KeyMsg('x'),
             new Rect(0, 0, 40, 6),
-            ComponentId::named('second'),
+            new FocusState(ComponentId::named('second')),
         );
 
         self::assertInstanceOf(RoutedFocusApp::class, $typed->model);

@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\RoutesFocus;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
@@ -44,10 +45,10 @@ final class FocusRoutingModel implements RoutesFocus
         return Cmd::focus(ComponentId::named('pane'));
     }
 
-    public function update(Message $message, Rect $area, ?ComponentId $focused = null): UpdateResult
+    public function update(Message $message, Rect $area, FocusState $focus = new FocusState()): UpdateResult
     {
         return $message instanceof KeyMsg && 'q' === $message->key
-            ? new UpdateResult(new self($focused), Cmd::quit())
+            ? new UpdateResult(new self($focus->focused()), Cmd::quit())
             : new UpdateResult($this);
     }
 

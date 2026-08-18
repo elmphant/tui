@@ -21,7 +21,12 @@ final class RenderContext
     private ?LayoutPlan $layoutPlan = null;
     private FocusState $focus;
     private int $focusDepth = 0;
-    private bool $focusRouted = false;
+    private int $componentDepth = 0;
+
+    /**
+     * @var array<string, string>
+     */
+    private array $focusedHints = [];
     private float $now = 0.0;
     private ?float $repaintDelay = null;
     private ?Frame $rootFrame = null;
@@ -88,7 +93,8 @@ final class RenderContext
         $this->rootPassRan = false;
         $this->focus = new FocusState();
         $this->focusDepth = 0;
-        $this->focusRouted = false;
+        $this->componentDepth = 0;
+        $this->focusedHints = [];
     }
 
     /**
@@ -98,18 +104,45 @@ final class RenderContext
     {
         $this->focus = $focus;
         $this->focusDepth = 0;
-        $this->focusRouted = true;
+        $this->componentDepth = 0;
     }
 
     /**
      * Whether the widget being rendered shows focus, given the flag it still
-     * carries. Where a tree has routed focus this frame its answer is the only
-     * one, so a flag left on some other widget cannot paint a second. Where none
-     * has — a widget rendered on its own in a test — the flag still answers.
+     * carries. Inside a bound component the tree's answer is the only one, so a
+     * stale flag cannot paint a second ring. Outside one — an app that routes the
+     * keyboard itself, a pane not yet bound, or a widget rendered alone in a
+     * test — there is nothing to defer to and the flag answers.
      */
     public function showsFocus(bool $flagged): bool
     {
-        return $this->hasFocus() || (!$this->focusRouted && $flagged);
+        return $this->hasFocus() || ($this->componentDepth === 0 && $flagged);
+    }
+
+    public function focusedComponent(): ?ComponentId
+    {
+        return $this->focus->focused();
+    }
+
+    /**
+     * @internal resolved once per frame by the tree that knows its components
+     *
+     * @param array<string, string> $hints
+     */
+    public function provideFocusedHints(array $hints): void
+    {
+        $this->focusedHints = $hints;
+    }
+
+    /**
+     * The keys whatever holds the keyboard answers, readable at any point in the
+     * tree rather than only after the focused widget has drawn.
+     *
+     * @return array<string, string>
+     */
+    public function focusedHints(): array
+    {
+        return $this->focusedHints;
     }
 
     /**
@@ -168,10 +201,12 @@ final class RenderContext
         if ($holdsFocus) {
             ++$this->focusDepth;
         }
+        ++$this->componentDepth;
 
         try {
             $render();
         } finally {
+            --$this->componentDepth;
             if ($holdsFocus) {
                 --$this->focusDepth;
             }
@@ -253,33 +288,64 @@ final class RenderContext
                 $this->renderWithPlan($root, $frame, $area, $plan);
             }
 
-            /** @var list<FloatPlacement> $recorded */
-            $recorded = [];
-
-            for ($iteration = 0; $iteration < 3 && $this->floats !== []; ++$iteration) {
-                $pending = $this->floats;
-                $this->floats = [];
-
-                foreach ($pending as [$popup, $anchor]) {
-                    $placement = $popup->placement($anchor, $frame->area());
-
-                    if ($placement->width < 1 || $placement->height < 1) {
-                        continue;
-                    }
-
-                    $popup->render($frame, $placement, $this);
-
-                    if ($popup instanceof PointerFloating) {
-                        $recorded[] = new FloatPlacement($popup, $anchor, $placement);
-                    }
-                }
-            }
-
-            $this->pendingPlacements = $recorded;
+            $this->pendingPlacements = $this->drawFloats($frame);
         } finally {
             $this->floats = [];
             $this->rootFrame = null;
         }
+    }
+
+    /**
+     * @internal runtime entry point for a model that paints its own screen
+     *           instead of handing a widget tree to renderRoot()
+     */
+    public function drainFloatsFor(Frame $frame): void
+    {
+        if ($this->rootPassRan || $this->floats === []) {
+            return;
+        }
+
+        $this->rootPassRan = true;
+        $this->rootFrame = $frame;
+
+        try {
+            $this->pendingPlacements = $this->drawFloats($frame);
+        } finally {
+            $this->floats = [];
+            $this->rootFrame = null;
+        }
+    }
+
+    /**
+     * @return list<FloatPlacement>
+     */
+    private function drawFloats(Frame $frame): array
+    {
+        /** @var list<FloatPlacement> $recorded */
+        $recorded = [];
+
+        // A float may queue one of its own; three rounds is deeper than any
+        // sensible chain and stops a cycle from spinning.
+        for ($iteration = 0; $iteration < 3 && $this->floats !== []; ++$iteration) {
+            $pending = $this->floats;
+            $this->floats = [];
+
+            foreach ($pending as [$popup, $anchor]) {
+                $placement = $popup->placement($anchor, $frame->area());
+
+                if ($placement->width < 1 || $placement->height < 1) {
+                    continue;
+                }
+
+                $popup->render($frame, $placement, $this);
+
+                if ($popup instanceof PointerFloating) {
+                    $recorded[] = new FloatPlacement($popup, $anchor, $placement);
+                }
+            }
+        }
+
+        return $recorded;
     }
 
     /**

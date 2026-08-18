@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout;
 
 use Closure;
+use WeakMap;
 
 /**
  * A handful of computed values, kept by the key they were computed for.
@@ -29,9 +30,13 @@ final class KeyedCache
     private const RETAINED = 2;
 
     /**
-     * @var array<int|string, TValue>
+     * Held beside the instance rather than on it, so what has been measured
+     * cannot change what its owner compares equal to. Weak, so a cache costs
+     * nothing once the widgets holding it are gone.
+     *
+     * @var WeakMap<self<object>, array<int|string, object>>
      */
-    private array $entries = [];
+    private static WeakMap $entries;
 
     /**
      * @param Closure(): TValue $compute consulted only when $key is not held
@@ -40,15 +45,22 @@ final class KeyedCache
      */
     public function at(int|string $key, Closure $compute): object
     {
-        $existing = $this->entries[$key] ?? null;
+        self::$entries ??= new WeakMap();
+        $held = self::$entries[$this] ?? [];
+
+        $existing = $held[$key] ?? null;
         if ($existing !== null) {
+            /** @var TValue */
             return $existing;
         }
 
-        if (count($this->entries) >= self::RETAINED) {
-            unset($this->entries[array_key_first($this->entries)]);
+        if (count($held) >= self::RETAINED) {
+            unset($held[array_key_first($held)]);
         }
 
-        return $this->entries[$key] = $compute();
+        $held[$key] = $computed = $compute();
+        self::$entries[$this] = $held;
+
+        return $computed;
     }
 }

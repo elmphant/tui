@@ -1,7 +1,20 @@
 includes:
     - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - rules.neon
 
 parameters:
+    elmphant:
+        # A container exposes what the caller handed it, not the parts it built
+        # for itself. The filterables build their own field and list; a
+        # Dropdown's content is drawn as a float and addressed through
+        # RenderContext::floatPlacements(), never through the tree.
+        reachableChildrenAllowList:
+            - Elmphant\Tui\Widget\Dropdown
+            - Elmphant\Tui\Widget\FilterableCheckboxGroup
+            - Elmphant\Tui\Widget\FilterableList
+            - Elmphant\Tui\Widget\FilterableTable
+        cloneWithAllowList:
+            - Elmphant\Tui\Core\App
     level: 9
     paths:
         - src
@@ -22,38 +35,9 @@ parameters:
         -
             identifier: new.static
             path: src/Core/Cloneable.php
-
-services:
-    -
-        class: Elmphant\Tui\Tests\Stan\CompleteRebuildRule
-        tags:
-            - phpstan.rules.rule
-    -
-        class: Elmphant\Tui\Tests\Stan\NamedRebuildRule
-        tags:
-            - phpstan.rules.rule
-    -
-        class: Elmphant\Tui\Tests\Stan\WidgetDoesNotPublishAnAxisPolicyRule
-        tags:
-            - phpstan.rules.rule
-    -
-        class: Elmphant\Tui\Tests\Stan\ReachableChildrenRule
-        arguments:
-            # A container exposes what the caller handed it, not the parts it
-            # built for itself. The filterables build their own field and list;
-            # a Dropdown's content is drawn as a float and addressed through
-            # RenderContext::floatPlacements(), never through the tree.
-            allowList:
-                - Elmphant\Tui\Widget\Dropdown
-                - Elmphant\Tui\Widget\FilterableCheckboxGroup
-                - Elmphant\Tui\Widget\FilterableList
-                - Elmphant\Tui\Widget\FilterableTable
-        tags:
-            - phpstan.rules.rule
-    -
-        class: Elmphant\Tui\Tests\Stan\CloneWithEncapsulationRule
-        arguments:
-            allowList:
-                - Elmphant\Tui\Core\App
-        tags:
-            - phpstan.rules.rule
+        # The component guard asks what two widgets are worth, not whether they
+        # are the same instance: a model may rebuild a component from what it
+        # kept rather than store the widget. PHP spells that comparison "==".
+        -
+            identifier: notEqual.notAllowed
+            path: src/Core/App.php

@@ -26,14 +26,39 @@ use UnitEnum;
 final readonly class Component implements Widget, WidgetContainer, SingleMount
 {
     /**
-     * @param TWidget $widget
-     * @param Closure $replace validated by bind()
+     * @param TWidget      $widget
+     * @param Closure|null $replace validated by bind(); null when named()
      */
     private function __construct(
         public ComponentId $id,
         public Interactive $widget,
-        private Closure $replace,
+        private ?Closure $replace,
     ) {
+    }
+
+    /**
+     * A focusable the tree knows by name, whose state its host still drives. It
+     * takes its turn at the keyboard and draws focused like any other, but input
+     * is the host's to route: nothing here can write the widget back.
+     *
+     * @template TNamedWidget of Interactive
+     *
+     * @param TNamedWidget $widget
+     *
+     * @return self<TNamedWidget>
+     */
+    public static function named(ComponentId|string $id, Interactive $widget): self
+    {
+        return new self(
+            is_string($id) ? ComponentId::named($id) : $id,
+            $widget,
+            null,
+        );
+    }
+
+    public function writesBack(): bool
+    {
+        return $this->replace !== null;
     }
 
     /**
@@ -115,6 +140,10 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     {
         $replace = $this->replace;
 
+        if ($replace === null) {
+            return $this;
+        }
+
         return new self(
             id: $this->id,
             widget: $this->widget,
@@ -127,6 +156,10 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function replaceIn(App $app, Interactive $widget): App
     {
+        if ($this->replace === null) {
+            throw new LogicException(sprintf('Component "%s" was named, not bound: its host drives it, so nothing can be written back', $this->id->value));
+        }
+
         $updated = ($this->replace)($app, $widget);
 
         if ($updated::class !== $app::class) {

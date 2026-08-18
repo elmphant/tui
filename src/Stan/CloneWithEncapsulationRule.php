@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Stan;
+namespace Elmphant\Tui\Stan;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;

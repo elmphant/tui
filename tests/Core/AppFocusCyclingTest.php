@@ -26,7 +26,7 @@ final class AppFocusCyclingTest extends TestCase
     {
         $app = new RebindableFocusApp();
 
-        $command = $app->update(new KeyMsg('n', ctrl: true), new Rect(0, 0, 40, 6), ComponentId::named('first'))->command;
+        $command = $app->update(new KeyMsg('n', ctrl: true), new Rect(0, 0, 40, 6), new FocusState(ComponentId::named('first')))->command;
 
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(

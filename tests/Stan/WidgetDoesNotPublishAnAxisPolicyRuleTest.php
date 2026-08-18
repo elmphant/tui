@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Stan;
 
+use Elmphant\Tui\Stan\WidgetDoesNotPublishAnAxisPolicyRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
