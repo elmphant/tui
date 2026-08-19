@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Testing;
 
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusCmd;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\MappedCmd;
@@ -94,9 +95,7 @@ final class ModelHarness
         if ($routed === null) {
             return $this;
         }
-        $this->focus = $this->focus->resolvedAgainst(
-            $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [],
-        );
+        $this->focus = $this->resolvedFocus();
         $result = $this->model instanceof RoutesFocus
             ? $this->model->update($routed, $this->area, $this->focus)
             : $this->model->update($routed, $this->area);
@@ -137,14 +136,34 @@ final class ModelHarness
         return $this->lastCommand;
     }
 
+    /**
+     * Which component the keyboard reaches, or nobody. The runtime owns this, so
+     * a test asks the harness rather than an app that would have to keep a copy.
+     */
+    public function focused(): ?ComponentId
+    {
+        return $this->resolvedFocus()->focused();
+    }
+
+    /**
+     * The keys whatever holds the keyboard answers — what a footer would carry.
+     * Resolved by drawing, because that is when the tree names them.
+     *
+     * @return array<string, string>
+     */
+    public function focusedHints(): array
+    {
+        $this->renderFrame();
+
+        return $this->context->focusedHints();
+    }
+
     public function renderFrame(): Frame
     {
         $frame = new Frame($this->area->width, $this->area->height);
 
         $this->context->beginFrame(0.0);
-        $this->context->focusOn($this->focus->resolvedAgainst(
-            $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [],
-        ));
+        $this->context->focusOn($this->resolvedFocus());
         $this->model->render($frame, $this->context);
         $this->context->commitFloatPlacements();
 
@@ -164,6 +183,13 @@ final class ModelHarness
     public function renderScreen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
+    }
+
+    private function resolvedFocus(): FocusState
+    {
+        return $this->focus->resolvedAgainst(
+            $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [],
+        );
     }
 
     /**
