@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusCmd;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\MappedCmd;
+use Elmphant\Tui\Core\MessageCmd;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\RoutesFocus;
@@ -27,7 +28,9 @@ use LogicException;
 /**
  * Drives a model's pure update and render paths without starting a terminal.
  *
- * Commands are exposed as values and are deliberately never executed.
+ * Effects are exposed as values and deliberately never carried out. The two a
+ * model needs answered to make progress at all are: moving the keyboard, and a
+ * message it sent itself, which go back through the loop as the runtime does them.
  *
  * @template TModel of Model
  */
@@ -106,6 +109,14 @@ final class ModelHarness
         $this->lastCommand = $result->command;
         $this->moveFocusFor($this->lastCommand);
 
+        foreach (self::messagesIn($this->lastCommand) as $sent) {
+            $this->dispatch($sent);
+        }
+
+        // What the caller pressed is what it asks about afterwards, so the errands
+        // that press left behind do not take the answer's place.
+        $this->lastCommand = $result->command;
+
         return $this;
     }
 
@@ -183,6 +194,22 @@ final class ModelHarness
     public function renderScreen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
+    }
+
+    /**
+     * @return list<Message>
+     */
+    private static function messagesIn(?Cmd $command): array
+    {
+        if ($command instanceof MappedCmd) {
+            return self::messagesIn($command->inner);
+        }
+
+        if ($command instanceof BatchCmd) {
+            return array_merge(...array_map(self::messagesIn(...), $command->commands));
+        }
+
+        return $command instanceof MessageCmd ? [$command->message] : [];
     }
 
     private function resolvedFocus(): FocusState
