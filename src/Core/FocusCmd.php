@@ -25,6 +25,10 @@ final readonly class FocusCmd extends Cmd
     {
         return match ($this->move) {
             FocusMove::To => new FocusState($this->target),
+            // Undecided rather than the first id outright: a tree that has just
+            // changed may not have grown its components yet, and undecided is
+            // what settles on the first once it has.
+            FocusMove::First => new FocusState($focusables[0] ?? null),
             FocusMove::Nowhere => FocusState::nowhere(),
             FocusMove::Next => $focus->next($focusables),
             FocusMove::Previous => $focus->previous($focusables),

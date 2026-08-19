@@ -24,6 +24,15 @@ abstract readonly class Cmd
     }
 
     /**
+     * Puts the keyboard where the tree begins, for an app that has just changed
+     * what is on the screen and has somewhere but nowhere in particular to put it.
+     */
+    public static function focusFirst(): self
+    {
+        return new FocusCmd(move: FocusMove::First);
+    }
+
+    /**
      * Puts the keyboard down, so the app answers the keys itself until it hands
      * them back. The runtime leaves it down rather than settling on a component.
      */

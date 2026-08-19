@@ -10,6 +10,7 @@ namespace Elmphant\Tui\Core;
 enum FocusMove
 {
     case To;
+    case First;
     case Next;
     case Previous;
     case Nowhere;
