@@ -552,11 +552,43 @@ abstract readonly class App implements RoutesFocus
         }
 
         [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates);
+        $answered = self::combineCommands($appResult->command, $childCommand, $hookCommand);
 
         return new UpdateResult(
             $next,
-            self::combineCommands($appResult->command, $childCommand, $hookCommand, self::focusAfterPointer($message, $landedOn)),
+            self::combineCommands(
+                $answered,
+                self::movesTheKeyboard($answered) ? null : self::focusAfterPointer($message, $landedOn),
+            ),
         );
+    }
+
+    /**
+     * Whether anything that answered the pointer already said where the keyboard
+     * goes. Where the pointer landed is only the default, so a more specific
+     * answer to the same press must not be raced by it.
+     */
+    private static function movesTheKeyboard(?Cmd $command): bool
+    {
+        if ($command instanceof FocusCmd) {
+            return true;
+        }
+
+        if ($command instanceof MappedCmd) {
+            return self::movesTheKeyboard($command->inner);
+        }
+
+        if (!$command instanceof BatchCmd) {
+            return false;
+        }
+
+        foreach ($command->commands as $child) {
+            if (self::movesTheKeyboard($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
