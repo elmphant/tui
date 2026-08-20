@@ -14,8 +14,8 @@ final class VimMode
         static $instance = null;
 
         return $instance ??= new Keybindings([
-            Actions::FOCUS_NEXT => ['j'],
-            Actions::FOCUS_PREV => ['k'],
+            Actions::CURSOR_DOWN => ['j'],
+            Actions::CURSOR_UP => ['k'],
             Actions::PAGE_UP => ['ctrl+u'],
             Actions::PAGE_DOWN => ['ctrl+d'],
             Actions::TAB_NEXT => ['l'],

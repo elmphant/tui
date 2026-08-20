@@ -69,8 +69,8 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     public static function defaultKeybindings(): Keybindings
     {
         return new Keybindings([
-            Actions::FOCUS_NEXT => ['down'],
-            Actions::FOCUS_PREV => ['up'],
+            Actions::CURSOR_DOWN => ['down'],
+            Actions::CURSOR_UP => ['up'],
             Actions::CURSOR_RIGHT => ['right'],
             Actions::CURSOR_LEFT => ['left'],
             Actions::TOGGLE => ['enter', 'space'],
@@ -101,8 +101,8 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         $bindings = $this->effectiveKeybindings();
 
         $moved = match (true) {
-            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->cursorDown(),
-            $bindings->matches($message, Actions::FOCUS_PREV) => $this->cursorUp(),
+            $bindings->matches($message, Actions::CURSOR_DOWN) => $this->cursorDown(),
+            $bindings->matches($message, Actions::CURSOR_UP) => $this->cursorUp(),
             $bindings->matches($message, Actions::CURSOR_RIGHT) => $this->expandOrEnter(),
             $bindings->matches($message, Actions::CURSOR_LEFT) => $this->collapseOrLeave(),
             $bindings->matches($message, Actions::TOGGLE) => $this->toggle($this->cursor()),

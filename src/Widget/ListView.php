@@ -371,8 +371,8 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         $bindings = $this->effectiveKeybindings();
 
         $updated = match (true) {
-            $bindings->matches($message, Actions::FOCUS_PREV) => $this->cursor > 0 ? $this->cloneWith(cursor: $this->cursor - 1) : null,
-            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->cursor < $count - 1 ? $this->cloneWith(cursor: $this->cursor + 1) : null,
+            $bindings->matches($message, Actions::CURSOR_UP) => $this->cursor > 0 ? $this->cloneWith(cursor: $this->cursor - 1) : null,
+            $bindings->matches($message, Actions::CURSOR_DOWN) => $this->cursor < $count - 1 ? $this->cloneWith(cursor: $this->cursor + 1) : null,
             $bindings->matches($message, Actions::HOME) => $this->cursor > 0 ? $this->cloneWith(cursor: 0) : null,
             $bindings->matches($message, Actions::END) => $this->cursor < $count - 1 ? $this->cloneWith(cursor: $count - 1) : null,
             $bindings->matches($message, Actions::PAGE_DOWN) => $this->cursor < $count - 1 ? $this->pagedBy(1, $area) : null,

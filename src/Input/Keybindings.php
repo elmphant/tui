@@ -51,8 +51,8 @@ final readonly class Keybindings
     public static function rowNavigation(): self
     {
         return new self([
-            Actions::FOCUS_NEXT => ['down'],
-            Actions::FOCUS_PREV => ['up'],
+            Actions::CURSOR_DOWN => ['down'],
+            Actions::CURSOR_UP => ['up'],
             Actions::HOME => ['home'],
             Actions::END => ['end'],
             Actions::PAGE_UP => ['shift+up', 'page_up'],

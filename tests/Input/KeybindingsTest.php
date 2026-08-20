@@ -214,59 +214,59 @@ final class KeybindingsTest extends TestCase
     #[Test]
     public function appendAddsPatternsToExistingAction(): void
     {
-        $defaults = new Keybindings(['focus_next' => ['down']]);
-        $extra = new Keybindings(['focus_next' => ['j']]);
+        $defaults = new Keybindings(['cursor_down' => ['down']]);
+        $extra = new Keybindings(['cursor_down' => ['j']]);
 
         $merged = $defaults->append($extra);
 
-        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'focus_next'));
-        self::assertTrue($merged->matches(new KeyMsg('j'), 'focus_next'));
+        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'cursor_down'));
+        self::assertTrue($merged->matches(new KeyMsg('j'), 'cursor_down'));
     }
 
     #[Test]
     public function appendAddsNewAction(): void
     {
-        $defaults = new Keybindings(['focus_next' => ['down']]);
+        $defaults = new Keybindings(['cursor_down' => ['down']]);
         $extra = new Keybindings(['help' => ['?']]);
 
         $merged = $defaults->append($extra);
 
         self::assertTrue($merged->matches(new KeyMsg('?'), 'help'));
-        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'focus_next'));
+        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'cursor_down'));
     }
 
     #[Test]
     public function appendDeduplicatesByCanonicalForm(): void
     {
-        $defaults = new Keybindings(['focus_next' => ['j', 'down']]);
-        $extra = new Keybindings(['focus_next' => ['j']]);   // duplicate
+        $defaults = new Keybindings(['cursor_down' => ['j', 'down']]);
+        $extra = new Keybindings(['cursor_down' => ['j']]);   // duplicate
 
         $merged = $defaults->append($extra);
 
-        self::assertCount(2, $merged->get('focus_next'));
+        self::assertCount(2, $merged->get('cursor_down'));
     }
 
     #[Test]
     public function appendEmptyIsIdentity(): void
     {
-        $defaults = new Keybindings(['focus_next' => ['down', 'j']]);
+        $defaults = new Keybindings(['cursor_down' => ['down', 'j']]);
 
         $merged = $defaults->append(Keybindings::empty());
 
-        self::assertTrue($merged->matches(new KeyMsg('j'), 'focus_next'));
-        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'focus_next'));
+        self::assertTrue($merged->matches(new KeyMsg('j'), 'cursor_down'));
+        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'cursor_down'));
     }
 
     #[Test]
     public function appendDoesNotRemoveDefaults(): void
     {
-        $defaults = new Keybindings(['focus_next' => ['down']]);
-        $extra = new Keybindings(['focus_next' => ['j']]);
+        $defaults = new Keybindings(['cursor_down' => ['down']]);
+        $extra = new Keybindings(['cursor_down' => ['j']]);
 
         $merged = $defaults->append($extra);
 
-        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'focus_next'));
-        self::assertTrue($merged->matches(new KeyMsg('j'), 'focus_next'));
+        self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'cursor_down'));
+        self::assertTrue($merged->matches(new KeyMsg('j'), 'cursor_down'));
     }
 
     #[Test]

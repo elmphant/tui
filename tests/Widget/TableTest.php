@@ -3267,8 +3267,8 @@ final class TableTest extends TestCase
 
     public static function tableKeybindingOverrideProvider(): iterable
     {
-        yield Actions::FOCUS_PREV => [Actions::FOCUS_PREV, new KeyMsg(Key::Up),       new KeyMsg('a'), 2, fn (Table $t) => $t->cursor() === 1];
-        yield Actions::FOCUS_NEXT => [Actions::FOCUS_NEXT, new KeyMsg(Key::Down),     new KeyMsg('b'), 0, fn (Table $t) => $t->cursor() === 1];
+        yield Actions::CURSOR_UP => [Actions::CURSOR_UP, new KeyMsg(Key::Up),       new KeyMsg('a'), 2, fn (Table $t) => $t->cursor() === 1];
+        yield Actions::CURSOR_DOWN => [Actions::CURSOR_DOWN, new KeyMsg(Key::Down),     new KeyMsg('b'), 0, fn (Table $t) => $t->cursor() === 1];
         yield Actions::HOME => [Actions::HOME,       new KeyMsg(Key::Home),     new KeyMsg('c'), 2, fn (Table $t) => $t->cursor() === 0];
         yield Actions::END => [Actions::END,        new KeyMsg(Key::End),      new KeyMsg('d'), 0, fn (Table $t) => $t->cursor() === 2];
         yield Actions::PAGE_UP => [Actions::PAGE_UP,    new KeyMsg(Key::PageUp),   new KeyMsg('e'), 2, fn (Table $t) => $t->cursor() < 2];

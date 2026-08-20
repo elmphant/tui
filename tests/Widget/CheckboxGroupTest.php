@@ -763,7 +763,7 @@ final class CheckboxGroupTest extends TestCase
         $afterDefault = $widget->update(new KeyMsg(Key::Up), $area)->model;
         self::assertSame(0, $afterDefault->cursor());
 
-        $custom = $widget->withKeybindings(new Keybindings([Actions::FOCUS_PREV => ['x']]));
+        $custom = $widget->withKeybindings(new Keybindings([Actions::CURSOR_UP => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Up), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
@@ -779,7 +779,7 @@ final class CheckboxGroupTest extends TestCase
         $afterDefault = $widget->update(new KeyMsg(Key::Down), $area)->model;
         self::assertSame(1, $afterDefault->cursor());
 
-        $custom = $widget->withKeybindings(new Keybindings([Actions::FOCUS_NEXT => ['x']]));
+        $custom = $widget->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Down), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;

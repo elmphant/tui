@@ -28,7 +28,7 @@ final readonly class FakeKeybindingsWidget implements KeybindingsAware
     public static function defaultKeybindings(): Keybindings
     {
         return new Keybindings([
-            Actions::FOCUS_NEXT => ['down', 'j'],
+            Actions::CURSOR_DOWN => ['down', 'j'],
             Actions::SELECT => ['enter'],
         ]);
     }
@@ -43,9 +43,9 @@ final class KeybindingsAwareBehaviorTest extends TestCase
 
         $bindings = $widget->effectiveKeybindings();
 
-        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::FOCUS_NEXT));
-        self::assertTrue($bindings->matches(new KeyMsg(Key::Down), Actions::FOCUS_NEXT));
-        self::assertFalse($bindings->matches(new KeyMsg('x'), Actions::FOCUS_NEXT));
+        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::CURSOR_DOWN));
+        self::assertTrue($bindings->matches(new KeyMsg(Key::Down), Actions::CURSOR_DOWN));
+        self::assertFalse($bindings->matches(new KeyMsg('x'), Actions::CURSOR_DOWN));
     }
 
     #[Test]
@@ -54,13 +54,13 @@ final class KeybindingsAwareBehaviorTest extends TestCase
         $widget = new FakeKeybindingsWidget();
 
         $customized = $widget->withKeybindings(new Keybindings([
-            Actions::FOCUS_NEXT => ['x'],
+            Actions::CURSOR_DOWN => ['x'],
         ]));
 
         $bindings = $customized->effectiveKeybindings();
 
-        self::assertTrue($bindings->matches(new KeyMsg('x'), Actions::FOCUS_NEXT));
-        self::assertFalse($bindings->matches(new KeyMsg('j'), Actions::FOCUS_NEXT));
+        self::assertTrue($bindings->matches(new KeyMsg('x'), Actions::CURSOR_DOWN));
+        self::assertFalse($bindings->matches(new KeyMsg('j'), Actions::CURSOR_DOWN));
         self::assertTrue($bindings->matches(new KeyMsg(Key::Enter), Actions::SELECT));
     }
 
@@ -68,47 +68,47 @@ final class KeybindingsAwareBehaviorTest extends TestCase
     public function withKeybindingsNullRestoresDefaults(): void
     {
         $customized = (new FakeKeybindingsWidget())
-            ->withKeybindings(new Keybindings([Actions::FOCUS_NEXT => ['x']]));
+            ->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['x']]));
 
         $restored = $customized->withKeybindings(null);
 
         $bindings = $restored->effectiveKeybindings();
-        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::FOCUS_NEXT));
-        self::assertFalse($bindings->matches(new KeyMsg('x'), Actions::FOCUS_NEXT));
+        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::CURSOR_DOWN));
+        self::assertFalse($bindings->matches(new KeyMsg('x'), Actions::CURSOR_DOWN));
     }
 
     #[Test]
     public function globalKeybindingsAppendsToDefaults(): void
     {
         $widget = new FakeKeybindingsWidget();
-        $global = new Keybindings([Actions::FOCUS_NEXT => ['x']]);
+        $global = new Keybindings([Actions::CURSOR_DOWN => ['x']]);
 
         $wrapped = $widget->withGlobalKeybindings($global);
         $bindings = $wrapped->effectiveKeybindings();
 
-        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::FOCUS_NEXT));
-        self::assertTrue($bindings->matches(new KeyMsg('x'), Actions::FOCUS_NEXT));
+        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::CURSOR_DOWN));
+        self::assertTrue($bindings->matches(new KeyMsg('x'), Actions::CURSOR_DOWN));
     }
 
     #[Test]
     public function globalKeybindingsDoesNotReplaceDefaults(): void
     {
         $widget = new FakeKeybindingsWidget();
-        $global = new Keybindings([Actions::FOCUS_NEXT => ['tab']]);
+        $global = new Keybindings([Actions::CURSOR_DOWN => ['tab']]);
 
         $wrapped = $widget->withGlobalKeybindings($global);
         $bindings = $wrapped->effectiveKeybindings();
 
-        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::FOCUS_NEXT));
-        self::assertTrue($bindings->matches(new KeyMsg(Key::Down), Actions::FOCUS_NEXT));
+        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::CURSOR_DOWN));
+        self::assertTrue($bindings->matches(new KeyMsg(Key::Down), Actions::CURSOR_DOWN));
     }
 
     #[Test]
     public function instanceOverrideStillReplacesPerAction(): void
     {
         $widget = new FakeKeybindingsWidget();
-        $global = new Keybindings([Actions::FOCUS_NEXT => ['tab']]);
-        $instance = new Keybindings([Actions::FOCUS_NEXT => ['z']]);
+        $global = new Keybindings([Actions::CURSOR_DOWN => ['tab']]);
+        $instance = new Keybindings([Actions::CURSOR_DOWN => ['z']]);
 
         $wrapped = $widget
             ->withGlobalKeybindings($global)
@@ -116,16 +116,16 @@ final class KeybindingsAwareBehaviorTest extends TestCase
 
         $bindings = $wrapped->effectiveKeybindings();
 
-        self::assertTrue($bindings->matches(new KeyMsg('z'), Actions::FOCUS_NEXT));
-        self::assertFalse($bindings->matches(new KeyMsg('j'), Actions::FOCUS_NEXT));
-        self::assertFalse($bindings->matches(new KeyMsg(Key::Tab), Actions::FOCUS_NEXT));
+        self::assertTrue($bindings->matches(new KeyMsg('z'), Actions::CURSOR_DOWN));
+        self::assertFalse($bindings->matches(new KeyMsg('j'), Actions::CURSOR_DOWN));
+        self::assertFalse($bindings->matches(new KeyMsg(Key::Tab), Actions::CURSOR_DOWN));
     }
 
     #[Test]
     public function withGlobalKeybindingsIdentitySentinel(): void
     {
         $widget = new FakeKeybindingsWidget();
-        $global = new Keybindings([Actions::FOCUS_NEXT => ['x']]);
+        $global = new Keybindings([Actions::CURSOR_DOWN => ['x']]);
 
         $wrapped = $widget->withGlobalKeybindings($global);
         $wrappedAgain = $wrapped->withGlobalKeybindings($global);

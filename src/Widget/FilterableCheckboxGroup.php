@@ -32,7 +32,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
     /**
      * Keys the boxes take; every other one is typing and belongs to the field.
      */
-    private const OWN_ACTIONS = [Actions::FOCUS_PREV, Actions::FOCUS_NEXT, Actions::TOGGLE];
+    private const OWN_ACTIONS = [Actions::CURSOR_UP, Actions::CURSOR_DOWN, Actions::TOGGLE];
 
     private const GAP_HEIGHT = 1;
 

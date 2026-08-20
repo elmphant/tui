@@ -6,8 +6,6 @@ namespace Elmphant\Tui\Input;
 
 final class Actions
 {
-    public const FOCUS_NEXT = 'focus_next';
-    public const FOCUS_PREV = 'focus_prev';
     public const SELECT = 'select';
     public const CANCEL = 'cancel';
     public const TOGGLE = 'toggle';
@@ -19,6 +17,8 @@ final class Actions
     public const SCROLL_UP = 'scroll_up';
     public const SCROLL_DOWN = 'scroll_down';
 
+    public const CURSOR_UP = 'cursor_up';
+    public const CURSOR_DOWN = 'cursor_down';
     public const CURSOR_LEFT = 'cursor_left';
     public const CURSOR_RIGHT = 'cursor_right';
 

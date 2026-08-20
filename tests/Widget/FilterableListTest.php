@@ -177,7 +177,7 @@ final class FilterableListTest extends TestCase
     #[Test]
     public function aHostsGlobalRowNavigationWalksTheFilteredList(): void
     {
-        $dispatcher = new ChildDispatcher(new Keybindings([Actions::FOCUS_NEXT => ['ctrl+n']]));
+        $dispatcher = new ChildDispatcher(new Keybindings([Actions::CURSOR_DOWN => ['ctrl+n']]));
 
         $moved = $dispatcher->dispatchOne($this->commands(), new KeyMsg('n', ctrl: true), $this->area())->child;
         self::assertInstanceOf(FilterableList::class, $moved);

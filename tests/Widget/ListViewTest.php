@@ -1662,8 +1662,8 @@ final class ListViewTest extends TestCase
 
     public static function listViewKeybindingOverrideProvider(): iterable
     {
-        yield Actions::FOCUS_PREV => [Actions::FOCUS_PREV, new KeyMsg(Key::Up),       new KeyMsg('a'), 3, fn (ListView $v) => $v->cursor() === 2];
-        yield Actions::FOCUS_NEXT => [Actions::FOCUS_NEXT, new KeyMsg(Key::Down),     new KeyMsg('b'), 0, fn (ListView $v) => $v->cursor() === 1];
+        yield Actions::CURSOR_UP => [Actions::CURSOR_UP, new KeyMsg(Key::Up),       new KeyMsg('a'), 3, fn (ListView $v) => $v->cursor() === 2];
+        yield Actions::CURSOR_DOWN => [Actions::CURSOR_DOWN, new KeyMsg(Key::Down),     new KeyMsg('b'), 0, fn (ListView $v) => $v->cursor() === 1];
         yield Actions::HOME => [Actions::HOME,       new KeyMsg(Key::Home),     new KeyMsg('c'), 5, fn (ListView $v) => $v->cursor() === 0];
         yield Actions::END => [Actions::END,        new KeyMsg(Key::End),      new KeyMsg('d'), 0, fn (ListView $v) => $v->cursor() === 9];
         yield Actions::PAGE_UP => [Actions::PAGE_UP,    new KeyMsg(Key::PageUp),   new KeyMsg('e'), 9, fn (ListView $v) => $v->cursor() < 9];

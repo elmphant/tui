@@ -17,8 +17,8 @@ final class VimModeTest extends TestCase
     {
         $bindings = VimMode::keybindings();
 
-        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::FOCUS_NEXT));
-        self::assertTrue($bindings->matches(new KeyMsg('k'), Actions::FOCUS_PREV));
+        self::assertTrue($bindings->matches(new KeyMsg('j'), Actions::CURSOR_DOWN));
+        self::assertTrue($bindings->matches(new KeyMsg('k'), Actions::CURSOR_UP));
     }
 
     #[Test]

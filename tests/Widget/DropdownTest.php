@@ -149,7 +149,7 @@ final class DropdownTest extends TestCase
     #[Test]
     public function aRebindingReachesWhatTheDropdownHolds(): void
     {
-        $bindings = new Keybindings([Actions::FOCUS_NEXT => ['j']]);
+        $bindings = new Keybindings([Actions::CURSOR_DOWN => ['j']]);
         $dropdown = self::opened(Dropdown::new(Select::new(['one', 'two'])))
             ->withGlobalKeybindings($bindings);
 

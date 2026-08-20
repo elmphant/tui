@@ -361,8 +361,8 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $bindings = $this->effectiveKeybindings();
 
         $updated = match (true) {
-            $bindings->matches($message, Actions::FOCUS_PREV) => $this->withCursorAt($this->findNextSelectable($this->cursor, -1)),
-            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->withCursorAt($this->findNextSelectable($this->cursor, 1)),
+            $bindings->matches($message, Actions::CURSOR_UP) => $this->withCursorAt($this->findNextSelectable($this->cursor, -1)),
+            $bindings->matches($message, Actions::CURSOR_DOWN) => $this->withCursorAt($this->findNextSelectable($this->cursor, 1)),
             $bindings->matches($message, Actions::HOME) => $this->withCursorAt($this->findNextSelectable(-1, 1)),
             $bindings->matches($message, Actions::END) => $this->withCursorAt($this->findNextSelectable($rowCount, -1)),
             $bindings->matches($message, Actions::PAGE_DOWN) => $this->withCursorAt($this->rowAPageAway(1, $visibleRows, $area)),

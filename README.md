@@ -449,8 +449,8 @@ public function view(): Widget
     $footer = Footer::hints($this->applicationKeybindings()->hints([
         'quit' => 'quit',
     ]) + ListView::defaultKeybindings()->hints([
-        'focus_next' => 'move down',
-        'focus_prev' => 'move up',
+        'cursor_down' => 'move down',
+        'cursor_up' => 'move up',
     ]));
 
     return Layout::vertical(

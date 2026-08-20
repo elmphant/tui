@@ -826,8 +826,8 @@ final class RadioTest extends TestCase
 
     public static function radioKeybindingOverrideProvider(): iterable
     {
-        yield Actions::FOCUS_PREV => [Actions::FOCUS_PREV, new KeyMsg(Key::Up),    new KeyMsg('x'), 1, 'cursor',   0];
-        yield Actions::FOCUS_NEXT => [Actions::FOCUS_NEXT, new KeyMsg(Key::Down),  new KeyMsg('x'), 0, 'cursor',   1];
+        yield Actions::CURSOR_UP => [Actions::CURSOR_UP, new KeyMsg(Key::Up),    new KeyMsg('x'), 1, 'cursor',   0];
+        yield Actions::CURSOR_DOWN => [Actions::CURSOR_DOWN, new KeyMsg(Key::Down),  new KeyMsg('x'), 0, 'cursor',   1];
         yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter), new KeyMsg('x'), 1, 'selected', 1];
     }
 

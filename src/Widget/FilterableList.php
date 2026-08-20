@@ -42,8 +42,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      * Actions the list takes; every other key is typing and belongs to the field.
      */
     private const LIST_ACTIONS = [
-        Actions::FOCUS_PREV,
-        Actions::FOCUS_NEXT,
+        Actions::CURSOR_UP,
+        Actions::CURSOR_DOWN,
         Actions::PAGE_UP,
         Actions::PAGE_DOWN,
         Actions::SELECT,
@@ -311,8 +311,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     public static function defaultKeybindings(): Keybindings
     {
         return new Keybindings([
-            Actions::FOCUS_PREV => ['up'],
-            Actions::FOCUS_NEXT => ['down'],
+            Actions::CURSOR_UP => ['up'],
+            Actions::CURSOR_DOWN => ['down'],
             Actions::PAGE_UP => ['shift+up', 'page_up'],
             Actions::PAGE_DOWN => ['shift+down', 'page_down'],
             Actions::SELECT => ['enter'],

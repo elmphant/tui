@@ -123,8 +123,8 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     public static function defaultKeybindings(): Keybindings
     {
         return new Keybindings([
-            Actions::FOCUS_NEXT => ['down'],
-            Actions::FOCUS_PREV => ['up'],
+            Actions::CURSOR_DOWN => ['down'],
+            Actions::CURSOR_UP => ['up'],
             Actions::TOGGLE => ['enter', 'space'],
         ]);
     }
@@ -299,8 +299,8 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         $bindings = $this->effectiveKeybindings();
 
         $updated = match (true) {
-            $bindings->matches($message, Actions::FOCUS_PREV) => $this->walked(-1, $count),
-            $bindings->matches($message, Actions::FOCUS_NEXT) => $this->walked(1, $count),
+            $bindings->matches($message, Actions::CURSOR_UP) => $this->walked(-1, $count),
+            $bindings->matches($message, Actions::CURSOR_DOWN) => $this->walked(1, $count),
             $bindings->matches($message, Actions::TOGGLE) => $this->toggleCurrent(),
             default => null,
         };
