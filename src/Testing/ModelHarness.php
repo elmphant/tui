@@ -216,6 +216,7 @@ final class ModelHarness
     {
         return $this->focus->resolvedAgainst(
             $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
+            $this->model instanceof RoutesFocus ? $this->model->reachableIds() : [],
         );
     }
 

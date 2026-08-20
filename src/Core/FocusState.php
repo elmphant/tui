@@ -67,9 +67,14 @@ final readonly class FocusState
      * The keyboard lands somewhere whenever there is anywhere for it to land, so
      * nothing focused means nothing focusable — never a component that left.
      *
-     * @param list<ComponentId> $order the focusable components, in tree order
+     * Whether it may stay is asked of everything it can reach; where it goes when it
+     * may not is the first place tab stops. A pointer-only pane is in the first list
+     * and not the second, so a press seats the keyboard there and tab still walks past.
+     *
+     * @param list<ComponentId> $order     where tab stops, in tree order
+     * @param list<ComponentId> $reachable everywhere the keyboard may be; defaults to $order
      */
-    public function resolvedAgainst(array $order): self
+    public function resolvedAgainst(array $order, ?array $reachable = null): self
     {
         if ($order === []) {
             return $this->cloneWith(focused: null);
@@ -79,7 +84,7 @@ final readonly class FocusState
             return $this;
         }
 
-        return null === $this->indexIn($order)
+        return null === $this->indexIn($reachable ?? $order)
             ? $this->cloneWith(focused: $order[0])
             : $this;
     }

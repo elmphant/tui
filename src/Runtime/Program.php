@@ -849,7 +849,7 @@ final class Program
                 if ($stamped === null) {
                     continue;
                 }
-                $this->focus = $this->focus->resolvedAgainst($this->focusableIds());
+                $this->focus = $this->focus->resolvedAgainst($this->focusableIds(), $this->reachableIds());
                 $result = $this->model instanceof RoutesFocus
                     ? $this->model->update($stamped, $screenRect, $this->focus)
                     : $this->model->update($stamped, $screenRect);
@@ -1003,6 +1003,14 @@ final class Program
     private function focusableIds(): array
     {
         return $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [];
+    }
+
+    /**
+     * @return list<ComponentId>
+     */
+    private function reachableIds(): array
+    {
+        return $this->model instanceof RoutesFocus ? $this->model->reachableIds() : [];
     }
 
     private function dispatchCommand(?Cmd $command, ?Closure $wrap = null): void

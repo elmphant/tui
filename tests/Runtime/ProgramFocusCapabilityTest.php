@@ -121,6 +121,14 @@ final class FocusRoutingModel implements RoutesFocus
         return [ComponentId::named('pane')];
     }
 
+    /**
+     * @return list<ComponentId>
+     */
+    public function reachableIds(): array
+    {
+        return [ComponentId::named('pane')];
+    }
+
     public function render(Frame $frame, RenderContext $context): void
     {
     }

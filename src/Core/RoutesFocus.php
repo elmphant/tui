@@ -23,4 +23,13 @@ interface RoutesFocus extends Model
      * @return list<ComponentId>
      */
     public function focusableIds(FocusState $focus = new FocusState()): array;
+
+    /**
+     * Every component the keyboard is allowed to be on, which is not the same as
+     * where tab stops: a pointer-only pane is reached by a press and walked past.
+     * Where a focus command has put the keyboard is checked against this.
+     *
+     * @return list<ComponentId>
+     */
+    public function reachableIds(): array;
 }

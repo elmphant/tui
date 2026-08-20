@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Core;
 
 use Closure;
-use Elmphant\Tui\Widget\AcceptsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\FocusScope;
 use Elmphant\Tui\Widget\InputLayer;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Navigates;
+use Elmphant\Tui\Widget\Navigation;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
@@ -117,28 +118,33 @@ final readonly class ComponentRegistry
      */
     public function ring(?ComponentId $focused): array
     {
+        $walkable = array_values(array_filter(
+            $this->focusables,
+            static fn (Component $component): bool => self::navigationOf($component->widget) !== Navigation::Pointer,
+        ));
+
         if ($this->scopes === []) {
-            return $this->focusables;
+            return $walkable;
         }
 
         $held = $this->scopeHolding($focused);
 
         if ($held !== null) {
             return array_values(array_filter(
-                $this->focusables,
+                $walkable,
                 static fn (Component $component): bool => \in_array($component->id->value, $held, true),
             ));
         }
 
         $beside = array_values(array_filter(
-            $this->focusables,
+            $walkable,
             fn (Component $component): bool => !$this->isScoped($component->id->value),
         ));
 
         // Taking the chrome off the ring assumes there is content beside it. Where a
         // scope is all there is, an empty ring would leave the keyboard nowhere to
         // land and every key falling through.
-        return $beside === [] ? $this->focusables : $beside;
+        return $beside === [] ? $walkable : $beside;
     }
 
     /**
@@ -293,10 +299,13 @@ final readonly class ComponentRegistry
             return true;
         }
 
-        $widget = $component->widget;
+        return $component->widget instanceof Focusable
+            && self::navigationOf($component->widget) !== Navigation::Never;
+    }
 
-        return $widget instanceof Focusable
-            && (!$widget instanceof AcceptsFocus || $widget->acceptsFocus());
+    private static function navigationOf(Widget $widget): Navigation
+    {
+        return $widget instanceof Navigates ? $widget->navigation() : Navigation::Regular;
     }
 
     /**
