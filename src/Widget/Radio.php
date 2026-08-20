@@ -77,6 +77,15 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         return $this->cloneWith(selected: $selected);
     }
 
+    /**
+     * A host holds what was chosen, not where it sat. A radio always stands on
+     * something, so a value it does not have leaves it on the first.
+     */
+    public function withSelectedValue(?string $value): self
+    {
+        return $this->cloneWith(selected: max(0, Options::placeOf($value, $this->options)));
+    }
+
     public function withLabel(string $label): self
     {
         return $this->cloneWith(label: $label);

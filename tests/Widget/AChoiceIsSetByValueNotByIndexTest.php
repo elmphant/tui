@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Widget\CheckboxGroup;
+use Elmphant\Tui\Widget\Radio;
 use Elmphant\Tui\Widget\RadioRow;
 use Elmphant\Tui\Widget\Select;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,5 +41,13 @@ final class AChoiceIsSetByValueNotByIndexTest extends TestCase
         $group = CheckboxGroup::new(['alpha', 'beta', 'gamma'])->withCheckedValues(['gamma', 'alpha']);
 
         self::assertSame(['alpha', 'gamma'], $group->checkedValues(), 'in the order the options read, not the order given');
+    }
+
+    #[Test]
+    public function aRadioHandedAValueItDoesNotHaveStandsOnTheFirst(): void
+    {
+        $radio = Radio::new(['alpha', 'beta'])->withSelectedValue('gone');
+
+        self::assertSame('alpha', $radio->selectedValue(), 'a radio always stands on something');
     }
 }

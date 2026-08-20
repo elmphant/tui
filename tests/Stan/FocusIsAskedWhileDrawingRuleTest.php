@@ -28,6 +28,12 @@ final class FocusIsAskedWhileDrawingRuleTest extends RuleTestCase
         );
     }
 
+    #[Test]
+    public function offeringTheFlagToTheContextIsHowTheTreeIsAsked(): void
+    {
+        $this->analyse([__DIR__ . '/Fixtures/FlagOfferedToTheContext.php'], []);
+    }
+
     protected function getRule(): Rule
     {
         return new FocusIsAskedWhileDrawingRule();

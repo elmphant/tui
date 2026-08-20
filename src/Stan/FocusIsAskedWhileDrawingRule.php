@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Stan;
 
+use Closure;
 use Elmphant\Tui\Widget\Focusable;
 use PhpParser\Node;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\NodeFinder;
@@ -41,14 +43,29 @@ final class FocusIsAskedWhileDrawingRule implements Rule
             return [];
         }
 
-        $read = (new NodeFinder())->findFirst(
-            $node->getOriginalNode()->stmts ?? [],
-            static fn (Node $each): bool => $each instanceof PropertyFetch
-                && $each->var instanceof Variable
-                && $each->var->name === 'this'
-                && $each->name instanceof Node\Identifier
-                && $each->name->name === 'focused',
-        );
+        $statements = $node->getOriginalNode()->stmts ?? [];
+        $finder = new NodeFinder();
+
+        // Handing the flag to the context is how the tree is asked — that is the
+        // DrawsFocus contract, `showsFocus($flag)`, and not a widget deciding.
+        $offered = [];
+        foreach ($finder->find($statements, self::isShowsFocusCall()) as $call) {
+            if (!$call instanceof MethodCall) {
+                continue;
+            }
+
+            foreach ($finder->find($call->getArgs(), self::isFocusFlagRead()) as $inside) {
+                $offered[$inside->getStartLine() . ':' . $inside->getStartTokenPos()] = true;
+            }
+        }
+
+        $read = null;
+        foreach ($finder->find($statements, self::isFocusFlagRead()) as $candidate) {
+            if (!isset($offered[$candidate->getStartLine() . ':' . $candidate->getStartTokenPos()])) {
+                $read = $candidate;
+                break;
+            }
+        }
 
         if ($read === null) {
             return [];
@@ -60,5 +77,21 @@ final class FocusIsAskedWhileDrawingRule implements Rule
                 $class->getDisplayName(),
             ))->identifier('elmphant.focus.askedWhileDrawing')->line($read->getStartLine())->build(),
         ];
+    }
+
+    private static function isFocusFlagRead(): Closure
+    {
+        return static fn (Node $each): bool => $each instanceof PropertyFetch
+            && $each->var instanceof Variable
+            && $each->var->name === 'this'
+            && $each->name instanceof Node\Identifier
+            && $each->name->name === 'focused';
+    }
+
+    private static function isShowsFocusCall(): Closure
+    {
+        return static fn (Node $each): bool => $each instanceof MethodCall
+            && $each->name instanceof Node\Identifier
+            && $each->name->name === 'showsFocus';
     }
 }
