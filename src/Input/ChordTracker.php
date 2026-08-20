@@ -16,8 +16,7 @@ use LogicException;
  * the immutable TEA model. Apps hold a single tracker instance for their
  * lifetime and pass the same reference across state transitions; do not
  * clone via `with()`.
- */
-/**
+ *
  * @internal stateful runtime matcher; applications configure immutable ChordBindings instead
  */
 final class ChordTracker

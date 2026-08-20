@@ -602,9 +602,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     }
 
     /**
-     * Where a row sits among these now, by what it reads, or -1 if it is no longer
-     * among them. A reader selects a record rather than a row number, so a refresh
-     * that adds rows above their choice must not answer with what slid into it.
+     * -1 where no row reads like that any more. Rows reading alike count as one.
      *
      * @param ?list<string> $text
      * @param list<Row>     $rows

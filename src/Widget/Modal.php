@@ -152,9 +152,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     }
 
     /**
-     * Whether this message is the one that closes the dialog. Asked, never stored:
-     * a remembered flag needs someone to reset it and survives into the next
-     * opening, so a host that keeps its modal could only ever ask once.
+     * Asked, never stored, for the reasons {@see Committing} gives.
      */
     public function dismisses(Message $message, Rect $area): bool
     {

@@ -297,11 +297,9 @@ abstract readonly class App implements RoutesFocus
             if ($component->id->equals($focused)) {
                 $widget = $component->widget;
 
-                // Only a component that does not already hold the keyboard is handed
-                // it. Taking focus is how a pane is told to seat its cursor at the
-                // start, so marking one that never let go would walk the reader back
-                // to its first child between one keystroke and the next. The pointer
-                // path guards the same way.
+                // Taking focus is how a pane is told to seat its cursor at the start,
+                // so marking one that never let go would walk the reader back to its
+                // first child between one keystroke and the next.
                 return [$widget instanceof Focusable && !$widget->isFocused()
                     ? $component->withWidget($widget->withFocus(true))
                     : $component];

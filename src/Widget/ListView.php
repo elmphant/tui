@@ -508,9 +508,7 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Where an item sits among these now, by the value it filters under, or -1 if
-     * it is no longer among them. Two items filtering alike are the same record as
-     * far as a reader picking one is concerned.
+     * -1 where the item is gone. Two items filtering alike count as the same record.
      *
      * @param list<ListItem> $items
      */

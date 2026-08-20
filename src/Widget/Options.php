@@ -28,10 +28,8 @@ final class Options
     }
 
     /**
-     * Where a value sits among the options now, or -1 if it is no longer there.
-     * A reader chooses an option, not a row number, so a host that reloads or sorts
-     * what it handed in must not leave the number pointing at what moved into that
-     * place. Options read differently from one another, so the value names one place.
+     * -1 where the value is gone. Options read differently from one another, so a
+     * value that is there names one place and only one.
      *
      * @param list<string> $options
      */
@@ -47,8 +45,7 @@ final class Options
     }
 
     /**
-     * Where a cursor lands once the options have changed: on the option it was on
-     * if that is still there, and inside the list either way.
+     * Unlike a selection, a cursor always lands inside the list.
      *
      * @param list<string> $options
      */

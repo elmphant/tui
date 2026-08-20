@@ -29,10 +29,6 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     /**
      * @param TWidget      $widget
      * @param Closure|null $replace validated by bind(); null when named()
-     */
-    /**
-     * @param TWidget      $widget
-     * @param Closure|null $replace validated by bind(); null when named()
      * @param Closure|null $address set by the Mount that owns this, if any
      */
     private function __construct(
