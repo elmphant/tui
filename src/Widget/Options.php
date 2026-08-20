@@ -51,6 +51,6 @@ final class Options
      */
     public static function cursorAfter(?string $under, array $options): int
     {
-        return max(0, min(self::placeOf($under, $options), count($options) - 1));
+        return max(0, self::placeOf($under, $options));
     }
 }

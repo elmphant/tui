@@ -30,4 +30,16 @@ final class ATableKeepsItsSelectionOnTheRowItWasMadeOnTest extends TestCase
 
         self::assertSame(['gamma', 'on'], $refreshed->selectedRow(), 'a refresh answers with the record they chose');
     }
+
+    #[Test]
+    public function aRowThatIsGoneLeavesNothingSelected(): void
+    {
+        $columns = [Column::new('Name', Constraint::flex()), Column::new('State', Constraint::flex())];
+        $chosen = Table::new($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])
+            ->withSelected(2);
+
+        $refreshed = $chosen->withRows([['alpha', 'on'], ['beta', 'off']]);
+
+        self::assertNull($refreshed->selectedRow(), 'the record went, so the selection went with it');
+    }
 }

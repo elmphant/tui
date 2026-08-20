@@ -31,4 +31,14 @@ final class ATabBarKeepsTheTabItWasShowingTest extends TestCase
 
         self::assertSame(3, $grown->activeTab(), 'the page they were reading is the page still shown');
     }
+
+    #[Test]
+    public function aPageThatIsGoneLeavesTheReaderOnTheFirst(): void
+    {
+        $bar = TabBar::new()->addTab('Alpha')->addTab('Beta')->addTab('Gamma')->withActiveTab(2);
+
+        $shrunk = $bar->withTabs([new TabPage('Alpha'), new TabPage('Beta')]);
+
+        self::assertSame(0, $shrunk->activeTab(), 'a bar always shows a page, so it falls back to the first');
+    }
 }

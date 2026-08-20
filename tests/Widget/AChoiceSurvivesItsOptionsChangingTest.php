@@ -106,4 +106,54 @@ final class AChoiceSurvivesItsOptionsChangingTest extends TestCase
 
         self::assertSame([1, 3], $grown->checkedIndices(), 'the ticks are on labels, not on places in a row');
     }
+
+    #[Test]
+    public function anOptionThatIsGoneLeavesNothingChosen(): void
+    {
+        $chosen = Select::new(['alpha', 'beta', 'gamma'])->withSelected(2);
+
+        $narrowed = $chosen->withOptions(['alpha', 'beta']);
+
+        self::assertNull($narrowed->selectedValue(), 'the choice went with the option, rather than sliding onto another');
+    }
+
+    #[Test]
+    public function aRadioWhoseOptionIsGoneStandsOnTheFirst(): void
+    {
+        $chosen = Radio::new(['alpha', 'beta', 'gamma'])->withSelected(2);
+
+        $narrowed = $chosen->withOptions(['beta', 'gamma-ish']);
+
+        self::assertSame('beta', $narrowed->selectedValue(), 'a radio always stands on something');
+    }
+
+    #[Test]
+    public function theOptionsItAlreadyHasChangeNothing(): void
+    {
+        $options = ['alpha', 'beta'];
+        $select = Select::new($options)->withSelected(1);
+
+        self::assertSame($select, $select->withOptions($options), 'nothing to re-resolve, so nothing is rebuilt');
+    }
+
+    #[Test]
+    public function aCursorWhoseOptionIsGoneGoesToTheTop(): void
+    {
+        $resting = RadioRow::new(['alpha', 'beta', 'gamma'])->withCursor(2);
+
+        $narrowed = $resting->withOptions(['alpha']);
+
+        self::assertSame(0, $narrowed->cursor(), 'a cursor always rests inside the list');
+    }
+
+    #[Test]
+    public function aCursorOnTheFirstOptionStaysThere(): void
+    {
+        $resting = RadioRow::new(['alpha', 'beta']);
+        self::assertSame(0, $resting->cursor(), 'precondition: the cursor starts at the top');
+
+        $grown = $resting->withOptions(['alpha', 'beta', 'gamma']);
+
+        self::assertSame(0, $grown->cursor(), 'alpha did not move, so neither does the cursor');
+    }
 }

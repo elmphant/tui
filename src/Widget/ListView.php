@@ -97,7 +97,7 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
             items: $items,
             rowIndex: RowIndex::of(count($items)),
             selected: self::placeOf($this->selectedItem(), $items),
-            cursor: max(0, min(self::placeOf($this->items[$this->cursor] ?? null, $items), count($items) - 1)),
+            cursor: max(0, self::placeOf($this->items[$this->cursor] ?? null, $items)),
         );
     }
 
