@@ -90,6 +90,26 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         return $this->cloneWith(checked: $checked);
     }
 
+    /**
+     * A host holds what was ticked, not where the ticks sat.
+     *
+     * @param list<string> $values
+     */
+    public function withCheckedValues(array $values): self
+    {
+        $checked = [];
+        foreach ($values as $value) {
+            $place = Options::placeOf($value, $this->options);
+
+            if ($place >= 0) {
+                $checked[] = $place;
+            }
+        }
+        sort($checked);
+
+        return $this->cloneWith(checked: $checked);
+    }
+
     public function withLabel(string $label): self
     {
         return $this->cloneWith(label: $label);

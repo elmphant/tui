@@ -71,6 +71,15 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $this->cloneWith(selected: $selected);
     }
 
+    /**
+     * A host holds what was chosen, not where it sat — so it says which option
+     * rather than searching the list for its place first.
+     */
+    public function withSelectedValue(?string $value): self
+    {
+        return $this->cloneWith(selected: Options::placeOf($value, $this->options));
+    }
+
     public function withEmptyCaption(string $caption): self
     {
         return $this->cloneWith(emptyCaption: $caption);

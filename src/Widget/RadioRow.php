@@ -126,6 +126,17 @@ final readonly class RadioRow implements OptionRow
         return $this->cloneWith(selected: $selected);
     }
 
+    /**
+     * A host holds what was chosen, not where it sat. The cursor goes there too:
+     * the reader is looking at the option that is chosen.
+     */
+    public function withSelectedValue(?string $value): self
+    {
+        $place = Options::placeOf($value, $this->options);
+
+        return $this->cloneWith(selected: $place, cursor: max(0, $place));
+    }
+
     public function isFocused(): bool
     {
         return $this->focused;
