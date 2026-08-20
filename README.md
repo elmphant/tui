@@ -578,6 +578,16 @@ A fourth, separate contract lets a widget draw outside its own rect:
 - **PointerFloating** — adds `target()` + `captures(action)` — takes pointer input over
   the area it drew
 
+Two more say how a subtree takes the keyboard:
+
+- **InputLayer** — owns input while it is on screen; everything behind it stops being
+  focusable, tab-reachable and clickable. `Modal` uses this
+- **FocusScope** — chrome the reader *steps into*: a filter row, a toolbar. Its
+  components come off the main ring and become the whole ring once the keyboard is in
+  one of them, so tab between the panes never walks controls touched once a session.
+  A command (`Cmd::focus()`) takes the keyboard in, and another takes it out. Unlike an
+  input layer it claims nothing while the keyboard is elsewhere
+
 ### The float layer
 
 A widget asks for a float while it renders:
@@ -727,6 +737,24 @@ Call `initialize()` to capture the model's initial command, `resize()` to test
 responsive behavior, `model()` to assert typed application state, and
 `renderFrame()` when cell styles or cursor data matter. PHPStan and Psalm infer
 the concrete model type through the harness.
+
+A tree containing bound components cannot be drawn without saying where the
+keyboard is: `RenderContext` refuses it rather than produce a frame no terminal
+would show — every field unfocused, and a popup belonging to the focused one
+missing. `ModelHarness` and `Program` always say. A test that renders a tree by
+hand says so too, and `RenderContext::unfocused($theme)` is how it says "nobody":
+
+```php
+$context = RenderContext::unfocused(Theme::dark());       // a layout or wording test
+$context->renderRoot($app->view(), $frame, $area);
+
+$context = RenderContext::unfocused(Theme::dark());       // or name the holder
+$context->focusOn(new FocusState(ComponentId::named('search')));
+```
+
+Not deciding is a different state from deciding nobody holds it: `FocusState::nowhere()`
+is an answer the runtime never fills in, which is what lets an app keep the keyboard
+for itself with `Cmd::focusNothing()`.
 
 Use `VirtualTerminal` only for runtime integration tests that need ANSI output,
 input bytes, resizing, or terminal capabilities. `ScreenBuffer::fromFrame()`
