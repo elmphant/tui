@@ -190,7 +190,14 @@ final readonly class FilterableTable implements Focusable, MeasureHeight
             return FilterBar::field($this->query, $focused);
         }
 
-        return $this->field
+        // The query is the one home; the field is kept only for where the caret sits,
+        // so it is re-valued exactly when a host has changed the query underneath it
+        // — re-valuing every frame would drag the caret back to the end each time.
+        $field = $this->field->value() === $this->query
+            ? $this->field
+            : $this->field->withValue($this->query);
+
+        return $field
             ->withFocus($focused)
             ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None);
     }
