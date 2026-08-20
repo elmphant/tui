@@ -149,11 +149,6 @@ final readonly class ComponentRegistry
         return $this->byId[$id->value] ?? null;
     }
 
-    public function has(ComponentId $id): bool
-    {
-        return isset($this->byId[$id->value]);
-    }
-
     /**
      * @return list<string>|null
      */

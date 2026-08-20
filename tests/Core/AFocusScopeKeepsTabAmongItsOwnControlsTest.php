@@ -57,6 +57,22 @@ final class AFocusScopeKeepsTabAmongItsOwnControlsTest extends TestCase
         );
     }
 
+    #[Test]
+    public function aScopeBelowThePanesWalksItsOwnControlsToo(): void
+    {
+        $app = new RowBelowThePanesApp();
+        $focus = new FocusState(ComponentId::named('sources'));
+
+        $command = $app->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 10), $focus)->command;
+
+        self::assertInstanceOf(FocusCmd::class, $command);
+        self::assertSame(
+            'severity',
+            $command->applyTo($focus, $app->focusableIds($focus))->focused()?->value,
+            'a scope is a ring wherever it sits, not only when it comes first',
+        );
+    }
+
     private function tabbedFrom(string $id, bool $backwards = false): ?string
     {
         $app = new RowAboveThePanesApp();
@@ -109,6 +125,45 @@ final readonly class RowAboveThePanesApp extends App
                 $this->entry,
                 static fn (self $app, TextInput $field): self => $app->cloneWith(entry: $field),
             ),
+        );
+    }
+}
+
+final readonly class RowBelowThePanesApp extends App
+{
+    public function __construct(
+        public TextInput $timeline = new TextInput(),
+        public TextInput $entry = new TextInput(),
+        public TextInput $severity = new TextInput(),
+        public TextInput $sources = new TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind(
+                'timeline',
+                $this->timeline,
+                static fn (self $app, TextInput $field): self => $app->cloneWith(timeline: $field),
+            ),
+            Component::bind(
+                'entry',
+                $this->entry,
+                static fn (self $app, TextInput $field): self => $app->cloneWith(entry: $field),
+            ),
+            new FilterRowScope(Layout::horizontal(
+                Component::bind(
+                    'severity',
+                    $this->severity,
+                    static fn (self $app, TextInput $field): self => $app->cloneWith(severity: $field),
+                ),
+                Component::bind(
+                    'sources',
+                    $this->sources,
+                    static fn (self $app, TextInput $field): self => $app->cloneWith(sources: $field),
+                ),
+            )),
         );
     }
 }
