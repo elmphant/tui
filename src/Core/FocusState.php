@@ -45,6 +45,16 @@ final readonly class FocusState
     }
 
     /**
+     * Naming the same component is not the same state: undecided and nowhere both
+     * name none, and settling the one is what stops the runtime filling the other.
+     */
+    public function sameAs(self $other): bool
+    {
+        return $this->focused?->value === $other->focused?->value
+            && $this->decided === $other->decided;
+    }
+
+    /**
      * The keyboard lands somewhere whenever there is anywhere for it to land, so
      * nothing focused means nothing focusable — never a component that left.
      *

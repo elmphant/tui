@@ -972,7 +972,7 @@ final class Program
     {
         $moved = $command->applyTo($this->focus, $this->focusableIds());
 
-        if ($moved->focused()?->value === $this->focus->focused()?->value) {
+        if ($moved->sameAs($this->focus)) {
             return;
         }
 
@@ -1002,7 +1002,7 @@ final class Program
      */
     private function focusableIds(): array
     {
-        return $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [];
+        return $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [];
     }
 
     private function dispatchCommand(?Cmd $command, ?Closure $wrap = null): void
