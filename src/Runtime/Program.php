@@ -976,6 +976,11 @@ final class Program
             return;
         }
 
+        $this->tracer?->record(TraceEvent::Focus, [
+            'from' => $this->focus->focused()?->value,
+            'to' => $moved->focused()?->value,
+        ]);
+
         $this->focus = $moved;
         $this->isDirty = true;
     }

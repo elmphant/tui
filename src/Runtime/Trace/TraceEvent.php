@@ -17,6 +17,11 @@ enum TraceEvent: string
     case Render = 'render';
 
     /**
+     * The keyboard moved. The runtime's own doing, so no update reports it.
+     */
+    case Focus = 'focus';
+
+    /**
      * A frame was due but the frame budget was not yet spent.
      */
     case FrameSkipped = 'frame.skipped';

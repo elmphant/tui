@@ -672,8 +672,10 @@ Program::new($model)->withTracer(JsonlTracer::toFile('/tmp/tui.jsonl'))->start()
 
 One JSON object per line, for grepping and totalling. `update` records the message,
 the key as a binding would spell it, **which component held the keyboard, and every
-stop it could have moved to**; `render` records what a frame cost, split between
-painting and diffing; `input.read`, `command` and `frame.skipped` cover the rest.
+stop it could have moved to**; `focus` records the keyboard moving, `from` and `to`,
+which no update reports because it is the runtime's doing rather than the model's;
+`render` records what a frame cost, split between painting and diffing; `input.read`,
+`command` and `frame.skipped` cover the rest.
 
 Those last two update fields are what a "that key does nothing" report turns on: a
 ring with one entry has nowhere for tab to go, and a key traced under a name no
