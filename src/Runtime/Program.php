@@ -31,12 +31,14 @@ use Elmphant\Tui\Core\TickCmd;
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
 use Elmphant\Tui\Input\InputParser;
+use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\ReportsOutputStats;
 use Elmphant\Tui\Input\StdinBuffer;
 use Elmphant\Tui\Input\Terminal;
 use Elmphant\Tui\Input\TerminalInterface;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
@@ -855,6 +857,15 @@ final class Program
                 if ($this->tracer !== null) {
                     $this->tracer->record(TraceEvent::Update, [
                         'message' => $stamped::class,
+                        'key' => $stamped instanceof KeyMsg ? self::describeKey($stamped) : null,
+                        // A key that seems to do nothing turns on where the keyboard was
+                        // when it arrived and what it could have moved to, so a trace
+                        // that named neither could not explain it.
+                        'focused' => $this->focus->focused()?->value,
+                        'ring' => array_map(
+                            static fn (ComponentId $id): string => $id->value,
+                            $this->focusableIds(),
+                        ),
                         'ms' => (hrtime(true) - $updateStart) / 1e6,
                         'changed' => $nextModel !== $this->model,
                     ]);
@@ -954,6 +965,34 @@ final class Program
     }
 
     /**
+     * Where the keyboard is gets drawn, so moving it makes the screen stale even
+     * though the model is untouched.
+     */
+    private function moveFocus(FocusCmd $command): void
+    {
+        $moved = $command->applyTo($this->focus, $this->focusableIds());
+
+        if ($moved->focused()?->value === $this->focus->focused()?->value) {
+            return;
+        }
+
+        $this->focus = $moved;
+        $this->isDirty = true;
+    }
+
+    /**
+     * The key as a reader of the trace would name it, modifiers included, so what was
+     * pressed can be matched against what a binding asks for.
+     */
+    private static function describeKey(KeyMsg $message): string
+    {
+        return ($message->ctrl ? 'ctrl+' : '')
+            . ($message->alt ? 'alt+' : '')
+            . ($message->shift ? 'shift+' : '')
+            . KeyPattern::nameOf($message->key);
+    }
+
+    /**
      * @return list<ComponentId>
      */
     private function focusableIds(): array
@@ -993,7 +1032,7 @@ final class Program
             $command instanceof TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
             $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
             $command instanceof CancelCmd => $this->cancelEffect($command->id, $wrap),
-            $command instanceof FocusCmd => $this->focus = $command->applyTo($this->focus, $this->focusableIds()),
+            $command instanceof FocusCmd => $this->moveFocus($command),
             $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
             $command instanceof CallCmd => $this->executeCall($command, $wrap),
             $command instanceof HttpCmd => $this->startHttpRequest($command, $wrap),

@@ -661,6 +661,28 @@ A `Program` is intentionally one-shot. Its lifecycle is `ProgramState::New → R
 
 The built-in interactive terminal backend currently targets POSIX TTYs. It fails explicitly when stdin is not a TTY, `proc_open()`/`stty` is unavailable, or the platform is Windows. Inject a custom `TerminalInterface` for another backend or for tests.
 
+## Tracing
+
+A TUI cannot print diagnostics — stdout is the display — so a `Tracer` writes them
+somewhere else:
+
+```php
+Program::new($model)->withTracer(JsonlTracer::toFile('/tmp/tui.jsonl'))->start();
+```
+
+One JSON object per line, for grepping and totalling. `update` records the message,
+the key as a binding would spell it, **which component held the keyboard, and every
+stop it could have moved to**; `render` records what a frame cost, split between
+painting and diffing; `input.read`, `command` and `frame.skipped` cover the rest.
+
+Those last two update fields are what a "that key does nothing" report turns on: a
+ring with one entry has nowhere for tab to go, and a key traced under a name no
+binding uses never arrived as the one that was pressed.
+
+The trace is held in memory until the program stops, so a run killed outright writes
+nothing — close it from a shutdown hook if you need a trace of a crash. In tests use
+`InMemoryTracer` and read `fieldsOf(TraceEvent::Update)` instead of a file.
+
 ## Messages
 
 All messages flow through `update()` via the unified `Elmphant\Tui\Message` namespace:

@@ -36,6 +36,22 @@ final readonly class KeyPattern
     ) {
     }
 
+    /**
+     * What a binding would call this key. One spelling for both directions, so a key
+     * read back from a trace can be compared with the pattern that was meant to match
+     * it.
+     */
+    public static function nameOf(Key|string $key): string
+    {
+        $name = array_search($key, self::NAMED_KEYS, true);
+
+        if ($name !== false) {
+            return $name;
+        }
+
+        return $key instanceof Key ? strtolower($key->name) : $key;
+    }
+
     public static function fromString(string $pattern): self
     {
         if ($pattern === '') {

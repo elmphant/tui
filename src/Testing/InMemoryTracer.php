@@ -13,7 +13,7 @@ use Elmphant\Tui\Runtime\Trace\Tracer;
 final class InMemoryTracer implements Tracer
 {
     /**
-     * @var list<array{TraceEvent, array<string, scalar|null>}>
+     * @var list<array{TraceEvent, array<string, scalar|list<string>|null>}>
      */
     private array $records = [];
 
@@ -23,7 +23,7 @@ final class InMemoryTracer implements Tracer
     }
 
     /**
-     * @return list<array{TraceEvent, array<string, scalar|null>}>
+     * @return list<array{TraceEvent, array<string, scalar|list<string>|null>}>
      */
     public function records(): array
     {
@@ -31,7 +31,7 @@ final class InMemoryTracer implements Tracer
     }
 
     /**
-     * @return list<array<string, scalar|null>>
+     * @return list<array<string, scalar|list<string>|null>>
      */
     public function fieldsOf(TraceEvent $event): array
     {

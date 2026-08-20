@@ -13,7 +13,7 @@ namespace Elmphant\Tui\Runtime\Trace;
 interface Tracer
 {
     /**
-     * @param array<string, scalar|null> $fields
+     * @param array<string, scalar|list<string>|null> $fields
      */
     public function record(TraceEvent $event, array $fields): void;
 }
