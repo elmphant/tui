@@ -1,0 +1,136 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Core;
+
+use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\TextInput;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * A pane that scrolls holds its own children, and once one of them takes the
+ * keyboard the pane is no longer where keys arrive. A key the child does not
+ * answer is the pane's, or nothing could scroll a form while a field is being
+ * filled in.
+ */
+final class AKeyTheFocusedComponentIgnoresReachesWhatEnclosesItTest extends TestCase
+{
+    #[Test]
+    public function theEnclosingComponentAnswersWhatTheFocusedOneIgnored(): void
+    {
+        $driven = ModelHarness::for(new FieldInsideAPaneApp(), 20, 4)->initialize();
+
+        $driven->dispatch(new KeyMsg(Key::Down));
+
+        self::assertSame(1, $driven->model()->pane->scrolled, 'the pane it sits in took the key');
+    }
+
+    #[Test]
+    public function aKeyTheFocusedComponentAnswersNeverLeavesIt(): void
+    {
+        $driven = ModelHarness::for(new FieldInsideAPaneApp(), 20, 4)->initialize();
+
+        $driven->dispatch(new KeyMsg('x'));
+
+        self::assertSame('x', $driven->model()->pane->field->value(), 'the field kept it');
+        self::assertSame(0, $driven->model()->pane->scrolled, 'so the pane never saw it');
+    }
+}
+
+/**
+ * Interactive but not Focusable: it writes back, so the keyboard never stops on
+ * it, which is exactly the case a scrolling pane of fields is.
+ */
+final readonly class ScrollingPane implements Interactive, WidgetContainer
+{
+    use Cloneable;
+
+    public function __construct(
+        public TextInput $field = new TextInput(),
+        public int $scrolled = 0,
+    ) {
+    }
+
+    public function sizing(): Sizing
+    {
+        return $this->inner()->sizing();
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return $message instanceof KeyMsg && $message->key === Key::Down
+            ? UpdateResult::changed($this->cloneWith(scrolled: $this->scrolled + 1))
+            : UpdateResult::keep($this);
+    }
+
+    public function withField(TextInput $field): self
+    {
+        return $this->cloneWith(field: $field);
+    }
+
+    /**
+     * @return iterable<Widget>
+     */
+    public function children(): iterable
+    {
+        return [$this->inner()];
+    }
+
+    /**
+     * @return iterable<array{Widget, Rect}>
+     */
+    public function childWidgets(Rect $area): iterable
+    {
+        return [[$this->inner(), $area]];
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        $this->inner()->render($frame, $area, $context);
+    }
+
+    private function inner(): Widget
+    {
+        return Component::bind(
+            'field',
+            $this->field,
+            static fn (FieldInsideAPaneApp $app, TextInput $field): FieldInsideAPaneApp => $app->cloneWith(
+                pane: $app->pane->withField($field),
+            ),
+        );
+    }
+}
+
+final readonly class FieldInsideAPaneApp extends App
+{
+    use Cloneable;
+
+    public function __construct(public ScrollingPane $pane = new ScrollingPane())
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            'pane',
+            $this->pane,
+            static fn (self $app, ScrollingPane $pane): self => $app->cloneWith(pane: $pane),
+        );
+    }
+}

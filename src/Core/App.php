@@ -23,6 +23,7 @@ use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 use WeakMap;
 
@@ -509,7 +510,75 @@ abstract readonly class App implements RoutesFocus
             );
         }
 
-        return new UpdateResult($this, $focused->addressed($dispatch->command));
+        if ($dispatch->command !== null) {
+            return new UpdateResult($this, $focused->addressed($dispatch->command));
+        }
+
+        return $this->offeredToWhatEncloses($message, $screenRect, $focused);
+    }
+
+    /**
+     * A key the focused component leaves alone belongs to whatever it sits inside:
+     * once a field takes the keyboard, the pane around it is no longer where keys
+     * arrive, and nothing could scroll a form while a field is being filled in.
+     *
+     * @param Component<Interactive> $focused
+     *
+     * @return UpdateResult<static>
+     */
+    private function offeredToWhatEncloses(Message $message, Rect $screenRect, Component $focused): UpdateResult
+    {
+        $enclosing = array_values(array_filter(
+            $this->componentRegistry()->all(),
+            static fn (Component $candidate): bool => !$candidate->id->equals($focused->id)
+                && $candidate->writesBack()
+                && self::holdsComponent($candidate->widget, $focused->id),
+        ));
+        $rects = $this->findComponentRects($screenRect, $enclosing);
+
+        // Nearest first: collection is pre-order, so what contains the rest is listed
+        // before it and the innermost is the last match.
+        foreach (array_reverse($enclosing) as $candidate) {
+            $dispatch = $this->childDispatcher()->dispatchOne(
+                $candidate->widget,
+                $message,
+                $rects[$candidate->id->value] ?? $screenRect,
+            );
+
+            if ($dispatch->changed) {
+                [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, [[$candidate, $dispatch->child]]);
+
+                return new UpdateResult(
+                    $current,
+                    self::combineCommands($candidate->addressed($dispatch->command), $hookCommand),
+                );
+            }
+
+            if ($dispatch->command !== null) {
+                return new UpdateResult($this, $candidate->addressed($dispatch->command));
+            }
+        }
+
+        return new UpdateResult($this);
+    }
+
+    private static function holdsComponent(Widget $widget, ComponentId $id): bool
+    {
+        if ($widget instanceof Component && $widget->id->equals($id)) {
+            return true;
+        }
+
+        if (!$widget instanceof WidgetContainer) {
+            return false;
+        }
+
+        foreach ($widget->children() as $child) {
+            if (self::holdsComponent($child, $id)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
