@@ -166,6 +166,19 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     }
 
     /**
+     * The children as they were handed in, before focus was applied to any of them.
+     * A host comparing what it is about to hand in against what the pane holds needs
+     * this: `children()` answers with the focus marks, so a focused pane could never
+     * match itself and would be rebuilt — scroll position, inner cursor and all.
+     *
+     * @return list<Widget>
+     */
+    public function authoredChildren(): array
+    {
+        return $this->children;
+    }
+
+    /**
      * Every row its children need, which is more than a viewport may show. A
      * caller sizing a pane to its content asks this and then decides.
      */

@@ -70,7 +70,7 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withChildren(array $children): self
     {
-        return $children === [...$this->pane->children()]
+        return $children === $this->pane->authoredChildren()
             ? $this
             : $this->withPane(ScrollPane::of(...$children));
     }
