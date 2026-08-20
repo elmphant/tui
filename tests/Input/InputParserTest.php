@@ -2290,4 +2290,18 @@ final class InputParserTest extends TestCase
         $this->assertInstanceOf(KeyMsg::class, $result);
         $this->assertSame($expectedKey, $result->key);
     }
+
+    /**
+     * A terminal answers questions on the same stream the reader types on. A reply we
+     * do not understand was read as text instead, so it arrived as a keystroke nobody
+     * pressed — a device-attributes answer as a cursor move.
+     */
+    #[Test]
+    public function aTerminalReportIsNotAKeystroke(): void
+    {
+        self::assertNull(InputParser::parseSequence("\x1b[?62;1;4c"), 'device attributes');
+        self::assertNull(InputParser::parseSequence("\x1b[>1;95;0c"), 'secondary device attributes');
+        self::assertNull(InputParser::parseSequence("\x1b[0n"), 'status report');
+        self::assertNull(InputParser::parseSequence("\x1b[4;24;80t"), 'window report');
+    }
 }

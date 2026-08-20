@@ -113,4 +113,27 @@ final class KittyParserTest extends TestCase
         $this->assertInstanceOf(KeyMsg::class, $result);
         $this->assertSame('x', $result->key);
     }
+
+    /**
+     * Kitty reports super, hyper and meta, which a KeyMsg cannot carry. Reading only
+     * the three bits we have delivered cmd+a as a plain "a".
+     */
+    #[Test]
+    public function superHeldDownIsNotDeliveredAsAPlainLetter(): void
+    {
+        self::assertNull(InputParser::parseSequence("\x1b[97;9u"), 'cmd+a is not an a');
+    }
+
+    /**
+     * The locks share that field, so dropping an unnameable modifier must not start
+     * dropping letters typed with caps lock on.
+     */
+    #[Test]
+    public function capsLockLeavesTheLetterAlone(): void
+    {
+        $message = InputParser::parseSequence("\x1b[97;65u");
+
+        self::assertInstanceOf(KeyMsg::class, $message);
+        self::assertSame('a', $message->key);
+    }
 }

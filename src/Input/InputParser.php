@@ -191,9 +191,30 @@ final class InputParser
             return new FocusMsg(false);
         }
 
-        $result = self::parse($sequence, flush: true);
+        // `?`, `>` and `=` open a device report. Only `<` belongs to a reader, on a
+        // mouse press.
+        if (self::endsACsiSequence($final) && in_array($body[0] ?? '', ['?', '>', '='], true)) {
+            return null;
+        }
 
-        return $result->messages[0] ?? null;
+        $decoded = self::parseCsi($sequence, 0, strlen($sequence));
+
+        if ($decoded !== null) {
+            return $decoded[0];
+        }
+
+        // A finished sequence we do not know is the terminal answering a question, and
+        // reading its bytes as text invents a keypress. An unfinished one is still text.
+        if (self::endsACsiSequence($final)) {
+            return null;
+        }
+
+        return self::parse($sequence, flush: true)->messages[0] ?? null;
+    }
+
+    private static function endsACsiSequence(string $byte): bool
+    {
+        return $byte !== '' && ord($byte) >= 0x40 && ord($byte) <= 0x7E;
     }
 
     private static function parseKittyCsiU(string $body): ?KeyMsg
@@ -203,6 +224,11 @@ final class InputParser
 
         $codepoint = (int)$parts[0];
         $modifierAndEvent = $parts[1] ?? '1';
+
+        if (self::holdsAModifierWeCannotName($modifierAndEvent)) {
+            return null;
+        }
+
         [$shift, $alt, $ctrl, $eventType] = self::parseModifiers($modifierAndEvent);
 
         $key = match ($codepoint) {
@@ -383,6 +409,18 @@ final class InputParser
         }
 
         return [new KeyMsg($key, ctrl: $ctrl, alt: $alt, shift: $shift, eventType: $eventType), $position];
+    }
+
+    /**
+     * Super, hyper and meta have nowhere to go in a KeyMsg, and ignoring the bit would
+     * deliver cmd+a as a plain "a". Caps and num lock are locks, not modifiers.
+     */
+    private static function holdsAModifierWeCannotName(string $modifierParam): bool
+    {
+        $parts = explode(':', $modifierParam);
+        $modifierValue = max(0, (int)$parts[0] - 1);
+
+        return ($modifierValue & (8 | 16 | 32)) !== 0;
     }
 
     /**
