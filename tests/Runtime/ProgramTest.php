@@ -4185,7 +4185,7 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function fireTickersUsesIntervalIndexToComputeNextFireTime(): void
+    public function fireTickersCountsTheNextDeadlineFromTheLastOne(): void
     {
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
@@ -4193,12 +4193,17 @@ final class ProgramTest extends TestCase
 
         $now = 1000.0;
         $interval = 2.5;
-        $reflection->getProperty('tickers')->setValue($program, [new TickerRecord($now - 0.1, $interval)]);
+        $deadline = $now - 0.1;
+        $reflection->getProperty('tickers')->setValue($program, [new TickerRecord($deadline, $interval)]);
 
         $reflection->getMethod('fireTickers')->invoke($program, $now);
 
         $tickers = $reflection->getProperty('tickers')->getValue($program);
-        self::assertSame($now + $interval, $tickers[0]->fireAt, 'Next fire time must be now + the ticker interval');
+        self::assertSame(
+            $deadline + $interval,
+            $tickers[0]->fireAt,
+            'the 0.1s the loop was late by is not added to the period',
+        );
     }
 
     #[Test]

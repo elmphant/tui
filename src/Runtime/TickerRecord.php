@@ -24,8 +24,20 @@ final readonly class TickerRecord
     ) {
     }
 
+    /**
+     * Counted from the deadline, not from when the loop got round to it, or every late
+     * tick would push the next one out and a clock would run slow for ever. A stall
+     * longer than the interval skips the periods nobody saw instead of replaying them.
+     */
     public function rescheduled(float $now): self
     {
-        return new self($now + $this->interval, $this->interval, $this->id, $this->wrap);
+        $next = $this->fireAt + $this->interval;
+
+        if ($next <= $now) {
+            $missed = floor(($now - $this->fireAt) / $this->interval);
+            $next = $this->fireAt + ($missed + 1) * $this->interval;
+        }
+
+        return new self($next, $this->interval, $this->id, $this->wrap);
     }
 }
