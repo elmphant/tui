@@ -94,9 +94,17 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
             if ($message->action === MouseAction::Press) {
                 $divider = $this->dividerAt($message, $area);
 
-                return $divider === null
-                    ? $this->toPanes($message, $area)
-                    : new UpdateResult($this->with($this->state->withDragging($divider)));
+                if ($divider !== null) {
+                    return new UpdateResult($this->with($this->state->withDragging($divider)));
+                }
+
+                // A press is a fresh grip, so whatever was held has been let go of —
+                // the release saying so may have gone to a layer over this one.
+                $letGo = $this->state->dragging === null
+                    ? $this
+                    : $this->with($this->state->withDragging(null));
+
+                return $letGo->toPanes($message, $area);
             }
 
             if ($message->action === MouseAction::Motion && $this->state->dragging !== null) {
