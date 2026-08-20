@@ -24,7 +24,7 @@ use PHPUnit\Framework\TestCase;
  * it. It still says which of them the keyboard is on, and the field inside that
  * one has to read the pane's keyboard as its own.
  */
-final class HeldRowKeepsThePanesKeyboardTest extends TestCase
+final class PaneRowFocusTest extends TestCase
 {
     #[Test]
     public function theFieldOnTheHeldRowShowsItsCursor(): void

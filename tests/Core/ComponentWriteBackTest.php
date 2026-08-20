@@ -30,7 +30,7 @@ use PHPUnit\Framework\TestCase;
  * back to the end. A press on one of them must not have the other's untouched
  * widget written back over what it just did.
  */
-final class RoutingDoesNotWriteBackAnUntouchedComponentTest extends TestCase
+final class ComponentWriteBackTest extends TestCase
 {
     #[Test]
     public function aPressOnOneComponentSurvivesTheOtherKeepingItsPlace(): void

@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
  * The App cannot know whose a bare message is once it is out, so the Mount says on
  * the way past.
  */
-final class AMountAddressesWhatItsComponentsSayTest extends TestCase
+final class MountAddressingTest extends TestCase
 {
     #[Test]
     public function aKeyAnsweredByAMountedComponentComesBackAddressedToItsModel(): void

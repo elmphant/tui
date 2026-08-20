@@ -20,7 +20,7 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class FlagOutsideTheTreeSurvivesTest extends TestCase
+final class FocusFlagFallbackTest extends TestCase
 {
     /**
      * A widget nobody bound has only its own flag to go on. Silencing it because
