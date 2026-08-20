@@ -8,6 +8,8 @@ use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Key;
@@ -50,6 +52,21 @@ final class AKeyTheFocusedComponentIgnoresReachesWhatEnclosesItTest extends Test
 
         self::assertSame('x', $driven->model()->pane->field->value(), 'the field kept it');
         self::assertSame(0, $driven->model()->pane->scrolled, 'so the pane never saw it');
+    }
+
+    #[Test]
+    public function aComponentThatDoesNotEncloseTheFocusedOneIsLeftAlone(): void
+    {
+        $driven = ModelHarness::for(new FieldInsideAPaneApp(), 20, 4)->initialize();
+
+        $driven->dispatch(new KeyMsg(Key::Down));
+
+        self::assertSame(1, $driven->model()->pane->scrolled, 'the pane around the field took it');
+        self::assertSame(
+            0,
+            $driven->model()->bystander->seen,
+            'a key goes outwards from where it was, never sideways to whatever else is bound',
+        );
     }
 }
 
@@ -117,20 +134,56 @@ final readonly class ScrollingPane implements Interactive, WidgetContainer
     }
 }
 
+/**
+ * Beside the pane rather than around it, so a key it ever answers is a key that
+ * went somewhere it had no business going.
+ */
+final readonly class Bystander implements Interactive
+{
+    use Cloneable;
+
+    public function __construct(public int $seen = 0)
+    {
+    }
+
+    public function sizing(): Sizing
+    {
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return UpdateResult::changed($this->cloneWith(seen: $this->seen + 1));
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+    }
+}
+
 final readonly class FieldInsideAPaneApp extends App
 {
     use Cloneable;
 
-    public function __construct(public ScrollingPane $pane = new ScrollingPane())
-    {
+    public function __construct(
+        public ScrollingPane $pane = new ScrollingPane(),
+        public Bystander $bystander = new Bystander(),
+    ) {
     }
 
     public function view(): Widget
     {
-        return Component::bind(
-            'pane',
-            $this->pane,
-            static fn (self $app, ScrollingPane $pane): self => $app->cloneWith(pane: $pane),
+        return Layout::vertical(
+            Component::bind(
+                'pane',
+                $this->pane,
+                static fn (self $app, ScrollingPane $pane): self => $app->cloneWith(pane: $pane),
+            ),
+            Component::bind(
+                'bystander',
+                $this->bystander,
+                static fn (self $app, Bystander $seen): self => $app->cloneWith(bystander: $seen),
+            ),
         );
     }
 }
