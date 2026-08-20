@@ -188,7 +188,11 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
             $style,
         );
 
-        if ($this->open) {
+        // The list belongs to whatever holds the keyboard. A tree that moved the
+        // keyboard on never told this widget, so its own flag can still say open;
+        // drawn anyway, the list would hang over rows the reader has moved to and
+        // no key of theirs would reach it to shut it.
+        if ($this->open && $this->drawsFocused($context)) {
             $context->float($frame, $this->popup(), $area);
         }
     }
