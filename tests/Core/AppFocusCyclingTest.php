@@ -13,6 +13,7 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
@@ -32,6 +33,51 @@ final class AppFocusCyclingTest extends TestCase
         self::assertEquals(
             ComponentId::named('second'),
             $command->applyTo(new FocusState(ComponentId::named('first')), $app->focusableIds())->focused(),
+        );
+    }
+
+    #[Test]
+    public function shiftTabWalksTheOtherWayRound(): void
+    {
+        $app = new PlainlyCyclingApp();
+        $onTheSecond = new FocusState(ComponentId::named('second'));
+
+        $command = $app->update(
+            new KeyMsg(Key::Tab, shift: true),
+            new Rect(0, 0, 40, 6),
+            $onTheSecond,
+        )->command;
+
+        self::assertInstanceOf(FocusCmd::class, $command);
+        self::assertEquals(
+            ComponentId::named('first'),
+            $command->applyTo($onTheSecond, $app->focusableIds())->focused(),
+            'shift+tab is the walk backwards, or the keyboard could only ever go one way',
+        );
+    }
+}
+
+final readonly class PlainlyCyclingApp extends App
+{
+    public function __construct(
+        public TextInput $first = new TextInput(),
+        public TextInput $second = new TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind(
+                'first',
+                $this->first,
+                static fn (self $app, TextInput $input): self => $app->cloneWith(first: $input),
+            ),
+            Component::bind(
+                'second',
+                $this->second,
+                static fn (self $app, TextInput $input): self => $app->cloneWith(second: $input),
+            ),
         );
     }
 }
