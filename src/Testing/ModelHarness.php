@@ -215,7 +215,7 @@ final class ModelHarness
     private function resolvedFocus(): FocusState
     {
         return $this->focus->resolvedAgainst(
-            $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [],
+            $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
         );
     }
 
@@ -243,7 +243,7 @@ final class ModelHarness
         if ($command instanceof FocusCmd) {
             $this->focus = $command->applyTo(
                 $this->focus,
-                $this->model instanceof RoutesFocus ? $this->model->focusableIds() : [],
+                $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
             );
         }
     }

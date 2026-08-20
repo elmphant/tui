@@ -55,7 +55,7 @@ final class FocusRoutingModel implements RoutesFocus
     /**
      * @return list<ComponentId>
      */
-    public function focusableIds(): array
+    public function focusableIds(FocusState $focus = new FocusState()): array
     {
         return [ComponentId::named('pane')];
     }

@@ -97,11 +97,11 @@ abstract readonly class App implements RoutesFocus
     /**
      * @return list<ComponentId>
      */
-    final public function focusableIds(): array
+    final public function focusableIds(FocusState $focus = new FocusState()): array
     {
         return array_map(
             static fn (Component $component): ComponentId => $component->id,
-            $this->componentRegistry()->focusables(),
+            $this->componentRegistry()->ring($focus->focused()),
         );
     }
 

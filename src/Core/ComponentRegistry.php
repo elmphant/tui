@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Core;
 use Closure;
 use Elmphant\Tui\Widget\AcceptsFocus;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\FocusScope;
 use Elmphant\Tui\Widget\InputLayer;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
@@ -32,9 +33,14 @@ final readonly class ComponentRegistry
      * @param list<Component<Interactive>>          $components
      * @param array<string, Component<Interactive>> $byId
      * @param list<Component<Interactive>>          $focusables
+     * @param list<list<string>>                    $scopes
      */
-    private function __construct(private array $components, array $byId, array $focusables)
-    {
+    private function __construct(
+        private array $components,
+        array $byId,
+        array $focusables,
+        private array $scopes = [],
+    ) {
         $this->byId = $byId;
         $this->focusables = $focusables;
     }
@@ -55,7 +61,7 @@ final readonly class ComponentRegistry
 
     public static function fromWidget(Widget $root): self
     {
-        return self::from(self::collect($root));
+        return self::from(self::collect($root))->withScopes(self::scopesIn($root));
     }
 
     /**
@@ -102,6 +108,40 @@ final readonly class ComponentRegistry
     }
 
     /**
+     * The ring the keyboard is walking. A focus scope holding it keeps tab to its
+     * own controls; from anywhere else those controls are off the ring altogether,
+     * so the way in is the command that says so and tab never walks chrome on its
+     * way between the panes a reader works in.
+     *
+     * @return list<Component<Interactive>>
+     */
+    public function ring(?ComponentId $focused): array
+    {
+        if ($this->scopes === []) {
+            return $this->focusables;
+        }
+
+        $held = $this->scopeHolding($focused);
+
+        if ($held !== null) {
+            return array_values(array_filter(
+                $this->focusables,
+                static fn (Component $component): bool => \in_array($component->id->value, $held, true),
+            ));
+        }
+
+        $beside = array_values(array_filter(
+            $this->focusables,
+            fn (Component $component): bool => !$this->isScoped($component->id->value),
+        ));
+
+        // Taking the chrome off the ring assumes there is content beside it. Where a
+        // scope is all there is, an empty ring would leave the keyboard nowhere to
+        // land and every key falling through.
+        return $beside === [] ? $this->focusables : $beside;
+    }
+
+    /**
      * @return Component<Interactive>|null
      */
     public function get(ComponentId $id): ?Component
@@ -112,6 +152,76 @@ final readonly class ComponentRegistry
     public function has(ComponentId $id): bool
     {
         return isset($this->byId[$id->value]);
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    private function scopeHolding(?ComponentId $focused): ?array
+    {
+        if ($focused === null) {
+            return null;
+        }
+
+        foreach ($this->scopes as $scope) {
+            if (\in_array($focused->value, $scope, true)) {
+                return $scope;
+            }
+        }
+
+        return null;
+    }
+
+    private function isScoped(string $id): bool
+    {
+        foreach ($this->scopes as $scope) {
+            if (\in_array($id, $scope, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param list<list<string>> $scopes
+     */
+    private function withScopes(array $scopes): self
+    {
+        return $scopes === []
+            ? $this
+            : new self(
+                components: $this->components,
+                byId: $this->byId,
+                focusables: $this->focusables,
+                scopes: $scopes,
+            );
+    }
+
+    /**
+     * The component ids under each focus scope in the tree, innermost first, so a
+     * scope nested in another is the one that answers for a component in both.
+     *
+     * @return list<list<string>>
+     */
+    private static function scopesIn(Widget $widget): array
+    {
+        $scopes = [];
+
+        if ($widget instanceof WidgetContainer) {
+            foreach ($widget->children() as $child) {
+                array_push($scopes, ...self::scopesIn($child));
+            }
+        }
+
+        if ($widget instanceof FocusScope) {
+            $scopes[] = array_map(
+                static fn (Component $component): string => $component->id->value,
+                self::collect($widget),
+            );
+        }
+
+        return $scopes;
     }
 
     /**

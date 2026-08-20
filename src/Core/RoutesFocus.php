@@ -16,9 +16,11 @@ interface RoutesFocus extends Model
     public function update(Message $message, Rect $area, FocusState $focus = new FocusState()): UpdateResult;
 
     /**
-     * The components that can hold the keyboard, in tree order.
+     * The components the keyboard can walk from where it is, in tree order. A
+     * focus scope holding it answers with its own controls, so tab stays inside
+     * the chrome the reader stepped into.
      *
      * @return list<ComponentId>
      */
-    public function focusableIds(): array;
+    public function focusableIds(FocusState $focus = new FocusState()): array;
 }
