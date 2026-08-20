@@ -132,7 +132,14 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withRows(array $rows): self
     {
-        return $this->cloneWith(rows: self::asTypedRows($rows), rowsAreTyped: false, layoutMemo: self::newLayoutMemo());
+        $typed = self::asTypedRows($rows);
+
+        return $this->cloneWith(
+            rows: $typed,
+            rowsAreTyped: false,
+            selected: self::rowPlaceOf($this->selectedRow(), $typed),
+            layoutMemo: self::newLayoutMemo(),
+        );
     }
 
     /**
@@ -592,6 +599,29 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         }
 
         return $cells;
+    }
+
+    /**
+     * Where a row sits among these now, by what it reads, or -1 if it is no longer
+     * among them. A reader selects a record rather than a row number, so a refresh
+     * that adds rows above their choice must not answer with what slid into it.
+     *
+     * @param ?list<string> $text
+     * @param list<Row>     $rows
+     */
+    private static function rowPlaceOf(?array $text, array $rows): int
+    {
+        if ($text === null) {
+            return -1;
+        }
+
+        foreach ($rows as $place => $row) {
+            if (self::textOf($row) === $text) {
+                return $place;
+            }
+        }
+
+        return -1;
     }
 
     private function ensureCursorVisible(Rect $area): self
