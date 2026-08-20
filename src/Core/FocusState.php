@@ -45,6 +45,15 @@ final readonly class FocusState
     }
 
     /**
+     * Whether anything has said where the keyboard is yet. `nowhere()` is an
+     * answer; this is the absence of one.
+     */
+    public function isUndecided(): bool
+    {
+        return null === $this->focused && !$this->decided;
+    }
+
+    /**
      * Naming the same component is not the same state: undecided and nowhere both
      * name none, and settling the one is what stops the runtime filling the other.
      */

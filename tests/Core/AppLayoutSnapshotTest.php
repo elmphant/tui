@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
@@ -241,8 +242,8 @@ final class AppLayoutSnapshotTest extends TestCase
         self::assertSame($app, $result->model);
 
         $frame = new Frame(80, 24);
-        $app->render($frame, new RenderContext(Theme::dark()));
-        $app->render(new Frame(80, 24), new RenderContext(Theme::dark()));
+        $app->render($frame, self::sayingNobodyHoldsTheKeyboard());
+        $app->render(new Frame(80, 24), self::sayingNobodyHoldsTheKeyboard());
 
         self::assertSame(1, $layouts->count);
         self::assertNotSame(' ', $frame->characters[0], 'A reused plan must still render the widget tree');
@@ -255,7 +256,7 @@ final class AppLayoutSnapshotTest extends TestCase
         $app = new LayoutPlanCountingApp(Panel::new('Main'), $layouts);
         $area = Rect::fromSize(80, 24);
 
-        $app->render(new Frame(80, 24), new RenderContext(Theme::dark()));
+        $app->render(new Frame(80, 24), self::sayingNobodyHoldsTheKeyboard());
 
         self::assertSame(1, $layouts->count);
         self::assertNull(LayoutSnapshot::existingPlanFor($app, $area));
@@ -272,5 +273,13 @@ final class AppLayoutSnapshotTest extends TestCase
         ViewCallCounter::$count = 0;
         ComponentsCallCounter::$count = 0;
         BindingsCallCounter::$count = 0;
+    }
+
+    private static function sayingNobodyHoldsTheKeyboard(): RenderContext
+    {
+        $context = new RenderContext(Theme::dark());
+        $context->focusOn(FocusState::nowhere());
+
+        return $context;
     }
 }

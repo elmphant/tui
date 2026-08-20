@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\ComponentRegistry;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
@@ -85,6 +86,7 @@ final class ComponentTreeTest extends TestCase
         $frame = new Frame(20, 5);
         $area = new Rect(2, 1, 10, 3);
         $context = new RenderContext(Theme::dark());
+        $context->focusOn(FocusState::nowhere());
 
         $component->render($frame, $area, $context);
 

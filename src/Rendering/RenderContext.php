@@ -20,6 +20,7 @@ final class RenderContext
 {
     private ?LayoutPlan $layoutPlan = null;
     private FocusState $focus;
+    private FocusState $initialFocus;
     private int $focusDepth = 0;
     private int $componentDepth = 0;
 
@@ -52,6 +53,21 @@ final class RenderContext
         public readonly ColorProfile $colorProfile = ColorProfile::TrueColor,
     ) {
         $this->focus = new FocusState();
+        $this->initialFocus = $this->focus;
+    }
+
+    /**
+     * A context to draw a tree with nobody at the keyboard — what a test of layout
+     * or wording wants. The plain constructor leaves the question unanswered, which
+     * is fine for one widget on its own but refused for a tree of components.
+     */
+    public static function unfocused(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor): self
+    {
+        $context = new self($theme, $colorProfile);
+        $context->initialFocus = FocusState::nowhere();
+        $context->focusOn($context->initialFocus);
+
+        return $context;
     }
 
     /**
@@ -91,7 +107,7 @@ final class RenderContext
         $this->repaintDelay = null;
         $this->pendingPlacements = [];
         $this->rootPassRan = false;
-        $this->focus = new FocusState();
+        $this->focus = $this->initialFocus;
         $this->focusDepth = 0;
         $this->componentDepth = 0;
         $this->focusedHints = [];
@@ -196,6 +212,10 @@ final class RenderContext
      */
     public function withinComponent(ComponentId $id, Closure $render): void
     {
+        if ($this->focus->isUndecided()) {
+            throw new LogicException(sprintf('Component "%s" is being drawn before anything said where the keyboard is. Call focusOn() first — FocusState::nowhere() if the answer is nobody.', $id->value));
+        }
+
         $holdsFocus = $this->focus->focused()?->equals($id) ?? false;
 
         if ($holdsFocus) {

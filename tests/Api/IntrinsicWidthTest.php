@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Api;
 
 use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Mount;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
@@ -347,7 +348,9 @@ final class IntrinsicWidthTest extends TestCase
     private static function inkWidth(Widget $widget, int $width): int
     {
         $frame = new Frame($width, self::GENEROUS_HEIGHT);
-        $widget->render($frame, Rect::fromSize($width, self::GENEROUS_HEIGHT), new RenderContext(Theme::dark()));
+        $context = new RenderContext(Theme::dark());
+        $context->focusOn(FocusState::nowhere());
+        $widget->render($frame, Rect::fromSize($width, self::GENEROUS_HEIGHT), $context);
 
         $widest = 0;
 
