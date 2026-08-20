@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -101,6 +102,10 @@ final readonly class FilterableTable implements Focusable, MeasureHeight
     {
         if (!$message instanceof KeyMsg || !$this->focused) {
             return new UpdateResult($this);
+        }
+
+        if (FilterBar::keybindings()->matches($message, Actions::CANCEL)) {
+            return new UpdateResult($this->query === '' ? $this : $this->withQuery(''));
         }
 
         $result = (new ChildDispatcher())->dispatchOne($this->field(), $message, $this->fieldArea($area));

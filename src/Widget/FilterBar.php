@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -55,6 +57,18 @@ final class FilterBar
         if ($summary !== null && $summaryX > $area->x) {
             $frame->putStyled($summaryX, $area->y, $summary, $context->theme->dim);
         }
+    }
+
+    /**
+     * The key every filter in the family cancels on. A filter with something in it
+     * clears; an empty one must return itself rather than hand the key to its field,
+     * or a host above never learns the escape went spare.
+     */
+    public static function keybindings(): Keybindings
+    {
+        static $instance = null;
+
+        return $instance ??= new Keybindings([Actions::CANCEL => ['esc']]);
     }
 
     public static function field(string $query, bool $focused): TextInput

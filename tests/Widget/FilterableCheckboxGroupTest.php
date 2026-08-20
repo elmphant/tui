@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
@@ -104,6 +105,26 @@ final class FilterableCheckboxGroupTest extends TestCase
         $this->expectExceptionMessage('FilterableCheckboxGroup options must read differently; "Yes" is at 0 and 2');
 
         FilterableCheckboxGroup::new(['Yes', 'No', 'Yes']);
+    }
+
+    #[Test]
+    public function escapeClearsATypedQueryAndBringsEveryOptionBack(): void
+    {
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma'])->withFocus(true);
+
+        $narrowed = self::pressed($group, new KeyMsg('b'));
+        $cleared = self::pressed($narrowed, new KeyMsg(Key::Escape));
+
+        self::assertStringNotContainsString('alpha', self::drawn($narrowed), 'the query is narrowing to beta');
+        self::assertStringContainsString('alpha', self::drawn($cleared), 'and the escape puts the rest back');
+    }
+
+    private static function drawn(FilterableCheckboxGroup $group): string
+    {
+        $frame = new Frame(30, 8);
+        $group->render($frame, Rect::fromSize(30, 8), new RenderContext(Theme::dark()));
+
+        return ScreenBuffer::fromFrame($frame)->getPlainText();
     }
 
     private static function pressed(FilterableCheckboxGroup $group, Message ...$messages): FilterableCheckboxGroup

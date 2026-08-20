@@ -155,6 +155,12 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
             return new UpdateResult($this);
         }
 
+        if ($message instanceof KeyMsg && FilterBar::keybindings()->matches($message, Actions::CANCEL)) {
+            return new UpdateResult(
+                $this->field->value() === '' ? $this : $this->cloneWith(field: $this->field->withValue(''), cursor: 0),
+            );
+        }
+
         $dispatcher = new ChildDispatcher();
 
         // The boxes own the pointer as well as the keys that walk them: they are

@@ -310,14 +310,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      */
     public static function defaultKeybindings(): Keybindings
     {
-        return new Keybindings([
+        return (new Keybindings([
             Actions::CURSOR_UP => ['up'],
             Actions::CURSOR_DOWN => ['down'],
             Actions::PAGE_UP => ['shift+up', 'page_up'],
             Actions::PAGE_DOWN => ['shift+down', 'page_down'],
             Actions::SELECT => ['enter'],
-            Actions::CANCEL => ['esc'],
-        ]);
+        ]))->merge(FilterBar::keybindings());
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -330,10 +329,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return new UpdateResult($this);
         }
 
-        // With nothing to clear the model comes back untouched, which is how a
-        // host above learns the escape is still going spare.
-        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL) && $this->query() !== '') {
-            return new UpdateResult($this->withQuery(''));
+        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
+            return new UpdateResult($this->query() === '' ? $this : $this->withQuery(''));
         }
 
         // Choosing is the list's own move, but the choice is this widget's to keep:

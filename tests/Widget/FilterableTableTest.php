@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
@@ -483,6 +484,29 @@ final class FilterableTableTest extends TestCase
         self::assertSame('alpha', $typedIn->field()->value(), 'precondition: a filter was typed');
 
         self::assertSame('', $typedIn->withQuery('')->field()->value());
+    }
+
+    #[Test]
+    public function escapeClearsATypedQueryAndKeepsEverythingElseWhereItWas(): void
+    {
+        $table = $this->routes()->withFocus(true)->withQuery('ajax');
+
+        $cleared = $table->update(new KeyMsg(Key::Escape), new Rect(0, 0, 40, 6))->model;
+
+        self::assertInstanceOf(FilterableTable::class, $cleared);
+        self::assertSame('', $cleared->query(), 'the first escape belongs to the query');
+        self::assertNotSame($table, $cleared, 'and a changed model is how it says it took the key');
+    }
+
+    #[Test]
+    public function escapeOverAnEmptyQueryIsLeftForWhoeverIsAbove(): void
+    {
+        $table = $this->routes()->withFocus(true);
+
+        $answered = $table->update(new KeyMsg(Key::Escape), new Rect(0, 0, 40, 6));
+
+        self::assertSame($table, $answered->model, 'nothing to clear, so nothing is claimed');
+        self::assertNull($answered->command);
     }
 
     private function fieldIsUnderlined(FilterableTable $table): bool
