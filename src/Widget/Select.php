@@ -55,7 +55,15 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
     {
         Options::assertDistinct($options, 'Select');
 
-        return $this->cloneWith(options: $options);
+        if ($options === $this->options) {
+            return $this;
+        }
+
+        return $this->cloneWith(
+            options: $options,
+            selected: Options::placeOf($this->selectedValue(), $options),
+            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
+        );
     }
 
     public function withSelected(int $selected): self

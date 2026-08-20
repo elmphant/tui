@@ -59,7 +59,17 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     {
         Options::assertDistinct($options, 'Radio');
 
-        return $this->cloneWith(options: $options);
+        if ($options === $this->options) {
+            return $this;
+        }
+
+        // A radio always stands on something, so an option that has gone hands the
+        // choice to the first rather than to none.
+        return $this->cloneWith(
+            options: $options,
+            selected: max(0, Options::placeOf($this->selectedValue(), $options)),
+            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
+        );
     }
 
     public function withSelected(int $selected): self

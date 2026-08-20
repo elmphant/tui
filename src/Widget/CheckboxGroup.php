@@ -61,7 +61,25 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     {
         Options::assertDistinct($options, 'CheckboxGroup');
 
-        return $this->cloneWith(options: $options);
+        if ($options === $this->options) {
+            return $this;
+        }
+
+        $checked = [];
+        foreach ($this->checkedValues() as $value) {
+            $place = Options::placeOf($value, $options);
+
+            if ($place >= 0) {
+                $checked[] = $place;
+            }
+        }
+        sort($checked);
+
+        return $this->cloneWith(
+            options: $options,
+            checked: $checked,
+            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
+        );
     }
 
     /**

@@ -93,7 +93,12 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
             return $this;
         }
 
-        return $this->cloneWith(items: $items, rowIndex: RowIndex::of(count($items)));
+        return $this->cloneWith(
+            items: $items,
+            rowIndex: RowIndex::of(count($items)),
+            selected: self::placeOf($this->selectedItem(), $items),
+            cursor: max(0, min(self::placeOf($this->items[$this->cursor] ?? null, $items), count($items) - 1)),
+        );
     }
 
     public function withSelected(int $selected): self
@@ -500,5 +505,27 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         $cursor = min(max(0, $this->cursor), count($this->items) - 1);
 
         return $this->extents($area)->offsetShowing($cursor, $area->height, $this->scrollOffset);
+    }
+
+    /**
+     * Where an item sits among these now, by the value it filters under, or -1 if
+     * it is no longer among them. Two items filtering alike are the same record as
+     * far as a reader picking one is concerned.
+     *
+     * @param list<ListItem> $items
+     */
+    private static function placeOf(?ListItem $item, array $items): int
+    {
+        if ($item === null) {
+            return -1;
+        }
+
+        foreach ($items as $place => $candidate) {
+            if ($candidate->filterValue() === $item->filterValue()) {
+                return $place;
+            }
+        }
+
+        return -1;
     }
 }
