@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Widget\CheckboxGroup;
+use Elmphant\Tui\Widget\CheckboxRow;
 use Elmphant\Tui\Widget\ListView;
 use Elmphant\Tui\Widget\Radio;
+use Elmphant\Tui\Widget\RadioRow;
 use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\SimpleListItem;
 use PHPUnit\Framework\Attributes\Test;
@@ -71,5 +73,37 @@ final class AChoiceSurvivesItsOptionsChangingTest extends TestCase
         $grown = $ticked->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
 
         self::assertSame(['alpha', 'gamma'], $grown->checkedValues(), 'the ticks follow the options they were put on');
+    }
+
+    #[Test]
+    public function aRowKeepsTheOptionItWasOnWhenTheListGrows(): void
+    {
+        $chosen = RadioRow::new(['alpha', 'beta', 'gamma'])->withSelected(2);
+        self::assertSame('gamma', $chosen->selectedValue(), 'precondition: the reader picked gamma');
+
+        $grown = $chosen->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
+
+        self::assertSame('gamma', $grown->selectedValue());
+    }
+
+    #[Test]
+    public function theCursorStaysOnTheOptionItWasRestingOn(): void
+    {
+        $resting = RadioRow::new(['alpha', 'beta', 'gamma'])->withCursor(2);
+
+        $grown = $resting->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
+
+        self::assertSame(3, $grown->cursor(), 'the cursor is on an option, so it follows where that went');
+    }
+
+    #[Test]
+    public function aRowOfBoxesKeepsItsTicksOnTheSameLabels(): void
+    {
+        $ticked = CheckboxRow::new(['alpha', 'beta', 'gamma'])->withChecked([true, false, true]);
+        self::assertSame([0, 2], $ticked->checkedIndices(), 'precondition: alpha and gamma are ticked');
+
+        $grown = $ticked->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
+
+        self::assertSame([1, 3], $grown->checkedIndices(), 'the ticks are on labels, not on places in a row');
     }
 }

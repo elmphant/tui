@@ -69,7 +69,25 @@ final readonly class CheckboxRow implements OptionRow
      */
     public function withOptions(array $options): static
     {
-        return $this->cloneWith(options: $options);
+        if ($options === $this->options) {
+            return $this;
+        }
+
+        $ticked = [];
+        foreach ($this->checkedIndices() as $index) {
+            $place = Options::placeOf($this->options[$index] ?? null, $options);
+
+            if ($place >= 0) {
+                $ticked[$place] = true;
+            }
+        }
+
+        $checked = [];
+        foreach (array_keys($options) as $place) {
+            $checked[] = isset($ticked[$place]);
+        }
+
+        return $this->cloneWith(options: $options, checked: $checked);
     }
 
     /**
