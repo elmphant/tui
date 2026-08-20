@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
  * that place — so the widget answers with a record nobody picked, and nothing
  * on the screen says so.
  */
-final class AChoiceSurvivesItsOptionsChangingTest extends TestCase
+final class OptionsTest extends TestCase
 {
     #[Test]
     public function anOptionThatMovedIsStillTheChosenOne(): void

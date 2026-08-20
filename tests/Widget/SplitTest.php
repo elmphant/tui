@@ -470,6 +470,59 @@ final class SplitTest extends TestCase
     }
 
     /**
+     * @return list<int>
+     */
+    /**
+     * A press is a fresh grip, so a drag whose release went to a layer above must not
+     * go on resizing on the next unrelated drag.
+     */
+    #[Test]
+    public function aPressEndsADragWhoseReleaseNeverArrived(): void
+    {
+        $area = new Rect(0, 0, 40, 10);
+        $split = Split::row(SplitState::even(2), Text::new('left'), Text::new('right'));
+        $grabbed = $split->update(new MouseMsg(20, 5, MouseAction::Press, MouseButton::Left), $area)->model;
+        self::assertNotSame($split, $grabbed, 'precondition: the divider was grabbed');
+
+        $regripped = $grabbed->update(new MouseMsg(4, 5, MouseAction::Press, MouseButton::Left), $area)->model;
+        $dragged = $regripped->update(new MouseMsg(8, 5, MouseAction::Motion, MouseButton::Left), $area)->model;
+
+        self::assertSame(SplitState::even(2)->shares, $dragged->state()->shares);
+    }
+
+    /**
+     * Squeezed, the panes give ground from whatever sits above its floor, so one
+     * already at its floor keeps it.
+     */
+    #[Test]
+    public function thePaneWithRoomGivesGroundAndTheOneAtItsFloorKeepsIt(): void
+    {
+        $split = Split::row(new SplitState([100, 900]), Text::new('left'), Text::new('right'))
+            ->withMinimums(10, 4);
+
+        self::assertSame([10, 29], $this->paneWidths($split, new Rect(0, 0, 40, 6)), 'roomy at 40 columns');
+
+        $squeezed = $this->paneWidths($split, new Rect(0, 0, 20, 6));
+        self::assertSame([10, 9], $squeezed, 'the right pane gave up its slack');
+        self::assertSame(20, array_sum($squeezed) + 1, 'and every column is handed out, gap included');
+    }
+
+    /**
+     * Equal shares of an odd number of columns cannot come out even, and whatever is
+     * left over has to land somewhere or a column of the terminal stays blank.
+     */
+    #[Test]
+    public function theColumnThatWillNotDivideGoesToTheLastPane(): void
+    {
+        $split = Split::row(SplitState::even(3), Text::new('a'), Text::new('b'), Text::new('c'));
+
+        $widths = $this->paneWidths($split, new Rect(0, 0, 12, 6));
+
+        self::assertSame([3, 3, 4], $widths, 'ten columns among three panes leaves one over');
+        self::assertSame(12, array_sum($widths) + 2, 'and with the two gaps, nothing is left unpainted');
+    }
+
+    /**
      * @param list<int> $shares
      *
      * @return list<int>
@@ -511,9 +564,6 @@ final class SplitTest extends TestCase
         return $moved;
     }
 
-    /**
-     * @return list<int>
-     */
     private function paneWidths(Split $split, Rect $area): array
     {
         $widths = [];

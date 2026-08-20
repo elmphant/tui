@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
  * has to search the options for the value first — the same search the widget already
  * does to keep a choice across a reload.
  */
-final class AChoiceIsSetByValueNotByIndexTest extends TestCase
+final class OptionValueSettersTest extends TestCase
 {
     #[Test]
     public function theValueNamesWhatIsChosen(): void

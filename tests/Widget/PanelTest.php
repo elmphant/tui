@@ -41,6 +41,7 @@ use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\Separator;
 use Elmphant\Tui\Widget\Spacer;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -3136,6 +3137,20 @@ final class PanelTest extends TestCase
 
         self::assertSame(3, $this->scrollOffsetOf($withSpacerAbove->update($key, $area)->model));
         self::assertSame(1, $this->scrollOffsetOf($alone->update($key, $area)->model));
+    }
+
+    /**
+     * The guard against rebuilding compared the children against what the pane
+     * reports, which is its children with focus applied — so a focused panel never
+     * matched itself and dropped its scroll position and inner cursor every frame.
+     */
+    #[Test]
+    public function aFocusedPanelKeepsItsPaneWhenHandedTheSameChildren(): void
+    {
+        $children = [new TextInput(), new TextInput()];
+        $panel = Panel::new('Log')->withChildren($children)->withFocus(true);
+
+        self::assertSame($panel, $panel->withChildren($children));
     }
 
     protected function createFocusable(): Focusable

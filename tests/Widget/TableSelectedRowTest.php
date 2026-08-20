@@ -86,6 +86,25 @@ final class TableSelectedRowTest extends TestCase
     /**
      * @return list<Column>
      */
+    /**
+     * A reader selects a record, not a row number, so a refresh that adds rows above
+     * their choice must not answer with whatever slid into its place. A record that
+     * has gone takes the selection with it.
+     */
+    #[Test]
+    public function theSelectionStaysOnTheRecordItWasMadeOn(): void
+    {
+        $columns = [Column::new('Name', Constraint::flex()), Column::new('State', Constraint::flex())];
+        $chosen = Table::new($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])->withSelected(2);
+        self::assertSame(['gamma', 'on'], $chosen->selectedRow(), 'precondition: gamma was chosen');
+
+        $refreshed = $chosen->withRows([['zulu', 'off'], ['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']]);
+        self::assertSame(['gamma', 'on'], $refreshed->selectedRow(), 'a row added above moves nothing');
+
+        $withoutGamma = $chosen->withRows([['alpha', 'on'], ['beta', 'off']]);
+        self::assertNull($withoutGamma->selectedRow(), 'the record went, so the selection went with it');
+    }
+
     private static function columns(): array
     {
         return [

@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
  * answer is the pane's, or nothing could scroll a form while a field is being
  * filled in.
  */
-final class AKeyTheFocusedComponentIgnoresReachesWhatEnclosesItTest extends TestCase
+final class KeyBubblingTest extends TestCase
 {
     #[Test]
     public function theEnclosingComponentAnswersWhatTheFocusedOneIgnored(): void

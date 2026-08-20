@@ -4,20 +4,26 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\CheckboxGroup;
 use Elmphant\Tui\Widget\Dropdown;
 use Elmphant\Tui\Widget\FilterableList;
 use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\SimpleListItem;
+use Elmphant\Tui\Widget\TextInput;
+use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -305,6 +311,28 @@ final class DropdownTest extends TestCase
     }
 
     /**
+     * A list floating over the layout belongs to whatever holds the keyboard. Left
+     * hanging once the keyboard has gone it covers rows the reader is working in, and
+     * nothing they press shuts it.
+     */
+    #[Test]
+    public function anOpenListGoesWhenTheKeyboardMovesToAnotherComponent(): void
+    {
+        $driven = ModelHarness::for(new PickerBesideAFieldApp(), 30, 12)->initialize();
+
+        $driven->dispatch(new KeyMsg(' '));
+        self::assertStringContainsString(
+            'yaml',
+            $driven->renderScreen()->getPlainText(),
+            'precondition: the list is open',
+        );
+
+        $driven->dispatch(new KeyMsg(Key::Tab));
+
+        self::assertStringNotContainsString('yaml', $driven->renderScreen()->getPlainText());
+    }
+
+    /**
      * The anchor row (row 0) always redraws the current selection, open or
      * closed, so it would make a scroll-into-view assertion pass regardless
      * of what the popup itself shows. Only rows below it prove the popup drew.
@@ -365,5 +393,30 @@ final class DropdownTest extends TestCase
     private static function opened(Dropdown $dropdown): Dropdown
     {
         return $dropdown->withFocus(true)->update(new KeyMsg(' '), self::anchor())->model;
+    }
+}
+
+final readonly class PickerBesideAFieldApp extends App
+{
+    public function __construct(
+        public ?Dropdown $picker = null,
+        public TextInput $field = new TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind(
+                'picker',
+                $this->picker ?? Dropdown::new(Select::new(['json', 'yaml'])),
+                static fn (self $app, Dropdown $picker): self => $app->cloneWith(picker: $picker),
+            ),
+            Component::bind(
+                'field',
+                $this->field,
+                static fn (self $app, TextInput $field): self => $app->cloneWith(field: $field),
+            ),
+        );
     }
 }

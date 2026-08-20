@@ -4,18 +4,25 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Runtime;
 
+use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\RoutesFocus;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\Trace\TraceEvent;
+use Elmphant\Tui\Testing\InMemoryTracer;
 use Elmphant\Tui\Testing\VirtualTerminal;
+use Elmphant\Tui\Widget\TextInput;
+use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -31,6 +38,60 @@ final class ProgramFocusCapabilityTest extends TestCase
 
         self::assertInstanceOf(FocusRoutingModel::class, $final);
         self::assertEquals(ComponentId::named('pane'), $final->seen);
+    }
+
+    /**
+     * `Cmd::focusNothing()` is how an app keeps the keyboard for itself. Undecided and
+     * decided-nowhere both name no component, so a runtime comparing only the
+     * component read one as the other and settled the keyboard on the first field.
+     */
+    #[Test]
+    public function theKeyboardStaysNowhereWhenAnAppAsksForNoFocus(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(40, 6);
+        $terminal->simulateInput('x');
+
+        Program::new(new KeyboardStartsWithTheAppApp())
+            ->withTerminal($terminal)
+            ->withTracer($tracer)
+            ->start();
+
+        $landedOn = array_values(array_filter(array_map(
+            static fn (array $update): mixed => $update['focused'] ?? null,
+            $tracer->fieldsOf(TraceEvent::Update),
+        )));
+
+        self::assertSame([], $landedOn, 'nowhere is a decision, not the absence of one');
+    }
+}
+
+final readonly class KeyboardStartsWithTheAppApp extends App
+{
+    public function __construct(
+        public TextInput $first = new TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind(
+                'first',
+                $this->first,
+                static fn (self $app, TextInput $field): self => $app->cloneWith(first: $field),
+            ),
+        );
+    }
+
+    protected function setup(): ?Cmd
+    {
+        return Cmd::focusNothing();
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        return UpdateResult::changed($this, Cmd::quit());
     }
 }
 

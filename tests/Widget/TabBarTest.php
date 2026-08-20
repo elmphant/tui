@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
@@ -41,6 +45,7 @@ use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\TabBar;
 use Elmphant\Tui\Widget\TabPage;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
@@ -5080,6 +5085,53 @@ final class TabBarTest extends TestCase
         );
     }
 
+    /**
+     * The reader is looking at a page, not at a place on the strip, so adding one in
+     * front must not silently show them a different page. A page that has gone leaves
+     * them on the first, since a bar always shows something.
+     */
+    #[Test]
+    public function theTabBarKeepsThePageItWasShowing(): void
+    {
+        $bar = TabBar::new()->addTab('Alpha')->addTab('Beta')->addTab('Gamma')->withActiveTab(2);
+
+        $grown = $bar->withTabs([
+            new TabPage('Zulu'),
+            new TabPage('Alpha'),
+            new TabPage('Beta'),
+            new TabPage('Gamma'),
+        ]);
+        self::assertSame(3, $grown->activeTab(), 'Gamma moved along, and the reader with it');
+
+        $shrunk = $bar->withTabs([new TabPage('Alpha'), new TabPage('Beta')]);
+        self::assertSame(0, $shrunk->activeTab(), 'Gamma is gone, so the first page shows');
+    }
+
+    /**
+     * Which child the keyboard is on is the pane's own cursor, and routing marks the
+     * focused component on every message. Taking focus is how a pane is told to seat
+     * that cursor at the start, so a bar marked while it already holds the keyboard
+     * walked the reader back to the first field between keystrokes.
+     */
+    #[Test]
+    public function aCharacterLandsInTheFieldTheReaderTabbedTo(): void
+    {
+        $area = new Rect(0, 0, 60, 20);
+        $onTheBar = new FocusState(ComponentId::named('bar'));
+
+        $tabbed = (new TwoFieldsInATabApp())->update(new KeyMsg(Key::Tab), $area, $onTheBar)->model;
+        $typed = $tabbed->update(new KeyMsg('x'), $area, $onTheBar)->model;
+
+        self::assertSame(
+            ['', 'x'],
+            array_map(
+                static fn (Widget $field): string => $field instanceof TextInput ? $field->value() : '?',
+                $typed->bar()->children(),
+            ),
+            'the character belongs to the field the reader walked to',
+        );
+    }
+
     private function screenWithTheme(TabBar $bar, Rect $area, Theme $theme): string
     {
         $frame = new Frame($area->width, $area->height);
@@ -5786,5 +5838,26 @@ final readonly class NotAWidgetReturningChild implements Interactive
     public function update(Message $message, Rect $area): UpdateResult
     {
         return new UpdateResult(new NotAWidgetModel());
+    }
+}
+
+final readonly class TwoFieldsInATabApp extends App
+{
+    public function __construct(private ?TabBar $bar = null)
+    {
+    }
+
+    public function bar(): TabBar
+    {
+        return $this->bar ?? TabBar::new()->addTab('Form')->add(new TextInput())->add(new TextInput());
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            'bar',
+            $this->bar(),
+            static fn (self $app, TabBar $bar): self => $app->cloneWith(bar: $bar),
+        );
     }
 }

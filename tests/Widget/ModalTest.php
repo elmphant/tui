@@ -1391,6 +1391,27 @@ final class ModalTest extends TestCase
         self::assertSame(Attr::ITALIC | Attr::FAINT, $frame->attributes[1]);
     }
 
+    // ---------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------
+
+    /**
+     * Asked, never stored: a remembered flag needed resetting and survived into the
+     * next opening, so a host keeping its dialog could only ask once.
+     */
+    #[Test]
+    public function havingBeenDismissedOnceDoesNotDismissItEverAfter(): void
+    {
+        $area = new Rect(0, 0, 40, 20);
+        $modal = Modal::new('Support', Text::new('body'));
+        $escape = new KeyMsg(Key::Escape);
+
+        $shownAgain = $modal->update($escape, $area)->model;
+        self::assertTrue($shownAgain->dismisses($escape, $area), 'precondition: escape closes it');
+
+        self::assertFalse($shownAgain->dismisses(new KeyMsg('x'), $area));
+    }
+
     protected function setUp(): void
     {
         $this->context = new RenderContext(Theme::dark());
@@ -1411,10 +1432,6 @@ final class ModalTest extends TestCase
             }
         };
     }
-
-    // ---------------------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------------------
 
     private function createStableInteractiveWidget(): Interactive
     {

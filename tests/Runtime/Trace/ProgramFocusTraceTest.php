@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
  * key that appears to do nothing turns on, so a trace that cannot say them
  * cannot explain the commonest kind of report.
  */
-final class ProgramTracesWhereTheKeyboardIsTest extends TestCase
+final class ProgramFocusTraceTest extends TestCase
 {
     #[Test]
     public function anUpdateNamesTheComponentHoldingTheKeyboard(): void

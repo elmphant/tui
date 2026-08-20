@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
  * between the panes they read in. Inside it, tab walks its own controls; the way
  * out is a key that says so.
  */
-final class AFocusScopeKeepsTabAmongItsOwnControlsTest extends TestCase
+final class FocusScopeRingTest extends TestCase
 {
     #[Test]
     public function tabFromTheLastControlComesBackToTheFirstRatherThanLeaving(): void
@@ -71,6 +71,17 @@ final class AFocusScopeKeepsTabAmongItsOwnControlsTest extends TestCase
             $command->applyTo($focus, $app->focusableIds($focus))->focused()?->value,
             'a scope is a ring wherever it sits, not only when it comes first',
         );
+    }
+
+    /**
+     * Taking the scopes off the ring assumes there is content beside the chrome. A
+     * tree that is all scope has none, and an empty ring leaves the keyboard nowhere
+     * to land.
+     */
+    #[Test]
+    public function aTreeThatIsNothingButAScopeStillOffersItsControls(): void
+    {
+        self::assertNotSame([], (new NothingButAScopeApp())->focusableIds());
     }
 
     private function tabbedFrom(string $id, bool $backwards = false): ?string
@@ -192,5 +203,22 @@ final readonly class FilterRowScope implements Widget, WidgetContainer, FocusSco
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $this->row->render($frame, $area, $context);
+    }
+}
+
+final readonly class NothingButAScopeApp extends App
+{
+    public function __construct(
+        public TextInput $only = new TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return new FilterRowScope(Component::bind(
+            'only',
+            $this->only,
+            static fn (self $app, TextInput $field): self => $app->cloneWith(only: $field),
+        ));
     }
 }

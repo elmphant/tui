@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Widget\FilterableTable;
 use Elmphant\Tui\Widget\FilterBar;
+use Elmphant\Tui\Widget\TextInput;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -467,6 +468,21 @@ final class FilterableTableTest extends TestCase
         $component = Component::bind('routes', $table, static fn (Model $app, FilterableTable $replacement): Model => $app);
 
         self::assertEquals($table->sizing(), $component->sizing(), 'The component stands in for the table it was given');
+    }
+
+    /**
+     * The query was kept twice — a string of its own and the field it was typed into
+     * — so setting only the string left the bar reading one filter while the rows
+     * were narrowed by another.
+     */
+    #[Test]
+    public function clearingTheQueryClearsWhatTheFieldShows(): void
+    {
+        $typedIn = FilterableTable::new(['Name'], [['alpha'], ['beta']])
+            ->withField(TextInput::new()->withValue('alpha'));
+        self::assertSame('alpha', $typedIn->field()->value(), 'precondition: a filter was typed');
+
+        self::assertSame('', $typedIn->withQuery('')->field()->value());
     }
 
     private function fieldIsUnderlined(FilterableTable $table): bool

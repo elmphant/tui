@@ -369,6 +369,23 @@ final class ButtonTest extends TestCase
         self::assertSame($theme->dim->foregroundValue(), $frame->foregrounds[11 + 4], 'the first label cell');
     }
 
+    /**
+     * Disabled between the press and the release, it never sees the release — so it
+     * has to let go, or it fires on the next bare one as though it had been pushed.
+     */
+    #[Test]
+    public function aReleaseWithNoPressBehindItStartsNothing(): void
+    {
+        $area = new Rect(0, 0, 12, 3);
+        $press = new MouseMsg(2, 1, MouseAction::Press, MouseButton::Left);
+        $release = new MouseMsg(2, 1, MouseAction::Release, MouseButton::Left);
+
+        $held = Button::new('Run', new TestMessage('run'))->update($press, $area)->model;
+        $whileDisabled = $held->withDisabled(true)->update($release, $area)->model;
+
+        self::assertNull($whileDisabled->withDisabled(false)->update($release, $area)->command);
+    }
+
     protected function createFocusable(): Focusable
     {
         return Button::new('Run', new TestMessage('run'));
