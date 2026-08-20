@@ -95,7 +95,14 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
      */
     public function withTabs(array $tabs): self
     {
-        return $this->cloneWith(tabs: $tabs);
+        if ($tabs === $this->tabs) {
+            return $this;
+        }
+
+        return $this->cloneWith(tabs: $tabs, activeTab: self::placeOfTab(
+            ($this->tabs[$this->activeTab] ?? null)?->label,
+            $tabs,
+        ));
     }
 
     /**
@@ -129,14 +136,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     }
 
     /**
-     * The frame can be drawn as active without the bar claiming the keyboard,
-     * which focus alone cannot express.
-     */
-    /**
      * Draw the border the way a focused bar draws it, without taking focus.
-     *
-     * The style comes from the theme in use at render time, so it stays
-     * correct when the same bar is rendered with another theme.
      */
     public function withEmphasizedBorder(bool $emphasized = true): self
     {
@@ -261,10 +261,22 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     }
 
     /**
+     * @param list<TabPage> $tabs
+     */
+    private static function placeOfTab(?string $label, array $tabs): int
+    {
+        foreach ($tabs as $place => $tab) {
+            if ($tab->label === $label) {
+                return $place;
+            }
+        }
+
+        return 0;
+    }
+
+    /**
      * Focus belongs to the active page; every other page is blurred, so
      * switching to one never arrives with two children lit.
-     *
-     * @param Closure(ScrollPane): ScrollPane $active
      *
      * @return list<TabPage>
      */
