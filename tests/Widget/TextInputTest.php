@@ -13,6 +13,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\CursorShape;
@@ -2162,6 +2163,31 @@ final class TextInputTest extends TestCase
 
         self::assertSame('', $cleared->value());
         self::assertSame(0, $cleared->cursor(), 'and the caret comes back to the start with it');
+    }
+
+    /**
+     * The runtime turns a bracketed paste into a PasteMsg, and nothing read one, so
+     * pasting into a field did nothing at all. Breaks and tabs become spaces, since
+     * one control character in a one-line field is drawn as a hole and submitted with
+     * the answer, and the char limit holds for a paste as it does for typing.
+     */
+    #[Test]
+    public function pastedTextIsInsertedWhereTheCursorIs(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $field = TextInput::new()->withValue('ab')->withFocus(true);
+
+        self::assertSame('abXY', $field->update(new PasteMsg('XY'), $area)->model->value());
+        self::assertSame(
+            'one two three',
+            TextInput::new()->withFocus(true)->update(new PasteMsg("one\r\ntwo\tthree"), $area)->model->value(),
+            'a line break from the clipboard is a space',
+        );
+        self::assertSame(
+            'abX',
+            $field->withCharLimit(3)->update(new PasteMsg('XYZ'), $area)->model->value(),
+            'a limit typing cannot pass is not one a paste walks through',
+        );
     }
 
     protected function createFocusable(): Focusable

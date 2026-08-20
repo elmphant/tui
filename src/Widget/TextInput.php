@@ -17,6 +17,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\CursorShape;
 use Elmphant\Tui\Rendering\Frame;
@@ -156,6 +157,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware
     {
         return match (true) {
             $message instanceof KeyMsg && $this->focused => $this->handleKey($message, $area),
+            $message instanceof PasteMsg && $this->focused => new UpdateResult($this->pasted($message->content) ?? $this),
             $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area),
             default => new UpdateResult($this),
         };
@@ -313,6 +315,31 @@ final readonly class TextInput implements Focusable, KeybindingsAware
         $after = self::graphemeSubstring($this->value, $this->cursor);
 
         return $this->cloneWith(value: $before . $character . $after, cursor: $this->cursor + 1);
+    }
+
+    private function pasted(string $content): ?self
+    {
+        // One line, so a break or a tab from the clipboard becomes a space rather than
+        // a control character drawn as a hole and submitted as part of the answer.
+        $content = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $content) ?? '';
+
+        if ($this->charLimit > 0) {
+            $room = $this->charLimit - self::graphemeLength($this->value);
+
+            if ($room <= 0) {
+                return null;
+            }
+
+            $content = self::graphemeSubstring($content, 0, $room);
+        }
+
+        $before = self::graphemeSubstring($this->value, 0, $this->cursor);
+        $after = self::graphemeSubstring($this->value, $this->cursor);
+
+        return $this->cloneWith(
+            value: $before . $content . $after,
+            cursor: $this->cursor + self::graphemeLength($content),
+        );
     }
 
     private function deleteCharBackward(): ?self
