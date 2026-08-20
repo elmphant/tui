@@ -317,8 +317,7 @@ final class ModalTest extends TestCase
         $modal = Modal::new('Title', Text::new('Content'));
         $area = Rect::fromSize(80, 24);
 
-        $result = $modal->update(new KeyMsg(Key::Escape), $area);
-        self::assertTrue($result->model->isDismissed());
+        self::assertTrue($modal->dismisses(new KeyMsg(Key::Escape), $area));
     }
 
     #[Test]
@@ -338,8 +337,7 @@ final class ModalTest extends TestCase
         $area = new Rect(0, 0, 80, 24);
 
         $mouseMessage = new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left);
-        $result = $modal->update($mouseMessage, $area);
-        self::assertTrue($result->model->isDismissed());
+        self::assertTrue($modal->dismisses($mouseMessage, $area));
     }
 
     #[Test]
@@ -349,8 +347,7 @@ final class ModalTest extends TestCase
         $area = new Rect(0, 0, 80, 24);
 
         $mouseMessage = new MouseMsg(40, 12, MouseAction::Press, MouseButton::Left);
-        $result = $modal->update($mouseMessage, $area);
-        self::assertFalse($result->model->isDismissed());
+        self::assertFalse($modal->dismisses($mouseMessage, $area));
     }
 
     #[Test]
@@ -359,8 +356,7 @@ final class ModalTest extends TestCase
         $modal = Modal::new('Title', Text::new('Content'));
         $area = Rect::fromSize(80, 24);
 
-        $result = $modal->update(new KeyMsg('a'), $area);
-        self::assertFalse($result->model->isDismissed());
+        self::assertFalse($modal->dismisses(new KeyMsg('a'), $area));
     }
 
     #[Test]
@@ -370,8 +366,7 @@ final class ModalTest extends TestCase
         $area = Rect::fromSize(80, 24);
 
         $mouseMessage = new MouseMsg(0, 0, MouseAction::Motion, MouseButton::None);
-        $result = $modal->update($mouseMessage, $area);
-        self::assertFalse($result->model->isDismissed());
+        self::assertFalse($modal->dismisses($mouseMessage, $area));
     }
 
     // ---------------------------------------------------------------
@@ -1289,9 +1284,10 @@ final class ModalTest extends TestCase
         $modal = Modal::new('Title', Text::new('Content'))
             ->withKeybindings(new Keybindings([Actions::CANCEL => ['ctrl+g']]));
 
-        $result = $modal->update(new KeyMsg('g', ctrl: true), Rect::fromSize(80, 24));
+        $rebound = new KeyMsg('g', ctrl: true);
+        $result = $modal->update($rebound, Rect::fromSize(80, 24));
 
-        self::assertTrue($result->model->isDismissed(), 'a rebound cancel key dismisses the modal');
+        self::assertTrue($modal->dismisses($rebound, Rect::fromSize(80, 24)), 'a rebound cancel key dismisses the modal');
         self::assertNotNull($result->command);
     }
 
@@ -1365,7 +1361,7 @@ final class ModalTest extends TestCase
 
         $result = $modal->update(new KeyMsg('x'), $area);
         self::assertInstanceOf(UpdateResult::class, $result);
-        self::assertFalse($result->model->isDismissed());
+        self::assertFalse($modal->dismisses(new KeyMsg('x'), $area));
     }
 
     #[Test]

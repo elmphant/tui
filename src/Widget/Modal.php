@@ -38,7 +38,6 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
         private bool $sizedToContent,
         private int $widthPercent,
         private int $heightPercent,
-        private bool $dismissed,
         private bool $focused = false,
         private ?Style $borderStyleOverride = null,
         private ?Style $titleStyleOverride = null,
@@ -55,7 +54,6 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
             sizedToContent: false,
             widthPercent: 60,
             heightPercent: 60,
-            dismissed: false,
         );
     }
 
@@ -67,11 +65,6 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     public function withContent(Widget $content): self
     {
         return $this->cloneWith(content: $content);
-    }
-
-    public function isDismissed(): bool
-    {
-        return $this->dismissed;
     }
 
     public function isFocused(): bool
@@ -158,12 +151,27 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
         return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
+    /**
+     * Whether this message is the one that closes the dialog. Asked, never stored:
+     * a remembered flag needs someone to reset it and survives into the next
+     * opening, so a host that keeps its modal could only ever ask once.
+     */
+    public function dismisses(Message $message, Rect $area): bool
+    {
+        if ($message instanceof KeyMsg) {
+            return $this->effectiveKeybindings()->matches($message, Actions::CANCEL);
+        }
+
+        return $message instanceof MouseMsg
+            && $message->isClick()
+            && !$message->inRect($this->computeModalRect($area));
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
         return match (true) {
-            $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL),
-            $message instanceof MouseMsg && $message->isClick() && !$message->inRect($this->computeModalRect($area)) => new UpdateResult(
-                $this->cloneWith(dismissed: true),
+            $this->dismisses($message, $area) => new UpdateResult(
+                $this,
                 Cmd::message(new ModalDismissed($this->title)),
             ),
 
