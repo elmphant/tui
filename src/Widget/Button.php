@@ -100,8 +100,12 @@ final readonly class Button implements Focusable, KeybindingsAware
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        // Being held is only true while the reader is holding it. A button disabled
+        // between the press and the release never sees the release, so it has to let
+        // go here or it draws pressed once enabled again and fires on the next bare
+        // release as though someone had pushed it.
         if ($this->disabled) {
-            return new UpdateResult($this);
+            return new UpdateResult($this->withArmed(false));
         }
 
         return match (true) {
