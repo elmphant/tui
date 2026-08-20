@@ -170,7 +170,10 @@ final class Terminal implements TerminalInterface, ReportsOutputStats
             && function_exists('stream_isatty') && stream_isatty($this->stdin)) {
             try {
                 $output = $this->runStty(['size']);
-                if (preg_match('/(\d+)\s+(\d+)/', $output, $matches) === 1) {
+                // A pty that cannot say how big it is answers zero. Taken at its word
+                // that is a screen with nothing on it.
+                if (preg_match('/(\d+)\s+(\d+)/', $output, $matches) === 1
+                    && (int)$matches[1] > 0 && (int)$matches[2] > 0) {
                     return [(int)$matches[2], (int)$matches[1]];
                 }
             } catch (TerminalException) {
@@ -181,8 +184,8 @@ final class Terminal implements TerminalInterface, ReportsOutputStats
         $lines = getenv('LINES');
 
         return [
-            (int)($columns !== false && $columns !== '' ? $columns : 80),
-            (int)($lines !== false && $lines !== '' ? $lines : 24),
+            self::positiveOr($columns, 80),
+            self::positiveOr($lines, 24),
         ];
     }
 
@@ -350,6 +353,11 @@ final class Terminal implements TerminalInterface, ReportsOutputStats
     public function inputStream(): mixed
     {
         return $this->stdin;
+    }
+
+    private static function positiveOr(string|false $value, int $fallback): int
+    {
+        return $value !== false && (int)$value > 0 ? (int)$value : $fallback;
     }
 
     private function assertPosixTty(): void

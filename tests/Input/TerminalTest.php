@@ -587,6 +587,30 @@ final class TerminalTest extends TestCase
         self::assertSame("\x1b]0;ABCDE\x07", stream_get_contents($this->stdout));
     }
 
+    /**
+     * @return array{resource, resource}
+     */
+    /**
+     * A pty that cannot say how big it is reports zero — docker, CI, tmux control
+     * mode. Taken at its word it gives a nought-by-nought screen and the app draws
+     * nothing, where the fallback would have shown something.
+     */
+    #[Test]
+    public function zeroColumnsFallBackToTheDefault(): void
+    {
+        putenv('COLUMNS=0');
+        putenv('LINES=0');
+
+        try {
+            $size = (new Terminal(fopen('php://memory', 'rb+')))->size();
+        } finally {
+            putenv('COLUMNS');
+            putenv('LINES');
+        }
+
+        self::assertSame([80, 24], $size);
+    }
+
     protected function setUp(): void
     {
         $this->stdin = fopen('php://memory', 'r+');
@@ -599,9 +623,6 @@ final class TerminalTest extends TestCase
         fclose($this->stdout);
     }
 
-    /**
-     * @return array{resource, resource}
-     */
     private function createNonBlockingSocketPair(): array
     {
         [$reader, $writer] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
