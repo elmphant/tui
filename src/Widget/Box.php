@@ -15,7 +15,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 
-final readonly class Box implements Widget, WidgetContainer
+final readonly class Box implements Widget, WidgetContainer, MeasureHeight
 {
     use Cloneable;
 
@@ -69,19 +69,30 @@ final readonly class Box implements Widget, WidgetContainer
         return $this->cloneWith(titleStyleOverride: $style);
     }
 
+    /**
+     * A box is as tall as what it holds, which only a width can answer — so it
+     * asks to be measured rather than naming a height it cannot know here.
+     */
     public function sizing(): Sizing
     {
+        return Sizing::of(Constraint::flex(), Constraint::content());
+    }
+
+    public function measureHeight(int $width): int
+    {
+        $padding = $this->padding;
+        $sides = $padding === null ? 0 : $padding->left + $padding->right;
+        $ends = $padding === null ? 0 : $padding->top + $padding->bottom;
+        $inner = max(0, $width - 2 - $sides);
         $childHeight = 0;
+
         foreach ($this->children as $child) {
-            $childHeight += max(1, $child->sizing()->rows->min);
+            $childHeight += $child instanceof MeasureHeight
+                ? max(1, $child->measureHeight($inner))
+                : max(1, $child->sizing()->rows->min);
         }
 
-        $overhead = 2;
-        if ($this->padding !== null) {
-            $overhead += $this->padding->top + $this->padding->bottom;
-        }
-
-        return Sizing::of(Constraint::flex(), Constraint::exact($childHeight + $overhead));
+        return $childHeight + 2 + $ends;
     }
 
     /**
@@ -109,7 +120,11 @@ final readonly class Box implements Widget, WidgetContainer
                 return;
             }
 
-            $childHeight = max(1, $child->sizing()->rows->min);
+            // Cells and prose wrap, so what a child needs is what it measures at
+            // the width it is given; a row constraint's floor is not that.
+            $childHeight = $child instanceof MeasureHeight
+                ? max(1, $child->measureHeight($contentArea->width))
+                : max(1, $child->sizing()->rows->min);
 
             yield [
                 $child,

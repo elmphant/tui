@@ -16,6 +16,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Box;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,6 +35,28 @@ final class BoxTest extends TestCase
         self::assertSame([$first, $second], [$placements[0][0], $placements[1][0]]);
         self::assertTrue((new Rect(1, 1, 10, 1))->equals($placements[0][1]));
         self::assertTrue((new Rect(1, 2, 10, 1))->equals($placements[1][1]));
+    }
+
+    #[Test]
+    public function aChildThatWrapsIsGivenEveryLineItNeeds(): void
+    {
+        $wrapping = Paragraph::fromText('one two three four five six seven eight nine ten');
+
+        $placements = iterator_to_array(Box::new('Held')->add($wrapping)->childWidgets(new Rect(0, 0, 14, 12)));
+
+        self::assertSame(
+            5,
+            $placements[0][1]->height,
+            'the text wraps to five lines at this width, and a box that hands it one drops four',
+        );
+    }
+
+    #[Test]
+    public function itMeasuresTheRowsItsChildrenWrapTo(): void
+    {
+        $box = Box::new('Held')->add(Paragraph::fromText('one two three four five six seven eight nine ten'));
+
+        self::assertSame(7, $box->measureHeight(14), 'five wrapped lines, and the border above and below them');
     }
 
     #[Test]
@@ -58,36 +81,38 @@ final class BoxTest extends TestCase
     }
 
     #[Test]
-    public function constraintIncludesBorderAndChildren(): void
+    public function itsHeightCountsItsBorderAndItsChildren(): void
     {
         $box = Box::new()
             ->add(Text::new('Line 1'))
             ->add(Text::new('Line 2'));
 
-        $constraint = $box->sizing()->rows;
-
-        self::assertSame(4, $constraint->min);
-        self::assertSame(4, $constraint->max);
+        self::assertSame(4, $box->measureHeight(20));
     }
 
     #[Test]
-    public function constraintWithPadding(): void
+    public function itsHeightCountsThePaddingToo(): void
     {
         $box = Box::new()
             ->add(Text::new('Hello'))
             ->withPadding(Spacing::vertical(1));
 
-        $constraint = $box->sizing()->rows;
-
-        self::assertSame(5, $constraint->min);
+        self::assertSame(5, $box->measureHeight(20));
     }
 
     #[Test]
-    public function constraintEmptyBox(): void
+    public function itAsksToBeMeasuredRatherThanGrowingToFill(): void
     {
-        $constraint = Box::new()->sizing()->rows;
+        $rows = Box::new()->add(Text::new('Hello'))->sizing()->rows;
 
-        self::assertSame(2, $constraint->min);
+        self::assertSame(0, $rows->flex, 'a box is as tall as what it holds and no taller');
+        self::assertTrue($rows->measuresContent, 'and the height it holds is answered by measuring');
+    }
+
+    #[Test]
+    public function anEmptyBoxIsJustItsBorder(): void
+    {
+        self::assertSame(2, Box::new()->measureHeight(20));
     }
 
     #[Test]
@@ -225,14 +250,11 @@ final class BoxTest extends TestCase
      * Kills L59 DecrementInteger: max(1, $constraint->min) → max(0, ...).
      */
     #[Test]
-    public function constraintTreatsZeroMinChildAsMinimumOneRow(): void
+    public function aChildThatAsksForNoRowsStillGetsOne(): void
     {
-        $zeroMinWidget = $this->createWidgetWithConstraint(Constraint::exact(0));
+        $box = Box::new()->add($this->createWidgetWithConstraint(Constraint::exact(0)));
 
-        $box = Box::new()->add($zeroMinWidget);
-        $constraint = $box->sizing()->rows;
-
-        self::assertSame(3, $constraint->min, 'Zero-min child must still contribute 1 row');
+        self::assertSame(3, $box->measureHeight(20), 'a child drawing nothing would otherwise vanish');
     }
 
     /**
