@@ -68,7 +68,9 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
 
     public function hints(): array
     {
-        return $this->effectiveKeybindings()->hints(['clear' => Actions::CLEAR_LINE]);
+        return $this->effectiveKeybindings()->hints(
+            $this->value === '' ? [] : ['clear' => Actions::CLEAR_LINE],
+        );
     }
 
     public function value(): string

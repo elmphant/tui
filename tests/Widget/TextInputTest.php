@@ -38,9 +38,15 @@ final class TextInputTest extends TestCase
      * field reads as frozen for as many presses as the cursor was out by.
      */
     #[Test]
-    public function itNamesTheKeysItAnswers(): void
+    public function itNamesNoKeyWhileThereIsNothingToClear(): void
     {
-        self::assertSame(['Ctrl+U' => 'clear'], (new TextInput())->hints());
+        self::assertSame([], (new TextInput())->hints());
+    }
+
+    #[Test]
+    public function itNamesTheKeyThatEmptiesWhatWasTyped(): void
+    {
+        self::assertSame(['Ctrl+U' => 'clear'], (new TextInput())->withValue('typed')->hints());
     }
 
     #[Test]
