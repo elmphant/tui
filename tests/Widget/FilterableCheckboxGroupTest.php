@@ -48,6 +48,20 @@ final class FilterableCheckboxGroupTest extends TestCase
     }
 
     #[Test]
+    public function aGroupWithSomethingTypedInItNamesTheKeyThatClearsIt(): void
+    {
+        $typed = self::pressed(
+            FilterableCheckboxGroup::new(['alpha', 'beta'])->withFocus(true),
+            new KeyMsg('a'),
+        );
+
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'toggle', 'Esc' => 'clear filter'],
+            $typed->hints(),
+        );
+    }
+
+    #[Test]
     public function aGlobalRebindingWalksTheBoxesInsteadOfTypingIntoTheField(): void
     {
         $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
