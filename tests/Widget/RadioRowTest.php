@@ -62,11 +62,11 @@ final class RadioRowTest extends TestCase
 
         $walked = $row->update(new KeyMsg(Key::Right), $area)->model;
         self::assertInstanceOf(RadioRow::class, $walked);
-        self::assertSame(-1, $walked->selected(), 'walking alone picks nothing');
+        self::assertSame(-1, $walked->selectedIndex(), 'walking alone picks nothing');
 
         $picked = $walked->update(new KeyMsg(' '), $area)->model;
         self::assertInstanceOf(RadioRow::class, $picked);
-        self::assertSame(1, $picked->selected());
+        self::assertSame(1, $picked->selectedIndex());
     }
 
     #[Test]
@@ -93,7 +93,7 @@ final class RadioRowTest extends TestCase
         $cleared = $row->update(new KeyMsg(' '), $area)->model;
 
         self::assertInstanceOf(RadioRow::class, $cleared);
-        self::assertSame(-1, $cleared->selected(), 'pressing the one already picked puts it back down');
+        self::assertSame(-1, $cleared->selectedIndex(), 'pressing the one already picked puts it back down');
         self::assertNull($cleared->selectedValue());
     }
 
@@ -109,7 +109,7 @@ final class RadioRowTest extends TestCase
         )->model;
 
         self::assertInstanceOf(RadioRow::class, $cleared);
-        self::assertSame(-1, $cleared->selected());
+        self::assertSame(-1, $cleared->selectedIndex());
     }
 
     #[Test]
@@ -152,7 +152,7 @@ final class RadioRowTest extends TestCase
         $picked = $row->update(new MouseMsg(12, 0, MouseAction::Press, MouseButton::Left), $area)->model;
 
         self::assertInstanceOf(RadioRow::class, $picked);
-        self::assertSame(1, $picked->selected(), 'the second option sits under that column');
+        self::assertSame(1, $picked->selectedIndex(), 'the second option sits under that column');
     }
 
     private function render(RadioRow $row): string

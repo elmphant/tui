@@ -88,7 +88,7 @@ final class SelectTest extends TestCase
 
         $result = $select->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
         self::assertSame('B', $result->model->selectedValue());
     }
 
@@ -100,7 +100,7 @@ final class SelectTest extends TestCase
 
         $cleared = $select->update(new KeyMsg(Key::Enter), $area)->model;
 
-        self::assertSame(-1, $cleared->selected(), 'pressing the one already picked puts it back down');
+        self::assertSame(-1, $cleared->selectedIndex(), 'pressing the one already picked puts it back down');
         self::assertNull($cleared->selectedValue());
     }
 
@@ -109,7 +109,7 @@ final class SelectTest extends TestCase
     {
         $select = Select::new(['A', 'B', 'C'])->clearable()->withSelected(0);
 
-        self::assertSame(-1, $select->activated('A')->selected(), 'a pointer pick must clear what a key press clears');
+        self::assertSame(-1, $select->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
     }
 
     #[Test]
@@ -155,7 +155,7 @@ final class SelectTest extends TestCase
 
         $mouseMessage = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
         $result = $select->update($mouseMessage, $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
         self::assertSame(1, $result->model->cursor());
     }
 
@@ -220,7 +220,7 @@ final class SelectTest extends TestCase
     public function defaultSelectedIsMinusOne(): void
     {
         $select = Select::new(['A', 'B', 'C']);
-        self::assertSame(-1, $select->selected());
+        self::assertSame(-1, $select->selectedIndex());
     }
 
     #[Test]
@@ -231,7 +231,7 @@ final class SelectTest extends TestCase
 
         $movedDown = $select->update(new KeyMsg(Key::Down), $area)->model;
         $result = $movedDown->update(new KeyMsg(' '), $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -253,7 +253,7 @@ final class SelectTest extends TestCase
         $mouseMessage = new MouseMsg(5, 7, MouseAction::Press, MouseButton::Left);
         $result = $select->update($mouseMessage, $area);
         self::assertSame(2, $result->model->cursor());
-        self::assertSame(2, $result->model->selected());
+        self::assertSame(2, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -265,7 +265,7 @@ final class SelectTest extends TestCase
         $mouseMessage = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
         $result = $select->update($mouseMessage, $area);
         self::assertSame(0, $result->model->cursor());
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -379,7 +379,7 @@ final class SelectTest extends TestCase
     {
         yield Actions::CURSOR_UP => [Actions::CURSOR_UP, new KeyMsg(Key::Up),    new KeyMsg('x'), 1, 'cursor',   0];
         yield Actions::CURSOR_DOWN => [Actions::CURSOR_DOWN, new KeyMsg(Key::Down),  new KeyMsg('x'), 0, 'cursor',   1];
-        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter), new KeyMsg('x'), 0, 'selected', 0];
+        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter), new KeyMsg('x'), 0, 'selectedIndex', 0];
     }
 
     #[DataProvider('selectKeybindingOverrideProvider')]

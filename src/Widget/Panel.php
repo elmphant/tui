@@ -262,11 +262,11 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
 
         $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
 
+        $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
+
         $block = Block::new()
-            ->border($prominent ? $theme->focusedBorder : $theme->border)
-            ->borderStyle($prominent
-                ? ($this->focusedBorderStyleOverride ?? $theme->focusedBorderStyle)
-                : ($this->borderStyleOverride ?? $theme->borderStyle))
+            ->border($theme->borderFor($prominent))
+            ->borderStyle($override ?? $theme->borderStyleFor($prominent))
             ->titleStyle($this->titleStyleOverride ?? $theme->titleStyle)
             ->title($this->title);
 

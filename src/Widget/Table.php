@@ -186,7 +186,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $this->cloneWith(cursor: $cursor, followCursor: true);
     }
 
-    public function selected(): int
+    public function selectedIndex(): int
     {
         return $this->selected;
     }

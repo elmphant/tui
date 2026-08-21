@@ -54,7 +54,7 @@ final class RadioTest extends TestCase
     {
         $radio = Radio::new(['A', 'B', 'C'])->clearable()->withSelected(0);
 
-        self::assertSame(-1, $radio->activated('A')->selected(), 'a pointer pick must clear what a key press clears');
+        self::assertSame(-1, $radio->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
     }
 
     #[Test]
@@ -133,7 +133,7 @@ final class RadioTest extends TestCase
 
         $result = $radio->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
         self::assertSame('B', $result->model->selectedValue());
     }
 
@@ -191,7 +191,7 @@ final class RadioTest extends TestCase
 
         $mouseMessage = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
         $result = $radio->update($mouseMessage, $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
         self::assertSame(1, $result->model->cursor());
     }
 
@@ -252,7 +252,7 @@ final class RadioTest extends TestCase
     public function defaultSelectedIsZero(): void
     {
         $radio = Radio::new(['A', 'B', 'C'], 'Label');
-        self::assertSame(0, $radio->selected());
+        self::assertSame(0, $radio->selectedIndex());
         self::assertSame('A', $radio->selectedValue());
     }
 
@@ -267,7 +267,7 @@ final class RadioTest extends TestCase
 
         $moved = $radio->update(new KeyMsg(Key::Down), $area)->model;
         $result = $moved->update(new KeyMsg(' '), $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -291,7 +291,7 @@ final class RadioTest extends TestCase
 
         $cleared = $radio->update(new KeyMsg(' '), $area)->model;
 
-        self::assertSame(-1, $cleared->selected(), 'pressing the one already picked puts it back down');
+        self::assertSame(-1, $cleared->selectedIndex(), 'pressing the one already picked puts it back down');
     }
 
     #[Test]
@@ -302,7 +302,7 @@ final class RadioTest extends TestCase
 
         $cleared = $radio->update(new MouseMsg(5, 8, MouseAction::Press, MouseButton::Left), $area)->model;
 
-        self::assertSame(-1, $cleared->selected());
+        self::assertSame(-1, $cleared->selectedIndex());
         self::assertSame(1, $cleared->cursor(), 'the cursor still rests where the pointer left it');
     }
 
@@ -317,7 +317,7 @@ final class RadioTest extends TestCase
 
         $mouseMessage = new MouseMsg(5, 8, MouseAction::Press, MouseButton::Left);
         $result = $radio->update($mouseMessage, $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
         self::assertSame(1, $result->model->cursor());
     }
 
@@ -332,7 +332,7 @@ final class RadioTest extends TestCase
 
         $mouseMessage = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
         $result = $radio->update($mouseMessage, $area);
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
         self::assertSame($radio, $result->model);
     }
 
@@ -366,7 +366,7 @@ final class RadioTest extends TestCase
         $result = $moved->update($mouseMessage, $area);
         self::assertNotSame($moved, $result->model, 'Click at optionY=0 must not be ignored');
         self::assertSame(0, $result->model->cursor());
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
     }
 
     /**
@@ -380,7 +380,7 @@ final class RadioTest extends TestCase
 
         $mouseMessage = new MouseMsg(5, 4, MouseAction::Press, MouseButton::Left);
         $result = $radio->update($mouseMessage, $area);
-        self::assertSame(2, $result->model->selected());
+        self::assertSame(2, $result->model->selectedIndex());
         self::assertSame(2, $result->model->cursor());
     }
 
@@ -769,7 +769,7 @@ final class RadioTest extends TestCase
 
         $mouseMessage = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
         $result = $radio->update($mouseMessage, $area);
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
         self::assertSame(0, $result->model->cursor());
     }
 
@@ -784,7 +784,7 @@ final class RadioTest extends TestCase
 
         $mouseMessage = new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left);
         $result = $radio->update($mouseMessage, $area);
-        self::assertSame(2, $result->model->selected());
+        self::assertSame(2, $result->model->selectedIndex());
     }
 
     /**
@@ -837,7 +837,7 @@ final class RadioTest extends TestCase
     {
         yield Actions::CURSOR_UP => [Actions::CURSOR_UP, new KeyMsg(Key::Up),    new KeyMsg('x'), 1, 'cursor',   0];
         yield Actions::CURSOR_DOWN => [Actions::CURSOR_DOWN, new KeyMsg(Key::Down),  new KeyMsg('x'), 0, 'cursor',   1];
-        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter), new KeyMsg('x'), 1, 'selected', 1];
+        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter), new KeyMsg('x'), 1, 'selectedIndex', 1];
     }
 
     #[DataProvider('radioKeybindingOverrideProvider')]

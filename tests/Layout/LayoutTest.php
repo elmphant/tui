@@ -90,6 +90,16 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
+    public function aSlotCanBeSizedWhereItIsAddedRatherThanInsideTheChild(): void
+    {
+        $column = Layout::vertical()
+            ->add($this->createFlexWidget('a'), Constraint::exact(2))
+            ->add($this->createFlexWidget('b'));
+
+        self::assertSame([2, 8], $column->sizesFor(10));
+    }
+
+    #[Test]
     public function aMeasuredChildIsNoTallerThanTheRowsItPinnedItselfTo(): void
     {
         $pinned = new class implements Widget, MeasureHeight {

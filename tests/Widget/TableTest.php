@@ -110,7 +110,7 @@ final class TableTest extends TestCase
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -184,7 +184,7 @@ final class TableTest extends TestCase
         $mouseMessage = new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left);
         $result = $table->update($mouseMessage, $area);
         self::assertSame(1, $result->model->cursor());
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -715,7 +715,7 @@ final class TableTest extends TestCase
     public function selectedStartsAtMinusOne(): void
     {
         $table = $this->createTable();
-        self::assertSame(-1, $table->selected());
+        self::assertSame(-1, $table->selectedIndex());
     }
 
     // --- L59: DecrementInteger — fromRows initial cursor = 0 when first row is selectable ---
@@ -764,7 +764,7 @@ final class TableTest extends TestCase
         $area = Rect::fromSize(20, 5);
 
         $result = $table->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
     }
 
     // --- L123: LessThanOrEqualTo — render guard width <= 0 || height <= 0 ---
@@ -944,10 +944,10 @@ final class TableTest extends TestCase
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(' '), $area);
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
 
         $result = $result->model->update(new KeyMsg(' '), $area);
-        self::assertSame(-1, $result->model->selected());
+        self::assertSame(-1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -957,10 +957,10 @@ final class TableTest extends TestCase
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
 
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(-1, $result->model->selected());
+        self::assertSame(-1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -1186,10 +1186,10 @@ final class TableTest extends TestCase
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(' '), $area);
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
 
         $result = $result->model->update(new KeyMsg(' '), $area);
-        self::assertSame(-1, $result->model->selected());
+        self::assertSame(-1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -1746,7 +1746,7 @@ final class TableTest extends TestCase
         $result = $table->update($click, $area);
 
         self::assertSame(1, $result->model->cursor());
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -2310,7 +2310,7 @@ final class TableTest extends TestCase
         $result = $table->update($click, $area);
 
         self::assertSame(1, $result->model->cursor());
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -2429,7 +2429,7 @@ final class TableTest extends TestCase
         $table = $result->model;
 
         self::assertSame(1, $table->cursor());
-        self::assertSame(0, $table->selected());
+        self::assertSame(0, $table->selectedIndex());
 
         $frame = new Frame(60, 10);
         $theme = Theme::dark();
@@ -2511,7 +2511,7 @@ final class TableTest extends TestCase
         $click = new MouseMsg(5, 6, MouseAction::Press, MouseButton::Left);
         $result = $table->update($click, $area);
         self::assertSame(0, $result->model->cursor());
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
     }
 
     // --- L257: rowIndex = localY - 1 + scrollOffset (Minus, Plus mutations) ---
@@ -2529,7 +2529,7 @@ final class TableTest extends TestCase
         $click = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
         $result = $table->update($click, $area);
         self::assertSame(0, $result->model->cursor());
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
     }
 
     // --- L259: localY >= 1 (GreaterThanOrEqualTo mutation) ---
@@ -2554,7 +2554,7 @@ final class TableTest extends TestCase
         $click = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
         $result = $table->update($click, $area);
         self::assertSame(0, $result->model->cursor());
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
     }
 
     // --- L259: rowIndex >= 0 check ---
@@ -2584,7 +2584,7 @@ final class TableTest extends TestCase
         $click = new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left);
         $result = $table->update($click, $area);
         self::assertSame(1, $result->model->cursor());
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
 
         $click = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
         $result = $table->update($click, $area);
@@ -2602,7 +2602,7 @@ final class TableTest extends TestCase
         $click = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
         $result = $table->update($click, $area);
         self::assertSame(2, $result->model->cursor());
-        self::assertSame(2, $result->model->selected());
+        self::assertSame(2, $result->model->selectedIndex());
     }
 
     // --- L266: maxOffset = max(0, rowCount - (height - 1)) ---
@@ -3180,7 +3180,7 @@ final class TableTest extends TestCase
                 $table = $result->model;
             }
             $result = $table->update(new KeyMsg(Key::Enter), $area);
-            self::assertSame($index, $result->model->selected());
+            self::assertSame($index, $result->model->selectedIndex());
             $table = $result->model->update(new KeyMsg(Key::Enter), $area)->model;
         }
     }
@@ -3303,7 +3303,7 @@ final class TableTest extends TestCase
         yield Actions::END => [Actions::END,        new KeyMsg(Key::End),      new KeyMsg('d'), 0, fn (Table $t) => $t->cursor() === 2];
         yield Actions::PAGE_UP => [Actions::PAGE_UP,    new KeyMsg(Key::PageUp),   new KeyMsg('e'), 2, fn (Table $t) => $t->cursor() < 2];
         yield Actions::PAGE_DOWN => [Actions::PAGE_DOWN,  new KeyMsg(Key::PageDown), new KeyMsg('f'), 0, fn (Table $t) => $t->cursor() > 0];
-        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter),    new KeyMsg('g'), 0, fn (Table $t) => $t->selected() === 0];
+        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter),    new KeyMsg('g'), 0, fn (Table $t) => $t->selectedIndex() === 0];
     }
 
     #[DataProvider('tableKeybindingOverrideProvider')]
@@ -3413,16 +3413,16 @@ final class TableTest extends TestCase
             [['one'], ['two'], ['three']],
         )->withFocus(true)->withCursor(1);
 
-        self::assertSame(-1, $table->selected(), 'Nothing is selected to begin with');
+        self::assertSame(-1, $table->selectedIndex(), 'Nothing is selected to begin with');
 
         $selected = $table->update(new KeyMsg(Key::Enter), $area)->model;
         self::assertInstanceOf(Table::class, $selected);
         self::assertSame(1, $selected->cursor());
-        self::assertSame(1, $selected->selected());
+        self::assertSame(1, $selected->selectedIndex());
 
         $again = $selected->update(new KeyMsg(Key::Enter), $area)->model;
         self::assertInstanceOf(Table::class, $again);
-        self::assertSame(-1, $again->selected(), 'The same row toggles back off');
+        self::assertSame(-1, $again->selectedIndex(), 'The same row toggles back off');
     }
 
     #[Test]

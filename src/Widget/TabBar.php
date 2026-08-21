@@ -235,11 +235,9 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
         $theme = $context->theme;
         $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
-        $borderEnum = $prominent ? $theme->focusedBorder : $theme->border;
-        $glyphs = $borderEnum->glyphs();
-        $borderStyle = $prominent
-            ? ($this->focusedBorderStyleOverride ?? $theme->focusedBorderStyle)
-            : ($this->borderStyleOverride ?? $theme->borderStyle);
+        $glyphs = $theme->borderFor($prominent)->glyphs();
+        $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
+        $borderStyle = $override ?? $theme->borderStyleFor($prominent);
 
         $this->renderContent($frame, $area, $context);
         $this->renderTabStrip($frame, $area, $glyphs, $borderStyle, $theme, $this->drawsFocused($context));

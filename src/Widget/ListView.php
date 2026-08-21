@@ -139,7 +139,7 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         return $this->cloneWith(cursor: $cursor, followCursor: true);
     }
 
-    public function selected(): int
+    public function selectedIndex(): int
     {
         return $this->selected;
     }

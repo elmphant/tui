@@ -20,21 +20,51 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
      */
     private array $children;
 
+    /**
+     * How a slot is sized where the parent knows better than the child. Keyed by
+     * position and only ever written by add(), which appends the pair together,
+     * so a constraint cannot come to describe a different child.
+     *
+     * @var array<int, Constraint>
+     */
+    private array $slotConstraints;
+
+    /**
+     * @param array<array-key, Widget> $children
+     * @param array<int, Constraint>   $slotConstraints
+     */
     private function __construct(
         private Direction $direction,
-        Widget ...$children,
+        array $children = [],
+        array $slotConstraints = [],
     ) {
         $this->children = array_values($children);
+        $this->slotConstraints = $slotConstraints;
+    }
+
+    /**
+     * A child, and how much of the axis it should be given — the say a parent has
+     * without reaching into the child to change what it asks for.
+     */
+    public function add(Widget $child, ?Constraint $constraint = null): self
+    {
+        $slots = $this->slotConstraints;
+
+        if ($constraint !== null) {
+            $slots[count($this->children)] = $constraint;
+        }
+
+        return new self($this->direction, [...$this->children, $child], $slots);
     }
 
     public static function vertical(Widget ...$children): self
     {
-        return new self(Direction::Vertical, ...$children);
+        return new self(Direction::Vertical, $children);
     }
 
     public static function horizontal(Widget ...$children): self
     {
-        return new self(Direction::Horizontal, ...$children);
+        return new self(Direction::Horizontal, $children);
     }
 
     public function sizing(): Sizing
@@ -138,8 +168,8 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     {
         $policies = [];
 
-        foreach ($this->children as $child) {
-            $constraint = $child->sizing()->on($this->direction);
+        foreach ($this->children as $index => $child) {
+            $constraint = $this->slotConstraints[$index] ?? $child->sizing()->on($this->direction);
 
             $policies[] = new ItemPolicy(
                 basis: ContentBasis::of($child, $constraint, $this->direction, $acrossExtent),

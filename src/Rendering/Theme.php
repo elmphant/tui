@@ -195,6 +195,21 @@ final readonly class Theme
      * One option row of a select, radio group or checkbox group, where marked
      * means selected or ticked.
      */
+    /**
+     * The border a container draws while it stands out — because it holds the
+     * keyboard, or because its host asked for emphasis. Asked of the theme rather
+     * than combined at each container, so two of them cannot drift apart.
+     */
+    public function borderFor(bool $prominent): BorderStyle
+    {
+        return $prominent ? $this->focusedBorder : $this->border;
+    }
+
+    public function borderStyleFor(bool $prominent): Style
+    {
+        return $prominent ? $this->focusedBorderStyle : $this->borderStyle;
+    }
+
     public function optionStyle(bool $isCursor, bool $isMarked, bool $focused): Style
     {
         return match (true) {

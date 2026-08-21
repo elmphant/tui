@@ -168,7 +168,7 @@ final readonly class RadioRow implements OptionRow, PublishesHints
         return OptionRowLayout::height($this->entries(), $width);
     }
 
-    public function selected(): int
+    public function selectedIndex(): int
     {
         return $this->selected;
     }

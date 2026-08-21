@@ -51,8 +51,8 @@ final class ListViewTest extends TestCase
         $replaced = $list->withItems([new SimpleListItem('a'), new SimpleListItem('b'), new SimpleListItem('c')]);
 
         self::assertSame(3, $replaced->itemCount());
-        self::assertSame(-1, $replaced->selected(), 'Nothing is selected to begin with');
-        self::assertSame(1, $replaced->withSelected(1)->selected());
+        self::assertSame(-1, $replaced->selectedIndex(), 'Nothing is selected to begin with');
+        self::assertSame(1, $replaced->withSelected(1)->selectedIndex());
     }
 
     #[Test]
@@ -137,7 +137,7 @@ final class ListViewTest extends TestCase
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -292,7 +292,7 @@ final class ListViewTest extends TestCase
         $mouseMessage = new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left);
         $result = $list->update($mouseMessage, $area);
         self::assertSame(2, $result->model->cursor());
-        self::assertSame(2, $result->model->selected());
+        self::assertSame(2, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -439,7 +439,7 @@ final class ListViewTest extends TestCase
     public function selectedStartsAtMinusOne(): void
     {
         $list = ListView::fromStrings(['A', 'B']);
-        self::assertSame(-1, $list->selected());
+        self::assertSame(-1, $list->selectedIndex());
     }
 
     // --- L94: MatchArmRemoval — empty list update returns self unchanged ---
@@ -600,7 +600,7 @@ final class ListViewTest extends TestCase
         $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(' '), $area);
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -757,7 +757,7 @@ final class ListViewTest extends TestCase
         $mouse = new MouseMsg(10, 12, MouseAction::Press, MouseButton::Left);
         $result = $list->update($mouse, $area);
         self::assertSame(2, $result->model->cursor());
-        self::assertSame(2, $result->model->selected());
+        self::assertSame(2, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -1118,7 +1118,7 @@ final class ListViewTest extends TestCase
         $clickOnDesc = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
         $result = $list->update($clickOnDesc, $area);
         self::assertSame(0, $result->model->cursor());
-        self::assertSame(0, $result->model->selected());
+        self::assertSame(0, $result->model->selectedIndex());
     }
 
     #[Test]
@@ -1134,7 +1134,7 @@ final class ListViewTest extends TestCase
         $clickOnB = new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left);
         $result = $list->update($clickOnB, $area);
         self::assertSame(1, $result->model->cursor());
-        self::assertSame(1, $result->model->selected());
+        self::assertSame(1, $result->model->selectedIndex());
     }
 
     // --- render: description empty string not rendered ---
@@ -1668,7 +1668,7 @@ final class ListViewTest extends TestCase
         yield Actions::END => [Actions::END,        new KeyMsg(Key::End),      new KeyMsg('d'), 0, fn (ListView $v) => $v->cursor() === 9];
         yield Actions::PAGE_UP => [Actions::PAGE_UP,    new KeyMsg(Key::PageUp),   new KeyMsg('e'), 9, fn (ListView $v) => $v->cursor() < 9];
         yield Actions::PAGE_DOWN => [Actions::PAGE_DOWN,  new KeyMsg(Key::PageDown), new KeyMsg('f'), 0, fn (ListView $v) => $v->cursor() > 0];
-        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter),    new KeyMsg('g'), 0, fn (ListView $v) => $v->selected() === 0];
+        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter),    new KeyMsg('g'), 0, fn (ListView $v) => $v->selectedIndex() === 0];
     }
 
     #[DataProvider('listViewKeybindingOverrideProvider')]
