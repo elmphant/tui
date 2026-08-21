@@ -58,6 +58,21 @@ final class ReadmeTest extends TestCase
         self::assertSame(0, $status, "The README's process configuration example does not run:\n" . $output);
     }
 
+    #[Test]
+    public function theDocumentedHintLabelsAreTheOnesTheBindingsProduce(): void
+    {
+        [$output, $status] = self::runExample(
+            self::blockContaining('Keybindings::rowNavigation()') . "\necho json_encode(\$hints);",
+        );
+
+        self::assertSame(0, $status, "The README's hint example does not run:\n" . $output);
+        self::assertSame(
+            ['(Shift+)↑/↓' => 'select', 'Enter' => 'choose'],
+            json_decode($output, true),
+            'the labels the README shows are the ones the bindings answer with',
+        );
+    }
+
     private static function blockContaining(string $needle): string
     {
         $readme = file_get_contents(dirname(__DIR__, 2) . '/README.md');

@@ -414,6 +414,7 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `Panel` | Scrollable container with border, title, focus management |
 | `Header` | Top bar with title, left/center/right slots, optional divider |
 | `Footer` | Bottom bar with slots; `Footer::hints([...])` renders key hints |
+| `FocusHints` | The keys whatever holds the keyboard answers, asked at render time |
 | `Select` | Single-selection list with keyboard/mouse |
 | `Radio` | Radio button group |
 | `Checkbox` | Toggle checkbox |
@@ -440,30 +441,59 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 ### Header, footer, and key hints
 
 `Header` and `Footer` are the standard top/bottom bars for full-screen apps.
-Build footer hints from the same `Keybindings` the app matches against, so
-the display can never drift from the real bindings:
+
+A widget names the keys it answers, so nothing keeps a label that can outlive the
+binding it was copied from. `FocusHints` asks whatever holds the keyboard:
 
 ```php
 public function view(): Widget
 {
-    $footer = Footer::hints($this->applicationKeybindings()->hints([
-        'quit' => 'quit',
-    ]) + ListView::defaultKeybindings()->hints([
-        'cursor_down' => 'move down',
-        'cursor_up' => 'move up',
-    ]));
-
     return Layout::vertical(
         Header::new('My App')->withDivider(),
-        $mainContent,
-        $footer,
+        Component::bind('list', $this->list, static fn (self $app, ListView $list): self => $app->cloneWith(list: $list)),
+        Footer::new()
+            ->left(StatusBar::hints($this->quitHints()))
+            ->center(FocusHints::new()),
     );
 }
 ```
 
-`Keybindings::hints()` maps each action's first pattern to a display label
-(`ctrl+q` → `Ctrl+Q`, `up` → `↑`); `KeyPattern::label()` formats a single
-pattern.
+With the keyboard on the list that footer reads `Ctrl+Q quit   ↑/↓ move   Enter
+choose`, every label read off the bindings that actually matched. Rebind the list
+and the footer follows; so does a `globalKeybindings()` override such as
+`VimMode::keybindings()`.
+
+Implement `PublishesHints` to say it in your own words — ask the widget for its
+bindings instead of typing a label:
+
+```php
+public function hints(): array
+{
+    return $this->list->effectiveKeybindings()->hints([
+        'select' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN, Actions::PAGE_UP, Actions::PAGE_DOWN],
+        'fill in' => Actions::SELECT,
+    ]);
+}
+```
+
+`Keybindings::hints()` takes `description => action`, or a list of actions where
+one label covers several, and answers `label => description`. It names the key
+each action leads with, writes a modifier they all share once (`Shift+←/→`), and
+turns one that only some of them take into an optional:
+
+```php
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
+
+$hints = Keybindings::rowNavigation()->hints([
+    'select' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN, Actions::PAGE_UP, Actions::PAGE_DOWN],
+    'choose' => Actions::SELECT,
+]);
+
+// ['(Shift+)↑/↓' => 'select', 'Enter' => 'choose']
+```
+
+`KeyPattern::label()` formats a single pattern.
 
 A bar places each slot in the width the slot's own `Sizing` declares — a bar is
 not an allocator, so a flexible slot is not stretched to the row. A widget with
