@@ -22,15 +22,6 @@ use WeakMap;
 final readonly class ComponentRegistry
 {
     /**
-     * @var array<string, Component<Interactive>>
-     */
-    private array $byId;
-    /**
-     * @var list<Component<Interactive>>
-     */
-    private array $focusables;
-
-    /**
      * @param list<Component<Interactive>>          $components
      * @param array<string, Component<Interactive>> $byId
      * @param list<Component<Interactive>>          $focusables
@@ -38,12 +29,10 @@ final readonly class ComponentRegistry
      */
     private function __construct(
         private array $components,
-        array $byId,
-        array $focusables,
+        private array $byId,
+        private array $focusables,
         private array $scopes = [],
     ) {
-        $this->byId = $byId;
-        $this->focusables = $focusables;
     }
 
     /**
@@ -285,7 +274,7 @@ final readonly class ComponentRegistry
         }
 
         return array_map(
-            static fn (Component $component): Component => $widget->own($component),
+            $widget->own(...),
             $components,
         );
     }

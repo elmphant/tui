@@ -86,14 +86,12 @@ final class SpanRenderer
                 continue;
             }
 
-            $childAttributes = $attributes;
-            if ($child instanceof Strong) {
-                $childAttributes |= Attr::BOLD;
-            } elseif ($child instanceof Emphasis) {
-                $childAttributes |= Attr::ITALIC;
-            } elseif ($child instanceof Strikethrough) {
-                $childAttributes |= Attr::STRIKETHROUGH;
-            }
+            $childAttributes = $attributes | match (true) {
+                $child instanceof Strong => Attr::BOLD,
+                $child instanceof Emphasis => Attr::ITALIC,
+                $child instanceof Strikethrough => Attr::STRIKETHROUGH,
+                default => 0,
+            };
 
             self::walkInlines($child, $spans, $childAttributes);
         }

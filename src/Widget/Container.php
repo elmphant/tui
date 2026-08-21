@@ -122,12 +122,9 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
             $availableWidth = min($availableWidth, $this->contentWidth);
         }
 
-        $contentHeight = $this->contentHeight;
-        if ($contentHeight === null) {
-            $contentHeight = $this->child instanceof MeasureHeight
-                ? $this->child->measureHeight($availableWidth)
-                : self::naturalHeight($this->child->sizing()->rows);
-        }
+        $contentHeight = $this->contentHeight ?? ($this->child instanceof MeasureHeight
+            ? $this->child->measureHeight($availableWidth)
+            : self::naturalHeight($this->child->sizing()->rows));
 
         $measured = $contentHeight + $this->verticalOverhead();
         if ($this->sizingOverride === null) {

@@ -308,10 +308,8 @@ final class Program
             }
         } finally {
             try {
-                if ($this->adaptiveTicker !== null) {
-                    $this->adaptiveTicker->stop();
-                    $this->adaptiveTicker = null;
-                }
+                $this->adaptiveTicker?->stop();
+                $this->adaptiveTicker = null;
             } finally {
                 $this->teardown();
             }
@@ -611,13 +609,11 @@ final class Program
     {
         $this->handlePendingResize();
         $newInput = $this->terminal->readInput();
-        if ($newInput !== '' && $this->tracer !== null) {
-            $this->tracer->record(TraceEvent::InputRead, [
+        if ($newInput !== '') {
+            $this->tracer?->record(TraceEvent::InputRead, [
                 'bytes' => strlen($newInput),
                 'queued' => $this->messageQueue->count(),
             ]);
-        }
-        if ($newInput !== '') {
             if ($this->escFlushTimerId !== null) {
                 EventLoop::cancel($this->escFlushTimerId);
                 $this->escFlushTimerId = null;
@@ -659,8 +655,8 @@ final class Program
 
                 return;
             }
-        } elseif ($this->tracer !== null && ($this->isDirty || $animationDue)) {
-            $this->tracer->record(TraceEvent::FrameSkipped, [
+        } elseif ($this->isDirty || $animationDue) {
+            $this->tracer?->record(TraceEvent::FrameSkipped, [
                 'waitMs' => ($this->lastRender + $frameBudget - $now) * 1000,
             ]);
         }
@@ -800,22 +796,20 @@ final class Program
                     ? $this->model->update($stamped, $screenRect, $this->focus)
                     : $this->model->update($stamped, $screenRect);
                 $nextModel = self::requireModel($result->model);
-                if ($this->tracer !== null) {
-                    $this->tracer->record(TraceEvent::Update, [
-                        'message' => $stamped::class,
-                        'key' => $stamped instanceof KeyMsg ? self::describeKey($stamped) : null,
-                        // A key that seems to do nothing turns on where the keyboard was
-                        // when it arrived and what it could have moved to, so a trace
-                        // that named neither could not explain it.
-                        'focused' => $this->focus->focused()?->value,
-                        'ring' => array_map(
-                            static fn (ComponentId $id): string => $id->value,
-                            $this->focusableIds(),
-                        ),
-                        'ms' => (hrtime(true) - $updateStart) / 1e6,
-                        'changed' => $nextModel !== $this->model,
-                    ]);
-                }
+                $this->tracer?->record(TraceEvent::Update, [
+                    'message' => $stamped::class,
+                    'key' => $stamped instanceof KeyMsg ? self::describeKey($stamped) : null,
+                    // A key that seems to do nothing turns on where the keyboard was
+                    // when it arrived and what it could have moved to, so a trace
+                    // that named neither could not explain it.
+                    'focused' => $this->focus->focused()?->value,
+                    'ring' => array_map(
+                        static fn (ComponentId $id): string => $id->value,
+                        $this->focusableIds(),
+                    ),
+                    'ms' => (hrtime(true) - $updateStart) / 1e6,
+                    'changed' => $nextModel !== $this->model,
+                ]);
             } catch (Throwable $error) {
                 ++$consecutiveErrors;
                 if ($consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
@@ -965,9 +959,7 @@ final class Program
             return;
         }
 
-        if ($this->tracer !== null) {
-            $this->tracer->record(TraceEvent::Command, ['command' => $command::class]);
-        }
+        $this->tracer?->record(TraceEvent::Command, ['command' => $command::class]);
 
         if ($command instanceof MappedCmd) {
             $this->dispatchCommand($command->inner, self::composeWrap($command->wrap, $wrap));

@@ -7,8 +7,9 @@ namespace Elmphant\Tui\Input;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use InvalidArgumentException;
+use Stringable;
 
-final readonly class KeyPattern
+final readonly class KeyPattern implements Stringable
 {
     private const NAMED_KEYS = [
         'enter' => Key::Enter, 'return' => Key::Enter,
@@ -86,16 +87,12 @@ final readonly class KeyPattern
             }
             $seen[$token] = true;
 
-            switch ($token) {
-                case 'ctrl':  $ctrl = true;
-                    break;
-                case 'alt':   $alt = true;
-                    break;
-                case 'shift': $shift = true;
-                    break;
-                default:
-                    throw new InvalidArgumentException("Unknown modifier '{$token}' in pattern '{$pattern}'");
-            }
+            match ($token) {
+                'ctrl' => $ctrl = true,
+                'alt' => $alt = true,
+                'shift' => $shift = true,
+                default => throw new InvalidArgumentException("Unknown modifier '{$token}' in pattern '{$pattern}'"),
+            };
         }
 
         $keyToken = $tokens[$count - 1];

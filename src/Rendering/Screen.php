@@ -384,10 +384,10 @@ final class Screen
                 $sgrParts[] = $this->attributesToSgr($attributes);
             }
             if ($foreground !== 0) {
-                $sgrParts[] = $this->colorToSgr($foreground, false);
+                $sgrParts[] = $this->colorToSgr($foreground, background: false);
             }
             if ($background !== 0) {
-                $sgrParts[] = $this->colorToSgr($background, true);
+                $sgrParts[] = $this->colorToSgr($background, background: true);
             }
         } else {
             $addedAttributes = $attributes & ~$this->currentAttributes;
@@ -395,11 +395,11 @@ final class Screen
                 $sgrParts[] = $this->attributesToSgr($addedAttributes);
             }
             if ($foreground !== $this->currentForeground) {
-                $sgrParts[] = $foreground !== 0 ? $this->colorToSgr($foreground, false)
+                $sgrParts[] = $foreground !== 0 ? $this->colorToSgr($foreground, background: false)
                     : '39';
             }
             if ($background !== $this->currentBackground) {
-                $sgrParts[] = $background !== 0 ? $this->colorToSgr($background, true)
+                $sgrParts[] = $background !== 0 ? $this->colorToSgr($background, background: true)
                     : '49';
             }
         }

@@ -27,9 +27,9 @@ final class JsonlTracer implements Tracer
         $this->startedAt = $this->clock->now();
     }
 
-    public static function toFile(string $path, ?Clock $clock = null): self
+    public static function toFile(string $path, Clock $clock = new MonotonicClock()): self
     {
-        return new self($path, $clock ?? new MonotonicClock());
+        return new self($path, $clock);
     }
 
     /**

@@ -14,9 +14,8 @@ final class Allocator
     /**
      * @param list<ItemPolicy> $policies
      */
-    public static function resolve(array $policies, int $available, ?AxisSpecification $specification = null): AxisResult
+    public static function resolve(array $policies, int $available, AxisSpecification $specification = new AxisSpecification()): AxisResult
     {
-        $specification ??= new AxisSpecification();
         $gap = self::gapWithin($specification->gap, count($policies), $available);
         $forSlots = max(0, $available - max(0, count($policies) - 1) * $gap);
 
