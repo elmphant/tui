@@ -690,8 +690,12 @@ final class TableTest extends TestCase
 
         $table->render($frame, new Rect(0, 0, 40, 5), new RenderContext($theme));
 
-        self::assertSame(Attr::REVERSE, $frame->attributes[1 * 40 + 0] & Attr::REVERSE);
-        self::assertSame($theme->success->foregroundValue(), $frame->foregrounds[1 * 40 + 0]);
+        self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[1 * 40 + 0]);
+        self::assertSame(
+            $theme->success->readableOn($theme->cursorStyle)->foregroundValue(),
+            $frame->foregrounds[1 * 40 + 0],
+            'the token keeps its colour, lifted far enough off the band to still be read',
+        );
     }
 
     #[Test]
@@ -1507,12 +1511,12 @@ final class TableTest extends TestCase
         )->withFocus(true)->withCursor(0);
         $frame = new Frame(20, 6);
 
-        $table->render($frame, Rect::fromSize(20, 6), new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, Rect::fromSize(20, 6), new RenderContext($theme));
 
-        $first = $frame->attributes[20 * 1] & Attr::REVERSE;
-        $second = $frame->attributes[20 * 2] & Attr::REVERSE;
-        self::assertSame(Attr::REVERSE, $first, 'The highlight starts on the first line');
-        self::assertSame(Attr::REVERSE, $second, 'And covers the wrapped line too');
+        $band = $theme->cursorStyle->backgroundValue();
+        self::assertSame($band, $frame->backgrounds[20 * 1], 'The highlight starts on the first line');
+        self::assertSame($band, $frame->backgrounds[20 * 2], 'And covers the wrapped line too');
     }
 
     #[Test]
@@ -1884,7 +1888,7 @@ final class TableTest extends TestCase
         $frame = new Frame(20, 4);
         $table->render($frame, Rect::fromSize(20, 4), new RenderContext($theme));
 
-        self::assertSame(Attr::REVERSE, $frame->attributes[20] & Attr::REVERSE);
+        self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[20]);
 
         self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[2 * 20]);
     }
@@ -1892,23 +1896,14 @@ final class TableTest extends TestCase
     // --- Rendering: cursor row has reverse attribute ---
 
     #[Test]
-    public function cursorRowHasReverseAttribute(): void
+    public function aRowAwayFromTheCursorIsNotHighlighted(): void
     {
         $table = $this->createTable()->withFocus(true);
         $frame = new Frame(60, 10);
-        $table->render($frame, Rect::fromSize(60, 10), new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, Rect::fromSize(60, 10), new RenderContext($theme));
 
-        self::assertSame(Attr::REVERSE, $frame->attributes[60] & Attr::REVERSE);
-    }
-
-    #[Test]
-    public function nonCursorRowDoesNotHaveReverse(): void
-    {
-        $table = $this->createTable()->withFocus(true);
-        $frame = new Frame(60, 10);
-        $table->render($frame, Rect::fromSize(60, 10), new RenderContext(Theme::dark()));
-
-        self::assertSame(0, $frame->attributes[2 * 60] & Attr::REVERSE);
+        self::assertNotSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[2 * 60]);
     }
 
     #[Test]
@@ -1922,28 +1917,30 @@ final class TableTest extends TestCase
         $table = $result->model->withFocus(false);
 
         $frame = new Frame(60, 10);
-        $table->render($frame, $area, new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, $area, new RenderContext($theme));
 
-        self::assertSame(Attr::REVERSE, $frame->attributes[2 * 60] & Attr::REVERSE);
+        self::assertSame($theme->selectedStyle->backgroundValue(), $frame->backgrounds[2 * 60]);
     }
 
-    // --- Reverse fill across totalWidth ---
+    // --- The highlight fills totalWidth ---
 
     #[Test]
-    public function reverseRowFillsEntireTotalWidth(): void
+    public function theHighlightFillsEntireTotalWidth(): void
     {
         $table = Table::new(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(3))],
             [['abc', 'def']],
         )->withFocus(true);
         $frame = new Frame(20, 3);
-        $table->render($frame, Rect::fromSize(20, 3), new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, Rect::fromSize(20, 3), new RenderContext($theme));
 
         for ($column = 0; $column < 6; ++$column) {
             self::assertSame(
-                Attr::REVERSE,
-                $frame->attributes[20 + $column] & Attr::REVERSE,
-                "Column $column should have reverse"
+                $theme->cursorStyle->backgroundValue(),
+                $frame->backgrounds[20 + $column],
+                "Column $column should carry the highlight"
             );
         }
     }
@@ -2023,7 +2020,7 @@ final class TableTest extends TestCase
     // --- Typed row rendering: selectable with custom style ---
 
     #[Test]
-    public function typedRowReverseWithCustomStyle(): void
+    public function aRowWithItsOwnStyleStillTakesTheHighlightUnderIt(): void
     {
         $customStyle = new Style(foreground: Color::ansi(3));
         $table = Table::fromRows(
@@ -2031,9 +2028,14 @@ final class TableTest extends TestCase
             [Row::new('Alice')->withStyle($customStyle)],
         )->withFocus(true);
         $frame = new Frame(40, 3);
-        $table->render($frame, Rect::fromSize(40, 3), new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, Rect::fromSize(40, 3), new RenderContext($theme));
 
-        self::assertSame(Attr::REVERSE, $frame->attributes[40] & Attr::REVERSE);
+        self::assertSame(
+            $theme->cursorStyle->backgroundValue(),
+            $frame->backgrounds[40],
+            'a row cannot punch a hole in the band it sits on',
+        );
     }
 
     #[Test]
@@ -2070,7 +2072,7 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function spanWithStyleOnReversedRow(): void
+    public function spanWithStyleOnAHighlightedRow(): void
     {
         $greenStyle = new Style(foreground: Color::ansi(2));
         $table = Table::fromRows(
@@ -2078,10 +2080,15 @@ final class TableTest extends TestCase
             [Row::new(Span::styled('Alice', $greenStyle))],
         )->withFocus(true);
         $frame = new Frame(40, 3);
-        $table->render($frame, Rect::fromSize(40, 3), new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, Rect::fromSize(40, 3), new RenderContext($theme));
 
-        self::assertSame(Attr::REVERSE, $frame->attributes[40] & Attr::REVERSE);
-        self::assertSame($greenStyle->foregroundValue(), $frame->foregrounds[40]);
+        self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[40]);
+        self::assertSame(
+            $greenStyle->readableOn($theme->cursorStyle)->foregroundValue(),
+            $frame->foregrounds[40],
+            'the span keeps its own colour, lifted off the band far enough to read',
+        );
     }
 
     #[Test]
@@ -2412,7 +2419,7 @@ final class TableTest extends TestCase
     // --- Plain row rendering with selected row not at cursor ---
 
     #[Test]
-    public function selectedRowNotAtCursorStillReversed(): void
+    public function aSelectionAwayFromTheCursorIsMarkedApartFromIt(): void
     {
         $table = $this->createTable()->withFocus(true);
         $area = Rect::fromSize(60, 10);
@@ -2425,29 +2432,31 @@ final class TableTest extends TestCase
         self::assertSame(0, $table->selected());
 
         $frame = new Frame(60, 10);
-        $table->render($frame, $area, new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, $area, new RenderContext($theme));
 
-        self::assertSame(Attr::REVERSE, $frame->attributes[1 * 60] & Attr::REVERSE);
-        self::assertSame(Attr::REVERSE, $frame->attributes[2 * 60] & Attr::REVERSE);
+        self::assertSame($theme->selectedStyle->backgroundValue(), $frame->backgrounds[1 * 60], 'the chosen row');
+        self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[2 * 60], 'and the one under the cursor');
     }
 
     // --- Typed row: reverse applied to full totalWidth ---
 
     #[Test]
-    public function typedRowReverseFillsEntireTotalWidth(): void
+    public function theHighlightOfATypedRowFillsEntireTotalWidth(): void
     {
         $table = Table::fromRows(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(4))],
             [Row::new('abc', 'defg')],
         )->withFocus(true);
         $frame = new Frame(20, 3);
-        $table->render($frame, Rect::fromSize(20, 3), new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, Rect::fromSize(20, 3), new RenderContext($theme));
 
         for ($column = 0; $column < 7; ++$column) {
             self::assertSame(
-                Attr::REVERSE,
-                $frame->attributes[20 + $column] & Attr::REVERSE,
-                "Column $column should have reverse in typed row"
+                $theme->cursorStyle->backgroundValue(),
+                $frame->backgrounds[20 + $column],
+                "Column $column should carry the highlight in a typed row"
             );
         }
     }
@@ -2826,11 +2835,13 @@ final class TableTest extends TestCase
             [['AAAAA', 'BBBBBBB']],
         )->withFocus(true);
         $frame = new Frame(30, 3);
-        $table->render($frame, Rect::fromSize(30, 3), new RenderContext(Theme::dark()));
+        $theme = Theme::dark();
+        $table->render($frame, Rect::fromSize(30, 3), new RenderContext($theme));
 
-        self::assertSame(Attr::REVERSE, $frame->attributes[30 + 0] & Attr::REVERSE);
-        self::assertSame(Attr::REVERSE, $frame->attributes[30 + 11] & Attr::REVERSE);
-        self::assertSame(0, $frame->attributes[30 + 12] & Attr::REVERSE);
+        $band = $theme->cursorStyle->backgroundValue();
+        self::assertSame($band, $frame->backgrounds[30 + 0]);
+        self::assertSame($band, $frame->backgrounds[30 + 11], 'the highlight runs to the last column');
+        self::assertNotSame($band, $frame->backgrounds[30 + 12], 'and stops there');
     }
 
     // --- L350-353: visibleIndex loop and break ---
@@ -2932,40 +2943,6 @@ final class TableTest extends TestCase
         $table->render($frame, Rect::fromSize(40, 4), new RenderContext($theme));
 
         self::assertSame($theme->dim->foregroundValue(), $frame->foregrounds[2 * 40]);
-    }
-
-    // --- L426-428: reverse with typedRow->style !== null ---
-
-    #[Test]
-    public function typedRowWithCustomStyleReversedOnCursor(): void
-    {
-        $customStyle = new Style(foreground: Color::ansi(4));
-        $table = Table::fromRows(
-            [Column::new('Name', Constraint::flex())],
-            [Row::new('Alice')->withStyle($customStyle)],
-        )->withFocus(true);
-        $frame = new Frame(40, 3);
-        $table->render($frame, Rect::fromSize(40, 3), new RenderContext(Theme::dark()));
-
-        self::assertSame($customStyle->foregroundValue(), $frame->foregrounds[40]);
-        self::assertSame(Attr::REVERSE, $frame->attributes[40] & Attr::REVERSE);
-    }
-
-    // --- L441-443: Span with style vs without style, with reverse ---
-
-    #[Test]
-    public function spanWithStyleReversedOnCursorRow(): void
-    {
-        $spanStyle = new Style(foreground: Color::ansi(5));
-        $table = Table::fromRows(
-            [Column::new('Name', Constraint::flex())],
-            [Row::new(Span::styled('Data', $spanStyle))],
-        )->withFocus(true);
-        $frame = new Frame(40, 3);
-        $table->render($frame, Rect::fromSize(40, 3), new RenderContext(Theme::dark()));
-
-        self::assertSame($spanStyle->foregroundValue(), $frame->foregrounds[40]);
-        self::assertSame(Attr::REVERSE, $frame->attributes[40] & Attr::REVERSE);
     }
 
     #[Test]
@@ -3738,11 +3715,15 @@ final class TableTest extends TestCase
 
     private function rowIsReversed(Table $table, int $rowIndex): bool
     {
+        $theme = Theme::dark();
         $frame = new Frame(20, 6);
-        $table->render($frame, new Rect(0, 0, 20, 6), new RenderContext(Theme::dark()));
+        $table->render($frame, new Rect(0, 0, 20, 6), new RenderContext($theme));
 
         // One header row sits above the first row.
-        return ($frame->attributes[(1 + $rowIndex) * 20] & Attr::REVERSE) !== 0;
+        $background = $frame->backgrounds[(1 + $rowIndex) * 20];
+
+        return $background === $theme->cursorStyle->backgroundValue()
+            || $background === $theme->selectedStyle->backgroundValue();
     }
 
     private function firstRowLine(Table $table, int $width, int $height): string

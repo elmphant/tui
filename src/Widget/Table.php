@@ -530,21 +530,22 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         $isCursor = $rowIndex === $this->cursor;
         $isSelected = $rowIndex === $this->selected;
-        $reverse = ($isCursor && $focused) || $isSelected;
+        $filled = ($isCursor && $focused) || $isSelected;
 
         $defaultStyle = match (true) {
+            $isCursor && $focused => $theme->cursorStyle,
+            $isSelected => $theme->selectedStyle,
             $focused => $theme->base,
             default => $theme->dim,
         };
 
-        if ($reverse) {
-            $defaultStyle = $defaultStyle->reverse();
+        if ($filled) {
             $defaultStyle->apply($frame, new Rect($startX, $renderY, $totalWidth, $height));
         }
 
         $rowStyle = $row->style ?? $defaultStyle;
-        if ($reverse && $row->style !== null) {
-            $rowStyle = $rowStyle->reverse();
+        if ($filled && $row->style !== null) {
+            $rowStyle = $rowStyle->readableOn($defaultStyle);
         }
 
         $rowLines = TableLayout::linesOfRow($columnWidths, $row);
@@ -563,7 +564,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
             $cellRenderStyle = match (true) {
                 $cellStyle === null => $rowStyle,
-                $reverse => $cellStyle->reverse(),
+                $filled => $cellStyle->readableOn($defaultStyle),
                 default => $cellStyle,
             };
 
