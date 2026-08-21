@@ -40,4 +40,4 @@ parameters:
         # kept rather than store the widget. PHP spells that comparison "==".
         -
             identifier: notEqual.notAllowed
-            path: src/Core/App.php
+            path: src/Core/ComponentWriteBack.php

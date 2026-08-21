@@ -339,15 +339,7 @@ abstract readonly class App implements RoutesFocus
             return $this->delegateMouse($message, $screenRect, $components);
         }
 
-        if ($message instanceof TickMsg) {
-            return $this->broadcastAfter($this->onTick($message, $screenRect), $message, $screenRect);
-        }
-
-        if ($message instanceof FloatMouseMsg) {
-            return $this->broadcastAfter($this->onMessage($message, $screenRect), $message, $screenRect);
-        }
-
-        return $this->onMessage($message, $screenRect);
+        return $this->handleUnrouted($message, $screenRect);
     }
 
     /**
@@ -367,9 +359,7 @@ abstract readonly class App implements RoutesFocus
             if ($bindings->matches($message, Actions::FOCUS_CYCLE)) {
                 return $this->handleTab($message, $screenRect, $focusables, $message->shift);
             }
-        }
 
-        if ($message instanceof KeyMsg) {
             return $this->handleLayerTwoKey($message, $screenRect, $focusables);
         }
 
@@ -382,6 +372,18 @@ abstract readonly class App implements RoutesFocus
             );
         }
 
+        return $this->handleUnrouted($message, $screenRect);
+    }
+
+    /**
+     * What neither layer routes by hand. A tick and a click on a float reach every
+     * component once the app's hook has had it; anything else is the app's alone.
+     * Both layers answer these the same way, so they answer them in one place.
+     *
+     * @return UpdateResult<static>
+     */
+    private function handleUnrouted(Message $message, Rect $screenRect): UpdateResult
+    {
         if ($message instanceof TickMsg) {
             return $this->broadcastAfter($this->onTick($message, $screenRect), $message, $screenRect);
         }
@@ -616,7 +618,7 @@ abstract readonly class App implements RoutesFocus
         }
         $rects = $current->findComponentRects($screenRect, $components);
         [$updates, $childCommand] = $current->dispatchComponents(
-            self::toldWhoHoldsTheKeyboard($components, $holdingTheKeyboard),
+            PointerFocus::told($components, $holdingTheKeyboard),
             $rects,
             $message,
             $current->childDispatcher(),
@@ -643,81 +645,9 @@ abstract readonly class App implements RoutesFocus
             $next,
             self::combineCommands(
                 $answered,
-                self::movesTheKeyboard($answered) ? null : self::focusAfterPointer($message, $landedOn),
+                PointerFocus::alreadyMoved($answered) ? null : PointerFocus::after($message, $landedOn),
             ),
         );
-    }
-
-    /**
-     * Whether anything that answered the pointer already said where the keyboard
-     * goes. Where the pointer landed is only the default, so a more specific
-     * answer to the same press must not be raced by it.
-     */
-    private static function movesTheKeyboard(?Cmd $command): bool
-    {
-        if ($command instanceof FocusCmd) {
-            return true;
-        }
-
-        if ($command instanceof MappedCmd) {
-            return self::movesTheKeyboard($command->inner);
-        }
-
-        if (!$command instanceof BatchCmd) {
-            return false;
-        }
-
-        foreach ($command->commands as $child) {
-            if (self::movesTheKeyboard($child)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * A widget deciding what a press means may need to know whether the keyboard
-     * was already on it — the runtime holds that, so it is told here rather than
-     * left to read a flag its host wrote for some other purpose.
-     *
-     * @param list<Component<Interactive>> $components
-     *
-     * @return list<Component<Interactive>>
-     */
-    private static function toldWhoHoldsTheKeyboard(array $components, ?ComponentId $holding): array
-    {
-        if ($holding === null) {
-            return $components;
-        }
-
-        return array_map(
-            static function (Component $component) use ($holding): Component {
-                $widget = $component->widget;
-
-                return $component->id->equals($holding) && $widget instanceof Focusable && !$widget->isFocused()
-                    ? $component->withWidget($widget->withFocus(true))
-                    : $component;
-            },
-            $components,
-        );
-    }
-
-    /**
-     * A pointer moves the keyboard the same way a key does. Writing only the
-     * widget's flag would leave the runtime pointing where it pointed before,
-     * and a routed tree ignores flags.
-     *
-     * A click on empty space is a deliberate move away from whatever held it; a
-     * wheel that turned nothing has no such intent behind it.
-     */
-    private static function focusAfterPointer(MouseMsg $message, ?ComponentId $landedOn): ?Cmd
-    {
-        if ($landedOn !== null) {
-            return Cmd::focus($landedOn);
-        }
-
-        return $message->isClick() ? Cmd::focusNothing() : null;
     }
 
     /**
@@ -938,40 +868,8 @@ abstract readonly class App implements RoutesFocus
             $app = $original->replaceIn($app, $widget);
         }
 
-        $registry = $app->componentRegistry();
-        foreach ($updates as [$original, $widget]) {
-            $rebound = $registry->get($original->id);
-            if ($rebound === null) {
-                throw new LogicException(sprintf('Component "%s" disappeared during an update', $original->id->value));
-            }
-
-            /*
-             * Equal, not identical: a model may keep what the component changed
-             * rather than the component, and build the widget back from it. The
-             * focus this routing applied is left out of the comparison — a model
-             * that lets the tree own focus rebuilds the widget without it.
-             */
-            if (self::asAuthored($rebound->widget) != self::asAuthored($widget)) {
-                throw new LogicException(sprintf('Component "%s" stored its update on another property', $original->id->value));
-            }
-        }
+        ComponentWriteBack::verify($app->componentRegistry(), $updates);
 
         return $app;
-    }
-
-    /**
-     * The widget without what routing put on it on the way in — focus and the
-     * app's global bindings. A model that lets the tree own those rebuilds the
-     * widget without them, and would otherwise never compare equal.
-     */
-    private static function asAuthored(Interactive $widget): Interactive
-    {
-        if ($widget instanceof Focusable) {
-            $widget = $widget->withFocus(false);
-        }
-
-        return $widget instanceof KeybindingsAware
-            ? $widget->withGlobalKeybindings(null)
-            : $widget;
     }
 }
