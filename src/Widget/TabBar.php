@@ -28,7 +28,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\ChildDispatcher;
 use LogicException;
 
-final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAware
+final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -161,8 +161,8 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     public function hints(): array
     {
         return $this->effectiveKeybindings()->hints([
-            Actions::TAB_PREV => 'previous tab',
-            Actions::TAB_NEXT => 'next tab',
+            'previous tab' => Actions::TAB_PREV,
+            'next tab' => Actions::TAB_NEXT,
         ]);
     }
 

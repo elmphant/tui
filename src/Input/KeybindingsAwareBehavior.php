@@ -10,7 +10,9 @@ trait KeybindingsAwareBehavior
     {
         $bindings = static::defaultKeybindings();
         if ($this->globalKeybindings !== null) {
-            $bindings = $bindings->append($this->globalKeybindings);
+            // Globals lead: they still only add keys, but a hint names the key an
+            // action leads with, and what the application bound is what it shows.
+            $bindings = $this->globalKeybindings->append($bindings);
         }
         if ($this->customKeybindings !== null) {
             $bindings = $bindings->merge($this->customKeybindings);

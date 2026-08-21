@@ -34,6 +34,7 @@ use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focusable;
@@ -277,6 +278,16 @@ final class TabBarTest extends TestCase
         ]));
 
         self::assertSame(['h' => 'previous tab', 'l' => 'next tab'], $bar->hints());
+    }
+
+    #[Test]
+    public function aBoundBarPublishesItsHintsToWhateverCarriesThem(): void
+    {
+        $app = new TwoFieldsInATabApp(TabBar::new()->addTab('A')->addTab('B'));
+
+        $driven = ModelHarness::for($app, 40, 10)->initialize();
+
+        self::assertSame(['←' => 'previous tab', '→' => 'next tab'], $driven->focusedHints());
     }
 
     #[Test]

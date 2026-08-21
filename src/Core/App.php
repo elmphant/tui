@@ -126,7 +126,7 @@ abstract readonly class App implements RoutesFocus
     {
         return $this->applicationKeybindings()
             ->append($this->resolvedQuitBindings())
-            ->hints(['quit' => $description]);
+            ->hints([$description => 'quit']);
     }
 
     protected function setup(): ?Cmd
@@ -829,6 +829,12 @@ abstract readonly class App implements RoutesFocus
         }
 
         $widget = $this->componentRegistry()->get($focused)?->widget;
+
+        // The stored widget is the authored one: routing hands the globals over on
+        // the way in and unwraps again, so nothing kept has them.
+        if ($widget instanceof KeybindingsAware) {
+            $widget = $widget->withGlobalKeybindings($this->globalKeybindings());
+        }
 
         return $widget instanceof PublishesHints ? $widget->hints() : [];
     }

@@ -170,6 +170,35 @@ final readonly class KeyPattern
         return implode('+', $parts);
     }
 
+    /**
+     * One label for keys that do the same job, writing a modifier they all share
+     * once: "Shift+←" and "Shift+→" become "Shift+←/→".
+     */
+    public static function joinedLabel(self $first, self ...$rest): string
+    {
+        $labels = [$first->label()];
+        foreach ($rest as $pattern) {
+            $labels[] = $pattern->label();
+        }
+
+        $lastModifier = strrpos($labels[0], '+');
+        $modifiers = $lastModifier === false ? '' : substr($labels[0], 0, $lastModifier + 1);
+
+        if ($modifiers === '') {
+            return self::withOptionalModifier($labels) ?? implode('/', $labels);
+        }
+
+        $tails = [];
+        foreach ($labels as $label) {
+            if (!str_starts_with($label, $modifiers)) {
+                return implode('/', $labels);
+            }
+            $tails[] = substr($label, \strlen($modifiers));
+        }
+
+        return $modifiers . implode('/', $tails);
+    }
+
     public static function fromKeyMsg(KeyMsg $msg): self
     {
         $key = $msg->key;
@@ -207,6 +236,36 @@ final readonly class KeyPattern
             && $this->ctrl === $msg->ctrl
             && $this->alt === $msg->alt
             && $this->shift === $shift;
+    }
+
+    /**
+     * "↑", "↓", "Shift+↑", "Shift+↓" is the same pair twice, so it reads as
+     * "(Shift+)↑/↓".
+     *
+     * @param list<string> $labels
+     */
+    private static function withOptionalModifier(array $labels): ?string
+    {
+        $plain = [];
+        $modified = [];
+        foreach ($labels as $label) {
+            $lastModifier = strrpos($label, '+');
+            if ($lastModifier === false) {
+                $plain[] = $label;
+                continue;
+            }
+            $modified[substr($label, 0, $lastModifier + 1)][] = substr($label, $lastModifier + 1);
+        }
+
+        if ($plain === [] || count($modified) !== 1) {
+            return null;
+        }
+
+        $modifiers = array_key_first($modified);
+
+        return $modified[$modifiers] === $plain
+            ? '(' . $modifiers . ')' . implode('/', $plain)
+            : null;
     }
 
     private function keyLabel(bool $hasModifiers): string

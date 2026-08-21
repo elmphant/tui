@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Input;
 
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Message\Key;
@@ -270,7 +271,7 @@ final class KeybindingsTest extends TestCase
     }
 
     #[Test]
-    public function hintsMapsFirstPatternLabelToActionDescription(): void
+    public function hintsNameTheKeyEachActionLeadsWith(): void
     {
         $bindings = new Keybindings([
             'quit' => ['ctrl+q'],
@@ -279,7 +280,65 @@ final class KeybindingsTest extends TestCase
 
         self::assertSame(
             ['Ctrl+Q' => 'quit', '↓' => 'move down'],
-            $bindings->hints(['quit' => 'quit', 'navigate' => 'move down']),
+            $bindings->hints(['quit' => 'quit', 'move down' => 'navigate']),
+        );
+    }
+
+    #[Test]
+    public function severalActionsUnderOneDescriptionShareOneLabel(): void
+    {
+        $bindings = new Keybindings([
+            Actions::CURSOR_UP => ['up'],
+            Actions::CURSOR_DOWN => ['down'],
+        ]);
+
+        self::assertSame(
+            ['↑/↓' => 'move'],
+            $bindings->hints(['move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN]]),
+        );
+    }
+
+    #[Test]
+    public function aModifierSharedByEveryKeyOfAHintIsWrittenOnce(): void
+    {
+        $bindings = new Keybindings([
+            Actions::TAB_PREV => ['shift+left'],
+            Actions::TAB_NEXT => ['shift+right'],
+        ]);
+
+        self::assertSame(
+            ['Shift+←/→' => 'switch tab'],
+            $bindings->hints(['switch tab' => [Actions::TAB_PREV, Actions::TAB_NEXT]]),
+        );
+    }
+
+    #[Test]
+    public function aModifierThatOnlySomeKeysOfAHintTakeIsWrittenAsOptional(): void
+    {
+        $bindings = Keybindings::rowNavigation();
+
+        self::assertSame(
+            ['(Shift+)↑/↓' => 'select'],
+            $bindings->hints(['select' => [
+                Actions::CURSOR_UP,
+                Actions::CURSOR_DOWN,
+                Actions::PAGE_UP,
+                Actions::PAGE_DOWN,
+            ]]),
+        );
+    }
+
+    #[Test]
+    public function keysWithNoModifierInCommonAreBothSpeltOut(): void
+    {
+        $bindings = new Keybindings([
+            Actions::CLEAR_LINE => ['ctrl+u'],
+            Actions::CANCEL => ['esc'],
+        ]);
+
+        self::assertSame(
+            ['Ctrl+U/Esc' => 'clear search'],
+            $bindings->hints(['clear search' => [Actions::CLEAR_LINE, Actions::CANCEL]]),
         );
     }
 

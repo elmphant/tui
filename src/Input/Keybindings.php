@@ -92,23 +92,29 @@ final readonly class Keybindings
      * Build a key-hint map (display label => description) from these bindings,
      * so footers and status bars stay in sync with what actually matches.
      *
-     * Actions without a binding are skipped. The first pattern of each action
-     * provides the label; $actionDescriptions order is preserved.
+     * A description covering several actions gets one label for all of them, from
+     * the key each action leads with. Actions without a binding are skipped,
+     * descriptions left with none are dropped, and the order given is kept.
      *
-     * @param array<string, string> $actionDescriptions action => human description
+     * @param array<string, string|list<string>> $descriptions description => the action(s) it covers
      *
      * @return array<string, string> key label => description
      */
-    public function hints(array $actionDescriptions): array
+    public function hints(array $descriptions): array
     {
         $hints = [];
-        foreach ($actionDescriptions as $action => $description) {
-            $patterns = $this->patterns[$action] ?? [];
-            if ($patterns === []) {
-                continue;
+        foreach ($descriptions as $description => $actions) {
+            $patterns = [];
+            foreach (\is_string($actions) ? [$actions] : $actions as $action) {
+                $pattern = $this->patterns[$action][0] ?? null;
+                if ($pattern !== null) {
+                    $patterns[] = $pattern;
+                }
             }
 
-            $hints[$patterns[0]->label()] = $description;
+            if ($patterns !== []) {
+                $hints[KeyPattern::joinedLabel(...$patterns)] = $description;
+            }
         }
 
         return $hints;

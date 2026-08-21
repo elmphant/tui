@@ -10,6 +10,8 @@ use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
@@ -18,8 +20,10 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\TabBar;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -39,6 +43,39 @@ final class FocusedHintsTest extends TestCase
         (new HintingApp($read))->render(new Frame(20, 3), $context);
 
         self::assertSame([['space' => 'pick']], $read->getArrayCopy());
+    }
+
+    #[Test]
+    public function theKeysNamedIncludeTheOnesTheAppsGlobalBindingsAdded(): void
+    {
+        $driven = ModelHarness::for(new VimTabsApp(), 40, 10)->initialize();
+
+        self::assertSame(
+            ['h' => 'previous tab', 'l' => 'next tab'],
+            $driven->focusedHints(),
+            'a footer names the keys vim mode made active, not the ones it was authored with',
+        );
+    }
+}
+
+final readonly class VimTabsApp extends App
+{
+    public function __construct(private ?TabBar $bar = null)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            'bar',
+            $this->bar ?? TabBar::new()->addTab('A')->addTab('B'),
+            static fn (self $app, TabBar $bar): self => $app->cloneWith(bar: $bar),
+        );
+    }
+
+    protected function globalKeybindings(): Keybindings
+    {
+        return VimMode::keybindings();
     }
 }
 
