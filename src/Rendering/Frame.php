@@ -48,15 +48,15 @@ final class Frame
     /**
      * @var list<string>
      */
-    private array $blankCharacters;
+    private readonly array $blankCharacters;
     /**
      * @var list<int>
      */
-    private array $zeroCells;
+    private readonly array $zeroCells;
     /**
      * @var list<int>
      */
-    private array $blankWidths;
+    private readonly array $blankWidths;
     /**
      * @var list<int>
      */

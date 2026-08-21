@@ -67,7 +67,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
     public static function fromText(string $text): self
     {
         $lines = array_map(
-            static fn (string $raw) => Line::raw($raw),
+            Line::raw(...),
             explode("\n", $text),
         );
 

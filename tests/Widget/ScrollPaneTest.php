@@ -42,7 +42,7 @@ final class ScrollPaneTest extends TestCase
     public function whatAPaneReportsAboutItselfDoesNotTurnOnItsOwnFocusFlag(): void
     {
         $taller = new class implements Widget, Focusable, MeasureHeight {
-            public function __construct(private bool $focused = false)
+            public function __construct(private readonly bool $focused = false)
             {
             }
 

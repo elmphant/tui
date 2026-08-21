@@ -95,9 +95,9 @@ final readonly class KeyboardStartsWithTheAppApp extends App
     }
 }
 
-final class FocusRoutingModel implements RoutesFocus
+final readonly class FocusRoutingModel implements RoutesFocus
 {
-    public function __construct(public readonly ?ComponentId $seen = null)
+    public function __construct(public ?ComponentId $seen = null)
     {
     }
 

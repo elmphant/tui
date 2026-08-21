@@ -42,7 +42,7 @@ final class RowExtentsTest extends TestCase
 
         self::assertSame(
             [0, 1, 1, 2, 2, 2, 3],
-            array_map(static fn (int $line): ?int => $extents->rowAtLine($line), range(0, 6)),
+            array_map($extents->rowAtLine(...), range(0, 6)),
         );
     }
 
@@ -73,7 +73,7 @@ final class RowExtentsTest extends TestCase
 
         self::assertSame(
             [0, 1, 2, 2, 3, 3, 3, 4],
-            array_map(static fn (int $line): int => $extents->firstRowAtOrAfter($line), range(0, 7)),
+            array_map($extents->firstRowAtOrAfter(...), range(0, 7)),
         );
     }
 

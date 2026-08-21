@@ -847,7 +847,7 @@ final class BindingCapturingFocusable implements Focusable, KeybindingsAware
     public ?Keybindings $capturedGlobalBindings = null;
 
     public function __construct(
-        private bool $focused = false,
+        private readonly bool $focused = false,
     ) {
     }
 

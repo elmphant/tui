@@ -624,7 +624,7 @@ final class FlexTest extends TestCase
         };
 
         return new class($record) implements Widget {
-            public function __construct(private Closure $record)
+            public function __construct(private readonly Closure $record)
             {
             }
 
@@ -643,7 +643,7 @@ final class FlexTest extends TestCase
     private function widthMeasuredWidget(int $width): Widget
     {
         return new class($width) implements Widget {
-            public function __construct(private int $width)
+            public function __construct(private readonly int $width)
             {
             }
 
@@ -680,7 +680,7 @@ final class FlexTest extends TestCase
     private function measuredWidget(Closure $measure): Widget
     {
         return new class($measure) implements Widget, MeasureHeight {
-            public function __construct(private Closure $measure)
+            public function __construct(private readonly Closure $measure)
             {
             }
 
@@ -703,7 +703,7 @@ final class FlexTest extends TestCase
     private function constraintWidget(Constraint $constraint): Widget
     {
         return new class($constraint) implements Widget {
-            public function __construct(private Constraint $constraint)
+            public function __construct(private readonly Constraint $constraint)
             {
             }
 

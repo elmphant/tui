@@ -2800,7 +2800,7 @@ final class ProgramTest extends TestCase
             public array $order = [];
             private bool $reentered = false;
 
-            public function __construct(private Program $program)
+            public function __construct(private readonly Program $program)
             {
             }
 
@@ -3615,7 +3615,7 @@ final class ProgramTest extends TestCase
     {
         $generations = new ArrayObject();
         $model = new class($generations) implements Model, ShutdownAware {
-            public function __construct(private ArrayObject $generations, private int $generation = 0)
+            public function __construct(private ArrayObject $generations, private readonly int $generation = 0)
             {
             }
 

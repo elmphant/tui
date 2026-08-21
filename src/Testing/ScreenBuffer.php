@@ -164,7 +164,7 @@ final class ScreenBuffer
 
         $final = $data[$position];
         ++$position;
-        $parts = $params !== '' ? array_map('intval', explode(';', $params)) : [];
+        $parts = $params !== '' ? array_map(intval(...), explode(';', $params)) : [];
 
         if ($final === 'H' || $final === 'f') {
             $this->cursorRow = isset($parts[0])

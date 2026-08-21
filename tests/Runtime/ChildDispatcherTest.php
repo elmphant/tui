@@ -188,9 +188,9 @@ final class DispatchProbe implements Interactive
     public ?Rect $lastRect = null;
 
     public function __construct(
-        private ?Interactive $replacement = null,
-        private ?Cmd $command = null,
-        private mixed $modelOverride = null,
+        private readonly ?Interactive $replacement = null,
+        private readonly ?Cmd $command = null,
+        private readonly mixed $modelOverride = null,
     ) {
     }
 

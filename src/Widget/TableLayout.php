@@ -18,12 +18,12 @@ use Elmphant\Tui\Rendering\Span;
  *
  * @internal
  */
-final class TableLayout
+final readonly class TableLayout
 {
     /**
      * @param list<int> $heights
      */
-    private function __construct(public readonly array $heights, public readonly int $totalHeight)
+    private function __construct(public array $heights, public int $totalHeight)
     {
     }
 

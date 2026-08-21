@@ -67,12 +67,12 @@ final class EffectRunner
      * @param Closure(): void               $wake     a stream that became readable has to reach the loop
      */
     public function __construct(
-        private SplQueue $results,
-        private Clock $clock,
-        private Closure $dispatch,
-        private Closure $wake,
-        private ProcessStarter $processStarter = new ProcessStarter(),
-        private HttpRequestStarter $requestStarter = new HttpRequestStarter(),
+        private readonly SplQueue $results,
+        private readonly Clock $clock,
+        private readonly Closure $dispatch,
+        private readonly Closure $wake,
+        private readonly ProcessStarter $processStarter = new ProcessStarter(),
+        private readonly HttpRequestStarter $requestStarter = new HttpRequestStarter(),
     ) {
     }
 

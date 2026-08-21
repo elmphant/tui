@@ -17,13 +17,13 @@ use Elmphant\Tui\Widget\PointerFloating;
  * A float that draws one marker character over a fixed rect, for tests that
  * need a pointer target without a real Dropdown.
  */
-final class TestPopup implements PointerFloating
+final readonly class TestPopup implements PointerFloating
 {
-    private readonly FloatTarget $target;
+    private FloatTarget $target;
 
     public function __construct(
-        private readonly Rect $placement,
-        private readonly string $marker = 'P',
+        private Rect $placement,
+        private string $marker = 'P',
     ) {
         $this->target = new FloatTarget();
     }

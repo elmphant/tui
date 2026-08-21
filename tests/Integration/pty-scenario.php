@@ -26,10 +26,10 @@ if ($scenario === 'blocking') {
 
 $model = new class($scenario, $readyFile, $resultFile) implements Model {
     public function __construct(
-        private string $scenario,
-        private string|false $readyFile,
-        private string|false $resultFile,
-        private int $resizeCount = 0,
+        private readonly string $scenario,
+        private readonly string|false $readyFile,
+        private readonly string|false $resultFile,
+        private readonly int $resizeCount = 0,
     ) {
     }
 

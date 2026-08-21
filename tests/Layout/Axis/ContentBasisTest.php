@@ -77,7 +77,7 @@ final class ContentBasisTest extends TestCase
     private function wanting(int $columns): Widget
     {
         return new class($columns) implements Widget {
-            public function __construct(private int $columns)
+            public function __construct(private readonly int $columns)
             {
             }
 
@@ -95,7 +95,7 @@ final class ContentBasisTest extends TestCase
     private function measuring(int $rows): Widget
     {
         return new class($rows) implements Widget, MeasureHeight {
-            public function __construct(private int $rows)
+            public function __construct(private readonly int $rows)
             {
             }
 

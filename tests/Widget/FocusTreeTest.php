@@ -335,7 +335,7 @@ final class FocusTreeTest extends TestCase
     private function createNodes(int $count): array
     {
         return array_map(
-            fn () => $this->createFocusableWidget(),
+            $this->createFocusableWidget(...),
             range(1, $count),
         );
     }
