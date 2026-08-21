@@ -321,6 +321,50 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function rowsThatWrapPastTheAreaGetAScrollbarThoughFewerRowsThanLinesFit(): void
+    {
+        $long = str_repeat('word ', 12);
+        $table = Table::new(
+            [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
+            [['1', $long], ['2', $long], ['3', $long]],
+        )->withFocus(true);
+
+        $frame = new Frame(30, 6);
+        $table->render($frame, new Rect(0, 0, 30, 6), new RenderContext(Theme::dark()));
+
+        $column = 29;
+        $glyphs = [];
+        for ($row = 1; $row < 6; ++$row) {
+            $glyphs[] = $frame->characters[$row * 30 + $column];
+        }
+
+        self::assertContains(
+            Scrollbar::THUMB,
+            $glyphs,
+            'three rows fit but their wrapped lines do not, so the rows the reader cannot see need a scrollbar',
+        );
+    }
+
+    #[Test]
+    public function theThumbReachesTheBottomOnceTheLastWrappedLinesAreInView(): void
+    {
+        $long = str_repeat('word ', 12);
+        $table = Table::new(
+            [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
+            [['1', $long], ['2', $long], ['3', $long]],
+        )->withFocus(true)->withScrollOffset(2);
+
+        $frame = new Frame(30, 6);
+        $table->render($frame, new Rect(0, 0, 30, 6), new RenderContext(Theme::dark()));
+
+        self::assertSame(
+            Scrollbar::THUMB,
+            $frame->characters[5 * 30 + 29],
+            'the reader is on the last row, so the thumb has to be at the end of the track',
+        );
+    }
+
+    #[Test]
     public function noScrollbarWhenAllRowsFit(): void
     {
         $table = Table::new(

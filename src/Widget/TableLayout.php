@@ -105,6 +105,22 @@ final class TableLayout
     }
 
     /**
+     * The line a row starts on, so a scrollbar counting wrapped lines can say
+     * where among them the reader is.
+     */
+    public function lineOf(int $row): int
+    {
+        $line = 0;
+        $rows = min($row, count($this->heights));
+
+        for ($index = 0; $index < $rows; ++$index) {
+            $line += $this->heights[$index];
+        }
+
+        return $line;
+    }
+
+    /**
      * Which row covers the given line of the viewport, counting from the first visible row.
      */
     public function rowAtLine(int $firstRow, int $line): ?int

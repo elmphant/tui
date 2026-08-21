@@ -253,11 +253,8 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         }
 
         $theme = $context->theme;
-        $rowCount = $this->rowCount();
         $visibleRows = $area->height - $this->headerHeight();
-        $showScrollbar = Scrollbar::needsScrollbar($rowCount, $visibleRows);
-
-        $columnWidths = $this->columnWidths($showScrollbar ? $area->width - 1 : $area->width);
+        [$showScrollbar, $columnWidths] = $this->scrollbarAndColumnWidths($area);
 
         $frame->pushClip($area);
         try {
@@ -267,11 +264,14 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             $this->renderRows($frame, $area, $columnWidths, $theme, $this->drawsFocused($context));
 
             if ($showScrollbar) {
+                $layout = $this->layoutFor($columnWidths);
+                $topRow = $this->displayScrollOffset($area);
+
                 Scrollbar::renderFor(
                     $frame,
                     new Rect($area->x, $area->y + $this->headerHeight(), $area->width, $visibleRows),
-                    $this->displayScrollOffset($area),
-                    $rowCount,
+                    $layout->lineOf($topRow) + ($topRow === $this->scrollOffset ? $this->lineOffset : 0),
+                    $layout->totalHeight,
                     $theme,
                 );
             }
@@ -591,9 +591,27 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     private function columnWidthsFor(Rect $area): array
     {
-        $showScrollbar = Scrollbar::needsScrollbar($this->rowCount(), max(1, $area->height - $this->headerHeight()));
+        return $this->scrollbarAndColumnWidths($area)[1];
+    }
 
-        return $this->columnWidths($showScrollbar ? $area->width - 1 : $area->width);
+    /**
+     * Whether the rows need a scrollbar, and the widths that leaves. Cells wrap,
+     * so what has to fit is the lines the rows come to and not how many rows
+     * there are; a scrollbar then takes a column, which can only wrap them
+     * further, so needing one at the full width still needs one once narrowed.
+     *
+     * @return array{bool, list<int>}
+     */
+    private function scrollbarAndColumnWidths(Rect $area): array
+    {
+        $visibleLines = max(1, $area->height - $this->headerHeight());
+        $widths = $this->columnWidths($area->width);
+
+        if (!Scrollbar::needsScrollbar($this->layoutFor($widths)->totalHeight, $visibleLines)) {
+            return [false, $widths];
+        }
+
+        return [true, $this->columnWidths(max(0, $area->width - 1))];
     }
 
     /**
