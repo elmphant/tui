@@ -11,6 +11,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Runtime\EffectRunner;
+use Elmphant\Tui\Runtime\HttpRequestStarter;
 use Elmphant\Tui\Testing\TestClock;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
@@ -451,11 +452,11 @@ final class EffectRunnerTest extends TestCase
         return new EffectRunner(
             $this->results,
             $this->clock,
-            static function (?Cmd $command): void {
+            static function (): void {
             },
             static function (): void {
             },
-            $client,
+            requestStarter: new HttpRequestStarter($client),
         );
     }
 

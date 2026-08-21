@@ -20,9 +20,6 @@ use Elmphant\Tui\Message\TickMsg;
 use LogicException;
 use Revolt\EventLoop;
 use SplQueue;
-use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\Process\Process;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 use UnexpectedValueException;
 
@@ -74,7 +71,8 @@ final class EffectRunner
         private Clock $clock,
         private Closure $dispatch,
         private Closure $wake,
-        private ?HttpClientInterface $httpClient = null,
+        private ProcessStarter $processStarter = new ProcessStarter(),
+        private HttpRequestStarter $requestStarter = new HttpRequestStarter(),
     ) {
     }
 
@@ -89,9 +87,24 @@ final class EffectRunner
             $command instanceof TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
             $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
             $command instanceof CancelCmd => $this->cancel($command->id, $wrap),
-            $command instanceof HttpCmd => $this->startHttpRequest($command, $wrap),
-            $command instanceof ExecCmd => $this->startExecProcess($command, $wrap),
-            $command instanceof ProcessCmd => $this->startStreamingProcess($command, $wrap),
+            $command instanceof HttpCmd => $this->keep(
+                fn (): RunningProcess => $this->requestStarter->start($command, $wrap),
+                'http',
+                $command->id,
+                $wrap,
+            ),
+            $command instanceof ExecCmd => $this->keep(
+                fn (): RunningProcess => $this->processStarter->exec($command, $wrap),
+                'process',
+                $command->id,
+                $wrap,
+            ),
+            $command instanceof ProcessCmd => $this->keep(
+                fn (): RunningProcess => $this->processStarter->streaming($command, $wrap),
+                'process',
+                $command->id,
+                $wrap,
+            ),
             $command instanceof ListenCmd => $this->subscribeToStream($command, $wrap),
             default => throw new LogicException(sprintf('Unknown command type "%s" — the runtime has no dispatcher for it', $command::class)),
         };
@@ -153,6 +166,22 @@ final class EffectRunner
             }
         }
         $this->processes = [];
+    }
+
+    /**
+     * Hold on to what a starter began, or say why it could not begin. Starting is
+     * the starter's to know; what a failure is worth saying is not.
+     *
+     * @param Closure(): RunningProcess      $start
+     * @param Closure(Message): Message|null $wrap
+     */
+    private function keep(Closure $start, string $source, ?EffectId $id, ?Closure $wrap): void
+    {
+        try {
+            $this->processes[] = $start();
+        } catch (Throwable $error) {
+            $this->report(new ErrorMsg($error, $source, $id), $wrap);
+        }
     }
 
     /**
@@ -237,107 +266,6 @@ final class EffectRunner
     private function registerTimer(float $delay, Closure $then, ?EffectId $id = null, ?Closure $wrap = null): void
     {
         $this->timers[] = new TimerRecord($this->clock->now() + $delay, $then, $id, $wrap);
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function startHttpRequest(HttpCmd $command, ?Closure $wrap = null): void
-    {
-        $this->httpClient ??= HttpClient::create();
-
-        $options = $command->options;
-        $options['buffer'] ??= false;
-        if ($command->headers !== []) {
-            $options['headers'] = $command->headers;
-        }
-        if ($command->body !== null) {
-            $options['body'] = $command->body;
-        }
-
-        try {
-            $response = $this->httpClient->request($command->method, $command->url, $options);
-        } catch (Throwable $error) {
-            $this->report(new ErrorMsg($error, 'http', $command->id), $wrap);
-
-            return;
-        }
-
-        $this->processes[] = new RunningHttpRequest(
-            $this->httpClient,
-            $response,
-            $command->id,
-            $command->maxBodyBytes,
-            $wrap,
-        );
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function startExecProcess(ExecCmd $command, ?Closure $wrap = null): void
-    {
-        try {
-            $process = $this->createProcess($command->command);
-            $this->configureProcess($process, $command->workingDirectory, $command->timeout, $command->env, $command->input);
-            $process->start();
-        } catch (Throwable $error) {
-            $this->report(new ErrorMsg($error, 'process', $command->id), $wrap);
-
-            return;
-        }
-
-        $this->processes[] = new RunningExecProcess($process, $command->id, $command->maxOutputBytes, $wrap);
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function startStreamingProcess(ProcessCmd $command, ?Closure $wrap = null): void
-    {
-        try {
-            $process = $this->createProcess($command->command);
-            $this->configureProcess($process, $command->workingDirectory, $command->timeout, $command->env, $command->input);
-            $process->start();
-        } catch (Throwable $error) {
-            $this->report(new ErrorMsg($error, 'process', $command->id), $wrap);
-
-            return;
-        }
-
-        $this->processes[] = new RunningStreamingProcess($process, $command->id, $command->outputChunkBytes, $wrap);
-    }
-
-    /**
-     * @param list<string> $command
-     */
-    private function createProcess(array $command): Process
-    {
-        return new Process($command);
-    }
-
-    /**
-     * @param array<string, string> $env
-     */
-    private function configureProcess(
-        Process $process,
-        ?string $workingDirectory,
-        ?float $timeout,
-        array $env,
-        ?string $input,
-    ): void {
-        if ($workingDirectory !== null) {
-            $process->setWorkingDirectory($workingDirectory);
-        }
-        if ($timeout !== null) {
-            $process->setTimeout($timeout);
-        }
-        if ($env !== []) {
-            $process->setEnv($env);
-        }
-        if ($input !== null) {
-            $process->setInput($input);
-        }
     }
 
     /**
