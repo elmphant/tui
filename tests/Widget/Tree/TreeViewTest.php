@@ -24,6 +24,15 @@ use PHPUnit\Framework\TestCase;
 final class TreeViewTest extends TestCase
 {
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'open or close'],
+            TreeView::new([])->hints(),
+        );
+    }
+
+    #[Test]
     public function aCollapsedTreeDrawsOnlyItsRoots(): void
     {
         $tree = TreeView::new([

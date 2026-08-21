@@ -15,7 +15,7 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
-final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, DropdownContent, Committing
+final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, DropdownContent, Committing, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;

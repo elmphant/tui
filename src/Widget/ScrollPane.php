@@ -28,7 +28,7 @@ use Elmphant\Tui\Runtime\ChildDispatcher;
 /**
  * A vertical stack of children in a scrolling viewport.
  */
-final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer
+final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -136,6 +136,13 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
             Actions::SCROLL_DOWN => ['down'],
             Actions::PAGE_UP => ['shift+up', 'page_up'],
             Actions::PAGE_DOWN => ['shift+down', 'page_down'],
+        ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'scroll' => [Actions::SCROLL_UP, Actions::SCROLL_DOWN],
         ]);
     }
 

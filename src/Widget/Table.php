@@ -36,7 +36,7 @@ use Elmphant\Tui\Rendering\Theme;
  * Rows given as plain cell text become Row values on the way in, so there is
  * one key path and one row renderer whichever shape the caller used.
  */
-final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
+final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -78,6 +78,14 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     public static function defaultKeybindings(): Keybindings
     {
         return Keybindings::rowNavigation();
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
+            'choose' => Actions::SELECT,
+        ]);
     }
 
     /**

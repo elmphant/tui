@@ -40,6 +40,15 @@ final class ModalTest extends TestCase
     private RenderContext $context;
 
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['Esc' => 'dismiss'],
+            Modal::new('Title', Text::new('body'))->hints(),
+        );
+    }
+
+    #[Test]
     public function contentDrawingPastItsAreaIsCroppedByTheModalBorder(): void
     {
         $frame = new Frame(40, 20);

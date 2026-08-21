@@ -54,6 +54,12 @@ final class PanelTest extends TestCase
     use FocusableBehaviorTrait;
 
     #[Test]
+    public function itNamesTheKeysItsPaneAnswers(): void
+    {
+        self::assertSame(['↑/↓' => 'scroll'], (new Panel())->hints());
+    }
+
+    #[Test]
     public function measuresItsChildrenPlusTheChromeAroundThem(): void
     {
         self::assertSame(5, $this->panelOfLines(3)->measureHeight(20), 'Three rows of content plus the border above and below');

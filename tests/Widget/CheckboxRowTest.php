@@ -27,6 +27,15 @@ use ReflectionProperty;
 final class CheckboxRowTest extends TestCase
 {
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['←/→' => 'move', 'Enter' => 'toggle'],
+            CheckboxRow::new([])->hints(),
+        );
+    }
+
+    #[Test]
     public function theLabelsCanBeReplacedAfterConstruction(): void
     {
         $frame = new Frame(30, 2);

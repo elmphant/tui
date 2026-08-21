@@ -1698,6 +1698,15 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'choose'],
+            ListView::new([])->hints(),
+        );
+    }
+
+    #[Test]
     public function homeAtCursorZeroIsANoOpEvenWhenScrolled(): void
     {
         $list = ListView::new($this->tenItems())->withFocus(true)->withScrollOffset(5);

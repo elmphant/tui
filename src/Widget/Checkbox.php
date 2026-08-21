@@ -20,7 +20,7 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
-final readonly class Checkbox implements Focusable, KeybindingsAware
+final readonly class Checkbox implements Focusable, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -48,6 +48,11 @@ final readonly class Checkbox implements Focusable, KeybindingsAware
         return new Keybindings([
             Actions::TOGGLE => ['enter', 'space'],
         ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints(['toggle' => Actions::TOGGLE]);
     }
 
     public function label(): string

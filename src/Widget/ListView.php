@@ -26,7 +26,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 
-final readonly class ListView implements Focusable, KeybindingsAware, MeasureHeight
+final readonly class ListView implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -67,6 +67,14 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     public static function defaultKeybindings(): Keybindings
     {
         return Keybindings::rowNavigation();
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
+            'choose' => Actions::SELECT,
+        ]);
     }
 
     /**

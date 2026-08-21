@@ -22,7 +22,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  * One choice out of several, side by side on a row: the horizontal Radio, as
  * CheckboxRow is the horizontal CheckboxGroup.
  */
-final readonly class RadioRow implements OptionRow
+final readonly class RadioRow implements OptionRow, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -84,6 +84,14 @@ final readonly class RadioRow implements OptionRow
             Actions::CURSOR_LEFT => ['left'],
             Actions::CURSOR_RIGHT => ['right'],
             Actions::SELECT => ['enter', 'space'],
+        ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_LEFT, Actions::CURSOR_RIGHT],
+            'choose' => Actions::SELECT,
         ]);
     }
 

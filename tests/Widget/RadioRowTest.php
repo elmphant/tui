@@ -21,6 +21,15 @@ use PHPUnit\Framework\TestCase;
 final class RadioRowTest extends TestCase
 {
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['←/→' => 'move', 'Enter' => 'choose'],
+            RadioRow::new([])->hints(),
+        );
+    }
+
+    #[Test]
     public function marksTheSelectedOptionAlongOneRow(): void
     {
         $row = RadioRow::new(['system', 'pages', 'all'])->withSelected(1);

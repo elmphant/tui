@@ -24,6 +24,15 @@ use PHPUnit\Framework\TestCase;
 final class CheckboxGroupTest extends TestCase
 {
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'toggle'],
+            (new CheckboxGroup())->hints(),
+        );
+    }
+
+    #[Test]
     public function aWrappingGroupComesRoundFromItsFirstOptionToItsLast(): void
     {
         $group = CheckboxGroup::new(['a', 'b', 'c'])->wrapping()->withFocus(true);

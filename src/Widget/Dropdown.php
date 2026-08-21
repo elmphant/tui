@@ -31,7 +31,7 @@ use Elmphant\Tui\Rendering\RenderContext;
  *
  * @template-covariant TContent of DropdownContent
  */
-final readonly class Dropdown implements Focusable, KeybindingsAware
+final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -140,6 +140,15 @@ final readonly class Dropdown implements Focusable, KeybindingsAware
             Actions::TOGGLE => ['enter', 'space'],
             Actions::CANCEL => ['esc'],
         ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints(
+            $this->open
+                ? ['close' => Actions::CANCEL]
+                : ['open' => Actions::TOGGLE],
+        );
     }
 
     public function update(Message $message, Rect $area): UpdateResult

@@ -26,7 +26,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Runtime\ChildDispatcher;
 
-final readonly class Modal implements Interactive, WidgetContainer, Focusable, InputLayer, KeybindingsAware
+final readonly class Modal implements Interactive, WidgetContainer, Focusable, InputLayer, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -87,6 +87,11 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
         return new Keybindings([
             Actions::CANCEL => ['esc'],
         ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints(['dismiss' => Actions::CANCEL]);
     }
 
     public function withGlobalKeybindings(?Keybindings $keybindings): static

@@ -27,7 +27,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 
-final readonly class Button implements Focusable, KeybindingsAware
+final readonly class Button implements Focusable, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -55,6 +55,11 @@ final readonly class Button implements Focusable, KeybindingsAware
         return new Keybindings([
             Actions::SELECT => ['enter', 'space'],
         ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints(['press' => Actions::SELECT]);
     }
 
     public function withTone(ButtonTone $tone): self

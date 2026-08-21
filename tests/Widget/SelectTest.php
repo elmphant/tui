@@ -28,6 +28,15 @@ final class SelectTest extends TestCase
     use FocusableBehaviorTrait;
 
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'choose'],
+            Select::new([])->hints(),
+        );
+    }
+
+    #[Test]
     public function constraintReturnsExactOptionCount(): void
     {
         $select = Select::new(['A', 'B', 'C']);

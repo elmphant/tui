@@ -37,6 +37,15 @@ final class TableTest extends TestCase
     use FocusableBehaviorTrait;
 
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'choose'],
+            Table::new([], [])->hints(),
+        );
+    }
+
+    #[Test]
     public function implementsFocusable(): void
     {
         self::assertInstanceOf(Focusable::class, $this->createTable());

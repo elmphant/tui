@@ -24,9 +24,10 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PublishesHints;
 use WeakMap;
 
-final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHeight
+final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -76,6 +77,14 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             Actions::TOGGLE => ['enter', 'space'],
             Actions::HOME => ['home'],
             Actions::END => ['end'],
+        ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
+            'open or close' => Actions::TOGGLE,
         ]);
     }
 

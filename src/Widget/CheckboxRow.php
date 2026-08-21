@@ -21,7 +21,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use LogicException;
 
-final readonly class CheckboxRow implements OptionRow
+final readonly class CheckboxRow implements OptionRow, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -104,6 +104,14 @@ final readonly class CheckboxRow implements OptionRow
             Actions::CURSOR_LEFT => ['left'],
             Actions::CURSOR_RIGHT => ['right'],
             Actions::TOGGLE => ['enter', 'space'],
+        ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_LEFT, Actions::CURSOR_RIGHT],
+            'toggle' => Actions::TOGGLE,
         ]);
     }
 

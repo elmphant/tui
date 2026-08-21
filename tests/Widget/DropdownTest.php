@@ -30,6 +30,28 @@ use PHPUnit\Framework\TestCase;
 final class DropdownTest extends TestCase
 {
     #[Test]
+    public function aClosedDropdownNamesOnlyTheKeyThatOpensIt(): void
+    {
+        self::assertSame(
+            ['Enter' => 'open'],
+            Dropdown::new(Select::new(['a']))->hints(),
+        );
+    }
+
+    #[Test]
+    public function anOpenDropdownNamesTheKeyThatShutsIt(): void
+    {
+        $open = Dropdown::new(Select::new(['a']))
+            ->withFocus(true)
+            ->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 1))
+            ->model;
+
+        self::assertInstanceOf(Dropdown::class, $open);
+        self::assertTrue($open->isOpen(), 'Enter must have opened it');
+        self::assertSame(['Esc' => 'close'], $open->hints());
+    }
+
+    #[Test]
     public function holdsAWidgetAndLetsItAnswerForItself(): void
     {
         $dropdown = Dropdown::new(Select::new(['json', 'yaml'])->withEmptyCaption('choose a format'));

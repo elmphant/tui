@@ -31,6 +31,15 @@ final class RadioTest extends TestCase
     private const MARK_WIDTH = 4;
 
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'choose'],
+            Radio::new([])->hints(),
+        );
+    }
+
+    #[Test]
     public function takesTheOptionsFirstAndLeavesTheLabelOptional(): void
     {
         $bare = Radio::new(['A', 'B']);

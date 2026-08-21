@@ -20,7 +20,7 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 
-final readonly class CheckboxGroup implements Focusable, KeybindingsAware, CursorAware, DropdownContent
+final readonly class CheckboxGroup implements Focusable, KeybindingsAware, CursorAware, DropdownContent, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -126,6 +126,14 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
             Actions::CURSOR_DOWN => ['down'],
             Actions::CURSOR_UP => ['up'],
             Actions::TOGGLE => ['enter', 'space'],
+        ]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
+            'toggle' => Actions::TOGGLE,
         ]);
     }
 

@@ -38,6 +38,27 @@ final class FilterableListTest extends TestCase
     private const FIRST_ITEM_ROW = 2;
 
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'choose'],
+            FilterableList::new([])->hints(),
+        );
+    }
+
+    #[Test]
+    public function aListWithSomethingTypedInItNamesTheKeyThatClearsIt(): void
+    {
+        $filtered = FilterableList::new([new SimpleListItem('alpha')])->withQuery('al');
+
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'choose', 'Ctrl+U/Esc' => 'clear filter'],
+            $filtered->hints(),
+            'the field is this widget’s own, so the key that empties it is a key this widget answers',
+        );
+    }
+
+    #[Test]
     public function narrowsToTheItemsMatchingTheQuery(): void
     {
         $list = $this->typed($this->commands(), 'warm');

@@ -25,7 +25,7 @@ use Elmphant\Tui\Rendering\Grapheme;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 
-final readonly class TextInput implements Focusable, KeybindingsAware
+final readonly class TextInput implements Focusable, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -64,6 +64,11 @@ final readonly class TextInput implements Focusable, KeybindingsAware
     public static function new(string $placeholder = ''): self
     {
         return new self(placeholder: $placeholder);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints(['clear' => Actions::CLEAR_LINE]);
     }
 
     public function value(): string

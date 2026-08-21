@@ -31,6 +31,14 @@ trait OptionListBehavior
         ]);
     }
 
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
+            'choose' => Actions::SELECT,
+        ]);
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
         $count = count($this->options);

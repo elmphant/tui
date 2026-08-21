@@ -30,7 +30,7 @@ use Elmphant\Tui\Search\SubstringMatcher;
 /**
  * A scrollable list with a free-text filter over it.
  */
-final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing
+final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -135,6 +135,15 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
                 ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None),
             list: $this->list->withFocus($focused),
         );
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
+            'choose' => Actions::SELECT,
+            ...($this->query() === '' ? [] : ['clear filter' => [Actions::CLEAR_LINE, Actions::CANCEL]]),
+        ]);
     }
 
     public function query(): string
@@ -316,7 +325,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             Actions::PAGE_UP => ['shift+up', 'page_up'],
             Actions::PAGE_DOWN => ['shift+down', 'page_down'],
             Actions::SELECT => ['enter'],
-        ]))->merge(FilterBar::keybindings());
+        ]))->merge(FilterBar::keybindings())
+            ->append(TextInput::defaultKeybindings());
     }
 
     public function update(Message $message, Rect $area): UpdateResult

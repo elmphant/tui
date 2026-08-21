@@ -25,6 +25,12 @@ final class CheckboxTest extends TestCase
     use FocusableBehaviorTrait;
 
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(['Enter' => 'toggle'], Checkbox::new('agree')->hints());
+    }
+
+    #[Test]
     public function implementsFocusable(): void
     {
         self::assertInstanceOf(Focusable::class, Checkbox::new('Accept'));

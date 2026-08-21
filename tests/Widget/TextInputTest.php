@@ -38,6 +38,12 @@ final class TextInputTest extends TestCase
      * field reads as frozen for as many presses as the cursor was out by.
      */
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(['Ctrl+U' => 'clear'], (new TextInput())->hints());
+    }
+
+    #[Test]
     public function aCursorSetPastTheEndOfTheValueSitsAtTheEnd(): void
     {
         self::assertSame(3, TextInput::new()->withValue('abc')->withCursor(99)->cursor());

@@ -21,7 +21,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Runtime\ChildDispatcher;
 
-final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer
+final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -58,6 +58,11 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
     public static function new(string $title = ''): self
     {
         return new self(title: $title);
+    }
+
+    public function hints(): array
+    {
+        return $this->pane->hints();
     }
 
     public function withTitle(string $title): self

@@ -30,6 +30,15 @@ final class ButtonTest extends TestCase
     use FocusableBehaviorTrait;
 
     #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['Enter' => 'press'],
+            Button::new('Run', new TestMessage('run'))->hints(),
+        );
+    }
+
+    #[Test]
     public function enterWhileFocusedEmitsTheMessage(): void
     {
         $pressed = new TestMessage('run');
