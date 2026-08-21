@@ -136,7 +136,7 @@ final class BarSlotPlacementTest extends TestCase
 
         $frame = $this->paint(Footer::new()->right($sized));
 
-        self::assertSame(str_repeat(' ', 14) . '──────  0%', $this->padded($frame), 'Ten columns, right up against the edge');
+        self::assertSame(str_repeat(' ', 14) . '█████─ 50%', $this->padded($frame), 'Ten columns, right up against the edge');
     }
 
     #[Test]
@@ -161,7 +161,7 @@ final class BarSlotPlacementTest extends TestCase
     {
         $pressed = new TestMessage('pressed');
         $widthless = new class($pressed) implements Interactive {
-            public function __construct(private Message $pressed)
+            public function __construct(private readonly Message $pressed)
             {
             }
 

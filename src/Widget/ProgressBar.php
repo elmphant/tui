@@ -40,9 +40,9 @@ final readonly class ProgressBar implements Interactive
         $this->progress = max(0.0, min(1.0, $progress));
     }
 
-    public static function new(): self
+    public static function new(float $progress = 0.0): self
     {
-        return new self();
+        return new self($progress);
     }
 
     public function withProgress(float $progress): self
