@@ -8,9 +8,7 @@ use ArrayObject;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
-use Elmphant\Tui\Core\ExecCmd;
 use Elmphant\Tui\Core\Model;
-use Elmphant\Tui\Core\ProcessCmd;
 use Elmphant\Tui\Core\RenderRevisioned;
 use Elmphant\Tui\Core\ShutdownAware;
 use Elmphant\Tui\Core\UpdateResult;
@@ -28,6 +26,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Message\TickMsg;
@@ -39,12 +38,10 @@ use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\AdaptiveTicker;
+use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
-use Elmphant\Tui\Runtime\RunningProcess;
 use Elmphant\Tui\Runtime\TerminalSession;
-use Elmphant\Tui\Runtime\TickerRecord;
-use Elmphant\Tui\Runtime\TimerRecord;
 use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Support\FloatingModel;
@@ -57,11 +54,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use ReflectionException;
 use ReflectionMethod;
-use ReflectionObject;
 use ReflectionProperty;
-use ReflectionUnionType;
 use Revolt\EventLoop;
 use RuntimeException;
 use SplQueue;
@@ -440,31 +434,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function registerTickerDoesNotEnqueueTickMsgImmediately(): void
-    {
-        $program = Program::new($this->createMockModel());
-
-        $queueReflection = new ReflectionProperty(Program::class, 'messageQueue');
-        $queueReflection->setValue($program, new SplQueue());
-
-        $registerTicker = new ReflectionMethod(Program::class, 'registerTicker');
-        $registerTicker->invoke($program, 1.0);
-
-        $queue = $queueReflection->getValue($program);
-        while (!$queue->isEmpty()) {
-            $message = $queue->dequeue();
-            self::assertNotInstanceOf(TickMsg::class, $message, 'registerTicker should not enqueue a TickMsg immediately');
-        }
-
-        $tickersReflection = new ReflectionProperty(Program::class, 'tickers');
-        $tickers = $tickersReflection->getValue($program);
-        $clock = (new ReflectionProperty(Program::class, 'clock'))->getValue($program);
-        self::assertCount(1, $tickers, 'registerTicker should add one ticker entry');
-        self::assertGreaterThan($clock->now(), $tickers[0]->fireAt, 'Next fire time should be in the future');
-        self::assertSame(1.0, $tickers[0]->interval, 'Ticker interval should match the registered interval');
-    }
-
-    #[Test]
     public function dispatchCommandWithNullIsNoOp(): void
     {
         $program = Program::new($this->createMockModel());
@@ -836,295 +805,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function dispatchCommandTickCmdRegistersTicker(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $tickersProperty = new ReflectionProperty(Program::class, 'tickers');
-        $tickersProperty->setValue($program, []);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke($program, Cmd::tick(0.5));
-
-        $tickers = $tickersProperty->getValue($program);
-        self::assertCount(1, $tickers, 'TickCmd dispatch must add a ticker entry');
-        self::assertSame(0.5, $tickers[0]->interval);
-    }
-
-    #[Test]
-    public function dispatchCommandAfterCmdRegistersTimer(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $timersProperty = new ReflectionProperty(Program::class, 'timers');
-        $timersProperty->setValue($program, []);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke($program, Cmd::after(1.0, fn () => null));
-
-        self::assertCount(1, $timersProperty->getValue($program), 'AfterCmd dispatch must add a timer entry');
-    }
-
-    #[Test]
-    public function dispatchCommandCancelCmdRemovesMatchingTickerAndTimer(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $tickersProperty = $reflection->getProperty('tickers');
-        $timersProperty = $reflection->getProperty('timers');
-        $tickersProperty->setValue($program, []);
-        $timersProperty->setValue($program, []);
-
-        $dispatch = $reflection->getMethod('dispatchCommand');
-        $dispatch->invoke($program, Cmd::tick(1.0, id: EffectId::named('clock')));
-        $dispatch->invoke($program, Cmd::tick(0.5, id: EffectId::named('spinner')));
-        $dispatch->invoke($program, Cmd::after(9.0, fn () => null, id: EffectId::named('clock')));
-        $dispatch->invoke($program, Cmd::after(9.0, fn () => null));
-
-        $dispatch->invoke($program, Cmd::cancel(EffectId::named('clock')));
-
-        $tickers = $tickersProperty->getValue($program);
-        self::assertSame([0], array_keys($tickers), 'Ticker list must be reindexed after cancellation');
-        self::assertSame(0.5, $tickers[0]->interval, 'The surviving ticker is the spinner');
-        self::assertSame('spinner', $tickers[0]->id?->value);
-
-        $timers = $timersProperty->getValue($program);
-        self::assertSame([0], array_keys($timers), 'Timer list must be reindexed after cancellation');
-        self::assertNull($timers[0]->id, 'The id-less timer must survive; the id-matched one is cancelled');
-    }
-
-    #[Test]
-    public function dispatchCommandCancelCmdWithUnknownIdIsANoOp(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $tickersProperty = $reflection->getProperty('tickers');
-        $tickersProperty->setValue($program, []);
-
-        $dispatch = $reflection->getMethod('dispatchCommand');
-        $dispatch->invoke($program, Cmd::tick(1.0, id: EffectId::named('clock')));
-        $dispatch->invoke($program, Cmd::cancel(EffectId::named('nonexistent')));
-
-        self::assertCount(1, $tickersProperty->getValue($program), 'Cancelling an unknown id must leave registered effects untouched');
-    }
-
-    #[Test]
-    public function dispatchCommandCancelStopsAndRemovesMatchingRunningEffects(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $id = EffectId::named('download');
-        $process = new class($id) implements RunningProcess {
-            public bool $stopped = false;
-
-            public function __construct(private readonly EffectId $effectId)
-            {
-            }
-
-            public function pump(): array
-            {
-                return [];
-            }
-
-            public function map(Message $message): Message
-            {
-                return $message;
-            }
-
-            public function isRunning(): bool
-            {
-                return !$this->stopped;
-            }
-
-            public function stop(): void
-            {
-                $this->stopped = true;
-            }
-
-            public function id(): ?EffectId
-            {
-                return $this->effectId;
-            }
-        };
-        $reflection->getProperty('processes')->setValue($program, [$process]);
-
-        $reflection->getMethod('dispatchCommand')->invoke(
-            $program,
-            Cmd::cancel(EffectId::named('download')),
-        );
-
-        self::assertTrue($process->stopped);
-        self::assertSame([], $reflection->getProperty('processes')->getValue($program));
-    }
-
-    #[Test]
-    public function anHttpRequestThatCannotBeMadeBecomesAnErrorMessage(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $queue = new SplQueue();
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke(
-            $program,
-            Cmd::http('not-a-url'),
-        );
-
-        self::assertSame([], $reflection->getProperty('processes')->getValue($program), 'Nothing is left in flight');
-        self::assertCount(1, $queue, 'The failure is reported rather than thrown');
-
-        $message = $queue->dequeue();
-        self::assertInstanceOf(ErrorMsg::class, $message);
-        self::assertSame('http', $message->source);
-    }
-
-    #[Test]
-    public function aProcessThatCannotStartBecomesAnErrorMessage(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $queue = new SplQueue();
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke(
-            $program,
-            Cmd::exec(['true'])->withWorkingDirectory('/no/such/directory')->withId(EffectId::named('doomed')),
-        );
-
-        self::assertSame([], $reflection->getProperty('processes')->getValue($program), 'Nothing is left running');
-        self::assertCount(1, $queue, 'The failure is reported rather than thrown');
-
-        $message = $queue->dequeue();
-        self::assertInstanceOf(ErrorMsg::class, $message);
-        self::assertSame('process', $message->source);
-    }
-
-    #[Test]
-    public function anEffectIdNamesOneRunningEffect(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('tickers')->setValue($program, []);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $dispatch = new ReflectionMethod(Program::class, 'dispatchCommand');
-
-        $dispatch->invoke($program, Cmd::tick(1.0, EffectId::named('poll')));
-        $dispatch->invoke($program, Cmd::tick(1.0, EffectId::named('poll')));
-        $dispatch->invoke($program, Cmd::exec(['true'])->withId(EffectId::named('fetch')));
-        $dispatch->invoke($program, Cmd::exec(['true'])->withId(EffectId::named('fetch')));
-
-        self::assertCount(1, $reflection->getProperty('tickers')->getValue($program), 'One ticker for the id');
-        self::assertCount(1, $reflection->getProperty('processes')->getValue($program), 'One process for the id');
-    }
-
-    #[Test]
-    public function anEffectIdNamesOneEffectAcrossKinds(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('tickers')->setValue($program, []);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $dispatch = new ReflectionMethod(Program::class, 'dispatchCommand');
-        $refresh = EffectId::named('refresh');
-
-        $dispatch->invoke($program, Cmd::tick(1.0, $refresh));
-        $dispatch->invoke($program, Cmd::exec(['true'])->withId($refresh));
-
-        self::assertCount(0, $reflection->getProperty('tickers')->getValue($program), 'The ticker gave up the name');
-        self::assertCount(1, $reflection->getProperty('processes')->getValue($program));
-    }
-
-    #[Test]
-    public function dispatchCommandExecCmdSpawnsProcess(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))
-            ->invoke($program, Cmd::exec(['true']));
-
-        $processes = $reflection->getProperty('processes')->getValue($program);
-        self::assertCount(1, $processes, 'ExecCmd dispatch must add a running process');
-    }
-
-    #[Test]
-    public function dispatchCommandProcessCmdSpawnsStreamingProcess(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))
-            ->invoke($program, Cmd::process(['true']));
-
-        $processes = $reflection->getProperty('processes')->getValue($program);
-        self::assertCount(1, $processes, 'ProcessCmd dispatch must add a streaming process');
-    }
-
-    #[Test]
-    public function aProcessStartedUnderAnIdAlreadyRunningReplacesIt(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        $dispatch = new ReflectionMethod(Program::class, 'dispatchCommand');
-        $id = EffectId::named('run');
-        $dispatch->invoke($program, Cmd::process(['sleep', '5'])->withId($id));
-        $dispatch->invoke($program, Cmd::process(['true'])->withId($id));
-
-        self::assertCount(
-            1,
-            $reflection->getProperty('processes')->getValue($program),
-            'The process left over from the first start no longer writes into the second',
-        );
-    }
-
-    #[Test]
-    public function dispatchCommandHttpCmdAddsRequestToProcesses(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        $reflection->getProperty('httpClient')->setValue(
-            $program,
-            new \Symfony\Component\HttpClient\MockHttpClient(
-                fn () => new \Symfony\Component\HttpClient\Response\MockResponse('ok'),
-            ),
-        );
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))
-            ->invoke($program, Cmd::http('http://example.com/'));
-
-        $processes = $reflection->getProperty('processes')->getValue($program);
-        self::assertCount(1, $processes, 'HttpCmd dispatch must add a request to processes');
-    }
-
-    #[Test]
-    public function dispatchCommandUnknownCmdThrowsLogicException(): void
-    {
-        $program = Program::new($this->createMockModel());
-
-        $unknownCmd = new UnknownTestCmd();
-
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage(UnknownTestCmd::class);
-
-        try {
-            (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke($program, $unknownCmd);
-        } catch (ReflectionException $reflectionException) {
-            throw $reflectionException->getPrevious() ?? $reflectionException;
-        }
-    }
-
-    #[Test]
     public function dispatchCommandBatchCmdDispatchesAllChildren(): void
     {
         $program = Program::new($this->createMockModel());
@@ -1144,31 +824,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function fireTimersWrapsExceptionInErrorMsg(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $effectId = EffectId::named('timer');
-
-        $timersProperty = new ReflectionProperty(Program::class, 'timers');
-        $timersProperty->setValue($program, [
-            new TimerRecord(0.0, fn () => throw new RuntimeException('timer boom'), $effectId),
-        ]);
-
-        $queueProperty = new ReflectionProperty(Program::class, 'messageQueue');
-        $queue = new SplQueue();
-        $queueProperty->setValue($program, $queue);
-
-        $method = new ReflectionMethod(Program::class, 'fireTimers');
-        $method->invoke($program, microtime(true));
-
-        self::assertFalse($queue->isEmpty());
-        $message = $queue->dequeue();
-        self::assertInstanceOf(ErrorMsg::class, $message);
-        self::assertSame('timer boom', $message->error->getMessage());
-        self::assertSame($effectId, $message->effectId);
-    }
-
-    #[Test]
     public function execCmdRejectsEmptyCommand(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -1180,42 +835,6 @@ final class ProgramTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         Cmd::process([]);
-    }
-
-    #[Test]
-    public function startExecProcessConstructsProcessInsideTryBlock(): void
-    {
-        $source = (new ReflectionMethod(Program::class, 'startExecProcess'))
-            ->getDeclaringClass()
-            ->getMethod('startExecProcess');
-        $startLine = $source->getStartLine();
-        $endLine = $source->getEndLine();
-        $lines = file($source->getFileName());
-        $body = implode('', array_slice($lines, $startLine - 1, $endLine - $startLine + 1));
-
-        $tryPos = strpos($body, 'try {');
-        $createPos = strpos($body, '$this->createProcess(');
-        self::assertNotFalse($tryPos);
-        self::assertNotFalse($createPos);
-        self::assertLessThan($createPos, $tryPos, 'createProcess() must be inside the try block to convert errors to ErrorMsg');
-    }
-
-    #[Test]
-    public function startStreamingProcessConstructsProcessInsideTryBlock(): void
-    {
-        $source = (new ReflectionMethod(Program::class, 'startStreamingProcess'))
-            ->getDeclaringClass()
-            ->getMethod('startStreamingProcess');
-        $startLine = $source->getStartLine();
-        $endLine = $source->getEndLine();
-        $lines = file($source->getFileName());
-        $body = implode('', array_slice($lines, $startLine - 1, $endLine - $startLine + 1));
-
-        $tryPos = strpos($body, 'try {');
-        $createPos = strpos($body, '$this->createProcess(');
-        self::assertNotFalse($tryPos);
-        self::assertNotFalse($createPos);
-        self::assertLessThan($createPos, $tryPos, 'createProcess() must be inside the try block to convert errors to ErrorMsg');
     }
 
     #[Test]
@@ -1274,66 +893,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function createProcessOnlyAcceptsArray(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $method = new ReflectionMethod(Program::class, 'createProcess');
-        $parameter = $method->getParameters()[0];
-
-        self::assertFalse($parameter->getType() instanceof ReflectionUnionType);
-    }
-
-    #[Test]
-    public function fireTimersFiresWhenNowExactlyEqualsFireAt(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $exactTime = 1000.0;
-
-        $timersProperty = new ReflectionProperty(Program::class, 'timers');
-        $timersProperty->setValue($program, [
-            new TimerRecord($exactTime, fn () => new TestMessage('timer-result')),
-        ]);
-
-        $queueProperty = new ReflectionProperty(Program::class, 'messageQueue');
-        $queue = new SplQueue();
-        $queueProperty->setValue($program, $queue);
-
-        $method = new ReflectionMethod(Program::class, 'fireTimers');
-        $method->invoke($program, $exactTime);
-
-        self::assertFalse($queue->isEmpty());
-        self::assertSame('timer-result', $queue->dequeue()->value);
-    }
-
-    #[Test]
-    public function fireTimersErrorDoesNotDispatchResult(): void
-    {
-        $program = Program::new($this->createMockModel());
-
-        $timersProperty = new ReflectionProperty(Program::class, 'timers');
-        $timersProperty->setValue($program, [
-            new TimerRecord(0.0, fn () => throw new RuntimeException('boom')),
-            new TimerRecord(0.0, fn () => new TestMessage('second-timer-result')),
-        ]);
-
-        $queueProperty = new ReflectionProperty(Program::class, 'messageQueue');
-        $queue = new SplQueue();
-        $queueProperty->setValue($program, $queue);
-
-        $method = new ReflectionMethod(Program::class, 'fireTimers');
-        $method->invoke($program, microtime(true));
-
-        $messages = [];
-        while (!$queue->isEmpty()) {
-            $messages[] = $queue->dequeue();
-        }
-
-        self::assertCount(2, $messages);
-        self::assertInstanceOf(ErrorMsg::class, $messages[0]);
-        self::assertSame('second-timer-result', $messages[1]->value);
-    }
-
-    #[Test]
     public function setupIsInsideTryBlock(): void
     {
         $source = file_get_contents((new ReflectionClass(Program::class))->getFileName());
@@ -1342,27 +901,6 @@ final class ProgramTest extends TestCase
         self::assertNotFalse($tryPosition);
         self::assertNotFalse($setupCallPosition);
         self::assertLessThan($setupCallPosition, $tryPosition);
-    }
-
-    #[Test]
-    public function fireTickersFiresOnceAfterLongSuspension(): void
-    {
-        $program = Program::new($this->createMockModel());
-
-        $reflection = new ReflectionClass($program);
-        $tickersProperty = $reflection->getProperty('tickers');
-        $queueProperty = $reflection->getProperty('messageQueue');
-        $fireMethod = $reflection->getMethod('fireTickers');
-
-        $queueProperty->setValue($program, new SplQueue());
-
-        $now = microtime(true);
-        $tickersProperty->setValue($program, [new TickerRecord($now - 1.0, 0.1)]);
-
-        $fireMethod->invoke($program, $now);
-
-        $queue = $queueProperty->getValue($program);
-        self::assertSame(1, $queue->count(), 'Should fire exactly once, not 10 times for catch-up');
     }
 
     #[Test]
@@ -1407,34 +945,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function nextTimerDelayReturnsDelayWhenOnlyTickersRegistered(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $tickersProperty = new ReflectionProperty(Program::class, 'tickers');
-        $tickersProperty->setValue($program, [new TickerRecord(microtime(true) + 1.0, 1.0)]);
-
-        $method = new ReflectionMethod(Program::class, 'nextTimerDelay');
-        $delay = $method->invoke($program);
-
-        self::assertNotNull($delay, 'tickers must contribute to the next-timer delay');
-        self::assertGreaterThan(0.0, $delay);
-    }
-
-    #[Test]
-    public function nextTimerDelayReturnsDelayWhenOnlyTimersRegistered(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $timersProperty = new ReflectionProperty(Program::class, 'timers');
-        $timersProperty->setValue($program, [new TimerRecord(microtime(true) + 1.0, fn () => null)]);
-
-        $method = new ReflectionMethod(Program::class, 'nextTimerDelay');
-        $delay = $method->invoke($program);
-
-        self::assertNotNull($delay, 'timers must contribute to the next-timer delay');
-        self::assertGreaterThan(0.0, $delay);
-    }
-
-    #[Test]
     public function handlePendingResizeIsNoopWhenResizeNotPending(): void
     {
         $terminal = new VirtualTerminal(80, 24);
@@ -1455,86 +965,6 @@ final class ProgramTest extends TestCase
         self::assertTrue($queue->isEmpty(), 'No ResizeMsg should be enqueued when no resize is pending');
         self::assertFalse($reflection->getProperty('isDirty')->getValue($program));
         self::assertFalse($reflection->getProperty('resizeNeedsScreenClear')->getValue($program));
-    }
-
-    #[Test]
-    public function pumpProcessesPumpsPendingMessages(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-
-        $queueProperty = $reflection->getProperty('messageQueue');
-        $queue = new SplQueue();
-        $queueProperty->setValue($program, $queue);
-
-        $process = new class implements RunningProcess {
-            public function pump(): array
-            {
-                return [new TestMessage('pumped-message')];
-            }
-
-            public function map(Message $message): Message
-            {
-                return $message;
-            }
-
-            public function isRunning(): bool
-            {
-                return false;
-            }
-
-            public function stop(): void
-            {
-            }
-
-            public function id(): ?EffectId
-            {
-                return null;
-            }
-        };
-
-        $reflection->getProperty('processes')->setValue($program, [$process]);
-
-        $reflection->getMethod('pumpProcesses')->invoke($program);
-
-        self::assertFalse($queue->isEmpty(), 'Pumped messages must be enqueued');
-        self::assertSame('pumped-message', $queue->dequeue()->value);
-    }
-
-    #[Test]
-    public function fireTickersAdvancesNextFireTimeIntoTheFuture(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-
-        $queueProperty = $reflection->getProperty('messageQueue');
-        $queueProperty->setValue($program, new SplQueue());
-
-        $now = microtime(true);
-        $tickersProperty = $reflection->getProperty('tickers');
-        $tickersProperty->setValue($program, [new TickerRecord($now - 0.1, 1.0)]);
-
-        $reflection->getMethod('fireTickers')->invoke($program, $now);
-
-        $tickers = $tickersProperty->getValue($program);
-        self::assertGreaterThan($now, $tickers[0]->fireAt, 'Ticker next-fire time must advance into the future, not the past');
-    }
-
-    #[Test]
-    public function fireTickersFiresExactlyAtBoundaryWhenFireAtEqualsNow(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-
-        $queue = new SplQueue();
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
-
-        $now = 100.0;
-        $reflection->getProperty('tickers')->setValue($program, [new TickerRecord($now, 0.5)]);
-
-        $reflection->getMethod('fireTickers')->invoke($program, $now);
-
-        self::assertFalse($queue->isEmpty(), 'Ticker with fireAt == now must fire (the comparison is <=, not <)');
     }
 
     #[Test]
@@ -2760,50 +2190,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function injectedClockDrivesTimerSchedulingDeterministically(): void
-    {
-        $clock = new TestClock(100.0);
-        $program = Program::new($this->createMockModel())->withClock($clock);
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        $fired = false;
-        $reflection->getMethod('registerTimer')->invoke($program, 5.0, function () use (&$fired) {
-            $fired = true;
-
-            return null;
-        });
-
-        $clock->advance(4.9);
-        $reflection->getMethod('fireTimers')->invoke($program, $clock->now());
-        self::assertFalse($fired, 'Timer must not fire before its delay elapsed');
-
-        $clock->advance(0.1);
-        $reflection->getMethod('fireTimers')->invoke($program, $clock->now());
-        self::assertTrue($fired, 'Timer must fire exactly when the injected clock reaches the deadline');
-    }
-
-    #[Test]
-    public function injectedClockDrivesTickerFiringDeterministically(): void
-    {
-        $clock = new TestClock(50.0);
-        $program = Program::new($this->createMockModel())->withClock($clock);
-        $reflection = new ReflectionClass($program);
-        $queue = new SplQueue();
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
-
-        $reflection->getMethod('registerTicker')->invoke($program, 2.0);
-
-        $clock->advance(1.9);
-        $reflection->getMethod('fireTickers')->invoke($program, $clock->now());
-        self::assertTrue($queue->isEmpty(), 'Ticker must not fire before its interval elapsed');
-
-        $clock->advance(0.1);
-        $reflection->getMethod('fireTickers')->invoke($program, $clock->now());
-        self::assertCount(1, $queue, 'Ticker must fire when the injected clock reaches the interval');
-    }
-
-    #[Test]
     public function runTickKeepsTickerScheduledWhileProcessesActive(): void
     {
         $terminal = new VirtualTerminal(80, 24);
@@ -2822,32 +2208,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('isDirty')->setValue($program, false);
         $reflection->getProperty('lastRender')->setValue($program, microtime(true));
 
-        $stillRunningProcess = new class implements RunningProcess {
-            public function pump(): array
-            {
-                return [];
-            }
-
-            public function map(Message $message): Message
-            {
-                return $message;
-            }
-
-            public function isRunning(): bool
-            {
-                return true;
-            }
-
-            public function stop(): void
-            {
-            }
-
-            public function id(): ?EffectId
-            {
-                return null;
-            }
-        };
-        $reflection->getProperty('processes')->setValue($program, [$stillRunningProcess]);
+        $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::process(['sleep', '30']));
 
         $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
@@ -3527,12 +2888,14 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
 
-        $now = $reflection->getProperty('clock')->getValue($program)->now();
-        $reflection->getProperty('tickers')->setValue($program, [new TickerRecord($now - 0.5, 0.1)]);
+        $clock = new TestClock(1_000.0);
+        $reflection->getProperty('clock')->setValue($program, $clock);
+        $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::tick(0.1));
 
+        $clock->advance(0.1);
         $program->tick();
 
-        self::assertGreaterThan(0, $observingModel->tickCount, 'fireTickers (called by tick) must deliver TickMsg to the model');
+        self::assertGreaterThan(0, $observingModel->tickCount, 'a ticker that is due must reach the model as a TickMsg');
     }
 
     #[Test]
@@ -3542,17 +2905,15 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
 
         $timerCalled = false;
-        $reflection->getProperty('timers')->setValue($program, [
-            new TimerRecord($reflection->getProperty('clock')->getValue($program)->now() - 0.1, function () use (&$timerCalled) {
-                $timerCalled = true;
+        $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::after(0.0, function () use (&$timerCalled) {
+            $timerCalled = true;
 
-                return null;
-            }),
-        ]);
+            return null;
+        }));
 
         $program->tick();
 
-        self::assertTrue($timerCalled, 'tick must call fireTimers which invokes the timer callback');
+        self::assertTrue($timerCalled, 'a timer that is due must have its callback run');
     }
 
     #[Test]
@@ -3582,44 +2943,19 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
 
-        $process = new class implements RunningProcess {
-            private bool $pumped = false;
+        $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::exec(['echo', 'from-process']));
 
-            public function pump(): array
-            {
-                if ($this->pumped) {
-                    return [];
-                }
-                $this->pumped = true;
+        for ($attempt = 0; $attempt < 400 && !$observingModel->receivedMessage instanceof ProcessResultMsg; ++$attempt) {
+            $program->tick();
+            usleep(5_000);
+        }
 
-                return [new TestMessage('from-process')];
-            }
-
-            public function map(Message $message): Message
-            {
-                return $message;
-            }
-
-            public function isRunning(): bool
-            {
-                return false;
-            }
-
-            public function stop(): void
-            {
-            }
-
-            public function id(): ?EffectId
-            {
-                return null;
-            }
-        };
-
-        $reflection->getProperty('processes')->setValue($program, [$process]);
-
-        $program->tick();
-
-        self::assertSame('from-process', $observingModel->receivedMessage->value, 'pumpProcesses (called by tick) must enqueue process messages and drainMessageQueue must deliver them to the model');
+        self::assertInstanceOf(
+            ProcessResultMsg::class,
+            $observingModel->receivedMessage,
+            'what a process printed must reach the model',
+        );
+        self::assertStringContainsString('from-process', $observingModel->receivedMessage->stdout);
     }
 
     #[Test]
@@ -3893,132 +3229,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function configureProcessAppliesTimeoutEnvAndInput(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $process = new \Symfony\Component\Process\Process(['true']);
-
-        $configureMethod = new ReflectionMethod(Program::class, 'configureProcess');
-        $configureMethod->invoke($program, $process, '/tmp', 7.5, ['MY_VAR' => 'hello'], 'piped-input');
-
-        self::assertSame(7.5, $process->getTimeout(), 'timeout must be applied when not null');
-        self::assertSame('hello', $process->getEnv()['MY_VAR'] ?? null, 'env must be applied when not empty');
-        self::assertSame('piped-input', $process->getInput(), 'input must be applied when not null');
-        self::assertSame('/tmp', $process->getWorkingDirectory(), 'working dir must be applied when not null');
-    }
-
-    #[Test]
-    public function configureProcessSkipsTimeoutEnvAndInputWhenNullOrEmpty(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $process = new \Symfony\Component\Process\Process(['true']);
-        $process->setTimeout(99.0);
-        $defaultTimeout = $process->getTimeout();
-
-        $configureMethod = new ReflectionMethod(Program::class, 'configureProcess');
-        $configureMethod->invoke($program, $process, null, null, [], null);
-
-        self::assertSame($defaultTimeout, $process->getTimeout(), 'Null timeout must not clobber pre-set value');
-        self::assertNull($process->getInput(), 'Null input must remain null');
-    }
-
-    #[Test]
-    public function startExecProcessActuallyStartsTheProcess(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        (new ReflectionMethod(Program::class, 'startExecProcess'))
-            ->invoke($program, Cmd::exec(['sleep', '5']));
-
-        $processes = $reflection->getProperty('processes')->getValue($program);
-        self::assertCount(1, $processes);
-
-        $runningProcess = $processes[0];
-        $procReflection = new ReflectionObject($runningProcess);
-        $innerProcess = $procReflection->getProperty('process')->getValue($runningProcess);
-        self::assertTrue($innerProcess->isStarted(), 'startExecProcess must actually call $process->start()');
-        $innerProcess->stop(0);
-    }
-
-    #[Test]
-    public function startStreamingProcessActuallyStartsTheProcess(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        (new ReflectionMethod(Program::class, 'startStreamingProcess'))
-            ->invoke($program, Cmd::process(['sleep', '5']));
-
-        $processes = $reflection->getProperty('processes')->getValue($program);
-        self::assertCount(1, $processes);
-
-        $runningProcess = $processes[0];
-        $procReflection = new ReflectionObject($runningProcess);
-        $innerProcess = $procReflection->getProperty('process')->getValue($runningProcess);
-        self::assertTrue($innerProcess->isStarted(), 'startStreamingProcess must actually call $process->start()');
-        $innerProcess->stop(0);
-    }
-
-    #[Test]
-    public function startHttpRequestPassesHeadersAndBody(): void
-    {
-        $capturedOptions = null;
-        $mockClient = new \Symfony\Component\HttpClient\MockHttpClient(
-            function (string $method, string $url, array $options) use (&$capturedOptions): \Symfony\Component\HttpClient\Response\MockResponse {
-                $capturedOptions = $options;
-
-                return new \Symfony\Component\HttpClient\Response\MockResponse('');
-            },
-        );
-
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('httpClient')->setValue($program, $mockClient);
-
-        (new ReflectionMethod(Program::class, 'startHttpRequest'))
-            ->invoke($program, Cmd::http('http://example.com/', 'POST', ['X-Custom' => 'v'], 'body-data'));
-
-        $rawHeaders = $capturedOptions['headers'] ?? [];
-        $headerLine = is_array($rawHeaders) ? implode("\n", array_map(fn ($k, $v) => is_int($k) ? $v : "$k: $v", array_keys($rawHeaders), $rawHeaders)) : (string)$rawHeaders;
-        self::assertStringContainsString('X-Custom', $headerLine, 'startHttpRequest must include headers when HttpCmd->headers !== []');
-        self::assertStringContainsString('v', $headerLine);
-        self::assertSame('body-data', $capturedOptions['body'] ?? null, 'startHttpRequest must include body when HttpCmd->body !== null');
-    }
-
-    #[Test]
-    public function nextTimerDelayClampsNegativeFireTimesToZero(): void
-    {
-        $program = Program::new($this->createMockModel())->withClock(new TestClock(100.0));
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('tickers')->setValue($program, [new TickerRecord(95.0, 1.0)]);
-        $reflection->getProperty('timers')->setValue($program, []);
-
-        $delay = (new ReflectionMethod(Program::class, 'nextTimerDelay'))->invoke($program);
-
-        self::assertSame(0.0, $delay, 'Past-due tickers must clamp to 0.0 (max(0.0, negative) = 0.0). max(1.0, ...) mutant would clamp to 1.0 instead');
-    }
-
-    #[Test]
-    public function nextTimerDelayClampsNegativeTimerFireTimesToZero(): void
-    {
-        $program = Program::new($this->createMockModel())->withClock(new TestClock(100.0));
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('tickers')->setValue($program, []);
-        $reflection->getProperty('timers')->setValue($program, [new TimerRecord(95.0, fn () => null)]);
-
-        $delay = (new ReflectionMethod(Program::class, 'nextTimerDelay'))->invoke($program);
-
-        self::assertSame(0.0, $delay, 'Past-due timers must clamp to 0.0 (max(0.0, negative)). max(1.0, ...) mutant would return 1.0 instead');
-    }
-
-    #[Test]
     public function handlePendingResizeClearsPendingFlagSetsScreenClearAndMarksDirty(): void
     {
         $terminal = new VirtualTerminal(120, 40);
@@ -4106,230 +3316,20 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function startExecProcessAppliesWorkingDirectory(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        $cmd = new ExecCmd(['sleep', '5'], workingDirectory: '/tmp');
-        (new ReflectionMethod(Program::class, 'startExecProcess'))->invoke($program, $cmd);
-
-        $processes = $reflection->getProperty('processes')->getValue($program);
-        $innerProcess = (new ReflectionObject($processes[0]))->getProperty('process')->getValue($processes[0]);
-
-        self::assertSame('/tmp', $innerProcess->getWorkingDirectory(), 'startExecProcess must call configureProcess so workingDirectory is applied');
-        $innerProcess->stop(0);
-    }
-
-    #[Test]
-    public function startStreamingProcessAppliesWorkingDirectory(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        $cmd = new ProcessCmd(['sleep', '5'], workingDirectory: '/tmp');
-        (new ReflectionMethod(Program::class, 'startStreamingProcess'))->invoke($program, $cmd);
-
-        $processes = $reflection->getProperty('processes')->getValue($program);
-        $innerProcess = (new ReflectionObject($processes[0]))->getProperty('process')->getValue($processes[0]);
-
-        self::assertSame('/tmp', $innerProcess->getWorkingDirectory(), 'startStreamingProcess must call configureProcess so workingDirectory is applied');
-        $innerProcess->stop(0);
-    }
-
-    #[Test]
-    public function startHttpRequestOmitsBodyWhenHttpCmdBodyIsNull(): void
-    {
-        $capturedOptions = null;
-        $mockClient = new \Symfony\Component\HttpClient\MockHttpClient(
-            function (string $method, string $url, array $options) use (&$capturedOptions): \Symfony\Component\HttpClient\Response\MockResponse {
-                $capturedOptions = $options;
-
-                return new \Symfony\Component\HttpClient\Response\MockResponse('');
-            },
-        );
-
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('processes')->setValue($program, []);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('httpClient')->setValue($program, $mockClient);
-
-        (new ReflectionMethod(Program::class, 'startHttpRequest'))
-            ->invoke($program, Cmd::http('http://example.com/'));
-
-        self::assertArrayNotHasKey('body', $capturedOptions, 'startHttpRequest must NOT pass body when HttpCmd->body is null');
-    }
-
-    #[Test]
-    public function fireTickersComparesFireTimeIndexZeroNotIntervalIndexOne(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $queue = new SplQueue();
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
-
-        // ticker[0] (fireAt) is just past, ticker[1] (interval) is far in the future
-        // Original: $ticker[0] <= $now (0.9 <= 1.0) → fires
-        // Mutant (index 0 → 1): $ticker[1] <= $now (2.5 <= 1.0) → does NOT fire
-        $now = 1.0;
-        $reflection->getProperty('tickers')->setValue($program, [new TickerRecord(0.9, 2.5)]);
-
-        $reflection->getMethod('fireTickers')->invoke($program, $now);
-
-        self::assertSame(1, $queue->count(), 'Comparison must be against ticker[0] (fireAt), not ticker[1] (interval)');
-    }
-
-    #[Test]
-    public function fireTickersCountsTheNextDeadlineFromTheLastOne(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        $now = 1000.0;
-        $interval = 2.5;
-        $deadline = $now - 0.1;
-        $reflection->getProperty('tickers')->setValue($program, [new TickerRecord($deadline, $interval)]);
-
-        $reflection->getMethod('fireTickers')->invoke($program, $now);
-
-        $tickers = $reflection->getProperty('tickers')->getValue($program);
-        self::assertSame(
-            $deadline + $interval,
-            $tickers[0]->fireAt,
-            'the 0.1s the loop was late by is not added to the period',
-        );
-    }
-
-    #[Test]
-    public function pumpProcessesRetainsRunningProcessesAndDropsStoppedOnes(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        $stoppedProcess = new class implements RunningProcess {
-            public function pump(): array
-            {
-                return [];
-            }
-
-            public function map(Message $message): Message
-            {
-                return $message;
-            }
-
-            public function isRunning(): bool
-            {
-                return false;
-            }
-
-            public function stop(): void
-            {
-            }
-
-            public function id(): ?EffectId
-            {
-                return null;
-            }
-        };
-        $runningProcess = new class implements RunningProcess {
-            public function pump(): array
-            {
-                return [];
-            }
-
-            public function map(Message $message): Message
-            {
-                return $message;
-            }
-
-            public function isRunning(): bool
-            {
-                return true;
-            }
-
-            public function stop(): void
-            {
-            }
-
-            public function id(): ?EffectId
-            {
-                return null;
-            }
-        };
-
-        $reflection->getProperty('processes')->setValue($program, [$stoppedProcess, $runningProcess]);
-
-        (new ReflectionMethod(Program::class, 'pumpProcesses'))->invoke($program);
-
-        $remaining = $reflection->getProperty('processes')->getValue($program);
-        self::assertCount(1, $remaining, 'Only running processes must remain');
-        self::assertSame($runningProcess, $remaining[0], 'IfNegation mutant would invert and retain the stopped process instead');
-    }
-
-    #[Test]
-    public function registerTimerSchedulesFireAtInTheFuture(): void
-    {
-        $program = Program::new($this->createMockModel())->withClock(new TestClock(100.0));
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('timers')->setValue($program, []);
-
-        $reflection->getMethod('registerTimer')->invoke($program, 1.0, fn () => null);
-
-        $timers = $reflection->getProperty('timers')->getValue($program);
-        self::assertCount(1, $timers);
-        self::assertSame(101.0, $timers[0]->fireAt, 'Timer fireAt must be clock now + delay');
-    }
-
-    #[Test]
     public function teardownStopsAllProcesses(): void
     {
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
+        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
-        $processesProperty = $reflection->getProperty('processes');
-        $teardownMethod = $reflection->getMethod('teardown');
+        $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::process(['sleep', '30']));
+        $effects = $reflection->getProperty('effects')->getValue($program);
+        self::assertInstanceOf(EffectRunner::class, $effects);
+        self::assertTrue($effects->hasRunningProcesses(), 'Precondition: something is running');
 
-        $mockProcess = new class implements RunningProcess {
-            public bool $stopped = false;
+        $reflection->getMethod('teardown')->invoke($program);
 
-            public function pump(): array
-            {
-                return [];
-            }
-
-            public function map(Message $message): Message
-            {
-                return $message;
-            }
-
-            public function isRunning(): bool
-            {
-                return !$this->stopped;
-            }
-
-            public function stop(): void
-            {
-                $this->stopped = true;
-            }
-
-            public function id(): ?EffectId
-            {
-                return null;
-            }
-        };
-
-        $processesProperty->setValue($program, [$mockProcess]);
-
-        $teardownMethod->invoke($program);
-
-        self::assertTrue($mockProcess->stopped, 'Process should be stopped during teardown');
+        self::assertFalse($effects->hasRunningProcesses(), 'nothing may outlive the program that started it');
     }
 
     #[Test]
@@ -4471,7 +3471,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminalSession')->setValue($program, $session);
         Closure::bind(function (): void {
-            unset($this->processes);
+            unset($this->effects);
         }, $program, Program::class)();
 
         try {
@@ -4608,32 +3608,6 @@ final class ProgramTest extends TestCase
         $this->expectExceptionMessage('renderer is not initialized');
 
         $reflection->getMethod('renderFrame')->invoke($program);
-    }
-
-    #[Test]
-    public function httpRequestsAreUnbufferedByDefault(): void
-    {
-        $capturedOptions = null;
-        $program = $this->createHttpCapturingProgram($capturedOptions);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))
-            ->invoke($program, Cmd::http('http://example.com/'));
-
-        self::assertIsArray($capturedOptions);
-        self::assertFalse($capturedOptions['buffer'], 'Without an explicit option the request must stream unbuffered — RunningHttpRequest pumps chunks itself');
-    }
-
-    #[Test]
-    public function httpRequestKeepsAnExplicitBufferOption(): void
-    {
-        $capturedOptions = null;
-        $program = $this->createHttpCapturingProgram($capturedOptions);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))
-            ->invoke($program, Cmd::http('http://example.com/', options: ['buffer' => true]));
-
-        self::assertIsArray($capturedOptions);
-        self::assertTrue($capturedOptions['buffer'], 'An explicit buffer option on the command must not be overwritten by the unbuffered default');
     }
 
     #[Test]

@@ -5,29 +5,21 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Runtime;
 
 use Closure;
-use Elmphant\Tui\Core\AfterCmd;
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\CallCmd;
-use Elmphant\Tui\Core\CancelCmd;
 use Elmphant\Tui\Core\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Core\EffectId;
-use Elmphant\Tui\Core\ExecCmd;
 use Elmphant\Tui\Core\FocusCmd;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Core\HttpCmd;
-use Elmphant\Tui\Core\ListenCmd;
 use Elmphant\Tui\Core\MappedCmd;
 use Elmphant\Tui\Core\MessageCmd;
 use Elmphant\Tui\Core\Model;
-use Elmphant\Tui\Core\ProcessCmd;
 use Elmphant\Tui\Core\QuitCmd;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\RenderRevisioned;
 use Elmphant\Tui\Core\RoutesFocus;
 use Elmphant\Tui\Core\ShutdownAware;
-use Elmphant\Tui\Core\TickCmd;
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
 use Elmphant\Tui\Input\InputParser;
@@ -45,7 +37,6 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\ResizeMsg;
-use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -58,9 +49,6 @@ use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 use Revolt\EventLoop\UnsupportedFeatureException;
 use SplQueue;
-use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\Process\Process;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 use UnexpectedValueException;
 
@@ -110,26 +98,10 @@ final class Program
     private ?TerminalSession $terminalSession = null;
 
     /**
-     * @var list<RunningProcess>
+     * Built on first use: an effect can only start once something dispatched a
+     * command, and a program that never does keeps none.
      */
-    private array $processes = [];
-
-    /**
-     * @var list<StreamSubscription>
-     */
-    private array $subscriptions = [];
-
-    private ?HttpClientInterface $httpClient = null;
-
-    /**
-     * @var list<TickerRecord>
-     */
-    private array $tickers = [];
-
-    /**
-     * @var list<TimerRecord>
-     */
-    private array $timers = [];
+    private ?EffectRunner $effects = null;
 
     private ?TerminalInterface $injectedTerminal = null;
     private ?AdaptiveTicker $adaptiveTicker = null;
@@ -496,18 +468,7 @@ final class Program
         try {
             $this->cancelEventLoopWatchers();
 
-            foreach ($this->subscriptions as $subscription) {
-                $this->stopWatching($subscription);
-            }
-            $this->subscriptions = [];
-
-            foreach ($this->processes as $process) {
-                try {
-                    $process->stop();
-                } catch (Throwable) {
-                }
-            }
-            $this->processes = [];
+            $this->effects?->shutdown();
         } finally {
             $this->terminalSession?->updateHeight($this->height);
             $this->terminalSession?->close();
@@ -539,7 +500,7 @@ final class Program
         $this->adaptiveTicker->refresh(
             nextRenderDelay: $this->nextRenderDelay(),
             nextTimerDelay: $this->nextTimerDelay(),
-            processesActive: $this->processes !== [],
+            processesActive: $this->effects?->hasRunningProcesses() ?? false,
             queuePending: !$this->messageQueue->isEmpty() || !$this->pendingWheel->isEmpty(),
         );
 
@@ -666,10 +627,8 @@ final class Program
         }
 
         $now = $this->clock->now();
-        $this->fireTickers($now);
-        $this->fireTimers($now);
-        $this->pumpProcesses();
-        $this->pumpSubscriptions();
+        $this->effects?->fire($now);
+        $this->effects?->pump();
         $this->flushWheelWhenDue($now);
 
         $this->drainMessageQueue();
@@ -713,27 +672,14 @@ final class Program
         $adaptiveTicker->refresh(
             nextRenderDelay: $this->nextRenderDelay(),
             nextTimerDelay: $this->nextTimerDelay(),
-            processesActive: $this->processes !== [],
+            processesActive: $this->effects?->hasRunningProcesses() ?? false,
             queuePending: !$this->messageQueue->isEmpty() || !$this->pendingWheel->isEmpty(),
         );
     }
 
     private function nextTimerDelay(): ?float
     {
-        $now = $this->clock->now();
-        $earliest = null;
-
-        foreach ($this->tickers as $ticker) {
-            $delay = max(0.0, $ticker->fireAt - $now);
-            $earliest = $earliest === null ? $delay : min($earliest, $delay);
-        }
-
-        foreach ($this->timers as $timer) {
-            $delay = max(0.0, $timer->fireAt - $now);
-            $earliest = $earliest === null ? $delay : min($earliest, $delay);
-        }
-
-        return $earliest;
+        return $this->effects?->nextDelay();
     }
 
     private function nextRenderDelay(): ?float
@@ -1037,37 +983,27 @@ final class Program
             return;
         }
 
-        // Three commands are the program's own: whether it is still running, what
-        // its terminal shows, and where the keyboard is. Everything else is an
-        // effect — it owns a resource or reports back later — and needs none of
-        // those three things.
+        // These five finish here: they say what the program is doing, what its
+        // terminal shows, where the keyboard is, or they hand over a message.
+        // Anything else leaves something running, which the effects hold.
         match (true) {
             $command instanceof QuitCmd => $this->running = false,
             $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
             $command instanceof FocusCmd => $this->moveFocus($command),
-            default => $this->runEffect($command, $wrap),
+            $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
+            $command instanceof CallCmd => $this->executeCall($command, $wrap),
+            default => $this->effects()->run($command, $wrap),
         };
     }
 
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function runEffect(Cmd $command, ?Closure $wrap): void
+    private function effects(): EffectRunner
     {
-        $this->makeRoomFor($command, $wrap);
-
-        match (true) {
-            $command instanceof TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
-            $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
-            $command instanceof CancelCmd => $this->cancelEffect($command->id, $wrap),
-            $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
-            $command instanceof CallCmd => $this->executeCall($command, $wrap),
-            $command instanceof HttpCmd => $this->startHttpRequest($command, $wrap),
-            $command instanceof ExecCmd => $this->startExecProcess($command, $wrap),
-            $command instanceof ProcessCmd => $this->startStreamingProcess($command, $wrap),
-            $command instanceof ListenCmd => $this->subscribeToStream($command, $wrap),
-            default => throw new LogicException(sprintf('Unknown command type "%s" — the runtime has no dispatcher for it', $command::class)),
-        };
+        return $this->effects ??= new EffectRunner(
+            $this->messageQueue,
+            $this->clock,
+            $this->dispatchCommand(...),
+            $this->tick(...),
+        );
     }
 
     /**
@@ -1093,320 +1029,6 @@ final class Program
                 'call',
             ), $wrap));
         }
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function subscribeToStream(ListenCmd $command, ?Closure $wrap = null): void
-    {
-        $subscription = new StreamSubscription($command->stream, $command->onReadable, $command->id, $wrap);
-        $subscription->watcherId = EventLoop::onReadable($command->stream, function () use ($subscription): void {
-            $subscription->readable = true;
-            $this->tick();
-        });
-        $this->subscriptions[] = $subscription;
-    }
-
-    private function pumpSubscriptions(): void
-    {
-        if ($this->subscriptions === []) {
-            return;
-        }
-
-        $remaining = [];
-        foreach ($this->subscriptions as $subscription) {
-            if (!$subscription->readable) {
-                $remaining[] = $subscription;
-                continue;
-            }
-            $subscription->readable = false;
-
-            try {
-                foreach ($subscription->read() as $message) {
-                    $this->messageQueue->enqueue(self::mapMessage($message, $subscription->wrap));
-                }
-            } catch (Throwable $error) {
-                $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'listen', $subscription->id), $subscription->wrap));
-                $this->stopWatching($subscription);
-                continue;
-            }
-
-            if (!$subscription->isOpen()) {
-                $this->stopWatching($subscription);
-                continue;
-            }
-            $remaining[] = $subscription;
-        }
-        $this->subscriptions = $remaining;
-    }
-
-    private function stopWatching(StreamSubscription $subscription): void
-    {
-        if ($subscription->watcherId === null) {
-            return;
-        }
-        $watcherId = $subscription->watcherId;
-        $subscription->watcherId = null;
-        try {
-            EventLoop::cancel($watcherId);
-        } catch (Throwable) {
-        }
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function registerTicker(float $interval, ?EffectId $id = null, ?Closure $wrap = null): void
-    {
-        $now = $this->clock->now();
-        $this->tickers[] = new TickerRecord($now + $interval, $interval, $id, $wrap);
-    }
-
-    /**
-     * @param Closure(): (Message|Cmd|null)  $then
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function registerTimer(float $delay, Closure $then, ?EffectId $id = null, ?Closure $wrap = null): void
-    {
-        $this->timers[] = new TimerRecord($this->clock->now() + $delay, $then, $id, $wrap);
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    /**
-     * An id is one slot: whatever still holds it goes before the replacement
-     * starts. Two effects answering to the same name would send messages no
-     * application can tell apart, and a ticker re-registered on every config
-     * change would silently multiply.
-     *
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function makeRoomFor(Cmd $command, ?Closure $wrap): void
-    {
-        $id = match (true) {
-            $command instanceof CancelCmd => null,
-            $command instanceof TickCmd,
-            $command instanceof AfterCmd,
-            $command instanceof HttpCmd,
-            $command instanceof ExecCmd,
-            $command instanceof ListenCmd,
-            $command instanceof ProcessCmd => $command->id,
-            default => null,
-        };
-
-        if ($id !== null) {
-            $this->cancelEffect($id, $wrap);
-        }
-    }
-
-    private function cancelEffect(EffectId $id, ?Closure $wrap = null): void
-    {
-        $this->tickers = array_values(array_filter(
-            $this->tickers,
-            static fn (TickerRecord $ticker): bool => $ticker->id === null || !$ticker->id->equals($id),
-        ));
-        $this->timers = array_values(array_filter(
-            $this->timers,
-            static fn (TimerRecord $timer): bool => $timer->id === null || !$timer->id->equals($id),
-        ));
-
-        $keptSubscriptions = [];
-        foreach ($this->subscriptions as $subscription) {
-            if ($subscription->id !== null && $subscription->id->equals($id)) {
-                $this->stopWatching($subscription);
-                continue;
-            }
-            $keptSubscriptions[] = $subscription;
-        }
-        $this->subscriptions = $keptSubscriptions;
-
-        $remaining = [];
-        foreach ($this->processes as $process) {
-            $processId = $process->id();
-            if ($processId !== null && $processId->equals($id)) {
-                try {
-                    $process->stop();
-                } catch (Throwable $error) {
-                    $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'cancel', $id), $wrap));
-                }
-                continue;
-            }
-            $remaining[] = $process;
-        }
-        $this->processes = $remaining;
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function startHttpRequest(HttpCmd $command, ?Closure $wrap = null): void
-    {
-        $this->httpClient ??= HttpClient::create();
-
-        $options = $command->options;
-        $options['buffer'] ??= false;
-        if ($command->headers !== []) {
-            $options['headers'] = $command->headers;
-        }
-        if ($command->body !== null) {
-            $options['body'] = $command->body;
-        }
-
-        try {
-            $response = $this->httpClient->request($command->method, $command->url, $options);
-        } catch (Throwable $error) {
-            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'http', $command->id), $wrap));
-
-            return;
-        }
-
-        $this->processes[] = new RunningHttpRequest(
-            $this->httpClient,
-            $response,
-            $command->id,
-            $command->maxBodyBytes,
-            $wrap,
-        );
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function startExecProcess(ExecCmd $command, ?Closure $wrap = null): void
-    {
-        try {
-            $process = $this->createProcess($command->command);
-            $this->configureProcess($process, $command->workingDirectory, $command->timeout, $command->env, $command->input);
-            $process->start();
-        } catch (Throwable $error) {
-            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'process', $command->id), $wrap));
-
-            return;
-        }
-
-        $this->processes[] = new RunningExecProcess($process, $command->id, $command->maxOutputBytes, $wrap);
-    }
-
-    /**
-     * @param Closure(Message): Message|null $wrap
-     */
-    private function startStreamingProcess(ProcessCmd $command, ?Closure $wrap = null): void
-    {
-        try {
-            $process = $this->createProcess($command->command);
-            $this->configureProcess($process, $command->workingDirectory, $command->timeout, $command->env, $command->input);
-            $process->start();
-        } catch (Throwable $error) {
-            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'process', $command->id), $wrap));
-
-            return;
-        }
-
-        $this->processes[] = new RunningStreamingProcess($process, $command->id, $command->outputChunkBytes, $wrap);
-    }
-
-    /**
-     * @param list<string> $command
-     */
-    private function createProcess(array $command): Process
-    {
-        return new Process($command);
-    }
-
-    /**
-     * @param array<string, string> $env
-     */
-    private function configureProcess(
-        Process $process,
-        ?string $workingDirectory,
-        ?float $timeout,
-        array $env,
-        ?string $input,
-    ): void {
-        if ($workingDirectory !== null) {
-            $process->setWorkingDirectory($workingDirectory);
-        }
-        if ($timeout !== null) {
-            $process->setTimeout($timeout);
-        }
-        if ($env !== []) {
-            $process->setEnv($env);
-        }
-        if ($input !== null) {
-            $process->setInput($input);
-        }
-    }
-
-    private function pumpProcesses(): void
-    {
-        if ($this->processes === []) {
-            return;
-        }
-
-        $remaining = [];
-        foreach ($this->processes as $process) {
-            try {
-                foreach ($process->pump() as $message) {
-                    $this->messageQueue->enqueue($message);
-                }
-            } catch (Throwable $error) {
-                $this->messageQueue->enqueue($process->map(new ErrorMsg($error, 'effect', $process->id())));
-                try {
-                    $process->stop();
-                } catch (Throwable) {
-                }
-                continue;
-            }
-            if ($process->isRunning()) {
-                $remaining[] = $process;
-            }
-        }
-        $this->processes = $remaining;
-    }
-
-    private function fireTickers(float $now): void
-    {
-        foreach ($this->tickers as $index => $ticker) {
-            if ($ticker->fireAt <= $now) {
-                $this->messageQueue->enqueue(self::mapMessage(new TickMsg($now), $ticker->wrap));
-                $this->tickers[$index] = $ticker->rescheduled($now);
-            }
-        }
-    }
-
-    private function fireTimers(float $now): void
-    {
-        if ($this->timers === []) {
-            return;
-        }
-
-        $remaining = [];
-        foreach ($this->timers as $timer) {
-            if ($now >= $timer->fireAt) {
-                try {
-                    $result = ($timer->callback)();
-                } catch (Throwable $error) {
-                    $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'timer', $timer->id), $timer->wrap));
-                    continue;
-                }
-                if ($result instanceof Cmd) {
-                    $this->dispatchCommand($result, $timer->wrap);
-                } elseif ($result instanceof Message) {
-                    $this->messageQueue->enqueue(self::mapMessage($result, $timer->wrap));
-                } elseif ($result !== null) {
-                    $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg(
-                        new UnexpectedValueException('Cmd::after() callback must return Message, Cmd, or null'),
-                        'timer',
-                        $timer->id,
-                    ), $timer->wrap));
-                }
-            } else {
-                $remaining[] = $timer;
-            }
-        }
-        $this->timers = $remaining;
     }
 
     /**

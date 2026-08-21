@@ -15,9 +15,9 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Runtime\TickerRecord;
-use Elmphant\Tui\Runtime\TimerRecord;
+use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -94,15 +94,9 @@ final class CmdMapTest extends TestCase
     {
         [$program, $queue] = $this->program();
         $this->dispatch($program, Cmd::tick(1.0)->map($this->wrap('ticker')));
-        /** @var list<TickerRecord> $records */
-        $records = (new ReflectionProperty(Program::class, 'tickers'))->getValue($program);
-        self::assertCount(1, $records);
 
-        $fire = new ReflectionMethod(Program::class, 'fireTickers');
-        $fire->invoke($program, $records[0]->fireAt);
-        /** @var list<TickerRecord> $rescheduled */
-        $rescheduled = (new ReflectionProperty(Program::class, 'tickers'))->getValue($program);
-        $fire->invoke($program, $rescheduled[0]->fireAt);
+        $this->fireDue($program, 1.0);
+        $this->fireDue($program, 1.0);
 
         self::assertSame(2, $queue->count());
         foreach ($queue as $message) {
@@ -120,7 +114,7 @@ final class CmdMapTest extends TestCase
             Cmd::after(1.0, static fn (): Message => new TestMessage('timer'))->map($this->wrap('timer')),
         );
 
-        $this->fireOnlyTimer($program);
+        $this->fireDue($program, 1.0);
 
         self::assertInstanceOf(WrappedMapMessage::class, $queue->dequeue());
     }
@@ -135,7 +129,7 @@ final class CmdMapTest extends TestCase
                 ->map($this->wrap('timer')),
         );
 
-        $this->fireOnlyTimer($program);
+        $this->fireDue($program, 1.0);
 
         self::assertInstanceOf(WrappedMapMessage::class, $queue->dequeue());
     }
@@ -149,7 +143,7 @@ final class CmdMapTest extends TestCase
             Cmd::after(1.0, static fn (): null => null)->map($this->wrap('timer')),
         );
 
-        $this->fireOnlyTimer($program);
+        $this->fireDue($program, 1.0);
 
         self::assertTrue($queue->isEmpty());
     }
@@ -166,7 +160,7 @@ final class CmdMapTest extends TestCase
         self::assertInstanceOf(Cmd::class, $command);
         $this->dispatch($program, $command->map($this->wrap('timer')));
 
-        $this->fireOnlyTimer($program);
+        $this->fireDue($program, 1.0);
 
         $message = $queue->dequeue();
         self::assertInstanceOf(WrappedMapMessage::class, $message);
@@ -247,7 +241,7 @@ final class CmdMapTest extends TestCase
             {
             }
         };
-        $program = Program::new($model);
+        $program = Program::new($model)->withClock(new TestClock(1_000.0));
         /** @var SplQueue<Message> $queue */
         $queue = new SplQueue();
         (new ReflectionProperty(Program::class, 'messageQueue'))->setValue($program, $queue);
@@ -261,12 +255,19 @@ final class CmdMapTest extends TestCase
         (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke($program, $command);
     }
 
-    private function fireOnlyTimer(Program $program): void
+    /**
+     * Whatever the effects have due once the clock has moved on, fired through
+     * the runner rather than by reaching for the records it keeps.
+     */
+    private function fireDue(Program $program, float $seconds): void
     {
-        /** @var list<TimerRecord> $timers */
-        $timers = (new ReflectionProperty(Program::class, 'timers'))->getValue($program);
-        self::assertCount(1, $timers);
-        (new ReflectionMethod(Program::class, 'fireTimers'))->invoke($program, $timers[0]->fireAt);
+        $clock = (new ReflectionProperty(Program::class, 'clock'))->getValue($program);
+        self::assertInstanceOf(TestClock::class, $clock);
+        $clock->advance($seconds);
+
+        $effects = (new ReflectionProperty(Program::class, 'effects'))->getValue($program);
+        self::assertInstanceOf(EffectRunner::class, $effects);
+        $effects->fire($clock->now());
     }
 
     /**
