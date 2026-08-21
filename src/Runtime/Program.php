@@ -1037,15 +1037,29 @@ final class Program
             return;
         }
 
-        $this->makeRoomFor($command, $wrap);
-
+        // Three commands are the program's own: whether it is still running, what
+        // its terminal shows, and where the keyboard is. Everything else is an
+        // effect — it owns a resource or reports back later — and needs none of
+        // those three things.
         match (true) {
             $command instanceof QuitCmd => $this->running = false,
             $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
+            $command instanceof FocusCmd => $this->moveFocus($command),
+            default => $this->runEffect($command, $wrap),
+        };
+    }
+
+    /**
+     * @param Closure(Message): Message|null $wrap
+     */
+    private function runEffect(Cmd $command, ?Closure $wrap): void
+    {
+        $this->makeRoomFor($command, $wrap);
+
+        match (true) {
             $command instanceof TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
             $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
             $command instanceof CancelCmd => $this->cancelEffect($command->id, $wrap),
-            $command instanceof FocusCmd => $this->moveFocus($command),
             $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
             $command instanceof CallCmd => $this->executeCall($command, $wrap),
             $command instanceof HttpCmd => $this->startHttpRequest($command, $wrap),
