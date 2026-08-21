@@ -307,17 +307,11 @@ final class Frame
             $byte = ord($text[$position]);
 
             if ($byte === 0x1B && $position + 1 < $length && $text[$position + 1] === '[') {
-                $end = strpos($text, 'm', $position + 2);
-                if ($end !== false) {
-                    $parser->parse(substr($text, $position + 2, $end - $position - 2));
-                    $position = $end + 1;
-                    continue;
+                [$position, $parameters] = SgrParser::csiAt($text, $position);
+
+                if ($parameters !== null) {
+                    $parser->parse($parameters);
                 }
-                $scanPosition = $position + 2;
-                while ($scanPosition < $length && ord($text[$scanPosition]) < 0x40) {
-                    ++$scanPosition;
-                }
-                $position = min($scanPosition + 1, $length);
                 continue;
             }
 

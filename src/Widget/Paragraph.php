@@ -106,19 +106,19 @@ final readonly class Paragraph implements Widget, MeasureHeight
                 $byte = ord($rawLine[$position]);
 
                 if ($byte === 0x1B && $position + 1 < $length && $rawLine[$position + 1] === '[') {
-                    $end = strpos($rawLine, 'm', $position + 2);
-                    if ($end !== false) {
+                    [$position, $parameters] = SgrParser::csiAt($rawLine, $position);
+
+                    if ($parameters !== null) {
                         if ($currentText !== '') {
                             $spans[] = self::spanFromSgrState($currentText, $currentForeground, $currentBackground, $currentAttributes);
                             $currentText = '';
                         }
-                        $parser->parse(substr($rawLine, $position + 2, $end - $position - 2));
+                        $parser->parse($parameters);
                         $currentForeground = $parser->foreground;
                         $currentBackground = $parser->background;
                         $currentAttributes = $parser->attributes;
-                        $position = $end + 1;
-                        continue;
                     }
+                    continue;
                 }
 
                 $characterByteLength = Grapheme::sequenceLength($byte);

@@ -295,6 +295,20 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function putAnsiKeepsTextThatMerelyContainsAnMAfterANonSgrSequence(): void
+    {
+        $frame = new Frame(20, 5);
+
+        $frame->putAnsi(0, 0, "\e[2Kmid stream");
+
+        self::assertSame(
+            'mid stream',
+            implode('', array_slice($frame->characters, 0, 10)),
+            'erase-line is not SGR, so the m of "mid" is text and not the end of a colour code',
+        );
+    }
+
+    #[Test]
     public function putAnsiNewlineAdvancesRow(): void
     {
         $frame = new Frame(20, 5);

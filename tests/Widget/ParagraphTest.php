@@ -355,6 +355,20 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function fromAnsiPassesOverASequenceThatIsNotAColour(): void
+    {
+        $frame = new Frame(12, 1);
+
+        Paragraph::fromAnsi("\x1b[5Chi")->render($frame, new Rect(0, 0, 12, 1), $this->context());
+
+        self::assertSame(
+            'hi',
+            trim(implode('', array_slice($frame->characters, 0, 12))),
+            'cursor-forward is not a colour, so its bytes are not text to draw',
+        );
+    }
+
+    #[Test]
     public function fromAnsiSplitsOnNewlines(): void
     {
         $frame = new Frame(10, 2);
