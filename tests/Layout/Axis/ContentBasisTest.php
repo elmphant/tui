@@ -48,6 +48,14 @@ final class ContentBasisTest extends TestCase
     }
 
     #[Test]
+    public function acrossARowAChildIsAsWideAsItSaysItWants(): void
+    {
+        $basis = ContentBasis::of($this->wanting(5), Constraint::content(), Direction::Horizontal, 20);
+
+        self::assertSame(5, $basis, 'a row has the width the child declares to go by, having no measurement');
+    }
+
+    #[Test]
     public function aChildPinnedToOneSizeIsNotMeasured(): void
     {
         $basis = ContentBasis::of($this->measuring(9), Constraint::exact(2), Direction::Vertical, 20);
@@ -61,6 +69,27 @@ final class ContentBasisTest extends TestCase
         $basis = ContentBasis::of($this->measuring(9), Constraint::min(2), Direction::Vertical, 0);
 
         self::assertSame(2, $basis);
+    }
+
+    /**
+     * A widget that says how wide it wants to be and cannot measure itself.
+     */
+    private function wanting(int $columns): Widget
+    {
+        return new class($columns) implements Widget {
+            public function __construct(private int $columns)
+            {
+            }
+
+            public function sizing(): Sizing
+            {
+                return Sizing::of(Constraint::exact($this->columns), Constraint::flex());
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+            }
+        };
     }
 
     private function measuring(int $rows): Widget

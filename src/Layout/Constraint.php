@@ -16,6 +16,12 @@ final readonly class Constraint
         public int $flex = 0,
         public ?int $basis = null,
         public int $shrink = 1,
+        /**
+         * Whether a null basis means "ask the child how big it wants to be" rather
+         * than "start at the floor". Only Constraint::content() asks, so a bare
+         * constraint keeps starting at nothing.
+         */
+        public bool $measuresContent = false,
     ) {
         if (null !== $basis && $basis < 0) {
             throw new InvalidArgumentException(sprintf('Constraint basis must be non-negative, got %d', $basis));
@@ -63,25 +69,27 @@ final readonly class Constraint
      */
     public function withFlex(int $weight = 1): self
     {
-        return new self(min: $this->min, max: $this->max, flex: $weight, basis: $this->basis, shrink: $this->shrink);
+        return new self(min: $this->min, max: $this->max, flex: $weight, basis: $this->basis, shrink: $this->shrink, measuresContent: $this->measuresContent);
     }
 
     /**
-     * The size the content wants, before any sharing out. A null basis means
-     * "measure me", which only the vertical axis has a device for.
+     * The size the content wants, before any sharing out. A null basis starts at
+     * the floor unless the constraint came from content(), which asks the child:
+     * rows measure themselves, columns say how wide they want to be.
      */
     public function withBasis(int $basis): self
     {
-        return new self(min: $this->min, max: $this->max, flex: $this->flex, basis: $basis, shrink: $this->shrink);
+        return new self(min: $this->min, max: $this->max, flex: $this->flex, basis: $basis, shrink: $this->shrink, measuresContent: $this->measuresContent);
     }
 
     /**
-     * As tall or wide as what the child holds, and no further. A child that
-     * cannot measure itself has no content to go by and stays at nothing.
+     * As tall or wide as what the child holds, and no further. Down a column that
+     * is what the child measures, across a row it is the width the child declares;
+     * a child that can answer neither has no content to go by and stays at nothing.
      */
     public static function content(): self
     {
-        return new self();
+        return new self(measuresContent: true);
     }
 
     public static function flex(int $weight = 1): self
