@@ -375,7 +375,10 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             return 0;
         }
         if ($widget instanceof MeasureHeight) {
-            return max(0, $widget->measureHeight($width));
+            // What the content wants, held to what the widget said it would take.
+            $rows = $widget->sizing()->rows;
+
+            return min(max(0, $widget->measureHeight($width), $rows->min), $rows->max);
         }
 
         $constraint = $widget->sizing()->rows;

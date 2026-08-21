@@ -54,9 +54,13 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         $columnWidths = $isVertical ? [] : $this->sizesFor($width);
 
         foreach ($this->children as $index => $child) {
+            $rows = $child->sizing()->rows;
             $childHeight = $child instanceof MeasureHeight
-                ? $child->measureHeight($isVertical ? $width : $columnWidths[$index])
-                : $this->constraintHeight($child->sizing()->rows);
+                // A measurement says what the content wants, not what the child
+                // will be given: the allocator still holds it to its own bounds,
+                // so measuring past them would report rows nothing can occupy.
+                ? min(max($child->measureHeight($isVertical ? $width : $columnWidths[$index]), $rows->min), $rows->max)
+                : $this->constraintHeight($rows);
 
             if ($isVertical) {
                 $total += $childHeight;

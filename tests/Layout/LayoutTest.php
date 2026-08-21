@@ -90,6 +90,34 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
+    public function aMeasuredChildIsNoTallerThanTheRowsItPinnedItselfTo(): void
+    {
+        $pinned = new class implements Widget, MeasureHeight {
+            public function sizing(): Sizing
+            {
+                return Sizing::of(Constraint::flex(), Constraint::exact(2));
+            }
+
+            public function measureHeight(int $width): int
+            {
+                return 10;
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+            }
+        };
+
+        $column = Layout::vertical($pinned, $this->createExactWidget(3));
+
+        self::assertSame(
+            array_sum($column->sizesFor(20, 40)),
+            $column->measureHeight(20),
+            'the rows a column measures are the rows it goes on to hand out',
+        );
+    }
+
+    #[Test]
     public function aTallChildIsNotWideBecauseOfIt(): void
     {
         $tall = new class implements Widget, MeasureHeight {

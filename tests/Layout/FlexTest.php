@@ -308,6 +308,18 @@ final class FlexTest extends TestCase
     }
 
     #[Test]
+    public function aRowIsNoTallerThanTheRowsItsItemPinnedItselfTo(): void
+    {
+        $row = Flex::row()->add($this->widgetMeasuringPastItsOwnCeiling(), Constraint::flex());
+
+        self::assertSame(
+            2,
+            $row->measureHeight(20),
+            'a measurement says what the content wants; the child still holds itself to two rows',
+        );
+    }
+
+    #[Test]
     public function integerRemaindersStopAfterTheAvailableCellsAreAssigned(): void
     {
         $grow = Flex::row()
@@ -638,6 +650,25 @@ final class FlexTest extends TestCase
             public function sizing(): Sizing
             {
                 return Sizing::of(Constraint::flex()->withBasis($this->width), Constraint::flex());
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+            }
+        };
+    }
+
+    private function widgetMeasuringPastItsOwnCeiling(): Widget
+    {
+        return new class implements Widget, MeasureHeight {
+            public function sizing(): Sizing
+            {
+                return Sizing::of(Constraint::flex(), Constraint::exact(2));
+            }
+
+            public function measureHeight(int $width): int
+            {
+                return 10;
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
