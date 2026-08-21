@@ -24,6 +24,7 @@ use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\ScrollPane;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +36,70 @@ final class ScrollPaneTest extends TestCase
     public function itNamesTheKeysItAnswers(): void
     {
         self::assertSame(['↑/↓' => 'scroll'], (new ScrollPane())->hints());
+    }
+
+    #[Test]
+    public function whatAPaneReportsAboutItselfDoesNotTurnOnItsOwnFocusFlag(): void
+    {
+        $taller = new class implements Widget, Focusable, MeasureHeight {
+            public function __construct(private bool $focused = false)
+            {
+            }
+
+            public function isFocused(): bool
+            {
+                return $this->focused;
+            }
+
+            public function withFocus(bool $focused): static
+            {
+                return new self($focused);
+            }
+
+            public function measureHeight(int $width): int
+            {
+                return $this->focused ? 5 : 1;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return UpdateResult::keep($this);
+            }
+
+            public function sizing(): Sizing
+            {
+                return Sizing::of(Constraint::flex(), Constraint::flex());
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+            }
+        };
+
+        $pane = ScrollPane::of($taller);
+
+        self::assertSame(
+            $pane->measureHeight(20),
+            $pane->withFocus(true)->measureHeight(20),
+            'the tree decides where the keyboard is at render time, so a height cannot turn on the flag',
+        );
+    }
+
+    #[Test]
+    public function theGeometryHandsBackTheChildrenAsTheyWereAuthored(): void
+    {
+        $pane = ScrollPane::of(TextInput::new(), TextInput::new())->withFocus(true);
+
+        $placed = [];
+        foreach ($pane->childWidgets(Rect::fromSize(20, 6)) as [$child]) {
+            $placed[] = $child;
+        }
+
+        self::assertSame(
+            $pane->authoredChildren(),
+            $placed,
+            'a mark from the pane’s own flag would hold rects for widgets the tree may never draw',
+        );
     }
 
     #[Test]

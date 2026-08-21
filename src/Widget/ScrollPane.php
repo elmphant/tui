@@ -193,7 +193,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
             return 0;
         }
 
-        return VerticalStack::layoutUsing($this->layoutMemo, $this->focusedChildren(), $width, 0)->totalHeight;
+        return VerticalStack::layoutUsing($this->layoutMemo, $this->children, $width, 0)->totalHeight;
     }
 
     /**
@@ -201,7 +201,9 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
      */
     public function childWidgets(Rect $area): iterable
     {
-        $children = $this->focusedChildren();
+        // Authored, not marked: only drawing knows where the keyboard is, and a
+        // rect held for a marked widget belongs to one the tree may never draw.
+        $children = $this->children;
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $children, $area->width, $area->height);
         $y = $area->y - $this->resolvedOffset($layout, $area->height);
         $placed = [];
