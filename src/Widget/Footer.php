@@ -6,6 +6,9 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -15,9 +18,10 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 
-final readonly class Footer implements Interactive, WidgetContainer
+final readonly class Footer implements Interactive, WidgetContainer, KeybindingsAware
 {
     use Cloneable;
+    use KeybindingsAwareBehavior;
 
     private function __construct(
         private ?Widget $leftSlot = null,
@@ -26,12 +30,19 @@ final readonly class Footer implements Interactive, WidgetContainer
         private ?Style $style = null,
         private ?Spacing $padding = null,
         private ?Spacing $margin = null,
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
     ) {
     }
 
     public static function new(): self
     {
         return new self();
+    }
+
+    public static function defaultKeybindings(): Keybindings
+    {
+        return Keybindings::empty();
     }
 
     /**
@@ -129,7 +140,7 @@ final readonly class Footer implements Interactive, WidgetContainer
             return new UpdateResult($this);
         }
 
-        [$overrides, $command] = BarSlotRenderer::updateSlots($this->slots(), $message, $contentArea);
+        [$overrides, $command] = BarSlotRenderer::updateSlots($this->slots(), $message, $contentArea, $this->globalKeybindings);
 
         if ($overrides !== []) {
             return new UpdateResult($this->cloneWith(...$overrides), $command);

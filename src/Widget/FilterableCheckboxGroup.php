@@ -7,6 +7,9 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -25,9 +28,10 @@ use Elmphant\Tui\Search\SubstringMatcher;
  * A tick is held by name rather than by row: the query decides which rows exist,
  * so a row number means something different from one keystroke to the next.
  */
-final readonly class FilterableCheckboxGroup implements DropdownContent
+final readonly class FilterableCheckboxGroup implements DropdownContent, KeybindingsAware, PublishesHints
 {
     use Cloneable;
+    use KeybindingsAwareBehavior;
 
     /**
      * Keys the boxes take; every other one is typing and belongs to the field.
@@ -47,7 +51,23 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
         private int $cursor = 0,
         private bool $focused = false,
         private ?Matcher $matcher = null,
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
     ) {
+    }
+
+    public static function defaultKeybindings(): Keybindings
+    {
+        return CheckboxGroup::defaultKeybindings()->append(FilterBar::keybindings());
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
+            'toggle' => Actions::TOGGLE,
+            ...($this->field->value() === '' ? [] : ['clear filter' => Actions::CANCEL]),
+        ]);
     }
 
     /**
@@ -155,13 +175,13 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
             return new UpdateResult($this);
         }
 
-        if ($message instanceof KeyMsg && FilterBar::keybindings()->matches($message, Actions::CANCEL)) {
+        if ($message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
             return new UpdateResult(
                 $this->field->value() === '' ? $this : $this->cloneWith(field: $this->field->withValue(''), cursor: 0),
             );
         }
 
-        $dispatcher = new ChildDispatcher();
+        $dispatcher = new ChildDispatcher($this->globalKeybindings);
 
         // The boxes own the pointer as well as the keys that walk them: they are
         // the rows drawn, so they are what a press and a wheel land on.
@@ -198,7 +218,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent
     private function isForTheBoxes(KeyMsg $message): bool
     {
         foreach (self::OWN_ACTIONS as $action) {
-            if (CheckboxGroup::defaultKeybindings()->matches($message, $action)) {
+            if ($this->effectiveKeybindings()->matches($message, $action)) {
                 return true;
             }
         }

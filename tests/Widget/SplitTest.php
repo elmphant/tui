@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\SplitState;
@@ -15,6 +17,8 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\ListView;
+use Elmphant\Tui\Widget\SimpleListItem;
 use Elmphant\Tui\Widget\Split;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\TextInput;
@@ -24,6 +28,22 @@ use PHPUnit\Framework\TestCase;
 
 final class SplitTest extends TestCase
 {
+    #[Test]
+    public function aGlobalRebindingReachesTheKeysAPaneAnswers(): void
+    {
+        $area = new Rect(0, 0, 40, 6);
+        $list = ListView::new([new SimpleListItem('a'), new SimpleListItem('b')])->withFocus(true);
+        $split = Split::row(SplitState::even(2), $list, Text::new('right'))
+            ->withGlobalKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['j']]));
+
+        $updated = $split->update(new KeyMsg('j'), $area)->model;
+
+        self::assertInstanceOf(Split::class, $updated);
+        $first = [...$updated->childWidgets($area)][0][0];
+        self::assertInstanceOf(ListView::class, $first);
+        self::assertSame(1, $first->cursor(), 'a split must hand its panes the bindings the app made active');
+    }
+
     #[Test]
     public function aPaneReceivesTheKeysTypedIntoIt(): void
     {

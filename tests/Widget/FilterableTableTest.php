@@ -23,6 +23,14 @@ use PHPUnit\Framework\TestCase;
 final class FilterableTableTest extends TestCase
 {
     #[Test]
+    public function aTableWithSomethingTypedInItNamesTheKeyThatClearsIt(): void
+    {
+        $filtered = FilterableTable::new(['Name'], [['alpha']])->withQuery('al');
+
+        self::assertSame(['Esc' => 'clear filter'], $filtered->hints());
+    }
+
+    #[Test]
     public function takingFocusKeepsTheFieldTheCaretSitsIn(): void
     {
         $table = $this->routes()->withField(FilterBar::field('ajax', true)->withCursor(1));

@@ -7,10 +7,13 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Color;
@@ -23,6 +26,7 @@ use Elmphant\Tui\Tests\Support\TickTally;
 use Elmphant\Tui\Widget\Header;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -269,6 +273,21 @@ final class HeaderTest extends TestCase
 
         self::assertInstanceOf(Header::class, $result->model);
         self::assertNotSame($header, $result->model);
+    }
+
+    #[Test]
+    public function aGlobalRebindingReachesTheKeysASlotAnswers(): void
+    {
+        $header = Header::new()
+            ->right(TextInput::new()->withValue('typed')->withFocus(true))
+            ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]));
+
+        $result = $header->update(new KeyMsg('k', ctrl: true), Rect::fromSize(80, 1));
+
+        self::assertInstanceOf(Header::class, $result->model);
+        $slot = [...$result->model->children()][0];
+        self::assertInstanceOf(TextInput::class, $slot);
+        self::assertSame('', $slot->value(), 'a bar must hand its slots the bindings the app made active');
     }
 
     #[Test]

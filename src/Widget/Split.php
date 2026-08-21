@@ -6,6 +6,9 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
 use Elmphant\Tui\Layout\Axis\Distribution;
@@ -32,9 +35,10 @@ use InvalidArgumentException;
  * and hand it back. Children are reached through WidgetContainer, so bound
  * components inside them stay visible to layout and routing.
  */
-final readonly class Split implements Widget, WidgetContainer, Interactive
+final readonly class Split implements Widget, WidgetContainer, Interactive, KeybindingsAware
 {
     use Cloneable;
+    use KeybindingsAwareBehavior;
 
     private const GAP = 1;
 
@@ -47,6 +51,8 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
         private array $children,
         private Direction $direction = Direction::Horizontal,
         private array $minimums = [],
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
     ) {
         $childCount = count($this->children);
         $shareCount = count($this->state->shares);
@@ -54,6 +60,11 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
         if ($childCount !== $shareCount) {
             throw new InvalidArgumentException(sprintf('Split needs as many shares as children, got %d children and %d shares', $childCount, $shareCount));
         }
+    }
+
+    public static function defaultKeybindings(): Keybindings
+    {
+        return Keybindings::empty();
     }
 
     public static function row(SplitState $state, Widget ...$children): self
@@ -206,14 +217,14 @@ final readonly class Split implements Widget, WidgetContainer, Interactive
             return new UpdateResult($this);
         }
 
-        $batch = (new ChildDispatcher())->dispatchList($panes, $rects, $message);
+        $batch = (new ChildDispatcher($this->globalKeybindings))->dispatchList($panes, $rects, $message);
 
         if ($batch->overrides === []) {
             return new UpdateResult($this, $batch->command);
         }
 
         return new UpdateResult(
-            new self($this->state, array_values(array_replace($this->children, $batch->overrides)), $this->direction, $this->minimums),
+            $this->cloneWith(children: array_values(array_replace($this->children, $batch->overrides))),
             $batch->command,
         );
     }

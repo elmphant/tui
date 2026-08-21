@@ -7,6 +7,9 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -21,10 +24,11 @@ use Elmphant\Tui\Search\SubstringMatcher;
 /**
  * A table with a free-text filter over its rows.
  */
-final readonly class FilterableTable implements Focusable, MeasureHeight
+final readonly class FilterableTable implements Focusable, MeasureHeight, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
+    use KeybindingsAwareBehavior;
 
     private const BAR_HEIGHT = FilterBar::HEIGHT;
     private const MIN_BAR = FilterBar::MIN_WIDTH;
@@ -41,7 +45,21 @@ final readonly class FilterableTable implements Focusable, MeasureHeight
         private bool $focused = false,
         private ?Matcher $matcher = null,
         private ?TextInput $field = null,
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
     ) {
+    }
+
+    public static function defaultKeybindings(): Keybindings
+    {
+        return FilterBar::keybindings();
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints(
+            $this->query === '' ? [] : ['clear filter' => Actions::CANCEL],
+        );
     }
 
     /**
@@ -104,11 +122,11 @@ final readonly class FilterableTable implements Focusable, MeasureHeight
             return new UpdateResult($this);
         }
 
-        if (FilterBar::keybindings()->matches($message, Actions::CANCEL)) {
+        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
             return new UpdateResult($this->query === '' ? $this : $this->withQuery(''));
         }
 
-        $result = (new ChildDispatcher())->dispatchOne($this->field(), $message, $this->fieldArea($area));
+        $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->field(), $message, $this->fieldArea($area));
 
         return new UpdateResult($this->withField($result->child), $result->command);
     }

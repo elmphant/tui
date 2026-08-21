@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
@@ -93,7 +94,7 @@ final class BarSlotRenderer
      *
      * @return array{array<string, Interactive>, ?Cmd}
      */
-    public static function updateSlots(array $slots, Message $message, Rect $contentArea): array
+    public static function updateSlots(array $slots, Message $message, Rect $contentArea, ?Keybindings $globalKeybindings = null): array
     {
         /** @var array<string, Interactive> $interactive */
         $interactive = array_filter($slots, static fn (?Widget $slot): bool => $slot instanceof Interactive);
@@ -106,7 +107,7 @@ final class BarSlotRenderer
                 ?? new Rect($contentArea->x, $contentArea->y, 0, 1);
         }
 
-        $result = (new ChildDispatcher())->dispatchMap($interactive, $areas, $message);
+        $result = (new ChildDispatcher($globalKeybindings))->dispatchMap($interactive, $areas, $message);
 
         return [$result->overrides, $result->command];
     }

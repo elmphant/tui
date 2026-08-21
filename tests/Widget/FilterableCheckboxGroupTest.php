@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -37,6 +38,31 @@ final class LastOptionOnlyMatcher implements Matcher
 
 final class FilterableCheckboxGroupTest extends TestCase
 {
+    #[Test]
+    public function itNamesTheKeysItAnswers(): void
+    {
+        self::assertSame(
+            ['↑/↓' => 'move', 'Enter' => 'toggle'],
+            FilterableCheckboxGroup::new(['alpha'])->hints(),
+        );
+    }
+
+    #[Test]
+    public function aGlobalRebindingWalksTheBoxesInsteadOfTypingIntoTheField(): void
+    {
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
+            ->withFocus(true)
+            ->withGlobalKeybindings(VimMode::keybindings());
+
+        $ticked = self::pressed($group, new KeyMsg('j'), new KeyMsg(' '));
+
+        self::assertSame(
+            ['beta'],
+            $ticked->checkedValues(),
+            'vim mode bound j to the cursor, so it walks the boxes rather than landing in the filter',
+        );
+    }
+
     #[Test]
     public function aMatcherNamingTheSameOptionTwiceStillDrawsOneBoxForIt(): void
     {
