@@ -175,7 +175,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
         return match (true) {
             $this->dismisses($message, $area) => new UpdateResult(
                 $this,
-                Cmd::message(new ModalDismissed($this->title)),
+                Cmd::message(new ModalDismissed()),
             ),
 
             $this->content instanceof Interactive => $this->updateContent($message, $area),

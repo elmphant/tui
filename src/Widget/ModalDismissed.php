@@ -6,10 +6,11 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Message\Message;
 
+/**
+ * A modal was dismissed. Which one is the component address's to say — a title
+ * is what a modal is called, not which of them this was, and two modals may
+ * share it.
+ */
 final readonly class ModalDismissed implements Message
 {
-    public function __construct(
-        public string $modalTitle,
-    ) {
-    }
 }

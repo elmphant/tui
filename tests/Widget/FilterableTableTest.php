@@ -23,11 +23,15 @@ use PHPUnit\Framework\TestCase;
 final class FilterableTableTest extends TestCase
 {
     #[Test]
-    public function aTableWithSomethingTypedInItNamesTheKeyThatClearsIt(): void
+    public function aTableWithSomethingTypedInItNamesEveryKeyThatClearsIt(): void
     {
         $filtered = FilterableTable::new(['Name'], [['alpha']])->withQuery('al');
 
-        self::assertSame(['Esc' => 'clear filter'], $filtered->hints());
+        self::assertSame(
+            ['Ctrl+U/Esc' => 'clear filter'],
+            $filtered->hints(),
+            'the field is this widget’s own, so the key that empties it is a key this widget answers',
+        );
     }
 
     #[Test]

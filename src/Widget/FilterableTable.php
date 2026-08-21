@@ -52,13 +52,13 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     public static function defaultKeybindings(): Keybindings
     {
-        return FilterBar::keybindings();
+        return FilterBar::keybindings()->append(TextInput::defaultKeybindings());
     }
 
     public function hints(): array
     {
         return $this->effectiveKeybindings()->hints(
-            $this->query === '' ? [] : ['clear filter' => Actions::CANCEL],
+            $this->query === '' ? [] : ['clear filter' => [Actions::CLEAR_LINE, Actions::CANCEL]],
         );
     }
 
