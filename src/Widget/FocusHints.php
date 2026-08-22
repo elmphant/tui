@@ -26,11 +26,11 @@ final readonly class FocusHints implements Widget
 
     public function sizing(): Sizing
     {
-        return StatusBar::hints([])->sizing();
+        return StatusBar::forHints([])->sizing();
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        StatusBar::hints($context->focusedHints())->render($frame, $area, $context);
+        StatusBar::forHints($context->focusedHints())->render($frame, $area, $context);
     }
 }

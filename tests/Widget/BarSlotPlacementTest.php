@@ -68,7 +68,7 @@ final class BarSlotPlacementTest extends TestCase
     #[Test]
     public function aFullRowPainterIsPlacedByItsInkAlone(): void
     {
-        $frame = $this->paint(Footer::rightHints(['q' => 'quit']));
+        $frame = $this->paint(Footer::forRightHints(['q' => 'quit']));
 
         self::assertSame(str_repeat(' ', 16) . ' q  quit', $this->padded($frame));
     }

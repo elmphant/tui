@@ -413,7 +413,7 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 |--------|-------------|
 | `Panel` | Scrollable container with border, title, focus management |
 | `Header` | Top bar with title, left/center/right slots, optional divider |
-| `Footer` | Bottom bar with slots; `Footer::hints([...])` renders key hints |
+| `Footer` | Bottom bar with slots; `Footer::forHints([...])` renders key hints |
 | `FocusHints` | The keys whatever holds the keyboard answers, asked at render time |
 | `Select` | Single-selection list with keyboard/mouse |
 | `Radio` | Radio button group |
@@ -452,7 +452,7 @@ public function view(): Widget
         Header::new('My App')->withDivider(),
         Component::bind('list', $this->list, static fn (self $app, ListView $list): self => $app->cloneWith(list: $list)),
         Footer::new()
-            ->left(StatusBar::hints($this->quitHints()))
+            ->left(StatusBar::forHints($this->quitHints()))
             ->center(FocusHints::new()),
     );
 }

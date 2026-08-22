@@ -40,7 +40,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsRendersKeyDescriptionPairs(): void
     {
-        $bar = StatusBar::hints(['Tab' => 'cycle', 'Esc' => 'quit']);
+        $bar = StatusBar::forHints(['Tab' => 'cycle', 'Esc' => 'quit']);
         $frame = new Frame(50, 1);
         $bar->render($frame, Rect::fromSize(50, 1), $this->context);
 
@@ -54,7 +54,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsKeyHasDifferentStyleThanDescription(): void
     {
-        $bar = StatusBar::hints(['Tab' => 'cycle']);
+        $bar = StatusBar::forHints(['Tab' => 'cycle']);
         $frame = new Frame(40, 1);
         $bar->render($frame, Rect::fromSize(40, 1), $this->context);
 
@@ -69,7 +69,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsConstraintIsExactOne(): void
     {
-        $bar = StatusBar::hints(['Tab' => 'cycle']);
+        $bar = StatusBar::forHints(['Tab' => 'cycle']);
         self::assertEquals(Constraint::exact(1), $bar->sizing()->rows);
     }
 
@@ -170,7 +170,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsDoNotRenderContentText(): void
     {
-        $bar = StatusBar::hints(['K' => 'v']);
+        $bar = StatusBar::forHints(['K' => 'v']);
         $frame = new Frame(40, 1);
         $bar->render($frame, Rect::fromSize(40, 1), $this->context);
 
@@ -188,7 +188,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function earlyReturnPreventsContentRenderingAfterHints(): void
     {
-        $bar = StatusBar::hints(['X' => 'Y']);
+        $bar = StatusBar::forHints(['X' => 'Y']);
         $frame = new Frame(40, 1);
         $bar->render($frame, Rect::fromSize(40, 1), $this->context);
 
@@ -206,7 +206,7 @@ final class StatusBarTest extends TestCase
     {
         $theme = Theme::dark();
         $context = new RenderContext($theme);
-        $bar = StatusBar::hints(['K' => 'desc']);
+        $bar = StatusBar::forHints(['K' => 'desc']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $context);
 
@@ -221,7 +221,7 @@ final class StatusBarTest extends TestCase
     {
         $theme = Theme::dark()->withFooterStyle(new Style(foreground: Color::hex('AAAAAA')));
         $context = new RenderContext($theme);
-        $bar = StatusBar::hints(['K' => 'desc']);
+        $bar = StatusBar::forHints(['K' => 'desc']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $context);
 
@@ -236,7 +236,7 @@ final class StatusBarTest extends TestCase
     {
         $theme = Theme::dark()->withFooterStyle(new Style(foreground: Color::hex('CCCCCC')));
         $context = new RenderContext($theme);
-        $bar = StatusBar::hints(['K' => 'desc']);
+        $bar = StatusBar::forHints(['K' => 'desc']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $context);
 
@@ -251,7 +251,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintKeyIsPaddedWithSpaces(): void
     {
-        $bar = StatusBar::hints(['K' => 'desc']);
+        $bar = StatusBar::forHints(['K' => 'desc']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -263,7 +263,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintKeySpacePrefixIsRendered(): void
     {
-        $bar = StatusBar::hints(['AB' => 'x']);
+        $bar = StatusBar::forHints(['AB' => 'x']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -276,7 +276,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintKeySpaceSuffixIsRendered(): void
     {
-        $bar = StatusBar::hints(['A' => 'x']);
+        $bar = StatusBar::forHints(['A' => 'x']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -290,7 +290,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintDescriptionIsPaddedCorrectly(): void
     {
-        $bar = StatusBar::hints(['K' => 'go']);
+        $bar = StatusBar::forHints(['K' => 'go']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -306,7 +306,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintDescriptionSpacePrefixIsRendered(): void
     {
-        $bar = StatusBar::hints(['K' => 'x']);
+        $bar = StatusBar::forHints(['K' => 'x']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -318,7 +318,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintDescriptionDoubleSpaceSuffixIsRendered(): void
     {
-        $bar = StatusBar::hints(['K' => 'x']);
+        $bar = StatusBar::forHints(['K' => 'x']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -332,7 +332,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintKeyPaddingHasKeyStyle(): void
     {
-        $bar = StatusBar::hints(['K' => 'desc']);
+        $bar = StatusBar::forHints(['K' => 'desc']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -344,7 +344,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintDescriptionPaddingHasBarStyle(): void
     {
-        $bar = StatusBar::hints(['K' => 'go']);
+        $bar = StatusBar::forHints(['K' => 'go']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -360,7 +360,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function multipleHintsRenderSequentially(): void
     {
-        $bar = StatusBar::hints(['A' => 'x', 'B' => 'y']);
+        $bar = StatusBar::forHints(['A' => 'x', 'B' => 'y']);
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -384,7 +384,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsDescriptionNotRenderedWhenKeyFillsEntireWidth(): void
     {
-        $bar = StatusBar::hints(['K' => 'description']);
+        $bar = StatusBar::forHints(['K' => 'description']);
         $frame = new Frame(10, 1);
         $bar->render($frame, new Rect(0, 0, 3, 1), $this->context);
 
@@ -394,7 +394,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsDoNotOverflowAreaBoundary(): void
     {
-        $bar = StatusBar::hints(['K' => 'description text']);
+        $bar = StatusBar::forHints(['K' => 'description text']);
         $frame = new Frame(20, 1);
         $bar->render($frame, new Rect(5, 0, 6, 1), $this->context);
 
@@ -404,7 +404,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsKeyTruncatedInNarrowAreaWithOffset(): void
     {
-        $bar = StatusBar::hints(['LongKey' => 'desc']);
+        $bar = StatusBar::forHints(['LongKey' => 'desc']);
         $frame = new Frame(20, 1);
         $bar->render($frame, new Rect(5, 0, 4, 1), $this->context);
 
@@ -414,7 +414,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsDescriptionTruncatedInNarrowAreaWithOffset(): void
     {
-        $bar = StatusBar::hints(['K' => 'LongDescription']);
+        $bar = StatusBar::forHints(['K' => 'LongDescription']);
         $frame = new Frame(20, 1);
         $bar->render($frame, new Rect(5, 0, 6, 1), $this->context);
 
@@ -424,7 +424,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsSecondKeyNotRenderedWhenFirstFillsArea(): void
     {
-        $bar = StatusBar::hints(['A' => 'x', 'B' => 'y']);
+        $bar = StatusBar::forHints(['A' => 'x', 'B' => 'y']);
         $frame = new Frame(10, 1);
         $bar->render($frame, new Rect(0, 0, 6, 1), $this->context);
 
@@ -434,7 +434,7 @@ final class StatusBarTest extends TestCase
     #[Test]
     public function hintsDescriptionNotStyledWhenKeyExactlyFillsRemaining(): void
     {
-        $bar = StatusBar::hints(['AB' => 'desc']);
+        $bar = StatusBar::forHints(['AB' => 'desc']);
         $frame = new Frame(10, 1);
         $bar->render($frame, new Rect(0, 0, 4, 1), $this->context);
 

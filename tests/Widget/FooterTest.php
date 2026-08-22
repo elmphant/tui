@@ -103,7 +103,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function hintsShortcutRendersKeyDescriptionPairs(): void
     {
-        $footer = Footer::hints(['Tab' => 'cycle', 'q' => 'quit']);
+        $footer = Footer::forHints(['Tab' => 'cycle', 'q' => 'quit']);
         $frame = new Frame(60, 1);
         $footer->render($frame, Rect::fromSize(60, 1), $this->context);
 
@@ -924,7 +924,7 @@ final class FooterTest extends TestCase
     {
         $frame = new Frame(40, 1);
 
-        Footer::rightHints(['q' => 'quit'])
+        Footer::forRightHints(['q' => 'quit'])
             ->render($frame, new Rect(0, 0, 40, 1), $this->context);
 
         $line = '';
@@ -941,7 +941,7 @@ final class FooterTest extends TestCase
     {
         $frame = new Frame(40, 1);
 
-        Footer::leftHints(['q' => 'quit'])
+        Footer::forLeftHints(['q' => 'quit'])
             ->render($frame, new Rect(0, 0, 40, 1), $this->context);
 
         // Left-aligned hint: " q " should start at col 0

@@ -48,25 +48,25 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
     /**
      * @param array<string, string> $hints
      */
-    public static function hints(array $hints): self
+    public static function forHints(array $hints): self
     {
-        return new self(centerSlot: StatusBar::hints($hints));
+        return new self(centerSlot: StatusBar::forHints($hints));
     }
 
     /**
      * @param array<string, string> $hints
      */
-    public static function leftHints(array $hints): self
+    public static function forLeftHints(array $hints): self
     {
-        return new self(leftSlot: StatusBar::hints($hints));
+        return new self(leftSlot: StatusBar::forHints($hints));
     }
 
     /**
      * @param array<string, string> $hints
      */
-    public static function rightHints(array $hints): self
+    public static function forRightHints(array $hints): self
     {
-        return new self(rightSlot: StatusBar::hints($hints));
+        return new self(rightSlot: StatusBar::forHints($hints));
     }
 
     public function left(Widget $widget): self

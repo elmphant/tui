@@ -33,7 +33,7 @@ final readonly class StatusBar implements Widget
     /**
      * @param array<string, string> $hints
      */
-    public static function hints(array $hints): self
+    public static function forHints(array $hints): self
     {
         $pairs = [];
         foreach ($hints as $key => $description) {
