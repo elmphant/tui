@@ -31,7 +31,7 @@ final class ScreenCursorEmissionTest extends TestCase
         $this->paint('steady');
         $this->paint('steady');
 
-        self::assertSame('', $this->terminal->getOutput());
+        self::assertSame('', $this->terminal->output());
     }
 
     #[Test]
@@ -39,7 +39,7 @@ final class ScreenCursorEmissionTest extends TestCase
     {
         $this->paint('steady');
 
-        self::assertStringContainsString(Ansi::HIDE_CURSOR, $this->terminal->getOutput());
+        self::assertStringContainsString(Ansi::HIDE_CURSOR, $this->terminal->output());
     }
 
     #[Test]
@@ -49,12 +49,12 @@ final class ScreenCursorEmissionTest extends TestCase
         $this->terminal->clearOutput();
 
         $this->paintWithCursor('steady', 2, 1);
-        $afterFirst = $this->terminal->getOutput();
+        $afterFirst = $this->terminal->output();
         $this->terminal->clearOutput();
         $this->paintWithCursor('steady', 2, 1);
 
         self::assertStringContainsString(Ansi::SHOW_CURSOR, $afterFirst);
-        self::assertSame('', $this->terminal->getOutput());
+        self::assertSame('', $this->terminal->output());
     }
 
     /**
@@ -69,7 +69,7 @@ final class ScreenCursorEmissionTest extends TestCase
 
         $this->paintWithCursor('changed', 2, 1);
 
-        self::assertStringContainsString(Ansi::cursorTo(1, 2), $this->terminal->getOutput());
+        self::assertStringContainsString(Ansi::cursorTo(1, 2), $this->terminal->output());
     }
 
     #[Test]
@@ -80,7 +80,7 @@ final class ScreenCursorEmissionTest extends TestCase
 
         $this->paintWithCursor('steady', 5, 1);
 
-        self::assertStringContainsString(Ansi::cursorTo(1, 5), $this->terminal->getOutput());
+        self::assertStringContainsString(Ansi::cursorTo(1, 5), $this->terminal->output());
     }
 
     #[Test]
@@ -91,7 +91,7 @@ final class ScreenCursorEmissionTest extends TestCase
 
         $this->paint('steady');
 
-        self::assertStringContainsString(Ansi::HIDE_CURSOR, $this->terminal->getOutput());
+        self::assertStringContainsString(Ansi::HIDE_CURSOR, $this->terminal->output());
     }
 
     #[Test]
@@ -103,7 +103,7 @@ final class ScreenCursorEmissionTest extends TestCase
 
         $this->paint('steady');
 
-        self::assertStringContainsString(Ansi::HIDE_CURSOR, $this->terminal->getOutput());
+        self::assertStringContainsString(Ansi::HIDE_CURSOR, $this->terminal->output());
     }
 
     #[Test]
@@ -116,12 +116,12 @@ final class ScreenCursorEmissionTest extends TestCase
 
         self::assertStringNotContainsString(
             Ansi::cursorShape(CursorShape::BlinkingBar),
-            $this->terminal->getOutput(),
+            $this->terminal->output(),
             'that sequence restarts the blink, so a repaint beside the caret would stop it ever blinking',
         );
         self::assertStringContainsString(
             Ansi::cursorTo(0, 3),
-            $this->terminal->getOutput(),
+            $this->terminal->output(),
             'it still goes back where it belongs once the cells have been written',
         );
     }
@@ -137,7 +137,7 @@ final class ScreenCursorEmissionTest extends TestCase
 
         self::assertStringContainsString(
             Ansi::cursorShape(CursorShape::BlinkingBar),
-            $this->terminal->getOutput(),
+            $this->terminal->output(),
             'the screen was given up and whatever had it since may have left the caret another shape',
         );
     }
@@ -152,7 +152,7 @@ final class ScreenCursorEmissionTest extends TestCase
 
         self::assertStringNotContainsString(
             Ansi::SHOW_CURSOR,
-            $this->terminal->getOutput(),
+            $this->terminal->output(),
             'showing a caret that is already showing is another sequence that disturbs its blink',
         );
     }

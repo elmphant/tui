@@ -2194,7 +2194,7 @@ final class ListViewTest extends TestCase
     {
         $frame = new Frame($area->width, $area->height);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
-        $screen = ScreenBuffer::fromFrame($frame)->getPlainText();
+        $screen = ScreenBuffer::fromFrame($frame)->plainText();
 
         $titles = [];
         for ($index = 0; $index < 20; ++$index) {

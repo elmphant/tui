@@ -57,7 +57,7 @@ final class DropdownTest extends TestCase
         $dropdown = Dropdown::new(Select::new(['json', 'yaml'])->withEmptyCaption('choose a format'));
 
         self::assertSame('choose a format', $dropdown->content()->caption());
-        self::assertStringContainsString('choose a format', self::screen($dropdown)->getLine(0));
+        self::assertStringContainsString('choose a format', self::screen($dropdown)->lineAt(0));
     }
 
     #[Test]
@@ -66,7 +66,7 @@ final class DropdownTest extends TestCase
         $dropdown = Dropdown::new(Select::new(['json', 'yaml'])->activated('yaml'));
 
         self::assertSame(1, $dropdown->sizing()->rows->min);
-        self::assertStringContainsString('yaml', self::screen($dropdown)->getLine(0));
+        self::assertStringContainsString('yaml', self::screen($dropdown)->lineAt(0));
     }
 
     #[Test]
@@ -74,7 +74,7 @@ final class DropdownTest extends TestCase
     {
         $dropdown = Dropdown::new(Select::new(['json'])->activated('json'));
 
-        self::assertStringStartsWith('▾ json', self::screen($dropdown)->getLine(0));
+        self::assertStringStartsWith('▾ json', self::screen($dropdown)->lineAt(0));
     }
 
     #[Test]
@@ -82,10 +82,10 @@ final class DropdownTest extends TestCase
     {
         $group = CheckboxGroup::new(['one', 'two', 'three', 'four']);
 
-        self::assertStringContainsString('0 of 4', self::screen(Dropdown::new($group))->getLine(0));
+        self::assertStringContainsString('0 of 4', self::screen(Dropdown::new($group))->lineAt(0));
         self::assertStringContainsString(
             '2 of 4',
-            self::screen(Dropdown::new($group->activated('one')->activated('two')))->getLine(0),
+            self::screen(Dropdown::new($group->activated('one')->activated('two')))->lineAt(0),
             'the caption is derived, so it cannot hold a stale copy',
         );
     }
@@ -96,7 +96,7 @@ final class DropdownTest extends TestCase
         $opened = self::opened(Dropdown::new(Select::new(['json', 'yaml'])));
 
         self::assertTrue($opened->isOpen());
-        self::assertStringContainsString('yaml', self::screen($opened)->getPlainText(), 'The popup drew');
+        self::assertStringContainsString('yaml', self::screen($opened)->plainText(), 'The popup drew');
     }
 
     #[Test]
@@ -279,7 +279,7 @@ final class DropdownTest extends TestCase
             new Rect(0, 0, 1, 1),
         );
 
-        self::assertSame('▾', ScreenBuffer::fromFrame($frame)->getTextAt(0, 0, 1));
+        self::assertSame('▾', ScreenBuffer::fromFrame($frame)->textAt(0, 0, 1));
     }
 
     #[Test]
@@ -292,7 +292,7 @@ final class DropdownTest extends TestCase
             new Rect(0, 0, 10, 0),
         );
 
-        self::assertSame('', trim(ScreenBuffer::fromFrame($frame)->getPlainText()));
+        self::assertSame('', trim(ScreenBuffer::fromFrame($frame)->plainText()));
     }
 
     #[Test]
@@ -302,7 +302,7 @@ final class DropdownTest extends TestCase
 
         self::assertSame(
             1,
-            substr_count(self::screen($opened)->getPlainText(), '╭'),
+            substr_count(self::screen($opened)->plainText(), '╭'),
             'the drain must not redraw and requeue the float',
         );
     }
@@ -327,7 +327,7 @@ final class DropdownTest extends TestCase
         self::assertSame('▾ none yet', $dropdown->caption());
         self::assertStringContainsString(
             $dropdown->caption(),
-            self::screen($dropdown)->getPlainText(),
+            self::screen($dropdown)->plainText(),
             'and that is exactly what it draws',
         );
     }
@@ -345,13 +345,13 @@ final class DropdownTest extends TestCase
         $driven->dispatch(new KeyMsg(' '));
         self::assertStringContainsString(
             'yaml',
-            $driven->renderScreen()->getPlainText(),
+            $driven->renderScreen()->plainText(),
             'precondition: the list is open',
         );
 
         $driven->dispatch(new KeyMsg(Key::Tab));
 
-        self::assertStringNotContainsString('yaml', $driven->renderScreen()->getPlainText());
+        self::assertStringNotContainsString('yaml', $driven->renderScreen()->plainText());
     }
 
     /**
@@ -365,7 +365,7 @@ final class DropdownTest extends TestCase
         $rows = [];
 
         for ($row = 1; $row < $frame->height; ++$row) {
-            $rows[] = $screen->getLine($row);
+            $rows[] = $screen->lineAt($row);
         }
 
         return implode("\n", $rows);

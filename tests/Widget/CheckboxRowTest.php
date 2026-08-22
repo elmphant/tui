@@ -83,8 +83,8 @@ final class CheckboxRowTest extends TestCase
         $row->render($frame, new Rect(0, 0, 12, 2), new RenderContext(Theme::dark()));
         $screen = ScreenBuffer::fromFrame($frame);
 
-        self::assertSame('[x] system', trim($screen->getLine(0)));
-        self::assertSame('[ ] pages', trim($screen->getLine(1)), 'the box stays with the label it belongs to');
+        self::assertSame('[x] system', trim($screen->lineAt(0)));
+        self::assertSame('[ ] pages', trim($screen->lineAt(1)), 'the box stays with the label it belongs to');
     }
 
     #[Test]

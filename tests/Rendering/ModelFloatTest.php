@@ -72,8 +72,8 @@ final class ModelFloatTest extends TestCase
             }
         })->withTerminal($terminal)->start();
 
-        $screen = new ScreenBuffer($terminal->getOutput(), 30, 6);
+        $screen = new ScreenBuffer($terminal->output(), 30, 6);
 
-        self::assertSame('PEEK!', $screen->getTextAt(2, 2, 5), 'the float paints over the row below its anchor');
+        self::assertSame('PEEK!', $screen->textAt(2, 2, 5), 'the float paints over the row below its anchor');
     }
 }

@@ -41,6 +41,6 @@ final class FilterableCheckboxGroupRenderTest extends TestCase
         $frame = new Frame($area->width, $area->height);
         $group->render($frame, $area, new RenderContext(Theme::dark()));
 
-        return explode("\n", ScreenBuffer::fromFrame($frame)->getPlainText());
+        return explode("\n", ScreenBuffer::fromFrame($frame)->plainText());
     }
 }

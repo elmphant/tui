@@ -26,7 +26,7 @@ final class AppFloatTest extends TestCase
 
         self::assertStringContainsString(
             'FLOATED',
-            $harness->renderScreen()->getPlainText(),
+            $harness->renderScreen()->plainText(),
             'The harness renders through App::render(), so it must drain too',
         );
     }

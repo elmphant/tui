@@ -149,10 +149,10 @@ final class TerminalSessionTest extends TestCase
         $session->updateHeight(42);
 
         $session->close();
-        $firstOutput = $terminal->getOutput();
+        $firstOutput = $terminal->output();
         $session->close();
 
-        self::assertSame($firstOutput, $terminal->getOutput());
+        self::assertSame($firstOutput, $terminal->output());
         self::assertStringContainsString(Ansi::RESET_STYLE, $firstOutput);
         self::assertStringContainsString(Ansi::SHOW_CURSOR, $firstOutput);
         self::assertStringContainsString(Ansi::cursorToRowStart(41) . "\n", $firstOutput);
@@ -276,7 +276,7 @@ final class TerminalSessionTest extends TestCase
 
         $session->close();
 
-        self::assertStringContainsString(Ansi::cursorToRowStart(0) . "\n", $terminal->getOutput());
+        self::assertStringContainsString(Ansi::cursorToRowStart(0) . "\n", $terminal->output());
     }
 
     #[Test]
@@ -290,8 +290,8 @@ final class TerminalSessionTest extends TestCase
 
         $session->suspend();
 
-        self::assertStringContainsString(Ansi::RESET_STYLE, $terminal->getOutput());
-        self::assertStringNotContainsString(Ansi::cursorToRowStart(6), $terminal->getOutput());
+        self::assertStringContainsString(Ansi::RESET_STYLE, $terminal->output());
+        self::assertStringNotContainsString(Ansi::cursorToRowStart(6), $terminal->output());
 
         $session->close();
     }

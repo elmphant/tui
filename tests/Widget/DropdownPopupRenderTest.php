@@ -23,9 +23,9 @@ final class DropdownPopupRenderTest extends TestCase
     {
         $screen = self::render(self::popupOf(['json', 'yaml']));
 
-        self::assertSame('╭', $screen->getTextAt(0, 0, 1), 'the border is the popup');
-        self::assertSame('json', $screen->getTextAt(1, 1, 4), 'and the first row inside it is the content');
-        self::assertSame('yaml', $screen->getTextAt(2, 1, 4));
+        self::assertSame('╭', $screen->textAt(0, 0, 1), 'the border is the popup');
+        self::assertSame('json', $screen->textAt(1, 1, 4), 'and the first row inside it is the content');
+        self::assertSame('yaml', $screen->textAt(2, 1, 4));
     }
 
     #[Test]
@@ -35,7 +35,7 @@ final class DropdownPopupRenderTest extends TestCase
 
         self::popupOf([])->render($frame, new Rect(0, 0, 3, 3), new RenderContext(Theme::dark()));
 
-        self::assertSame('╭', ScreenBuffer::fromFrame($frame)->getTextAt(0, 0, 1));
+        self::assertSame('╭', ScreenBuffer::fromFrame($frame)->textAt(0, 0, 1));
     }
 
     #[Test]
@@ -45,7 +45,7 @@ final class DropdownPopupRenderTest extends TestCase
 
         self::popupOf([])->render($frame, new Rect(0, 0, 2, 10), new RenderContext(Theme::dark()));
 
-        self::assertNotSame('╭', ScreenBuffer::fromFrame($frame)->getTextAt(0, 0, 1), 'Too narrow: neither dimension guard alone should let this through');
+        self::assertNotSame('╭', ScreenBuffer::fromFrame($frame)->textAt(0, 0, 1), 'Too narrow: neither dimension guard alone should let this through');
     }
 
     #[Test]

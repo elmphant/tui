@@ -53,7 +53,7 @@ final class ProgramKittyTest extends TestCase
 
         Program::new($model)->withTerminal($terminal)->start();
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringContainsString(Ansi::QUERY_KITTY_KEYBOARD, $output, 'Should send Kitty query on startup');
     }
 
@@ -132,7 +132,7 @@ final class ProgramKittyTest extends TestCase
 
         $result = Program::new($model)->withTerminal($terminal)->start();
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $output, 'Should enable Kitty after response');
         $this->assertTrue($result->receivedKey, 'Kitty Ctrl+A sequence should be parsed');
     }
@@ -165,7 +165,7 @@ final class ProgramKittyTest extends TestCase
 
         Program::new($model)->withTerminal($terminal)->start();
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $output, 'Should disable Kitty on teardown');
     }
 
@@ -197,7 +197,7 @@ final class ProgramKittyTest extends TestCase
 
         Program::new($model)->withTerminal($terminal)->start();
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringNotContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $output, 'Should not enable without response');
         $this->assertStringNotContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $output, 'Should not disable if never enabled');
     }
@@ -269,7 +269,7 @@ final class ProgramKittyTest extends TestCase
         $method = new ReflectionMethod(Program::class, 'restoreTerminalForSuspension');
         $method->invoke($program);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $output, 'Suspension must disable Kitty protocol if active');
     }
 
@@ -299,7 +299,7 @@ final class ProgramKittyTest extends TestCase
         $method = new ReflectionMethod(Program::class, 'restoreTerminalForSuspension');
         $method->invoke($program);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringNotContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $output, 'Suspension must not disable Kitty if it was never active');
     }
 
@@ -340,7 +340,7 @@ final class ProgramKittyTest extends TestCase
         $method->invoke($program);
         (new ReflectionMethod(Program::class, 'cancelEventLoopWatchers'))->invoke($program);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $output, 'Resume must re-enable Kitty protocol if it was active before suspend');
         $session->close();
     }
@@ -373,7 +373,7 @@ final class ProgramKittyTest extends TestCase
 
         Program::new($model)->withTerminal($terminal)->start();
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $enableCount = substr_count($output, Ansi::ENABLE_KITTY_KEYBOARD);
         $this->assertSame(1, $enableCount, 'Enable should fire exactly once even with duplicate responses');
     }

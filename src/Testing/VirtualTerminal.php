@@ -224,7 +224,7 @@ final class VirtualTerminal implements Terminal
         return $this->readPipe;
     }
 
-    public function getOutput(): string
+    public function output(): string
     {
         return $this->output;
     }

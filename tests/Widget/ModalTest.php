@@ -61,7 +61,7 @@ final class ModalTest extends TestCase
         $contentRow = 0;
 
         for ($row = 0; $row < 20; ++$row) {
-            $line = $screen->getLine($row);
+            $line = $screen->lineAt($row);
 
             if ($contentRow === 0 && str_contains($line, 'X')) {
                 $contentRow = $row;
@@ -73,8 +73,8 @@ final class ModalTest extends TestCase
         }
 
         self::assertGreaterThan(0, $contentRow, 'Precondition: the content did draw inside the modal');
-        self::assertStringNotContainsString('X', $screen->getLine($bottomBorderRow), 'nothing of it reached past the border');
-        self::assertStringContainsString('╰', $screen->getLine($bottomBorderRow), 'and the border ring is intact');
+        self::assertStringNotContainsString('X', $screen->lineAt($bottomBorderRow), 'nothing of it reached past the border');
+        self::assertStringContainsString('╰', $screen->lineAt($bottomBorderRow), 'and the border ring is intact');
     }
 
     #[Test]
@@ -104,7 +104,7 @@ final class ModalTest extends TestCase
         Modal::new('T', $content)->withSizedToContent()->render($frame, Rect::fromSize(100, 50), $this->context);
 
         $drawn = array_values(array_filter(
-            explode("\n", ScreenBuffer::fromFrame($frame)->getPlainText()),
+            explode("\n", ScreenBuffer::fromFrame($frame)->plainText()),
             static fn (string $line): bool => trim($line) !== '',
         ));
 

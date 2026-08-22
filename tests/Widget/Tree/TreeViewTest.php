@@ -332,7 +332,7 @@ final class TreeViewTest extends TestCase
         $frame = new Frame($area->width, $area->height);
         $tree->render($frame, $area, new RenderContext(Theme::dark()));
 
-        return explode("\n", ScreenBuffer::fromFrame($frame)->getPlainText());
+        return explode("\n", ScreenBuffer::fromFrame($frame)->plainText());
     }
 
     private static function afterKey(TreeView $tree, Key|string $key, Rect $area): TreeView
@@ -363,6 +363,6 @@ final class TreeViewTest extends TestCase
         $frame = new Frame($width, $height);
         $tree->render($frame, new Rect(0, 0, $width, $height), new RenderContext(Theme::dark()));
 
-        return explode("\n", ScreenBuffer::fromFrame($frame)->getPlainText());
+        return explode("\n", ScreenBuffer::fromFrame($frame)->plainText());
     }
 }

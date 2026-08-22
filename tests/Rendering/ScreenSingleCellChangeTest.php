@@ -32,7 +32,7 @@ final class ScreenSingleCellChangeTest extends TestCase
         $second->putString(0, 0, str_repeat('x', 79) . 'y');
         $screen->flush($second);
 
-        $written = $terminal->getOutput();
+        $written = $terminal->output();
 
         self::assertStringContainsString('y', $written);
         self::assertLessThan(

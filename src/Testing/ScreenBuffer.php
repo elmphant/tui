@@ -50,17 +50,17 @@ final class ScreenBuffer
         return $screen;
     }
 
-    public function getPlainText(): string
+    public function plainText(): string
     {
         $lines = [];
         for ($r = 0; $r < $this->height; ++$r) {
-            $lines[] = rtrim($this->getLine($r));
+            $lines[] = rtrim($this->lineAt($r));
         }
 
         return implode("\n", $lines);
     }
 
-    public function getCursorPosition(): CursorPosition
+    public function cursorPosition(): CursorPosition
     {
         return new CursorPosition(
             $this->cursorRow,
@@ -69,7 +69,7 @@ final class ScreenBuffer
         );
     }
 
-    public function getCursorShape(): CursorShape
+    public function cursorShape(): CursorShape
     {
         return $this->cursorShape;
     }
@@ -79,7 +79,7 @@ final class ScreenBuffer
         return $this->cursorVisible;
     }
 
-    public function getLine(int $row): string
+    public function lineAt(int $row): string
     {
         $line = '';
         for ($c = 0; $c < $this->width; ++$c) {
@@ -89,7 +89,7 @@ final class ScreenBuffer
         return $line;
     }
 
-    public function getTextAt(int $row, int $col, int $length): string
+    public function textAt(int $row, int $col, int $length): string
     {
         $text = '';
         for ($c = $col; $c < $col + $length; ++$c) {

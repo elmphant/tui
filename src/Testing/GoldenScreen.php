@@ -8,7 +8,7 @@ final class GoldenScreen
 {
     public static function capture(ScreenBuffer $screen): string
     {
-        return $screen->getPlainText();
+        return $screen->plainText();
     }
 
     public static function assertMatchesSnapshot(string $name, ScreenBuffer $screen, string $snapshotDir): void

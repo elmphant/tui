@@ -101,7 +101,7 @@ final class FilterableCheckboxGroupTest extends TestCase
         $frame = new Frame(30, 8);
         $typed->render($frame, Rect::fromSize(30, 8), new RenderContext(Theme::dark()));
 
-        self::assertSame(1, substr_count(ScreenBuffer::fromFrame($frame)->getPlainText(), 'alpha'));
+        self::assertSame(1, substr_count(ScreenBuffer::fromFrame($frame)->plainText(), 'alpha'));
     }
 
     #[Test]
@@ -164,7 +164,7 @@ final class FilterableCheckboxGroupTest extends TestCase
         $frame = new Frame(30, 8);
         $group->render($frame, Rect::fromSize(30, 8), new RenderContext(Theme::dark()));
 
-        return ScreenBuffer::fromFrame($frame)->getPlainText();
+        return ScreenBuffer::fromFrame($frame)->plainText();
     }
 
     private static function pressed(FilterableCheckboxGroup $group, Message ...$messages): FilterableCheckboxGroup

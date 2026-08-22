@@ -198,7 +198,7 @@ final class DropdownHostAcceptanceTest extends TestCase
         $drawn = ScreenBuffer::fromFrame(self::rendered($pane));
 
         for ($row = 0; $row < 18; ++$row) {
-            if (str_contains($drawn->getLine($row), $needle)) {
+            if (str_contains($drawn->lineAt($row), $needle)) {
                 return $row;
             }
         }
@@ -208,7 +208,7 @@ final class DropdownHostAcceptanceTest extends TestCase
 
     private static function draw(ScrollPane $pane): string
     {
-        return ScreenBuffer::fromFrame(self::rendered($pane))->getPlainText();
+        return ScreenBuffer::fromFrame(self::rendered($pane))->plainText();
     }
 
     private static function rendered(ScrollPane $pane): Frame

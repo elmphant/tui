@@ -67,7 +67,7 @@ final class RenderContextRenderRootTest extends TestCase
         $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 3, 1)), $frame, $frame->area());
         $context->commitFloatPlacements();
 
-        self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+        self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
         self::assertSame([], $context->floatPlacements());
     }
 
@@ -265,8 +265,8 @@ final class RenderContextRenderRootTest extends TestCase
 
         $screen = ScreenBuffer::fromFrame($frame);
 
-        self::assertStringContainsString('base', $screen->getLine(1), 'The tree still drew');
-        self::assertStringContainsString('POPUP', $screen->getLine(4), 'and the float escaped the clip');
+        self::assertStringContainsString('base', $screen->lineAt(1), 'The tree still drew');
+        self::assertStringContainsString('POPUP', $screen->lineAt(4), 'and the float escaped the clip');
     }
 
     #[Test]
@@ -280,7 +280,7 @@ final class RenderContextRenderRootTest extends TestCase
 
         self::assertStringNotContainsString(
             'STALE',
-            ScreenBuffer::fromFrame($frame)->getPlainText(),
+            ScreenBuffer::fromFrame($frame)->plainText(),
             'A float left over from before this call must not survive into this render',
         );
         self::assertSame([], $context->floats(), 'and it is discarded, never restored afterwards');
@@ -397,7 +397,7 @@ final class RenderContextRenderRootTest extends TestCase
 
         $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 1, 1)), $frame, $frame->area());
 
-        self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+        self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
     }
 
     #[Test]
@@ -408,7 +408,7 @@ final class RenderContextRenderRootTest extends TestCase
 
         $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 0, 3)), $frame, $frame->area());
 
-        self::assertStringNotContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+        self::assertStringNotContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
     }
 
     #[Test]
@@ -419,7 +419,7 @@ final class RenderContextRenderRootTest extends TestCase
 
         $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 3, 0)), $frame, $frame->area());
 
-        self::assertStringNotContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+        self::assertStringNotContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
     }
 
     #[Test]
@@ -434,7 +434,7 @@ final class RenderContextRenderRootTest extends TestCase
             $frame->area(),
         );
 
-        self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->getPlainText());
+        self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
     }
 
     #[Test]
@@ -450,7 +450,7 @@ final class RenderContextRenderRootTest extends TestCase
             $frame->area(),
         );
 
-        self::assertStringContainsString('second', ScreenBuffer::fromFrame($frame)->getLine(3));
+        self::assertStringContainsString('second', ScreenBuffer::fromFrame($frame)->lineAt(3));
     }
 
     /**

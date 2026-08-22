@@ -83,7 +83,7 @@ final class ModelHarnessTest extends TestCase
 
         self::assertSame(20, $frame->width);
         self::assertSame(4, $frame->height);
-        self::assertSame('Count: 1', $harness->renderScreen()->getTextAt(0, 0, 8));
+        self::assertSame('Count: 1', $harness->renderScreen()->textAt(0, 0, 8));
     }
 
     #[Test]
@@ -96,7 +96,7 @@ final class ModelHarnessTest extends TestCase
 
         self::assertSame(37, $harness->model()->lastWidth);
         self::assertSame(11, $harness->model()->lastHeight);
-        self::assertSame('37x11', $harness->renderScreen()->getTextAt(0, 0, 5));
+        self::assertSame('37x11', $harness->renderScreen()->textAt(0, 0, 5));
     }
 
     #[Test]

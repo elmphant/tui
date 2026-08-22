@@ -24,7 +24,7 @@ final class ScreenCursorTest extends TestCase
         $frame->setCursorPosition(5, 0, CursorShape::BlinkingBar);
         $screen->flush($frame);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringContainsString(Ansi::cursorShape(CursorShape::BlinkingBar), $output);
         $this->assertStringContainsString(Ansi::SHOW_CURSOR, $output);
     }
@@ -38,7 +38,7 @@ final class ScreenCursorTest extends TestCase
         $frame->putString(0, 0, 'Hello');
         $screen->flush($frame);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         $this->assertStringContainsString(Ansi::HIDE_CURSOR, $output);
         $this->assertStringNotContainsString(Ansi::SHOW_CURSOR, $output);
     }

@@ -71,7 +71,7 @@ final class DropdownMouseTest extends TestCase
 
         $drawn = [];
         for ($row = 1; $row < $frame->height; ++$row) {
-            $drawn[] = ScreenBuffer::fromFrame($frame)->getLine($row);
+            $drawn[] = ScreenBuffer::fromFrame($frame)->lineAt($row);
         }
 
         self::assertStringContainsString('option18', implode("\n", $drawn), 'it opens on the selection, scrolled into view');
@@ -622,7 +622,7 @@ final class DropdownMouseTest extends TestCase
         $rows = [];
 
         for ($offset = 0; $offset < $inner->height; ++$offset) {
-            $rows[] = $screen->getLine($inner->y + $offset);
+            $rows[] = $screen->lineAt($inner->y + $offset);
         }
 
         return implode("\n", $rows);
@@ -658,7 +658,7 @@ final class DropdownMouseTest extends TestCase
         $drawn = ScreenBuffer::fromFrame($frame);
 
         for ($row = 0; $row < $frame->height; ++$row) {
-            if (str_contains($drawn->getLine($row), $needle)) {
+            if (str_contains($drawn->lineAt($row), $needle)) {
                 return $row;
             }
         }
@@ -676,7 +676,7 @@ final class DropdownMouseTest extends TestCase
         $frame = new Frame($viewport->width, $viewport->height);
         (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, self::anchor());
 
-        return ScreenBuffer::fromFrame($frame)->getPlainText();
+        return ScreenBuffer::fromFrame($frame)->plainText();
     }
 
     /**

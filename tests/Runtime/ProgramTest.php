@@ -606,11 +606,11 @@ final class ProgramTest extends TestCase
         $method = new ReflectionMethod(Program::class, 'teardown');
         $method->invoke($program);
 
-        $firstOutput = $terminal->getOutput();
+        $firstOutput = $terminal->output();
 
         $method->invoke($program);
 
-        self::assertSame($firstOutput, $terminal->getOutput(), 'teardown() called twice must not produce extra output');
+        self::assertSame($firstOutput, $terminal->output(), 'teardown() called twice must not produce extra output');
     }
 
     #[Test]
@@ -626,7 +626,7 @@ final class ProgramTest extends TestCase
         $method = new ReflectionMethod(Program::class, 'teardown');
         $method->invoke($program);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         self::assertStringContainsString(Ansi::RESET_STYLE, $output, 'teardown must emit RESET_STYLE');
         self::assertStringContainsString(Ansi::SHOW_CURSOR, $output, 'teardown must re-show cursor');
     }
@@ -644,7 +644,7 @@ final class ProgramTest extends TestCase
         $method = new ReflectionMethod(Program::class, 'teardown');
         $method->invoke($program);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         self::assertStringContainsString(Ansi::cursorToRowStart(23) . "\n", $output, 'inline mode must position cursor at height-1 row');
     }
 
@@ -661,7 +661,7 @@ final class ProgramTest extends TestCase
         $method = new ReflectionMethod(Program::class, 'teardown');
         $method->invoke($program);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         self::assertStringNotContainsString(Ansi::cursorToRowStart(23), $output, 'alt-screen mode must NOT emit cursor repositioning');
     }
 
@@ -742,8 +742,8 @@ final class ProgramTest extends TestCase
         $terminal = new VirtualTerminal(80, 24, ColorProfile::Ansi);
         Program::new($renderThenQuitModel)->withTerminal($terminal)->start();
 
-        self::assertStringContainsString('R', $terminal->getOutput(), 'Precondition: at least one frame must have rendered');
-        self::assertStringNotContainsString('38;2;255;0;0', $terminal->getOutput(), 'Program must construct the Screen with the detected terminal color profile so truecolor degrades on 16-color terminals');
+        self::assertStringContainsString('R', $terminal->output(), 'Precondition: at least one frame must have rendered');
+        self::assertStringNotContainsString('38;2;255;0;0', $terminal->output(), 'Program must construct the Screen with the detected terminal color profile so truecolor degrades on 16-color terminals');
     }
 
     #[Test]
@@ -1116,7 +1116,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('restoreTerminalForSuspension')->invoke($program);
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         self::assertStringContainsString(Ansi::SHOW_CURSOR, $output, 'restoreTerminalForSuspension must re-show cursor');
         self::assertStringContainsString(Ansi::RESET_STYLE, $output, 'restoreTerminalForSuspension must reset SGR style');
     }
@@ -1149,7 +1149,7 @@ final class ProgramTest extends TestCase
         }
         self::assertTrue($found, 'resume must enqueue ResizeMsg so the model re-runs layout');
 
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->getOutput(), 'resume must clear the screen so leftover content from another app does not show through');
+        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output(), 'resume must clear the screen so leftover content from another app does not show through');
     }
 
     #[Test]
@@ -2267,7 +2267,7 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('renderFrame')->invoke($program);
 
         self::assertTrue($model->rendered, 'renderFrame must call model->render()');
-        self::assertStringContainsString('HELLO', $terminal->getOutput(), 'renderFrame must flush buffer content to the terminal');
+        self::assertStringContainsString('HELLO', $terminal->output(), 'renderFrame must flush buffer content to the terminal');
     }
 
     #[Test]
@@ -2464,7 +2464,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('renderFrame')->invoke($program);
 
-        self::assertStringNotContainsString('PARTIAL-CONTENT', $terminal->getOutput(), 'Render error must return before screen->flush() so half-rendered content is NOT emitted');
+        self::assertStringNotContainsString('PARTIAL-CONTENT', $terminal->output(), 'Render error must return before screen->flush() so half-rendered content is NOT emitted');
     }
 
     #[Test]
@@ -3275,7 +3275,7 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('renderFrame')->invoke($program);
 
         self::assertFalse($reflection->getProperty('resizeNeedsScreenClear')->getValue($program), 'Flag must clear to false after consuming it (FalseValue mutant flips it to true → would re-clear forever)');
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->getOutput(), 'Second render with resizeNeedsScreenClear=true must call screen->clear() which writes ERASE_DISPLAY; without it, renderDiff would not emit ERASE_DISPLAY for the unchanged content');
+        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output(), 'Second render with resizeNeedsScreenClear=true must call screen->clear() which writes ERASE_DISPLAY; without it, renderDiff would not emit ERASE_DISPLAY for the unchanged content');
     }
 
     #[Test]
@@ -3354,7 +3354,7 @@ final class ProgramTest extends TestCase
 
         self::assertStringContainsString(
             Ansi::cursorToRowStart(29) . "\n",
-            $terminal->getOutput(),
+            $terminal->output(),
             'setup() must propagate the detected height to the session so a close before teardown parks the cursor on the last row of the 30-row terminal',
         );
     }
@@ -3380,7 +3380,7 @@ final class ProgramTest extends TestCase
 
         self::assertStringContainsString(
             Ansi::cursorToRowStart(39) . "\n",
-            $terminal->getOutput(),
+            $terminal->output(),
             'resume() must push the re-read terminal height into the session so the final cursor lands on the last row of the 40-row terminal',
         );
     }
@@ -3401,7 +3401,7 @@ final class ProgramTest extends TestCase
 
         self::assertStringContainsString(
             Ansi::cursorToRowStart(39) . "\n",
-            $terminal->getOutput(),
+            $terminal->output(),
             'teardown() must hand the latest height to the session so the shell prompt continues below the UI, not inside it',
         );
     }
@@ -3425,7 +3425,7 @@ final class ProgramTest extends TestCase
 
         self::assertStringContainsString(
             Ansi::cursorToRowStart(34) . "\n",
-            $terminal->getOutput(),
+            $terminal->output(),
             'A resize must propagate the new height to the session so the final cursor row matches the resized terminal',
         );
     }
@@ -3483,7 +3483,7 @@ final class ProgramTest extends TestCase
         } catch (Error) {
         }
 
-        $output = $terminal->getOutput();
+        $output = $terminal->output();
         self::assertStringContainsString(Ansi::RESET_STYLE, $output, 'The finally block must still close the session when watcher/process cleanup throws');
         self::assertStringContainsString(Ansi::SHOW_CURSOR, $output, 'The cursor must be restored even when cleanup throws');
     }

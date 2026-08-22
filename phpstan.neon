@@ -44,3 +44,8 @@ parameters:
         -
             identifier: equal.notAllowed
             path: src/Core/ComponentWriteBack.php
+        # This analysis reads src only, so it cannot see tests/ using the
+        # consumer-facing assertion trait. TerminalAssertionsTest covers it.
+        -
+            identifier: trait.unused
+            path: src/Testing/TerminalAssertions.php

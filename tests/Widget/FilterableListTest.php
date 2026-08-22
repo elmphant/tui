@@ -575,7 +575,7 @@ final class FilterableListTest extends TestCase
         $screen = ScreenBuffer::fromFrame($frame);
         $rows = [];
         for ($row = 0; $row < self::HEIGHT; ++$row) {
-            $rows[] = $screen->getLine($row);
+            $rows[] = $screen->lineAt($row);
         }
 
         return $rows;

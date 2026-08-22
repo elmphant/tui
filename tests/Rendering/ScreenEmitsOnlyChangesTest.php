@@ -32,6 +32,6 @@ final class ScreenEmitsOnlyChangesTest extends TestCase
         $same->putString(0, 0, 'Hello');
         $screen->flush($same);
 
-        self::assertSame('', $terminal->getOutput());
+        self::assertSame('', $terminal->output());
     }
 }

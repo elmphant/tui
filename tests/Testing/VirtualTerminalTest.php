@@ -24,7 +24,7 @@ final class VirtualTerminalTest extends TestCase
         $terminal = new VirtualTerminal(80, 24);
         $terminal->write('hello');
         $terminal->write(' world');
-        $this->assertSame('hello world', $terminal->getOutput());
+        $this->assertSame('hello world', $terminal->output());
     }
 
     #[Test]
@@ -33,7 +33,7 @@ final class VirtualTerminalTest extends TestCase
         $terminal = new VirtualTerminal(80, 24);
         $terminal->write('hello');
         $terminal->clearOutput();
-        $this->assertSame('', $terminal->getOutput());
+        $this->assertSame('', $terminal->output());
     }
 
     #[Test]
@@ -75,7 +75,7 @@ final class VirtualTerminalTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->queryKittyProtocol();
-        $this->assertSame(Ansi::QUERY_KITTY_KEYBOARD, $terminal->getOutput());
+        $this->assertSame(Ansi::QUERY_KITTY_KEYBOARD, $terminal->output());
     }
 
     #[Test]
@@ -86,12 +86,12 @@ final class VirtualTerminalTest extends TestCase
 
         $terminal->enableKittyProtocol();
         $this->assertTrue($terminal->isKittyEnabled());
-        $this->assertStringContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $terminal->getOutput());
+        $this->assertStringContainsString(Ansi::ENABLE_KITTY_KEYBOARD, $terminal->output());
 
         $terminal->clearOutput();
         $terminal->disableKittyProtocol();
         $this->assertFalse($terminal->isKittyEnabled());
-        $this->assertStringContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $terminal->getOutput());
+        $this->assertStringContainsString(Ansi::DISABLE_KITTY_KEYBOARD, $terminal->output());
     }
 
     #[Test]
@@ -99,7 +99,7 @@ final class VirtualTerminalTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->bell();
-        $this->assertSame("\x07", $terminal->getOutput());
+        $this->assertSame("\x07", $terminal->output());
     }
 
     #[Test]
@@ -107,6 +107,6 @@ final class VirtualTerminalTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->setTitle('Hello');
-        $this->assertSame("\x1b]0;Hello\x07", $terminal->getOutput());
+        $this->assertSame("\x1b]0;Hello\x07", $terminal->output());
     }
 }

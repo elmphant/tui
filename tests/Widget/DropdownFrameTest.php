@@ -42,7 +42,7 @@ final class DropdownFrameTest extends TestCase
         $screen = ScreenBuffer::fromFrame($frame);
         $drawn = '';
         for ($row = 0; $row < 12; ++$row) {
-            $drawn .= $screen->getLine($row);
+            $drawn .= $screen->lineAt($row);
         }
 
         self::assertStringContainsString('#', $drawn, 'The supplied frame draws the chrome, not the built-in one');

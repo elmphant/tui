@@ -53,6 +53,6 @@ final class ProgramClipboardTest extends TestCase
 
         Program::new($model)->withTerminal($terminal)->start();
 
-        self::assertStringContainsString(Ansi::clipboard('one two'), $terminal->getOutput());
+        self::assertStringContainsString(Ansi::clipboard('one two'), $terminal->output());
     }
 }
