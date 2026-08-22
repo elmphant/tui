@@ -108,14 +108,10 @@ final class Program
     private ?AdaptiveTicker $adaptiveTicker = null;
     private ?float $animationRepaintAt = null;
     private StdinBuffer $stdinBuffer;
-    private ?string $escFlushTimerId = null;
-    private ?string $sigtstpCallbackId = null;
-    private ?string $sigwinchCallbackId = null;
-    private ?string $sigintCallbackId = null;
-    private ?string $sigtermCallbackId = null;
-    private ?string $sighupCallbackId = null;
-    private ?string $sigcontCallbackId = null;
-    private ?string $readableCallbackId = null;
+    /**
+     * @var array<string, string> loop watcher ids, keyed by EventLoopWatcher name
+     */
+    private array $watchers = [];
     /**
      * @var Suspension<mixed>|null
      */
@@ -367,36 +363,36 @@ final class Program
         }
 
         try {
-            $this->sigwinchCallbackId = EventLoop::onSignal(SIGWINCH, function () {
+            $this->watch(EventLoopWatcher::Resize, EventLoop::onSignal(SIGWINCH, function () {
                 $this->resizePending = true;
                 EventLoop::defer(fn () => $this->tick());
-            });
+            }));
 
-            $this->sigintCallbackId = EventLoop::onSignal(SIGINT, function () {
+            $this->watch(EventLoopWatcher::Interrupt, EventLoop::onSignal(SIGINT, function () {
                 $this->messageQueue->enqueue(QuitMsg::Quit);
                 EventLoop::defer(fn () => $this->tick());
-            });
-            $this->sigtermCallbackId = EventLoop::onSignal(SIGTERM, function () {
+            }));
+            $this->watch(EventLoopWatcher::Terminate, EventLoop::onSignal(SIGTERM, function () {
                 $this->messageQueue->enqueue(QuitMsg::Quit);
                 EventLoop::defer(fn () => $this->tick());
-            });
+            }));
             // Closing the terminal window would otherwise kill the process
             // outright, skipping both the shutdown hook and terminal restore.
-            $this->sighupCallbackId = EventLoop::onSignal(SIGHUP, function () {
+            $this->watch(EventLoopWatcher::Hangup, EventLoop::onSignal(SIGHUP, function () {
                 $this->messageQueue->enqueue(QuitMsg::Quit);
                 EventLoop::defer(fn () => $this->tick());
-            });
+            }));
 
             if (function_exists('posix_kill')) {
-                $this->sigtstpCallbackId = EventLoop::onSignal(SIGTSTP, function () {
+                $this->watch(EventLoopWatcher::Suspend, EventLoop::onSignal(SIGTSTP, function () {
                     $this->suspend();
-                });
+                }));
             }
 
-            $this->sigcontCallbackId = EventLoop::onSignal(SIGCONT, function () {
+            $this->watch(EventLoopWatcher::Resumed, EventLoop::onSignal(SIGCONT, function () {
                 $this->resume();
                 EventLoop::defer(fn () => $this->tick());
-            });
+            }));
         } catch (UnsupportedFeatureException) {
             // The active EventLoop driver cannot watch signals; keep running
             // with whatever watchers were registered before the throw.
@@ -405,10 +401,7 @@ final class Program
 
     private function suspend(): void
     {
-        if ($this->sigtstpCallbackId !== null) {
-            EventLoop::cancel($this->sigtstpCallbackId);
-            $this->sigtstpCallbackId = null;
-        }
+        $this->cancelWatcher(EventLoopWatcher::Suspend);
 
         $this->restoreTerminalForSuspension();
 
@@ -431,7 +424,7 @@ final class Program
     {
         $this->terminalSession?->resume();
 
-        $this->sigtstpCallbackId = EventLoop::onSignal(SIGTSTP, fn () => $this->suspend());
+        $this->watch(EventLoopWatcher::Suspend, EventLoop::onSignal(SIGTSTP, fn () => $this->suspend()));
 
         $this->screen->clear();
         $this->adoptTerminalSize();
@@ -446,18 +439,31 @@ final class Program
         $this->isDirty = true;
     }
 
+    private function watch(EventLoopWatcher $watcher, string $id): void
+    {
+        $this->watchers[$watcher->name] = $id;
+    }
+
+    private function cancelWatcher(EventLoopWatcher $watcher): void
+    {
+        $id = $this->watchers[$watcher->name] ?? null;
+        if ($id === null) {
+            return;
+        }
+
+        unset($this->watchers[$watcher->name]);
+
+        try {
+            EventLoop::cancel($id);
+        } catch (Throwable) {
+            // A stale watcher must not prevent process or terminal cleanup.
+        }
+    }
+
     private function cancelEventLoopWatchers(): void
     {
-        foreach (['sigwinchCallbackId', 'sigintCallbackId', 'sigtermCallbackId', 'sighupCallbackId', 'sigcontCallbackId', 'sigtstpCallbackId', 'readableCallbackId', 'escFlushTimerId'] as $property) {
-            if ($this->$property !== null) {
-                $id = $this->$property;
-                $this->$property = null;
-                try {
-                    EventLoop::cancel($id);
-                } catch (Throwable) {
-                    // A stale watcher must not prevent process or terminal cleanup.
-                }
-            }
+        foreach (EventLoopWatcher::cases() as $watcher) {
+            $this->cancelWatcher($watcher);
         }
     }
 
@@ -510,9 +516,9 @@ final class Program
 
         $inputStream = $this->terminal->inputStream();
         if ($inputStream !== null) {
-            $this->readableCallbackId = EventLoop::onReadable($inputStream, function () {
+            $this->watch(EventLoopWatcher::Input, EventLoop::onReadable($inputStream, function () {
                 $this->tick();
-            });
+            }));
         }
 
         // Park on a Suspension instead of EventLoop::run(): this composes with
@@ -606,7 +612,7 @@ final class Program
      */
     private function flushPendingInput(): void
     {
-        $this->escFlushTimerId = null;
+        unset($this->watchers[EventLoopWatcher::EscapeFlush->name]);
         $this->stdinBuffer->flush();
         $this->tick();
     }
@@ -620,12 +626,9 @@ final class Program
                 'bytes' => strlen($newInput),
                 'queued' => $this->messageQueue->count(),
             ]);
-            if ($this->escFlushTimerId !== null) {
-                EventLoop::cancel($this->escFlushTimerId);
-                $this->escFlushTimerId = null;
-            }
+            $this->cancelWatcher(EventLoopWatcher::EscapeFlush);
             $this->stdinBuffer->process($newInput);
-            $this->escFlushTimerId = EventLoop::delay(self::ESCAPE_TIMEOUT, $this->flushPendingInput(...));
+            $this->watch(EventLoopWatcher::EscapeFlush, EventLoop::delay(self::ESCAPE_TIMEOUT, $this->flushPendingInput(...)));
         }
 
         $now = $this->clock->now();

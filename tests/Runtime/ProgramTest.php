@@ -40,6 +40,7 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\AdaptiveTicker;
 use Elmphant\Tui\Runtime\EffectRunner;
+use Elmphant\Tui\Runtime\EventLoopWatcher;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Runtime\TerminalSession;
@@ -984,32 +985,33 @@ final class ProgramTest extends TestCase
         $stdinBufferProperty = $reflection->getProperty('stdinBuffer');
         $stdinBufferProperty->setValue($program, new StdinBuffer(fn () => null));
 
-        $signalIdProperties = ['sigwinchCallbackId', 'sigintCallbackId', 'sigtermCallbackId', 'sigcontCallbackId', 'sigtstpCallbackId'];
+        $watchersProperty = $reflection->getProperty('watchers');
 
-        $setupMethod = $reflection->getMethod('setup');
-        $setupMethod->invoke($program);
+        $reflection->getMethod('setup')->invoke($program);
 
-        foreach ($signalIdProperties as $name) {
-            $value = $reflection->getProperty($name)->getValue($program);
-            self::assertNotNull($value, "$name must be populated after setup() so teardown can cancel it");
+        $registered = $watchersProperty->getValue($program);
+        self::assertIsArray($registered);
+        foreach ([
+            EventLoopWatcher::Resize,
+            EventLoopWatcher::Interrupt,
+            EventLoopWatcher::Terminate,
+            EventLoopWatcher::Hangup,
+            EventLoopWatcher::Suspend,
+            EventLoopWatcher::Resumed,
+        ] as $watcher) {
+            self::assertArrayHasKey(
+                $watcher->name,
+                $registered,
+                "the {$watcher->name} watcher must be held after setup() so teardown can cancel it",
+            );
         }
 
-        $registeredIds = [];
-        foreach ($signalIdProperties as $name) {
-            $registeredIds[] = $reflection->getProperty($name)->getValue($program);
-        }
+        $reflection->getMethod('teardown')->invoke($program);
 
-        $teardownMethod = $reflection->getMethod('teardown');
-        $teardownMethod->invoke($program);
-
-        foreach ($signalIdProperties as $name) {
-            $value = $reflection->getProperty($name)->getValue($program);
-            self::assertNull($value, "$name must be cancelled and nulled out by teardown()");
-        }
-
+        self::assertSame([], $watchersProperty->getValue($program), 'teardown() must let every watcher go');
         $activeIds = EventLoop::getIdentifiers();
-        foreach ($registeredIds as $id) {
-            self::assertNotContains($id, $activeIds, 'Watcher must be cancelled in EventLoop, not just nulled in the property');
+        foreach ($registered as $id) {
+            self::assertNotContains($id, $activeIds, 'Watcher must be cancelled in EventLoop, not just forgotten');
         }
     }
 
@@ -3767,9 +3769,9 @@ final class ProgramTest extends TestCase
             'Closing the terminal window must quit through QuitMsg, not kill the process before it can shut down',
         );
         self::assertStringContainsString(
-            'sighupCallbackId',
+            'EventLoopWatcher::Hangup',
             $source,
-            'The SIGHUP watcher must be cancelled with the others, or a resumed program leaks it',
+            'The SIGHUP watcher must be held like the others, or teardown cannot cancel it',
         );
     }
 
