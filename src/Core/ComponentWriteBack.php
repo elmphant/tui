@@ -35,10 +35,14 @@ final class ComponentWriteBack
             }
 
             /*
-             * Equal, not identical: a model may keep what the component changed
-             * rather than the component, and build the widget back from it.
+             * A dropped update leaves the widget as it was before the key, so
+             * that is what this checks for. Any other widget means the model kept
+             * the change and derived something else from it too — a title, a
+             * hint — which is allowed.
              */
-            if (self::asAuthored($rebound->widget) != self::asAuthored($widget)) {
+            if (self::asAuthored($rebound->widget) == self::asAuthored($original->widget)
+                && self::asAuthored($widget) != self::asAuthored($original->widget)
+            ) {
                 throw new LogicException(sprintf('Component "%s" stored its update on another property', $original->id->value));
             }
         }

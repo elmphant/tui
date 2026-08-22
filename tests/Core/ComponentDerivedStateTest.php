@@ -35,6 +35,49 @@ final class ComponentDerivedStateTest extends TestCase
         self::assertInstanceOf(DerivedScrollApp::class, $scrolled->model);
         self::assertSame(1, $scrolled->model->scroll);
     }
+
+    /**
+     * One key can change both the component's own state and something the host
+     * derives from it, such as a title. The model kept the change, so the rebuilt
+     * widget must be accepted — refusing it loses the keystroke.
+     */
+    #[Test]
+    public function aComponentRebuiltWithDecorationTheSameKeystrokeChangedIsAcceptedBack(): void
+    {
+        $scrolled = (new DerivedTitleApp())->update(
+            new KeyMsg(Key::Down),
+            new Rect(0, 0, 20, 5),
+            new FocusState(ComponentId::named('pane')),
+        );
+
+        self::assertInstanceOf(DerivedTitleApp::class, $scrolled->model);
+        self::assertSame(1, $scrolled->model->scroll);
+    }
+}
+
+final readonly class DerivedTitleApp extends App
+{
+    public function __construct(public int $scroll = 0)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            'pane',
+            Panel::new('At row ' . $this->scroll)
+                ->withChildren([
+                    Text::new('one'),
+                    Text::new('two'),
+                    Text::new('three'),
+                    Text::new('four'),
+                    Text::new('five'),
+                    Text::new('six'),
+                ])
+                ->withScrollOffset($this->scroll),
+            static fn (self $app, Panel $pane): self => $app->cloneWith(scroll: $pane->scrollOffset()),
+        );
+    }
 }
 
 final readonly class DerivedScrollApp extends App

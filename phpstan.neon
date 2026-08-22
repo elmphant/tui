@@ -41,3 +41,6 @@ parameters:
         -
             identifier: notEqual.notAllowed
             path: src/Core/ComponentWriteBack.php
+        -
+            identifier: equal.notAllowed
+            path: src/Core/ComponentWriteBack.php
