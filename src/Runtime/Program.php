@@ -978,14 +978,18 @@ final class Program
         // These five finish here: they say what the program is doing, what its
         // terminal shows, where the keyboard is, or they hand over a message.
         // Anything else leaves something running, which the effects hold.
-        match (true) {
-            $command instanceof QuitCmd => $this->running = false,
-            $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
-            $command instanceof FocusCmd => $this->moveFocus($command),
-            $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
-            $command instanceof CallCmd => $this->executeCall($command, $wrap),
-            default => $this->effects()->run($command, $wrap),
-        };
+        try {
+            match (true) {
+                $command instanceof QuitCmd => $this->running = false,
+                $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
+                $command instanceof FocusCmd => $this->moveFocus($command),
+                $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
+                $command instanceof CallCmd => $this->executeCall($command, $wrap),
+                default => $this->effects()->run($command, $wrap),
+            };
+        } catch (Throwable $error) {
+            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'command'), $wrap));
+        }
     }
 
     private function effects(): EffectRunner
