@@ -651,10 +651,10 @@ final class TextInputTest extends TestCase
         self::assertSame(0, $frame->backgrounds[5]);
     }
 
-    // --- DecrementInteger: L28 (viewportOffset default 0), L31 (charLimit default 0) ---
+    // --- DecrementInteger: L28 (scrollOffset default 0), L31 (charLimit default 0) ---
 
     #[Test]
-    public function defaultViewportOffsetIsZero(): void
+    public function defaultScrollOffsetIsZero(): void
     {
         $input = TextInput::new()->withValue('abc')->withFocus(true);
         $frame = new Frame(10, 1);
@@ -1105,7 +1105,7 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function renderCursorPositionAccountsForViewportOffset(): void
+    public function renderCursorPositionAccountsForScrollOffset(): void
     {
         $input = TextInput::new()->withFocus(true);
         $area = new Rect(0, 0, 5, 1);
@@ -1288,7 +1288,7 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function viewportOffsetUpdatesOnCursorLeftPastViewport(): void
+    public function scrollOffsetUpdatesOnCursorLeftPastViewport(): void
     {
         $input = TextInput::new()->withFocus(true);
         $area = new Rect(0, 0, 5, 1);
@@ -1414,10 +1414,10 @@ final class TextInputTest extends TestCase
         self::assertSame($afterType, $shortTick->model);
     }
 
-    // --- Edge cases for viewport computeViewportOffset (L292-306) ---
+    // --- Edge cases for viewport computeScrollOffset (L292-306) ---
 
     #[Test]
-    public function viewportOffsetNeverGoesNegative(): void
+    public function scrollOffsetNeverGoesNegative(): void
     {
         $input = TextInput::new()->withFocus(true)->withValue('a');
         $area = new Rect(0, 0, 10, 1);
@@ -1450,7 +1450,7 @@ final class TextInputTest extends TestCase
     // --- Render visible text with viewport offset (L138) ---
 
     #[Test]
-    public function renderVisibleTextSlicedByViewportOffset(): void
+    public function renderVisibleTextSlicedByScrollOffset(): void
     {
         $input = TextInput::new()->withFocus(true);
         $area = new Rect(0, 0, 4, 1);
@@ -1493,7 +1493,7 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function mouseClickWithViewportOffsetAccountsForScroll(): void
+    public function mouseClickWithScrollOffsetAccountsForScroll(): void
     {
         $input = TextInput::new()->withFocus(true);
         $area = new Rect(0, 0, 5, 1);
@@ -1510,7 +1510,7 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function viewportOffsetFormulaCursorMinusWidthPlusOne(): void
+    public function scrollOffsetFormulaCursorMinusWidthPlusOne(): void
     {
         $input = TextInput::new()->withFocus(true);
         $area = new Rect(0, 0, 4, 1);
@@ -1529,7 +1529,7 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function cursorScreenPositionIsAreaXPlusCursorMinusViewportOffset(): void
+    public function cursorScreenPositionIsAreaXPlusCursorMinusScrollOffset(): void
     {
         $input = TextInput::new()->withFocus(true);
         $area = new Rect(2, 0, 5, 1);
@@ -2111,10 +2111,10 @@ final class TextInputTest extends TestCase
             ->withFocus(true)
             ->withValue('abcdefghij')
             ->withCursor(0)
-            ->withViewportOffset(5);
+            ->withScrollOffset(5);
         $result = $input->update(new KeyMsg(Key::Home), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(5, $this->viewportOffsetOf($result), 'Home with the cursor already at 0 must not recompute the viewport');
+        self::assertSame(5, $this->scrollOffsetOf($result), 'Home with the cursor already at 0 must not recompute the viewport');
     }
 
     #[Test]
@@ -2123,10 +2123,10 @@ final class TextInputTest extends TestCase
         $input = TextInput::new()
             ->withFocus(true)
             ->withValue('abcdefghij')
-            ->withViewportOffset(0);
+            ->withScrollOffset(0);
         $result = $input->update(new KeyMsg(Key::End), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(0, $this->viewportOffsetOf($result), 'End with the cursor already at the end must not recompute the viewport');
+        self::assertSame(0, $this->scrollOffsetOf($result), 'End with the cursor already at the end must not recompute the viewport');
     }
 
     #[Test]
@@ -2135,10 +2135,10 @@ final class TextInputTest extends TestCase
         $input = TextInput::new()
             ->withFocus(true)
             ->withValue('abcdefghij')
-            ->withViewportOffset(0);
+            ->withScrollOffset(0);
         $result = $input->update(new KeyMsg(Key::Delete), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(0, $this->viewportOffsetOf($result), 'Delete at the end of the text has nothing to delete and must change nothing');
+        self::assertSame(0, $this->scrollOffsetOf($result), 'Delete at the end of the text has nothing to delete and must change nothing');
     }
 
     #[Test]
@@ -2147,10 +2147,10 @@ final class TextInputTest extends TestCase
         $input = TextInput::new()
             ->withFocus(true)
             ->withValue('abcdefghij')
-            ->withViewportOffset(0);
+            ->withScrollOffset(0);
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(0, $this->viewportOffsetOf($result), 'Ctrl+Delete at the end of the text must change nothing');
+        self::assertSame(0, $this->scrollOffsetOf($result), 'Ctrl+Delete at the end of the text must change nothing');
     }
 
     #[Test]
@@ -2160,10 +2160,10 @@ final class TextInputTest extends TestCase
             ->withFocus(true)
             ->withValue('abcdefghij')
             ->withCursor(0)
-            ->withViewportOffset(5);
+            ->withScrollOffset(5);
         $result = $input->update(new KeyMsg(Key::Backspace, ctrl: true), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(5, $this->viewportOffsetOf($result), 'Ctrl+Backspace at position 0 has nothing to delete and must change nothing');
+        self::assertSame(5, $this->scrollOffsetOf($result), 'Ctrl+Backspace at position 0 has nothing to delete and must change nothing');
     }
 
     #[Test]
@@ -2207,8 +2207,8 @@ final class TextInputTest extends TestCase
         return TextInput::new();
     }
 
-    private function viewportOffsetOf(TextInput $input): int
+    private function scrollOffsetOf(TextInput $input): int
     {
-        return (new ReflectionProperty(TextInput::class, 'viewportOffset'))->getValue($input);
+        return (new ReflectionProperty(TextInput::class, 'scrollOffset'))->getValue($input);
     }
 }

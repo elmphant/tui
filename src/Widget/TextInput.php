@@ -34,7 +34,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
     public function __construct(
         private string $value = '',
         private int $cursor = 0,
-        private int $viewportOffset = 0,
+        private int $scrollOffset = 0,
         private bool $focused = false,
         private string $placeholder = '',
         private int $charLimit = 0,
@@ -91,9 +91,9 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
     /**
      * @internal viewport state is normally derived from cursor movement
      */
-    public function withViewportOffset(int $viewportOffset): self
+    public function withScrollOffset(int $scrollOffset): self
     {
-        return $this->cloneWith(viewportOffset: $viewportOffset);
+        return $this->cloneWith(scrollOffset: $scrollOffset);
     }
 
     public function echoMode(): EchoMode
@@ -180,7 +180,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         $textLength = self::graphemeLength($displayText);
         $availableWidth = $area->width;
 
-        $viewportOffset = $this->computeViewportOffset($availableWidth);
+        $scrollOffset = $this->computeScrollOffset($availableWidth);
 
         $showPlaceholder = $textLength === 0 && $this->placeholder !== '';
 
@@ -191,13 +191,13 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
 
         $content = $showPlaceholder
             ? CharWidth::truncateToWidth($this->placeholder, $availableWidth)
-            : self::substringByDisplayWidth($displayText, $viewportOffset, $availableWidth);
+            : self::substringByDisplayWidth($displayText, $scrollOffset, $availableWidth);
 
         $frame->putStyled($area->x, $area->y, $content, $fieldStyle);
 
         if ($this->drawsFocused($context)) {
             $cursorDisplayX = CharWidth::stringWidth(self::graphemeSubstring($displayText, 0, $this->cursor));
-            $cursorScreenX = $area->x + $cursorDisplayX - $viewportOffset;
+            $cursorScreenX = $area->x + $cursorDisplayX - $scrollOffset;
             if ($cursorScreenX >= $area->x && $cursorScreenX < $area->right()) {
                 $frame->setCursorPosition($cursorScreenX, $area->y, $this->cursorShape);
             }
@@ -244,9 +244,9 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         };
 
         if ($updated !== null) {
-            $viewportOffset = $updated->computeViewportOffset($area->width);
-            if ($viewportOffset !== $updated->viewportOffset) {
-                $updated = $updated->cloneWith(viewportOffset: $viewportOffset);
+            $scrollOffset = $updated->computeScrollOffset($area->width);
+            if ($scrollOffset !== $updated->scrollOffset) {
+                $updated = $updated->cloneWith(scrollOffset: $scrollOffset);
             }
 
             return new UpdateResult($updated);
@@ -260,8 +260,8 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
      */
     private function handleClick(MouseMsg $message, Rect $area): UpdateResult
     {
-        $viewportOffset = $this->computeViewportOffset($area->width);
-        $clickDisplayX = $message->x - $area->x + $viewportOffset;
+        $scrollOffset = $this->computeScrollOffset($area->width);
+        $clickDisplayX = $message->x - $area->x + $scrollOffset;
         $displayText = $this->echoMode->mask($this->value);
         $chars = Grapheme::split($displayText);
         $displayWidth = 0;
@@ -410,7 +410,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         return $this->cloneWith(value: $before . $remaining);
     }
 
-    private function computeViewportOffset(int $availableWidth): int
+    private function computeScrollOffset(int $availableWidth): int
     {
         if ($availableWidth <= 0) {
             return 0;
@@ -420,7 +420,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         $cursorDisplayWidth = CharWidth::stringWidth(self::graphemeSubstring($displayText, 0, $this->cursor));
 
         return ScrollWindow::showing(
-            $this->viewportOffset,
+            $this->scrollOffset,
             $cursorDisplayWidth,
             1,
             $availableWidth,
