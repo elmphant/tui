@@ -95,7 +95,7 @@ final class CardTest extends TestCase
     {
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
-        $card = Card::new('Title', 'body')->dimmed();
+        $card = Card::new('Title', 'body')->withDimmed();
 
         $card->render($frame, new Rect(0, 0, 20, 4), $context);
 
@@ -103,7 +103,7 @@ final class CardTest extends TestCase
         self::assertSame(
             Attr::FAINT,
             $titleAttr & Attr::FAINT,
-            'dimmed() should set FAINT on title',
+            'withDimmed() should set FAINT on title',
         );
     }
 
@@ -121,7 +121,7 @@ final class CardTest extends TestCase
         self::assertSame(
             0,
             $titleAttr & Attr::FAINT,
-            'Card without explicit dimmed() must NOT have FAINT on title (default $dimmed must be false)',
+            'Card without explicit withDimmed() must NOT have FAINT on title (default $dimmed must be false)',
         );
     }
 

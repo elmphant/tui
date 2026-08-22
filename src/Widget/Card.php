@@ -72,14 +72,9 @@ final readonly class Card implements Widget
         return $this->cloneWith(height: $height);
     }
 
-    public function dimmed(bool $dimmed = true): self
-    {
-        return $this->cloneWith(dimmed: $dimmed);
-    }
-
     public function withDimmed(bool $dimmed = true): self
     {
-        return $this->dimmed($dimmed);
+        return $this->cloneWith(dimmed: $dimmed);
     }
 
     public function sizing(): Sizing
