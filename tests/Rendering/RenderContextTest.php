@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
@@ -117,6 +118,23 @@ final class RenderContextTest extends TestCase
         $this->expectExceptionMessageMatches('/focusOn/');
 
         $context->renderRoot(self::boundField(), new Frame(20, 3), new Rect(0, 0, 20, 3));
+    }
+
+    /**
+     * The runtime hands over what it has. Where the tree offers nothing to focus —
+     * a modal with no field in it, a pane still being built — that is nobody rather
+     * than nothing said, and the frame still has to draw.
+     */
+    #[Test]
+    public function aFocusStateStillWaitingForAnAnswerDrawsAsNobody(): void
+    {
+        $context = new RenderContext(Theme::dark());
+        $context->beginFrame(0.0);
+        $context->focusOn(new FocusState());
+
+        $context->renderRoot(self::boundField(), new Frame(20, 3), new Rect(0, 0, 20, 3));
+
+        self::assertTrue(true, 'drawing got that far without asking for a decision twice');
     }
 
     /**

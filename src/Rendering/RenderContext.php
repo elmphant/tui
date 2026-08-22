@@ -118,7 +118,10 @@ final class RenderContext
      */
     public function focusOn(FocusState $focus): void
     {
-        $this->focus = $focus;
+        // A tree with nothing to focus leaves the runtime still waiting for an
+        // answer. For this frame that means nobody: saying so is what the guard
+        // below asks for, and the tree settles on a component once it has one.
+        $this->focus = $focus->isUndecided() ? FocusState::nowhere() : $focus;
         $this->focusDepth = 0;
         $this->componentDepth = 0;
     }

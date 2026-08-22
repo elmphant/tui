@@ -25,6 +25,22 @@ final class FocusStateTest extends TestCase
         self::assertEquals(ComponentId::named('search'), $moved->focused());
     }
 
+    /**
+     * A modal with nothing focusable in it empties the ring while the components
+     * behind it are still drawn. Moving has to leave the keyboard where it is:
+     * clearing it says "nobody said yet", and a frame drawn on that answer throws.
+     */
+    #[Test]
+    public function aMoveWithNowhereToGoLeavesTheKeyboardWhereItWas(): void
+    {
+        $held = new FocusState(ComponentId::named('search'));
+
+        $moved = $held->next([]);
+
+        self::assertEquals(ComponentId::named('search'), $moved->focused());
+        self::assertFalse($moved->isUndecided(), 'and the answer stays an answer');
+    }
+
     #[Test]
     public function aMoveLandsOnTheComponentAfterTheFocusedOne(): void
     {

@@ -110,8 +110,10 @@ final readonly class FocusState
      */
     private function movedBy(int $step, array $order): self
     {
+        // Nowhere to go, so nothing moves. Clearing it would leave the state
+        // undecided, and a frame drawn on that has no answer to give.
         if ($order === []) {
-            return $this->cloneWith(focused: null);
+            return $this;
         }
 
         $at = $this->indexIn($order);
