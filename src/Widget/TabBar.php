@@ -40,7 +40,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
      */
     public function __construct(
         private array $tabs = [],
-        private int $activeTab = 0,
+        private int $selectedTab = 0,
         private ?string $hint = null,
         private ?string $shortHint = null,
         private bool $focused = false,
@@ -84,9 +84,9 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         return $this->cloneWith(tabs: $tabs);
     }
 
-    public function activeTab(): int
+    public function selectedTab(): int
     {
-        return $this->activeTab;
+        return $this->selectedTab;
     }
 
     /**
@@ -98,8 +98,8 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
             return $this;
         }
 
-        return $this->cloneWith(tabs: $tabs, activeTab: Options::cursorAfter(
-            ($this->tabs[$this->activeTab] ?? null)?->label,
+        return $this->cloneWith(tabs: $tabs, selectedTab: Options::cursorAfter(
+            ($this->tabs[$this->selectedTab] ?? null)?->label,
             array_map(static fn (TabPage $tab): string => $tab->label, $tabs),
         ));
     }
@@ -107,9 +107,9 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     /**
      * The chosen page takes the focus the old one had.
      */
-    public function withActiveTab(int $activeTab): self
+    public function withSelectedTab(int $selectedTab): self
     {
-        return $this->cloneWith(activeTab: $activeTab)->withFocus($this->focused);
+        return $this->cloneWith(selectedTab: $selectedTab)->withFocus($this->focused);
     }
 
     /**
@@ -269,7 +269,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
         foreach ($this->tabs as $index => $tab) {
             $tabs[] = $tab->withPane(
-                $index === $this->activeTab ? $active($tab->pane) : $tab->pane->withFocus(false),
+                $index === $this->selectedTab ? $active($tab->pane) : $tab->pane->withFocus(false),
             );
         }
 
@@ -291,13 +291,13 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
     private function activePane(): ScrollPane
     {
-        return $this->tabs[$this->activeTab]->pane ?? new ScrollPane();
+        return $this->tabs[$this->selectedTab]->pane ?? new ScrollPane();
     }
 
     private function withActivePane(ScrollPane $pane): self
     {
         $tabs = $this->tabs;
-        $tabs[$this->activeTab] = $tabs[$this->activeTab]->withPane($pane);
+        $tabs[$this->selectedTab] = $tabs[$this->selectedTab]->withPane($pane);
 
         return $this->cloneWith(tabs: $tabs);
     }
@@ -335,9 +335,9 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
             return new UpdateResult($this);
         }
 
-        $newIndex = ($this->activeTab + $direction + $count) % $count;
+        $newIndex = ($this->selectedTab + $direction + $count) % $count;
 
-        return new UpdateResult($this->cloneWith(activeTab: $newIndex)->withFocus(true));
+        return new UpdateResult($this->cloneWith(selectedTab: $newIndex)->withFocus(true));
     }
 
     /**
@@ -347,11 +347,11 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     {
         $index = $this->tabStripLayout($area)->indexAt($message->x);
 
-        if ($index === null || $index === $this->activeTab) {
+        if ($index === null || $index === $this->selectedTab) {
             return new UpdateResult($this);
         }
 
-        return new UpdateResult($this->cloneWith(activeTab: $index)->withFocus($this->focused));
+        return new UpdateResult($this->cloneWith(selectedTab: $index)->withFocus($this->focused));
     }
 
     private function tabStripLayout(Rect $area): TabStripLayout
@@ -384,7 +384,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
             $labelRow = $cell->y + 1;
 
-            if ($tabIndex === $this->activeTab) {
+            if ($tabIndex === $this->selectedTab) {
                 $tabRight = $cell->right() - 1;
 
                 $frame->putChar($cell->x, $cell->y, $border->topLeft, $borderForeground, $borderBackground, $borderAttributes);
@@ -417,13 +417,13 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $attributes = $borderStyle->attributes;
         $baselineY = $area->y + 2;
 
-        $isFirstActive = $this->activeTab === 0;
+        $isFirstActive = $this->selectedTab === 0;
         $baselineLeft = $isFirstActive ? $border->vertical : $border->topLeft;
         $frame->putChar($area->x, $baselineY, $baselineLeft, $foreground, $background, $attributes);
         $frame->fillRect($area->x + 1, $baselineY, $area->width - 2, 1, $foreground, $background, $attributes, $border->horizontal);
         $frame->putChar($area->right() - 1, $baselineY, $border->topRight, $foreground, $background, $attributes);
 
-        $cell = $layout->rectOf($this->activeTab);
+        $cell = $layout->rectOf($this->selectedTab);
         if ($cell === null) {
             return;
         }
@@ -431,7 +431,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $frame->putChar(
             $cell->x,
             $baselineY,
-            $this->activeTab === 0 ? $border->vertical : $border->bottomRight,
+            $this->selectedTab === 0 ? $border->vertical : $border->bottomRight,
             $foreground,
             $background,
             $attributes,
@@ -528,7 +528,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
             return;
         }
 
-        if (!isset($this->tabs[$this->activeTab])) {
+        if (!isset($this->tabs[$this->selectedTab])) {
             return;
         }
 
