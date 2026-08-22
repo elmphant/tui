@@ -29,7 +29,7 @@ final class FocusTreeTest extends TestCase
         $tree = new FocusTree(3, null);
 
         self::assertSame(0, $tree->next()->active(), 'Stepping forward from nothing lands on the first node');
-        self::assertSame(2, $tree->prev()->active(), 'and stepping back from nothing lands on the last');
+        self::assertSame(2, $tree->previous()->active(), 'and stepping back from nothing lands on the last');
     }
 
     #[Test]
@@ -73,7 +73,7 @@ final class FocusTreeTest extends TestCase
         $nodes = $this->createNodes(3);
         $tree = new FocusTree(3, active: 2);
 
-        $result = $tree->prev()->apply($nodes);
+        $result = $tree->previous()->apply($nodes);
 
         self::assertFalse($result[0]->isFocused());
         self::assertTrue($result[1]->isFocused());
@@ -86,7 +86,7 @@ final class FocusTreeTest extends TestCase
         $nodes = $this->createNodes(3);
         $tree = new FocusTree(3, active: 0);
 
-        $result = $tree->prev()->apply($nodes);
+        $result = $tree->previous()->apply($nodes);
 
         self::assertFalse($result[0]->isFocused());
         self::assertFalse($result[1]->isFocused());
@@ -247,7 +247,7 @@ final class FocusTreeTest extends TestCase
     {
         $tree = new FocusTree();
 
-        $result = $tree->prev();
+        $result = $tree->previous();
 
         self::assertSame($tree, $result);
     }

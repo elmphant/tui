@@ -440,7 +440,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
             return null;
         }
 
-        return $this->cloneWith(focusIndex: ($reverse ? $tree->prev() : $tree->next())->active());
+        return $this->cloneWith(focusIndex: ($reverse ? $tree->previous() : $tree->next())->active());
     }
 
     private function scrolledByKey(KeyMsg $message, Rect $area): ?self

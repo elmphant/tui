@@ -45,7 +45,7 @@ final readonly class FocusTree
         return $this->cloneWith(active: $this->active === null ? 0 : ($this->active + 1) % $this->count);
     }
 
-    public function prev(): self
+    public function previous(): self
     {
         if ($this->count === 0) {
             return $this;
