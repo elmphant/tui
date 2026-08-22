@@ -23,7 +23,6 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Runtime\ChildDispatcher;
 
 /**
  * A vertical stack of children in a scrolling viewport.

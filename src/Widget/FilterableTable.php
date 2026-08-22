@@ -17,7 +17,6 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Runtime\ChildDispatcher;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
 

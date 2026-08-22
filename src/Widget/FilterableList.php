@@ -23,7 +23,6 @@ use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
-use Elmphant\Tui\Runtime\ChildDispatcher;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
 

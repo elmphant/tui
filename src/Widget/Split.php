@@ -25,7 +25,6 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Runtime\ChildDispatcher;
 use InvalidArgumentException;
 
 /**

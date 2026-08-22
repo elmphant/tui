@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Runtime;
+namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
@@ -16,8 +16,8 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Runtime\ChildDispatcher;
 use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Widget\ChildDispatcher;
 use Elmphant\Tui\Widget\Interactive;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;

@@ -2,20 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Runtime;
+namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Widget\Interactive;
 
 /**
  * @internal
  *
  * @template-covariant TChild of Interactive
  */
-final readonly class IndexedBatchDispatchResult
+final readonly class BatchDispatchResult
 {
     /**
-     * @param array<int, TChild> $overrides
+     * @param array<string, TChild> $overrides
      */
     public function __construct(
         public array $overrides,

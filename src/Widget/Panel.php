@@ -19,7 +19,6 @@ use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
-use Elmphant\Tui\Runtime\ChildDispatcher;
 
 final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer, PublishesHints
 {

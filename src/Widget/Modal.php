@@ -24,7 +24,6 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
-use Elmphant\Tui\Runtime\ChildDispatcher;
 
 final readonly class Modal implements Interactive, WidgetContainer, Focusable, InputLayer, KeybindingsAware, PublishesHints
 {
