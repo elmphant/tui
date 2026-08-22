@@ -389,9 +389,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
                 $tabRight = $cell->right() - 1;
 
                 $frame->putChar($cell->x, $cell->y, $border->topLeft, $borderForeground, $borderBackground, $borderAttributes);
-                for ($x = $cell->x + 1; $x < $tabRight; ++$x) {
-                    $frame->putChar($x, $cell->y, $border->horizontal, $borderForeground, $borderBackground, $borderAttributes);
-                }
+                $frame->fillRect($cell->x + 1, $cell->y, $tabRight - $cell->x - 1, 1, $borderForeground, $borderBackground, $borderAttributes, $border->horizontal);
                 $frame->putChar($tabRight, $cell->y, $border->topRight, $borderForeground, $borderBackground, $borderAttributes);
 
                 $frame->putChar($cell->x, $labelRow, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
@@ -423,9 +421,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $isFirstActive = $this->activeTab === 0;
         $baselineLeft = $isFirstActive ? $border->vertical : $border->topLeft;
         $frame->putChar($area->x, $baselineY, $baselineLeft, $foreground, $background, $attributes);
-        for ($x = $area->x + 1; $x < $area->right() - 1; ++$x) {
-            $frame->putChar($x, $baselineY, $border->horizontal, $foreground, $background, $attributes);
-        }
+        $frame->fillRect($area->x + 1, $baselineY, $area->width - 2, 1, $foreground, $background, $attributes, $border->horizontal);
         $frame->putChar($area->right() - 1, $baselineY, $border->topRight, $foreground, $background, $attributes);
 
         $cell = $layout->rectOf($this->activeTab);
@@ -445,9 +441,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $tabRight = $cell->right() - 1;
         $frame->putChar($tabRight, $baselineY, $border->bottomLeft, $foreground, $background, $attributes);
 
-        for ($x = $cell->x + 1; $x <= $tabRight - 1; ++$x) {
-            $frame->putChar($x, $baselineY, ' ', 0, $background);
-        }
+        $frame->fillRect($cell->x + 1, $baselineY, $tabRight - $cell->x - 1, 1, 0, $background);
     }
 
     private function renderTabHint(Frame $frame, Rect $area, int $afterTabsX, Theme $theme, bool $focused): void
@@ -518,16 +512,13 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $background = $borderStyle->backgroundValue();
         $attributes = $borderStyle->attributes;
 
-        for ($y = $area->y + 3; $y < $area->bottom() - 1; ++$y) {
-            $frame->putChar($area->x, $y, $border->vertical, $foreground, $background, $attributes);
-            $frame->putChar($area->right() - 1, $y, $border->vertical, $foreground, $background, $attributes);
-        }
+        $sideHeight = $area->bottom() - 1 - ($area->y + 3);
+        $frame->fillRect($area->x, $area->y + 3, 1, $sideHeight, $foreground, $background, $attributes, $border->vertical);
+        $frame->fillRect($area->right() - 1, $area->y + 3, 1, $sideHeight, $foreground, $background, $attributes, $border->vertical);
 
         $bottomY = $area->bottom() - 1;
         $frame->putChar($area->x, $bottomY, $border->bottomLeft, $foreground, $background, $attributes);
-        for ($x = $area->x + 1; $x < $area->right() - 1; ++$x) {
-            $frame->putChar($x, $bottomY, $border->horizontal, $foreground, $background, $attributes);
-        }
+        $frame->fillRect($area->x + 1, $bottomY, $area->width - 2, 1, $foreground, $background, $attributes, $border->horizontal);
         $frame->putChar($area->right() - 1, $bottomY, $border->bottomRight, $foreground, $background, $attributes);
     }
 
