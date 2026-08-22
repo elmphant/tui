@@ -32,7 +32,7 @@ final class HeaderTitleSlotTest extends TestCase
     #[Test]
     public function aCentreSlotDoesNotSwallowTheTitle(): void
     {
-        $drawn = self::draw(Header::new('SKYLINE')->center(Text::new('status')));
+        $drawn = self::draw(Header::new('SKYLINE')->withCenter(Text::new('status')));
 
         self::assertStringContainsString('SKYLINE', $drawn);
         self::assertStringContainsString('status', $drawn);
@@ -41,13 +41,13 @@ final class HeaderTitleSlotTest extends TestCase
     #[Test]
     public function aDisplacedTitleMovesToTheLeft(): void
     {
-        self::assertStringStartsWith('SKYLINE', self::draw(Header::new('SKYLINE')->center(Text::new('status'))));
+        self::assertStringStartsWith('SKYLINE', self::draw(Header::new('SKYLINE')->withCenter(Text::new('status'))));
     }
 
     #[Test]
     public function anExplicitLeftSlotOutranksTheTitle(): void
     {
-        $drawn = self::draw(Header::new('SKYLINE')->center(Text::new('status'))->left(Text::new('branch')));
+        $drawn = self::draw(Header::new('SKYLINE')->withCenter(Text::new('status'))->withLeft(Text::new('branch')));
 
         self::assertStringStartsWith('branch', $drawn);
         self::assertStringContainsString('status', $drawn);
@@ -56,7 +56,7 @@ final class HeaderTitleSlotTest extends TestCase
     #[Test]
     public function aLeftSlotAloneLeavesTheTitleCentred(): void
     {
-        $drawn = self::draw(Header::new('SKYLINE')->left(Text::new('branch')));
+        $drawn = self::draw(Header::new('SKYLINE')->withLeft(Text::new('branch')));
 
         self::assertStringStartsWith('branch', $drawn);
         self::assertStringContainsString('SKYLINE', $drawn);

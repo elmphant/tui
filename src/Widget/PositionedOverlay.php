@@ -35,7 +35,7 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
         return new self($x, $y, null);
     }
 
-    public function content(Widget $widget): self
+    public function withContent(Widget $widget): self
     {
         return $this->cloneWith(widget: $widget);
     }

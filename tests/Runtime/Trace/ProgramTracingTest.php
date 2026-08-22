@@ -164,7 +164,7 @@ final class ProgramTracingTest extends TestCase
             ->withTerminal($terminal)
             ->withTracer($tracer)
             ->withClock($clock)
-            ->fps($framesPerSecond);
+            ->withFps($framesPerSecond);
 
         $queue = new SplQueue();
         $queue->enqueue(new TestMessage('traced'));

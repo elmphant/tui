@@ -105,7 +105,7 @@ final class ProgramFocusTraceTest extends TestCase
         Program::new(new TwoFieldsLeftRunningApp())
             ->withTerminal($terminal)
             ->withTracer($tracer)
-            ->fps(1000.0)
+            ->withFps(1000.0)
             ->start();
 
         $records = $tracer->records();

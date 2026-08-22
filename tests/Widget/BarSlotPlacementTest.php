@@ -39,7 +39,7 @@ final class BarSlotPlacementTest extends TestCase
     #[Test]
     public function aLeftSlotStartsAtTheContentOriginAndKeepsTheBarBackground(): void
     {
-        $frame = $this->paint(Footer::new()->left(Text::new('Hi')));
+        $frame = $this->paint(Footer::new()->withLeft(Text::new('Hi')));
 
         self::assertSame('Hi', $this->row($frame));
         self::assertSame(
@@ -52,7 +52,7 @@ final class BarSlotPlacementTest extends TestCase
     #[Test]
     public function aRightSlotEndsAtTheRightEdge(): void
     {
-        $frame = $this->paint(Footer::new()->right(Text::new('Hi')));
+        $frame = $this->paint(Footer::new()->withRight(Text::new('Hi')));
 
         self::assertSame(str_repeat(' ', 22) . 'Hi', $this->padded($frame));
     }
@@ -60,7 +60,7 @@ final class BarSlotPlacementTest extends TestCase
     #[Test]
     public function aCentreSlotSitsInTheMiddleOfTheRow(): void
     {
-        $frame = $this->paint(Footer::new()->center(Text::new('Hi')));
+        $frame = $this->paint(Footer::new()->withCenter(Text::new('Hi')));
 
         self::assertSame(str_repeat(' ', 11) . 'Hi', $this->row($frame));
     }
@@ -87,7 +87,7 @@ final class BarSlotPlacementTest extends TestCase
             }
         };
 
-        $frame = $this->paint(Footer::new()->center($silent));
+        $frame = $this->paint(Footer::new()->withCenter($silent));
 
         self::assertSame('', $this->row($frame));
     }
@@ -107,7 +107,7 @@ final class BarSlotPlacementTest extends TestCase
             }
         };
 
-        $frame = $this->paint(Footer::new()->center($greedy));
+        $frame = $this->paint(Footer::new()->withCenter($greedy));
 
         self::assertSame(str_repeat(' ', 10) . 'XXXX', $this->row($frame));
     }
@@ -115,7 +115,7 @@ final class BarSlotPlacementTest extends TestCase
     #[Test]
     public function aRightSlotKeepsTheTrailingSpacesItAsksFor(): void
     {
-        $frame = $this->paint(Footer::new()->right(Text::new('Hi  ')));
+        $frame = $this->paint(Footer::new()->withRight(Text::new('Hi  ')));
 
         self::assertSame(str_repeat(' ', 20) . 'Hi  ', $this->padded($frame));
     }
@@ -123,7 +123,7 @@ final class BarSlotPlacementTest extends TestCase
     #[Test]
     public function aWidgetThatOnlyFillsWhatItIsGivenDrawsNothingInASlot(): void
     {
-        $frame = $this->paint(Footer::new()->right(ProgressBar::new(0.5)));
+        $frame = $this->paint(Footer::new()->withRight(ProgressBar::new(0.5)));
 
         self::assertSame('', $this->row($frame));
     }
@@ -134,7 +134,7 @@ final class BarSlotPlacementTest extends TestCase
         $sized = Container::around(ProgressBar::new(0.5))
             ->withSizing(Sizing::of(Constraint::exact(10), Constraint::exact(1)));
 
-        $frame = $this->paint(Footer::new()->right($sized));
+        $frame = $this->paint(Footer::new()->withRight($sized));
 
         self::assertSame(str_repeat(' ', 14) . '█████─ 50%', $this->padded($frame), 'Ten columns, right up against the edge');
     }
@@ -144,8 +144,8 @@ final class BarSlotPlacementTest extends TestCase
     {
         $rightPressed = new TestMessage('right');
         $bar = Footer::new()
-            ->left(Button::new('L', new TestMessage('left')))
-            ->right(Button::new('R', $rightPressed));
+            ->withLeft(Button::new('L', new TestMessage('left')))
+            ->withRight(Button::new('R', $rightPressed));
         $area = new Rect(0, 0, self::BAR_WIDTH, 1);
 
         $armed = $bar->update(new MouseMsg(22, 0, MouseAction::Press, MouseButton::Left), $area)->model;
@@ -180,7 +180,7 @@ final class BarSlotPlacementTest extends TestCase
             }
         };
 
-        $result = Footer::new()->left($widthless)->update(new KeyMsg(Key::Enter), new Rect(0, 0, self::BAR_WIDTH, 1));
+        $result = Footer::new()->withLeft($widthless)->update(new KeyMsg(Key::Enter), new Rect(0, 0, self::BAR_WIDTH, 1));
 
         $command = $result->command;
         self::assertInstanceOf(MessageCmd::class, $command);

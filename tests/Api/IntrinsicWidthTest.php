@@ -245,7 +245,7 @@ final class IntrinsicWidthTest extends TestCase
         yield 'Card' => [Card::new('title', 'body')];
         yield 'ProgressBar' => [ProgressBar::new()];
         yield 'TabBar' => [TabBar::new()->withTabs([new TabPage('one')])];
-        yield 'PositionedOverlay' => [PositionedOverlay::at(0, 0)->content(Separator::new())];
+        yield 'PositionedOverlay' => [PositionedOverlay::at(0, 0)->withContent(Separator::new())];
         yield 'DropdownPopup' => [DropdownPopup::of(Select::new(['alpha']), new FloatTarget())];
         yield 'Layout' => [Layout::vertical(Separator::new())];
         yield 'Flex' => [Flex::row()->add(Separator::new())];

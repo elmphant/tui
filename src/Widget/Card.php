@@ -100,9 +100,9 @@ final readonly class Card implements Widget
         }
 
         $block = Block::new()
-            ->border($this->border)
-            ->borderStyle($borderStyle)
-            ->padding(Spacing::horizontal(1));
+            ->withBorder($this->border)
+            ->withBorderStyle($borderStyle)
+            ->withPadding(Spacing::horizontal(1));
         $block->render($frame, $area);
         $inner = $block->inner($area);
 

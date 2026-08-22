@@ -452,8 +452,8 @@ public function view(): Widget
         Header::new('My App')->withDivider(),
         Component::bind('list', $this->list, static fn (self $app, ListView $list): self => $app->cloneWith(list: $list)),
         Footer::new()
-            ->left(StatusBar::forHints($this->quitHints()))
-            ->center(FocusHints::new()),
+            ->withLeft(StatusBar::forHints($this->quitHints()))
+            ->withCenter(FocusHints::new()),
     );
 }
 ```
@@ -501,7 +501,7 @@ no width of its own (`ProgressBar`, `Separator`, and the other fill-only ones)
 therefore has nothing to draw in; give it one:
 
 ```php
-Footer::new()->right(
+Footer::new()->withRight(
     Container::around(ProgressBar::new($ratio))
         ->withSizing(Sizing::of(Constraint::exact(20), Constraint::exact(1))),
 );
@@ -690,9 +690,9 @@ $right = Panel::new('System')
 
 ```php
 Program::new($model)
-    ->altScreen()       // use alternate screen buffer
-    ->mouseTracking()   // enable mouse click/scroll/drag
-    ->fps(30)           // frame rate limit (default: 60)
+    ->withAltScreen()       // use alternate screen buffer
+    ->withMouseTracking()   // enable mouse click/scroll/drag
+    ->withFps(30)           // frame rate limit (default: 60)
     ->onError(fn(ErrorMsg $error) => null) // may return a recovery Cmd
     ->start();
 ```

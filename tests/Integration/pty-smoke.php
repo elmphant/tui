@@ -29,4 +29,4 @@ $model = new class implements Model {
     }
 };
 
-Program::new($model)->altScreen()->mouseTracking()->start();
+Program::new($model)->withAltScreen()->withMouseTracking()->start();

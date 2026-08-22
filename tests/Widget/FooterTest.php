@@ -39,7 +39,7 @@ final class FooterTest extends TestCase
     public function aGlobalRebindingReachesTheKeysASlotAnswers(): void
     {
         $footer = Footer::new()
-            ->right(TextInput::new()->withValue('typed')->withFocus(true))
+            ->withRight(TextInput::new()->withValue('typed')->withFocus(true))
             ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]));
 
         $result = $footer->update(new KeyMsg('k', ctrl: true), Rect::fromSize(80, 1));
@@ -67,7 +67,7 @@ final class FooterTest extends TestCase
     public function rendersLeftSlot(): void
     {
         $footer = Footer::new()
-            ->left(Text::new('Left'));
+            ->withLeft(Text::new('Left'));
         $frame = new Frame(30, 1);
         $footer->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -79,7 +79,7 @@ final class FooterTest extends TestCase
     public function rendersCenterSlot(): void
     {
         $footer = Footer::new()
-            ->center(Text::new('Center'));
+            ->withCenter(Text::new('Center'));
         $frame = new Frame(20, 1);
         $footer->render($frame, Rect::fromSize(20, 1), $this->context);
 
@@ -92,7 +92,7 @@ final class FooterTest extends TestCase
     public function rendersRightSlotRightAligned(): void
     {
         $footer = Footer::new()
-            ->right(Text::new('Right'));
+            ->withRight(Text::new('Right'));
         $frame = new Frame(30, 1);
         $footer->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -146,8 +146,8 @@ final class FooterTest extends TestCase
     public function paddingShiftsContent(): void
     {
         $footer = Footer::new()
-            ->left(Text::new('Left'))
-            ->padding(Spacing::horizontal(1));
+            ->withLeft(Text::new('Left'))
+            ->withPadding(Spacing::horizontal(1));
         $frame = new Frame(20, 1);
         $footer->render($frame, Rect::fromSize(20, 1), $this->context);
 
@@ -161,7 +161,7 @@ final class FooterTest extends TestCase
     public function constraintIncludesPadding(): void
     {
         $footer = Footer::new()
-            ->padding(Spacing::vertical(1));
+            ->withPadding(Spacing::vertical(1));
 
         self::assertEquals(Constraint::exact(3), $footer->sizing()->rows);
     }
@@ -176,7 +176,7 @@ final class FooterTest extends TestCase
     public function updateForwardsTickToInteractiveSlot(): void
     {
         $spinner = new TickTally();
-        $footer = Footer::new()->right($spinner);
+        $footer = Footer::new()->withRight($spinner);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TickMsg(1.0), $area);
@@ -188,7 +188,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function updateLeavesSlotsAloneInAnAreaTooSmallToDrawThem(): void
     {
-        $footer = Footer::new()->right(new TickTally());
+        $footer = Footer::new()->withRight(new TickTally());
 
         $result = $footer->update(new TickMsg(1.0), Rect::fromSize(80, 0));
 
@@ -198,7 +198,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function updateReturnsUnchangedWhenNoInteractiveSlots(): void
     {
-        $footer = Footer::new()->right(Text::new('static'));
+        $footer = Footer::new()->withRight(Text::new('static'));
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TickMsg(1.0), $area);
@@ -211,7 +211,7 @@ final class FooterTest extends TestCase
     {
         $left = new TickTally();
         $right = new TickTally();
-        $footer = Footer::new()->left($left)->right($right);
+        $footer = Footer::new()->withLeft($left)->withRight($right);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TickMsg(1.0), $area);
@@ -224,7 +224,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function updateWithNoCommandsReturnsNull(): void
     {
-        $footer = Footer::new()->left(Text::new('static'));
+        $footer = Footer::new()->withLeft(Text::new('static'));
         $result = $footer->update(new TickMsg(0.0), Rect::fromSize(80, 1));
         self::assertNull($result->command);
     }
@@ -234,7 +234,7 @@ final class FooterTest extends TestCase
     {
         $command = Cmd::tick(1.0);
         $slot = $this->createInteractiveReturningCommand($command);
-        $footer = Footer::new()->left($slot);
+        $footer = Footer::new()->withLeft($slot);
         $result = $footer->update(new TickMsg(0.0), Rect::fromSize(80, 1));
         self::assertNotNull($result->command);
         self::assertNotInstanceOf(BatchCmd::class, $result->command);
@@ -258,8 +258,8 @@ final class FooterTest extends TestCase
     public function constraintWithPaddingAndMarginSumsCorrectly(): void
     {
         $footer = Footer::new()
-            ->padding(Spacing::vertical(1))
-            ->margin(Spacing::vertical(1));
+            ->withPadding(Spacing::vertical(1))
+            ->withMargin(Spacing::vertical(1));
 
         // 1 (content) + 1 (padding top) + 1 (padding bottom) + 1 (margin top) + 1 (margin bottom) = 5
         self::assertEquals(Constraint::exact(5), $footer->sizing()->rows);
@@ -272,7 +272,7 @@ final class FooterTest extends TestCase
     public function updateDetectsLeftSlotModelChange(): void
     {
         $spinner = new TickTally();
-        $footer = Footer::new()->left($spinner);
+        $footer = Footer::new()->withLeft($spinner);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TickMsg(1.0), $area);
@@ -288,7 +288,7 @@ final class FooterTest extends TestCase
     public function updateDoesNotOverrideWhenLeftSlotModelUnchanged(): void
     {
         $staticSlot = $this->createInteractiveReturningSelf();
-        $footer = Footer::new()->left($staticSlot);
+        $footer = Footer::new()->withLeft($staticSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TestMessage('msg'), $area);
@@ -308,7 +308,7 @@ final class FooterTest extends TestCase
         $leftSlot = $this->createInteractiveReturningCommand($leftCommand);
         $centerSlot = $this->createInteractiveReturningCommand($centerCommand);
 
-        $footer = Footer::new()->left($leftSlot)->center($centerSlot);
+        $footer = Footer::new()->withLeft($leftSlot)->withCenter($centerSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TestMessage('msg'), $area);
@@ -326,7 +326,7 @@ final class FooterTest extends TestCase
         $leftCommand = Cmd::tick(1.0);
         $leftSlot = $this->createInteractiveReturningCommand($leftCommand);
 
-        $footer = Footer::new()->left($leftSlot);
+        $footer = Footer::new()->withLeft($leftSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TestMessage('msg'), $area);
@@ -346,7 +346,7 @@ final class FooterTest extends TestCase
         $leftSlot = $this->createInteractiveReturningCommand($leftCommand);
         $rightSlot = $this->createInteractiveReturningCommand($rightCommand);
 
-        $footer = Footer::new()->left($leftSlot)->right($rightSlot);
+        $footer = Footer::new()->withLeft($leftSlot)->withRight($rightSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TestMessage('msg'), $area);
@@ -364,7 +364,7 @@ final class FooterTest extends TestCase
         $rightCommand = Cmd::tick(2.0);
         $rightSlot = $this->createInteractiveReturningCommand($rightCommand);
 
-        $footer = Footer::new()->right($rightSlot);
+        $footer = Footer::new()->withRight($rightSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TestMessage('msg'), $area);
@@ -450,7 +450,7 @@ final class FooterTest extends TestCase
     public function renderWithMarginLeavingWidthOneRendersBackground(): void
     {
         $footer = Footer::new()
-            ->margin(Spacing::horizontal(1));
+            ->withMargin(Spacing::horizontal(1));
         $frame = new Frame(3, 1);
         $footer->render($frame, Rect::fromSize(3, 1), $this->context);
 
@@ -464,7 +464,7 @@ final class FooterTest extends TestCase
     public function renderWithMarginLeavingZeroWidthDoesNotRender(): void
     {
         $footer = Footer::new()
-            ->margin(Spacing::horizontal(1));
+            ->withMargin(Spacing::horizontal(1));
         $frame = new Frame(2, 1);
         $footer->render($frame, Rect::fromSize(2, 1), $this->context);
 
@@ -608,7 +608,7 @@ final class FooterTest extends TestCase
     public function customStyleOverridesDefaultBarStyle(): void
     {
         $customStyle = new Style(foreground: Color::rgb(255, 0, 0), background: Color::rgb(0, 255, 0));
-        $footer = Footer::new()->style($customStyle);
+        $footer = Footer::new()->withStyle($customStyle);
         $frame = new Frame(10, 1);
         $footer->render($frame, Rect::fromSize(10, 1), $this->context);
 
@@ -623,8 +623,8 @@ final class FooterTest extends TestCase
     public function renderWithPaddingLeavingWidthOneStillRendersContent(): void
     {
         $footer = Footer::new()
-            ->left(Text::new('X'))
-            ->padding(Spacing::horizontal(1));
+            ->withLeft(Text::new('X'))
+            ->withPadding(Spacing::horizontal(1));
         $frame = new Frame(3, 1);
         $footer->render($frame, Rect::fromSize(3, 1), $this->context);
 
@@ -638,8 +638,8 @@ final class FooterTest extends TestCase
     public function renderWithPaddingConsumingAllWidthSkipsSlotRendering(): void
     {
         $footer = Footer::new()
-            ->left(Text::new('X'))
-            ->padding(Spacing::horizontal(1));
+            ->withLeft(Text::new('X'))
+            ->withPadding(Spacing::horizontal(1));
         $frame = new Frame(2, 1);
         $footer->render($frame, Rect::fromSize(2, 1), $this->context);
 
@@ -667,7 +667,7 @@ final class FooterTest extends TestCase
     public function constraintIncludesMargin(): void
     {
         $footer = Footer::new()
-            ->margin(Spacing::vertical(1));
+            ->withMargin(Spacing::vertical(1));
 
         // 1 (content) + 1 (margin top) + 1 (margin bottom) = 3
         self::assertEquals(Constraint::exact(3), $footer->sizing()->rows);
@@ -680,7 +680,7 @@ final class FooterTest extends TestCase
     public function renderWithMarginLeavingZeroHeightDoesNotRender(): void
     {
         $footer = Footer::new()
-            ->margin(Spacing::vertical(1));
+            ->withMargin(Spacing::vertical(1));
         $frame = new Frame(10, 1);
         $footer->render($frame, Rect::fromSize(10, 1), $this->context);
 
@@ -696,7 +696,7 @@ final class FooterTest extends TestCase
         $centerCommand = Cmd::tick(2.0);
         $centerSlot = $this->createInteractiveReturningCommand($centerCommand);
 
-        $footer = Footer::new()->center($centerSlot);
+        $footer = Footer::new()->withCenter($centerSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TestMessage('msg'), $area);
@@ -708,7 +708,7 @@ final class FooterTest extends TestCase
     public function updateDetectsCenterSlotModelChange(): void
     {
         $spinner = new TickTally();
-        $footer = Footer::new()->center($spinner);
+        $footer = Footer::new()->withCenter($spinner);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TickMsg(1.0), $area);
@@ -720,7 +720,7 @@ final class FooterTest extends TestCase
     public function updateDetectsRightSlotModelChange(): void
     {
         $spinner = new TickTally();
-        $footer = Footer::new()->right($spinner);
+        $footer = Footer::new()->withRight($spinner);
         $area = Rect::fromSize(80, 1);
 
         $result = $footer->update(new TickMsg(1.0), $area);
@@ -744,7 +744,7 @@ final class FooterTest extends TestCase
     public function fillRectWithMarginOnlyCoversBarArea(): void
     {
         $footer = Footer::new()
-            ->margin(Spacing::horizontal(1));
+            ->withMargin(Spacing::horizontal(1));
         $frame = new Frame(10, 1);
         $footer->render($frame, Rect::fromSize(10, 1), $this->context);
 
@@ -757,7 +757,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function renderAtNonZeroOriginPositionsCorrectly(): void
     {
-        $footer = Footer::new()->left(Text::new('Hi'));
+        $footer = Footer::new()->withLeft(Text::new('Hi'));
         $frame = new Frame(30, 10);
         $area = new Rect(5, 7, 20, 1);
         $footer->render($frame, $area, $this->context);
@@ -774,7 +774,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function renderWithZeroWidthButPositiveHeightReturnsEarly(): void
     {
-        $footer = Footer::new()->left(Text::new('X'));
+        $footer = Footer::new()->withLeft(Text::new('X'));
         $frame = new Frame(5, 5);
         $area = new Rect(0, 0, 0, 1);
         $footer->render($frame, $area, $this->context);
@@ -789,7 +789,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function renderWithZeroHeightButPositiveWidthReturnsEarly(): void
     {
-        $footer = Footer::new()->left(Text::new('X'));
+        $footer = Footer::new()->withLeft(Text::new('X'));
         $frame = new Frame(10, 5);
         $area = new Rect(0, 0, 10, 0);
         $footer->render($frame, $area, $this->context);
@@ -805,8 +805,8 @@ final class FooterTest extends TestCase
     public function renderWithMarginLeavingZeroWidthButPositiveHeightReturnsEarly(): void
     {
         $footer = Footer::new()
-            ->left(Text::new('X'))
-            ->margin(Spacing::horizontal(5));
+            ->withLeft(Text::new('X'))
+            ->withMargin(Spacing::horizontal(5));
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $footer->render($frame, $area, $this->context);
@@ -823,8 +823,8 @@ final class FooterTest extends TestCase
     public function renderWithPaddingLeavingZeroWidthStillFillsBar(): void
     {
         $footer = Footer::new()
-            ->left(Text::new('X'))
-            ->padding(Spacing::horizontal(5));
+            ->withLeft(Text::new('X'))
+            ->withPadding(Spacing::horizontal(5));
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $footer->render($frame, $area, $this->context);
@@ -877,7 +877,7 @@ final class FooterTest extends TestCase
         $left = Text::new('Hi');
         $right = Text::new('Bye');
 
-        $children = [...Footer::new()->left($left)->right($right)->childWidgets(new Rect(0, 0, 20, 1))];
+        $children = [...Footer::new()->withLeft($left)->withRight($right)->childWidgets(new Rect(0, 0, 20, 1))];
 
         self::assertSame([$left, $right], array_column($children, 0));
         self::assertSame([0, 17], array_map(static fn (array $child): int => $child[1]->x, $children));
@@ -890,9 +890,9 @@ final class FooterTest extends TestCase
         $spy = new FooterAreaCapturingInteractive($receivedArea);
 
         $footer = Footer::new()
-            ->left($spy)
-            ->padding(Spacing::horizontal(1))
-            ->margin(Spacing::horizontal(1));
+            ->withLeft($spy)
+            ->withPadding(Spacing::horizontal(1))
+            ->withMargin(Spacing::horizontal(1));
         $footer->update(new TickMsg(0.0), new Rect(0, 0, 80, 1));
 
         self::assertNotNull($receivedArea);
@@ -909,9 +909,9 @@ final class FooterTest extends TestCase
         $rightCommand = Cmd::message(new TestMessage('right-cmd'));
 
         $footer = Footer::new()
-            ->left(new FooterCommandWidget($leftCommand))
-            ->center(new FooterCommandWidget($centerCommand))
-            ->right(new FooterCommandWidget($rightCommand));
+            ->withLeft(new FooterCommandWidget($leftCommand))
+            ->withCenter(new FooterCommandWidget($centerCommand))
+            ->withRight(new FooterCommandWidget($rightCommand));
 
         $result = $footer->update(new TickMsg(0.0), Rect::fromSize(80, 3));
 

@@ -264,17 +264,17 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
         $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
 
         $block = Block::new()
-            ->border($theme->borderFor($prominent))
-            ->borderStyle($override ?? $theme->borderStyleFor($prominent))
-            ->titleStyle($this->titleStyleOverride ?? $theme->titleStyle)
-            ->title($this->title);
+            ->withBorder($theme->borderFor($prominent))
+            ->withBorderStyle($override ?? $theme->borderStyleFor($prominent))
+            ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
+            ->withTitle($this->title);
 
         if ($this->margin !== null) {
-            $block = $block->margin($this->margin);
+            $block = $block->withMargin($this->margin);
         }
 
         if ($this->padding !== null) {
-            $block = $block->padding($this->padding);
+            $block = $block->withPadding($this->padding);
         }
 
         return $block;

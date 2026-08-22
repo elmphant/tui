@@ -22,7 +22,7 @@ final class PositionedOverlayTest extends TestCase
     public function itExposesItsContentAtTheAbsolutePositionItDrawsIt(): void
     {
         $content = Text::new('Hi');
-        $overlay = PositionedOverlay::at(5, 3)->content($content)->withSize(4, 2);
+        $overlay = PositionedOverlay::at(5, 3)->withContent($content)->withSize(4, 2);
 
         $placements = iterator_to_array($overlay->childWidgets(new Rect(0, 0, 20, 10)));
 
@@ -36,7 +36,7 @@ final class PositionedOverlayTest extends TestCase
     {
         $frame = new Frame(20, 10);
         $context = new RenderContext(Theme::dark());
-        $overlay = PositionedOverlay::at(5, 3)->content(Text::new('Hi'));
+        $overlay = PositionedOverlay::at(5, 3)->withContent(Text::new('Hi'));
 
         $overlay->render($frame, new Rect(0, 0, 20, 10), $context);
 
@@ -52,7 +52,7 @@ final class PositionedOverlayTest extends TestCase
         $context = new RenderContext(Theme::dark());
         $overlay = PositionedOverlay::at(0, 0)
             ->withSize(3, 1)
-            ->content(Text::new('abcdefghij'));
+            ->withContent(Text::new('abcdefghij'));
 
         $overlay->render($frame, new Rect(0, 0, 20, 10), $context);
 
@@ -71,7 +71,7 @@ final class PositionedOverlayTest extends TestCase
             $frame->putChar($i, 0, '.');
         }
         $context = new RenderContext(Theme::dark());
-        $overlay = PositionedOverlay::at(10, 0)->content(Text::new('abcdefghij'));
+        $overlay = PositionedOverlay::at(10, 0)->withContent(Text::new('abcdefghij'));
 
         $overlay->render($frame, new Rect(0, 0, 15, 1), $context);
 
@@ -89,7 +89,7 @@ final class PositionedOverlayTest extends TestCase
             $frame->putChar($i, 0, '.');
         }
         $context = new RenderContext(Theme::dark());
-        $overlay = PositionedOverlay::at(10, 0)->content(Text::new('abcdefghij'));
+        $overlay = PositionedOverlay::at(10, 0)->withContent(Text::new('abcdefghij'));
 
         $overlay->render($frame, new Rect(5, 0, 20, 1), $context);
 
@@ -106,7 +106,7 @@ final class PositionedOverlayTest extends TestCase
             $frame->putChar($i % 20, intdiv($i, 20), '.');
         }
         $context = new RenderContext(Theme::dark());
-        $overlay = PositionedOverlay::at(0, 5)->content(Text::new('hi'));
+        $overlay = PositionedOverlay::at(0, 5)->withContent(Text::new('hi'));
 
         $overlay->render($frame, new Rect(0, 0, 20, 10), $context);
 
@@ -123,7 +123,7 @@ final class PositionedOverlayTest extends TestCase
             $frame->putChar($i % 5, intdiv($i, 5), '.');
         }
         $context = new RenderContext(Theme::dark());
-        $overlay = PositionedOverlay::at(0, 0)->withSize(0, 2)->content(Text::new('abc'));
+        $overlay = PositionedOverlay::at(0, 0)->withSize(0, 2)->withContent(Text::new('abc'));
 
         $overlay->render($frame, new Rect(0, 0, 5, 5), $context);
 
@@ -141,7 +141,7 @@ final class PositionedOverlayTest extends TestCase
             $frame->putChar($i % 5, intdiv($i, 5), '.');
         }
         $context = new RenderContext(Theme::dark());
-        $overlay = PositionedOverlay::at(0, 0)->withSize(3, 0)->content(Text::new('abc'));
+        $overlay = PositionedOverlay::at(0, 0)->withSize(3, 0)->withContent(Text::new('abc'));
 
         $overlay->render($frame, new Rect(0, 0, 5, 5), $context);
 
@@ -174,7 +174,7 @@ final class PositionedOverlayTest extends TestCase
             }
         };
 
-        $overlay = PositionedOverlay::at(0, 3)->content($widget);
+        $overlay = PositionedOverlay::at(0, 3)->withContent($widget);
         $overlay->render($frame, new Rect(0, 0, 5, 10), $context);
 
         // Height = 10 - (3 - 0) = 7. Widget should fill rows 3..9.

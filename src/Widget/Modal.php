@@ -202,10 +202,10 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
 
         $theme = $context->theme;
         $block = Block::new()
-            ->border($theme->border)
-            ->borderStyle($this->borderStyleOverride ?? $theme->focusedBorderStyle)
-            ->titleStyle($this->titleStyleOverride ?? $theme->titleStyle)
-            ->title($this->title);
+            ->withBorder($theme->border)
+            ->withBorderStyle($this->borderStyleOverride ?? $theme->focusedBorderStyle)
+            ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
+            ->withTitle($this->title);
         $block->render($frame, $modalRect);
         $contentRect = $block->inner($modalRect);
 
@@ -276,7 +276,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     private function computeContentRect(Rect $area): Rect
     {
         $modalRect = $this->computeModalRect($area);
-        $block = Block::new()->border(BorderStyle::Rounded);
+        $block = Block::new()->withBorder(BorderStyle::Rounded);
 
         return $block->inner($modalRect);
     }

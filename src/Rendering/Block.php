@@ -28,32 +28,32 @@ final readonly class Block
         return new self();
     }
 
-    public function border(BorderStyle $border): static
+    public function withBorder(BorderStyle $border): static
     {
         return $this->cloneWith(border: $border);
     }
 
-    public function padding(Spacing $padding): static
+    public function withPadding(Spacing $padding): static
     {
         return $this->cloneWith(padding: $padding);
     }
 
-    public function margin(Spacing $margin): static
+    public function withMargin(Spacing $margin): static
     {
         return $this->cloneWith(margin: $margin);
     }
 
-    public function title(string $title): static
+    public function withTitle(string $title): static
     {
         return $this->cloneWith(title: $title);
     }
 
-    public function borderStyle(Style $style): static
+    public function withBorderStyle(Style $style): static
     {
         return $this->cloneWith(borderStyle: $style);
     }
 
-    public function titleStyle(Style $style): static
+    public function withTitleStyle(Style $style): static
     {
         return $this->cloneWith(titleStyle: $style);
     }

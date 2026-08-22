@@ -125,7 +125,7 @@ final class AppInteractivesTest extends TestCase
     public function layerOneTickBroadcastsToInteractives(): void
     {
         $spinner = new TickTally();
-        $footer = Footer::new()->right($spinner);
+        $footer = Footer::new()->withRight($spinner);
         $app = new FooterOnlyApp(footer: $footer);
 
         $result = $app->update(new TickMsg(1.0), Rect::fromSize(80, 24));
@@ -137,7 +137,7 @@ final class AppInteractivesTest extends TestCase
     public function layerTwoTickBroadcastsToInteractives(): void
     {
         $spinner = new TickTally();
-        $footer = Footer::new()->right($spinner);
+        $footer = Footer::new()->withRight($spinner);
         $panel = Panel::new('Test')->withFocus(true);
         $app = new PanelAndFooterApp(panel: $panel, footer: $footer);
 
@@ -149,7 +149,7 @@ final class AppInteractivesTest extends TestCase
     #[Test]
     public function emptyInteractivesNoChange(): void
     {
-        $footer = Footer::new()->right(Text::new('static'));
+        $footer = Footer::new()->withRight(Text::new('static'));
         $app = new FooterOnlyApp(footer: $footer);
 
         $result = $app->update(new TickMsg(1.0), Rect::fromSize(80, 24));
@@ -215,7 +215,7 @@ final class AppInteractivesTest extends TestCase
     #[Test]
     public function broadcastToWithNoCommandsReturnsNull(): void
     {
-        $footer = Footer::new()->right(Text::new('static'));
+        $footer = Footer::new()->withRight(Text::new('static'));
         $app = new FooterOnlyApp(footer: $footer);
 
         $result = $app->update(new TickMsg(1.0), Rect::fromSize(80, 24));

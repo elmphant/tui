@@ -53,32 +53,32 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         return $this->cloneWith(title: $title);
     }
 
-    public function center(Widget $widget): self
-    {
-        return $this->cloneWith(centerSlot: $widget);
-    }
-
-    public function left(Widget $widget): self
+    public function withLeft(Widget $widget): self
     {
         return $this->cloneWith(leftSlot: $widget);
     }
 
-    public function right(Widget $widget): self
+    public function withCenter(Widget $widget): self
+    {
+        return $this->cloneWith(centerSlot: $widget);
+    }
+
+    public function withRight(Widget $widget): self
     {
         return $this->cloneWith(rightSlot: $widget);
     }
 
-    public function style(Style $style): self
+    public function withStyle(Style $style): self
     {
         return $this->cloneWith(style: $style);
     }
 
-    public function padding(Spacing $padding): self
+    public function withPadding(Spacing $padding): self
     {
         return $this->cloneWith(padding: $padding);
     }
 
-    public function margin(Spacing $margin): self
+    public function withMargin(Spacing $margin): self
     {
         return $this->cloneWith(margin: $margin);
     }

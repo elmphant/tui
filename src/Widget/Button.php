@@ -155,9 +155,9 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
         // rounded corner; a button is small enough that the heavier stroke reads as
         // pressable rather than as a mismatched box.
         $block = Block::new()
-            ->border($showsFocus ? BorderStyle::Thick : $theme->border)
-            ->borderStyle($borderStyle)
-            ->padding(Spacing::horizontal(1));
+            ->withBorder($showsFocus ? BorderStyle::Thick : $theme->border)
+            ->withBorderStyle($borderStyle)
+            ->withPadding(Spacing::horizontal(1));
         $block->render($frame, $area);
         $inner = $block->inner($area);
 

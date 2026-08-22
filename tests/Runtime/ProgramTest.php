@@ -329,7 +329,7 @@ final class ProgramTest extends TestCase
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('state Stopped');
-        $program->fps(30);
+        $program->withFps(30);
     }
 
     #[Test]
@@ -369,9 +369,9 @@ final class ProgramTest extends TestCase
     public function builderMethodsReturnSelf(): void
     {
         $program = Program::new($this->createMockModel());
-        self::assertSame($program, $program->altScreen());
-        self::assertSame($program, $program->mouseTracking());
-        self::assertSame($program, $program->fps(30));
+        self::assertSame($program, $program->withAltScreen());
+        self::assertSame($program, $program->withMouseTracking());
+        self::assertSame($program, $program->withFps(30));
         self::assertSame($program, $program->onError(fn () => Cmd::quit()));
     }
 
@@ -379,7 +379,7 @@ final class ProgramTest extends TestCase
     public function altScreenEnablesFlag(): void
     {
         $program = Program::new($this->createMockModel());
-        $program->altScreen();
+        $program->withAltScreen();
 
         $reflection = new ReflectionProperty(Program::class, 'useAltScreen');
         self::assertTrue($reflection->getValue($program));
@@ -389,7 +389,7 @@ final class ProgramTest extends TestCase
     public function mouseTrackingEnablesFlag(): void
     {
         $program = Program::new($this->createMockModel());
-        $program->mouseTracking();
+        $program->withMouseTracking();
 
         $reflection = new ReflectionProperty(Program::class, 'useMouseTracking');
         self::assertTrue($reflection->getValue($program));
@@ -399,7 +399,7 @@ final class ProgramTest extends TestCase
     public function fpsClampsToMinimumOnePointZero(): void
     {
         $program = Program::new($this->createMockModel());
-        $program->fps(0.5);
+        $program->withFps(0.5);
 
         $reflection = new ReflectionProperty(Program::class, 'framesPerSecond');
         self::assertSame(1.0, $reflection->getValue($program));
@@ -409,7 +409,7 @@ final class ProgramTest extends TestCase
     public function fpsAcceptsValueAboveMinimum(): void
     {
         $program = Program::new($this->createMockModel());
-        $program->fps(30.0);
+        $program->withFps(30.0);
 
         $reflection = new ReflectionProperty(Program::class, 'framesPerSecond');
         self::assertSame(30.0, $reflection->getValue($program));
@@ -419,7 +419,7 @@ final class ProgramTest extends TestCase
     public function fpsClampedToMinimumOne(): void
     {
         $program = Program::new($this->createMockModel());
-        $result = $program->fps(0.5);
+        $result = $program->withFps(0.5);
         self::assertSame($program, $result);
     }
 
@@ -427,9 +427,9 @@ final class ProgramTest extends TestCase
     public function builderMethodsChainable(): void
     {
         $program = Program::new($this->createMockModel())
-            ->altScreen()
-            ->mouseTracking()
-            ->fps(30)
+            ->withAltScreen()
+            ->withMouseTracking()
+            ->withFps(30)
             ->onError(fn (ErrorMsg $error) => Cmd::quit());
 
         self::assertInstanceOf(Program::class, $program);
@@ -652,7 +652,7 @@ final class ProgramTest extends TestCase
     public function teardownAltScreenModeDoesNotMoveCursor(): void
     {
         $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel())->altScreen();
+        $program = Program::new($this->createMockModel())->withAltScreen();
         $session = new TerminalSession($terminal, true, false);
         $session->start();
 
@@ -1806,7 +1806,7 @@ final class ProgramTest extends TestCase
         $clock = new TestClock(10.25);
         $program = Program::new($this->createMockModel())
             ->withClock($clock)
-            ->fps(2.0);
+            ->withFps(2.0);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('lastRender')->setValue($program, 10.0);
         $nextRenderDelay = $reflection->getMethod('nextRenderDelay');
@@ -2169,9 +2169,9 @@ final class ProgramTest extends TestCase
      */
     public static function configurationBuilderProvider(): iterable
     {
-        yield 'altScreen' => [fn (Program $program) => $program->altScreen()];
-        yield 'mouseTracking' => [fn (Program $program) => $program->mouseTracking()];
-        yield 'fps' => [fn (Program $program) => $program->fps(30.0)];
+        yield 'altScreen' => [fn (Program $program) => $program->withAltScreen()];
+        yield 'mouseTracking' => [fn (Program $program) => $program->withMouseTracking()];
+        yield 'fps' => [fn (Program $program) => $program->withFps(30.0)];
         yield 'onError' => [fn (Program $program) => $program->onError(fn () => null)];
         yield 'withTerminal' => [fn (Program $program) => $program->withTerminal(new VirtualTerminal(80, 24))];
         yield 'withTheme' => [fn (Program $program) => $program->withTheme(Theme::dark())];
@@ -3101,7 +3101,7 @@ final class ProgramTest extends TestCase
             }
         };
 
-        $program = $this->buildTickableProgram()->fps(1.0);
+        $program = $this->buildTickableProgram()->withFps(1.0);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
         $reflection->getProperty('isDirty')->setValue($program, true);
@@ -3956,7 +3956,7 @@ final class ProgramTest extends TestCase
     private function buildTickableProgram(): Program
     {
         $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel())->fps(30.0);
+        $program = Program::new($this->createMockModel())->withFps(30.0);
         $reflection = new ReflectionClass($program);
 
         $reflection->getProperty('terminal')->setValue($program, $terminal);

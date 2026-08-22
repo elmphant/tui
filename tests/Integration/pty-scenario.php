@@ -82,7 +82,7 @@ $model = new class($scenario, $readyFile, $resultFile) implements Model {
 };
 
 try {
-    Program::new($model)->altScreen()->mouseTracking()->start();
+    Program::new($model)->withAltScreen()->withMouseTracking()->start();
 } finally {
     if ($scenario === 'blocking') {
         $metadata = stream_get_meta_data(STDIN);

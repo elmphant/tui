@@ -169,7 +169,7 @@ final class Program
     /**
      * @return self<TModel>
      */
-    public function altScreen(): self
+    public function withAltScreen(): self
     {
         $this->assertConfigurable();
         $this->useAltScreen = true;
@@ -180,7 +180,7 @@ final class Program
     /**
      * @return self<TModel>
      */
-    public function mouseTracking(): self
+    public function withMouseTracking(): self
     {
         $this->assertConfigurable();
         $this->useMouseTracking = true;
@@ -191,7 +191,7 @@ final class Program
     /**
      * @return self<TModel>
      */
-    public function fps(float $framesPerSecond): self
+    public function withFps(float $framesPerSecond): self
     {
         $this->assertConfigurable();
         $this->framesPerSecond = max(1.0, $framesPerSecond);

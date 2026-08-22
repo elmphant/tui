@@ -76,7 +76,7 @@ final class HeaderTest extends TestCase
     public function rendersLeftSlot(): void
     {
         $header = Header::new('Title')
-            ->left(Text::new('Left'));
+            ->withLeft(Text::new('Left'));
         $frame = new Frame(30, 1);
         $header->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -88,7 +88,7 @@ final class HeaderTest extends TestCase
     public function rendersRightSlotRightAligned(): void
     {
         $header = Header::new('Title')
-            ->right(Text::new('Right'));
+            ->withRight(Text::new('Right'));
         $frame = new Frame(30, 1);
         $header->render($frame, Rect::fromSize(30, 1), $this->context);
 
@@ -100,8 +100,8 @@ final class HeaderTest extends TestCase
     public function rendersAllThreeSlots(): void
     {
         $header = Header::new('Center')
-            ->left(Text::new('L'))
-            ->right(Text::new('R'));
+            ->withLeft(Text::new('L'))
+            ->withRight(Text::new('R'));
         $frame = new Frame(20, 1);
         $header->render($frame, Rect::fromSize(20, 1), $this->context);
 
@@ -139,7 +139,7 @@ final class HeaderTest extends TestCase
     public function paddingShiftsContentInward(): void
     {
         $header = Header::new('Title')
-            ->padding(Spacing::horizontal(1));
+            ->withPadding(Spacing::horizontal(1));
         $frame = new Frame(20, 1);
         $header->render($frame, Rect::fromSize(20, 1), $this->context);
 
@@ -154,7 +154,7 @@ final class HeaderTest extends TestCase
     public function constraintIncludesPadding(): void
     {
         $header = Header::new('Title')
-            ->padding(Spacing::vertical(1));
+            ->withPadding(Spacing::vertical(1));
 
         self::assertEquals(Constraint::exact(3), $header->sizing()->rows);
     }
@@ -163,7 +163,7 @@ final class HeaderTest extends TestCase
     public function constraintIncludesMargin(): void
     {
         $header = Header::new('Title')
-            ->margin(Spacing::vertical(1));
+            ->withMargin(Spacing::vertical(1));
 
         self::assertEquals(Constraint::exact(3), $header->sizing()->rows);
     }
@@ -172,7 +172,7 @@ final class HeaderTest extends TestCase
     public function marginShiftsBorderInward(): void
     {
         $header = Header::new('Title')
-            ->margin(Spacing::horizontal(1));
+            ->withMargin(Spacing::horizontal(1));
         $frame = new Frame(22, 1);
         $header->render($frame, Rect::fromSize(22, 1), $this->context);
 
@@ -191,7 +191,7 @@ final class HeaderTest extends TestCase
     public function centerSlotDisplacesTitleToTheLeft(): void
     {
         $header = Header::new('Title')
-            ->center(Text::new('Custom'));
+            ->withCenter(Text::new('Custom'));
         $frame = new Frame(20, 1);
         $header->render($frame, Rect::fromSize(20, 1), $this->context);
 
@@ -203,7 +203,7 @@ final class HeaderTest extends TestCase
     public function centerSlotWithoutTitle(): void
     {
         $header = Header::new()
-            ->center(Text::new('Brand'));
+            ->withCenter(Text::new('Brand'));
         $frame = new Frame(20, 1);
         $header->render($frame, Rect::fromSize(20, 1), $this->context);
 
@@ -222,7 +222,7 @@ final class HeaderTest extends TestCase
     public function dividerWithPaddingConstraint(): void
     {
         $header = Header::new('Title')
-            ->padding(Spacing::vertical(1))
+            ->withPadding(Spacing::vertical(1))
             ->withDivider();
 
         self::assertEquals(Constraint::exact(4), $header->sizing()->rows);
@@ -266,7 +266,7 @@ final class HeaderTest extends TestCase
     public function updateForwardsTickToInteractiveSlot(): void
     {
         $spinner = new TickTally();
-        $header = Header::new()->right($spinner);
+        $header = Header::new()->withRight($spinner);
         $area = Rect::fromSize(80, 1);
 
         $result = $header->update(new TickMsg(1.0), $area);
@@ -279,7 +279,7 @@ final class HeaderTest extends TestCase
     public function aGlobalRebindingReachesTheKeysASlotAnswers(): void
     {
         $header = Header::new()
-            ->right(TextInput::new()->withValue('typed')->withFocus(true))
+            ->withRight(TextInput::new()->withValue('typed')->withFocus(true))
             ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]));
 
         $result = $header->update(new KeyMsg('k', ctrl: true), Rect::fromSize(80, 1));
@@ -293,7 +293,7 @@ final class HeaderTest extends TestCase
     #[Test]
     public function updateLeavesSlotsAloneInAnAreaTooSmallToDrawThem(): void
     {
-        $header = Header::new()->right(new TickTally());
+        $header = Header::new()->withRight(new TickTally());
 
         $result = $header->update(new TickMsg(1.0), Rect::fromSize(80, 0));
 
@@ -303,7 +303,7 @@ final class HeaderTest extends TestCase
     #[Test]
     public function updateReturnsUnchangedWhenNoInteractiveSlots(): void
     {
-        $header = Header::new('Title')->right(Text::new('static'));
+        $header = Header::new('Title')->withRight(Text::new('static'));
         $area = Rect::fromSize(80, 1);
 
         $result = $header->update(new TickMsg(1.0), $area);
@@ -325,7 +325,7 @@ final class HeaderTest extends TestCase
         $leftSlot = $this->createInteractiveReturningCommand($leftCommand);
         $rightSlot = $this->createInteractiveReturningCommand($rightCommand);
 
-        $header = Header::new()->left($leftSlot)->right($rightSlot);
+        $header = Header::new()->withLeft($leftSlot)->withRight($rightSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $header->update(new TestMessage('msg'), $area);
@@ -337,7 +337,7 @@ final class HeaderTest extends TestCase
     #[Test]
     public function updateWithNoCommandsReturnsNull(): void
     {
-        $header = Header::new()->left(Text::new('static'));
+        $header = Header::new()->withLeft(Text::new('static'));
         $result = $header->update(new TickMsg(0.0), Rect::fromSize(80, 1));
         self::assertNull($result->command);
     }
@@ -347,7 +347,7 @@ final class HeaderTest extends TestCase
     {
         $command = Cmd::tick(1.0);
         $slot = $this->createInteractiveReturningCommand($command);
-        $header = Header::new()->left($slot);
+        $header = Header::new()->withLeft($slot);
         $result = $header->update(new TickMsg(0.0), Rect::fromSize(80, 1));
         self::assertNotNull($result->command);
         self::assertNotInstanceOf(BatchCmd::class, $result->command);
@@ -435,7 +435,7 @@ final class HeaderTest extends TestCase
     public function renderWithMarginLeavingWidthOneRendersBackground(): void
     {
         $header = Header::new('X')
-            ->margin(Spacing::horizontal(1));
+            ->withMargin(Spacing::horizontal(1));
         $frame = new Frame(3, 1);
         $header->render($frame, Rect::fromSize(3, 1), $this->context);
 
@@ -450,7 +450,7 @@ final class HeaderTest extends TestCase
     public function renderWithMarginLeavingZeroWidthDoesNotRender(): void
     {
         $header = Header::new('X')
-            ->margin(Spacing::horizontal(1));
+            ->withMargin(Spacing::horizontal(1));
         $frame = new Frame(2, 1);
         $header->render($frame, Rect::fromSize(2, 1), $this->context);
 
@@ -479,7 +479,7 @@ final class HeaderTest extends TestCase
     public function barHeightIncludesPaddingTopAndBottom(): void
     {
         $header = Header::new('Hi')
-            ->padding(Spacing::vertical(1));
+            ->withPadding(Spacing::vertical(1));
         $frame = new Frame(10, 3);
         $header->render($frame, Rect::fromSize(10, 3), $this->context);
 
@@ -497,7 +497,7 @@ final class HeaderTest extends TestCase
     public function customStyleOverridesThemeHeaderStyle(): void
     {
         $customStyle = new Style(foreground: Color::rgb(255, 0, 0), background: Color::rgb(0, 255, 0));
-        $header = Header::new('X')->style($customStyle);
+        $header = Header::new('X')->withStyle($customStyle);
         $frame = new Frame(5, 1);
         $header->render($frame, Rect::fromSize(5, 1), $this->context);
 
@@ -529,7 +529,7 @@ final class HeaderTest extends TestCase
     public function renderWithPaddingLeavingWidthOneStillRendersTitle(): void
     {
         $header = Header::new('X')
-            ->padding(Spacing::horizontal(1));
+            ->withPadding(Spacing::horizontal(1));
         $frame = new Frame(3, 1);
         $header->render($frame, Rect::fromSize(3, 1), $this->context);
 
@@ -543,7 +543,7 @@ final class HeaderTest extends TestCase
     public function renderWithPaddingConsumingAllWidthStillFillsBackground(): void
     {
         $header = Header::new('X')
-            ->padding(Spacing::horizontal(1));
+            ->withPadding(Spacing::horizontal(1));
         $frame = new Frame(2, 1);
         $header->render($frame, Rect::fromSize(2, 1), $this->context);
 
@@ -643,7 +643,7 @@ final class HeaderTest extends TestCase
     public function renderWithMarginLeavingHeightOneRendersBackground(): void
     {
         $header = Header::new()
-            ->margin(Spacing::vertical(0));
+            ->withMargin(Spacing::vertical(0));
         $frame = new Frame(10, 1);
         $header->render($frame, Rect::fromSize(10, 1), $this->context);
 
@@ -673,7 +673,7 @@ final class HeaderTest extends TestCase
         $rightCommand = Cmd::tick(2.0);
         $rightSlot = $this->createInteractiveReturningCommand($rightCommand);
 
-        $header = Header::new()->right($rightSlot);
+        $header = Header::new()->withRight($rightSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $header->update(new TestMessage('msg'), $area);
@@ -690,7 +690,7 @@ final class HeaderTest extends TestCase
         $centerCommand = Cmd::tick(3.0);
         $centerSlot = $this->createInteractiveReturningCommand($centerCommand);
 
-        $header = Header::new()->center($centerSlot);
+        $header = Header::new()->withCenter($centerSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $header->update(new TestMessage('msg'), $area);
@@ -710,7 +710,7 @@ final class HeaderTest extends TestCase
         $leftSlot = $this->createInteractiveReturningCommand($leftCommand);
         $centerSlot = $this->createInteractiveReturningCommand($centerCommand);
 
-        $header = Header::new()->left($leftSlot)->center($centerSlot);
+        $header = Header::new()->withLeft($leftSlot)->withCenter($centerSlot);
         $area = Rect::fromSize(80, 1);
 
         $result = $header->update(new TestMessage('msg'), $area);
@@ -723,7 +723,7 @@ final class HeaderTest extends TestCase
     public function updateDetectsLeftSlotModelChange(): void
     {
         $spinner = new TickTally();
-        $header = Header::new()->left($spinner);
+        $header = Header::new()->withLeft($spinner);
         $area = Rect::fromSize(80, 1);
 
         $result = $header->update(new TickMsg(1.0), $area);
@@ -735,7 +735,7 @@ final class HeaderTest extends TestCase
     public function updateDetectsCenterSlotModelChange(): void
     {
         $spinner = new TickTally();
-        $header = Header::new()->center($spinner);
+        $header = Header::new()->withCenter($spinner);
         $area = Rect::fromSize(80, 1);
 
         $result = $header->update(new TickMsg(1.0), $area);
@@ -747,7 +747,7 @@ final class HeaderTest extends TestCase
     public function barHeightClampedToInnerAreaHeight(): void
     {
         $header = Header::new('X')
-            ->padding(Spacing::vertical(1));
+            ->withPadding(Spacing::vertical(1));
         $frame = new Frame(10, 1);
         $header->render($frame, Rect::fromSize(10, 1), $this->context);
 
@@ -769,7 +769,7 @@ final class HeaderTest extends TestCase
     public function dividerYIsExactlyBarYPlusBarHeight(): void
     {
         $header = Header::new('T')
-            ->padding(Spacing::vertical(1))
+            ->withPadding(Spacing::vertical(1))
             ->withDivider();
         $frame = new Frame(10, 4);
         $header->render($frame, Rect::fromSize(10, 4), $this->context);
@@ -848,7 +848,7 @@ final class HeaderTest extends TestCase
     public function renderWithMarginLeavingZeroWidthReturnsEarly(): void
     {
         $header = Header::new('X')
-            ->margin(Spacing::horizontal(5));
+            ->withMargin(Spacing::horizontal(5));
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $header->render($frame, $area, $this->context);
@@ -865,7 +865,7 @@ final class HeaderTest extends TestCase
     public function renderWithMarginLeavingZeroHeightReturnsEarly(): void
     {
         $header = Header::new('X')
-            ->margin(Spacing::vertical(1));
+            ->withMargin(Spacing::vertical(1));
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $header->render($frame, $area, $this->context);
@@ -881,7 +881,7 @@ final class HeaderTest extends TestCase
         $left = Text::new('Hi');
         $right = Text::new('Bye');
 
-        $children = [...Header::new()->left($left)->right($right)->childWidgets(new Rect(0, 0, 20, 1))];
+        $children = [...Header::new()->withLeft($left)->withRight($right)->childWidgets(new Rect(0, 0, 20, 1))];
 
         self::assertSame([$left, $right], array_column($children, 0));
         self::assertSame([0, 17], array_map(static fn (array $child): int => $child[1]->x, $children));
@@ -894,9 +894,9 @@ final class HeaderTest extends TestCase
         $spy = new AreaCapturingInteractive($receivedArea);
 
         $header = Header::new()
-            ->left($spy)
-            ->padding(Spacing::horizontal(1))
-            ->margin(Spacing::horizontal(1));
+            ->withLeft($spy)
+            ->withPadding(Spacing::horizontal(1))
+            ->withMargin(Spacing::horizontal(1));
         $header->update(new TickMsg(0.0), new Rect(0, 0, 80, 3));
 
         self::assertNotNull($receivedArea);
@@ -912,8 +912,8 @@ final class HeaderTest extends TestCase
         $spy = new AreaCapturingInteractive($receivedArea);
 
         $header = Header::new()
-            ->left($spy)
-            ->padding(Spacing::vertical(1));
+            ->withLeft($spy)
+            ->withPadding(Spacing::vertical(1));
         $header->update(new TickMsg(0.0), new Rect(0, 0, 80, 5));
 
         self::assertNotNull($receivedArea);
@@ -929,9 +929,9 @@ final class HeaderTest extends TestCase
         $rightCommand = Cmd::message(new TestMessage('right-cmd'));
 
         $header = Header::new()
-            ->left(new HeaderCommandWidget($leftCommand))
-            ->center(new HeaderCommandWidget($centerCommand))
-            ->right(new HeaderCommandWidget($rightCommand));
+            ->withLeft(new HeaderCommandWidget($leftCommand))
+            ->withCenter(new HeaderCommandWidget($centerCommand))
+            ->withRight(new HeaderCommandWidget($rightCommand));
 
         $result = $header->update(new TickMsg(0.0), Rect::fromSize(80, 3));
 

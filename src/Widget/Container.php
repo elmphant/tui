@@ -225,15 +225,15 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         $block = Block::new();
 
         if ($this->margin !== null) {
-            $block = $block->margin($this->margin);
+            $block = $block->withMargin($this->margin);
         }
         if ($this->border !== null) {
             $block = $block
-                ->border($this->border)
-                ->borderStyle($this->borderStyle ?? $context->theme->borderStyle);
+                ->withBorder($this->border)
+                ->withBorderStyle($this->borderStyle ?? $context->theme->borderStyle);
         }
         if ($this->padding !== null) {
-            $block = $block->padding($this->padding);
+            $block = $block->withPadding($this->padding);
         }
 
         return $block;

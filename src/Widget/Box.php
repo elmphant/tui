@@ -146,13 +146,13 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
         $titleStyle = $this->titleStyleOverride ?? $theme->titleStyle;
 
         $block = Block::new()
-            ->border($theme->border)
-            ->borderStyle($borderStyle)
-            ->titleStyle($titleStyle)
-            ->title($this->title);
+            ->withBorder($theme->border)
+            ->withBorderStyle($borderStyle)
+            ->withTitleStyle($titleStyle)
+            ->withTitle($this->title);
 
         if ($this->padding !== null) {
-            $block = $block->padding($this->padding);
+            $block = $block->withPadding($this->padding);
         }
 
         $frame->pushClip($this->contentArea($area));
@@ -173,8 +173,8 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
      */
     private function contentArea(Rect $area): Rect
     {
-        $block = Block::new()->border(BorderStyle::Solid);
+        $block = Block::new()->withBorder(BorderStyle::Solid);
 
-        return ($this->padding === null ? $block : $block->padding($this->padding))->inner($area);
+        return ($this->padding === null ? $block : $block->withPadding($this->padding))->inner($area);
     }
 }
