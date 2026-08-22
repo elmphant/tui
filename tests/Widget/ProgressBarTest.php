@@ -475,6 +475,28 @@ final class ProgressBarTest extends TestCase
         self::assertSame($customColor->value, $frame->foregrounds[0]);
     }
 
+    #[Test]
+    public function thePercentReadsOnWhateverFillItSitsOn(): void
+    {
+        $fill = Color::hex('#00008b');
+
+        $progressBar = ProgressBar::new()
+            ->withProgress(0.9)
+            ->withFillStyle(new Style(foreground: $fill))
+            ->withShowPercent(true);
+
+        $frame = new Frame(20, 1);
+        $progressBar->render($frame, new Rect(0, 0, 20, 1), $this->context);
+
+        $percentIndex = $this->findCharIndex($frame, '%', 20);
+        self::assertNotNull($percentIndex);
+        self::assertGreaterThanOrEqual(
+            4.5,
+            Color::fromValue($frame->foregrounds[$percentIndex])->contrastRatio($fill),
+            'the number is read off the fill it is drawn on, so the fill decides the ink',
+        );
+    }
+
     /**
      * L136: Coalesce — emptyStyleOverride ?? theme->emptyStyle.
      * Custom empty style must be used instead of theme default.
@@ -741,8 +763,9 @@ final class ProgressBarTest extends TestCase
     /**
      * L168: GreaterThan, DecrementInteger, IncrementInteger, Ternary — percent foreground color.
      * L169: GreaterThan, Ternary — percent background color.
-     * When display > 0.5, percent uses Color::ansi(0) foreground and fillColor background.
-     * When display <= 0.5, uses labelColor foreground and baseBackground.
+     * When display > 0.5, percent sits on the fill and takes the ink that fill
+     * contrasts with — ansi(0) for this theme. When display <= 0.5, it uses
+     * labelColor foreground and baseBackground.
      */
     #[Test]
     public function percentColorChangesAboveHalfProgress(): void
