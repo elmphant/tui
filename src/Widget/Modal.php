@@ -106,8 +106,9 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     /**
      * Size the modal to its content instead of to a share of the screen.
      *
-     * Content that reports neither MeasureWidth nor MeasureHeight keeps the
-     * percentage sizing for the dimension it cannot answer for.
+     * The width comes from the content's own column constraint, the height from
+     * MeasureHeight; content that answers neither keeps the percentage sizing for
+     * the dimension it cannot speak for.
      */
     public function sizedToContent(): self
     {
