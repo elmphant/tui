@@ -432,12 +432,17 @@ final class Program
 
         $this->sigtstpCallbackId = EventLoop::onSignal(SIGTSTP, fn () => $this->suspend());
 
+        $this->screen->clear();
+        $this->adoptTerminalSize();
+    }
+
+    private function adoptTerminalSize(): void
+    {
         [$this->width, $this->height] = $this->terminal->size();
         $this->terminalSession?->updateHeight($this->height);
         $this->backBuffer = new Frame($this->width, $this->height);
-        $this->screen->clear();
-        $this->isDirty = true;
         $this->messageQueue->enqueue(new ResizeMsg($this->width, $this->height));
+        $this->isDirty = true;
     }
 
     private function cancelEventLoopWatchers(): void
@@ -705,11 +710,7 @@ final class Program
         }
         $this->resizePending = false;
         $this->resizeNeedsScreenClear = true;
-        [$this->width, $this->height] = $this->terminal->size();
-        $this->terminalSession?->updateHeight($this->height);
-        $this->backBuffer = new Frame($this->width, $this->height);
-        $this->messageQueue->enqueue(new ResizeMsg($this->width, $this->height));
-        $this->isDirty = true;
+        $this->adoptTerminalSize();
     }
 
     private function tracedRenderFrame(): void
