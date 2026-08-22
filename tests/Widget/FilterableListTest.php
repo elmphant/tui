@@ -119,6 +119,14 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function aHostCanSayWhatAQueryThatKeptNothingReads(): void
+    {
+        $list = $this->typed($this->commands()->withNoMatchText('No command by that name'), 'nonsense');
+
+        self::assertStringContainsString('No command by that name', $this->render($list));
+    }
+
+    #[Test]
     public function aNewQueryPutsTheCursorBackOnTheBestMatch(): void
     {
         $moved = $this->press($this->typed($this->commands(), 'cache'), Key::Down);

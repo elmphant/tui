@@ -65,7 +65,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private TextInput $field,
         private ListView $list,
         private ?Matcher $matcher = null,
-        private string $emptyText = 'No matches',
+        private string $noMatchText = 'No matches',
         private ?string $picked = null,
         private string $emptyCaption = '',
         ?array $matching = null,
@@ -111,9 +111,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(field: $this->field->withPlaceholder($placeholder));
     }
 
-    public function withEmptyText(string $emptyText): self
+    /**
+     * What the list shows where the query kept nothing — not to be confused with
+     * withEmptyCaption(), which is what the caption reads when nothing is chosen.
+     */
+    public function withNoMatchText(string $noMatchText): self
     {
-        return $this->cloneWith(emptyText: $emptyText);
+        return $this->cloneWith(noMatchText: $noMatchText);
     }
 
     public function withEmptyCaption(string $caption): self
@@ -392,7 +396,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         }
 
         if ($this->list->itemCount() === 0) {
-            Paragraph::fromLines([new Line([Span::token($this->emptyText, StyleToken::Dim)])])
+            Paragraph::fromLines([new Line([Span::token($this->noMatchText, StyleToken::Dim)])])
                 ->render($frame, $body, $context);
 
             return;
