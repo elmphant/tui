@@ -60,6 +60,21 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
+    public function aRowToldNotToWrapRestsAtEitherEndInstead(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $row = CheckboxRow::new(['system', 'pages', 'all'])->wrapping(false)->withFocus(true);
+
+        $left = $row->update(new KeyMsg(Key::Left), $area)->model;
+        self::assertInstanceOf(CheckboxRow::class, $left);
+        self::assertSame(0, $left->cursor(), 'the near end holds');
+
+        $right = $row->withCursor(2)->update(new KeyMsg(Key::Right), $area)->model;
+        self::assertInstanceOf(CheckboxRow::class, $right);
+        self::assertSame(2, $right->cursor(), 'and so does the far one');
+    }
+
+    #[Test]
     public function breaksOntoAFurtherRowRatherThanRunningOffTheEdge(): void
     {
         $row = CheckboxRow::new(['system', 'pages'])->withChecked([true, false]);
