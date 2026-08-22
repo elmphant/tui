@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Runtime;
 
-use Elmphant\Tui\Input\TerminalInterface;
+use Elmphant\Tui\Input\Terminal;
 use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Runtime\ShutdownRestorer;
 use Elmphant\Tui\Runtime\TerminalSession;
@@ -114,7 +114,7 @@ final class TerminalSessionTest extends TestCase
     #[Test]
     public function failedActivationRestoresOnlyModesThatWereEnabled(): void
     {
-        $terminal = $this->createMock(TerminalInterface::class);
+        $terminal = $this->createMock(Terminal::class);
         $terminal->expects(self::once())->method('enableRawMode');
         $terminal->expects(self::once())->method('enableBracketedPaste');
         $terminal->expects(self::once())->method('hideCursor');
@@ -223,7 +223,7 @@ final class TerminalSessionTest extends TestCase
     public function closeRetriesModesThatFailedToRestore(): void
     {
         $disableRawModeCalls = 0;
-        $terminal = $this->createMock(TerminalInterface::class);
+        $terminal = $this->createMock(Terminal::class);
         $terminal->expects(self::exactly(2))->method('disableRawMode')->willReturnCallback(
             static function () use (&$disableRawModeCalls): void {
                 if (++$disableRawModeCalls === 1) {
@@ -249,7 +249,7 @@ final class TerminalSessionTest extends TestCase
     #[Test]
     public function aModeThatNeverRestoresKeepsTheSessionRegistered(): void
     {
-        $terminal = $this->createMock(TerminalInterface::class);
+        $terminal = $this->createMock(Terminal::class);
         $terminal->method('disableRawMode')->willThrowException(new RuntimeException('stty failed'));
 
         $baseline = ShutdownRestorer::activeCount();
@@ -327,7 +327,7 @@ final class TerminalSessionTest extends TestCase
     #[Test]
     public function closeFlushesPendingTerminalOutput(): void
     {
-        $terminal = $this->createMock(TerminalInterface::class);
+        $terminal = $this->createMock(Terminal::class);
         $terminal->expects(self::once())->method('flush');
 
         $session = new TerminalSession($terminal, false, false);

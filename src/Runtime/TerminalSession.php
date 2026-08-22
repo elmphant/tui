@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Runtime;
 
 use Closure;
-use Elmphant\Tui\Input\TerminalInterface;
+use Elmphant\Tui\Input\Terminal;
 use Elmphant\Tui\Rendering\Ansi;
 use LogicException;
 use Throwable;
@@ -26,7 +26,7 @@ final class TerminalSession
     private int $height = 24;
 
     public function __construct(
-        private readonly TerminalInterface $terminal,
+        private readonly Terminal $terminal,
         private readonly bool $useAltScreen,
         private readonly bool $useMouseTracking,
     ) {

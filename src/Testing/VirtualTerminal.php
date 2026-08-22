@@ -6,12 +6,12 @@ namespace Elmphant\Tui\Testing;
 
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
-use Elmphant\Tui\Input\TerminalInterface;
+use Elmphant\Tui\Input\Terminal;
 use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\TerminalText;
 use RuntimeException;
 
-final class VirtualTerminal implements TerminalInterface
+final class VirtualTerminal implements Terminal
 {
     private string $output = '';
     private bool $rawModeEnabled = false;

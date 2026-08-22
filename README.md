@@ -699,7 +699,7 @@ Program::new($model)
 
 A `Program` is intentionally one-shot. Its lifecycle is `ProgramState::New → Running → Stopped`; create a fresh `Program` to run a model again. Configuration methods are valid only while the state is `New`.
 
-The built-in interactive terminal backend currently targets POSIX TTYs. It fails explicitly when stdin is not a TTY, `proc_open()`/`stty` is unavailable, or the platform is Windows. Inject a custom `TerminalInterface` for another backend or for tests.
+The built-in interactive terminal backend currently targets POSIX TTYs. It fails explicitly when stdin is not a TTY, `proc_open()`/`stty` is unavailable, or the platform is Windows. Inject a custom `Terminal` for another backend or for tests (`SystemTerminal` is the POSIX one, `VirtualTerminal` the in-memory one).
 
 ## Tracing
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Rendering;
 
 use Elmphant\Tui\Input\ColorProfile;
-use Elmphant\Tui\Input\TerminalOutputInterface;
+use Elmphant\Tui\Input\TerminalOutput;
 use LogicException;
 
 final class Screen
@@ -49,7 +49,7 @@ final class Screen
     private bool $shown = false;
 
     public function __construct(
-        private readonly TerminalOutputInterface $terminal,
+        private readonly TerminalOutput $terminal,
         private readonly ColorProfile $colorProfile = ColorProfile::TrueColor,
     ) {
     }

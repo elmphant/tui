@@ -15,8 +15,8 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
 use Elmphant\Tui\Input\StdinBuffer;
-use Elmphant\Tui\Input\TerminalInterface;
-use Elmphant\Tui\Input\TerminalOutputInterface;
+use Elmphant\Tui\Input\Terminal;
+use Elmphant\Tui\Input\TerminalOutput;
 use Elmphant\Tui\Input\TerminalWriteException;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
@@ -2604,7 +2604,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function aStalledTerminalWriteReachesTheModelAsAnError(): void
     {
-        $stalledOutput = new class implements TerminalOutputInterface {
+        $stalledOutput = new class implements TerminalOutput {
             public function write(string $data): void
             {
                 throw new TerminalWriteException(0, strlen($data));
@@ -2661,7 +2661,7 @@ final class ProgramTest extends TestCase
     #[Test]
     public function resolveThemeReturnsLightForLightColorScheme(): void
     {
-        $lightTerminal = new class implements TerminalInterface {
+        $lightTerminal = new class implements Terminal {
             public function enableRawMode(): void
             {
             }

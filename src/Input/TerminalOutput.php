@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Input;
 
-interface TerminalOutputInterface
+interface TerminalOutput
 {
     /**
      * @throws TerminalWriteException when the complete payload cannot be written

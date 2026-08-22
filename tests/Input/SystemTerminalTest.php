@@ -6,14 +6,14 @@ namespace Elmphant\Tui\Tests\Input;
 
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
-use Elmphant\Tui\Input\Terminal;
+use Elmphant\Tui\Input\SystemTerminal;
 use Elmphant\Tui\Input\TerminalException;
 use Elmphant\Tui\Input\TerminalWriteException;
 use Elmphant\Tui\Rendering\Ansi;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class TerminalTest extends TestCase
+final class SystemTerminalTest extends TestCase
 {
     /**
      * @var resource
@@ -27,7 +27,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function writeToStdout(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->write('Hello');
 
         rewind($this->stdout);
@@ -37,7 +37,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function enterAltScreenWritesAnsiSequence(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->enterAltScreen();
 
         rewind($this->stdout);
@@ -47,7 +47,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function leaveAltScreenWritesAnsiSequence(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->leaveAltScreen();
 
         rewind($this->stdout);
@@ -57,7 +57,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function hideCursorWritesAnsiSequence(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->hideCursor();
 
         rewind($this->stdout);
@@ -67,7 +67,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function showCursorWritesAnsiSequence(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->showCursor();
 
         rewind($this->stdout);
@@ -77,7 +77,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function enableBracketedPasteWritesMode2004High(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->enableBracketedPaste();
 
         rewind($this->stdout);
@@ -87,7 +87,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function disableBracketedPasteWritesMode2004Low(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->disableBracketedPaste();
 
         rewind($this->stdout);
@@ -97,7 +97,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function enableMouseTrackingWritesMultipleSequences(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->enableMouseTracking();
 
         rewind($this->stdout);
@@ -108,7 +108,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function disableMouseTrackingWritesMultipleSequences(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->disableMouseTracking();
 
         rewind($this->stdout);
@@ -122,7 +122,7 @@ final class TerminalTest extends TestCase
         fwrite($this->stdin, 'input data');
         rewind($this->stdin);
 
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame('input data', $terminal->readInput());
     }
 
@@ -134,7 +134,7 @@ final class TerminalTest extends TestCase
         putenv('COLORTERM');
         putenv('TERM');
 
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::Ascii, $terminal->colorProfile());
     }
 
@@ -144,7 +144,7 @@ final class TerminalTest extends TestCase
         putenv('COLORTERM=truecolor');
 
         // We need a fresh instance to bypass the cached detectedColorProfile
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::TrueColor, $terminal->colorProfile());
 
         putenv('COLORTERM'); // Cleanup
@@ -155,7 +155,7 @@ final class TerminalTest extends TestCase
     {
         putenv('TERM=xterm-256color');
 
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::Ansi256, $terminal->colorProfile());
 
         putenv('TERM'); // Cleanup
@@ -166,7 +166,7 @@ final class TerminalTest extends TestCase
     {
         putenv('TERM=xterm');
 
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::Ansi, $terminal->colorProfile());
 
         putenv('TERM'); // Cleanup
@@ -178,7 +178,7 @@ final class TerminalTest extends TestCase
         putenv('NO_COLOR=1');
         putenv('COLORTERM=truecolor'); // Should be ignored
 
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::Ascii, $terminal->colorProfile());
 
         putenv('NO_COLOR');
@@ -191,7 +191,7 @@ final class TerminalTest extends TestCase
         fwrite($this->stdin, str_repeat('A', 4097));
         rewind($this->stdin);
 
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $result = $terminal->readInput();
 
         self::assertSame(4096, strlen($result));
@@ -204,7 +204,7 @@ final class TerminalTest extends TestCase
         fwrite($this->stdin, $data);
         rewind($this->stdin);
 
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $result = $terminal->readInput();
 
         self::assertSame(4096, strlen($result));
@@ -218,7 +218,7 @@ final class TerminalTest extends TestCase
         PartialWriteStream::$bytesPerWrite = 3;
 
         $stream = fopen('partialwrite://output', 'w+');
-        $terminal = new Terminal($this->stdin, $stream);
+        $terminal = new SystemTerminal($this->stdin, $stream);
         $terminal->write('ABCDEFGHIJ');
 
         self::assertSame('ABCDEFGHIJ', PartialWriteStream::$written);
@@ -234,7 +234,7 @@ final class TerminalTest extends TestCase
         PartialWriteStream::$bytesPerWrite = 2;
 
         $stream = fopen('partialwrite://output', 'w+');
-        $terminal = new Terminal($this->stdin, $stream);
+        $terminal = new SystemTerminal($this->stdin, $stream);
         $terminal->write('ABCDEF');
 
         self::assertSame('ABCDEF', PartialWriteStream::$written);
@@ -249,7 +249,7 @@ final class TerminalTest extends TestCase
         PartialWriteStream::register();
         PartialWriteStream::$bytesPerWrite = 0;
         $stream = fopen('partialwrite://output', 'w+');
-        $terminal = new Terminal($this->stdin, $stream);
+        $terminal = new SystemTerminal($this->stdin, $stream);
 
         try {
             $terminal->write('ABC');
@@ -275,7 +275,7 @@ final class TerminalTest extends TestCase
         self::assertIsResource($stream);
 
         try {
-            (new Terminal($this->stdin, $stream))->write('ABC');
+            (new SystemTerminal($this->stdin, $stream))->write('ABC');
             self::assertSame('ABC', PartialWriteStream::$written);
             self::assertSame(0, PartialWriteStream::$zeroWritesRemaining);
         } finally {
@@ -292,7 +292,7 @@ final class TerminalTest extends TestCase
         PartialWriteStream::register();
         PartialWriteStream::$flushSucceeds = false;
         $stream = fopen('partialwrite://output', 'w+');
-        $terminal = new Terminal($this->stdin, $stream);
+        $terminal = new SystemTerminal($this->stdin, $stream);
 
         try {
             $terminal->flush();
@@ -308,7 +308,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function rawModeRejectsNonTtyInput(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
 
         $this->expectException(TerminalException::class);
         $this->expectExceptionMessage('requires stdin to be a TTY');
@@ -322,7 +322,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "abc\x1b[24;80R");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $result = $terminal->probeSize();
 
         self::assertSame([80, 24], $result);
@@ -338,7 +338,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "\x1b[24;80Rxyz");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $result = $terminal->probeSize();
 
         self::assertSame([80, 24], $result);
@@ -354,7 +354,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, 'garbage');
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $result = $terminal->probeSize();
 
         self::assertNull($result);
@@ -370,7 +370,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "pre\033]11;rgb:ffff/ffff/ffff\033\\post");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $result = $terminal->detectColorScheme();
 
         self::assertNotNull($result);
@@ -386,7 +386,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "abc\x1b[24;80Rxyz");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $result = $terminal->probeSize();
 
         self::assertSame([80, 24], $result);
@@ -402,7 +402,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "aaa\x1b[24;80R");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $terminal->probeSize();
 
         fwrite($writer, "bbb\x1b[48;120R");
@@ -420,7 +420,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "aaa\x1b[24;80R");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $terminal->probeSize();
 
         fwrite($writer, 'garbage');
@@ -438,7 +438,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "aaa\x1b[24;80R");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $terminal->probeSize();
 
         fwrite($writer, "\033]11;rgb:ff/ff/ff\033\\bbb");
@@ -456,7 +456,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "aaa\x1b[24;80R");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
         $terminal->probeSize();
 
         fwrite($writer, 'fresh');
@@ -473,7 +473,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "\033]11;rgb:00/00/00\033\\");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
 
         self::assertSame(ColorScheme::Dark, $terminal->detectColorScheme());
 
@@ -487,7 +487,7 @@ final class TerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "\033]11;rgb:ff/ff/ff\033\\");
 
-        $terminal = new Terminal($reader, $this->stdout);
+        $terminal = new SystemTerminal($reader, $this->stdout);
 
         self::assertSame(ColorScheme::Light, $terminal->detectColorScheme());
 
@@ -508,7 +508,7 @@ final class TerminalTest extends TestCase
             [$reader, $writer] = $this->createNonBlockingSocketPair();
             fwrite($writer, sprintf("\033]11;rgb:%s/%s/%s\033\\", $red, $green, $blue));
 
-            self::assertSame($expected, (new Terminal($reader, $this->stdout))->detectColorScheme());
+            self::assertSame($expected, (new SystemTerminal($reader, $this->stdout))->detectColorScheme());
 
             fclose($reader);
             fclose($writer);
@@ -518,7 +518,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function queryKittyProtocolWritesQuerySequence(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->queryKittyProtocol();
 
         rewind($this->stdout);
@@ -528,7 +528,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function enableKittyProtocolAsksOnlyForEscapeDisambiguation(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->enableKittyProtocol();
 
         rewind($this->stdout);
@@ -540,7 +540,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function disableKittyProtocolWritesDisableSequence(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->disableKittyProtocol();
 
         rewind($this->stdout);
@@ -550,7 +550,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function bellWritesAsciiBellByte(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->bell();
 
         rewind($this->stdout);
@@ -560,7 +560,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function setTitleWritesOscSequence(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->setTitle('My App');
 
         rewind($this->stdout);
@@ -570,7 +570,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function setTitleStripsControlCharacters(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->setTitle("Mal\x07icious\x1bTitle\tforged\nline\rreturn");
 
         rewind($this->stdout);
@@ -580,7 +580,7 @@ final class TerminalTest extends TestCase
     #[Test]
     public function setTitleStripsRawAndUtf8EncodedC1Controls(): void
     {
-        $terminal = new Terminal($this->stdin, $this->stdout);
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
         $terminal->setTitle("A\x80B\x9fC\u{0080}D\u{009F}E");
 
         rewind($this->stdout);
@@ -602,7 +602,7 @@ final class TerminalTest extends TestCase
         putenv('LINES=0');
 
         try {
-            $size = (new Terminal(fopen('php://memory', 'rb+')))->size();
+            $size = (new SystemTerminal(fopen('php://memory', 'rb+')))->size();
         } finally {
             putenv('COLUMNS');
             putenv('LINES');

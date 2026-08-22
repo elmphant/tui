@@ -26,8 +26,8 @@ use Elmphant\Tui\Input\InputParser;
 use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\ReportsOutputStats;
 use Elmphant\Tui\Input\StdinBuffer;
+use Elmphant\Tui\Input\SystemTerminal;
 use Elmphant\Tui\Input\Terminal;
-use Elmphant\Tui\Input\TerminalInterface;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
@@ -77,7 +77,7 @@ final class Program
     private ?Closure $errorHandler = null;
     private ?Tracer $tracer = null;
 
-    private TerminalInterface $terminal;
+    private Terminal $terminal;
     private Screen $screen;
     /**
      * @var SplQueue<Message>
@@ -104,7 +104,7 @@ final class Program
      */
     private ?EffectRunner $effects = null;
 
-    private ?TerminalInterface $injectedTerminal = null;
+    private ?Terminal $injectedTerminal = null;
     private ?AdaptiveTicker $adaptiveTicker = null;
     private ?float $animationRepaintAt = null;
     private StdinBuffer $stdinBuffer;
@@ -215,7 +215,7 @@ final class Program
     /**
      * @return self<TModel>
      */
-    public function withTerminal(TerminalInterface $terminal): self
+    public function withTerminal(Terminal $terminal): self
     {
         $this->assertConfigurable();
         $this->injectedTerminal = $terminal;
@@ -282,7 +282,7 @@ final class Program
         $this->state = ProgramState::Running;
 
         try {
-            $this->terminal = $this->injectedTerminal ?? new Terminal();
+            $this->terminal = $this->injectedTerminal ?? new SystemTerminal();
             $this->screen = new Screen($this->terminal, $this->resolveColorProfile());
             $this->messageQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();

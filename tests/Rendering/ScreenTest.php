@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Input\ColorProfile;
-use Elmphant\Tui\Input\TerminalOutputInterface;
+use Elmphant\Tui\Input\TerminalOutput;
 use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
@@ -76,7 +76,7 @@ final class ScreenTest extends TestCase
     #[Test]
     public function failedFullRedrawIsRetriedInFull(): void
     {
-        $terminal = new class implements TerminalOutputInterface {
+        $terminal = new class implements TerminalOutput {
             public bool $failNextWrite = true;
             public string $output = '';
 
@@ -334,7 +334,7 @@ final class ScreenTest extends TestCase
     #[Test]
     public function diffSkipsUnchangedRows(): void
     {
-        $terminal = new class implements TerminalOutputInterface {
+        $terminal = new class implements TerminalOutput {
             public string $output = '';
 
             public function write(string $data): void
@@ -370,7 +370,7 @@ final class ScreenTest extends TestCase
     #[Test]
     public function resizeTriggersFullRedraw(): void
     {
-        $terminal = new class implements TerminalOutputInterface {
+        $terminal = new class implements TerminalOutput {
             public string $output = '';
 
             public function write(string $data): void
@@ -397,7 +397,7 @@ final class ScreenTest extends TestCase
     #[Test]
     public function forceRedrawReRendersEverything(): void
     {
-        $terminal = new class implements TerminalOutputInterface {
+        $terminal = new class implements TerminalOutput {
             public string $output = '';
 
             public function write(string $data): void
@@ -786,7 +786,7 @@ final class ScreenTest extends TestCase
     public function fullRedrawCallsTerminalFlush(): void
     {
         $flushCount = 0;
-        $terminal = new class($flushCount) implements TerminalOutputInterface {
+        $terminal = new class($flushCount) implements TerminalOutput {
             public string $output = '';
 
             public function __construct(private int &$flushCount)
@@ -1072,7 +1072,7 @@ final class ScreenTest extends TestCase
     public function diffCallsTerminalFlush(): void
     {
         $flushCount = 0;
-        $terminal = new class($flushCount) implements TerminalOutputInterface {
+        $terminal = new class($flushCount) implements TerminalOutput {
             public string $output = '';
 
             public function __construct(private int &$flushCount)
@@ -1711,7 +1711,7 @@ final class ScreenTest extends TestCase
     public function fullRedrawWritesConcatenatedOutput(): void
     {
         $writeCount = 0;
-        $terminal = new class($writeCount) implements TerminalOutputInterface {
+        $terminal = new class($writeCount) implements TerminalOutput {
             public string $output = '';
 
             public function __construct(private int &$writeCount)
@@ -2122,7 +2122,7 @@ final class ScreenTest extends TestCase
     public function clearCallsTerminalFlush(): void
     {
         $flushCount = 0;
-        $terminal = new class($flushCount) implements TerminalOutputInterface {
+        $terminal = new class($flushCount) implements TerminalOutput {
             public string $output = '';
 
             public function __construct(private int &$flushCount)
@@ -2833,7 +2833,7 @@ final class ScreenTest extends TestCase
 
     private function createTerminalMock(string &$capturedOutput): object
     {
-        return new class($capturedOutput) implements TerminalOutputInterface {
+        return new class($capturedOutput) implements TerminalOutput {
             public function __construct(private string &$capturedOutput)
             {
             }
@@ -2851,7 +2851,7 @@ final class ScreenTest extends TestCase
 
     private function createTerminal(): object
     {
-        return new class implements TerminalOutputInterface {
+        return new class implements TerminalOutput {
             public string $output = '';
 
             public function write(string $data): void
