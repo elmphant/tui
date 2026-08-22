@@ -3575,6 +3575,32 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function reloadingTypedRowsKeepsTheRowThatWasChosen(): void
+    {
+        $columns = [Column::new('A', Constraint::flex())];
+        $table = Table::fromRows($columns, [Row::new('alpha'), Row::new('beta')])->withSelected(1);
+
+        $reordered = $table->withTypedRows([Row::new('beta'), Row::new('alpha')]);
+
+        self::assertSame(
+            ['beta'],
+            $reordered->selectedRow(),
+            'a choice is held by what was chosen, not by the place it sat in',
+        );
+    }
+
+    #[Test]
+    public function reloadingTypedRowsLeavesTheCursorOnARowAReaderCanChoose(): void
+    {
+        $columns = [Column::new('A', Constraint::flex())];
+        $table = Table::fromRows($columns, [Row::new('alpha'), Row::new('beta')]);
+
+        $regrouped = $table->withTypedRows([Row::header('group'), Row::new('alpha'), Row::new('beta')]);
+
+        self::assertSame(1, $regrouped->cursor(), 'a group label is not a row the cursor may rest on');
+    }
+
+    #[Test]
     public function switchingRowRepresentationDropsTheOtherOne(): void
     {
         $columns = [Column::new('A', Constraint::flex())];

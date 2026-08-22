@@ -104,19 +104,11 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public static function fromRows(array $columns, array $rows): self
     {
-        $initialCursor = 0;
-        foreach ($rows as $index => $row) {
-            if ($row->selectable) {
-                $initialCursor = $index;
-                break;
-            }
-        }
-
         return new self(
             columns: $columns,
             rows: $rows,
             rowsAreTyped: true,
-            cursor: $initialCursor,
+            cursor: self::firstSelectablePlace($rows),
         );
     }
 
@@ -153,7 +145,13 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withTypedRows(array $rows): self
     {
-        return $this->cloneWith(rows: $rows, rowsAreTyped: true, layoutMemo: self::newLayoutMemo());
+        return $this->cloneWith(
+            rows: $rows,
+            rowsAreTyped: true,
+            cursor: $this->cursorAfter($rows),
+            selected: self::rowPlaceOf($this->selectedRow(), $rows),
+            layoutMemo: self::newLayoutMemo(),
+        );
     }
 
     public function withSelected(int $selected): self
@@ -299,6 +297,38 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         }
 
         return Constraint::allocate($constraints, $totalWidth);
+    }
+
+    /**
+     * The row the cursor was on, wherever the reload put it — and off a row that
+     * cannot be chosen, since only a reload can seat it on one.
+     *
+     * @param list<Row> $rows
+     */
+    private function cursorAfter(array $rows): int
+    {
+        $resting = $this->rows[$this->cursor] ?? null;
+        $place = $resting === null ? -1 : self::rowPlaceOf(self::textOf($resting), $rows);
+
+        if ($place >= 0 && ($rows[$place]->selectable ?? true)) {
+            return $place;
+        }
+
+        return self::firstSelectablePlace($rows);
+    }
+
+    /**
+     * @param list<Row> $rows
+     */
+    private static function firstSelectablePlace(array $rows): int
+    {
+        foreach ($rows as $place => $row) {
+            if ($row->selectable) {
+                return $place;
+            }
+        }
+
+        return 0;
     }
 
     /**
