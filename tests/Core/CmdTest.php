@@ -81,6 +81,16 @@ final class CmdTest extends TestCase
     }
 
     #[Test]
+    public function anEffectIsNamedWhereItIsStartedLikeATickerOrATimer(): void
+    {
+        $load = EffectId::named('load');
+
+        self::assertSame($load, Cmd::exec(['ls'], id: $load)->id);
+        self::assertSame($load, Cmd::process(['tail', '-f', 'log'], id: $load)->id);
+        self::assertSame($load, Cmd::http('https://example.test', id: $load)->id);
+    }
+
+    #[Test]
     public function execHasTypedConfigurationBuilders(): void
     {
         $id = EffectId::named('install');

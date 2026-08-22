@@ -160,17 +160,17 @@ abstract readonly class Cmd
     /**
      * @param list<string> $command
      */
-    public static function exec(array $command): ExecCmd
+    public static function exec(array $command, ?EffectId $id = null): ExecCmd
     {
-        return new ExecCmd($command);
+        return new ExecCmd($command, $id);
     }
 
     /**
      * @param list<string> $command
      */
-    public static function process(array $command): ProcessCmd
+    public static function process(array $command, ?EffectId $id = null): ProcessCmd
     {
-        return new ProcessCmd($command);
+        return new ProcessCmd($command, $id);
     }
 
     /**
@@ -183,7 +183,8 @@ abstract readonly class Cmd
         array $headers = [],
         ?string $body = null,
         array $options = [],
+        ?EffectId $id = null,
     ): HttpCmd {
-        return new HttpCmd($url, $method, $headers, $body, options: $options);
+        return new HttpCmd($url, $method, $headers, $body, $id, $options);
     }
 }

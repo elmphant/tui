@@ -256,7 +256,7 @@ Effects that may need cancellation share a typed identity:
 ```php
 $download = EffectId::named('download');
 
-Cmd::http('https://example.com/archive')->withId($download);
+Cmd::http('https://example.com/archive', id: $download);
 Cmd::cancel($download); // also works for tick(), after(), exec(), and process()
 ```
 
