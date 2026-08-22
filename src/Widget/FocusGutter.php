@@ -6,17 +6,20 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Runtime\ChildDispatcher;
 
 /**
  * Marks where the keyboard is, so every field says it the same way instead of
  * each inventing a colour of its own.
  */
-final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, WidgetContainer, MeasureHeight
+final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, WidgetContainer, MeasureHeight, KeybindingsAware
 {
     use Cloneable;
     /**
@@ -110,15 +113,44 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Widge
         yield [$this->child, self::contentIn($area)];
     }
 
+    public static function defaultKeybindings(): Keybindings
+    {
+        return Keybindings::empty();
+    }
+
+    /**
+     * The track binds nothing of its own; what a reader can press is the field's.
+     */
+    public function effectiveKeybindings(): Keybindings
+    {
+        return $this->child instanceof KeybindingsAware
+            ? $this->child->effectiveKeybindings()
+            : self::defaultKeybindings();
+    }
+
+    public function withKeybindings(?Keybindings $keybindings): static
+    {
+        return $this->child instanceof KeybindingsAware
+            ? $this->cloneWith(child: $this->child->withKeybindings($keybindings))
+            : $this;
+    }
+
+    public function withGlobalKeybindings(?Keybindings $keybindings): static
+    {
+        return $this->child instanceof KeybindingsAware
+            ? $this->cloneWith(child: $this->child->withGlobalKeybindings($keybindings))
+            : $this;
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
         if (!$this->child instanceof Interactive) {
             return new UpdateResult($this);
         }
 
-        $result = $this->child->update($message, self::contentIn($area));
+        $result = (new ChildDispatcher())->dispatchOne($this->child, $message, self::contentIn($area));
 
-        return new UpdateResult($this->cloneWith(child: $result->model), $result->command);
+        return new UpdateResult($this->cloneWith(child: $result->child), $result->command);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
