@@ -137,7 +137,7 @@ final readonly class CheckboxRow implements OptionRow, PublishesHints
      * whose ends should hold — a form field, where an arrow held down would
      * otherwise cycle the value forever.
      */
-    public function wrapping(bool $wrapping = true): self
+    public function withWrapping(bool $wrapping = true): self
     {
         return $this->cloneWith(wrapping: $wrapping);
     }

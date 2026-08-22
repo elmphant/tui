@@ -63,7 +63,7 @@ final class CheckboxRowTest extends TestCase
     public function aRowToldNotToWrapRestsAtEitherEndInstead(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = CheckboxRow::new(['system', 'pages', 'all'])->wrapping(false)->withFocus(true);
+        $row = CheckboxRow::new(['system', 'pages', 'all'])->withWrapping(false)->withFocus(true);
 
         $left = $row->update(new KeyMsg(Key::Left), $area)->model;
         self::assertInstanceOf(CheckboxRow::class, $left);

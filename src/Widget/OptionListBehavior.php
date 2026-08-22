@@ -59,9 +59,9 @@ trait OptionListBehavior
      * stray keypress. Nothing picked is a state these widgets can already hold and
      * draw — this is how a reader reaches it.
      */
-    public function clearable(): static
+    public function withClearable(bool $clearable = true): static
     {
-        return $this->cloneWith(clearable: true);
+        return $this->cloneWith(clearable: $clearable);
     }
 
     public function optionAt(MouseMsg $message, Rect $area): ?string

@@ -101,7 +101,7 @@ final class ModalTest extends TestCase
         $content = Paragraph::fromText("one two three\nfour");
         $frame = new Frame(100, 50);
 
-        Modal::new('T', $content)->sizedToContent()->render($frame, Rect::fromSize(100, 50), $this->context);
+        Modal::new('T', $content)->withSizedToContent()->render($frame, Rect::fromSize(100, 50), $this->context);
 
         $drawn = array_values(array_filter(
             explode("\n", ScreenBuffer::fromFrame($frame)->getPlainText()),

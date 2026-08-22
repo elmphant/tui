@@ -130,7 +130,7 @@ final class AlertTest extends TestCase
     #[Test]
     public function aPulseLeavesTheFillAtFullStrengthWhereItStarts(): void
     {
-        $alert = Alert::warning('Low disk')->pulsing(1.0);
+        $alert = Alert::warning('Low disk')->withPulsing(1.0);
 
         self::assertSame(Color::hex('E5C07B')->value, self::fillAt($alert, 0.0));
     }
@@ -138,7 +138,7 @@ final class AlertTest extends TestCase
     #[Test]
     public function aPulseHasFadedByItsFullDepthHalfWayThroughThePeriod(): void
     {
-        $alert = Alert::warning('Low disk')->pulsing(1.0);
+        $alert = Alert::warning('Low disk')->withPulsing(1.0);
 
         self::assertSame(Color::rgb(237, 211, 163)->value, self::fillAt($alert, 0.5));
     }
@@ -146,7 +146,7 @@ final class AlertTest extends TestCase
     #[Test]
     public function aPulseIsPartWayThereAtAQuarterOfThePeriod(): void
     {
-        $alert = Alert::warning('Low disk')->pulsing(1.0);
+        $alert = Alert::warning('Low disk')->withPulsing(1.0);
 
         self::assertSame(Color::rgb(233, 201, 143)->value, self::fillAt($alert, 0.25));
     }
@@ -154,7 +154,7 @@ final class AlertTest extends TestCase
     #[Test]
     public function aLongerPeriodStretchesTheSameFadeOverMoreTime(): void
     {
-        $slow = Alert::warning('Low disk')->pulsing(2.0);
+        $slow = Alert::warning('Low disk')->withPulsing(2.0);
 
         self::assertSame(
             Color::rgb(233, 201, 143)->value,
@@ -174,7 +174,7 @@ final class AlertTest extends TestCase
     #[Test]
     public function aPulseFadesAwayFromTheTextItHasToStayReadableUnder(): void
     {
-        $alert = Alert::warning('Low disk')->pulsing(1.0);
+        $alert = Alert::warning('Low disk')->withPulsing(1.0);
 
         [$red, $green, $blue] = self::channelsOf(self::fillAt($alert, 0.0));
         [$pulsedRed, $pulsedGreen, $pulsedBlue] = self::channelsOf(self::fillAt($alert, 0.5));
@@ -187,7 +187,7 @@ final class AlertTest extends TestCase
     #[Test]
     public function aPulseHoldsStillWhereTheTerminalCannotShowIt(): void
     {
-        $alert = Alert::warning('Low disk')->pulsing(1.0);
+        $alert = Alert::warning('Low disk')->withPulsing(1.0);
 
         self::assertSame(
             self::fillAt($alert, 0.0, ColorProfile::Ansi),
@@ -199,7 +199,7 @@ final class AlertTest extends TestCase
     #[Test]
     public function aPulsingAlertKeepsTheFramesComing(): void
     {
-        $context = self::renderedContext(Alert::warning('Low disk')->pulsing(1.0), 0.0, ColorProfile::TrueColor);
+        $context = self::renderedContext(Alert::warning('Low disk')->withPulsing(1.0), 0.0, ColorProfile::TrueColor);
 
         self::assertSame(0.05, $context->repaintDelay(), 'twenty frames a second is enough to read as a fade');
     }
@@ -208,7 +208,7 @@ final class AlertTest extends TestCase
     public function anAlertHoldingStillLetsTheRenderLoopSleep(): void
     {
         $still = self::renderedContext(Alert::warning('Low disk'), 0.0, ColorProfile::TrueColor);
-        $flattened = self::renderedContext(Alert::warning('Low disk')->pulsing(1.0), 0.0, ColorProfile::Ansi);
+        $flattened = self::renderedContext(Alert::warning('Low disk')->withPulsing(1.0), 0.0, ColorProfile::Ansi);
 
         self::assertNull($still->repaintDelay(), 'nothing is moving');
         self::assertNull($flattened->repaintDelay(), 'and a fade nobody can see must not cost frames either');

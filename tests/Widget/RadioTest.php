@@ -52,7 +52,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function activatingThePickedOptionOfAClearableRadioPutsItBackDown(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'])->clearable()->withSelected(0);
+        $radio = Radio::new(['A', 'B', 'C'])->withClearable()->withSelected(0);
 
         self::assertSame(-1, $radio->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
     }
@@ -273,7 +273,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function aWrappingRadioCarriesTheCursorRoundEitherEnd(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->wrapping()->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withWrapping()->withFocus(true);
         $area = Rect::fromSize(40, 10);
 
         $up = $radio->update(new KeyMsg(Key::Up), $area)->model;
@@ -286,7 +286,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function aClearableRadioLetsThePickedOptionBePutBackDown(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->clearable()->withSelected(0)->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withClearable()->withSelected(0)->withFocus(true);
         $area = Rect::fromSize(40, 10);
 
         $cleared = $radio->update(new KeyMsg(' '), $area)->model;
@@ -297,7 +297,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function clickingTheOptionAClearableRadioHoldsPutsItBackDown(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->clearable()->withSelected(1);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withClearable()->withSelected(1);
         $area = new Rect(0, 5, 40, 8);
 
         $cleared = $radio->update(new MouseMsg(5, 8, MouseAction::Press, MouseButton::Left), $area)->model;

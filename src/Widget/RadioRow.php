@@ -62,9 +62,9 @@ final readonly class RadioRow implements OptionRow, PublishesHints
      * stray keypress. Nothing picked is a state this row can already hold and draw
      * — this is how a reader reaches it.
      */
-    public function clearable(): self
+    public function withClearable(bool $clearable = true): self
     {
-        return $this->cloneWith(clearable: true);
+        return $this->cloneWith(clearable: $clearable);
     }
 
     /**
@@ -73,7 +73,7 @@ final readonly class RadioRow implements OptionRow, PublishesHints
      * whose ends should hold — a form field, where an arrow held down would
      * otherwise cycle the value forever.
      */
-    public function wrapping(bool $wrapping = true): self
+    public function withWrapping(bool $wrapping = true): self
     {
         return $this->cloneWith(wrapping: $wrapping);
     }

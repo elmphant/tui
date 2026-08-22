@@ -58,7 +58,7 @@ final readonly class Alert implements Widget
     /**
      * Breathes the fill so the row draws the eye without moving the layout.
      */
-    public function pulsing(float $periodSeconds = 1.2): self
+    public function withPulsing(float $periodSeconds = 1.2): self
     {
         return $this->cloneWith(pulsePeriod: max(0.1, $periodSeconds));
     }

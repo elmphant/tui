@@ -73,7 +73,7 @@ final class RadioRowTest extends TestCase
     public function aRowToldNotToWrapRestsAtEitherEndInstead(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['webp', 'avif', 'jxl'])->wrapping(false)->withFocus(true);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withWrapping(false)->withFocus(true);
 
         $left = $row->update(new KeyMsg(Key::Left), $area)->model;
         self::assertInstanceOf(RadioRow::class, $left);
@@ -88,7 +88,7 @@ final class RadioRowTest extends TestCase
     public function aClearableRowLetsThePickedOptionBePutBackDown(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['webp', 'avif', 'jxl'])->clearable()->withSelected(0)->withFocus(true);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelected(0)->withFocus(true);
 
         $cleared = $row->update(new KeyMsg(' '), $area)->model;
 
@@ -101,7 +101,7 @@ final class RadioRowTest extends TestCase
     public function clickingTheOptionAClearableRowHoldsPutsItBackDown(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['webp', 'avif', 'jxl'])->clearable()->withSelected(0);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelected(0);
 
         $cleared = $row->update(
             new MouseMsg(1, 0, MouseAction::Press, MouseButton::Left),

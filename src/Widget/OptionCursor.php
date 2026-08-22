@@ -29,7 +29,7 @@ trait OptionCursor
      * enough that coming round reads as a jump. Say `wrapping()` for one short
      * enough that it reads as a step.
      */
-    public function wrapping(bool $wrapping = true): static
+    public function withWrapping(bool $wrapping = true): static
     {
         return $this->cloneWith(wrapping: $wrapping);
     }

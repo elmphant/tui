@@ -35,7 +35,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function aWrappingGroupComesRoundFromItsFirstOptionToItsLast(): void
     {
-        $group = CheckboxGroup::new(['a', 'b', 'c'])->wrapping()->withFocus(true);
+        $group = CheckboxGroup::new(['a', 'b', 'c'])->withWrapping()->withFocus(true);
 
         $moved = $group->update(new KeyMsg(Key::Up), new Rect(0, 0, 20, 6))->model;
 

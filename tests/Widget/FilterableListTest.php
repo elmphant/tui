@@ -357,9 +357,23 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function aListToldNotToBeClearableKeepsWhatItHolds(): void
+    {
+        $list = $this->commands()->withClearable(false)->withPicked('cache:warmup');
+
+        $again = $list->activated('cache:warmup');
+
+        self::assertSame(
+            'cache:warmup',
+            $again->pickedItem()?->filterValue(),
+            'a list that must answer stays answered when the row it holds is chosen again',
+        );
+    }
+
+    #[Test]
     public function aClearableListLetsThePickedRowBePutBackDown(): void
     {
-        $list = $this->commands()->clearable()->withPicked('cache:warmup');
+        $list = $this->commands()->withClearable()->withPicked('cache:warmup');
 
         $cleared = $list->activated('cache:warmup');
         $moved = $list->activated('user:create');

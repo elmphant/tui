@@ -272,9 +272,9 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      * stray press. Nothing picked is a state this list can already hold and name
      * through its empty caption — this is how a reader reaches it.
      */
-    public function clearable(): self
+    public function withClearable(bool $clearable = true): self
     {
-        return $this->cloneWith(clearable: true);
+        return $this->cloneWith(clearable: $clearable);
     }
 
     public function popupWidth(): int
