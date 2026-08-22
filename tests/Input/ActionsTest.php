@@ -32,9 +32,9 @@ final class ActionsTest extends TestCase
         self::assertSame('cursor_right', Actions::CURSOR_RIGHT);
 
         self::assertSame('focus_cycle', Actions::FOCUS_CYCLE);
-        self::assertSame('focus_prev_cycle', Actions::FOCUS_PREV_CYCLE);
+        self::assertSame('focus_previous_cycle', Actions::FOCUS_PREVIOUS_CYCLE);
         self::assertSame('tab_next', Actions::TAB_NEXT);
-        self::assertSame('tab_prev', Actions::TAB_PREV);
+        self::assertSame('tab_previous', Actions::TAB_PREVIOUS);
 
         self::assertSame('line_start', Actions::LINE_START);
         self::assertSame('line_end', Actions::LINE_END);

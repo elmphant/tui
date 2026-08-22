@@ -281,7 +281,7 @@ abstract readonly class App implements RoutesFocus
     {
         return new Keybindings([
             Actions::FOCUS_CYCLE => ['tab'],
-            Actions::FOCUS_PREV_CYCLE => ['shift+tab'],
+            Actions::FOCUS_PREVIOUS_CYCLE => ['shift+tab'],
         ]);
     }
 
@@ -352,7 +352,7 @@ abstract readonly class App implements RoutesFocus
         if ($message instanceof KeyMsg) {
             $bindings = $this->focusCycleBindings();
 
-            if ($bindings->matches($message, Actions::FOCUS_PREV_CYCLE)) {
+            if ($bindings->matches($message, Actions::FOCUS_PREVIOUS_CYCLE)) {
                 return $this->handleTab($message, $screenRect, $focusables, true);
             }
 

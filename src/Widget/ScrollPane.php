@@ -129,7 +129,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     {
         return new Keybindings([
             Actions::FOCUS_CYCLE => ['tab'],
-            Actions::FOCUS_PREV_CYCLE => ['shift+tab'],
+            Actions::FOCUS_PREVIOUS_CYCLE => ['shift+tab'],
             Actions::SCROLL_UP => ['up'],
             Actions::SCROLL_DOWN => ['down'],
             Actions::PAGE_UP => ['shift+up', 'page_up'],
@@ -428,7 +428,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     private function cycledFocus(KeyMsg $message): ?self
     {
         $bindings = $this->effectiveKeybindings();
-        $reverse = $bindings->matches($message, Actions::FOCUS_PREV_CYCLE);
+        $reverse = $bindings->matches($message, Actions::FOCUS_PREVIOUS_CYCLE);
 
         if (!$reverse && !$bindings->matches($message, Actions::FOCUS_CYCLE)) {
             return null;

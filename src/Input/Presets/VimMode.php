@@ -19,7 +19,7 @@ final class VimMode
             Actions::PAGE_UP => ['ctrl+u'],
             Actions::PAGE_DOWN => ['ctrl+d'],
             Actions::TAB_NEXT => ['l'],
-            Actions::TAB_PREV => ['h'],
+            Actions::TAB_PREVIOUS => ['h'],
             Actions::SCROLL_UP => ['k'],
             Actions::SCROLL_DOWN => ['j'],
         ]);

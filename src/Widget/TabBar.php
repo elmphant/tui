@@ -57,7 +57,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     {
         return (new Keybindings([
             Actions::TAB_NEXT => ['right'],
-            Actions::TAB_PREV => ['left'],
+            Actions::TAB_PREVIOUS => ['left'],
         ]))->merge(ScrollPane::defaultKeybindings());
     }
 
@@ -160,7 +160,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     public function hints(): array
     {
         return $this->effectiveKeybindings()->hints([
-            'previous tab' => Actions::TAB_PREV,
+            'previous tab' => Actions::TAB_PREVIOUS,
             'next tab' => Actions::TAB_NEXT,
         ]);
     }
@@ -310,7 +310,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $bindings = $this->effectiveKeybindings();
 
         return match (true) {
-            $bindings->matches($message, Actions::TAB_PREV) => $this->switchTab(-1),
+            $bindings->matches($message, Actions::TAB_PREVIOUS) => $this->switchTab(-1),
             $bindings->matches($message, Actions::TAB_NEXT) => $this->switchTab(1),
             default => null,
         };
@@ -491,7 +491,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     private function switchKeyLabels(): ?string
     {
         $bindings = $this->effectiveKeybindings();
-        $previous = $bindings->get(Actions::TAB_PREV)[0] ?? null;
+        $previous = $bindings->get(Actions::TAB_PREVIOUS)[0] ?? null;
         $next = $bindings->get(Actions::TAB_NEXT)[0] ?? null;
 
         if ($previous === null || $next === null) {

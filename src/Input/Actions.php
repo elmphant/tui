@@ -23,9 +23,9 @@ final class Actions
     public const CURSOR_RIGHT = 'cursor_right';
 
     public const FOCUS_CYCLE = 'focus_cycle';
-    public const FOCUS_PREV_CYCLE = 'focus_prev_cycle';
+    public const FOCUS_PREVIOUS_CYCLE = 'focus_previous_cycle';
     public const TAB_NEXT = 'tab_next';
-    public const TAB_PREV = 'tab_prev';
+    public const TAB_PREVIOUS = 'tab_previous';
 
     public const LINE_START = 'line_start';
     public const LINE_END = 'line_end';

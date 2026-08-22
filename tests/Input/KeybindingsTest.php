@@ -302,13 +302,13 @@ final class KeybindingsTest extends TestCase
     public function aModifierSharedByEveryKeyOfAHintIsWrittenOnce(): void
     {
         $bindings = new Keybindings([
-            Actions::TAB_PREV => ['shift+left'],
+            Actions::TAB_PREVIOUS => ['shift+left'],
             Actions::TAB_NEXT => ['shift+right'],
         ]);
 
         self::assertSame(
             ['Shift+←/→' => 'switch tab'],
-            $bindings->hints(['switch tab' => [Actions::TAB_PREV, Actions::TAB_NEXT]]),
+            $bindings->hints(['switch tab' => [Actions::TAB_PREVIOUS, Actions::TAB_NEXT]]),
         );
     }
 

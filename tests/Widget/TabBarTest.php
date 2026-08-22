@@ -273,7 +273,7 @@ final class TabBarTest extends TestCase
     public function hintsFollowRebinding(): void
     {
         $bar = TabBar::new()->addTab('A')->addTab('B')->withKeybindings(new Keybindings([
-            Actions::TAB_PREV => ['h'],
+            Actions::TAB_PREVIOUS => ['h'],
             Actions::TAB_NEXT => ['l'],
         ]));
 
@@ -325,7 +325,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
             ->withKeybindings(new Keybindings([
-                Actions::TAB_PREV => ['pgup'],
+                Actions::TAB_PREVIOUS => ['pgup'],
                 Actions::TAB_NEXT => ['pgdn'],
             ]));
 
@@ -4781,7 +4781,7 @@ final class TabBarTest extends TestCase
         $activeAfterDefault = (new ReflectionProperty($afterDefault, 'activeTab'))->getValue($afterDefault);
         self::assertSame(0, $activeAfterDefault);
 
-        $custom = $widget->withKeybindings(new Keybindings([Actions::TAB_PREV => ['x']]));
+        $custom = $widget->withKeybindings(new Keybindings([Actions::TAB_PREVIOUS => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Left), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
