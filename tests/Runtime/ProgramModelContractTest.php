@@ -9,11 +9,15 @@ use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Testing\VirtualTerminal;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -61,9 +65,15 @@ final class ProgramModelContractTest extends TestCase
         self::assertSame(10, $updates);
     }
 
-    private function validModel(): Model
+    #[Test]
+    public function aReducerThatIsNoModelIsReportedAsABrokenContract(): void
     {
-        return new class implements Model {
+        $model = new class implements Model {
+            /**
+             * @var list<string>
+             */
+            public array $reportedErrors = [];
+
             public function init(): ?Cmd
             {
                 return null;
@@ -71,6 +81,16 @@ final class ProgramModelContractTest extends TestCase
 
             public function update(Message $message, Rect $area): UpdateResult
             {
+                if ($message instanceof ErrorMsg) {
+                    $this->reportedErrors[] = $message->error::class;
+
+                    return new UpdateResult($this, Cmd::quit());
+                }
+
+                if ($message instanceof KeyMsg && $message->key === 'x') {
+                    return new UpdateResult(new NonModelReducer());
+                }
+
                 return UpdateResult::keep($this);
             }
 
@@ -78,6 +98,17 @@ final class ProgramModelContractTest extends TestCase
             {
             }
         };
+
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('x');
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(
+            [LogicException::class],
+            $model->reportedErrors,
+            'A reducer that is no Model breaks the runtime contract, the way App and ModelHarness say it',
+        );
     }
 }
 

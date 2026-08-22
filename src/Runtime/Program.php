@@ -848,7 +848,7 @@ final class Program
     private static function requireModel(Reducer $model): Model
     {
         if (!$model instanceof Model) {
-            throw new UnexpectedValueException('Model::update() must return a Model in UpdateResult');
+            throw new LogicException(sprintf('Model::update() must return a Model in UpdateResult, got %s', get_debug_type($model)));
         }
 
         return $model;
