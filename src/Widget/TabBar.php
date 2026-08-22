@@ -41,8 +41,8 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     public function __construct(
         private array $tabs = [],
         private int $activeTab = 0,
-        private ?string $caption = null,
-        private ?string $shortCaption = null,
+        private ?string $hint = null,
+        private ?string $shortHint = null,
         private bool $focused = false,
         private ?Spacing $padding = null,
         private bool $emphasizedBorder = false,
@@ -113,15 +113,15 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     }
 
     /**
-     * Supplementary text for the tab strip, drawn when it fits.
+     * The hint drawn at the right of the strip, when it fits.
      *
      * It replaces the switch hint the bar derives from its own keybindings,
      * for applications that drive tab switching from somewhere else. Pass a
      * short form to keep something readable on a narrow terminal.
      */
-    public function withCaption(?string $caption, ?string $shortCaption = null): self
+    public function withHint(?string $hint, ?string $shortHint = null): self
     {
-        return $this->cloneWith(caption: $caption, shortCaption: $shortCaption);
+        return $this->cloneWith(hint: $hint, shortHint: $shortHint);
     }
 
     public function sizing(): Sizing
@@ -446,7 +446,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     private function renderTabHint(Frame $frame, Rect $area, int $afterTabsX, Theme $theme, bool $focused): void
     {
         $rightEdge = $area->right() - 1;
-        $text = $this->captionWithin($rightEdge - $afterTabsX, $focused);
+        $text = $this->hintWithin($rightEdge - $afterTabsX, $focused);
 
         if ($text === null) {
             return;
@@ -455,12 +455,12 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         $frame->putStyled($rightEdge - CharWidth::stringWidth($text) - 1, $area->y + 1, $text, $theme->dim);
     }
 
-    private function captionWithin(int $availableWidth, bool $focused): ?string
+    private function hintWithin(int $availableWidth, bool $focused): ?string
     {
-        if ($this->caption !== null) {
+        if ($this->hint !== null) {
             return match (true) {
-                self::fits($this->caption, $availableWidth) => $this->caption,
-                $this->shortCaption !== null && self::fits($this->shortCaption, $availableWidth) => $this->shortCaption,
+                self::fits($this->hint, $availableWidth) => $this->hint,
+                $this->shortHint !== null && self::fits($this->shortHint, $availableWidth) => $this->shortHint,
                 default => null,
             };
         }

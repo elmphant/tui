@@ -356,10 +356,10 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function showsACaptionSuppliedByTheApplication(): void
+    public function showsAHintSuppliedByTheApplication(): void
     {
         $tabBar = TabBar::new()->addTab('A')->addTab('B')
-            ->withCaption('shift+←/→ to switch');
+            ->withHint('shift+←/→ to switch');
 
         $screen = $this->screenOfTabBar($tabBar, new Rect(0, 0, 50, 6));
 
@@ -371,15 +371,15 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function fallsBackToTheShortCaptionWhenTheFullOneDoesNotFit(): void
+    public function fallsBackToTheShortHintWhenTheFullOneDoesNotFit(): void
     {
         $tabBar = TabBar::new()->addTab('A')->addTab('B')
-            ->withCaption('shift+←/→ to switch', 'shift+←/→');
+            ->withHint('shift+←/→ to switch', 'shift+←/→');
 
         self::assertStringContainsString(
             'shift+←/→ to switch',
             $this->screenOfTabBar($tabBar, new Rect(0, 0, 50, 6)),
-            'The full caption where there is room',
+            'The full hint where there is room',
         );
         self::assertStringContainsString(
             'shift+←/→',
