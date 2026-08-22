@@ -135,6 +135,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $this->cloneWith(
             rows: $typed,
             rowsAreTyped: false,
+            cursor: $this->cursorAfter($typed),
             selected: self::rowPlaceOf($this->selectedRow(), $typed),
             layoutMemo: self::newLayoutMemo(),
         );
