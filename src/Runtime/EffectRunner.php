@@ -377,31 +377,46 @@ final class EffectRunner
             return;
         }
 
-        $remaining = [];
+        $due = [];
         foreach ($this->timers as $timer) {
             if ($now >= $timer->fireAt) {
-                try {
-                    $result = ($timer->callback)();
-                } catch (Throwable $error) {
-                    $this->report(new ErrorMsg($error, 'timer', $timer->id), $timer->wrap);
-                    continue;
-                }
-                if ($result instanceof Cmd) {
-                    ($this->dispatch)($result, $timer->wrap);
-                } elseif ($result instanceof Message) {
-                    $this->report($result, $timer->wrap);
-                } elseif ($result !== null) {
-                    $this->report(new ErrorMsg(
-                        new UnexpectedValueException('Cmd::after() callback must return Message, Cmd, or null'),
-                        'timer',
-                        $timer->id,
-                    ), $timer->wrap);
-                }
-            } else {
-                $remaining[] = $timer;
+                $due[] = $timer;
             }
         }
-        $this->timers = $remaining;
+
+        foreach ($due as $timer) {
+            // A callback earlier in this pass may have cancelled it.
+            if (!in_array($timer, $this->timers, true)) {
+                continue;
+            }
+            $this->forgetTimer($timer);
+
+            try {
+                $result = ($timer->callback)();
+            } catch (Throwable $error) {
+                $this->report(new ErrorMsg($error, 'timer', $timer->id), $timer->wrap);
+                continue;
+            }
+            if ($result instanceof Cmd) {
+                ($this->dispatch)($result, $timer->wrap);
+            } elseif ($result instanceof Message) {
+                $this->report($result, $timer->wrap);
+            } elseif ($result !== null) {
+                $this->report(new ErrorMsg(
+                    new UnexpectedValueException('Cmd::after() callback must return Message, Cmd, or null'),
+                    'timer',
+                    $timer->id,
+                ), $timer->wrap);
+            }
+        }
+    }
+
+    private function forgetTimer(TimerRecord $timer): void
+    {
+        $this->timers = array_values(array_filter(
+            $this->timers,
+            static fn (TimerRecord $known): bool => $known !== $timer,
+        ));
     }
 
     /**

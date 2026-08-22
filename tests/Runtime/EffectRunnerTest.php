@@ -171,6 +171,55 @@ final class EffectRunnerTest extends TestCase
     }
 
     #[Test]
+    public function aTimerAnsweringWithAnotherTimerKeepsTheChainAlive(): void
+    {
+        $runner = $this->selfDispatchingRunner();
+        $runner->run(Cmd::after(1.0, static fn (): Cmd => Cmd::after(
+            1.0,
+            static fn (): Message => new TickMsg(2.0),
+        )), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(0, $this->results, 'the first timer answers with a command, not a message');
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(1, $this->results, 'the chained timer must outlive the pass that scheduled it');
+    }
+
+    #[Test]
+    public function cancellingASiblingFromATimerCallbackStaysCancelled(): void
+    {
+        $runner = $this->selfDispatchingRunner();
+        $runner->run(Cmd::after(1.0, static fn (): Cmd => Cmd::cancel(EffectId::named('retry'))), null);
+        $runner->run(Cmd::after(3.0, static fn (): Message => new TickMsg(3.0), id: EffectId::named('retry')), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        $this->clock->advance(5.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(0, $this->results, 'a cancellation decided inside a firing pass cannot be undone by it');
+    }
+
+    #[Test]
+    public function aCancellationBeatsASiblingStillDueInTheSamePass(): void
+    {
+        $runner = $this->selfDispatchingRunner();
+        $runner->run(Cmd::after(1.0, static fn (): Cmd => Cmd::cancel(EffectId::named('retry'))), null);
+        $runner->run(Cmd::after(1.0, static fn (): Message => new TickMsg(1.0), id: EffectId::named('retry')), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(0, $this->results);
+    }
+
+    #[Test]
     public function cancellingByNameStopsThatEffectAndLeavesTheRest(): void
     {
         $runner = $this->runner();
@@ -473,6 +522,24 @@ final class EffectRunnerTest extends TestCase
             static function (): void {
             },
         );
+    }
+
+    private function selfDispatchingRunner(): EffectRunner
+    {
+        $runner = null;
+        $runner = new EffectRunner(
+            $this->results,
+            $this->clock,
+            static function (?Cmd $command) use (&$runner): void {
+                if ($command instanceof Cmd && $runner instanceof EffectRunner) {
+                    $runner->run($command, null);
+                }
+            },
+            static function (): void {
+            },
+        );
+
+        return $runner;
     }
 
     private function pumpUntilQuiet(EffectRunner $runner): void
