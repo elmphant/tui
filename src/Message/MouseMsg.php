@@ -41,9 +41,10 @@ final readonly class MouseMsg implements Message
 
     /**
      * How far to scroll for this event. Always use this instead of the step on
-     * its own: one event can stand for many notches.
+     * its own: one event can stand for many notches. A notch moves one row
+     * unless a widget scrolls in coarser units and says so.
      */
-    public function wheelSteps(int $step): int
+    public function wheelSteps(int $step = 1): int
     {
         return $step * max(1, $this->repeat);
     }

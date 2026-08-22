@@ -2621,7 +2621,7 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->scrollOffset());
     }
 
-    // --- L268: scrollOffset + WHEEL_SCROLL_STEP (PlusEqual mutation) ---
+    // --- L268: scrollOffset + wheelSteps() (PlusEqual mutation) ---
 
     #[Test]
     public function wheelDownIncrementsByExactlyOne(): void
@@ -2640,7 +2640,7 @@ final class TableTest extends TestCase
         self::assertSame(2, $result->model->scrollOffset());
     }
 
-    // --- L272: scrollOffset - WHEEL_SCROLL_STEP (MinusEqual mutation) ---
+    // --- L272: scrollOffset - wheelSteps() (MinusEqual mutation) ---
 
     #[Test]
     public function wheelUpDecrementsByExactlyOne(): void

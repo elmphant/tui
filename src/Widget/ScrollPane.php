@@ -33,7 +33,6 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     use DrawsFocus;
     use KeybindingsAwareBehavior;
 
-    private const WHEEL_STEP = 1;
     private const KEY_STEP = 1;
 
     /**
@@ -312,8 +311,8 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
         }
 
         $scrolled = match ($message->action) {
-            MouseAction::WheelDown => $this->scrolledBy($message->wheelSteps(self::WHEEL_STEP), $area),
-            MouseAction::WheelUp => $this->scrolledBy(-$message->wheelSteps(self::WHEEL_STEP), $area),
+            MouseAction::WheelDown => $this->scrolledBy($message->wheelSteps(), $area),
+            MouseAction::WheelUp => $this->scrolledBy(-$message->wheelSteps(), $area),
             default => null,
         };
 

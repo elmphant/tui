@@ -32,7 +32,6 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     use DrawsFocus;
     use KeybindingsAwareBehavior;
 
-    private const WHEEL_SCROLL_STEP = 1;
     /**
      * Scrollbar column plus one blank column between it and the text.
      */
@@ -419,11 +418,11 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
             if ($message->action === MouseAction::WheelDown) {
                 $maxOffset = $this->totalItemRows($itemWidth) - $area->height;
 
-                return new UpdateResult($this->cloneWith(scrollOffset: min(max(0, $maxOffset), $displayOffset + $message->wheelSteps(self::WHEEL_SCROLL_STEP)), followCursor: false));
+                return new UpdateResult($this->cloneWith(scrollOffset: min(max(0, $maxOffset), $displayOffset + $message->wheelSteps()), followCursor: false));
             }
 
             if ($message->action === MouseAction::WheelUp) {
-                return new UpdateResult($this->cloneWith(scrollOffset: max(0, $displayOffset - $message->wheelSteps(self::WHEEL_SCROLL_STEP)), followCursor: false));
+                return new UpdateResult($this->cloneWith(scrollOffset: max(0, $displayOffset - $message->wheelSteps()), followCursor: false));
             }
         }
 

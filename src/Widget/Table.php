@@ -42,8 +42,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     use DrawsFocus;
     use KeybindingsAwareBehavior;
 
-    private const WHEEL_SCROLL_STEP = 1;
-
     /**
      * Row heights for the current rows, shared with every clone that keeps
      * them, so moving the cursor does not re-measure the table.
@@ -448,11 +446,11 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         if ($message->inRect($area)) {
             if ($message->action === MouseAction::WheelDown) {
-                return new UpdateResult($this->scrolledDown($message->wheelSteps(self::WHEEL_SCROLL_STEP), $displayOffset, $area));
+                return new UpdateResult($this->scrolledDown($message->wheelSteps(), $displayOffset, $area));
             }
 
             if ($message->action === MouseAction::WheelUp) {
-                return new UpdateResult($this->scrolledUp($message->wheelSteps(self::WHEEL_SCROLL_STEP), $displayOffset, $area));
+                return new UpdateResult($this->scrolledUp($message->wheelSteps(), $displayOffset, $area));
             }
         }
 
