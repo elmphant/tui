@@ -30,6 +30,19 @@ final class FilterableCheckboxGroupPointerTest extends TestCase
     }
 
     #[Test]
+    public function aPressLandsOnTheBoxItWasAimedAtBeforeTheKeyboardIsThere(): void
+    {
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations']);
+        $area = Rect::fromSize(30, 8);
+
+        $onTheFirstBox = new MouseMsg(0, $area->y + 2, MouseAction::Press, MouseButton::Left);
+        $ticked = $group->update($onTheFirstBox, $area)->model;
+
+        self::assertInstanceOf(FilterableCheckboxGroup::class, $ticked);
+        self::assertSame(['app.log'], $ticked->checkedValues(), 'the pointer says where it landed, not where the keyboard was');
+    }
+
+    #[Test]
     public function theWheelOverTheBoxesWalksTheCursor(): void
     {
         $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log'])->withFocus(true);

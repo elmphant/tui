@@ -167,28 +167,26 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if (!$this->focused) {
+        $dispatcher = new ChildDispatcher($this->globalKeybindings);
+
+        // The boxes are the rows drawn, so a press and a wheel land on them — and a
+        // press arrives before the keyboard does, focus or no focus.
+        if ($message instanceof MouseMsg) {
+            return $this->dispatchedToTheBoxes($dispatcher, $message, $area);
+        }
+
+        if (!$this->focused || !$message instanceof KeyMsg) {
             return new UpdateResult($this);
         }
 
-        if (!$message instanceof KeyMsg && !$message instanceof MouseMsg) {
-            return new UpdateResult($this);
-        }
-
-        if ($message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
+        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
             return new UpdateResult(
                 $this->field->value() === '' ? $this : $this->cloneWith(field: $this->field->withValue(''), cursor: 0),
             );
         }
 
-        $dispatcher = new ChildDispatcher($this->globalKeybindings);
-
-        // The boxes own the pointer as well as the keys that walk them: they are
-        // the rows drawn, so they are what a press and a wheel land on.
-        if ($message instanceof MouseMsg || $this->isForTheBoxes($message)) {
-            $boxes = $dispatcher->dispatchOne($this->boxes(), $message, $this->boxesArea($area))->child;
-
-            return new UpdateResult($this->cloneWith(checked: $this->checkedAfter($boxes), cursor: $boxes->cursor()));
+        if ($this->isForTheBoxes($message)) {
+            return $this->dispatchedToTheBoxes($dispatcher, $message, $area);
         }
 
         $field = $dispatcher->dispatchOne($this->field, $message, $this->fieldArea($area))->child;
@@ -213,6 +211,16 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         if ($body->height > 0) {
             $this->boxes()->render($frame, $body, $context);
         }
+    }
+
+    /**
+     * @return UpdateResult<static>
+     */
+    private function dispatchedToTheBoxes(ChildDispatcher $dispatcher, Message $message, Rect $area): UpdateResult
+    {
+        $boxes = $dispatcher->dispatchOne($this->boxes(), $message, $this->boxesArea($area))->child;
+
+        return new UpdateResult($this->cloneWith(checked: $this->checkedAfter($boxes), cursor: $boxes->cursor()));
     }
 
     private function isForTheBoxes(KeyMsg $message): bool
