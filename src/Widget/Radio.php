@@ -22,8 +22,8 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     use KeybindingsAwareBehavior;
     use OptionListBehavior;
 
-    public const PICKED_MARK = OptionMarks::PICKED;
-    public const FREE_MARK = OptionMarks::FREE;
+    public const SELECTED_MARK = OptionMarks::SELECTED;
+    public const UNSELECTED_MARK = OptionMarks::UNSELECTED;
 
     /**
      * @param list<string> $options
@@ -137,7 +137,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
             $widest = max($widest, CharWidth::stringWidth($option));
         }
 
-        return $widest + CharWidth::stringWidth(self::PICKED_MARK);
+        return $widest + CharWidth::stringWidth(self::SELECTED_MARK);
     }
 
     /**
@@ -181,7 +181,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
             $isCursor = $index === $this->cursor && $this->drawsFocused($context);
             $isSelected = $index === $this->selected;
 
-            $mark = $isSelected ? self::PICKED_MARK : self::FREE_MARK;
+            $mark = $isSelected ? self::SELECTED_MARK : self::UNSELECTED_MARK;
             $markWidth = CharWidth::stringWidth($mark);
 
             $style = $theme->optionStyle($isCursor, $isSelected, $this->drawsFocused($context));

@@ -66,13 +66,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private ListView $list,
         private ?Matcher $matcher = null,
         private string $noMatchText = 'No matches',
-        private ?string $picked = null,
+        private ?string $selectedValue = null,
         private string $emptyCaption = '',
         ?array $matching = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
-        private ?int $pickedIndex = null,
+        private ?int $selectedSourceIndex = null,
     ) {
         $this->matching = $matching ?? self::matching($matcher, $field->value(), $items);
     }
@@ -201,25 +201,25 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      * An item is chosen by its own filter value, so narrowing the list to
      * nothing cannot erase a choice already made.
      */
-    public function withPicked(?string $filterValue): self
+    public function withSelectedValue(?string $filterValue): self
     {
-        return $this->cloneWith(picked: $filterValue, pickedIndex: null);
+        return $this->cloneWith(selectedValue: $filterValue, selectedSourceIndex: null);
     }
 
-    public function pickedItem(): ?ListItem
+    public function selectedItem(): ?ListItem
     {
-        if ($this->picked === null) {
+        if ($this->selectedValue === null) {
             return null;
         }
 
-        $atIndex = $this->pickedIndex === null ? null : ($this->items[$this->pickedIndex] ?? null);
+        $atIndex = $this->selectedSourceIndex === null ? null : ($this->items[$this->selectedSourceIndex] ?? null);
 
-        if ($atIndex !== null && $atIndex->filterValue() === $this->picked) {
+        if ($atIndex !== null && $atIndex->filterValue() === $this->selectedValue) {
             return $atIndex;
         }
 
         foreach ($this->items as $item) {
-            if ($item->filterValue() === $this->picked) {
+            if ($item->filterValue() === $this->selectedValue) {
                 return $item;
             }
         }
@@ -229,12 +229,12 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
     public function caption(): string
     {
-        return $this->pickedItem()?->title() ?? $this->emptyCaption;
+        return $this->selectedItem()?->title() ?? $this->emptyCaption;
     }
 
     public function hasChoice(): bool
     {
-        return $this->pickedItem() !== null;
+        return $this->selectedItem() !== null;
     }
 
     public function optionAt(MouseMsg $message, Rect $area): ?string
@@ -261,7 +261,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return $this;
         }
 
-        return $this->withPicked($this->clearable && $this->picked === $option ? null : $option);
+        return $this->withSelectedValue($this->clearable && $this->selectedValue === $option ? null : $option);
     }
 
     /**
@@ -358,9 +358,9 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             }
 
             $value = $cursor->filterValue();
-            $clearing = $this->clearable && $this->picked === $value;
+            $clearing = $this->clearable && $this->selectedValue === $value;
 
-            return new UpdateResult($this->pickedAt($clearing ? null : $value, $this->sourceIndex()));
+            return new UpdateResult($this->selectedAt($clearing ? null : $value, $this->sourceIndex()));
         }
 
         $dispatcher = new ChildDispatcher($this->globalKeybindings);
@@ -417,11 +417,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      * the row is only consulted while it still reads the same, so a list that
      * moved on behind the choice falls back to finding it by value.
      */
-    private function pickedAt(?string $filterValue, ?int $index): self
+    private function selectedAt(?string $filterValue, ?int $index): self
     {
         return $this->cloneWith(
-            picked: $filterValue,
-            pickedIndex: $filterValue === null ? null : $index,
+            selectedValue: $filterValue,
+            selectedSourceIndex: $filterValue === null ? null : $index,
         );
     }
 

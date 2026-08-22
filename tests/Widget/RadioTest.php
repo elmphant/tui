@@ -417,10 +417,10 @@ final class RadioTest extends TestCase
         self::assertSame(' ', $frame->characters[$row1Index]);
 
         $optionRow0Index = 2 * 40;
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, $optionRow0Index));
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, $optionRow0Index));
 
         $optionRow1Index = 3 * 40;
-        self::assertSame(Radio::FREE_MARK, $this->markAt($frame, $optionRow1Index));
+        self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, $optionRow1Index));
     }
 
     #[Test]
@@ -434,7 +434,7 @@ final class RadioTest extends TestCase
 
         self::assertSame('T', $frame->characters[3 * 40]);
         self::assertSame(' ', $frame->characters[4 * 40]);
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, 5 * 40), 'Option must render at area.y(3)+2=5, not at absolute row 2');
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 5 * 40), 'Option must render at area.y(3)+2=5, not at absolute row 2');
         self::assertSame(' ', $frame->characters[2 * 40], 'Row 2 must be empty (mutant $y=2 would render option here)');
     }
 
@@ -450,10 +450,10 @@ final class RadioTest extends TestCase
         $area = new Rect(0, 0, 40, 4);
         $radio->render($frame, $area, new RenderContext($theme));
 
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, 0));
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 0));
 
         $row1Index = 1 * 40;
-        self::assertSame(Radio::FREE_MARK, $this->markAt($frame, $row1Index));
+        self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, $row1Index));
     }
 
     /**
@@ -489,10 +489,10 @@ final class RadioTest extends TestCase
         $area = new Rect(0, 0, 40, 2);
         $radio->render($frame, $area, new RenderContext($theme));
 
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, 0));
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 0));
 
         $row1Index = 1 * 40;
-        self::assertSame(Radio::FREE_MARK, $this->markAt($frame, $row1Index));
+        self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, $row1Index));
     }
 
     /**
@@ -564,9 +564,9 @@ final class RadioTest extends TestCase
         $area = new Rect(0, 0, 40, 4);
         $radio->render($frame, $area, new RenderContext($theme));
 
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, 0));
-        self::assertSame(Radio::FREE_MARK, $this->markAt($frame, 1 * 40));
-        self::assertSame(Radio::FREE_MARK, $this->markAt($frame, 2 * 40));
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 0));
+        self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, 1 * 40));
+        self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, 2 * 40));
     }
 
     /**
@@ -586,9 +586,9 @@ final class RadioTest extends TestCase
         $renderArea = new Rect(0, 0, 40, 4);
         $selected->render($frame, $renderArea, new RenderContext($theme));
 
-        self::assertSame(Radio::FREE_MARK, $this->markAt($frame, 0));
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, 1 * 40));
-        self::assertSame(Radio::FREE_MARK, $this->markAt($frame, 2 * 40));
+        self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, 0));
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 1 * 40));
+        self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, 2 * 40));
     }
 
     /**
@@ -603,9 +603,9 @@ final class RadioTest extends TestCase
         $area = new Rect(0, 0, 40, 3);
         $radio->render($frame, $area, new RenderContext($theme));
 
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, 0));
-        self::assertSame(Radio::FREE_MARK, $this->markAt($frame, 1 * 40));
-        self::assertNotSame(Radio::PICKED_MARK, Radio::FREE_MARK, 'the two states have to look different');
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 0));
+        self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, 1 * 40));
+        self::assertNotSame(Radio::SELECTED_MARK, Radio::UNSELECTED_MARK, 'the two states have to look different');
     }
 
     /**
@@ -673,7 +673,7 @@ final class RadioTest extends TestCase
         $area = new Rect(0, 0, 40, 2);
         $radio->render($frame, $area, new RenderContext($theme));
 
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, 0));
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 0));
         self::assertNotSame(0, $frame->foregrounds[0]);
     }
 
@@ -708,7 +708,7 @@ final class RadioTest extends TestCase
         $area = new Rect(5, 0, 35, 2);
         $radio->render($frame, $area, new RenderContext($theme));
 
-        self::assertSame(Radio::PICKED_MARK, $this->markAt($frame, 5));
+        self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 5));
         self::assertSame('H', $frame->characters[5 + self::MARK_WIDTH]);
         self::assertSame('i', $frame->characters[5 + self::MARK_WIDTH + 1]);
     }
@@ -939,7 +939,7 @@ final class RadioTest extends TestCase
         self::assertSame('P', $frame->characters[0]);
         self::assertContains(
             $this->markAt($frame, 2 * 10),
-            [Radio::PICKED_MARK, Radio::FREE_MARK],
+            [Radio::SELECTED_MARK, Radio::UNSELECTED_MARK],
             'first option marker must be at row 2 (after label + blank)',
         );
     }
@@ -953,8 +953,8 @@ final class RadioTest extends TestCase
 
         self::assertSame('Pick', rtrim($this->extractRow($frame, 0, 20)), 'Label on row 0');
         self::assertSame('', rtrim($this->extractRow($frame, 1, 20)), 'Row 1 is the spacer');
-        self::assertSame(Radio::PICKED_MARK . 'Alpha', rtrim($this->extractRow($frame, 2, 20)), 'First option starts on row 2 — the label occupies exactly two rows');
-        self::assertSame(Radio::FREE_MARK . 'Beta', rtrim($this->extractRow($frame, 3, 20)));
+        self::assertSame(Radio::SELECTED_MARK . 'Alpha', rtrim($this->extractRow($frame, 2, 20)), 'First option starts on row 2 — the label occupies exactly two rows');
+        self::assertSame(Radio::UNSELECTED_MARK . 'Beta', rtrim($this->extractRow($frame, 3, 20)));
     }
 
     #[Test]
@@ -966,9 +966,9 @@ final class RadioTest extends TestCase
         $frame = new Frame(12, 3);
         $radio->render($frame, new Rect(0, 0, 12, 3), new RenderContext(Theme::dark()));
 
-        self::assertSame(Radio::FREE_MARK . 'Beta', rtrim($this->extractRow($frame, 0, 12)), 'One row scrolled out: Beta is now the top row');
-        self::assertSame(Radio::FREE_MARK . 'Gamma', rtrim($this->extractRow($frame, 1, 12)));
-        self::assertSame(Radio::FREE_MARK . 'Delta', rtrim($this->extractRow($frame, 2, 12)), 'The cursor row is the last visible row');
+        self::assertSame(Radio::UNSELECTED_MARK . 'Beta', rtrim($this->extractRow($frame, 0, 12)), 'One row scrolled out: Beta is now the top row');
+        self::assertSame(Radio::UNSELECTED_MARK . 'Gamma', rtrim($this->extractRow($frame, 1, 12)));
+        self::assertSame(Radio::UNSELECTED_MARK . 'Delta', rtrim($this->extractRow($frame, 2, 12)), 'The cursor row is the last visible row');
     }
 
     #[Test]
@@ -980,8 +980,8 @@ final class RadioTest extends TestCase
         $frame = new Frame(12, 4);
         $radio->render($frame, new Rect(0, 0, 12, 4), new RenderContext(Theme::dark()));
 
-        self::assertSame(Radio::PICKED_MARK . 'Alpha', rtrim($this->extractRow($frame, 0, 12)), 'Offset (2+3)-4+1=2 scrolls the label and spacer out; all four options fit');
-        self::assertSame(Radio::FREE_MARK . 'Delta', rtrim($this->extractRow($frame, 3, 12)), 'The cursor row lands on the last visible row');
+        self::assertSame(Radio::SELECTED_MARK . 'Alpha', rtrim($this->extractRow($frame, 0, 12)), 'Offset (2+3)-4+1=2 scrolls the label and spacer out; all four options fit');
+        self::assertSame(Radio::UNSELECTED_MARK . 'Delta', rtrim($this->extractRow($frame, 3, 12)), 'The cursor row lands on the last visible row');
     }
 
     #[Test]

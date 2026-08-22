@@ -14,14 +14,14 @@ final class OptionMarksTest extends TestCase
     #[Test]
     public function drawsAChoiceInParenthesesAndAToggleInBracketsOverTheSameColumns(): void
     {
-        self::assertSame('(●) ', OptionMarks::PICKED);
-        self::assertSame('( ) ', OptionMarks::FREE);
+        self::assertSame('(●) ', OptionMarks::SELECTED);
+        self::assertSame('( ) ', OptionMarks::UNSELECTED);
         self::assertSame('[x] ', OptionMarks::CHECKED);
         self::assertSame('[ ] ', OptionMarks::UNCHECKED);
 
         $widths = array_map(
             CharWidth::stringWidth(...),
-            [OptionMarks::PICKED, OptionMarks::FREE, OptionMarks::CHECKED, OptionMarks::UNCHECKED],
+            [OptionMarks::SELECTED, OptionMarks::UNSELECTED, OptionMarks::CHECKED, OptionMarks::UNCHECKED],
         );
 
         self::assertSame([4, 4, 4, 4], $widths, 'a form mixing both controls lines its labels up');

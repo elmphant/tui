@@ -242,13 +242,13 @@ final class FilterableListTest extends TestCase
     #[Test]
     public function aChoiceSurvivesTheReaderTypingOnInTheFilter(): void
     {
-        $picked = $this->commands()->withPicked('cache:flush');
+        $picked = $this->commands()->withSelectedValue('cache:flush');
 
         $typed = $this->typed($picked, 'user');
 
         self::assertSame(
             'cache:flush',
-            $typed->pickedItem()?->title(),
+            $typed->selectedItem()?->title(),
             'narrowing the list is not choosing from it, so the choice holds still',
         );
     }
@@ -256,12 +256,12 @@ final class FilterableListTest extends TestCase
     #[Test]
     public function theHighlightFollowsTheFilterWhileTheChoiceDoesNot(): void
     {
-        $list = $this->commands()->withPicked('cache:flush');
+        $list = $this->commands()->withSelectedValue('cache:flush');
 
         $typed = $this->typed($list, 'user');
 
         self::assertSame('user:create', $typed->cursorItem()?->title(), 'the cursor sits on the only match');
-        self::assertSame('cache:flush', $typed->pickedItem()?->title(), 'and the choice is elsewhere, which is the point');
+        self::assertSame('cache:flush', $typed->selectedItem()?->title(), 'and the choice is elsewhere, which is the point');
     }
 
     #[Test]
@@ -299,7 +299,7 @@ final class FilterableListTest extends TestCase
     #[Test]
     public function anOptionItNeverOfferedIsNotOneItCanChoose(): void
     {
-        $list = $this->commands()->withPicked('cache:flush');
+        $list = $this->commands()->withSelectedValue('cache:flush');
 
         self::assertFalse($list->hasOption('user:delete'));
         self::assertSame(
@@ -353,19 +353,19 @@ final class FilterableListTest extends TestCase
 
         $picked = $this->send($list, new KeyMsg(Key::Enter));
 
-        self::assertSame('cache:flush', $picked->pickedItem()?->filterValue());
+        self::assertSame('cache:flush', $picked->selectedItem()?->filterValue());
     }
 
     #[Test]
     public function aListToldNotToBeClearableKeepsWhatItHolds(): void
     {
-        $list = $this->commands()->withClearable(false)->withPicked('cache:warmup');
+        $list = $this->commands()->withClearable(false)->withSelectedValue('cache:warmup');
 
         $again = $list->activated('cache:warmup');
 
         self::assertSame(
             'cache:warmup',
-            $again->pickedItem()?->filterValue(),
+            $again->selectedItem()?->filterValue(),
             'a list that must answer stays answered when the row it holds is chosen again',
         );
     }
@@ -373,13 +373,13 @@ final class FilterableListTest extends TestCase
     #[Test]
     public function aClearableListLetsThePickedRowBePutBackDown(): void
     {
-        $list = $this->commands()->withClearable()->withPicked('cache:warmup');
+        $list = $this->commands()->withClearable()->withSelectedValue('cache:warmup');
 
         $cleared = $list->activated('cache:warmup');
         $moved = $list->activated('user:create');
 
-        self::assertNull($cleared->pickedItem(), 'choosing the row it already holds puts it back down');
-        self::assertSame('user:create', $moved->pickedItem()?->filterValue(), 'any other row still picks');
+        self::assertNull($cleared->selectedItem(), 'choosing the row it already holds puts it back down');
+        self::assertSame('user:create', $moved->selectedItem()?->filterValue(), 'any other row still picks');
     }
 
     #[Test]
@@ -480,7 +480,7 @@ final class FilterableListTest extends TestCase
 
         $picked = $this->press($onSecond, Key::Enter);
 
-        self::assertSame('second', $picked->pickedItem()?->description());
+        self::assertSame('second', $picked->selectedItem()?->description());
     }
 
     #[Test]

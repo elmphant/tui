@@ -28,8 +28,8 @@ final readonly class RadioRow implements OptionRow, PublishesHints
     use DrawsFocus;
     use KeybindingsAwareBehavior;
 
-    public const PICKED_MARK = OptionMarks::PICKED;
-    public const FREE_MARK = OptionMarks::FREE;
+    public const SELECTED_MARK = OptionMarks::SELECTED;
+    public const UNSELECTED_MARK = OptionMarks::UNSELECTED;
 
     /**
      * @param list<string> $options
@@ -204,7 +204,7 @@ final readonly class RadioRow implements OptionRow, PublishesHints
             $frame->putStyled(
                 $x,
                 $y,
-                ($picked ? self::PICKED_MARK : self::FREE_MARK) . $this->options[$index],
+                ($picked ? self::SELECTED_MARK : self::UNSELECTED_MARK) . $this->options[$index],
                 $context->theme->optionStyle($focused && $index === $this->cursor, $picked, $focused),
             );
         }
@@ -274,7 +274,7 @@ final readonly class RadioRow implements OptionRow, PublishesHints
     private function entries(): array
     {
         return array_map(
-            static fn (string $option): string => self::FREE_MARK . $option,
+            static fn (string $option): string => self::UNSELECTED_MARK . $option,
             $this->options,
         );
     }

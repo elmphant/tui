@@ -13,8 +13,8 @@ namespace Elmphant\Tui\Widget;
  */
 final class OptionMarks
 {
-    public const PICKED = '(●) ';
-    public const FREE = '( ) ';
+    public const SELECTED = '(●) ';
+    public const UNSELECTED = '( ) ';
     public const CHECKED = '[x] ';
     public const UNCHECKED = '[ ] ';
 }

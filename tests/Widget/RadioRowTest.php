@@ -35,7 +35,7 @@ final class RadioRowTest extends TestCase
         $row = RadioRow::new(['system', 'pages', 'all'])->withSelected(1);
 
         self::assertSame(
-            RadioRow::FREE_MARK . 'system  ' . RadioRow::PICKED_MARK . 'pages  ' . RadioRow::FREE_MARK . 'all',
+            RadioRow::UNSELECTED_MARK . 'system  ' . RadioRow::SELECTED_MARK . 'pages  ' . RadioRow::UNSELECTED_MARK . 'all',
             trim($this->render($row)),
         );
     }
@@ -49,9 +49,9 @@ final class RadioRowTest extends TestCase
         $row->render($frame, new Rect(0, 0, 10, 3), new RenderContext(Theme::dark()));
         $screen = ScreenBuffer::fromFrame($frame);
 
-        self::assertSame(RadioRow::FREE_MARK . 'system', trim($screen->getLine(0)));
-        self::assertSame(RadioRow::PICKED_MARK . 'pages', trim($screen->getLine(1)), 'the mark stays with the value it belongs to');
-        self::assertSame(RadioRow::FREE_MARK . 'all', trim($screen->getLine(2)));
+        self::assertSame(RadioRow::UNSELECTED_MARK . 'system', trim($screen->getLine(0)));
+        self::assertSame(RadioRow::SELECTED_MARK . 'pages', trim($screen->getLine(1)), 'the mark stays with the value it belongs to');
+        self::assertSame(RadioRow::UNSELECTED_MARK . 'all', trim($screen->getLine(2)));
     }
 
     #[Test]
