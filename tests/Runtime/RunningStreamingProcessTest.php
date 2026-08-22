@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessOutputMsg;
@@ -47,7 +48,7 @@ final class RunningStreamingProcessTest extends TestCase
         $wrap = static fn (Message $message): Message => new MessageEnvelope($message);
         $running = new RunningStreamingProcess($process, null, wrap: $wrap);
 
-        $message = $running->map(new ErrorMsg(new RuntimeException('pump failed'), 'effect'));
+        $message = $running->map(new ErrorMsg(new RuntimeException('pump failed'), ErrorSource::Process));
 
         self::assertInstanceOf(ErrorMsg::class, self::envelope($message)->inner);
     }

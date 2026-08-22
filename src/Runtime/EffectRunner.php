@@ -15,6 +15,7 @@ use Elmphant\Tui\Core\ListenCmd;
 use Elmphant\Tui\Core\ProcessCmd;
 use Elmphant\Tui\Core\TickCmd;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use LogicException;
@@ -89,19 +90,19 @@ final class EffectRunner
             $command instanceof CancelCmd => $this->cancel($command->id, $wrap),
             $command instanceof HttpCmd => $this->keep(
                 fn (): RunningProcess => $this->requestStarter->start($command, $wrap),
-                'http',
+                ErrorSource::Http,
                 $command->id,
                 $wrap,
             ),
             $command instanceof ExecCmd => $this->keep(
                 fn (): RunningProcess => $this->processStarter->exec($command, $wrap),
-                'process',
+                ErrorSource::Process,
                 $command->id,
                 $wrap,
             ),
             $command instanceof ProcessCmd => $this->keep(
                 fn (): RunningProcess => $this->processStarter->streaming($command, $wrap),
-                'process',
+                ErrorSource::Process,
                 $command->id,
                 $wrap,
             ),
@@ -175,7 +176,7 @@ final class EffectRunner
      * @param Closure(): RunningProcess      $start
      * @param Closure(Message): Message|null $wrap
      */
-    private function keep(Closure $start, string $source, ?EffectId $id, ?Closure $wrap): void
+    private function keep(Closure $start, ErrorSource $source, ?EffectId $id, ?Closure $wrap): void
     {
         try {
             $this->processes[] = $start();
@@ -241,7 +242,7 @@ final class EffectRunner
                 try {
                     $process->stop();
                 } catch (Throwable $error) {
-                    $this->report(new ErrorMsg($error, 'cancel', $id), $wrap);
+                    $this->report(new ErrorMsg($error, ErrorSource::Cancel, $id), $wrap);
                 }
                 continue;
             }
@@ -294,7 +295,7 @@ final class EffectRunner
                     $this->results->enqueue($message);
                 }
             } catch (Throwable $error) {
-                $this->results->enqueue($process->map(new ErrorMsg($error, 'effect', $process->id())));
+                $this->results->enqueue($process->map(new ErrorMsg($error, ErrorSource::Process, $process->id())));
                 try {
                     $process->stop();
                 } catch (Throwable) {
@@ -327,7 +328,7 @@ final class EffectRunner
                     $this->report($message, $subscription->wrap);
                 }
             } catch (Throwable $error) {
-                $this->report(new ErrorMsg($error, 'listen', $subscription->id), $subscription->wrap);
+                $this->report(new ErrorMsg($error, ErrorSource::Listen, $subscription->id), $subscription->wrap);
                 $this->stopWatching($subscription);
                 continue;
             }
@@ -394,7 +395,7 @@ final class EffectRunner
             try {
                 $result = ($timer->callback)();
             } catch (Throwable $error) {
-                $this->report(new ErrorMsg($error, 'timer', $timer->id), $timer->wrap);
+                $this->report(new ErrorMsg($error, ErrorSource::Timer, $timer->id), $timer->wrap);
                 continue;
             }
             if ($result instanceof Cmd) {
@@ -404,7 +405,7 @@ final class EffectRunner
             } elseif ($result !== null) {
                 $this->report(new ErrorMsg(
                     new UnexpectedValueException('Cmd::after() callback must return Message, Cmd, or null'),
-                    'timer',
+                    ErrorSource::Timer,
                     $timer->id,
                 ), $timer->wrap);
             }

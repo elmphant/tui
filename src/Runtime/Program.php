@@ -30,6 +30,7 @@ use Elmphant\Tui\Input\Terminal;
 use Elmphant\Tui\Input\TerminalInterface;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -818,7 +819,7 @@ final class Program
 
                     return;
                 }
-                $this->messageQueue->enqueue(new ErrorMsg($error, 'update'));
+                $this->messageQueue->enqueue(new ErrorMsg($error, ErrorSource::Update));
                 continue;
             }
 
@@ -889,7 +890,7 @@ final class Program
             if ($this->consecutiveRenderFailures >= self::MAX_CONSECUTIVE_ERRORS) {
                 $this->running = false;
             }
-            $this->messageQueue->enqueue(new ErrorMsg($error, 'render'));
+            $this->messageQueue->enqueue(new ErrorMsg($error, ErrorSource::Render));
 
             return false;
         }
@@ -989,7 +990,7 @@ final class Program
                 default => $this->effects()->run($command, $wrap),
             };
         } catch (Throwable $error) {
-            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'command'), $wrap));
+            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, ErrorSource::Command), $wrap));
         }
     }
 
@@ -1011,7 +1012,7 @@ final class Program
         try {
             $result = ($command->callback)();
         } catch (Throwable $error) {
-            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, 'call'), $wrap));
+            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, ErrorSource::Call), $wrap));
 
             return;
         }
@@ -1023,7 +1024,7 @@ final class Program
         } elseif ($result !== null) {
             $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg(
                 new UnexpectedValueException('Cmd::call() callback must return Message, Cmd, or null'),
-                'call',
+                ErrorSource::Call,
             ), $wrap));
         }
     }

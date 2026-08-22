@@ -20,6 +20,7 @@ use Elmphant\Tui\Input\TerminalOutputInterface;
 use Elmphant\Tui\Input\TerminalWriteException;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -547,7 +548,7 @@ final class ProgramTest extends TestCase
         $message = $queue->dequeue();
         self::assertInstanceOf(ErrorMsg::class, $message);
         self::assertSame($error, $message->error);
-        self::assertSame('call', $message->source);
+        self::assertSame(ErrorSource::Call, $message->source);
     }
 
     #[Test]
@@ -1244,7 +1245,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('running')->setValue($program, true);
 
         $queue = new SplQueue();
-        $queue->enqueue(new ErrorMsg(new RuntimeException('test'), 'test'));
+        $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
@@ -1287,7 +1288,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('running')->setValue($program, true);
 
         $queue = new SplQueue();
-        $queue->enqueue(new ErrorMsg(new RuntimeException('test'), 'test'));
+        $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
         $queue->enqueue(new TickMsg(0.0));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
@@ -1332,7 +1333,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('running')->setValue($program, true);
 
         $queue = new SplQueue();
-        $queue->enqueue(new ErrorMsg(new RuntimeException('original'), 'render'));
+        $queue->enqueue(new ErrorMsg(new RuntimeException('original'), ErrorSource::Render));
         $queue->enqueue(new TickMsg(0.0));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
@@ -1378,7 +1379,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('running')->setValue($program, true);
 
         $queue = new SplQueue();
-        $queue->enqueue(new ErrorMsg(new RuntimeException('test'), 'test'));
+        $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
@@ -1403,7 +1404,7 @@ final class ProgramTest extends TestCase
 
         $queue = new SplQueue();
         for ($i = 0; $i < 15; ++$i) {
-            $queue->enqueue(new ErrorMsg(new RuntimeException("e$i"), 'test'));
+            $queue->enqueue(new ErrorMsg(new RuntimeException("e$i"), ErrorSource::Update));
         }
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
@@ -2614,7 +2615,7 @@ final class ProgramTest extends TestCase
 
         $errorObservingModel = new class implements Model {
             /**
-             * @var list<string>
+             * @var list<ErrorSource>
              */
             public array $errorSources = [];
 
@@ -2652,7 +2653,7 @@ final class ProgramTest extends TestCase
         $runTick->invoke($program);
         $ticker->stop();
 
-        self::assertSame(['render'], $errorObservingModel->errorSources, 'A write that stalls must become an ErrorMsg the app can act on, not unwind the loop');
+        self::assertSame([ErrorSource::Render], $errorObservingModel->errorSources, 'A write that stalls must become an ErrorMsg the app can act on, not unwind the loop');
     }
 
     #[Test]

@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
@@ -25,7 +26,7 @@ final class ProgramCommandFailureTest extends TestCase
     {
         $model = new class implements Model {
             /**
-             * @var list<string>
+             * @var list<ErrorSource>
              */
             public array $errorSources = [];
 
@@ -60,7 +61,7 @@ final class ProgramCommandFailureTest extends TestCase
         Program::new($model)->withTerminal($terminal)->start();
 
         self::assertSame(
-            ['command'],
+            [ErrorSource::Command],
             $model->errorSources,
             'A command that cannot be dispatched must reach the app as an error instead of unwinding the loop',
         );

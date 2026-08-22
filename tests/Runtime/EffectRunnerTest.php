@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\TickMsg;
@@ -143,7 +144,7 @@ final class EffectRunnerTest extends TestCase
 
         $message = $this->results->dequeue();
         self::assertInstanceOf(ErrorMsg::class, $message);
-        self::assertSame('timer', $message->source);
+        self::assertSame(ErrorSource::Timer, $message->source);
     }
 
     #[Test]

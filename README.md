@@ -262,7 +262,7 @@ Cmd::cancel($download); // also works for tick(), after(), exec(), and process()
 
 `Cmd::call()` is an escape hatch for short synchronous side effects. Its callback
 may return a message, another command, or `null`; thrown exceptions are delivered
-as `ErrorMsg` with source `call`. It runs on the event-loop thread, so it must not
+as `ErrorMsg` with source `ErrorSource::Call`. It runs on the event-loop thread, so it must not
 perform slow I/O or CPU-heavy work. Use `Cmd::http()`, `Cmd::exec()`, or
 `Cmd::process()` for non-blocking work.
 

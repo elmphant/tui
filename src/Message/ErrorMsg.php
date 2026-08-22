@@ -11,7 +11,7 @@ final readonly class ErrorMsg implements Message
 {
     public function __construct(
         public Throwable $error,
-        public string $source = 'async',
+        public ErrorSource $source,
         public ?EffectId $effectId = null,
     ) {
     }

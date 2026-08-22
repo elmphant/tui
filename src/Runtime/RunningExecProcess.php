@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Runtime;
 use Closure;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Symfony\Component\Process\Process;
@@ -49,7 +50,7 @@ final class RunningExecProcess implements RunningProcess
 
                 return [$this->map(new ErrorMsg(
                     new EffectOutputLimitExceeded($this->maxOutputBytes, 'Process'),
-                    'process',
+                    ErrorSource::Process,
                     $this->processId,
                 ))];
             }
@@ -64,7 +65,7 @@ final class RunningExecProcess implements RunningProcess
         } catch (Throwable $error) {
             $this->finished = true;
 
-            return [$this->map(new ErrorMsg($error, 'process', $this->processId))];
+            return [$this->map(new ErrorMsg($error, ErrorSource::Process, $this->processId))];
         }
 
         $this->finished = true;

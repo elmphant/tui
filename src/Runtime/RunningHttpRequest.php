@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Runtime;
 use Closure;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\HttpResultMsg;
 use Elmphant\Tui\Message\Message;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -51,7 +52,7 @@ final class RunningHttpRequest implements RunningProcess
 
                     return [$this->map(new ErrorMsg(
                         new EffectOutputLimitExceeded($this->maxBodyBytes, 'HTTP response'),
-                        'http',
+                        ErrorSource::Http,
                         $this->requestId,
                     ))];
                 }
@@ -70,7 +71,7 @@ final class RunningHttpRequest implements RunningProcess
         } catch (Throwable $error) {
             $this->finished = true;
 
-            return [$this->map(new ErrorMsg($error, 'http', $this->requestId))];
+            return [$this->map(new ErrorMsg($error, ErrorSource::Http, $this->requestId))];
         }
 
         return [];

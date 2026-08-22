@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\HttpResultMsg;
 use Elmphant\Tui\Message\KeyMsg;
@@ -33,7 +34,7 @@ final class MessageMarkerTest extends TestCase
     public function everyBuiltinMessageImplementsTheMarker(): void
     {
         $messages = [
-            new ErrorMsg(new RuntimeException()),
+            new ErrorMsg(new RuntimeException(), ErrorSource::Update),
             new FocusMsg(true),
             new HttpResultMsg(200, ''),
             new KeyMsg('a'),
