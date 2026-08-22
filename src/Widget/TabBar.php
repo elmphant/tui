@@ -99,9 +99,9 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
             return $this;
         }
 
-        return $this->cloneWith(tabs: $tabs, activeTab: self::placeOfTab(
+        return $this->cloneWith(tabs: $tabs, activeTab: Options::cursorAfter(
             ($this->tabs[$this->activeTab] ?? null)?->label,
-            $tabs,
+            array_map(static fn (TabPage $tab): string => $tab->label, $tabs),
         ));
     }
 
@@ -256,20 +256,6 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         return $this->cloneWith(globalKeybindings: $keybindings, tabs: $this->tabsWithPane(
             static fn (ScrollPane $pane): ScrollPane => $pane->withGlobalKeybindings($keybindings),
         ));
-    }
-
-    /**
-     * @param list<TabPage> $tabs
-     */
-    private static function placeOfTab(?string $label, array $tabs): int
-    {
-        foreach ($tabs as $place => $tab) {
-            if ($tab->label === $label) {
-                return $place;
-            }
-        }
-
-        return 0;
     }
 
     /**
