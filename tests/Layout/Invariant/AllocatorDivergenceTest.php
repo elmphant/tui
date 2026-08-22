@@ -68,7 +68,7 @@ final class AllocatorDivergenceTest extends TestCase
     #[Test]
     public function aTableLeavesAColumnThatHasNeitherWeightNorFloorEmpty(): void
     {
-        $table = Table::new(
+        $table = Table::fromCells(
             [
                 Column::new(str_repeat('A', 40), Constraint::min(0)),
                 Column::new(str_repeat('B', 40), Constraint::exact(2)),

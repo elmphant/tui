@@ -88,13 +88,13 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
     /**
      * @param list<Column>       $columns
-     * @param list<list<string>> $rows
+     * @param list<list<string>> $cells
      */
-    public static function new(array $columns, array $rows): self
+    public static function fromCells(array $columns, array $cells): self
     {
         return new self(
             columns: $columns,
-            rows: self::asTypedRows($rows),
+            rows: self::asTypedRows($cells),
         );
     }
 
@@ -102,7 +102,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      * @param list<Column> $columns
      * @param list<Row>    $rows
      */
-    public static function fromRows(array $columns, array $rows): self
+    public static function new(array $columns, array $rows): self
     {
         return new self(
             columns: $columns,
@@ -126,11 +126,11 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     }
 
     /**
-     * @param list<list<string>> $rows
+     * @param list<list<string>> $cells
      */
-    public function withRows(array $rows): self
+    public function withCells(array $cells): self
     {
-        $typed = self::asTypedRows($rows);
+        $typed = self::asTypedRows($cells);
 
         return $this->cloneWith(
             rows: $typed,
@@ -144,7 +144,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     /**
      * @param list<Row> $rows
      */
-    public function withTypedRows(array $rows): self
+    public function withRows(array $rows): self
     {
         return $this->cloneWith(
             rows: $rows,

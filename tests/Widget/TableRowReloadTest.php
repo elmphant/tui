@@ -16,9 +16,9 @@ final class TableRowReloadTest extends TestCase
     public function reloadingRowsKeepsTheReaderOnTheRowTheCursorWasOn(): void
     {
         $columns = [Column::new('A', Constraint::flex())];
-        $table = Table::new($columns, [['alpha'], ['beta']])->withCursor(1);
+        $table = Table::fromCells($columns, [['alpha'], ['beta']])->withCursor(1);
 
-        $reordered = $table->withRows([['beta'], ['alpha']]);
+        $reordered = $table->withCells([['beta'], ['alpha']]);
 
         self::assertSame(0, $reordered->cursor(), 'beta moved to the top, and the reader with it');
     }

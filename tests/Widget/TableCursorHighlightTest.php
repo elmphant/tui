@@ -44,7 +44,7 @@ final class TableCursorHighlightTest extends TestCase
         $theme = Theme::dark();
         $frame = new Frame(30, 3);
 
-        Table::fromRows(
+        Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::styled('Alice', new Style(foreground: Color::ansi(2))))],
         )->withFocus(true)->render($frame, Rect::fromSize(30, 3), new RenderContext($theme));
@@ -61,7 +61,7 @@ final class TableCursorHighlightTest extends TestCase
 
     private static function tableOf(): Table
     {
-        return Table::new(
+        return Table::fromCells(
             [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
             [['1', 'first'], ['2', 'second']],
         );

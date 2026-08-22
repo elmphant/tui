@@ -204,7 +204,7 @@ final class IntrinsicWidthTest extends TestCase
     {
         yield 'TextInput' => [TextInput::new()->withValue('typed')];
         yield 'FocusGutter' => [FocusGutter::around(TextInput::new()->withValue('typed'))];
-        yield 'Table' => [Table::new([Column::new('A', Constraint::flex())], [['x']])];
+        yield 'Table' => [Table::fromCells([Column::new('A', Constraint::flex())], [['x']])];
         yield 'FilterableCheckboxGroup' => [FilterableCheckboxGroup::new(['alpha'])];
         yield 'Footer' => [Footer::new()];
         yield 'ListView' => [ListView::new([new SimpleListItem('alpha')])];

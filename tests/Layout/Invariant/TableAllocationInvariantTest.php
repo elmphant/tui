@@ -98,7 +98,7 @@ final class TableAllocationInvariantTest extends TestCase
     #[Test]
     public function aTableMeasuresItsHeightAgainstColumnsWiderThanTheWidthItWasGiven(): void
     {
-        $table = Table::new(
+        $table = Table::fromCells(
             [
                 Column::new('left', Constraint::min(10)),
                 Column::new('right', Constraint::min(10)),
@@ -166,6 +166,6 @@ final class TableAllocationInvariantTest extends TestCase
             $cells[] = '';
         }
 
-        return Table::new($columns, [$cells]);
+        return Table::fromCells($columns, [$cells]);
     }
 }

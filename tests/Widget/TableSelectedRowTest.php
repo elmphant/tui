@@ -22,7 +22,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aTypedTableReportsTheSelectedRowsText(): void
     {
-        $table = Table::fromRows(self::columns(), [
+        $table = Table::new(self::columns(), [
             Row::new('alpha', 'eu-1a'),
             Row::new('beta', 'eu-1b'),
         ])->withSelected(1);
@@ -34,7 +34,7 @@ final class TableSelectedRowTest extends TestCase
     public function aTypedTableReportsTheSelectedRowItself(): void
     {
         $second = Row::new('beta', 'eu-1b');
-        $table = Table::fromRows(self::columns(), [Row::new('alpha', 'eu-1a'), $second])->withSelected(1);
+        $table = Table::new(self::columns(), [Row::new('alpha', 'eu-1a'), $second])->withSelected(1);
 
         self::assertSame($second, $table->selectedTypedRow());
     }
@@ -42,7 +42,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function spanCellsAreReportedAsTheirText(): void
     {
-        $table = Table::fromRows(self::columns(), [
+        $table = Table::new(self::columns(), [
             Row::new(Span::styled('gamma', new Style()), 'eu-1c'),
         ])->withSelected(0);
 
@@ -52,7 +52,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aPlainTableStillReportsItsSelectedRow(): void
     {
-        $table = Table::new(self::columns(), [['alpha', 'eu-1a'], ['beta', 'eu-1b']])->withSelected(1);
+        $table = Table::fromCells(self::columns(), [['alpha', 'eu-1a'], ['beta', 'eu-1b']])->withSelected(1);
 
         self::assertSame(['beta', 'eu-1b'], $table->selectedRow());
     }
@@ -60,7 +60,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function nothingSelectedReportsNothing(): void
     {
-        $typed = Table::fromRows(self::columns(), [Row::new('alpha', 'eu-1a')]);
+        $typed = Table::new(self::columns(), [Row::new('alpha', 'eu-1a')]);
 
         self::assertNull($typed->selectedRow());
         self::assertNull($typed->selectedTypedRow());
@@ -69,7 +69,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aSelectionPastTheLastRowReportsNothing(): void
     {
-        $typed = Table::fromRows(self::columns(), [Row::new('alpha', 'eu-1a')])->withSelected(9);
+        $typed = Table::new(self::columns(), [Row::new('alpha', 'eu-1a')])->withSelected(9);
 
         self::assertNull($typed->selectedRow());
         self::assertNull($typed->selectedTypedRow());
@@ -78,7 +78,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aPlainTableHasNoTypedRowToReport(): void
     {
-        $plain = Table::new(self::columns(), [['alpha', 'eu-1a']])->withSelected(0);
+        $plain = Table::fromCells(self::columns(), [['alpha', 'eu-1a']])->withSelected(0);
 
         self::assertNull($plain->selectedTypedRow());
     }
@@ -95,13 +95,13 @@ final class TableSelectedRowTest extends TestCase
     public function theSelectionStaysOnTheRecordItWasMadeOn(): void
     {
         $columns = [Column::new('Name', Constraint::flex()), Column::new('State', Constraint::flex())];
-        $chosen = Table::new($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])->withSelected(2);
+        $chosen = Table::fromCells($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])->withSelected(2);
         self::assertSame(['gamma', 'on'], $chosen->selectedRow(), 'precondition: gamma was chosen');
 
-        $refreshed = $chosen->withRows([['zulu', 'off'], ['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']]);
+        $refreshed = $chosen->withCells([['zulu', 'off'], ['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']]);
         self::assertSame(['gamma', 'on'], $refreshed->selectedRow(), 'a row added above moves nothing');
 
-        $withoutGamma = $chosen->withRows([['alpha', 'on'], ['beta', 'off']]);
+        $withoutGamma = $chosen->withCells([['alpha', 'on'], ['beta', 'off']]);
         self::assertNull($withoutGamma->selectedRow(), 'the record went, so the selection went with it');
     }
 

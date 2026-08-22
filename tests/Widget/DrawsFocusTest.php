@@ -71,7 +71,7 @@ final class DrawsFocusTest extends TestCase
         yield 'Select' => [Select::new(['one', 'two'])];
         yield 'CheckboxGroup' => [CheckboxGroup::new(['one', 'two'])];
         yield 'ListView' => [ListView::new([new SimpleListItem('one'), new SimpleListItem('two')])];
-        yield 'Table' => [Table::new([Column::new('A', Constraint::exact(8))], [['one'], ['two']])];
+        yield 'Table' => [Table::fromCells([Column::new('A', Constraint::exact(8))], [['one'], ['two']])];
         yield 'Dropdown' => [Dropdown::new(Select::new(['one', 'two']))];
         yield 'Panel' => [Panel::new('Title')];
         yield 'TabBar' => [TabBar::new()->addTab('One')->addTab('Two')];
