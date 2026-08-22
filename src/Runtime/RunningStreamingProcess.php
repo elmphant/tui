@@ -21,7 +21,7 @@ final class RunningStreamingProcess implements RunningProcess
 
     public function __construct(
         private readonly Process $process,
-        private readonly ?EffectId $processId,
+        private readonly ?EffectId $effectId,
         private readonly int $outputChunkBytes = 65_536,
         /**
          * @var Closure(Message): Message|null
@@ -51,7 +51,7 @@ final class RunningStreamingProcess implements RunningProcess
         $messages[] = $this->map(new ProcessFinishedMsg(
             $this->process->getExitCode() ?? -1,
             $this->process->isSuccessful(),
-            $this->processId,
+            $this->effectId,
         ));
 
         return $messages;
@@ -67,7 +67,7 @@ final class RunningStreamingProcess implements RunningProcess
         $stdout = $this->process->getIncrementalOutput();
         if ($stdout !== '') {
             foreach (str_split($stdout, max(1, $this->outputChunkBytes)) as $chunk) {
-                $messages[] = $this->map(new ProcessOutputMsg($chunk, ProcessStream::Stdout, $this->processId));
+                $messages[] = $this->map(new ProcessOutputMsg($chunk, ProcessStream::Stdout, $this->effectId));
             }
         }
         $this->process->clearOutput();
@@ -75,7 +75,7 @@ final class RunningStreamingProcess implements RunningProcess
         $stderr = $this->process->getIncrementalErrorOutput();
         if ($stderr !== '') {
             foreach (str_split($stderr, max(1, $this->outputChunkBytes)) as $chunk) {
-                $messages[] = $this->map(new ProcessOutputMsg($chunk, ProcessStream::Stderr, $this->processId));
+                $messages[] = $this->map(new ProcessOutputMsg($chunk, ProcessStream::Stderr, $this->effectId));
             }
         }
         $this->process->clearErrorOutput();

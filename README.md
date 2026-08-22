@@ -379,7 +379,7 @@ Cmd::process(['npm', 'run', 'build'])
     ->withOutputChunkBytes(64 * 1024);
 ```
 
-The same `EffectId` instance appears as `$message->processId`, allowing precise routing and cancellation.
+The same `EffectId` instance appears as `$message->effectId` on every result message, allowing precise routing and cancellation.
 
 ## HTTP Requests
 
@@ -399,7 +399,7 @@ $message instanceof KeyMsg && $message->key === 'r'
             ->withMaxBodyBytes(4 * 1024 * 1024)
     ),
 
-$message instanceof HttpResultMsg && $message->id?->equals($packages)
+$message instanceof HttpResultMsg && $message->effectId?->equals($packages)
     => $this->withPackages(
         json_decode($message->body, true)['results'] ?? [],
     ),

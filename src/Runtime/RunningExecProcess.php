@@ -25,7 +25,7 @@ final class RunningExecProcess implements RunningProcess
 
     public function __construct(
         private readonly Process $process,
-        private readonly ?EffectId $processId,
+        private readonly ?EffectId $effectId,
         private readonly int $maxOutputBytes = 8_388_608,
         /**
          * @var Closure(Message): Message|null
@@ -51,7 +51,7 @@ final class RunningExecProcess implements RunningProcess
                 return [$this->map(new ErrorMsg(
                     new EffectOutputLimitExceeded($this->maxOutputBytes, 'Process'),
                     ErrorSource::Process,
-                    $this->processId,
+                    $this->effectId,
                 ))];
             }
 
@@ -65,7 +65,7 @@ final class RunningExecProcess implements RunningProcess
         } catch (Throwable $error) {
             $this->finished = true;
 
-            return [$this->map(new ErrorMsg($error, ErrorSource::Process, $this->processId))];
+            return [$this->map(new ErrorMsg($error, ErrorSource::Process, $this->effectId))];
         }
 
         $this->finished = true;
@@ -75,7 +75,7 @@ final class RunningExecProcess implements RunningProcess
             $this->stderr,
             $this->process->getExitCode() ?? -1,
             $this->process->isSuccessful(),
-            $this->processId,
+            $this->effectId,
         ))];
     }
 

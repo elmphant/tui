@@ -15,7 +15,7 @@ final readonly class HttpResultMsg implements Message
         public int $statusCode,
         public string $body,
         public array $headers = [],
-        public ?EffectId $id = null,
+        public ?EffectId $effectId = null,
     ) {
     }
 }

@@ -45,6 +45,6 @@ trait ChildProcessLifecycle
 
     public function id(): ?EffectId
     {
-        return $this->processId;
+        return $this->effectId;
     }
 }

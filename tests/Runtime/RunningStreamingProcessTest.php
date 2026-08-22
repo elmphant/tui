@@ -129,7 +129,7 @@ final class RunningStreamingProcessTest extends TestCase
         self::assertInstanceOf(ProcessFinishedMsg::class, $messages[0]);
         self::assertSame(123, $messages[0]->exitCode);
         self::assertFalse($messages[0]->successful);
-        self::assertSame('fin', $messages[0]->processId?->value);
+        self::assertSame('fin', $messages[0]->effectId?->value);
         self::assertFalse($running->isRunning());
     }
 

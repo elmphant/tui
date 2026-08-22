@@ -237,8 +237,8 @@ final class EffectRunner
 
         $remaining = [];
         foreach ($this->processes as $process) {
-            $processId = $process->id();
-            if ($processId !== null && $processId->equals($id)) {
+            $effectId = $process->id();
+            if ($effectId !== null && $effectId->equals($id)) {
                 try {
                     $process->stop();
                 } catch (Throwable $error) {

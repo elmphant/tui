@@ -13,7 +13,7 @@ final readonly class ProcessResultMsg implements Message
         public string $stderr,
         public int $exitCode,
         public bool $successful,
-        public ?EffectId $processId = null,
+        public ?EffectId $effectId = null,
     ) {
     }
 }

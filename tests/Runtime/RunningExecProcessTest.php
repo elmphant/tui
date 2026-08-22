@@ -46,7 +46,7 @@ final class RunningExecProcessTest extends TestCase
         self::assertSame("hello\n", $messages[0]->stdout);
         self::assertSame(0, $messages[0]->exitCode);
         self::assertTrue($messages[0]->successful);
-        self::assertSame('test', $messages[0]->processId?->value);
+        self::assertSame('test', $messages[0]->effectId?->value);
         self::assertFalse($running->isRunning());
     }
 
@@ -85,7 +85,7 @@ final class RunningExecProcessTest extends TestCase
         self::assertSame("err\n", $messages[0]->stderr);
         self::assertSame(1, $messages[0]->exitCode);
         self::assertFalse($messages[0]->successful);
-        self::assertNull($messages[0]->processId);
+        self::assertNull($messages[0]->effectId);
     }
 
     #[Test]
