@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Feedback;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
@@ -13,6 +13,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\Interactive;
 
 final readonly class ActivityBar implements Interactive
 {

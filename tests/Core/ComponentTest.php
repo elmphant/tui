@@ -11,7 +11,7 @@ use Elmphant\Tui\Core\ComponentRegistry;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Widget\Spinner;
+use Elmphant\Tui\Widget\Feedback\Spinner;
 use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;

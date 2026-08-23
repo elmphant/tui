@@ -10,9 +10,9 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Widget\Feedback\Spinner;
+use Elmphant\Tui\Widget\Feedback\SpinnerStyle;
 use Elmphant\Tui\Widget\Interactive;
-use Elmphant\Tui\Widget\Spinner;
-use Elmphant\Tui\Widget\SpinnerStyle;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

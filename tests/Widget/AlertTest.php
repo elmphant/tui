@@ -12,7 +12,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\Alert;
+use Elmphant\Tui\Widget\Feedback\Alert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -215,7 +215,7 @@ final class AlertTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{callable(): Alert, callable(Theme): Style}>
+     * @return iterable<string, array{callable():Alert, callable(Theme):Style}>
      */
     public static function severityToThemeStyle(): iterable
     {
@@ -238,7 +238,7 @@ final class AlertTest extends TestCase
     }
 
     /**
-     * @param callable(): Alert      $build
+     * @param callable():Alert       $build
      * @param callable(Theme): Style $style
      */
     #[Test]

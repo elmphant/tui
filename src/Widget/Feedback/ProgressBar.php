@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Feedback;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
@@ -18,6 +18,7 @@ use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Widget\Interactive;
 
 final readonly class ProgressBar implements Interactive
 {

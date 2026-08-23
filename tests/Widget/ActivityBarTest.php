@@ -11,7 +11,7 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\ActivityBar;
+use Elmphant\Tui\Widget\Feedback\ActivityBar;
 use Elmphant\Tui\Widget\Interactive;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
