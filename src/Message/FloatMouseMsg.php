@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Message;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\FloatPlacement;
-use Elmphant\Tui\Widget\PointerFloating;
+use Elmphant\Tui\Widget\Popup\PointerFloating;
 
 /**
  * A pointer event that landed on a float the last frame drew.

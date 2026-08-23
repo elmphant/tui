@@ -2,7 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Popup;
+
+use Elmphant\Tui\Widget\Captioning;
+use Elmphant\Tui\Widget\Committing;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\PointerOptions;
 
 /**
  * What a Dropdown can hold. Every capability is required by something the

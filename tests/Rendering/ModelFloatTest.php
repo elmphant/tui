@@ -17,7 +17,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\VirtualTerminal;
-use Elmphant\Tui\Widget\Floating;
+use Elmphant\Tui\Widget\Popup\Floating;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop;

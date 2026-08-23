@@ -30,6 +30,7 @@ use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Listing\ListItem;
 use Elmphant\Tui\Widget\Listing\ListItems;
 use Elmphant\Tui\Widget\Listing\ListView;
+use Elmphant\Tui\Widget\Popup\DropdownContent;
 
 /**
  * A scrollable list with a free-text filter over it.

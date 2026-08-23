@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Popup;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
  * The chrome drawn around content that floats above the layout.

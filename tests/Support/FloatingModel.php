@@ -15,7 +15,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\PointerFloating;
+use Elmphant\Tui\Widget\Popup\PointerFloating;
 use Elmphant\Tui\Widget\Widget;
 use RuntimeException;
 

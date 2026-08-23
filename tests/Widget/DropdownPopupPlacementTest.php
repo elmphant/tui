@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Widget\DropdownPopup;
-use Elmphant\Tui\Widget\FloatTarget;
+use Elmphant\Tui\Widget\Popup\DropdownPopup;
+use Elmphant\Tui\Widget\Popup\FloatTarget;
 use Elmphant\Tui\Widget\Select;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

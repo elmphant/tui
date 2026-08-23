@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Popup;
 
 use Closure;
 use Elmphant\Tui\Core\Cloneable;
@@ -22,7 +22,10 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\PublishesHints;
 
 /**
  * One row reading as what it holds, and a float to change that from.

@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Popup;
+
+use Elmphant\Tui\Widget\Container;
+use Elmphant\Tui\Widget\MeasureHeight;
 
 /**
  * How big a widget would be with nothing constraining it, so a float can be

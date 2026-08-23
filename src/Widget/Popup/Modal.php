@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Popup;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
@@ -24,7 +24,14 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
 
 final readonly class Modal implements Interactive, WidgetContainer, Focusable, InputLayer, KeybindingsAware, PublishesHints
 {

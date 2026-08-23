@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Popup;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Inset;
@@ -13,6 +13,7 @@ use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\Widget;
 
 /**
  * @internal the floating half of a Dropdown, queued by Dropdown::render()

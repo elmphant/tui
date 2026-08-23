@@ -19,8 +19,8 @@ use Elmphant\Tui\Rendering\FloatPlacement;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\InputRouter;
-use Elmphant\Tui\Widget\FloatTarget;
-use Elmphant\Tui\Widget\PointerFloating;
+use Elmphant\Tui\Widget\Popup\FloatTarget;
+use Elmphant\Tui\Widget\Popup\PointerFloating;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

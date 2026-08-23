@@ -10,8 +10,8 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\FloatTarget;
-use Elmphant\Tui\Widget\PointerFloating;
+use Elmphant\Tui\Widget\Popup\FloatTarget;
+use Elmphant\Tui\Widget\Popup\PointerFloating;
 
 /**
  * A float that draws one marker character over a fixed rect, for tests that

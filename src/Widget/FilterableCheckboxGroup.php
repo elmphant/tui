@@ -21,6 +21,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Popup\DropdownContent;
 
 /**
  * Boxes to tick with a free-text filter over them, for a list too long to walk.

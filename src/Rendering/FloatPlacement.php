@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Rendering;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Widget\FloatTarget;
-use Elmphant\Tui\Widget\PointerFloating;
+use Elmphant\Tui\Widget\Popup\FloatTarget;
+use Elmphant\Tui\Widget\Popup\PointerFloating;
 
 /**
  * @internal

@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Popup\DropdownContent;
 
 final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, DropdownContent, Committing, PublishesHints
 {
