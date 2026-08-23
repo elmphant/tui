@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
-use Elmphant\Tui\Widget\Row;
+use Elmphant\Tui\Widget\Table\Row;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

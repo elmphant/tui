@@ -7,9 +7,9 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
-use Elmphant\Tui\Widget\Column;
-use Elmphant\Tui\Widget\Row;
 use Elmphant\Tui\Widget\Table;
+use Elmphant\Tui\Widget\Table\Column;
+use Elmphant\Tui\Widget\Table\Row;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -22,7 +22,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aTypedTableReportsTheSelectedRowsText(): void
     {
-        $table = Table::new(self::columns(), [
+        $table = Table\Table::new(self::columns(), [
             Row::new('alpha', 'eu-1a'),
             Row::new('beta', 'eu-1b'),
         ])->withSelected(1);
@@ -34,7 +34,7 @@ final class TableSelectedRowTest extends TestCase
     public function aTypedTableReportsTheSelectedRowItself(): void
     {
         $second = Row::new('beta', 'eu-1b');
-        $table = Table::new(self::columns(), [Row::new('alpha', 'eu-1a'), $second])->withSelected(1);
+        $table = Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a'), $second])->withSelected(1);
 
         self::assertSame($second, $table->selectedTypedRow());
     }
@@ -42,7 +42,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function spanCellsAreReportedAsTheirText(): void
     {
-        $table = Table::new(self::columns(), [
+        $table = Table\Table::new(self::columns(), [
             Row::new(Span::styled('gamma', new Style()), 'eu-1c'),
         ])->withSelected(0);
 
@@ -52,7 +52,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aPlainTableStillReportsItsSelectedRow(): void
     {
-        $table = Table::fromCells(self::columns(), [['alpha', 'eu-1a'], ['beta', 'eu-1b']])->withSelected(1);
+        $table = Table\Table::fromCells(self::columns(), [['alpha', 'eu-1a'], ['beta', 'eu-1b']])->withSelected(1);
 
         self::assertSame(['beta', 'eu-1b'], $table->selectedRow());
     }
@@ -60,7 +60,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function nothingSelectedReportsNothing(): void
     {
-        $typed = Table::new(self::columns(), [Row::new('alpha', 'eu-1a')]);
+        $typed = Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a')]);
 
         self::assertNull($typed->selectedRow());
         self::assertNull($typed->selectedTypedRow());
@@ -69,7 +69,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aSelectionPastTheLastRowReportsNothing(): void
     {
-        $typed = Table::new(self::columns(), [Row::new('alpha', 'eu-1a')])->withSelected(9);
+        $typed = Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a')])->withSelected(9);
 
         self::assertNull($typed->selectedRow());
         self::assertNull($typed->selectedTypedRow());
@@ -78,7 +78,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aPlainTableHasNoTypedRowToReport(): void
     {
-        $plain = Table::fromCells(self::columns(), [['alpha', 'eu-1a']])->withSelected(0);
+        $plain = Table\Table::fromCells(self::columns(), [['alpha', 'eu-1a']])->withSelected(0);
 
         self::assertNull($plain->selectedTypedRow());
     }
@@ -95,7 +95,7 @@ final class TableSelectedRowTest extends TestCase
     public function theSelectionStaysOnTheRecordItWasMadeOn(): void
     {
         $columns = [Column::new('Name', Constraint::flex()), Column::new('State', Constraint::flex())];
-        $chosen = Table::fromCells($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])->withSelected(2);
+        $chosen = Table\Table::fromCells($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])->withSelected(2);
         self::assertSame(['gamma', 'on'], $chosen->selectedRow(), 'precondition: gamma was chosen');
 
         $refreshed = $chosen->withCells([['zulu', 'off'], ['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']]);

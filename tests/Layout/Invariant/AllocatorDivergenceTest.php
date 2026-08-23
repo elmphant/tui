@@ -15,9 +15,9 @@ use Elmphant\Tui\Layout\VerticalStack;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\Column;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Table;
+use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -68,7 +68,7 @@ final class AllocatorDivergenceTest extends TestCase
     #[Test]
     public function aTableLeavesAColumnThatHasNeitherWeightNorFloorEmpty(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [
                 Column::new(str_repeat('A', 40), Constraint::min(0)),
                 Column::new(str_repeat('B', 40), Constraint::exact(2)),

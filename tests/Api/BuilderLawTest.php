@@ -15,7 +15,7 @@ use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Radio;
 use Elmphant\Tui\Widget\Select;
-use Elmphant\Tui\Widget\StaticTable;
+use Elmphant\Tui\Widget\Table\StaticTable;
 use Elmphant\Tui\Widget\TextInput;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

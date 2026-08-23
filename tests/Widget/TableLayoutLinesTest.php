@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Widget\Row;
-use Elmphant\Tui\Widget\TableLayout;
+use Elmphant\Tui\Widget\Table\Row;
+use Elmphant\Tui\Widget\Table\TableLayout;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -13,9 +13,9 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\Column;
-use Elmphant\Tui\Widget\Row;
 use Elmphant\Tui\Widget\Table;
+use Elmphant\Tui\Widget\Table\Column;
+use Elmphant\Tui\Widget\Table\Row;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -44,7 +44,7 @@ final class TableCursorHighlightTest extends TestCase
         $theme = Theme::dark();
         $frame = new Frame(30, 3);
 
-        Table::new(
+        Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::styled('Alice', new Style(foreground: Color::ansi(2))))],
         )->withFocus(true)->render($frame, Rect::fromSize(30, 3), new RenderContext($theme));
@@ -59,9 +59,9 @@ final class TableCursorHighlightTest extends TestCase
         );
     }
 
-    private static function tableOf(): Table
+    private static function tableOf(): Table\Table
     {
-        return Table::fromCells(
+        return Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
             [['1', 'first'], ['2', 'second']],
         );

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Table;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
@@ -13,6 +13,9 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\WrapCache;
+use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\Overflow;
+use Elmphant\Tui\Widget\Widget;
 
 /**
  * A bordered table that draws every row, with no cursor and no scrolling.

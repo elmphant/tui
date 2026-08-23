@@ -10,7 +10,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Rendering\WrapCache;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
-use Elmphant\Tui\Widget\StaticTable;
+use Elmphant\Tui\Widget\Table\StaticTable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

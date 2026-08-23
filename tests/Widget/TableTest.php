@@ -24,10 +24,10 @@ use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
-use Elmphant\Tui\Widget\Column;
 use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\Row;
 use Elmphant\Tui\Widget\Table;
+use Elmphant\Tui\Widget\Table\Column;
+use Elmphant\Tui\Widget\Table\Row;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +41,7 @@ final class TableTest extends TestCase
     {
         self::assertSame(
             ['↑/↓' => 'move', 'Enter' => 'choose'],
-            Table::fromCells([], [])->hints(),
+            Table\Table::fromCells([], [])->hints(),
         );
     }
 
@@ -152,7 +152,7 @@ final class TableTest extends TestCase
     public function pageDownAndUp(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index, "Name $index", 'Active'], range(1, 20));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5)), Column::new('Name', Constraint::flex(1)), Column::new('Status', Constraint::flex(1))],
             $rows,
         )->withFocus(true);
@@ -213,7 +213,7 @@ final class TableTest extends TestCase
     public function mouseWheelScrolls(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index, "Name $index"], range(1, 30));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5)), Column::new('Name', Constraint::flex(1))],
             $rows,
         );
@@ -269,7 +269,7 @@ final class TableTest extends TestCase
     #[Test]
     public function emptyTableRenderDoesNotCrash(): void
     {
-        $table = Table::fromCells([Column::new('ID', Constraint::exact(5))], []);
+        $table = Table\Table::fromCells([Column::new('ID', Constraint::exact(5))], []);
         $frame = new Frame(20, 5);
         $table->render($frame, Rect::fromSize(20, 5), new RenderContext(Theme::dark()));
         self::assertTrue(true);
@@ -278,7 +278,7 @@ final class TableTest extends TestCase
     #[Test]
     public function emptyTableHandlesKeysGracefully(): void
     {
-        $table = Table::fromCells([Column::new('ID', Constraint::exact(5))], [])->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('ID', Constraint::exact(5))], [])->withFocus(true);
         $area = Rect::fromSize(20, 5);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         self::assertSame($table, $result->model);
@@ -300,7 +300,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 20; ++$index) {
             $rows[] = [(string)$index, "Task $index"];
         }
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
             $rows,
         )->withFocus(true);
@@ -324,7 +324,7 @@ final class TableTest extends TestCase
     public function rowsThatWrapPastTheAreaGetAScrollbarThoughFewerRowsThanLinesFit(): void
     {
         $long = str_repeat('word ', 12);
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
             [['1', $long], ['2', $long], ['3', $long]],
         )->withFocus(true);
@@ -349,7 +349,7 @@ final class TableTest extends TestCase
     public function theThumbReachesTheBottomOnceTheLastWrappedLinesAreInView(): void
     {
         $long = str_repeat('word ', 12);
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
             [['1', $long], ['2', $long], ['3', $long]],
         )->withFocus(true)->withScrollOffset(2);
@@ -367,7 +367,7 @@ final class TableTest extends TestCase
     #[Test]
     public function noScrollbarWhenAllRowsFit(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(4))],
             [['1'], ['2']],
         );
@@ -381,7 +381,7 @@ final class TableTest extends TestCase
     #[Test]
     public function tableAcceptsRows(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
         );
@@ -391,7 +391,7 @@ final class TableTest extends TestCase
     #[Test]
     public function cursorSkipsNonSelectableRows(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('Group'), Row::new('Alice'), Row::new('Bob')],
         )->withFocus(true);
@@ -415,8 +415,8 @@ final class TableTest extends TestCase
         $cell = 'abcdefghij';
 
         // A three-row area leaves two lines for rows once the header takes one.
-        $fits = $this->firstRowLine(Table::fromCells($columns, [[$cell], [$cell]]), 10, 3);
-        $overflows = $this->firstRowLine(Table::fromCells($columns, [[$cell], [$cell], [$cell]]), 10, 3);
+        $fits = $this->firstRowLine(Table\Table::fromCells($columns, [[$cell], [$cell]]), 10, 3);
+        $overflows = $this->firstRowLine(Table\Table::fromCells($columns, [[$cell], [$cell], [$cell]]), 10, 3);
 
         self::assertSame($cell, $fits, 'Two rows fit, so no column is reserved');
         self::assertSame('abcdefghi▐', $overflows, 'A third row needs a scrollbar, leaving nine columns for the cell');
@@ -426,7 +426,7 @@ final class TableTest extends TestCase
     public function aCellTooWideForItsColumnIsTruncatedNotSpilledIntoTheNext(): void
     {
         $frame = new Frame(20, 3);
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(6)), Column::new('B', Constraint::exact(6))],
             [['aaaaaaaaaa', 'bb']],
         );
@@ -446,7 +446,7 @@ final class TableTest extends TestCase
     public function aColumnWithNoWidthIsSkippedWithoutShiftingTheRest(): void
     {
         $frame = new Frame(20, 3);
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [
                 Column::new('A', Constraint::exact(4)),
                 Column::new('Z', Constraint::exact(0)),
@@ -470,7 +470,7 @@ final class TableTest extends TestCase
     public function aColumnFloorIsReservedBeforeTheFlexColumnsShare(): void
     {
         $frame = new Frame(21, 3);
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [
                 Column::new('A', Constraint::min(10)),
                 Column::new('B', Constraint::flex(1)),
@@ -495,7 +495,7 @@ final class TableTest extends TestCase
     public function flexColumnsShareWhatTheFixedColumnsLeaveAndTheLastTakesTheRemainder(): void
     {
         $frame = new Frame(41, 3);
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [
                 Column::new('A', Constraint::exact(10)),
                 Column::new('B', Constraint::flex(1)),
@@ -523,7 +523,7 @@ final class TableTest extends TestCase
     public function homeAndEndReachTheFirstAndLastSelectableRows(): void
     {
         $area = new Rect(0, 0, 40, 10);
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob'), Row::new('Carol')],
         )->withFocus(true)->withCursor(1);
@@ -536,7 +536,7 @@ final class TableTest extends TestCase
     public function homeAndEndStopAtSelectableRowsWhenTheEdgesAreHeaders(): void
     {
         $area = new Rect(0, 0, 40, 10);
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('Top'), Row::new('Alice'), Row::new('Bob'), Row::header('Bottom')],
         )->withFocus(true)->withCursor(2);
@@ -549,7 +549,7 @@ final class TableTest extends TestCase
     public function homeAndEndOnPlainRowsReachBothEnds(): void
     {
         $area = new Rect(0, 0, 40, 10);
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Name', Constraint::flex())],
             [['Alice'], ['Bob'], ['Carol'], ['Dave']],
         )->withFocus(true)->withCursor(2);
@@ -563,7 +563,7 @@ final class TableTest extends TestCase
     {
         $frame = new Frame(40, 5);
         $context = new RenderContext(Theme::dark());
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex()), Column::new('Age', Constraint::exact(5))],
             [Row::header('People'), Row::new('Alice', '30')],
         )->withFocus(true);
@@ -580,7 +580,7 @@ final class TableTest extends TestCase
         $redStyle = new Style(foreground: Color::ansi(1));
         $frame = new Frame(40, 5);
         $context = new RenderContext(Theme::dark());
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice')->withStyle($redStyle)],
         );
@@ -595,7 +595,7 @@ final class TableTest extends TestCase
         $greenStyle = new Style(foreground: Color::ansi(2));
         $frame = new Frame(40, 5);
         $context = new RenderContext(Theme::dark());
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::styled('Alice', $greenStyle))],
         );
@@ -609,7 +609,7 @@ final class TableTest extends TestCase
     public function aHeaderlessTableStartsItsFirstRowAtTheTop(): void
     {
         $frame = new Frame(40, 5);
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
         )->withHeader(false);
@@ -623,7 +623,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aHeaderlessTableDoesNotDrawTheColumnTitles(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Name', Constraint::flex())],
             [['Alice']],
         );
@@ -636,7 +636,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aHeaderlessTableGivesTheFreedRowToContent(): void
     {
-        $withHeader = Table::new(
+        $withHeader = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice')],
         );
@@ -648,7 +648,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aHeaderlessTableMapsAClickToTheRowUnderIt(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob'), Row::new('Carol')],
         )->withHeader(false)->withFocus(true);
@@ -658,7 +658,7 @@ final class TableTest extends TestCase
             new Rect(0, 0, 40, 5),
         )->model;
 
-        self::assertInstanceOf(Table::class, $clicked);
+        self::assertInstanceOf(Table\Table::class, $clicked);
         self::assertSame(1, $clicked->cursor());
     }
 
@@ -667,7 +667,7 @@ final class TableTest extends TestCase
     {
         $frame = new Frame(40, 5);
         $theme = Theme::dark();
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::token('Alice', StyleToken::Success))],
         );
@@ -683,7 +683,7 @@ final class TableTest extends TestCase
     {
         $frame = new Frame(40, 5);
         $theme = Theme::dark();
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::token('Alice', StyleToken::Success))],
         )->withFocus(true);
@@ -701,7 +701,7 @@ final class TableTest extends TestCase
     #[Test]
     public function initialCursorSkipsHeaderRows(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('Group'), Row::new('Alice')],
         );
@@ -723,7 +723,7 @@ final class TableTest extends TestCase
     #[Test]
     public function fromRowsInitialCursorIsZeroWhenFirstRowSelectable(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
         );
@@ -733,7 +733,7 @@ final class TableTest extends TestCase
     #[Test]
     public function fromRowsInitialCursorSkipsMultipleHeaders(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('H1'), Row::header('H2'), Row::new('Alice')],
         );
@@ -745,7 +745,7 @@ final class TableTest extends TestCase
     #[Test]
     public function focusedEmptyTableIgnoresAllKeys(): void
     {
-        $table = Table::fromCells([Column::new('ID', Constraint::exact(5))], [])->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('ID', Constraint::exact(5))], [])->withFocus(true);
         $area = Rect::fromSize(20, 5);
 
         foreach ([Key::Up, Key::Down, Key::Home, Key::End, Key::PageDown, Key::PageUp, Key::Enter] as $key) {
@@ -757,7 +757,7 @@ final class TableTest extends TestCase
     #[Test]
     public function singleRowTableHandlesKeys(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1']],
         )->withFocus(true);
@@ -781,7 +781,7 @@ final class TableTest extends TestCase
     #[Test]
     public function renderWithWidthOneRendersContent(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('X', Constraint::exact(1))],
             [['A']],
         );
@@ -796,7 +796,7 @@ final class TableTest extends TestCase
     public function visibleRowsIsHeightMinusOneForHeader(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(1, 10));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -817,14 +817,14 @@ final class TableTest extends TestCase
     public function scrollbarReducesColumnWidth(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(1, 20));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::flex())],
             $rows,
         );
         $bufferWithScroll = new Frame(20, 5);
         $table->render($bufferWithScroll, new Rect(0, 0, 20, 5), new RenderContext(Theme::dark()));
 
-        $tableNoScroll = Table::fromCells(
+        $tableNoScroll = Table\Table::fromCells(
             [Column::new('ID', Constraint::flex())],
             [['1']],
         );
@@ -839,7 +839,7 @@ final class TableTest extends TestCase
     public function scrollbarPositionIsAtRightEdge(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(1, 20));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::flex())],
             $rows,
         );
@@ -863,7 +863,7 @@ final class TableTest extends TestCase
     public function scrollbarStartsAtYPlusOne(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(1, 20));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::flex())],
             $rows,
         );
@@ -896,7 +896,7 @@ final class TableTest extends TestCase
     #[Test]
     public function findNextSelectableReturnsNullAtBoundary(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::header('Group')],
         )->withFocus(true);
@@ -909,7 +909,7 @@ final class TableTest extends TestCase
     #[Test]
     public function findNextSelectableTraversesMultipleNonSelectable(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::header('H1'), Row::header('H2'), Row::new('Bob')],
         )->withFocus(true);
@@ -922,7 +922,7 @@ final class TableTest extends TestCase
     #[Test]
     public function findNextSelectableGoesBackward(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::header('H1'), Row::header('H2'), Row::new('Bob')],
         )->withFocus(true);
@@ -987,7 +987,7 @@ final class TableTest extends TestCase
     public function pageDownExactCursorValue(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(1, 20));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         )->withFocus(true);
@@ -1003,7 +1003,7 @@ final class TableTest extends TestCase
         // Every cell wraps onto two lines, so five viewport lines hold two rows
         // and a half — a page is two rows, not five.
         $rows = array_map(static fn (int $index): array => ["row $index wraps here"], range(1, 20));
-        $table = Table::fromCells([Column::new('Text', Constraint::exact(10))], $rows)->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('Text', Constraint::exact(10))], $rows)->withFocus(true);
         $area = Rect::fromSize(10, 6);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -1015,7 +1015,7 @@ final class TableTest extends TestCase
     public function pageUpExactCursorValue(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(1, 20));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         )->withFocus(true);
@@ -1033,7 +1033,7 @@ final class TableTest extends TestCase
     public function pageDownClampsToLastRow(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(1, 5));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         )->withFocus(true);
@@ -1048,7 +1048,7 @@ final class TableTest extends TestCase
     public function pageUpClampsToZero(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(1, 20));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         )->withFocus(true);
@@ -1062,7 +1062,7 @@ final class TableTest extends TestCase
     #[Test]
     public function pageDownAtEndReturnsSelf(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1'], ['2']],
         )->withFocus(true);
@@ -1106,7 +1106,7 @@ final class TableTest extends TestCase
     #[Test]
     public function visibleRowsMinimumIsOneForSmallArea(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1'], ['2'], ['3']],
         )->withFocus(true);
@@ -1121,7 +1121,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsHomeMovesToFirstSelectable(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('H'), Row::new('Alice'), Row::new('Bob')],
         )->withFocus(true);
@@ -1137,7 +1137,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsEndMovesToLastSelectable(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob'), Row::header('Footer')],
         )->withFocus(true);
@@ -1150,7 +1150,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsHomeAtFirstSelectableReturnsSelf(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('H'), Row::new('Alice'), Row::new('Bob')],
         )->withFocus(true);
@@ -1164,7 +1164,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsEndAtLastSelectableReturnsSelf(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob'), Row::header('Footer')],
         )->withFocus(true);
@@ -1179,7 +1179,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsSpaceTogglesSelection(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
         )->withFocus(true);
@@ -1195,7 +1195,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsDefaultKeyReturnsSelf(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice')],
         )->withFocus(true);
@@ -1210,7 +1210,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsPageDownSkipsNonSelectable(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [
                 Row::new('Alice'),
@@ -1231,7 +1231,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsPageUpSkipsNonSelectable(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [
                 Row::new('Alice'),
@@ -1251,7 +1251,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsPageDownAtEndReturnsSelf(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
         )->withFocus(true);
@@ -1266,7 +1266,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowsPageUpAtTopReturnsSelf(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
         )->withFocus(true);
@@ -1281,7 +1281,7 @@ final class TableTest extends TestCase
     #[Test]
     public function computeColumnWidthsNoColumns(): void
     {
-        $table = Table::fromCells([], []);
+        $table = Table\Table::fromCells([], []);
         $frame = new Frame(20, 5);
         $table->render($frame, Rect::fromSize(20, 5), new RenderContext(Theme::dark()));
         self::assertSame(' ', $frame->characters[0]);
@@ -1290,7 +1290,7 @@ final class TableTest extends TestCase
     #[Test]
     public function computeColumnWidthsExactColumnsGetExactWidth(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('AA', Constraint::exact(3)), Column::new('BB', Constraint::exact(4))],
             [['aaa', 'bbbb']],
         );
@@ -1307,7 +1307,7 @@ final class TableTest extends TestCase
     #[Test]
     public function tableDistributesFlexWeightProportionally(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::flex(2)), Column::new('B', Constraint::flex(1))],
             [['AAAAAAAAAA', 'BBBBBBBBBB']],
         );
@@ -1345,7 +1345,7 @@ final class TableTest extends TestCase
     #[Test]
     public function flexColumnsUseRemainingAfterExact(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Fixed', Constraint::exact(10)), Column::new('Flex', Constraint::flex())],
             [['FIXED_____', 'FLEX_DATA_']],
         );
@@ -1364,7 +1364,7 @@ final class TableTest extends TestCase
     #[Test]
     public function flexColumnRemainderGoesToLastFlex(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::flex(1)), Column::new('B', Constraint::flex(1)), Column::new('C', Constraint::flex(1))],
             [['AAAAAAAAAA', 'BBBBBBBBBB', 'CCCCCCCCCC']],
         );
@@ -1389,7 +1389,7 @@ final class TableTest extends TestCase
     #[Test]
     public function exactColumnSubtractsFromRemaining(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(5)), Column::new('B', Constraint::flex(1))],
             [['12345', 'FLEX']],
         );
@@ -1407,7 +1407,7 @@ final class TableTest extends TestCase
     #[Test]
     public function columnWidthDistributionUsesFloor(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::flex(1)), Column::new('B', Constraint::flex(1))],
             [['AAAAAAAAA', 'BBBBBBBBB']],
         );
@@ -1438,7 +1438,7 @@ final class TableTest extends TestCase
     #[Test]
     public function headerTruncation(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('VeryLongHeaderName', Constraint::exact(5))],
             [['data']],
         );
@@ -1456,7 +1456,7 @@ final class TableTest extends TestCase
     #[Test]
     public function cellValueTruncatedToColumnWidth(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['ABCDEFGH']],
         );
@@ -1474,7 +1474,7 @@ final class TableTest extends TestCase
     #[Test]
     public function longCellsWrapInsteadOfBeingCut(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Title', Constraint::exact(10))],
             [['wrap me over several lines']],
         );
@@ -1491,7 +1491,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aWrappedRowPushesTheNextRowDown(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Title', Constraint::exact(10))],
             [['one two three'], ['second']],
         );
@@ -1505,7 +1505,7 @@ final class TableTest extends TestCase
     #[Test]
     public function theSelectionCoversEveryLineOfAWrappedRow(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Title', Constraint::exact(10))],
             [['one two three'], ['second']],
         )->withFocus(true)->withCursor(0);
@@ -1522,7 +1522,7 @@ final class TableTest extends TestCase
     #[Test]
     public function clickingAWrappedLineSelectsItsOwnRow(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Title', Constraint::exact(10))],
             [['one two three'], ['second']],
         )->withFocus(true);
@@ -1531,14 +1531,14 @@ final class TableTest extends TestCase
         // "one two three" wraps to two lines, so screen row 2 is still row 0.
         $result = $table->update(new MouseMsg(2, 2, MouseAction::Press, MouseButton::Left), $area);
 
-        self::assertInstanceOf(Table::class, $result->model);
+        self::assertInstanceOf(Table\Table::class, $result->model);
         self::assertSame(0, $result->model->cursor());
     }
 
     #[Test]
     public function measuresItsHeightFromWrappedRows(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Title', Constraint::exact(10))],
             [['one two three'], ['second']],
         );
@@ -1550,7 +1550,7 @@ final class TableTest extends TestCase
     #[Test]
     public function columnWithZeroComputedWidthSkipsRendering(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::flex())],
             [['AAA', 'BBB']],
         );
@@ -1566,7 +1566,7 @@ final class TableTest extends TestCase
     #[Test]
     public function headerCellXAdvances(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('AA', Constraint::exact(4)), Column::new('BB', Constraint::exact(4))],
             [['1111', '2222']],
         );
@@ -1584,7 +1584,7 @@ final class TableTest extends TestCase
     #[Test]
     public function rowCellXAdvances(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(3))],
             [['abc', 'def']],
         );
@@ -1604,7 +1604,7 @@ final class TableTest extends TestCase
     #[Test]
     public function renderAtOffset(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['ABC']],
         );
@@ -1622,7 +1622,7 @@ final class TableTest extends TestCase
     public function scrolledTableRendersCorrectRows(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 9));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
         )->withFocus(true);
@@ -1645,7 +1645,7 @@ final class TableTest extends TestCase
     public function cursorScrollsDownWhenBelowViewport(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 19));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
         )->withFocus(true);
@@ -1664,7 +1664,7 @@ final class TableTest extends TestCase
     public function cursorScrollsUpWhenAboveViewport(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 19));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
         )->withFocus(true);
@@ -1688,7 +1688,7 @@ final class TableTest extends TestCase
     public function ensureCursorVisibleAdjustsScrollWhenCursorBelowViewport(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 9));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
         )->withFocus(true);
@@ -1731,7 +1731,7 @@ final class TableTest extends TestCase
     public function mouseClickCalculatesCorrectRowWithScrollOffset(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 19));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -1753,7 +1753,7 @@ final class TableTest extends TestCase
     public function mouseClickOnLastVisibleRow(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 19));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -1767,7 +1767,7 @@ final class TableTest extends TestCase
     #[Test]
     public function mouseClickOnNonSelectableTypedRowDoesNothing(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('Group'), Row::new('Alice')],
         );
@@ -1784,7 +1784,7 @@ final class TableTest extends TestCase
     public function mouseWheelDownClampsToMaxOffset(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 5));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -1804,7 +1804,7 @@ final class TableTest extends TestCase
     public function mouseWheelUpClampsToZero(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 9));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -1819,7 +1819,7 @@ final class TableTest extends TestCase
     public function mouseWheelUpFromScrolledPosition(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 9));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -1839,7 +1839,7 @@ final class TableTest extends TestCase
     public function mouseWheelOutsideAreaDoesNothing(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 9));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -1867,7 +1867,7 @@ final class TableTest extends TestCase
     public function unfocusedTableUsesDimStyle(): void
     {
         $theme = Theme::dark();
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['hello']],
         );
@@ -1881,7 +1881,7 @@ final class TableTest extends TestCase
     public function focusedTableUsesBaseStyle(): void
     {
         $theme = Theme::dark();
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['hello'], ['world']],
         )->withFocus(true);
@@ -1928,7 +1928,7 @@ final class TableTest extends TestCase
     #[Test]
     public function theHighlightFillsEntireTotalWidth(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(3))],
             [['abc', 'def']],
         )->withFocus(true);
@@ -1951,7 +1951,7 @@ final class TableTest extends TestCase
     public function typedHeaderRowUsesHeaderStyle(): void
     {
         $theme = Theme::dark();
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('Group Title'), Row::new('Alice')],
         )->withFocus(true);
@@ -1965,7 +1965,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aGroupHeaderWiderThanTheTableWrapsOntoASecondLine(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('N', Constraint::exact(3))],
             [Row::header('VeryLongGroupName')],
         );
@@ -1978,7 +1978,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aGroupHeaderReservesOnlyTheLinesItWrapsToAcrossAllColumns(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(6)), Column::new('Role', Constraint::exact(6))],
             [Row::header('Engineering department'), Row::new('Ada', 'dev')],
         );
@@ -1991,7 +1991,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aRowThatCannotBeSelectedStillShowsEveryColumn(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(6)), Column::new('Role', Constraint::exact(6))],
             [Row::new('Ada', 'dev')->withSelectable(false)],
         );
@@ -2004,7 +2004,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aGroupHeaderBreaksAtTheTotalWidthAndSpillsIntoNoColumn(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('N', Constraint::exact(3))],
             [Row::header('VeryLongGroupName'), Row::new('A')],
         )->withScrollOffset(0);
@@ -2023,7 +2023,7 @@ final class TableTest extends TestCase
     public function aRowWithItsOwnStyleStillTakesTheHighlightUnderIt(): void
     {
         $customStyle = new Style(foreground: Color::ansi(3));
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice')->withStyle($customStyle)],
         )->withFocus(true);
@@ -2042,7 +2042,7 @@ final class TableTest extends TestCase
     public function typedRowNonCursorUsesRowStyle(): void
     {
         $customStyle = new Style(foreground: Color::ansi(3));
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')->withStyle($customStyle)],
         )->withFocus(true);
@@ -2058,7 +2058,7 @@ final class TableTest extends TestCase
     public function spanCellTruncatedToColumnWidth(): void
     {
         $greenStyle = new Style(foreground: Color::ansi(2));
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(3))],
             [Row::new(Span::styled('ABCDEFGH', $greenStyle))],
         );
@@ -2075,7 +2075,7 @@ final class TableTest extends TestCase
     public function spanWithStyleOnAHighlightedRow(): void
     {
         $greenStyle = new Style(foreground: Color::ansi(2));
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::styled('Alice', $greenStyle))],
         )->withFocus(true);
@@ -2095,7 +2095,7 @@ final class TableTest extends TestCase
     public function spanWithoutStyleUsesRowStyle(): void
     {
         $customStyle = new Style(foreground: Color::ansi(3));
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(new Span('Alice'))->withStyle($customStyle)],
         );
@@ -2108,7 +2108,7 @@ final class TableTest extends TestCase
     #[Test]
     public function plainStringCellInTypedRow(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Hello')],
         );
@@ -2124,7 +2124,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowMultipleColumnCellXAdvances(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(3))],
             [Row::new('abc', 'def')],
         );
@@ -2142,7 +2142,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowZeroWidthColumnSkipped(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::flex())],
             [Row::new('AAA', 'BBB')],
         );
@@ -2158,7 +2158,7 @@ final class TableTest extends TestCase
     #[Test]
     public function renderStopsAtLastRow(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B']],
         );
@@ -2175,7 +2175,7 @@ final class TableTest extends TestCase
     #[Test]
     public function renderYStartsAtAreaYPlusOne(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['X']],
         );
@@ -2191,7 +2191,7 @@ final class TableTest extends TestCase
     #[Test]
     public function missingCellDefaultsToEmpty(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(3))],
             [['only_a']],
         );
@@ -2205,7 +2205,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowMissingCellDefaultsToEmpty(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(3))],
             [Row::new('abc')],
         );
@@ -2229,7 +2229,7 @@ final class TableTest extends TestCase
     #[Test]
     public function rowCountUsesTypedRowsWhenPresent(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('A'), Row::new('B'), Row::new('C')],
         )->withFocus(true);
@@ -2244,7 +2244,7 @@ final class TableTest extends TestCase
     #[Test]
     public function headerTruncationWithMultibyteCharacters(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new("\xC3\xBCber", Constraint::exact(3))],
             [['x']],
         );
@@ -2258,7 +2258,7 @@ final class TableTest extends TestCase
     #[Test]
     public function cellTruncationWithMultibyteCharacters(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [["\xC3\xBCbertragen"]],
         );
@@ -2275,7 +2275,7 @@ final class TableTest extends TestCase
     public function spanCellTruncationWithMultibyteCharacters(): void
     {
         $style = new Style(foreground: Color::ansi(1));
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(3))],
             [Row::new(Span::styled("\xC3\xBCbertragen", $style))],
         );
@@ -2316,7 +2316,7 @@ final class TableTest extends TestCase
     #[Test]
     public function mouseClickBeyondRowCountDoesNothing(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1'], ['2']],
         );
@@ -2333,7 +2333,7 @@ final class TableTest extends TestCase
     public function mouseWheelDownMaxOffsetUsesHeightMinusOne(): void
     {
         $rows = [['1'], ['2'], ['3'], ['4'], ['5']];
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -2356,7 +2356,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $typedRows[] = Row::new("Row $index");
         }
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             $typedRows,
         )->withFocus(true);
@@ -2390,7 +2390,7 @@ final class TableTest extends TestCase
             Row::new('D'),
             Row::new('E'),
         ];
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(10))],
             $typedRows,
         )->withFocus(true);
@@ -2444,7 +2444,7 @@ final class TableTest extends TestCase
     #[Test]
     public function theHighlightOfATypedRowFillsEntireTotalWidth(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(4))],
             [Row::new('abc', 'defg')],
         )->withFocus(true);
@@ -2466,7 +2466,7 @@ final class TableTest extends TestCase
     #[Test]
     public function handlePageDownSkipsTrailingNonSelectable(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [
                 Row::new('Alice'),
@@ -2485,7 +2485,7 @@ final class TableTest extends TestCase
     #[Test]
     public function handlePageUpSkipsLeadingNonSelectable(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [
                 Row::header('Divider'),
@@ -2520,7 +2520,7 @@ final class TableTest extends TestCase
     public function mouseClickRowIndexAccountsForHeaderAndScroll(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 9));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -2575,7 +2575,7 @@ final class TableTest extends TestCase
     #[Test]
     public function mouseClickRowIndexMustBeLessThanRowCount(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1'], ['2']],
         );
@@ -2610,7 +2610,7 @@ final class TableTest extends TestCase
     #[Test]
     public function wheelDownMaxOffsetWithFewRows(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1']],
         );
@@ -2627,7 +2627,7 @@ final class TableTest extends TestCase
     public function wheelDownIncrementsByExactlyOne(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 19));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -2646,7 +2646,7 @@ final class TableTest extends TestCase
     public function wheelUpDecrementsByExactlyOne(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 19));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
         );
@@ -2666,7 +2666,7 @@ final class TableTest extends TestCase
     #[Test]
     public function flexColumnWithMinEqualsMaxAndMinZeroIsFlex(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', new Constraint(min: 0, max: 0)), Column::new('B', Constraint::flex())],
             [['AAAA', 'BBBB']],
         );
@@ -2685,7 +2685,7 @@ final class TableTest extends TestCase
     #[Test]
     public function allExactColumnsLeaveNoFlexDistribution(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(5)), Column::new('B', Constraint::exact(5))],
             [['AAAAA', 'BBBBB']],
         );
@@ -2702,7 +2702,7 @@ final class TableTest extends TestCase
     #[Test]
     public function lastFlexIndexWithSingleFlexColumn(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Only', Constraint::flex())],
             [['Data']],
         );
@@ -2720,7 +2720,7 @@ final class TableTest extends TestCase
     #[Test]
     public function flexDistributionWithDifferentWeights(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::flex(3)), Column::new('B', Constraint::flex(1))],
             [['AAAAAAAAAAAAAAAA', 'BBBBBBBB']],
         );
@@ -2742,7 +2742,7 @@ final class TableTest extends TestCase
     #[Test]
     public function remainderGoesToLastFlexColumn(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::flex(1)), Column::new('B', Constraint::flex(1))],
             [['AAAAAAAAAA', 'BBBBBBBBBB']],
         );
@@ -2768,7 +2768,7 @@ final class TableTest extends TestCase
     #[Test]
     public function headerHasUnderlineAttribute(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Test', Constraint::exact(5))],
             [['data']],
         );
@@ -2783,7 +2783,7 @@ final class TableTest extends TestCase
     #[Test]
     public function columnWidthsFallbackToZero(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(5))],
             [['data']],
         );
@@ -2797,7 +2797,7 @@ final class TableTest extends TestCase
     #[Test]
     public function renderRowsVisibleRowsEqualsHeightMinusOne(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C'], ['D'], ['E']],
         );
@@ -2814,7 +2814,7 @@ final class TableTest extends TestCase
     #[Test]
     public function useTypedRowsBranch(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(10))],
             [Row::new('Alice'), Row::new('Bob')],
         );
@@ -2830,7 +2830,7 @@ final class TableTest extends TestCase
     #[Test]
     public function totalWidthIsArraySumOfColumnWidths(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(5)), Column::new('B', Constraint::exact(7))],
             [['AAAAA', 'BBBBBBB']],
         )->withFocus(true);
@@ -2849,7 +2849,7 @@ final class TableTest extends TestCase
     #[Test]
     public function visibleIndexLoopBreaksAtRowCount(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A']],
         );
@@ -2867,7 +2867,7 @@ final class TableTest extends TestCase
     #[Test]
     public function renderYCalculation(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['X'], ['Y'], ['Z']],
         );
@@ -2898,7 +2898,7 @@ final class TableTest extends TestCase
     public function nonSelectableTypedRowReturnsEarly(): void
     {
         $theme = Theme::dark();
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::exact(5)), Column::new('B', Constraint::exact(5))],
             [Row::header('Group Label')],
         );
@@ -2915,7 +2915,7 @@ final class TableTest extends TestCase
     #[Test]
     public function headerRowTruncatesToTotalWidthNotColumnWidth(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(4))],
             [Row::header('ABCDEFGHIJK')],
         );
@@ -2935,7 +2935,7 @@ final class TableTest extends TestCase
     public function typedRowWithoutCustomStyleUsesDefault(): void
     {
         $theme = Theme::dark();
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
         );
@@ -2949,7 +2949,7 @@ final class TableTest extends TestCase
     public function spanWithoutStyleOnNonReversedRowUsesRowStyle(): void
     {
         $rowStyle = new Style(foreground: Color::ansi(6));
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('First'), Row::new(new Span('Data'))->withStyle($rowStyle)],
         )->withFocus(true);
@@ -2965,7 +2965,7 @@ final class TableTest extends TestCase
     public function ensureCursorVisibleWithHeightOfOne(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 5));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
         )->withFocus(true);
@@ -2980,7 +2980,7 @@ final class TableTest extends TestCase
     public function ensureCursorVisibleScrollsUpExactly(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 9));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
         )->withFocus(true);
@@ -3003,7 +3003,7 @@ final class TableTest extends TestCase
     public function ensureCursorVisibleWhenCursorAboveOffset(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 19));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
         )->withFocus(true);
@@ -3028,7 +3028,7 @@ final class TableTest extends TestCase
     public function ensureCursorVisibleWhenCursorBelowViewport(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 9));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
         )->withFocus(true);
@@ -3044,7 +3044,7 @@ final class TableTest extends TestCase
     #[Test]
     public function ensureCursorVisibleReturnsSelfWhenNoChangeNeeded(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C']],
         )->withFocus(true);
@@ -3060,7 +3060,7 @@ final class TableTest extends TestCase
     #[Test]
     public function downAtLastRowReturnsSelfPlainRows(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B']],
         )->withFocus(true);
@@ -3079,7 +3079,7 @@ final class TableTest extends TestCase
     #[Test]
     public function homeMovesCursorToZeroFromMiddle(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C']],
         )->withFocus(true);
@@ -3095,7 +3095,7 @@ final class TableTest extends TestCase
     #[Test]
     public function endMovesCursorToRowCountMinusOne(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C'], ['D'], ['E']],
         )->withFocus(true);
@@ -3110,7 +3110,7 @@ final class TableTest extends TestCase
     #[Test]
     public function pageDownClampsWithMin(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C'], ['D'], ['E']],
         )->withFocus(true);
@@ -3125,7 +3125,7 @@ final class TableTest extends TestCase
     #[Test]
     public function pageUpClampsWithMax(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C'], ['D'], ['E']],
         )->withFocus(true);
@@ -3141,7 +3141,7 @@ final class TableTest extends TestCase
     #[Test]
     public function rowCountReturnsTypedRowsCountWhenNonEmpty(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('A')],
         )->withFocus(true);
@@ -3156,7 +3156,7 @@ final class TableTest extends TestCase
     #[Test]
     public function rowCountReturnsPlainRowsCount(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C']],
         )->withFocus(true);
@@ -3190,7 +3190,7 @@ final class TableTest extends TestCase
     #[Test]
     public function isRowSelectableWithOutOfBoundsTypedRowDefaultsTrue(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice')],
         );
@@ -3206,7 +3206,7 @@ final class TableTest extends TestCase
     #[Test]
     public function findNextSelectableDirectionTraversal(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('A'), Row::header('H'), Row::new('B')],
         )->withFocus(true);
@@ -3224,7 +3224,7 @@ final class TableTest extends TestCase
     #[Test]
     public function findNextSelectableStopsAtBounds(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('H1'), Row::new('A'), Row::header('H2')],
         )->withFocus(true);
@@ -3246,7 +3246,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = Row::new("Item $index");
         }
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             $rows,
         )->withFocus(true);
@@ -3265,7 +3265,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = Row::new("Item $index");
         }
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             $rows,
         )->withFocus(true);
@@ -3281,7 +3281,7 @@ final class TableTest extends TestCase
     #[Test]
     public function cellTruncationUsesDisplayWidth(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('Name', Constraint::exact(5))],
             [["\u{4F60}\u{597D}\u{4E16}\u{754C}"]],
         );
@@ -3297,13 +3297,13 @@ final class TableTest extends TestCase
 
     public static function tableKeybindingOverrideProvider(): iterable
     {
-        yield Actions::CURSOR_UP => [Actions::CURSOR_UP, new KeyMsg(Key::Up),       new KeyMsg('a'), 2, fn (Table $t) => $t->cursor() === 1];
-        yield Actions::CURSOR_DOWN => [Actions::CURSOR_DOWN, new KeyMsg(Key::Down),     new KeyMsg('b'), 0, fn (Table $t) => $t->cursor() === 1];
-        yield Actions::HOME => [Actions::HOME,       new KeyMsg(Key::Home),     new KeyMsg('c'), 2, fn (Table $t) => $t->cursor() === 0];
-        yield Actions::END => [Actions::END,        new KeyMsg(Key::End),      new KeyMsg('d'), 0, fn (Table $t) => $t->cursor() === 2];
-        yield Actions::PAGE_UP => [Actions::PAGE_UP,    new KeyMsg(Key::PageUp),   new KeyMsg('e'), 2, fn (Table $t) => $t->cursor() < 2];
-        yield Actions::PAGE_DOWN => [Actions::PAGE_DOWN,  new KeyMsg(Key::PageDown), new KeyMsg('f'), 0, fn (Table $t) => $t->cursor() > 0];
-        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter),    new KeyMsg('g'), 0, fn (Table $t) => $t->selectedIndex() === 0];
+        yield Actions::CURSOR_UP => [Actions::CURSOR_UP, new KeyMsg(Key::Up),       new KeyMsg('a'), 2, fn (Table\Table $t) => $t->cursor() === 1];
+        yield Actions::CURSOR_DOWN => [Actions::CURSOR_DOWN, new KeyMsg(Key::Down),     new KeyMsg('b'), 0, fn (Table\Table $t) => $t->cursor() === 1];
+        yield Actions::HOME => [Actions::HOME,       new KeyMsg(Key::Home),     new KeyMsg('c'), 2, fn (Table\Table $t) => $t->cursor() === 0];
+        yield Actions::END => [Actions::END,        new KeyMsg(Key::End),      new KeyMsg('d'), 0, fn (Table\Table $t) => $t->cursor() === 2];
+        yield Actions::PAGE_UP => [Actions::PAGE_UP,    new KeyMsg(Key::PageUp),   new KeyMsg('e'), 2, fn (Table\Table $t) => $t->cursor() < 2];
+        yield Actions::PAGE_DOWN => [Actions::PAGE_DOWN,  new KeyMsg(Key::PageDown), new KeyMsg('f'), 0, fn (Table\Table $t) => $t->cursor() > 0];
+        yield Actions::SELECT => [Actions::SELECT,     new KeyMsg(Key::Enter),    new KeyMsg('g'), 0, fn (Table\Table $t) => $t->selectedIndex() === 0];
     }
 
     #[DataProvider('tableKeybindingOverrideProvider')]
@@ -3343,18 +3343,18 @@ final class TableTest extends TestCase
 
         // The offset is set apart from the cursor on purpose: a key that moves
         // nothing must not scroll either.
-        $atBottom = Table::fromCells($columns, $rows)->withFocus(true)->withCursor(9)->withScrollOffset(0);
+        $atBottom = Table\Table::fromCells($columns, $rows)->withFocus(true)->withCursor(9)->withScrollOffset(0);
         foreach ([Key::End, Key::PageDown, Key::Down] as $key) {
             $result = $atBottom->update(new KeyMsg($key), $area)->model;
-            self::assertInstanceOf(Table::class, $result);
+            self::assertInstanceOf(Table\Table::class, $result);
             self::assertSame(9, $result->cursor(), "{$key->name} on the last row");
             self::assertSame(0, $result->scrollOffset(), "{$key->name} left the offset alone");
         }
 
-        $atTop = Table::fromCells($columns, $rows)->withFocus(true)->withCursor(0)->withScrollOffset(5);
+        $atTop = Table\Table::fromCells($columns, $rows)->withFocus(true)->withCursor(0)->withScrollOffset(5);
         foreach ([Key::Home, Key::PageUp, Key::Up] as $key) {
             $result = $atTop->update(new KeyMsg($key), $area)->model;
-            self::assertInstanceOf(Table::class, $result);
+            self::assertInstanceOf(Table\Table::class, $result);
             self::assertSame(0, $result->cursor(), "{$key->name} on the first row");
             self::assertSame(5, $result->scrollOffset(), "{$key->name} left the offset alone");
         }
@@ -3369,13 +3369,13 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = ["row{$index}"];
         }
-        $table = Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
 
         self::assertSame(0, $table->scrollOffset());
 
         for ($press = 0; $press < 5; ++$press) {
             $result = $table->update(new KeyMsg(Key::Down), $area);
-            self::assertInstanceOf(Table::class, $result->model);
+            self::assertInstanceOf(Table\Table::class, $result->model);
             $table = $result->model;
         }
 
@@ -3390,17 +3390,17 @@ final class TableTest extends TestCase
         $columns = [Column::new('A', Constraint::flex())];
 
         // Only the very first row can be selected, and the cursor starts past it.
-        $onlyFirst = Table::new($columns, [Row::new('first'), Row::header('h1'), Row::header('h2')])
+        $onlyFirst = Table\Table::new($columns, [Row::new('first'), Row::header('h1'), Row::header('h2')])
             ->withFocus(true)->withCursor(2);
         $home = $onlyFirst->update(new KeyMsg(Key::Home), $area)->model;
-        self::assertInstanceOf(Table::class, $home);
+        self::assertInstanceOf(Table\Table::class, $home);
         self::assertSame(0, $home->cursor(), 'Home has to look at row 0 itself');
 
         // And the mirror image: only the very last row can be selected.
-        $onlyLast = Table::new($columns, [Row::header('h1'), Row::header('h2'), Row::new('last')])
+        $onlyLast = Table\Table::new($columns, [Row::header('h1'), Row::header('h2'), Row::new('last')])
             ->withFocus(true)->withCursor(0);
         $end = $onlyLast->update(new KeyMsg(Key::End), $area)->model;
-        self::assertInstanceOf(Table::class, $end);
+        self::assertInstanceOf(Table\Table::class, $end);
         self::assertSame(2, $end->cursor(), 'End has to look at the last row itself');
     }
 
@@ -3408,7 +3408,7 @@ final class TableTest extends TestCase
     public function selectingTheCursorRowTwiceDeselectsIt(): void
     {
         $area = new Rect(0, 0, 20, 6);
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::flex())],
             [['one'], ['two'], ['three']],
         )->withFocus(true)->withCursor(1);
@@ -3416,12 +3416,12 @@ final class TableTest extends TestCase
         self::assertSame(-1, $table->selectedIndex(), 'Nothing is selected to begin with');
 
         $selected = $table->update(new KeyMsg(Key::Enter), $area)->model;
-        self::assertInstanceOf(Table::class, $selected);
+        self::assertInstanceOf(Table\Table::class, $selected);
         self::assertSame(1, $selected->cursor());
         self::assertSame(1, $selected->selectedIndex());
 
         $again = $selected->update(new KeyMsg(Key::Enter), $area)->model;
-        self::assertInstanceOf(Table::class, $again);
+        self::assertInstanceOf(Table\Table::class, $again);
         self::assertSame(-1, $again->selectedIndex(), 'The same row toggles back off');
     }
 
@@ -3436,13 +3436,13 @@ final class TableTest extends TestCase
         // and four do not. Once a scrollbar is reserved the cell wraps onto two
         // lines, which moves what sits under a click on the second content line.
         $fits = $this->typedRowsOf(3);
-        $clicked = Table::new($columns, $fits)->withFocus(true)->update($click, $area)->model;
-        self::assertInstanceOf(Table::class, $clicked);
+        $clicked = Table\Table::new($columns, $fits)->withFocus(true)->update($click, $area)->model;
+        self::assertInstanceOf(Table\Table::class, $clicked);
         self::assertSame(1, $clicked->cursor(), 'No scrollbar, so no wrap: the second line is row 1');
 
         $overflows = $this->typedRowsOf(4);
-        $wrapped = Table::new($columns, $overflows)->withFocus(true)->update($click, $area)->model;
-        self::assertInstanceOf(Table::class, $wrapped);
+        $wrapped = Table\Table::new($columns, $overflows)->withFocus(true)->update($click, $area)->model;
+        self::assertInstanceOf(Table\Table::class, $wrapped);
         self::assertSame(0, $wrapped->cursor(), 'One row more reserves the column, so row 0 spans both lines');
     }
 
@@ -3455,9 +3455,9 @@ final class TableTest extends TestCase
 
         // Three rows need no scrollbar, so the cell has all ten columns and fits
         // on one line: the second content line is row 1.
-        $short = Table::new($columns, [Row::new('abcdefghij'), Row::new('abcdefghij'), Row::new('abcdefghij')])
+        $short = Table\Table::new($columns, [Row::new('abcdefghij'), Row::new('abcdefghij'), Row::new('abcdefghij')])
             ->withFocus(true)->update($click, $area)->model;
-        self::assertInstanceOf(Table::class, $short);
+        self::assertInstanceOf(Table\Table::class, $short);
         self::assertSame(1, $short->cursor());
 
         // Eight rows need one, leaving nine columns, so each cell wraps onto two
@@ -3466,8 +3466,8 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 8; ++$index) {
             $rows[] = Row::new('abcdefghij');
         }
-        $tall = Table::new($columns, $rows)->withFocus(true)->update($click, $area)->model;
-        self::assertInstanceOf(Table::class, $tall);
+        $tall = Table\Table::new($columns, $rows)->withFocus(true)->update($click, $area)->model;
+        self::assertInstanceOf(Table\Table::class, $tall);
         self::assertSame(0, $tall->cursor());
     }
 
@@ -3475,16 +3475,16 @@ final class TableTest extends TestCase
     public function aClickMovesTheCursorToTheRowUnderThePointer(): void
     {
         $columns = [Column::new('A', Constraint::flex())];
-        $table = Table::fromCells($columns, [['one'], ['two'], ['three']])->withFocus(true);
+        $table = Table\Table::fromCells($columns, [['one'], ['two'], ['three']])->withFocus(true);
         $area = new Rect(0, 0, 10, 6);
 
         // Row 0 sits on the line below the header, so y=2 is row 1.
         $clicked = $table->update(new MouseMsg(0, 2, MouseAction::Press, MouseButton::Left), $area)->model;
-        self::assertInstanceOf(Table::class, $clicked);
+        self::assertInstanceOf(Table\Table::class, $clicked);
         self::assertSame(1, $clicked->cursor());
 
         $header = $table->update(new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left), $area)->model;
-        self::assertInstanceOf(Table::class, $header);
+        self::assertInstanceOf(Table\Table::class, $header);
         self::assertSame(0, $header->cursor(), 'A click on the header row moves nothing');
     }
 
@@ -3492,7 +3492,7 @@ final class TableTest extends TestCase
     public function pagingSkipsBackToASelectableRowWhenItLandsOnAHeader(): void
     {
         $area = new Rect(0, 0, 20, 6);
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::flex())],
             [
                 Row::new('r0'), Row::new('r1'), Row::new('r2'), Row::new('r3'),
@@ -3502,7 +3502,7 @@ final class TableTest extends TestCase
 
         // A page of five from row 0 lands on the header at index 5, so it walks back.
         $down = $table->update(new KeyMsg(Key::PageDown), $area)->model;
-        self::assertInstanceOf(Table::class, $down);
+        self::assertInstanceOf(Table\Table::class, $down);
 
         self::assertSame(4, $down->cursor());
     }
@@ -3516,29 +3516,29 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = ["row{$index}"];
         }
-        $table = Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
 
         $down = $table->update(new KeyMsg(Key::PageDown), $area)->model;
-        self::assertInstanceOf(Table::class, $down);
+        self::assertInstanceOf(Table\Table::class, $down);
         self::assertSame(5, $down->cursor());
 
         $twice = $down->update(new KeyMsg(Key::PageDown), $area)->model;
-        self::assertInstanceOf(Table::class, $twice);
+        self::assertInstanceOf(Table\Table::class, $twice);
         self::assertSame(9, $twice->cursor(), 'The last row, not past it');
 
         $up = $twice->update(new KeyMsg(Key::PageUp), $area)->model;
-        self::assertInstanceOf(Table::class, $up);
+        self::assertInstanceOf(Table\Table::class, $up);
         self::assertSame(4, $up->cursor());
 
         $top = $up->update(new KeyMsg(Key::PageUp), $area)->model;
-        self::assertInstanceOf(Table::class, $top);
+        self::assertInstanceOf(Table\Table::class, $top);
         self::assertSame(0, $top->cursor(), 'The first row, not before it');
     }
 
     #[Test]
     public function theCursorRowIsHighlightedOnlyWhileFocusedButASelectedRowAlways(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('A', Constraint::flex())],
             [['one'], ['two'], ['three']],
         )->withCursor(1);
@@ -3552,7 +3552,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aTypedCursorRowIsHighlightedOnTheSameTermsAsAPlainOne(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::flex())],
             [Row::new('one'), Row::new('two'), Row::new('three')],
         )->withCursor(1);
@@ -3566,7 +3566,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aNonSelectableTypedRowIsNeverHighlighted(): void
     {
-        $table = Table::new(
+        $table = Table\Table::new(
             [Column::new('A', Constraint::flex())],
             [Row::new('one'), Row::header('group'), Row::new('three')],
         )->withFocus(true)->withCursor(1)->withSelected(1);
@@ -3578,7 +3578,7 @@ final class TableTest extends TestCase
     public function reloadingTypedRowsKeepsTheRowThatWasChosen(): void
     {
         $columns = [Column::new('A', Constraint::flex())];
-        $table = Table::new($columns, [Row::new('alpha'), Row::new('beta')])->withSelected(1);
+        $table = Table\Table::new($columns, [Row::new('alpha'), Row::new('beta')])->withSelected(1);
 
         $reordered = $table->withRows([Row::new('beta'), Row::new('alpha')]);
 
@@ -3593,7 +3593,7 @@ final class TableTest extends TestCase
     public function reloadingTypedRowsLeavesTheCursorOnARowAReaderCanChoose(): void
     {
         $columns = [Column::new('A', Constraint::flex())];
-        $table = Table::new($columns, [Row::new('alpha'), Row::new('beta')]);
+        $table = Table\Table::new($columns, [Row::new('alpha'), Row::new('beta')]);
 
         $regrouped = $table->withRows([Row::header('group'), Row::new('alpha'), Row::new('beta')]);
 
@@ -3606,7 +3606,7 @@ final class TableTest extends TestCase
         $columns = [Column::new('A', Constraint::flex())];
         $area = new Rect(0, 0, 20, 6);
 
-        $plain = Table::new($columns, [Row::new('typedcell')])->withCells([['plaincell']]);
+        $plain = Table\Table::new($columns, [Row::new('typedcell')])->withCells([['plaincell']]);
         $screen = $this->screenOfTable($plain, $area);
         self::assertStringContainsString('plaincell', $screen);
         self::assertStringNotContainsString('typedcell', $screen, 'The typed rows are gone');
@@ -3621,7 +3621,7 @@ final class TableTest extends TestCase
     public function theColumnsCanBeReplacedAfterConstruction(): void
     {
         $area = new Rect(0, 0, 20, 6);
-        $table = Table::fromCells([Column::new('Before', Constraint::flex())], [['x']])
+        $table = Table\Table::fromCells([Column::new('Before', Constraint::flex())], [['x']])
             ->withColumns([Column::new('After', Constraint::flex())]);
 
         $screen = $this->screenOfTable($table, $area);
@@ -3638,7 +3638,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = ["row{$index}"];
         }
-        $table = Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withScrollOffset(3);
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withScrollOffset(3);
 
         self::assertSame(3, $table->scrollOffset());
 
@@ -3655,7 +3655,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = ["row{$index}"];
         }
-        $table = Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withCursor(9);
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withCursor(9);
 
         $screen = $this->screenOfTable($table, $area);
 
@@ -3670,7 +3670,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = ["row{$index}"];
         }
-        $table = Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
         $scrolled = $table->update(new KeyMsg(Key::End), $area)->model;
         self::assertSame(6, $scrolled->scrollOffset());
 
@@ -3683,7 +3683,7 @@ final class TableTest extends TestCase
     public function scrollingInsideARowTallerThanTheViewportRevealsItsLaterLines(): void
     {
         $long = implode(' ', array_map(static fn (int $index): string => "word{$index}", range(1, 40)));
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('text', Constraint::flex())],
             [[$long], ['second']],
         )->withHeader(false);
@@ -3691,14 +3691,14 @@ final class TableTest extends TestCase
 
         $scrolled = $table->update(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None), $area)->model;
 
-        self::assertInstanceOf(Table::class, $scrolled);
+        self::assertInstanceOf(Table\Table::class, $scrolled);
         self::assertStringContainsString('word9', $this->screenOfTable($scrolled, $area), 'A cell taller than the viewport must not hide its later lines from every scroll position');
     }
 
     #[Test]
     public function anOffsetPastTheLastRowStillShowsTheEndOfTheTable(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [Column::new('name', Constraint::flex())],
             [['alpha'], ['bravo'], ['charlie'], ['delta'], ['echo']],
         )->withHeader(false);
@@ -3726,7 +3726,7 @@ final class TableTest extends TestCase
         return $rows;
     }
 
-    private function screenOfTable(Table $table, Rect $area): string
+    private function screenOfTable(Table\Table $table, Rect $area): string
     {
         $frame = new Frame($area->width, $area->height);
         $table->render($frame, $area, new RenderContext(Theme::dark()));
@@ -3739,7 +3739,7 @@ final class TableTest extends TestCase
         return $screen;
     }
 
-    private function rowIsReversed(Table $table, int $rowIndex): bool
+    private function rowIsReversed(Table\Table $table, int $rowIndex): bool
     {
         $theme = Theme::dark();
         $frame = new Frame(20, 6);
@@ -3752,7 +3752,7 @@ final class TableTest extends TestCase
             || $background === $theme->selectedStyle->backgroundValue();
     }
 
-    private function firstRowLine(Table $table, int $width, int $height): string
+    private function firstRowLine(Table\Table $table, int $width, int $height): string
     {
         $frame = new Frame($width, $height);
         $table->render($frame, new Rect(0, 0, $width, $height), new RenderContext(Theme::dark()));
@@ -3765,9 +3765,9 @@ final class TableTest extends TestCase
         return $line;
     }
 
-    private function createTable(): Table
+    private function createTable(): Table\Table
     {
-        return Table::fromCells(
+        return Table\Table::fromCells(
             [
                 Column::new('ID', Constraint::exact(5)),
                 Column::new('Name', Constraint::flex(2)),

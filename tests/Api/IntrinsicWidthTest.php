@@ -28,7 +28,6 @@ use Elmphant\Tui\Widget\Card;
 use Elmphant\Tui\Widget\Checkbox;
 use Elmphant\Tui\Widget\CheckboxGroup;
 use Elmphant\Tui\Widget\CheckboxRow;
-use Elmphant\Tui\Widget\Column;
 use Elmphant\Tui\Widget\Container;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Dropdown;
@@ -56,9 +55,10 @@ use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\Separator;
 use Elmphant\Tui\Widget\Spacer;
 use Elmphant\Tui\Widget\Split;
-use Elmphant\Tui\Widget\StaticTable;
 use Elmphant\Tui\Widget\TabBar;
 use Elmphant\Tui\Widget\Table;
+use Elmphant\Tui\Widget\Table\Column;
+use Elmphant\Tui\Widget\Table\StaticTable;
 use Elmphant\Tui\Widget\TabPage;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\TextInput;
@@ -204,7 +204,7 @@ final class IntrinsicWidthTest extends TestCase
     {
         yield 'TextInput' => [TextInput::new()->withValue('typed')];
         yield 'FocusGutter' => [FocusGutter::around(TextInput::new()->withValue('typed'))];
-        yield 'Table' => [Table::fromCells([Column::new('A', Constraint::flex())], [['x']])];
+        yield 'Table' => [Table\Table::fromCells([Column::new('A', Constraint::flex())], [['x']])];
         yield 'FilterableCheckboxGroup' => [FilterableCheckboxGroup::new(['alpha'])];
         yield 'Footer' => [Footer::new()];
         yield 'ListView' => [ListView::new([new SimpleListItem('alpha')])];

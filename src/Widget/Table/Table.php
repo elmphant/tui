@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Table;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
@@ -26,6 +26,9 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PublishesHints;
 
 /**
  * A table the reader navigates: cursor, selection, mouse, and a scrolled viewport.

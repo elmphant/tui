@@ -10,8 +10,8 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\Column;
 use Elmphant\Tui\Widget\Table;
+use Elmphant\Tui\Widget\Table\Column;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -98,7 +98,7 @@ final class TableAllocationInvariantTest extends TestCase
     #[Test]
     public function aTableMeasuresItsHeightAgainstColumnsWiderThanTheWidthItWasGiven(): void
     {
-        $table = Table::fromCells(
+        $table = Table\Table::fromCells(
             [
                 Column::new('left', Constraint::min(10)),
                 Column::new('right', Constraint::min(10)),
@@ -156,7 +156,7 @@ final class TableAllocationInvariantTest extends TestCase
     /**
      * @param list<Constraint> $constraints
      */
-    private function table(array $constraints): Table
+    private function table(array $constraints): Table\Table
     {
         $columns = [];
         $cells = [];
@@ -166,6 +166,6 @@ final class TableAllocationInvariantTest extends TestCase
             $cells[] = '';
         }
 
-        return Table::fromCells($columns, [$cells]);
+        return Table\Table::fromCells($columns, [$cells]);
     }
 }
