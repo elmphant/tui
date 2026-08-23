@@ -82,20 +82,6 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
-    public function matchesOnlyTheChosenColumn(): void
-    {
-        $matched = $this->routes()->withColumn(2)->withQuery('bookmark')->matchingRows();
-
-        self::assertSame([['ajax_bookmark', 'POST', '/ajax/bookmark']], $matched);
-
-        self::assertSame(
-            [],
-            $this->routes()->withColumn(1)->withQuery('bookmark')->matchingRows(),
-            'A term the chosen column does not hold matches nothing, however well another column holds it',
-        );
-    }
-
-    #[Test]
     public function matchesBySubstring(): void
     {
         self::assertSame([['ajax_bookmark', 'POST', '/ajax/bookmark']], $this->routes()->withQuery('bookmark')->matchingRows());
@@ -175,18 +161,6 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
-    public function putsTheFieldBeforeTheColumnItFiltersOn(): void
-    {
-        $bar = $this->screen($this->routes()->withColumn(1), 60, 12)[0];
-
-        self::assertLessThan(
-            mb_strpos($bar, 'Method'),
-            mb_strpos($bar, 'Filter…'),
-            'The field comes first: it is the control that does the work',
-        );
-    }
-
-    #[Test]
     public function underlinesTheFieldWhileThePaneIsActive(): void
     {
         self::assertTrue($this->fieldIsUnderlined($this->routes()->withFocus(true)));
@@ -243,12 +217,10 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function keepsTheBarWideEnoughForItsOwnControls(): void
     {
-        $tiny = FilterableTable::new(['A'], [['x']])->withColumn(0);
-        $bar = $this->screen($tiny, 90, 12)[0];
+        $bar = $this->barRow(FilterableTable::new(['A'], [['x']]), 90);
 
-        self::assertStringContainsString('Filter…', $bar);
-        self::assertStringContainsString('A', $bar);
-        self::assertStringContainsString('1 of 1', $bar);
+        self::assertSame('Filter…', mb_substr($bar, 0, 7), 'The field sits at the left edge');
+        self::assertSame('1 of 1', mb_substr($bar, 14, 6), 'and the count ends a bar that holds room for nothing else');
     }
 
     #[Test]
@@ -272,27 +244,13 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
-    public function aBarSearchingEveryColumnShowsNoScopeLabel(): void
+    public function theBarHoldsAFieldAtOneEndACountAtTheOtherAndNothingBetween(): void
     {
         $bar = $this->barRow($this->routes(), 50);
 
         self::assertSame('Filter…', mb_substr($bar, 0, 7), 'The field sits at the left edge');
-        self::assertSame('3 of 3', mb_substr($bar, 37, 6), 'and the count still ends where the table does');
-        self::assertSame('', trim(mb_substr($bar, 7, 30)), 'nothing between them claims a scope the reader cannot change');
-    }
-
-    #[Test]
-    public function aColumnTheHeadersDoNotHaveShowsNoScopeLabel(): void
-    {
-        $bar = $this->barRow($this->routes()->withColumn(9), 50);
-
-        self::assertSame('', trim(mb_substr($bar, 7, 30)), 'there is no column to name, and the search matches nothing');
-    }
-
-    #[Test]
-    public function namesTheChosenColumnInTheLabel(): void
-    {
-        self::assertSame('Method', mb_substr($this->barRow($this->routes()->withColumn(1), 50), 28, 6));
+        self::assertSame('3 of 3', mb_substr($bar, 37, 6), 'and the count ends where the table does');
+        self::assertSame('', trim(mb_substr($bar, 7, 30)), 'with nothing in between claiming to be a control');
     }
 
     #[Test]

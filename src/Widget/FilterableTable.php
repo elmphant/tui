@@ -40,7 +40,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
         private array $headers,
         private array $rows,
         private string $query = '',
-        private ?int $column = null,
         private bool $focused = false,
         private ?Matcher $matcher = null,
         private ?TextInput $field = null,
@@ -92,14 +91,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     public function withQuery(string $query): self
     {
         return $this->cloneWith(query: $query);
-    }
-
-    /**
-     * Null filters every column.
-     */
-    public function withColumn(?int $column): self
-    {
-        return $this->cloneWith(column: $column);
     }
 
     /**
@@ -192,11 +183,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
             return $this->rows;
         }
 
-        $column = $this->column;
-        $searched = array_map(
-            static fn (array $row): string => $column === null ? implode(' ', $row) : ($row[$column] ?? ''),
-            $this->rows,
-        );
+        $searched = array_map(static fn (array $row): string => implode(' ', $row), $this->rows);
 
         // A matcher may name the same row twice — nothing in the port forbids it
         // — and one row of data is one row of table.
@@ -231,7 +218,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
             $context,
             $this->fieldFocused($this->drawsFocused($context)),
             $summary,
-            $this->scopeLabel(),
         );
     }
 
@@ -241,20 +227,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     private function summaryOf(array $matching): string
     {
         return count($matching) . ' of ' . count($this->rows);
-    }
-
-    /**
-     * Only a column the bar can name is labelled. With nothing scoped there is
-     * no scope to report, and an accent word the reader cannot change reads as
-     * a control that does not respond.
-     */
-    private function scopeLabel(): ?string
-    {
-        if ($this->column === null) {
-            return null;
-        }
-
-        return $this->headers[$this->column] ?? null;
     }
 
     /**
