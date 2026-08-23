@@ -138,7 +138,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
     }
 
     /**
-     * Paint the theme's input background across the field instead of underlining it.
+     * Draw the theme's input background across the field instead of underlining it.
      */
     public function withStyled(bool $styled = true): self
     {

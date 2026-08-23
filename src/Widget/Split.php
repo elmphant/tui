@@ -28,9 +28,9 @@ use Elmphant\Tui\Rendering\RenderContext;
 use InvalidArgumentException;
 
 /**
- * Children side by side, divided where the application says.
+ * Children side by side, divided where the host says.
  *
- * The division lives in the SplitState handed in, so an application can save it
+ * The division lives in the SplitState handed in, so a host can save it
  * and hand it back. Children are reached through WidgetContainer, so bound
  * components inside them stay visible to layout and routing.
  */

@@ -56,7 +56,7 @@ trait OptionListBehavior
      * it back down rather than picking it again.
      *
      * Off by default, because a list that must answer should not be emptiable by a
-     * stray keypress. Nothing picked is a state these widgets can already hold and
+     * stray keystroke. Nothing picked is a state these widgets can already hold and
      * draw — this is how a reader reaches it.
      */
     public function withClearable(bool $clearable = true): static

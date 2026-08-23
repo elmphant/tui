@@ -78,7 +78,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     }
 
     /**
-     * Scrolling by hand ends any follow: the user has taken over.
+     * Scrolling by hand ends any follow: the reader has taken over.
      */
     public function withScrollOffset(int $scrollOffset): self
     {

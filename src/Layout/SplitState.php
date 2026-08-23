@@ -49,7 +49,7 @@ final readonly class SplitState
     }
 
     /**
-     * Whatever an application stored, or an even division when it stored nonsense.
+     * Whatever a host stored, or an even division when it stored nonsense.
      */
     public static function fromArray(mixed $shares, int $panes): self
     {

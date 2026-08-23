@@ -7,9 +7,9 @@ namespace Elmphant\Tui\Widget;
 /**
  * A widget that owns input while it is on screen.
  *
- * Components inside the topmost layer are the only ones the application binds:
+ * Components inside the topmost layer are the only ones the host binds:
  * everything behind it stops being focusable, tab-reachable and clickable
- * without the application unbinding anything itself.
+ * without the host unbinding anything itself.
  */
 interface InputLayer
 {

@@ -129,7 +129,7 @@ final class RenderContext
     /**
      * Whether the widget being rendered shows focus, given the flag it still
      * carries. Inside a bound component the tree's answer is the only one, so a
-     * stale flag cannot paint a second ring. Outside one — an app that routes the
+     * stale flag cannot draw a second ring. Outside one — a host that routes the
      * keyboard itself, a pane not yet bound, or a widget rendered alone in a
      * test — there is nothing to defer to and the flag answers.
      */
@@ -287,7 +287,7 @@ final class RenderContext
      * @internal renderRoot() cannot nest: a nested drain would paint before the
      * surrounding tree finishes, violating draw-last
      *
-     * It also runs once per frame: a second pass would paint its tree over the
+     * It also runs once per frame: a second pass would draw its tree over the
      * first pass's popup, while that popup's placement still claims the input
      */
     public function renderRoot(Widget $root, Frame $frame, Rect $area, ?LayoutPlan $plan = null): void

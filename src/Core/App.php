@@ -168,7 +168,7 @@ abstract readonly class App implements RoutesFocus
     /**
      * Reserved application shortcuts, evaluated before focused components.
      *
-     * Keep printable, unmodified keys out of this map when users should be
+     * Keep printable, unmodified keys out of this map when the reader should be
      * able to type them into an input. Widget action inheritance belongs in
      * globalKeybindings() instead.
      *

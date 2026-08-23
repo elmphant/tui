@@ -191,7 +191,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
 
     /**
      * Probe terminal size via cursor position report.
-     * Only safe to call before user interaction starts (stdin must be clean).
+     * Only safe to call before the reader starts typing (stdin must be clean).
      *
      * @return array{int, int}|null [width, height]
      */

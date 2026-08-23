@@ -26,7 +26,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Theme;
 
 /**
- * A table the user navigates: cursor, selection, mouse, and a scrolled viewport.
+ * A table the reader navigates: cursor, selection, mouse, and a scrolled viewport.
  *
  * Columns are sized by their Constraint to fill the width given, so cells
  * truncate or wrap rather than widening the table. Only the rows in view are
@@ -686,7 +686,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     /**
      * The offset actually drawn: it follows the cursor unless the view was
      * scrolled away from it, so a cursor moved from outside update() is still
-     * on screen at the next paint.
+     * on screen at the next frame.
      */
     private function displayScrollOffset(Rect $area): int
     {

@@ -204,7 +204,7 @@ final class InputParser
         }
 
         // A finished sequence we do not know is the terminal answering a question, and
-        // reading its bytes as text invents a keypress. An unfinished one is still text.
+        // reading its bytes as text invents a keystroke. An unfinished one is still text.
         if (self::endsACsiSequence($final)) {
             return null;
         }

@@ -102,7 +102,7 @@ final class Frame
     }
 
     /**
-     * The region writes can currently land in.
+     * The area writes can currently land in.
      *
      * A widget taller than its viewport reads this to skip the rows that would
      * be discarded anyway: a 300-line table costs 300 writes per frame to draw
@@ -114,11 +114,11 @@ final class Frame
     }
 
     /**
-     * Narrow the drawable region.
+     * Narrow the drawable area.
      *
      * Intersected with the clip already in force: a nested clip can only ever
      * shrink what is visible. Without that, a scroll container's child pushing
-     * its own content-sized area would widen the region back out and undo the
+     * its own content-sized area would widen the clip back out and undo the
      * container's clipping.
      */
     public function pushClip(Rect $clip): void

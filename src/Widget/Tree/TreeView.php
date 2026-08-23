@@ -64,7 +64,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
 
     /**
      * Arrows and enter, and deliberately no letters: which letter means
-     * "expand" is the application's to decide, and a tree beside a text field
+     * "expand" is the host's to decide, and a tree beside a text field
      * must not swallow one.
      */
     public static function defaultKeybindings(): Keybindings
@@ -441,7 +441,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     private function visibleRows(): array
     {
-        // One keypress asks five times over — moving the cursor, clamping the
+        // One keystroke asks five times over — moving the cursor, clamping the
         // scroll, drawing. The rows are a pure function of this value, so the
         // second ask onwards is free.
         /** @var WeakMap<object, list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>>|null $rows */

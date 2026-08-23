@@ -19,7 +19,7 @@ use Elmphant\Tui\Rendering\WrapCache;
  *
  * Columns size themselves to their content, so a table sized for someone else's
  * terminal can be redrawn for this one. Renders the whole data set, so keep it
- * for small, known-size data — when the user needs to navigate rows, or the row
+ * for small, known-size data — when the reader needs to navigate rows, or the row
  * count is unbounded, use Table.
  */
 final class StaticTable implements Widget, MeasureHeight

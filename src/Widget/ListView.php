@@ -489,7 +489,7 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * The scroll offset actually shown: follows the cursor unless the user scrolled away.
+     * The scroll offset actually shown: follows the cursor unless the reader scrolled away.
      */
     private function displayScrollOffset(Rect $area): int
     {
