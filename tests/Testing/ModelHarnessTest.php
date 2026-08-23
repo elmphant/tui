@@ -22,7 +22,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Tests\Support\FloatingModel;
 use Elmphant\Tui\Tests\Support\TestPopup;
-use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
 use LogicException;

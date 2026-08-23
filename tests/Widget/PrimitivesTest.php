@@ -13,9 +13,9 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Bar\StatusBar;
-use Elmphant\Tui\Widget\Separator;
-use Elmphant\Tui\Widget\Spacer;
-use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Prose\Separator;
+use Elmphant\Tui\Widget\Prose\Spacer;
+use Elmphant\Tui\Widget\Prose\Text;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

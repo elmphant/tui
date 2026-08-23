@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\WidgetTree;
 use Elmphant\Tui\Widget\Popup\Overlay;
-use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\WidgetContainer;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -25,7 +25,7 @@ use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\MeasureHeight;
-use Elmphant\Tui\Widget\Paragraph;
+use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Structure\Container;
 use Elmphant\Tui\Widget\VerticalAlignment;
 use Elmphant\Tui\Widget\Widget;

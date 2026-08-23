@@ -15,7 +15,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
 use Elmphant\Tui\Widget\Listing\ListView;
-use Elmphant\Tui\Widget\Paragraph;
+use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Table\StaticTable;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

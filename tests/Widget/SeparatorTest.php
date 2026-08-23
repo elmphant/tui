@@ -9,7 +9,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
-use Elmphant\Tui\Widget\Separator;
+use Elmphant\Tui\Widget\Prose\Separator;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

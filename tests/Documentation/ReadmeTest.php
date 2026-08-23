@@ -21,9 +21,9 @@ final class ReadmeTest extends TestCase
      * example runs against real ones standing in for them.
      */
     private const PLACEHOLDER_WIDGETS = <<<'PHP'
-        $sidebar = \Elmphant\Tui\Widget\Text::new('sidebar');
-        $main = \Elmphant\Tui\Widget\Text::new('main');
-        $details = \Elmphant\Tui\Widget\Text::new('details');
+        $sidebar = \Elmphant\Tui\Widget\Prose\Text::new('sidebar');
+        $main = \Elmphant\Tui\Widget\Prose\Text::new('main');
+        $details = \Elmphant\Tui\Widget\Prose\Text::new('details');
         PHP;
 
     #[Test]

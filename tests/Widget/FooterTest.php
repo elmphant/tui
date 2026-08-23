@@ -26,7 +26,7 @@ use Elmphant\Tui\Tests\Support\TickTally;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Interactive;
-use Elmphant\Tui\Widget\Text;
+use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

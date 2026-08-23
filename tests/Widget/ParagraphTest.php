@@ -18,7 +18,7 @@ use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Rendering\WrapCache;
 use Elmphant\Tui\Widget\Alignment;
-use Elmphant\Tui\Widget\Paragraph;
+use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Wrap;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

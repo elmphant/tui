@@ -34,8 +34,8 @@ use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Listing\ListItem;
 use Elmphant\Tui\Widget\Listing\ListItems;
 use Elmphant\Tui\Widget\Listing\ListView;
-use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
+use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\PublishesHints;
 
 /**

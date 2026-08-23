@@ -25,7 +25,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\Spacer;
+use Elmphant\Tui\Widget\Prose\Spacer;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

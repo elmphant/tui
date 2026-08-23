@@ -13,10 +13,10 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Focus\FocusTree;
-use Elmphant\Tui\Widget\Separator;
-use Elmphant\Tui\Widget\Spacer;
+use Elmphant\Tui\Widget\Prose\Separator;
+use Elmphant\Tui\Widget\Prose\Spacer;
+use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
-use Elmphant\Tui\Widget\Text;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

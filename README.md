@@ -29,7 +29,8 @@ use Elmphant\Tui\Core\{App, Cmd, UpdateResult};
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Widget\{Text, Widget};
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
 
 final readonly class Counter extends App
 {
@@ -192,7 +193,8 @@ belong to the composition rather than the widget itself:
 ```php
 use Elmphant\Tui\Layout\{Constraint, Sizing, Spacing};
 use Elmphant\Tui\Rendering\{BorderStyle, Color, Style};
-use Elmphant\Tui\Widget\{Alignment, Container, VerticalAlignment};
+use Elmphant\Tui\Widget\{Alignment, VerticalAlignment};
+use Elmphant\Tui\Widget\Structure\Container;
 
 $card = Container::around($content)
     ->withPadding(Spacing::xy(horizontal: 2, vertical: 1))

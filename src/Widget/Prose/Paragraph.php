@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Prose;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
@@ -19,6 +19,10 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\SpanRenderer;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\WrapCache;
+use Elmphant\Tui\Widget\Alignment;
+use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\Wrap;
 
 final readonly class Paragraph implements Widget, MeasureHeight
 {
