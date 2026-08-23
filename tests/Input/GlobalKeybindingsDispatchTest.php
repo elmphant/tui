@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Input;
 
-use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
@@ -27,9 +26,9 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
 use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\Panel;
 use Elmphant\Tui\Widget\Select;
-use Elmphant\Tui\Widget\TabBar;
+use Elmphant\Tui\Widget\Structure\Panel;
+use Elmphant\Tui\Widget\Structure\TabBar;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;

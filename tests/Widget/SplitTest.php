@@ -19,7 +19,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
-use Elmphant\Tui\Widget\Split;
+use Elmphant\Tui\Widget\Structure\Split;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\TextInput;
 use InvalidArgumentException;

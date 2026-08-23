@@ -23,7 +23,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\PublishesHints;
-use Elmphant\Tui\Widget\TabBar;
+use Elmphant\Tui\Widget\Structure\TabBar;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

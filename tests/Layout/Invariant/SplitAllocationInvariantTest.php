@@ -8,7 +8,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\SplitState;
-use Elmphant\Tui\Widget\Split;
+use Elmphant\Tui\Widget\Structure\Split;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

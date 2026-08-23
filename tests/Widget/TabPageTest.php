@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
-use Elmphant\Tui\Widget\TabPage;
+use Elmphant\Tui\Widget\Structure\TabPage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -32,7 +32,7 @@ use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
 use Elmphant\Tui\Tests\Core\Support\TestComponents;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\Panel;
+use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;

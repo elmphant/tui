@@ -23,9 +23,9 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Alignment;
-use Elmphant\Tui\Widget\Container;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Paragraph;
+use Elmphant\Tui\Widget\Structure\Container;
 use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\VerticalAlignment;
 use Elmphant\Tui\Widget\Widget;
@@ -443,7 +443,7 @@ final class ContainerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{Closure(Container): void, string}>
+     * @return iterable<string, array{Closure(Container):void, string}>
      */
     public static function invalidContentDimensions(): iterable
     {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Structure;
 
 use Closure;
 use Elmphant\Tui\Core\Cloneable;
@@ -28,6 +28,11 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\Options;
+use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 
 final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAware, PublishesHints

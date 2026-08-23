@@ -27,7 +27,7 @@ use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
 use Elmphant\Tui\Tests\Support\TickTally;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Interactive;
-use Elmphant\Tui\Widget\Panel;
+use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
