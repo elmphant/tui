@@ -6,11 +6,11 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Widget\CheckboxGroup;
 use Elmphant\Tui\Widget\CheckboxRow;
-use Elmphant\Tui\Widget\ListView;
+use Elmphant\Tui\Widget\Listing\ListView;
+use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Radio;
 use Elmphant\Tui\Widget\RadioRow;
 use Elmphant\Tui\Widget\Select;
-use Elmphant\Tui\Widget\SimpleListItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

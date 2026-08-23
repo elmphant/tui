@@ -27,6 +27,9 @@ use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Listing\ListItem;
+use Elmphant\Tui\Widget\Listing\ListItems;
+use Elmphant\Tui\Widget\Listing\ListView;
 
 /**
  * A scrollable list with a free-text filter over it.

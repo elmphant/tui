@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Listing;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
@@ -27,6 +27,9 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PublishesHints;
 
 final readonly class ListView implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {

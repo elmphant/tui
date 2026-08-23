@@ -11,7 +11,7 @@ use Elmphant\Tui\Widget\CheckboxGroup;
 use Elmphant\Tui\Widget\Feedback\ProgressBar;
 use Elmphant\Tui\Widget\FilterableList;
 use Elmphant\Tui\Widget\FilterableTable;
-use Elmphant\Tui\Widget\ListView;
+use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Radio;
 use Elmphant\Tui\Widget\Select;

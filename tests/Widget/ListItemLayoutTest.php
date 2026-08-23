@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Widget\ListItemLayout;
-use Elmphant\Tui\Widget\SimpleListItem;
+use Elmphant\Tui\Widget\Listing\ListItemLayout;
+use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Tests\Input;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Widget\ListView;
+use Elmphant\Tui\Widget\Listing\ListView;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

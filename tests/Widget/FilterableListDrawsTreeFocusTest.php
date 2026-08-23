@@ -9,7 +9,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\FilterableList;
-use Elmphant\Tui\Widget\SimpleListItem;
+use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
