@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Widget\FilterableCheckboxGroup;
+use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

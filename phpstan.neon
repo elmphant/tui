@@ -9,10 +9,10 @@ parameters:
         # Dropdown's content is drawn as a float and addressed through
         # RenderContext::floatPlacements(), never through the tree.
         reachableChildrenAllowList:
+            - Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup
+            - Elmphant\Tui\Widget\Filter\FilterableList
+            - Elmphant\Tui\Widget\Filter\FilterableTable
             - Elmphant\Tui\Widget\Popup\Dropdown
-            - Elmphant\Tui\Widget\FilterableCheckboxGroup
-            - Elmphant\Tui\Widget\FilterableList
-            - Elmphant\Tui\Widget\FilterableTable
         cloneWithAllowList:
             - Elmphant\Tui\Core\App
     level: 9

@@ -18,7 +18,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\CheckboxGroup;
-use Elmphant\Tui\Widget\FilterableList;
+use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Popup\Dropdown;
 use Elmphant\Tui\Widget\Select;

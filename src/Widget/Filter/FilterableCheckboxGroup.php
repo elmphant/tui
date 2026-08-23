@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Filter;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
@@ -20,8 +20,12 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
+use Elmphant\Tui\Widget\CheckboxGroup;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Options;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
+use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\TextInput;
 
 /**
  * Boxes to tick with a free-text filter over them, for a list too long to walk.

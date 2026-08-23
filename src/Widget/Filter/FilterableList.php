@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Filter;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
@@ -25,12 +25,18 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\InputDecoration;
 use Elmphant\Tui\Widget\Listing\ListItem;
 use Elmphant\Tui\Widget\Listing\ListItems;
 use Elmphant\Tui\Widget\Listing\ListView;
+use Elmphant\Tui\Widget\Paragraph;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
+use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\TextInput;
 
 /**
  * A scrollable list with a free-text filter over it.
