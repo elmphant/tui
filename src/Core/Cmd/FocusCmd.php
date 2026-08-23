@@ -2,7 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Core\Cmd;
+
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusMove;
+use Elmphant\Tui\Core\FocusState;
 
 /**
  * Moving the keyboard is a change to the tree, not to the model, so it travels

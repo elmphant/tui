@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Core\Cmd;
 
+use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\EffectId;
 use InvalidArgumentException;
 
 final readonly class HttpCmd extends Cmd

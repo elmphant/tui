@@ -13,6 +13,7 @@ use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Runtime\Program;
+use Revolt\EventLoop;
 
 $scenario = $argv[1] ?? 'normal';
 $readyFile = getenv('ELMPHANT_PTY_READY');
@@ -37,7 +38,7 @@ $model = new class($scenario, $readyFile, $resultFile) implements Model {
     {
         if ($this->readyFile !== false) {
             $readyFile = $this->readyFile;
-            Revolt\EventLoop::defer(static function () use ($readyFile): void {
+            EventLoop::defer(static function () use ($readyFile): void {
                 touch($readyFile);
             });
         }

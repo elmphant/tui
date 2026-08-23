@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Core;
 
+use Elmphant\Tui\Core\Cmd\BatchCmd;
+use Elmphant\Tui\Core\Cmd\FocusCmd;
+use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;

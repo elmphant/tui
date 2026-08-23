@@ -237,7 +237,7 @@ final class FooterTest extends TestCase
         $footer = Footer::new()->withLeft($slot);
         $result = $footer->update(new TickMsg(0.0), Rect::fromSize(80, 1));
         self::assertNotNull($result->command);
-        self::assertNotInstanceOf(BatchCmd::class, $result->command);
+        self::assertNotInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertSame($command, $result->command);
     }
 
@@ -313,7 +313,7 @@ final class FooterTest extends TestCase
 
         $result = $footer->update(new TestMessage('msg'), $area);
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -351,7 +351,7 @@ final class FooterTest extends TestCase
 
         $result = $footer->update(new TestMessage('msg'), $area);
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -915,7 +915,7 @@ final class FooterTest extends TestCase
 
         $result = $footer->update(new TickMsg(0.0), Rect::fromSize(80, 3));
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(3, $result->command->commands);
     }
 

@@ -330,7 +330,7 @@ final class HeaderTest extends TestCase
 
         $result = $header->update(new TestMessage('msg'), $area);
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -350,7 +350,7 @@ final class HeaderTest extends TestCase
         $header = Header::new()->withLeft($slot);
         $result = $header->update(new TickMsg(0.0), Rect::fromSize(80, 1));
         self::assertNotNull($result->command);
-        self::assertNotInstanceOf(BatchCmd::class, $result->command);
+        self::assertNotInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertSame($command, $result->command);
     }
 
@@ -715,7 +715,7 @@ final class HeaderTest extends TestCase
 
         $result = $header->update(new TestMessage('msg'), $area);
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -935,7 +935,7 @@ final class HeaderTest extends TestCase
 
         $result = $header->update(new TickMsg(0.0), Rect::fromSize(80, 3));
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(3, $result->command->commands);
     }
 

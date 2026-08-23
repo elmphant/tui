@@ -61,6 +61,8 @@ use ReflectionProperty;
 use Revolt\EventLoop;
 use RuntimeException;
 use SplQueue;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ProgramTest extends TestCase
 {
@@ -3982,11 +3984,11 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('httpClient')->setValue(
             $program,
-            new \Symfony\Component\HttpClient\MockHttpClient(
+            new MockHttpClient(
                 function (string $method, string $url, array $options) use (&$capturedOptions) {
                     $capturedOptions = $options;
 
-                    return new \Symfony\Component\HttpClient\Response\MockResponse('ok');
+                    return new MockResponse('ok');
                 },
             ),
         );

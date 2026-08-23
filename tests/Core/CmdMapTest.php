@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\MappedCmd;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
@@ -36,7 +35,7 @@ final class CmdMapTest extends TestCase
         $inner = Cmd::message(new TestMessage('inner'));
         $mapped = $inner->map(static fn (Message $message): Message => $message);
 
-        self::assertInstanceOf(MappedCmd::class, $mapped);
+        self::assertInstanceOf(Cmd\MappedCmd::class, $mapped);
         self::assertSame($inner, $mapped->inner);
     }
 

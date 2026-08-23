@@ -4,13 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Testing;
 
-use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Core\FocusCmd;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Core\MappedCmd;
-use Elmphant\Tui\Core\MessageCmd;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\RoutesFocus;
@@ -201,15 +197,15 @@ final class ModelHarness
      */
     private static function messagesIn(?Cmd $command): array
     {
-        if ($command instanceof MappedCmd) {
+        if ($command instanceof Cmd\MappedCmd) {
             return self::messagesIn($command->inner);
         }
 
-        if ($command instanceof BatchCmd) {
+        if ($command instanceof Cmd\BatchCmd) {
             return array_merge(...array_map(self::messagesIn(...), $command->commands));
         }
 
-        return $command instanceof MessageCmd ? [$command->message] : [];
+        return $command instanceof Cmd\MessageCmd ? [$command->message] : [];
     }
 
     private function resolvedFocus(): FocusState
@@ -227,13 +223,13 @@ final class ModelHarness
      */
     private function moveFocusFor(?Cmd $command): void
     {
-        if ($command instanceof MappedCmd) {
+        if ($command instanceof Cmd\MappedCmd) {
             $this->moveFocusFor($command->inner);
 
             return;
         }
 
-        if ($command instanceof BatchCmd) {
+        if ($command instanceof Cmd\BatchCmd) {
             foreach ($command->commands as $child) {
                 $this->moveFocusFor($child);
             }
@@ -241,7 +237,7 @@ final class ModelHarness
             return;
         }
 
-        if ($command instanceof FocusCmd) {
+        if ($command instanceof Cmd\FocusCmd) {
             $this->focus = $command->applyTo(
                 $this->focus,
                 $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],

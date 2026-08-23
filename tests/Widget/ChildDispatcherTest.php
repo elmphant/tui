@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
@@ -108,7 +107,7 @@ final class ChildDispatcherTest extends TestCase
 
         self::assertSame(['changed' => $replacement], $result->overrides);
         self::assertTrue($result->changed());
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertSame([$firstCommand, $secondCommand], $result->command->commands);
     }
 

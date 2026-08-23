@@ -7,6 +7,8 @@ namespace Elmphant\Tui\Tests\Testing;
 use Elmphant\Tui\Testing\GoldenScreen;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\ExpectationFailedException;
+use PHPUnit\Framework\IncompleteTestError;
 use PHPUnit\Framework\TestCase;
 
 final class GoldenScreenTest extends TestCase
@@ -31,7 +33,7 @@ final class GoldenScreenTest extends TestCase
 
             try {
                 GoldenScreen::assertMatchesSnapshot('match', $screen, $dir);
-            } catch (\PHPUnit\Framework\IncompleteTestError) {
+            } catch (IncompleteTestError) {
                 // first run creates snapshot
             }
 
@@ -61,7 +63,7 @@ final class GoldenScreenTest extends TestCase
             try {
                 GoldenScreen::assertMatchesSnapshot('test_create', $screen, $dir);
                 $this->fail('Expected first run to throw IncompleteTestError');
-            } catch (\PHPUnit\Framework\IncompleteTestError) {
+            } catch (IncompleteTestError) {
                 // expected on first run
             }
 
@@ -87,7 +89,7 @@ final class GoldenScreenTest extends TestCase
             try {
                 GoldenScreen::assertMatchesSnapshot('trim', $screen, $dir . '/');
                 $this->fail('Expected first run to mark the test incomplete');
-            } catch (\PHPUnit\Framework\IncompleteTestError $error) {
+            } catch (IncompleteTestError $error) {
                 $this->assertSame(
                     "Snapshot created: {$dir}/trim.txt. Run again to verify.",
                     $error->getMessage(),
@@ -114,7 +116,7 @@ final class GoldenScreenTest extends TestCase
             try {
                 GoldenScreen::assertMatchesSnapshot('mismatch', $screen, $dir);
                 $this->fail('Expected the mismatching snapshot to fail the assertion');
-            } catch (\PHPUnit\Framework\ExpectationFailedException $error) {
+            } catch (ExpectationFailedException $error) {
                 $this->assertStringContainsString(
                     "Golden screen mismatch for 'mismatch'. Delete {$dir}/mismatch.txt to regenerate.",
                     $error->getMessage(),

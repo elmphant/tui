@@ -8,6 +8,7 @@ use Elmphant\Tui\Runtime\AdaptiveTicker;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Revolt\EventLoop;
 
 final class AdaptiveTickerTest extends TestCase
 {
@@ -103,8 +104,8 @@ final class AdaptiveTickerTest extends TestCase
         $ticker = new AdaptiveTicker(function () use (&$ticked) { $ticked = true; });
         $ticker->refresh(nextRenderDelay: 0.001, nextTimerDelay: null, processesActive: false);
 
-        \Revolt\EventLoop::delay(0.02, fn () => \Revolt\EventLoop::getDriver()->stop());
-        \Revolt\EventLoop::run();
+        EventLoop::delay(0.02, fn () => EventLoop::getDriver()->stop());
+        EventLoop::run();
 
         $ticker->stop();
         $this->assertTrue($ticked);
@@ -117,8 +118,8 @@ final class AdaptiveTickerTest extends TestCase
         $ticker = new AdaptiveTicker(function () use (&$ticked) { $ticked = true; });
         $ticker->refresh(nextRenderDelay: null, nextTimerDelay: null, processesActive: false);
 
-        \Revolt\EventLoop::delay(0.02, fn () => \Revolt\EventLoop::getDriver()->stop());
-        \Revolt\EventLoop::run();
+        EventLoop::delay(0.02, fn () => EventLoop::getDriver()->stop());
+        EventLoop::run();
 
         $ticker->stop();
         $this->assertFalse($ticked);

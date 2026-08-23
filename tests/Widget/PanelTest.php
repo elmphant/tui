@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
@@ -2905,7 +2904,7 @@ final class PanelTest extends TestCase
 
         $result = $panel->update(new TickMsg(0.0), Rect::fromSize(80, 24));
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 

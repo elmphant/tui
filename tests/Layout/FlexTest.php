@@ -18,6 +18,7 @@ use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -68,7 +69,7 @@ final class FlexTest extends TestCase
     /**
      * @param array{basis?: int, min?: int, max?: int, flex?: int, shrink?: int} $arguments
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('invalidConstraintArguments')]
+    #[DataProvider('invalidConstraintArguments')]
     #[Test]
     public function everyNegativeConstraintValueIsRejected(array $arguments): void
     {

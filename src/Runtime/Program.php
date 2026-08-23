@@ -5,17 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Runtime;
 
 use Closure;
-use Elmphant\Tui\Core\BatchCmd;
-use Elmphant\Tui\Core\CallCmd;
-use Elmphant\Tui\Core\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Core\FocusCmd;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Core\MappedCmd;
-use Elmphant\Tui\Core\MessageCmd;
 use Elmphant\Tui\Core\Model;
-use Elmphant\Tui\Core\QuitCmd;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\RenderRevisioned;
 use Elmphant\Tui\Core\RoutesFocus;
@@ -522,7 +515,7 @@ final class Program
         }
 
         // Park on a Suspension instead of EventLoop::run(): this composes with
-        // a host application that already drives the Revolt loop (nested run()
+        // a host that already drives the Revolt loop (nested run()
         // is fatal) and quitting resumes only this fiber instead of stopping
         // the shared driver out from under the host's other watchers.
         $this->runSuspension = EventLoop::getSuspension();
@@ -608,7 +601,7 @@ final class Program
      *
      * The flush happens on a timer, with the loop otherwise idle, so it has to
      * tick as well: without that the keystroke waits in the queue until the
-     * next one arrives, and every lone Escape takes effect one keypress late.
+     * next one arrives, and every lone Escape takes effect one keystroke late.
      */
     private function flushPendingInput(): void
     {
@@ -913,7 +906,7 @@ final class Program
      * Where the keyboard is gets drawn, so moving it makes the screen stale even
      * though the model is untouched.
      */
-    private function moveFocus(FocusCmd $command): void
+    private function moveFocus(Cmd\FocusCmd $command): void
     {
         $moved = $command->applyTo($this->focus, $this->focusableIds());
 
@@ -966,13 +959,13 @@ final class Program
 
         $this->tracer?->record(TraceEvent::Command, ['command' => $command::class]);
 
-        if ($command instanceof MappedCmd) {
+        if ($command instanceof Cmd\MappedCmd) {
             $this->dispatchCommand($command->inner, self::composeWrap($command->wrap, $wrap));
 
             return;
         }
 
-        if ($command instanceof BatchCmd) {
+        if ($command instanceof Cmd\BatchCmd) {
             foreach ($command->commands as $child) {
                 $this->dispatchCommand($child, $wrap);
             }
@@ -985,11 +978,11 @@ final class Program
         // Anything else leaves something running, which the effects hold.
         try {
             match (true) {
-                $command instanceof QuitCmd => $this->running = false,
-                $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
-                $command instanceof FocusCmd => $this->moveFocus($command),
-                $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
-                $command instanceof CallCmd => $this->executeCall($command, $wrap),
+                $command instanceof Cmd\QuitCmd => $this->running = false,
+                $command instanceof Cmd\ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
+                $command instanceof Cmd\FocusCmd => $this->moveFocus($command),
+                $command instanceof Cmd\MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
+                $command instanceof Cmd\CallCmd => $this->executeCall($command, $wrap),
                 default => $this->effects()->run($command, $wrap),
             };
         } catch (Throwable $error) {
@@ -1010,7 +1003,7 @@ final class Program
     /**
      * @param Closure(Message): Message|null $wrap
      */
-    private function executeCall(CallCmd $command, ?Closure $wrap = null): void
+    private function executeCall(Cmd\CallCmd $command, ?Closure $wrap = null): void
     {
         try {
             $result = ($command->callback)();

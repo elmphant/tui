@@ -4,14 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core;
 
-use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Core\ExecCmd;
-use Elmphant\Tui\Core\FocusCmd;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Core\QuitCmd;
-use Elmphant\Tui\Core\TickCmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
@@ -81,7 +76,7 @@ final class AppFocusableTest extends TestCase
         $app = TwoPanelApp::create();
 
         $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
-        self::assertNotInstanceOf(QuitCmd::class, $result->command);
+        self::assertNotInstanceOf(Cmd\QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -93,7 +88,7 @@ final class AppFocusableTest extends TestCase
         );
 
         $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
-        self::assertInstanceOf(QuitCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -102,7 +97,7 @@ final class AppFocusableTest extends TestCase
         $app = TwoPanelApp::create();
 
         $result = $app->update(new KeyMsg('c', ctrl: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(QuitCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -112,7 +107,7 @@ final class AppFocusableTest extends TestCase
 
         $result = $app->update(new KeyMsg('q', ctrl: true), Rect::fromSize(80, 24));
 
-        self::assertInstanceOf(QuitCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -155,7 +150,7 @@ final class AppFocusableTest extends TestCase
         $app = new SimpleCounterApp();
 
         $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
-        self::assertInstanceOf(QuitCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -193,7 +188,7 @@ final class AppFocusableTest extends TestCase
         );
 
         $result = $app->update(new KeyMsg('c'), Rect::fromSize(80, 24));
-        self::assertInstanceOf(ExecCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\ExecCmd::class, $result->command);
     }
 
     #[Test]
@@ -472,11 +467,11 @@ final class AppFocusableTest extends TestCase
             Rect::fromSize(80, 24),
         );
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(3, $result->command->commands);
-        self::assertInstanceOf(TickCmd::class, $result->command->commands[0]);
-        self::assertInstanceOf(ExecCmd::class, $result->command->commands[1]);
-        self::assertInstanceOf(FocusCmd::class, $result->command->commands[2], 'the click moves the keyboard too');
+        self::assertInstanceOf(Cmd\TickCmd::class, $result->command->commands[0]);
+        self::assertInstanceOf(Cmd\ExecCmd::class, $result->command->commands[1]);
+        self::assertInstanceOf(Cmd\FocusCmd::class, $result->command->commands[2], 'the click moves the keyboard too');
     }
 
     #[Test]
@@ -507,10 +502,10 @@ final class AppFocusableTest extends TestCase
             Rect::fromSize(80, 24),
         );
 
-        self::assertInstanceOf(BatchCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
-        self::assertInstanceOf(ExecCmd::class, $result->command->commands[0]);
-        self::assertInstanceOf(FocusCmd::class, $result->command->commands[1]);
+        self::assertInstanceOf(Cmd\ExecCmd::class, $result->command->commands[0]);
+        self::assertInstanceOf(Cmd\FocusCmd::class, $result->command->commands[1]);
     }
 
     #[Test]
@@ -567,7 +562,7 @@ final class AppFocusableTest extends TestCase
 
         self::assertInstanceOf(CommandOnlyUpdateResultApp::class, $result->model);
         self::assertSame(0, $result->model->counter->count);
-        self::assertInstanceOf(QuitCmd::class, $result->command);
+        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -654,7 +649,7 @@ final class AppFocusableTest extends TestCase
      */
     private static function keyboardLandsOn(?Cmd $command, array $order, ?string $from): ?ComponentId
     {
-        self::assertInstanceOf(FocusCmd::class, $command);
+        self::assertInstanceOf(Cmd\FocusCmd::class, $command);
 
         $start = new FocusState(null === $from ? null : ComponentId::named($from));
 

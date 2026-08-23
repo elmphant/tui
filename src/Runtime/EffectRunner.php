@@ -5,15 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Runtime;
 
 use Closure;
-use Elmphant\Tui\Core\AfterCmd;
-use Elmphant\Tui\Core\CancelCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
-use Elmphant\Tui\Core\ExecCmd;
-use Elmphant\Tui\Core\HttpCmd;
-use Elmphant\Tui\Core\ListenCmd;
-use Elmphant\Tui\Core\ProcessCmd;
-use Elmphant\Tui\Core\TickCmd;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\Message;
@@ -85,28 +78,28 @@ final class EffectRunner
         $this->makeRoomFor($command, $wrap);
 
         match (true) {
-            $command instanceof TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
-            $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
-            $command instanceof CancelCmd => $this->cancel($command->id, $wrap),
-            $command instanceof HttpCmd => $this->keep(
+            $command instanceof Cmd\TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
+            $command instanceof Cmd\AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
+            $command instanceof Cmd\CancelCmd => $this->cancel($command->id, $wrap),
+            $command instanceof Cmd\HttpCmd => $this->keep(
                 fn (): RunningProcess => $this->requestStarter->start($command, $wrap),
                 ErrorSource::Http,
                 $command->id,
                 $wrap,
             ),
-            $command instanceof ExecCmd => $this->keep(
+            $command instanceof Cmd\ExecCmd => $this->keep(
                 fn (): RunningProcess => $this->processStarter->exec($command, $wrap),
                 ErrorSource::Process,
                 $command->id,
                 $wrap,
             ),
-            $command instanceof ProcessCmd => $this->keep(
+            $command instanceof Cmd\ProcessCmd => $this->keep(
                 fn (): RunningProcess => $this->processStarter->streaming($command, $wrap),
                 ErrorSource::Process,
                 $command->id,
                 $wrap,
             ),
-            $command instanceof ListenCmd => $this->subscribeToStream($command, $wrap),
+            $command instanceof Cmd\ListenCmd => $this->subscribeToStream($command, $wrap),
             default => throw new LogicException(sprintf('Unknown command type "%s" — the runtime has no dispatcher for it', $command::class)),
         };
     }
@@ -188,7 +181,7 @@ final class EffectRunner
     /**
      * An id is one slot: whatever still holds it goes before the replacement
      * starts. Two effects answering to the same name would send messages no
-     * application can tell apart, and a ticker re-registered on every config
+     * host can tell apart, and a ticker re-registered on every config
      * change would silently multiply.
      *
      * @param Closure(Message): Message|null $wrap
@@ -196,13 +189,13 @@ final class EffectRunner
     private function makeRoomFor(Cmd $command, ?Closure $wrap): void
     {
         $id = match (true) {
-            $command instanceof CancelCmd => null,
-            $command instanceof TickCmd,
-            $command instanceof AfterCmd,
-            $command instanceof HttpCmd,
-            $command instanceof ExecCmd,
-            $command instanceof ListenCmd,
-            $command instanceof ProcessCmd => $command->id,
+            $command instanceof Cmd\CancelCmd => null,
+            $command instanceof Cmd\TickCmd,
+            $command instanceof Cmd\AfterCmd,
+            $command instanceof Cmd\HttpCmd,
+            $command instanceof Cmd\ExecCmd,
+            $command instanceof Cmd\ListenCmd,
+            $command instanceof Cmd\ProcessCmd => $command->id,
             default => null,
         };
 
@@ -272,7 +265,7 @@ final class EffectRunner
     /**
      * @param Closure(Message): Message|null $wrap
      */
-    private function subscribeToStream(ListenCmd $command, ?Closure $wrap = null): void
+    private function subscribeToStream(Cmd\ListenCmd $command, ?Closure $wrap = null): void
     {
         $subscription = new StreamSubscription($command->stream, $command->onReadable, $command->id, $wrap);
         $subscription->watcherId = EventLoop::onReadable($command->stream, function () use ($subscription): void {

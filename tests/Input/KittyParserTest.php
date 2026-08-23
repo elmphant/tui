@@ -9,6 +9,7 @@ use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -65,7 +66,7 @@ final class KittyParserTest extends TestCase
         yield 'KP equals' => [57415, '='];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('kittyKeypadCharacterProvider')]
+    #[DataProvider('kittyKeypadCharacterProvider')]
     #[Test]
     public function kittyKeypadCharacters(int $codepoint, string $expectedCharacter): void
     {

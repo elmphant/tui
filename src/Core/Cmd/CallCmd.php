@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Core\Cmd;
 
 use Closure;
+use Elmphant\Tui\Core\Cmd;
 
 /**
  * @internal

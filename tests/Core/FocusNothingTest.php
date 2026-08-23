@@ -9,7 +9,6 @@ use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Core\FocusCmd;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
@@ -30,7 +29,7 @@ final class FocusNothingTest extends TestCase
     {
         $command = Cmd::focusNothing();
 
-        self::assertInstanceOf(FocusCmd::class, $command);
+        self::assertInstanceOf(Cmd\FocusCmd::class, $command);
         self::assertEquals(
             FocusState::nowhere(),
             $command->applyTo(

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core;
 
-use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\QuitMsg;
@@ -26,7 +25,7 @@ final class BatchCmdTest extends TestCase
 
         $batch = Cmd::batch(Cmd::batch($first, $second), $third);
 
-        self::assertInstanceOf(BatchCmd::class, $batch);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $batch);
         self::assertSame([$first, $second, $third], $batch->commands);
     }
 
@@ -44,7 +43,7 @@ final class BatchCmdTest extends TestCase
 
         $batch = Cmd::batch($wrapped, $beside);
 
-        self::assertInstanceOf(BatchCmd::class, $batch);
+        self::assertInstanceOf(Cmd\BatchCmd::class, $batch);
         self::assertSame([$wrapped, $beside], $batch->commands);
     }
 }

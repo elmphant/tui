@@ -9,8 +9,6 @@ use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Core\MappedCmd;
-use Elmphant\Tui\Core\MessageCmd;
 use Elmphant\Tui\Core\Mount;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
@@ -40,8 +38,8 @@ final class MountAddressingTest extends TestCase
 
         $command = $app->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 5), new FocusState())->command;
 
-        self::assertInstanceOf(MappedCmd::class, $command, 'the address is a wrap the runtime applies to what it emits');
-        self::assertInstanceOf(MessageCmd::class, $command->inner);
+        self::assertInstanceOf(Cmd\MappedCmd::class, $command, 'the address is a wrap the runtime applies to what it emits');
+        self::assertInstanceOf(Cmd\MessageCmd::class, $command->inner);
 
         $delivered = ($command->wrap)($command->inner->message);
 

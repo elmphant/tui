@@ -19,6 +19,7 @@ use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use Revolt\EventLoop;
 
 final class ProgramTerminalInjectionTest extends TestCase
 {
@@ -200,7 +201,7 @@ final class ProgramTerminalInjectionTest extends TestCase
 
         $terminal = new VirtualTerminal(80, 24);
 
-        \Revolt\EventLoop::delay(0.1, function () use ($terminal) {
+        EventLoop::delay(0.1, function () use ($terminal) {
             $terminal->simulateInput('q');
         });
 
