@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Widget\OptionRowLayout;
+use Elmphant\Tui\Widget\Choice\OptionRowLayout;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

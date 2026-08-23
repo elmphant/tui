@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Widget\CheckboxGroup;
-use Elmphant\Tui\Widget\CheckboxRow;
+use Elmphant\Tui\Widget\Choice\CheckboxGroup;
+use Elmphant\Tui\Widget\Choice\CheckboxRow;
+use Elmphant\Tui\Widget\Choice\Radio;
+use Elmphant\Tui\Widget\Choice\RadioRow;
+use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
-use Elmphant\Tui\Widget\Radio;
-use Elmphant\Tui\Widget\RadioRow;
-use Elmphant\Tui\Widget\Select;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

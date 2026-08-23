@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Choice;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Reducer;
@@ -20,6 +20,7 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\PublishesHints;
 use LogicException;
 
 final readonly class CheckboxRow implements OptionRow, PublishesHints

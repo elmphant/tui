@@ -11,7 +11,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\WidgetTree;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\Checkbox;
+use Elmphant\Tui\Widget\Choice\Checkbox;
 use Elmphant\Tui\Widget\Popup\Modal;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Structure\TabBar;

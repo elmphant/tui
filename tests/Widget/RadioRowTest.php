@@ -14,7 +14,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
-use Elmphant\Tui\Widget\RadioRow;
+use Elmphant\Tui\Widget\Choice\RadioRow;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

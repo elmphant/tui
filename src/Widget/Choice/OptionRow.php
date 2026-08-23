@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Choice;
 
 use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\MeasureHeight;
 
 /**
  * Options side by side on a row, wrapping onto further rows when the width runs

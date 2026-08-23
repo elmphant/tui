@@ -15,7 +15,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\CheckboxGroup;
+use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Focusable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
