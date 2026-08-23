@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Focus;
 
 /**
  * A widget whose components are a ring of their own once the keyboard is in one

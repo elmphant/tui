@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Focus;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\Widget;
 
 final readonly class FocusTree
 {

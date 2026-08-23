@@ -17,6 +17,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\Focus\DrawsFocus;
 
 /**
  * One choice out of several, side by side on a row: the horizontal Radio, as

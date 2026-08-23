@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Focus;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\StatusBar;
+use Elmphant\Tui\Widget\Widget;
 
 /**
  * The keys whatever holds the keyboard answers, asked for at render time so no

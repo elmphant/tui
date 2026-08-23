@@ -27,6 +27,7 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
+use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use LogicException;
 
 final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAware, PublishesHints

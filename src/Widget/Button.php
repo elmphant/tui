@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Widget\Focus\DrawsFocus;
 
 final readonly class Button implements Focusable, KeybindingsAware, PublishesHints
 {

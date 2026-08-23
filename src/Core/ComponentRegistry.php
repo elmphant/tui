@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Core;
 
 use Closure;
+use Elmphant\Tui\Widget\Focus\FocusScope;
 use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\FocusScope;
 use Elmphant\Tui\Widget\InputLayer;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Navigates;

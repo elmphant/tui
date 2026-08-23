@@ -24,6 +24,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Grapheme;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Widget\Focus\DrawsFocus;
 
 final readonly class TextInput implements Focusable, KeybindingsAware, PublishesHints
 {

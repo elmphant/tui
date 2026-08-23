@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Focus;
+
+use Elmphant\Tui\Widget\Widget;
 
 /**
  * A child that says it is the one its container's keyboard is on, without being a

@@ -11,7 +11,7 @@ use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\FocusTree;
+use Elmphant\Tui\Widget\Focus\FocusTree;
 use Elmphant\Tui\Widget\Panel;
 use Elmphant\Tui\Widget\Select;
 use Elmphant\Tui\Widget\Separator;

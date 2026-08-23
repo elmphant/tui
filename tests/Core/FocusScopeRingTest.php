@@ -16,7 +16,7 @@ use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\FocusScope;
+use Elmphant\Tui\Widget\Focus\FocusScope;
 use Elmphant\Tui\Widget\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;

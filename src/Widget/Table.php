@@ -24,6 +24,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Focus\DrawsFocus;
 
 /**
  * A table the reader navigates: cursor, selection, mouse, and a scrolled viewport.
