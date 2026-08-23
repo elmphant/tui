@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Field;
 
 /**
  * How a text field shows its bounds.

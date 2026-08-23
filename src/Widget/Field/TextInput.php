@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Field;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
@@ -25,6 +25,8 @@ use Elmphant\Tui\Rendering\Grapheme;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\PublishesHints;
 
 final readonly class TextInput implements Focusable, KeybindingsAware, PublishesHints
 {

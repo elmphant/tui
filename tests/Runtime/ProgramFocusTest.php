@@ -14,7 +14,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
-use Elmphant\Tui\Widget\TextInput;
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

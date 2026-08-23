@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Widget\TextInput;
+use Elmphant\Tui\Widget\Field\TextInput;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

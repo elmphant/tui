@@ -11,9 +11,9 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focus\FocusGutter;
 use Elmphant\Tui\Widget\Text;
-use Elmphant\Tui\Widget\TextInput;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

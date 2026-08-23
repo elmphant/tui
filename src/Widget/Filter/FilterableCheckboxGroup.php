@@ -23,9 +23,9 @@ use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Choice\Options;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
 use Elmphant\Tui\Widget\PublishesHints;
-use Elmphant\Tui\Widget\TextInput;
 
 /**
  * Boxes to tick with a free-text filter over them, for a list too long to walk.

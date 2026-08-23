@@ -14,9 +14,9 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
 use Elmphant\Tui\Widget\Filter\FilterBar;
-use Elmphant\Tui\Widget\TextInput;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

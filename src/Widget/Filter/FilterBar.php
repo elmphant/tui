@@ -9,8 +9,8 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\InputDecoration;
-use Elmphant\Tui\Widget\TextInput;
+use Elmphant\Tui\Widget\Field\InputDecoration;
+use Elmphant\Tui\Widget\Field\TextInput;
 
 /**
  * @internal shared filter bar for FilterableTable and FilterableList

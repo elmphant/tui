@@ -8,7 +8,7 @@ use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Layout\Layout;
-use Elmphant\Tui\Widget\TextInput;
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Widget;
 
 final readonly class TwoFieldsKeyboardDownApp extends App
