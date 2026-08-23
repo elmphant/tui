@@ -2910,7 +2910,7 @@ final class PanelTest extends TestCase
     }
 
     #[Test]
-    public function childWidgetsReflectsScrollOffset(): void
+    public function aScrolledPanelPlacesItsChildrenHigherUp(): void
     {
         $panel = Panel::new('Test');
         for ($index = 0; $index < 20; ++$index) {
@@ -2922,8 +2922,8 @@ final class PanelTest extends TestCase
         $scrolled = $panel->update($wheelDown, $area);
         assert($scrolled->model instanceof Panel);
 
-        $childRects = $scrolled->model->childWidgets($area);
-        $unscrolledChildRects = $panel->childWidgets($area);
+        $childRects = $scrolled->model->placedChildren($area);
+        $unscrolledChildRects = $panel->placedChildren($area);
 
         self::assertNotSame(
             $unscrolledChildRects[0][1]->y,

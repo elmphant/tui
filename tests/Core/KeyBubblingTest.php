@@ -112,7 +112,7 @@ final readonly class ScrollingPane implements Interactive, WidgetContainer
     /**
      * @return iterable<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         return [[$this->inner(), $area]];
     }

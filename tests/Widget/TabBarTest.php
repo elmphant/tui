@@ -94,7 +94,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()->addTab('A')->withSelectedTab(3);
 
         self::assertSame([], $tabBar->children(), 'No children to reach');
-        self::assertSame([], $tabBar->childWidgets($area), 'And none to place');
+        self::assertSame([], $tabBar->placedChildren($area), 'And none to place');
 
         $frame = new Frame(24, 9);
         $tabBar->render($frame, $area, new RenderContext(Theme::dark()));
@@ -4726,7 +4726,7 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function childWidgetsReflectsScrollOffset(): void
+    public function aScrolledTabBarPlacesItsChildrenHigherUp(): void
     {
         $tabBar = $this->createOverflowingTabBarUnfocused();
         $area = new Rect(0, 0, 30, 10);
@@ -4737,8 +4737,8 @@ final class TabBarTest extends TestCase
         )->model;
         assert($scrolled instanceof TabBar);
 
-        $childRects = $scrolled->childWidgets($area);
-        $unscrolledChildRects = $tabBar->childWidgets($area);
+        $childRects = $scrolled->placedChildren($area);
+        $unscrolledChildRects = $tabBar->placedChildren($area);
 
         self::assertNotSame(
             $unscrolledChildRects[0][1]->y,

@@ -171,7 +171,7 @@ final readonly class LayoutPlanContainer implements Widget, WidgetContainer
     /**
      * @return list<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): array
+    public function placedChildren(Rect $area): array
     {
         ++$this->counter->count;
 
@@ -224,7 +224,7 @@ final readonly class InspectingLayoutPlanContainer implements Widget, WidgetCont
     /**
      * @return list<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): array
+    public function placedChildren(Rect $area): array
     {
         ++$this->counter->count;
 

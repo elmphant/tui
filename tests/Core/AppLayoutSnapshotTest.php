@@ -136,7 +136,7 @@ final readonly class CountingWidgetContainer implements Widget, WidgetContainer
     /**
      * @return list<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): array
+    public function placedChildren(Rect $area): array
     {
         ++$this->layouts->count;
 

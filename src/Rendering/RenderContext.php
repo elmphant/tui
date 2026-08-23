@@ -368,7 +368,7 @@ final class RenderContext
     public function childrenOf(WidgetContainer $container, Rect $area): iterable
     {
         return $this->plannedChildrenOf($container, $area)
-            ?? $container->childWidgets($area);
+            ?? $container->placedChildren($area);
     }
 
     /**

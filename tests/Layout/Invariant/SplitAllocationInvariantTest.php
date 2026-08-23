@@ -97,8 +97,8 @@ final class SplitAllocationInvariantTest extends TestCase
         $column = Split::column(new SplitState($shares), ...$this->children($shares))->withMinimums(...$minimums);
 
         self::assertSame(
-            self::extentsAlong(self::rectsOf($row->childWidgets(new Rect(0, 0, $extent, 5))), Direction::Horizontal),
-            self::extentsAlong(self::rectsOf($column->childWidgets(new Rect(0, 0, 5, $extent))), Direction::Vertical),
+            self::extentsAlong(self::rectsOf($row->placedChildren(new Rect(0, 0, $extent, 5))), Direction::Horizontal),
+            self::extentsAlong(self::rectsOf($column->placedChildren(new Rect(0, 0, 5, $extent))), Direction::Vertical),
         );
     }
 
@@ -193,7 +193,7 @@ final class SplitAllocationInvariantTest extends TestCase
     {
         $split = Split::row(new SplitState($shares), ...$this->children($shares))->withMinimums(...$minimums);
 
-        return self::rectsOf($split->childWidgets(self::areaOf($extent)));
+        return self::rectsOf($split->placedChildren(self::areaOf($extent)));
     }
 
     /**

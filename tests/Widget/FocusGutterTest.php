@@ -25,7 +25,7 @@ final class FocusGutterTest extends TestCase
         $child = Text::new('field');
         $gutter = FocusGutter::beside($child, held: false);
 
-        $placements = iterator_to_array($gutter->childWidgets(new Rect(0, 0, 12, 2)));
+        $placements = iterator_to_array($gutter->placedChildren(new Rect(0, 0, 12, 2)));
 
         self::assertCount(1, $placements);
         self::assertSame($child, $placements[0][0]);

@@ -113,7 +113,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Widge
     /**
      * @return iterable<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         yield [$this->child, self::contentIn($area)];
     }

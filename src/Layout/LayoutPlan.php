@@ -86,7 +86,7 @@ final class LayoutPlan
         }
 
         $placements = [];
-        foreach ($widget->childWidgets($area) as [$child, $childArea]) {
+        foreach ($widget->placedChildren($area) as [$child, $childArea]) {
             $placements[] = [$child, $childArea];
         }
 

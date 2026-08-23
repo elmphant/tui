@@ -39,7 +39,7 @@ final class SplitTest extends TestCase
         $updated = $split->update(new KeyMsg('j'), $area)->model;
 
         self::assertInstanceOf(Split::class, $updated);
-        $first = [...$updated->childWidgets($area)][0][0];
+        $first = [...$updated->placedChildren($area)][0][0];
         self::assertInstanceOf(ListView::class, $first);
         self::assertSame(1, $first->cursor(), 'a split must hand its panes the bindings the app made active');
     }
@@ -53,7 +53,7 @@ final class SplitTest extends TestCase
         $updated = $split->update(new KeyMsg('h'), $area)->model;
 
         self::assertInstanceOf(Split::class, $updated);
-        $first = [...$updated->childWidgets($area)][0][0];
+        $first = [...$updated->placedChildren($area)][0][0];
         self::assertInstanceOf(TextInput::class, $first);
         self::assertSame('h', $first->value(), 'A split that swallows input is a dead end for anything interactive');
     }
@@ -174,7 +174,7 @@ final class SplitTest extends TestCase
         $split = Split::row(SplitState::even(2), Text::new('left'), Text::new('right'));
 
         $panes = [];
-        foreach ($split->childWidgets($area) as [, $pane]) {
+        foreach ($split->placedChildren($area) as [, $pane]) {
             $panes[] = [$pane->x, $pane->y, $pane->width, $pane->height];
         }
 
@@ -238,7 +238,7 @@ final class SplitTest extends TestCase
         $split = Split::row(new SplitState([500, 300, 200]), Text::new('a'), Text::new('b'), Text::new('c'));
 
         $placed = [];
-        foreach ($split->childWidgets($area) as [, $pane]) {
+        foreach ($split->placedChildren($area) as [, $pane]) {
             $placed[] = [$pane->x, $pane->width];
         }
 
@@ -402,7 +402,7 @@ final class SplitTest extends TestCase
             ->withMinimums(4, 4);
 
         $heights = [];
-        foreach ($split->childWidgets($area) as [, $pane]) {
+        foreach ($split->placedChildren($area) as [, $pane]) {
             $heights[] = $pane->height;
             self::assertSame(40, $pane->width, 'A column keeps the full width');
         }
@@ -415,7 +415,7 @@ final class SplitTest extends TestCase
         self::assertInstanceOf(Split::class, $moved);
 
         $dragged = [];
-        foreach ($moved->childWidgets($area) as [, $pane]) {
+        foreach ($moved->placedChildren($area) as [, $pane]) {
             $dragged[] = $pane->height;
         }
 
@@ -565,7 +565,7 @@ final class SplitTest extends TestCase
         $split->render($frame, $area, new RenderContext(Theme::dark()));
 
         $column = 0;
-        foreach ($split->childWidgets($area) as [, $pane]) {
+        foreach ($split->placedChildren($area) as [, $pane]) {
             $column = $pane->x + $pane->width;
             break;
         }
@@ -588,7 +588,7 @@ final class SplitTest extends TestCase
     {
         $widths = [];
 
-        foreach ($split->childWidgets($area) as [, $pane]) {
+        foreach ($split->placedChildren($area) as [, $pane]) {
             $widths[] = $pane->width;
         }
 

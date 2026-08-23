@@ -115,7 +115,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     /**
      * @return iterable<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         yield [$this->widget, $area];
     }

@@ -150,7 +150,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
     /**
      * @return iterable<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         yield [$this->child, $this->contentArea($area)];
     }

@@ -135,7 +135,7 @@ final class ModalTest extends TestCase
 
         $modal = Modal::new('Title', $panel)->withFocus(true);
 
-        $content = $modal->childWidgets(Rect::fromSize(80, 24))[0][0];
+        $content = $modal->placedChildren(Rect::fromSize(80, 24))[0][0];
         self::assertInstanceOf(Focusable::class, $content);
         self::assertTrue($content->isFocused(), 'the content is focused as soon as the modal is, so the very first frame draws it focused');
     }
@@ -148,7 +148,7 @@ final class ModalTest extends TestCase
             ->withTitle('Replacement')
             ->withContent($replacementContent);
 
-        self::assertSame($replacementContent, $modal->childWidgets(Rect::fromSize(80, 24))[0][0]);
+        self::assertSame($replacementContent, $modal->placedChildren(Rect::fromSize(80, 24))[0][0]);
         self::assertSame($modal, $modal->withTitle('Replacement'));
         self::assertSame($modal, $modal->withContent($replacementContent));
 
@@ -1356,7 +1356,7 @@ final class ModalTest extends TestCase
 
         $modal = Modal::new('Title', $panel)->withFocus(false);
 
-        $content = $modal->childWidgets(Rect::fromSize(80, 24))[0][0];
+        $content = $modal->placedChildren(Rect::fromSize(80, 24))[0][0];
         self::assertInstanceOf(Focusable::class, $content);
         self::assertFalse($content->isFocused(), 'a modal losing focus blurs its content');
     }

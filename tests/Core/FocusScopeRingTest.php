@@ -195,7 +195,7 @@ final readonly class FilterRowScope implements Widget, WidgetContainer, FocusSco
         return [$this->row];
     }
 
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         return [[$this->row, $area]];
     }

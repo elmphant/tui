@@ -169,7 +169,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
     /**
      * @return list<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): array
+    public function placedChildren(Rect $area): array
     {
         return $this->computeChildRects($area);
     }

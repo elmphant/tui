@@ -208,7 +208,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     /**
      * @return list<array{0: Widget, 1: Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         // Authored, not marked: only drawing knows where the keyboard is, and a
         // rect held for a marked widget belongs to one the tree may never draw.
@@ -349,7 +349,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
         $interactives = [];
         $rects = [];
 
-        foreach ($this->childWidgets($area) as $index => [$child, $childArea]) {
+        foreach ($this->placedChildren($area) as $index => [$child, $childArea]) {
             if ($child instanceof Interactive) {
                 $interactives[$index] = $child;
                 $rects[$index] = $childArea;

@@ -16,5 +16,5 @@ interface WidgetContainer
     /**
      * @return iterable<array{0: Widget, 1: Rect}>
      */
-    public function childWidgets(Rect $area): iterable;
+    public function placedChildren(Rect $area): iterable;
 }

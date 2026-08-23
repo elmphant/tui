@@ -91,7 +91,7 @@ final class ScrollPaneTest extends TestCase
         $pane = ScrollPane::of(TextInput::new(), TextInput::new())->withFocus(true);
 
         $placed = [];
-        foreach ($pane->childWidgets(Rect::fromSize(20, 6)) as [$child]) {
+        foreach ($pane->placedChildren(Rect::fromSize(20, 6)) as [$child]) {
             $placed[] = $child;
         }
 
@@ -543,7 +543,7 @@ final class ScrollPaneTest extends TestCase
         $third = Text::new('three');
         $pane = ScrollPane::of($first, $second, $third)->withScrollOffset(1);
 
-        $placed = [...$pane->childWidgets(Rect::fromSize(20, 2))];
+        $placed = [...$pane->placedChildren(Rect::fromSize(20, 2))];
 
         self::assertSame([$first, $second, $third], [...$pane->children()]);
         self::assertSame($first, $placed[0][0]);

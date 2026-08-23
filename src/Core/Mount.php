@@ -76,7 +76,7 @@ final readonly class Mount implements Widget, WidgetContainer
     /**
      * @return iterable<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         yield [$this->content, $area];
     }

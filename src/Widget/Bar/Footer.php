@@ -124,7 +124,7 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
     /**
      * @return list<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): array
+    public function placedChildren(Rect $area): array
     {
         $contentArea = $this->contentArea($area);
 

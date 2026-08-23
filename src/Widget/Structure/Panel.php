@@ -205,9 +205,9 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
     /**
      * @return list<array{0: Widget, 1: Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
-        return [...$this->pane->childWidgets($this->contentArea($area))];
+        return [...$this->pane->placedChildren($this->contentArea($area))];
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

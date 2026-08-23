@@ -102,7 +102,7 @@ final readonly class MarkedFrame implements PopupFrame
     /**
      * @return list<array{0: Widget, 1: Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         return [[$this->content, $this->contentArea($area)]];
     }
@@ -111,7 +111,7 @@ final readonly class MarkedFrame implements PopupFrame
     {
         $frame->putChar($area->x, $area->y, '#', 0, 0);
 
-        foreach ($this->childWidgets($area) as [$child, $childArea]) {
+        foreach ($this->placedChildren($area) as [$child, $childArea]) {
             $child->render($frame, $childArea, $context);
         }
     }

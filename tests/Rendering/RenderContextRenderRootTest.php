@@ -242,15 +242,15 @@ final class RenderContextRenderRootTest extends TestCase
         $context = new RenderContext(Theme::dark());
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 5, 1);
-        $childWidgetsCalls = new FloatDrainCounter();
+        $placementCalls = new FloatDrainCounter();
         $float = self::pointerFloat('planned', $anchor);
-        $root = self::containerQueuingPointerFloat($anchor, $float, $childWidgetsCalls);
+        $root = self::containerQueuingPointerFloat($anchor, $float, $placementCalls);
         $plan = LayoutPlan::resolve($root, $frame->area());
 
         $context->renderRoot($root, $frame, $frame->area(), $plan);
         $context->commitFloatPlacements();
 
-        self::assertSame(1, $childWidgetsCalls->count, 'renderRoot must reuse the plan instead of recomputing layout');
+        self::assertSame(1, $placementCalls->count, 'renderRoot must reuse the plan instead of recomputing layout');
         self::assertCount(1, $context->floatPlacements());
         self::assertSame($float->target(), $context->floatPlacements()[0]->target());
     }
@@ -740,14 +740,14 @@ final class RenderContextRenderRootTest extends TestCase
     private static function containerQueuingPointerFloat(
         Rect $anchor,
         PointerFloating $float,
-        FloatDrainCounter $childWidgetsCalls,
+        FloatDrainCounter $placementCalls,
     ): Widget {
         $child = self::widgetQueuingPointerFloats($anchor, $float);
 
-        return new class($child, $childWidgetsCalls) implements Widget, WidgetContainer {
+        return new class($child, $placementCalls) implements Widget, WidgetContainer {
             public function __construct(
                 private readonly Widget $child,
-                private readonly FloatDrainCounter $childWidgetsCalls,
+                private readonly FloatDrainCounter $placementCalls,
             ) {
             }
 
@@ -767,9 +767,9 @@ final class RenderContextRenderRootTest extends TestCase
             /**
              * @return iterable<array{0: Widget, 1: Rect}>
              */
-            public function childWidgets(Rect $area): iterable
+            public function placedChildren(Rect $area): iterable
             {
-                ++$this->childWidgetsCalls->count;
+                ++$this->placementCalls->count;
 
                 return [[$this->child, $area]];
             }

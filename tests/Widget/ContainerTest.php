@@ -179,7 +179,7 @@ final class ContainerTest extends TestCase
             ->withHorizontalAlignment(Alignment::Center)
             ->withVerticalAlignment(VerticalAlignment::Center);
 
-        $placements = iterator_to_array($container->childWidgets(new Rect(0, 0, 20, 10)));
+        $placements = iterator_to_array($container->placedChildren(new Rect(0, 0, 20, 10)));
 
         self::assertCount(1, $placements);
         self::assertSame($child, $placements[0][0]);
@@ -195,7 +195,7 @@ final class ContainerTest extends TestCase
             ->withHorizontalAlignment(Alignment::Right)
             ->withVerticalAlignment(VerticalAlignment::Bottom);
 
-        [, $area] = iterator_to_array($container->childWidgets(Rect::fromSize(12, 8)))[0];
+        [, $area] = iterator_to_array($container->placedChildren(Rect::fromSize(12, 8)))[0];
 
         self::assertTrue((new Rect(7, 5, 4, 2))->equals($area));
     }
@@ -209,7 +209,7 @@ final class ContainerTest extends TestCase
             ->withHorizontalAlignment(Alignment::Center)
             ->withVerticalAlignment(VerticalAlignment::Center);
 
-        [, $area] = iterator_to_array($container->childWidgets(Rect::fromSize(8, 5)))[0];
+        [, $area] = iterator_to_array($container->placedChildren(Rect::fromSize(8, 5)))[0];
 
         self::assertTrue((new Rect(1, 1, 6, 3))->equals($area));
     }
@@ -471,7 +471,7 @@ final class ContainerTest extends TestCase
         $container = Container::around(new ContainerProbe())
             ->withContentSize(0, 0);
 
-        [, $area] = iterator_to_array($container->childWidgets(Rect::fromSize(10, 5)))[0];
+        [, $area] = iterator_to_array($container->placedChildren(Rect::fromSize(10, 5)))[0];
 
         self::assertTrue((new Rect(0, 0, 0, 0))->equals($area));
     }

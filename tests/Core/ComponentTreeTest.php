@@ -204,7 +204,7 @@ final readonly class StructuralOnlyContainer implements Widget, WidgetContainer
         return [$this->child];
     }
 
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         throw new LogicException('Component discovery must not resolve child rectangles');
     }

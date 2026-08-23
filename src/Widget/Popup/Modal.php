@@ -154,7 +154,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     /**
      * @return list<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): array
+    public function placedChildren(Rect $area): array
     {
         return [[$this->content, $this->computeContentRect($area)]];
     }

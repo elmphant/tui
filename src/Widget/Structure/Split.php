@@ -172,7 +172,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
     /**
      * @return list<array{0: Widget, 1: Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         $pairs = [];
         $offset = 0;
@@ -209,7 +209,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         $panes = [];
         $rects = [];
 
-        foreach ($this->childWidgets($area) as $index => [$child, $rect]) {
+        foreach ($this->placedChildren($area) as $index => [$child, $rect]) {
             if ($child instanceof Interactive) {
                 $panes[$index] = $child;
                 $rects[$index] = $rect;

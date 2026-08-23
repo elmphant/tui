@@ -30,7 +30,7 @@ final class BoxTest extends TestCase
         $first = Text::new('one');
         $second = Text::new('two');
 
-        $placements = iterator_to_array(Box::new('Held')->add($first)->add($second)->childWidgets(new Rect(0, 0, 12, 6)));
+        $placements = iterator_to_array(Box::new('Held')->add($first)->add($second)->placedChildren(new Rect(0, 0, 12, 6)));
 
         self::assertSame([$first, $second], [$placements[0][0], $placements[1][0]]);
         self::assertTrue((new Rect(1, 1, 10, 1))->equals($placements[0][1]));
@@ -42,7 +42,7 @@ final class BoxTest extends TestCase
     {
         $wrapping = Paragraph::fromText('one two three four five six seven eight nine ten');
 
-        $placements = iterator_to_array(Box::new('Held')->add($wrapping)->childWidgets(new Rect(0, 0, 14, 12)));
+        $placements = iterator_to_array(Box::new('Held')->add($wrapping)->placedChildren(new Rect(0, 0, 14, 12)));
 
         self::assertSame(
             5,

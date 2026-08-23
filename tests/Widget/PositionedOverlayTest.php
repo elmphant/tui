@@ -24,7 +24,7 @@ final class PositionedOverlayTest extends TestCase
         $content = Text::new('Hi');
         $overlay = PositionedOverlay::at(5, 3)->withContent($content)->withSize(4, 2);
 
-        $placements = iterator_to_array($overlay->childWidgets(new Rect(0, 0, 20, 10)));
+        $placements = iterator_to_array($overlay->placedChildren(new Rect(0, 0, 20, 10)));
 
         self::assertCount(1, $placements);
         self::assertSame($content, $placements[0][0]);

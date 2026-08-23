@@ -877,7 +877,7 @@ final class FooterTest extends TestCase
         $left = Text::new('Hi');
         $right = Text::new('Bye');
 
-        $children = [...Footer::new()->withLeft($left)->withRight($right)->childWidgets(new Rect(0, 0, 20, 1))];
+        $children = [...Footer::new()->withLeft($left)->withRight($right)->placedChildren(new Rect(0, 0, 20, 1))];
 
         self::assertSame([$left, $right], array_column($children, 0));
         self::assertSame([0, 17], array_map(static fn (array $child): int => $child[1]->x, $children));

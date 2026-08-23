@@ -203,9 +203,9 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     /**
      * @return list<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): array
+    public function placedChildren(Rect $area): array
     {
-        return [...$this->activePane()->childWidgets($this->contentArea($area))];
+        return [...$this->activePane()->placedChildren($this->contentArea($area))];
     }
 
     public function update(Message $message, Rect $area): UpdateResult

@@ -109,7 +109,7 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
     /**
      * @return iterable<array{Widget, Rect}>
      */
-    public function childWidgets(Rect $area): iterable
+    public function placedChildren(Rect $area): iterable
     {
         if ($area->width < 3 || $area->height < 3) {
             return;
