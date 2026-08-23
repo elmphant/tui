@@ -6,6 +6,9 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\ExecCmd;
+use Elmphant\Tui\Core\Cmd\QuitCmd;
+use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Model;
@@ -62,7 +65,7 @@ final class AppTest extends TestCase
     {
         $app = new TickingApp();
         $command = $app->init();
-        self::assertInstanceOf(Cmd\TickCmd::class, $command);
+        self::assertInstanceOf(TickCmd::class, $command);
         self::assertSame(0.05, $command->interval);
     }
 
@@ -91,7 +94,7 @@ final class AppTest extends TestCase
     {
         $app = new CounterApp();
         $result = $app->update(new KeyMsg('c', ctrl: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
+        self::assertInstanceOf(QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -107,7 +110,7 @@ final class AppTest extends TestCase
     {
         $app = new NoQuitApp();
         $result = $app->update(new KeyMsg('c', ctrl: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
+        self::assertInstanceOf(QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -119,7 +122,7 @@ final class AppTest extends TestCase
         self::assertNull($ctrlC->command, 'An app that rebinds quit must be able to intercept ctrl+c');
 
         $ctrlD = $app->update(new KeyMsg('d', ctrl: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(Cmd\QuitCmd::class, $ctrlD->command);
+        self::assertInstanceOf(QuitCmd::class, $ctrlD->command);
     }
 
     #[Test]
@@ -207,7 +210,7 @@ final class AppTest extends TestCase
         $result = $app->update(new KeyMsg('r'), Rect::fromSize(80, 24));
         self::assertInstanceOf(CmdApp::class, $result->model);
         self::assertTrue($result->model->requested);
-        self::assertInstanceOf(Cmd\ExecCmd::class, $result->command);
+        self::assertInstanceOf(ExecCmd::class, $result->command);
     }
 
     #[Test]
@@ -386,7 +389,7 @@ final class AppTest extends TestCase
 
         $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
 
-        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
+        self::assertInstanceOf(QuitCmd::class, $result->command);
     }
 
     #[Test]
@@ -396,7 +399,7 @@ final class AppTest extends TestCase
 
         $result = $app->update(new KeyMsg('q', ctrl: true), Rect::fromSize(80, 24));
 
-        self::assertInstanceOf(Cmd\QuitCmd::class, $result->command);
+        self::assertInstanceOf(QuitCmd::class, $result->command);
     }
 
     #[Test]

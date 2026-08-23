@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\App;
-use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
@@ -65,7 +65,7 @@ final class FocusScopeRingTest extends TestCase
 
         $command = $app->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 10), $focus)->command;
 
-        self::assertInstanceOf(Cmd\FocusCmd::class, $command);
+        self::assertInstanceOf(FocusCmd::class, $command);
         self::assertSame(
             'severity',
             $command->applyTo($focus, $app->focusableIds($focus))->focused()?->value,
@@ -95,7 +95,7 @@ final class FocusScopeRingTest extends TestCase
             $focus,
         )->command;
 
-        self::assertInstanceOf(Cmd\FocusCmd::class, $command);
+        self::assertInstanceOf(FocusCmd::class, $command);
 
         return $command->applyTo($focus, $app->focusableIds($focus))->focused()?->value;
     }

@@ -10,6 +10,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 
 /**
  * @internal shared slot placement, drawing and routing for the Header and Footer bars

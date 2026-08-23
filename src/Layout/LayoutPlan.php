@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
-use Elmphant\Tui\Widget\SingleMount;
+use Elmphant\Tui\Widget\Dispatch\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;

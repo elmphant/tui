@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
@@ -330,7 +330,7 @@ final class HeaderTest extends TestCase
 
         $result = $header->update(new TestMessage('msg'), $area);
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -350,7 +350,7 @@ final class HeaderTest extends TestCase
         $header = Header::new()->withLeft($slot);
         $result = $header->update(new TickMsg(0.0), Rect::fromSize(80, 1));
         self::assertNotNull($result->command);
-        self::assertNotInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertNotInstanceOf(BatchCmd::class, $result->command);
         self::assertSame($command, $result->command);
     }
 
@@ -715,7 +715,7 @@ final class HeaderTest extends TestCase
 
         $result = $header->update(new TestMessage('msg'), $area);
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -935,7 +935,7 @@ final class HeaderTest extends TestCase
 
         $result = $header->update(new TickMsg(0.0), Rect::fromSize(80, 3));
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(3, $result->command->commands);
     }
 

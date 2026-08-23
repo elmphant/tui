@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Core;
 use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
@@ -44,7 +45,7 @@ final class PointerFocusTest extends TestCase
             new FocusState(ComponentId::named('second')),
         );
 
-        self::assertInstanceOf(Cmd\FocusCmd::class, $clicked->command);
+        self::assertInstanceOf(FocusCmd::class, $clicked->command);
         self::assertEquals(Cmd::focus(ComponentId::named('first')), $clicked->command);
     }
 

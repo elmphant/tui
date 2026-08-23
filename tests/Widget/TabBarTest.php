@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
@@ -4695,7 +4696,7 @@ final class TabBarTest extends TestCase
 
         $result = $tabBar->update(new TickMsg(0.0), Rect::fromSize(80, 24));
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -4721,7 +4722,7 @@ final class TabBarTest extends TestCase
         $result = $tabBar->update(new TickMsg(0.0), Rect::fromSize(80, 24));
 
         self::assertNotNull($result->command);
-        self::assertNotInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertNotInstanceOf(BatchCmd::class, $result->command);
     }
 
     #[Test]

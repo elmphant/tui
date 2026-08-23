@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Core\BatchCmd;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
@@ -237,7 +237,7 @@ final class FooterTest extends TestCase
         $footer = Footer::new()->withLeft($slot);
         $result = $footer->update(new TickMsg(0.0), Rect::fromSize(80, 1));
         self::assertNotNull($result->command);
-        self::assertNotInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertNotInstanceOf(BatchCmd::class, $result->command);
         self::assertSame($command, $result->command);
     }
 
@@ -313,7 +313,7 @@ final class FooterTest extends TestCase
 
         $result = $footer->update(new TestMessage('msg'), $area);
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -351,7 +351,7 @@ final class FooterTest extends TestCase
 
         $result = $footer->update(new TestMessage('msg'), $area);
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 
@@ -915,7 +915,7 @@ final class FooterTest extends TestCase
 
         $result = $footer->update(new TickMsg(0.0), Rect::fromSize(80, 3));
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(3, $result->command->commands);
     }
 

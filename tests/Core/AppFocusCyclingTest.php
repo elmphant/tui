@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\App;
-use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
@@ -29,7 +29,7 @@ final class AppFocusCyclingTest extends TestCase
 
         $command = $app->update(new KeyMsg('n', ctrl: true), new Rect(0, 0, 40, 6), new FocusState(ComponentId::named('first')))->command;
 
-        self::assertInstanceOf(Cmd\FocusCmd::class, $command);
+        self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
             ComponentId::named('second'),
             $command->applyTo(new FocusState(ComponentId::named('first')), $app->focusableIds())->focused(),
@@ -48,7 +48,7 @@ final class AppFocusCyclingTest extends TestCase
             $onTheSecond,
         )->command;
 
-        self::assertInstanceOf(Cmd\FocusCmd::class, $command);
+        self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
             ComponentId::named('first'),
             $command->applyTo($onTheSecond, $app->focusableIds())->focused(),

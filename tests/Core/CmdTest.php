@@ -5,6 +5,14 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\BatchCmd;
+use Elmphant\Tui\Core\Cmd\CallCmd;
+use Elmphant\Tui\Core\Cmd\ClipboardCmd;
+use Elmphant\Tui\Core\Cmd\ExecCmd;
+use Elmphant\Tui\Core\Cmd\HttpCmd;
+use Elmphant\Tui\Core\Cmd\ProcessCmd;
+use Elmphant\Tui\Core\Cmd\QuitCmd;
+use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
@@ -20,7 +28,7 @@ final class CmdTest extends TestCase
     {
         $command = Cmd::quit();
         self::assertInstanceOf(Cmd::class, $command);
-        self::assertInstanceOf(Cmd\QuitCmd::class, $command);
+        self::assertInstanceOf(QuitCmd::class, $command);
     }
 
     #[Test]
@@ -28,7 +36,7 @@ final class CmdTest extends TestCase
     {
         $command = Cmd::copy('one two');
 
-        self::assertInstanceOf(Cmd\ClipboardCmd::class, $command);
+        self::assertInstanceOf(ClipboardCmd::class, $command);
         self::assertSame('one two', $command->text);
     }
 
@@ -36,7 +44,7 @@ final class CmdTest extends TestCase
     public function tickReturnsCmdWithInterval(): void
     {
         $command = Cmd::tick(0.05);
-        self::assertInstanceOf(Cmd\TickCmd::class, $command);
+        self::assertInstanceOf(TickCmd::class, $command);
         self::assertSame(0.05, $command->interval);
     }
 
@@ -44,7 +52,7 @@ final class CmdTest extends TestCase
     public function batchWrapsMultipleCommands(): void
     {
         $command = Cmd::batch(Cmd::quit(), Cmd::tick(0.1));
-        self::assertInstanceOf(Cmd\BatchCmd::class, $command);
+        self::assertInstanceOf(BatchCmd::class, $command);
         self::assertCount(2, $command->commands);
     }
 
@@ -56,7 +64,7 @@ final class CmdTest extends TestCase
 
         $command = Cmd::batch(first: $first, second: $second);
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $command);
+        self::assertInstanceOf(BatchCmd::class, $command);
         self::assertSame([0, 1], array_keys($command->commands));
         self::assertSame([$first, $second], $command->commands);
     }
@@ -68,7 +76,7 @@ final class CmdTest extends TestCase
 
         $command = Cmd::call($callback);
 
-        self::assertInstanceOf(Cmd\CallCmd::class, $command);
+        self::assertInstanceOf(CallCmd::class, $command);
         self::assertSame($callback, $command->callback);
     }
 
@@ -95,7 +103,7 @@ final class CmdTest extends TestCase
             ->withInput("yes\n")
             ->withMaxOutputBytes(1_024);
 
-        self::assertInstanceOf(Cmd\ExecCmd::class, $command);
+        self::assertInstanceOf(ExecCmd::class, $command);
         self::assertSame(['composer', 'update'], $command->command);
         self::assertSame($id, $command->id);
         self::assertSame('/app', $command->workingDirectory);
@@ -135,7 +143,7 @@ final class CmdTest extends TestCase
             ->withInput("start\n")
             ->withOutputChunkBytes(2_048);
 
-        self::assertInstanceOf(Cmd\ProcessCmd::class, $command);
+        self::assertInstanceOf(ProcessCmd::class, $command);
         self::assertSame(['npm', 'run', 'dev'], $command->command);
         self::assertSame($id, $command->id);
         self::assertSame('/app', $command->workingDirectory);
@@ -175,7 +183,7 @@ final class CmdTest extends TestCase
             ->withOptions(['max_redirects' => 2])
             ->withMaxBodyBytes(4_096);
 
-        self::assertInstanceOf(Cmd\HttpCmd::class, $command);
+        self::assertInstanceOf(HttpCmd::class, $command);
         self::assertSame('https://example.com/archive', $command->url);
         self::assertSame('POST', $command->method);
         self::assertSame(['Content-Type' => 'application/json'], $command->headers);

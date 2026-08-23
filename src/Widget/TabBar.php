@@ -25,6 +25,8 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use LogicException;
 
 final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAware, PublishesHints
@@ -277,7 +279,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     }
 
     /**
-     * @param Closure(ScrollPane): ScrollPane $change
+     * @param Closure(ScrollPane):ScrollPane $change
      *
      * @return list<TabPage>
      */

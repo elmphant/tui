@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,7 +22,7 @@ final class FocusCmdTest extends TestCase
     {
         $command = Cmd::focus(ComponentId::named('search'));
 
-        self::assertInstanceOf(Cmd\FocusCmd::class, $command);
+        self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
             new FocusState(ComponentId::named('search')),
             $command->applyTo(new FocusState(), []),

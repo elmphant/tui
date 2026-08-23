@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,7 +21,7 @@ final class FocusCycleCmdTest extends TestCase
     public function cyclingMovesTheKeyboardToTheNextComponentInTreeOrder(): void
     {
         $command = Cmd::focusNext();
-        self::assertInstanceOf(Cmd\FocusCmd::class, $command);
+        self::assertInstanceOf(FocusCmd::class, $command);
 
         $moved = $command->applyTo(
             new FocusState(ComponentId::named('search')),

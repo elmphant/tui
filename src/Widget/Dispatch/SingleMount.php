@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Dispatch;
 
 /**
  * A widget whose rect is found by object identity, so it may be mounted once.

@@ -6,6 +6,13 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\BatchCmd;
+use Elmphant\Tui\Core\Cmd\CallCmd;
+use Elmphant\Tui\Core\Cmd\ClipboardCmd;
+use Elmphant\Tui\Core\Cmd\FocusCmd;
+use Elmphant\Tui\Core\Cmd\MappedCmd;
+use Elmphant\Tui\Core\Cmd\MessageCmd;
+use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Model;
@@ -906,7 +913,7 @@ final class Program
      * Where the keyboard is gets drawn, so moving it makes the screen stale even
      * though the model is untouched.
      */
-    private function moveFocus(Cmd\FocusCmd $command): void
+    private function moveFocus(FocusCmd $command): void
     {
         $moved = $command->applyTo($this->focus, $this->focusableIds());
 
@@ -959,13 +966,13 @@ final class Program
 
         $this->tracer?->record(TraceEvent::Command, ['command' => $command::class]);
 
-        if ($command instanceof Cmd\MappedCmd) {
+        if ($command instanceof MappedCmd) {
             $this->dispatchCommand($command->inner, self::composeWrap($command->wrap, $wrap));
 
             return;
         }
 
-        if ($command instanceof Cmd\BatchCmd) {
+        if ($command instanceof BatchCmd) {
             foreach ($command->commands as $child) {
                 $this->dispatchCommand($child, $wrap);
             }
@@ -978,11 +985,11 @@ final class Program
         // Anything else leaves something running, which the effects hold.
         try {
             match (true) {
-                $command instanceof Cmd\QuitCmd => $this->running = false,
-                $command instanceof Cmd\ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
-                $command instanceof Cmd\FocusCmd => $this->moveFocus($command),
-                $command instanceof Cmd\MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
-                $command instanceof Cmd\CallCmd => $this->executeCall($command, $wrap),
+                $command instanceof QuitCmd => $this->running = false,
+                $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
+                $command instanceof FocusCmd => $this->moveFocus($command),
+                $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
+                $command instanceof CallCmd => $this->executeCall($command, $wrap),
                 default => $this->effects()->run($command, $wrap),
             };
         } catch (Throwable $error) {
@@ -1003,7 +1010,7 @@ final class Program
     /**
      * @param Closure(Message): Message|null $wrap
      */
-    private function executeCall(Cmd\CallCmd $command, ?Closure $wrap = null): void
+    private function executeCall(CallCmd $command, ?Closure $wrap = null): void
     {
         try {
             $result = ($command->callback)();

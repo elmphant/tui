@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -151,7 +152,7 @@ final class BarSlotPlacementTest extends TestCase
         $result = $armed->update(new MouseMsg(22, 0, MouseAction::Release, MouseButton::Left), $area);
 
         $command = $result->command;
-        self::assertInstanceOf(Cmd\MessageCmd::class, $command);
+        self::assertInstanceOf(MessageCmd::class, $command);
         self::assertSame($rightPressed, $command->message);
     }
 
@@ -182,7 +183,7 @@ final class BarSlotPlacementTest extends TestCase
         $result = Footer::new()->withLeft($widthless)->update(new KeyMsg(Key::Enter), new Rect(0, 0, self::BAR_WIDTH, 1));
 
         $command = $result->command;
-        self::assertInstanceOf(Cmd\MessageCmd::class, $command);
+        self::assertInstanceOf(MessageCmd::class, $command);
         self::assertSame($pressed, $command->message);
     }
 

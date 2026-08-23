@@ -18,7 +18,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\ScreenBuffer;
-use Elmphant\Tui\Widget\ChildDispatcher;
+use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\FilterableList;
 use Elmphant\Tui\Widget\FilterBar;
 use Elmphant\Tui\Widget\ListItem;

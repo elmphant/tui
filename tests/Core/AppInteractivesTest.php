@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\BatchCmd;
+use Elmphant\Tui\Core\Cmd\ExecCmd;
+use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\UpdateResult;
@@ -192,7 +195,7 @@ final class AppInteractivesTest extends TestCase
 
         $result = $app->update(new TickMsg(1.0), Rect::fromSize(80, 24));
 
-        self::assertInstanceOf(Cmd\ExecCmd::class, $result->command);
+        self::assertInstanceOf(ExecCmd::class, $result->command);
     }
 
     #[Test]
@@ -203,10 +206,10 @@ final class AppInteractivesTest extends TestCase
 
         $result = $app->update(new TickMsg(1.0), Rect::fromSize(80, 24));
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
-        self::assertInstanceOf(Cmd\TickCmd::class, $result->command->commands[0]);
-        self::assertInstanceOf(Cmd\ExecCmd::class, $result->command->commands[1]);
+        self::assertInstanceOf(TickCmd::class, $result->command->commands[0]);
+        self::assertInstanceOf(ExecCmd::class, $result->command->commands[1]);
     }
 
     #[Test]
@@ -229,7 +232,7 @@ final class AppInteractivesTest extends TestCase
         );
         $result = $app->update(new TickMsg(1.0), Rect::fromSize(80, 24));
 
-        self::assertInstanceOf(Cmd\BatchCmd::class, $result->command);
+        self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertCount(2, $result->command->commands);
     }
 }

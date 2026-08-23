@@ -25,6 +25,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
+use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 
 /**
  * A scrollable list with a free-text filter over it.

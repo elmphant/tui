@@ -13,6 +13,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 
 /**
  * Marks where the keyboard is, so every field says it the same way instead of

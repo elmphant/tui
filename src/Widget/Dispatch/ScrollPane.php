@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Dispatch;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
@@ -23,6 +23,17 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\CursorAware;
+use Elmphant\Tui\Widget\DrawsFocus;
+use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\FocusTree;
+use Elmphant\Tui\Widget\HoldsTheKeyboard;
+use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\Scrollbar;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
  * A vertical stack of children in a scrolling viewport.

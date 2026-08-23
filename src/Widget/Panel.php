@@ -19,6 +19,8 @@ use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 
 final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer, PublishesHints
 {

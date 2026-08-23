@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
@@ -407,7 +407,7 @@ final class ButtonTest extends TestCase
     {
         $command = $result->command;
 
-        self::assertInstanceOf(Cmd\MessageCmd::class, $command);
+        self::assertInstanceOf(MessageCmd::class, $command);
         self::assertSame($expected, $command->message);
     }
 }

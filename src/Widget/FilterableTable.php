@@ -19,6 +19,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
+use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 
 /**
  * A table with a free-text filter over its rows.

@@ -18,7 +18,7 @@ use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\ChildDispatcher;
+use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\PublishesHints;
