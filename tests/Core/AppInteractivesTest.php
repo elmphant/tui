@@ -25,7 +25,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
 use Elmphant\Tui\Tests\Support\TickTally;
-use Elmphant\Tui\Widget\Footer;
+use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Panel;
 use Elmphant\Tui\Widget\Text;

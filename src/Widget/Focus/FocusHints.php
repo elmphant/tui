@@ -8,7 +8,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\StatusBar;
+use Elmphant\Tui\Widget\Bar\StatusBar;
 use Elmphant\Tui\Widget\Widget;
 
 /**

@@ -25,6 +25,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 
 final readonly class ListView implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints

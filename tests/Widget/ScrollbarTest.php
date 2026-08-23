@@ -8,7 +8,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\Scrollbar;
+use Elmphant\Tui\Widget\Bar\Scrollbar;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

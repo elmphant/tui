@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Bar;
 
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Input\Keybindings;
@@ -10,7 +10,10 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Widget;
 
 /**
  * @internal shared slot placement, drawing and routing for the Header and Footer bars

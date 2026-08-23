@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Bar;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
@@ -14,30 +14,36 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class Footer implements Interactive, WidgetContainer, KeybindingsAware
+final readonly class Header implements Interactive, WidgetContainer, KeybindingsAware
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
 
     private function __construct(
+        private string $title = '',
         private ?Widget $leftSlot = null,
         private ?Widget $centerSlot = null,
         private ?Widget $rightSlot = null,
         private ?Style $style = null,
         private ?Spacing $padding = null,
         private ?Spacing $margin = null,
+        private bool $divider = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
     }
 
-    public static function new(): self
+    public static function new(string $title = ''): self
     {
-        return new self();
+        return new self($title);
     }
 
     public static function defaultKeybindings(): Keybindings
@@ -45,28 +51,9 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         return Keybindings::empty();
     }
 
-    /**
-     * @param array<string, string> $hints
-     */
-    public static function forHints(array $hints): self
+    public function withTitle(string $title): self
     {
-        return new self(centerSlot: StatusBar::forHints($hints));
-    }
-
-    /**
-     * @param array<string, string> $hints
-     */
-    public static function forLeftHints(array $hints): self
-    {
-        return new self(leftSlot: StatusBar::forHints($hints));
-    }
-
-    /**
-     * @param array<string, string> $hints
-     */
-    public static function forRightHints(array $hints): self
-    {
-        return new self(rightSlot: StatusBar::forHints($hints));
+        return $this->cloneWith(title: $title);
     }
 
     public function withLeft(Widget $widget): self
@@ -99,14 +86,20 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         return $this->cloneWith(margin: $margin);
     }
 
+    public function withDivider(): self
+    {
+        return $this->cloneWith(divider: true);
+    }
+
     public function sizing(): Sizing
     {
         $padding = $this->padding ?? Spacing::none();
         $margin = $this->margin ?? Spacing::none();
+        $dividerHeight = $this->divider ? 1 : 0;
 
         return Sizing::of(
             Constraint::flex(),
-            Constraint::exact(1 + $padding->top + $padding->bottom + $margin->top + $margin->bottom),
+            Constraint::exact(1 + $padding->top + $padding->bottom + $margin->top + $margin->bottom + $dividerHeight),
         );
     }
 
@@ -155,18 +148,20 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             return;
         }
 
-        $barArea = ($this->margin ?? Spacing::none())->applyTo($area);
-        if ($barArea->width < 1 || $barArea->height < 1) {
+        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
+        if ($innerArea->width < 1 || $innerArea->height < 1) {
             return;
         }
 
-        $theme = $context->theme;
-        $barStyle = $this->style ?? $theme->footerStyle;
-        $barBg = $barStyle->backgroundValue();
+        $padding = $this->padding ?? Spacing::none();
+        $barHeight = 1 + $padding->top + $padding->bottom;
+        $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
 
-        $frame->fillRect($barArea->x, $barArea->y, $barArea->width, $barArea->height, $barStyle->foregroundValue(), $barBg, $barStyle->attributes);
+        $headerStyle = $this->style ?? $context->theme->headerStyle;
+        $barBg = $headerStyle->backgroundValue();
+        $frame->fillRect($barArea->x, $barArea->y, $barArea->width, $barArea->height, $headerStyle->foregroundValue(), $barBg, $headerStyle->attributes);
 
-        $contentArea = ($this->padding ?? Spacing::none())->applyTo($barArea);
+        $contentArea = $padding->applyTo($barArea);
         if ($contentArea->width < 1 || $contentArea->height < 1) {
             return;
         }
@@ -183,8 +178,31 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             BarSlotRenderer::renderCentered($frame, $this->centerSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
         }
 
+        // The title is the bar's default content rather than a fourth slot: it
+        // centres while the centre is free, and steps left when a centre slot
+        // takes that place. Only an explicit left slot displaces it entirely —
+        // a caller-supplied title vanishing is never the useful answer.
+        $titleWidth = CharWidth::stringWidth($this->title);
+        $titleFits = $titleWidth > 0
+            && ($this->centerSlot === null || $this->leftSlot === null);
+
+        if ($titleFits) {
+            $titleX = $this->centerSlot === null
+                ? max($contentX, $contentX + (int)floor(($contentWidth - $titleWidth) / 2))
+                : $contentX;
+            $frame->putString($titleX, $contentY, $this->title, $headerStyle->foregroundValue(), $barBg, $headerStyle->attributes);
+        }
+
         if ($this->rightSlot !== null) {
             BarSlotRenderer::renderRight($frame, $this->rightSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+        }
+
+        if ($this->divider) {
+            $dividerY = $barArea->y + $barArea->height;
+            if ($dividerY < $area->y + $area->height) {
+                $dividerStyle = $context->theme->borderStyle;
+                $frame->putString($innerArea->x, $dividerY, str_repeat('─', $innerArea->width), $dividerStyle->foregroundValue(), $dividerStyle->backgroundValue());
+            }
         }
     }
 
@@ -206,13 +224,16 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             return null;
         }
 
-        $barArea = ($this->margin ?? Spacing::none())->applyTo($area);
+        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
 
-        if ($barArea->width < 1 || $barArea->height < 1) {
+        if ($innerArea->width < 1 || $innerArea->height < 1) {
             return null;
         }
 
-        $contentArea = ($this->padding ?? Spacing::none())->applyTo($barArea);
+        $padding = $this->padding ?? Spacing::none();
+        $barHeight = 1 + $padding->top + $padding->bottom;
+        $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
+        $contentArea = $padding->applyTo($barArea);
 
         return $contentArea->width < 1 || $contentArea->height < 1 ? null : $contentArea;
     }

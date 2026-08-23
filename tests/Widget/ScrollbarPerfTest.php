@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
-use Elmphant\Tui\Widget\Scrollbar;
+use Elmphant\Tui\Widget\Bar\Scrollbar;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

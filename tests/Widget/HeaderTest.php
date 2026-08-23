@@ -23,7 +23,7 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TickTally;
-use Elmphant\Tui\Widget\Header;
+use Elmphant\Tui\Widget\Bar\Header;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Text;
 use Elmphant\Tui\Widget\TextInput;
