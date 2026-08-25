@@ -90,6 +90,10 @@ final class RenderContext
      */
     public function requestRepaint(float $delay): void
     {
+        if (!is_finite($delay)) {
+            return;
+        }
+
         $delay = max(0.0, $delay);
         $this->repaintDelay = $this->repaintDelay === null
             ? $delay

@@ -15,18 +15,6 @@ use PHPUnit\Framework\TestCase;
 final class ThemeTest extends TestCase
 {
     #[Test]
-    public function theFocusTrackFollowsWhateverFocusWasRecolouredTo(): void
-    {
-        $recoloured = Theme::dark()->withFocusedBorderStyle(new Style(foreground: Color::hex('F49700')));
-
-        self::assertSame(
-            $recoloured->focusedBorderStyle->foregroundValue(),
-            $recoloured->focusedGutterStyle()->foregroundValue(),
-            'a palette that recolours focus must not leave the track behind in another hue',
-        );
-    }
-
-    #[Test]
     public function darkPresetHasAllTokens(): void
     {
         $theme = Theme::dark();

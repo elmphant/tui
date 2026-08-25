@@ -82,6 +82,21 @@ final class RenderContextTest extends TestCase
         self::assertSame(0.05, $context->repaintDelay());
     }
 
+    /**
+     * A delay is turned into the moment the next frame is due, and a moment
+     * nothing can compare stops the animation clock for the whole program —
+     * not just for the widget that asked.
+     */
+    #[Test]
+    public function requestRepaintIgnoresADelayThatNamesNoMoment(): void
+    {
+        $context = new RenderContext(Theme::dark());
+
+        $context->requestRepaint(NAN);
+
+        self::assertNull($context->repaintDelay(), 'a frame due at no moment is a frame that never comes');
+    }
+
     #[Test]
     public function requestRepaintClampsNegativeDelaysToZero(): void
     {

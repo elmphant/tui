@@ -614,36 +614,6 @@ final class Frame
         }
     }
 
-    public function swapArrays(self $other): void
-    {
-        $temporaryCharacters = $this->characters;
-        $temporaryForegrounds = $this->foregrounds;
-        $temporaryBackgrounds = $this->backgrounds;
-        $temporaryAttributes = $this->attributes;
-        $temporaryWidths = $this->widths;
-        $temporaryContentRows = $this->contentRows;
-        $temporaryBlankBackground = $this->blankBackground;
-        $temporaryBlankBackgrounds = $this->blankBackgrounds;
-
-        $this->characters = $other->characters;
-        $this->foregrounds = $other->foregrounds;
-        $this->backgrounds = $other->backgrounds;
-        $this->attributes = $other->attributes;
-        $this->widths = $other->widths;
-        $this->contentRows = $other->contentRows;
-        $this->blankBackground = $other->blankBackground;
-        $this->blankBackgrounds = $other->blankBackgrounds;
-
-        $other->characters = $temporaryCharacters;
-        $other->foregrounds = $temporaryForegrounds;
-        $other->backgrounds = $temporaryBackgrounds;
-        $other->attributes = $temporaryAttributes;
-        $other->widths = $temporaryWidths;
-        $other->contentRows = $temporaryContentRows;
-        $other->blankBackground = $temporaryBlankBackground;
-        $other->blankBackgrounds = $temporaryBlankBackgrounds;
-    }
-
     private static function spanStyleOver(?Style $span, Style $base): Style
     {
         if ($span === null) {

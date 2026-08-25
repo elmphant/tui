@@ -86,16 +86,6 @@ final readonly class Theme
         return $this->base->readableOn(new Style(background: $page->readableOn($page, self::RAISED_SEPARATION)));
     }
 
-    /**
-     * The track beside whatever the keyboard is on. Derived on every read rather
-     * than resolved once, so a palette that recolours focus afterwards — as every
-     * withX() builder does — cannot leave the track behind in the old hue.
-     */
-    public function focusedGutterStyle(): Style
-    {
-        return $this->focusedBorderStyle;
-    }
-
     public function withBase(Style $base): self
     {
         return $this->cloneWith(base: $base);
@@ -191,10 +181,6 @@ final readonly class Theme
         return $this->cloneWith(focusedBorder: $border);
     }
 
-    /**
-     * One option row of a select, radio group or checkbox group, where marked
-     * means selected or ticked.
-     */
     /**
      * The border a container draws while it stands out — because it holds the
      * keyboard, or because its host asked for emphasis. Asked of the theme rather

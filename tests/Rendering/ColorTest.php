@@ -261,9 +261,12 @@ final class ColorTest extends TestCase
     }
 
     #[Test]
-    public function namedUnknownReturnsNone(): void
+    public function anUnknownColourNameIsRefusedRatherThanSilentlyDefaulted(): void
     {
-        self::assertSame(0, Color::named('nonexistent')->value);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown colour name "nonexistent"');
+
+        Color::named('nonexistent');
     }
 
     #[Test]

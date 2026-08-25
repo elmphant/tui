@@ -258,20 +258,6 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function swapArrays(): void
-    {
-        $bufferA = new Frame(5, 3);
-        $bufferB = new Frame(5, 3);
-        $bufferA->putChar(0, 0, 'A');
-        $bufferB->putChar(0, 0, 'B');
-
-        $bufferA->swapArrays($bufferB);
-
-        self::assertSame('B', $bufferA->characters[0]);
-        self::assertSame('A', $bufferB->characters[0]);
-    }
-
-    #[Test]
     public function putAnsiPlainText(): void
     {
         $frame = new Frame(20, 5);

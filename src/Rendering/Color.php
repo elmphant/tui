@@ -120,7 +120,7 @@ final readonly class Color
             'cyan' => self::ANSI + 6,
             'white' => self::ANSI + 7,
             'gray', 'grey' => self::BRIGHT,
-            default => 0,
+            default => throw new InvalidArgumentException("Unknown colour name \"{$name}\""),
         });
     }
 
