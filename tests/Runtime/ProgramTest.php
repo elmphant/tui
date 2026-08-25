@@ -39,6 +39,8 @@ use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\AdaptiveTicker;
+use Elmphant\Tui\Runtime\Clock;
+use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\EventLoopWatcher;
 use Elmphant\Tui\Runtime\Program;
@@ -47,6 +49,7 @@ use Elmphant\Tui\Runtime\TerminalSession;
 use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Support\FloatingModel;
+use Elmphant\Tui\Tests\Support\PlaySoundCmd;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TestPopup;
 use Error;
@@ -71,6 +74,100 @@ final class ProgramTest extends TestCase
     {
         self::assertSame(Model::class, (string)(new ReflectionMethod(Program::class, 'run'))->getReturnType());
         self::assertSame(Model::class, (string)(new ReflectionMethod(Program::class, 'start'))->getReturnType());
+    }
+
+    #[Test]
+    public function aRegisteredHandlerRunsACommandTheRuntimeDoesNotKnow(): void
+    {
+        $model = new class implements Model {
+            /**
+             * @var list<string>
+             */
+            public array $received = [];
+
+            public function init(): ?Cmd
+            {
+                return Cmd::batch(
+                    new PlaySoundCmd(),
+                    Cmd::after(0.05, static fn (): Cmd => Cmd::quit()),
+                );
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if (!$message instanceof TestMessage) {
+                    return new UpdateResult($this);
+                }
+                $next = clone $this;
+                $next->received = [...$this->received, $message->value];
+
+                return new UpdateResult($next);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+
+        $handler = new class implements CommandHandler {
+            public function handles(Cmd $command): bool
+            {
+                return $command instanceof PlaySoundCmd;
+            }
+
+            public function start(Cmd $command, Closure $emit): ?Closure
+            {
+                $emit(new TestMessage('played'));
+
+                return null;
+            }
+        };
+
+        $final = Program::new($model)
+            ->withTerminal(new VirtualTerminal(80, 24))
+            ->withCommandHandler($handler)
+            ->start();
+
+        self::assertInstanceOf($model::class, $final);
+        self::assertSame(['played'], $final->received);
+    }
+
+    #[Test]
+    public function aTimerDueAlongsideAQuitDoesNotFireAfterIt(): void
+    {
+        $log = new ArrayObject(['late' => false]);
+        $model = new class($log) implements Model {
+            public function __construct(private readonly ArrayObject $log)
+            {
+            }
+
+            public function init(): ?Cmd
+            {
+                $log = $this->log;
+
+                return Cmd::batch(
+                    Cmd::after(0.01, static fn (): Cmd => Cmd::quit()),
+                    Cmd::after(0.01, static function () use ($log): ?Message {
+                        $log['late'] = true;
+
+                        return null;
+                    }),
+                );
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+
+        Program::new($model)->withTerminal(new VirtualTerminal(80, 24))->start();
+
+        self::assertFalse($log['late'], 'a quit ends the pass it was dispatched in');
     }
 
     #[Test]
@@ -945,6 +1042,55 @@ final class ProgramTest extends TestCase
         self::assertFalse(
             $runningProperty->getValue($program),
             'Program should force-quit after consecutive errors instead of looping forever'
+        );
+    }
+
+    #[Test]
+    public function aSecondDrainInTheSameTickContinuesTheBudgetInsteadOfBuyingAFreshOne(): void
+    {
+        $clock = new TestClock(0.0);
+        $program = $this->buildTickableProgram()->withClock($clock);
+
+        $model = new class($clock) implements Model {
+            public int $updates = 0;
+
+            public function __construct(private readonly Clock $clock)
+            {
+            }
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                ++$this->updates;
+                $this->clock->advance(0.025);
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+
+        $reflection = new ReflectionClass($program);
+        $queue = new SplQueue();
+        for ($message = 0; $message < 8; ++$message) {
+            $queue->enqueue(new TickMsg(0.0));
+        }
+        $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('model')->setValue($program, $model);
+        $reflection->getProperty('running')->setValue($program, true);
+
+        $program->tick();
+
+        self::assertSame(
+            3,
+            $model->updates,
+            'Two 25 ms updates exhaust the 50 ms budget; the re-drain may serve one forced message, no more'
         );
     }
 

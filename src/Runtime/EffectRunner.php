@@ -14,6 +14,7 @@ use Elmphant\Tui\Core\Cmd\ListenCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\Message;
@@ -62,10 +63,16 @@ final class EffectRunner
     private array $subscriptions = [];
 
     /**
+     * @var list<HandledEffect>
+     */
+    private array $handled = [];
+
+    /**
      * @param SplQueue<Message>             $results  where an effect reports what it produced
      * @param Closure(?Cmd, ?Closure): void $dispatch a timer's callback may answer with a command,
      *                                                and that command may be any command at all
      * @param Closure(): void               $wake     a stream that became readable has to reach the loop
+     * @param list<CommandHandler>          $handlers what runs a command the runtime has no effect for
      */
     public function __construct(
         private readonly SplQueue $results,
@@ -74,6 +81,7 @@ final class EffectRunner
         private readonly Closure $wake,
         private readonly ProcessStarter $processStarter = new ProcessStarter(),
         private readonly HttpRequestStarter $requestStarter = new HttpRequestStarter(),
+        private readonly array $handlers = [],
     ) {
     }
 
@@ -107,7 +115,7 @@ final class EffectRunner
                 $wrap,
             ),
             $command instanceof ListenCmd => $this->subscribeToStream($command, $wrap),
-            default => throw new LogicException(sprintf('Unknown command type "%s" — the runtime has no dispatcher for it', $command::class)),
+            default => $this->delegate($command, $wrap),
         };
     }
 
@@ -153,6 +161,15 @@ final class EffectRunner
         return $this->processes !== [];
     }
 
+    /**
+     * A callback due in the pass being fired must not run once the program has
+     * been told to stop.
+     */
+    public function forgetTimers(): void
+    {
+        $this->timers = [];
+    }
+
     public function shutdown(): void
     {
         foreach ($this->subscriptions as $subscription) {
@@ -167,6 +184,51 @@ final class EffectRunner
             }
         }
         $this->processes = [];
+
+        foreach ($this->handled as $effect) {
+            try {
+                ($effect->stop)();
+            } catch (Throwable) {
+            }
+        }
+        $this->handled = [];
+    }
+
+    /**
+     * A command of the application's own: the first handler that claims it runs
+     * it, and whatever it answers with is held under the command's name so a
+     * cancellation, a replacement or a shutdown reaches it like any other effect.
+     *
+     * @param Closure(Message): Message|null $wrap
+     */
+    private function delegate(Cmd $command, ?Closure $wrap): void
+    {
+        $id = $command instanceof NamesItsEffect ? $command->effectId() : null;
+
+        foreach ($this->handlers as $handler) {
+            if (!$handler->handles($command)) {
+                continue;
+            }
+
+            try {
+                $stop = $handler->start($command, function (Message $message) use ($wrap): void {
+                    $this->report($message, $wrap);
+                    ($this->wake)();
+                });
+            } catch (Throwable $error) {
+                $this->report(new ErrorMsg($error, ErrorSource::Command, $id), $wrap);
+
+                return;
+            }
+
+            if ($stop !== null) {
+                $this->handled[] = new HandledEffect($stop, $id);
+            }
+
+            return;
+        }
+
+        throw new LogicException(sprintf('Unknown command type "%s" — the runtime has no dispatcher for it', $command::class));
     }
 
     /**
@@ -203,7 +265,7 @@ final class EffectRunner
             $command instanceof ExecCmd,
             $command instanceof ListenCmd,
             $command instanceof ProcessCmd => $command->id,
-            default => null,
+            default => $command instanceof NamesItsEffect ? $command->effectId() : null,
         };
 
         if ($id !== null) {
@@ -249,6 +311,28 @@ final class EffectRunner
             $remaining[] = $process;
         }
         $this->processes = $remaining;
+
+        $keptHandled = [];
+        foreach ($this->handled as $effect) {
+            if ($effect->id !== null && $effect->id->equals($id)) {
+                $this->stopHandled($effect, $wrap);
+                continue;
+            }
+            $keptHandled[] = $effect;
+        }
+        $this->handled = $keptHandled;
+    }
+
+    /**
+     * @param Closure(Message): Message|null $wrap
+     */
+    private function stopHandled(HandledEffect $effect, ?Closure $wrap = null): void
+    {
+        try {
+            ($effect->stop)();
+        } catch (Throwable $error) {
+            $this->report(new ErrorMsg($error, ErrorSource::Cancel, $effect->id), $wrap);
+        }
     }
 
     /**

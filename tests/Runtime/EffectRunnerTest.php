@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Runtime;
 
+use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\HttpRequestStarter;
 use Elmphant\Tui\Testing\TestClock;
@@ -465,6 +468,35 @@ final class EffectRunnerTest extends TestCase
         self::assertFalse($runner->hasRunningProcesses());
     }
 
+    /**
+     * Forgetting a process is not stopping it. Emptying the list satisfies
+     * `hasRunningProcesses()` on its own, so the child is asked for directly:
+     * one left behind outlives the program that spawned it.
+     */
+    #[Test]
+    public function shuttingDownLeavesNoChildBehind(): void
+    {
+        if (!function_exists('posix_kill')) {
+            self::markTestSkipped('asking whether a pid is still alive needs ext-posix');
+        }
+
+        $pidFile = tempnam(sys_get_temp_dir(), 'elmphant-child-');
+        self::assertIsString($pidFile);
+
+        $runner = $this->runner();
+        // The child reports its own pid, so the test asks the OS about the process
+        // the runner actually spawned rather than searching by name.
+        $runner->run(Cmd::process(['sh', '-c', 'echo $$ > ' . escapeshellarg($pidFile) . '; sleep 30']), null);
+
+        $pid = self::pidWrittenTo($pidFile);
+        self::assertTrue(posix_kill($pid, 0), 'the child must be running before shutdown proves anything');
+
+        $runner->shutdown();
+
+        self::assertFalse(posix_kill($pid, 0), 'a child left running outlives the program that spawned it');
+        unlink($pidFile);
+    }
+
     #[Test]
     public function aCommandTheRunnerHasNoEffectForSaysSoRatherThanBeingIgnored(): void
     {
@@ -488,6 +520,117 @@ final class EffectRunnerTest extends TestCase
         self::assertInstanceOf(WrappedEffectMessage::class, $this->results->dequeue());
     }
 
+    #[Test]
+    public function aCommandTheRuntimeHasNoEffectForGoesToAHandler(): void
+    {
+        $handler = new SoundHandler();
+
+        $this->runnerWith($handler)->run(new SoundCmd(), null);
+
+        self::assertSame(1, $handler->started);
+        self::assertInstanceOf(TickMsg::class, $this->results->dequeue(), 'what a handler emits reaches the model');
+    }
+
+    #[Test]
+    public function cancellingByNameStopsAHandlersEffect(): void
+    {
+        $handler = new SoundHandler();
+        $runner = $this->runnerWith($handler);
+        $chime = EffectId::named('chime');
+
+        $runner->run(new SoundCmd($chime), null);
+        $runner->run(Cmd::cancel($chime), null);
+
+        self::assertSame(1, $handler->stopped);
+    }
+
+    #[Test]
+    public function aSecondCommandUnderTheSameNameReplacesTheFirst(): void
+    {
+        $handler = new SoundHandler();
+        $runner = $this->runnerWith($handler);
+        $chime = EffectId::named('chime');
+
+        $runner->run(new SoundCmd($chime), null);
+        $runner->run(new SoundCmd($chime), null);
+
+        self::assertSame(2, $handler->started);
+        self::assertSame(1, $handler->stopped, 'two effects answering to one name send messages no host can tell apart');
+    }
+
+    #[Test]
+    public function shuttingDownStopsAHandlersEffectTheProgramNeverCancelled(): void
+    {
+        $handler = new SoundHandler();
+        $runner = $this->runnerWith($handler);
+
+        $runner->run(new SoundCmd(), null);
+        $runner->shutdown();
+
+        self::assertSame(1, $handler->stopped, 'an effect nobody named still ends with the program');
+    }
+
+    #[Test]
+    public function aHandlerNeverSeesACommandTheRuntimeHasAnEffectFor(): void
+    {
+        $handler = new GreedyHandler();
+        $runner = $this->runnerWith($handler);
+
+        $runner->run(Cmd::tick(1.0), null);
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertSame(0, $handler->started, 'a handler that claims everything must not take over the runtime');
+        self::assertInstanceOf(TickMsg::class, $this->results->dequeue());
+    }
+
+    #[Test]
+    public function whatAHandlerEmitsIsWrappedOnTheWayOutToo(): void
+    {
+        $this->runnerWith(new SoundHandler())->run(
+            new SoundCmd(),
+            static fn (Message $message): Message => new WrappedEffectMessage($message),
+        );
+
+        self::assertInstanceOf(
+            WrappedEffectMessage::class,
+            $this->results->dequeue(),
+            'a child component\'s own effect stays in the namespace its parent mapped it into',
+        );
+    }
+
+    #[Test]
+    public function aHandlerThatCannotStartSaysSoRatherThanTakingTheLoopDown(): void
+    {
+        $runner = $this->runnerWith(new BrokenHandler());
+
+        $runner->run(new SoundCmd(), null);
+
+        $message = $this->results->dequeue();
+        self::assertInstanceOf(ErrorMsg::class, $message);
+        self::assertSame(ErrorSource::Command, $message->source);
+    }
+
+    #[Test]
+    public function emittingFromAHandlerWakesALoopThatWasWaiting(): void
+    {
+        $woken = 0;
+        $runner = new EffectRunner(
+            $this->results,
+            $this->clock,
+            static function (): void {
+            },
+            static function () use (&$woken): void {
+                ++$woken;
+            },
+            handlers: [new SoundHandler()],
+        );
+
+        $runner->run(new SoundCmd(), null);
+
+        self::assertSame(1, $woken, 'a message nobody wakes for waits in the queue until the next keystroke');
+    }
+
     protected function setUp(): void
     {
         /** @var SplQueue<Message> $results */
@@ -507,6 +650,34 @@ final class EffectRunnerTest extends TestCase
             static function (): void {
             },
             requestStarter: new HttpRequestStarter($client),
+        );
+    }
+
+    private static function pidWrittenTo(string $file): int
+    {
+        for ($attempt = 0; $attempt < 200; ++$attempt) {
+            $written = trim((string)@file_get_contents($file));
+
+            if (ctype_digit($written)) {
+                return (int)$written;
+            }
+
+            usleep(10_000);
+        }
+
+        self::fail('the child never reported its pid');
+    }
+
+    private function runnerWith(CommandHandler ...$handlers): EffectRunner
+    {
+        return new EffectRunner(
+            $this->results,
+            $this->clock,
+            static function (): void {
+            },
+            static function (): void {
+            },
+            handlers: array_values($handlers),
         );
     }
 
@@ -556,6 +727,70 @@ final class EffectRunnerTest extends TestCase
 
 final readonly class UnknownEffectCmd extends Cmd
 {
+}
+
+final readonly class SoundCmd extends Cmd implements NamesItsEffect
+{
+    public function __construct(private ?EffectId $id = null)
+    {
+    }
+
+    public function effectId(): ?EffectId
+    {
+        return $this->id;
+    }
+}
+
+final class BrokenHandler implements CommandHandler
+{
+    public function handles(Cmd $command): bool
+    {
+        return true;
+    }
+
+    public function start(Cmd $command, Closure $emit): ?Closure
+    {
+        throw new LogicException('the sound card is on fire');
+    }
+}
+
+final class GreedyHandler implements CommandHandler
+{
+    public int $started = 0;
+
+    public function handles(Cmd $command): bool
+    {
+        return true;
+    }
+
+    public function start(Cmd $command, Closure $emit): ?Closure
+    {
+        ++$this->started;
+
+        return null;
+    }
+}
+
+final class SoundHandler implements CommandHandler
+{
+    public int $started = 0;
+
+    public int $stopped = 0;
+
+    public function handles(Cmd $command): bool
+    {
+        return $command instanceof SoundCmd;
+    }
+
+    public function start(Cmd $command, Closure $emit): ?Closure
+    {
+        ++$this->started;
+        $emit(new TickMsg(2.0));
+
+        return function (): void {
+            ++$this->stopped;
+        };
+    }
 }
 
 final readonly class WrappedEffectMessage implements Message

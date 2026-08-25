@@ -77,6 +77,11 @@ final class Program
     private ?Closure $errorHandler = null;
     private ?Tracer $tracer = null;
 
+    /**
+     * @var list<CommandHandler>
+     */
+    private array $commandHandlers = [];
+
     private Terminal $terminal;
     private Screen $screen;
     /**
@@ -90,6 +95,7 @@ final class Program
     private bool $running = false;
     private bool $isDirty = true;
     private int $consecutiveRenderFailures = 0;
+    private ?float $drainDeadline = null;
     private bool $resizePending = false;
     private bool $resizeNeedsScreenClear = false;
     private int $width = 80;
@@ -267,6 +273,20 @@ final class Program
     {
         $this->assertConfigurable();
         $this->tracer = $tracer;
+
+        return $this;
+    }
+
+    /**
+     * Runs a command of the application's own. Handlers are asked in the order
+     * they were added, and only for a command the runtime has no effect for.
+     *
+     * @return self<TModel>
+     */
+    public function withCommandHandler(CommandHandler $handler): self
+    {
+        $this->assertConfigurable();
+        $this->commandHandlers[] = $handler;
 
         return $this;
     }
@@ -619,6 +639,7 @@ final class Program
 
     private function runTick(): void
     {
+        $this->drainDeadline = null;
         $this->handlePendingResize();
         $newInput = $this->terminal->readInput();
         if ($newInput !== '') {
@@ -755,7 +776,10 @@ final class Program
         $consecutiveErrors = 0;
         $screenRect = $this->screenRect();
         $processed = 0;
-        $deadline = $this->clock->now() + self::MAX_DRAIN_SECONDS;
+        // A resize re-drain inside the same tick continues this deadline rather
+        // than buying a fresh budget, or one tick could spend twice the cap.
+        $this->drainDeadline ??= $this->clock->now() + self::MAX_DRAIN_SECONDS;
+        $deadline = $this->drainDeadline;
 
         while ($this->running && $processed < self::MAX_MESSAGES_PER_DRAIN && !$this->messageQueue->isEmpty()) {
             if ($processed > 0 && $this->clock->now() >= $deadline) {
@@ -985,7 +1009,7 @@ final class Program
         // Anything else leaves something running, which the effects hold.
         try {
             match (true) {
-                $command instanceof QuitCmd => $this->running = false,
+                $command instanceof QuitCmd => $this->stopRunning(),
                 $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
                 $command instanceof FocusCmd => $this->moveFocus($command),
                 $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
@@ -997,6 +1021,12 @@ final class Program
         }
     }
 
+    private function stopRunning(): void
+    {
+        $this->running = false;
+        $this->effects?->forgetTimers();
+    }
+
     private function effects(): EffectRunner
     {
         return $this->effects ??= new EffectRunner(
@@ -1004,6 +1034,7 @@ final class Program
             $this->clock,
             $this->dispatchCommand(...),
             $this->tick(...),
+            handlers: $this->commandHandlers,
         );
     }
 

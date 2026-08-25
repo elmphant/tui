@@ -15,6 +15,7 @@ use Generator;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Symfony\Component\HttpClient\Chunk\ErrorChunk;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\HttpClient\Response\ResponseStream;
@@ -96,6 +97,32 @@ final class RunningHttpRequestTest extends TestCase
         self::assertSame([], $request->pump());
         self::assertSame(0.0, $capturedTimeout);
         self::assertTrue($request->isRunning());
+    }
+
+    #[Test]
+    public function anIdleChunkPastTheDeadlineResolvesTheRequestWithAnError(): void
+    {
+        $client = $this->createMock(HttpClientInterface::class);
+        $client->method('stream')->willReturnCallback(
+            static fn (): ResponseStream => new ResponseStream((static function (): Generator {
+                yield new ErrorChunk(0, 'Idle timeout reached for "https://example.test".');
+            })()),
+        );
+        $response = $this->createMock(ResponseInterface::class);
+        $response->expects(self::once())->method('cancel');
+
+        $request = new RunningHttpRequest(
+            $client,
+            $response,
+            EffectId::named('slow-http'),
+            timeoutSeconds: 0.0,
+        );
+        $messages = $request->pump();
+
+        self::assertCount(1, $messages);
+        self::assertInstanceOf(ErrorMsg::class, $messages[0]);
+        self::assertSame('slow-http', $messages[0]->effectId?->value);
+        self::assertFalse($request->isRunning());
     }
 
     #[Test]

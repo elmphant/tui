@@ -10,6 +10,7 @@ use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\HttpResultMsg;
 use Elmphant\Tui\Message\Message;
+use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use Throwable;
@@ -19,8 +20,11 @@ use Throwable;
  */
 final class RunningHttpRequest implements RunningProcess
 {
+    private const NANOSECONDS_PER_SECOND = 1_000_000_000;
+
     private bool $finished = false;
     private string $body = '';
+    private float $startedAt;
 
     public function __construct(
         private readonly HttpClientInterface $client,
@@ -31,7 +35,9 @@ final class RunningHttpRequest implements RunningProcess
          * @var Closure(Message): Message|null
          */
         private readonly ?Closure $wrap = null,
+        private readonly ?float $timeoutSeconds = null,
     ) {
+        $this->startedAt = hrtime(true) / self::NANOSECONDS_PER_SECOND;
     }
 
     public function pump(): array
@@ -43,6 +49,16 @@ final class RunningHttpRequest implements RunningProcess
         try {
             foreach ($this->client->stream([$this->response], 0) as $chunk) {
                 if ($chunk->isTimeout()) {
+                    if ($this->pastDeadline()) {
+                        $this->stop();
+
+                        return [$this->map(new ErrorMsg(
+                            new RuntimeException(sprintf('HTTP request timed out after %g seconds.', $this->timeoutSeconds)),
+                            ErrorSource::Http,
+                            $this->requestId,
+                        ))];
+                    }
+
                     return [];
                 }
 
@@ -101,5 +117,11 @@ final class RunningHttpRequest implements RunningProcess
     public function id(): ?EffectId
     {
         return $this->requestId;
+    }
+
+    private function pastDeadline(): bool
+    {
+        return $this->timeoutSeconds !== null
+            && hrtime(true) / self::NANOSECONDS_PER_SECOND - $this->startedAt >= $this->timeoutSeconds;
     }
 }
