@@ -334,6 +334,18 @@ final class VerticalStackTest extends TestCase
     }
 
     #[Test]
+    public function aMeasurementNeverLiftsTheDeclaredCeiling(): void
+    {
+        $calls = new VerticalStackCalls();
+        $children = [
+            new MeasuredStackWidget(Constraint::max(3), 9, $calls),
+            new CountingStackWidget(Constraint::flex(), $calls),
+        ];
+
+        self::assertSame([3, 7], $this->heightsOf($children, 80, 10));
+    }
+
+    #[Test]
     public function everyFlooredChildKeepsItsOwnShareWhenThreeCompete(): void
     {
         $calls = new VerticalStackCalls();

@@ -92,7 +92,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         if ($this->direction === Direction::Vertical) {
             $height = 0;
             foreach ($this->items as $item) {
-                $height += $item->initialSize();
+                $height += $this->policyFor($item, $width)->initialSize();
             }
 
             return $height + $this->gap * (count($this->items) - 1);
@@ -359,7 +359,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             return 0;
         }
 
-        return min($this->gap, intdiv(max(0, $available), $count - 1));
+        return min($this->gap, max(0, intdiv(max(0, $available - $count), $count - 1)));
     }
 
     private function intrinsicWidth(Widget $widget): int

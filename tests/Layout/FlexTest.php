@@ -147,6 +147,27 @@ final class FlexTest extends TestCase
     }
 
     #[Test]
+    public function anOversizedGapStillLeavesEveryWrappedLineARow(): void
+    {
+        $flex = Flex::row()
+            ->withWrap()
+            ->withGap(10)
+            ->add(Text::new('first'), new Constraint(min: 20, flex: 1, basis: 30))
+            ->add(Text::new('second'), new Constraint(min: 20, flex: 1, basis: 30))
+            ->add(Text::new('third'), new Constraint(min: 20, flex: 1, basis: 30));
+
+        $children = $flex->computeChildRects(new Rect(0, 0, 35, 12));
+
+        foreach (array_column(array_column($children, 1), 'height') as $index => $height) {
+            self::assertGreaterThanOrEqual(1, $height, "wrapped line {$index} was erased by the gap");
+        }
+        self::assertLessThanOrEqual(12, max(array_map(
+            static fn (array $child): int => $child[1]->y + $child[1]->height,
+            $children,
+        )), 'the lines stay inside the area');
+    }
+
+    #[Test]
     public function wrappingChangesOnlyAfterBasisAndGapCrossTheBoundary(): void
     {
         $flex = Flex::row()
@@ -575,6 +596,17 @@ final class FlexTest extends TestCase
             ->add($this->constraintWidget(Constraint::flex()), new Constraint(max: 1, flex: 0, basis: 1));
         self::assertSame(0, $exactZero->measureHeight(1));
         self::assertSame(1, $flexibleZero->measureHeight(1));
+    }
+
+    #[Test]
+    public function aColumnOfContentSizedItemsMeasuresItsChildren(): void
+    {
+        $column = Flex::column()
+            ->withGap(1)
+            ->add($this->measuredWidget(static fn (int $width): int => 3), new Constraint(flex: 0))
+            ->add($this->measuredWidget(static fn (int $width): int => $width), new Constraint(flex: 0));
+
+        self::assertSame(7, $column->measureHeight(3));
     }
 
     #[Test]

@@ -121,7 +121,7 @@ final readonly class RowExtents
 
     public function maxOffset(int $viewportHeight): int
     {
-        return max(0, $this->totalHeight() - $viewportHeight);
+        return ScrollWindow::lastOffset($this->totalHeight(), $viewportHeight);
     }
 
     /**

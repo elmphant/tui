@@ -84,11 +84,11 @@ final class RowExtentsTest extends TestCase
     }
 
     #[Test]
-    public function maxOffsetLeavesTheLastLineAtTheBottomOfTheViewport(): void
+    public function maxOffsetLeavesABlankLineUnderTheLastRow(): void
     {
         $extents = self::sample();
 
-        self::assertSame(4, $extents->maxOffset(3));
+        self::assertSame(5, $extents->maxOffset(3));
         self::assertSame(0, $extents->maxOffset(7));
         self::assertSame(0, $extents->maxOffset(99));
     }
@@ -123,7 +123,7 @@ final class RowExtentsTest extends TestCase
     {
         $extents = self::sample();
 
-        self::assertSame(4, $extents->offsetShowing(3, 3, 999));
+        self::assertSame(5, $extents->offsetShowing(3, 3, 999));
     }
 
     #[Test]
