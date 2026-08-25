@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Runtime;
 use Closure;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Message\Message;
+use RuntimeException;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -27,7 +28,7 @@ final class HttpRequestStarter
      */
     public function start(HttpCmd $command, ?Closure $wrap): RunningProcess
     {
-        $client = $this->client ??= HttpClient::create();
+        $client = $this->client ??= self::defaultClient();
 
         // Read as it arrives unless the caller wants the whole body at once: a
         // buffered response cannot report progress.
@@ -47,6 +48,29 @@ final class HttpRequestStarter
             $command->id,
             $command->maxBodyBytes,
             $wrap,
+            self::deadlineOf($options),
         );
+    }
+
+    /**
+     * The package requires the client contracts — the interfaces — and not an
+     * implementation, so an application that never makes a request installs no
+     * HTTP client at all.
+     */
+    private static function defaultClient(): HttpClientInterface
+    {
+        if (!class_exists(HttpClient::class)) {
+            throw new RuntimeException('symfony/http-client is required for Cmd::http(). Install it via: composer require symfony/http-client');
+        }
+
+        return HttpClient::create();
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function deadlineOf(array $options): ?float
+    {
+        return is_numeric($options['timeout'] ?? null) ? (float)$options['timeout'] : null;
     }
 }
