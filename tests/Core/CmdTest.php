@@ -219,6 +219,40 @@ final class CmdTest extends TestCase
         Cmd::http('https://example.com')->withMaxBodyBytes(0);
     }
 
+    /**
+     * `NAN <= 0` is false, so a not-a-number interval walked past the positivity
+     * guard — and every later comparison against it is false too, so the ticker
+     * reads as due on every pass of the loop and floods the queue for good.
+     */
+    #[Test]
+    public function aTickerIntervalThatIsNotANumberIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Cmd::tick(NAN);
+    }
+
+    /**
+     * A delay had no guard at all, so a negative one fired on the next pass as
+     * if it had been asked for, and a not-a-number one was a timer whose due
+     * time nothing could compare.
+     */
+    #[Test]
+    public function aDelayThatNamesNoMomentIsRefused(): void
+    {
+        $refused = 0;
+
+        foreach ([NAN, INF, -1.0] as $delay) {
+            try {
+                Cmd::after($delay, static fn () => null);
+            } catch (InvalidArgumentException) {
+                ++$refused;
+            }
+        }
+
+        self::assertSame(3, $refused);
+    }
+
     #[Test]
     public function updateResultDefaults(): void
     {

@@ -17,8 +17,11 @@ final readonly class TickCmd extends Cmd
         public float $interval,
         public ?EffectId $id = null,
     ) {
-        if ($interval <= 0) {
-            throw new InvalidArgumentException("Ticker interval must be positive, got {$interval}");
+        // NAN fails every comparison, so it walks past a positivity guard and
+        // then reads as due on every pass of the loop; INF schedules a tick the
+        // program can never reach.
+        if (!is_finite($interval) || $interval <= 0) {
+            throw new InvalidArgumentException("Ticker interval must be a positive number of seconds, got {$interval}");
         }
     }
 }
