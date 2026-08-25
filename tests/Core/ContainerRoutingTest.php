@@ -17,6 +17,9 @@ use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Layout\SplitState;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Popup\Modal;
 use Elmphant\Tui\Widget\Popup\Overlay;
@@ -78,6 +81,32 @@ final class ContainerRoutingTest extends TestCase
         );
 
         self::assertNotSame([], $keys, 'the component never heard the key');
+    }
+
+    /**
+     * The pointer is the other way in, and it is resolved from drawn geometry
+     * rather than from the ring — a wrapper that moves its child without saying
+     * so lands the click somewhere else, or nowhere.
+     *
+     * @param Closure(Widget): Widget $wrap
+     */
+    #[DataProvider('containerProvider')]
+    #[Test]
+    public function aClickReachesTheComponentWhateverWrapsIt(Closure $wrap): void
+    {
+        $seen = new ArrayObject();
+        $harness = ModelHarness::for(new WrappedPaneApp(new RecordingPane($seen), $wrap), width: 40, height: 12);
+        $harness->initialize();
+        $harness->renderFrame();
+
+        $harness->dispatch(new MouseMsg(20, 6, MouseAction::Press, MouseButton::Left));
+
+        $clicks = array_filter(
+            iterator_to_array($seen),
+            static fn (object $message): bool => $message instanceof MouseMsg,
+        );
+
+        self::assertNotSame([], $clicks, 'the component never heard the click');
     }
 }
 
