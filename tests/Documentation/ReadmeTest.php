@@ -11,19 +11,33 @@ use ReflectionMethod;
 use ReflectionNamedType;
 
 /**
- * The README is the first code a reader runs, and PHP rejects a hook declared
- * with fewer parameters than the base class. Nothing else executes it.
+ * The README is the first code a reader runs, so every example in it is run
+ * here. A block a reader cannot paste as it stands — a method body, a menu of
+ * calls, loose match arms — says so in its fence (```php fragment) and is
+ * skipped; everything else must reach the terminal or finish.
  */
 final class ReadmeTest extends TestCase
 {
+    private const FRAGMENT_BLOCKS = 11;
+
     /**
-     * The widgets a layout example arranges are named but never built, so the
-     * example runs against real ones standing in for them.
+     * What an example names but never builds, standing in as the real thing.
      */
-    private const PLACEHOLDER_WIDGETS = <<<'PHP'
+    private const PLACEHOLDERS = <<<'PHP'
         $sidebar = \Elmphant\Tui\Widget\Prose\Text::new('sidebar');
         $main = \Elmphant\Tui\Widget\Prose\Text::new('main');
         $details = \Elmphant\Tui\Widget\Prose\Text::new('details');
+        $content = \Elmphant\Tui\Widget\Prose\Text::new('content');
+        $ratio = 0.42;
+        $frame = new \Elmphant\Tui\Rendering\Frame(80, 24);
+        $area = \Elmphant\Tui\Layout\Rect::fromSize(80, 24);
+        final readonly class ReadmeApp extends \Elmphant\Tui\Core\App {
+            public function view(): \Elmphant\Tui\Widget\Widget
+            {
+                return \Elmphant\Tui\Widget\Prose\Text::new('placeholder');
+            }
+        }
+        $app = $model = new ReadmeApp();
         PHP;
 
     #[Test]
@@ -43,29 +57,33 @@ final class ReadmeTest extends TestCase
     }
 
     #[Test]
-    public function theDocumentedResponsiveLayoutCanBeBuilt(): void
+    public function everyDocumentedExampleRuns(): void
     {
-        [$output, $status] = self::runExample(self::blockContaining('Flex::row()'));
+        $broken = [];
 
-        self::assertSame(0, $status, "The README's responsive layout example does not run:\n" . $output);
-    }
+        foreach (self::blocks() as $index => [$info, $code]) {
+            if ($info === 'fragment') {
+                continue;
+            }
 
-    #[Test]
-    public function theDocumentedProcessConfigurationCanBeBuilt(): void
-    {
-        [$output, $status] = self::runExample(self::blockContaining('->withOutputChunkBytes('));
+            [$output, $ranOrReachedTheTerminal] = self::runExample($code);
 
-        self::assertSame(0, $status, "The README's process configuration example does not run:\n" . $output);
+            if (!$ranOrReachedTheTerminal) {
+                $broken[] = sprintf("block %d (%s):\n%s", $index, strtok(trim($code), "\n"), $output);
+            }
+        }
+
+        self::assertSame([], $broken, "README examples that no longer run:\n\n" . implode("\n\n", $broken));
     }
 
     #[Test]
     public function theDocumentedHintLabelsAreTheOnesTheBindingsProduce(): void
     {
-        [$output, $status] = self::runExample(
+        [$output, $ran] = self::runExample(
             self::blockContaining('Keybindings::rowNavigation()') . "\necho json_encode(\$hints);",
         );
 
-        self::assertSame(0, $status, "The README's hint example does not run:\n" . $output);
+        self::assertTrue($ran, "The README's hint example does not run:\n" . $output);
         self::assertSame(
             ['(Shift+)↑/↓' => 'select', 'Enter' => 'choose'],
             json_decode($output, true),
@@ -73,16 +91,41 @@ final class ReadmeTest extends TestCase
         );
     }
 
-    private static function blockContaining(string $needle): string
+    /**
+     * A fragment is an example nothing runs, so the count is worth noticing: it
+     * should go down as examples are made paste-able, and never quietly up
+     * because a fence was the easy way past a failing example.
+     */
+    #[Test]
+    public function onlyTheExamplesThatCannotBePastedAreFragments(): void
+    {
+        $fragments = array_filter(self::blocks(), static fn (array $block): bool => $block[0] === 'fragment');
+
+        self::assertCount(self::FRAGMENT_BLOCKS, $fragments);
+    }
+
+    /**
+     * @return list<array{string, string}> [what the fence says after `php`, the code]
+     */
+    private static function blocks(): array
     {
         $readme = file_get_contents(dirname(__DIR__, 2) . '/README.md');
         self::assertIsString($readme, 'README.md must be readable');
 
-        preg_match_all('/```php\n(.*?)```/s', $readme, $matches);
+        preg_match_all('/```php([^\n]*)\n(.*?)```/s', $readme, $matches, PREG_SET_ORDER);
+        self::assertNotSame([], $matches, 'the README must carry examples');
 
-        foreach ($matches[1] as $block) {
-            if (str_contains($block, $needle)) {
-                return $block;
+        return array_map(
+            static fn (array $match): array => [trim($match[1]), $match[2]],
+            $matches,
+        );
+    }
+
+    private static function blockContaining(string $needle): string
+    {
+        foreach (self::blocks() as [, $code]) {
+            if (str_contains($code, $needle)) {
+                return $code;
             }
         }
 
@@ -90,24 +133,33 @@ final class ReadmeTest extends TestCase
     }
 
     /**
-     * @return array{string, int}
+     * A block that starts a program gets as far as the terminal and no further —
+     * this suite has no TTY — so reaching that boundary counts as having run:
+     * everything the example spells out was accepted on the way.
+     *
+     * @return array{string, bool}
      */
     private static function runExample(string $block): array
     {
         $root = dirname(__DIR__, 2);
-        $file = tempnam(sys_get_temp_dir(), 'readme') . '.php';
+        $file = tempnam($root, 'readme-') . '.php';
 
-        file_put_contents($file, sprintf(
-            "<?php\n\ndeclare(strict_types=1);\n\nrequire %s;\n\n%s\n%s",
-            var_export($root . '/vendor/autoload.php', true),
-            self::PLACEHOLDER_WIDGETS,
-            $block,
-        ));
+        file_put_contents($file, str_starts_with(ltrim($block), '<?php')
+            ? $block
+            : sprintf(
+                "<?php\n\ndeclare(strict_types=1);\n\nrequire %s;\n\n%s\n%s",
+                var_export($root . '/vendor/autoload.php', true),
+                self::PLACEHOLDERS,
+                $block,
+            ));
 
         exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($file) . ' 2>&1', $lines, $status);
+        unlink(substr($file, 0, -4));
         unlink($file);
 
-        return [implode("\n", $lines), $status];
+        $output = implode("\n", $lines);
+
+        return [$output, $status === 0 || str_contains($output, 'requires stdin to be a TTY')];
     }
 
     /**

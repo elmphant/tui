@@ -16,6 +16,17 @@ Elmphant requires PHP 8.2+, `ext-mbstring`, and `ext-intl`. Interactive
 programs target POSIX terminals; models and widgets can be tested on any
 platform without opening a terminal.
 
+Two features bring their own package, because an app that does not use them
+should not pay for one:
+
+```bash
+composer require symfony/http-client   # Cmd::http()
+composer require league/commonmark     # Paragraph::fromMarkdown()
+```
+
+Either one missing is a clear exception naming the package at the moment you
+reach for the feature, never a fatal autoload error.
+
 ## Hello World
 
 ```php
@@ -53,7 +64,7 @@ final readonly class Counter extends App
 
     public function view(): Widget
     {
-        return Text::new("Count: {$this->count}  j/k change, q or x quit");
+        return Text::new("Count: {$this->count}  j/k change, x or Ctrl+Q quit");
     }
 }
 
@@ -83,7 +94,7 @@ Terminal I/O, HTTP, processes, timers, and program shutdown happen only when the
 
 ### Recommended App API
 
-Most applications should extend `App`. It gives you widget-based rendering, screen-aware mouse handling, reserved Ctrl-Q/Ctrl-C quit shortcuts (both live in `applicationKeybindings()` — override it to rebind or intercept them, e.g. for a confirm-before-quit dialog), default `q` quit for simple non-focusable apps (only while no focusable component is mounted — override `quitBindings()` to change), an `onResize()` hook, and focus delegation. In `onKey()`, returning a changed model or any command consumes the key; `UpdateResult::keep($this)` passes it to the focused component.
+Most applications should extend `App`. It gives you widget-based rendering, screen-aware mouse handling, reserved Ctrl-Q/Ctrl-C quit shortcuts (both live in `applicationKeybindings()` — override it to rebind or intercept them, e.g. for a confirm-before-quit dialog), extra quit keys via `quitBindings()` (empty by default, honoured only while no component holds the keyboard), an `onResize()` hook, and focus delegation. In `onKey()`, returning a changed model or any command consumes the key; `UpdateResult::keep($this)` passes it to the focused component.
 
 ```php
 abstract readonly class App
@@ -103,6 +114,12 @@ Hooks always return `UpdateResult`: use `UpdateResult::keep($this)` when nothing
 Keep stateful widgets as properties on the model, not local variables rebuilt inside `view()`. `view()` should compose the current state into a widget tree; if you recreate a `TextInput`, `Panel`, `Select`, or `Table` in `view()`, its cursor, selection, scroll, and focus state will be reset.
 
 ```php
+use Elmphant\Tui\Core\{App, Component};
+use Elmphant\Tui\Layout\Layout;
+use Elmphant\Tui\Widget\Bar\Footer;
+use Elmphant\Tui\Widget\Structure\Panel;
+use Elmphant\Tui\Widget\Widget;
+
 final readonly class Settings extends App
 {
     public function __construct(
@@ -239,7 +256,7 @@ interface Model
 
 Commands are how your model requests side effects. They are data, not executed inline.
 
-```php
+```php fragment
 Cmd::quit()                         // stop the program
 Cmd::tick(0.05)                     // send TickMsg every 50ms
 Cmd::after(2.0, fn() => $msg)       // send one delayed message or command
@@ -256,6 +273,8 @@ Cmd::process(['tail', '-f', 'log']) // stream output in real-time
 Effects that may need cancellation share a typed identity:
 
 ```php
+use Elmphant\Tui\Core\{Cmd, EffectId};
+
 $download = EffectId::named('download');
 
 Cmd::http('https://example.com/archive', id: $download);
@@ -282,6 +301,64 @@ final readonly class SearchSubmitted implements Message
 }
 ```
 
+### Effects of your own
+
+The built-in commands cover timers, subprocesses, HTTP and readable streams. An
+effect outside that list — a query on an event-loop-aware database client, a
+websocket, anything that finishes later — is a command of your own plus a
+`CommandHandler` that runs it. The command stays data; the handler is the only
+place that does anything:
+
+```php
+use Closure;
+use Elmphant\Tui\Core\{Cmd, EffectId, NamesItsEffect};
+use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Runtime\{CommandHandler, Program};
+
+final readonly class QueryRows extends Cmd implements NamesItsEffect
+{
+    public function __construct(public string $sql, private ?EffectId $id = null) {}
+
+    public function effectId(): ?EffectId
+    {
+        return $this->id;
+    }
+}
+
+final class RowLoader implements CommandHandler
+{
+    public function handles(Cmd $command): bool
+    {
+        return $command instanceof QueryRows;
+    }
+
+    public function start(Cmd $command, Closure $emit): ?Closure
+    {
+        assert($command instanceof QueryRows);
+        $query = MyAsyncDatabase::run($command->sql, static fn (array $rows) => $emit(new RowsLoaded($rows)));
+
+        return $query->cancel(...);
+    }
+}
+
+Program::new($model)->withCommandHandler(new RowLoader())->start();
+```
+
+`$emit` puts a message on the same queue every other effect reports into — under
+the mapping of a `Cmd::map()`ped command, so a child component's effect stays in
+its own namespace — and wakes a loop that was waiting for input.
+
+The closure `start()` answers with, if any, is how the runtime stops the effect
+again: on `Cmd::cancel($id)`, when a second command takes the same
+`effectId()`, and when the program shuts down. Implement `NamesItsEffect` to
+take part in that; a command without a name simply runs until the program ends.
+
+Handlers are asked in the order they were registered, and only for a command the
+runtime has no effect of its own for — a handler cannot intercept `Cmd::quit()`
+however greedily it answers `handles()`. A command no handler claims is a
+`LogicException`, so a typo in `handles()` is loud rather than silent. Anything
+`start()` throws arrives as `ErrorMsg` with source `ErrorSource::Command`.
+
 ### Composing child widgets
 
 Use `Cmd::map()` to keep a reusable child in its own message namespace. The
@@ -289,7 +366,7 @@ mapping applies to every message emitted by the command, including future
 ticker/timer events, HTTP results, process chunks, completion messages, and
 errors.
 
-```php
+```php fragment
 final readonly class FromSearchBox implements Message
 {
     public function __construct(public Message $inner) {}
@@ -314,7 +391,7 @@ Two modes for executing OS commands, both non-blocking:
 
 Runs a command in the background. Sends a single `ProcessResultMsg` when it finishes with stdout, stderr, and the exit code. Collected output is capped at 8 MiB by default; exceeding the limit produces `ErrorMsg` with `EffectOutputLimitExceeded`.
 
-```php
+```php fragment
 use Elmphant\Tui\Message\ProcessResultMsg;
 
 // In update():
@@ -329,7 +406,7 @@ $message instanceof ProcessResultMsg
 
 Runs a command and streams output as it arrives. Sends bounded `ProcessOutputMsg` chunks (64 KiB by default), clears consumed Symfony Process buffers, and sends `ProcessFinishedMsg` when the process exits.
 
-```php
+```php fragment
 use Elmphant\Tui\Message\{ProcessOutputMsg, ProcessFinishedMsg, ProcessStream};
 
 // In update():
@@ -387,7 +464,11 @@ The same `EffectId` instance appears as `$message->effectId` on every result mes
 
 `Cmd::http()` runs through the same update loop as every other effect. Start the request with a command, then handle `HttpResultMsg`.
 
-```php
+It needs `symfony/http-client` (`composer require symfony/http-client`). The
+package itself requires only the client *contracts* — the interfaces — so an app
+that never makes a request installs no HTTP client at all.
+
+```php fragment
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Message\HttpResultMsg;
 
@@ -422,17 +503,22 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `Checkbox` | Toggle checkbox |
 | `CheckboxGroup` | Group of checkboxes |
 | `TextInput` | Single-line text input with cursor, char limit, echo mode; underlined field bounds by default (`withDecoration(InputDecoration::Filled\|Underline\|None)`) |
+| `Button` | Labelled press action |
 | `ProgressBar` | Fractional fill bar with spring animation |
 | `ListView` | Scrollable list with custom `ListItem` rendering; wraps long item text, keeps an externally moved cursor visible |
 | `Table` | Interactive table: cursor, selection, mouse, scrolling; constraint-based columns, wrapping cells, optional header (`withHeader(false)`) |
 | `StaticTable` | Static bordered table: draws every row, no cursor or scrolling, columns sized to content |
+| `FilterableList` | Search field over a list: typing filters, arrows/Enter navigate and choose; `sourceIndex()` maps the cursor back to your items |
+| `FilterableTable` | The same search field over a `StaticTable` |
 | `TabBar` | Tabbed container with keyboard/mouse tab switching |
+| `Split` | Two panes with a draggable divider |
+| `TreeView` | Lazy tree — children load on expand (`pendingExpansions()` names what to fetch); the cursor is a path, so it survives reloads |
 | `Modal` | Centered overlay with background dim |
 | `Dropdown` | Collapsed one-row control with a filterable option list that floats above the layout. Enter/Space opens, typing filters, Enter picks, Escape clears a typed filter before it closes; `hasFilterText()` lets a host label that key |
 | `Overlay` / `PositionedOverlay` | Stack widgets above a base layer |
 | `Spinner` | Animated loading indicator (frame-clock driven, no wiring) |
 | `ActivityBar` | Bouncing activity indicator (frame-clock driven, no wiring) |
-| `Card` / `Box` / `Row` / `Column` / `Container` | Composition and decoration helpers |
+| `Card` / `Box` / `Container` | Composition and decoration helpers |
 | `Text` | Static text label |
 | `Paragraph` | Multi-line text with wrapping, alignment, ANSI/Markdown |
 | `Separator` | Horizontal line |
@@ -447,7 +533,7 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 A widget names the keys it answers, so nothing keeps a label that can outlive the
 binding it was copied from. `FocusHints` asks whatever holds the keyboard:
 
-```php
+```php fragment
 public function view(): Widget
 {
     return Layout::vertical(
@@ -468,7 +554,7 @@ and the footer follows; so does a `globalKeybindings()` override such as
 Implement `PublishesHints` to say it in your own words — ask the widget for its
 bindings instead of typing a label:
 
-```php
+```php fragment
 public function hints(): array
 {
     return $this->list->effectiveKeybindings()->hints([
@@ -503,6 +589,11 @@ no width of its own (`ProgressBar`, `Separator`, and the other fill-only ones)
 therefore has nothing to draw in; give it one:
 
 ```php
+use Elmphant\Tui\Layout\{Constraint, Sizing};
+use Elmphant\Tui\Widget\Bar\Footer;
+use Elmphant\Tui\Widget\Feedback\ProgressBar;
+use Elmphant\Tui\Widget\Structure\Container;
+
 Footer::new()->withRight(
     Container::around(ProgressBar::new($ratio))
         ->withSizing(Sizing::of(Constraint::exact(20), Constraint::exact(1))),
@@ -516,49 +607,6 @@ sequence. The flush runs on a timer with the loop otherwise idle, so it ticks as
 well — draining and repainting. Without that the keystroke waits in the queue
 until the next one arrives, and every bare `Escape` appears to take effect one
 keypress late.
-
-### Tracing what the runtime does
-
-A TUI cannot print its own diagnostics — stdout is the display. Attach a tracer
-and the runtime writes what it did to a file instead:
-
-```php
-use Elmphant\Tui\Runtime\Trace\JsonlTracer;
-
-Program::new($app)
-    ->withTracer(JsonlTracer::toFile('tui-trace.jsonl'))
-    ->start();
-```
-
-One JSON object per line, so a trace can be grepped or totalled:
-
-| Event | Fields |
-| --- | --- |
-| `input.read` | `bytes`, `queued` — how much arrived, and how much was still waiting |
-| `update` | `message`, `ms`, `changed` |
-| `command` | `command` |
-| `render` | `ms`, `paintMs`, `diffMs`, `bytes`, `blockedMs`, `drawn` |
-| `frame.skipped` | `waitMs` — the frame budget was not yet spent |
-
-Every message a widget or command produces reaches the model through one queue,
-and every effect through one dispatch, so these cover the runtime's whole flow —
-but not what a widget does privately inside its own `update()`.
-
-`blockedMs` is the time the terminal made the program wait for it to accept
-output; `paintMs` and `diffMs` split a frame into drawing it and sending the
-changed cells. That split is what tells you whether a slow frame is your widgets
-or the wire.
-
-Events are buffered and written when the program stops, so tracing does not cost
-a syscall per event. In tests use `Elmphant\Tui\Testing\InMemoryTracer` and
-assert on the flow directly:
-
-```php
-$tracer = new InMemoryTracer();
-Program::new($app)->withTracer($tracer)->start();
-
-self::assertSame(0.0, $tracer->totalOf(TraceEvent::Render, 'blockedMs'));
-```
 
 ### Readability defaults
 
@@ -624,7 +672,7 @@ Two more say how a subtree takes the keyboard:
 
 A widget asks for a float while it renders:
 
-```php
+```php fragment
 $context->float($frame, MyPopup::of(...), $area);   // $area is the anchor
 ```
 
@@ -672,10 +720,15 @@ would never see one.
 ### Example: Settings Form
 
 ```php
+use Elmphant\Tui\Widget\Choice\{Radio, Select};
+use Elmphant\Tui\Widget\Feedback\ProgressBar;
+use Elmphant\Tui\Widget\Prose\{Separator, Spacer, Text};
+use Elmphant\Tui\Widget\Structure\Panel;
+
 $left = Panel::new('Preferences')
-    ->add(Text::styled('Appearance', Color::hex('FF06B7')->value, Attr::BOLD))
+    ->add(Text::accent('Appearance'))
     ->add(Spacer::new())
-    ->add(Radio::new('Theme', ['Dark', 'Light', 'Dracula', 'Nord']))
+    ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Nord'], 'Theme'))
     ->add(Separator::new())
     ->add(Text::new('Font'))
     ->add(Select::new(['JetBrains Mono', 'Fira Code', 'Cascadia']))
@@ -691,6 +744,9 @@ $right = Panel::new('System')
 ## Program Options
 
 ```php
+use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Runtime\Program;
+
 Program::new($model)
     ->withAltScreen()       // use alternate screen buffer
     ->withMouseTracking()   // enable mouse click/scroll/drag
@@ -709,23 +765,79 @@ A TUI cannot print diagnostics — stdout is the display — so a `Tracer` write
 somewhere else:
 
 ```php
+use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\Trace\JsonlTracer;
+
 Program::new($model)->withTracer(JsonlTracer::toFile('/tmp/tui.jsonl'))->start();
 ```
 
-One JSON object per line, for grepping and totalling. `update` records the message,
-the key as a binding would spell it, **which component held the keyboard, and every
-stop it could have moved to**; `focus` records the keyboard moving, `from` and `to`,
-which no update reports because it is the runtime's doing rather than the model's;
-`render` records what a frame cost, split between painting and diffing; `input.read`,
-`command` and `frame.skipped` cover the rest.
+One JSON object per line, for grepping and totalling:
 
-Those last two update fields are what a "that key does nothing" report turns on: a
-ring with one entry has nowhere for tab to go, and a key traced under a name no
-binding uses never arrived as the one that was pressed.
+| Event | Fields |
+| --- | --- |
+| `input.read` | `bytes`, `queued` — how much arrived, and how much was still waiting |
+| `update` | `message`, `key` as a binding would spell it, `focused`, `ring`, `ms`, `changed` |
+| `focus` | `from`, `to` |
+| `command` | `command` |
+| `render` | `ms`, `paintMs`, `diffMs`, `bytes`, `blockedMs`, `drawn` |
+| `frame.skipped` | `waitMs` — the frame budget was not yet spent |
 
-The trace is held in memory until the program stops, so a run killed outright writes
-nothing — close it from a shutdown hook if you need a trace of a crash. In tests use
-`InMemoryTracer` and read `fieldsOf(TraceEvent::Update)` instead of a file.
+Every message a widget or command produces reaches the model through one queue,
+and every effect through one dispatch, so these cover the runtime's whole flow —
+but not what a widget does privately inside its own `update()`. `focus` exists
+because no update reports the keyboard moving: that is the runtime's doing rather
+than the model's.
+
+`update`'s `focused` and `ring` are what a "that key does nothing" report turns
+on: a ring with one entry has nowhere for tab to go, and a key traced under a
+name no binding uses never arrived as the one that was pressed. `blockedMs` is
+the time the terminal made the program wait for it to accept output, and
+`paintMs`/`diffMs` split a frame into drawing it and sending the changed cells —
+that split says whether a slow frame is your widgets or the wire.
+
+Events are buffered and written when the program stops, so tracing costs no
+syscall per event — but a run killed outright writes nothing, so close it from a
+shutdown hook if you need a trace of a crash. In tests use
+`Elmphant\Tui\Testing\InMemoryTracer` and assert on the flow directly:
+
+```php fragment
+$tracer = new InMemoryTracer();
+Program::new($app)->withTracer($tracer)->start();
+
+self::assertSame(0.0, $tracer->totalOf(TraceEvent::Render, 'blockedMs'));
+```
+
+## Static analysis for your own app
+
+The package ships the six PHPStan rules it enforces on itself. Include
+`rules.neon` and your application is held to the same invariants — the ones a
+test cannot catch because the code is correct today and wrong the day something
+moves:
+
+```neon
+includes:
+    - vendor/elmphant/tui/rules.neon
+```
+
+| Rule | What it catches |
+| --- | --- |
+| `CompleteRebuildRule` | A `new self(...)` that rebuilds with fewer arguments than the constructor takes, silently resetting the fields it left out |
+| `NamedRebuildRule` | A positional rebuild — correct today, wrong the day a constructor parameter moves |
+| `WidgetDoesNotPublishAnAxisPolicyRule` | A `Widget` handing out a bare `Constraint`, which does not say which axis it means; widgets answer with a `Sizing` |
+| `FocusIsAskedWhileDrawingRule` | A widget reading its own focus flag while rendering, which is one message behind by the time the frame is drawn |
+| `ReachableChildrenRule` | A widget rendering a child it never exposes through `WidgetContainer`, leaving anything bound inside it unreachable to focus and discovery |
+| `CloneWithEncapsulationRule` | `cloneWith()` called on someone else's object — an internal keyed write where a typed `withX()` belongs |
+
+The last two take allowlists for the places you have decided otherwise:
+
+```neon
+parameters:
+    elmphant:
+        reachableChildrenAllowList:
+            - App\Widget\Decoration
+        cloneWithAllowList:
+            - App\Widget\Legacy
+```
 
 ## Messages
 
@@ -748,7 +860,7 @@ Use `ModelHarness` for most application tests. It drives the same
 `Model::update()` and `Model::render()` contracts as the runtime, but performs
 no terminal I/O and never executes commands:
 
-```php
+```php fragment
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 
@@ -757,7 +869,7 @@ $app = ModelHarness::for(new Counter(), width: 40, height: 5)
 
 self::assertSame(
     'Count: 1',
-    $app->renderScreen()->getTextAt(row: 0, col: 0, length: 8),
+    $app->renderScreen()->textAt(0, 0, 8),
 );
 self::assertNull($app->lastCommand());
 
@@ -777,6 +889,9 @@ missing. `ModelHarness` and `Program` always say. A test that renders a tree by
 hand says so too, and `RenderContext::unfocused($theme)` is how it says "nobody":
 
 ```php
+use Elmphant\Tui\Core\{ComponentId, FocusState};
+use Elmphant\Tui\Rendering\{RenderContext, Theme};
+
 $context = RenderContext::unfocused(Theme::dark());       // a layout or wording test
 $context->renderRoot($app->view(), $frame, $area);
 
@@ -791,7 +906,11 @@ for itself with `Cmd::focusNothing()`.
 Use `VirtualTerminal` only for runtime integration tests that need ANSI output,
 input bytes, resizing, or terminal capabilities. `ScreenBuffer::fromFrame()`
 provides Unicode-safe screen assertions without parsing an ANSI stream, while
-`GoldenScreen` is useful for larger snapshots.
+`GoldenScreen` is useful for larger snapshots. The `TerminalAssertions` trait
+adds `assertScreenContains()`, `assertTextAt()`, `assertCursorAt()` and
+`assertCursorHidden()` over a `ScreenBuffer` — never name a test after one of
+them, or the test overrides the helper its own body calls and recurses until the
+process is killed.
 
 `Program::run()` and `Program::start()` return `Model` natively and preserve the
 concrete model type for static analysis, so callers can inspect final state
@@ -814,7 +933,7 @@ in sync. The `*PerfTest.php` files hold the cold/warm large-container plus
 narrow, medium, and wide end-to-end performance budgets, so `composer test`
 keeps them honest.
 
-```php
+```php fragment
 public function render(Frame $frame, RenderContext $context): void
 {
     // Text with color
