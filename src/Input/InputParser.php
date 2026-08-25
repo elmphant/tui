@@ -63,7 +63,10 @@ final class InputParser
                         $position = $result[1];
                         continue;
                     }
-                    if (self::isCsiIncomplete($raw, $position, $length)) {
+
+                    $end = self::csiEnd($raw, $position, $length);
+
+                    if ($end === null) {
                         if ($flush) {
                             self::emitRemainderAsLiterals($raw, $position, $length, $messages);
 
@@ -72,6 +75,11 @@ final class InputParser
 
                         return new InputParseResult($messages, substr($raw, $position));
                     }
+
+                    // Whole, and no key of ours: the terminal answering a question
+                    // rather than anything the reader pressed.
+                    $position = $end;
+                    continue;
                 }
 
                 if ($next === 'O') {
@@ -121,6 +129,23 @@ final class InputParser
                     continue;
                 }
 
+                // A control byte after ESC names its alt-combo rather than a lone
+                // escape — legacy alt+Enter arrives as ESC CR.
+                if ($altByte >= 0x01 && $altByte <= 0x1A || $altByte === 0x7F) {
+                    $namedKey = match ($altByte) {
+                        0x08, 0x7F => Key::Backspace,
+                        0x09 => Key::Tab,
+                        0x0A, 0x0D => Key::Enter,
+                        default => null,
+                    };
+
+                    $messages[] = $namedKey === null
+                        ? new KeyMsg(chr($altByte + 0x60), ctrl: true, alt: true)
+                        : new KeyMsg($namedKey, alt: true);
+                    $position += 2;
+                    continue;
+                }
+
                 $messages[] = new KeyMsg(Key::Escape);
                 ++$position;
                 continue;
@@ -150,6 +175,14 @@ final class InputParser
                 continue;
             }
 
+            // What is left below space: a terminal sends NUL for ctrl+space, and
+            // the four bytes above escape for ctrl with the symbol 0x40 higher.
+            if ($byte <= 0x1F) {
+                $messages[] = new KeyMsg($byte === 0x00 ? ' ' : chr($byte + 0x40), ctrl: true);
+                ++$position;
+                continue;
+            }
+
             if ($byte >= 0x80) {
                 $characterLength = Grapheme::sequenceLength($byte);
                 if ($position + $characterLength > $length) {
@@ -162,8 +195,15 @@ final class InputParser
                     return new InputParseResult($messages, substr($raw, $position));
                 }
                 $character = substr($raw, $position, $characterLength);
-                $messages[] = new KeyMsg($character);
                 $position += $characterLength;
+
+                // A byte no keyboard produces: a continuation byte on its own, or a
+                // sequence that never finished. Passing it on would put invalid
+                // UTF-8 into a model, where mb_/grapheme calls answer nothing at all.
+                if (mb_check_encoding($character, 'UTF-8')) {
+                    $messages[] = new KeyMsg($character);
+                }
+
                 continue;
             }
 
@@ -210,6 +250,16 @@ final class InputParser
         }
 
         return self::parse($sequence, flush: true)->messages[0] ?? null;
+    }
+
+    private static function wheelAction(int $base): MouseAction
+    {
+        return match ($base) {
+            0 => MouseAction::WheelUp,
+            1 => MouseAction::WheelDown,
+            2 => MouseAction::WheelLeft,
+            default => MouseAction::WheelRight,
+        };
     }
 
     private static function endsACsiSequence(string $byte): bool
@@ -294,21 +344,32 @@ final class InputParser
         }
     }
 
-    private static function isCsiIncomplete(string $raw, int $escapePosition, int $length): bool
+    /**
+     * Where a CSI sequence ends, or null while the rest of it is still in flight.
+     */
+    private static function csiEnd(string $raw, int $escapePosition, int $length): ?int
     {
         $position = $escapePosition + 2;
-        if ($position < $length && $raw[$position] === '<') {
+
+        // An X10 mouse report carries three raw bytes after its final one, and any
+        // of them may look like a final byte itself.
+        if (($raw[$position] ?? '') === 'M') {
+            return $position + 4 <= $length ? $position + 4 : null;
+        }
+
+        if (($raw[$position] ?? '') === '<') {
             ++$position;
         }
+
         while ($position < $length) {
             $byte = ord($raw[$position]);
             if ($byte >= 0x40 && $byte <= 0x7E) {
-                return false;
+                return $position + 1;
             }
             ++$position;
         }
 
-        return true;
+        return null;
     }
 
     /**
@@ -347,6 +408,12 @@ final class InputParser
 
         $finalCharacter = $raw[$position];
         ++$position;
+
+        // A cursor-position report shares this final byte; only an unmodified
+        // F3 arrives without parameters.
+        if ($finalCharacter === 'R' && str_contains($parameters, ';')) {
+            return null;
+        }
 
         $shift = false;
         $alt = false;
@@ -462,9 +529,15 @@ final class InputParser
         $position += 3;
 
         if (($buttonCode & 64) !== 0) {
-            $action = ($buttonCode & 3) === 0 ? MouseAction::WheelUp : MouseAction::WheelDown;
-
-            return [new MouseMsg($column, $row, $action, MouseButton::None, shift: $shift, alt: $alt, ctrl: $ctrl), $position];
+            return [new MouseMsg(
+                $column,
+                $row,
+                self::wheelAction($buttonCode & 3),
+                MouseButton::None,
+                shift: $shift,
+                alt: $alt,
+                ctrl: $ctrl,
+            ), $position];
         }
 
         $buttonBase = $buttonCode & 3;
@@ -526,7 +599,7 @@ final class InputParser
             return [new MouseMsg(
                 $column,
                 $row,
-                $buttonBase === 0 ? MouseAction::WheelUp : MouseAction::WheelDown,
+                self::wheelAction($buttonBase),
                 MouseButton::None,
                 shift: $shift,
                 alt: $alt,

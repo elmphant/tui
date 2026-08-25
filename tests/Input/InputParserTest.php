@@ -231,15 +231,14 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTruncatedX10MouseReportDegradesWithoutReadingPastInput(): void
+    public function aTruncatedX10MouseReportWaitsForTheRestOfItself(): void
     {
         $raw = "\x1b[M" . chr(32) . chr(33);
 
-        $messages = InputParser::parse($raw)->messages;
+        $result = InputParser::parse($raw);
 
-        self::assertCount(4, $messages, 'Truncated X10 falls through to alt-[ plus literals (only reachable when bypassing StdinBuffer framing)');
-        self::assertSame('[', $messages[0]->key);
-        self::assertTrue($messages[0]->alt);
+        self::assertSame([], $result->messages, 'a coordinate byte may look like a final byte, so the count is what ends it');
+        self::assertSame($raw, $result->remainder);
     }
 
     #[Test]
@@ -540,14 +539,6 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function parserFallsBackToSingleByteForInvalidUtf8LeadByte(): void
-    {
-        $messages = InputParser::parse("\xff")->messages;
-        self::assertCount(1, $messages);
-        self::assertSame("\xff", $messages[0]->key);
-    }
-
-    #[Test]
     public function parserRecognizesSsThreeF2(): void
     {
         $messages = InputParser::parse("\x1bOQ")->messages;
@@ -704,13 +695,12 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function parserDoesNotTreatEscFollowedByDeleteAsAlt(): void
+    public function escapeFollowedByDeleteIsAltBackspace(): void
     {
-        // L65: 0x7f is NOT < 0x7f, so fails alt check => bare Escape + Backspace
         $messages = InputParser::parse("\x1b\x7f")->messages;
-        self::assertCount(2, $messages);
-        self::assertSame(Key::Escape, $messages[0]->key);
-        self::assertSame(Key::Backspace, $messages[1]->key);
+        self::assertCount(1, $messages);
+        self::assertSame(Key::Backspace, $messages[0]->key);
+        self::assertTrue($messages[0]->alt);
     }
 
     #[Test]
@@ -733,26 +723,48 @@ final class InputParserTest extends TestCase
         self::assertTrue($messages[0]->ctrl);
     }
 
+    /**
+     * The control bytes outside ctrl+a..ctrl+z arrived as their own raw character,
+     * so ctrl+space typed a NUL into whatever had the keyboard and no binding
+     * could name any of them.
+     */
     #[Test]
-    public function parserRecognizesByte0x80AsHighByteStart(): void
+    public function theControlBytesBesideTheLetterRangeAreNamedKeysToo(): void
     {
-        // L106: byte >= 0x80 boundary
-        $messages = InputParser::parse("\x80")->messages;
-        self::assertCount(1, $messages);
-        self::assertSame("\x80", $messages[0]->key);
+        foreach (["\x00" => ' ', "\x1c" => '\\', "\x1d" => ']', "\x1e" => '^', "\x1f" => '_'] as $byte => $expected) {
+            // Followed by a letter, so the control byte is shown to consume itself
+            // and nothing else — stopping there would swallow the rest of the read.
+            $messages = InputParser::parse($byte . 'a')->messages;
+
+            self::assertCount(2, $messages);
+            self::assertSame($expected, $messages[0]->key);
+            self::assertTrue($messages[0]->ctrl);
+            self::assertSame('a', $messages[1]->key);
+        }
+    }
+
+    /**
+     * Nothing on a keyboard produces a byte that cannot begin a character, and
+     * passing one on puts invalid UTF-8 into the model of whatever holds the
+     * keyboard — where every UTF-8-aware call on the value then answers nothing.
+     */
+    #[Test]
+    public function aByteThatCannotBeACharacterIsNotAKeystroke(): void
+    {
+        self::assertSame([], InputParser::parse("\x80")->messages, 'a continuation byte with nothing in front of it');
+        self::assertSame([], InputParser::parse("\xff")->messages, 'a byte no encoder can produce');
+        self::assertSame([], InputParser::parse("\xe2\x28\xa1")->messages, 'a lead byte whose sequence is malformed');
     }
 
     #[Test]
     public function parserCsiParameterCollectionStopsAtFinalByte0x40(): void
     {
-        // L140: byte >= 0x40 — '@' is 0x40, boundary. parseCsi sees '@' as final char.
-        // match '@' => default => null, so parseCsi returns null.
-        // Outer parse falls through to alt check: $next='[' => alt-[, then '@' plain key.
-        $messages = InputParser::parse("\x1b[@")->messages;
-        self::assertCount(2, $messages);
-        self::assertTrue($messages[0]->alt);
-        self::assertSame('[', $messages[0]->key);
-        self::assertSame('@', $messages[1]->key);
+        // L140: byte >= 0x40 — '@' is 0x40, boundary. A byte below it would still
+        // be a parameter, leaving the sequence unfinished and held as a remainder.
+        $result = InputParser::parse("\x1b[@");
+
+        self::assertSame([], $result->messages);
+        self::assertSame('', $result->remainder, "'@' ends the sequence rather than continuing it");
     }
 
     #[Test]
@@ -1114,27 +1126,18 @@ final class InputParserTest extends TestCase
         self::assertSame(Key::F12, $messages[0]->key);
     }
 
+    /**
+     * A terminal answers questions on the stream the reader types on, so a
+     * complete sequence this parser has no key for is the terminal talking —
+     * spelling it out as alt+[ and its parameter bytes types the answer into
+     * whatever had the keyboard.
+     */
     #[Test]
-    public function parserCsiTildeWithUnknownParameterFallsThrough(): void
+    public function aCompleteCsiSequenceItHasNoKeyForIsNotTypedText(): void
     {
-        // \x1b[99~ — tilde with unknown param. parseCsi match returns null.
-        // Returns null from parseCsi. Outer: alt-[, then '9','9','~' as plain keys.
-        $messages = InputParser::parse("\x1b[99~")->messages;
-        self::assertGreaterThanOrEqual(1, count($messages));
-        self::assertTrue($messages[0]->alt);
-        self::assertSame('[', $messages[0]->key);
-    }
-
-    #[Test]
-    public function parserCsiUnknownFinalCharFallsThrough(): void
-    {
-        // \x1b[x — 'x' is final char, no match. parseCsi returns null.
-        // Outer: alt-[, then 'x' as plain key.
-        $messages = InputParser::parse("\x1b[x")->messages;
-        self::assertCount(2, $messages);
-        self::assertTrue($messages[0]->alt);
-        self::assertSame('[', $messages[0]->key);
-        self::assertSame('x', $messages[1]->key);
+        self::assertSame([], InputParser::parse("\x1b[99~")->messages, 'a parameter it does not know');
+        self::assertSame([], InputParser::parse("\x1b[x")->messages, 'a final byte it does not know');
+        self::assertSame([], InputParser::parse("\x1b[24;80R")->messages, 'a cursor position report');
     }
 
     // ===================================================================
@@ -1259,6 +1262,20 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function horizontalWheelCodesDecodeAsHorizontalWheels(): void
+    {
+        // buttonCode 66 = 64 + 2, 67 = 64 + 3
+        $left = InputParser::parse("\x1b[<66;10;20M")->messages;
+        self::assertInstanceOf(MouseMsg::class, $left[0]);
+        self::assertSame(MouseAction::WheelLeft, $left[0]->action);
+        self::assertTrue($left[0]->isWheel());
+
+        $right = InputParser::parse("\x1b[<67;10;20M")->messages;
+        self::assertInstanceOf(MouseMsg::class, $right[0]);
+        self::assertSame(MouseAction::WheelRight, $right[0]->action);
+    }
+
+    #[Test]
     public function parserSgrMouseColumnAndRowAreZeroIndexed(): void
     {
         $messages = InputParser::parse("\x1b[<0;1;1M")->messages;
@@ -1276,31 +1293,23 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function parserSgrMouseWrongPartCountReturnsAltBracket(): void
+    public function anSgrMouseReportWithTooFewPartsIsDropped(): void
     {
-        $result = InputParser::parse("\x1b[<0;5M")->messages;
-        self::assertGreaterThanOrEqual(1, count($result));
-        self::assertTrue($result[0]->alt);
-        self::assertSame('[', $result[0]->key);
+        self::assertSame([], InputParser::parse("\x1b[<0;5M")->messages);
     }
 
     #[Test]
-    public function parserSgrMouseTooManyPartsReturnsAltBracket(): void
+    public function anSgrMouseReportWithTooManyPartsIsDropped(): void
     {
-        $result = InputParser::parse("\x1b[<0;5;3;1M")->messages;
-        self::assertGreaterThanOrEqual(1, count($result));
-        self::assertTrue($result[0]->alt);
-        self::assertSame('[', $result[0]->key);
+        self::assertSame([], InputParser::parse("\x1b[<0;5;3;1M")->messages);
     }
 
     #[Test]
-    public function parserSgrMouseExcessiveLengthReturnsAltBracket(): void
+    public function anOverlongSgrMouseReportIsDropped(): void
     {
         $longParams = str_repeat('1', 40);
-        $result = InputParser::parse("\x1b[<" . $longParams . 'M')->messages;
-        self::assertGreaterThanOrEqual(1, count($result));
-        self::assertTrue($result[0]->alt);
-        self::assertSame('[', $result[0]->key);
+
+        self::assertSame([], InputParser::parse("\x1b[<" . $longParams . 'M')->messages);
     }
 
     #[Test]
@@ -1321,14 +1330,14 @@ final class InputParserTest extends TestCase
     {
         $input = "\x1b\t\r\x03" . 'a' . "\x7f";
         $messages = InputParser::parse($input)->messages;
-        self::assertCount(6, $messages);
-        self::assertSame(Key::Escape, $messages[0]->key);
-        self::assertSame(Key::Tab, $messages[1]->key);
-        self::assertSame(Key::Enter, $messages[2]->key);
-        self::assertSame('c', $messages[3]->key);
-        self::assertTrue($messages[3]->ctrl);
-        self::assertSame('a', $messages[4]->key);
-        self::assertSame(Key::Backspace, $messages[5]->key);
+        self::assertCount(5, $messages);
+        self::assertSame(Key::Tab, $messages[0]->key);
+        self::assertTrue($messages[0]->alt);
+        self::assertSame(Key::Enter, $messages[1]->key);
+        self::assertSame('c', $messages[2]->key);
+        self::assertTrue($messages[2]->ctrl);
+        self::assertSame('a', $messages[3]->key);
+        self::assertSame(Key::Backspace, $messages[4]->key);
     }
 
     #[Test]
@@ -1446,13 +1455,18 @@ final class InputParserTest extends TestCase
     // ===================================================================
 
     #[Test]
-    public function parserEscFollowedByControlByteProducesEscapeThenCtrl(): void
+    public function aControlByteAfterEscapeIsItsAltCombo(): void
     {
         $messages = InputParser::parse("\x1b\x01")->messages;
-        self::assertCount(2, $messages);
-        self::assertSame(Key::Escape, $messages[0]->key);
-        self::assertSame('a', $messages[1]->key);
-        self::assertTrue($messages[1]->ctrl);
+        self::assertCount(1, $messages);
+        self::assertSame('a', $messages[0]->key);
+        self::assertTrue($messages[0]->ctrl);
+        self::assertTrue($messages[0]->alt);
+
+        $enter = InputParser::parseSequence("\x1b\r");
+        self::assertInstanceOf(KeyMsg::class, $enter);
+        self::assertSame(Key::Enter, $enter->key);
+        self::assertTrue($enter->alt, 'legacy alt+Enter is one key, not an escape swallowing Enter');
     }
 
     // ===================================================================
@@ -1637,19 +1651,16 @@ final class InputParserTest extends TestCase
     }
 
     // ===================================================================
-    // ESC + CSI that fails falls through: ESC '[' as alt-[
+    // ESC + CSI with no key of ours: dropped whole, and nothing else with it
     // ===================================================================
 
     #[Test]
-    public function parserEscFollowedByFailedCsiProducesAltBracketAndRemainingChars(): void
+    public function aKeystrokeAfterASequenceItHasNoKeyForStillArrives(): void
     {
-        // parseCsi finds 'x' as final (0x78, in 0x40-0x7e), params='', match 'x' => null.
-        // parseCsi returns null. Outer: $next='[' => alt-[, position+=2. Then 'x' plain.
-        $messages = InputParser::parse("\x1b[x")->messages;
-        self::assertCount(2, $messages);
-        self::assertTrue($messages[0]->alt);
-        self::assertSame('[', $messages[0]->key);
-        self::assertSame('x', $messages[1]->key);
+        $messages = InputParser::parse("\x1b[99~a")->messages;
+
+        self::assertCount(1, $messages);
+        self::assertSame('a', $messages[0]->key);
     }
 
     // ===================================================================
@@ -1811,11 +1822,10 @@ final class InputParserTest extends TestCase
     public function parserEscFollowedByHighByteProducesEscape(): void
     {
         // ESC + 0x80: fails '[' check, fails 'O' check, fails alt check (0x80 >= 0x7f)
-        // => bare Escape, then 0x80 parsed as UTF-8 high byte
+        // => bare Escape, and 0x80 begins no character of its own
         $messages = InputParser::parse("\x1b\x80")->messages;
-        self::assertCount(2, $messages);
+        self::assertCount(1, $messages);
         self::assertSame(Key::Escape, $messages[0]->key);
-        self::assertSame("\x80", $messages[1]->key);
     }
 
     // ===================================================================
@@ -1896,11 +1906,10 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserInvalidUtf8ContinuationByteConsumesOnlyOneByte(): void
     {
-        // 0x80 hits default => 1; if default were 2, 'q' would be consumed too
+        // 0x80 hits default => 1; if default were 2, 'q' would be dropped with it
         $messages = InputParser::parse("\x80q")->messages;
-        self::assertCount(2, $messages);
-        self::assertSame("\x80", $messages[0]->key);
-        self::assertSame('q', $messages[1]->key);
+        self::assertCount(1, $messages);
+        self::assertSame('q', $messages[0]->key);
     }
 
     // ===================================================================
@@ -1910,14 +1919,13 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserCsiAtSignAsFinalByteIsDetectedAtExactBoundary(): void
     {
-        // '@' is 0x40 — with >= 0x40 it's a final byte (no key match => null)
-        // With > 0x40, '@' collected as param, 'A' becomes final => Key::Up
+        // '@' is 0x40 — with >= 0x40 it ends the sequence, leaving 'A' a plain
+        // letter. With > 0x40 it would be a parameter and 'A' the final byte,
+        // turning a typed capital into an arrow key.
         $messages = InputParser::parse("\x1b[@A")->messages;
-        self::assertCount(3, $messages);
-        self::assertTrue($messages[0]->alt);
-        self::assertSame('[', $messages[0]->key);
-        self::assertSame('@', $messages[1]->key);
-        self::assertSame('A', $messages[2]->key);
+
+        self::assertCount(1, $messages);
+        self::assertSame('A', $messages[0]->key);
     }
 
     // ===================================================================
@@ -2302,6 +2310,11 @@ final class InputParserTest extends TestCase
         self::assertNull(InputParser::parseSequence("\x1b[?62;1;4c"), 'device attributes');
         self::assertNull(InputParser::parseSequence("\x1b[>1;95;0c"), 'secondary device attributes');
         self::assertNull(InputParser::parseSequence("\x1b[0n"), 'status report');
+        self::assertNull(InputParser::parseSequence("\x1b[24;80R"), 'cursor position report');
         self::assertNull(InputParser::parseSequence("\x1b[4;24;80t"), 'window report');
+
+        // Its three coordinate bytes never arrived. Reading what did as text would
+        // put an Escape nobody pressed in front of the reader's next keystroke.
+        self::assertNull(InputParser::parseSequence("\x1b[M"), 'a mouse report cut short');
     }
 }
