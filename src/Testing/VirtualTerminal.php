@@ -207,7 +207,13 @@ final class VirtualTerminal implements Terminal
         $read = [$this->readPipe];
         $write = $except = null;
 
-        return @stream_select($read, $write, $except, 0, 0) > 0;
+        return @stream_select(
+            $read,
+            $write,
+            $except,
+            (int)($timeoutMicroseconds / 1_000_000),
+            $timeoutMicroseconds % 1_000_000,
+        ) > 0;
     }
 
     public function write(string $data): void

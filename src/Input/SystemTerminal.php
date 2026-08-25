@@ -197,21 +197,24 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
      */
     public function probeSize(): ?array
     {
-        @fwrite($this->stdout, Ansi::SAVE_CURSOR . Ansi::CURSOR_TO_BOTTOM_RIGHT . Ansi::REPORT_CURSOR_POSITION);
-        @fflush($this->stdout);
+        try {
+            $this->write(Ansi::SAVE_CURSOR . Ansi::CURSOR_TO_BOTTOM_RIGHT . Ansi::REPORT_CURSOR_POSITION);
+            $this->flush();
 
-        $read = [$this->stdin];
-        $write = $except = null;
-        if (@stream_select($read, $write, $except, 0, 100_000) <= 0) {
-            @fwrite($this->stdout, Ansi::RESTORE_CURSOR);
-            @fflush($this->stdout);
+            $read = [$this->stdin];
+            $write = $except = null;
+            $answered = @stream_select($read, $write, $except, 0, 100_000) > 0;
+            $response = $answered ? (string)@fread($this->stdin, 32) : '';
 
+            $this->write(Ansi::RESTORE_CURSOR);
+            $this->flush();
+        } catch (TerminalException) {
             return null;
         }
 
-        $response = (string)@fread($this->stdin, 32);
-        @fwrite($this->stdout, Ansi::RESTORE_CURSOR);
-        @fflush($this->stdout);
+        if (!$answered) {
+            return null;
+        }
 
         if (preg_match('/\x1b\[(\d+);(\d+)R/', $response, $matches, PREG_OFFSET_CAPTURE) === 1) {
             $matchStart = $matches[0][1];
@@ -264,7 +267,9 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
         }
 
         $response = (string)@fread($this->stdin, 256);
-        if (preg_match('/\033\]11;rgb:([0-9a-f]{2,4})\/([0-9a-f]{2,4})\/([0-9a-f]{2,4})\x1b\\\\?/', $response, $matches, PREG_OFFSET_CAPTURE) !== 1) {
+        // A terminal ends an OSC reply with either the string terminator or BEL,
+        // whatever it was asked with.
+        if (preg_match('/\033\]11;rgb:([0-9a-f]{2,4})\/([0-9a-f]{2,4})\/([0-9a-f]{2,4})(?:\x1b\\\\?|\x07)/', $response, $matches, PREG_OFFSET_CAPTURE) !== 1) {
             $this->stdinLeftover .= $response;
 
             return null;

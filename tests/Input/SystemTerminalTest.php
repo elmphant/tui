@@ -332,6 +332,25 @@ final class SystemTerminalTest extends TestCase
         fclose($writer);
     }
 
+    /**
+     * The probe writes to the same terminal everything else does, so it goes out
+     * the one way that survives a full PTY buffer and is counted with the rest.
+     */
+    #[Test]
+    public function theSizeProbeIsWrittenThroughTheTerminalsOwnWrite(): void
+    {
+        [$reader, $writer] = $this->createNonBlockingSocketPair();
+        fwrite($writer, "\x1b[24;80R");
+
+        $terminal = new SystemTerminal($reader, $this->stdout);
+        $terminal->probeSize();
+
+        self::assertGreaterThan(0, $terminal->bytesWritten());
+
+        fclose($reader);
+        fclose($writer);
+    }
+
     #[Test]
     public function probeSizePreservesTrailingLeftoverBytes(): void
     {
@@ -472,6 +491,24 @@ final class SystemTerminalTest extends TestCase
     {
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "\033]11;rgb:00/00/00\033\\");
+
+        $terminal = new SystemTerminal($reader, $this->stdout);
+
+        self::assertSame(ColorScheme::Dark, $terminal->detectColorScheme());
+
+        fclose($reader);
+        fclose($writer);
+    }
+
+    /**
+     * A terminal may close an OSC reply with BEL instead of the string terminator
+     * it was asked with, and answering "no idea" there picks the wrong palette.
+     */
+    #[Test]
+    public function aBellEndsAnOscReplyJustAsTheStringTerminatorDoes(): void
+    {
+        [$reader, $writer] = $this->createNonBlockingSocketPair();
+        fwrite($writer, "\033]11;rgb:00/00/00\x07");
 
         $terminal = new SystemTerminal($reader, $this->stdout);
 
