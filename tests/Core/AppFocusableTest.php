@@ -33,6 +33,7 @@ use Elmphant\Tui\Tests\Core\Support\TestComponents;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Box;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -62,6 +63,34 @@ final class AppFocusableTest extends TestCase
         $result = $app->update(new KeyMsg(Key::Down), Rect::fromSize(80, 24));
         self::assertInstanceOf(TwoPanelApp::class, $result->model);
         self::assertNull($result->command);
+    }
+
+    #[Test]
+    public function aKeyReachesNothingWhenTheFocusedComponentIsClippedAway(): void
+    {
+        $app = new ClippedFocusApp(
+            visible: new CountingFocusable(),
+            middle: new CountingFocusable(),
+            clipped: (new CountingFocusable())->withFocus(true),
+        );
+
+        $result = $app->update(new KeyMsg('a'), Rect::fromSize(8, 4));
+
+        self::assertSame(0, $result->model->clipped->count);
+    }
+
+    #[Test]
+    public function tabMovesOnWhenTheFocusedComponentIsClippedAway(): void
+    {
+        $app = new ClippedFocusApp(
+            visible: new CountingFocusable(),
+            middle: new CountingFocusable(),
+            clipped: (new CountingFocusable())->withFocus(true),
+        );
+
+        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(8, 4));
+
+        self::assertInstanceOf(FocusCmd::class, $result->command);
     }
 
     #[Test]
@@ -777,6 +806,24 @@ final readonly class UnhandledApplicationShortcutApp extends CopyableTestApp
     protected function applicationKeybindings(): Keybindings
     {
         return new Keybindings(['help' => ['f1']]);
+    }
+}
+
+final readonly class ClippedFocusApp extends CopyableTestApp
+{
+    public function __construct(
+        public CountingFocusable $visible,
+        public CountingFocusable $middle,
+        public CountingFocusable $clipped,
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Box::new('Clipped')
+            ->add(TestComponents::bind('clipped-visible', 'visible', $this->visible))
+            ->add(TestComponents::bind('clipped-middle', 'middle', $this->middle))
+            ->add(TestComponents::bind('clipped-last', 'clipped', $this->clipped));
     }
 }
 

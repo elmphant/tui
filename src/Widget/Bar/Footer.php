@@ -154,14 +154,13 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        if ($area->width < 1 || $area->height < 1) {
+        $geometry = $this->geometry($area);
+
+        if ($geometry === null) {
             return;
         }
 
-        $barArea = ($this->margin ?? Spacing::none())->applyTo($area);
-        if ($barArea->width < 1 || $barArea->height < 1) {
-            return;
-        }
+        $barArea = $geometry['bar'];
 
         $theme = $context->theme;
         $barStyle = $this->style ?? $theme->footerStyle;
@@ -169,8 +168,9 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
 
         $frame->fillRect($barArea->x, $barArea->y, $barArea->width, $barArea->height, $barStyle->foregroundValue(), $barBg, $barStyle->attributes);
 
-        $contentArea = ($this->padding ?? Spacing::none())->applyTo($barArea);
-        if ($contentArea->width < 1 || $contentArea->height < 1) {
+        $contentArea = $geometry['content'];
+
+        if ($contentArea === null) {
             return;
         }
 
@@ -205,18 +205,26 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
 
     private function contentArea(Rect $area): ?Rect
     {
-        if ($area->width < 1 || $area->height < 1) {
+        return $this->geometry($area)['content'] ?? null;
+    }
+
+    /**
+     * @return array{bar: Rect, content: ?Rect}|null
+     */
+    private function geometry(Rect $area): ?array
+    {
+        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
+
+        if ($innerArea->width < 1 || $innerArea->height < 1) {
             return null;
         }
 
-        $barArea = ($this->margin ?? Spacing::none())->applyTo($area);
+        $padding = $this->padding ?? Spacing::none();
+        $contentArea = $padding->applyTo($innerArea);
 
-        if ($barArea->width < 1 || $barArea->height < 1) {
-            return null;
-        }
-
-        $contentArea = ($this->padding ?? Spacing::none())->applyTo($barArea);
-
-        return $contentArea->width < 1 || $contentArea->height < 1 ? null : $contentArea;
+        return [
+            'bar' => $innerArea,
+            'content' => $contentArea->width > 0 && $contentArea->height > 0 ? $contentArea : null,
+        ];
     }
 }

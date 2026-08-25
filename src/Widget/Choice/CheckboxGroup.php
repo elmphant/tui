@@ -270,19 +270,18 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $theme = $context->theme;
+        $count = count($this->options);
+        $scrollOffset = $this->cursorScrollOffset($area->height);
 
-        $y = $area->y - $this->cursorScrollOffset($area->height);
+        $y = $area->y;
 
         if ($this->label !== '') {
             $frame->putStyled($area->x, $y, $this->label, $theme->titleStyle);
             $y += 2;
         }
 
-        foreach ($this->options as $index => $option) {
-            if ($y >= $area->bottom()) {
-                break;
-            }
-
+        for ($index = $scrollOffset; $index < min($count, $scrollOffset + $area->bottom() - $y); ++$index) {
+            $rowY = $y + $index - $scrollOffset;
             $isCursor = $index === $this->cursor && $this->drawsFocused($context);
             $isChecked = $this->isChecked($index);
 
@@ -290,9 +289,13 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
 
             $style = $theme->optionStyle($isCursor, $isChecked, $this->drawsFocused($context));
 
-            $frame->putStyled($area->x, $y, $mark, $style);
-            $frame->putStyled($area->x + CharWidth::stringWidth($mark), $y, $option, $style);
-            ++$y;
+            $frame->putStyled($area->x, $rowY, $mark, $style);
+            $frame->putStyled(
+                $area->x + CharWidth::stringWidth($mark),
+                $rowY,
+                CharWidth::truncateToWidth($this->options[$index], max(0, $area->width - CharWidth::stringWidth($mark))),
+                $style,
+            );
         }
     }
 

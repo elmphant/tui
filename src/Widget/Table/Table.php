@@ -409,7 +409,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             $bindings->matches($message, Actions::END) => $this->withCursorAt($this->findNextSelectable($rowCount, -1)),
             $bindings->matches($message, Actions::PAGE_DOWN) => $this->withCursorAt($this->rowAPageAway(1, $visibleRows, $area)),
             $bindings->matches($message, Actions::PAGE_UP) => $this->withCursorAt($this->rowAPageAway(-1, $visibleRows, $area)),
-            $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->selected === $this->cursor ? -1 : $this->cursor),
+            $bindings->matches($message, Actions::SELECT) => $this->cloneWith(selected: $this->cursor),
             default => null,
         };
 

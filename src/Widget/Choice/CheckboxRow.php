@@ -90,7 +90,11 @@ final readonly class CheckboxRow implements OptionRow, PublishesHints
             $checked[] = isset($ticked[$place]);
         }
 
-        return $this->cloneWith(options: $options, checked: $checked);
+        return $this->cloneWith(
+            options: $options,
+            checked: $checked,
+            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
+        );
     }
 
     /**

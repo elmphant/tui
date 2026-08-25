@@ -28,6 +28,7 @@ use Elmphant\Tui\Tests\Support\TickTally;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Box;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -102,6 +103,23 @@ final class AppInteractivesTest extends TestCase
 
         self::assertInstanceOf(PressCountingApp::class, $result->model);
         self::assertSame(1, $result->model->widget->presses, 'bind() accepts it, so routing must reach it');
+    }
+
+    #[Test]
+    public function aClickReachesTheVisibleComponentWhileLaterSiblingsAreClippedAway(): void
+    {
+        $visible = new PressCountingWidget();
+        $middle = new PressCountingWidget();
+        $clipped = new PressCountingWidget();
+        $app = new ClippedRowsApp(first: $visible, middle: $middle, last: $clipped);
+
+        $result = $app->update(
+            new MouseMsg(1, 1, MouseAction::Press, MouseButton::Left),
+            Rect::fromSize(8, 4),
+        );
+
+        self::assertSame(1, $result->model->first->presses);
+        self::assertSame(0, $result->model->last->presses, 'a component with no placed rect receives nothing');
     }
 
     #[Test]
@@ -334,6 +352,36 @@ final readonly class PressCountingBesidePanelApp extends CopyableTestApp
                 static fn (self $app, PressCountingWidget $widget): self => $app->cloneWith(widget: $widget),
             ),
         );
+    }
+}
+
+final readonly class ClippedRowsApp extends CopyableTestApp
+{
+    public function __construct(
+        public PressCountingWidget $first,
+        public PressCountingWidget $middle,
+        public PressCountingWidget $last,
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Box::new('Clipped')
+            ->add(Component::bind(
+                ComponentId::named('first'),
+                $this->first,
+                static fn (self $app, PressCountingWidget $first): self => $app->cloneWith(first: $first),
+            ))
+            ->add(Component::bind(
+                ComponentId::named('middle'),
+                $this->middle,
+                static fn (self $app, PressCountingWidget $middle): self => $app->cloneWith(middle: $middle),
+            ))
+            ->add(Component::bind(
+                ComponentId::named('last'),
+                $this->last,
+                static fn (self $app, PressCountingWidget $last): self => $app->cloneWith(last: $last),
+            ));
     }
 }
 

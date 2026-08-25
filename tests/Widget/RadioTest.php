@@ -17,6 +17,7 @@ use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Choice\Radio;
 use Elmphant\Tui\Widget\Focusable;
 use InvalidArgumentException;
@@ -47,6 +48,25 @@ final class RadioTest extends TestCase
         self::assertSame('A', $bare->selectedValue(), 'the collection is what leads');
         self::assertSame(2, $bare->sizing()->rows->min, 'and an omitted label costs no rows');
         self::assertSame(4, Radio::new(['A', 'B'], 'Pick one')->sizing()->rows->min, 'a label still follows it, where there is one');
+    }
+
+    #[Test]
+    public function aSqueezedRadioScrollsWithinItsOwnRect(): void
+    {
+        $area = new Rect(0, 1, 30, 3);
+        $radio = Radio::new(['one', 'two', 'three', 'four', 'five'])->withFocus(true);
+        for ($step = 0; $step < 4; ++$step) {
+            $radio = $radio->update(new KeyMsg(Key::Down), $area)->model;
+        }
+
+        $frame = new Frame(30, 5);
+        $radio->render($frame, $area, new RenderContext(Theme::dark()));
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame('', trim($screen->lineAt(0)), 'nothing may be painted above the rect');
+        self::assertStringContainsString('three', $screen->lineAt(1));
+        self::assertStringContainsString('four', $screen->lineAt(2));
+        self::assertStringContainsString('five', $screen->lineAt(3));
     }
 
     #[Test]
@@ -972,7 +992,7 @@ final class RadioTest extends TestCase
     }
 
     #[Test]
-    public function labeledRadioScrollAccountsForExactlyTwoLabelRows(): void
+    public function aScrolledLabelledRadioKeepsItsLabelAndWindowsTheOptions(): void
     {
         $radio = Radio::new(['Alpha', 'Beta', 'Gamma', 'Delta'], 'Top')
             ->withCursor(3)
@@ -980,7 +1000,9 @@ final class RadioTest extends TestCase
         $frame = new Frame(12, 4);
         $radio->render($frame, new Rect(0, 0, 12, 4), new RenderContext(Theme::dark()));
 
-        self::assertSame(Radio::SELECTED_MARK . 'Alpha', rtrim($this->extractRow($frame, 0, 12)), 'Offset (2+3)-4+1=2 scrolls the label and spacer out; all four options fit');
+        self::assertSame('Top', rtrim($this->extractRow($frame, 0, 12)), 'the label stays where the rect put it');
+        self::assertSame('', rtrim($this->extractRow($frame, 1, 12)), 'Row 1 is the spacer');
+        self::assertSame(Radio::UNSELECTED_MARK . 'Gamma', rtrim($this->extractRow($frame, 2, 12)), 'two label rows leave two option rows');
         self::assertSame(Radio::UNSELECTED_MARK . 'Delta', rtrim($this->extractRow($frame, 3, 12)), 'The cursor row lands on the last visible row');
     }
 

@@ -62,6 +62,32 @@ final class HeaderTitleSlotTest extends TestCase
         self::assertStringContainsString('SKYLINE', $drawn);
     }
 
+    #[Test]
+    public function aTitleWiderThanTheBarStopsAtItsEdge(): void
+    {
+        $frame = new Frame(40, 1);
+        Header::new(str_repeat('x', 30))->render($frame, new Rect(5, 0, 20, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame(' ', $frame->characters[25], 'nothing is written past the bar');
+    }
+
+    #[Test]
+    public function anOversizedTitleFillsTheSpaceBesideTheLeftSlot(): void
+    {
+        $drawn = self::draw(Header::new(str_repeat('t', 40))->withLeft(Text::new('branch')), 30);
+
+        self::assertStringStartsWith('branch', $drawn);
+        self::assertMatchesRegularExpression('/^brancht+$/', $drawn);
+    }
+
+    #[Test]
+    public function aDisplacedTitleStopsBeforeTheCentreSlot(): void
+    {
+        $drawn = self::draw(Header::new(str_repeat('t', 60))->withCenter(Text::new('status')), 20);
+
+        self::assertStringContainsString('status', $drawn);
+    }
+
     private static function draw(Header $header, int $width = 40): string
     {
         $frame = new Frame($width, 1);

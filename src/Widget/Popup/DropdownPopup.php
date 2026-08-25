@@ -73,7 +73,8 @@ final readonly class DropdownPopup implements PopupFrame
     public function captures(MouseAction $action): bool
     {
         return match ($action) {
-            MouseAction::Press, MouseAction::WheelUp, MouseAction::WheelDown => true,
+            MouseAction::Press, MouseAction::WheelUp, MouseAction::WheelDown,
+            MouseAction::WheelLeft, MouseAction::WheelRight => true,
             MouseAction::Motion, MouseAction::Release => false,
         };
     }

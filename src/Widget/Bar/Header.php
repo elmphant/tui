@@ -18,6 +18,7 @@ use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -144,25 +145,22 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        if ($area->width < 1 || $area->height < 1) {
+        $geometry = $this->geometry($area);
+
+        if ($geometry === null) {
             return;
         }
 
-        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
-        if ($innerArea->width < 1 || $innerArea->height < 1) {
-            return;
-        }
-
-        $padding = $this->padding ?? Spacing::none();
-        $barHeight = 1 + $padding->top + $padding->bottom;
-        $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
+        $barArea = $geometry['bar'];
+        $contentArea = $geometry['content'];
 
         $headerStyle = $this->style ?? $context->theme->headerStyle;
         $barBg = $headerStyle->backgroundValue();
         $frame->fillRect($barArea->x, $barArea->y, $barArea->width, $barArea->height, $headerStyle->foregroundValue(), $barBg, $headerStyle->attributes);
 
-        $contentArea = $padding->applyTo($barArea);
-        if ($contentArea->width < 1 || $contentArea->height < 1) {
+        $contentArea = $geometry['content'];
+
+        if ($contentArea === null) {
             return;
         }
 
@@ -183,14 +181,29 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         // takes that place. Only an explicit left slot displaces it entirely —
         // a caller-supplied title vanishing is never the useful answer.
         $titleWidth = CharWidth::stringWidth($this->title);
-        $titleFits = $titleWidth > 0
-            && ($this->centerSlot === null || $this->leftSlot === null);
 
-        if ($titleFits) {
-            $titleX = $this->centerSlot === null
+        if ($titleWidth > 0 && ($this->centerSlot === null || $this->leftSlot === null)) {
+            $gapStart = $this->centerSlot === null
                 ? max($contentX, $contentX + (int)floor(($contentWidth - $titleWidth) / 2))
                 : $contentX;
-            $frame->putString($titleX, $contentY, $this->title, $headerStyle->foregroundValue(), $barBg, $headerStyle->attributes);
+            $gapEnd = $contentX + $contentWidth;
+
+            $leftRect = $this->leftSlot !== null ? BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea) : null;
+
+            if ($leftRect !== null) {
+                $gapStart = max($gapStart, $leftRect->right());
+            }
+
+            $centreRect = $this->centerSlot !== null ? BarSlotRenderer::rectFor($this->centerSlot, Alignment::Center, $contentArea) : null;
+
+            if ($centreRect !== null) {
+                $gapEnd = min($gapEnd, $centreRect->x);
+            }
+
+            $available = $gapEnd - $gapStart;
+            if ($available > 0) {
+                $frame->putString($gapStart, $contentY, CharWidth::truncateToWidth($this->title, $available), $headerStyle->foregroundValue(), $barBg, $headerStyle->attributes);
+            }
         }
 
         if ($this->rightSlot !== null) {
@@ -201,7 +214,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
             $dividerY = $barArea->y + $barArea->height;
             if ($dividerY < $area->y + $area->height) {
                 $dividerStyle = $context->theme->borderStyle;
-                $frame->putString($innerArea->x, $dividerY, str_repeat('─', $innerArea->width), $dividerStyle->foregroundValue(), $dividerStyle->backgroundValue());
+                $frame->putString($barArea->x, $dividerY, str_repeat('─', $barArea->width), $dividerStyle->foregroundValue(), $dividerStyle->backgroundValue());
             }
         }
     }
@@ -220,10 +233,14 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
 
     private function contentArea(Rect $area): ?Rect
     {
-        if ($area->width < 1 || $area->height < 1) {
-            return null;
-        }
+        return $this->geometry($area)['content'] ?? null;
+    }
 
+    /**
+     * @return array{bar: Rect, content: ?Rect}|null
+     */
+    private function geometry(Rect $area): ?array
+    {
         $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
 
         if ($innerArea->width < 1 || $innerArea->height < 1) {
@@ -235,6 +252,9 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
         $contentArea = $padding->applyTo($barArea);
 
-        return $contentArea->width < 1 || $contentArea->height < 1 ? null : $contentArea;
+        return [
+            'bar' => $barArea,
+            'content' => $contentArea->width > 0 && $contentArea->height > 0 ? $contentArea : null,
+        ];
     }
 }

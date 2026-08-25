@@ -452,6 +452,20 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function wheelingThroughTheListKeepsWhatWasChosen(): void
+    {
+        $chosen = $this->commands()->withSelectedValue('cache:flush');
+
+        $wheeled = $chosen->update(
+            new MouseMsg(1, self::FIRST_ITEM_ROW, MouseAction::WheelDown, MouseButton::None),
+            $this->area(),
+        )->model;
+
+        self::assertInstanceOf(FilterableList::class, $wheeled);
+        self::assertSame('cache:flush', $wheeled->caption());
+    }
+
+    #[Test]
     public function aMatcherNamingTheSameItemTwiceStillShowsItOnce(): void
     {
         $repeating = new class implements Matcher {

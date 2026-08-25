@@ -296,9 +296,10 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         $matching = ($this->matcher ?? new SubstringMatcher())->matching($query, $this->options);
 
         // A matcher may name the same option twice — nothing in the port forbids
-        // it — and the same box drawn twice is one box the reader can tick apart.
-        return array_values(array_unique(
-            array_map(fn (int $index): string => $this->options[$index] ?? '', $matching),
-        ));
+        // it — and an index past the options names no box at all.
+        return array_values(array_unique(array_map(
+            fn (int $index): string => $this->options[$index],
+            array_filter($matching, fn (int $index): bool => isset($this->options[$index])),
+        )));
     }
 }

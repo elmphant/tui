@@ -171,7 +171,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Widge
                 $area->x,
                 $row,
                 $held ? self::BAR : self::RAIL,
-                $held ? $context->theme->focusedGutterStyle() : $context->theme->dim,
+                $held ? $context->theme->focusedBorderStyle : $context->theme->dim,
             );
         }
 

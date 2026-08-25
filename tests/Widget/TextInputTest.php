@@ -2047,6 +2047,35 @@ final class TextInputTest extends TestCase
         self::assertSame(0, $frame->cursorPosition->row);
     }
 
+    #[Test]
+    public function wordDeleteBackwardKeepsWholeComposedCharacters(): void
+    {
+        $area = Rect::fromSize(40, 1);
+        $input = TextInput::new()
+            ->withFocus(true)
+            ->withValue("cafe\u{0301} bar")
+            ->withCursor(8);
+
+        $updated = $input->update(new KeyMsg(Key::Backspace, ctrl: true), $area)->model;
+
+        self::assertSame("cafe\u{0301} ", $updated->value());
+        self::assertSame(5, $updated->cursor());
+    }
+
+    #[Test]
+    public function wordDeleteForwardKeepsTheSpaceBehindAWordWithComposedCharacters(): void
+    {
+        $area = Rect::fromSize(40, 1);
+        $input = TextInput::new()
+            ->withFocus(true)
+            ->withValue("a\u{0301}bc def")
+            ->withCursor(0);
+
+        $updated = $input->update(new KeyMsg(Key::Delete, ctrl: true), $area)->model;
+
+        self::assertSame(' def', $updated->value());
+    }
+
     public static function textInputKeybindingOverrideProvider(): iterable
     {
         yield Actions::CURSOR_LEFT => [Actions::CURSOR_LEFT,           new KeyMsg(Key::Left),                  new KeyMsg('b', ctrl: true), 'ctrl+b', 'hello',   3, fn (TextInput $t) => $t->cursor() === 2];

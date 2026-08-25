@@ -772,6 +772,22 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
+    public function theWheelScrollsToThePaddedBottomLikeEveryOtherWidget(): void
+    {
+        $items = array_map(fn (int $index) => "Item $index", range(0, 9));
+        $list = ListView::fromStrings($items);
+        $area = Rect::fromSize(40, 3);
+
+        $wheelDown = new MouseMsg(5, 0, MouseAction::WheelDown, MouseButton::None);
+        $result = $list;
+        for ($step = 0; $step < 12; ++$step) {
+            $result = $result->update($wheelDown, $area)->model;
+        }
+
+        self::assertSame(8, $result->scrollOffset(), 'the blank line under the last row says the list ends here');
+    }
+
+    #[Test]
     public function mouseWheelDownClampsToMaxOffset(): void
     {
         $list = ListView::fromStrings(['A', 'B', 'C']);
@@ -782,7 +798,10 @@ final class ListViewTest extends TestCase
         self::assertSame(1, $result->model->scrollOffset());
 
         $result = $result->model->update($wheelDown, $area);
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset());
+
+        $result = $result->model->update($wheelDown, $area);
+        self::assertSame(2, $result->model->scrollOffset());
     }
 
     #[Test]
@@ -985,8 +1004,6 @@ final class ListViewTest extends TestCase
         self::assertSame('e', $frame->characters[20 + 3]);
     }
 
-    // --- totalItemRows correctness ---
-
     #[Test]
     public function scrollbarRendersWithMixedHeightItems(): void
     {
@@ -1089,7 +1106,7 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
-    public function mouseWheelDownMaxOffsetEqualsItemsMinusViewport(): void
+    public function repeatedWheelingStopsAtThePaddedBottomAndNeverPastIt(): void
     {
         $list = ListView::fromStrings(['A', 'B', 'C', 'D', 'E']);
         $area = new Rect(0, 0, 20, 3);
@@ -1100,7 +1117,7 @@ final class ListViewTest extends TestCase
             $result = $current->update($wheelDown, $area);
             $current = $result->model;
         }
-        self::assertSame(2, $current->scrollOffset());
+        self::assertSame(3, $current->scrollOffset());
     }
 
     // --- itemIndexAtY — edge: click exactly at boundary of multi-height item ---
@@ -1287,23 +1304,6 @@ final class ListViewTest extends TestCase
 
         $result = $list->update(new KeyMsg(Key::PageDown), $area);
         self::assertSame(1, $result->model->cursor());
-    }
-
-    // --- L205: maxOffset = totalItemRows - area.height ---
-
-    #[Test]
-    public function wheelDownMaxOffsetIsExactlyTotalRowsMinusHeight(): void
-    {
-        $list = ListView::fromStrings(['A', 'B', 'C', 'D']);
-        $area = new Rect(0, 0, 20, 3);
-
-        $wheelDown = new MouseMsg(5, 0, MouseAction::WheelDown, MouseButton::None);
-        $current = $list;
-        for ($step = 0; $step < 10; ++$step) {
-            $result = $current->update($wheelDown, $area);
-            $current = $result->model;
-        }
-        self::assertSame(1, $current->scrollOffset());
     }
 
     // --- L113/114: render scroll offset skip with exact rowsConsumed boundary ---

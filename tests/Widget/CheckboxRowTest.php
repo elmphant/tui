@@ -36,6 +36,37 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
+    public function theCursorFollowsItsOptionWhenTheOptionsAreReloaded(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $row = CheckboxRow::new(['alpha', 'beta', 'gamma', 'delta'])->withFocus(true);
+
+        $row = $row->update(new KeyMsg(Key::Right), $area)->model;
+        $row = $row->update(new KeyMsg(Key::Right), $area)->model;
+        self::assertSame('gamma', $row->options()[$row->cursor()]);
+
+        $reloaded = $row->withOptions(['alpha', 'gamma', 'beta']);
+
+        self::assertSame('gamma', $reloaded->options()[$reloaded->cursor()]);
+    }
+
+    #[Test]
+    public function enterStillTogglesAfterAReloadShrankTheOptions(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $row = CheckboxRow::new(['alpha', 'beta', 'gamma', 'delta'])->withFocus(true);
+
+        $row = $row->update(new KeyMsg(Key::Right), $area)->model;
+        $row = $row->update(new KeyMsg(Key::Right), $area)->model;
+        $row = $row->update(new KeyMsg(Key::Right), $area)->model;
+
+        $reloaded = $row->withOptions(['alpha', 'beta'])->withFocus(true);
+        $toggled = $reloaded->update(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 1))->model;
+
+        self::assertTrue($toggled->isChecked($reloaded->cursor()));
+    }
+
+    #[Test]
     public function theLabelsCanBeReplacedAfterConstruction(): void
     {
         $frame = new Frame(30, 2);

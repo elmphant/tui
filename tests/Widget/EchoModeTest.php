@@ -39,4 +39,10 @@ final class EchoModeTest extends TestCase
     {
         self::assertSame('•••', EchoMode::Password->mask('äöü'));
     }
+
+    #[Test]
+    public function aComposedCharacterIsOneBulletNotTwo(): void
+    {
+        self::assertSame('••', EchoMode::Password->mask("a\u{0301}b"));
+    }
 }

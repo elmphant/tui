@@ -105,6 +105,37 @@ final class FilterableCheckboxGroupTest extends TestCase
     }
 
     #[Test]
+    public function aMatcherNamingAnIndexBeyondTheOptionsDrawsNoGhostBoxForIt(): void
+    {
+        $stale = new class implements Matcher {
+            /**
+             * @param list<string> $haystack
+             *
+             * @return list<int>
+             */
+            public function matching(string $query, array $haystack): array
+            {
+                return $haystack === [] ? [] : [0, 9];
+            }
+        };
+
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
+            ->withMatcher($stale)
+            ->withFocus(true);
+
+        $typed = self::pressed($group, new KeyMsg('a'));
+
+        $frame = new Frame(30, 8);
+        $typed->render($frame, Rect::fromSize(30, 8), new RenderContext(Theme::dark()));
+
+        self::assertSame(
+            1,
+            substr_count(ScreenBuffer::fromFrame($frame)->plainText(), '[ ]'),
+            'the stale index draws nothing — an untogglable empty box is not an option',
+        );
+    }
+
+    #[Test]
     public function narrowsTheBoxesWithTheMatcherItWasGiven(): void
     {
         $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma'])

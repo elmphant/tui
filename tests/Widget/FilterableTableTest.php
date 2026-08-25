@@ -108,7 +108,7 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
-    public function keepsTheRowsInTheOrderTheyWereHandedInWhateverRankTheMatcherReturns(): void
+    public function keepsTheRowsInTheRankTheMatcherReturns(): void
     {
         $reversed = new class implements Matcher {
             public function matching(string $query, array $haystack): array
@@ -119,11 +119,11 @@ final class FilterableTableTest extends TestCase
 
         self::assertSame(
             [
-                ['ajax_bookmark', 'POST', '/ajax/bookmark'],
                 ['record_edit', 'POST', '/record/edit'],
+                ['ajax_bookmark', 'POST', '/ajax/bookmark'],
             ],
             $this->routes()->withMatcher($reversed)->withQuery('post')->matchingRows(),
-            'a table reads down its rows, so source order survives the ranking',
+            'best match first is the Matcher contract, the promise every filterable widget keeps',
         );
     }
 
@@ -395,6 +395,26 @@ final class FilterableTableTest extends TestCase
         $table = $this->routes()->withMatcher($repeating)->withQuery('anything');
 
         self::assertSame([['ajax_bookmark', 'POST', '/ajax/bookmark']], $table->matchingRows());
+        self::assertSame('1 of 3', $table->summary());
+    }
+
+    #[Test]
+    public function aMatcherNamingAnIndexBeyondTheRowsNamesNoRowForIt(): void
+    {
+        $stale = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return $haystack === [] ? [] : [0, 9];
+            }
+        };
+
+        $table = $this->routes()->withMatcher($stale)->withQuery('anything');
+
+        self::assertSame(
+            [['ajax_bookmark', 'POST', '/ajax/bookmark']],
+            $table->matchingRows(),
+            'an index past the rows names no row of table',
+        );
         self::assertSame('1 of 3', $table->summary());
     }
 

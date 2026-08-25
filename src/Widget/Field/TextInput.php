@@ -385,9 +385,8 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         $before = self::graphemeSubstring($this->value, 0, $this->cursor);
         $after = self::graphemeSubstring($this->value, $this->cursor);
 
-        $trimmed = rtrim($before);
-        $lastSpace = mb_strrpos($trimmed, ' ');
-        $newCursor = $lastSpace === false ? 0 : $lastSpace + 1;
+        $spaces = array_keys(Grapheme::split(rtrim($before)), ' ', true);
+        $newCursor = $spaces === [] ? 0 : array_pop($spaces) + 1;
         $newBefore = self::graphemeSubstring($before, 0, $newCursor);
 
         return $this->cloneWith(value: $newBefore . $after, cursor: $newCursor);
@@ -403,10 +402,12 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         $before = self::graphemeSubstring($this->value, 0, $this->cursor);
         $after = self::graphemeSubstring($this->value, $this->cursor);
 
-        $trimmed = ltrim($after);
-        $firstSpace = mb_strpos($trimmed, ' ');
+        $leadingWhitespace = self::graphemeLength($after) - self::graphemeLength(ltrim($after));
+        $spaces = array_keys(Grapheme::split(ltrim($after)), ' ', true);
+        $firstSpace = $spaces === [] ? false : reset($spaces);
         $deleteCount = $firstSpace === false
-            ? self::graphemeLength($after) : self::graphemeLength($after) - self::graphemeLength($trimmed) + $firstSpace;
+            ? self::graphemeLength($after)
+            : $leadingWhitespace + $firstSpace;
 
         $remaining = self::graphemeSubstring($after, $deleteCount);
 

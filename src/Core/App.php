@@ -407,7 +407,12 @@ abstract readonly class App implements RoutesFocus
         if ($focused !== null && $focused->writesBack()) {
             /** @var Focusable $widget */
             $widget = $focused->widget;
-            $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value];
+            $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value] ?? null;
+
+            if ($rect === null) {
+                return new UpdateResult($this, $reverse ? Cmd::focusPrevious() : Cmd::focusNext());
+            }
+
             $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
 
             if ($dispatch->changed || $dispatch->command !== null) {
@@ -494,8 +499,9 @@ abstract readonly class App implements RoutesFocus
 
         foreach ($components as $component) {
             $key = $component->id->value;
-            $result[$key] = $laidOut[$key]
-                ?? throw new LogicException("Missing rect for component key '$key'");
+            if (isset($laidOut[$key])) {
+                $result[$key] = $laidOut[$key];
+            }
         }
 
         return $result;
@@ -516,7 +522,12 @@ abstract readonly class App implements RoutesFocus
 
         /** @var Focusable $widget */
         $widget = $focused->widget;
-        $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value];
+        $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value] ?? null;
+
+        if ($rect === null) {
+            return $this->offeredToWhatEncloses($message, $screenRect, $focused);
+        }
+
         $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
 
         if ($dispatch->changed) {
@@ -632,7 +643,9 @@ abstract readonly class App implements RoutesFocus
         $landedOn = null;
         if ($message->isClick() || $message->isWheel()) {
             foreach ($current->componentRegistry()->focusables() as $component) {
-                if ($message->inRect($rects[$component->id->value])) {
+                $rect = $rects[$component->id->value] ?? null;
+
+                if ($rect !== null && $message->inRect($rect)) {
                     $landedOn = $component->id;
                 }
             }
@@ -720,7 +733,12 @@ abstract readonly class App implements RoutesFocus
             /** @var Interactive $widget */
             $widget = $component->widget;
             $key = $component->id->value;
-            $rect = $rects[$key] ?? throw new LogicException("Missing rect for component key '$key'");
+            $rect = $rects[$key] ?? null;
+
+            if ($rect === null) {
+                continue;
+            }
+
             $dispatch = $dispatcher->dispatchOne($widget, $message, $rect);
 
             if ($dispatch->changed) {

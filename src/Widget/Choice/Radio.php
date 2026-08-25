@@ -171,19 +171,18 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $theme = $context->theme;
+        $count = count($this->options);
+        $scrollOffset = $this->cursorScrollOffset($area->height);
 
-        $y = $area->y - $this->cursorScrollOffset($area->height);
+        $y = $area->y;
 
         if ($this->label !== '') {
             $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($this->label, $area->width), $theme->titleStyle);
             $y += 2;
         }
 
-        foreach ($this->options as $index => $option) {
-            if ($y >= $area->bottom()) {
-                break;
-            }
-
+        for ($index = $scrollOffset; $index < min($count, $scrollOffset + $area->bottom() - $y); ++$index) {
+            $rowY = $y + $index - $scrollOffset;
             $isCursor = $index === $this->cursor && $this->drawsFocused($context);
             $isSelected = $index === $this->selected;
 
@@ -192,9 +191,8 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
 
             $style = $theme->optionStyle($isCursor, $isSelected, $this->drawsFocused($context));
 
-            $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($mark, $area->width), $style);
-            $frame->putStyled($area->x + $markWidth, $y, CharWidth::truncateToWidth($option, max(0, $area->width - $markWidth)), $style);
-            ++$y;
+            $frame->putStyled($area->x, $rowY, CharWidth::truncateToWidth($mark, $area->width), $style);
+            $frame->putStyled($area->x + $markWidth, $rowY, CharWidth::truncateToWidth($this->options[$index], max(0, $area->width - $markWidth)), $style);
         }
     }
 

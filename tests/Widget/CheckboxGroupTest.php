@@ -33,6 +33,37 @@ final class CheckboxGroupTest extends TestCase
     }
 
     #[Test]
+    public function aSqueezedGroupScrollsWithinItsOwnRect(): void
+    {
+        $area = new Rect(0, 1, 30, 3);
+        $group = (new CheckboxGroup(['one', 'two', 'three', 'four', 'five']))->withFocus(true);
+        for ($step = 0; $step < 4; ++$step) {
+            $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+        }
+        self::assertInstanceOf(CheckboxGroup::class, $group);
+
+        $frame = new Frame(30, 5);
+        $group->render($frame, $area, new RenderContext(Theme::dark()));
+
+        self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 0, 30), 'nothing may be painted above the rect');
+        self::assertStringContainsString('three', $this->extractRow($frame, 1, 30));
+        self::assertStringContainsString('four', $this->extractRow($frame, 2, 30));
+        self::assertStringContainsString('five', $this->extractRow($frame, 3, 30));
+    }
+
+    #[Test]
+    public function aLongOptionStopsAtTheRectInsteadOfBleedingPastIt(): void
+    {
+        $frame = new Frame(20, 2);
+        $group = new CheckboxGroup(['a very long option label', 'b']);
+
+        $group->render($frame, new Rect(0, 0, 10, 2), new RenderContext(Theme::dark()));
+
+        self::assertSame(str_repeat(' ', 10), substr($this->extractRow($frame, 0, 20), 10), 'no ink past column 10');
+        self::assertStringContainsString('b', $this->extractRow($frame, 1, 20));
+    }
+
+    #[Test]
     public function aWrappingGroupComesRoundFromItsFirstOptionToItsLast(): void
     {
         $group = CheckboxGroup::new(['a', 'b', 'c'])->withWrapping()->withFocus(true);
@@ -840,7 +871,7 @@ final class CheckboxGroupTest extends TestCase
     }
 
     #[Test]
-    public function labeledGroupScrollAccountsForExactlyTwoLabelRows(): void
+    public function aScrolledLabelledGroupKeepsItsLabelAndWindowsTheOptions(): void
     {
         $group = CheckboxGroup::new(['Alpha', 'Beta', 'Gamma', 'Delta'], 'Top')
             ->withCursor(3)
@@ -848,7 +879,9 @@ final class CheckboxGroupTest extends TestCase
         $frame = new Frame(12, 4);
         $group->render($frame, new Rect(0, 0, 12, 4), new RenderContext(Theme::dark()));
 
-        self::assertSame('[ ] Alpha', rtrim($this->extractRow($frame, 0, 12)), 'Offset (2+3)-4+1=2 scrolls the label and spacer out; all four options fit');
+        self::assertSame('Top', rtrim($this->extractRow($frame, 0, 12)), 'the label stays where the rect put it');
+        self::assertSame('', rtrim($this->extractRow($frame, 1, 12)), 'Row 1 is the spacer');
+        self::assertSame('[ ] Gamma', rtrim($this->extractRow($frame, 2, 12)), 'two label rows leave two option rows');
         self::assertSame('[ ] Delta', rtrim($this->extractRow($frame, 3, 12)), 'The cursor row lands on the last visible row');
     }
 

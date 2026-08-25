@@ -938,7 +938,7 @@ final class TableTest extends TestCase
     // --- L185-219: handleKey scroll math, viewport, match arms ---
 
     #[Test]
-    public function spaceTogglesSelection(): void
+    public function spaceSelectsTheRowUnderTheCursor(): void
     {
         $table = $this->createTable()->withFocus(true);
         $area = Rect::fromSize(60, 10);
@@ -947,11 +947,11 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->selectedIndex());
 
         $result = $result->model->update(new KeyMsg(' '), $area);
-        self::assertSame(-1, $result->model->selectedIndex());
+        self::assertSame(0, $result->model->selectedIndex(), 'space shares the choose action with enter');
     }
 
     #[Test]
-    public function enterTogglesSelectionOff(): void
+    public function pressingEnterOnAChosenRowKeepsItChosen(): void
     {
         $table = $this->createTable()->withFocus(true);
         $area = Rect::fromSize(60, 10);
@@ -960,7 +960,7 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->selectedIndex());
 
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(-1, $result->model->selectedIndex());
+        self::assertSame(0, $result->model->selectedIndex(), 'the hint says choose, and choosing twice does not unchoose');
     }
 
     #[Test]
@@ -1177,7 +1177,7 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function typedRowsSpaceTogglesSelection(): void
+    public function typedRowsSpaceSelectsTheRowUnderTheCursor(): void
     {
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
@@ -1189,7 +1189,7 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->selectedIndex());
 
         $result = $result->model->update(new KeyMsg(' '), $area);
-        self::assertSame(-1, $result->model->selectedIndex());
+        self::assertSame(0, $result->model->selectedIndex(), 'space shares the choose action with enter');
     }
 
     #[Test]
@@ -3405,7 +3405,7 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function selectingTheCursorRowTwiceDeselectsIt(): void
+    public function selectingTheCursorRowTwiceKeepsItSelected(): void
     {
         $area = new Rect(0, 0, 20, 6);
         $table = Table\Table::fromCells(
@@ -3422,7 +3422,7 @@ final class TableTest extends TestCase
 
         $again = $selected->update(new KeyMsg(Key::Enter), $area)->model;
         self::assertInstanceOf(Table\Table::class, $again);
-        self::assertSame(-1, $again->selectedIndex(), 'The same row toggles back off');
+        self::assertSame(1, $again->selectedIndex(), 'choosing the chosen row does not unchoose it');
     }
 
     #[Test]

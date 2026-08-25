@@ -262,6 +262,50 @@ final class TreeViewTest extends TestCase
     }
 
     #[Test]
+    public function aDeeplyNestedRowShowsItsLabelAtFullWidthAndDropsItsDetail(): void
+    {
+        $node = new SimpleTreeNode('deep', 'deep', 'value');
+        foreach (range(1, 10) as $level) {
+            $node = new SimpleTreeNode('level' . $level, 'level' . $level, '', [$node]);
+        }
+        $path = TreePath::root();
+        $tree = TreeView::new([$node]);
+        foreach (range(10, 1) as $level) {
+            $path = $path->child('level' . $level);
+            $tree = $tree->expand($path);
+        }
+
+        $lines = self::draw($tree, 40, 12);
+
+        self::assertSame('deep', rtrim(mb_substr($lines[10], 22)), 'the guides reach past the detail column, so the label takes the rest of the row');
+    }
+
+    #[Test]
+    public function aRowWithoutADetailColumnOpensWhereverItIsClicked(): void
+    {
+        $node = new SimpleTreeNode('deep', 'deep', 'value');
+        foreach (range(1, 10) as $level) {
+            $node = new SimpleTreeNode('level' . $level, 'level' . $level, '', [$node]);
+        }
+        $path = TreePath::root();
+        $tree = TreeView::new([$node]);
+        foreach (range(10, 1) as $level) {
+            $path = $path->child('level' . $level);
+            $tree = $tree->expand($path);
+        }
+
+        $area = new Rect(0, 0, 40, 12);
+        $level1 = TreePath::root()->child('level10')->child('level9')->child('level8')
+            ->child('level7')->child('level6')->child('level5')->child('level4')
+            ->child('level3')->child('level2')->child('level1');
+
+        $clicked = self::afterMouse($tree, 25, 9, $area);
+
+        self::assertSame(['level10', 'level9', 'level8', 'level7', 'level6', 'level5', 'level4', 'level3', 'level2', 'level1'], $clicked->cursor()->keys);
+        self::assertFalse($clicked->isExpanded($level1), 'with no value drawn beside it, the whole row is the name');
+    }
+
+    #[Test]
     public function aClickOnTheLabelTogglesWhileAClickOnTheDetailOnlySelects(): void
     {
         $area = new Rect(0, 0, 30, 6);

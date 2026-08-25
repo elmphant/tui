@@ -339,7 +339,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
             if ($currentWidth + $characterWidth > $maxWidth && $index > $rowStart) {
                 if ($lastSpaceOffset >= 0) {
                     $rows[] = [$rowStart, $lastSpaceOffset];
-                    $rowStart += $character === ' ' ? $lastSpaceOffset : $lastSpaceOffset + 1;
+                    $rowStart += $lastSpaceOffset + 1;
                     $currentWidth = $currentWidth - $widthAtLastSpace - 1 + $characterWidth;
                 } else {
                     $rows[] = [$rowStart, $index - $rowStart];

@@ -421,9 +421,12 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
 
         if ($message->inRect($area)) {
             if ($message->action === MouseAction::WheelDown) {
-                $maxOffset = $this->totalItemRows($itemWidth) - $area->height;
+                $scrolled = ScrollWindow::clamped(
+                    $displayOffset + $message->wheelSteps(),
+                    $this->extents($area)->maxOffset($area->height),
+                );
 
-                return new UpdateResult($this->cloneWith(scrollOffset: min(max(0, $maxOffset), $displayOffset + $message->wheelSteps()), followCursor: false));
+                return new UpdateResult($this->cloneWith(scrollOffset: $scrolled, followCursor: false));
             }
 
             if ($message->action === MouseAction::WheelUp) {
@@ -458,7 +461,7 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
 
         return $this->cloneWith(
             cursor: $cursor,
-            scrollOffset: min(max(0, $anchor), $extents->maxOffset($area->height)),
+            scrollOffset: ScrollWindow::clamped($anchor, $extents->maxOffset($area->height)),
         );
     }
 
@@ -481,11 +484,6 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         }
 
         return $extents->rowAtLine(min($line, max(0, $extents->totalHeight() - 1))) ?? $last;
-    }
-
-    private function totalItemRows(int $itemWidth): int
-    {
-        return $this->extentsAt($itemWidth)->totalHeight();
     }
 
     private function ensureCursorVisible(Rect $area): self

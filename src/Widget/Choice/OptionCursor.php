@@ -44,14 +44,14 @@ trait OptionCursor
 
     protected function cursorScrollOffset(int $areaHeight): int
     {
-        $totalRows = $this->rowOffset() + count($this->options);
-        $cursorRow = $this->cursorRow();
+        $count = count($this->options);
+        $visibleRows = max(0, $areaHeight - $this->rowOffset());
 
-        if ($areaHeight > 0 && $totalRows > $areaHeight && $cursorRow >= $areaHeight) {
-            return $cursorRow - $areaHeight + 1;
+        if ($visibleRows === 0 || $count <= $visibleRows || $this->cursor < $visibleRows) {
+            return 0;
         }
 
-        return 0;
+        return $this->cursor - $visibleRows + 1;
     }
 
     /**

@@ -17,6 +17,7 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Rendering\WrapCache;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Wrap;
@@ -176,6 +177,20 @@ final class ParagraphTest extends TestCase
 
         self::assertSame('H', $frame->characters[0]);
         self::assertSame('w', $frame->characters[6]);
+    }
+
+    #[Test]
+    public function aBreakingSpaceThatOverflowsIsDroppedRatherThanACarriedCharacter(): void
+    {
+        $frame = new Frame(3, 3);
+        $paragraph = Paragraph::fromText('abc defgh');
+
+        $paragraph->render($frame, new Rect(0, 0, 3, 3), $this->context());
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame('abc', trim($screen->lineAt(0)));
+        self::assertSame('def', trim($screen->lineAt(1)), 'the overflowed space is dropped, not the f');
+        self::assertSame('gh', trim($screen->lineAt(2)));
     }
 
     #[Test]
@@ -946,7 +961,7 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
-    public function aSpaceThatOverflowsTheRowOpensTheNextOne(): void
+    public function anOverflowingBreakingSpaceIsDroppedSoNoCharacterIsLost(): void
     {
         $frame = new Frame(5, 2);
         for ($index = 0; $index < 10; ++$index) {
@@ -955,8 +970,8 @@ final class ParagraphTest extends TestCase
 
         Paragraph::fromText('abcde fg')->render($frame, new Rect(0, 0, 5, 2), $this->context());
 
-        self::assertSame(' ', $frame->characters[5], 'The space filled the row it broke, so it leads the next one');
-        self::assertSame('f', $frame->characters[6]);
+        self::assertSame('f', $frame->characters[5], 'the continuation line starts at its own first character');
+        self::assertSame('g', $frame->characters[6]);
     }
 
     #[Test]

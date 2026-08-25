@@ -14,7 +14,7 @@ enum EchoMode
     {
         return match ($this) {
             self::Normal => $text,
-            self::Password => str_repeat('•', mb_strlen($text)),
+            self::Password => str_repeat('•', max(0, (int)grapheme_strlen($text))),
             self::None => '',
         };
     }

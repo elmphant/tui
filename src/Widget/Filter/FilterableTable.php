@@ -193,10 +193,12 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
         $searched = array_map(static fn (array $row): string => implode(' ', $row), $this->rows);
 
-        // A matcher may name the same row twice — nothing in the port forbids it
-        // — and one row of data is one row of table.
-        $matching = array_values(array_unique(($this->matcher ?? new SubstringMatcher())->matching($this->query, $searched)));
-        sort($matching);
+        // A matcher may name the same row twice — nothing in the port forbids
+        // it — and an index past the rows names no row at all.
+        $matching = array_values(array_unique(array_filter(
+            ($this->matcher ?? new SubstringMatcher())->matching($this->query, $searched),
+            fn (int $index): bool => isset($this->rows[$index]),
+        )));
 
         return array_map(fn (int $index): array => $this->rows[$index], $matching);
     }

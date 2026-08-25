@@ -128,13 +128,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     public function pathAt(MouseMsg $message, Rect $area): ?TreePath
     {
-        if (!$message->inRect($area)) {
-            return null;
-        }
+        $row = $this->rowAt($message, $area);
 
-        $row = $this->visibleRows()[$this->scrollOffset + $message->y - $area->y] ?? null;
-
-        return $row === null || !$row['selectable'] ? null : $row['path'];
+        return $row === null ? null : $row['path'];
     }
 
     /**
@@ -353,18 +349,37 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             $x += $frame->putStyled($x, $y, $visible['guides'], $onCursor ? $rowStyle : $theme->dim);
             $x += $frame->putStyled($x, $y, $visible['marker'], $onCursor ? $rowStyle : $theme->dim);
 
-            $labelWidth = max(0, $area->x + self::DETAIL_COLUMN - $x);
+            $detailX = $area->x + self::DETAIL_COLUMN;
+            $showsDetail = $x <= $detailX;
+            $labelWidth = $showsDetail ? $detailX - $x : max(0, $area->right() - $x);
             $frame->putStyled($x, $y, CharWidth::truncateToWidth($visible['node']->label(), $labelWidth), $rowStyle);
 
-            $detailX = $area->x + self::DETAIL_COLUMN;
-            $frame->putStyled(
-                $detailX,
-                $y,
-                CharWidth::truncateToWidth($visible['node']->detail(), max(0, $area->right() - $detailX)),
-                $onCursor ? $rowStyle : $theme->dim,
-            );
+            if ($showsDetail) {
+                $frame->putStyled(
+                    $detailX,
+                    $y,
+                    CharWidth::truncateToWidth($visible['node']->detail(), max(0, $area->right() - $detailX)),
+                    $onCursor ? $rowStyle : $theme->dim,
+                );
+            }
             ++$row;
         }
+    }
+
+    /**
+     * The row a pointer event lands on, or null past the last row.
+     *
+     * @return array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}|null
+     */
+    private function rowAt(MouseMsg $message, Rect $area): ?array
+    {
+        if (!$message->inRect($area)) {
+            return null;
+        }
+
+        $row = $this->visibleRows()[$this->scrollOffset + $message->y - $area->y] ?? null;
+
+        return $row === null || !$row['selectable'] ? null : $row;
     }
 
     /**
@@ -386,14 +401,17 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             return $this;
         }
 
-        $path = $this->pathAt($message, $area);
-        if ($path === null) {
+        $row = $this->rowAt($message, $area);
+        if ($row === null) {
             return $this;
         }
 
-        $selected = $this->withCursor($path);
+        $selected = $this->withCursor($row['path']);
 
-        return $message->x - $area->x < self::DETAIL_COLUMN ? $selected->toggle($path) : $selected;
+        $drawsDetail = CharWidth::stringWidth($row['guides']) + CharWidth::stringWidth($row['marker']) <= self::DETAIL_COLUMN;
+        $onDetail = $drawsDetail && $message->x - $area->x >= self::DETAIL_COLUMN;
+
+        return $onDetail ? $selected : $selected->toggle($row['path']);
     }
 
     private function scrolledBy(int $notches, Rect $area): self
