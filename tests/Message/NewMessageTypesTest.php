@@ -27,6 +27,18 @@ final class NewMessageTypesTest extends TestCase
         $this->assertSame('hello world', $msg->content);
     }
 
+    /**
+     * A paste is bytes off the wire in whatever encoding the source had. One that
+     * cannot be a character makes every UTF-8-aware call on the whole paste answer
+     * nothing — a field reading it would drop the paste entire, not the byte.
+     */
+    #[Test]
+    public function aPasteKeepsOnlyTheBytesThatFormCharacters(): void
+    {
+        self::assertSame('abcd', (new PasteMsg("ab\xffcd"))->content);
+        self::assertSame('naïve 😀', (new PasteMsg('naïve 😀'))->content, 'what is already text is untouched');
+    }
+
     #[Test]
     public function focusMsgHoldsFocusState(): void
     {

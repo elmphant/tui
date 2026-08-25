@@ -11,4 +11,6 @@ enum MouseAction
     case Motion;
     case WheelUp;
     case WheelDown;
+    case WheelLeft;
+    case WheelRight;
 }

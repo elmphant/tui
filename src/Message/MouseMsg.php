@@ -66,7 +66,10 @@ final readonly class MouseMsg implements Message
 
     public function isWheel(): bool
     {
-        return $this->action === MouseAction::WheelUp || $this->action === MouseAction::WheelDown;
+        return match ($this->action) {
+            MouseAction::WheelUp, MouseAction::WheelDown, MouseAction::WheelLeft, MouseAction::WheelRight => true,
+            default => false,
+        };
     }
 
     public function isDrag(): bool
