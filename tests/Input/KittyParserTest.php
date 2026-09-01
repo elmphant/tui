@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Input;
 
 use Elmphant\Tui\Input\InputParser;
-use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\TerminalFocusMsg;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -87,7 +87,7 @@ final class KittyParserTest extends TestCase
     public function focusIn(): void
     {
         $result = InputParser::parseSequence("\x1b[I");
-        $this->assertInstanceOf(FocusMsg::class, $result);
+        $this->assertInstanceOf(TerminalFocusMsg::class, $result);
         $this->assertTrue($result->focused);
     }
 
@@ -95,7 +95,7 @@ final class KittyParserTest extends TestCase
     public function focusOut(): void
     {
         $result = InputParser::parseSequence("\x1b[O");
-        $this->assertInstanceOf(FocusMsg::class, $result);
+        $this->assertInstanceOf(TerminalFocusMsg::class, $result);
         $this->assertFalse($result->focused);
     }
 

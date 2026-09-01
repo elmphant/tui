@@ -16,6 +16,7 @@ use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -180,9 +181,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
     public function withFocus(bool $focused): static
     {
-        return $this->cloneWith(focused: $focused, tabs: $this->tabsWithFocus(
-            static fn (ScrollPane $pane): ScrollPane => $focused ? $pane->withFocusAt(0) : $pane->withFocus(false),
-        ));
+        return $this->seated($focused);
     }
 
     public function withFocusReversed(): static
@@ -210,6 +209,10 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        if ($message instanceof FocusMsg) {
+            return new UpdateResult($this->seated($message->focused));
+        }
+
         if (!$this->fitsIn($area)) {
             return new UpdateResult($this);
         }
@@ -262,6 +265,13 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
     {
         return $this->cloneWith(globalKeybindings: $keybindings, tabs: $this->tabsWithPane(
             static fn (ScrollPane $pane): ScrollPane => $pane->withGlobalKeybindings($keybindings),
+        ));
+    }
+
+    private function seated(bool $focused): static
+    {
+        return $this->cloneWith(focused: $focused, tabs: $this->tabsWithFocus(
+            static fn (ScrollPane $pane): ScrollPane => $focused ? $pane->withFocusAt(0) : $pane->withFocus(false),
         ));
     }
 

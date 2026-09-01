@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\Frame;
@@ -153,10 +154,7 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withFocus(bool $focused): static
     {
-        return $this->cloneWith(
-            focused: $focused,
-            pane: $focused ? $this->pane->withFocusAt(0) : $this->pane->withFocus(false),
-        );
+        return $this->seated($focused);
     }
 
     public function withFocusReversed(): static
@@ -187,6 +185,10 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        if ($message instanceof FocusMsg) {
+            return new UpdateResult($this->seated($message->focused));
+        }
+
         $result = (new ChildDispatcher())->dispatchOne($this->pane, $message, $this->contentArea($area));
 
         return $result->changed
@@ -256,6 +258,14 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
     public function contentArea(Rect $area): Rect
     {
         return $this->inset()->inner($area);
+    }
+
+    private function seated(bool $focused): static
+    {
+        return $this->cloneWith(
+            focused: $focused,
+            pane: $focused ? $this->pane->withFocusAt(0) : $this->pane->withFocus(false),
+        );
     }
 
     private function inset(): Inset

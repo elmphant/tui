@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Message;
 
-use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\PasteMsg;
+use Elmphant\Tui\Message\TerminalFocusMsg;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -40,9 +40,9 @@ final class NewMessageTypesTest extends TestCase
     }
 
     #[Test]
-    public function focusMsgHoldsFocusState(): void
+    public function terminalFocusMsgHoldsWhetherTheWindowHasIt(): void
     {
-        $this->assertTrue((new FocusMsg(true))->focused);
-        $this->assertFalse((new FocusMsg(false))->focused);
+        $this->assertTrue((new TerminalFocusMsg(true))->focused);
+        $this->assertFalse((new TerminalFocusMsg(false))->focused);
     }
 }

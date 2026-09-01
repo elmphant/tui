@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Input;
 
-use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
@@ -12,6 +11,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\TerminalFocusMsg;
 use Elmphant\Tui\Rendering\Grapheme;
 
 /**
@@ -224,11 +224,11 @@ final class InputParser
         }
 
         if ($sequence === "\x1b[I") {
-            return new FocusMsg(true);
+            return new TerminalFocusMsg(true);
         }
 
         if ($sequence === "\x1b[O") {
-            return new FocusMsg(false);
+            return new TerminalFocusMsg(false);
         }
 
         // `?`, `>` and `=` open a device report. Only `<` belongs to a reader, on a
