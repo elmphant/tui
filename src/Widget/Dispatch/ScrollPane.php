@@ -17,6 +17,7 @@ use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\VerticalStack;
 use Elmphant\Tui\Layout\VerticalStackLayout;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -168,6 +169,10 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
 
         if ($message instanceof PasteMsg) {
             return $this->typed($message, $area) ?? new UpdateResult($this);
+        }
+
+        if ($message instanceof FocusMsg) {
+            return new UpdateResult($message->focused ? $this->withFocusAt(0) : $this->withFocus(false));
         }
 
         return $this->broadcast($message, $area);
