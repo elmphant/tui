@@ -166,8 +166,8 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
     public function update(Message $message, Rect $area): UpdateResult
     {
         return match (true) {
-            $message instanceof KeyMsg && $this->focused => $this->handleKey($message, $area),
-            $message instanceof PasteMsg && $this->focused => new UpdateResult($this->pasted($message->content) ?? $this),
+            $message instanceof KeyMsg => $this->handleKey($message, $area),
+            $message instanceof PasteMsg => new UpdateResult($this->pasted($message->content) ?? $this),
             $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area),
             default => new UpdateResult($this),
         };

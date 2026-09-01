@@ -23,7 +23,7 @@ use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Feedback\ProgressBar;
 use Elmphant\Tui\Widget\Field\Button;
-use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Container;
 use Elmphant\Tui\Widget\Widget;
@@ -157,12 +157,22 @@ final class BarSlotPlacementTest extends TestCase
     }
 
     #[Test]
-    public function anInteractiveSlotWithNoWidthStillTakesKeys(): void
+    public function aFocusedSlotWithNoWidthStillTakesKeys(): void
     {
         $pressed = new TestMessage('pressed');
-        $widthless = new class($pressed) implements Interactive {
+        $widthless = new class($pressed) implements Focusable {
             public function __construct(private readonly Message $pressed)
             {
+            }
+
+            public function isFocused(): bool
+            {
+                return true;
+            }
+
+            public function withFocus(bool $focused): static
+            {
+                return $this;
             }
 
             public function sizing(): Sizing

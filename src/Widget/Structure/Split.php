@@ -19,13 +19,16 @@ use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\SplitState;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -126,6 +129,10 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
             }
         }
 
+        if ($message instanceof KeyMsg || $message instanceof PasteMsg) {
+            return $this->toMarkedPane($message, $area);
+        }
+
         return $this->toPanes($message, $area);
     }
 
@@ -199,6 +206,32 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
 
             ++$index;
         }
+    }
+
+    /**
+     * Typing has one destination. Nothing here cycles focus, so the pane the host
+     * marked is the answer, and none means nobody has said yet.
+     *
+     * @return UpdateResult<static>
+     */
+    private function toMarkedPane(Message $message, Rect $area): UpdateResult
+    {
+        foreach ($this->placedChildren($area) as $index => [$child, $rect]) {
+            if (!$child instanceof Focusable || !$child->isFocused()) {
+                continue;
+            }
+
+            $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($child, $message, $rect);
+
+            return new UpdateResult(
+                $result->changed
+                    ? $this->cloneWith(children: array_values(array_replace($this->children, [$index => $result->child])))
+                    : $this,
+                $result->command,
+            );
+        }
+
+        return new UpdateResult($this);
     }
 
     /**

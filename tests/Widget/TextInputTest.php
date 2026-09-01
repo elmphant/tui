@@ -227,15 +227,6 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function ignoresInputWhenNotFocused(): void
-    {
-        $input = TextInput::new();
-        $area = Rect::fromSize(40, 1);
-        $result = $input->update(new KeyMsg('x'), $area);
-        self::assertSame($input, $result->model);
-    }
-
-    #[Test]
     public function withValueSetsCursorToEnd(): void
     {
         $input = TextInput::new()->withValue('hello');

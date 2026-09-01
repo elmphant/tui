@@ -7,11 +7,14 @@ namespace Elmphant\Tui\Widget\Bar;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 
@@ -110,6 +113,10 @@ final class BarSlotRenderer
                 ?? new Rect($contentArea->x, $contentArea->y, 0, 1);
         }
 
+        if ($message instanceof KeyMsg || $message instanceof PasteMsg) {
+            $interactive = self::marked($interactive);
+        }
+
         $result = (new ChildDispatcher($globalKeybindings))->dispatchMap($interactive, $areas, $message);
 
         return [$result->overrides, $result->command];
@@ -134,6 +141,25 @@ final class BarSlotRenderer
         };
 
         return new Rect($offsetX, $contentArea->y, $width, 1);
+    }
+
+    /**
+     * Typing has one destination, and a bar cycles nothing, so the slot the host
+     * marked is the answer.
+     *
+     * @param array<string, Interactive> $slots
+     *
+     * @return array<string, Interactive>
+     */
+    private static function marked(array $slots): array
+    {
+        foreach ($slots as $key => $slot) {
+            if ($slot instanceof Focusable && $slot->isFocused()) {
+                return [$key => $slot];
+            }
+        }
+
+        return [];
     }
 
     private static function render(
