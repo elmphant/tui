@@ -185,7 +185,7 @@ final class CheckboxTest extends TestCase
         $theme = Theme::dark();
         $checkbox = Checkbox::new('A')->withFocus(true);
         $frame = new Frame(20, 1);
-        $checkbox->render($frame, new Rect(0, 0, 20, 1), new RenderContext($theme));
+        $checkbox->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused($theme));
 
         $expectedForeground = $theme->cursorStyle->foregroundValue();
         self::assertSame($expectedForeground, $frame->foregrounds[0]);
@@ -222,7 +222,7 @@ final class CheckboxTest extends TestCase
         $area = new Rect(0, 0, 20, 1);
 
         $focusedBuffer = new Frame(20, 1);
-        Checkbox::new('A')->withFocus(true)->render($focusedBuffer, $area, new RenderContext($theme));
+        Checkbox::new('A')->withFocus(true)->render($focusedBuffer, $area, RenderContext::focused($theme));
 
         $checkedBuffer = new Frame(20, 1);
         Checkbox::new('A')->withChecked(true)->render($checkedBuffer, $area, new RenderContext($theme));

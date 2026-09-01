@@ -289,17 +289,16 @@ final class PanelRenderingTest extends TestCase
             ->add(Select::new(['X', 'Y', 'Z']))
             ->withFocus(true);
 
-        $context = new RenderContext(Theme::dark());
         $area = new Rect(0, 0, 30, 15);
 
         // Render focused
         $buffer1 = new Frame(30, 15);
-        $panel->render($buffer1, $area, $context);
+        $panel->render($buffer1, $area, RenderContext::focused(Theme::dark()));
 
         // Toggle to unfocused
         $unfocused = $panel->withFocus(false);
         $buffer2 = new Frame(30, 15);
-        $unfocused->render($buffer2, $area, $context);
+        $unfocused->render($buffer2, $area, RenderContext::unfocused(Theme::dark()));
 
         // Focus keeps the rounded shape and marks itself in bold
         self::assertSame('╭', $buffer1->characters[0], 'focused: top-left corner');

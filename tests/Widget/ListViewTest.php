@@ -359,7 +359,7 @@ final class ListViewTest extends TestCase
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $theme = Theme::dark();
-        $list->render($frame, $area, new RenderContext($theme));
+        $list->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame('A', $frame->characters[0]);
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[0]);
@@ -548,7 +548,7 @@ final class ListViewTest extends TestCase
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 20, 5);
         $theme = Theme::dark();
-        $list->render($frame, $area, new RenderContext($theme));
+        $list->render($frame, $area, RenderContext::focused($theme));
 
         $secondRowIndex = 1 * 20;
         self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[$secondRowIndex]);
@@ -574,7 +574,7 @@ final class ListViewTest extends TestCase
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 20, 5);
         $theme = Theme::dark();
-        $list->render($frame, $area, new RenderContext($theme));
+        $list->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[0]);
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[0]);
@@ -1814,7 +1814,7 @@ final class ListViewTest extends TestCase
         $list = ListView::new([new SimpleListItem('AB')])->withCursor(0)->withFocus(true);
         $frame = new Frame(20, 3);
 
-        $list->render($frame, new Rect(0, 0, 20, 3), new RenderContext($theme));
+        $list->render($frame, new Rect(0, 0, 20, 3), RenderContext::focused($theme));
 
         $expected = $theme->cursorStyle->backgroundValue();
         self::assertSame($expected, $frame->backgrounds[0], 'Highlight starts at the row start');
@@ -1898,7 +1898,7 @@ final class ListViewTest extends TestCase
             ->withFocus(true);
         $frame = new Frame(20, 4);
 
-        $list->render($frame, new Rect(0, 0, 20, 4), new RenderContext($theme));
+        $list->render($frame, new Rect(0, 0, 20, 4), RenderContext::focused($theme));
 
         $descriptionIndex = 1 * 20 + 2;
         self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[$descriptionIndex]);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
@@ -15,28 +16,29 @@ use PHPUnit\Framework\TestCase;
 final class FilterableTableDrawsTreeFocusTest extends TestCase
 {
     #[Test]
-    public function aTableTheTreeFocusesLooksLikeOneFocusedByItsOwnFlag(): void
+    public function aTableTheTreeFocusesUnderlinesItsField(): void
     {
         $table = FilterableTable::new(['Name'], [['one'], ['two']]);
         $area = new Rect(0, 0, 40, 6);
 
-        $byFlag = new Frame(40, 6);
-        $table->withFocus(true)->render($byFlag, $area, new RenderContext(Theme::dark()));
+        $focused = new Frame(40, 6);
+        $table->render($focused, $area, RenderContext::focused(Theme::dark()));
 
-        $byTree = new Frame(40, 6);
-        $context = new RenderContext(Theme::dark());
-        $context->withFocusHere(static function () use ($table, $byTree, $area, $context): void {
-            $table->render($byTree, $area, $context);
-        });
+        $plain = new Frame(40, 6);
+        $table->render($plain, $area, RenderContext::unfocused(Theme::dark()));
 
-        self::assertSame(self::snapshot($byFlag), self::snapshot($byTree));
+        self::assertTrue(self::underlinesAnything($focused), 'the field is underlined where the keyboard is');
+        self::assertFalse(self::underlinesAnything($plain), 'and plain where it is not');
     }
 
-    private static function snapshot(Frame $frame): string
+    private static function underlinesAnything(Frame $frame): bool
     {
-        return implode('|', $frame->characters)
-            . '#' . implode('|', $frame->foregrounds)
-            . '#' . implode('|', $frame->backgrounds)
-            . '#' . implode('|', $frame->attributes);
+        foreach ($frame->attributes as $attributes) {
+            if (($attributes & Attr::UNDERLINE) !== 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

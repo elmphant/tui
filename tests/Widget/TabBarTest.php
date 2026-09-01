@@ -219,7 +219,7 @@ final class TabBarTest extends TestCase
         $theme = Theme::dark()->withFocusedBorder(BorderStyle::Double);
         $bar = TabBar::new()->addTab('A');
 
-        self::assertStringContainsString('╔', $this->screenWithTheme($bar->withFocus(true), $area, $theme));
+        self::assertStringContainsString('╔', $this->screenWithTheme($bar->withFocus(true), $area, $theme, focused: true));
         self::assertStringNotContainsString('╔', $this->screenWithTheme($bar, $area, $theme));
     }
 
@@ -230,7 +230,7 @@ final class TabBarTest extends TestCase
         $bar = TabBar::new()->addTab('A')->withFocusedBorderStyle($accent)->withFocus(true);
 
         $frame = new Frame(20, 8);
-        $bar->render($frame, new Rect(0, 0, 20, 8), new RenderContext(Theme::dark()));
+        $bar->render($frame, new Rect(0, 0, 20, 8), $this->focusedContext());
 
         self::assertSame($accent->foregroundValue(), $frame->foregrounds[0]);
     }
@@ -257,7 +257,7 @@ final class TabBarTest extends TestCase
         );
         self::assertStringContainsString(
             'to switch',
-            $this->screenOfTabBar($bar->withFocus(true), new Rect(0, 0, 40, 8)),
+            $this->screenOfTabBar($bar->withFocus(true), new Rect(0, 0, 40, 8), focused: true),
         );
     }
 
@@ -329,7 +329,7 @@ final class TabBarTest extends TestCase
                 Actions::TAB_NEXT => ['pgdn'],
             ]));
 
-        $screen = $this->screenOfTabBar($tabBar, new Rect(0, 0, 40, 6));
+        $screen = $this->screenOfTabBar($tabBar, new Rect(0, 0, 40, 6), focused: true);
 
         self::assertStringContainsString('PgUp', $screen, 'The hint names the bound key');
         self::assertStringContainsString('PgDn', $screen, 'For both directions');
@@ -1491,7 +1491,7 @@ final class TabBarTest extends TestCase
     public function focusedBorderForegroundApplied(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('One')->withFocus(true)->render($frame, new Rect(0, 0, 30, 10), $this->context());
+        TabBar::new()->addTab('One')->withFocus(true)->render($frame, new Rect(0, 0, 30, 10), $this->focusedContext());
         self::assertSame(Theme::dark()->focusedBorderStyle->foregroundValue(), $frame->foregrounds[0]);
     }
 
@@ -1525,7 +1525,7 @@ final class TabBarTest extends TestCase
     public function rendersFullHintWhenSpaceAvailable(): void
     {
         $frame = new Frame(40, 10);
-        TabBar::new()->addTab('One')->addTab('Two')->withFocus(true)->render($frame, new Rect(0, 0, 40, 10), $this->context());
+        TabBar::new()->addTab('One')->addTab('Two')->withFocus(true)->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
         self::assertStringContainsString("\u{2190} \u{2192} to switch", $this->bufferRow($frame, 1, 40));
     }
 
@@ -1533,7 +1533,7 @@ final class TabBarTest extends TestCase
     public function rendersShortHintWhenLimitedSpace(): void
     {
         $frame = new Frame(34, 10);
-        TabBar::new()->addTab('First Tab')->addTab('Second Tab')->withFocus(true)->render($frame, new Rect(0, 0, 34, 10), $this->context());
+        TabBar::new()->addTab('First Tab')->addTab('Second Tab')->withFocus(true)->render($frame, new Rect(0, 0, 34, 10), $this->focusedContext());
         $row = $this->bufferRow($frame, 1, 34);
         self::assertStringContainsString("\u{2190} \u{2192}", $row);
         self::assertStringNotContainsString('to switch', $row);
@@ -1555,7 +1555,7 @@ final class TabBarTest extends TestCase
         // tabs exist.
         $frame = new Frame(40, 10);
         TabBar::new()->addTab('Very Long Tab Name')->addTab('Another Long Tab')->withFocus(true)
-            ->render($frame, new Rect(0, 0, 40, 10), $this->context());
+            ->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
         self::assertStringContainsString("\u{2190}", $this->bufferRow($frame, 1, 40));
     }
 
@@ -1573,7 +1573,7 @@ final class TabBarTest extends TestCase
     public function hintRenderedWithDimStyle(): void
     {
         $frame = new Frame(40, 10);
-        TabBar::new()->addTab('A')->addTab('B')->withFocus(true)->render($frame, new Rect(0, 0, 40, 10), $this->context());
+        TabBar::new()->addTab('A')->addTab('B')->withFocus(true)->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
         $row = $this->bufferRow($frame, 1, 40);
         $hintStart = mb_strpos($row, "\u{2190}");
         self::assertNotFalse($hintStart);
@@ -2134,7 +2134,7 @@ final class TabBarTest extends TestCase
             ->withFocus(true);
         $area = new Rect(0, 0, 30, 20);
         $frame = new Frame(30, 20);
-        $tabBar->render($frame, $area, $this->context());
+        $tabBar->render($frame, $area, $this->focusedContext());
         self::assertSame('F', $frame->characters[4 * 30 + 4]);
         self::assertSame('U', $frame->characters[7 * 30 + 4]);
     }
@@ -2150,7 +2150,7 @@ final class TabBarTest extends TestCase
             ->withFocus(true);
         $area = new Rect(0, 0, 30, 20);
         $frame = new Frame(30, 20);
-        $tabBar->render($frame, $area, $this->context());
+        $tabBar->render($frame, $area, $this->focusedContext());
         self::assertSame('F', $frame->characters[3 * 30 + 3]);
         self::assertSame('U', $frame->characters[6 * 30 + 3]);
         self::assertSame('U', $frame->characters[9 * 30 + 3]);
@@ -2179,7 +2179,7 @@ final class TabBarTest extends TestCase
             ->withFocusReversed();
         $area = new Rect(0, 0, 30, 20);
         $frame = new Frame(30, 20);
-        $tabBar->render($frame, $area, $this->context());
+        $tabBar->render($frame, $area, $this->focusedContext());
         self::assertSame('U', $frame->characters[4 * 30 + 4]);
         self::assertSame('F', $frame->characters[7 * 30 + 4]);
     }
@@ -2195,7 +2195,7 @@ final class TabBarTest extends TestCase
             ->withFocusReversed();
         $area = new Rect(0, 0, 30, 20);
         $frame = new Frame(30, 20);
-        $tabBar->render($frame, $area, $this->context());
+        $tabBar->render($frame, $area, $this->focusedContext());
         self::assertSame('U', $frame->characters[3 * 30 + 3]);
         self::assertSame('U', $frame->characters[6 * 30 + 3]);
         self::assertSame('F', $frame->characters[9 * 30 + 3]);
@@ -2214,7 +2214,7 @@ final class TabBarTest extends TestCase
         $switched = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $back = $switched->update(new KeyMsg(Key::Left), $area)->model;
         $frame = new Frame(30, 20);
-        $back->render($frame, $area, $this->context());
+        $back->render($frame, $area, $this->focusedContext());
         self::assertSame('F', $frame->characters[3 * 30 + 3]);
     }
 
@@ -2238,7 +2238,7 @@ final class TabBarTest extends TestCase
         $blurred = $tabBar->withFocus(false);
         $refocused = $blurred->withFocus(true);
         $frame = new Frame(30, 20);
-        $refocused->render($frame, new Rect(0, 0, 30, 20), $this->context());
+        $refocused->render($frame, new Rect(0, 0, 30, 20), $this->focusedContext());
         self::assertSame('F', $frame->characters[3 * 30 + 3]);
     }
 
@@ -2253,7 +2253,7 @@ final class TabBarTest extends TestCase
         self::assertFalse($defocused->isFocused());
         $refocused = $defocused->withFocus(true);
         $frame = new Frame(30, 20);
-        $refocused->render($frame, new Rect(0, 0, 30, 20), $this->context());
+        $refocused->render($frame, new Rect(0, 0, 30, 20), $this->focusedContext());
         self::assertSame('F', $frame->characters[3 * 30 + 3]);
     }
 
@@ -2267,7 +2267,7 @@ final class TabBarTest extends TestCase
         $area = new Rect(0, 0, 30, 20);
         $switched = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $frame = new Frame(30, 20);
-        $switched->render($frame, $area, $this->context());
+        $switched->render($frame, $area, $this->focusedContext());
         self::assertSame('F', $frame->characters[3 * 30 + 3]);
     }
 
@@ -2284,11 +2284,11 @@ final class TabBarTest extends TestCase
             ->withFocus(true);
         $area = new Rect(0, 0, 30, 20);
         $buffer1 = new Frame(30, 20);
-        $tabBar->render($buffer1, $area, $this->context());
+        $tabBar->render($buffer1, $area, $this->focusedContext());
         self::assertSame('F', $buffer1->characters[4 * 30 + 4]);
         $tabbed = $tabBar->update(new KeyMsg(Key::Tab), $area)->model;
         $buffer2 = new Frame(30, 20);
-        $tabbed->render($buffer2, $area, $this->context());
+        $tabbed->render($buffer2, $area, $this->focusedContext());
         self::assertSame('U', $buffer2->characters[4 * 30 + 4]);
         self::assertSame('F', $buffer2->characters[7 * 30 + 4]);
     }
@@ -2319,7 +2319,7 @@ final class TabBarTest extends TestCase
         $area = new Rect(0, 0, 30, 20);
         $tabbed = $tabBar->update(new KeyMsg(Key::Tab), $area)->model;
         $frame = new Frame(30, 20);
-        $tabbed->render($frame, $area, $this->context());
+        $tabbed->render($frame, $area, $this->focusedContext());
         self::assertSame('U', $frame->characters[3 * 30 + 4]);
         self::assertSame('F', $frame->characters[7 * 30 + 4]);
     }
@@ -2339,7 +2339,7 @@ final class TabBarTest extends TestCase
         $tabbed = $tabBar->update(new KeyMsg(Key::Tab), $area)->model;
         $tabbed = $tabbed->update(new KeyMsg(Key::Tab), $area)->model;
         $frame = new Frame(30, 30);
-        $tabbed->render($frame, $area, $this->context());
+        $tabbed->render($frame, $area, $this->focusedContext());
         self::assertSame('U', $frame->characters[3 * 30 + 4]);
         self::assertSame('U', $frame->characters[7 * 30 + 4]);
         self::assertSame('F', $frame->characters[11 * 30 + 4]);
@@ -2433,7 +2433,7 @@ final class TabBarTest extends TestCase
 
         $after = $tabBar->update(new KeyMsg(Key::Tab), $area)->model;
         $frame = new Frame(40, 30);
-        $after->render($frame, $area, $this->context());
+        $after->render($frame, $area, $this->focusedContext());
         self::assertSame('B', $frame->characters[4 * 40 + 1]);
     }
 
@@ -2451,7 +2451,7 @@ final class TabBarTest extends TestCase
         $atSecond = $tabBar->update(new KeyMsg(Key::Tab), $area)->model;
         $backToFirst = $atSecond->update(new KeyMsg(Key::Tab, shift: true), $area)->model;
         $frame = new Frame(40, 30);
-        $backToFirst->render($frame, $area, $this->context());
+        $backToFirst->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
     }
 
@@ -2470,7 +2470,7 @@ final class TabBarTest extends TestCase
         $switched = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         self::assertSame(1, $switched->selectedTab());
         $frame = new Frame(40, 30);
-        $switched->render($frame, $area, $this->context());
+        $switched->render($frame, $area, $this->focusedContext());
         self::assertSame('X', $frame->characters[3 * 40 + 1]);
     }
 
@@ -2770,7 +2770,7 @@ final class TabBarTest extends TestCase
         );
         self::assertSame(1, $switched->model->selectedTab());
         $frame = new Frame(40, 20);
-        $switched->model->render($frame, $area, $this->context());
+        $switched->model->render($frame, $area, $this->focusedContext());
         self::assertSame('X', $frame->characters[3 * 40 + 1]);
     }
 
@@ -2810,7 +2810,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 30);
-        $switched->model->render($frame, $area, $this->context());
+        $switched->model->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
         self::assertSame('b', $frame->characters[4 * 40 + 1]);
     }
@@ -2865,7 +2865,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $bufferA = new Frame(40, 20);
-        $clickOnA->model->render($bufferA, $area, $this->context());
+        $clickOnA->model->render($bufferA, $area, $this->focusedContext());
         self::assertSame('A', $bufferA->characters[3 * 40 + 1]);
         self::assertSame('b', $bufferA->characters[4 * 40 + 1]);
 
@@ -2874,7 +2874,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $bufferB = new Frame(40, 20);
-        $clickOnB->model->render($bufferB, $area, $this->context());
+        $clickOnB->model->render($bufferB, $area, $this->focusedContext());
         self::assertSame('a', $bufferB->characters[3 * 40 + 1]);
         self::assertSame('B', $bufferB->characters[4 * 40 + 1]);
     }
@@ -2894,7 +2894,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $bufferEdge = new Frame(40, 20);
-        $clickAtLeftEdge->model->render($bufferEdge, $area, $this->context());
+        $clickAtLeftEdge->model->render($bufferEdge, $area, $this->focusedContext());
         self::assertSame('a', $bufferEdge->characters[3 * 40 + 1]);
         self::assertSame('B', $bufferEdge->characters[4 * 40 + 1]);
     }
@@ -2914,7 +2914,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $bufferRight = new Frame(40, 20);
-        $clickAtRightInside->model->render($bufferRight, $area, $this->context());
+        $clickAtRightInside->model->render($bufferRight, $area, $this->focusedContext());
         self::assertSame('a', $bufferRight->characters[3 * 40 + 1]);
         self::assertSame('B', $bufferRight->characters[4 * 40 + 1]);
     }
@@ -2934,7 +2934,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $bufferBelow = new Frame(40, 20);
-        $clickBelow->model->render($bufferBelow, $area, $this->context());
+        $clickBelow->model->render($bufferBelow, $area, $this->focusedContext());
         self::assertSame('A', $bufferBelow->characters[3 * 40 + 1]);
         self::assertSame('b', $bufferBelow->characters[4 * 40 + 1]);
     }
@@ -2957,7 +2957,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 20);
-        $clickOnB->model->render($frame, $area, $this->context());
+        $clickOnB->model->render($frame, $area, $this->focusedContext());
         self::assertSame('a', $frame->characters[3 * 40 + 1]);
         self::assertSame('B', $frame->characters[5 * 40 + 1]);
     }
@@ -3151,8 +3151,8 @@ final class TabBarTest extends TestCase
     public function tabHintNearRightEdge(): void
     {
         $frame = new Frame(50, 10);
-        TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
-            ->render($frame, new Rect(0, 0, 50, 10), $this->context());
+        TabBar::new()->addTab('A')->addTab('B')
+            ->render($frame, new Rect(0, 0, 50, 10), $this->focusedContext());
         $row = $this->bufferRow($frame, 1, 50);
         $hintPos = mb_strpos($row, "\u{2190}");
         self::assertNotFalse($hintPos);
@@ -3453,26 +3453,17 @@ final class TabBarTest extends TestCase
         self::assertSame($second, $second->update(new KeyMsg(Key::Tab), $area)->model);
     }
 
-    // ── withFocus: focused=true calls focusFirst, focused=false calls blurAll ──
-
     #[Test]
-    public function withFocusTrueVsFalseProduceDifferentResults(): void
+    public function withFocusRemembersWhetherItWasHandedTheKeyboard(): void
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
             ->add($this->createTrackableFocusable('A'))
             ->add($this->createTrackableFocusable('B'));
         $focused = $tabBar->withFocus(true);
-        $blurred = $focused->withFocus(false);
+
         self::assertTrue($focused->isFocused());
-        self::assertFalse($blurred->isFocused());
-        $area = new Rect(0, 0, 40, 20);
-        $bufferFocused = new Frame(40, 20);
-        $focused->render($bufferFocused, $area, $this->context());
-        self::assertSame('A', $bufferFocused->characters[3 * 40 + 1]);
-        $bufferBlurred = new Frame(40, 20);
-        $blurred->render($bufferBlurred, $area, $this->context());
-        self::assertSame('a', $bufferBlurred->characters[3 * 40 + 1]);
+        self::assertFalse($focused->withFocus(false)->isFocused());
     }
 
     // ── withFocusReversed always sets focused=true ──
@@ -3488,7 +3479,7 @@ final class TabBarTest extends TestCase
             ->withFocusReversed();
         $area = new Rect(0, 0, 40, 30);
         $frame = new Frame(40, 30);
-        $tabBar->render($frame, $area, $this->context());
+        $tabBar->render($frame, $area, $this->focusedContext());
         self::assertSame('a', $frame->characters[3 * 40 + 1]);
         self::assertSame('b', $frame->characters[4 * 40 + 1]);
         self::assertSame('C', $frame->characters[5 * 40 + 1]);
@@ -3851,9 +3842,9 @@ final class TabBarTest extends TestCase
         $last = $tabBar->withFocusReversed();
         $area = new Rect(0, 0, 40, 30);
         $bufFirst = new Frame(40, 30);
-        $first->render($bufFirst, $area, $this->context());
+        $first->render($bufFirst, $area, $this->focusedContext());
         $bufLast = new Frame(40, 30);
-        $last->render($bufLast, $area, $this->context());
+        $last->render($bufLast, $area, $this->focusedContext());
         self::assertSame('A', $bufFirst->characters[3 * 40 + 1]);
         self::assertSame('c', $bufFirst->characters[5 * 40 + 1]);
         self::assertSame('a', $bufLast->characters[3 * 40 + 1]);
@@ -3910,7 +3901,7 @@ final class TabBarTest extends TestCase
         $area = new Rect(0, 0, 40, 30);
         $tabbed = $tabBar->update(new KeyMsg(Key::Tab), $area)->model;
         $frame = new Frame(40, 30);
-        $tabbed->render($frame, $area, $this->context());
+        $tabbed->render($frame, $area, $this->focusedContext());
         self::assertSame('a', $frame->characters[3 * 40 + 1]);
         self::assertSame('B', $frame->characters[4 * 40 + 1]);
         self::assertSame('c', $frame->characters[5 * 40 + 1]);
@@ -4014,7 +4005,7 @@ final class TabBarTest extends TestCase
         $switched = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $back = $switched->update(new KeyMsg(Key::Left), $area)->model;
         $frame = new Frame(40, 20);
-        $back->render($frame, $area, $this->context());
+        $back->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
     }
 
@@ -4095,7 +4086,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 20);
-        $result->model->render($frame, $area, $this->context());
+        $result->model->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
     }
 
@@ -4174,7 +4165,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 30);
-        $switched->model->render($frame, $area, $this->context());
+        $switched->model->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
         self::assertSame('b', $frame->characters[4 * 40 + 1]);
         self::assertSame('c', $frame->characters[5 * 40 + 1]);
@@ -4279,7 +4270,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 20);
-        $result->model->render($frame, $area, $this->context());
+        $result->model->render($frame, $area, $this->focusedContext());
         self::assertSame('a', $frame->characters[3 * 40 + 1]);
         self::assertSame('B', $frame->characters[4 * 40 + 1]);
     }
@@ -4298,7 +4289,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 20);
-        $result->model->render($frame, $area, $this->context());
+        $result->model->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
         self::assertSame('b', $frame->characters[4 * 40 + 1]);
     }
@@ -4317,7 +4308,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 20);
-        $result->model->render($frame, $area, $this->context());
+        $result->model->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
         self::assertSame('b', $frame->characters[4 * 40 + 1]);
     }
@@ -4339,7 +4330,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 30);
-        $clicked->model->render($frame, $area, $this->context());
+        $clicked->model->render($frame, $area, $this->focusedContext());
         self::assertSame('X', $frame->characters[3 * 40 + 1]);
         self::assertSame('y', $frame->characters[4 * 40 + 1]);
     }
@@ -4357,7 +4348,7 @@ final class TabBarTest extends TestCase
         $switched = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $cycled = $switched->update(new KeyMsg(Key::Tab), $area)->model;
         $bufferCycled = new Frame(40, 30);
-        $cycled->render($bufferCycled, $area, $this->context());
+        $cycled->render($bufferCycled, $area, $this->focusedContext());
         self::assertSame('x', $bufferCycled->characters[3 * 40 + 1]);
         self::assertSame('Y', $bufferCycled->characters[4 * 40 + 1]);
         $backToFirst = $cycled->update(new KeyMsg(Key::Left), $area)->model;
@@ -4366,7 +4357,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $bufferReset = new Frame(40, 30);
-        $backToSecond->model->render($bufferReset, $area, $this->context());
+        $backToSecond->model->render($bufferReset, $area, $this->focusedContext());
         self::assertSame('X', $bufferReset->characters[3 * 40 + 1]);
         self::assertSame('y', $bufferReset->characters[4 * 40 + 1]);
     }
@@ -4387,7 +4378,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 20);
-        $clickAtRight->model->render($frame, $area, $this->context());
+        $clickAtRight->model->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
         self::assertSame('b', $frame->characters[4 * 40 + 1]);
     }
@@ -4406,7 +4397,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(40, 20);
-        $clickJustInside->model->render($frame, $area, $this->context());
+        $clickJustInside->model->render($frame, $area, $this->focusedContext());
         self::assertSame('a', $frame->characters[3 * 40 + 1]);
         self::assertSame('B', $frame->characters[4 * 40 + 1]);
     }
@@ -4425,7 +4416,7 @@ final class TabBarTest extends TestCase
             $area,
         );
         $frame = new Frame(20, 15);
-        $clickAtExactRight->model->render($frame, $area, $this->context());
+        $clickAtExactRight->model->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
         self::assertSame('b', $frame->characters[4 * 20 + 1]);
     }
@@ -4538,7 +4529,7 @@ final class TabBarTest extends TestCase
             ->withFocus(true);
         $area = new Rect(0, 0, 40, 30);
         $frame = new Frame(40, 30);
-        $tabBar->render($frame, $area, $this->context());
+        $tabBar->render($frame, $area, $this->focusedContext());
         self::assertSame('A', $frame->characters[3 * 40 + 1]);
         self::assertSame('b', $frame->characters[4 * 40 + 1]);
         self::assertSame('c', $frame->characters[5 * 40 + 1]);
@@ -4557,13 +4548,13 @@ final class TabBarTest extends TestCase
         $toTwo = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $cycled = $toTwo->update(new KeyMsg(Key::Tab), $area)->model;
         $bufferCycled = new Frame(40, 30);
-        $cycled->render($bufferCycled, $area, $this->context());
+        $cycled->render($bufferCycled, $area, $this->focusedContext());
         self::assertSame('x', $bufferCycled->characters[3 * 40 + 1]);
         self::assertSame('Y', $bufferCycled->characters[4 * 40 + 1]);
         $toOne = $cycled->update(new KeyMsg(Key::Left), $area)->model;
         $backToTwo = $toOne->update(new KeyMsg(Key::Right), $area)->model;
         $bufferReset = new Frame(40, 30);
-        $backToTwo->render($bufferReset, $area, $this->context());
+        $backToTwo->render($bufferReset, $area, $this->focusedContext());
         self::assertSame('X', $bufferReset->characters[3 * 40 + 1]);
         self::assertSame('y', $bufferReset->characters[4 * 40 + 1]);
     }
@@ -4579,12 +4570,12 @@ final class TabBarTest extends TestCase
         $area = new Rect(0, 0, 40, 30);
         $cycled = $tabBar->update(new KeyMsg(Key::Tab), $area)->model;
         $bufferCycled = new Frame(40, 30);
-        $cycled->render($bufferCycled, $area, $this->context());
+        $cycled->render($bufferCycled, $area, $this->focusedContext());
         self::assertSame('a', $bufferCycled->characters[3 * 40 + 1]);
         self::assertSame('B', $bufferCycled->characters[4 * 40 + 1]);
         $refocused = $cycled->withFocus(true);
         $bufferRefocused = new Frame(40, 30);
-        $refocused->render($bufferRefocused, $area, $this->context());
+        $refocused->render($bufferRefocused, $area, $this->focusedContext());
         self::assertSame('A', $bufferRefocused->characters[3 * 40 + 1]);
         self::assertSame('b', $bufferRefocused->characters[4 * 40 + 1]);
     }
@@ -5068,7 +5059,7 @@ final class TabBarTest extends TestCase
         $width = 26;
         $frame = new Frame($width, 6);
         TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
-            ->render($frame, new Rect(0, 0, $width, 6), new RenderContext(Theme::dark()));
+            ->render($frame, new Rect(0, 0, $width, 6), $this->focusedContext());
 
         $labelRow = '';
         for ($column = 0; $column < $width; ++$column) {
@@ -5143,18 +5134,18 @@ final class TabBarTest extends TestCase
         );
     }
 
-    private function screenWithTheme(TabBar $bar, Rect $area, Theme $theme): string
+    private function screenWithTheme(TabBar $bar, Rect $area, Theme $theme, bool $focused = false): string
     {
         $frame = new Frame($area->width, $area->height);
-        $bar->render($frame, $area, new RenderContext($theme));
+        $bar->render($frame, $area, $focused ? RenderContext::focused($theme) : new RenderContext($theme));
 
         return implode('', $frame->characters);
     }
 
-    private function screenOfTabBar(TabBar $tabBar, Rect $area): string
+    private function screenOfTabBar(TabBar $tabBar, Rect $area, bool $focused = false): string
     {
         $frame = new Frame($area->width, $area->height);
-        $tabBar->render($frame, $area, new RenderContext(Theme::dark()));
+        $tabBar->render($frame, $area, $focused ? $this->focusedContext() : $this->context());
 
         $screen = '';
         for ($cell = 0; $cell < $area->width * $area->height; ++$cell) {
@@ -5181,7 +5172,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame($width, 6);
         TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
-            ->render($frame, new Rect(0, 0, $width, 6), new RenderContext(Theme::dark()));
+            ->render($frame, new Rect(0, 0, $width, 6), $this->focusedContext());
 
         $screen = '';
         for ($row = 0; $row < 6; ++$row) {
@@ -5196,6 +5187,11 @@ final class TabBarTest extends TestCase
     private function context(): RenderContext
     {
         return new RenderContext(Theme::dark());
+    }
+
+    private function focusedContext(): RenderContext
+    {
+        return RenderContext::focused(Theme::dark());
     }
 
     private function bufferRow(Frame $frame, int $row, int $width): string

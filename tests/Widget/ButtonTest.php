@@ -226,7 +226,7 @@ final class ButtonTest extends TestCase
         Button::new('Run', new TestMessage('run'))
             ->withTone(ButtonTone::Danger)
             ->withFocus(true)
-            ->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));
+            ->render($frame, new Rect(0, 0, 11, 3), RenderContext::focused($theme));
 
         self::assertSame(' ', $frame->characters[11 + 2], 'a cell the label does not reach');
         self::assertSame($theme->error->foregroundValue(), $frame->backgrounds[11 + 2]);
@@ -237,11 +237,10 @@ final class ButtonTest extends TestCase
     {
         $idle = new Frame(11, 3);
         $focused = new Frame(11, 3);
-        $context = new RenderContext(Theme::dark());
         $area = new Rect(0, 0, 11, 3);
 
-        Button::new('Run', new TestMessage('run'))->render($idle, $area, $context);
-        Button::new('Run', new TestMessage('run'))->withFocus(true)->render($focused, $area, $context);
+        Button::new('Run', new TestMessage('run'))->render($idle, $area, RenderContext::unfocused(Theme::dark()));
+        Button::new('Run', new TestMessage('run'))->withFocus(true)->render($focused, $area, RenderContext::focused(Theme::dark()));
 
         self::assertSame('╭', $idle->characters[0], 'idle keeps the rounded corner every other box uses');
         self::assertSame('┏', $focused->characters[0], 'and focus thickens the whole outline');
@@ -255,7 +254,7 @@ final class ButtonTest extends TestCase
 
         Button::new('Run', new TestMessage('run'))
             ->withFocus(true)
-            ->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));
+            ->render($frame, new Rect(0, 0, 11, 3), RenderContext::focused($theme));
 
         self::assertSame($theme->focusedBorderStyle->foregroundValue(), $frame->foregrounds[0]);
     }

@@ -185,7 +185,7 @@ final readonly class HostDrivenPane implements Focusable
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $frame->putChar($area->x, $area->y, $context->showsFocus($this->focused) ? 'F' : 'u');
+        $frame->putChar($area->x, $area->y, $context->hasFocus() ? 'F' : 'u');
     }
 }
 

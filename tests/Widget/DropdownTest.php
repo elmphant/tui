@@ -96,7 +96,7 @@ final class DropdownTest extends TestCase
         $opened = self::opened(Dropdown::new(Select::new(['json', 'yaml'])));
 
         self::assertTrue($opened->isOpen());
-        self::assertStringContainsString('yaml', self::screen($opened)->plainText(), 'The popup drew');
+        self::assertStringContainsString('yaml', self::screen($opened, focused: true)->plainText(), 'The popup drew');
     }
 
     #[Test]
@@ -250,7 +250,7 @@ final class DropdownTest extends TestCase
 
         self::assertSame(
             $theme->cursorStyle->foregroundValue(),
-            self::foregroundOfFirstCell(self::frameFor($dropdown, $theme)),
+            self::foregroundOfFirstCell(self::frameFor($dropdown, $theme, focused: true)),
             'accent means a value was chosen, so focus cannot borrow it',
         );
     }
@@ -263,7 +263,7 @@ final class DropdownTest extends TestCase
 
         self::assertSame(
             $theme->cursorStyle->foregroundValue(),
-            self::foregroundOfFirstCell(self::frameFor($dropdown, $theme)),
+            self::foregroundOfFirstCell(self::frameFor($dropdown, $theme, focused: true)),
             'the mark says where the keys are',
         );
         self::assertStringContainsString('json', $dropdown->caption(), 'and the caption says what is held');
@@ -302,7 +302,7 @@ final class DropdownTest extends TestCase
 
         self::assertSame(
             1,
-            substr_count(self::screen($opened)->plainText(), '╭'),
+            substr_count(self::screen($opened, focused: true)->plainText(), '╭'),
             'the drain must not redraw and requeue the float',
         );
     }
@@ -387,10 +387,11 @@ final class DropdownTest extends TestCase
         return new Rect(0, 0, 20, 1);
     }
 
-    private static function frameFor(Dropdown $dropdown, Theme $theme): Frame
+    private static function frameFor(Dropdown $dropdown, Theme $theme, bool $focused = false): Frame
     {
         $frame = new Frame(30, 6);
-        (new RenderContext($theme))->renderRoot($dropdown, $frame, self::anchor());
+        $context = $focused ? RenderContext::focused($theme) : new RenderContext($theme);
+        $context->renderRoot($dropdown, $frame, self::anchor());
 
         return $frame;
     }
@@ -403,10 +404,10 @@ final class DropdownTest extends TestCase
         return $frame->foreground(0);
     }
 
-    private static function screen(Dropdown $dropdown): ScreenBuffer
+    private static function screen(Dropdown $dropdown, bool $focused = false): ScreenBuffer
     {
         $frame = new Frame(30, 12);
-        $context = new RenderContext(Theme::dark());
+        $context = $focused ? RenderContext::focused(Theme::dark()) : new RenderContext(Theme::dark());
         $context->renderRoot($dropdown, $frame, self::anchor());
 
         return ScreenBuffer::fromFrame($frame);

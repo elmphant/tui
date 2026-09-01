@@ -109,7 +109,7 @@ final class PanelTest extends TestCase
 
         self::assertSame(
             $accent,
-            $this->borderColour(Panel::new('t')->withFocusedBorderStyle(Theme::dark()->accent)->withFocus(true), $area),
+            $this->borderColour(Panel::new('t')->withFocusedBorderStyle(Theme::dark()->accent)->withFocus(true), $area, focused: true),
             'A focused panel uses the focused override',
         );
     }
@@ -464,7 +464,7 @@ final class PanelTest extends TestCase
         $panel = Panel::new('Title')->withFocus(true);
         $area = new Rect(0, 0, 20, 10);
 
-        $panel->render($frame, $area, new RenderContext(Theme::dark()));
+        $panel->render($frame, $area, RenderContext::focused(Theme::dark()));
 
         $topLeftForeground = $frame->foregrounds[0];
         $unfocusedBuffer = new Frame(20, 10);
@@ -481,7 +481,7 @@ final class PanelTest extends TestCase
         $theme = Theme::dark()->withFocusedBorder(BorderStyle::Double);
         $panel = Panel::new('T');
 
-        self::assertStringContainsString('╔', $this->screenWith($panel->withFocus(true), $area, $theme));
+        self::assertStringContainsString('╔', $this->screenWith($panel->withFocus(true), $area, $theme, focused: true));
         self::assertStringNotContainsString('╔', $this->screenWith($panel, $area, $theme));
     }
 
@@ -1433,11 +1433,11 @@ final class PanelTest extends TestCase
 
         $frame = new Frame(20, 10);
         $area = new Rect(0, 0, 20, 10);
-        $panel->render($frame, $area, new RenderContext(Theme::dark()));
+        $panel->render($frame, $area, RenderContext::focused(Theme::dark()));
 
         $overrideForeground = $frame->foregrounds[0];
         $defaultBuffer = new Frame(20, 10);
-        Panel::new('Test')->withFocus(true)->render($defaultBuffer, $area, new RenderContext(Theme::dark()));
+        Panel::new('Test')->withFocus(true)->render($defaultBuffer, $area, RenderContext::focused(Theme::dark()));
         $defaultForeground = $defaultBuffer->foregrounds[0];
 
         self::assertNotSame($defaultForeground, $overrideForeground, 'Focused border style override should change color');
@@ -3180,10 +3180,11 @@ final class PanelTest extends TestCase
         };
     }
 
-    private function screenWith(Panel $panel, Rect $area, Theme $theme): string
+    private function screenWith(Panel $panel, Rect $area, Theme $theme, bool $focused = false): string
     {
         $frame = new Frame($area->width, $area->height);
-        $panel->render($frame, $area, new RenderContext($theme));
+        $context = $focused ? RenderContext::focused($theme) : new RenderContext($theme);
+        $panel->render($frame, $area, $context);
 
         return implode('', $frame->characters);
     }
@@ -3208,10 +3209,11 @@ final class PanelTest extends TestCase
         return null;
     }
 
-    private function borderColour(Panel $panel, Rect $area, ?Theme $theme = null): int
+    private function borderColour(Panel $panel, Rect $area, ?Theme $theme = null, bool $focused = false): int
     {
         $frame = new Frame($area->width, $area->height);
-        $panel->render($frame, $area, new RenderContext($theme ?? Theme::dark()));
+        $context = $focused ? RenderContext::focused($theme ?? Theme::dark()) : new RenderContext($theme ?? Theme::dark());
+        $panel->render($frame, $area, $context);
 
         return $frame->foregrounds[0];
     }

@@ -15,20 +15,18 @@ use PHPUnit\Framework\TestCase;
 final class TabBarDrawsTreeFocusTest extends TestCase
 {
     #[Test]
-    public function aBarTheTreeFocusesAdvertisesTheSameKeysAsOneFocusedByItsOwnFlag(): void
+    public function aBarTheTreeFocusesAdvertisesTheKeysItAnswers(): void
     {
         $bar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 0, 60, 8);
 
-        $byFlag = new Frame(60, 8);
-        $bar->withFocus(true)->render($byFlag, $area, new RenderContext(Theme::dark()));
+        $focused = new Frame(60, 8);
+        $bar->render($focused, $area, RenderContext::focused(Theme::dark()));
 
-        $byTree = new Frame(60, 8);
-        $context = new RenderContext(Theme::dark());
-        $context->withFocusHere(static function () use ($bar, $byTree, $area, $context): void {
-            $bar->render($byTree, $area, $context);
-        });
+        $plain = new Frame(60, 8);
+        $bar->render($plain, $area, RenderContext::unfocused(Theme::dark()));
 
-        self::assertSame(implode('', $byFlag->characters), implode('', $byTree->characters));
+        self::assertStringContainsString('← → to switch', implode('', $focused->characters), 'the bar names its keys where the keyboard is');
+        self::assertStringNotContainsString('← → to switch', implode('', $plain->characters), 'and stays quiet where it is not');
     }
 }

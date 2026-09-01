@@ -542,13 +542,13 @@ final class RadioTest extends TestCase
         $theme = Theme::dark();
         $area = new Rect(0, 0, 40, 3);
 
-        $focused = Radio::new(['A', 'B'])->withFocus(true);
-        $focusedBuffer = new Frame(40, 3);
-        $focused->render($focusedBuffer, $area, new RenderContext($theme));
+        $radio = Radio::new(['A', 'B']);
 
-        $unfocused = Radio::new(['A', 'B'])->withFocus(false);
+        $focusedBuffer = new Frame(40, 3);
+        $radio->render($focusedBuffer, $area, RenderContext::focused($theme));
+
         $unfocusedBuffer = new Frame(40, 3);
-        $unfocused->render($unfocusedBuffer, $area, new RenderContext($theme));
+        $radio->render($unfocusedBuffer, $area, new RenderContext($theme));
 
         self::assertSame($theme->cursorStyle->foregroundValue(), $focusedBuffer->foregrounds[0]);
         self::assertNotSame($theme->cursorStyle->foregroundValue(), $unfocusedBuffer->foregrounds[0]);
@@ -654,11 +654,11 @@ final class RadioTest extends TestCase
     public function focusedNonSelectedNonCursorOptionUsesBaseStyle(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['A', 'B', 'C'])->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C']);
 
         $frame = new Frame(40, 4);
         $area = new Rect(0, 0, 40, 4);
-        $radio->render($frame, $area, new RenderContext($theme));
+        $radio->render($frame, $area, RenderContext::focused($theme));
 
         $row2Fg = $frame->foregrounds[2 * 40];
         self::assertSame($theme->base->foregroundValue(), $row2Fg);
@@ -740,10 +740,10 @@ final class RadioTest extends TestCase
     public function optionTextForegroundMatchesStyle(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['Hello'])->withFocus(true);
+        $radio = Radio::new(['Hello']);
         $frame = new Frame(40, 2);
         $area = new Rect(0, 0, 40, 2);
-        $radio->render($frame, $area, new RenderContext($theme));
+        $radio->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[self::MARK_WIDTH]);
     }

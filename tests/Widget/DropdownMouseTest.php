@@ -25,6 +25,7 @@ use Elmphant\Tui\Widget\Popup\Dropdown;
 use Elmphant\Tui\Widget\Popup\DropdownPopup;
 use Elmphant\Tui\Widget\Popup\FloatTarget;
 use Elmphant\Tui\Widget\Popup\Overlay;
+use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -67,7 +68,7 @@ final class DropdownMouseTest extends TestCase
         self::assertTrue($clicked->isOpen(), 'a click on the closed row opens the popup');
 
         $frame = new Frame(20, 8);
-        (new RenderContext(Theme::dark()))->renderRoot($clicked, $frame, $anchor);
+        self::renderFocused($clicked, $frame, $anchor);
 
         $drawn = [];
         for ($row = 1; $row < $frame->height; ++$row) {
@@ -384,10 +385,7 @@ final class DropdownMouseTest extends TestCase
         $foreign = self::listOf(['json', 'yaml']);
 
         $frame = new Frame(40, 18);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->renderRoot(Overlay::new($mine, $foreign), $frame, $anchor);
-        $context->commitFloatPlacements();
+        $context = self::renderFocused(Overlay::new($mine, $foreign), $frame, $anchor);
 
         $placements = $context->floatPlacements();
         self::assertCount(2, $placements, 'Overlay hands both dropdowns the same rect, so both popups are drawn');
@@ -583,12 +581,21 @@ final class DropdownMouseTest extends TestCase
     {
         $viewport ??= self::viewport();
         $frame = new Frame($viewport->width, $viewport->height);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->renderRoot($dropdown, $frame, $anchor ?? self::anchor());
-        $context->commitFloatPlacements();
+        $context = self::renderFocused($dropdown, $frame, $anchor ?? self::anchor());
 
         return InputRouter::route($mouse, $frame->area(), $context->floatPlacements());
+    }
+
+    private static function renderFocused(Widget $root, Frame $frame, Rect $anchor): RenderContext
+    {
+        $context = RenderContext::unfocused(Theme::dark());
+        $context->beginFrame(0.0);
+        $context->withFocusHere(static function () use ($context, $root, $frame, $anchor): void {
+            $context->renderRoot($root, $frame, $anchor);
+        });
+        $context->commitFloatPlacements();
+
+        return $context;
     }
 
     private static function drawnPlacement(Dropdown $dropdown): Rect
@@ -603,10 +610,7 @@ final class DropdownMouseTest extends TestCase
     private static function drawnOptionRows(Dropdown $dropdown, Rect $viewport): string
     {
         $frame = new Frame($viewport->width, $viewport->height);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->renderRoot($dropdown, $frame, self::anchor());
-        $context->commitFloatPlacements();
+        $context = self::renderFocused($dropdown, $frame, self::anchor());
 
         $placements = $context->floatPlacements();
 
@@ -636,10 +640,7 @@ final class DropdownMouseTest extends TestCase
     private static function drawnFloat(Dropdown $dropdown): FloatPlacement
     {
         $frame = new Frame(40, 18);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->renderRoot($dropdown, $frame, self::anchor());
-        $context->commitFloatPlacements();
+        $context = self::renderFocused($dropdown, $frame, self::anchor());
 
         $placements = $context->floatPlacements();
 
@@ -654,7 +655,7 @@ final class DropdownMouseTest extends TestCase
     {
         $viewport ??= self::viewport();
         $frame = new Frame($viewport->width, $viewport->height);
-        (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, $anchor ?? self::anchor());
+        self::renderFocused($dropdown, $frame, $anchor ?? self::anchor());
         $drawn = ScreenBuffer::fromFrame($frame);
 
         for ($row = 0; $row < $frame->height; ++$row) {
@@ -674,7 +675,7 @@ final class DropdownMouseTest extends TestCase
     private static function drawIn(Dropdown $dropdown, Rect $viewport): string
     {
         $frame = new Frame($viewport->width, $viewport->height);
-        (new RenderContext(Theme::dark()))->renderRoot($dropdown, $frame, self::anchor());
+        self::renderFocused($dropdown, $frame, self::anchor());
 
         return ScreenBuffer::fromFrame($frame)->plainText();
     }

@@ -23,15 +23,36 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class FocusFlagFallbackTest extends TestCase
+final class FocusComesFromTheTreeTest extends TestCase
 {
+    #[Test]
+    public function aFlaggedWidgetShowsNoRingUntilSomethingAboveItSaysSo(): void
+    {
+        $frame = new Frame(6, 1);
+
+        (new FlaggedProbe(true))->render($frame, Rect::fromSize(6, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame('u', $frame->character(0), 'nothing said where the keyboard is, so nothing shows it');
+    }
+
+    #[Test]
+    public function aContextDeclaredFocusedStaysFocusedOnTheNextFrame(): void
+    {
+        $frame = new Frame(6, 1);
+        $context = RenderContext::focused(Theme::dark());
+        $context->beginFrame(0.0);
+
+        (new FlaggedProbe())->render($frame, Rect::fromSize(6, 1), $context);
+
+        self::assertSame('F', $frame->character(0));
+    }
+
     /**
-     * A widget nobody bound has only its own flag to go on. Silencing it because
-     * some component elsewhere holds the keyboard leaves a pane that reads the
-     * keys with no way to say so.
+     * An app that routes the keys itself says where they went by opening a scope
+     * around the widget it fed, the way Component does for a bound one.
      */
     #[Test]
-    public function aFlaggedWidgetTheTreeDoesNotKnowKeepsItsRing(): void
+    public function aWidgetNobodyBoundShowsNoRingOfItsOwn(): void
     {
         $frame = new Frame(6, 2);
         $context = new RenderContext(Theme::dark());
@@ -40,14 +61,12 @@ final class FocusFlagFallbackTest extends TestCase
 
         (new MixedTreeApp())->render($frame, $context);
 
-        self::assertSame('F', $frame->character(6), 'the unbound pane still shows the flag it was given');
+        self::assertSame('u', $frame->character(6), 'the unbound pane was never given the keyboard');
     }
 
     /**
-     * The other half of the same rule. A widget's own flag is one message behind —
-     * nothing tells the pane that lost the keyboard, so its flag stays true. Inside
-     * a bound component the tree's answer is the only one, or a reader would see
-     * two panes both claiming the keyboard.
+     * Nothing tells the pane that lost the keyboard, so its flag stays true one
+     * message longer than the truth.
      */
     #[Test]
     public function aBoundPaneStillFlaggedDoesNotDrawAsFocusedOnceTheKeyboardHasMoved(): void
@@ -122,7 +141,7 @@ final readonly class FlaggedProbe implements Focusable
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $frame->putChar($area->x, $area->y, $context->showsFocus($this->focused) ? 'F' : 'u');
+        $frame->putChar($area->x, $area->y, $context->hasFocus() ? 'F' : 'u');
     }
 }
 
@@ -135,6 +154,6 @@ final readonly class FocusProbe implements Widget
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $frame->putChar($area->x, $area->y, $context->showsFocus(true) ? 'F' : 'u');
+        $frame->putChar($area->x, $area->y, $context->hasFocus() ? 'F' : 'u');
     }
 }

@@ -138,7 +138,7 @@ final class RadioRowTest extends TestCase
         $row = RadioRow::new(['system', 'pages'])->withFocus(true);
         $frame = new Frame(40, 1);
 
-        $row->render($frame, new Rect(0, 0, 40, 1), new RenderContext($theme));
+        $row->render($frame, new Rect(0, 0, 40, 1), RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[0], 'the arrows would otherwise walk an invisible cursor');
     }

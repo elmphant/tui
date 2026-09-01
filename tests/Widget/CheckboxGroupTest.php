@@ -567,7 +567,7 @@ final class CheckboxGroupTest extends TestCase
         $frame = new Frame(30, 2);
         $area = new Rect(0, 0, 30, 2);
 
-        $group->render($frame, $area, new RenderContext($theme));
+        $group->render($frame, $area, RenderContext::focused($theme));
 
         $cursorFg = $theme->cursorStyle->foregroundValue();
         $baseFg = $theme->base->foregroundValue();
@@ -603,7 +603,7 @@ final class CheckboxGroupTest extends TestCase
         $frame = new Frame(30, 3);
         $area = new Rect(0, 0, 30, 3);
 
-        $group->render($frame, $area, new RenderContext($theme));
+        $group->render($frame, $area, RenderContext::focused($theme));
 
         // Cursor is at 0 — rows 1 and 2 should use base style (focused, not checked, not cursor)
         self::assertSame($theme->base->foregroundValue(), $this->foregroundAt($frame, 0, 1));
@@ -619,7 +619,7 @@ final class CheckboxGroupTest extends TestCase
         $frame = new Frame(30, 1);
         $area = new Rect(0, 0, 30, 1);
 
-        $group->render($frame, $area, new RenderContext($theme));
+        $group->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->foregroundValue(), $this->foregroundAt($frame, 0, 0));
     }
@@ -637,7 +637,7 @@ final class CheckboxGroupTest extends TestCase
         $group = $group->update(new KeyMsg(Key::Down), $area)->model;
 
         $frame = new Frame(30, 2);
-        $group->render($frame, new Rect(0, 0, 30, 2), new RenderContext($theme));
+        $group->render($frame, new Rect(0, 0, 30, 2), RenderContext::focused($theme));
 
         // Row 0: checked but not cursor => accent
         self::assertSame($theme->accent->foregroundValue(), $this->foregroundAt($frame, 0, 0));
@@ -654,7 +654,7 @@ final class CheckboxGroupTest extends TestCase
         $frame = new Frame(30, 2);
         $area = new Rect(0, 0, 30, 2);
 
-        $group->render($frame, $area, new RenderContext($theme));
+        $group->render($frame, $area, RenderContext::focused($theme));
 
         // Row 1: focused, not cursor (cursor=0), not checked => base
         self::assertSame($theme->base->foregroundValue(), $this->foregroundAt($frame, 0, 1));

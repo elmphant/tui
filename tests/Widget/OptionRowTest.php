@@ -106,7 +106,7 @@ final class OptionRowTest extends TestCase
         $theme = Theme::dark();
         $frame = new Frame(40, 1);
 
-        $row->withFocus(true)->render($frame, new Rect(0, 0, 40, 1), new RenderContext($theme));
+        $row->withFocus(true)->render($frame, new Rect(0, 0, 40, 1), RenderContext::focused($theme));
 
         self::assertSame(
             $theme->cursorStyle->foregroundValue(),

@@ -14,7 +14,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 
-final readonly class FlagOfferedToTheContext implements Focusable, Interactive
+final readonly class FocusAskedOfTheContext implements Focusable, Interactive
 {
     public function __construct(private bool $focused = false)
     {
@@ -42,7 +42,7 @@ final readonly class FlagOfferedToTheContext implements Focusable, Interactive
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        if ($context->showsFocus($this->focused)) {
+        if ($context->hasFocus()) {
             $frame->putChar($area->x, $area->y, '>');
         }
     }

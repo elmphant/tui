@@ -84,7 +84,7 @@ final class DropdownHostAcceptanceTest extends TestCase
         $pane = self::paneWithTwoDropdowns(openFirst: true);
 
         $firstFrame = new Frame(40, 18);
-        $context = new RenderContext(Theme::dark());
+        $context = RenderContext::focused(Theme::dark());
         $context->beginFrame(0.0);
         $context->renderRoot($pane, $firstFrame, $firstFrame->area());
         $context->commitFloatPlacements();
@@ -134,7 +134,7 @@ final class DropdownHostAcceptanceTest extends TestCase
     private static function route(ScrollPane $pane, MouseMsg $mouse): Message
     {
         $frame = new Frame(40, 18);
-        $context = new RenderContext(Theme::dark());
+        $context = RenderContext::focused(Theme::dark());
         $context->beginFrame(0.0);
         $context->renderRoot($pane, $frame, $frame->area());
         $context->commitFloatPlacements();
@@ -214,7 +214,7 @@ final class DropdownHostAcceptanceTest extends TestCase
     private static function rendered(ScrollPane $pane): Frame
     {
         $frame = new Frame(40, 18);
-        (new RenderContext(Theme::dark()))->renderRoot($pane, $frame, $frame->area());
+        RenderContext::focused(Theme::dark())->renderRoot($pane, $frame, $frame->area());
 
         return $frame;
     }

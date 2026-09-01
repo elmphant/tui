@@ -182,7 +182,7 @@ final class ScrollPaneTest extends TestCase
     {
         $pane = ScrollPane::of($this->focusable('a'), Text::new('plain'), $this->focusable('b'));
 
-        $rows = $this->rows($pane->withFocusAt(1), 20, 4);
+        $rows = $this->rows($pane->withFocusAt(1), 20, 4, focused: true);
 
         self::assertSame('a', $rows[0], 'The first focusable lost focus');
         self::assertSame('plain', $rows[1], 'A child that cannot focus is skipped when counting');
@@ -194,7 +194,7 @@ final class ScrollPaneTest extends TestCase
     {
         $pane = ScrollPane::of(Text::new('plain'), $this->focusable('a'), $this->focusable('b'));
 
-        $rows = $this->rows($pane->withFocus(true), 20, 4);
+        $rows = $this->rows($pane->withFocus(true), 20, 4, focused: true);
 
         self::assertSame('a*', $rows[1]);
         self::assertSame('b', $rows[2]);
@@ -205,7 +205,7 @@ final class ScrollPaneTest extends TestCase
     {
         $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'));
 
-        $rows = $this->rows($pane->withFocusReversed(), 20, 4);
+        $rows = $this->rows($pane->withFocusReversed(), 20, 4, focused: true);
 
         self::assertSame('a', $rows[0]);
         self::assertSame('b*', $rows[1]);
@@ -218,7 +218,7 @@ final class ScrollPaneTest extends TestCase
 
         $clicked = $this->clickAt($pane, 1, Rect::fromSize(20, 4));
 
-        self::assertSame(['a', 'b*'], array_slice($this->rows($clicked, 20, 4), 0, 2));
+        self::assertSame(['a', 'b*'], array_slice($this->rows($clicked, 20, 4, focused: true), 0, 2));
     }
 
     #[Test]
@@ -240,7 +240,7 @@ final class ScrollPaneTest extends TestCase
 
         $clicked = $this->clickAt($pane, 0, Rect::fromSize(20, 2));
 
-        self::assertStringStartsWith('b*', $this->rows($clicked, 20, 2)[0], 'Row 0 shows b once scrolled, so b takes focus');
+        self::assertStringStartsWith('b*', $this->rows($clicked, 20, 2, focused: true)[0], 'Row 0 shows b once scrolled, so b takes focus');
     }
 
     #[Test]
@@ -320,7 +320,7 @@ final class ScrollPaneTest extends TestCase
 
         $pressed = $this->press($pane, Key::Enter, Rect::fromSize(20, 4));
 
-        self::assertSame(['a 0', 'b 1*'], array_slice($this->rows($pressed, 20, 4), 0, 2));
+        self::assertSame(['a 0', 'b 1*'], array_slice($this->rows($pressed, 20, 4, focused: true), 0, 2));
     }
 
     #[Test]
@@ -347,7 +347,7 @@ final class ScrollPaneTest extends TestCase
         $pane = ScrollPane::of(Text::new('one'), Text::new('two'), $this->counter('c'))
             ->withFocus(true);
 
-        $rows = $this->rows($this->press($pane, Key::Enter, Rect::fromSize(20, 2)), 20, 2);
+        $rows = $this->rows($this->press($pane, Key::Enter, Rect::fromSize(20, 2)), 20, 2, focused: true);
 
         self::assertStringStartsWith('c 1*', $rows[1], 'The pane scrolled so the cursor row is on screen');
     }
@@ -359,7 +359,7 @@ final class ScrollPaneTest extends TestCase
 
         $tabbed = $this->press($pane, Key::Tab, Rect::fromSize(20, 4));
 
-        self::assertSame(['a', 'b*'], array_slice($this->rows($tabbed, 20, 4), 0, 2));
+        self::assertSame(['a', 'b*'], array_slice($this->rows($tabbed, 20, 4, focused: true), 0, 2));
     }
 
     #[Test]
@@ -393,7 +393,7 @@ final class ScrollPaneTest extends TestCase
         $result = $pane->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(20, 4));
         self::assertInstanceOf(ScrollPane::class, $result->model);
 
-        self::assertSame(['a*', 'b'], array_slice($this->rows($result->model, 20, 4), 0, 2));
+        self::assertSame(['a*', 'b'], array_slice($this->rows($result->model, 20, 4, focused: true), 0, 2));
     }
 
     #[Test]
@@ -406,7 +406,7 @@ final class ScrollPaneTest extends TestCase
 
         self::assertSame(
             ['a 1*', 'b 1'],
-            array_slice($this->rows($result->model, 20, 4), 0, 2),
+            array_slice($this->rows($result->model, 20, 4, focused: true), 0, 2),
             'A tick is not input: it goes to all of them, not only the focused one',
         );
     }
@@ -490,7 +490,7 @@ final class ScrollPaneTest extends TestCase
 
         $pressed = $this->press($pane, Key::Enter, Rect::fromSize(20, 1));
 
-        self::assertStringStartsWith('a 1*', $this->rows($pressed, 20, 1)[0], 'The cursor was above the viewport');
+        self::assertStringStartsWith('a 1*', $this->rows($pressed, 20, 1, focused: true)[0], 'The cursor was above the viewport');
     }
 
     #[Test]
@@ -808,10 +808,11 @@ final class ScrollPaneTest extends TestCase
     /**
      * @return list<string>
      */
-    private function rows(ScrollPane $pane, int $width, int $height): array
+    private function rows(ScrollPane $pane, int $width, int $height, bool $focused = false): array
     {
         $frame = new Frame($width, $height);
-        $pane->render($frame, Rect::fromSize($width, $height), new RenderContext(Theme::dark()));
+        $context = $focused ? RenderContext::focused(Theme::dark()) : new RenderContext(Theme::dark());
+        $pane->render($frame, Rect::fromSize($width, $height), $context);
 
         $rows = [];
         for ($row = 0; $row < $height; ++$row) {

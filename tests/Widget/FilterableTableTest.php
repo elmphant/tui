@@ -293,7 +293,7 @@ final class FilterableTableTest extends TestCase
     {
         $frame = new Frame(50, 1);
         $this->routes()->withQuery('ajax')->withFocus(true)
-            ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+            ->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(4, $frame->cursorPosition->col, 'One column past the four typed characters');
@@ -309,7 +309,7 @@ final class FilterableTableTest extends TestCase
         $fieldWidth = 34;
 
         $this->routes()->withQuery(str_repeat('x', 40))->withFocus(true)
-            ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+            ->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame($fieldWidth - 1, $frame->cursorPosition->col);
@@ -331,7 +331,7 @@ final class FilterableTableTest extends TestCase
     {
         $frame = new Frame(50, 1);
         $this->routes()->withQuery('ajax')->withFocus(true)
-            ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+            ->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         $fieldWidth = 34;
 
@@ -349,11 +349,11 @@ final class FilterableTableTest extends TestCase
     {
         $typed = new Frame(50, 1);
         $this->routes()->withQuery('ajax')->withFocus(true)
-            ->render($typed, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+            ->render($typed, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         $placeholder = new Frame(50, 1);
         $this->routes()->withFocus(true)
-            ->render($placeholder, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
+            ->render($placeholder, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotSame(
             $placeholder->foregrounds[0],
@@ -502,7 +502,8 @@ final class FilterableTableTest extends TestCase
     private function fieldIsUnderlined(FilterableTable $table): bool
     {
         $frame = new Frame(60, 12);
-        $table->render($frame, Rect::fromSize(60, 12), new RenderContext(Theme::dark()));
+        $context = $table->isFocused() ? RenderContext::focused(Theme::dark()) : RenderContext::unfocused(Theme::dark());
+        $table->render($frame, Rect::fromSize(60, 12), $context);
 
         for ($column = 0; $column < 60; ++$column) {
             if (($frame->attributes[$column] & Attr::UNDERLINE) !== 0) {

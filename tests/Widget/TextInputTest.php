@@ -413,7 +413,7 @@ final class TextInputTest extends TestCase
     {
         $input = TextInput::new()->withValue('hi')->withFocus(true);
         $frame = new Frame(20, 1);
-        $input->render($frame, new Rect(0, 0, 20, 1), new RenderContext(Theme::dark()));
+        $input->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(CursorShape::BlinkingBlock, $frame->cursorPosition->shape, 'A block caret is easier to spot in a form');
@@ -424,7 +424,7 @@ final class TextInputTest extends TestCase
     {
         $input = TextInput::new()->withValue('hi')->withFocus(true)->withCursorShape(CursorShape::SteadyBar);
         $frame = new Frame(20, 1);
-        $input->render($frame, new Rect(0, 0, 20, 1), new RenderContext(Theme::dark()));
+        $input->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(CursorShape::SteadyBar, $frame->cursorPosition->shape);
@@ -436,7 +436,7 @@ final class TextInputTest extends TestCase
         $input = TextInput::new('Type here...')->withFocus(true);
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
-        $input->render($frame, $area, new RenderContext(Theme::dark()));
+        $input->render($frame, $area, RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(0, $frame->cursorPosition->col);
@@ -1116,7 +1116,7 @@ final class TextInputTest extends TestCase
         }
 
         $frame = new Frame(5, 1);
-        $current->render($frame, $area, new RenderContext(Theme::dark()));
+        $current->render($frame, $area, RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(4, $frame->cursorPosition->col);
@@ -1157,7 +1157,7 @@ final class TextInputTest extends TestCase
             ->withFocus(true);
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
-        $input->render($frame, $area, new RenderContext(Theme::dark()));
+        $input->render($frame, $area, RenderContext::focused(Theme::dark()));
 
         self::assertSame(' ', $frame->characters[0]);
         self::assertSame(' ', $frame->characters[1]);
@@ -1198,7 +1198,7 @@ final class TextInputTest extends TestCase
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
-        $input->render($frame, $area, new RenderContext($theme));
+        $input->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[0]);
     }
@@ -1486,7 +1486,7 @@ final class TextInputTest extends TestCase
         }
 
         $frame = new Frame(20, 1);
-        $current->render($frame, $area, new RenderContext(Theme::dark()));
+        $current->render($frame, $area, RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(9, $frame->cursorPosition->col);
@@ -1540,7 +1540,7 @@ final class TextInputTest extends TestCase
         }
 
         $frame = new Frame(10, 1);
-        $current->render($frame, $area, new RenderContext(Theme::dark()));
+        $current->render($frame, $area, RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(6, $frame->cursorPosition->col);
@@ -1651,7 +1651,7 @@ final class TextInputTest extends TestCase
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
-        $input->render($frame, $area, new RenderContext($theme));
+        $input->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame($theme->inputStyle->backgroundValue(), $frame->backgrounds[0]);
         self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[0]);
@@ -1676,7 +1676,7 @@ final class TextInputTest extends TestCase
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
-        $input->render($frame, $area, new RenderContext($theme));
+        $input->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame('H', $frame->characters[0]);
         self::assertSame($theme->inputStyle->backgroundValue(), $frame->backgrounds[5]);
@@ -1746,7 +1746,7 @@ final class TextInputTest extends TestCase
         );
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
-        $context = new RenderContext(Theme::dark());
+        $context = RenderContext::focused(Theme::dark());
         $input->render($frame, $area, $context);
 
         self::assertNotNull($frame->cursorPosition);
@@ -1959,7 +1959,7 @@ final class TextInputTest extends TestCase
     {
         $input = TextInput::new()->withValue("\u{4F60}\u{597D}")->withFocus(true);
         $frame = new Frame(10, 1);
-        $input->render($frame, Rect::fromSize(10, 1), new RenderContext(Theme::dark()));
+        $input->render($frame, Rect::fromSize(10, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(4, $frame->cursorPosition->col);
@@ -2041,7 +2041,7 @@ final class TextInputTest extends TestCase
     {
         $input = TextInput::new()->withValue('Hello')->withFocus(true);
         $frame = new Frame(20, 1);
-        $input->render($frame, Rect::fromSize(20, 1), new RenderContext(Theme::dark()));
+        $input->render($frame, Rect::fromSize(20, 1), RenderContext::focused(Theme::dark()));
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(5, $frame->cursorPosition->col);
         self::assertSame(0, $frame->cursorPosition->row);

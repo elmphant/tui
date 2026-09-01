@@ -129,7 +129,7 @@ final class SelectTest extends TestCase
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $theme = Theme::dark();
-        $select->render($frame, $area, new RenderContext($theme));
+        $select->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame('A', $frame->characters[0]);
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[0]);
@@ -312,7 +312,7 @@ final class SelectTest extends TestCase
 
         $frame = new Frame(40, 5);
         $theme = Theme::dark();
-        $selected->render($frame, $area, new RenderContext($theme));
+        $selected->render($frame, $area, RenderContext::focused($theme));
 
         $selectedRowIndex = 1 * 40;
         self::assertSame($theme->accent->foregroundValue(), $frame->foregrounds[$selectedRowIndex]);
@@ -328,7 +328,7 @@ final class SelectTest extends TestCase
         $area = Rect::fromSize(40, 5);
         $frame = new Frame(40, 5);
         $theme = Theme::dark();
-        $select->render($frame, $area, new RenderContext($theme));
+        $select->render($frame, $area, RenderContext::focused($theme));
 
         $secondRowIndex = 1 * 40;
         self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[$secondRowIndex]);

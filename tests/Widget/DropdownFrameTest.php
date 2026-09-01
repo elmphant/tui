@@ -34,9 +34,11 @@ final class DropdownFrameTest extends TestCase
             ->update(new KeyMsg(' '), $anchor)->model;
 
         $frame = new Frame(30, 12);
-        $context = new RenderContext(Theme::dark());
+        $context = RenderContext::unfocused(Theme::dark());
         $context->beginFrame(0.0);
-        $context->renderRoot($dropdown, $frame, $anchor);
+        $context->withFocusHere(static function () use ($context, $dropdown, $frame, $anchor): void {
+            $context->renderRoot($dropdown, $frame, $anchor);
+        });
         $context->commitFloatPlacements();
 
         $screen = ScreenBuffer::fromFrame($frame);

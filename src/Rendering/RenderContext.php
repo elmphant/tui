@@ -21,6 +21,7 @@ final class RenderContext
     private ?LayoutPlan $layoutPlan = null;
     private FocusState $focus;
     private FocusState $initialFocus;
+    private int $initialFocusDepth = 0;
     private int $focusDepth = 0;
     private int $componentDepth = 0;
 
@@ -71,6 +72,19 @@ final class RenderContext
     }
 
     /**
+     * A context to draw one widget as the one at the keyboard. Inside a tree of
+     * components the scope is opened per component instead, by Component::render().
+     */
+    public static function focused(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor): self
+    {
+        $context = self::unfocused($theme, $colorProfile);
+        $context->initialFocusDepth = 1;
+        $context->focusDepth = 1;
+
+        return $context;
+    }
+
+    /**
      * Monotonic time of the frame being rendered, in seconds.
      *
      * Widgets derive animation phase from this instead of carrying
@@ -112,7 +126,7 @@ final class RenderContext
         $this->pendingPlacements = [];
         $this->rootPassRan = false;
         $this->focus = $this->initialFocus;
-        $this->focusDepth = 0;
+        $this->focusDepth = $this->initialFocusDepth;
         $this->componentDepth = 0;
         $this->focusedHints = [];
     }
@@ -128,18 +142,6 @@ final class RenderContext
         $this->focus = $focus->isUndecided() ? FocusState::nowhere() : $focus;
         $this->focusDepth = 0;
         $this->componentDepth = 0;
-    }
-
-    /**
-     * Whether the widget being rendered shows focus, given the flag it still
-     * carries. Inside a bound component the tree's answer is the only one, so a
-     * stale flag cannot draw a second ring. Outside one — a host that routes the
-     * keyboard itself, a pane not yet bound, or a widget rendered alone in a
-     * test — there is nothing to defer to and the flag answers.
-     */
-    public function showsFocus(bool $flagged): bool
-    {
-        return $this->hasFocus() || ($this->componentDepth === 0 && $flagged);
     }
 
     public function focusedComponent(): ?ComponentId

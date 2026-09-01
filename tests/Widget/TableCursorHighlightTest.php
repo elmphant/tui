@@ -32,7 +32,7 @@ final class TableCursorHighlightTest extends TestCase
         $theme = Theme::dark();
         $frame = new Frame(30, 4);
 
-        self::tableOf()->withFocus(true)->render($frame, Rect::fromSize(30, 4), new RenderContext($theme));
+        self::tableOf()->withFocus(true)->render($frame, Rect::fromSize(30, 4), RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[30]);
         self::assertSame(0, $frame->attributes[30] & Attr::REVERSE);
@@ -47,7 +47,7 @@ final class TableCursorHighlightTest extends TestCase
         Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::styled('Alice', new Style(foreground: Color::ansi(2))))],
-        )->withFocus(true)->render($frame, Rect::fromSize(30, 3), new RenderContext($theme));
+        )->withFocus(true)->render($frame, Rect::fromSize(30, 3), RenderContext::focused($theme));
 
         $ink = Color::fromValue($frame->foregrounds[30]);
         $band = Color::fromValue($frame->backgrounds[30]);

@@ -535,7 +535,7 @@ final class CheckboxRowTest extends TestCase
         $row = CheckboxRow::new(['A'])->withFocus(true);
         $frame = new Frame(20, 1);
 
-        $row->render($frame, new Rect(0, 0, 20, 1), new RenderContext($theme));
+        $row->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[0]);
     }
@@ -566,7 +566,7 @@ final class CheckboxRowTest extends TestCase
         $row = $row->update(new KeyMsg(Key::Right), $area)->model;
 
         $frame = new Frame(40, 1);
-        $row->render($frame, new Rect(0, 0, 40, 1), new RenderContext($theme));
+        $row->render($frame, new Rect(0, 0, 40, 1), RenderContext::focused($theme));
 
         self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[0]);
     }
@@ -578,7 +578,7 @@ final class CheckboxRowTest extends TestCase
         $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
         $frame = new Frame(40, 1);
 
-        $row->render($frame, new Rect(0, 0, 40, 1), new RenderContext($theme));
+        $row->render($frame, new Rect(0, 0, 40, 1), RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[0]);
 

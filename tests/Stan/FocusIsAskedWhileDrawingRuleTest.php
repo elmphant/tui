@@ -29,9 +29,9 @@ final class FocusIsAskedWhileDrawingRuleTest extends RuleTestCase
     }
 
     #[Test]
-    public function offeringTheFlagToTheContextIsHowTheTreeIsAsked(): void
+    public function askingTheContextIsHowTheTreeIsRead(): void
     {
-        $this->analyse([__DIR__ . '/Fixtures/FlagOfferedToTheContext.php'], []);
+        $this->analyse([__DIR__ . '/Fixtures/FocusAskedOfTheContext.php'], []);
     }
 
     protected function getRule(): Rule

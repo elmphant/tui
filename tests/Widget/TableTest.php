@@ -688,7 +688,7 @@ final class TableTest extends TestCase
             [Row::new(Span::token('Alice', StyleToken::Success))],
         )->withFocus(true);
 
-        $table->render($frame, new Rect(0, 0, 40, 5), new RenderContext($theme));
+        $table->render($frame, new Rect(0, 0, 40, 5), RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[1 * 40 + 0]);
         self::assertSame(
@@ -1512,7 +1512,7 @@ final class TableTest extends TestCase
         $frame = new Frame(20, 6);
 
         $theme = Theme::dark();
-        $table->render($frame, Rect::fromSize(20, 6), new RenderContext($theme));
+        $table->render($frame, Rect::fromSize(20, 6), RenderContext::focused($theme));
 
         $band = $theme->cursorStyle->backgroundValue();
         self::assertSame($band, $frame->backgrounds[20 * 1], 'The highlight starts on the first line');
@@ -1886,7 +1886,7 @@ final class TableTest extends TestCase
             [['hello'], ['world']],
         )->withFocus(true);
         $frame = new Frame(20, 4);
-        $table->render($frame, Rect::fromSize(20, 4), new RenderContext($theme));
+        $table->render($frame, Rect::fromSize(20, 4), RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[20]);
 
@@ -1934,7 +1934,7 @@ final class TableTest extends TestCase
         )->withFocus(true);
         $frame = new Frame(20, 3);
         $theme = Theme::dark();
-        $table->render($frame, Rect::fromSize(20, 3), new RenderContext($theme));
+        $table->render($frame, Rect::fromSize(20, 3), RenderContext::focused($theme));
 
         for ($column = 0; $column < 6; ++$column) {
             self::assertSame(
@@ -2029,7 +2029,7 @@ final class TableTest extends TestCase
         )->withFocus(true);
         $frame = new Frame(40, 3);
         $theme = Theme::dark();
-        $table->render($frame, Rect::fromSize(40, 3), new RenderContext($theme));
+        $table->render($frame, Rect::fromSize(40, 3), RenderContext::focused($theme));
 
         self::assertSame(
             $theme->cursorStyle->backgroundValue(),
@@ -2081,7 +2081,7 @@ final class TableTest extends TestCase
         )->withFocus(true);
         $frame = new Frame(40, 3);
         $theme = Theme::dark();
-        $table->render($frame, Rect::fromSize(40, 3), new RenderContext($theme));
+        $table->render($frame, Rect::fromSize(40, 3), RenderContext::focused($theme));
 
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[40]);
         self::assertSame(
@@ -2433,7 +2433,7 @@ final class TableTest extends TestCase
 
         $frame = new Frame(60, 10);
         $theme = Theme::dark();
-        $table->render($frame, $area, new RenderContext($theme));
+        $table->render($frame, $area, RenderContext::focused($theme));
 
         self::assertSame($theme->selectedStyle->backgroundValue(), $frame->backgrounds[1 * 60], 'the chosen row');
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[2 * 60], 'and the one under the cursor');
@@ -2450,7 +2450,7 @@ final class TableTest extends TestCase
         )->withFocus(true);
         $frame = new Frame(20, 3);
         $theme = Theme::dark();
-        $table->render($frame, Rect::fromSize(20, 3), new RenderContext($theme));
+        $table->render($frame, Rect::fromSize(20, 3), RenderContext::focused($theme));
 
         for ($column = 0; $column < 7; ++$column) {
             self::assertSame(
@@ -2836,7 +2836,7 @@ final class TableTest extends TestCase
         )->withFocus(true);
         $frame = new Frame(30, 3);
         $theme = Theme::dark();
-        $table->render($frame, Rect::fromSize(30, 3), new RenderContext($theme));
+        $table->render($frame, Rect::fromSize(30, 3), RenderContext::focused($theme));
 
         $band = $theme->cursorStyle->backgroundValue();
         self::assertSame($band, $frame->backgrounds[30 + 0]);
@@ -3743,7 +3743,8 @@ final class TableTest extends TestCase
     {
         $theme = Theme::dark();
         $frame = new Frame(20, 6);
-        $table->render($frame, new Rect(0, 0, 20, 6), new RenderContext($theme));
+        $context = $table->isFocused() ? RenderContext::focused($theme) : RenderContext::unfocused($theme);
+        $table->render($frame, new Rect(0, 0, 20, 6), $context);
 
         // One header row sits above the first row.
         $background = $frame->backgrounds[(1 + $rowIndex) * 20];

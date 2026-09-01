@@ -14,29 +14,23 @@ use PHPUnit\Framework\TestCase;
 
 final class FilterableCheckboxGroupDrawsTreeFocusTest extends TestCase
 {
+    private const WIDTH = 40;
+
+    private const CURSOR_ROW = 2;
+
     #[Test]
-    public function aGroupTheTreeFocusesLooksLikeOneFocusedByItsOwnFlag(): void
+    public function aGroupTheTreeFocusesFillsTheRowItsCursorIsOn(): void
     {
         $group = FilterableCheckboxGroup::new(['one', 'two']);
-        $area = new Rect(0, 0, 40, 5);
+        $area = new Rect(0, 0, self::WIDTH, 5);
 
-        $byFlag = new Frame(40, 5);
-        $group->withFocus(true)->render($byFlag, $area, new RenderContext(Theme::dark()));
+        $focused = new Frame(self::WIDTH, 5);
+        $group->render($focused, $area, RenderContext::focused(Theme::dark()));
 
-        $byTree = new Frame(40, 5);
-        $context = new RenderContext(Theme::dark());
-        $context->withFocusHere(static function () use ($group, $byTree, $area, $context): void {
-            $group->render($byTree, $area, $context);
-        });
+        $plain = new Frame(self::WIDTH, 5);
+        $group->render($plain, $area, RenderContext::unfocused(Theme::dark()));
 
-        self::assertSame(self::snapshot($byFlag), self::snapshot($byTree));
-    }
-
-    private static function snapshot(Frame $frame): string
-    {
-        return implode('|', $frame->characters)
-            . '#' . implode('|', $frame->foregrounds)
-            . '#' . implode('|', $frame->backgrounds)
-            . '#' . implode('|', $frame->attributes);
+        self::assertNotSame(0, $focused->backgrounds[self::CURSOR_ROW * self::WIDTH], 'the cursor row is filled where the keyboard is');
+        self::assertSame(0, $plain->backgrounds[self::CURSOR_ROW * self::WIDTH], 'and flat where it is not');
     }
 }

@@ -253,7 +253,7 @@ final class TreeViewTest extends TestCase
         $tree = self::orderTree()->withFocus(true);
         $frame = new Frame(30, 4);
 
-        $tree->render($frame, new Rect(0, 0, 30, 4), new RenderContext($theme));
+        $tree->render($frame, new Rect(0, 0, 30, 4), RenderContext::focused($theme));
 
         $highlight = $theme->cursorStyle->backgroundValue();
         self::assertSame($highlight, $frame->backgrounds[0], 'the cursor row starts highlighted');
