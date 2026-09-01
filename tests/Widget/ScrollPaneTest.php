@@ -25,6 +25,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -359,6 +360,19 @@ final class ScrollPaneTest extends TestCase
         $tabbed = $this->press($pane, Key::Tab, Rect::fromSize(20, 4));
 
         self::assertSame(['a', 'b*'], array_slice($this->rows($tabbed, 20, 4), 0, 2));
+    }
+
+    #[Test]
+    public function aNestedPanelKeepsItsOwnFocusWhenTheNextKeyArrives(): void
+    {
+        $panel = Panel::new('Form')->add(TextInput::new())->add(TextInput::new());
+        $area = Rect::fromSize(40, 10);
+
+        $tabbed = $this->press(ScrollPane::of($panel)->withFocusAt(0), Key::Tab, $area);
+        $typed = $tabbed->update(new KeyMsg('x'), $area);
+        self::assertInstanceOf(ScrollPane::class, $typed->model);
+
+        self::assertSame(['', 'x'], $this->nestedFieldValues($typed->model));
     }
 
     #[Test]
@@ -770,6 +784,25 @@ final class ScrollPaneTest extends TestCase
     private function rowOf(Frame $frame, int $row, int $width): string
     {
         return rtrim(implode('', array_slice($frame->characters, $row * $width, $width)));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function nestedFieldValues(ScrollPane $pane): array
+    {
+        $panel = $pane->authoredChildren()[0];
+        self::assertInstanceOf(Panel::class, $panel);
+
+        $values = [];
+
+        foreach ($panel->children() as $child) {
+            if ($child instanceof TextInput) {
+                $values[] = $child->value();
+            }
+        }
+
+        return $values;
     }
 
     /**
