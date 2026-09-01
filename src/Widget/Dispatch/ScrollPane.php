@@ -21,6 +21,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
@@ -165,6 +166,10 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
             return $this->moused($message, $area);
         }
 
+        if ($message instanceof PasteMsg) {
+            return $this->typed($message, $area) ?? new UpdateResult($this);
+        }
+
         return $this->broadcast($message, $area);
     }
 
@@ -250,8 +255,6 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
 
                     $holds = $child instanceof HoldsTheKeyboard ? $child->isHeld() : $index === $active;
 
-                    // The pane holds the keyboard for one child; the rest sit in
-                    // the same focused subtree and must not read it as their own.
                     if ($holds) {
                         $child->render($frame, $childArea, $context);
                     } else {
@@ -304,13 +307,20 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
             return new UpdateResult($this);
         }
 
-        $delegated = $this->delegatedToFocusedChild($message, $area);
+        return $this->typed($message, $area)
+            ?? new UpdateResult($this->cycledFocus($message) ?? $this->scrolledByKey($message, $area) ?? $this);
+    }
 
-        if ($delegated !== null) {
-            return $delegated;
-        }
-
-        return new UpdateResult($this->cycledFocus($message) ?? $this->scrolledByKey($message, $area) ?? $this);
+    /**
+     * Never broadcast: a paste handed to every child fills every field in a form.
+     *
+     * @return UpdateResult<self>|null null where nothing took it
+     */
+    private function typed(Message $message, Rect $area): ?UpdateResult
+    {
+        return $this->focused
+            ? $this->delegatedToFocusedChild($message, $area)
+            : null;
     }
 
     /**
@@ -555,7 +565,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     }
 
     /**
-     * The index among all children, not among the focusable ones focusIndex counts.
+     * Counts every child; focusIndex counts only the focusable ones.
      */
     private function activeChildIndex(): ?int
     {
