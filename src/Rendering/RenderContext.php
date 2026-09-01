@@ -72,8 +72,7 @@ final class RenderContext
     }
 
     /**
-     * A context to draw one widget as the one at the keyboard. Inside a tree of
-     * components the scope is opened per component instead, by Component::render().
+     * For one widget on its own; inside a tree Component::render() opens the scope.
      */
     public static function focused(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor): self
     {

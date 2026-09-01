@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Message;
 
 /**
- * The terminal window gained or lost focus. Where the keyboard is inside the
- * application is FocusMsg.
+ * The window, not the component — where the keyboard is inside the app is FocusMsg.
  */
 final readonly class TerminalFocusMsg implements Message
 {

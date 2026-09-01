@@ -150,7 +150,6 @@ final class PanelRenderingTest extends TestCase
         $left->render($bufferBefore, $leftRect, $context);
         $right->render($bufferBefore, $rightRect, $context);
 
-        // Simulate Tab: focus moves to the right panel
         $newLeft = $left->withFocus(false);
         $newRight = $right->withFocus(true);
 

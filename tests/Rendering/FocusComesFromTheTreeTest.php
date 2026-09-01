@@ -47,10 +47,6 @@ final class FocusComesFromTheTreeTest extends TestCase
         self::assertSame('F', $frame->character(0));
     }
 
-    /**
-     * An app that routes the keys itself says where they went by opening a scope
-     * around the widget it fed, the way Component does for a bound one.
-     */
     #[Test]
     public function aWidgetNobodyBoundShowsNoRingOfItsOwn(): void
     {
@@ -110,8 +106,7 @@ final readonly class MixedTreeApp extends App
 }
 
 /**
- * Draws what the context answers about its own flag, so a frame says which pane
- * a reader would see as holding the keyboard.
+ * Carries a flag nothing reads, so a test can hand it a stale one.
  */
 final readonly class FlaggedProbe implements Focusable
 {
