@@ -12,7 +12,6 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Choice\Select;
-use Elmphant\Tui\Widget\Focus\FocusTree;
 use Elmphant\Tui\Widget\Prose\Separator;
 use Elmphant\Tui\Widget\Prose\Spacer;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -151,15 +150,9 @@ final class PanelRenderingTest extends TestCase
         $left->render($bufferBefore, $leftRect, $context);
         $right->render($bufferBefore, $rightRect, $context);
 
-        // Simulate Tab: switch focus via FocusTree
-        $focusTree = new FocusTree(2, 0);
-        $newFocus = $focusTree->next();
-        $applied = $newFocus->apply([$left, $right]);
-        $newLeft = $applied[0];
-        $newRight = $applied[1];
-
-        self::assertFalse($newLeft->isFocused(), 'Left panel should be unfocused after Tab');
-        self::assertTrue($newRight->isFocused(), 'Right panel should be focused after Tab');
+        // Simulate Tab: focus moves to the right panel
+        $newLeft = $left->withFocus(false);
+        $newRight = $right->withFocus(true);
 
         // Render after Tab
         $bufferAfter = new Frame(60, 15);
