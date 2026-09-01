@@ -69,16 +69,6 @@ final class OptionRowTest extends TestCase
 
     #[Test]
     #[DataProvider('rows')]
-    public function leavesTheKeysAloneWhileSomethingElseHasTheFocus(OptionRow $row): void
-    {
-        $result = $row->withCursor(1)->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 1));
-
-        self::assertInstanceOf(OptionRow::class, $result->model);
-        self::assertSame(1, $result->model->cursor(), 'the arrows belong to whichever row is focused');
-    }
-
-    #[Test]
-    #[DataProvider('rows')]
     public function aClickLeavesTheCursorOnWhatItPicked(OptionRow $row): void
     {
         $area = new Rect(0, 0, 40, 1);

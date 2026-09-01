@@ -148,16 +148,6 @@ final class SelectTest extends TestCase
     }
 
     #[Test]
-    public function updateIgnoresKeyWhenNotFocused(): void
-    {
-        $select = Select::new(['A', 'B']);
-        $area = Rect::fromSize(40, 10);
-
-        $result = $select->update(new KeyMsg(Key::Down), $area);
-        self::assertSame($select, $result->model);
-    }
-
-    #[Test]
     public function mouseClickSelectsOption(): void
     {
         $select = Select::new(['A', 'B', 'C']);

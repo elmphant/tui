@@ -260,7 +260,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         $count = count($this->options);
 
         return match (true) {
-            $message instanceof KeyMsg && $this->focused => $this->handleKey($message, $count),
+            $message instanceof KeyMsg => $this->handleKey($message, $count),
             $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area, $count),
             $message instanceof MouseMsg && $message->inRect($area) => $this->handleWheel($message, $count),
             default => new UpdateResult($this),

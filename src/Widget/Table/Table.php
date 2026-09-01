@@ -242,7 +242,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $rowCount = $this->rowCount();
 
         return match (true) {
-            $message instanceof KeyMsg && $this->focused && $rowCount > 0 => $this->handleKey($message, $area),
+            $message instanceof KeyMsg && $rowCount > 0 => $this->handleKey($message, $area),
             $message instanceof MouseMsg => $this->handleMouse($message, $area, $rowCount),
             default => new UpdateResult($this),
         };

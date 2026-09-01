@@ -166,15 +166,6 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function ignoresInputWhenNotFocused(): void
-    {
-        $table = $this->createTable();
-        $area = Rect::fromSize(60, 10);
-        $result = $table->update(new KeyMsg(Key::Down), $area);
-        self::assertSame($table, $result->model);
-    }
-
-    #[Test]
     public function mouseClickSelectsRow(): void
     {
         $table = $this->createTable();

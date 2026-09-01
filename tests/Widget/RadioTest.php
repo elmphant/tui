@@ -194,16 +194,6 @@ final class RadioTest extends TestCase
     }
 
     #[Test]
-    public function updateIgnoresKeyWhenNotFocused(): void
-    {
-        $radio = Radio::new(['A', 'B'], 'Label');
-        $area = Rect::fromSize(40, 10);
-
-        $result = $radio->update(new KeyMsg(Key::Down), $area);
-        self::assertSame($radio, $result->model);
-    }
-
-    #[Test]
     public function mouseClickSelectsOption(): void
     {
         $radio = Radio::new(['A', 'B', 'C'], 'Label');

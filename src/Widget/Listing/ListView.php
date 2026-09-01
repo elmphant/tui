@@ -192,7 +192,7 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
 
         return match (true) {
             $count === 0 => new UpdateResult($this),
-            $message instanceof KeyMsg && $this->focused => $this->handleKey($message, $area),
+            $message instanceof KeyMsg => $this->handleKey($message, $area),
             $message instanceof MouseMsg => $this->handleMouse($message, $area),
             default => new UpdateResult($this),
         };

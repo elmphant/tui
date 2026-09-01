@@ -271,17 +271,6 @@ final class CheckboxGroupTest extends TestCase
     }
 
     #[Test]
-    public function ignoresKeysWhenNotFocused(): void
-    {
-        $group = CheckboxGroup::new(['A', 'B'], 'Pick');
-        $area = Rect::fromSize(40, 3);
-
-        $result = $group->update(new KeyMsg(Key::Down), $area);
-
-        self::assertSame($group, $result->model);
-    }
-
-    #[Test]
     public function mouseClickTogglesOption(): void
     {
         $group = CheckboxGroup::new(['A', 'B', 'C'], 'Pick');

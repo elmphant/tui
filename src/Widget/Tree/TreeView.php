@@ -103,7 +103,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         if ($message instanceof MouseMsg) {
             return new UpdateResult($this->afterPointer($message, $area));
         }
-        if (!$message instanceof KeyMsg || !$this->focused) {
+        if (!$message instanceof KeyMsg) {
             return new UpdateResult($this);
         }
 

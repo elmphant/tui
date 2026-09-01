@@ -201,17 +201,6 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
-    public function ignoresKeyWhenNotFocused(): void
-    {
-        $row = CheckboxRow::new(['A', 'B']);
-        $area = new Rect(0, 0, 40, 1);
-
-        $result = $row->update(new KeyMsg(' '), $area);
-
-        self::assertSame($row, $result->model);
-    }
-
-    #[Test]
     public function withFocusReturnsNewInstance(): void
     {
         $row = CheckboxRow::new(['A']);

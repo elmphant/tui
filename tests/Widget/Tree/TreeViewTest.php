@@ -143,19 +143,16 @@ final class TreeViewTest extends TestCase
     }
 
     #[Test]
-    public function theArrowKeysDriveTheTreeOnlyWhileItHoldsTheKeyboard(): void
+    public function theArrowKeysMoveTheCursorAndOpenWhatItSitsOn(): void
     {
         $area = new Rect(0, 0, 30, 10);
-        $tree = self::orderTree()->withFocus(true);
+        $tree = self::orderTree();
 
         self::assertSame(['total'], self::afterKey($tree, Key::Down, $area)->cursor()->keys);
 
         $opened = self::afterKey($tree, Key::Right, $area);
         self::assertTrue($opened->isExpanded(TreePath::root()->child('order')), 'right opens what the cursor is on');
         self::assertFalse($opened->isExpanded(TreePath::root()->child('order')->child('lines')));
-
-        $unfocused = self::afterKey(self::orderTree()->withFocus(false), Key::Down, $area);
-        self::assertSame(['order'], $unfocused->cursor()->keys, 'a tree without the keyboard ignores the key');
     }
 
     #[Test]

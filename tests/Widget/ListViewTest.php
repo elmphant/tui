@@ -275,15 +275,6 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
-    public function ignoresInputWhenNotFocused(): void
-    {
-        $list = ListView::fromStrings(['A', 'B']);
-        $area = Rect::fromSize(40, 10);
-        $result = $list->update(new KeyMsg(Key::Down), $area);
-        self::assertSame($list, $result->model);
-    }
-
-    #[Test]
     public function mouseClickSelectsItem(): void
     {
         $list = ListView::fromStrings(['A', 'B', 'C']);

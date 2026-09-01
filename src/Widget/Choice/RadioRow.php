@@ -183,7 +183,7 @@ final readonly class RadioRow implements OptionRow, PublishesHints
     public function update(Message $message, Rect $area): UpdateResult
     {
         return match (true) {
-            $message instanceof KeyMsg && $this->focused => $this->handleKey($message),
+            $message instanceof KeyMsg => $this->handleKey($message),
             $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area),
             default => new UpdateResult($this),
         };
