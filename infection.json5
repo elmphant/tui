@@ -15,10 +15,17 @@
         "text": "infection.log"
     },
     "mutators": {
-        "@default": true
+        "@default": true,
+        // Widens protected to public. No test can observe a visibility
+        // relaxation, so every one of these survives: 11 of App.php's 14
+        // escapes were the App hooks alone.
+        "ProtectedVisibility": false
     },
-    // Measured 87.74% MSI / 89% covered over the whole of src on 2026-08-16,
-    // with StaticTable no longer excluded.
+    // Measured over the whole of src on 2026-09-02, ProtectedVisibility off:
+    // 86.1% MSI / 88.6% covered (12609 mutants, 371 timeouts, which Infection
+    // counts as detected). minCoveredMsi has never been met — the 2026-08-16
+    // measurement recorded 89% against the same floor of 93 — and `mutation` is
+    // not in CI, so nothing was failing on it.
     "minMsi": 86,
     "minCoveredMsi": 93,
     "testFramework": "phpunit",
