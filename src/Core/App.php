@@ -10,6 +10,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\LayoutSnapshot;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FloatMouseMsg;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -91,7 +92,7 @@ abstract readonly class App implements RoutesFocus
             return $this->handleLayerOne($message, $screenRect, $components);
         }
 
-        return $this->handleLayerTwo($message, $screenRect, self::holdingTheKeyboard($focusables, $focus));
+        return $this->handleLayerTwo($message, $screenRect, $focusables, $focus->focused());
     }
 
     /**
@@ -286,41 +287,6 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * The tree names the component the keys belong to. Its own flag does not.
-     *
-     * @param list<Component<Interactive>> $focusables
-     *
-     * @return list<Component<Interactive>>
-     */
-    private static function holdingTheKeyboard(array $focusables, FocusState $focus): array
-    {
-        if ($focus->isNowhere()) {
-            return [];
-        }
-
-        $focused = $focus->focused();
-
-        if ($focused === null) {
-            return $focusables;
-        }
-
-        foreach ($focusables as $component) {
-            if ($component->id->equals($focused)) {
-                $widget = $component->widget;
-
-                // Taking focus is how a pane is told to seat its cursor at the start,
-                // so marking one that never let go would walk the reader back to its
-                // first child between one keystroke and the next.
-                return [$widget instanceof Focusable && !$widget->isFocused()
-                    ? $component->withWidget($widget->withFocus(true))
-                    : $component];
-            }
-        }
-
-        return $focusables;
-    }
-
-    /**
      * @param list<Component<Interactive>> $components
      *
      * @return UpdateResult<static>
@@ -347,29 +313,28 @@ abstract readonly class App implements RoutesFocus
      *
      * @return UpdateResult<static>
      */
-    private function handleLayerTwo(Message $message, Rect $screenRect, array $focusables): UpdateResult
+    private function handleLayerTwo(Message $message, Rect $screenRect, array $focusables, ?ComponentId $holder): UpdateResult
     {
         if ($message instanceof KeyMsg) {
             $bindings = $this->focusCycleBindings();
 
             if ($bindings->matches($message, Actions::FOCUS_PREVIOUS_CYCLE)) {
-                return $this->handleTab($message, $screenRect, $focusables, true);
+                return $this->handleTab($message, $screenRect, $focusables, $holder, true);
             }
 
             if ($bindings->matches($message, Actions::FOCUS_CYCLE)) {
-                return $this->handleTab($message, $screenRect, $focusables, $message->shift);
+                return $this->handleTab($message, $screenRect, $focusables, $holder, $message->shift);
             }
 
-            return $this->handleLayerTwoKey($message, $screenRect, $focusables);
+            return $this->handleLayerTwoKey($message, $screenRect, $focusables, $holder);
         }
 
         if ($message instanceof MouseMsg) {
-            return $this->delegateMouse(
-                $message,
-                $screenRect,
-                $this->componentRegistry()->all(),
-                $this->findFocusedComponent($focusables)?->id,
-            );
+            return $this->delegateMouse($message, $screenRect, $this->componentRegistry()->all());
+        }
+
+        if ($message instanceof FocusMsg) {
+            return $this->delegateToFocused($message, $screenRect, $focusables, $holder);
         }
 
         return $this->handleUnrouted($message, $screenRect);
@@ -400,9 +365,9 @@ abstract readonly class App implements RoutesFocus
      *
      * @return UpdateResult<static>
      */
-    private function handleTab(KeyMsg $message, Rect $screenRect, array $focusables, bool $reverse): UpdateResult
+    private function handleTab(KeyMsg $message, Rect $screenRect, array $focusables, ?ComponentId $holder, bool $reverse): UpdateResult
     {
-        $focused = $this->findFocusedComponent($focusables);
+        $focused = $this->findFocusedComponent($focusables, $holder);
 
         if ($focused !== null && $focused->writesBack()) {
             /** @var Focusable $widget */
@@ -435,9 +400,9 @@ abstract readonly class App implements RoutesFocus
      *
      * @return UpdateResult<static>
      */
-    private function handleLayerTwoKey(KeyMsg $message, Rect $screenRect, array $focusables): UpdateResult
+    private function handleLayerTwoKey(KeyMsg $message, Rect $screenRect, array $focusables, ?ComponentId $holder): UpdateResult
     {
-        if ($this->findFocusedComponent($focusables) === null
+        if ($this->findFocusedComponent($focusables, $holder) === null
             && $this->resolvedQuitBindings()->matches($message, 'quit')
         ) {
             return new UpdateResult($this, Cmd::quit());
@@ -449,7 +414,7 @@ abstract readonly class App implements RoutesFocus
             return $appResult;
         }
 
-        return $this->delegateToFocused($message, $screenRect, $focusables);
+        return $this->delegateToFocused($message, $screenRect, $focusables, $holder);
     }
 
     /**
@@ -457,22 +422,15 @@ abstract readonly class App implements RoutesFocus
      *
      * @return Component<Interactive>|null
      */
-    private function findFocusedComponent(array $focusables): ?Component
+    private function findFocusedComponent(array $focusables, ?ComponentId $holder): ?Component
     {
-        $index = $this->findFocusedIndex($focusables);
+        if ($holder === null) {
+            return null;
+        }
 
-        return $index === null ? null : $focusables[$index];
-    }
-
-    /**
-     * @param list<Component<Interactive>> $focusables
-     */
-    private function findFocusedIndex(array $focusables): ?int
-    {
-        foreach ($focusables as $index => $component) {
-            $widget = $component->widget;
-            if ($widget instanceof Focusable && $widget->isFocused()) {
-                return $index;
+        foreach ($focusables as $component) {
+            if ($component->id->equals($holder)) {
+                return $component;
             }
         }
 
@@ -512,9 +470,9 @@ abstract readonly class App implements RoutesFocus
      *
      * @return UpdateResult<static>
      */
-    private function delegateToFocused(Message $message, Rect $screenRect, array $focusables): UpdateResult
+    private function delegateToFocused(Message $message, Rect $screenRect, array $focusables, ?ComponentId $holder): UpdateResult
     {
-        $focused = $this->findFocusedComponent($focusables);
+        $focused = $this->findFocusedComponent($focusables, $holder);
 
         if ($focused === null || !$focused->writesBack()) {
             return new UpdateResult($this);
@@ -619,7 +577,6 @@ abstract readonly class App implements RoutesFocus
         MouseMsg $message,
         Rect $screenRect,
         array $components,
-        ?ComponentId $holdingTheKeyboard = null,
     ): UpdateResult {
         $appResult = $this->onMouse($message, $screenRect);
         $current = $this->appModel($appResult);
@@ -629,7 +586,7 @@ abstract readonly class App implements RoutesFocus
         }
         $rects = $current->findComponentRects($screenRect, $components);
         [$updates, $childCommand] = $current->dispatchComponents(
-            PointerFocus::told($components, $holdingTheKeyboard),
+            $components,
             $rects,
             $message,
             $current->childDispatcher(),

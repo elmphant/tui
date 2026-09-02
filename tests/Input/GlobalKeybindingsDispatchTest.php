@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Input;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
@@ -158,7 +159,7 @@ final class GlobalKeybindingsDispatchTest extends TestCase
     public function appWrapsFocusableBeforeKeyDispatch(): void
     {
         $app = new GlobalCustomApp();
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), new FocusState(ComponentId::named('global-observer')));
 
         /** @var GlobalCustomApp $updated */
         $updated = $result->model;
@@ -235,14 +236,15 @@ final class GlobalKeybindingsDispatchTest extends TestCase
     public function vimModeAppliedAsGlobalReachesSelect(): void
     {
         $app = new VimModeApp();
+        $onSelect = new FocusState(ComponentId::named('vim-select'));
 
-        $result = $app->update(new KeyMsg('j'), Rect::fromSize(40, 10));
+        $result = $app->update(new KeyMsg('j'), Rect::fromSize(40, 10), $onSelect);
         /** @var VimModeApp $updated */
         $updated = $result->model;
         self::assertSame(1, $updated->select->cursor());
 
         // Default 'down' still works — additive semantics
-        $result2 = $app->update(new KeyMsg(Key::Down), Rect::fromSize(40, 10));
+        $result2 = $app->update(new KeyMsg(Key::Down), Rect::fromSize(40, 10), $onSelect);
         /** @var VimModeApp $updated2 */
         $updated2 = $result2->model;
         self::assertSame(1, $updated2->select->cursor());

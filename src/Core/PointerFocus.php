@@ -8,8 +8,6 @@ use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\Interactive;
 
 /**
  * What a press does to the keyboard, as rules about messages and commands
@@ -58,34 +56,5 @@ final class PointerFocus
         }
 
         return $message->isClick() ? Cmd::focusNothing() : null;
-    }
-
-    /**
-     * The components with the one holding the keyboard marked, so a press is
-     * answered by a tree that agrees with where the keys are going. Only handed
-     * to a widget that does not already hold it: taking focus is how a pane is
-     * told to seat its cursor, and marking one that never let go would walk the
-     * reader back to its first child.
-     *
-     * @param list<Component<Interactive>> $components
-     *
-     * @return list<Component<Interactive>>
-     */
-    public static function told(array $components, ?ComponentId $holding): array
-    {
-        if ($holding === null) {
-            return $components;
-        }
-
-        return array_map(
-            static function (Component $component) use ($holding): Component {
-                $widget = $component->widget;
-
-                return $component->id->equals($holding) && $widget instanceof Focusable && !$widget->isFocused()
-                    ? $component->withWidget($widget->withFocus(true))
-                    : $component;
-            },
-            $components,
-        );
     }
 }

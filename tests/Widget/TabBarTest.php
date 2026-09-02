@@ -548,10 +548,13 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function keyMsgWhenNotFocusedReturnsSelf(): void
+    public function aKeyItIsHandedSwitchesTheTab(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
-        self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15))->model);
+        $switched = $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15))->model;
+
+        self::assertInstanceOf(TabBar::class, $switched);
+        self::assertSame(1, $switched->selectedTab());
     }
 
     #[Test]

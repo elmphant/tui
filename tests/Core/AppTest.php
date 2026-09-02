@@ -11,6 +11,7 @@ use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
@@ -130,7 +131,7 @@ final class AppTest extends TestCase
     {
         $app = SearchApp::create();
 
-        $result = $app->update(new KeyMsg('a'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('a'), Rect::fromSize(80, 24), new FocusState(ComponentId::named('search-input')));
 
         self::assertInstanceOf(SearchApp::class, $result->model);
         self::assertSame('a', $result->model->query->value(), 'The focused input received the key');

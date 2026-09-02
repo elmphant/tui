@@ -442,16 +442,6 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
-    public function typingPastAnUnfocusedTableLeavesItAlone(): void
-    {
-        $table = $this->routes();
-
-        $result = $table->update(new KeyMsg('f'), Rect::fromSize(40, 10));
-
-        self::assertSame($table, $result->model);
-    }
-
-    #[Test]
     public function aHostCanBindItLikeAnyOtherInteractiveWidget(): void
     {
         $table = $this->routes();

@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Mount;
 use Elmphant\Tui\Core\Reducer;
@@ -38,7 +39,7 @@ final class MountAddressingTest extends TestCase
     {
         $app = new AddressingApp(new TalkativeSubModel());
 
-        $command = $app->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 5), new FocusState())->command;
+        $command = $app->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 5), new FocusState(ComponentId::named('speaker')))->command;
 
         self::assertInstanceOf(MappedCmd::class, $command, 'the address is a wrap the runtime applies to what it emits');
         self::assertInstanceOf(MessageCmd::class, $command->inner);

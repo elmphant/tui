@@ -66,9 +66,9 @@ final class ComponentTreeTest extends TestCase
     #[Test]
     public function appRoutesMessagesFromComponentNodesWithoutASecondRegistrationList(): void
     {
-        $app = new TreeComponentApp(TextInput::new()->withFocus(true));
+        $app = new TreeComponentApp(TextInput::new());
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('input')));
 
         self::assertInstanceOf(TreeComponentApp::class, $result->model);
         self::assertSame('x', $result->model->input->value());

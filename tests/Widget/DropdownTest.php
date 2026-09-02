@@ -191,14 +191,6 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
-    public function anUnfocusedDropdownIgnoresTheToggleKey(): void
-    {
-        $answered = Dropdown::new(Select::new(['json']))->update(new KeyMsg(' '), self::anchor());
-
-        self::assertFalse($answered->model->isOpen());
-    }
-
-    #[Test]
     public function isFocusedDefaultsToFalse(): void
     {
         self::assertFalse(Dropdown::new(Select::new(['json']))->isFocused());

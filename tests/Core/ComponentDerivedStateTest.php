@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -26,7 +27,7 @@ final class ComponentDerivedStateTest extends TestCase
     #[Test]
     public function aComponentRebuiltFromWhatTheModelKeptIsAcceptedBack(): void
     {
-        $scrolled = (new DerivedScrollApp())->update(
+        $scrolled = self::afterKeyboardArrives(new DerivedScrollApp())->update(
             new KeyMsg(Key::Down),
             new Rect(0, 0, 20, 5),
             new FocusState(ComponentId::named('pane')),
@@ -44,7 +45,7 @@ final class ComponentDerivedStateTest extends TestCase
     #[Test]
     public function aComponentRebuiltWithDecorationTheSameKeystrokeChangedIsAcceptedBack(): void
     {
-        $scrolled = (new DerivedTitleApp())->update(
+        $scrolled = self::afterKeyboardArrives(new DerivedTitleApp())->update(
             new KeyMsg(Key::Down),
             new Rect(0, 0, 20, 5),
             new FocusState(ComponentId::named('pane')),
@@ -52,6 +53,22 @@ final class ComponentDerivedStateTest extends TestCase
 
         self::assertInstanceOf(DerivedTitleApp::class, $scrolled->model);
         self::assertSame(1, $scrolled->model->scroll);
+    }
+
+    /**
+     * What the runtime sends before the first key, so the pane has a cursor to move.
+     */
+    private static function afterKeyboardArrives(App $app): App
+    {
+        $seated = $app->update(
+            new FocusMsg(true),
+            new Rect(0, 0, 20, 5),
+            new FocusState(ComponentId::named('pane')),
+        )->model;
+
+        self::assertInstanceOf(App::class, $seated);
+
+        return $seated;
     }
 }
 

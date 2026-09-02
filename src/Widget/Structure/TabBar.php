@@ -221,10 +221,6 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
             return $this->handleTabClick($message, $area);
         }
 
-        if ($message instanceof KeyMsg && !$this->focused) {
-            return new UpdateResult($this);
-        }
-
         $pane = $this->activePane();
         $result = (new ChildDispatcher())->dispatchOne($pane, $message, $this->contentArea($area));
 

@@ -180,7 +180,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
             return $this->dispatchedToTheBoxes($dispatcher, $message, $area);
         }
 
-        if (!$this->focused || !$message instanceof KeyMsg) {
+        if (!$message instanceof KeyMsg) {
             return new UpdateResult($this);
         }
 

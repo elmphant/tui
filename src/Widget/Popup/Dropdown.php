@@ -165,7 +165,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
             return new UpdateResult($this->moused($message, $area));
         }
 
-        if (!$message instanceof KeyMsg || !$this->focused) {
+        if (!$message instanceof KeyMsg) {
             return new UpdateResult($this);
         }
 

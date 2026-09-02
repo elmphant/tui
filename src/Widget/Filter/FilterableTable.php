@@ -116,7 +116,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if (!$message instanceof KeyMsg || !$this->focused) {
+        if (!$message instanceof KeyMsg) {
             return new UpdateResult($this);
         }
 

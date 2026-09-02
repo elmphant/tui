@@ -31,6 +31,7 @@ use Elmphant\Tui\Input\Terminal;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
@@ -820,7 +821,19 @@ final class Program
                 if ($stamped === null) {
                     continue;
                 }
-                $this->focus = $this->focus->resolvedAgainst($this->focusableIds(), $this->reachableIds());
+                $resolved = $this->focus->resolvedAgainst($this->focusableIds(), $this->reachableIds());
+
+                // The waiting message goes back behind the announcement, or the first
+                // key an application ever sees arrives before its pane is seated.
+                if (!$resolved->sameAs($this->focus) && $resolved->focused() !== null) {
+                    $this->focus = $resolved;
+                    $this->messageQueue->unshift($stamped);
+                    $this->messageQueue->unshift(new FocusMsg(true));
+
+                    continue;
+                }
+
+                $this->focus = $resolved;
                 $result = $this->model instanceof RoutesFocus
                     ? $this->model->update($stamped, $screenRect, $this->focus)
                     : $this->model->update($stamped, $screenRect);
@@ -941,17 +954,22 @@ final class Program
     {
         $moved = $command->applyTo($this->focus, $this->focusableIds());
 
-        if ($moved->sameAs($this->focus)) {
-            return;
+        if (!$moved->sameAs($this->focus)) {
+            $this->tracer?->record(TraceEvent::Focus, [
+                'from' => $this->focus->focused()?->value,
+                'to' => $moved->focused()?->value,
+            ]);
+
+            $this->focus = $moved;
+            $this->isDirty = true;
         }
 
-        $this->tracer?->record(TraceEvent::Focus, [
-            'from' => $this->focus->focused()?->value,
-            'to' => $moved->focused()?->value,
-        ]);
-
-        $this->focus = $moved;
-        $this->isDirty = true;
+        // Announced even when the move lands back where it started: a ring of one
+        // still means "put the keyboard here". Unshifted, because one read can queue
+        // a whole burst of keystrokes and an arrival behind them seats too late.
+        if ($moved->focused() !== null) {
+            $this->messageQueue->unshift(new FocusMsg(true));
+        }
     }
 
     /**

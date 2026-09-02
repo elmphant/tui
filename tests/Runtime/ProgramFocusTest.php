@@ -15,6 +15,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -50,6 +51,34 @@ final class ProgramFocusTest extends TestCase
         self::assertInstanceOf(FocusCyclingApp::class, $final);
         self::assertSame('x', $final->first->value());
         self::assertSame('', $final->second->value());
+    }
+
+    #[Test]
+    public function theFirstKeystrokeReachesTheFieldTheRuntimePlacedTheKeyboardOn(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('a');
+        $terminal->simulateInput('q');
+
+        $final = Program::new(PaneCyclingApp::seeded())->withTerminal($terminal)->start();
+
+        self::assertInstanceOf(PaneCyclingApp::class, $final);
+        self::assertSame(['a', ''], $final->valuesOfLeft());
+    }
+
+    #[Test]
+    public function aPaneTheKeyboardComesBackToStartsAtItsFirstChildAgain(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+
+        foreach (['a', "\t", 'b', "\t", 'c', "\t", 'd', 'q'] as $keystroke) {
+            $terminal->simulateInput($keystroke);
+        }
+
+        $final = Program::new(PaneCyclingApp::seeded())->withTerminal($terminal)->start();
+
+        self::assertInstanceOf(PaneCyclingApp::class, $final);
+        self::assertSame(['ad', 'b'], $final->valuesOfLeft());
     }
 
     #[Test]
@@ -120,6 +149,52 @@ final readonly class TabFromAPlacedFocusApp extends App
     protected function setup(): ?Cmd
     {
         return Cmd::focus(ComponentId::named('second'));
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        return 'q' === $message->key ? $this->withCmd(Cmd::quit()) : UpdateResult::keep($this);
+    }
+}
+
+final readonly class PaneCyclingApp extends App
+{
+    public function __construct(
+        public Panel $left = new Panel('L'),
+        public Panel $right = new Panel('R'),
+    ) {
+    }
+
+    public static function seeded(): self
+    {
+        return new self(
+            Panel::new('L')->add(TextInput::new())->add(TextInput::new()),
+            Panel::new('R')->add(TextInput::new()),
+        );
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind('left', $this->left, static fn (self $app, Panel $pane): self => $app->cloneWith(left: $pane)),
+            Component::bind('right', $this->right, static fn (self $app, Panel $pane): self => $app->cloneWith(right: $pane)),
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function valuesOfLeft(): array
+    {
+        $values = [];
+
+        foreach ($this->left->children() as $child) {
+            if ($child instanceof TextInput) {
+                $values[] = $child->value();
+            }
+        }
+
+        return $values;
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult

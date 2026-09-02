@@ -89,19 +89,6 @@ final class PointerFocusTest extends TestCase
     }
 
     #[Test]
-    public function theComponentTheKeyboardIsOnIsToldSoWhenAPressArrives(): void
-    {
-        $result = (new WatchingApp())->update(
-            new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left),
-            Rect::fromSize(20, 2),
-            new FocusState(ComponentId::named('watcher')),
-        );
-
-        self::assertInstanceOf(WatchingApp::class, $result->model);
-        self::assertTrue($result->model->watcher->sawTheKeyboard());
-    }
-
-    #[Test]
     public function anAppThatMovesTheKeyboardOnAPressIsNotOverruledByTheDefault(): void
     {
         $driven = ModelHarness::for(new ClickableChromeApp(), 40, 3)->initialize();

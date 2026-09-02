@@ -308,10 +308,6 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
      */
     private function keyed(KeyMsg $message, Rect $area): UpdateResult
     {
-        if (!$this->focused) {
-            return new UpdateResult($this);
-        }
-
         return $this->typed($message, $area)
             ?? new UpdateResult($this->cycledFocus($message) ?? $this->scrolledByKey($message, $area) ?? $this);
     }
@@ -323,9 +319,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
      */
     private function typed(Message $message, Rect $area): ?UpdateResult
     {
-        return $this->focused
-            ? $this->delegatedToFocusedChild($message, $area)
-            : null;
+        return $this->delegatedToFocusedChild($message, $area);
     }
 
     /**

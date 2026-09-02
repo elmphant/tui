@@ -306,14 +306,6 @@ final class ScrollPaneTest extends TestCase
     }
 
     #[Test]
-    public function keysAreIgnoredWhileThePaneIsNotFocused(): void
-    {
-        $pane = ScrollPane::of(Text::new('one'), Text::new('two'), Text::new('three'));
-
-        self::assertSame($pane, $this->press($pane, Key::Down, Rect::fromSize(20, 2)));
-    }
-
-    #[Test]
     public function theFocusedChildSeesTheMessageFirst(): void
     {
         $pane = ScrollPane::of($this->counter('a'), $this->counter('b'))->withFocus(true)->withFocusAt(1);

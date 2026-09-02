@@ -109,7 +109,7 @@ final class AppFocusableTest extends TestCase
     {
         $app = TwoPanelApp::create();
 
-        $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24), self::keyboardOn('left-panel'));
         self::assertNotInstanceOf(QuitCmd::class, $result->command);
     }
 
@@ -196,7 +196,7 @@ final class AppFocusableTest extends TestCase
         $outerRight = Panel::new('Right');
 
         $app = new TwoPanelApp(left: $outerLeft, right: $outerRight);
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), self::keyboardOn('left-panel'));
 
         self::assertInstanceOf(TwoPanelApp::class, $result->model);
         self::assertNotSame($app->left, $result->model->left);
@@ -209,7 +209,7 @@ final class AppFocusableTest extends TestCase
             counter: new CountingFocusable(focused: true),
         );
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), self::keyboardOn('counting-widget'));
         self::assertInstanceOf(CountingFocusableApp::class, $result->model);
         self::assertSame(1, $result->model->counter->count);
     }
@@ -221,7 +221,7 @@ final class AppFocusableTest extends TestCase
             counter: new CountingFocusable(focused: true),
         );
 
-        $result = $app->update(new KeyMsg('c'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('c'), Rect::fromSize(80, 24), self::keyboardOn('counting-widget'));
         self::assertInstanceOf(ExecCmd::class, $result->command);
     }
 
@@ -348,7 +348,7 @@ final class AppFocusableTest extends TestCase
             counter: new CountingFocusable(focused: true),
         );
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), self::keyboardOn('counting-widget'));
         self::assertSame(1, $result->model->counter->count);
     }
 
@@ -360,7 +360,7 @@ final class AppFocusableTest extends TestCase
             right: new CountingFocusable(count: 0, focused: true),
         );
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), self::keyboardOn('right-counter'));
         self::assertInstanceOf(TwoCountingFocusableApp::class, $result->model);
         self::assertSame(0, $result->model->left->count);
         self::assertSame(1, $result->model->right->count);
@@ -396,7 +396,7 @@ final class AppFocusableTest extends TestCase
             counter: new CountingFocusable(focused: true),
         );
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), self::keyboardOn('counting-widget'));
         self::assertNotSame($app, $result->model);
         self::assertSame(1, $result->model->counter->count);
     }
@@ -420,7 +420,7 @@ final class AppFocusableTest extends TestCase
             widget: new RectCapturingFocusable(focused: true),
         );
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), self::keyboardOn('rect-capture'));
         self::assertInstanceOf(RectCapturingFocusableApp::class, $result->model);
         self::assertSame(80, $result->model->widget->capturedWidth);
         self::assertSame(24, $result->model->widget->capturedHeight);
@@ -434,7 +434,7 @@ final class AppFocusableTest extends TestCase
             right: new RectCapturingFocusable(focused: true),
         );
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), self::keyboardOn('right-capture'));
         self::assertInstanceOf(TwoRectCapturingApp::class, $result->model);
         self::assertSame(40, $result->model->right->capturedWidth);
     }
@@ -481,7 +481,7 @@ final class AppFocusableTest extends TestCase
             other: new UnchangedFocusable(focused: false),
         );
 
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), self::keyboardOn('tab-consumer'));
 
         self::assertInstanceOf(TabConsumingApp::class, $result->model);
         self::assertSame(1, $result->model->widget->tabCount);
@@ -565,7 +565,7 @@ final class AppFocusableTest extends TestCase
             counter: new CountingFocusable(focused: true),
         );
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), self::keyboardOn('counting-widget'));
 
         self::assertInstanceOf(NoOpUpdateResultApp::class, $result->model);
         self::assertSame(1, $result->model->counter->count);
@@ -676,6 +676,14 @@ final class AppFocusableTest extends TestCase
             $result->command,
             'the keyboard is asked for on the widget that replaced the one clicked',
         );
+    }
+
+    /**
+     * Driving update() by hand means saying where the keyboard is, as the runtime does.
+     */
+    private static function keyboardOn(string $id): FocusState
+    {
+        return new FocusState(ComponentId::named($id));
     }
 
     /**

@@ -15,6 +15,7 @@ use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\RoutesFocus;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\FloatPlacement;
@@ -98,7 +99,13 @@ final class ModelHarness
         if ($routed === null) {
             return $this;
         }
+        $previous = $this->focus;
         $this->focus = $this->resolvedFocus();
+
+        if (!$this->focus->sameAs($previous)) {
+            $this->announceArrival();
+        }
+
         $result = $this->model instanceof RoutesFocus
             ? $this->model->update($routed, $this->area, $this->focus)
             : $this->model->update($routed, $this->area);
@@ -246,7 +253,23 @@ final class ModelHarness
                 $this->focus,
                 $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
             );
+            $this->announceArrival();
         }
+    }
+
+    private function announceArrival(): void
+    {
+        if ($this->focus->focused() === null) {
+            return;
+        }
+
+        $result = $this->model instanceof RoutesFocus
+            ? $this->model->update(new FocusMsg(true), $this->area, $this->focus)
+            : $this->model->update(new FocusMsg(true), $this->area);
+
+        /** @var TModel $next */
+        $next = self::requireModel($result->model);
+        $this->model = $next;
     }
 
     private static function requireModel(Reducer $model): Model

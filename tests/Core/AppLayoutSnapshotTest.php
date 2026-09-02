@@ -181,11 +181,12 @@ final class AppLayoutSnapshotTest extends TestCase
     #[Test]
     public function repeatedChildDispatchReusesTheDispatcherAndGlobalBindings(): void
     {
-        $app = new SnapshotCountingApp(Panel::new('Main')->withFocus(true));
+        $app = new SnapshotCountingApp(Panel::new('Main'));
         $screenRect = Rect::fromSize(80, 24);
+        $onPanel = new FocusState(ComponentId::named('main-panel'));
 
-        $app->update(new KeyMsg('x'), $screenRect);
-        $app->update(new KeyMsg('y'), $screenRect);
+        $app->update(new KeyMsg('x'), $screenRect, $onPanel);
+        $app->update(new KeyMsg('y'), $screenRect, $onPanel);
 
         self::assertSame(1, BindingsCallCounter::$count);
     }
@@ -233,12 +234,12 @@ final class AppLayoutSnapshotTest extends TestCase
     {
         $layouts = new ChildLayoutCounter();
         $app = new LayoutPlanCountingApp(
-            Panel::new('Main')->withFocus(true),
+            Panel::new('Main'),
             $layouts,
         );
         $screen = Rect::fromSize(80, 24);
 
-        $result = $app->update(new KeyMsg('ignored'), $screen);
+        $result = $app->update(new KeyMsg('ignored'), $screen, new FocusState(ComponentId::named('counted-panel')));
         self::assertSame($app, $result->model);
 
         $frame = new Frame(80, 24);

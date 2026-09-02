@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\ComponentRegistry;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
@@ -186,9 +187,9 @@ final class ComponentTest extends TestCase
     #[Test]
     public function bindingAPropertyWritesTheUpdateBackToIt(): void
     {
-        $app = new PropertyBoundApp(TextInput::new()->withFocus(true), version: 7);
+        $app = new PropertyBoundApp(TextInput::new(), version: 7);
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('input')));
 
         self::assertInstanceOf(PropertyBoundApp::class, $result->model);
         self::assertSame('x', $result->model->input->value());
@@ -198,23 +199,23 @@ final class ComponentTest extends TestCase
     #[Test]
     public function aComponentCannotDisappearWhileItsUpdateIsBeingApplied(): void
     {
-        $app = new DisappearingComponentApp(TextInput::new()->withFocus(true));
+        $app = new DisappearingComponentApp(TextInput::new());
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Component "input" disappeared during an update');
 
-        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1));
+        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('input')));
     }
 
     #[Test]
     public function aReplacementWritingToTheWrongPropertyIsRefused(): void
     {
-        $app = new MisdirectedComponentApp(TextInput::new()->withFocus(true));
+        $app = new MisdirectedComponentApp(TextInput::new());
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Component "typed" stored its update on another property');
 
-        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1));
+        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('typed')));
     }
 }
 
