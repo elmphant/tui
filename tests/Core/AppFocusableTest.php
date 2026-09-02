@@ -31,11 +31,13 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
 use Elmphant\Tui\Tests\Core\Support\TestComponents;
 use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Box;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -79,18 +81,55 @@ final class AppFocusableTest extends TestCase
         self::assertSame(0, $result->model->clipped->count);
     }
 
+    /**
+     * A clipped component has no rect to dispatch into, so the tab passes it by —
+     * and must pass it by in the direction it was pressed.
+     */
     #[Test]
-    public function tabMovesOnWhenTheFocusedComponentIsClippedAway(): void
+    #[DataProvider('tabDirections')]
+    public function tabMovesOnInItsOwnDirectionWhenTheFocusedComponentIsClippedAway(KeyMsg $key, string $lands): void
     {
         $app = new ClippedFocusApp(
             visible: new CountingFocusable(),
             middle: new CountingFocusable(),
-            clipped: (new CountingFocusable())->withFocus(true),
+            clipped: new CountingFocusable(),
         );
 
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(8, 4));
+        $result = $app->update($key, Rect::fromSize(8, 4), self::keyboardOn('clipped-last'));
 
-        self::assertInstanceOf(FocusCmd::class, $result->command);
+        self::assertEquals(
+            ComponentId::named($lands),
+            self::keyboardLandsOn($result->command, $app->focusableIds(), 'clipped-last'),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{KeyMsg, string}>
+     */
+    public static function tabDirections(): iterable
+    {
+        yield 'tab wraps on past the last' => [new KeyMsg(Key::Tab), 'clipped-visible'];
+        yield 'shift+tab steps back' => [new KeyMsg(Key::Tab, shift: true), 'clipped-middle'];
+    }
+
+    /**
+     * The onMouse hook may rebuild the tree, so the click has to be delivered
+     * against the components the changed model publishes, not the ones read
+     * before the hook ran.
+     */
+    #[Test]
+    public function aClickReachesTheTreeTheMouseHookLeftBehind(): void
+    {
+        $app = new SwappingOnMouseApp(
+            before: TextInput::new()->withValue('aaaa'),
+            after: TextInput::new()->withValue('bbbb'),
+        );
+
+        $result = $app->update(new MouseMsg(1, 0, MouseAction::Press, MouseButton::Left), Rect::fromSize(20, 1));
+
+        self::assertInstanceOf(SwappingOnMouseApp::class, $result->model);
+        self::assertSame(1, $result->model->after->cursor(), 'the widget the hook swapped in took the click');
+        self::assertSame(4, $result->model->before->cursor(), 'the one it swapped out was left alone');
     }
 
     #[Test]
@@ -696,6 +735,28 @@ final class AppFocusableTest extends TestCase
         $start = new FocusState(null === $from ? null : ComponentId::named($from));
 
         return $command->applyTo($start, $order)->focused();
+    }
+}
+
+final readonly class SwappingOnMouseApp extends CopyableTestApp
+{
+    public function __construct(
+        public TextInput $before = new TextInput(),
+        public TextInput $after = new TextInput(),
+        public bool $swapped = false,
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return $this->swapped
+            ? TestComponents::bind('field', 'after', $this->after)
+            : TestComponents::bind('field', 'before', $this->before);
+    }
+
+    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    {
+        return UpdateResult::keep($this->cloneWith(swapped: true));
     }
 }
 

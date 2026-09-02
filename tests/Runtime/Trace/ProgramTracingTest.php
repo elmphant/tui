@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\StdinBuffer;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -48,6 +49,25 @@ final class ProgramTracingTest extends TestCase
         $messages = array_column($tracer->fieldsOf(TraceEvent::Update), 'message');
 
         self::assertContains(TestMessage::class, $messages, 'The model saw this message, so the trace must show it');
+    }
+
+    /**
+     * The trace is what answers "that key does nothing", so it has to name every
+     * modifier that was held — a binding is matched on all of them.
+     */
+    #[Test]
+    public function aTracedKeyIsNamedWithEveryModifierThatWasHeld(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput("\x1b[97;8u");
+        $terminal->simulateInput('q');
+
+        Program::new($this->quittingOnQ())->withTerminal($terminal)->withTracer($tracer)->start();
+
+        $keys = array_column($tracer->fieldsOf(TraceEvent::Update), 'key');
+
+        self::assertContains('ctrl+alt+shift+a', $keys);
     }
 
     #[Test]
@@ -226,6 +246,28 @@ final class ProgramTracingTest extends TestCase
      * Handles one real message, then quits from a timer so the loop completes an
      * iteration before stopping.
      */
+    private function quittingOnQ(): Model
+    {
+        return new class implements Model {
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult(
+                    $this,
+                    $message instanceof KeyMsg && 'q' === $message->key ? Cmd::quit() : null,
+                );
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+    }
+
     private function shortLivedModel(): Model
     {
         return new class implements Model {

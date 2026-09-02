@@ -5,14 +5,21 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Layout;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -31,6 +38,45 @@ final class FocusArrivesAtAComponentTest extends TestCase
         self::assertInstanceOf(TwoPaneForm::class, $model);
         self::assertSame(['c'], self::valuesOf($model->right), 'the keyboard passed through the right pane');
         self::assertSame(['ad', 'b'], self::valuesOf($model->left));
+    }
+
+    /**
+     * An app rarely returns a focus move on its own — it comes batched with the
+     * effect that prompted it, or wrapped by a mounted child's address.
+     */
+    #[Test]
+    #[DataProvider('waysToCarryAFocusMove')]
+    public function aFocusMoveIsHonouredHoweverTheCommandCarriesIt(string $key): void
+    {
+        $harness = ModelHarness::for(new WrappedFocusApp(), 40, 10);
+
+        $harness->dispatch(new KeyMsg($key));
+
+        self::assertTrue(
+            $harness->focused()?->equals(ComponentId::named('second')),
+            'the move was honoured wherever it sat in the command',
+        );
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function waysToCarryAFocusMove(): iterable
+    {
+        yield 'batched with another effect' => ['b'];
+        yield 'wrapped by an address' => ['m'];
+    }
+
+    #[Test]
+    public function theHarnessSeatsThePaneItPlacesTheKeyboardOn(): void
+    {
+        $harness = ModelHarness::for(SeededPaneForm::startingOnTheSecondField(), 40, 10);
+
+        $harness->dispatch(new KeyMsg('x'));
+
+        $model = $harness->model();
+        self::assertInstanceOf(SeededPaneForm::class, $model);
+        self::assertSame(['x', ''], $model->fieldValues());
     }
 
     #[Test]
@@ -55,6 +101,67 @@ final class FocusArrivesAtAComponentTest extends TestCase
         $values = [];
 
         foreach ($panel->children() as $child) {
+            if ($child instanceof TextInput) {
+                $values[] = $child->value();
+            }
+        }
+
+        return $values;
+    }
+}
+
+final readonly class WrappedFocusApp extends App
+{
+    public function __construct(
+        public TextInput $first = new TextInput(),
+        public TextInput $second = new TextInput(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind('first', $this->first, static fn (self $app, TextInput $f): self => $app->cloneWith(first: $f)),
+            Component::bind('second', $this->second, static fn (self $app, TextInput $f): self => $app->cloneWith(second: $f)),
+        );
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        $move = Cmd::focus(ComponentId::named('second'));
+
+        return match ($message->key) {
+            'b' => $this->withCmd(Cmd::batch(Cmd::tick(1.0), $move)),
+            'm' => $this->withCmd($move->map(static fn (Message $inner): Message => $inner)),
+            default => UpdateResult::keep($this),
+        };
+    }
+}
+
+final readonly class SeededPaneForm extends App
+{
+    public function __construct(public ScrollPane $pane = new ScrollPane())
+    {
+    }
+
+    public static function startingOnTheSecondField(): self
+    {
+        return new self(ScrollPane::of(TextInput::new(), TextInput::new())->withFocusAt(1));
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('pane', $this->pane, static fn (self $app, ScrollPane $pane): self => $app->cloneWith(pane: $pane));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function fieldValues(): array
+    {
+        $values = [];
+
+        foreach ($this->pane->authoredChildren() as $child) {
             if ($child instanceof TextInput) {
                 $values[] = $child->value();
             }

@@ -12,8 +12,10 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
+use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
@@ -51,6 +53,36 @@ final class ProgramFocusTest extends TestCase
         self::assertInstanceOf(FocusCyclingApp::class, $final);
         self::assertSame('x', $final->first->value());
         self::assertSame('', $final->second->value());
+    }
+
+    /**
+     * The announcement is unshifted ahead of whatever was already being handled,
+     * so that message has to come back afterwards rather than be dropped or run
+     * twice. At startup the message in hand is the terminal's own size.
+     */
+    #[Test]
+    public function theMessageWaitingOnTheFirstPlacementIsHandledExactlyOnce(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('q');
+
+        $final = Program::new(new ResizeCountingApp())->withTerminal($terminal)->start();
+
+        self::assertInstanceOf(ResizeCountingApp::class, $final);
+        self::assertSame(1, $final->resizes);
+    }
+
+    #[Test]
+    public function thePlacementSeatsAPaneThatWasHandedInOnALaterChild(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('x');
+        $terminal->simulateInput('q');
+
+        $final = Program::new(SeededPaneApp::startingOnTheSecondField())->withTerminal($terminal)->start();
+
+        self::assertInstanceOf(SeededPaneApp::class, $final);
+        self::assertSame(['x', ''], $final->fieldValues(), 'the keyboard arriving seats the pane on its first child');
     }
 
     #[Test]
@@ -149,6 +181,68 @@ final readonly class TabFromAPlacedFocusApp extends App
     protected function setup(): ?Cmd
     {
         return Cmd::focus(ComponentId::named('second'));
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        return 'q' === $message->key ? $this->withCmd(Cmd::quit()) : UpdateResult::keep($this);
+    }
+}
+
+final readonly class SeededPaneApp extends App
+{
+    public function __construct(public ScrollPane $pane = new ScrollPane())
+    {
+    }
+
+    public static function startingOnTheSecondField(): self
+    {
+        return new self(ScrollPane::of(TextInput::new(), TextInput::new())->withFocusAt(1));
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('pane', $this->pane, static fn (self $app, ScrollPane $pane): self => $app->cloneWith(pane: $pane));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function fieldValues(): array
+    {
+        $values = [];
+
+        foreach ($this->pane->authoredChildren() as $child) {
+            if ($child instanceof TextInput) {
+                $values[] = $child->value();
+            }
+        }
+
+        return $values;
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        return 'q' === $message->key ? $this->withCmd(Cmd::quit()) : UpdateResult::keep($this);
+    }
+}
+
+final readonly class ResizeCountingApp extends App
+{
+    public function __construct(
+        public TextInput $field = new TextInput(),
+        public int $resizes = 0,
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('field', $this->field, static fn (self $app, TextInput $field): self => $app->cloneWith(field: $field));
+    }
+
+    protected function onResize(ResizeMsg $message): UpdateResult
+    {
+        return UpdateResult::keep($this->cloneWith(resizes: $this->resizes + 1));
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
