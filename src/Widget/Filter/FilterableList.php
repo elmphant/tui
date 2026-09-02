@@ -350,7 +350,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return $this->withMouse($message, $area);
         }
 
-        if (!$message instanceof KeyMsg || !$this->isFocused()) {
+        if (!$message instanceof KeyMsg) {
             return new UpdateResult($this);
         }
 
