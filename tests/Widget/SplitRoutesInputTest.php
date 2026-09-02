@@ -20,14 +20,14 @@ final class SplitRoutesInputTest extends TestCase
         $area = new Rect(0, 0, 40, 6);
         $split = Split::row(
             SplitState::even(2),
-            TextInput::new()->withFocus(true),
+            TextInput::new(),
             TextInput::new()->withFocus(true),
         );
 
         $typed = $split->update(new KeyMsg('x'), $area)->model;
 
         self::assertInstanceOf(Split::class, $typed);
-        self::assertSame(['x', ''], self::fieldValues($typed, $area));
+        self::assertSame(['', 'x'], self::fieldValues($typed, $area), 'the second pane is the marked one');
     }
 
     /**

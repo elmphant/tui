@@ -17,13 +17,13 @@ final class BarSlotRoutesInputTest extends TestCase
     public function aKeyReachesTheMarkedSlotAndNoOther(): void
     {
         $header = Header::new()
-            ->withLeft(TextInput::new()->withFocus(true))
+            ->withLeft(TextInput::new())
             ->withRight(TextInput::new()->withFocus(true));
 
         $typed = $header->update(new KeyMsg('x'), Rect::fromSize(60, 1))->model;
 
         self::assertInstanceOf(Header::class, $typed);
-        self::assertSame(['x', ''], self::slotValues($typed));
+        self::assertSame(['', 'x'], self::slotValues($typed), 'the right slot is the marked one');
     }
 
     /**
