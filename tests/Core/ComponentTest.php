@@ -196,6 +196,21 @@ final class ComponentTest extends TestCase
         self::assertSame(7, $result->model->version);
     }
 
+    /**
+     * The property name is only the default id. A host that gives one explicitly
+     * is naming what `Cmd::focus()` and the trace will call this component.
+     */
+    #[Test]
+    public function bindPropertyTakesAnIdOfItsOwnOverThePropertyName(): void
+    {
+        $ids = array_map(
+            static fn (ComponentId $id): string => $id->value,
+            (new RenamedPropertyApp())->focusableIds(),
+        );
+
+        self::assertSame(['search-field'], $ids);
+    }
+
     #[Test]
     public function aComponentCannotDisappearWhileItsUpdateIsBeingApplied(): void
     {
@@ -253,6 +268,18 @@ final readonly class PropertyBoundApp extends App
     public function view(): Widget
     {
         return $this->bindProperty('input', $this->input);
+    }
+}
+
+final readonly class RenamedPropertyApp extends App
+{
+    public function __construct(public TextInput $input = new TextInput())
+    {
+    }
+
+    public function view(): Widget
+    {
+        return $this->bindProperty('input', $this->input, 'search-field');
     }
 }
 

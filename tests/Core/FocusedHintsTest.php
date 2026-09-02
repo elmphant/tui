@@ -45,6 +45,26 @@ final class FocusedHintsTest extends TestCase
         self::assertSame([['space' => 'pick']], $read->getArrayCopy());
     }
 
+    /**
+     * A focus id can outlive the component it named — a view that rebuilt without
+     * it, drawn before the runtime repairs the state. Naming keys is not worth a
+     * crash.
+     */
+    #[Test]
+    public function anIdNamingNoComponentNamesNoKeysRatherThanFailing(): void
+    {
+        /** @var ArrayObject<int, array<string, string>> $read */
+        $read = new ArrayObject();
+
+        $context = new RenderContext(Theme::dark());
+        $context->beginFrame(0.0);
+        $context->focusOn(new FocusState(ComponentId::named('long-gone')));
+
+        (new HintingApp($read))->render(new Frame(20, 3), $context);
+
+        self::assertSame([[]], $read->getArrayCopy());
+    }
+
     #[Test]
     public function theKeysNamedIncludeTheOnesTheAppsGlobalBindingsAdded(): void
     {

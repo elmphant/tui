@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
+use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
@@ -224,6 +225,37 @@ final class AppFocusableTest extends TestCase
 
         $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
         self::assertInstanceOf(QuitCmd::class, $result->command);
+    }
+
+    /**
+     * A broadcast walks every component, and one it has to skip — nothing writes
+     * this one back — must not stop the walk before the rest.
+     */
+    #[Test]
+    public function aBroadcastCarriesPastAComponentNothingWritesBack(): void
+    {
+        $app = new SkippedThenReachedApp();
+
+        $result = $app->update(new MouseMsg(1, 2, MouseAction::Press, MouseButton::Left), Rect::fromSize(20, 4));
+
+        self::assertInstanceOf(SkippedThenReachedApp::class, $result->model);
+        self::assertSame(1, $result->model->reached->count);
+    }
+
+    /**
+     * With nothing to cycle between, tab is not the framework's to take: an app
+     * without components may bind it to whatever it likes.
+     */
+    #[Test]
+    public function anAppWithNothingFocusableStillSeesTabInItsOwnHook(): void
+    {
+        $app = new SimpleCounterApp();
+
+        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
+
+        self::assertInstanceOf(SimpleCounterApp::class, $result->model);
+        self::assertSame(1, $result->model->count);
+        self::assertNull($result->command, 'nothing asked the runtime to move a keyboard that has nowhere to go');
     }
 
     #[Test]
@@ -738,6 +770,24 @@ final class AppFocusableTest extends TestCase
     }
 }
 
+/**
+ * The click lands behind a component nothing writes back.
+ */
+final readonly class SkippedThenReachedApp extends CopyableTestApp
+{
+    public function __construct(
+        public ClickTrackingFocusable $reached = new ClickTrackingFocusable(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Box::new('Rows')
+            ->add(Component::named('read-only', Text::new('chrome')))
+            ->add(TestComponents::bind('reached', 'reached', $this->reached));
+    }
+}
+
 final readonly class SwappingOnMouseApp extends CopyableTestApp
 {
     public function __construct(
@@ -915,7 +965,7 @@ final readonly class SimpleCounterApp extends CopyableTestApp
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            'k' => UpdateResult::changed($this->cloneWith(count: $this->count + 1)),
+            'k', Key::Tab => UpdateResult::changed($this->cloneWith(count: $this->count + 1)),
             default => UpdateResult::keep($this),
         };
     }
