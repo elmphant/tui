@@ -320,8 +320,6 @@ final class CharWidth
         $width = 0;
         $offset = 0;
         $plainEnd = $match[0][1];
-        // Built by concatenation, not by slicing the input: Grapheme::split()
-        // drops bytes that are not valid UTF-8, and the result must drop them too.
         $result = '';
 
         while ($offset < $length && $width < $maxWidth) {

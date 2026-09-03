@@ -54,6 +54,9 @@ final class CharWidthSegmentationTest extends TestCase
         yield 'high control range' => ["a\u{0085}b"];
         yield 'invalid utf8 lead' => ["a\xC3b"];
         yield 'invalid utf8 continuation' => ["a\x80b"];
+        yield 'byte forming no character' => ["ab\xFFcd"];
+        yield 'truncated multibyte tail' => ["tr\xC3\xA4nc\xC3"];
+        yield 'leads with a bad byte' => ["\xFFab"];
         yield 'long ascii with one bullet' => [str_repeat('abcdefgh ', 40) . '·'];
         yield 'alternating' => [str_repeat('a·', 30)];
         yield 'ends with combining mark' => ["abc\u{0301}"];

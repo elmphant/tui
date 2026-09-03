@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Rendering\Grapheme;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -49,5 +50,32 @@ final class GraphemeTest extends TestCase
     {
         self::assertSame(['a', "\xFF", 'b'], Grapheme::split("a\xFFb"));
         self::assertSame(["\xFF"], Grapheme::split("\xFF"));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function strings(): iterable
+    {
+        yield 'ascii' => ['abc'];
+        yield 'valid multibyte' => ["caf\u{00E9}"];
+        yield 'combining mark' => ["e\u{0301}x"];
+        yield 'zwj sequence' => ["\u{1F468}\u{200D}\u{1F469}tail"];
+        yield 'leads with a bad byte' => ["\xFFab"];
+        yield 'leads with a continuation byte' => ["\x80ab"];
+        yield 'leads with a truncated sequence' => ["\xC3ab"];
+        yield 'valid multibyte then a bad byte' => ["\u{00E4}\xFF"];
+        yield 'bad byte alone' => ["\xFF"];
+        yield 'empty' => [''];
+    }
+
+    /**
+     * An optimisation of split()[0], so it must never answer differently.
+     */
+    #[Test]
+    #[DataProvider('strings')]
+    public function firstNamesWhateverSplittingWouldPutFirst(string $input): void
+    {
+        self::assertSame(Grapheme::split($input)[0] ?? '', Grapheme::first($input));
     }
 }
