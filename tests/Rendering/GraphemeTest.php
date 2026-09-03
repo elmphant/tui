@@ -40,4 +40,14 @@ final class GraphemeTest extends TestCase
     {
         $this->assertSame("\u{1F469}\u{1F3FD}\u{200D}\u{1F4BB}", Grapheme::first("\u{1F469}\u{1F3FD}\u{200D}\u{1F4BB}tail"));
     }
+
+    /**
+     * TerminalText::plain() keeps such a byte by design, so splitting must too.
+     */
+    #[Test]
+    public function aByteThatFormsNoCharacterIsKeptAsItsOwnCluster(): void
+    {
+        self::assertSame(['a', "\xFF", 'b'], Grapheme::split("a\xFFb"));
+        self::assertSame(["\xFF"], Grapheme::split("\xFF"));
+    }
 }

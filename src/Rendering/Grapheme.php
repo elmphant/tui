@@ -41,22 +41,24 @@ final class Grapheme
     public static function split(string $string): array
     {
         // \X matches one extended grapheme cluster, so PCRE segments the whole
-        // string in a single call. It rejects malformed UTF-8 outright, which
-        // the loop below still handles a byte at a time.
+        // string in a single call — but /u makes it fail outright on malformed
+        // UTF-8, which is what the walk below is for.
         if (preg_match_all('/\X/u', $string, $matches) !== false) {
             return $matches[0];
         }
 
         $result = [];
-        $offset = 0;
         $length = strlen($string);
 
-        while ($offset < $length) {
-            $grapheme = grapheme_extract($string, 1, GRAPHEME_EXTR_COUNT, $offset, $offset);
-            if ($grapheme === false) {
-                break;
+        for ($offset = 0; $offset < $length;) {
+            $sequence = substr($string, $offset, self::sequenceLength(ord($string[$offset])));
+
+            if (!mb_check_encoding($sequence, 'UTF-8')) {
+                $sequence = $string[$offset];
             }
-            $result[] = $grapheme;
+
+            $result[] = $sequence;
+            $offset += strlen($sequence);
         }
 
         return $result;
