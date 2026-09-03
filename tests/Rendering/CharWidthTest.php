@@ -837,6 +837,11 @@ final class CharWidthTest extends TestCase
         self::assertLessThanOrEqual(4_096, $remembered, 'A long-running TUI would leak every cluster it ever drew');
     }
 
+    protected function setUp(): void
+    {
+        CharWidth::forgetMeasurements();
+    }
+
     private static function rememberedWidthCount(): int
     {
         $memo = (new ReflectionProperty(CharWidth::class, 'graphemeWidths'))->getValue();

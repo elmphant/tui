@@ -115,6 +115,16 @@ final class CharWidth
         return 1;
     }
 
+    /**
+     * @internal the memo is static and its budget empties at a point no test
+     *           controls, so a test asserting a width clears it first or it may
+     *           read what an earlier one left behind
+     */
+    public static function forgetMeasurements(): void
+    {
+        self::$graphemeWidths = [];
+    }
+
     public static function graphemeWidth(string $grapheme): int
     {
         // The memo comes first so a repeated cluster costs one lookup, whether it
