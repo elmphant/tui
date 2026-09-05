@@ -42,6 +42,13 @@ final class RenderContext
     private array $enclosure = [];
 
     /**
+     * @var list<string>
+     */
+    private array $stopPublishers = [];
+
+    private bool $keyboardIsLoose = false;
+
+    /**
      * @var array<string, string>
      */
     private array $focusedHints = [];
@@ -144,7 +151,9 @@ final class RenderContext
         $this->focusDepth = $this->initialFocusDepth;
         $this->componentDepth = 0;
         $this->focusedPath = [];
+        $this->keyboardIsLoose = false;
         $this->enclosure = [];
+        $this->stopPublishers = [];
         $this->focusedHints = [];
     }
 
@@ -160,6 +169,7 @@ final class RenderContext
         $this->focusDepth = 0;
         $this->componentDepth = 0;
         $this->focusedPath = [];
+        $this->keyboardIsLoose = false;
     }
 
     public function focusedComponent(): ?ComponentId
@@ -185,6 +195,26 @@ final class RenderContext
     public function provideFocusedEnclosure(array $ids): void
     {
         $this->enclosure = $ids;
+    }
+
+    /**
+     * @internal resolved once per frame by the tree that knows its components
+     *
+     * @param list<string> $ids
+     */
+    public function provideStopPublishers(array $ids): void
+    {
+        $this->stopPublishers = $ids;
+    }
+
+    /**
+     * The keyboard is on this subtree as a whole, nothing within it having a name
+     * of its own. A container drawing under one shows its first focusable, or the
+     * reader is left with nothing lit.
+     */
+    public function keyboardIsLoose(): bool
+    {
+        return $this->keyboardIsLoose && $this->hasFocus();
     }
 
     /**
@@ -257,12 +287,15 @@ final class RenderContext
         $under = str_starts_with($focused, $id->value . '/');
         $holdsFocus = $focused === $id->value || $under || in_array($id->value, $this->enclosure, true);
         $path = $this->focusedPath;
+        $loose = $this->keyboardIsLoose;
 
         if ($holdsFocus) {
             ++$this->focusDepth;
             $this->focusedPath = $under
                 ? explode('/', substr($focused, strlen($id->value) + 1))
                 : [];
+            $this->keyboardIsLoose = $focused === $id->value
+                && !in_array($id->value, $this->stopPublishers, true);
         }
         ++$this->componentDepth;
 
@@ -271,6 +304,7 @@ final class RenderContext
         } finally {
             --$this->componentDepth;
             $this->focusedPath = $path;
+            $this->keyboardIsLoose = $loose;
             if ($holdsFocus) {
                 --$this->focusDepth;
             }

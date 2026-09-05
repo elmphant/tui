@@ -59,6 +59,7 @@ abstract readonly class App implements RoutesFocus
         $focused = $context->focusedComponent();
 
         $context->provideFocusedHints($this->hintsOfFocused($focused));
+        $context->provideStopPublishers($this->componentRegistry()->stopPublishers());
         $context->provideFocusedEnclosure($focused === null ? [] : array_map(
             static fn (Component $component): string => $component->id->value,
             $this->enclosing($focused),

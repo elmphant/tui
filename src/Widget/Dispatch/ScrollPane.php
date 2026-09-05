@@ -232,6 +232,8 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $children, $area->width, $area->height);
         $offset = $this->resolvedOffset($layout, $area->height);
 
+        $loose = $context->keyboardIsLoose() ? $this->firstFocusableIndex() : null;
+
         $frame->pushClip(new Rect($area->x, $area->y, $layout->childWidth, $area->height));
 
         try {
@@ -247,7 +249,7 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
                         $child->render($frame, $childArea, $context);
                     };
 
-                    if ($child instanceof HoldsTheKeyboard && $child->isHeld()) {
+                    if (($child instanceof HoldsTheKeyboard && $child->isHeld()) || $index === $loose) {
                         $draw();
                     } else {
                         $context->withinChild($index, $draw);
@@ -380,6 +382,17 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
             $viewportHeight,
             $layout->maxScrollOffset($viewportHeight),
         );
+    }
+
+    private function firstFocusableIndex(): ?int
+    {
+        foreach ($this->children as $index => $child) {
+            if (self::holdsAFocusable([$child])) {
+                return $index;
+            }
+        }
+
+        return null;
     }
 
     /**

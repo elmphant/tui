@@ -146,6 +146,29 @@ final readonly class ComponentRegistry
     }
 
     /**
+     * Focus landing on one of these exactly is the reader on its own control — a
+     * tab strip — rather than adrift in everything it draws.
+     *
+     * @return list<string>
+     */
+    public function stopPublishers(): array
+    {
+        $publishers = [];
+
+        foreach ($this->components as $component) {
+            foreach ($this->components as $candidate) {
+                if ($candidate->id->isUnder($component->id)) {
+                    $publishers[] = $component->id->value;
+
+                    break;
+                }
+            }
+        }
+
+        return $publishers;
+    }
+
+    /**
      * @return list<string>|null
      */
     private function scopeHolding(?ComponentId $focused): ?array
