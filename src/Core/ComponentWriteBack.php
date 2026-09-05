@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Core;
 
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Interactive;
 use LogicException;
 
@@ -49,14 +50,19 @@ final class ComponentWriteBack
     }
 
     /**
-     * The widget without what routing put on it on the way in — focus and the
-     * app's global bindings. A model that lets the tree own those rebuilds the
-     * widget without them, and would otherwise never compare equal.
+     * The widget without what routing put on it on the way in — focus, where the
+     * keyboard arrived, and the app's global bindings. A model that lets the tree
+     * own those rebuilds the widget without them, and would otherwise never
+     * compare equal.
      */
     private static function asAuthored(Interactive $widget): Interactive
     {
         if ($widget instanceof Focusable) {
             $widget = $widget->withFocus(false);
+        }
+
+        if ($widget instanceof FollowsTheKeyboard) {
+            $widget = $widget->withKeyboardAt(null);
         }
 
         return $widget instanceof KeybindingsAware

@@ -23,9 +23,11 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Prose\Spacer;
+use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -49,8 +51,12 @@ final class PointerFocusTest extends TestCase
         self::assertEquals(Cmd::focus(ComponentId::named('first')), $clicked->command);
     }
 
+    /**
+     * Wheeling through a form is reading, not choosing a field. The keyboard
+     * follows the wheel only to something that scrolled with it.
+     */
     #[Test]
-    public function aWheelOverAnotherComponentAsksForTheKeyboardToMoveThere(): void
+    public function aWheelOverAFieldThatIgnoresItLeavesTheKeyboardWhereItWas(): void
     {
         $turned = (new TwoFieldPointerApp())->update(
             new MouseMsg(1, 0, MouseAction::WheelDown, MouseButton::None),
@@ -58,7 +64,19 @@ final class PointerFocusTest extends TestCase
             new FocusState(ComponentId::named('second')),
         );
 
-        self::assertEquals(Cmd::focus(ComponentId::named('first')), $turned->command);
+        self::assertNull($turned->command);
+    }
+
+    #[Test]
+    public function aWheelOverAPaneThatScrollsWithItTakesTheKeyboardThere(): void
+    {
+        $turned = FieldAboveScrollingPaneApp::seeded()->update(
+            new MouseMsg(1, 2, MouseAction::WheelDown, MouseButton::None),
+            new Rect(0, 0, 20, 4),
+            new FocusState(ComponentId::named('field')),
+        );
+
+        self::assertEquals(Cmd::focus(ComponentId::named('pane')), $turned->command);
     }
 
     #[Test]
@@ -89,6 +107,21 @@ final class PointerFocusTest extends TestCase
     }
 
     #[Test]
+    public function aClickFindsTheChildUnderItEvenWhenThePaneIsScrolled(): void
+    {
+        $clicked = ScrolledPaneApp::scrolled()->update(
+            new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left),
+            new Rect(0, 0, 20, 2),
+        );
+
+        self::assertEquals(
+            Cmd::focus(ComponentId::named('pane/1')),
+            $clicked->command,
+            'the first row shows the second field once the pane is scrolled',
+        );
+    }
+
+    #[Test]
     public function anAppThatMovesTheKeyboardOnAPressIsNotOverruledByTheDefault(): void
     {
         $driven = ModelHarness::for(new ClickableChromeApp(), 40, 3)->initialize();
@@ -99,6 +132,25 @@ final class PointerFocusTest extends TestCase
             $driven->focused()?->equals(ComponentId::named('second')),
             'the app answered the press and named where the keys go, so the keys have to be there',
         );
+    }
+}
+
+final readonly class ScrolledPaneApp extends App
+{
+    public function __construct(public ScrollPane $pane = new ScrollPane())
+    {
+    }
+
+    public static function scrolled(): self
+    {
+        return new self(
+            ScrollPane::of(TextInput::new(), TextInput::new(), TextInput::new())->withScrollOffset(1),
+        );
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('pane', $this->pane, static fn (self $app, ScrollPane $pane): self => $app->cloneWith(pane: $pane));
     }
 }
 
@@ -115,6 +167,31 @@ final readonly class TwoFieldPointerApp extends App
         return Layout::vertical(
             Component::bind('first', $this->first, static fn (self $app, TextInput $w): self => $app->cloneWith(first: $w)),
             Component::bind('second', $this->second, static fn (self $app, TextInput $w): self => $app->cloneWith(second: $w)),
+        );
+    }
+}
+
+final readonly class FieldAboveScrollingPaneApp extends App
+{
+    public function __construct(
+        public TextInput $field = new TextInput(),
+        public ScrollPane $pane = new ScrollPane(),
+    ) {
+    }
+
+    public static function seeded(): self
+    {
+        return new self(pane: ScrollPane::of(...array_map(
+            static fn (int $row): Text => Text::new('row' . $row),
+            range(1, 6),
+        )));
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind('field', $this->field, static fn (self $app, TextInput $field): self => $app->cloneWith(field: $field)),
+            Component::bind('pane', $this->pane, static fn (self $app, ScrollPane $pane): self => $app->cloneWith(pane: $pane)),
         );
     }
 }

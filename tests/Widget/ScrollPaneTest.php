@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -24,8 +28,8 @@ use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\Navigation;
 use Elmphant\Tui\Widget\Prose\Text;
-use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +41,22 @@ final class ScrollPaneTest extends TestCase
     public function itNamesTheKeysItAnswers(): void
     {
         self::assertSame(['↑/↓' => 'scroll'], (new ScrollPane())->hints());
+    }
+
+    /**
+     * A child that keeps its own name is still a child the keyboard reaches, so the
+     * frame around it is no more a stop than around a bare field.
+     */
+    #[Test]
+    public function aPaneAroundABoundFieldIsNotAStopItself(): void
+    {
+        $pane = ScrollPane::of(Component::bind(
+            'email',
+            TextInput::new(),
+            static fn (App $app, TextInput $field): App => $app,
+        ));
+
+        self::assertSame(Navigation::Never, $pane->navigation());
     }
 
     #[Test]
@@ -178,69 +198,37 @@ final class ScrollPaneTest extends TestCase
     }
 
     #[Test]
-    public function focusingAChildBlursTheOthers(): void
+    public function theChildTheKeyboardNamesIsTheOnlyOneDrawnFocused(): void
     {
         $pane = ScrollPane::of($this->focusable('a'), Text::new('plain'), $this->focusable('b'));
 
-        $rows = $this->rows($pane->withFocusAt(1), 20, 4, focused: true);
+        $rows = $this->rowsWithKeyboardOn($pane, 2, 20, 4);
 
-        self::assertSame('a', $rows[0], 'The first focusable lost focus');
-        self::assertSame('plain', $rows[1], 'A child that cannot focus is skipped when counting');
-        self::assertSame('b*', $rows[2], 'The second focusable has it');
+        self::assertSame(['a', 'plain', 'b*'], array_slice($rows, 0, 3), 'The id counts every child, so 2 is the second focusable');
     }
 
+    /**
+     * A tab strip holds the keyboard without naming a child; the child that would
+     * be lit is not where the keys go.
+     */
     #[Test]
-    public function focusStartsOnTheFirstChildThatCanTakeIt(): void
+    public function aPaneHoldingTheKeyboardItselfLightsNoChild(): void
     {
         $pane = ScrollPane::of(Text::new('plain'), $this->focusable('a'), $this->focusable('b'));
 
-        $rows = $this->rows($pane->withFocus(true), 20, 4, focused: true);
+        $rows = $this->rows($pane, 20, 4, focused: true);
 
-        self::assertSame('a*', $rows[1]);
-        self::assertSame('b', $rows[2]);
-    }
-
-    #[Test]
-    public function reversedFocusStartsOnTheLastChildThatCanTakeIt(): void
-    {
-        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'));
-
-        $rows = $this->rows($pane->withFocusReversed(), 20, 4, focused: true);
-
-        self::assertSame('a', $rows[0]);
-        self::assertSame('b*', $rows[1]);
-    }
-
-    #[Test]
-    public function clickingAChildGivesItFocus(): void
-    {
-        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'))->withFocus(true);
-
-        $clicked = $this->clickAt($pane, 1, Rect::fromSize(20, 4));
-
-        self::assertSame(['a', 'b*'], array_slice($this->rows($clicked, 20, 4, focused: true), 0, 2));
+        self::assertSame(['plain', 'a', 'b'], array_slice($rows, 0, 3));
     }
 
     #[Test]
     public function aClickThatHitsNothingLeavesThePaneAsItWas(): void
     {
-        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'))->withFocus(true);
+        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'));
 
         $clicked = $this->clickAt($pane, 3, Rect::fromSize(20, 4));
 
         self::assertSame($pane, $clicked, 'An untouched widget is how this framework says "not mine"');
-    }
-
-    #[Test]
-    public function aClickFindsTheChildUnderItEvenWhenScrolled(): void
-    {
-        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'), $this->focusable('c'))
-            ->withFocus(true)
-            ->withScrollOffset(1);
-
-        $clicked = $this->clickAt($pane, 0, Rect::fromSize(20, 2));
-
-        self::assertStringStartsWith('b*', $this->rows($clicked, 20, 2, focused: true)[0], 'Row 0 shows b once scrolled, so b takes focus');
     }
 
     #[Test]
@@ -306,101 +294,45 @@ final class ScrollPaneTest extends TestCase
     }
 
     #[Test]
-    public function theFocusedChildSeesTheMessageFirst(): void
+    public function aKeyTheScrollBindingsDoNotNameLeavesThePaneAsItWas(): void
     {
-        $pane = ScrollPane::of($this->counter('a'), $this->counter('b'))->withFocus(true)->withFocusAt(1);
-
-        $pressed = $this->press($pane, Key::Enter, Rect::fromSize(20, 4));
-
-        self::assertSame(['a 0', 'b 1*'], array_slice($this->rows($pressed, 20, 4, focused: true), 0, 2));
-    }
-
-    #[Test]
-    public function aChildThatIgnoresTheMessageLeavesThePaneAsItWas(): void
-    {
-        $pane = ScrollPane::of($this->counter('a'))->withFocus(true);
+        $pane = ScrollPane::of($this->counter('a'));
 
         self::assertSame($pane, $this->press($pane, Key::F1, Rect::fromSize(20, 4)));
     }
 
+    /**
+     * The pane hears where the keyboard is from the runtime, and keeps that child
+     * in view when its answer is grafted back.
+     */
     #[Test]
-    public function aCommandFromTheFocusedChildIsPassedOn(): void
+    public function graftingTheKeyboardChildBackKeepsItInView(): void
     {
-        $pane = ScrollPane::of($this->counter('a'))->withFocus(true);
+        $pane = ScrollPane::of(Text::new('one'), Text::new('two'), $this->counter('c'))->withKeyboardAt(2);
 
-        $result = $pane->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 4));
+        $grafted = $pane->withChildAt(2, $this->counter('c'));
 
-        self::assertNotNull($result->command, 'The child asked for a command, so the pane must not swallow it');
+        self::assertStringStartsWith('c 0', $this->rows($grafted, 20, 2)[1]);
     }
 
     #[Test]
-    public function scrollingFollowsTheCursorOfTheFocusedChild(): void
+    public function tabIsLeftToWhoeverWalksTheRing(): void
     {
-        $pane = ScrollPane::of(Text::new('one'), Text::new('two'), $this->counter('c'))
-            ->withFocus(true);
-
-        $rows = $this->rows($this->press($pane, Key::Enter, Rect::fromSize(20, 2)), 20, 2, focused: true);
-
-        self::assertStringStartsWith('c 1*', $rows[1], 'The pane scrolled so the cursor row is on screen');
-    }
-
-    #[Test]
-    public function tabMovesFocusToTheNextChild(): void
-    {
-        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'))->withFocus(true);
+        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'));
 
         $tabbed = $this->press($pane, Key::Tab, Rect::fromSize(20, 4));
 
-        self::assertSame(['a', 'b*'], array_slice($this->rows($tabbed, 20, 4, focused: true), 0, 2));
+        self::assertSame($pane, $tabbed, 'Each child is a stop of its own, so the pane has no cycle to run');
     }
 
     #[Test]
-    public function aNestedPanelKeepsItsOwnFocusWhenTheNextKeyArrives(): void
+    public function aTickIsNotThePanesToHandOut(): void
     {
-        $panel = Panel::new('Form')->add(TextInput::new())->add(TextInput::new());
-        $area = Rect::fromSize(40, 10);
-
-        $tabbed = $this->press(ScrollPane::of($panel)->withFocusAt(0), Key::Tab, $area);
-        $typed = $tabbed->update(new KeyMsg('x'), $area);
-        self::assertInstanceOf(ScrollPane::class, $typed->model);
-
-        self::assertSame(['', 'x'], $this->nestedFieldValues($typed->model));
-    }
-
-    #[Test]
-    public function tabPastTheLastChildLeavesThePaneAsItWas(): void
-    {
-        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'))->withFocusReversed();
-
-        $tabbed = $this->press($pane, Key::Tab, Rect::fromSize(20, 4));
-
-        self::assertSame($pane, $tabbed, 'Focus leaves the pane, so the parent decides where it goes');
-    }
-
-    #[Test]
-    public function shiftTabMovesFocusBack(): void
-    {
-        $pane = ScrollPane::of($this->focusable('a'), $this->focusable('b'))->withFocusReversed();
-
-        $result = $pane->update(new KeyMsg(Key::Tab, shift: true), Rect::fromSize(20, 4));
-        self::assertInstanceOf(ScrollPane::class, $result->model);
-
-        self::assertSame(['a*', 'b'], array_slice($this->rows($result->model, 20, 4, focused: true), 0, 2));
-    }
-
-    #[Test]
-    public function aMessageThatIsNotInputReachesEveryChild(): void
-    {
-        $pane = ScrollPane::of($this->counter('a'), $this->counter('b'))->withFocus(true);
+        $pane = ScrollPane::of($this->counter('a'), $this->counter('b'));
 
         $result = $pane->update(new TickMsg(0.0), Rect::fromSize(20, 4));
-        self::assertInstanceOf(ScrollPane::class, $result->model);
 
-        self::assertSame(
-            ['a 1*', 'b 1'],
-            array_slice($this->rows($result->model, 20, 4, focused: true), 0, 2),
-            'A tick is not input: it goes to all of them, not only the focused one',
-        );
+        self::assertSame($pane, $result->model, 'Each child is bound in its own right, so the tick reaches it there');
     }
 
     #[Test]
@@ -419,6 +351,18 @@ final class ScrollPaneTest extends TestCase
             ->withFollowChild(0);
 
         self::assertStringStartsWith('one', $this->rows($pane, 20, 2)[0]);
+    }
+
+    #[Test]
+    public function aFollowedChildWithACursorIsShownAtThatRow(): void
+    {
+        $pane = ScrollPane::of($this->cursorList(8, 5))->withFollowChild(0);
+
+        self::assertStringStartsWith(
+            'row5',
+            $this->rows($pane, 20, 4)[3],
+            'A child taller than the viewport is followed at its cursor, not at its top',
+        );
     }
 
     #[Test]
@@ -474,15 +418,13 @@ final class ScrollPaneTest extends TestCase
     }
 
     #[Test]
-    public function aCursorAboveTheViewportScrollsBackUp(): void
+    public function theKeyboardChildAboveTheViewportIsScrolledBackUpTo(): void
     {
         $pane = ScrollPane::of($this->counter('a'), Text::new('two'), Text::new('three'))
-            ->withFocus(true)
-            ->withScrollOffset(2);
+            ->withScrollOffset(2)
+            ->withKeyboardAt(0);
 
-        $pressed = $this->press($pane, Key::Enter, Rect::fromSize(20, 1));
-
-        self::assertStringStartsWith('a 1*', $this->rows($pressed, 20, 1, focused: true)[0], 'The cursor was above the viewport');
+        self::assertStringStartsWith('a 0', $this->rows($pane, 20, 1)[0]);
     }
 
     #[Test]
@@ -679,7 +621,35 @@ final class ScrollPaneTest extends TestCase
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
-                $frame->putString($area->x, $area->y, sprintf('%s %d%s', $this->label, $this->count, $this->focused ? '*' : ''));
+                $frame->putString($area->x, $area->y, sprintf('%s %d%s', $this->label, $this->count, $context->hasFocus() ? '*' : ''));
+            }
+        };
+    }
+
+    private function cursorList(int $rows, int $cursorRow): Widget
+    {
+        return new class($rows, $cursorRow) implements Widget, CursorAware {
+            public function __construct(
+                private readonly int $rows,
+                private readonly int $cursorRow,
+            ) {
+            }
+
+            public function sizing(): Sizing
+            {
+                return Sizing::of(Constraint::exact($this->rows), Constraint::exact($this->rows));
+            }
+
+            public function cursorRow(): int
+            {
+                return $this->cursorRow;
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                for ($row = 0; $row < $this->rows; ++$row) {
+                    $frame->putString($area->x, $area->y + $row, 'row' . $row);
+                }
             }
         };
     }
@@ -739,7 +709,7 @@ final class ScrollPaneTest extends TestCase
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
-                $frame->putString($area->x, $area->y, $this->label . ($this->focused ? '*' : ''));
+                $frame->putString($area->x, $area->y, $this->label . ($context->hasFocus() ? '*' : ''));
             }
         };
     }
@@ -781,31 +751,39 @@ final class ScrollPaneTest extends TestCase
     /**
      * @return list<string>
      */
-    private function nestedFieldValues(ScrollPane $pane): array
-    {
-        $panel = $pane->authoredChildren()[0];
-        self::assertInstanceOf(Panel::class, $panel);
-
-        $values = [];
-
-        foreach ($panel->children() as $child) {
-            if ($child instanceof TextInput) {
-                $values[] = $child->value();
-            }
-        }
-
-        return $values;
-    }
-
-    /**
-     * @return list<string>
-     */
     private function rows(ScrollPane $pane, int $width, int $height, bool $focused = false): array
     {
         $frame = new Frame($width, $height);
         $context = $focused ? RenderContext::focused(Theme::dark()) : new RenderContext(Theme::dark());
         $pane->render($frame, Rect::fromSize($width, $height), $context);
 
+        return self::rowsOf($frame, $width, $height);
+    }
+
+    /**
+     * Drawn the way the runtime draws a bound pane: the keyboard is on one of the
+     * ids the pane publishes, and the pane reads which from the context.
+     *
+     * @return list<string>
+     */
+    private function rowsWithKeyboardOn(ScrollPane $pane, int $child, int $width, int $height): array
+    {
+        $frame = new Frame($width, $height);
+        $context = new RenderContext(Theme::dark());
+        $context->focusOn(new FocusState(ComponentId::named('pane/' . $child)));
+        $context->withinComponent(
+            ComponentId::named('pane'),
+            static fn () => $pane->render($frame, Rect::fromSize($width, $height), $context),
+        );
+
+        return self::rowsOf($frame, $width, $height);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function rowsOf(Frame $frame, int $width, int $height): array
+    {
         $rows = [];
         for ($row = 0; $row < $height; ++$row) {
             $rows[] = rtrim(implode('', array_slice($frame->characters, $row * $width, $width)));

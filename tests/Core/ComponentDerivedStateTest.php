@@ -9,9 +9,10 @@ use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
@@ -27,7 +28,7 @@ final class ComponentDerivedStateTest extends TestCase
     #[Test]
     public function aComponentRebuiltFromWhatTheModelKeptIsAcceptedBack(): void
     {
-        $scrolled = self::afterKeyboardArrives(new DerivedScrollApp())->update(
+        $scrolled = (new DerivedScrollApp())->update(
             new KeyMsg(Key::Down),
             new Rect(0, 0, 20, 5),
             new FocusState(ComponentId::named('pane')),
@@ -45,7 +46,7 @@ final class ComponentDerivedStateTest extends TestCase
     #[Test]
     public function aComponentRebuiltWithDecorationTheSameKeystrokeChangedIsAcceptedBack(): void
     {
-        $scrolled = self::afterKeyboardArrives(new DerivedTitleApp())->update(
+        $scrolled = (new DerivedTitleApp())->update(
             new KeyMsg(Key::Down),
             new Rect(0, 0, 20, 5),
             new FocusState(ComponentId::named('pane')),
@@ -56,19 +57,20 @@ final class ComponentDerivedStateTest extends TestCase
     }
 
     /**
-     * What the runtime sends before the first key, so the pane has a cursor to move.
+     * The pane's own cursor is framework state the model has nowhere to keep.
      */
-    private static function afterKeyboardArrives(App $app): App
+    #[Test]
+    public function aPaneRebuiltFromTheModelsOwnDataSurvivesTabbingInsideIt(): void
     {
-        $seated = $app->update(
-            new FocusMsg(true),
-            new Rect(0, 0, 20, 5),
-            new FocusState(ComponentId::named('pane')),
-        )->model;
+        $harness = ModelHarness::for(new RebuiltFieldsApp(), 40, 10);
 
-        self::assertInstanceOf(App::class, $seated);
+        $harness->dispatch(new KeyMsg('x'));
+        $harness->dispatch(new KeyMsg(Key::Tab));
+        $harness->dispatch(new KeyMsg('y'));
 
-        return $seated;
+        $model = $harness->model();
+        self::assertInstanceOf(RebuiltFieldsApp::class, $model);
+        self::assertSame(['x', 'y'], $model->values);
     }
 }
 
@@ -119,5 +121,39 @@ final readonly class DerivedScrollApp extends App
                 ->withScrollOffset($this->scroll),
             static fn (self $app, Panel $pane): self => $app->cloneWith(scroll: $pane->scrollOffset()),
         );
+    }
+}
+
+/**
+ * Rebuilding the widget from kept data is what view() is documented to do.
+ */
+final readonly class RebuiltFieldsApp extends App
+{
+    /**
+     * @param list<string> $values
+     */
+    public function __construct(public array $values = ['', ''])
+    {
+    }
+
+    public function view(): Widget
+    {
+        $panel = Panel::new('Form');
+
+        foreach ($this->values as $value) {
+            $panel = $panel->add(TextInput::new()->withValue($value));
+        }
+
+        return Component::bind('form', $panel, static function (self $app, Panel $panel): self {
+            $values = [];
+
+            foreach ($panel->children() as $child) {
+                if ($child instanceof TextInput) {
+                    $values[] = $child->value();
+                }
+            }
+
+            return $app->cloneWith(values: $values);
+        });
     }
 }

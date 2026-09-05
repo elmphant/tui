@@ -26,6 +26,22 @@ final class RenderContext
     private int $componentDepth = 0;
 
     /**
+     * Segments of the focused id still to be matched, below the component being
+     * drawn. Empty means the keyboard is on that component itself.
+     *
+     * @var list<string>
+     */
+    private array $focusedPath = [];
+
+    /**
+     * Components whose subtree holds the focused one without naming it in their id:
+     * a bound child inside a pane.
+     *
+     * @var list<string>
+     */
+    private array $enclosure = [];
+
+    /**
      * @var array<string, string>
      */
     private array $focusedHints = [];
@@ -127,6 +143,8 @@ final class RenderContext
         $this->focus = $this->initialFocus;
         $this->focusDepth = $this->initialFocusDepth;
         $this->componentDepth = 0;
+        $this->focusedPath = [];
+        $this->enclosure = [];
         $this->focusedHints = [];
     }
 
@@ -141,6 +159,7 @@ final class RenderContext
         $this->focus = $focus->isUndecided() ? FocusState::nowhere() : $focus;
         $this->focusDepth = 0;
         $this->componentDepth = 0;
+        $this->focusedPath = [];
     }
 
     public function focusedComponent(): ?ComponentId
@@ -156,6 +175,16 @@ final class RenderContext
     public function provideFocusedHints(array $hints): void
     {
         $this->focusedHints = $hints;
+    }
+
+    /**
+     * @internal resolved once per frame by the tree that knows its components
+     *
+     * @param list<string> $ids
+     */
+    public function provideFocusedEnclosure(array $ids): void
+    {
+        $this->enclosure = $ids;
     }
 
     /**
@@ -224,10 +253,16 @@ final class RenderContext
             throw new LogicException(sprintf('Component "%s" is being drawn before anything said where the keyboard is. Call focusOn() first — FocusState::nowhere() if the answer is nobody.', $id->value));
         }
 
-        $holdsFocus = $this->focus->focused()?->equals($id) ?? false;
+        $focused = $this->focus->focused()->value ?? '';
+        $under = str_starts_with($focused, $id->value . '/');
+        $holdsFocus = $focused === $id->value || $under || in_array($id->value, $this->enclosure, true);
+        $path = $this->focusedPath;
 
         if ($holdsFocus) {
             ++$this->focusDepth;
+            $this->focusedPath = $under
+                ? explode('/', substr($focused, strlen($id->value) + 1))
+                : [];
         }
         ++$this->componentDepth;
 
@@ -235,10 +270,47 @@ final class RenderContext
             $render();
         } finally {
             --$this->componentDepth;
+            $this->focusedPath = $path;
             if ($holdsFocus) {
                 --$this->focusDepth;
             }
         }
+    }
+
+    /**
+     * Draw one child of a container that publishes its children as stops of their
+     * own. The keyboard reaches at most one of them, and what is left of the path
+     * says which.
+     *
+     * @param Closure(): void $render
+     */
+    public function withinChild(int $index, Closure $render): void
+    {
+        if ($this->focusedChildIndex() !== $index) {
+            $this->withoutFocus($render);
+
+            return;
+        }
+
+        $path = $this->focusedPath;
+        array_shift($this->focusedPath);
+
+        try {
+            $render();
+        } finally {
+            $this->focusedPath = $path;
+        }
+    }
+
+    /**
+     * Which child the keyboard is in, or null where it is on this container
+     * itself or somewhere else entirely.
+     */
+    public function focusedChildIndex(): ?int
+    {
+        $segment = $this->focusedPath[0] ?? null;
+
+        return $this->hasFocus() && $segment !== null && ctype_digit($segment) ? (int)$segment : null;
     }
 
     /**

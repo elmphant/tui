@@ -10,6 +10,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Dispatch\SingleMount;
+use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -130,6 +131,32 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     public function withWidget(Widget $widget): self
     {
         return new self(id: $this->id, widget: $widget, replace: $this->replace, address: $this->address);
+    }
+
+    /**
+     * What the child answers is grafted back into the container before the host's
+     * replacement sees it, so the host still stores the one widget it bound.
+     *
+     * @internal
+     *
+     * @return self<Interactive>
+     */
+    public function childAt(int $index, Interactive $child): self
+    {
+        $id = ComponentId::named($this->id->value . '/' . $index);
+        $replace = $this->replace;
+        $container = $this->widget;
+
+        if ($replace === null || !$container instanceof GraftsItsChildren) {
+            return new self(id: $id, widget: $child, replace: null, address: $this->address);
+        }
+
+        return new self(
+            id: $id,
+            widget: $child,
+            replace: static fn (Reducer $owner, Interactive $updated): Reducer => $replace($owner, $container->withChildAt($index, $updated)),
+            address: $this->address,
+        );
     }
 
     /**

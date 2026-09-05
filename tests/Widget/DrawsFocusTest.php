@@ -16,7 +16,6 @@ use Elmphant\Tui\Widget\Choice\CheckboxRow;
 use Elmphant\Tui\Widget\Choice\Radio;
 use Elmphant\Tui\Widget\Choice\RadioRow;
 use Elmphant\Tui\Widget\Choice\Select;
-use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Listing\ListView;
@@ -75,7 +74,6 @@ final class DrawsFocusTest extends TestCase
         yield 'Dropdown' => [Dropdown::new(Select::new(['one', 'two']))];
         yield 'Panel' => [Panel::new('Title')];
         yield 'TabBar' => [TabBar::new()->addTab('One')->addTab('Two')];
-        yield 'ScrollPane' => [ScrollPane::of(TextInput::new()->withValue('abc'))];
         yield 'CheckboxRow' => [CheckboxRow::new(['one', 'two'])];
         yield 'RadioRow' => [RadioRow::new(['one', 'two'])];
     }

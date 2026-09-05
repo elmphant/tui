@@ -8,12 +8,15 @@ use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\ComponentRegistry;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Mount;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +40,60 @@ final class MountedSubModelTest extends TestCase
 
         self::assertInstanceOf(MountingApp::class, $updated);
         self::assertSame('after', $updated->panel->field->value());
+    }
+
+    #[Test]
+    public function aGraftedChildOfAMountedPaneWritesBackThroughTheMount(): void
+    {
+        $app = new MountingFormApp(new MountedForm(Panel::new('Sub')->add(TextInput::new())->add(TextInput::new())));
+
+        $updated = $app->update(
+            new KeyMsg('x'),
+            Rect::fromSize(40, 10),
+            new FocusState(ComponentId::named('form/0')),
+        )->model;
+
+        self::assertInstanceOf(MountingFormApp::class, $updated);
+        $first = [...$updated->form->form->children()][0];
+        self::assertInstanceOf(TextInput::class, $first);
+        self::assertSame('x', $first->value());
+    }
+}
+
+final readonly class MountingFormApp extends App
+{
+    public function __construct(public MountedForm $form)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Mount::of(
+            $this->form,
+            $this->form->view(),
+            static fn (self $app, MountedForm $form): self => new self($form),
+        );
+    }
+}
+
+final readonly class MountedForm implements Reducer
+{
+    public function __construct(public Panel $form)
+    {
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return new UpdateResult($this);
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind(
+            'form',
+            $this->form,
+            static fn (self $model, Panel $form): self => new self($form),
+        );
     }
 }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -16,19 +18,19 @@ use PHPUnit\Framework\TestCase;
 final class PanelFocusScopeTest extends TestCase
 {
     /**
-     * A focused pane holds the keyboard for one child. The others are inside the
-     * same subtree, so they have to be told they do not have it.
+     * The other children sit in the same subtree, so they have to be told they do
+     * not have it.
      */
     #[Test]
     public function onlyTheActiveChildOfAFocusedPaneShowsTheCaret(): void
     {
         $panel = Panel::new('Form')
-            ->withChildren([TextInput::new()->withValue('aa'), TextInput::new()->withValue('bb')])
-            ->withFocus(true);
+            ->withChildren([TextInput::new()->withValue('aa'), TextInput::new()->withValue('bb')]);
 
         $frame = new Frame(20, 8);
         $context = new RenderContext(Theme::dark());
-        $context->withFocusHere(static function () use ($panel, $frame, $context): void {
+        $context->focusOn(new FocusState(ComponentId::named('form/0')));
+        $context->withinComponent(ComponentId::named('form'), static function () use ($panel, $frame, $context): void {
             $panel->render($frame, new Rect(0, 0, 20, 8), $context);
         });
 

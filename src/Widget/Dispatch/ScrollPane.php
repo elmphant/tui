@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Dispatch;
 
 use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
@@ -17,22 +18,22 @@ use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\VerticalStack;
 use Elmphant\Tui\Layout\VerticalStackLayout;
-use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
-use Elmphant\Tui\Widget\Focus\FocusTree;
 use Elmphant\Tui\Widget\Focus\HoldsTheKeyboard;
 use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\FollowsTheKeyboard;
+use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\Navigates;
+use Elmphant\Tui\Widget\Navigation;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -40,7 +41,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 /**
  * A vertical stack of children in a scrolling viewport.
  */
-final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer, PublishesHints
+final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -64,9 +65,9 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     public function __construct(
         private array $children = [],
         private int $scrollOffset = 0,
-        private int $focusIndex = 0,
         private ?int $followChild = null,
         private int $followSpan = 1,
+        private bool $scrolledAway = false,
         private bool $focused = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -95,7 +96,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
      */
     public function withScrollOffset(int $scrollOffset): self
     {
-        return $this->cloneWith(scrollOffset: max(0, $scrollOffset), followChild: null);
+        return $this->cloneWith(scrollOffset: max(0, $scrollOffset), scrolledAway: true);
     }
 
     /**
@@ -103,7 +104,12 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
      */
     public function withFollowChild(?int $index, int $span = 1): self
     {
-        return $this->cloneWith(followChild: $index, followSpan: max(1, $span));
+        return $this->cloneWith(followChild: $index, followSpan: max(1, $span), scrolledAway: false);
+    }
+
+    public function withKeyboardAt(?int $child): static
+    {
+        return $this->cloneWith(followChild: $child, followSpan: 1, scrolledAway: false);
     }
 
     public function isFocused(): bool
@@ -117,32 +123,17 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     }
 
     /**
-     * Focus arrives from the end, so Tab backwards lands on the last child
-     * rather than the first.
+     * Where the pane holds anything the keyboard can reach, those children are the
+     * stops and the frame around them is not one.
      */
-    public function withFocusReversed(): static
+    public function navigation(): Navigation
     {
-        return $this->cloneWith(focusIndex: $this->tree()->focusAtEnd()->active(), focused: true);
-    }
-
-    /**
-     * The index counts only the children that can take focus.
-     */
-    public function withFocusAt(int $index): self
-    {
-        return $this->cloneWith(focusIndex: $this->tree()->focusAt($index)->active(), focused: true);
-    }
-
-    public function focusIndex(): int
-    {
-        return $this->focusIndex;
+        return self::holdsAFocusable($this->children) ? Navigation::Never : Navigation::Regular;
     }
 
     public static function defaultKeybindings(): Keybindings
     {
         return new Keybindings([
-            Actions::FOCUS_CYCLE => ['tab'],
-            Actions::FOCUS_PREVIOUS_CYCLE => ['shift+tab'],
             Actions::SCROLL_UP => ['up'],
             Actions::SCROLL_DOWN => ['down'],
             Actions::PAGE_UP => ['shift+up', 'page_up'],
@@ -157,25 +148,21 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
         ]);
     }
 
+    /**
+     * Scrolling, and nothing else: each child the keyboard can reach is a stop of
+     * its own, so a message meant for one arrives there rather than through here.
+     */
     public function update(Message $message, Rect $area): UpdateResult
     {
         if ($message instanceof KeyMsg) {
-            return $this->keyed($message, $area);
+            return new UpdateResult($this->scrolledByKey($message, $area) ?? $this);
         }
 
-        if ($message instanceof MouseMsg) {
-            return $this->moused($message, $area);
+        if ($message instanceof MouseMsg && $message->inRect($area)) {
+            return new UpdateResult($this->scrolledByWheel($message, $area) ?? $this);
         }
 
-        if ($message instanceof PasteMsg) {
-            return $this->typed($message, $area) ?? new UpdateResult($this);
-        }
-
-        if ($message instanceof FocusMsg) {
-            return new UpdateResult($message->focused ? $this->withFocusAt(0) : $this->withFocus(false));
-        }
-
-        return $this->broadcast($message, $area);
+        return new UpdateResult($this);
     }
 
     public function sizing(): Sizing
@@ -188,7 +175,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
      */
     public function children(): iterable
     {
-        return $this->focusedChildren();
+        return $this->children;
     }
 
     /**
@@ -241,9 +228,7 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
             return;
         }
 
-        $focused = $this->drawsFocused($context);
-        $children = $this->childrenFocused($focused);
-        $active = $focused ? $this->activeChildIndex() : null;
+        $children = $this->children;
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $children, $area->width, $area->height);
         $offset = $this->resolvedOffset($layout, $area->height);
 
@@ -258,14 +243,14 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
                 if ($y + $height > $area->y && $y < $area->bottom()) {
                     $childArea = new Rect($area->x, $y, $layout->childWidth, $height);
 
-                    $holds = $child instanceof HoldsTheKeyboard ? $child->isHeld() : $index === $active;
-
-                    if ($holds) {
+                    $draw = static function () use ($child, $frame, $childArea, $context): void {
                         $child->render($frame, $childArea, $context);
+                    };
+
+                    if ($child instanceof HoldsTheKeyboard && $child->isHeld()) {
+                        $draw();
                     } else {
-                        $context->withoutFocus(static function () use ($child, $frame, $childArea, $context): void {
-                            $child->render($frame, $childArea, $context);
-                        });
+                        $context->withinChild($index, $draw);
                     }
                 }
 
@@ -292,6 +277,14 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
         );
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        $children = $this->children;
+        $children[$index] = $child;
+
+        return $this->cloneWith(children: array_values($children), layoutMemo: self::newLayoutMemo());
+    }
+
     /**
      * @return KeyedCache<VerticalStackLayout>
      */
@@ -303,170 +296,13 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
         return $cache;
     }
 
-    /**
-     * @return UpdateResult<self>
-     */
-    private function keyed(KeyMsg $message, Rect $area): UpdateResult
+    private function scrolledByWheel(MouseMsg $message, Rect $area): ?self
     {
-        return $this->typed($message, $area)
-            ?? new UpdateResult($this->cycledFocus($message) ?? $this->scrolledByKey($message, $area) ?? $this);
-    }
-
-    /**
-     * Never broadcast: a paste handed to every child fills every field in a form.
-     *
-     * @return UpdateResult<self>|null null where nothing took it
-     */
-    private function typed(Message $message, Rect $area): ?UpdateResult
-    {
-        return $this->delegatedToFocusedChild($message, $area);
-    }
-
-    /**
-     * The wheel is the pane's own. A click picks the child under it and then
-     * goes on to the children, so the one under the pointer can answer too.
-     *
-     * @return UpdateResult<self>
-     */
-    private function moused(MouseMsg $message, Rect $area): UpdateResult
-    {
-        if (!$message->inRect($area)) {
-            return $this->broadcast($message, $area);
-        }
-
-        $scrolled = match ($message->action) {
+        return match ($message->action) {
             MouseAction::WheelDown => $this->scrolledBy($message->wheelSteps(), $area),
             MouseAction::WheelUp => $this->scrolledBy(-$message->wheelSteps(), $area),
             default => null,
         };
-
-        if ($scrolled !== null) {
-            return new UpdateResult($scrolled);
-        }
-
-        $pane = $message->isClick() && $this->focused
-            ? $this->focusedByClick($message, $area)
-            : $this;
-
-        return $pane->broadcast($message, $area);
-    }
-
-    /**
-     * Anything that is not input belongs to every child, not only the focused
-     * one: a tick reaches the spinner nobody is looking at.
-     *
-     * @return UpdateResult<self>
-     */
-    private function broadcast(Message $message, Rect $area): UpdateResult
-    {
-        $interactives = [];
-        $rects = [];
-
-        foreach ($this->placedChildren($area) as $index => [$child, $childArea]) {
-            if ($child instanceof Interactive) {
-                $interactives[$index] = $child;
-                $rects[$index] = $childArea;
-            }
-        }
-
-        $batch = (new ChildDispatcher($this->globalKeybindings))->dispatchList($interactives, $rects, $message);
-
-        if (!$batch->changed()) {
-            return new UpdateResult($this, $batch->command);
-        }
-
-        $children = $this->children;
-
-        foreach ($batch->overrides as $index => $child) {
-            $children[$index] = $child;
-        }
-
-        return new UpdateResult($this->cloneWith(children: array_values($children), layoutMemo: self::newLayoutMemo()), $batch->command);
-    }
-
-    /**
-     * The focused child answers first. Null means it did not, and the pane may
-     * treat the message as its own.
-     *
-     * @return ?UpdateResult<self>
-     */
-    private function delegatedToFocusedChild(Message $message, Rect $area): ?UpdateResult
-    {
-        $index = $this->activeChildIndex();
-
-        if ($index === null) {
-            return null;
-        }
-
-        $child = $this->children[$index];
-
-        if (!$child instanceof Interactive) {
-            return null;
-        }
-
-        $layout = VerticalStack::layoutUsing($this->layoutMemo, $this->children, $area->width, $area->height);
-        $y = $area->y - $this->resolvedOffset($layout, $area->height)
-            + array_sum(array_slice($layout->heights, 0, $index));
-
-        $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne(
-            self::arriving($child),
-            $message,
-            new Rect($area->x, $y, $layout->childWidth, $layout->heights[$index]),
-        );
-
-        $updated = $result->changed
-            ? $this->withChildAt($index, $result->child)
-            : $this;
-        $updated = $updated->followingCursorOf($result->child, $layout, $index, $area->height);
-
-        return $updated === $this && $result->command === null
-            ? null
-            : new UpdateResult($updated, $result->command);
-    }
-
-    private function withChildAt(int $index, Widget $child): self
-    {
-        $children = $this->children;
-        $children[$index] = $child;
-
-        return $this->cloneWith(children: array_values($children), layoutMemo: self::newLayoutMemo());
-    }
-
-    /**
-     * Scrolled just enough to bring the child's cursor row back on screen.
-     */
-    private function followingCursorOf(Widget $child, VerticalStackLayout $layout, int $index, int $height): self
-    {
-        if (!$child instanceof CursorAware || $height < 1) {
-            return $this;
-        }
-
-        $row = array_sum(array_slice($layout->heights, 0, $index)) + $child->cursorRow();
-        $offset = ScrollWindow::showing($this->scrollOffset, $row, 1, $height, $layout->maxScrollOffset($height));
-
-        return $offset === $this->scrollOffset ? $this : $this->cloneWith(scrollOffset: $offset);
-    }
-
-    /**
-     * Focus moved to the next or previous child, or null when it would leave
-     * the pane — then the parent decides where it goes.
-     */
-    private function cycledFocus(KeyMsg $message): ?self
-    {
-        $bindings = $this->effectiveKeybindings();
-        $reverse = $bindings->matches($message, Actions::FOCUS_PREVIOUS_CYCLE);
-
-        if (!$reverse && !$bindings->matches($message, Actions::FOCUS_CYCLE)) {
-            return null;
-        }
-
-        $tree = $this->tree();
-
-        if ($tree->wouldWrap($reverse)) {
-            return null;
-        }
-
-        return $this->cloneWith(focusIndex: ($reverse ? $tree->previous() : $tree->next())->active());
     }
 
     private function scrolledByKey(KeyMsg $message, Rect $area): ?self
@@ -501,33 +337,16 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
         $shown = $this->resolvedOffset($layout, $area->height);
         $offset = min($layout->maxScrollOffset($area->height), max(0, $shown + $rows));
 
-        if ($offset === $this->scrollOffset && $this->followChild === null) {
+        if ($offset === $this->scrollOffset && !$this->following()) {
             return null;
         }
 
-        return $this->cloneWith(scrollOffset: $offset, followChild: null);
+        return $this->cloneWith(scrollOffset: $offset, scrolledAway: true);
     }
 
-    /**
-     * A click that lands on no child leaves the focus where it was.
-     */
-    private function focusedByClick(MouseMsg $message, Rect $area): self
+    private function following(): bool
     {
-        $layout = VerticalStack::layoutUsing($this->layoutMemo, $this->children, $area->width, $area->height);
-        $y = $area->y - $this->resolvedOffset($layout, $area->height);
-        $areas = [];
-
-        foreach ($this->children as $index => $child) {
-            $height = $layout->heights[$index];
-
-            if ($child instanceof Focusable) {
-                $areas[] = new Rect($area->x, $y, $layout->childWidth, $height);
-            }
-
-            $y += $height;
-        }
-
-        return $this->withFocusAt($this->tree()->focusByClick($message, ...$areas)->active());
+        return $this->followChild !== null && !$this->scrolledAway;
     }
 
     /**
@@ -538,88 +357,46 @@ final readonly class ScrollPane implements Focusable, KeybindingsAware, MeasureH
     {
         $offset = $layout->clampScrollOffset($this->scrollOffset, $viewportHeight);
 
-        if ($this->followChild === null || $viewportHeight < 1) {
+        if (!$this->following() || $viewportHeight < 1) {
             return $offset;
         }
 
-        $first = max(0, $this->followChild);
+        $first = max(0, $this->followChild ?? 0);
+        $top = array_sum(array_slice($layout->heights, 0, $first));
+        $span = array_sum(array_slice($layout->heights, $first, $this->followSpan));
+        $child = $this->children[$first] ?? null;
+
+        // A child that knows where its cursor is says so; showing its top would
+        // leave the row the reader is on below the fold whenever it is tall.
+        if ($this->followSpan === 1 && $child instanceof CursorAware) {
+            $top += max(0, min($child->cursorRow(), $span - 1));
+            $span = 1;
+        }
 
         return ScrollWindow::showing(
             $offset,
-            array_sum(array_slice($layout->heights, 0, $first)),
-            array_sum(array_slice($layout->heights, $first, $this->followSpan)),
+            $top,
+            $span,
             $viewportHeight,
             $layout->maxScrollOffset($viewportHeight),
         );
     }
 
-    private function tree(): FocusTree
-    {
-        return new FocusTree($this->focusableCount(), $this->focusIndex);
-    }
-
-    private function focusableCount(): int
-    {
-        return count(array_filter($this->children, static fn (Widget $child): bool => $child instanceof Focusable));
-    }
-
     /**
-     * Counts every child; focusIndex counts only the focusable ones.
+     * @param iterable<Widget> $widgets
      */
-    private function activeChildIndex(): ?int
+    private static function holdsAFocusable(iterable $widgets): bool
     {
-        $focusable = 0;
-
-        foreach ($this->children as $index => $child) {
-            if (!$child instanceof Focusable) {
-                continue;
+        foreach ($widgets as $widget) {
+            if ($widget instanceof Focusable && (!$widget instanceof Navigates || $widget->navigation() !== Navigation::Never)) {
+                return true;
             }
 
-            if ($focusable === $this->focusIndex) {
-                return $index;
-            }
-
-            ++$focusable;
-        }
-
-        return null;
-    }
-
-    /**
-     * Taking focus is how a child seats its cursor, so one that never let go keeps it.
-     */
-    private static function arriving(Interactive $child): Interactive
-    {
-        return $child instanceof Focusable && !$child->isFocused()
-            ? $child->withFocus(true)
-            : $child;
-    }
-
-    /**
-     * The children as they should be drawn: the focused one marked, the rest
-     * blurred, and nothing focused at all while the pane itself is not.
-     *
-     * @return list<Widget>
-     */
-    private function focusedChildren(): array
-    {
-        return $this->childrenFocused($this->focused);
-    }
-
-    /**
-     * @return list<Widget>
-     */
-    private function childrenFocused(bool $focused): array
-    {
-        $active = $focused ? $this->activeChildIndex() : null;
-        $children = $this->children;
-
-        foreach ($children as $index => $child) {
-            if ($child instanceof Focusable && $child->isFocused() !== ($index === $active)) {
-                $children[$index] = $child->withFocus($index === $active);
+            if (($widget instanceof Component || $widget instanceof GraftsItsChildren) && self::holdsAFocusable($widget->children())) {
+                return true;
             }
         }
 
-        return $children;
+        return false;
     }
 }

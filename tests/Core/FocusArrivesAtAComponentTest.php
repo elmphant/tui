@@ -68,9 +68,9 @@ final class FocusArrivesAtAComponentTest extends TestCase
     }
 
     #[Test]
-    public function theHarnessSeatsThePaneItPlacesTheKeyboardOn(): void
+    public function theHarnessPlacesTheKeyboardOnTheFirstFieldOfAPane(): void
     {
-        $harness = ModelHarness::for(SeededPaneForm::startingOnTheSecondField(), 40, 10);
+        $harness = ModelHarness::for(new SeededPaneForm(ScrollPane::of(TextInput::new(), TextInput::new())), 40, 10);
 
         $harness->dispatch(new KeyMsg('x'));
 
@@ -142,11 +142,6 @@ final readonly class SeededPaneForm extends App
 {
     public function __construct(public ScrollPane $pane = new ScrollPane())
     {
-    }
-
-    public static function startingOnTheSecondField(): self
-    {
-        return new self(ScrollPane::of(TextInput::new(), TextInput::new())->withFocusAt(1));
     }
 
     public function view(): Widget

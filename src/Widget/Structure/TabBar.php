@@ -16,7 +16,6 @@ use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
-use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
@@ -31,12 +30,14 @@ use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\FollowsTheKeyboard;
+use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 
-final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAware, PublishesHints
+final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsChildren, WidgetContainer, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -181,14 +182,7 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
 
     public function withFocus(bool $focused): static
     {
-        return $this->seated($focused);
-    }
-
-    public function withFocusReversed(): static
-    {
-        return $this->cloneWith(focused: true, tabs: $this->tabsWithFocus(
-            static fn (ScrollPane $pane): ScrollPane => $pane->withFocusReversed(),
-        ));
+        return $this->cloneWith(focused: $focused);
     }
 
     /**
@@ -199,6 +193,18 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         return [...$this->activePane()->children()];
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return $this->withActivePane($this->activePane()->withChildAt($index, $child));
+    }
+
+    public function withKeyboardAt(?int $child): static
+    {
+        return isset($this->tabs[$this->selectedTab])
+            ? $this->withActivePane($this->activePane()->withKeyboardAt($child))
+            : $this;
+    }
+
     /**
      * @return list<array{Widget, Rect}>
      */
@@ -207,12 +213,13 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         return [...$this->activePane()->placedChildren($this->contentArea($area))];
     }
 
+    /**
+     * The strip is the bar's own; the page under it is a pane that scrolls. Each
+     * child the keyboard can reach is a stop of its own, so nothing routes through
+     * here to reach one.
+     */
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($message instanceof FocusMsg) {
-            return new UpdateResult($this->seated($message->focused));
-        }
-
         if (!$this->fitsIn($area)) {
             return new UpdateResult($this);
         }
@@ -221,15 +228,18 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
             return $this->handleTabClick($message, $area);
         }
 
-        $pane = $this->activePane();
-        $result = (new ChildDispatcher())->dispatchOne($pane, $message, $this->contentArea($area));
+        if ($message instanceof KeyMsg) {
+            $switched = $this->switchedTab($message);
 
-        if ($result->changed) {
-            return new UpdateResult($this->withActivePane(self::requirePane($result->child)), $result->command);
+            if ($switched !== null) {
+                return $switched;
+            }
         }
 
-        return $message instanceof KeyMsg
-            ? $this->switchedTab($message) ?? new UpdateResult($this, $result->command)
+        $result = (new ChildDispatcher())->dispatchOne($this->activePane(), $message, $this->contentArea($area));
+
+        return $result->changed
+            ? new UpdateResult($this->withActivePane(self::requirePane($result->child)), $result->command)
             : new UpdateResult($this, $result->command);
     }
 
@@ -262,32 +272,6 @@ final readonly class TabBar implements Focusable, WidgetContainer, KeybindingsAw
         return $this->cloneWith(globalKeybindings: $keybindings, tabs: $this->tabsWithPane(
             static fn (ScrollPane $pane): ScrollPane => $pane->withGlobalKeybindings($keybindings),
         ));
-    }
-
-    private function seated(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused, tabs: $this->tabsWithFocus(
-            static fn (ScrollPane $pane): ScrollPane => $focused ? $pane->withFocusAt(0) : $pane->withFocus(false),
-        ));
-    }
-
-    /**
-     * Focus belongs to the active page; every other page is blurred, so
-     * switching to one never arrives with two children lit.
-     *
-     * @return list<TabPage>
-     */
-    private function tabsWithFocus(Closure $active): array
-    {
-        $tabs = [];
-
-        foreach ($this->tabs as $index => $tab) {
-            $tabs[] = $tab->withPane(
-                $index === $this->selectedTab ? $active($tab->pane) : $tab->pane->withFocus(false),
-            );
-        }
-
-        return $tabs;
     }
 
     /**

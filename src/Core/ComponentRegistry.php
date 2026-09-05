@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Core;
 use Closure;
 use Elmphant\Tui\Widget\Focus\FocusScope;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Navigates;
 use Elmphant\Tui\Widget\Navigation;
@@ -237,7 +238,7 @@ final readonly class ComponentRegistry
 
         if ($widget instanceof Component) {
             /** @var Component<Interactive> $widget */
-            $components[] = $widget;
+            array_push($components, ...self::published($widget));
         }
 
         $layerComponents = null;
@@ -277,6 +278,37 @@ final readonly class ComponentRegistry
             $widget->own(...),
             $components,
         );
+    }
+
+    /**
+     * The container stays in the list whatever `navigation()` answers: the pointer,
+     * a broadcast and a key its child leaves alone still reach it; `from()` keeps a
+     * `Never` frame off the ring.
+     *
+     * @param Component<Interactive> $component
+     *
+     * @return list<Component<Interactive>>
+     */
+    private static function published(Component $component): array
+    {
+        $widget = $component->widget;
+
+        if (!$widget instanceof GraftsItsChildren) {
+            return [$component];
+        }
+
+        $stops = [$component];
+        $index = 0;
+
+        foreach ($widget->children() as $child) {
+            if ($child instanceof Interactive && self::navigationOf($child) !== Navigation::Never) {
+                array_push($stops, ...self::published($component->childAt($index, $child)));
+            }
+
+            ++$index;
+        }
+
+        return $stops;
     }
 
     /**

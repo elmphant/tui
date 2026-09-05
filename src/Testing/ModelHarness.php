@@ -99,12 +99,7 @@ final class ModelHarness
         if ($routed === null) {
             return $this;
         }
-        $previous = $this->focus;
-        $this->focus = $this->resolvedFocus();
-
-        if (!$this->focus->sameAs($previous)) {
-            $this->announceArrival();
-        }
+        $this->settleFocus();
 
         $result = $this->model instanceof RoutesFocus
             ? $this->model->update($routed, $this->area, $this->focus)
@@ -160,7 +155,9 @@ final class ModelHarness
      */
     public function focused(): ?ComponentId
     {
-        return $this->resolvedFocus()->focused();
+        $this->settleFocus();
+
+        return $this->focus->focused();
     }
 
     /**
@@ -178,10 +175,12 @@ final class ModelHarness
 
     public function renderFrame(): Frame
     {
+        $this->settleFocus();
+
         $frame = new Frame($this->area->width, $this->area->height);
 
         $this->context->beginFrame(0.0);
-        $this->context->focusOn($this->resolvedFocus());
+        $this->context->focusOn($this->focus);
         $this->model->render($frame, $this->context);
         $this->context->commitFloatPlacements();
 
@@ -217,6 +216,20 @@ final class ModelHarness
         }
 
         return $command instanceof MessageCmd ? [$command->message] : [];
+    }
+
+    /**
+     * The runtime announces its first placement too, and a container that never
+     * hears one cannot bring the arriving child into view.
+     */
+    private function settleFocus(): void
+    {
+        $previous = $this->focus;
+        $this->focus = $this->resolvedFocus();
+
+        if (!$this->focus->sameAs($previous)) {
+            $this->announceArrival();
+        }
     }
 
     private function resolvedFocus(): FocusState

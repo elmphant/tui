@@ -79,6 +79,32 @@ final class FocusStateTest extends TestCase
         self::assertEquals(ComponentId::named('search'), $resolved->focused());
     }
 
+    /**
+     * A page switch can take the third field away while the bar it was in stays.
+     */
+    #[Test]
+    public function focusOnAStopThatLeftStaysWithTheContainerItWasIn(): void
+    {
+        $gone = new FocusState(ComponentId::named('tabs/2'));
+
+        $resolved = $gone->resolvedAgainst(self::order('side/0', 'tabs', 'tabs/0'));
+
+        self::assertEquals(ComponentId::named('tabs'), $resolved->focused());
+    }
+
+    /**
+     * A pane whose frame is not a stop offers its first remaining field instead.
+     */
+    #[Test]
+    public function focusOnAStopThatLeftLandsOnTheFirstStopStillUnderItsContainer(): void
+    {
+        $gone = new FocusState(ComponentId::named('form/3'));
+
+        $resolved = $gone->resolvedAgainst(self::order('side/0', 'form/0', 'form/1'));
+
+        self::assertEquals(ComponentId::named('form/0'), $resolved->focused());
+    }
+
     #[Test]
     public function aTreeWithNothingFocusableKeepsTheKeyboardOnNothing(): void
     {

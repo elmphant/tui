@@ -73,16 +73,16 @@ final class ProgramFocusTest extends TestCase
     }
 
     #[Test]
-    public function thePlacementSeatsAPaneThatWasHandedInOnALaterChild(): void
+    public function thePlacementPutsTheKeyboardOnAPanesFirstField(): void
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput('x');
         $terminal->simulateInput('q');
 
-        $final = Program::new(SeededPaneApp::startingOnTheSecondField())->withTerminal($terminal)->start();
+        $final = Program::new(SeededPaneApp::twoFields())->withTerminal($terminal)->start();
 
         self::assertInstanceOf(SeededPaneApp::class, $final);
-        self::assertSame(['x', ''], $final->fieldValues(), 'the keyboard arriving seats the pane on its first child');
+        self::assertSame(['x', ''], $final->fieldValues());
     }
 
     #[Test]
@@ -195,9 +195,9 @@ final readonly class SeededPaneApp extends App
     {
     }
 
-    public static function startingOnTheSecondField(): self
+    public static function twoFields(): self
     {
-        return new self(ScrollPane::of(TextInput::new(), TextInput::new())->withFocusAt(1));
+        return new self(ScrollPane::of(TextInput::new(), TextInput::new()));
     }
 
     public function view(): Widget

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
@@ -20,6 +24,7 @@ use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Popup\Dropdown;
 use Elmphant\Tui\Widget\Popup\DropdownPopup;
 use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -83,11 +88,7 @@ final class DropdownHostAcceptanceTest extends TestCase
     {
         $pane = self::paneWithTwoDropdowns(openFirst: true);
 
-        $firstFrame = new Frame(40, 18);
-        $context = RenderContext::focused(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->renderRoot($pane, $firstFrame, $firstFrame->area());
-        $context->commitFloatPlacements();
+        [$firstFrame, $context] = self::drawn($pane);
 
         $placements = $context->floatPlacements();
         self::assertCount(1, $placements, 'the popup is on the first frame, drawn through the fallback layout path');
@@ -100,7 +101,7 @@ final class DropdownHostAcceptanceTest extends TestCase
             $firstFrame->area(),
             $placements,
         );
-        $picked = $pane->update($routed, $firstFrame->area())->model;
+        $picked = self::handed($pane, $routed);
 
         self::assertSame('json', self::dropdownAt($picked, 0)->content()->selectedValue());
     }
@@ -115,31 +116,57 @@ final class DropdownHostAcceptanceTest extends TestCase
 
         self::assertFalse(self::dropdownAt($picked, 0)->isOpen(), 'the pick closed the popup');
 
-        $reopened = $picked->update(new KeyMsg(' ', screen: self::area()), self::area())->model;
+        $reopened = self::handed($picked, new KeyMsg(' ', screen: self::area()));
 
         self::assertTrue(self::dropdownAt($reopened, 0)->isOpen(), 'space still reaches the focused dropdown');
     }
 
     private static function deliver(ScrollPane $pane, MouseMsg $mouse): ScrollPane
     {
-        $result = $pane->update(self::route($pane, $mouse), self::area())->model;
+        return self::handed($pane, self::route($pane, $mouse));
+    }
 
-        if (!$result instanceof ScrollPane) {
-            throw new RuntimeException('the pane must stay a pane');
+    /**
+     * The pane publishes its dropdowns, so a host is what routes to one — the pane
+     * itself only scrolls.
+     */
+    private static function handed(ScrollPane $pane, Message $message): ScrollPane
+    {
+        $updated = (new DropdownPaneApp($pane))->update(
+            $message,
+            self::area(),
+            new FocusState(ComponentId::named('pane/0')),
+        )->model;
+
+        if (!$updated instanceof DropdownPaneApp) {
+            throw new RuntimeException('the host must stay a host');
         }
 
-        return $result;
+        return $updated->pane;
     }
 
     private static function route(ScrollPane $pane, MouseMsg $mouse): Message
     {
-        $frame = new Frame(40, 18);
-        $context = RenderContext::focused(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->renderRoot($pane, $frame, $frame->area());
-        $context->commitFloatPlacements();
+        [$frame, $context] = self::drawn($pane);
 
         return InputRouter::route($mouse, $frame->area(), $context->floatPlacements());
+    }
+
+    /**
+     * As the runtime draws a bound pane; a bare RenderContext::focused() names no child.
+     *
+     * @return array{Frame, RenderContext}
+     */
+    private static function drawn(ScrollPane $pane): array
+    {
+        $frame = new Frame(40, 18);
+        $context = new RenderContext(Theme::dark());
+        $context->beginFrame(0.0);
+        $context->focusOn(new FocusState(ComponentId::named('pane/0')));
+        $context->renderRoot((new DropdownPaneApp($pane))->view(), $frame, $frame->area());
+        $context->commitFloatPlacements();
+
+        return [$frame, $context];
     }
 
     private static function paneWithTwoDropdowns(bool $openFirst): ScrollPane
@@ -167,13 +194,7 @@ final class DropdownHostAcceptanceTest extends TestCase
 
     private static function openedPane(ScrollPane $pane): ScrollPane
     {
-        $opened = $pane->update(new KeyMsg(' ', screen: self::area()), self::area())->model;
-
-        if (!$opened instanceof ScrollPane) {
-            throw new RuntimeException('the pane must stay a pane');
-        }
-
-        return $opened;
+        return self::handed($pane, new KeyMsg(' ', screen: self::area()));
     }
 
     private static function dropdownAt(ScrollPane $pane, int $index): Dropdown
@@ -213,14 +234,23 @@ final class DropdownHostAcceptanceTest extends TestCase
 
     private static function rendered(ScrollPane $pane): Frame
     {
-        $frame = new Frame(40, 18);
-        RenderContext::focused(Theme::dark())->renderRoot($pane, $frame, $frame->area());
-
-        return $frame;
+        return self::drawn($pane)[0];
     }
 
     private static function area(): Rect
     {
         return Rect::fromSize(40, 18);
+    }
+}
+
+final readonly class DropdownPaneApp extends App
+{
+    public function __construct(public ScrollPane $pane = new ScrollPane())
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('pane', $this->pane, static fn (self $app, ScrollPane $pane): self => $app->cloneWith(pane: $pane));
     }
 }

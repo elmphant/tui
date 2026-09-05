@@ -15,12 +15,15 @@ use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\FollowsTheKeyboard;
+use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
@@ -53,8 +56,13 @@ abstract readonly class App implements RoutesFocus
     final public function render(Frame $frame, RenderContext $context): void
     {
         $area = $frame->area();
+        $focused = $context->focusedComponent();
 
-        $context->provideFocusedHints($this->hintsOfFocused($context->focusedComponent()));
+        $context->provideFocusedHints($this->hintsOfFocused($focused));
+        $context->provideFocusedEnclosure($focused === null ? [] : array_map(
+            static fn (Component $component): string => $component->id->value,
+            $this->enclosing($focused),
+        ));
 
         $context->renderRoot(
             $this->viewWidget(),
@@ -334,10 +342,103 @@ abstract readonly class App implements RoutesFocus
         }
 
         if ($message instanceof FocusMsg) {
+            return $this->delegateArrival($message, $screenRect, $focusables, $holder);
+        }
+
+        // A paste is typing, so it goes where the typing goes. Handed to every
+        // component it would fill every field of a form at once.
+        if ($message instanceof PasteMsg) {
             return $this->delegateToFocused($message, $screenRect, $focusables, $holder);
         }
 
         return $this->handleUnrouted($message, $screenRect);
+    }
+
+    /**
+     * The containers above the arriving component hear where below them it is,
+     * so a pane can bring it into view; the component itself hears the message.
+     *
+     * @param list<Component<Interactive>> $focusables
+     *
+     * @return UpdateResult<static>
+     */
+    private function delegateArrival(FocusMsg $message, Rect $screenRect, array $focusables, ?ComponentId $holder): UpdateResult
+    {
+        $focused = $this->findFocusedComponent($focusables, $holder);
+
+        if ($focused === null) {
+            return new UpdateResult($this);
+        }
+
+        $updates = $this->keyboardAnnouncements($focused);
+        $command = null;
+        $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value] ?? null;
+
+        if ($focused->writesBack() && $rect !== null) {
+            /** @var Interactive $widget */
+            $widget = $focused->widget;
+            $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
+
+            if ($dispatch->changed) {
+                $updates[] = [$focused, $dispatch->child];
+            }
+
+            $command = $focused->addressed($dispatch->command);
+        }
+
+        [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $updates);
+
+        return new UpdateResult($current, self::combineCommands($command, $hookCommand));
+    }
+
+    /**
+     * @param Component<Interactive> $focused
+     *
+     * @return array<string, array{Component<Interactive>, Interactive}>
+     */
+    private function keyboardAnnouncements(Component $focused): array
+    {
+        $updates = [];
+
+        foreach ($this->enclosing($focused->id) as $ancestor) {
+            /** @var Interactive $container */
+            $container = $ancestor->widget;
+
+            if (!$ancestor->writesBack() || !$container instanceof FollowsTheKeyboard || !$container instanceof WidgetContainer) {
+                continue;
+            }
+
+            $child = $focused->id->isUnder($ancestor->id)
+                ? $focused->id->pathBelow($ancestor->id)[0]
+                : self::childHolding($container, $focused->id);
+
+            if ($child === null) {
+                continue;
+            }
+
+            $told = $container->withKeyboardAt($child);
+
+            if ($told !== $container) {
+                $updates[$ancestor->id->value] = [$ancestor, $told];
+            }
+        }
+
+        return $updates;
+    }
+
+    private static function childHolding(WidgetContainer $container, ComponentId $id): ?int
+    {
+        $index = 0;
+
+        foreach ($container->children() as $child) {
+            if (self::holdsComponent($child, $id)) {
+                return $index;
+            }
+
+            ++$index;
+        }
+
+        return null;
     }
 
     /**
@@ -382,7 +483,7 @@ abstract readonly class App implements RoutesFocus
 
             if ($dispatch->changed || $dispatch->command !== null) {
                 [$current, $hookCommand] = $dispatch->changed
-                    ? $this->applyComponentUpdatesAndNotify($this, [[$focused, $dispatch->child]])
+                    ? $this->applyComponentUpdatesAndNotify($this, $this->focusedUpdate($focused, $dispatch->child))
                     : [$this, null];
 
                 return new UpdateResult(
@@ -445,20 +546,16 @@ abstract readonly class App implements RoutesFocus
     private function findComponentRects(Rect $screenRect, array $components): array
     {
         $rectMap = LayoutSnapshot::rectsFor($this, $screenRect, $this->viewWidget(...));
-        $laidOut = [];
-
-        foreach ($rectMap as $widget) {
-            if ($widget instanceof Component) {
-                $laidOut[$widget->id->value] = $rectMap[$widget];
-            }
-        }
-
         $result = [];
 
+        // A component derived from a child is not itself in the tree; its widget is.
         foreach ($components as $component) {
-            $key = $component->id->value;
-            if (isset($laidOut[$key])) {
-                $result[$key] = $laidOut[$key];
+            foreach ([$component, $component->widget] as $placed) {
+                if ($rectMap->contains($placed)) {
+                    $result[$component->id->value] = $rectMap[$placed];
+
+                    break;
+                }
             }
         }
 
@@ -489,7 +586,7 @@ abstract readonly class App implements RoutesFocus
         $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
 
         if ($dispatch->changed) {
-            [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, [[$focused, $dispatch->child]]);
+            [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $this->focusedUpdate($focused, $dispatch->child));
 
             return new UpdateResult(
                 $current,
@@ -505,6 +602,19 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
+     * Input the focused component answered brings it back into view where the
+     * reader had scrolled away from it, so the containers hear the keyboard again.
+     *
+     * @param Component<Interactive> $focused
+     *
+     * @return list<array{Component<Interactive>, Interactive}>
+     */
+    private function focusedUpdate(Component $focused, Interactive $child): array
+    {
+        return [...array_values($this->keyboardAnnouncements($focused)), [$focused, $child]];
+    }
+
+    /**
      * A key the focused component leaves alone belongs to whatever it sits inside:
      * once a field takes the keyboard, the pane around it is no longer where keys
      * arrive, and nothing could scroll a form while a field is being filled in.
@@ -516,10 +626,8 @@ abstract readonly class App implements RoutesFocus
     private function offeredToWhatEncloses(Message $message, Rect $screenRect, Component $focused): UpdateResult
     {
         $enclosing = array_values(array_filter(
-            $this->componentRegistry()->all(),
-            static fn (Component $candidate): bool => !$candidate->id->equals($focused->id)
-                && $candidate->writesBack()
-                && self::holdsComponent($candidate->widget, $focused->id),
+            $this->enclosing($focused->id),
+            static fn (Component $candidate): bool => $candidate->writesBack(),
         ));
         $rects = $this->findComponentRects($screenRect, $enclosing);
 
@@ -549,9 +657,22 @@ abstract readonly class App implements RoutesFocus
         return new UpdateResult($this);
     }
 
+    /**
+     * The components whose subtree holds $id, outermost first.
+     *
+     * @return list<Component<Interactive>>
+     */
+    private function enclosing(ComponentId $id): array
+    {
+        return array_values(array_filter(
+            $this->componentRegistry()->all(),
+            static fn (Component $candidate): bool => !$candidate->id->equals($id) && self::holdsComponent($candidate, $id),
+        ));
+    }
+
     private static function holdsComponent(Widget $widget, ComponentId $id): bool
     {
-        if ($widget instanceof Component && $widget->id->equals($id)) {
+        if ($widget instanceof Component && ($widget->id->equals($id) || $id->isUnder($widget->id))) {
             return true;
         }
 
@@ -602,9 +723,17 @@ abstract readonly class App implements RoutesFocus
             foreach ($current->componentRegistry()->focusables() as $component) {
                 $rect = $rects[$component->id->value] ?? null;
 
-                if ($rect !== null && $message->inRect($rect)) {
-                    $landedOn = $component->id;
+                if ($rect === null || !$message->inRect($rect)) {
+                    continue;
                 }
+
+                // A wheel is reading, so the keyboard follows it only to what scrolled
+                // with it; a host-driven component cannot be asked and is trusted.
+                if ($message->isWheel() && $component->writesBack() && !isset($updates[$component->id->value])) {
+                    continue;
+                }
+
+                $landedOn = $component->id;
             }
         }
 
@@ -838,7 +967,7 @@ abstract readonly class App implements RoutesFocus
      */
     private function applyComponentUpdates(self $app, array $updates): self
     {
-        foreach ($updates as [$original, $widget]) {
+        foreach (self::foldedIntoAncestors($updates) as [$original, $widget]) {
             /** @var static $app */
             $app = $original->replaceIn($app, $widget);
         }
@@ -846,5 +975,78 @@ abstract readonly class App implements RoutesFocus
         ComponentWriteBack::verify($app->componentRegistry(), $updates);
 
         return $app;
+    }
+
+    /**
+     * A grafted child writes back through its container as it was when the tree
+     * was collected, so beside the container's own answer one of the two is lost.
+     *
+     * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
+     *
+     * @return list<array{Component<Interactive>, Interactive}>
+     */
+    private static function foldedIntoAncestors(array $updates): array
+    {
+        $byId = [];
+
+        foreach ($updates as [$component, $widget]) {
+            $byId[$component->id->value] = [$component, $widget];
+        }
+
+        foreach ($byId as $id => [$component, $widget]) {
+            $ancestor = self::nearestAnswering($component->id, $byId);
+
+            if ($ancestor === null) {
+                continue;
+            }
+
+            [$ancestorComponent, $ancestorWidget] = $byId[$ancestor];
+            $path = $component->id->pathBelow($ancestorComponent->id);
+            $byId[$ancestor] = [$ancestorComponent, self::grafted($ancestorWidget, $path, $widget)];
+            unset($byId[$id]);
+        }
+
+        return array_values($byId);
+    }
+
+    /**
+     * @param array<string, array{Component<Interactive>, Interactive}> $byId
+     */
+    private static function nearestAnswering(ComponentId $id, array $byId): ?string
+    {
+        $nearest = null;
+
+        foreach ($byId as $candidate => [$component]) {
+            if ($id->isUnder($component->id) && ($nearest === null || strlen($candidate) > strlen($nearest))) {
+                $nearest = $candidate;
+            }
+        }
+
+        return $nearest;
+    }
+
+    /**
+     * @param non-empty-list<int> $path
+     */
+    private static function grafted(Interactive $container, array $path, Interactive $child): Interactive
+    {
+        if (!$container instanceof GraftsItsChildren) {
+            throw new LogicException(sprintf('%s published a child but does not graft one back', $container::class));
+        }
+
+        $index = $path[0];
+        $rest = array_slice($path, 1);
+
+        if ($rest === []) {
+            return $container->withChildAt($index, $child);
+        }
+
+        $inner = [...$container->children()][$index] ?? null;
+
+        if (!$inner instanceof Interactive) {
+            throw new LogicException(sprintf('%s has no interactive child at %d to graft into', $container::class, $index));
+        }
+
+        return $container->withChildAt($index, self::grafted($inner, $rest, $child));
     }
 }

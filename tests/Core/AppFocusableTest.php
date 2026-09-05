@@ -258,19 +258,21 @@ final class AppFocusableTest extends TestCase
         self::assertNull($result->command, 'nothing asked the runtime to move a keyboard that has nowhere to go');
     }
 
+    /**
+     * A pane publishes its children, so tab walks them without leaving it.
+     */
     #[Test]
-    public function tabDelegatedToFocusedWidgetWithInternalFocusables(): void
+    public function aPanesOwnChildrenAreStopsOfTheirOwn(): void
     {
-        $innerLeft = Panel::new('Inner1')->withFocus(true);
-        $innerRight = Panel::new('Inner2');
-        $outerLeft = Panel::new('Outer')->add($innerLeft)->add($innerRight)->withFocus(true);
-        $outerRight = Panel::new('Right');
+        $outerLeft = Panel::new('Outer')->add(Panel::new('Inner1'))->add(Panel::new('Inner2'));
 
-        $app = new TwoPanelApp(left: $outerLeft, right: $outerRight);
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), self::keyboardOn('left-panel'));
+        $app = new TwoPanelApp(left: $outerLeft, right: Panel::new('Right'));
+        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), self::keyboardOn('left-panel/0'));
 
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertNotSame($app->left, $result->model->left);
+        self::assertEquals(
+            ComponentId::named('left-panel/1'),
+            self::keyboardLandsOn($result->command, $app->focusableIds(), 'left-panel/0'),
+        );
     }
 
     #[Test]

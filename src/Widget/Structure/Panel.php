@@ -14,7 +14,6 @@ use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
-use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\Frame;
@@ -23,13 +22,16 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
-use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\FollowsTheKeyboard;
+use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\Navigates;
+use Elmphant\Tui\Widget\Navigation;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight, WidgetContainer, PublishesHints
+final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -144,22 +146,24 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
         return $this->withPane($this->pane->withFollowChild($index, $span));
     }
 
+    public function withKeyboardAt(?int $child): static
+    {
+        return $this->withPane($this->pane->withKeyboardAt($child));
+    }
+
     public function isFocused(): bool
     {
         return $this->focused;
     }
 
-    /**
-     * Focus arriving from outside starts at the first child.
-     */
-    public function withFocus(bool $focused): static
+    public function navigation(): Navigation
     {
-        return $this->seated($focused);
+        return $this->pane->navigation();
     }
 
-    public function withFocusReversed(): static
+    public function withFocus(bool $focused): static
     {
-        return $this->cloneWith(focused: true, pane: $this->pane->withFocusReversed());
+        return $this->cloneWith(focused: $focused, pane: $this->pane->withFocus($focused));
     }
 
     public function withKeybindings(?Keybindings $keybindings): static
@@ -185,10 +189,6 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($message instanceof FocusMsg) {
-            return new UpdateResult($this->seated($message->focused));
-        }
-
         $result = (new ChildDispatcher())->dispatchOne($this->pane, $message, $this->contentArea($area));
 
         return $result->changed
@@ -202,6 +202,11 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
     public function children(): iterable
     {
         return [...$this->pane->children()];
+    }
+
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return $this->withPane($this->pane->withChildAt($index, $child));
     }
 
     /**
@@ -258,14 +263,6 @@ final readonly class Panel implements Focusable, KeybindingsAware, MeasureHeight
     public function contentArea(Rect $area): Rect
     {
         return $this->inset()->inner($area);
-    }
-
-    private function seated(bool $focused): static
-    {
-        return $this->cloneWith(
-            focused: $focused,
-            pane: $focused ? $this->pane->withFocusAt(0) : $this->pane->withFocus(false),
-        );
     }
 
     private function inset(): Inset

@@ -85,7 +85,7 @@ final readonly class FocusState
         }
 
         return null === $this->indexIn($reachable ?? $order)
-            ? $this->cloneWith(focused: $order[0])
+            ? $this->cloneWith(focused: $this->landingIn($order))
             : $this;
     }
 
@@ -103,6 +103,31 @@ final readonly class FocusState
     public function previous(array $order): self
     {
         return $this->movedBy(-1, $order);
+    }
+
+    /**
+     * Where a lost stop's keyboard goes: the nearest container above it that is a
+     * stop, else the first stop still under that container, else the first stop.
+     *
+     * @param non-empty-list<ComponentId> $order
+     */
+    private function landingIn(array $order): ComponentId
+    {
+        for ($ancestor = $this->focused?->parent(); $ancestor !== null; $ancestor = $ancestor->parent()) {
+            foreach ($order as $stop) {
+                if ($stop->equals($ancestor)) {
+                    return $stop;
+                }
+            }
+
+            foreach ($order as $stop) {
+                if ($stop->isUnder($ancestor)) {
+                    return $stop;
+                }
+            }
+        }
+
+        return $order[0];
     }
 
     /**

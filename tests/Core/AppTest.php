@@ -161,10 +161,9 @@ final class AppTest extends TestCase
             Rect::fromSize(80, 24),
         );
 
-        self::assertEquals(
-            Cmd::focus(ComponentId::named('no-op-input')),
+        self::assertNull(
             $result->command,
-            'only the keyboard moved: the hook signals with a quit, and an ignored wheel never reaches it',
+            'the hook signals with a quit, and an ignored wheel never reaches it; nor does the keyboard follow a wheel nothing answered',
         );
     }
 
