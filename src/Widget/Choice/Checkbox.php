@@ -35,7 +35,6 @@ final readonly class Checkbox implements Focusable, KeybindingsAware, PublishesH
     public function __construct(
         private string $label = '',
         private bool $checked = false,
-        private bool $focused = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -78,16 +77,6 @@ final readonly class Checkbox implements Focusable, KeybindingsAware, PublishesH
         return $this->cloneWith(checked: $checked);
     }
 
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
-    }
-
     public function sizing(): Sizing
     {
         $mark = $this->checked ? self::CHECKED_MARK : self::UNCHECKED_MARK;
@@ -102,7 +91,6 @@ final readonly class Checkbox implements Focusable, KeybindingsAware, PublishesH
     {
         return match (true) {
             $message instanceof KeyMsg
-                && $this->focused
                 && $this->effectiveKeybindings()->matches($message, Actions::TOGGLE) => new UpdateResult($this->cloneWith(checked: !$this->checked)),
             $message instanceof MouseMsg
                 && $message->isClick()

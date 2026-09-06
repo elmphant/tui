@@ -238,7 +238,7 @@ final readonly class NamedPanelApp extends App
         return Component::named(
             'pane',
             Panel::new('Pane')->withChildren([
-                TextInput::new()->withFocus(true),
+                TextInput::new(),
                 TextInput::new(),
             ]),
         );

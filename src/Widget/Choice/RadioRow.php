@@ -40,7 +40,6 @@ final readonly class RadioRow implements OptionRow, PublishesHints
         private array $options = [],
         private int $selected = -1,
         private int $cursor = 0,
-        private bool $focused = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
@@ -145,16 +144,6 @@ final readonly class RadioRow implements OptionRow, PublishesHints
         $place = Options::placeOf($value, $this->options);
 
         return $this->cloneWith(selected: $place, cursor: max(0, $place));
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     public function sizing(): Sizing

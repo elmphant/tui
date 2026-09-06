@@ -34,8 +34,6 @@ use PHPUnit\Framework\TestCase;
 
 final class TableTest extends TestCase
 {
-    use FocusableBehaviorTrait;
-
     #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
@@ -67,7 +65,7 @@ final class TableTest extends TestCase
     #[Test]
     public function arrowDownMovesCursor(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         self::assertSame(1, $result->model->cursor());
@@ -76,7 +74,7 @@ final class TableTest extends TestCase
     #[Test]
     public function arrowDownDoesNotMovePastLast(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
@@ -87,7 +85,7 @@ final class TableTest extends TestCase
     #[Test]
     public function arrowUpMovesCursor(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
@@ -97,7 +95,7 @@ final class TableTest extends TestCase
     #[Test]
     public function arrowUpAtTopReturnsSelf(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Up), $area);
         self::assertSame($table, $result->model);
@@ -106,7 +104,7 @@ final class TableTest extends TestCase
     #[Test]
     public function enterSelectsRow(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
@@ -116,7 +114,7 @@ final class TableTest extends TestCase
     #[Test]
     public function selectedRow(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
@@ -132,7 +130,7 @@ final class TableTest extends TestCase
     #[Test]
     public function homeMovesCursorToFirst(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::End), $area);
         $result = $result->model->update(new KeyMsg(Key::Home), $area);
@@ -142,7 +140,7 @@ final class TableTest extends TestCase
     #[Test]
     public function endMovesCursorToLast(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::End), $area);
         self::assertSame(2, $result->model->cursor());
@@ -155,7 +153,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5)), Column::new('Name', Constraint::flex(1)), Column::new('Status', Constraint::flex(1))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(60, 8);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -218,7 +216,7 @@ final class TableTest extends TestCase
     #[Test]
     public function rendersHeaderWithBoldAttribute(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $frame = new Frame(60, 10);
         $area = new Rect(0, 0, 60, 10);
         $table->render($frame, $area, new RenderContext(Theme::dark()));
@@ -231,7 +229,7 @@ final class TableTest extends TestCase
     #[Test]
     public function rendersDataRows(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $frame = new Frame(60, 10);
         $area = new Rect(0, 0, 60, 10);
         $table->render($frame, $area, new RenderContext(Theme::dark()));
@@ -247,7 +245,7 @@ final class TableTest extends TestCase
     #[Test]
     public function rendersHighlightSymbolForCursorRow(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $frame = new Frame(60, 10);
         $area = new Rect(0, 0, 60, 10);
         $table->render($frame, $area, new RenderContext(Theme::dark()));
@@ -269,7 +267,7 @@ final class TableTest extends TestCase
     #[Test]
     public function emptyTableHandlesKeysGracefully(): void
     {
-        $table = Table\Table::fromCells([Column::new('ID', Constraint::exact(5))], [])->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('ID', Constraint::exact(5))], []);
         $area = Rect::fromSize(20, 5);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         self::assertSame($table, $result->model);
@@ -294,7 +292,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
             $rows,
-        )->withFocus(true);
+        );
 
         $frame = new Frame(30, 5);
         $area = new Rect(0, 0, 30, 5);
@@ -318,7 +316,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
             [['1', $long], ['2', $long], ['3', $long]],
-        )->withFocus(true);
+        );
 
         $frame = new Frame(30, 6);
         $table->render($frame, new Rect(0, 0, 30, 6), new RenderContext(Theme::dark()));
@@ -343,7 +341,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(4)), Column::new('Task', Constraint::flex())],
             [['1', $long], ['2', $long], ['3', $long]],
-        )->withFocus(true)->withScrollOffset(2);
+        )->withScrollOffset(2);
 
         $frame = new Frame(30, 6);
         $table->render($frame, new Rect(0, 0, 30, 6), new RenderContext(Theme::dark()));
@@ -385,7 +383,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('Group'), Row::new('Alice'), Row::new('Bob')],
-        )->withFocus(true);
+        );
 
         // Cursor starts at 1 (first selectable, skipping header at 0)
         self::assertSame(1, $table->cursor());
@@ -517,7 +515,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob'), Row::new('Carol')],
-        )->withFocus(true)->withCursor(1);
+        )->withCursor(1);
 
         self::assertSame(0, $table->update(new KeyMsg(Key::Home), $area)->model->cursor());
         self::assertSame(2, $table->update(new KeyMsg(Key::End), $area)->model->cursor());
@@ -530,7 +528,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('Top'), Row::new('Alice'), Row::new('Bob'), Row::header('Bottom')],
-        )->withFocus(true)->withCursor(2);
+        )->withCursor(2);
 
         self::assertSame(1, $table->update(new KeyMsg(Key::Home), $area)->model->cursor(), 'Past the leading header');
         self::assertSame(2, $table->update(new KeyMsg(Key::End), $area)->model->cursor(), 'Back off the trailing header');
@@ -543,7 +541,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('Name', Constraint::flex())],
             [['Alice'], ['Bob'], ['Carol'], ['Dave']],
-        )->withFocus(true)->withCursor(2);
+        )->withCursor(2);
 
         self::assertSame(0, $table->update(new KeyMsg(Key::Home), $area)->model->cursor());
         self::assertSame(3, $table->update(new KeyMsg(Key::End), $area)->model->cursor());
@@ -557,7 +555,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex()), Column::new('Age', Constraint::exact(5))],
             [Row::header('People'), Row::new('Alice', '30')],
-        )->withFocus(true);
+        );
 
         $table->render($frame, new Rect(0, 0, 40, 5), $context);
 
@@ -642,7 +640,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob'), Row::new('Carol')],
-        )->withHeader(false)->withFocus(true);
+        )->withHeader(false);
 
         $clicked = $table->update(
             new MouseMsg(2, 1, MouseAction::Press, MouseButton::Left),
@@ -677,7 +675,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::token('Alice', StyleToken::Success))],
-        )->withFocus(true);
+        );
 
         $table->render($frame, new Rect(0, 0, 40, 5), RenderContext::focused($theme));
 
@@ -736,7 +734,7 @@ final class TableTest extends TestCase
     #[Test]
     public function focusedEmptyTableIgnoresAllKeys(): void
     {
-        $table = Table\Table::fromCells([Column::new('ID', Constraint::exact(5))], [])->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('ID', Constraint::exact(5))], []);
         $area = Rect::fromSize(20, 5);
 
         foreach ([Key::Up, Key::Down, Key::Home, Key::End, Key::PageDown, Key::PageUp, Key::Enter] as $key) {
@@ -751,7 +749,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 5);
 
         $result = $table->update(new KeyMsg(Key::Enter), $area);
@@ -874,7 +872,7 @@ final class TableTest extends TestCase
     #[Test]
     public function isRowSelectableReturnsTrueForPlainRows(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -890,7 +888,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::header('Group')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -903,7 +901,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::header('H1'), Row::header('H2'), Row::new('Bob')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -916,7 +914,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::header('H1'), Row::header('H2'), Row::new('Bob')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -931,7 +929,7 @@ final class TableTest extends TestCase
     #[Test]
     public function spaceSelectsTheRowUnderTheCursor(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(' '), $area);
@@ -944,7 +942,7 @@ final class TableTest extends TestCase
     #[Test]
     public function pressingEnterOnAChosenRowKeepsItChosen(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Enter), $area);
@@ -957,7 +955,7 @@ final class TableTest extends TestCase
     #[Test]
     public function homeAtTopReturnsSelf(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Home), $area);
         self::assertSame($table, $result->model);
@@ -966,7 +964,7 @@ final class TableTest extends TestCase
     #[Test]
     public function endAtBottomReturnsSelf(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::End), $area);
         $endTable = $result->model;
@@ -981,7 +979,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 6);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -994,7 +992,7 @@ final class TableTest extends TestCase
         // Every cell wraps onto two lines, so five viewport lines hold two rows
         // and a half — a page is two rows, not five.
         $rows = array_map(static fn (int $index): array => ["row $index wraps here"], range(1, 20));
-        $table = Table\Table::fromCells([Column::new('Text', Constraint::exact(10))], $rows)->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('Text', Constraint::exact(10))], $rows);
         $area = Rect::fromSize(10, 6);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -1009,7 +1007,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 6);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -1027,7 +1025,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 4);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -1042,7 +1040,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 6);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -1056,7 +1054,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1'], ['2']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 10);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -1068,7 +1066,7 @@ final class TableTest extends TestCase
     #[Test]
     public function pageUpAtTopReturnsSelf(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::PageUp), $area);
         self::assertSame($table, $result->model);
@@ -1077,7 +1075,7 @@ final class TableTest extends TestCase
     #[Test]
     public function defaultKeyReturnsSelf(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg('x'), $area);
         self::assertSame($table, $result->model);
@@ -1086,7 +1084,7 @@ final class TableTest extends TestCase
     #[Test]
     public function unknownMessageReturnsSelf(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new TestMessage('random string'), $area);
         self::assertSame($table, $result->model);
@@ -1100,7 +1098,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['1'], ['2'], ['3']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 1);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -1115,7 +1113,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('H'), Row::new('Alice'), Row::new('Bob')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -1131,7 +1129,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob'), Row::header('Footer')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -1144,7 +1142,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('H'), Row::new('Alice'), Row::new('Bob')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         self::assertSame(1, $table->cursor());
@@ -1158,7 +1156,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob'), Row::header('Footer')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -1173,7 +1171,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(' '), $area);
@@ -1189,7 +1187,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg('x'), $area);
@@ -1211,7 +1209,7 @@ final class TableTest extends TestCase
                 Row::header('H3'),
                 Row::new('Charlie'),
             ],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 4);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -1231,7 +1229,7 @@ final class TableTest extends TestCase
                 Row::new('Bob'),
                 Row::new('Charlie'),
             ],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 4);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -1245,7 +1243,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -1260,7 +1258,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::PageUp), $area);
@@ -1499,7 +1497,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('Title', Constraint::exact(10))],
             [['one two three'], ['second']],
-        )->withFocus(true)->withCursor(0);
+        )->withCursor(0);
         $frame = new Frame(20, 6);
 
         $theme = Theme::dark();
@@ -1516,7 +1514,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('Title', Constraint::exact(10))],
             [['one two three'], ['second']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 6);
 
         // "one two three" wraps to two lines, so screen row 2 is still row 0.
@@ -1616,7 +1614,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 4);
 
         for ($index = 0; $index < 5; ++$index) {
@@ -1639,7 +1637,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 4);
 
         for ($index = 0; $index < 5; ++$index) {
@@ -1658,7 +1656,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 4);
 
         for ($index = 0; $index < 10; ++$index) {
@@ -1682,7 +1680,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 4);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -1698,7 +1696,7 @@ final class TableTest extends TestCase
     #[Test]
     public function ensureCursorVisibleDoesNotChangeWhenAlreadyVisible(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -1708,7 +1706,7 @@ final class TableTest extends TestCase
     #[Test]
     public function ensureCursorVisibleNoOpDoesNotChangeScrollOffset(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -1875,7 +1873,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(5))],
             [['hello'], ['world']],
-        )->withFocus(true);
+        );
         $frame = new Frame(20, 4);
         $table->render($frame, Rect::fromSize(20, 4), RenderContext::focused($theme));
 
@@ -1889,7 +1887,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aRowAwayFromTheCursorIsNotHighlighted(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $frame = new Frame(60, 10);
         $theme = Theme::dark();
         $table->render($frame, Rect::fromSize(60, 10), new RenderContext($theme));
@@ -1900,12 +1898,12 @@ final class TableTest extends TestCase
     #[Test]
     public function selectedRowHasReverseEvenWhenNotFocused(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
-        $table = $result->model->withFocus(false);
+        $table = $result->model;
 
         $frame = new Frame(60, 10);
         $theme = Theme::dark();
@@ -1922,7 +1920,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(3))],
             [['abc', 'def']],
-        )->withFocus(true);
+        );
         $frame = new Frame(20, 3);
         $theme = Theme::dark();
         $table->render($frame, Rect::fromSize(20, 3), RenderContext::focused($theme));
@@ -1945,7 +1943,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('Group Title'), Row::new('Alice')],
-        )->withFocus(true);
+        );
         $frame = new Frame(40, 5);
         $table->render($frame, Rect::fromSize(40, 5), new RenderContext($theme));
 
@@ -2017,7 +2015,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice')->withStyle($customStyle)],
-        )->withFocus(true);
+        );
         $frame = new Frame(40, 3);
         $theme = Theme::dark();
         $table->render($frame, Rect::fromSize(40, 3), RenderContext::focused($theme));
@@ -2036,7 +2034,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')->withStyle($customStyle)],
-        )->withFocus(true);
+        );
         $frame = new Frame(40, 4);
         $table->render($frame, Rect::fromSize(40, 4), new RenderContext(Theme::dark()));
 
@@ -2069,7 +2067,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::styled('Alice', $greenStyle))],
-        )->withFocus(true);
+        );
         $frame = new Frame(40, 3);
         $theme = Theme::dark();
         $table->render($frame, Rect::fromSize(40, 3), RenderContext::focused($theme));
@@ -2223,7 +2221,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('A'), Row::new('B'), Row::new('C')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -2282,7 +2280,7 @@ final class TableTest extends TestCase
     #[Test]
     public function selectedRowReturnsCorrectData(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Enter), $area);
@@ -2350,7 +2348,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             $typedRows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 4);
 
         for ($index = 0; $index < 5; ++$index) {
@@ -2384,7 +2382,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(10))],
             $typedRows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 4);
 
         for ($index = 0; $index < 4; ++$index) {
@@ -2412,7 +2410,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aSelectionAwayFromTheCursorIsMarkedApartFromIt(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Enter), $area);
@@ -2438,7 +2436,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('A', Constraint::exact(3)), Column::new('B', Constraint::exact(4))],
             [Row::new('abc', 'defg')],
-        )->withFocus(true);
+        );
         $frame = new Frame(20, 3);
         $theme = Theme::dark();
         $table->render($frame, Rect::fromSize(20, 3), RenderContext::focused($theme));
@@ -2464,7 +2462,7 @@ final class TableTest extends TestCase
                 Row::new('Bob'),
                 Row::header('Divider'),
             ],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 3);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -2483,7 +2481,7 @@ final class TableTest extends TestCase
                 Row::new('Alice'),
                 Row::new('Bob'),
             ],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 3);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -2824,7 +2822,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(5)), Column::new('B', Constraint::exact(7))],
             [['AAAAA', 'BBBBBBB']],
-        )->withFocus(true);
+        );
         $frame = new Frame(30, 3);
         $theme = Theme::dark();
         $table->render($frame, Rect::fromSize(30, 3), RenderContext::focused($theme));
@@ -2943,7 +2941,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('First'), Row::new(new Span('Data'))->withStyle($rowStyle)],
-        )->withFocus(true);
+        );
         $frame = new Frame(40, 4);
         $table->render($frame, Rect::fromSize(40, 4), new RenderContext(Theme::dark()));
 
@@ -2959,7 +2957,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 2);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -2974,7 +2972,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 4);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -2997,7 +2995,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 6);
 
         for ($index = 0; $index < 15; ++$index) {
@@ -3022,7 +3020,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 3);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -3038,7 +3036,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -3054,7 +3052,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -3073,7 +3071,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -3089,7 +3087,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C'], ['D'], ['E']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 10);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -3104,7 +3102,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C'], ['D'], ['E']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 100);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -3119,7 +3117,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C'], ['D'], ['E']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 100);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -3135,7 +3133,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('A')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -3150,7 +3148,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('ID', Constraint::exact(3))],
             [['A'], ['B'], ['C']],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(20, 10);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -3162,7 +3160,7 @@ final class TableTest extends TestCase
     #[Test]
     public function allPlainRowsAreSelectable(): void
     {
-        $table = $this->createTable()->withFocus(true);
+        $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
 
         for ($index = 0; $index < 3; ++$index) {
@@ -3200,7 +3198,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('A'), Row::header('H'), Row::new('B')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -3218,7 +3216,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::header('H1'), Row::new('A'), Row::header('H2')],
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 10);
 
         $result = $table->update(new KeyMsg(Key::Up), $area);
@@ -3240,7 +3238,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 4);
 
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
@@ -3259,7 +3257,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             $rows,
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 4);
 
         $result = $table->update(new KeyMsg(Key::End), $area);
@@ -3307,7 +3305,7 @@ final class TableTest extends TestCase
         Closure $assertExpected,
     ): void {
         $area = Rect::fromSize(40, 10);
-        $widget = $this->createTable()->withFocus(true)->withCursor($startingCursor);
+        $widget = $this->createTable()->withCursor($startingCursor);
 
         $afterDefault = $widget->update($defaultKey, $area)->model;
         self::assertNotSame($widget, $afterDefault);
@@ -3334,7 +3332,7 @@ final class TableTest extends TestCase
 
         // The offset is set apart from the cursor on purpose: a key that moves
         // nothing must not scroll either.
-        $atBottom = Table\Table::fromCells($columns, $rows)->withFocus(true)->withCursor(9)->withScrollOffset(0);
+        $atBottom = Table\Table::fromCells($columns, $rows)->withCursor(9)->withScrollOffset(0);
         foreach ([Key::End, Key::PageDown, Key::Down] as $key) {
             $result = $atBottom->update(new KeyMsg($key), $area)->model;
             self::assertInstanceOf(Table\Table::class, $result);
@@ -3342,7 +3340,7 @@ final class TableTest extends TestCase
             self::assertSame(0, $result->scrollOffset(), "{$key->name} left the offset alone");
         }
 
-        $atTop = Table\Table::fromCells($columns, $rows)->withFocus(true)->withCursor(0)->withScrollOffset(5);
+        $atTop = Table\Table::fromCells($columns, $rows)->withCursor(0)->withScrollOffset(5);
         foreach ([Key::Home, Key::PageUp, Key::Up] as $key) {
             $result = $atTop->update(new KeyMsg($key), $area)->model;
             self::assertInstanceOf(Table\Table::class, $result);
@@ -3360,7 +3358,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = ["row{$index}"];
         }
-        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows);
 
         self::assertSame(0, $table->scrollOffset());
 
@@ -3382,14 +3380,14 @@ final class TableTest extends TestCase
 
         // Only the very first row can be selected, and the cursor starts past it.
         $onlyFirst = Table\Table::new($columns, [Row::new('first'), Row::header('h1'), Row::header('h2')])
-            ->withFocus(true)->withCursor(2);
+            ->withCursor(2);
         $home = $onlyFirst->update(new KeyMsg(Key::Home), $area)->model;
         self::assertInstanceOf(Table\Table::class, $home);
         self::assertSame(0, $home->cursor(), 'Home has to look at row 0 itself');
 
         // And the mirror image: only the very last row can be selected.
         $onlyLast = Table\Table::new($columns, [Row::header('h1'), Row::header('h2'), Row::new('last')])
-            ->withFocus(true)->withCursor(0);
+            ->withCursor(0);
         $end = $onlyLast->update(new KeyMsg(Key::End), $area)->model;
         self::assertInstanceOf(Table\Table::class, $end);
         self::assertSame(2, $end->cursor(), 'End has to look at the last row itself');
@@ -3402,7 +3400,7 @@ final class TableTest extends TestCase
         $table = Table\Table::fromCells(
             [Column::new('A', Constraint::flex())],
             [['one'], ['two'], ['three']],
-        )->withFocus(true)->withCursor(1);
+        )->withCursor(1);
 
         self::assertSame(-1, $table->selectedIndex(), 'Nothing is selected to begin with');
 
@@ -3427,12 +3425,12 @@ final class TableTest extends TestCase
         // and four do not. Once a scrollbar is reserved the cell wraps onto two
         // lines, which moves what sits under a click on the second content line.
         $fits = $this->typedRowsOf(3);
-        $clicked = Table\Table::new($columns, $fits)->withFocus(true)->update($click, $area)->model;
+        $clicked = Table\Table::new($columns, $fits)->update($click, $area)->model;
         self::assertInstanceOf(Table\Table::class, $clicked);
         self::assertSame(1, $clicked->cursor(), 'No scrollbar, so no wrap: the second line is row 1');
 
         $overflows = $this->typedRowsOf(4);
-        $wrapped = Table\Table::new($columns, $overflows)->withFocus(true)->update($click, $area)->model;
+        $wrapped = Table\Table::new($columns, $overflows)->update($click, $area)->model;
         self::assertInstanceOf(Table\Table::class, $wrapped);
         self::assertSame(0, $wrapped->cursor(), 'One row more reserves the column, so row 0 spans both lines');
     }
@@ -3447,7 +3445,7 @@ final class TableTest extends TestCase
         // Three rows need no scrollbar, so the cell has all ten columns and fits
         // on one line: the second content line is row 1.
         $short = Table\Table::new($columns, [Row::new('abcdefghij'), Row::new('abcdefghij'), Row::new('abcdefghij')])
-            ->withFocus(true)->update($click, $area)->model;
+            ->update($click, $area)->model;
         self::assertInstanceOf(Table\Table::class, $short);
         self::assertSame(1, $short->cursor());
 
@@ -3457,7 +3455,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 8; ++$index) {
             $rows[] = Row::new('abcdefghij');
         }
-        $tall = Table\Table::new($columns, $rows)->withFocus(true)->update($click, $area)->model;
+        $tall = Table\Table::new($columns, $rows)->update($click, $area)->model;
         self::assertInstanceOf(Table\Table::class, $tall);
         self::assertSame(0, $tall->cursor());
     }
@@ -3466,7 +3464,7 @@ final class TableTest extends TestCase
     public function aClickMovesTheCursorToTheRowUnderThePointer(): void
     {
         $columns = [Column::new('A', Constraint::flex())];
-        $table = Table\Table::fromCells($columns, [['one'], ['two'], ['three']])->withFocus(true);
+        $table = Table\Table::fromCells($columns, [['one'], ['two'], ['three']]);
         $area = new Rect(0, 0, 10, 6);
 
         // Row 0 sits on the line below the header, so y=2 is row 1.
@@ -3489,7 +3487,7 @@ final class TableTest extends TestCase
                 Row::new('r0'), Row::new('r1'), Row::new('r2'), Row::new('r3'),
                 Row::new('r4'), Row::header('mid'), Row::new('r6'),
             ],
-        )->withFocus(true);
+        );
 
         // A page of five from row 0 lands on the header at index 5, so it walks back.
         $down = $table->update(new KeyMsg(Key::PageDown), $area)->model;
@@ -3507,7 +3505,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = ["row{$index}"];
         }
-        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows);
 
         $down = $table->update(new KeyMsg(Key::PageDown), $area)->model;
         self::assertInstanceOf(Table\Table::class, $down);
@@ -3534,10 +3532,10 @@ final class TableTest extends TestCase
             [['one'], ['two'], ['three']],
         )->withCursor(1);
 
-        self::assertTrue($this->rowIsReversed($table->withFocus(true), 1), 'The cursor row while focused');
+        self::assertTrue($this->rowIsReversed($table, 1, focused: true), 'The cursor row while focused');
         self::assertFalse($this->rowIsReversed($table, 1), 'The cursor row of an unfocused table is left plain');
         self::assertTrue($this->rowIsReversed($table->withSelected(1), 1), 'A selected row stays marked when focus goes');
-        self::assertFalse($this->rowIsReversed($table->withFocus(true), 2), 'A row that is neither is left plain');
+        self::assertFalse($this->rowIsReversed($table, 2, focused: true), 'A row that is neither is left plain');
     }
 
     #[Test]
@@ -3548,10 +3546,10 @@ final class TableTest extends TestCase
             [Row::new('one'), Row::new('two'), Row::new('three')],
         )->withCursor(1);
 
-        self::assertTrue($this->rowIsReversed($table->withFocus(true), 1), 'The cursor row while focused');
+        self::assertTrue($this->rowIsReversed($table, 1, focused: true), 'The cursor row while focused');
         self::assertFalse($this->rowIsReversed($table, 1), 'The cursor row of an unfocused table is left plain');
         self::assertTrue($this->rowIsReversed($table->withSelected(1), 1), 'A selected row stays marked when focus goes');
-        self::assertFalse($this->rowIsReversed($table->withFocus(true), 2), 'A row that is neither is left plain');
+        self::assertFalse($this->rowIsReversed($table, 2, focused: true), 'A row that is neither is left plain');
     }
 
     #[Test]
@@ -3560,9 +3558,9 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('A', Constraint::flex())],
             [Row::new('one'), Row::header('group'), Row::new('three')],
-        )->withFocus(true)->withCursor(1)->withSelected(1);
+        )->withCursor(1)->withSelected(1);
 
-        self::assertFalse($this->rowIsReversed($table, 1), 'A header row draws as a header whatever the cursor says');
+        self::assertFalse($this->rowIsReversed($table, 1, focused: true), 'A header row draws as a header whatever the cursor says');
     }
 
     #[Test]
@@ -3661,7 +3659,7 @@ final class TableTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $rows[] = ["row{$index}"];
         }
-        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withFocus(true);
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows);
         $scrolled = $table->update(new KeyMsg(Key::End), $area)->model;
         self::assertSame(6, $scrolled->scrollOffset());
 
@@ -3699,11 +3697,6 @@ final class TableTest extends TestCase
         self::assertStringContainsString('echo', $screen, 'An offset nobody can scroll back from must settle on the last rows');
     }
 
-    protected function createFocusable(): Focusable
-    {
-        return $this->createTable();
-    }
-
     /**
      * @return list<Row>
      */
@@ -3730,11 +3723,11 @@ final class TableTest extends TestCase
         return $screen;
     }
 
-    private function rowIsReversed(Table\Table $table, int $rowIndex): bool
+    private function rowIsReversed(Table\Table $table, int $rowIndex, bool $focused = false): bool
     {
         $theme = Theme::dark();
         $frame = new Frame(20, 6);
-        $context = $table->isFocused() ? RenderContext::focused($theme) : RenderContext::unfocused($theme);
+        $context = $focused ? RenderContext::focused($theme) : RenderContext::unfocused($theme);
         $table->render($frame, new Rect(0, 0, 20, 6), $context);
 
         // One header row sits above the first row.

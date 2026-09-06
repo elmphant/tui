@@ -69,7 +69,6 @@ final class FilterBar
     {
         return TextInput::new(self::PLACEHOLDER)
             ->withValue($query)
-            ->withFocus($focused)
             ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None);
     }
 }

@@ -42,13 +42,10 @@ use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionMethod;
 
 final class PanelTest extends TestCase
 {
     use PerformanceBudget;
-
-    use FocusableBehaviorTrait;
 
     #[Test]
     public function itNamesTheKeysItsPaneAnswers(): void
@@ -106,7 +103,7 @@ final class PanelTest extends TestCase
 
         self::assertSame(
             $accent,
-            $this->borderColour(Panel::new('t')->withFocusedBorderStyle(Theme::dark()->accent)->withFocus(true), $area, focused: true),
+            $this->borderColour(Panel::new('t')->withFocusedBorderStyle(Theme::dark()->accent), $area, focused: true),
             'A focused panel uses the focused override',
         );
     }
@@ -124,8 +121,6 @@ final class PanelTest extends TestCase
                 'The theme decides the colour, so it can differ per theme',
             );
         }
-
-        self::assertFalse($panel->isFocused());
     }
 
     #[Test]
@@ -168,7 +163,7 @@ final class PanelTest extends TestCase
     {
         $children = [Select::new(['a']), Select::new(['b'])];
 
-        $panel = Panel::new('t')->withChildren($children)->withFocus(true);
+        $panel = Panel::new('t')->withChildren($children);
 
         self::assertSame($children, $panel->children(), 'A panel marks nothing: the tree decides where the keyboard is');
     }
@@ -218,7 +213,7 @@ final class PanelTest extends TestCase
     public function theWheelStopsScrollingAtTheBottomOfTheContent(): void
     {
         $area = new Rect(0, 0, 24, 6);
-        $panel = $this->panelOfLines(10)->withFocus(true);
+        $panel = $this->panelOfLines(10);
         $wheel = new MouseMsg(2, 2, MouseAction::WheelDown, MouseButton::Left);
 
         for ($turn = 0; $turn < 20; ++$turn) {
@@ -337,16 +332,6 @@ final class PanelTest extends TestCase
         $panel = Panel::new('Test');
 
         self::assertInstanceOf(Focusable::class, $panel);
-        self::assertFalse($panel->isFocused());
-    }
-
-    #[Test]
-    public function withFocusMatchesFocusableInterfaceSignature(): void
-    {
-        $method = new ReflectionMethod(Panel::class, 'withFocus');
-
-        self::assertSame(1, $method->getNumberOfParameters());
-        self::assertSame('focused', $method->getParameters()[0]->getName());
     }
 
     #[Test]
@@ -410,7 +395,7 @@ final class PanelTest extends TestCase
     public function focusedBorderUsesAccentColor(): void
     {
         $frame = new Frame(20, 10);
-        $panel = Panel::new('Title')->withFocus(true);
+        $panel = Panel::new('Title');
         $area = new Rect(0, 0, 20, 10);
 
         $panel->render($frame, $area, RenderContext::focused(Theme::dark()));
@@ -430,7 +415,7 @@ final class PanelTest extends TestCase
         $theme = Theme::dark()->withFocusedBorder(BorderStyle::Double);
         $panel = Panel::new('T');
 
-        self::assertStringContainsString('╔', $this->screenWith($panel->withFocus(true), $area, $theme, focused: true));
+        self::assertStringContainsString('╔', $this->screenWith($panel, $area, $theme, focused: true));
         self::assertStringNotContainsString('╔', $this->screenWith($panel, $area, $theme));
     }
 
@@ -442,8 +427,7 @@ final class PanelTest extends TestCase
             ->add(Text::new('Line 2'))
             ->add(Text::new('Line 3'))
             ->add(Text::new('Line 4'))
-            ->add(Text::new('Line 5'))
-            ->withFocus(true);
+            ->add(Text::new('Line 5'));
 
         $area = new Rect(0, 0, 20, 5);
         $downMessage = new KeyMsg(Key::Down);
@@ -467,8 +451,7 @@ final class PanelTest extends TestCase
     #[Test]
     public function updateReturnsSelfForUnhandledKeys(): void
     {
-        $panel = Panel::new('Test')
-            ->withFocus(true);
+        $panel = Panel::new('Test');
 
         $area = new Rect(0, 0, 20, 10);
         $result = $panel->update(new KeyMsg('z'), $area);
@@ -512,8 +495,7 @@ final class PanelTest extends TestCase
 
         $panel = Panel::new('Test')
             ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
+            ->add($focusableB);
 
         // Tab forward to second (last) focusable child
         $area = new Rect(0, 0, 30, 20);
@@ -534,8 +516,7 @@ final class PanelTest extends TestCase
 
         $panel = Panel::new('Test')
             ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
+            ->add($focusableB);
 
         // Focus starts at first child. Shift+Tab should return same instance.
         $area = new Rect(0, 0, 30, 20);
@@ -595,16 +576,16 @@ final class PanelTest extends TestCase
     }
 
     #[Test]
-    public function panelWithNoFocusableChildren(): void
+    public function aTabKeyIsLeftForTheRingAbove(): void
     {
         $panel = Panel::new('Test')
             ->add(Text::new('Static'))
             ->add(Separator::new());
-        $focused = $panel->withFocus(true);
-        self::assertTrue($focused->isFocused());
-        $area = new Rect(0, 0, 40, 10);
-        $result = $focused->update(new KeyMsg(Key::Tab), $area);
-        self::assertSame($focused, $result->model);
+
+        $result = $panel->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 10));
+
+        self::assertSame($panel, $result->model, 'an unanswered Tab falls through to App, which moves the flat ring');
+        self::assertNull($result->command);
     }
 
     #[Test]
@@ -789,52 +770,6 @@ final class PanelTest extends TestCase
     }
 
     #[Test]
-    public function withFocusTrueResetsToFirstFocusableChild(): void
-    {
-        $focusableA = $this->createFocusableWidget();
-        $focusableB = $this->createFocusableWidget();
-
-        $panel = Panel::new('Test')
-            ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
-
-        $area = new Rect(0, 0, 30, 20);
-        $tabbed = $panel->update(new KeyMsg(Key::Tab), $area)->model;
-
-        $reFocused = $tabbed->withFocus(true);
-        $result = $reFocused->update(new KeyMsg(Key::Tab, shift: true), $area);
-        self::assertSame($reFocused, $result->model, 'After re-focus, should be at first child, shift-tab wraps');
-    }
-
-    #[Test]
-    public function withFocusFalseBlursAllChildren(): void
-    {
-        $focusableA = $this->createFocusableWidget();
-        $focusableB = $this->createFocusableWidget();
-
-        $panel = Panel::new('Test')
-            ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
-
-        $unfocused = $panel->withFocus(false);
-        self::assertFalse($unfocused->isFocused());
-
-        $reFocused = $unfocused->withFocus(true);
-        self::assertTrue($reFocused->isFocused());
-    }
-
-    #[Test]
-    public function withFocusFalseDoesNotCreateNewInstanceWhenNoChildrenFocused(): void
-    {
-        $panel = Panel::new('Test')
-            ->add(Text::new('No focusable children'));
-        $unfocused = $panel->withFocus(false);
-        self::assertFalse($unfocused->isFocused());
-    }
-
-    #[Test]
     public function scrollDownWithArrowKeyIncreasesOffset(): void
     {
         $panel = Panel::new('Test');
@@ -842,7 +777,6 @@ final class PanelTest extends TestCase
         foreach ($labels as $label) {
             $panel = $panel->add(Text::new($label));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $result = $panel->update(new KeyMsg(Key::Down), $area);
@@ -863,7 +797,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 20; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $scrolled = $panel->update(new KeyMsg(Key::Down), $area)->model;
@@ -879,7 +812,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 20; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $result = $panel->update(new KeyMsg(Key::Up), $area);
@@ -893,7 +825,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 5; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $current = $panel;
@@ -998,8 +929,7 @@ final class PanelTest extends TestCase
 
         $panel = Panel::new('Test')
             ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
+            ->add($focusableB);
 
         $area = new Rect(0, 0, 30, 20);
         $clickOnBorder = new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left);
@@ -1023,8 +953,7 @@ final class PanelTest extends TestCase
     {
         $panel = Panel::new('Test')
             ->add(Text::new('Not focusable'))
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
+            ->add($this->createFocusableWidget());
 
         $area = new Rect(0, 0, 30, 20);
         $clickOnText = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
@@ -1094,11 +1023,7 @@ final class PanelTest extends TestCase
         $customStyle = new Style(
             foreground: Color::hex('00FF00')
         );
-        $panel = new Panel(
-            title: 'Test',
-            focused: true,
-            focusedBorderStyleOverride: $customStyle,
-        );
+        $panel = Panel::new('Test')->withFocusedBorderStyle($customStyle);
 
         $frame = new Frame(20, 10);
         $area = new Rect(0, 0, 20, 10);
@@ -1106,7 +1031,7 @@ final class PanelTest extends TestCase
 
         $overrideForeground = $frame->foregrounds[0];
         $defaultBuffer = new Frame(20, 10);
-        Panel::new('Test')->withFocus(true)->render($defaultBuffer, $area, RenderContext::focused(Theme::dark()));
+        Panel::new('Test')->render($defaultBuffer, $area, RenderContext::focused(Theme::dark()));
         $defaultForeground = $defaultBuffer->foregrounds[0];
 
         self::assertNotSame($defaultForeground, $overrideForeground, 'Focused border style override should change color');
@@ -1170,7 +1095,6 @@ final class PanelTest extends TestCase
         foreach ($labels as $label) {
             $panel = $panel->add(Text::new($label));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $scrolled = $panel;
@@ -1216,7 +1140,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 5; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $current = $panel;
@@ -1342,29 +1265,14 @@ final class PanelTest extends TestCase
     }
 
     #[Test]
-    public function focusedChildReceivesKeyBeforeScrollHandling(): void
+    public function aKeyNoScrollBindingAnswersLeavesThePanelAlone(): void
     {
-        $trackingWidget = $this->createTrackingFocusableWidget();
+        $panel = Panel::new('Test')->add($this->createTrackingFocusableWidget());
 
-        $panel = Panel::new('Test')
-            ->add($trackingWidget)
-            ->withFocus(true);
+        $result = $panel->update(new KeyMsg('x'), new Rect(0, 0, 30, 20));
 
-        $area = new Rect(0, 0, 30, 20);
-        $result = $panel->update(new KeyMsg('x'), $area);
-        self::assertInstanceOf(UpdateResult::class, $result);
-    }
-
-    #[Test]
-    public function blurAllChildrenIsIdempotent(): void
-    {
-        $panel = Panel::new('Test')
-            ->add($this->createFocusableWidget())
-            ->add($this->createFocusableWidget());
-
-        $unfocused1 = $panel->withFocus(false);
-        $unfocused2 = $unfocused1->withFocus(false);
-        self::assertFalse($unfocused2->isFocused());
+        self::assertSame($panel, $result->model, 'the child is a stop of its own; the panel answers only its scroll keys');
+        self::assertNull($result->command);
     }
 
     #[Test]
@@ -1375,8 +1283,7 @@ final class PanelTest extends TestCase
             ->add($this->createFocusableWidget())
             ->add(Separator::new())
             ->add($this->createFocusableWidget())
-            ->add(Text::new('After'))
-            ->withFocus(true);
+            ->add(Text::new('After'));
 
         $frame = new Frame(30, 20);
         $area = new Rect(0, 0, 30, 20);
@@ -1426,7 +1333,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 20; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
-        $panel = $panel->withFocus(true);
 
         $smallArea = new Rect(0, 0, 20, 5);
         $current = $panel;
@@ -1542,7 +1448,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 5; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $current = $panel;
@@ -1566,7 +1471,6 @@ final class PanelTest extends TestCase
         foreach ($labels as $label) {
             $panel = $panel->add(Text::new($label));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
 
@@ -1664,7 +1568,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $panel = $panel->add(Text::new("L$index"));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $scrolled = $panel;
@@ -1684,32 +1587,11 @@ final class PanelTest extends TestCase
             ->add(Text::new('A'))
             ->add(Text::new('B'))
             ->add(Text::new('C'))
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
+            ->add($this->createFocusableWidget());
 
         $area = new Rect(0, 0, 30, 30);
         $result = $panel->update(new KeyMsg(Key::Tab), $area);
         self::assertSame($panel, $result->model, 'Only 1 focusable child, Tab should wrap immediately');
-    }
-
-    #[Test]
-    public function withFocusFalseBlursPreviouslyFocusedChild(): void
-    {
-        $focusableA = $this->createFocusableWidget();
-        $focusableB = $this->createFocusableWidget();
-
-        $panel = Panel::new('Test')
-            ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
-
-        $area = new Rect(0, 0, 30, 20);
-        $tabbed = $panel->update(new KeyMsg(Key::Tab), $area)->model;
-        $unfocused = $tabbed->withFocus(false);
-        $reFocused = $unfocused->withFocus(true);
-
-        $shiftTabResult = $reFocused->update(new KeyMsg(Key::Tab, shift: true), $area);
-        self::assertSame($reFocused, $shiftTabResult->model, 'After re-focus, at index 0, shift-tab wraps');
     }
 
     #[Test]
@@ -1720,7 +1602,6 @@ final class PanelTest extends TestCase
         foreach ($labels as $label) {
             $panel = $panel->add(Text::new($label));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $scrolled = $panel->update(new KeyMsg(Key::Down), $area)->model;
@@ -1741,7 +1622,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $result = $panel->update(new KeyMsg('x'), $area);
@@ -1755,7 +1635,6 @@ final class PanelTest extends TestCase
         for ($index = 0; $index < 10; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $result = $panel->update(new KeyMsg(Key::Up), $area);
@@ -1770,7 +1649,6 @@ final class PanelTest extends TestCase
         foreach ($labels as $label) {
             $panel = $panel->add(Text::new($label));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $current = $panel;
@@ -1789,8 +1667,7 @@ final class PanelTest extends TestCase
     public function tabWouldWrapReturnsSelfWithNoCommand(): void
     {
         $panel = Panel::new('Test')
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
+            ->add($this->createFocusableWidget());
 
         $area = new Rect(0, 0, 30, 20);
         $result = $panel->update(new KeyMsg(Key::Tab), $area);
@@ -1840,8 +1717,7 @@ final class PanelTest extends TestCase
         $focusableA = $this->createFocusableWidget();
 
         $panel = Panel::new('Test')
-            ->add($focusableA)
-            ->withFocus(true);
+            ->add($focusableA);
 
         $area = new Rect(0, 0, 30, 20);
         $clickOutsideX = new MouseMsg(0, 2, MouseAction::Press, MouseButton::Left);
@@ -1850,27 +1726,9 @@ final class PanelTest extends TestCase
     }
 
     #[Test]
-    public function blurAllChildrenOnlyBlursFocusedOnes(): void
-    {
-        $focusableA = $this->createFocusableWidget();
-        $focusableB = $this->createFocusableWidget();
-
-        $panel = Panel::new('Test')
-            ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
-
-        $unfocused = $panel->withFocus(false);
-        $reFocused = $unfocused->withFocus(true);
-
-        self::assertTrue($reFocused->isFocused());
-        self::assertNotSame($unfocused, $reFocused);
-    }
-
-    #[Test]
     public function clampedScrollOffsetWithZeroTotalHeight(): void
     {
-        $panel = Panel::new('Test')->withFocus(true);
+        $panel = Panel::new('Test');
 
         $area = new Rect(0, 0, 20, 10);
         $result = $panel->update(new KeyMsg(Key::Down), $area);
@@ -1882,7 +1740,6 @@ final class PanelTest extends TestCase
     {
         $panel = Panel::new('Test')
             ->add(Text::new('Only one'));
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 10);
         $result = $panel->update(new KeyMsg(Key::Down), $area);
@@ -1898,7 +1755,6 @@ final class PanelTest extends TestCase
         foreach ($labels as $label) {
             $panel = $panel->add(Text::new($label));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 22, 7);
         $scrolled = $panel->update(new KeyMsg(Key::Down), $area)->model;
@@ -1929,7 +1785,6 @@ final class PanelTest extends TestCase
         foreach ($labels as $label) {
             $panel = $panel->add(Text::new($label));
         }
-        $panel = $panel->withFocus(true);
 
         $area = new Rect(0, 0, 20, 5);
         $current = $panel;
@@ -1951,8 +1806,7 @@ final class PanelTest extends TestCase
     {
         $bar = ProgressBar::new()->withProgress(0.5);
         $panel = Panel::new('Test')
-            ->add($bar)
-            ->withFocus(true);
+            ->add($bar);
 
         $area = new Rect(0, 0, 40, 10);
         $click = new MouseMsg(20, 5, MouseAction::Press, MouseButton::Left);
@@ -1964,8 +1818,7 @@ final class PanelTest extends TestCase
     public function scrollOffsetClampsMaxCantGoNegative(): void
     {
         $panel = Panel::new('Test')
-            ->add(Text::new('Tiny'))
-            ->withFocus(true);
+            ->add(Text::new('Tiny'));
 
         $area = new Rect(0, 0, 20, 10);
 
@@ -1982,8 +1835,7 @@ final class PanelTest extends TestCase
 
         $panel = Panel::new('Test')
             ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
+            ->add($focusableB);
 
         $area = new Rect(0, 0, 30, 20);
 
@@ -2003,8 +1855,7 @@ final class PanelTest extends TestCase
 
         $panel = Panel::new('Test')
             ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
+            ->add($focusableB);
 
         $area = new Rect(0, 0, 30, 20);
 
@@ -2022,8 +1873,7 @@ final class PanelTest extends TestCase
         $focusableA = $this->createFocusableWidget();
 
         $panel = Panel::new('Test')
-            ->add($focusableA)
-            ->withFocus(true);
+            ->add($focusableA);
 
         $area = new Rect(0, 0, 30, 20);
         $clickOnLeftEdge = new MouseMsg(1, 2, MouseAction::Press, MouseButton::Left);
@@ -2037,8 +1887,7 @@ final class PanelTest extends TestCase
         $focusableA = $this->createFocusableWidget();
 
         $panel = Panel::new('Test')
-            ->add($focusableA)
-            ->withFocus(true);
+            ->add($focusableA);
 
         $area = new Rect(0, 0, 30, 20);
         $clickOutsideRight = new MouseMsg(29, 2, MouseAction::Press, MouseButton::Left);
@@ -2055,8 +1904,7 @@ final class PanelTest extends TestCase
         $panel = Panel::new('Test')
             ->add($focusableA)
             ->add(Text::new('Gap'))
-            ->add($focusableB)
-            ->withFocus(true);
+            ->add($focusableB);
 
         $area = new Rect(0, 0, 30, 20);
         $clickOnGap = new MouseMsg(5, 4, MouseAction::Press, MouseButton::Left);
@@ -2077,8 +1925,7 @@ final class PanelTest extends TestCase
             ->add(Text::new('Row1'))
             ->add(Text::new('Row2'))
             ->add($focusableA)
-            ->add($focusableB)
-            ->withFocus(true);
+            ->add($focusableB);
 
         $area = new Rect(0, 0, 30, 20);
         $clickOnB = new MouseMsg(5, 8, MouseAction::Press, MouseButton::Left);
@@ -2195,7 +2042,7 @@ final class PanelTest extends TestCase
         for ($i = 1; $i <= 10; ++$i) {
             $panel = $panel->add(Text::new("line{$i}"));
         }
-        $panel = $panel->withFocus(true)->withScrollOffset(3);
+        $panel = $panel->withScrollOffset(3);
 
         $afterDefault = $panel->update(new KeyMsg(Key::Up), $area)->model;
         self::assertLessThan(3, $afterDefault->scrollOffset());
@@ -2215,7 +2062,6 @@ final class PanelTest extends TestCase
         for ($i = 1; $i <= 10; ++$i) {
             $panel = $panel->add(Text::new("line{$i}"));
         }
-        $panel = $panel->withFocus(true);
 
         $afterDefault = $panel->update(new KeyMsg(Key::Down), $area)->model;
         self::assertGreaterThan(0, $afterDefault->scrollOffset());
@@ -2282,8 +2128,7 @@ final class PanelTest extends TestCase
         }
 
         $panel = Panel::new('About')
-            ->add(Paragraph::fromLines($lines))
-            ->withFocus(true);
+            ->add(Paragraph::fromLines($lines));
 
         $area = new Rect(0, 0, 40, 6);
         $panel = $panel->update(new KeyMsg(Key::Down), $area)->model;
@@ -2363,7 +2208,7 @@ final class PanelTest extends TestCase
     public function aFocusedPanelKeepsItsPaneWhenHandedTheSameChildren(): void
     {
         $children = [new TextInput(), new TextInput()];
-        $panel = Panel::new('Log')->withChildren($children)->withFocus(true);
+        $panel = Panel::new('Log')->withChildren($children);
 
         self::assertSame($panel, $panel->withChildren($children));
     }
@@ -2375,7 +2220,7 @@ final class PanelTest extends TestCase
 
     private function eightOptions(): Select
     {
-        return Select::new(['opt0', 'opt1', 'opt2', 'opt3', 'opt4', 'opt5', 'opt6', 'opt7'])->withFocus(true);
+        return Select::new(['opt0', 'opt1', 'opt2', 'opt3', 'opt4', 'opt5', 'opt6', 'opt7']);
     }
 
     private function eightOptionsAtRow(int $row): Select
@@ -2414,26 +2259,6 @@ final class PanelTest extends TestCase
         $panel->render($frame, $area, $context);
 
         return implode('', $frame->characters);
-    }
-
-    private function twoChildPanel(bool $focused): Panel
-    {
-        $panel = Panel::new('Test')
-            ->add($this->createFocusableWidget())
-            ->add($this->createFocusableWidget());
-
-        return $focused ? $panel->withFocus(true) : $panel;
-    }
-
-    private function focusedChildIndexOf(Panel $panel): ?int
-    {
-        foreach ($panel->children() as $index => $child) {
-            if ($child instanceof Focusable && $child->isFocused()) {
-                return $index;
-            }
-        }
-
-        return null;
     }
 
     private function borderColour(Panel $panel, Rect $area, ?Theme $theme = null, bool $focused = false): int
@@ -2499,17 +2324,15 @@ final class PanelTest extends TestCase
     {
         return Panel::new()
             ->withChildren([new PanelMultiLineWidget(2), $this->cursorJumpChild($cursorRow, $jumpTarget)])
-            ->withScrollOffset($scrollOffset)
-            ->withFocus(true);
+            ->withScrollOffset($scrollOffset);
     }
 
     private function cursorJumpChild(int $cursorRow, int $jumpTarget): Interactive
     {
-        return new class($cursorRow, $jumpTarget, false) implements Interactive, Focusable, CursorAware {
+        return new class($cursorRow, $jumpTarget) implements Interactive, Focusable, CursorAware {
             public function __construct(
                 private readonly int $cursorRow,
                 private readonly int $jumpTarget,
-                private readonly bool $focused,
             ) {
             }
 
@@ -2528,18 +2351,8 @@ final class PanelTest extends TestCase
             public function update(mixed $message, Rect $area): UpdateResult
             {
                 return $message instanceof KeyMsg
-                    ? new UpdateResult(new self($this->jumpTarget, $this->jumpTarget, $this->focused))
+                    ? new UpdateResult(new self($this->jumpTarget, $this->jumpTarget))
                     : new UpdateResult($this);
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new self($this->cursorRow, $this->jumpTarget, $focused);
             }
 
             public function cursorRow(): int
@@ -2554,23 +2367,9 @@ final class PanelTest extends TestCase
         return $panel->scrollOffset();
     }
 
-    private function createFocusableWidget(bool $focused = false): Focusable
+    private function createFocusableWidget(): Focusable
     {
-        return new class($focused) implements Focusable {
-            public function __construct(private readonly bool $focused)
-            {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($focused);
-            }
-
+        return new class implements Focusable {
             public function sizing(): Sizing
             {
                 return Sizing::of(Constraint::exact(3), Constraint::exact(3));
@@ -2589,21 +2388,7 @@ final class PanelTest extends TestCase
 
     private function createFocusableWidgetWithCommand(): Focusable
     {
-        return new class(false) implements Focusable {
-            public function __construct(private readonly bool $focused)
-            {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($focused);
-            }
-
+        return new class implements Focusable {
             public function sizing(): Sizing
             {
                 return Sizing::of(Constraint::exact(3), Constraint::exact(3));
@@ -2622,21 +2407,9 @@ final class PanelTest extends TestCase
 
     private function createTrackingFocusableWidget(): Focusable
     {
-        return new class(false, 0) implements Focusable {
-            public function __construct(
-                private readonly bool $focused,
-                public readonly int $updateCount,
-            ) {
-            }
-
-            public function isFocused(): bool
+        return new class(0) implements Focusable {
+            public function __construct(public readonly int $updateCount)
             {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($focused, $this->updateCount);
             }
 
             public function sizing(): Sizing
@@ -2650,14 +2423,7 @@ final class PanelTest extends TestCase
 
             public function update(mixed $message, Rect $area): UpdateResult
             {
-                // Ordinary input is taken, Tab is left to the container. A
-                // double that answered every message with a new instance would
-                // be claiming Tab too, and focus could never leave it.
-                if ($message instanceof KeyMsg && $message->key === Key::Tab) {
-                    return new UpdateResult($this);
-                }
-
-                return new UpdateResult(new static($this->focused, $this->updateCount + 1));
+                return new UpdateResult(new static($this->updateCount + 1));
             }
         };
     }

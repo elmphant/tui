@@ -19,7 +19,6 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Choice\Radio;
-use Elmphant\Tui\Widget\Focusable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,8 +26,6 @@ use PHPUnit\Framework\TestCase;
 
 final class RadioTest extends TestCase
 {
-    use FocusableBehaviorTrait;
-
     private const MARK_WIDTH = 4;
 
     #[Test]
@@ -54,7 +51,7 @@ final class RadioTest extends TestCase
     public function aSqueezedRadioScrollsWithinItsOwnRect(): void
     {
         $area = new Rect(0, 1, 30, 3);
-        $radio = Radio::new(['one', 'two', 'three', 'four', 'five'])->withFocus(true);
+        $radio = Radio::new(['one', 'two', 'three', 'four', 'five']);
         for ($step = 0; $step < 4; ++$step) {
             $radio = $radio->update(new KeyMsg(Key::Down), $area)->model;
         }
@@ -98,7 +95,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function arrowDownMovesCursor(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $result = $radio->update(new KeyMsg(Key::Down), $area);
@@ -113,7 +110,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function arrowDownDoesNotMovePastLastOption(): void
     {
-        $radio = Radio::new(['A', 'B'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $result = $radio->update(new KeyMsg(Key::Down), $area);
@@ -124,7 +121,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function arrowUpMovesCursor(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $result = $radio->update(new KeyMsg(Key::Down), $area);
@@ -138,7 +135,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function arrowUpDoesNotMovePastFirstOption(): void
     {
-        $radio = Radio::new(['A', 'B'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $result = $radio->update(new KeyMsg(Key::Up), $area);
@@ -148,7 +145,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function enterSelectsCurrentCursorPosition(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $result = $radio->update(new KeyMsg(Key::Down), $area);
@@ -160,7 +157,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function rendersLabelWithTitleStyle(): void
     {
-        $radio = Radio::new(['A', 'B'], 'Pick one')->withFocus(true);
+        $radio = Radio::new(['A', 'B'], 'Pick one');
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $radio->render($frame, $area, new RenderContext(Theme::dark()));
@@ -173,24 +170,6 @@ final class RadioTest extends TestCase
         $theme = Theme::dark();
         self::assertSame($theme->titleStyle->foregroundValue(), $frame->foregrounds[0]);
         self::assertSame(Attr::BOLD, $frame->attributes[0]);
-    }
-
-    #[Test]
-    public function labelStyleDoesNotChangeWithFocus(): void
-    {
-        $theme = Theme::dark();
-        $area = new Rect(0, 0, 40, 5);
-
-        $focused = Radio::new(['A', 'B'], 'Pick one')->withFocus(true);
-        $unfocused = Radio::new(['A', 'B'], 'Pick one')->withFocus(false);
-
-        $focusedBuffer = new Frame(40, 5);
-        $focused->render($focusedBuffer, $area, new RenderContext($theme));
-
-        $unfocusedBuffer = new Frame(40, 5);
-        $unfocused->render($unfocusedBuffer, $area, new RenderContext($theme));
-
-        self::assertSame($focusedBuffer->foregrounds[0], $unfocusedBuffer->foregrounds[0]);
     }
 
     #[Test]
@@ -208,7 +187,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function upAtFirstOptionReturnsSameInstance(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $result = $radio->update(new KeyMsg(Key::Up), $area);
@@ -218,7 +197,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function downAtLastOptionReturnsSameInstance(): void
     {
-        $radio = Radio::new(['A', 'B'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $movedDown = $radio->update(new KeyMsg(Key::Down), $area)->model;
@@ -231,7 +210,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function updateWithEmptyOptionsReturnsSelf(): void
     {
-        $radio = Radio::new([], 'Label')->withFocus(true);
+        $radio = Radio::new([], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $result = $radio->update(new KeyMsg(Key::Down), $area);
@@ -272,7 +251,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function spaceSelectsCurrentCursorPosition(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $moved = $radio->update(new KeyMsg(Key::Down), $area)->model;
@@ -283,7 +262,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function aWrappingRadioCarriesTheCursorRoundEitherEnd(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withWrapping()->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withWrapping();
         $area = Rect::fromSize(40, 10);
 
         $up = $radio->update(new KeyMsg(Key::Up), $area)->model;
@@ -296,7 +275,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function aClearableRadioLetsThePickedOptionBePutBackDown(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withClearable()->withSelected(0)->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withClearable()->withSelected(0);
         $area = Rect::fromSize(40, 10);
 
         $cleared = $radio->update(new KeyMsg(' '), $area)->model;
@@ -366,7 +345,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function clickAtFirstOptionBoundaryProducesNewModel(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label');
         $area = new Rect(0, 0, 40, 6);
 
         $moved = $radio->update(new KeyMsg(Key::Down), $area)->model;
@@ -415,7 +394,7 @@ final class RadioTest extends TestCase
     public function optionsRenderTwoRowsBelowLabelWhenLabelPresent(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['Alpha', 'Beta'], 'Title')->withFocus(true);
+        $radio = Radio::new(['Alpha', 'Beta'], 'Title');
         $frame = new Frame(40, 6);
         $area = new Rect(0, 0, 40, 6);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -437,7 +416,7 @@ final class RadioTest extends TestCase
     public function labelOffsetUsesIncrementNotAbsoluteAssignment(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['Alpha'], 'Title')->withFocus(true);
+        $radio = Radio::new(['Alpha'], 'Title');
         $frame = new Frame(40, 8);
         $area = new Rect(0, 3, 40, 5);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -455,7 +434,7 @@ final class RadioTest extends TestCase
     public function optionsRenderAtRow0WhenNoLabel(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['Alpha', 'Beta'])->withFocus(true);
+        $radio = Radio::new(['Alpha', 'Beta']);
         $frame = new Frame(40, 4);
         $area = new Rect(0, 0, 40, 4);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -473,7 +452,7 @@ final class RadioTest extends TestCase
     public function allOptionsAreRendered(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['Alpha', 'Beta', 'Gamma'])->withFocus(true);
+        $radio = Radio::new(['Alpha', 'Beta', 'Gamma']);
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -494,7 +473,7 @@ final class RadioTest extends TestCase
     public function renderClipsOptionsAtAreaBottom(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['A', 'B', 'C'])->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C']);
         $frame = new Frame(40, 2);
         $area = new Rect(0, 0, 40, 2);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -512,7 +491,7 @@ final class RadioTest extends TestCase
     public function optionAtExactBottomBoundaryDoesNotRender(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['A', 'B', 'C'])->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C']);
         $frame = new Frame(40, 3);
         $area = new Rect(0, 0, 40, 2);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -553,7 +532,7 @@ final class RadioTest extends TestCase
         $theme = Theme::dark();
         $area = new Rect(0, 0, 40, 3);
 
-        $radio = Radio::new(['A', 'B'])->withFocus(true);
+        $radio = Radio::new(['A', 'B']);
         $frame = new Frame(40, 3);
         $radio->render($frame, $area, new RenderContext($theme));
 
@@ -569,7 +548,7 @@ final class RadioTest extends TestCase
     public function selectedOptionShowsFilledDot(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['A', 'B', 'C'])->withFocus(false);
+        $radio = Radio::new(['A', 'B', 'C']);
         $frame = new Frame(40, 4);
         $area = new Rect(0, 0, 40, 4);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -585,7 +564,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function secondOptionShowsFilledDotWhenSelected(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'])->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 5);
 
         $moved = $radio->update(new KeyMsg(Key::Down), $area)->model;
@@ -607,7 +586,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function selectedDotCharacterDiffersFromUnselected(): void
     {
-        $radio = Radio::new(['A', 'B'])->withFocus(false);
+        $radio = Radio::new(['A', 'B']);
         $theme = Theme::dark();
         $frame = new Frame(40, 3);
         $area = new Rect(0, 0, 40, 3);
@@ -625,7 +604,7 @@ final class RadioTest extends TestCase
     public function selectedNonCursorOptionUsesAccentStyle(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['A', 'B'])->withFocus(true);
+        $radio = Radio::new(['A', 'B']);
         $area = Rect::fromSize(40, 5);
 
         $moved = $radio->update(new KeyMsg(Key::Down), $area)->model;
@@ -661,7 +640,7 @@ final class RadioTest extends TestCase
     public function unfocusedNonSelectedOptionUsesDimStyle(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['A', 'B'])->withFocus(false);
+        $radio = Radio::new(['A', 'B']);
 
         $frame = new Frame(40, 3);
         $area = new Rect(0, 0, 40, 3);
@@ -678,7 +657,7 @@ final class RadioTest extends TestCase
     public function dotMarkerIsRenderedInBuffer(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['A'])->withFocus(true);
+        $radio = Radio::new(['A']);
         $frame = new Frame(40, 2);
         $area = new Rect(0, 0, 40, 2);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -694,7 +673,7 @@ final class RadioTest extends TestCase
     public function optionTextRendersRightAfterTheMark(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['Hello'])->withFocus(true);
+        $radio = Radio::new(['Hello']);
         $frame = new Frame(40, 2);
         $area = new Rect(0, 0, 40, 2);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -713,7 +692,7 @@ final class RadioTest extends TestCase
     public function optionTextRendersAtCorrectXWithAreaOffset(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['Hi'])->withFocus(true);
+        $radio = Radio::new(['Hi']);
         $frame = new Frame(40, 2);
         $area = new Rect(5, 0, 35, 2);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -745,7 +724,7 @@ final class RadioTest extends TestCase
     public function eachOptionRendersOnSuccessiveRows(): void
     {
         $theme = Theme::dark();
-        $radio = Radio::new(['A', 'B', 'C'])->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C']);
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $radio->render($frame, $area, new RenderContext($theme));
@@ -761,7 +740,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function unrecognizedKeyReturnsSameInstance(): void
     {
-        $radio = Radio::new(['A', 'B'], 'Label')->withFocus(true);
+        $radio = Radio::new(['A', 'B'], 'Label');
         $area = Rect::fromSize(40, 10);
 
         $result = $radio->update(new KeyMsg('x'), $area);
@@ -861,7 +840,7 @@ final class RadioTest extends TestCase
         int $expected,
     ): void {
         $area = Rect::fromSize(20, 10);
-        $widget = Radio::new(['a', 'b', 'c'], 'lbl')->withFocus(true)->withCursor($startingCursor);
+        $widget = Radio::new(['a', 'b', 'c'], 'lbl')->withCursor($startingCursor);
 
         $afterDefault = $widget->update($defaultKey, $area)->model;
         self::assertNotSame($widget, $afterDefault);
@@ -883,7 +862,7 @@ final class RadioTest extends TestCase
         // (bottom=4) and gets dropped by the clip — invisible to the user.
         // The widget must self-scroll so the cursor row stays in view.
         $radio = Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rosé Pine'], 'Theme')
-            ->withFocus(true);
+        ;
         // Move cursor to last option (Rosé Pine)
         for ($i = 0; $i < 4; ++$i) {
             $radio = $radio->update(new KeyMsg(Key::Down), new Rect(0, 0, 20, 4))->model;
@@ -913,7 +892,7 @@ final class RadioTest extends TestCase
     public function cursorRowWithoutLabelReturnsCursorIndex(): void
     {
         // L79 in Radio: cursorRow() = (label !== '' ? 2 : 0) + cursor
-        $radio = Radio::new(['A', 'B', 'C'])->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C']);
 
         self::assertSame(0, $radio->cursorRow(), 'cursorRow at index 0 with no label must be 0');
 
@@ -928,7 +907,7 @@ final class RadioTest extends TestCase
     public function cursorRowWithLabelOffsetsByTwo(): void
     {
         // L79: with label, the cursor row is offset by 2 (for the label + blank line).
-        $radio = Radio::new(['A', 'B', 'C'], 'Pick one')->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Pick one');
 
         self::assertSame(2, $radio->cursorRow(), 'cursorRow at index 0 with label must be 2');
 
@@ -940,7 +919,7 @@ final class RadioTest extends TestCase
     public function renderNoScrollWhenAreaFitsAllRows(): void
     {
         // L132/L137 in Radio render: scrollOffset must remain 0 when area is large enough.
-        $radio = Radio::new(['A', 'B', 'C'], 'Pick')->withFocus(true);
+        $radio = Radio::new(['A', 'B', 'C'], 'Pick');
         $frame = new Frame(10, 10);
         // Need at least: label(2) + 3 options = 5 rows. Area is 10 rows.
         $radio->render($frame, new Rect(0, 0, 10, 10), new RenderContext(Theme::dark()));
@@ -972,7 +951,7 @@ final class RadioTest extends TestCase
     {
         $radio = Radio::new(['Alpha', 'Beta', 'Gamma', 'Delta'])
             ->withCursor(3)
-            ->withFocus(true);
+        ;
         $frame = new Frame(12, 3);
         $radio->render($frame, new Rect(0, 0, 12, 3), new RenderContext(Theme::dark()));
 
@@ -986,7 +965,7 @@ final class RadioTest extends TestCase
     {
         $radio = Radio::new(['Alpha', 'Beta', 'Gamma', 'Delta'], 'Top')
             ->withCursor(3)
-            ->withFocus(true);
+        ;
         $frame = new Frame(12, 4);
         $radio->render($frame, new Rect(0, 0, 12, 4), new RenderContext(Theme::dark()));
 
@@ -1001,7 +980,7 @@ final class RadioTest extends TestCase
     {
         $radio = Radio::new(['Alpha', 'Beta', 'Gamma', 'Delta'], 'Top')
             ->withCursor(3)
-            ->withFocus(true);
+        ;
         $area = new Rect(0, 0, 12, 4);
 
         $result = $radio->update(new MouseMsg(5, 2, MouseAction::Press, MouseButton::Left), $area);
@@ -1062,11 +1041,11 @@ final class RadioTest extends TestCase
     public function enterOverAnEmptyRadioFinishesNothing(): void
     {
         self::assertTrue(
-            Radio::new(['A'], 'Severity')->withFocus(true)->commits(new KeyMsg(Key::Enter)),
+            Radio::new(['A'], 'Severity')->commits(new KeyMsg(Key::Enter)),
             'with something under the cursor, enter is what finishes the choice',
         );
         self::assertFalse(
-            Radio::new([], 'Severity')->withFocus(true)->commits(new KeyMsg(Key::Enter)),
+            Radio::new([], 'Severity')->commits(new KeyMsg(Key::Enter)),
             'the binding matches, but there is nothing to choose, so the popup must not close',
         );
     }
@@ -1087,11 +1066,6 @@ final class RadioTest extends TestCase
         $this->expectExceptionMessage('Radio options must read differently');
 
         Radio::new(['Yes', 'No'])->withOptions(['Same', 'Same']);
-    }
-
-    protected function createFocusable(): Focusable
-    {
-        return Radio::new(['A', 'B'], 'Label');
     }
 
     private function markAt(Frame $frame, int $index): string

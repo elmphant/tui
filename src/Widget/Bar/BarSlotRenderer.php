@@ -14,7 +14,6 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
-use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 
@@ -100,7 +99,7 @@ final class BarSlotRenderer
      *
      * @return array{array<string, Interactive>, ?Cmd}
      */
-    public static function updateSlots(array $slots, Message $message, Rect $contentArea, ?Keybindings $globalKeybindings = null): array
+    public static function updateSlots(array $slots, Message $message, Rect $contentArea, ?Alignment $markedSlot = null, ?Keybindings $globalKeybindings = null): array
     {
         /** @var array<string, Interactive> $interactive */
         $interactive = array_filter($slots, static fn (?Widget $slot): bool => $slot instanceof Interactive);
@@ -114,7 +113,7 @@ final class BarSlotRenderer
         }
 
         if ($message instanceof KeyMsg || $message instanceof PasteMsg) {
-            $interactive = self::marked($interactive);
+            $interactive = self::marked($interactive, $markedSlot);
         }
 
         $result = (new ChildDispatcher($globalKeybindings))->dispatchMap($interactive, $areas, $message);
@@ -151,10 +150,10 @@ final class BarSlotRenderer
      *
      * @return array<string, Interactive>
      */
-    private static function marked(array $slots): array
+    private static function marked(array $slots, ?Alignment $markedSlot): array
     {
         foreach ($slots as $key => $slot) {
-            if ($slot instanceof Focusable && $slot->isFocused()) {
+            if (self::ALIGNMENTS[$key] === $markedSlot) {
                 return [$key => $slot];
             }
         }

@@ -31,8 +31,6 @@ use PHPUnit\Framework\TestCase;
 
 final class ListViewTest extends TestCase
 {
-    use FocusableBehaviorTrait;
-
     #[Test]
     public function measuresTheRowsItsItemsNeed(): void
     {
@@ -95,7 +93,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function arrowDownMovesCursor(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         self::assertSame(1, $result->model->cursor());
@@ -104,7 +102,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function arrowDownDoesNotMovePastLast(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
@@ -114,7 +112,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function arrowUpMovesCursor(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
@@ -124,7 +122,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function arrowUpAtTopReturnsSelf(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Up), $area);
         self::assertSame($list, $result->model);
@@ -133,7 +131,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function enterSelectsItem(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
@@ -143,7 +141,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function selectedValue(): void
     {
-        $list = ListView::fromStrings(['Apple', 'Banana', 'Cherry'])->withFocus(true);
+        $list = ListView::fromStrings(['Apple', 'Banana', 'Cherry']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
@@ -161,7 +159,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function homeMovesCursorToFirst(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
@@ -172,7 +170,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function endMovesCursorToLast(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::End), $area);
         self::assertSame(2, $result->model->cursor());
@@ -182,7 +180,7 @@ final class ListViewTest extends TestCase
     public function pageDownMovesCursorByPageSize(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 19));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(40, 5);
 
         $result = $list->update(new KeyMsg(Key::PageDown), $area);
@@ -193,7 +191,7 @@ final class ListViewTest extends TestCase
     public function everyPageDownMovesAnotherWholePage(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 19));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(40, 5);
 
         $first = $list->update(new KeyMsg(Key::PageDown), $area)->model;
@@ -211,7 +209,7 @@ final class ListViewTest extends TestCase
             static fn (int $index): SimpleListItem => new SimpleListItem("Item $index", "About item $index"),
             range(0, 9),
         );
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $area = Rect::fromSize(30, 7);
 
         $down = $list->update(new KeyMsg(Key::PageDown), $area)->model;
@@ -231,7 +229,7 @@ final class ListViewTest extends TestCase
             range(0, 19),
         );
         $area = Rect::fromSize(24, 9);
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
 
         for ($page = 0; $page < 10; ++$page) {
             $onScreen = $this->titlesOnScreen($list, $area);
@@ -255,7 +253,7 @@ final class ListViewTest extends TestCase
     public function shiftDownMovesCursorByPageSizeToo(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 19));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
 
         $result = $list->update(new KeyMsg(Key::Down, shift: true), Rect::fromSize(40, 5));
 
@@ -266,7 +264,7 @@ final class ListViewTest extends TestCase
     public function pageUpMovesCursorByPageSize(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 19));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(40, 5);
 
         $result = $list->update(new KeyMsg(Key::End), $area);
@@ -301,7 +299,7 @@ final class ListViewTest extends TestCase
     public function mouseWheelScrolls(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 19));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = new Rect(0, 0, 40, 5);
 
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
@@ -313,7 +311,7 @@ final class ListViewTest extends TestCase
     public function mouseWheelUpScrolls(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 19));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = new Rect(0, 0, 40, 5);
 
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
@@ -328,7 +326,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function emptyListHandlesKeyGracefully(): void
     {
-        $list = ListView::new([])->withFocus(true);
+        $list = ListView::new([]);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         self::assertSame($list, $result->model);
@@ -346,7 +344,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function rendersCursorStyleForCursor(): void
     {
-        $list = ListView::fromStrings(['Alpha', 'Beta'])->withFocus(true);
+        $list = ListView::fromStrings(['Alpha', 'Beta']);
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $theme = Theme::dark();
@@ -360,7 +358,7 @@ final class ListViewTest extends TestCase
     public function rendersItemDescription(): void
     {
         $items = [new SimpleListItem('Title', 'Description')];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -397,7 +395,7 @@ final class ListViewTest extends TestCase
         for ($index = 0; $index < 20; ++$index) {
             $items[] = new SimpleListItem("Item $index");
         }
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(30, 5);
         $area = new Rect(0, 0, 30, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -416,7 +414,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function noScrollbarWhenAllItemsFit(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $frame = new Frame(30, 5);
         $area = new Rect(0, 0, 30, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -450,7 +448,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function renderDoesNothingWithZeroWidth(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 0, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -460,7 +458,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function renderDoesNothingWithZeroHeight(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 20, 0);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -473,7 +471,7 @@ final class ListViewTest extends TestCase
     public function renderStopsAtAreaBottom(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $frame = new Frame(20, 3);
         $area = new Rect(0, 0, 20, 3);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -498,7 +496,7 @@ final class ListViewTest extends TestCase
             new SimpleListItem('Title A', 'Desc A'),
             new SimpleListItem('Title B'),
         ];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 20, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -515,7 +513,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function selectedItemGetsAccentStyle(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(20, 5);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
@@ -535,7 +533,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function focusedNonCursorNonSelectedItemGetsBaseStyle(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 20, 5);
         $theme = Theme::dark();
@@ -561,7 +559,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function cursorAndFocusedGetsCursorStyle(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 20, 5);
         $theme = Theme::dark();
@@ -588,7 +586,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function spaceSelectsItem(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(' '), $area);
         self::assertSame(0, $result->model->selectedIndex());
@@ -597,7 +595,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function upAtZeroReturnsSameInstance(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Up), $area);
         self::assertSame($list, $result->model);
@@ -606,7 +604,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function downAtLastReturnsSameInstance(): void
     {
-        $list = ListView::fromStrings(['A'])->withFocus(true);
+        $list = ListView::fromStrings(['A']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         self::assertSame($list, $result->model);
@@ -615,7 +613,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function homeAtTopReturnsSameInstance(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Home), $area);
         self::assertSame($list, $result->model);
@@ -624,7 +622,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function endAtBottomReturnsSameInstance(): void
     {
-        $list = ListView::fromStrings(['A'])->withFocus(true);
+        $list = ListView::fromStrings(['A']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::End), $area);
         self::assertSame($list, $result->model);
@@ -633,7 +631,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function pageDownClampsToLastItem(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::PageDown), $area);
         self::assertSame(2, $result->model->cursor());
@@ -642,7 +640,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function pageUpClampsToFirstItem(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::PageUp), $area);
@@ -652,7 +650,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function pageUpAtTopReturnsSameInstance(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::PageUp), $area);
         self::assertSame($list, $result->model);
@@ -661,7 +659,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function pageDownAtBottomReturnsSameInstance(): void
     {
-        $list = ListView::fromStrings(['A'])->withFocus(true);
+        $list = ListView::fromStrings(['A']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg(Key::PageDown), $area);
         self::assertSame($list, $result->model);
@@ -670,7 +668,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function unrecognizedKeyReturnsSameInstance(): void
     {
-        $list = ListView::fromStrings(['A', 'B'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B']);
         $area = Rect::fromSize(40, 10);
         $result = $list->update(new KeyMsg('x'), $area);
         self::assertSame($list, $result->model);
@@ -682,7 +680,7 @@ final class ListViewTest extends TestCase
     public function scrollsDownWhenCursorExceedsViewport(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(40, 3);
 
         $current = $list;
@@ -700,7 +698,7 @@ final class ListViewTest extends TestCase
     public function scrollsUpWhenCursorMovesAboveViewport(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(40, 3);
 
         $result = $list->update(new KeyMsg(Key::End), $area);
@@ -718,7 +716,7 @@ final class ListViewTest extends TestCase
     public function ensureCursorVisibleDoesNotChangeWhenAlreadyVisible(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(40, 5);
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
@@ -729,7 +727,7 @@ final class ListViewTest extends TestCase
     public function ensureCursorVisibleNoOpDoesNotChangeScrollOffset(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(40, 10);
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
@@ -823,7 +821,7 @@ final class ListViewTest extends TestCase
     public function renderWithScrollOffsetSkipsItems(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         $current = $list;
@@ -850,7 +848,7 @@ final class ListViewTest extends TestCase
             new SimpleListItem('Title B', 'Desc B'),
             new SimpleListItem('Title C'),
         ];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(20, 6);
         $area = new Rect(0, 0, 20, 6);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -922,7 +920,7 @@ final class ListViewTest extends TestCase
             new SimpleListItem('B', 'Desc B'),
             new SimpleListItem('C', 'Desc C'),
         ];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $area = Rect::fromSize(20, 3);
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
@@ -943,7 +941,7 @@ final class ListViewTest extends TestCase
             new SimpleListItem('C', 'Desc C'),
             new SimpleListItem('D', 'Desc D'),
         ];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $area = Rect::fromSize(20, 4);
 
         $result = $list->update(new KeyMsg(Key::End), $area);
@@ -960,7 +958,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function renderAtNonZeroOrigin(): void
     {
-        $list = ListView::fromStrings(['Hello', 'World'])->withFocus(true);
+        $list = ListView::fromStrings(['Hello', 'World']);
         $frame = new Frame(30, 15);
         $area = new Rect(5, 10, 20, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -984,7 +982,7 @@ final class ListViewTest extends TestCase
     public function descriptionRenderedAtXPlusTwoOffset(): void
     {
         $items = [new SimpleListItem('Title', 'Desc')];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 20, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1002,7 +1000,7 @@ final class ListViewTest extends TestCase
         for ($index = 0; $index < 5; ++$index) {
             $items[] = new SimpleListItem("Item $index", "Desc $index");
         }
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(30, 5);
         $area = new Rect(0, 0, 30, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1024,7 +1022,7 @@ final class ListViewTest extends TestCase
     public function scrollOffsetExactlyMatchesCursorMinusViewport(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 4));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
@@ -1045,7 +1043,7 @@ final class ListViewTest extends TestCase
     public function scrollOffsetRetractsWhenCursorMovesUp(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         $result = $list->update(new KeyMsg(Key::End), $area);
@@ -1154,7 +1152,7 @@ final class ListViewTest extends TestCase
             new SimpleListItem('Title A'),
             new SimpleListItem('Title B'),
         ];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(20, 5);
         $area = new Rect(0, 0, 20, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1171,7 +1169,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function renderDoesNotRenderItemAtExactAreaBottom(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C', 'D'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C', 'D']);
         $frame = new Frame(20, 3);
         $area = new Rect(0, 0, 20, 3);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1211,7 +1209,7 @@ final class ListViewTest extends TestCase
     public function ensureCursorVisibleAtExactBottomBoundary(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 4));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
@@ -1224,7 +1222,7 @@ final class ListViewTest extends TestCase
     public function ensureCursorVisibleScrollsJustEnoughDown(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 5));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
@@ -1238,7 +1236,7 @@ final class ListViewTest extends TestCase
     public function ensureCursorVisibleScrollsJustEnoughUp(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 5));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         $result = $list->update(new KeyMsg(Key::End), $area);
@@ -1261,7 +1259,7 @@ final class ListViewTest extends TestCase
     public function descriptionAtExactXOffset(): void
     {
         $items = [new SimpleListItem('Title', 'Desc')];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(20, 5);
         $area = new Rect(3, 0, 17, 5);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1274,7 +1272,7 @@ final class ListViewTest extends TestCase
     public function descriptionAtExactYOffset(): void
     {
         $items = [new SimpleListItem('Title', 'Desc')];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(20, 5);
         $area = new Rect(0, 2, 20, 3);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1290,7 +1288,7 @@ final class ListViewTest extends TestCase
     public function pageDownWithZeroHeightAreaUsesPageSizeOfOne(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 5));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = new Rect(0, 0, 20, 1);
 
         $result = $list->update(new KeyMsg(Key::PageDown), $area);
@@ -1307,7 +1305,7 @@ final class ListViewTest extends TestCase
             new SimpleListItem('B'),
             new SimpleListItem('C'),
         ];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $area = Rect::fromSize(20, 3);
 
         $result = $list->update(new KeyMsg(Key::End), $area);
@@ -1329,7 +1327,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function emptyListDoesNotHandleKeyMessages(): void
     {
-        $list = ListView::fromStrings([])->withFocus(true);
+        $list = ListView::fromStrings([]);
         $area = Rect::fromSize(20, 5);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         self::assertSame($list, $result->model);
@@ -1338,7 +1336,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function emptyListEnterKeyDoesNotCrash(): void
     {
-        $list = ListView::fromStrings([])->withFocus(true);
+        $list = ListView::fromStrings([]);
         $area = Rect::fromSize(20, 5);
         $result = $list->update(new KeyMsg(Key::Enter), $area);
         self::assertSame($list, $result->model);
@@ -1351,7 +1349,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function itemsAtExactAreaBottomAreNotRendered(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C', 'D', 'E'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C', 'D', 'E']);
         $frame = new Frame(20, 4);
         $area = new Rect(0, 0, 20, 3);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1370,7 +1368,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function breakPreventsRenderingBeyondAreaBottom(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C', 'D', 'E'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C', 'D', 'E']);
         $frame = new Frame(20, 6);
         $area = new Rect(0, 0, 20, 3);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1392,7 +1390,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function pageDownWithHeightZeroMovesExactlyOneItem(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = new Rect(0, 0, 20, 0);
         $result = $list->update(new KeyMsg(Key::PageDown), $area);
         // max(1, 0) = 1, so cursor moves by 1
@@ -1408,7 +1406,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function endKeyFromSecondToLastItemMovesToLastItem(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(20, 5);
         // Move cursor to 1 (second-to-last)
         $result = $list->update(new KeyMsg(Key::Down), $area);
@@ -1426,7 +1424,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function pageDownFromSecondToLastItemStillMoves(): void
     {
-        $list = ListView::fromStrings(['A', 'B', 'C'])->withFocus(true);
+        $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = Rect::fromSize(20, 5);
         $result = $list->update(new KeyMsg(Key::Down), $area);
         self::assertSame(1, $result->model->cursor());
@@ -1515,7 +1513,7 @@ final class ListViewTest extends TestCase
     public function ensureCursorVisibleDoesNotScrollWhenCursorAtTopOfViewport(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         // Move to item 5, then scroll should be at 3 (items 3,4,5 visible)
@@ -1542,7 +1540,7 @@ final class ListViewTest extends TestCase
     public function ensureCursorVisibleDoesNotScrollWhenCursorAtBottomOfViewport(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         // Move to item 2 (bottom of initial viewport: items 0,1,2)
@@ -1574,7 +1572,7 @@ final class ListViewTest extends TestCase
     public function renderSkipsItemsBeforeScrollOffset(): void
     {
         $items = array_map(fn (int $index) => "Item $index", range(0, 9));
-        $list = ListView::fromStrings($items)->withFocus(true);
+        $list = ListView::fromStrings($items);
         $area = Rect::fromSize(20, 3);
 
         $result = $list->update(new KeyMsg(Key::End), $area);
@@ -1610,7 +1608,7 @@ final class ListViewTest extends TestCase
     public function descriptionNotRenderedWhenWidthEqualsTwoCharOffset(): void
     {
         $items = [new SimpleListItem('T', 'Description')];
-        $list = ListView::new($items)->withFocus(true);
+        $list = ListView::new($items);
         $frame = new Frame(10, 5);
         $list->render($frame, new Rect(0, 0, 2, 5), new RenderContext(Theme::dark()));
 
@@ -1626,7 +1624,7 @@ final class ListViewTest extends TestCase
     {
         // Three columns leave nothing once the scrollbar gutter is reserved, so
         // the item degrades to its title rather than drawing over the bar.
-        $list = ListView::new([new SimpleListItem('T', 'Description')])->withFocus(true);
+        $list = ListView::new([new SimpleListItem('T', 'Description')]);
         $frame = new Frame(10, 5);
 
         $list->render($frame, new Rect(0, 0, 3, 5), new RenderContext(Theme::dark()));
@@ -1673,7 +1671,7 @@ final class ListViewTest extends TestCase
     ): void {
         $area = Rect::fromSize(30, 10);
         $items = array_map(fn (int $i) => new SimpleListItem("item $i"), range(1, 10));
-        $widget = ListView::new($items)->withFocus(true)->withCursor($startingCursor);
+        $widget = ListView::new($items)->withCursor($startingCursor);
 
         $afterDefault = $widget->update($defaultKey, $area)->model;
         self::assertNotSame($widget, $afterDefault, "default key for $action must change state");
@@ -1700,7 +1698,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function homeAtCursorZeroIsANoOpEvenWhenScrolled(): void
     {
-        $list = ListView::new($this->tenItems())->withFocus(true)->withScrollOffset(5);
+        $list = ListView::new($this->tenItems())->withScrollOffset(5);
         $area = new Rect(0, 0, 20, 3);
 
         $result = $list->update(new KeyMsg(Key::Home), $area)->model;
@@ -1711,7 +1709,7 @@ final class ListViewTest extends TestCase
     #[Test]
     public function pageUpAtCursorZeroIsANoOpEvenWhenScrolled(): void
     {
-        $list = ListView::new($this->tenItems())->withFocus(true)->withScrollOffset(5);
+        $list = ListView::new($this->tenItems())->withScrollOffset(5);
         $area = new Rect(0, 0, 20, 3);
 
         $result = $list->update(new KeyMsg(Key::PageUp), $area)->model;
@@ -1723,8 +1721,7 @@ final class ListViewTest extends TestCase
     public function endAtLastCursorIsANoOpEvenWhenCursorIsOffScreen(): void
     {
         $list = ListView::new($this->tenItems())
-            ->withFocus(true)
-            ->withCursor(9)
+                        ->withCursor(9)
             ->withScrollOffset(0);
         $area = new Rect(0, 0, 20, 3);
 
@@ -1737,8 +1734,7 @@ final class ListViewTest extends TestCase
     public function pageDownAtLastCursorIsANoOpEvenWhenCursorIsOffScreen(): void
     {
         $list = ListView::new($this->tenItems())
-            ->withFocus(true)
-            ->withCursor(9)
+                        ->withCursor(9)
             ->withScrollOffset(0);
         $area = new Rect(0, 0, 20, 3);
 
@@ -1802,7 +1798,7 @@ final class ListViewTest extends TestCase
     public function theSelectedRowHighlightSpansTheFullRowWidth(): void
     {
         $theme = Theme::dark();
-        $list = ListView::new([new SimpleListItem('AB')])->withCursor(0)->withFocus(true);
+        $list = ListView::new([new SimpleListItem('AB')])->withCursor(0);
         $frame = new Frame(20, 3);
 
         $list->render($frame, new Rect(0, 0, 20, 3), RenderContext::focused($theme));
@@ -1886,7 +1882,7 @@ final class ListViewTest extends TestCase
         $theme = Theme::dark();
         $list = ListView::new([new SimpleListItem('Title', 'Description')])
             ->withCursor(0)
-            ->withFocus(true);
+        ;
         $frame = new Frame(20, 4);
 
         $list->render($frame, new Rect(0, 0, 20, 4), RenderContext::focused($theme));
@@ -1902,7 +1898,7 @@ final class ListViewTest extends TestCase
     {
         $list = ListView::new([new SimpleListItem('Title', 'Description')])
             ->withCursor(0)
-            ->withFocus(true);
+        ;
         $frame = new Frame(20, 4);
 
         $list->render($frame, new Rect(0, 0, 20, 4), new RenderContext(Theme::dark()));
@@ -2157,11 +2153,6 @@ final class ListViewTest extends TestCase
         $this->expectExceptionMessage('ListView takes ListItem instances; item 0 is string');
 
         ListView::new(self::itemsFromUntypedData());
-    }
-
-    protected function createFocusable(): Focusable
-    {
-        return ListView::new([]);
     }
 
     /**

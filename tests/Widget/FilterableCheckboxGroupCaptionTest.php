@@ -15,8 +15,7 @@ final class FilterableCheckboxGroupCaptionTest extends TestCase
     #[Test]
     public function theClosedRowCountsEveryTickAndNotOnlyTheOnesTheQueryLeftShowing(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail'])
-            ->withFocus(true);
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail']);
         $area = Rect::fromSize(30, 8);
 
         self::assertSame('0 of 4', $group->caption());

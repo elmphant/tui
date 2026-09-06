@@ -39,7 +39,7 @@ final class CheckboxRowTest extends TestCase
     public function theCursorFollowsItsOptionWhenTheOptionsAreReloaded(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = CheckboxRow::new(['alpha', 'beta', 'gamma', 'delta'])->withFocus(true);
+        $row = CheckboxRow::new(['alpha', 'beta', 'gamma', 'delta']);
 
         $row = $row->update(new KeyMsg(Key::Right), $area)->model;
         $row = $row->update(new KeyMsg(Key::Right), $area)->model;
@@ -54,13 +54,13 @@ final class CheckboxRowTest extends TestCase
     public function enterStillTogglesAfterAReloadShrankTheOptions(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = CheckboxRow::new(['alpha', 'beta', 'gamma', 'delta'])->withFocus(true);
+        $row = CheckboxRow::new(['alpha', 'beta', 'gamma', 'delta']);
 
         $row = $row->update(new KeyMsg(Key::Right), $area)->model;
         $row = $row->update(new KeyMsg(Key::Right), $area)->model;
         $row = $row->update(new KeyMsg(Key::Right), $area)->model;
 
-        $reloaded = $row->withOptions(['alpha', 'beta'])->withFocus(true);
+        $reloaded = $row->withOptions(['alpha', 'beta']);
         $toggled = $reloaded->update(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 1))->model;
 
         self::assertTrue($toggled->isChecked($reloaded->cursor()));
@@ -94,7 +94,7 @@ final class CheckboxRowTest extends TestCase
     public function aRowToldNotToWrapRestsAtEitherEndInstead(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = CheckboxRow::new(['system', 'pages', 'all'])->withWrapping(false)->withFocus(true);
+        $row = CheckboxRow::new(['system', 'pages', 'all'])->withWrapping(false);
 
         $left = $row->update(new KeyMsg(Key::Left), $area)->model;
         self::assertInstanceOf(CheckboxRow::class, $left);
@@ -131,7 +131,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function rightMoveCursorWraps(): void
     {
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $area = new Rect(0, 0, 40, 1);
 
         $result = $row->update(new KeyMsg(Key::Right), $area);
@@ -143,7 +143,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function leftMoveCursorWraps(): void
     {
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $area = new Rect(0, 0, 40, 1);
 
         $result = $row->update(new KeyMsg(Key::Left), $area);
@@ -154,7 +154,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function spaceTogglesCurrentOption(): void
     {
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $area = new Rect(0, 0, 40, 1);
 
         $result = $row->update(new KeyMsg(' '), $area);
@@ -166,7 +166,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function enterTogglesCurrentOption(): void
     {
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $area = new Rect(0, 0, 40, 1);
 
         $result = $row->update(new KeyMsg(Key::Enter), $area);
@@ -177,7 +177,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function toggleUnchecks(): void
     {
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $area = new Rect(0, 0, 40, 1);
 
         $result = $row->update(new KeyMsg(' '), $area);
@@ -189,7 +189,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function checkedIndices(): void
     {
-        $row = CheckboxRow::new(['A', 'B', 'C'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B', 'C']);
         $area = new Rect(0, 0, 40, 1);
 
         $row = $row->update(new KeyMsg(' '), $area)->model;
@@ -198,15 +198,6 @@ final class CheckboxRowTest extends TestCase
         $row = $row->update(new KeyMsg(' '), $area)->model;
 
         self::assertSame([0, 2], $row->checkedIndices());
-    }
-
-    #[Test]
-    public function withFocusReturnsNewInstance(): void
-    {
-        $row = CheckboxRow::new(['A']);
-
-        self::assertFalse($row->isFocused());
-        self::assertTrue($row->withFocus(true)->isFocused());
     }
 
     #[Test]
@@ -284,7 +275,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function rendersCheckedMark(): void
     {
-        $row = CheckboxRow::new(['A'])->withFocus(true);
+        $row = CheckboxRow::new(['A']);
         $area = new Rect(0, 0, 20, 1);
 
         $toggled = $row->update(new KeyMsg(' '), $area)->model;
@@ -313,7 +304,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function emptyLabelsHandleGracefully(): void
     {
-        $row = CheckboxRow::new([])->withFocus(true);
+        $row = CheckboxRow::new([]);
         $area = new Rect(0, 0, 20, 1);
 
         $result = $row->update(new KeyMsg(Key::Right), $area);
@@ -336,7 +327,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function unrecognizedKeyReturnsSameModelWhenFocused(): void
     {
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $area = new Rect(0, 0, 40, 1);
 
         $result = $row->update(new KeyMsg('z'), $area);
@@ -355,7 +346,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function leftFromMiddleCursorGoesToPreviousNotNext(): void
     {
-        $row = CheckboxRow::new(['A', 'B', 'C'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B', 'C']);
         $area = new Rect(0, 0, 40, 1);
 
         $row = $row->update(new KeyMsg(Key::Right), $area)->model;
@@ -368,7 +359,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function leftKeyRemovalMutantKiller(): void
     {
-        $row = CheckboxRow::new(['A', 'B', 'C'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B', 'C']);
         $area = new Rect(0, 0, 40, 1);
 
         $result = $row->update(new KeyMsg(Key::Left), $area);
@@ -521,7 +512,7 @@ final class CheckboxRowTest extends TestCase
     public function renderFocusedCursorItemUsesCursorStyle(): void
     {
         $theme = Theme::dark();
-        $row = CheckboxRow::new(['A'])->withFocus(true);
+        $row = CheckboxRow::new(['A']);
         $frame = new Frame(20, 1);
 
         $row->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused($theme));
@@ -533,7 +524,7 @@ final class CheckboxRowTest extends TestCase
     public function renderCheckedNonCursorUsesAccentStyle(): void
     {
         $theme = Theme::dark();
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $area = new Rect(0, 0, 40, 1);
 
         $row = $row->update(new KeyMsg(' '), $area)->model;
@@ -549,7 +540,7 @@ final class CheckboxRowTest extends TestCase
     public function renderFocusedNonCursorUncheckedUsesBaseStyle(): void
     {
         $theme = Theme::dark();
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $area = new Rect(0, 0, 40, 1);
 
         $row = $row->update(new KeyMsg(Key::Right), $area)->model;
@@ -564,7 +555,7 @@ final class CheckboxRowTest extends TestCase
     public function renderCursorOnlyOnFocusedIndex(): void
     {
         $theme = Theme::dark();
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $frame = new Frame(40, 1);
 
         $row->render($frame, new Rect(0, 0, 40, 1), RenderContext::focused($theme));
@@ -606,7 +597,7 @@ final class CheckboxRowTest extends TestCase
     public function leavesTheGapBetweenOptionsBlank(): void
     {
         $theme = Theme::dark();
-        $row = CheckboxRow::new(['A', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['A', 'B']);
         $frame = new Frame(40, 1);
 
         $row->render($frame, new Rect(0, 0, 40, 1), new RenderContext($theme));
@@ -663,7 +654,7 @@ final class CheckboxRowTest extends TestCase
     #[Test]
     public function clickHitsCorrectCjkLabelPosition(): void
     {
-        $row = CheckboxRow::new(['漢字', 'B'])->withFocus(true);
+        $row = CheckboxRow::new(['漢字', 'B']);
         $area = new Rect(0, 0, 30, 1);
 
         // Each han character takes two columns, so the option ends at 7. Counted
@@ -679,7 +670,7 @@ final class CheckboxRowTest extends TestCase
     public function supportsCustomCursorLeftKeybinding(): void
     {
         $area = Rect::fromSize(40, 3);
-        $widget = CheckboxRow::new(['a', 'b', 'c'])->withFocus(true)->withCursor(1);
+        $widget = CheckboxRow::new(['a', 'b', 'c'])->withCursor(1);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Left), $area)->model;
         self::assertSame(0, $this->getCursor($afterDefault));
@@ -695,7 +686,7 @@ final class CheckboxRowTest extends TestCase
     public function supportsCustomCursorRightKeybinding(): void
     {
         $area = Rect::fromSize(40, 3);
-        $widget = CheckboxRow::new(['a', 'b', 'c'])->withFocus(true);
+        $widget = CheckboxRow::new(['a', 'b', 'c']);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Right), $area)->model;
         self::assertSame(1, $this->getCursor($afterDefault));
@@ -711,7 +702,7 @@ final class CheckboxRowTest extends TestCase
     public function supportsCustomToggleKeybinding(): void
     {
         $area = Rect::fromSize(40, 3);
-        $widget = CheckboxRow::new(['a', 'b', 'c'])->withFocus(true);
+        $widget = CheckboxRow::new(['a', 'b', 'c']);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Enter), $area)->model;
         self::assertTrue($afterDefault->isChecked(0));

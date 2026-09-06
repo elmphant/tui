@@ -12,9 +12,14 @@ final readonly class MouseMsg implements Message
     use Cloneable;
 
     /**
-     * @param int $repeat how many notches this event stands for. A terminal
-     *                    sends one event per notch, so the runtime merges a run
-     *                    of them into a single message.
+     * @param int  $repeat          how many notches this event stands for. A terminal
+     *                              sends one event per notch, so the runtime merges a
+     *                              run of them into a single message.
+     * @param bool $keyboardWasHere a press reaches every component under it, and the
+     *                              one it lands on is also the one it moves the
+     *                              keyboard to, so a widget that acts only where the
+     *                              reader already is cannot tell the arriving press
+     *                              from the acting one without being told
      */
     public function __construct(
         public int $x,
@@ -26,12 +31,18 @@ final readonly class MouseMsg implements Message
         public bool $shift = false,
         public bool $alt = false,
         public bool $ctrl = false,
+        public bool $keyboardWasHere = false,
     ) {
     }
 
     public function withScreen(Rect $screen): self
     {
         return $this->cloneWith(screen: $screen);
+    }
+
+    public function withKeyboardHere(bool $here): self
+    {
+        return $this->cloneWith(keyboardWasHere: $here);
     }
 
     public function withRepeat(int $repeat): self

@@ -19,7 +19,7 @@ final class FilterableCheckboxGroupPointerTest extends TestCase
     #[Test]
     public function aPressOnABoxTicksItThroughTheUpdateEveryMessageTakes(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations'])->withFocus(true);
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations']);
         $area = Rect::fromSize(30, 8);
 
         $onTheFirstBox = new MouseMsg(0, $area->y + 2, MouseAction::Press, MouseButton::Left);
@@ -45,7 +45,7 @@ final class FilterableCheckboxGroupPointerTest extends TestCase
     #[Test]
     public function theWheelOverTheBoxesWalksTheCursor(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log'])->withFocus(true);
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log']);
         $area = Rect::fromSize(30, 8);
 
         $overTheBoxes = new MouseMsg(0, $area->y + 2, MouseAction::WheelDown, MouseButton::None);
@@ -61,8 +61,7 @@ final class FilterableCheckboxGroupPointerTest extends TestCase
     #[Test]
     public function aPressNamesTheBoxDrawnOnThatRowOfTheNarrowedList(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail'])
-            ->withFocus(true);
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail']);
         $area = Rect::fromSize(30, 8);
 
         $narrowed = $group;

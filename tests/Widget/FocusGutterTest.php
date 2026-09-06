@@ -38,8 +38,8 @@ final class FocusGutterTest extends TestCase
         $frame = new Frame(12, 1);
         $theme = Theme::dark();
 
-        FocusGutter::around(TextInput::new('')->withFocus(true))
-            ->render($frame, new Rect(0, 0, 12, 1), new RenderContext($theme));
+        FocusGutter::around(TextInput::new(''))
+            ->render($frame, new Rect(0, 0, 12, 1), RenderContext::focused($theme));
 
         self::assertSame(FocusGutter::BAR, $frame->characters[0], 'the bar says where the keys land');
         self::assertSame($theme->focusedBorderStyle->foregroundValue(), $frame->foregrounds[0]);
@@ -61,7 +61,7 @@ final class FocusGutterTest extends TestCase
     #[Test]
     public function whatItHoldsStillTakesTheKeysAndKeepsWhatTheyDid(): void
     {
-        $wrapped = FocusGutter::around(TextInput::new('type here')->withFocus(true));
+        $wrapped = FocusGutter::around(TextInput::new('type here'));
 
         $typed = $wrapped->update(new KeyMsg('h'), new Rect(0, 0, 20, 1))->model;
         self::assertInstanceOf(FocusGutter::class, $typed);
@@ -75,7 +75,7 @@ final class FocusGutterTest extends TestCase
     #[Test]
     public function aKeyTheApplicationBoundGloballyStillReachesTheFieldBehindTheTrack(): void
     {
-        $gutter = FocusGutter::around(TextInput::new('')->withValue('typed')->withFocus(true))
+        $gutter = FocusGutter::around(TextInput::new('')->withValue('typed'))
             ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]));
 
         $cleared = $gutter->update(new KeyMsg('k', ctrl: true), new Rect(0, 0, 20, 1))->model;
@@ -107,7 +107,7 @@ final class FocusGutterTest extends TestCase
     #[Test]
     public function aHostRebindingTheTrackRebindsTheFieldBehindIt(): void
     {
-        $gutter = FocusGutter::around(TextInput::new()->withValue('typed')->withFocus(true))
+        $gutter = FocusGutter::around(TextInput::new()->withValue('typed'))
             ->withKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+w']]));
 
         $cleared = $gutter->update(new KeyMsg('w', ctrl: true), new Rect(0, 0, 20, 1))->model;
@@ -121,7 +121,7 @@ final class FocusGutterTest extends TestCase
     #[Test]
     public function itSaysWhatItHoldsAndWhereThatLandsForAHostWalkingTheTree(): void
     {
-        $field = TextInput::new('type here')->withFocus(true);
+        $field = TextInput::new('type here');
 
         $gutter = FocusGutter::around($field);
 

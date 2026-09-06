@@ -47,7 +47,7 @@ final class DropdownAppAcceptanceTest extends TestCase
         $app = self::appOf($harness);
         self::assertSame('json', $app->first->content()->selectedValue(), 'the drawn popup owns that cell');
         self::assertNull($app->second->content()->selectedValue(), 'the sibling under the popup saw nothing');
-        self::assertTrue($app->first->isFocused(), 'the picker keeps focus');
+        self::assertSame('first', $harness->focused()?->value, 'the picker keeps focus');
 
         $harness->renderFrame();
         $harness->dispatch(new KeyMsg(' '));
@@ -65,7 +65,7 @@ final class DropdownAppAcceptanceTest extends TestCase
 
         $app = self::appOf($harness);
         self::assertTrue($app->first->isOpen(), 'one click opens it');
-        self::assertTrue($app->first->isFocused(), 'and it ends up focused');
+        self::assertSame('first', $harness->focused()?->value, 'and it ends up focused');
     }
 
     #[Test]
@@ -74,7 +74,7 @@ final class DropdownAppAcceptanceTest extends TestCase
         $harness = ModelHarness::for(TwoDropdownApp::new(), 40, 18);
         $harness->renderFrame();
 
-        self::assertFalse(self::appOf($harness)->second->isFocused(), 'the second row starts unfocused');
+        self::assertSame('first', $harness->focused()?->value, 'the keyboard starts on the first row');
 
         $harness->dispatch(new MouseMsg(2, 1, MouseAction::Press, MouseButton::Left));
 
@@ -118,7 +118,7 @@ final readonly class TwoDropdownApp extends App
     public static function new(): self
     {
         return new self(
-            Dropdown::new(Select::new(['json', 'yaml']))->withFocus(true),
+            Dropdown::new(Select::new(['json', 'yaml'])),
             Dropdown::new(Select::new(['toml', 'ini'])),
         );
     }

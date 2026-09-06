@@ -30,7 +30,6 @@ final class DropdownFrameTest extends TestCase
         $anchor = new Rect(0, 0, 30, 12);
         $dropdown = Dropdown::new(Select::new(['json', 'yaml']))
             ->withFrame(static fn (DropdownContent $content, FloatTarget $target): PopupFrame => new MarkedFrame($content, $target))
-            ->withFocus(true)
             ->update(new KeyMsg(' '), $anchor)->model;
 
         $frame = new Frame(30, 12);

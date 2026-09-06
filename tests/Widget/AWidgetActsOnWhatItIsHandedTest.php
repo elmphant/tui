@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Widget\Choice\Checkbox;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Choice\CheckboxRow;
 use Elmphant\Tui\Widget\Choice\RadioRow;
 use Elmphant\Tui\Widget\Choice\Select;
+use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Listing\ListView;
@@ -91,6 +95,29 @@ final class AWidgetActsOnWhatItIsHandedTest extends TestCase
 
         self::assertInstanceOf(Table::class, $moved);
         self::assertSame(1, $moved->cursor());
+    }
+
+    #[Test]
+    public function anUnflaggedCheckboxTogglesOnTheKeyItIsHanded(): void
+    {
+        $checkbox = Checkbox::new('opt in');
+
+        $toggled = $checkbox->update(new KeyMsg(' '), new Rect(0, 0, 30, 1))->model;
+
+        self::assertInstanceOf(Checkbox::class, $toggled);
+        self::assertTrue($toggled->isChecked());
+    }
+
+    #[Test]
+    public function anUnflaggedButtonFiresOnTheKeyItIsHanded(): void
+    {
+        $pressed = new TestMessage('pressed');
+        $button = Button::new('OK', $pressed);
+
+        $command = $button->update(new KeyMsg(Key::Enter), new Rect(0, 0, 30, 3))->command;
+
+        self::assertInstanceOf(MessageCmd::class, $command);
+        self::assertSame($pressed, $command->message);
     }
 
     /**

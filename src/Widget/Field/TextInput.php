@@ -38,7 +38,6 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         private string $value = '',
         private int $cursor = 0,
         private int $scrollOffset = 0,
-        private bool $focused = false,
         private string $placeholder = '',
         private int $charLimit = 0,
         private EchoMode $echoMode = EchoMode::Normal,
@@ -146,16 +145,6 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
     public function withStyled(bool $styled = true): self
     {
         return $this->cloneWith(decoration: $styled ? InputDecoration::Filled : InputDecoration::None);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     public function sizing(): Sizing

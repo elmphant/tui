@@ -20,16 +20,6 @@ final readonly class FlagReadingRenderer implements Focusable, Interactive
     {
     }
 
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return new self($focused);
-    }
-
     public function sizing(): Sizing
     {
         return Sizing::of(Constraint::flex(), Constraint::exact(1));

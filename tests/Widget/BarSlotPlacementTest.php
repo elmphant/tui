@@ -20,10 +20,11 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Feedback\ProgressBar;
 use Elmphant\Tui\Widget\Field\Button;
-use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Container;
 use Elmphant\Tui\Widget\Widget;
@@ -157,22 +158,12 @@ final class BarSlotPlacementTest extends TestCase
     }
 
     #[Test]
-    public function aFocusedSlotWithNoWidthStillTakesKeys(): void
+    public function aMarkedSlotWithNoWidthStillTakesKeys(): void
     {
         $pressed = new TestMessage('pressed');
-        $widthless = new class($pressed) implements Focusable {
+        $widthless = new class($pressed) implements Interactive {
             public function __construct(private readonly Message $pressed)
             {
-            }
-
-            public function isFocused(): bool
-            {
-                return true;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return $this;
             }
 
             public function sizing(): Sizing
@@ -190,7 +181,7 @@ final class BarSlotPlacementTest extends TestCase
             }
         };
 
-        $result = Footer::new()->withLeft($widthless)->update(new KeyMsg(Key::Enter), new Rect(0, 0, self::BAR_WIDTH, 1));
+        $result = Footer::new()->withLeft($widthless)->withMarkedSlot(Alignment::Left)->update(new KeyMsg(Key::Enter), new Rect(0, 0, self::BAR_WIDTH, 1));
 
         $command = $result->command;
         self::assertInstanceOf(MessageCmd::class, $command);

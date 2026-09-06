@@ -24,9 +24,10 @@ final class ComponentWithWidgetTest extends TestCase
             static fn (object $app, TextInput $field): object => $app,
         );
 
-        $focused = $component->withWidget(TextInput::new()->withFocus(true));
+        $replacement = TextInput::new()->withValue('replaced');
+        $swapped = $component->withWidget($replacement);
 
-        self::assertEquals(ComponentId::named('field'), $focused->id);
-        self::assertTrue($focused->widget->isFocused());
+        self::assertEquals(ComponentId::named('field'), $swapped->id);
+        self::assertSame($replacement, $swapped->widget);
     }
 }

@@ -158,7 +158,7 @@ final readonly class PanelledObserverApp extends CopyableTestApp
 final readonly class VimModeApp extends CopyableTestApp
 {
     public function __construct(
-        public Select $select = new Select(options: ['a', 'b', 'c'], focused: true),
+        public Select $select = new Select(options: ['a', 'b', 'c']),
     ) {
     }
 

@@ -38,7 +38,6 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         private array $options = [],
         private int $cursor = 0,
         private int $selected = 0,
-        private bool $focused = false,
         private string $label = '',
         private string $emptyCaption = '',
         private ?Keybindings $customKeybindings = null,
@@ -150,16 +149,6 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
      * An empty list still binds enter to SELECT, so the binding alone would
      * close a popup over nothing.
      */
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
-    }
-
     public function sizing(): Sizing
     {
         return Sizing::of(

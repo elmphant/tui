@@ -106,9 +106,6 @@ final readonly class FocusState
     }
 
     /**
-     * Where a lost stop's keyboard goes: the nearest container above it that is a
-     * stop, else the first stop still under that container, else the first stop.
-     *
      * @param non-empty-list<ComponentId> $order
      */
     private function landingIn(array $order): ComponentId

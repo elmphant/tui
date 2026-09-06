@@ -45,7 +45,6 @@ final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, Key
     public function __construct(
         private string $title = '',
         private ScrollPane $pane = new ScrollPane(),
-        private bool $focused = false,
         private bool $emphasizedBorder = false,
         private ?Style $borderStyleOverride = null,
         private ?Style $focusedBorderStyleOverride = null,
@@ -87,7 +86,7 @@ final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, Key
     {
         return $children === $this->pane->authoredChildren()
             ? $this
-            : $this->withPane(ScrollPane::of(...$children));
+            : $this->withPane($this->pane->withChildren($children));
     }
 
     public function add(Widget $child): self
@@ -151,19 +150,9 @@ final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, Key
         return $this->withPane($this->pane->withKeyboardAt($child));
     }
 
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
     public function navigation(): Navigation
     {
         return $this->pane->navigation();
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused, pane: $this->pane->withFocus($focused));
     }
 
     public function withKeybindings(?Keybindings $keybindings): static
@@ -297,7 +286,7 @@ final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, Key
 
     private function withPane(ScrollPane $pane): self
     {
-        return $this->cloneWith(pane: $pane->withFocus($this->focused));
+        return $this->cloneWith(pane: $pane);
     }
 
     private function effectiveMargin(): Spacing

@@ -58,7 +58,7 @@ final class DropdownMouseTest extends TestCase
         $screen = Rect::fromSize(20, 8);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 20));
 
-        $dropdown = Dropdown::new(Select::new($options)->activated('option18'))->withFocus(true);
+        $dropdown = Dropdown::new(Select::new($options)->activated('option18'));
 
         $clicked = $dropdown->update(
             new MouseMsg(2, 0, MouseAction::Press, MouseButton::Left, screen: $screen),
@@ -97,7 +97,7 @@ final class DropdownMouseTest extends TestCase
     #[Test]
     public function clickingElsewhereWhileClosedDoesNothing(): void
     {
-        $dropdown = Dropdown::new(Select::new(['json', 'yaml']))->withFocus(true);
+        $dropdown = Dropdown::new(Select::new(['json', 'yaml']));
 
         $clicked = $dropdown->update(
             new MouseMsg(2, 5, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
@@ -135,8 +135,7 @@ final class DropdownMouseTest extends TestCase
     public function clickingAwayCancelsEvenWithoutAScreenRectOnTheMessage(): void
     {
         $blind = Dropdown::new(Select::new(['json', 'yaml']))
-            ->withFocus(true)
-            ->update(new KeyMsg(' '), self::anchor())->model;
+                        ->update(new KeyMsg(' '), self::anchor())->model;
 
         $clicked = $blind->update(
             new MouseMsg(2, 9, MouseAction::Press, MouseButton::Left),
@@ -314,7 +313,7 @@ final class DropdownMouseTest extends TestCase
         $screen = Rect::fromSize(60, 14);
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 36));
 
-        $dropdown = Dropdown::new(Select::new($options))->withFocus(true)->update(new KeyMsg(' '), $anchor)->model;
+        $dropdown = Dropdown::new(Select::new($options))->update(new KeyMsg(' '), $anchor)->model;
         for ($step = 0; $step < 20; ++$step) {
             $dropdown = $dropdown->update(new KeyMsg(Key::Down, screen: $screen), $anchor)->model;
         }
@@ -468,8 +467,7 @@ final class DropdownMouseTest extends TestCase
         $screen = Rect::fromSize(20, 12);
 
         $opened = Dropdown::new(Select::new(['alpha', 'bravo', 'charlie', 'delta'])->activated('bravo'))
-            ->withFocus(true)
-            ->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
+                        ->update(new KeyMsg(' ', screen: $screen), $anchor)->model;
 
         self::assertStringContainsString('alpha', self::drawnOptionRows($opened, $screen), 'nothing has scrolled yet');
     }
@@ -481,8 +479,7 @@ final class DropdownMouseTest extends TestCase
         $screen = Rect::fromSize(20, 12);
 
         $picked = Dropdown::new(Select::new(['alpha', 'bravo', 'charlie', 'delta']))
-            ->withFocus(true)
-            ->update(new KeyMsg(' ', screen: $screen), $anchor)->model
+                        ->update(new KeyMsg(' ', screen: $screen), $anchor)->model
             ->update(new KeyMsg(Key::Down, screen: $screen), $anchor)->model
             ->update(new KeyMsg(Key::Enter, screen: $screen), $anchor)->model;
 
@@ -504,8 +501,7 @@ final class DropdownMouseTest extends TestCase
         $screen = Rect::fromSize(20, 12);
 
         $picked = Dropdown::new(Select::new(['alpha', 'bravo', 'charlie', 'delta']))
-            ->withFocus(true)
-            ->update(new KeyMsg(' ', screen: $screen), $anchor)->model
+                        ->update(new KeyMsg(' ', screen: $screen), $anchor)->model
             ->update(new KeyMsg(Key::Enter, screen: $screen), $anchor)->model;
 
         self::assertSame('alpha', $picked->content()->selectedValue());
@@ -531,8 +527,7 @@ final class DropdownMouseTest extends TestCase
         $options = array_map(static fn (int $index): string => sprintf('opt%02d', $index), range(1, 20));
 
         $opened = Dropdown::new(Select::new($options)->activated('opt18'))
-            ->withFocus(true)
-            ->update(new KeyMsg(' ', screen: Rect::fromSize(20, 4)), self::anchor())->model;
+                        ->update(new KeyMsg(' ', screen: Rect::fromSize(20, 4)), self::anchor())->model;
 
         $drawn = self::drawIn($opened, Rect::fromSize(20, 16));
 
@@ -546,8 +541,7 @@ final class DropdownMouseTest extends TestCase
         $opened = self::opened();
 
         $withered = $opened
-            ->withFocus(true)
-            ->withGlobalKeybindings(new Keybindings([Actions::CANCEL => ['q']]));
+                        ->withGlobalKeybindings(new Keybindings([Actions::CANCEL => ['q']]));
 
         self::assertSame(self::drawnTarget($opened), self::drawnTarget($withered), 'ownership is one token for the widget lifetime');
     }
@@ -699,8 +693,7 @@ final class DropdownMouseTest extends TestCase
     private static function listOf(array $options): Dropdown
     {
         return Dropdown::new(Select::new($options))
-            ->withFocus(true)
-            ->update(new KeyMsg(' '), self::anchor())->model;
+                        ->update(new KeyMsg(' '), self::anchor())->model;
     }
 
     private static function viewport(): Rect

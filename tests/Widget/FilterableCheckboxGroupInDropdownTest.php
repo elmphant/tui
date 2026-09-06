@@ -19,7 +19,7 @@ final class FilterableCheckboxGroupInDropdownTest extends TestCase
     {
         $dropdown = Dropdown::new(
             FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail']),
-        )->withFocus(true);
+        );
         $area = Rect::fromSize(40, 12);
 
         $ticked = $dropdown;

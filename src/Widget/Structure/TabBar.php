@@ -53,7 +53,6 @@ final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsC
         private int $selectedTab = 0,
         private ?string $hint = null,
         private ?string $shortHint = null,
-        private bool $focused = false,
         private ?Spacing $padding = null,
         private bool $emphasizedBorder = false,
         private ?Style $borderStyleOverride = null,
@@ -119,7 +118,7 @@ final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsC
      */
     public function withSelectedTab(int $selectedTab): self
     {
-        return $this->cloneWith(selectedTab: $selectedTab)->withFocus($this->focused);
+        return $this->cloneWith(selectedTab: $selectedTab);
     }
 
     /**
@@ -173,16 +172,6 @@ final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsC
             'previous tab' => Actions::TAB_PREVIOUS,
             'next tab' => Actions::TAB_NEXT,
         ]);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     /**
@@ -335,7 +324,7 @@ final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsC
 
         $newIndex = ($this->selectedTab + $direction + $count) % $count;
 
-        return new UpdateResult($this->cloneWith(selectedTab: $newIndex)->withFocus(true));
+        return new UpdateResult($this->cloneWith(selectedTab: $newIndex));
     }
 
     /**
@@ -349,7 +338,7 @@ final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsC
             return new UpdateResult($this);
         }
 
-        return new UpdateResult($this->cloneWith(selectedTab: $index)->withFocus($this->focused));
+        return new UpdateResult($this->cloneWith(selectedTab: $index));
     }
 
     private function tabStripLayout(Rect $area): TabStripLayout

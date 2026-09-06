@@ -69,7 +69,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         private int $scrollOffset = 0,
         private int $lineOffset = 0,
         private bool $followCursor = true,
-        private bool $focused = false,
         private bool $header = true,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -220,16 +219,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     public function scrollOffset(): int
     {
         return $this->scrollOffset;
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     public function sizing(): Sizing

@@ -31,8 +31,6 @@ use ReflectionProperty;
 
 final class TextInputTest extends TestCase
 {
-    use FocusableBehaviorTrait;
-
     /**
      * Left from a cursor past the end only counts down towards the text, so the
      * field reads as frozen for as many presses as the cursor was out by.
@@ -115,7 +113,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function typingCharacterAppendsToValue(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg('h'), $area);
         self::assertSame('h', $result->model->value());
@@ -125,7 +123,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function typingMultipleCharacters(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg('h'), $area);
@@ -137,7 +135,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function backspaceDeletesCharacterBeforeCursor(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg(Key::Backspace), $area);
         self::assertSame('hell', $result->model->value());
@@ -147,7 +145,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function backspaceAtStartDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg(Key::Backspace), $area);
         self::assertSame($input, $result->model);
@@ -156,7 +154,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteRemovesCharacterAtCursor(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
 
         // Move cursor to position 2 (after "he")
@@ -172,7 +170,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function leftArrowMovesCursorBack(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg(Key::Left), $area);
         self::assertSame(1, $result->model->cursor());
@@ -181,7 +179,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function leftArrowAtStartDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $area = Rect::fromSize(40, 1);
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
         $result = $moved->update(new KeyMsg(Key::Left), $area);
@@ -191,7 +189,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function rightArrowMovesCursorForward(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $area = Rect::fromSize(40, 1);
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
         $result = $moved->update(new KeyMsg(Key::Right), $area);
@@ -201,7 +199,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function rightArrowAtEndDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg(Key::Right), $area);
         self::assertSame($input, $result->model);
@@ -210,7 +208,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function homeMovesCursorToStart(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg(Key::Home), $area);
         self::assertSame(0, $result->model->cursor());
@@ -219,7 +217,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function endMovesCursorToEnd(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
         $result = $moved->update(new KeyMsg(Key::End), $area);
@@ -237,7 +235,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function charLimitPreventsExcessInput(): void
     {
-        $input = TextInput::new()->withFocus(true)->withCharLimit(3);
+        $input = TextInput::new()->withCharLimit(3);
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg('a'), $area);
@@ -250,7 +248,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function charLimitZeroMeansUnlimited(): void
     {
-        $input = TextInput::new()->withFocus(true)->withCharLimit(0);
+        $input = TextInput::new()->withCharLimit(0);
         $area = Rect::fromSize(40, 1);
 
         $text = str_repeat('x', 100);
@@ -271,7 +269,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function insertInMiddleOfText(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hllo');
+        $input = TextInput::new()->withValue('hllo');
         $area = Rect::fromSize(40, 1);
 
         // Move cursor to position 1
@@ -287,7 +285,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlBackspaceDeletesWordBackward(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello world');
+        $input = TextInput::new()->withValue('hello world');
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Backspace, ctrl: true), $area);
@@ -297,7 +295,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlDeleteDeletesWordForward(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello world');
+        $input = TextInput::new()->withValue('hello world');
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -308,7 +306,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickPositionsCursor(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello world');
+        $input = TextInput::new()->withValue('hello world');
         $area = new Rect(0, 0, 40, 1);
 
         $mouseMessage = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
@@ -319,7 +317,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickBeyondTextPositionsCursorAtEnd(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $area = new Rect(0, 0, 40, 1);
 
         $mouseMessage = new MouseMsg(20, 0, MouseAction::Press, MouseButton::Left);
@@ -330,7 +328,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickAtCurrentCursorPositionReturnsSameInstance(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello world');
+        $input = TextInput::new()->withValue('hello world');
         $area = new Rect(0, 0, 40, 1);
         self::assertSame(11, $input->cursor(), 'precondition: cursor is at end after withValue');
 
@@ -342,7 +340,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickOutsideAreaDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = new Rect(0, 0, 40, 1);
 
         $mouseMessage = new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left);
@@ -351,21 +349,9 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function mouseClickOnUnfocusedInputPositionsCursorWithoutSelfFocusing(): void
-    {
-        $input = TextInput::new()->withValue('hello');
-        $area = new Rect(0, 0, 40, 1);
-
-        $mouseMessage = new MouseMsg(3, 0, MouseAction::Press, MouseButton::Left);
-        $result = $input->update($mouseMessage, $area);
-        self::assertFalse($result->model->isFocused());
-        self::assertSame(3, $result->model->cursor());
-    }
-
-    #[Test]
     public function rendersValueWhenFocused(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -390,7 +376,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function rendersPlaceholderWhileFocusedAndEmpty(): void
     {
-        $input = TextInput::new('Type here...')->withFocus(true);
+        $input = TextInput::new('Type here...');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -402,7 +388,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function drawsABlockCaretByDefault(): void
     {
-        $input = TextInput::new()->withValue('hi')->withFocus(true);
+        $input = TextInput::new()->withValue('hi');
         $frame = new Frame(20, 1);
         $input->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused(Theme::dark()));
 
@@ -413,7 +399,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function theCaretShapeCanBeChosen(): void
     {
-        $input = TextInput::new()->withValue('hi')->withFocus(true)->withCursorShape(CursorShape::SteadyBar);
+        $input = TextInput::new()->withValue('hi')->withCursorShape(CursorShape::SteadyBar);
         $frame = new Frame(20, 1);
         $input->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused(Theme::dark()));
 
@@ -424,7 +410,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function rendersTheCursorOverThePlaceholderWhileFocused(): void
     {
-        $input = TextInput::new('Type here...')->withFocus(true);
+        $input = TextInput::new('Type here...');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, RenderContext::focused(Theme::dark()));
@@ -436,7 +422,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function typingReplacesThePlaceholder(): void
     {
-        $input = TextInput::new('Type here...')->withFocus(true)->withValue('x');
+        $input = TextInput::new('Type here...')->withValue('x');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -451,7 +437,7 @@ final class TextInputTest extends TestCase
         $input = TextInput::new()
             ->withEchoMode(EchoMode::Password)
             ->withValue('secret')
-            ->withFocus(true);
+        ;
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -473,7 +459,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function viewportScrollsWhenCursorExceedsWidth(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -494,7 +480,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function tickBeforeBlinkIntervalDoesNotToggle(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $area = Rect::fromSize(20, 1);
 
         $result = $input->update(new TickMsg(0.1), $area);
@@ -514,7 +500,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function styledAppliesBackgroundToFullWidth(): void
     {
-        $input = TextInput::new()->withStyled()->withValue('hi')->withFocus(true);
+        $input = TextInput::new()->withStyled()->withValue('hi');
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -547,7 +533,7 @@ final class TextInputTest extends TestCase
         // Underline OR background — combining both reads as a heavy block and
         // collides with selection and bar backgrounds.
         $theme = Theme::dark();
-        $input = TextInput::new()->withValue('hi')->withFocus(true);
+        $input = TextInput::new()->withValue('hi');
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $input->render($frame, $area, new RenderContext($theme));
@@ -561,7 +547,7 @@ final class TextInputTest extends TestCase
     {
         // Terminals draw the underline in the text colour, so the placeholder
         // and the empty tail must share one tone or the rule looks broken.
-        $input = TextInput::new('Search commands…')->withFocus(true);
+        $input = TextInput::new('Search commands…');
         $frame = new Frame(40, 1);
 
         $input->render($frame, new Rect(0, 0, 40, 1), new RenderContext(Theme::dark()));
@@ -577,7 +563,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function theUnderlineIsOneColourOnceTextIsTyped(): void
     {
-        $input = TextInput::new('Search commands…')->withValue('cache')->withFocus(true);
+        $input = TextInput::new('Search commands…')->withValue('cache');
         $frame = new Frame(40, 1);
 
         $input->render($frame, new Rect(0, 0, 40, 1), new RenderContext(Theme::dark()));
@@ -589,7 +575,7 @@ final class TextInputTest extends TestCase
     public function filledFieldsAreNotAlsoUnderlined(): void
     {
         $theme = Theme::dark();
-        $input = TextInput::new()->withValue('hi')->withFocus(true)->withDecoration(InputDecoration::Filled);
+        $input = TextInput::new()->withValue('hi')->withDecoration(InputDecoration::Filled);
         $frame = new Frame(10, 1);
         $input->render($frame, new Rect(0, 0, 10, 1), new RenderContext($theme));
 
@@ -603,7 +589,7 @@ final class TextInputTest extends TestCase
     {
         // The underline marks the field's extent like a form field, even where a
         // theme's input background matches other highlights.
-        $input = TextInput::new()->withValue('hi')->withFocus(true);
+        $input = TextInput::new()->withValue('hi');
         $frame = new Frame(10, 1);
         $input->render($frame, new Rect(0, 0, 10, 1), new RenderContext(Theme::dark()));
 
@@ -614,7 +600,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function underliningStopsAtTheFieldBounds(): void
     {
-        $input = TextInput::new()->withValue('hi')->withFocus(true);
+        $input = TextInput::new()->withValue('hi');
         $frame = new Frame(12, 1);
         $input->render($frame, new Rect(0, 0, 10, 1), new RenderContext(Theme::dark()));
 
@@ -624,7 +610,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function unstyledFieldsAreNotUnderlined(): void
     {
-        $input = TextInput::new()->withValue('hi')->withFocus(true)->withStyled(false);
+        $input = TextInput::new()->withValue('hi')->withStyled(false);
         $frame = new Frame(10, 1);
         $input->render($frame, new Rect(0, 0, 10, 1), new RenderContext(Theme::dark()));
 
@@ -634,7 +620,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function withoutStyledNoBackgroundIsPainted(): void
     {
-        $input = TextInput::new()->withValue('hi')->withFocus(true)->withStyled(false);
+        $input = TextInput::new()->withValue('hi')->withStyled(false);
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -647,7 +633,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function defaultScrollOffsetIsZero(): void
     {
-        $input = TextInput::new()->withValue('abc')->withFocus(true);
+        $input = TextInput::new()->withValue('abc');
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -660,7 +646,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function defaultCharLimitAllowsUnlimitedInput(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = Rect::fromSize(200, 1);
 
         $current = $input;
@@ -692,7 +678,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function cursorMovesRightByOneCharacterWithMultibyte(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{1F600}\u{1F601}");
+        $input = TextInput::new()->withValue("\u{1F600}\u{1F601}");
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -705,7 +691,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function cursorMovesLeftByOneCharacterWithMultibyte(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{1F600}\u{1F601}");
+        $input = TextInput::new()->withValue("\u{1F600}\u{1F601}");
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Left), $area)->model;
@@ -715,7 +701,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function rightArrowAtEndOfMultibyteStringDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{1F600}");
+        $input = TextInput::new()->withValue("\u{1F600}");
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Right), $area);
@@ -727,7 +713,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function homeKeyWhenAlreadyAtStartDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
         $result = $atHome->update(new KeyMsg(Key::Home), $area);
@@ -737,7 +723,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function endKeyWhenAlreadyAtEndDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg(Key::End), $area);
         self::assertSame($input, $result->model);
@@ -746,7 +732,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function endKeyMovesToEndWithMultibyteCharacters(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}\u{4E16}\u{754C}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}\u{4E16}\u{754C}");
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -759,7 +745,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function endKeyAtEndOfMultibyteStringReturnsSameInstance(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}");
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg(Key::End), $area);
         self::assertSame($input, $result->model);
@@ -770,7 +756,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function insertMultibyteCharacterAtBeginning(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('abc');
+        $input = TextInput::new()->withValue('abc');
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -783,7 +769,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function insertMultibyteCharacterInMiddle(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{754C}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{754C}");
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -798,7 +784,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function charLimitCountsMultibyteCharactersNotBytes(): void
     {
-        $input = TextInput::new()->withFocus(true)->withCharLimit(2);
+        $input = TextInput::new()->withCharLimit(2);
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg("\u{1F600}"), $area);
@@ -812,7 +798,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function keyMsgWithMultipleCodePointsIsIgnored(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg('ab'), $area);
         self::assertSame($input, $result->model);
@@ -821,7 +807,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlKeyIsNotInserted(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg('a', ctrl: true), $area);
         self::assertSame($input, $result->model);
@@ -830,7 +816,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function altKeyIsNotInserted(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = Rect::fromSize(40, 1);
         $result = $input->update(new KeyMsg('a', alt: true), $area);
         self::assertSame($input, $result->model);
@@ -841,7 +827,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function backspaceDeletesMultibyteCharacter(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{1F600}\u{1F601}\u{1F602}");
+        $input = TextInput::new()->withValue("\u{1F600}\u{1F601}\u{1F602}");
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Backspace), $area);
@@ -852,7 +838,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function backspaceInMiddleOfMultibyteString(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}\u{4E16}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}\u{4E16}");
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -870,7 +856,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteForwardRemovesMultibyteCharacter(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{1F600}\u{1F601}\u{1F602}");
+        $input = TextInput::new()->withValue("\u{1F600}\u{1F601}\u{1F602}");
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -882,7 +868,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteAtEndOfMultibyteStringDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{1F600}");
+        $input = TextInput::new()->withValue("\u{1F600}");
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Delete), $area);
@@ -892,7 +878,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteForwardInMiddleOfMultibyteString(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}\u{4E16}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}\u{4E16}");
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -909,7 +895,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlBackspaceDeletesWordWithMultibyteCharacters(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D} \u{4E16}\u{754C}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D} \u{4E16}\u{754C}");
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Backspace, ctrl: true), $area);
@@ -919,7 +905,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlBackspaceAtStartDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello world');
+        $input = TextInput::new()->withValue('hello world');
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -930,7 +916,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlBackspaceDeletesEntireValueWhenNoSpaces(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Backspace, ctrl: true), $area);
@@ -941,7 +927,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlBackspaceDeletesTrailingSpacesThenWord(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello   ');
+        $input = TextInput::new()->withValue('hello   ');
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Backspace, ctrl: true), $area);
@@ -954,7 +940,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlDeleteDeletesWordForwardWithMultibyte(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D} \u{4E16}\u{754C}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D} \u{4E16}\u{754C}");
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -966,7 +952,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlDeleteAtEndDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), $area);
@@ -976,7 +962,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlDeleteDeletesEntireValueWhenNoSpaces(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -988,7 +974,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function ctrlDeleteDeletesLeadingSpacesAndWord(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('   hello world');
+        $input = TextInput::new()->withValue('   hello world');
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1002,7 +988,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickPositionsCursorWithMultibyteText(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}\u{4E16}\u{754C}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}\u{4E16}\u{754C}");
         $area = new Rect(0, 0, 40, 1);
 
         // Display: 你(col 0-1) 好(col 2-3) 世(col 4-5) 界(col 6-7)
@@ -1015,7 +1001,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickClampsToTextLength(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{1F600}");
+        $input = TextInput::new()->withValue("\u{1F600}");
         $area = new Rect(0, 0, 40, 1);
 
         $mouseMessage = new MouseMsg(10, 0, MouseAction::Press, MouseButton::Left);
@@ -1026,7 +1012,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickAtSamePositionDoesNothing(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello');
+        $input = TextInput::new()->withValue('hello');
         $area = new Rect(0, 0, 40, 1);
 
         $mouseMessage = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
@@ -1037,7 +1023,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickWithOffsetArea(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hello world');
+        $input = TextInput::new()->withValue('hello world');
         $area = new Rect(5, 2, 40, 1);
 
         $mouseMessage = new MouseMsg(8, 2, MouseAction::Press, MouseButton::Left);
@@ -1050,7 +1036,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderMultibyteTextCorrectly(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}");
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1098,7 +1084,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderCursorPositionAccountsForScrollOffset(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -1129,7 +1115,7 @@ final class TextInputTest extends TestCase
         $input = TextInput::new()
             ->withEchoMode(EchoMode::Password)
             ->withValue("\u{4F60}\u{597D}\u{4E16}")
-            ->withFocus(true);
+        ;
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1145,7 +1131,7 @@ final class TextInputTest extends TestCase
         $input = TextInput::new()
             ->withEchoMode(EchoMode::None)
             ->withValue('secret')
-            ->withFocus(true);
+        ;
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, RenderContext::focused(Theme::dark()));
@@ -1161,7 +1147,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderAtNonZeroAreaPosition(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $frame = new Frame(20, 5);
         $area = new Rect(3, 2, 10, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1185,7 +1171,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderFocusedUsesBaseStyle(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('ab');
+        $input = TextInput::new()->withValue('ab');
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
@@ -1211,7 +1197,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function viewportScrollsLeftWhenCursorMovesBeforeOffset(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -1231,7 +1217,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function viewportScrollsRightAsTypingExceedsWidth(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 3, 1);
 
         $current = $input;
@@ -1249,7 +1235,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function viewportWithZeroAvailableWidthReturnsZero(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('abc');
+        $input = TextInput::new()->withValue('abc');
         $frame = new Frame(1, 1);
         $area = new Rect(0, 0, 0, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1259,7 +1245,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function viewportScrollsCorrectlyWithMultibyteCharacters(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 3, 1);
 
         $current = $input;
@@ -1281,7 +1267,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function scrollOffsetUpdatesOnCursorLeftPastViewport(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -1306,7 +1292,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function tickJustBelowBlinkIntervalDoesNotToggle(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $area = Rect::fromSize(20, 1);
 
         $result = $input->update(new TickMsg(0.529), $area);
@@ -1318,7 +1304,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function insertCharacterConcatenatesCorrectly(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('ac');
+        $input = TextInput::new()->withValue('ac');
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1331,7 +1317,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteCharBackwardConcatenatesCorrectly(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('abc');
+        $input = TextInput::new()->withValue('abc');
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1347,7 +1333,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteCharForwardConcatenatesCorrectly(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('abc');
+        $input = TextInput::new()->withValue('abc');
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1362,7 +1348,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteWordBackwardConcatenatesCorrectly(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('foo bar baz');
+        $input = TextInput::new()->withValue('foo bar baz');
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1379,7 +1365,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteWordForwardConcatenatesCorrectly(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('foo bar baz');
+        $input = TextInput::new()->withValue('foo bar baz');
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1396,7 +1382,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function blinkTimeResetsOnKeypress(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('hi');
+        $input = TextInput::new()->withValue('hi');
         $area = Rect::fromSize(20, 1);
 
         $afterType = $input->update(new KeyMsg('x'), $area)->model;
@@ -1410,7 +1396,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function scrollOffsetNeverGoesNegative(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('a');
+        $input = TextInput::new()->withValue('a');
         $area = new Rect(0, 0, 10, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1423,7 +1409,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function viewportScrollsExactlyOneCharacterPastWidth(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 3, 1);
 
         $current = $input;
@@ -1443,7 +1429,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderVisibleTextSlicedByScrollOffset(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 4, 1);
 
         $current = $input;
@@ -1468,7 +1454,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function cursorNotRenderedWhenScreenPositionBeforeAreaStart(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(5, 0, 5, 1);
 
         $current = $input;
@@ -1486,7 +1472,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function mouseClickWithScrollOffsetAccountsForScroll(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -1503,7 +1489,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function scrollOffsetFormulaCursorMinusWidthPlusOne(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 4, 1);
 
         $current = $input;
@@ -1522,7 +1508,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function cursorScreenPositionIsAreaXPlusCursorMinusScrollOffset(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(2, 0, 5, 1);
 
         $current = $input;
@@ -1540,7 +1526,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteCharForwardWithMultibyteConcatenatesBeforeAndAfterCursorPlusOne(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}\u{4E16}\u{754C}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}\u{4E16}\u{754C}");
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1555,7 +1541,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function insertCharacterAtBeginningWithMultibyteSplitsCorrectly(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{597D}\u{4E16}");
+        $input = TextInput::new()->withValue("\u{597D}\u{4E16}");
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1569,7 +1555,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteBackwardWithMultibyteSplitsCorrectly(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}\u{4E16}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}\u{4E16}");
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1583,7 +1569,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteWordBackwardWithMultibyteFindsMbStrrpos(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D} \u{4E16}\u{754C} \u{1F600}");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D} \u{4E16}\u{754C} \u{1F600}");
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg(Key::Backspace, ctrl: true), $area);
@@ -1594,7 +1580,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteWordForwardWithMultibyteFindsMbStrpos(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60} \u{597D} \u{4E16}");
+        $input = TextInput::new()->withValue("\u{4F60} \u{597D} \u{4E16}");
         $area = Rect::fromSize(40, 1);
 
         $atHome = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1606,7 +1592,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteWordForwardDeleteCountUsesCorrectMbStringLengths(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue("\u{4F60}\u{597D}  \u{4E16}\u{754C} end");
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}  \u{4E16}\u{754C} end");
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1621,7 +1607,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteWordBackwardNewBeforeUsesCorrectMbSubstr(): void
     {
-        $input = TextInput::new()->withFocus(true)->withValue('ab cd ef');
+        $input = TextInput::new()->withValue('ab cd ef');
         $area = Rect::fromSize(40, 1);
 
         $moved = $input->update(new KeyMsg(Key::Home), $area)->model;
@@ -1638,7 +1624,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderTextStyleHasInputBgWhenStyled(): void
     {
-        $input = TextInput::new()->withStyled()->withValue('ab')->withFocus(true);
+        $input = TextInput::new()->withStyled()->withValue('ab');
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
@@ -1663,7 +1649,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderStyledPlaceholderKeepsTheInputBackgroundWhileFocused(): void
     {
-        $input = TextInput::new('Hello')->withStyled()->withFocus(true);
+        $input = TextInput::new('Hello')->withStyled();
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
@@ -1691,7 +1677,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function computeViewportCursorLessThanOffset(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -1712,7 +1698,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function computeViewportCursorExactlyAtOffsetPlusWidth(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -1732,7 +1718,6 @@ final class TextInputTest extends TestCase
         $input = new TextInput(
             value: "\u{1F600}\u{1F601}",
             cursor: 2,
-            focused: true,
             echoMode: EchoMode::Password,
         );
         $frame = new Frame(10, 1);
@@ -1750,7 +1735,6 @@ final class TextInputTest extends TestCase
         $input = new TextInput(
             value: '',
             placeholder: 'Enter...',
-            focused: false,
         );
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -1769,7 +1753,6 @@ final class TextInputTest extends TestCase
         $input = new TextInput(
             value: $multibyteValue,
             cursor: 0,
-            focused: true,
         );
         $area = Rect::fromSize(20, 1);
 
@@ -1799,7 +1782,6 @@ final class TextInputTest extends TestCase
         $input = new TextInput(
             value: "\u{00E9}\u{00F1} world",
             cursor: 0,
-            focused: true,
         );
         $area = Rect::fromSize(20, 1);
 
@@ -1813,7 +1795,6 @@ final class TextInputTest extends TestCase
         $input = new TextInput(
             value: "hi \u{00E9}\u{00F1}\u{00FC} end",
             cursor: 3,
-            focused: true,
         );
         $area = Rect::fromSize(20, 1);
 
@@ -1830,7 +1811,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function defaultCharLimitIsZeroMeansUnlimited(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = Rect::fromSize(40, 1);
         $current = $input;
 
@@ -1841,7 +1822,7 @@ final class TextInputTest extends TestCase
         self::assertSame(20, mb_strlen($current->value()));
 
         // Now with charLimit = 1, only 1 char allowed
-        $limited = TextInput::new()->withCharLimit(1)->withFocus(true);
+        $limited = TextInput::new()->withCharLimit(1);
         $limited = $limited->update(new KeyMsg('a'), $area)->model;
         self::assertSame('a', $limited->value());
         $limited = $limited->update(new KeyMsg('b'), $area)->model;
@@ -1858,7 +1839,6 @@ final class TextInputTest extends TestCase
         $input = new TextInput(
             value: '',
             placeholder: "\u{00FC}\u{00E9}\u{00F1}\u{00E4}",
-            focused: false,
         );
         $frame = new Frame(3, 1);
         $area = new Rect(0, 0, 3, 1);
@@ -1881,7 +1861,6 @@ final class TextInputTest extends TestCase
         $input = new TextInput(
             value: '',
             placeholder: 'Hello',
-            focused: false,
             decoration: InputDecoration::None,
         );
         $frame = new Frame(10, 1);
@@ -1913,7 +1892,6 @@ final class TextInputTest extends TestCase
         $input = new TextInput(
             value: "\u{00E9}",
             cursor: 1,
-            focused: true,
         );
         $area = Rect::fromSize(20, 1);
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), $area);
@@ -1924,7 +1902,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function viewportScrollWhenCursorEqualsOffset(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -1948,7 +1926,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderWideCharacterCursorPosition(): void
     {
-        $input = TextInput::new()->withValue("\u{4F60}\u{597D}")->withFocus(true);
+        $input = TextInput::new()->withValue("\u{4F60}\u{597D}");
         $frame = new Frame(10, 1);
         $input->render($frame, Rect::fromSize(10, 1), RenderContext::focused(Theme::dark()));
 
@@ -1959,7 +1937,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function scrolledViewportShowsCorrectSubstring(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -1979,7 +1957,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function scrolledViewportTruncatesAtExactWidth(): void
     {
-        $input = TextInput::new()->withFocus(true);
+        $input = TextInput::new();
         $area = new Rect(0, 0, 5, 1);
 
         $current = $input;
@@ -2004,7 +1982,7 @@ final class TextInputTest extends TestCase
     {
         $input = TextInput::new()
             ->withValue("ab\u{4E16}\u{754C}cd")
-            ->withFocus(true);
+        ;
         $area = new Rect(0, 0, 4, 1);
 
         $current = $input;
@@ -2023,14 +2001,14 @@ final class TextInputTest extends TestCase
     public function backspaceRemovesFullGrapheme(): void
     {
         $input = TextInput::new()->withValue("cafe\u{0301}");
-        $result = $input->withFocus(true)->update(new KeyMsg(key: Key::Backspace), Rect::fromSize(20, 1));
+        $result = $input->update(new KeyMsg(key: Key::Backspace), Rect::fromSize(20, 1));
         self::assertSame('caf', $result->model->value());
     }
 
     #[Test]
     public function renderSetsCursorPositionOnBuffer(): void
     {
-        $input = TextInput::new()->withValue('Hello')->withFocus(true);
+        $input = TextInput::new()->withValue('Hello');
         $frame = new Frame(20, 1);
         $input->render($frame, Rect::fromSize(20, 1), RenderContext::focused(Theme::dark()));
         self::assertNotNull($frame->cursorPosition);
@@ -2043,8 +2021,7 @@ final class TextInputTest extends TestCase
     {
         $area = Rect::fromSize(40, 1);
         $input = TextInput::new()
-            ->withFocus(true)
-            ->withValue("cafe\u{0301} bar")
+                        ->withValue("cafe\u{0301} bar")
             ->withCursor(8);
 
         $updated = $input->update(new KeyMsg(Key::Backspace, ctrl: true), $area)->model;
@@ -2058,8 +2035,7 @@ final class TextInputTest extends TestCase
     {
         $area = Rect::fromSize(40, 1);
         $input = TextInput::new()
-            ->withFocus(true)
-            ->withValue("a\u{0301}bc def")
+                        ->withValue("a\u{0301}bc def")
             ->withCursor(0);
 
         $updated = $input->update(new KeyMsg(Key::Delete, ctrl: true), $area)->model;
@@ -2092,8 +2068,7 @@ final class TextInputTest extends TestCase
     ): void {
         $area = Rect::fromSize(40, 1);
         $widget = TextInput::new()
-            ->withFocus(true)
-            ->withValue($initialValue)
+                        ->withValue($initialValue)
             ->withCursor($startingCursor);
 
         $afterDefault = $widget->update($defaultKey, $area)->model;
@@ -2112,7 +2087,7 @@ final class TextInputTest extends TestCase
     public function printableCharactersStillInsertAfterMigration(): void
     {
         $area = Rect::fromSize(40, 1);
-        $widget = TextInput::new()->withFocus(true);
+        $widget = TextInput::new();
 
         $afterA = $widget->update(new KeyMsg('a'), $area)->model;
         self::assertSame('a', $afterA->value());
@@ -2128,8 +2103,7 @@ final class TextInputTest extends TestCase
     public function homeAtCursorZeroIsANoOpAndKeepsTheViewport(): void
     {
         $input = TextInput::new()
-            ->withFocus(true)
-            ->withValue('abcdefghij')
+                        ->withValue('abcdefghij')
             ->withCursor(0)
             ->withScrollOffset(5);
         $result = $input->update(new KeyMsg(Key::Home), new Rect(0, 0, 5, 1))->model;
@@ -2141,8 +2115,7 @@ final class TextInputTest extends TestCase
     public function endAtTextEndIsANoOpAndKeepsTheViewport(): void
     {
         $input = TextInput::new()
-            ->withFocus(true)
-            ->withValue('abcdefghij')
+                        ->withValue('abcdefghij')
             ->withScrollOffset(0);
         $result = $input->update(new KeyMsg(Key::End), new Rect(0, 0, 5, 1))->model;
 
@@ -2153,8 +2126,7 @@ final class TextInputTest extends TestCase
     public function deleteForwardAtTextEndIsANoOpAndKeepsTheViewport(): void
     {
         $input = TextInput::new()
-            ->withFocus(true)
-            ->withValue('abcdefghij')
+                        ->withValue('abcdefghij')
             ->withScrollOffset(0);
         $result = $input->update(new KeyMsg(Key::Delete), new Rect(0, 0, 5, 1))->model;
 
@@ -2165,8 +2137,7 @@ final class TextInputTest extends TestCase
     public function deleteWordForwardAtTextEndIsANoOpAndKeepsTheViewport(): void
     {
         $input = TextInput::new()
-            ->withFocus(true)
-            ->withValue('abcdefghij')
+                        ->withValue('abcdefghij')
             ->withScrollOffset(0);
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), new Rect(0, 0, 5, 1))->model;
 
@@ -2177,8 +2148,7 @@ final class TextInputTest extends TestCase
     public function deleteWordBackwardAtCursorZeroIsANoOpAndKeepsTheViewport(): void
     {
         $input = TextInput::new()
-            ->withFocus(true)
-            ->withValue('abcdefghij')
+                        ->withValue('abcdefghij')
             ->withCursor(0)
             ->withScrollOffset(5);
         $result = $input->update(new KeyMsg(Key::Backspace, ctrl: true), new Rect(0, 0, 5, 1))->model;
@@ -2189,7 +2159,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function controlUEmptiesTheFieldTheWayItDoesAtAnyPrompt(): void
     {
-        $filled = TextInput::new()->withFocus(true)->withValue('one two')->withCursor(3);
+        $filled = TextInput::new()->withValue('one two')->withCursor(3);
 
         $cleared = $filled->update(new KeyMsg('u', ctrl: true), Rect::fromSize(40, 1))->model;
 
@@ -2207,12 +2177,12 @@ final class TextInputTest extends TestCase
     public function pastedTextIsInsertedWhereTheCursorIs(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $field = TextInput::new()->withValue('ab')->withFocus(true);
+        $field = TextInput::new()->withValue('ab');
 
         self::assertSame('abXY', $field->update(new PasteMsg('XY'), $area)->model->value());
         self::assertSame(
             'one two three',
-            TextInput::new()->withFocus(true)->update(new PasteMsg("one\r\ntwo\tthree"), $area)->model->value(),
+            TextInput::new()->update(new PasteMsg("one\r\ntwo\tthree"), $area)->model->value(),
             'a line break from the clipboard is a space',
         );
         self::assertSame(
@@ -2220,11 +2190,6 @@ final class TextInputTest extends TestCase
             $field->withCharLimit(3)->update(new PasteMsg('XYZ'), $area)->model->value(),
             'a limit typing cannot pass is not one a paste walks through',
         );
-    }
-
-    protected function createFocusable(): Focusable
-    {
-        return TextInput::new();
     }
 
     private function scrollOffsetOf(TextInput $input): int

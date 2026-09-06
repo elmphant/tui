@@ -74,7 +74,7 @@ final class PanelRenderingTest extends TestCase
     }
 
     #[Test]
-    public function childPositionsPreservedAfterFocusToggle(): void
+    public function childPositionsDoNotDependOnWhoHoldsTheKeyboard(): void
     {
         $panel = Panel::new('Test')
             ->add(Text::new('Header'))
@@ -86,127 +86,19 @@ final class PanelRenderingTest extends TestCase
             ->add(Text::new('Footer'));
 
         $area = new Rect(0, 0, 30, 15);
+        $theme = Theme::dark();
 
-        $focusedPanel = $panel->withFocus(true);
         $focusedBuffer = new Frame(30, 15);
-        $context = new RenderContext(Theme::dark());
-        $focusedPanel->render($focusedBuffer, $area, $context);
+        $panel->render($focusedBuffer, $area, RenderContext::focused($theme));
 
-        $unfocusedPanel = $panel->withFocus(false);
         $unfocusedBuffer = new Frame(30, 15);
-        $unfocusedPanel->render($unfocusedBuffer, $area, $context);
+        $panel->render($unfocusedBuffer, $area, RenderContext::unfocused($theme));
 
-        // Content area: inner(1) = Rect(1, 1, 28, 13)
-        // Row 1: "Header"
-        // Row 2: Spacer (empty)
-        // Row 3: Select option 0 ("Alpha")
-        // Row 4: Select option 1 ("Beta")
-        // Row 5: Select option 2 ("Gamma")
-        // Row 6: Spacer
-        // Row 7: Separator (─ characters)
-        // Row 8: Spacer
-        // Row 9: "Footer"
-
-        self::assertSame('H', $focusedBuffer->characters[1 * 30 + 1], 'Focused: Header at row 1');
-        self::assertSame('H', $unfocusedBuffer->characters[1 * 30 + 1], 'Unfocused: Header at row 1');
-
-        // Select options should be at rows 3-5 in both states
-        // Option text "Alpha" starts at column 1 (content area x, no prefix)
-        self::assertSame('A', $focusedBuffer->characters[3 * 30 + 1], 'Focused: Alpha at row 3');
-        self::assertSame('A', $unfocusedBuffer->characters[3 * 30 + 1], 'Unfocused: Alpha at row 3');
-
-        // Separator at row 7 should be ─ characters
-        self::assertSame('─', $focusedBuffer->characters[7 * 30 + 1], 'Focused: Separator at row 7');
-        self::assertSame('─', $unfocusedBuffer->characters[7 * 30 + 1], 'Unfocused: Separator at row 7');
-
-        // Footer at row 9
-        self::assertSame('F', $focusedBuffer->characters[9 * 30 + 1], 'Focused: Footer at row 9');
-        self::assertSame('F', $unfocusedBuffer->characters[9 * 30 + 1], 'Unfocused: Footer at row 9');
-    }
-
-    #[Test]
-    public function twoPanelFocusSwitchPreservesLayout(): void
-    {
-        $left = Panel::new('Settings')
-            ->add(Text::new('Theme:'))
-            ->add(Select::new(['Dark', 'Light']))
-            ->add(Separator::new())
-            ->add(Text::new('Size:'))
-            ->add(Select::new(['Small', 'Medium', 'Large']))
-            ->withFocus(true);
-
-        $right = Panel::new('Status')
-            ->add(Text::new('Info line 1'))
-            ->add(Text::new('Info line 2'))
-            ->withFocus(false);
-
-        $leftRect = new Rect(0, 0, 30, 15);
-        $rightRect = new Rect(30, 0, 30, 15);
-
-        $context = new RenderContext(Theme::dark());
-
-        // Render initial state
-        $bufferBefore = new Frame(60, 15);
-        $left->render($bufferBefore, $leftRect, $context);
-        $right->render($bufferBefore, $rightRect, $context);
-
-        $newLeft = $left->withFocus(false);
-        $newRight = $right->withFocus(true);
-
-        // Render after Tab
-        $bufferAfter = new Frame(60, 15);
-        $newLeft->render($bufferAfter, $leftRect, $context);
-        $newRight->render($bufferAfter, $rightRect, $context);
-
-        // Left panel content should still be at correct positions
-        // Content area: Rect(1, 1, 28, 13)
-        // Row 1: "Theme:"
-        self::assertSame('T', $bufferAfter->characters[1 * 60 + 1], 'Left: Theme at row 1 after Tab');
-        // Row 2-3: Select (Dark, Light) — option text starts at column 1 (no prefix)
-        self::assertSame('D', $bufferAfter->characters[2 * 60 + 1], 'Left: Dark at row 2 after Tab');
-        self::assertSame('L', $bufferAfter->characters[3 * 60 + 1], 'Left: Light at row 3 after Tab');
-        // Row 4: Separator
-        self::assertSame('─', $bufferAfter->characters[4 * 60 + 1], 'Left: Separator at row 4 after Tab');
-        // Row 5: "Size:"
-        self::assertSame('S', $bufferAfter->characters[5 * 60 + 1], 'Left: Size at row 5 after Tab');
-        // Row 6-8: Select (Small, Medium, Large) — option text at col 1 (no prefix)
-        self::assertSame('S', $bufferAfter->characters[6 * 60 + 1], 'Left: Small at row 6 after Tab');
-        self::assertSame('M', $bufferAfter->characters[7 * 60 + 1], 'Left: Medium at row 7 after Tab');
-        self::assertSame('L', $bufferAfter->characters[8 * 60 + 1], 'Left: Large at row 8 after Tab');
-
-        // Right panel content should be at correct positions
-        // Content area: Rect(31, 1, 28, 13)
-        self::assertSame('I', $bufferAfter->characters[1 * 60 + 31], 'Right: Info line 1 at row 1 after Tab');
-        self::assertSame('I', $bufferAfter->characters[2 * 60 + 31], 'Right: Info line 2 at row 2 after Tab');
-    }
-
-    #[Test]
-    public function repeatedFocusTogglingPreservesChildren(): void
-    {
-        $panel = Panel::new('Test')
-            ->add(Text::new('Line A'))
-            ->add(Select::new(['X', 'Y', 'Z']))
-            ->add(Text::new('Line B'));
-
-        $area = new Rect(0, 0, 30, 12);
-
-        // Toggle focus several times
-        $current = $panel->withFocus(true);
-        for ($iteration = 0; $iteration < 5; ++$iteration) {
-            $current = $current->withFocus(false);
-            $current = $current->withFocus(true);
-        }
-
-        $frame = new Frame(30, 12);
-        $current->render($frame, $area, new RenderContext(Theme::dark()));
-
-        // Content should still be intact
-        self::assertSame('L', $frame->characters[1 * 30 + 1], 'Line A at row 1');
-        // Select starts at row 2 with cursor on first option (no prefix)
-        self::assertSame('X', $frame->characters[2 * 30 + 1], 'X option at row 2');
-        self::assertSame('Y', $frame->characters[3 * 30 + 1], 'Y option at row 3');
-        self::assertSame('Z', $frame->characters[4 * 30 + 1], 'Z option at row 4');
-        self::assertSame('L', $frame->characters[5 * 30 + 1], 'Line B at row 5');
+        self::assertSame('H', $focusedBuffer->characters[1 * 30 + 1], 'Header at row 1');
+        self::assertSame('A', $focusedBuffer->characters[3 * 30 + 1], 'Alpha at row 3');
+        self::assertSame('─', $focusedBuffer->characters[7 * 30 + 1], 'Separator at row 7');
+        self::assertSame('F', $focusedBuffer->characters[9 * 30 + 1], 'Footer at row 9');
+        self::assertSame($focusedBuffer->characters, $unfocusedBuffer->characters, 'Focus decides colour, never placement');
     }
 
     #[Test]
@@ -216,7 +108,6 @@ final class PanelRenderingTest extends TestCase
         for ($index = 0; $index < 20; ++$index) {
             $panel = $panel->add(Text::new("Line {$index}"));
         }
-        $panel = $panel->withFocus(true);
 
         $context = new RenderContext(Theme::dark());
         $area = new Rect(0, 0, 30, 10);
@@ -238,8 +129,7 @@ final class PanelRenderingTest extends TestCase
             ->add(Text::new('Line 1'))
             ->add(Text::new('Line 2'))
             ->add(Select::new(['A', 'B', 'C', 'D', 'E']))
-            ->add(Text::new('After'))
-            ->withFocus(true);
+            ->add(Text::new('After'));
 
         // Panel height 10 -> content area height 8 (rows 1-8), border at row 9
         $context = new RenderContext(Theme::dark());
@@ -262,8 +152,7 @@ final class PanelRenderingTest extends TestCase
         // Row 0 (top border) must NOT be overwritten by Select content
         $panel = Panel::new('Test')
             ->add(Text::new('Header'))
-            ->add(Select::new(['A', 'B', 'C', 'D', 'E']))
-            ->withFocus(true);
+            ->add(Select::new(['A', 'B', 'C', 'D', 'E']));
 
         $context = new RenderContext(Theme::dark());
         $area = new Rect(0, 0, 30, 7);
@@ -285,8 +174,7 @@ final class PanelRenderingTest extends TestCase
             ->add(Text::new('Header'))
             ->add(Select::new(['A', 'B', 'C', 'D', 'E']))
             ->add(Separator::new())
-            ->add(Select::new(['X', 'Y', 'Z']))
-            ->withFocus(true);
+            ->add(Select::new(['X', 'Y', 'Z']));
 
         $area = new Rect(0, 0, 30, 15);
 
@@ -294,10 +182,8 @@ final class PanelRenderingTest extends TestCase
         $buffer1 = new Frame(30, 15);
         $panel->render($buffer1, $area, RenderContext::focused(Theme::dark()));
 
-        // Toggle to unfocused
-        $unfocused = $panel->withFocus(false);
         $buffer2 = new Frame(30, 15);
-        $unfocused->render($buffer2, $area, RenderContext::unfocused(Theme::dark()));
+        $panel->render($buffer2, $area, RenderContext::unfocused(Theme::dark()));
 
         // Focus keeps the rounded shape and marks itself in bold
         self::assertSame('╭', $buffer1->characters[0], 'focused: top-left corner');
@@ -328,8 +214,7 @@ final class PanelRenderingTest extends TestCase
         $panel = Panel::new('Test')
             ->add(Text::new('Top'))
             ->add(Select::new(['A', 'B', 'C']))
-            ->add(Text::new('Bottom'))
-            ->withFocus(true);
+            ->add(Text::new('Bottom'));
 
         $area = new Rect(0, 0, 30, 5);
 

@@ -42,8 +42,7 @@ final class DropdownTest extends TestCase
     public function anOpenDropdownNamesTheKeyThatShutsIt(): void
     {
         $open = Dropdown::new(Select::new(['a']))
-            ->withFocus(true)
-            ->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 1))
+                        ->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 1))
             ->model;
 
         self::assertInstanceOf(Dropdown::class, $open);
@@ -103,19 +102,9 @@ final class DropdownTest extends TestCase
     public function enterOpensAClosedDropdown(): void
     {
         $opened = Dropdown::new(Select::new(['json', 'yaml']))
-            ->withFocus(true)
-            ->update(new KeyMsg(Key::Enter), self::anchor())->model;
+                        ->update(new KeyMsg(Key::Enter), self::anchor())->model;
 
         self::assertTrue($opened->isOpen());
-    }
-
-    #[Test]
-    public function openingHandsTheContentTheKeyboard(): void
-    {
-        $closed = Dropdown::new(Select::new(['json', 'yaml']));
-
-        self::assertFalse($closed->content()->isFocused(), 'content is built unfocused, as every widget is');
-        self::assertTrue(self::opened($closed)->content()->isFocused(), 'or it would never answer a key');
     }
 
     #[Test]
@@ -184,24 +173,9 @@ final class DropdownTest extends TestCase
     public function rightNoLongerOpensTheDropdown(): void
     {
         $answered = Dropdown::new(Select::new(['json', 'yaml']))
-            ->withFocus(true)
-            ->update(new KeyMsg(Key::Right), self::anchor());
+                        ->update(new KeyMsg(Key::Right), self::anchor());
 
         self::assertFalse($answered->model->isOpen());
-    }
-
-    #[Test]
-    public function isFocusedDefaultsToFalse(): void
-    {
-        self::assertFalse(Dropdown::new(Select::new(['json']))->isFocused());
-    }
-
-    #[Test]
-    public function losingFocusClosesAnOpenDropdown(): void
-    {
-        $opened = self::opened(Dropdown::new(Select::new(['json', 'yaml'])));
-
-        self::assertFalse($opened->withFocus(false)->isOpen());
     }
 
     #[Test]
@@ -237,7 +211,7 @@ final class DropdownTest extends TestCase
     #[Test]
     public function aFocusedEmptyRowIsMarkedLikeAnythingElseUnderTheCursor(): void
     {
-        $dropdown = Dropdown::new(Select::new(['json']))->withFocus(true);
+        $dropdown = Dropdown::new(Select::new(['json']));
         $theme = Theme::dark();
 
         self::assertSame(
@@ -250,7 +224,7 @@ final class DropdownTest extends TestCase
     #[Test]
     public function aFocusedRowHoldingAValueIsMarkedTheSameAndNamesItInTheCaption(): void
     {
-        $dropdown = Dropdown::new(Select::new(['json'])->activated('json'))->withFocus(true);
+        $dropdown = Dropdown::new(Select::new(['json'])->activated('json'));
         $theme = Theme::dark();
 
         self::assertSame(
@@ -407,7 +381,7 @@ final class DropdownTest extends TestCase
 
     private static function opened(Dropdown $dropdown): Dropdown
     {
-        return $dropdown->withFocus(true)->update(new KeyMsg(' '), self::anchor())->model;
+        return $dropdown->update(new KeyMsg(' '), self::anchor())->model;
     }
 }
 

@@ -119,28 +119,6 @@ final class ModalTest extends TestCase
     }
 
     #[Test]
-    public function withFocusTogglesFocusedState(): void
-    {
-        $modal = Modal::new('Title', Text::new('Content'));
-
-        self::assertFalse($modal->isFocused(), 'Modal must default to not focused');
-        self::assertTrue($modal->withFocus(true)->isFocused());
-        self::assertFalse($modal->withFocus(true)->withFocus(false)->isFocused());
-    }
-
-    #[Test]
-    public function focusReachesTheContentBeforeAnyMessageArrives(): void
-    {
-        $panel = Panel::new('inner')->add(Text::new('row'));
-
-        $modal = Modal::new('Title', $panel)->withFocus(true);
-
-        $content = $modal->placedChildren(Rect::fromSize(80, 24))[0][0];
-        self::assertInstanceOf(Focusable::class, $content);
-        self::assertTrue($content->isFocused(), 'the content is focused as soon as the modal is, so the very first frame draws it focused');
-    }
-
-    #[Test]
     public function typedTitleAndContentBuildersReplaceValuesAndElideNoOps(): void
     {
         $replacementContent = Text::new('After');
@@ -1329,36 +1307,6 @@ final class ModalTest extends TestCase
 
         $result = $modal->withGlobalKeybindings($vimBindings);
         self::assertSame($modal, $result, 'withGlobalKeybindings must return same instance when content already has identical keybindings');
-    }
-
-    #[Test]
-    public function forwardsFocusToFocusableContentBeforeDelegating(): void
-    {
-        $panel = Panel::new('inner')
-            ->add(Text::new('row 1'))
-            ->add(Text::new('row 2'));
-        self::assertFalse($panel->isFocused(), 'precondition: content panel starts unfocused');
-
-        $modal = Modal::new('Title', $panel)->withFocus(true);
-
-        $result = $modal->update(new KeyMsg('x'), Rect::fromSize(80, 24));
-
-        $newContent = (new ReflectionObject($result->model))->getProperty('content')->getValue($result->model);
-        self::assertTrue($newContent->isFocused(), 'Modal must forward its focused state to a Focusable content widget so the content handles keyboard input');
-    }
-
-    #[Test]
-    public function unfocusesFocusableContentWhenModalLosesFocus(): void
-    {
-        $panel = Panel::new('inner')
-            ->add(Text::new('row'))
-            ->withFocus(true);
-
-        $modal = Modal::new('Title', $panel)->withFocus(false);
-
-        $content = $modal->placedChildren(Rect::fromSize(80, 24))[0][0];
-        self::assertInstanceOf(Focusable::class, $content);
-        self::assertFalse($content->isFocused(), 'a modal losing focus blurs its content');
     }
 
     #[Test]

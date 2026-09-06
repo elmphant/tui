@@ -731,8 +731,7 @@ $left = Panel::new('Preferences')
     ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Nord'], 'Theme'))
     ->add(Separator::new())
     ->add(Text::new('Font'))
-    ->add(Select::new(['JetBrains Mono', 'Fira Code', 'Cascadia']))
-    ->withFocus(true);
+    ->add(Select::new(['JetBrains Mono', 'Fira Code', 'Cascadia']));
 
 $right = Panel::new('System')
     ->add(Text::new('CPU'))

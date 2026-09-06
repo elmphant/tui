@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Bar\Header;
 use Elmphant\Tui\Widget\Field\TextInput;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,7 +19,8 @@ final class BarSlotRoutesInputTest extends TestCase
     {
         $header = Header::new()
             ->withLeft(TextInput::new())
-            ->withRight(TextInput::new()->withFocus(true));
+            ->withRight(TextInput::new())
+            ->withMarkedSlot(Alignment::Right);
 
         $typed = $header->update(new KeyMsg('x'), Rect::fromSize(60, 1))->model;
 

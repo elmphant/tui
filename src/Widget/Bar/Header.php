@@ -33,6 +33,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         private ?Widget $leftSlot = null,
         private ?Widget $centerSlot = null,
         private ?Widget $rightSlot = null,
+        private ?Alignment $markedSlot = null,
         private ?Style $style = null,
         private ?Spacing $padding = null,
         private ?Spacing $margin = null,
@@ -70,6 +71,14 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
     public function withRight(Widget $widget): self
     {
         return $this->cloneWith(rightSlot: $widget);
+    }
+
+    /**
+     * The slot a host routing keys by hand sends them to.
+     */
+    public function withMarkedSlot(?Alignment $slot): self
+    {
+        return $this->cloneWith(markedSlot: $slot);
     }
 
     public function withStyle(Style $style): self
@@ -134,7 +143,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
             return new UpdateResult($this);
         }
 
-        [$overrides, $command] = BarSlotRenderer::updateSlots($this->slots(), $message, $contentArea, $this->globalKeybindings);
+        [$overrides, $command] = BarSlotRenderer::updateSlots($this->slots(), $message, $contentArea, $this->markedSlot, $this->globalKeybindings);
 
         if ($overrides !== []) {
             return new UpdateResult($this->cloneWith(...$overrides), $command);

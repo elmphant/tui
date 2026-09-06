@@ -30,7 +30,7 @@ final class SearchBoxComposedTest extends TestCase
     {
         $recorder = new SearchRecorder();
         $model = new ComposedSearchModel(
-            SearchBox::new()->withFocus(true),
+            SearchBox::new(),
             $recorder,
         );
         $program = Program::new($model);
@@ -150,18 +150,6 @@ final readonly class SearchBox implements Focusable
     public function sizing(): Sizing
     {
         return Sizing::of($this->input->sizing()->rows, $this->input->sizing()->rows);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->input->isFocused();
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        $input = $this->input->withFocus($focused);
-
-        return $input === $this->input ? $this : new self($input);
     }
 
     public function update(Message $message, Rect $area): UpdateResult

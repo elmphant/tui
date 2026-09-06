@@ -60,56 +60,9 @@ final class ScrollPaneTest extends TestCase
     }
 
     #[Test]
-    public function whatAPaneReportsAboutItselfDoesNotTurnOnItsOwnFocusFlag(): void
-    {
-        $taller = new class implements Widget, Focusable, MeasureHeight {
-            public function __construct(private readonly bool $focused = false)
-            {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new self($focused);
-            }
-
-            public function measureHeight(int $width): int
-            {
-                return $this->focused ? 5 : 1;
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                return UpdateResult::keep($this);
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::flex(), Constraint::flex());
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-        };
-
-        $pane = ScrollPane::of($taller);
-
-        self::assertSame(
-            $pane->measureHeight(20),
-            $pane->withFocus(true)->measureHeight(20),
-            'the tree decides where the keyboard is at render time, so a height cannot turn on the flag',
-        );
-    }
-
-    #[Test]
     public function theGeometryHandsBackTheChildrenAsTheyWereAuthored(): void
     {
-        $pane = ScrollPane::of(TextInput::new(), TextInput::new())->withFocus(true);
+        $pane = ScrollPane::of(TextInput::new(), TextInput::new());
 
         $placed = [];
         foreach ($pane->placedChildren(Rect::fromSize(20, 6)) as [$child]) {
@@ -284,7 +237,7 @@ final class ScrollPaneTest extends TestCase
     #[Test]
     public function scrollKeysMoveTheContent(): void
     {
-        $pane = ScrollPane::of(Text::new('one'), Text::new('two'), Text::new('three'))->withFocus(true);
+        $pane = ScrollPane::of(Text::new('one'), Text::new('two'), Text::new('three'));
         $area = Rect::fromSize(20, 2);
 
         $down = $this->press($pane, Key::Down, $area);
@@ -301,10 +254,6 @@ final class ScrollPaneTest extends TestCase
         self::assertSame($pane, $this->press($pane, Key::F1, Rect::fromSize(20, 4)));
     }
 
-    /**
-     * The pane hears where the keyboard is from the runtime, and keeps that child
-     * in view when its answer is grafted back.
-     */
     #[Test]
     public function graftingTheKeyboardChildBackKeepsItInView(): void
     {
@@ -394,7 +343,6 @@ final class ScrollPaneTest extends TestCase
             Text::new('four'),
             Text::new('five'),
         )
-            ->withFocus(true)
             ->withFollowChild(4);
 
         self::assertStringStartsWith('five', $this->rows($pane, 20, 1)[0], 'following put the last child on screen');
@@ -504,7 +452,7 @@ final class ScrollPaneTest extends TestCase
     public function scrollingDoesNotReMeasureAnUnchangedTree(): void
     {
         $tally = new MeasureTally();
-        $pane = ScrollPane::of(new TallyingWidget(30, $tally))->withFocus(true);
+        $pane = ScrollPane::of(new TallyingWidget(30, $tally));
         $area = new Rect(0, 0, 40, 10);
         $wheel = new MouseMsg(2, 2, MouseAction::WheelDown, MouseButton::None);
 
@@ -540,7 +488,7 @@ final class ScrollPaneTest extends TestCase
     #[Test]
     public function shiftDownScrollsAWholePage(): void
     {
-        $pane = self::numbered(12)->withFocus(true);
+        $pane = self::numbered(12);
 
         $paged = $pane->update(new KeyMsg(Key::Down, shift: true), Rect::fromSize(20, 4))->model;
 
@@ -551,7 +499,7 @@ final class ScrollPaneTest extends TestCase
     public function shiftUpPagesBackAndStopsAtTheTop(): void
     {
         $area = Rect::fromSize(20, 4);
-        $pane = self::numbered(12)->withFocus(true)->withScrollOffset(5);
+        $pane = self::numbered(12)->withScrollOffset(5);
 
         $back = $pane->update(new KeyMsg(Key::Up, shift: true), $area)->model;
         $further = $back->update(new KeyMsg(Key::Up, shift: true), $area)->model;
@@ -581,23 +529,12 @@ final class ScrollPaneTest extends TestCase
             public function __construct(
                 private readonly string $label,
                 private readonly int $count = 0,
-                private readonly bool $focused = false,
             ) {
             }
 
             public function sizing(): Sizing
             {
                 return Sizing::of(Constraint::exact(1), Constraint::exact(1));
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($this->label, $this->count, $focused);
             }
 
             public function cursorRow(): int
@@ -614,7 +551,7 @@ final class ScrollPaneTest extends TestCase
                 }
 
                 return new UpdateResult(
-                    new static($this->label, $this->count + 1, $this->focused),
+                    new static($this->label, $this->count + 1),
                     $enter ? Cmd::quit() : null,
                 );
             }
@@ -681,25 +618,13 @@ final class ScrollPaneTest extends TestCase
     private function focusable(string $label): Widget
     {
         return new class($label) implements Focusable {
-            public function __construct(
-                private readonly string $label,
-                private readonly bool $focused = false,
-            ) {
+            public function __construct(private readonly string $label)
+            {
             }
 
             public function sizing(): Sizing
             {
                 return Sizing::of(Constraint::exact(1), Constraint::exact(1));
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($this->label, $focused);
             }
 
             public function update(Message $message, Rect $area): UpdateResult

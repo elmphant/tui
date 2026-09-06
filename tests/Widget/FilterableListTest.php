@@ -487,7 +487,7 @@ final class FilterableListTest extends TestCase
         $list = FilterableList::new([
             new SimpleListItem('Same', 'first'),
             new SimpleListItem('Same', 'second'),
-        ])->withFocus(true);
+        ]);
 
         $onSecond = $this->press($list, Key::Down);
         self::assertSame(1, $onSecond->sourceIndex(), 'the cursor is on the second');
@@ -529,7 +529,7 @@ final class FilterableListTest extends TestCase
 
     private function commands(): FilterableList
     {
-        return FilterableList::new($this->commandItems())->withFocus(true);
+        return FilterableList::new($this->commandItems());
     }
 
     private function typed(FilterableList $list, string $text): FilterableList

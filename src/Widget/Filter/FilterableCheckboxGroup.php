@@ -54,7 +54,6 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         private TextInput $field,
         private array $checked = [],
         private int $cursor = 0,
-        private bool $focused = false,
         private ?Matcher $matcher = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -160,16 +159,6 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
             : [...$this->checked, $option]);
     }
 
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(field: $this->field->withFocus($focused), focused: $focused);
-    }
-
     public function update(Message $message, Rect $area): UpdateResult
     {
         $dispatcher = new ChildDispatcher($this->globalKeybindings);
@@ -252,8 +241,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
                 array_keys($matching),
                 fn (int $index): bool => \in_array($matching[$index], $this->checked, true),
             )))
-            ->withCursor(min($this->cursor, max(0, \count($matching) - 1)))
-            ->withFocus($this->focused);
+            ->withCursor(min($this->cursor, max(0, \count($matching) - 1)));
     }
 
     /**

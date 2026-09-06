@@ -22,7 +22,7 @@ final class FocusIsAskedWhileDrawingRuleTest extends RuleTestCase
             [
                 [
                     'Elmphant\Tui\Tests\Stan\Fixtures\FlagReadingRenderer::render() draws from its own focus flag. Where the keyboard is belongs to the tree, so ask $context through drawsFocused() — a flag is a message behind by the time a frame is drawn.',
-                    45,
+                    35,
                 ],
             ],
         );

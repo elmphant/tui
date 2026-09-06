@@ -46,7 +46,6 @@ final class DropdownHostAcceptanceTest extends TestCase
         self::assertSame('yaml', self::dropdownAt($picked, 0)->content()->selectedValue(), 'the popup owns the cell it drew on');
         self::assertNull(self::dropdownAt($picked, 1)->content()->selectedValue(), 'the sibling beneath the popup saw nothing');
         self::assertFalse(self::dropdownAt($picked, 1)->isOpen());
-        self::assertTrue(self::dropdownAt($picked, 0)->isFocused(), 'the picker keeps focus');
     }
 
     #[Test]
@@ -171,8 +170,8 @@ final class DropdownHostAcceptanceTest extends TestCase
 
     private static function paneWithTwoDropdowns(bool $openFirst): ScrollPane
     {
-        $first = Dropdown::new(Select::new(['json', 'yaml']))->withFocus(true);
-        $pane = ScrollPane::of($first, Dropdown::new(Select::new(['toml', 'ini'])), Text::new('beneath'))->withFocus(true);
+        $first = Dropdown::new(Select::new(['json', 'yaml']));
+        $pane = ScrollPane::of($first, Dropdown::new(Select::new(['toml', 'ini'])), Text::new('beneath'));
 
         return $openFirst
             ? self::openedPane($pane)
@@ -183,9 +182,9 @@ final class DropdownHostAcceptanceTest extends TestCase
     {
         $options = array_map(static fn (int $index): string => 'option' . $index, range(1, 30));
         $pane = ScrollPane::of(
-            Dropdown::new(Select::new($options))->withFocus(true),
+            Dropdown::new(Select::new($options)),
             ...array_map(static fn (int $row): Text => Text::new('row' . $row), range(1, 20)),
-        )->withFocus(true);
+        );
 
         return $openFirst
             ? self::openedPane($pane)

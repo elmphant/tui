@@ -59,7 +59,6 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         private int $cursor = 0,
         private int $selected = -1,
         private int $scrollOffset = 0,
-        private bool $focused = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $followCursor = true,
@@ -169,16 +168,6 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     public function itemCount(): int
     {
         return count($this->items);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     public function sizing(): Sizing

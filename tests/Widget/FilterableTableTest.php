@@ -35,14 +35,6 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
-    public function takingFocusKeepsTheFieldTheCaretSitsIn(): void
-    {
-        $table = $this->routes()->withField(FilterBar::field('ajax', true)->withCursor(1));
-
-        self::assertSame(1, $table->withFocus(true)->field()->cursor(), 'a later builder must not drop the field');
-    }
-
-    #[Test]
     public function filtersItsRowsOnceForOneFrame(): void
     {
         $counting = new class implements Matcher {
@@ -65,7 +57,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function anUnfocusedTableClaimsNoCaretForAFieldItWasHandedFocused(): void
     {
-        $table = $this->routes()->withFocus(false)->withField(FilterBar::field('', true));
+        $table = $this->routes()->withField(FilterBar::field('', true));
 
         $frame = new Frame(60, 12);
         $table->render($frame, new Rect(0, 0, 60, 12), new RenderContext(Theme::dark()));
@@ -163,7 +155,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function underlinesTheFieldWhileThePaneIsActive(): void
     {
-        self::assertTrue($this->fieldIsUnderlined($this->routes()->withFocus(true)));
+        self::assertTrue($this->fieldIsUnderlined($this->routes(), focused: true));
         self::assertFalse($this->fieldIsUnderlined($this->routes()), 'An inactive pane draws no field to type into');
     }
 
@@ -229,7 +221,7 @@ final class FilterableTableTest extends TestCase
         $frame = new Frame(60, 12);
         $frame->pushClip(new Rect(0, 4, 60, 8));
 
-        $this->routes()->withFocus(true)->render($frame, Rect::fromSize(60, 12), new RenderContext(Theme::dark()));
+        $this->routes()->render($frame, Rect::fromSize(60, 12), RenderContext::focused(Theme::dark()));
 
         self::assertNull($frame->cursorPosition, 'A caret placed outside its pane is drawn on whatever is there');
     }
@@ -256,7 +248,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function showsTheQueryInPlaceOfThePlaceholder(): void
     {
-        $bar = $this->barRow($this->routes()->withQuery('ajax')->withFocus(true), 50);
+        $bar = $this->barRow($this->routes()->withQuery('ajax'), 50);
 
         self::assertSame('ajax', mb_substr($bar, 0, 4));
         self::assertSame('2 of 3', mb_substr($bar, 37, 6), 'The count follows the filter');
@@ -292,8 +284,7 @@ final class FilterableTableTest extends TestCase
     public function putsTheCursorAfterTheQueryWhileFocused(): void
     {
         $frame = new Frame(50, 1);
-        $this->routes()->withQuery('ajax')->withFocus(true)
-            ->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
+        $this->routes()->withQuery('ajax')->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame(4, $frame->cursorPosition->col, 'One column past the four typed characters');
@@ -308,8 +299,7 @@ final class FilterableTableTest extends TestCase
         // so the field spans 34 columns however long the query is.
         $fieldWidth = 34;
 
-        $this->routes()->withQuery(str_repeat('x', 40))->withFocus(true)
-            ->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
+        $this->routes()->withQuery(str_repeat('x', 40))->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition);
         self::assertSame($fieldWidth - 1, $frame->cursorPosition->col);
@@ -330,8 +320,7 @@ final class FilterableTableTest extends TestCase
     public function aFocusedFieldIsUnderlinedAcrossItsWholeWidth(): void
     {
         $frame = new Frame(50, 1);
-        $this->routes()->withQuery('ajax')->withFocus(true)
-            ->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
+        $this->routes()->withQuery('ajax')->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         $fieldWidth = 34;
 
@@ -348,12 +337,10 @@ final class FilterableTableTest extends TestCase
     public function aTypedQueryIsBrighterThanThePlaceholder(): void
     {
         $typed = new Frame(50, 1);
-        $this->routes()->withQuery('ajax')->withFocus(true)
-            ->render($typed, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
+        $this->routes()->withQuery('ajax')->render($typed, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         $placeholder = new Frame(50, 1);
-        $this->routes()->withFocus(true)
-            ->render($placeholder, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
+        $this->routes()->render($placeholder, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotSame(
             $placeholder->foregrounds[0],
@@ -423,7 +410,7 @@ final class FilterableTableTest extends TestCase
     {
         $handedIn = FilterBar::field('ajax', false);
 
-        self::assertTrue($this->fieldIsUnderlined($this->routes()->withFocus(true)->withField($handedIn)));
+        self::assertTrue($this->fieldIsUnderlined($this->routes()->withField($handedIn), focused: true));
         self::assertFalse(
             $this->fieldIsUnderlined($this->routes()->withField($handedIn)),
             'A host driving the caret does not decide whether the pane is active',
@@ -433,7 +420,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function typingIntoAFocusedTableNarrowsIt(): void
     {
-        $table = $this->routes()->withFocus(true);
+        $table = $this->routes();
 
         $narrowed = $table->update(new KeyMsg('f'), Rect::fromSize(40, 10))->model;
 
@@ -469,7 +456,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function escapeClearsATypedQueryAndKeepsEverythingElseWhereItWas(): void
     {
-        $table = $this->routes()->withFocus(true)->withQuery('ajax');
+        $table = $this->routes()->withQuery('ajax');
 
         $cleared = $table->update(new KeyMsg(Key::Escape), new Rect(0, 0, 40, 6))->model;
 
@@ -481,7 +468,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function escapeOverAnEmptyQueryIsLeftForWhoeverIsAbove(): void
     {
-        $table = $this->routes()->withFocus(true);
+        $table = $this->routes();
 
         $answered = $table->update(new KeyMsg(Key::Escape), new Rect(0, 0, 40, 6));
 
@@ -489,10 +476,10 @@ final class FilterableTableTest extends TestCase
         self::assertNull($answered->command);
     }
 
-    private function fieldIsUnderlined(FilterableTable $table): bool
+    private function fieldIsUnderlined(FilterableTable $table, bool $focused = false): bool
     {
         $frame = new Frame(60, 12);
-        $context = $table->isFocused() ? RenderContext::focused(Theme::dark()) : RenderContext::unfocused(Theme::dark());
+        $context = $focused ? RenderContext::focused(Theme::dark()) : RenderContext::unfocused(Theme::dark());
         $table->render($frame, Rect::fromSize(60, 12), $context);
 
         for ($column = 0; $column < 60; ++$column) {

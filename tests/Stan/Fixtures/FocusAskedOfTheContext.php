@@ -16,20 +16,6 @@ use Elmphant\Tui\Widget\Interactive;
 
 final readonly class FocusAskedOfTheContext implements Focusable, Interactive
 {
-    public function __construct(private bool $focused = false)
-    {
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return new self($focused);
-    }
-
     public function sizing(): Sizing
     {
         return Sizing::of(Constraint::flex(), Constraint::exact(1));

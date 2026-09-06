@@ -68,7 +68,6 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
         private ?int $followChild = null,
         private int $followSpan = 1,
         private bool $scrolledAway = false,
-        private bool $focused = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         ?KeyedCache $layoutMemo = null,
@@ -84,6 +83,14 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
     public function add(Widget $child): self
     {
         return $this->cloneWith(children: [...$this->children, $child], layoutMemo: self::newLayoutMemo());
+    }
+
+    /**
+     * @param list<Widget> $children
+     */
+    public function withChildren(array $children): self
+    {
+        return $this->cloneWith(children: $children, layoutMemo: self::newLayoutMemo());
     }
 
     public function scrollOffset(): int
@@ -110,16 +117,6 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
     public function withKeyboardAt(?int $child): static
     {
         return $this->cloneWith(followChild: $child, followSpan: 1, scrolledAway: false);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     /**
@@ -232,7 +229,7 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $children, $area->width, $area->height);
         $offset = $this->resolvedOffset($layout, $area->height);
 
-        $loose = $context->keyboardIsLoose() ? $this->firstFocusableIndex() : null;
+        $loose = $context->keyboardIsLoose() && !$this->aRowIsMarked() ? $this->firstFocusableIndex() : null;
 
         $frame->pushClip(new Rect($area->x, $area->y, $layout->childWidth, $area->height));
 
@@ -382,6 +379,20 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
             $viewportHeight,
             $layout->maxScrollOffset($viewportHeight),
         );
+    }
+
+    /**
+     * A host that marks its rows has said where the keyboard is.
+     */
+    private function aRowIsMarked(): bool
+    {
+        foreach ($this->children as $child) {
+            if ($child instanceof HoldsTheKeyboard && $child->isHeld()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function firstFocusableIndex(): ?int

@@ -17,7 +17,6 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Choice\Select;
-use Elmphant\Tui\Widget\Focusable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,8 +24,6 @@ use PHPUnit\Framework\TestCase;
 
 final class SelectTest extends TestCase
 {
-    use FocusableBehaviorTrait;
-
     #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
@@ -48,7 +45,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function arrowDownMovesCursor(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withFocus(true);
+        $select = Select::new(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
 
         $result = $select->update(new KeyMsg(Key::Down), $area);
@@ -60,7 +57,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function arrowDownDoesNotMovePastLastOption(): void
     {
-        $select = Select::new(['A', 'B'])->withFocus(true);
+        $select = Select::new(['A', 'B']);
         $area = Rect::fromSize(40, 10);
 
         $result = $select->update(new KeyMsg(Key::Down), $area);
@@ -71,7 +68,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function arrowUpMovesCursor(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withFocus(true);
+        $select = Select::new(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
 
         $result = $select->update(new KeyMsg(Key::Down), $area);
@@ -83,7 +80,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function enterSelectsCurrentCursorPosition(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withFocus(true);
+        $select = Select::new(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
 
         $result = $select->update(new KeyMsg(Key::Down), $area);
@@ -95,7 +92,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function aClearableSelectLetsThePickedOptionBePutBackDown(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withClearable()->withSelected(0)->withFocus(true);
+        $select = Select::new(['A', 'B', 'C'])->withClearable()->withSelected(0);
         $area = Rect::fromSize(40, 10);
 
         $cleared = $select->update(new KeyMsg(Key::Enter), $area)->model;
@@ -107,7 +104,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function aSelectToldNotToBeClearableStaysAnswered(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withClearable(false)->withSelected(0)->withFocus(true);
+        $select = Select::new(['A', 'B', 'C'])->withClearable(false)->withSelected(0);
 
         $again = $select->update(new KeyMsg(Key::Enter), Rect::fromSize(40, 10))->model;
 
@@ -125,7 +122,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function rendersCursorStyleWhenFocused(): void
     {
-        $select = Select::new(['Alpha', 'Beta'])->withFocus(true);
+        $select = Select::new(['Alpha', 'Beta']);
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $theme = Theme::dark();
@@ -138,7 +135,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function doesNotRenderCursorStyleWhenNotFocused(): void
     {
-        $select = Select::new(['Alpha', 'Beta'])->withFocus(false);
+        $select = Select::new(['Alpha', 'Beta']);
         $frame = new Frame(40, 5);
         $area = new Rect(0, 0, 40, 5);
         $theme = Theme::dark();
@@ -162,7 +159,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function upAtFirstOptionReturnsSameInstance(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withFocus(true);
+        $select = Select::new(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
 
         $result = $select->update(new KeyMsg(Key::Up), $area);
@@ -172,7 +169,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function downAtLastOptionReturnsSameInstance(): void
     {
-        $select = Select::new(['A', 'B'])->withFocus(true);
+        $select = Select::new(['A', 'B']);
         $area = Rect::fromSize(40, 10);
 
         $movedDown = $select->update(new KeyMsg(Key::Down), $area)->model;
@@ -185,7 +182,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function updateWithEmptyOptionsReturnsSelf(): void
     {
-        $select = Select::new([])->withFocus(true);
+        $select = Select::new([]);
         $area = Rect::fromSize(40, 10);
 
         $result = $select->update(new KeyMsg(Key::Down), $area);
@@ -226,7 +223,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function spaceSelectsCurrentCursorPosition(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withFocus(true);
+        $select = Select::new(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
 
         $movedDown = $select->update(new KeyMsg(Key::Down), $area)->model;
@@ -237,7 +234,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function unhandledKeyReturnsSameInstance(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withFocus(true);
+        $select = Select::new(['A', 'B', 'C']);
         $area = Rect::fromSize(40, 10);
 
         $result = $select->update(new KeyMsg('x'), $area);
@@ -293,7 +290,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function rendersSelectedOptionWithAccentStyle(): void
     {
-        $select = Select::new(['Alpha', 'Beta', 'Gamma'])->withFocus(true);
+        $select = Select::new(['Alpha', 'Beta', 'Gamma']);
         $area = Rect::fromSize(40, 5);
 
         $selected = $select->update(new KeyMsg(Key::Down), $area)->model;
@@ -314,7 +311,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function rendersFocusedNonCursorNonSelectedOptionWithBaseStyle(): void
     {
-        $select = Select::new(['Alpha', 'Beta', 'Gamma'])->withFocus(true);
+        $select = Select::new(['Alpha', 'Beta', 'Gamma']);
         $area = Rect::fromSize(40, 5);
         $frame = new Frame(40, 5);
         $theme = Theme::dark();
@@ -352,7 +349,7 @@ final class SelectTest extends TestCase
     {
         $select = Select::new(['Alpha', 'Beta', 'Gamma', 'Delta'])
             ->withCursor(3)
-            ->withFocus(true);
+        ;
         $frame = new Frame(12, 3);
         $select->render($frame, new Rect(0, 0, 12, 3), new RenderContext(Theme::dark()));
 
@@ -366,7 +363,7 @@ final class SelectTest extends TestCase
     {
         $select = Select::new(['Alpha', 'Beta', 'Gamma', 'Delta'])
             ->withCursor(3)
-            ->withFocus(true);
+        ;
         $area = new Rect(0, 0, 12, 3);
 
         $result = $select->update(new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left), $area);
@@ -393,7 +390,7 @@ final class SelectTest extends TestCase
         int $expected,
     ): void {
         $area = Rect::fromSize(20, 10);
-        $widget = Select::new(['a', 'b', 'c'])->withFocus(true)->withCursor($startingCursor);
+        $widget = Select::new(['a', 'b', 'c'])->withCursor($startingCursor);
 
         $afterDefault = $widget->update($defaultKey, $area)->model;
         self::assertNotSame($widget, $afterDefault, "default key for $action should change state");
@@ -446,11 +443,11 @@ final class SelectTest extends TestCase
     public function enterOverAnEmptyListFinishesNothing(): void
     {
         self::assertTrue(
-            Select::new(['json'])->withFocus(true)->commits(new KeyMsg(Key::Enter)),
+            Select::new(['json'])->commits(new KeyMsg(Key::Enter)),
             'with something under the cursor, enter is what finishes the choice',
         );
         self::assertFalse(
-            Select::new([])->withFocus(true)->commits(new KeyMsg(Key::Enter)),
+            Select::new([])->commits(new KeyMsg(Key::Enter)),
             'the binding matches, but there is nothing to choose, so the popup must not close',
         );
     }
@@ -458,7 +455,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function theWheelWalksTheListAsManyNotchesAsTheEventCarries(): void
     {
-        $select = Select::new(['a', 'b', 'c', 'd'])->withFocus(true);
+        $select = Select::new(['a', 'b', 'c', 'd']);
         $area = Rect::fromSize(20, 2);
 
         $down = $select->update(self::wheel(MouseAction::WheelDown, $area), $area)->model;
@@ -473,7 +470,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function theWheelStopsAtBothEndsOfTheList(): void
     {
-        $select = Select::new(['a', 'b'])->withFocus(true);
+        $select = Select::new(['a', 'b']);
         $area = Rect::fromSize(20, 2);
 
         $answered = $select->update(self::wheel(MouseAction::WheelUp, $area), $area);
@@ -489,7 +486,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function theWheelIsIgnoredWhereThePointerIsNotOverTheList(): void
     {
-        $select = Select::new(['a', 'b', 'c'])->withFocus(true);
+        $select = Select::new(['a', 'b', 'c']);
         $area = Rect::fromSize(20, 2);
 
         $elsewhere = new MouseMsg(0, $area->bottom() + 1, MouseAction::WheelDown, MouseButton::None);
@@ -513,11 +510,6 @@ final class SelectTest extends TestCase
         $this->expectExceptionMessage('Select options must read differently');
 
         Select::new(['Yes', 'No'])->withOptions(['Same', 'Same']);
-    }
-
-    protected function createFocusable(): Focusable
-    {
-        return Select::new(['A', 'B']);
     }
 
     private static function wheel(MouseAction $action, Rect $area, int $repeat = 1): MouseMsg

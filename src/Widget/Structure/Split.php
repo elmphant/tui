@@ -28,7 +28,6 @@ use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
-use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -57,6 +56,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         private array $children,
         private Direction $direction = Direction::Horizontal,
         private array $minimums = [],
+        private ?int $markedPane = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -66,6 +66,14 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         if ($childCount !== $shareCount) {
             throw new InvalidArgumentException(sprintf('Split needs as many shares as children, got %d children and %d shares', $childCount, $shareCount));
         }
+    }
+
+    /**
+     * The pane a host routing keys by hand sends them to.
+     */
+    public function withMarkedPane(?int $pane): self
+    {
+        return $this->cloneWith(markedPane: $pane);
     }
 
     public static function defaultKeybindings(): Keybindings
@@ -217,7 +225,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
     private function toMarkedPane(Message $message, Rect $area): UpdateResult
     {
         foreach ($this->placedChildren($area) as $index => [$child, $rect]) {
-            if (!$child instanceof Focusable || !$child->isFocused()) {
+            if ($index !== $this->markedPane || !$child instanceof Interactive) {
                 continue;
             }
 

@@ -49,7 +49,6 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
     private function __construct(
         private DropdownContent $content,
         private bool $open = false,
-        private bool $focused = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private FloatTarget $floatTarget = new FloatTarget(),
@@ -102,18 +101,6 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
     public function isOpen(): bool
     {
         return $this->open;
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $focused
-            ? $this->cloneWith(focused: true)
-            : $this->cloneWith(focused: false)->closed();
     }
 
     public function withGlobalKeybindings(?Keybindings $keybindings): static
@@ -210,18 +197,14 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
         }
     }
 
-    /**
-     * Content is built unfocused, as every widget is, so opening has to hand it
-     * the keyboard or it would never answer one.
-     */
     private function opened(): static
     {
-        return $this->cloneWith(open: true, content: $this->content->withFocus(true));
+        return $this->cloneWith(open: true);
     }
 
     private function closed(): static
     {
-        return $this->cloneWith(open: false, content: $this->content->withFocus(false));
+        return $this->cloneWith(open: false);
     }
 
     /**

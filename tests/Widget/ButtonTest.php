@@ -21,14 +21,11 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\ButtonTone;
-use Elmphant\Tui\Widget\Focusable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ButtonTest extends TestCase
 {
-    use FocusableBehaviorTrait;
-
     #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
@@ -39,10 +36,10 @@ final class ButtonTest extends TestCase
     }
 
     #[Test]
-    public function enterWhileFocusedEmitsTheMessage(): void
+    public function enterEmitsTheMessage(): void
     {
         $pressed = new TestMessage('run');
-        $button = Button::new('Run', $pressed)->withFocus(true);
+        $button = Button::new('Run', $pressed);
 
         $result = $button->update(new KeyMsg(Key::Enter), new Rect(0, 0, 10, 3));
 
@@ -50,10 +47,10 @@ final class ButtonTest extends TestCase
     }
 
     #[Test]
-    public function spaceWhileFocusedEmitsTheMessage(): void
+    public function spaceEmitsTheMessage(): void
     {
         $pressed = new TestMessage('run');
-        $button = Button::new('Run', $pressed)->withFocus(true);
+        $button = Button::new('Run', $pressed);
 
         $result = $button->update(new KeyMsg(' '), new Rect(0, 0, 10, 3));
 
@@ -145,16 +142,6 @@ final class ButtonTest extends TestCase
     }
 
     #[Test]
-    public function anUnfocusedButtonIgnoresEnter(): void
-    {
-        $button = Button::new('Run', new TestMessage('run'));
-
-        $result = $button->update(new KeyMsg(Key::Enter), new Rect(0, 0, 10, 3));
-
-        self::assertNull($result->command);
-    }
-
-    #[Test]
     public function aClickOutsideTheAreaIsIgnored(): void
     {
         $button = Button::new('Run', new TestMessage('run'));
@@ -171,7 +158,6 @@ final class ButtonTest extends TestCase
     public function aDisabledButtonIgnoresEnter(): void
     {
         $button = Button::new('Run', new TestMessage('run'))
-            ->withFocus(true)
             ->withDisabled();
 
         $result = $button->update(new KeyMsg(Key::Enter), new Rect(0, 0, 10, 3));
@@ -225,7 +211,6 @@ final class ButtonTest extends TestCase
 
         Button::new('Run', new TestMessage('run'))
             ->withTone(ButtonTone::Danger)
-            ->withFocus(true)
             ->render($frame, new Rect(0, 0, 11, 3), RenderContext::focused($theme));
 
         self::assertSame(' ', $frame->characters[11 + 2], 'a cell the label does not reach');
@@ -240,7 +225,7 @@ final class ButtonTest extends TestCase
         $area = new Rect(0, 0, 11, 3);
 
         Button::new('Run', new TestMessage('run'))->render($idle, $area, RenderContext::unfocused(Theme::dark()));
-        Button::new('Run', new TestMessage('run'))->withFocus(true)->render($focused, $area, RenderContext::focused(Theme::dark()));
+        Button::new('Run', new TestMessage('run'))->render($focused, $area, RenderContext::focused(Theme::dark()));
 
         self::assertSame('╭', $idle->characters[0], 'idle keeps the rounded corner every other box uses');
         self::assertSame('┏', $focused->characters[0], 'and focus thickens the whole outline');
@@ -253,7 +238,6 @@ final class ButtonTest extends TestCase
         $theme = Theme::dark();
 
         Button::new('Run', new TestMessage('run'))
-            ->withFocus(true)
             ->render($frame, new Rect(0, 0, 11, 3), RenderContext::focused($theme));
 
         self::assertSame($theme->focusedBorderStyle->foregroundValue(), $frame->foregrounds[0]);
@@ -265,7 +249,6 @@ final class ButtonTest extends TestCase
         $frame = new Frame(11, 3);
 
         Button::new('Run', new TestMessage('run'))
-            ->withFocus(true)
             ->render($frame, new Rect(0, 0, 11, 3), new RenderContext(Theme::dark()));
 
         self::assertSame(0, $frame->backgrounds[11 + 2], 'beside the label');
@@ -294,7 +277,6 @@ final class ButtonTest extends TestCase
 
         Button::new('Delete', new TestMessage('delete'))
             ->withTone(ButtonTone::Danger)
-            ->withFocus(true)
             ->withDisabled()
             ->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));
 
@@ -392,11 +374,6 @@ final class ButtonTest extends TestCase
         $whileDisabled = $held->withDisabled(true)->update($release, $area)->model;
 
         self::assertNull($whileDisabled->withDisabled(false)->update($release, $area)->command);
-    }
-
-    protected function createFocusable(): Focusable
-    {
-        return Button::new('Run', new TestMessage('run'));
     }
 
     /**

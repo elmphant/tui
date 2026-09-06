@@ -49,7 +49,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         private array $roots = [],
         private array $expanded = [],
         private ?TreePath $cursor = null,
-        private bool $focused = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private int $scrollOffset = 0,
@@ -86,16 +85,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
             'open or close' => Actions::TOGGLE,
         ]);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     public function update(Message $message, Rect $area): UpdateResult

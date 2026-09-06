@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Core;
 
 use Elmphant\Tui\Input\KeybindingsAware;
-use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Interactive;
 use LogicException;
@@ -57,10 +56,6 @@ final class ComponentWriteBack
      */
     private static function asAuthored(Interactive $widget): Interactive
     {
-        if ($widget instanceof Focusable) {
-            $widget = $widget->withFocus(false);
-        }
-
         if ($widget instanceof FollowsTheKeyboard) {
             $widget = $widget->withKeyboardAt(null);
         }

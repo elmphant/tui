@@ -40,7 +40,6 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         private array $options = [],
         private int $cursor = 0,
         private array $checked = [],
-        private bool $focused = false,
         private string $label = '',
         private string $emptyCaption = '',
         private bool $wrapping = false,
@@ -235,16 +234,6 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     public function popupHeight(int $width): int
     {
         return $this->rowOffset() + count($this->options);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     public function sizing(): Sizing

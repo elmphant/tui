@@ -19,14 +19,14 @@ use PHPUnit\Framework\TestCase;
 final class FocusRoutingTest extends TestCase
 {
     /**
-     * Two widgets flagged focused: the keys must follow the tree, not the order.
+     * Two identical fields: the keys must follow the tree, not the order.
      */
     #[Test]
     public function keysGoToTheComponentTheTreeFocusedNotTheFirstOneFlagged(): void
     {
         $app = new RoutedFocusApp(
-            TextInput::new()->withFocus(true),
-            TextInput::new()->withFocus(true),
+            TextInput::new(),
+            TextInput::new(),
         );
 
         $typed = $app->update(

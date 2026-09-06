@@ -32,8 +32,9 @@ final class SplitTest extends TestCase
     public function aGlobalRebindingReachesTheKeysAPaneAnswers(): void
     {
         $area = new Rect(0, 0, 40, 6);
-        $list = ListView::new([new SimpleListItem('a'), new SimpleListItem('b')])->withFocus(true);
+        $list = ListView::new([new SimpleListItem('a'), new SimpleListItem('b')]);
         $split = Split::row(SplitState::even(2), $list, Text::new('right'))
+            ->withMarkedPane(0)
             ->withGlobalKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['j']]));
 
         $updated = $split->update(new KeyMsg('j'), $area)->model;
@@ -48,7 +49,7 @@ final class SplitTest extends TestCase
     public function aPaneReceivesTheKeysTypedIntoIt(): void
     {
         $area = new Rect(0, 0, 40, 6);
-        $split = Split::row(SplitState::even(2), TextInput::new()->withFocus(true), Text::new('right'));
+        $split = Split::row(SplitState::even(2), TextInput::new(), Text::new('right'))->withMarkedPane(0);
 
         $updated = $split->update(new KeyMsg('h'), $area)->model;
 

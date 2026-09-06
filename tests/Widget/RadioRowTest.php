@@ -58,7 +58,7 @@ final class RadioRowTest extends TestCase
     public function theArrowsWalkTheOptionsAndSpacePicksTheOneTheyRestOn(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['system', 'pages', 'all'])->withFocus(true);
+        $row = RadioRow::new(['system', 'pages', 'all']);
 
         $walked = $row->update(new KeyMsg(Key::Right), $area)->model;
         self::assertInstanceOf(RadioRow::class, $walked);
@@ -73,7 +73,7 @@ final class RadioRowTest extends TestCase
     public function aRowToldNotToWrapRestsAtEitherEndInstead(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withWrapping(false)->withFocus(true);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withWrapping(false);
 
         $left = $row->update(new KeyMsg(Key::Left), $area)->model;
         self::assertInstanceOf(RadioRow::class, $left);
@@ -88,7 +88,7 @@ final class RadioRowTest extends TestCase
     public function aClearableRowLetsThePickedOptionBePutBackDown(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelected(0)->withFocus(true);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelected(0);
 
         $cleared = $row->update(new KeyMsg(' '), $area)->model;
 
@@ -135,7 +135,7 @@ final class RadioRowTest extends TestCase
     public function showsWhereTheCursorRestsWhileItIsFocused(): void
     {
         $theme = Theme::dark();
-        $row = RadioRow::new(['system', 'pages'])->withFocus(true);
+        $row = RadioRow::new(['system', 'pages']);
         $frame = new Frame(40, 1);
 
         $row->render($frame, new Rect(0, 0, 40, 1), RenderContext::focused($theme));

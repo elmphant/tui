@@ -48,7 +48,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
         private array $headers,
         private array $rows,
         private string $query = '',
-        private bool $focused = false,
         private ?Matcher $matcher = null,
         private ?TextInput $field = null,
         private ?Keybindings $customKeybindings = null,
@@ -79,7 +78,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     public function field(): TextInput
     {
-        return $this->fieldFocused($this->focused);
+        return $this->fieldFocused(false);
     }
 
     public function query(): string
@@ -99,19 +98,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     public function withQuery(string $query): self
     {
         return $this->cloneWith(query: $query);
-    }
-
-    /**
-     * Drawn as a field to type into only while the pane holding it is active.
-     */
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -216,7 +202,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
             : $this->field->withValue($this->query);
 
         return $field
-            ->withFocus($focused)
             ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None);
     }
 

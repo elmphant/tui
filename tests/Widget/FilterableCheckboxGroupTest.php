@@ -51,7 +51,7 @@ final class FilterableCheckboxGroupTest extends TestCase
     public function aGroupWithSomethingTypedInItNamesTheKeyThatClearsIt(): void
     {
         $typed = self::pressed(
-            FilterableCheckboxGroup::new(['alpha', 'beta'])->withFocus(true),
+            FilterableCheckboxGroup::new(['alpha', 'beta']),
             new KeyMsg('a'),
         );
 
@@ -65,7 +65,6 @@ final class FilterableCheckboxGroupTest extends TestCase
     public function aGlobalRebindingWalksTheBoxesInsteadOfTypingIntoTheField(): void
     {
         $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
-            ->withFocus(true)
             ->withGlobalKeybindings(VimMode::keybindings());
 
         $ticked = self::pressed($group, new KeyMsg('j'), new KeyMsg(' '));
@@ -93,8 +92,7 @@ final class FilterableCheckboxGroupTest extends TestCase
         };
 
         $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
-            ->withMatcher($repeating)
-            ->withFocus(true);
+            ->withMatcher($repeating);
 
         $typed = self::pressed($group, new KeyMsg('a'));
 
@@ -120,8 +118,7 @@ final class FilterableCheckboxGroupTest extends TestCase
         };
 
         $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
-            ->withMatcher($stale)
-            ->withFocus(true);
+            ->withMatcher($stale);
 
         $typed = self::pressed($group, new KeyMsg('a'));
 
@@ -139,8 +136,7 @@ final class FilterableCheckboxGroupTest extends TestCase
     public function narrowsTheBoxesWithTheMatcherItWasGiven(): void
     {
         $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma'])
-            ->withMatcher(new LastOptionOnlyMatcher())
-            ->withFocus(true);
+            ->withMatcher(new LastOptionOnlyMatcher());
 
         $ticked = self::pressed($group, new KeyMsg('z'), new KeyMsg(' '));
 
@@ -150,8 +146,7 @@ final class FilterableCheckboxGroupTest extends TestCase
     #[Test]
     public function aTickOutlivesTheQueryThatWasNarrowingTheBoxesWhenItWasMade(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail'])
-            ->withFocus(true);
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail']);
 
         $ticked = self::pressed(
             $group,
@@ -181,7 +176,7 @@ final class FilterableCheckboxGroupTest extends TestCase
     #[Test]
     public function escapeClearsATypedQueryAndBringsEveryOptionBack(): void
     {
-        $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma'])->withFocus(true);
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma']);
 
         $narrowed = self::pressed($group, new KeyMsg('b'));
         $cleared = self::pressed($narrowed, new KeyMsg(Key::Escape));

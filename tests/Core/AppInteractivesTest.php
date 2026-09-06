@@ -126,7 +126,7 @@ final class AppInteractivesTest extends TestCase
     public function aPressReachesAnUnfocusableWidgetSharingTheScreenWithAFocusableOne(): void
     {
         $app = new PressCountingBesidePanelApp(
-            panel: Panel::new('Test')->withFocus(true),
+            panel: Panel::new('Test'),
             widget: new PressCountingWidget(),
         );
 
@@ -156,7 +156,7 @@ final class AppInteractivesTest extends TestCase
     {
         $spinner = new TickTally();
         $footer = Footer::new()->withRight($spinner);
-        $panel = Panel::new('Test')->withFocus(true);
+        $panel = Panel::new('Test');
         $app = new PanelAndFooterApp(panel: $panel, footer: $footer);
 
         $result = $app->update(new TickMsg(1.0), Rect::fromSize(80, 24));

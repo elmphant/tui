@@ -23,6 +23,7 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TickTally;
+use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Bar\Header;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Interactive;
@@ -279,7 +280,8 @@ final class HeaderTest extends TestCase
     public function aGlobalRebindingReachesTheKeysASlotAnswers(): void
     {
         $header = Header::new()
-            ->withRight(TextInput::new()->withValue('typed')->withFocus(true))
+            ->withRight(TextInput::new()->withValue('typed'))
+            ->withMarkedSlot(Alignment::Right)
             ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]));
 
         $result = $header->update(new KeyMsg('k', ctrl: true), Rect::fromSize(80, 1));

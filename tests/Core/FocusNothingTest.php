@@ -52,7 +52,7 @@ final class FocusNothingTest extends TestCase
     #[Test]
     public function aFlaggedWidgetGetsNoKeysWhileTheKeyboardIsDown(): void
     {
-        $app = new StaleFlagApp(TextInput::new()->withFocus(true));
+        $app = new StaleFlagApp(TextInput::new());
 
         $result = $app->update(new KeyMsg('x'), Rect::fromSize(40, 4), FocusState::nowhere());
 

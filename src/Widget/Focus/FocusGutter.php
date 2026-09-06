@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
@@ -24,7 +25,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
  * Marks where the keyboard is, so every field says it the same way instead of
  * each inventing a colour of its own.
  */
-final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, WidgetContainer, MeasureHeight, KeybindingsAware
+final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, GraftsItsChildren, WidgetContainer, MeasureHeight, KeybindingsAware
 {
     use Cloneable;
     /**
@@ -80,12 +81,12 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Widge
     }
 
     /**
-     * Deliberately not Focusable: a pane cycling its focusable children would stop
-     * on the track instead of the field inside it.
+     * Only what a host said. A track around a field that answers for itself asks
+     * the tree while drawing instead.
      */
     public function isHeld(): bool
     {
-        return $this->held ?? ($this->child instanceof Focusable && $this->child->isFocused());
+        return $this->held ?? false;
     }
 
     /**
@@ -95,6 +96,11 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Widge
     public function holds(): Widget
     {
         return $this->child;
+    }
+
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return $this->cloneWith(child: $child);
     }
 
     public function contentRectIn(Rect $area): Rect
@@ -164,7 +170,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Widge
             return;
         }
 
-        $held = $this->isHeld();
+        $held = $this->held ?? $context->hasFocus();
 
         for ($row = $area->y; $row < $area->bottom(); ++$row) {
             $frame->putStyled(
@@ -175,10 +181,16 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Widge
             );
         }
 
-        if ($area->width > self::COLUMNS) {
-            foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+        if ($area->width <= self::COLUMNS) {
+            return;
+        }
+
+        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+            $draw = static function () use ($child, $frame, $childArea, $context): void {
                 $child->render($frame, $childArea, $context);
-            }
+            };
+
+            $this->held === null ? $context->withinChild(0, $draw) : $draw();
         }
     }
 

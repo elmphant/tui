@@ -45,7 +45,6 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
         private bool $sizedToContent,
         private int $widthPercent,
         private int $heightPercent,
-        private bool $focused = false,
         private ?Style $borderStyleOverride = null,
         private ?Style $titleStyleOverride = null,
         private ?Keybindings $customKeybindings = null,
@@ -72,21 +71,6 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     public function withContent(Widget $content): self
     {
         return $this->cloneWith(content: $content);
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(
-            focused: $focused,
-            content: $this->content instanceof Focusable
-                ? $this->content->withFocus($focused)
-                : $this->content,
-        );
     }
 
     public static function defaultKeybindings(): Keybindings

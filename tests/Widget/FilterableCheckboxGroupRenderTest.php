@@ -19,8 +19,7 @@ final class FilterableCheckboxGroupRenderTest extends TestCase
     #[Test]
     public function drawsTheFieldAboveOnlyTheBoxesTheQueryLeft(): void
     {
-        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail'])
-            ->withFocus(true);
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail']);
         $area = Rect::fromSize(30, 8);
 
         $narrowed = $group->update(new KeyMsg('d'), $area)->model;

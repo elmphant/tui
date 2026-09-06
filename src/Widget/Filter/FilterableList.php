@@ -137,21 +137,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(emptyCaption: $caption);
     }
 
-    public function isFocused(): bool
-    {
-        return $this->field->isFocused();
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(
-            field: $this->field
-                ->withFocus($focused)
-                ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None),
-            list: $this->list->withFocus($focused),
-        );
-    }
-
     public function hints(): array
     {
         return $this->effectiveKeybindings()->hints([

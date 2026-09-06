@@ -22,8 +22,6 @@ use PHPUnit\Framework\TestCase;
 
 final class CheckboxTest extends TestCase
 {
-    use FocusableBehaviorTrait;
-
     #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
@@ -85,7 +83,7 @@ final class CheckboxTest extends TestCase
     #[Test]
     public function enterTogglesChecked(): void
     {
-        $checkbox = Checkbox::new('Accept')->withFocus(true);
+        $checkbox = Checkbox::new('Accept');
         $area = Rect::fromSize(40, 1);
 
         $result = $checkbox->update(new KeyMsg(Key::Enter), $area);
@@ -98,7 +96,7 @@ final class CheckboxTest extends TestCase
     #[Test]
     public function spaceTogglesChecked(): void
     {
-        $checkbox = Checkbox::new('Accept')->withFocus(true);
+        $checkbox = Checkbox::new('Accept');
         $area = Rect::fromSize(40, 1);
 
         $result = $checkbox->update(new KeyMsg(' '), $area);
@@ -106,18 +104,9 @@ final class CheckboxTest extends TestCase
     }
 
     #[Test]
-    public function ignoresKeyWhenNotFocused(): void
-    {
-        $checkbox = Checkbox::new('Accept');
-        $area = Rect::fromSize(40, 1);
-        $result = $checkbox->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame($checkbox, $result->model);
-    }
-
-    #[Test]
     public function unhandledKeyReturnsSelf(): void
     {
-        $checkbox = Checkbox::new('Accept')->withFocus(true);
+        $checkbox = Checkbox::new('Accept');
         $area = Rect::fromSize(40, 1);
         $result = $checkbox->update(new KeyMsg('x'), $area);
         self::assertSame($checkbox, $result->model);
@@ -151,7 +140,7 @@ final class CheckboxTest extends TestCase
     #[Test]
     public function rendersUncheckedBox(): void
     {
-        $checkbox = Checkbox::new('Accept')->withFocus(true);
+        $checkbox = Checkbox::new('Accept');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $checkbox->render($frame, $area, new RenderContext(Theme::dark()));
@@ -183,7 +172,7 @@ final class CheckboxTest extends TestCase
     public function focusedCheckboxUseCursorStyle(): void
     {
         $theme = Theme::dark();
-        $checkbox = Checkbox::new('A')->withFocus(true);
+        $checkbox = Checkbox::new('A');
         $frame = new Frame(20, 1);
         $checkbox->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused($theme));
 
@@ -222,7 +211,7 @@ final class CheckboxTest extends TestCase
         $area = new Rect(0, 0, 20, 1);
 
         $focusedBuffer = new Frame(20, 1);
-        Checkbox::new('A')->withFocus(true)->render($focusedBuffer, $area, RenderContext::focused($theme));
+        Checkbox::new('A')->render($focusedBuffer, $area, RenderContext::focused($theme));
 
         $checkedBuffer = new Frame(20, 1);
         Checkbox::new('A')->withChecked(true)->render($checkedBuffer, $area, new RenderContext($theme));
@@ -238,7 +227,7 @@ final class CheckboxTest extends TestCase
     #[Test]
     public function labelStartsAfterCheckMark(): void
     {
-        $checkbox = Checkbox::new('Hi')->withFocus(true);
+        $checkbox = Checkbox::new('Hi');
         $frame = new Frame(20, 1);
         // Use non-zero x offset so $column = putStyled() differs from $column += putStyled()
         $checkbox->render($frame, new Rect(2, 0, 18, 1), new RenderContext(Theme::dark()));
@@ -306,7 +295,7 @@ final class CheckboxTest extends TestCase
     public function supportsCustomToggleKeybinding(): void
     {
         $area = Rect::fromSize(20, 1);
-        $widget = Checkbox::new('label')->withFocus(true);
+        $widget = Checkbox::new('label');
 
         $afterEnter = $widget->update(new KeyMsg(Key::Enter), $area)->model;
         self::assertTrue($afterEnter->isChecked());
@@ -317,10 +306,5 @@ final class CheckboxTest extends TestCase
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
         self::assertTrue($afterCustom->isChecked());
-    }
-
-    protected function createFocusable(): Focusable
-    {
-        return Checkbox::new('Accept');
     }
 }

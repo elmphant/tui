@@ -339,7 +339,7 @@ abstract readonly class App implements RoutesFocus
         }
 
         if ($message instanceof MouseMsg) {
-            return $this->delegateMouse($message, $screenRect, $this->componentRegistry()->all());
+            return $this->delegateMouse($message, $screenRect, $this->componentRegistry()->all(), $holder);
         }
 
         if ($message instanceof FocusMsg) {
@@ -356,8 +356,8 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * The containers above the arriving component hear where below them it is,
-     * so a pane can bring it into view; the component itself hears the message.
+     * The containers above hear where below them the keyboard landed; the
+     * component itself hears the message.
      *
      * @param list<Component<Interactive>> $focusables
      *
@@ -699,6 +699,7 @@ abstract readonly class App implements RoutesFocus
         MouseMsg $message,
         Rect $screenRect,
         array $components,
+        ?ComponentId $holder = null,
     ): UpdateResult {
         $appResult = $this->onMouse($message, $screenRect);
         $current = $this->appModel($appResult);
@@ -712,6 +713,7 @@ abstract readonly class App implements RoutesFocus
             $rects,
             $message,
             $current->childDispatcher(),
+            $holder,
         );
 
         // Where the pointer landed is a question about the screen, so every bound
@@ -806,6 +808,7 @@ abstract readonly class App implements RoutesFocus
         array $rects,
         Message $message,
         ChildDispatcher $dispatcher,
+        ?ComponentId $holder = null,
     ): array {
         $updates = [];
         $commands = [];
@@ -826,7 +829,11 @@ abstract readonly class App implements RoutesFocus
                 continue;
             }
 
-            $dispatch = $dispatcher->dispatchOne($widget, $message, $rect);
+            $addressed = $message instanceof MouseMsg
+                ? $message->withKeyboardHere($holder?->equals($component->id) ?? false)
+                : $message;
+
+            $dispatch = $dispatcher->dispatchOne($widget, $addressed, $rect);
 
             if ($dispatch->changed) {
                 $updates[$key] = [$component, $dispatch->child];

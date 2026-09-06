@@ -89,7 +89,7 @@ final class TabBarTest extends TestCase
     public function theWheelStopsAtTheBottomOfATabsContent(): void
     {
         $area = new Rect(0, 0, 24, 9);
-        $tabBar = TabBar::new()->addTab('A')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('A');
 
         for ($index = 0; $index < 8; ++$index) {
             $tabBar = $tabBar->add(Text::new("row{$index}"));
@@ -116,7 +116,7 @@ final class TabBarTest extends TestCase
     {
         $area = new Rect(0, 0, 24, 9);
         // add() appends to the last tab, so the children belong to the active one.
-        $tabBar = TabBar::new()->addTab('A')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('A');
 
         for ($index = 0; $index < 8; ++$index) {
             $tabBar = $tabBar->add(Text::new("row{$index}"));
@@ -146,8 +146,7 @@ final class TabBarTest extends TestCase
     {
         $width = 20;
         $frame = new Frame($width, 8);
-        TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
-            ->render($frame, new Rect(0, 0, $width, 8), new RenderContext(Theme::dark()));
+        TabBar::new()->addTab('A')->addTab('B')->render($frame, new Rect(0, 0, $width, 8), new RenderContext(Theme::dark()));
 
         $bottom = '';
         for ($column = 0; $column < $width; ++$column) {
@@ -175,7 +174,7 @@ final class TabBarTest extends TestCase
         $theme = Theme::dark()->withFocusedBorder(BorderStyle::Double);
         $bar = TabBar::new()->addTab('A');
 
-        self::assertStringContainsString('╔', $this->screenWithTheme($bar->withFocus(true), $area, $theme, focused: true));
+        self::assertStringContainsString('╔', $this->screenWithTheme($bar, $area, $theme, focused: true));
         self::assertStringNotContainsString('╔', $this->screenWithTheme($bar, $area, $theme));
     }
 
@@ -183,7 +182,7 @@ final class TabBarTest extends TestCase
     public function aFocusedBarCanOverrideItsBorderStyle(): void
     {
         $accent = new Style(foreground: Color::hex('#ff8700'));
-        $bar = TabBar::new()->addTab('A')->withFocusedBorderStyle($accent)->withFocus(true);
+        $bar = TabBar::new()->addTab('A')->withFocusedBorderStyle($accent);
 
         $frame = new Frame(20, 8);
         $bar->render($frame, new Rect(0, 0, 20, 8), $this->focusedContext());
@@ -194,7 +193,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function aBarWithOneTabHasNothingToSwitchTo(): void
     {
-        $bar = TabBar::new()->addTab('Only')->withFocus(true);
+        $bar = TabBar::new()->addTab('Only');
 
         $result = $bar->update(new KeyMsg(Key::Right), new Rect(0, 0, 30, 10));
 
@@ -213,7 +212,7 @@ final class TabBarTest extends TestCase
         );
         self::assertStringContainsString(
             'to switch',
-            $this->screenOfTabBar($bar->withFocus(true), new Rect(0, 0, 40, 8), focused: true),
+            $this->screenOfTabBar($bar, new Rect(0, 0, 40, 8), focused: true),
         );
     }
 
@@ -261,7 +260,6 @@ final class TabBarTest extends TestCase
             $frame->foregrounds[0],
             'The frame can look active without the widget claiming the keyboard',
         );
-        self::assertFalse($bar->isFocused());
     }
 
     #[Test]
@@ -279,11 +277,10 @@ final class TabBarTest extends TestCase
     #[Test]
     public function theSwitchHintFollowsTheConfiguredKeybindings(): void
     {
-        $tabBar = TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
-            ->withKeybindings(new Keybindings([
-                Actions::TAB_PREVIOUS => ['pgup'],
-                Actions::TAB_NEXT => ['pgdn'],
-            ]));
+        $tabBar = TabBar::new()->addTab('A')->addTab('B')->withKeybindings(new Keybindings([
+            Actions::TAB_PREVIOUS => ['pgup'],
+            Actions::TAB_NEXT => ['pgdn'],
+        ]));
 
         $screen = $this->screenOfTabBar($tabBar, new Rect(0, 0, 40, 6), focused: true);
 
@@ -307,8 +304,6 @@ final class TabBarTest extends TestCase
                 'The theme decides the colour, so it can differ per theme',
             );
         }
-
-        self::assertFalse($bar->isFocused());
     }
 
     #[Test]
@@ -384,77 +379,16 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function isFocusedReturnsFalseByDefault(): void
-    {
-        self::assertFalse(TabBar::new()->isFocused());
-    }
-
-    #[Test]
     public function withPaddingReturnsNewInstance(): void
     {
         $tabBar = TabBar::new();
         self::assertNotSame($tabBar, $tabBar->withPadding(Spacing::all(1)));
     }
 
-    // ── Focus management ──
-
-    #[Test]
-    public function withFocusTrueSetsIsFocused(): void
-    {
-        $tabBar = TabBar::new()->addTab('Tab');
-        $focused = $tabBar->withFocus(true);
-        self::assertFalse($tabBar->isFocused());
-        self::assertTrue($focused->isFocused());
-    }
-
-    #[Test]
-    public function withFocusFalseUnsetsIsFocused(): void
-    {
-        $focused = TabBar::new()->addTab('Tab')->withFocus(true);
-        self::assertFalse($focused->withFocus(false)->isFocused());
-    }
-
-    #[Test]
-    public function withFocusTrueCallsFocusFirstInActiveTab(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createFocusableWidget())
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
-        self::assertTrue($tabBar->isFocused());
-    }
-
-    #[Test]
-    public function withFocusFalseBlursAllChildren(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
-        self::assertFalse($tabBar->withFocus(false)->isFocused());
-    }
-
-    #[Test]
-    public function withFocusOnTabWithNoFocusableChildren(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add(Text::new('Not focusable'))
-            ->withFocus(true);
-        self::assertTrue($tabBar->isFocused());
-    }
-
-    #[Test]
-    public function withFocusOnEmptyTabsDoesNotCrash(): void
-    {
-        self::assertTrue(TabBar::new()->withFocus(true)->isFocused());
-    }
-
     // ── Update routing ──
 
     #[Test]
-    public function updateWithUnknownMessageDelegatesToChildren(): void
+    public function anUnknownMessageLeavesTheBarAlone(): void
     {
         $tabBar = TabBar::new()->addTab('Tab');
         self::assertSame($tabBar, $tabBar->update(new TestMessage('test'), Rect::fromSize(40, 10))->model);
@@ -482,14 +416,14 @@ final class TabBarTest extends TestCase
     #[Test]
     public function rightKeyAdvancesTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     #[Test]
     public function leftKeyGoesBackOneTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 0, 40, 15);
         $at1 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         self::assertSame(0, $at1->update(new KeyMsg(Key::Left), $area)->model->selectedTab());
@@ -498,14 +432,14 @@ final class TabBarTest extends TestCase
     #[Test]
     public function leftWrapsToLastTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->addTab('Three')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->addTab('Three');
         self::assertSame(2, $tabBar->update(new KeyMsg(Key::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     #[Test]
     public function rightWrapsToFirstTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 0, 40, 15);
         $at1 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         self::assertSame(0, $at1->update(new KeyMsg(Key::Right), $area)->model->selectedTab());
@@ -514,7 +448,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function switchTabWithSingleTabReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('Only')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('Only');
         $area = new Rect(0, 0, 40, 15);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Right), $area)->model);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Left), $area)->model);
@@ -524,8 +458,7 @@ final class TabBarTest extends TestCase
     public function updateLeavesPanesAloneInAnAreaTooSmallToDrawThem(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
-            ->withFocus(true);
+            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'));
 
         $result = $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 40, 3));
 
@@ -537,64 +470,30 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
-            ->addTab('Two')->add(Text::new('Plain'))
-            ->withFocus(true);
+            ->addTab('Two')->add(Text::new('Plain'));
         self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 20))->model->selectedTab());
     }
 
-    // ── Tab key focus cycling ──
+    // ── Tab key ──
 
     #[Test]
-    public function tabAtLastFocusableReturnsSelfWouldWrap(): void
+    public function aTabKeyIsLeftForTheRingAbove(): void
     {
         $tabBar = TabBar::new()
             ->addTab('One')
-            ->add(Radio::new(['A', 'B'], 'R'))
-            ->withFocus(true);
-        self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 20))->model);
+            ->add(Radio::new(['A', 'B'], 'R'));
+
+        $result = $tabBar->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 20));
+
+        self::assertSame($tabBar, $result->model, 'an unanswered Tab falls through to App, which moves the flat ring');
+        self::assertNull($result->command);
     }
 
     #[Test]
-    public function shiftTabAtFirstFocusableReturnsSelfWouldWrap(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')
-            ->add(Radio::new(['A', 'B'], 'R'))
-            ->withFocus(true);
-        self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Tab, shift: true), new Rect(0, 0, 40, 20))->model);
-    }
-
-    #[Test]
-    public function tabKeyOnEmptyTabsReturnsSelf(): void
-    {
-        $tabBar = TabBar::new()->withFocus(true);
-        self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 20))->model);
-    }
-
-    // ── Delegation to focused child ──
-
-    #[Test]
-    public function delegateToActiveTabChildrenOnEmptyTabs(): void
+    public function aBarWithNoTabsAnswersNothing(): void
     {
         $tabBar = TabBar::new();
         self::assertSame($tabBar, $tabBar->update(new TestMessage('msg'), new Rect(0, 0, 40, 20))->model);
-    }
-
-    #[Test]
-    public function delegateToFocusedChildOnEmptyTabsFallsThrough(): void
-    {
-        $tabBar = TabBar::new()->withFocus(true);
-        self::assertSame($tabBar, $tabBar->update(new KeyMsg('x'), new Rect(0, 0, 40, 20))->model);
-    }
-
-    #[Test]
-    public function keyFallsThroughToTabSwitchWhenNoFocusedChild(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Text::new('A'))
-            ->addTab('Two')->add(Text::new('B'))
-            ->withFocus(true);
-        self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     // ── Scroll behavior ──
@@ -624,7 +523,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollOnEmptyTabsReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->withFocus(true);
+        $tabBar = TabBar::new();
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 30, 10))->model);
     }
 
@@ -635,7 +534,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 10; ++$i) {
             $tabBar = $tabBar->add(Text::new("L$i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 30, 10);
         $current = $tabBar;
         for ($i = 0; $i < 20; ++$i) {
@@ -651,14 +549,14 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollWithNoOverflowReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->add(Text::new('Short'))->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->add(Text::new('Short'));
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 30, 10))->model);
     }
 
     #[Test]
     public function unknownKeyInScrollReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->add(Text::new('x'))->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->add(Text::new('x'));
         self::assertSame($tabBar, $tabBar->update(new KeyMsg('z'), new Rect(0, 0, 30, 10))->model);
     }
 
@@ -667,14 +565,14 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clickOnTabSwitchesToIt(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         self::assertSame(1, $tabBar->update(new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     #[Test]
     public function aClickOnTheFirstColumnOfATabActivatesThatTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 0, 40, 15);
 
         self::assertSame(
@@ -689,7 +587,7 @@ final class TabBarTest extends TestCase
     {
         $labels = ['One', 'Two', 'Three'];
         $area = new Rect(0, 0, 40, 10);
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->addTab('Three')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->addTab('Three');
 
         $frame = new Frame(40, 10);
         $tabBar->render($frame, $area, $this->context());
@@ -708,68 +606,49 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clickOnTabAtYEqualsAreaY(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         self::assertSame(1, $tabBar->update(new MouseMsg(10, 0, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     #[Test]
     public function clickOnTabAtYEqualsAreaYPlusTwoIsNotTabStrip(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         self::assertSame(0, $tabBar->update(new MouseMsg(10, 2, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     #[Test]
     public function clickOnAlreadyActiveTabReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         self::assertSame($tabBar, $tabBar->update(new MouseMsg(3, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model);
     }
 
     #[Test]
     public function clickBeyondLastTabReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('A')->addTab('B')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('A')->addTab('B');
         self::assertSame($tabBar, $tabBar->update(new MouseMsg(30, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model);
-    }
-
-    #[Test]
-    public function clickOnTabWithFocusableChildrenFocusesThem(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
-            ->addTab('Two')->add(Radio::new(['C', 'D'], 'R2'))
-            ->withFocus(true);
-        self::assertSame(1, $tabBar->update(new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
-    }
-
-    #[Test]
-    public function clickOnTabWhenNotFocusedDoesNotFocusChildren(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
-            ->addTab('Two')->add(Radio::new(['C', 'D'], 'R2'));
-        self::assertSame(1, $tabBar->update(new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     #[Test]
     public function clickAtExactTabBoundaryLeftOfSecondTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         self::assertSame(1, $tabBar->update(new MouseMsg(8, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     #[Test]
     public function clickAtLastCellOfFirstTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         self::assertSame(0, $tabBar->update(new MouseMsg(6, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
     }
 
     #[Test]
     public function aClickWhereATabTooWideToBeDrawnWouldSitChangesNothing(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $tooNarrowForBoth = new Rect(0, 0, 13, 15);
 
         self::assertSame(0, $tabBar->update(new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left), $tooNarrowForBoth)->model->selectedTab());
@@ -778,7 +657,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clickOnTabWithAreaOffset(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         self::assertSame(1, $tabBar->update(new MouseMsg(14, 4, MouseAction::Press, MouseButton::Left), new Rect(5, 3, 40, 15))->model->selectedTab());
     }
 
@@ -787,7 +666,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function mouseWheelDownScrollsContent(): void
     {
-        $tabBar = $this->createOverflowingTabBarUnfocused();
+        $tabBar = $this->createOverflowingTabBar();
         self::assertNotSame($tabBar, $tabBar->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), new Rect(0, 0, 30, 10))->model);
     }
 
@@ -795,14 +674,14 @@ final class TabBarTest extends TestCase
     public function mouseWheelUpAfterDownScrolls(): void
     {
         $area = new Rect(0, 0, 30, 10);
-        $scrolled = $this->createOverflowingTabBarUnfocused()->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
+        $scrolled = $this->createOverflowingTabBar()->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
         self::assertNotSame($scrolled, $scrolled->update(new MouseMsg(5, 5, MouseAction::WheelUp, MouseButton::None), $area)->model);
     }
 
     #[Test]
     public function mouseWheelOutsideAreaIgnored(): void
     {
-        $tabBar = $this->createOverflowingTabBarUnfocused();
+        $tabBar = $this->createOverflowingTabBar();
         self::assertSame($tabBar, $tabBar->update(new MouseMsg(35, 5, MouseAction::WheelDown, MouseButton::None), new Rect(0, 0, 30, 10))->model);
     }
 
@@ -816,7 +695,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function mouseWheelUpAtTopReturnsSameInstance(): void
     {
-        $tabBar = $this->createOverflowingTabBarUnfocused();
+        $tabBar = $this->createOverflowingTabBar();
         $result = $tabBar->update(new MouseMsg(5, 5, MouseAction::WheelUp, MouseButton::None), new Rect(0, 0, 30, 10));
         // WheelUp at offset 0 is a no-op — with() elision returns $this
         self::assertSame($tabBar, $result->model);
@@ -845,58 +724,17 @@ final class TabBarTest extends TestCase
     // ── Mouse: Click in content area ──
 
     #[Test]
-    public function clickInContentWhenNotFocusedDelegates(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')
-            ->add($this->createFocusableWidget())
-            ->add($this->createFocusableWidget());
-        self::assertInstanceOf(UpdateResult::class, $tabBar->update(new MouseMsg(5, 6, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 30, 20)));
-    }
-
-    #[Test]
-    public function mouseReleaseDelegatesToChildren(): void
+    public function aMouseReleaseOverTheContentLeavesTheBarAlone(): void
     {
         $tabBar = TabBar::new()->addTab('One')->add(Text::new('Content'));
         self::assertSame($tabBar, $tabBar->update(new MouseMsg(5, 5, MouseAction::Release, MouseButton::Left), new Rect(0, 0, 30, 20))->model);
     }
 
     #[Test]
-    public function mouseMotionDelegatesToChildren(): void
+    public function aMouseMotionOverTheContentLeavesTheBarAlone(): void
     {
         $tabBar = TabBar::new()->addTab('Tab')->add(Text::new('Hi'));
         self::assertSame($tabBar, $tabBar->update(new MouseMsg(5, 5, MouseAction::Motion, MouseButton::None), new Rect(0, 0, 30, 10))->model);
-    }
-
-    #[Test]
-    public function clickOnNonFocusableChildDoesNotChangeFocus(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add(Text::new('Static'))
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
-        self::assertInstanceOf(UpdateResult::class, $tabBar->update(new MouseMsg(5, 3, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 30, 15)));
-    }
-
-    #[Test]
-    public function clickBelowAllChildrenDoesNotFocus(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
-        self::assertInstanceOf(UpdateResult::class, $tabBar->update(new MouseMsg(5, 10, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 30, 15)));
-    }
-
-    #[Test]
-    public function clickOutsideContentXBoundsDoesNotFocus(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
-        self::assertInstanceOf(UpdateResult::class, $tabBar->update(new MouseMsg(0, 5, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 30, 15)));
     }
 
     // ── Rendering: empty and small ──
@@ -1036,7 +874,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function rendersBaselineForNonFirstActiveTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 0, 30, 10);
         $tabBar2 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $frame = new Frame(30, 10);
@@ -1224,7 +1062,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 20; ++$i) {
             $tabBar = $tabBar->add(Text::new("Line$i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 30, 10);
         for ($i = 0; $i < 3; ++$i) {
             $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -1285,7 +1122,7 @@ final class TabBarTest extends TestCase
     public function focusedTabBarUsesFocusedBorderGlyphs(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('One')->withFocus(true)->render($frame, new Rect(0, 0, 30, 10), $this->context());
+        TabBar::new()->addTab('One')->render($frame, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame(Theme::dark()->focusedBorder->glyphs()->topLeft, $frame->characters[0]);
     }
 
@@ -1301,7 +1138,7 @@ final class TabBarTest extends TestCase
     public function focusedBorderForegroundApplied(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('One')->withFocus(true)->render($frame, new Rect(0, 0, 30, 10), $this->focusedContext());
+        TabBar::new()->addTab('One')->render($frame, new Rect(0, 0, 30, 10), $this->focusedContext());
         self::assertSame(Theme::dark()->focusedBorderStyle->foregroundValue(), $frame->foregrounds[0]);
     }
 
@@ -1335,7 +1172,7 @@ final class TabBarTest extends TestCase
     public function rendersFullHintWhenSpaceAvailable(): void
     {
         $frame = new Frame(40, 10);
-        TabBar::new()->addTab('One')->addTab('Two')->withFocus(true)->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
+        TabBar::new()->addTab('One')->addTab('Two')->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
         self::assertStringContainsString("\u{2190} \u{2192} to switch", $this->bufferRow($frame, 1, 40));
     }
 
@@ -1343,7 +1180,7 @@ final class TabBarTest extends TestCase
     public function rendersShortHintWhenLimitedSpace(): void
     {
         $frame = new Frame(34, 10);
-        TabBar::new()->addTab('First Tab')->addTab('Second Tab')->withFocus(true)->render($frame, new Rect(0, 0, 34, 10), $this->focusedContext());
+        TabBar::new()->addTab('First Tab')->addTab('Second Tab')->render($frame, new Rect(0, 0, 34, 10), $this->focusedContext());
         $row = $this->bufferRow($frame, 1, 34);
         self::assertStringContainsString("\u{2190} \u{2192}", $row);
         self::assertStringNotContainsString('to switch', $row);
@@ -1364,8 +1201,7 @@ final class TabBarTest extends TestCase
         // by the clipping. The hint must still render so users know hidden
         // tabs exist.
         $frame = new Frame(40, 10);
-        TabBar::new()->addTab('Very Long Tab Name')->addTab('Another Long Tab')->withFocus(true)
-            ->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
+        TabBar::new()->addTab('Very Long Tab Name')->addTab('Another Long Tab')->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
         self::assertStringContainsString("\u{2190}", $this->bufferRow($frame, 1, 40));
     }
 
@@ -1374,8 +1210,7 @@ final class TabBarTest extends TestCase
     {
         // 22-cell tab in a 22-wide area uses every column; no room for any hint.
         $frame = new Frame(22, 10);
-        TabBar::new()->addTab('Very Long Tab Name')->addTab('Another Long Tab')->withFocus(true)
-            ->render($frame, new Rect(0, 0, 22, 10), $this->context());
+        TabBar::new()->addTab('Very Long Tab Name')->addTab('Another Long Tab')->render($frame, new Rect(0, 0, 22, 10), $this->context());
         self::assertStringNotContainsString("\u{2190}", $this->bufferRow($frame, 1, 22));
     }
 
@@ -1383,7 +1218,7 @@ final class TabBarTest extends TestCase
     public function hintRenderedWithDimStyle(): void
     {
         $frame = new Frame(40, 10);
-        TabBar::new()->addTab('A')->addTab('B')->withFocus(true)->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
+        TabBar::new()->addTab('A')->addTab('B')->render($frame, new Rect(0, 0, 40, 10), $this->focusedContext());
         $row = $this->bufferRow($frame, 1, 40);
         $hintStart = mb_strpos($row, "\u{2190}");
         self::assertNotFalse($hintStart);
@@ -1469,7 +1304,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function rendersSecondTabActive(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->addTab('Three')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->addTab('Three');
         $area = new Rect(0, 0, 50, 10);
         $tabBar2 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $frame = new Frame(50, 10);
@@ -1485,8 +1320,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('One')->addTab('Two')
-            ->addTab('Three')->add(Text::new('Content3'))
-            ->withFocus(true);
+            ->addTab('Three')->add(Text::new('Content3'));
         $area = new Rect(0, 0, 50, 10);
         $tab3 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $tab3 = $tab3->update(new KeyMsg(Key::Right), $area)->model;
@@ -1531,17 +1365,6 @@ final class TabBarTest extends TestCase
         self::assertSame($theme->borderStyle->foregroundValue(), $frame->foregrounds[1 * 30 + 4]);
     }
 
-    // ── blurAllTabs optimization ──
-
-    #[Test]
-    public function blurAllTabsWhenNoFocusedChildrenIsEfficient(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Text::new('A'))
-            ->addTab('Two')->add(Text::new('B'));
-        self::assertFalse($tabBar->withFocus(false)->isFocused());
-    }
-
     // ── clampedScrollOffset ──
 
     #[Test]
@@ -1551,7 +1374,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 10; ++$i) {
             $tabBar = $tabBar->add(Text::new("L$i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 30, 10);
         $current = $tabBar;
         for ($i = 0; $i < 20; ++$i) {
@@ -1851,7 +1673,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 10; ++$i) {
             $tabBar = $tabBar->add(Text::new("L$i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 20, 10);
         $current = $tabBar;
         $scrollCount = 0;
@@ -1873,45 +1694,11 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 10; ++$i) {
             $tabBar = $tabBar->add($this->createMarkerWidget("$i", Constraint::exact(1)));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 20, 10);
         $scrolled = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
         $frame = new Frame(20, 10);
         $scrolled->render($frame, $area, $this->context());
         self::assertSame('1', $frame->characters[3 * 20 + 1]);
-    }
-
-    // ── L699: focusFirstInActiveTab early return ──
-
-    #[Test]
-    public function focusFirstWithOnlyNonFocusableChildrenStillFocuses(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')
-            ->add(Text::new('Static'))
-            ->withFocus(true);
-        self::assertTrue($tabBar->isFocused());
-    }
-
-    #[Test]
-    public function blurAllTabsWithNoFocusedChildrenReturnsSameState(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Text::new('Static'))
-            ->addTab('Two')->add(Text::new('Static2'));
-        self::assertFalse($tabBar->withFocus(false)->isFocused());
-    }
-
-    #[Test]
-    public function focusableChildrenOfReturnsEmptyForNonFocusableOnlyTab(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add(Text::new('A'))
-            ->add(Text::new('B'))
-            ->withFocus(true);
-        $result = $tabBar->update(new KeyMsg(Key::Tab), new Rect(0, 0, 30, 20));
-        self::assertSame($tabBar, $result->model);
     }
 
     // ── Mixed exact+min+flex ──
@@ -1955,18 +1742,6 @@ final class TabBarTest extends TestCase
         self::assertSame('X', $frame->characters[4 * 20 + 2]);
     }
 
-    // ── L112: MatchArmRemoval — unfocused KeyMsg must not delegate to children ──
-
-    #[Test]
-    public function unfocusedKeyMsgDoesNotDelegateToActiveTabChildren(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createInteractiveWidget());
-        $result = $tabBar->update(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 20));
-        self::assertSame($tabBar, $result->model);
-    }
-
     // ── L197: GreaterThan — exact equality of totalHeight and contentArea->height means no scroll ──
 
     #[Test]
@@ -1976,7 +1751,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 16; ++$i) {
             $tabBar = $tabBar->add(Text::new("L$i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 40, 20);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), $area)->model);
     }
@@ -1990,7 +1764,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 20; ++$i) {
             $tabBar = $tabBar->add(Text::new("L$i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 40, 20);
 
         $current = $tabBar;
@@ -2024,7 +1797,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clickAtYBelowAreaYDoesNotSwitchTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 5, 40, 15);
         $result = $tabBar->update(
             new MouseMsg(10, 4, MouseAction::Press, MouseButton::Left),
@@ -2036,7 +1809,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clickAtYAboveAreaYPlusOneDoesNotSwitchTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 5, 40, 15);
         $result = $tabBar->update(
             new MouseMsg(10, 8, MouseAction::Press, MouseButton::Left),
@@ -2048,7 +1821,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clickAtExactlyAreaYPlusOneSwitchesTab(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 5, 40, 15);
         $result = $tabBar->update(
             new MouseMsg(10, 6, MouseAction::Press, MouseButton::Left),
@@ -2085,7 +1858,7 @@ final class TabBarTest extends TestCase
             $base = $base->add(Text::new("L$i"));
         }
 
-        $keyTabBar = $base->withFocus(true);
+        $keyTabBar = $base;
         $keyCurrent = $keyTabBar;
         $keyScrollCount = 0;
         for ($i = 0; $i < 100; ++$i) {
@@ -2097,7 +1870,7 @@ final class TabBarTest extends TestCase
             ++$keyScrollCount;
         }
 
-        $wheelTabBar = $base->withFocus(true);
+        $wheelTabBar = $base;
         $wheelCurrent = $wheelTabBar;
         for ($i = 0; $i < $keyScrollCount + 5; ++$i) {
             $wheelCurrent = $wheelCurrent->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
@@ -2179,37 +1952,20 @@ final class TabBarTest extends TestCase
         );
     }
 
-    // ── L250: LogicalAnd x2 — click in content area requires focus and correct area ──
+    // ── Clicks below the strip ──
 
     #[Test]
-    public function clickInContentAreaWhenUnfocusedDoesNotUpdateFocus(): void
+    public function aClickBelowTheStripIsNotTheStripsToAnswer(): void
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
             ->add($this->createTrackableFocusable('A'))
             ->add($this->createTrackableFocusable('B'));
         $area = new Rect(0, 0, 40, 20);
-        $result = $tabBar->update(
-            new MouseMsg(5, 5, MouseAction::Press, MouseButton::Left),
-            $area,
-        );
-        self::assertSame($tabBar, $result->model);
-    }
 
-    #[Test]
-    public function clickOutsideContentRectWhenFocusedDoesNotUpdateFocus(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->add($this->createTrackableFocusable('B'))
-            ->withFocus(true);
-        $area = new Rect(0, 0, 40, 20);
-        $result = $tabBar->update(
-            new MouseMsg(50, 10, MouseAction::Press, MouseButton::Left),
-            $area,
-        );
-        self::assertSame($tabBar, $result->model);
+        $result = $tabBar->update(new MouseMsg(5, 5, MouseAction::Press, MouseButton::Left), $area);
+
+        self::assertSame($tabBar, $result->model, 'the child under the pointer is a stop of its own, reached by the runtime');
     }
 
     // ── L264: MBString — mb_strlen in handleTabClick for multi-byte labels ──
@@ -2219,8 +1975,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab("\u{00e4}\u{00f6}\u{00fc}")
-            ->addTab('Two')
-            ->withFocus(true);
+            ->addTab('Two');
         $area = new Rect(0, 0, 40, 15);
         $clickOnSecond = $tabBar->update(
             new MouseMsg(8, 1, MouseAction::Press, MouseButton::Left),
@@ -2234,8 +1989,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab("\u{00e4}\u{00f6}\u{00fc}")
-            ->addTab('Two')
-            ->withFocus(true);
+            ->addTab('Two');
         $area = new Rect(0, 0, 40, 15);
         $clickOnFirst = $tabBar->update(
             new MouseMsg(3, 1, MouseAction::Press, MouseButton::Left),
@@ -2245,7 +1999,7 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function clickOnTabWhenUnfocusedWithFocusableChildrenDoesNotFocusThem(): void
+    public function aTabClickShowsTheNewPagesChildren(): void
     {
         $tabBar = TabBar::new()
             ->addTab('One')
@@ -2261,22 +2015,6 @@ final class TabBarTest extends TestCase
         $frame = new Frame(40, 20);
         $switched->model->render($frame, $area, $this->context());
         self::assertSame('x', $frame->characters[3 * 40 + 1]);
-    }
-
-    // ── L344: LogicalAnd — delegateToFocusedChild only delegates to Interactive+Focusable+isFocused ──
-
-    #[Test]
-    public function delegateToFocusedChildDoesNotDelegateToUnfocused(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createFocusableWidget())
-            ->add($this->createAlwaysReactiveFocusable())
-            ->withFocus(true);
-        $area = new Rect(0, 0, 40, 20);
-
-        $result = $tabBar->update(new KeyMsg('x'), $area);
-        self::assertSame($tabBar, $result->model);
     }
 
     // ── L443: MBString — mb_strlen in renderTabStrip ──
@@ -2334,11 +2072,10 @@ final class TabBarTest extends TestCase
     {
         $glyphs = Theme::dark()->border->glyphs();
         $buffer1 = new Frame(30, 10);
-        TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
-            ->render($buffer1, new Rect(0, 0, 30, 10), $this->context());
+        TabBar::new()->addTab('A')->addTab('B')->render($buffer1, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame($glyphs->vertical, $buffer1->characters[2 * 30 + 0]);
 
-        $tabBar = TabBar::new()->addTab('A')->addTab('B')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('A')->addTab('B');
         $tabBar = $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 30, 10))->model;
         $buffer2 = new Frame(30, 10);
         $tabBar->render($buffer2, new Rect(0, 0, 30, 10), $this->context());
@@ -2391,7 +2128,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function baselineTabXAccumulatesThirdTab(): void
     {
-        $tabBar = TabBar::new()->addTab('A')->addTab('BB')->addTab('CCC')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('A')->addTab('BB')->addTab('CCC');
         $area = new Rect(0, 0, 50, 10);
         $tabBar = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $tabBar = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
@@ -2528,7 +2265,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 20; ++$i) {
             $tabBar = $tabBar->add(Text::new("R$i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 30, 10);
         $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
         $frame = new Frame(30, 10);
@@ -2560,7 +2296,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 20; ++$i) {
             $tabBar = $tabBar->add(Text::new("Q$i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 30, 10);
         for ($i = 0; $i < 5; ++$i) {
             $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -2581,7 +2316,6 @@ final class TabBarTest extends TestCase
         for ($i = 0; $i < 30; ++$i) {
             $tabBar = $tabBar->add(Text::new("Line $i"));
         }
-        $tabBar = $tabBar->withFocus(true);
         $area = new Rect(0, 0, 30, 10);
         $buffer0 = new Frame(30, 10);
         $tabBar->render($buffer0, $area, $this->context());
@@ -2665,37 +2399,11 @@ final class TabBarTest extends TestCase
             ->addTab('Second')
             ->add(Text::new('InSecond'));
         $area = new Rect(0, 0, 40, 20);
-        $focused = $tabBar->withFocus(true);
+        $focused = $tabBar;
         $switched = $focused->update(new KeyMsg(Key::Right), $area)->model;
         $frame = new Frame(40, 20);
         $switched->render($frame, $area, $this->context());
         self::assertSame('I', $frame->characters[3 * 40 + 1]);
-    }
-
-    #[Test]
-    public function tabIsLeftToWhoeverWalksTheRing(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createFocusableWidget())
-            ->add(Text::new('Plain'));
-
-        $area = new Rect(0, 0, 40, 20);
-
-        self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Tab), $area)->model, 'Each child the keyboard can reach is a stop of its own');
-    }
-
-    #[Test]
-    public function withFocusRemembersWhetherItWasHandedTheKeyboard(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->add($this->createTrackableFocusable('B'));
-        $focused = $tabBar->withFocus(true);
-
-        self::assertTrue($focused->isFocused());
-        self::assertFalse($focused->withFocus(false)->isFocused());
     }
 
     // ── update() match arms: MouseMsg, default ──
@@ -2719,8 +2427,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()
             ->addTab('A')
             ->addTab('B')
-            ->addTab('C')
-            ->withFocus(true);
+            ->addTab('C');
         $area = new Rect(0, 0, 40, 15);
         $forward = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         self::assertSame(1, $forward->selectedTab());
@@ -2734,8 +2441,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()
             ->addTab('A')
             ->addTab('B')
-            ->addTab('C')
-            ->withFocus(true);
+            ->addTab('C');
         $area = new Rect(0, 0, 40, 15);
         $wrapLeft = $tabBar->update(new KeyMsg(Key::Left), $area)->model;
         self::assertSame(2, $wrapLeft->selectedTab());
@@ -2769,7 +2475,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollNewOffsetEqualsOldReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab')->add(Text::new('Short'))->withFocus(true);
+        $tabBar = TabBar::new()->addTab('Tab')->add(Text::new('Short'));
         $area = new Rect(0, 0, 30, 10);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Up), $area)->model);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), $area)->model);
@@ -2855,7 +2561,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function tabClickCellWidthIncludesPadding(): void
     {
-        $tabBar = TabBar::new()->addTab('AB')->addTab('CD')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('AB')->addTab('CD');
         $area = new Rect(0, 0, 40, 15);
         $clickOnSecond = $tabBar->update(
             new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left),
@@ -2877,8 +2583,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()
             ->addTab('AA')
             ->addTab('BB')
-            ->addTab('CC')
-            ->withFocus(true);
+            ->addTab('CC');
         $area = new Rect(0, 0, 40, 15);
         $clickOnThird = $tabBar->update(
             new MouseMsg(13, 1, MouseAction::Press, MouseButton::Left),
@@ -2887,38 +2592,8 @@ final class TabBarTest extends TestCase
         self::assertSame(2, $clickOnThird->model->selectedTab());
     }
 
-    // ── delegateToFocusedChild: returns null when no focused child exists ──
-
     #[Test]
-    public function keyFallsThroughWhenNoChildHandlesIt(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')
-            ->addTab('Two')
-            ->add(Text::new('Static'))
-            ->withFocus(true);
-        $area = new Rect(0, 0, 40, 15);
-        $result = $tabBar->update(new KeyMsg(Key::Right), $area);
-        self::assertSame(1, $result->model->selectedTab());
-    }
-
-    // ── delegateToActiveTabChildren: skips non-Interactive ──
-
-    #[Test]
-    public function delegateSkipsTextWidgets(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add(Text::new('Static'))
-            ->add(Text::new('Also static'));
-        $result = $tabBar->update(new TestMessage('msg'), new Rect(0, 0, 40, 20));
-        self::assertSame($tabBar, $result->model);
-    }
-
-    // ── delegateToActiveTabChildren: childChanged flag ──
-
-    #[Test]
-    public function delegateToActiveTabChildrenReturnsSelfWhenNoChange(): void
+    public function aChildThatAnswersWithItselfLeavesTheBarAlone(): void
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
@@ -2927,29 +2602,12 @@ final class TabBarTest extends TestCase
         self::assertSame($tabBar, $result->model);
     }
 
-    // ── blurAllTabs: only returns new instance when children actually changed ──
-
-    #[Test]
-    public function blurAllTabsReturnsNewInstanceWhenChildrenWereFocused(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->withFocus(true);
-        $blurred = $tabBar->withFocus(false);
-        self::assertFalse($blurred->isFocused());
-        $area = new Rect(0, 0, 40, 20);
-        $frame = new Frame(40, 20);
-        $blurred->render($frame, $area, $this->context());
-        self::assertSame('a', $frame->characters[3 * 40 + 1]);
-    }
-
     // ── handleScroll: empty tabs guard ──
 
     #[Test]
     public function handleScrollOnEmptyTabsReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->withFocus(true);
+        $tabBar = TabBar::new();
         $area = new Rect(0, 0, 30, 10);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Up), $area)->model);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), $area)->model);
@@ -3015,12 +2673,11 @@ final class TabBarTest extends TestCase
     // ── handleMouse: click outside content area falls through to delegation ──
 
     #[Test]
-    public function mouseClickOutsideContentAreaDelegatesToChildren(): void
+    public function aClickOutsideTheBarLeavesItAlone(): void
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
-            ->add($this->createInteractiveWidget())
-            ->withFocus(true);
+            ->add($this->createInteractiveWidget());
         $area = new Rect(0, 0, 40, 20);
         $result = $tabBar->update(
             new MouseMsg(50, 10, MouseAction::Press, MouseButton::Left),
@@ -3048,8 +2705,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()
             ->addTab('X')
             ->addTab('YY')
-            ->addTab('ZZZ')
-            ->withFocus(true);
+            ->addTab('ZZZ');
         $area = new Rect(0, 0, 50, 15);
         $clickOnSecond = $tabBar->update(
             new MouseMsg(6, 1, MouseAction::Press, MouseButton::Left),
@@ -3068,7 +2724,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function tabClickOnActiveTabReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab')->addTab('Other')->withFocus(true);
+        $tabBar = TabBar::new()->addTab('Tab')->addTab('Other');
         $area = new Rect(0, 0, 40, 15);
         self::assertSame(
             $tabBar,
@@ -3076,27 +2732,12 @@ final class TabBarTest extends TestCase
         );
     }
 
-    // ── delegateToFocusedChild: instanceof checks ──
-
-    #[Test]
-    public function delegateToFocusedChildRequiresInteractiveAndFocusableAndFocused(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add(Text::new('Not interactive'))
-            ->add($this->createFocusableWidget())
-            ->withFocus(true);
-        $area = new Rect(0, 0, 40, 20);
-        $result = $tabBar->update(new KeyMsg('x'), $area);
-        self::assertSame($tabBar, $result->model);
-    }
-
     // ── switchTab: count <= 1 check ──
 
     #[Test]
     public function switchTabWithNoTabsReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->withFocus(true);
+        $tabBar = TabBar::new();
         $area = new Rect(0, 0, 40, 15);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Right), $area)->model);
     }
@@ -3113,196 +2754,17 @@ final class TabBarTest extends TestCase
         );
     }
 
-    // ── delegateToFocusedChild: multiple children, only focused gets update ──
-
     #[Test]
-    public function delegateToFocusedChildOnlyDelegatesToFocusedOne(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->add($this->createAlwaysReactiveFocusable())
-            ->withFocus(true);
-        $area = new Rect(0, 0, 40, 20);
-        $result = $tabBar->update(new KeyMsg('z'), $area);
-        self::assertSame($tabBar, $result->model);
-    }
-
-    // ── handleTabClick: focus condition requires both focusable children AND focused ──
-
-    #[Test]
-    public function tabClickFocusConditionRequiresBothFocusableAndFocused(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')
-            ->addTab('Two')
-            ->add($this->createTrackableFocusable('X'));
-        $area = new Rect(0, 0, 40, 20);
-        $switched = $tabBar->update(
-            new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left),
-            $area,
-        );
-        self::assertSame(1, $switched->model->selectedTab());
-        $frame = new Frame(40, 20);
-        $switched->model->render($frame, $area, $this->context());
-        self::assertSame('x', $frame->characters[3 * 40 + 1]);
-    }
-
-    // ── L112: MatchArmRemoval — unfocused KeyMsg must return self, not fall through to default ──
-
-    #[Test]
-    public function unfocusedKeyMsgReturnsSelfNotDelegateToChildren(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createInteractiveWidget());
-        $result = $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 40, 20));
-        self::assertSame($tabBar, $result->model);
-        $result2 = $tabBar->update(new KeyMsg('z'), new Rect(0, 0, 40, 20));
-        self::assertSame($tabBar, $result2->model);
-    }
-
-    #[Test]
-    public function unfocusedKeyMsgDoesNotReachKeyReactiveInteractive(): void
+    public function aKeyTheStripDoesNotAnswerReachesTheActivePaneOnly(): void
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
             ->add($this->createKeyReactiveInteractive());
-        $area = new Rect(0, 0, 40, 20);
-        $result = $tabBar->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame($tabBar, $result->model);
-    }
 
-    // ── L250: LogicalAnd — click in content must require all three conditions ──
+        $result = $tabBar->update(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 20));
 
-    #[Test]
-    public function clickInContentRequiresIsClick(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->add($this->createTrackableFocusable('B'))
-            ->withFocus(true);
-        $area = new Rect(0, 0, 40, 20);
-        $motionResult = $tabBar->update(
-            new MouseMsg(5, 5, MouseAction::Motion, MouseButton::None),
-            $area,
-        );
-        self::assertSame($tabBar, $motionResult->model);
-    }
-
-    #[Test]
-    public function clickInContentRequiresInRect(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->add($this->createTrackableFocusable('B'))
-            ->withFocus(true);
-        $area = new Rect(0, 0, 40, 20);
-        $outsideResult = $tabBar->update(
-            new MouseMsg(50, 10, MouseAction::Press, MouseButton::Left),
-            $area,
-        );
-        self::assertSame($tabBar, $outsideResult->model);
-    }
-
-    #[Test]
-    public function clickInContentRequiresFocused(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->add($this->createTrackableFocusable('B'));
-        $area = new Rect(0, 0, 40, 20);
-        $unfocusedResult = $tabBar->update(
-            new MouseMsg(5, 5, MouseAction::Press, MouseButton::Left),
-            $area,
-        );
-        self::assertSame($tabBar, $unfocusedResult->model);
-    }
-
-    // ── L713: ReturnRemoval — focusFirstInActiveTab with no focusable children ──
-
-    #[Test]
-    public function focusFirstWithNoFocusableChildrenReturnsBluuredState(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Text::new('Static'))
-            ->addTab('Two')->add(Text::new('Also static'));
-        $focused = $tabBar->withFocus(true);
-        self::assertTrue($focused->isFocused());
-    }
-
-    // ── L753: FalseValue — blurAllTabs changed = false must not start true ──
-
-    #[Test]
-    public function blurAllTabsWithNoFocusedChildrenReturnsSameInstance(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Text::new('A'))
-            ->addTab('Two')->add(Text::new('B'));
-        $focused = $tabBar->withFocus(true);
-        $blurred = $focused->withFocus(false);
-        $doubleBlurred = $blurred->withFocus(false);
-        self::assertFalse($doubleBlurred->isFocused());
-    }
-
-    // ── L757: FalseValue — childChanged = false must not start true ──
-
-    #[Test]
-    public function blurAllTabsChildChangedFlagMustStartFalse(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Text::new('Static1'))
-            ->addTab('Two')->add(Text::new('Static2'))
-            ->addTab('Three')->add(Text::new('Static3'));
-        $focused = $tabBar->withFocus(true);
-        $blurred = $focused->withFocus(false);
-        $reblurred = $blurred->withFocus(false);
-        self::assertFalse($reblurred->isFocused());
-    }
-
-    // ── L773: ReturnRemoval — blurAllTabs must return $this when no changes ──
-
-    #[Test]
-    public function blurAllTabsReturnsSelfWhenNothingToBlur(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add(Text::new('Static'));
-        $result1 = $tabBar->withFocus(false);
-        $result2 = $result1->withFocus(false);
-        self::assertFalse($result1->isFocused());
-        self::assertFalse($result2->isFocused());
-    }
-
-    #[Test]
-    public function blurAllTabsWithUnfocusedFocusableChildReturnsSelf(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->add($this->createTrackableFocusable('B'));
-        $blurred = $tabBar->withFocus(false);
-        $area = new Rect(0, 0, 40, 20);
-        $buffer1 = new Frame(40, 20);
-        $blurred->render($buffer1, $area, $this->context());
-        self::assertSame('a', $buffer1->characters[3 * 40 + 1]);
-        self::assertSame('b', $buffer1->characters[4 * 40 + 1]);
-    }
-
-    #[Test]
-    public function blurAllTabsWithNonFocusableOnlyChildrenDoesNotRecreate(): void
-    {
-        $tabBar = TabBar::new()
-            ->addTab('One')->add(Text::new('A'))
-            ->addTab('Two')->add(Text::new('B'));
-        $tabBarChildrenUntouched = $tabBar->withFocus(false);
-        $area = new Rect(0, 0, 40, 20);
-        $frame = new Frame(40, 20);
-        $tabBarChildrenUntouched->render($frame, $area, $this->context());
-        self::assertSame('A', $frame->characters[3 * 40 + 1]);
+        self::assertSame($tabBar, $result->model, 'the pane answers its own scroll keys and hands nothing to its children');
+        self::assertNull($result->command);
     }
 
     #[Test]
@@ -3320,7 +2782,7 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function delegateToActiveTabChildrenWithNoCommandsReturnsNull(): void
+    public function anIdleChildProducesNoCommand(): void
     {
         $tabBar = TabBar::new()
             ->addTab('Tab')
@@ -3334,7 +2796,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function aScrolledTabBarPlacesItsChildrenHigherUp(): void
     {
-        $tabBar = $this->createOverflowingTabBarUnfocused();
+        $tabBar = $this->createOverflowingTabBar();
         $area = new Rect(0, 0, 30, 10);
 
         $scrolled = $tabBar->update(
@@ -3362,7 +2824,7 @@ final class TabBarTest extends TestCase
     public function supportsCustomTabNextKeybinding(): void
     {
         $area = Rect::fromSize(40, 10);
-        $widget = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $widget = TabBar::new()->addTab('One')->addTab('Two');
 
         $afterDefault = $widget->update(new KeyMsg(Key::Right), $area)->model;
         $activeAfterDefault = (new ReflectionProperty($afterDefault, 'selectedTab'))->getValue($afterDefault);
@@ -3380,7 +2842,7 @@ final class TabBarTest extends TestCase
     public function supportsCustomTabPrevKeybinding(): void
     {
         $area = Rect::fromSize(40, 10);
-        $widget = TabBar::new()->addTab('One')->addTab('Two')->withFocus(true);
+        $widget = TabBar::new()->addTab('One')->addTab('Two');
         $widget = $widget->withSelectedTab(1);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Left), $area)->model;
@@ -3470,12 +2932,10 @@ final class TabBarTest extends TestCase
         // Radio cursor to the last option, the cursor row would otherwise be
         // outside the visible window — the TabBar must scroll its tab content
         // so the cursor stays in view.
-        $radio = Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rosé Pine'], 'Theme')
-            ->withFocus(true);
+        $radio = Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rosé Pine'], 'Theme');
         $tabBar = TabBar::new()
             ->addTab('Theme')
-            ->add($radio)
-            ->withFocus(true);
+            ->add($radio);
 
         $area = new Rect(0, 0, 40, 8); // tabStrip 3 + content 4 + bottom border 1
         // Move cursor 4 times down (j or arrow); active option becomes Rosé Pine.
@@ -3510,8 +2970,7 @@ final class TabBarTest extends TestCase
 
         $tabBar = TabBar::new()
             ->addTab('About')
-            ->add(Paragraph::fromLines($lines))
-            ->withFocus(true);
+            ->add(Paragraph::fromLines($lines));
 
         $area = new Rect(0, 0, 40, 8);
         $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -3551,8 +3010,7 @@ final class TabBarTest extends TestCase
 
         $tabBar = TabBar::new()
             ->addTab('About')
-            ->add($layout)
-            ->withFocus(true);
+            ->add($layout);
 
         $area = new Rect(0, 0, 40, 8);
         $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -3577,8 +3035,7 @@ final class TabBarTest extends TestCase
     public function switchingTabOnASingleTabBarIsIdentity(): void
     {
         $tabBar = TabBar::new()->addTab('One')
-            ->add(Radio::new(['a', 'b']))
-            ->withFocus(true);
+            ->add(Radio::new(['a', 'b']));
 
         $result = $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15));
 
@@ -3589,8 +3046,7 @@ final class TabBarTest extends TestCase
     public function clickingTheActiveTabHeaderIsIdentity(): void
     {
         $tabBar = TabBar::new()->addTab('One')
-            ->add(Radio::new(['a', 'b']))
-            ->withFocus(true);
+            ->add(Radio::new(['a', 'b']));
 
         $result = $tabBar->update(new MouseMsg(3, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15));
 
@@ -3601,8 +3057,7 @@ final class TabBarTest extends TestCase
     public function cursorVisibleInsideTheViewportKeepsTheScrollOffset(): void
     {
         $tabBar = TabBar::new()->addTab('One')
-            ->add($this->cursorJumpChild(4, 5))
-            ->withFocus(true);
+            ->add($this->cursorJumpChild(4, 5));
         $tabs = (new ReflectionProperty(TabBar::class, 'tabs'))->getValue($tabBar);
         // Six rows of content in a four-row viewport, so three is as far as it scrolls.
         $tabBar = $tabBar->withTabs([$tabs[0]->withPane($tabs[0]->pane->withScrollOffset(3))]);
@@ -3617,8 +3072,7 @@ final class TabBarTest extends TestCase
     public function zeroHeightViewportNeverAdjustsTheScrollOffset(): void
     {
         $tabBar = TabBar::new()->addTab('One')
-            ->add($this->cursorJumpChild(0, 4))
-            ->withFocus(true);
+            ->add($this->cursorJumpChild(0, 4));
         $area = new Rect(0, 0, 40, 4); // content height = 4 - 3 - 1 = 0
 
         $result = $tabBar->update(new KeyMsg('x'), $area)->model;
@@ -3642,8 +3096,7 @@ final class TabBarTest extends TestCase
     {
         $width = 26;
         $frame = new Frame($width, 6);
-        TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
-            ->render($frame, new Rect(0, 0, $width, 6), $this->focusedContext());
+        TabBar::new()->addTab('A')->addTab('B')->render($frame, new Rect(0, 0, $width, 6), $this->focusedContext());
 
         $labelRow = '';
         for ($column = 0; $column < $width; ++$column) {
@@ -3713,8 +3166,7 @@ final class TabBarTest extends TestCase
     private function screenAtWidth(int $width): string
     {
         $frame = new Frame($width, 6);
-        TabBar::new()->addTab('A')->addTab('B')->withFocus(true)
-            ->render($frame, new Rect(0, 0, $width, 6), $this->focusedContext());
+        TabBar::new()->addTab('A')->addTab('B')->render($frame, new Rect(0, 0, $width, 6), $this->focusedContext());
 
         $screen = '';
         for ($row = 0; $row < 6; ++$row) {
@@ -3767,78 +3219,16 @@ final class TabBarTest extends TestCase
             $tabBar = $tabBar->add(Text::new("Line $i"));
         }
 
-        return $tabBar->withFocus(true);
-    }
-
-    private function createOverflowingTabBarUnfocused(): TabBar
-    {
-        $tabBar = TabBar::new()->addTab('One');
-        for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Line $i"));
-        }
-
         return $tabBar;
-    }
-
-    private function createTabConsumingFocusable(): Focusable
-    {
-        return new class(false, false) implements Focusable {
-            public function __construct(
-                private readonly bool $focused,
-                private readonly bool $consumed,
-            ) {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($focused, $this->consumed);
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact(1), Constraint::exact(1));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-                $frame->putString($area->x, $area->y, $this->consumed ? 'consumed' : 'waiting');
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                if (!$message instanceof KeyMsg || $message->key !== Key::Tab) {
-                    return new UpdateResult($this);
-                }
-
-                return new UpdateResult(new static($this->focused, true));
-            }
-        };
     }
 
     // ─── Helper factories ───
 
     private function createTrackableFocusable(string $label): Focusable
     {
-        return new class($label, false) implements Focusable {
-            public function __construct(
-                private readonly string $label,
-                private readonly bool $focused,
-            ) {
-            }
-
-            public function isFocused(): bool
+        return new class($label) implements Focusable {
+            public function __construct(private readonly string $label)
             {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($this->label, $focused);
             }
 
             public function sizing(): Sizing
@@ -3848,118 +3238,11 @@ final class TabBarTest extends TestCase
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
-                $display = $this->focused ? strtoupper($this->label) : strtolower($this->label);
-                $frame->putString($area->x, $area->y, $display);
+                $frame->putString($area->x, $area->y, $context->hasFocus() ? strtoupper($this->label) : strtolower($this->label));
             }
 
             public function update(Message $message, Rect $area): UpdateResult
             {
-                return new UpdateResult($this);
-            }
-        };
-    }
-
-    private function createAlwaysReactiveFocusable(): Focusable
-    {
-        return new class(false, 0) implements Focusable {
-            public function __construct(
-                private readonly bool $focused,
-                private readonly int $counter,
-            ) {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($focused, $this->counter);
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                return new UpdateResult(new static($this->focused, $this->counter + 1));
-            }
-        };
-    }
-
-    private function createFocusableWidget(bool $focused = false): Focusable
-    {
-        return new class($focused) implements Focusable {
-            public function __construct(private readonly bool $focused)
-            {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($focused);
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                return new UpdateResult($this);
-            }
-        };
-    }
-
-    private function createFocusableWidgetWithCommand(): Focusable
-    {
-        return new class implements Focusable {
-            private bool $focused = false;
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                $clone = clone $this;
-                $clone->focused = $focused;
-
-                return $clone;
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                if ($message instanceof KeyMsg && $message->key === Key::Enter) {
-                    return new UpdateResult(clone $this, Cmd::quit());
-                }
-
                 return new UpdateResult($this);
             }
         };
@@ -4050,72 +3333,6 @@ final class TabBarTest extends TestCase
         };
     }
 
-    private function createAreaTrackingFocusable(string $label, int $height): Focusable
-    {
-        return new class($label, $height, true, 0) implements Focusable {
-            public function __construct(
-                private readonly string $label,
-                private readonly int $height,
-                private readonly bool $focused,
-                private readonly int $receivedY,
-            ) {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($this->label, $this->height, $focused, $this->receivedY);
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact($this->height), Constraint::exact($this->height));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                return new UpdateResult(new static($this->label, $this->height, $this->focused, $area->y));
-            }
-        };
-    }
-
-    private function createAreaTrackingInteractive(int $height): Interactive
-    {
-        return new class($height, 0) implements Interactive {
-            public function __construct(
-                private readonly int $height,
-                private readonly int $receivedY,
-            ) {
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact($this->height), Constraint::exact($this->height));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                if ($message instanceof TestMessage && $message->value === 'track-area') {
-                    return new UpdateResult(new static($this->height, $area->y));
-                }
-
-                return new UpdateResult($this);
-            }
-        };
-    }
-
     private function createKeyReactiveInteractive(): Interactive
     {
         return new class implements Interactive {
@@ -4144,137 +3361,15 @@ final class TabBarTest extends TestCase
         };
     }
 
-    private function createExactHeightWidget(int $height): Widget
-    {
-        return new class($height) implements Widget {
-            public function __construct(private readonly int $height)
-            {
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact($this->height), Constraint::exact($this->height));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-        };
-    }
-
-    private function createYVerifyingFocusable(int $expectedY): Focusable
-    {
-        return new class($expectedY, true) implements Focusable {
-            public function __construct(
-                private readonly int $expectedY,
-                private readonly bool $focused,
-            ) {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($this->expectedY, $focused);
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact(2), Constraint::exact(2));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                if ($message instanceof KeyMsg && $message->key === 'verify-y' && $area->y === $this->expectedY) {
-                    return new UpdateResult(new static($this->expectedY, $this->focused));
-                }
-
-                return new UpdateResult($this);
-            }
-        };
-    }
-
-    private function createYVerifyingInteractive(int $expectedY): Interactive
-    {
-        return new class($expectedY) implements Interactive {
-            public function __construct(private readonly int $expectedY)
-            {
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact(2), Constraint::exact(2));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                if ($message instanceof TestMessage && $message->value === 'verify-y' && $area->y === $this->expectedY) {
-                    return new UpdateResult(new static($this->expectedY));
-                }
-
-                return new UpdateResult($this);
-            }
-        };
-    }
-
-    private function createRenderingFocusableWidget(string $label): Focusable
-    {
-        return new class($label, false) implements Focusable {
-            public function __construct(
-                private readonly string $label,
-                private readonly bool $focused,
-            ) {
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new static($this->label, $focused);
-            }
-
-            public function sizing(): Sizing
-            {
-                return Sizing::of(Constraint::exact(3), Constraint::exact(3));
-            }
-
-            public function render(Frame $frame, Rect $area, RenderContext $context): void
-            {
-                $state = $this->focused ? 'F' : 'U';
-                $frame->putString($area->x, $area->y, $this->label . ':' . $state);
-            }
-
-            public function update(Message $message, Rect $area): UpdateResult
-            {
-                return new UpdateResult($this);
-            }
-        };
-    }
-
     /**
      * Focusable child whose cursorRow() jumps to a fixed target on any key.
      */
     private function cursorJumpChild(int $row, int $jumpTarget): Interactive
     {
-        return new class($row, $jumpTarget, false) implements Interactive, Focusable, CursorAware {
+        return new class($row, $jumpTarget) implements Interactive, Focusable, CursorAware {
             public function __construct(
                 public int $row,
                 public int $jumpTarget,
-                public bool $focused,
             ) {
             }
 
@@ -4290,18 +3385,8 @@ final class TabBarTest extends TestCase
             public function update(Message $message, Rect $area): UpdateResult
             {
                 return $message instanceof KeyMsg
-                    ? new UpdateResult(new self($this->jumpTarget, $this->jumpTarget, $this->focused))
+                    ? new UpdateResult(new self($this->jumpTarget, $this->jumpTarget))
                     : new UpdateResult($this);
-            }
-
-            public function isFocused(): bool
-            {
-                return $this->focused;
-            }
-
-            public function withFocus(bool $focused): static
-            {
-                return new self($this->row, $this->jumpTarget, $focused);
             }
 
             public function cursorRow(): int

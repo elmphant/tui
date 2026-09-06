@@ -156,7 +156,7 @@ final class AppLayoutSnapshotTest extends TestCase
     #[Test]
     public function repeatedUpdatesBuildTheComponentRegistryOncePerAppValue(): void
     {
-        $app = new SnapshotCountingApp(Panel::new('Main')->withFocus(true));
+        $app = new SnapshotCountingApp(Panel::new('Main'));
         $screenRect = Rect::fromSize(80, 24);
 
         $app->update(new KeyMsg('x'), $screenRect);
@@ -170,9 +170,9 @@ final class AppLayoutSnapshotTest extends TestCase
     {
         $screenRect = Rect::fromSize(80, 24);
 
-        (new SnapshotCountingApp(Panel::new('First')->withFocus(true)))
+        (new SnapshotCountingApp(Panel::new('First')))
             ->update(new KeyMsg('x'), $screenRect);
-        (new SnapshotCountingApp(Panel::new('Second')->withFocus(true)))
+        (new SnapshotCountingApp(Panel::new('Second')))
             ->update(new KeyMsg('x'), $screenRect);
 
         self::assertSame(2, ComponentsCallCounter::$count);
@@ -206,7 +206,7 @@ final class AppLayoutSnapshotTest extends TestCase
     #[Test]
     public function repeatedNoOpKeyDispatchResolvesLayoutOnce(): void
     {
-        $app = new SnapshotCountingApp(Panel::new('Main')->withFocus(true));
+        $app = new SnapshotCountingApp(Panel::new('Main'));
         $screenRect = Rect::fromSize(80, 24);
 
         $first = $app->update(new KeyMsg('x'), $screenRect);
@@ -221,7 +221,7 @@ final class AppLayoutSnapshotTest extends TestCase
     #[Test]
     public function resizeReusesTheViewTreeWhileRecomputingLayoutForTheNewArea(): void
     {
-        $app = new SnapshotCountingApp(Panel::new('Main')->withFocus(true));
+        $app = new SnapshotCountingApp(Panel::new('Main'));
 
         $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
         $app->update(new KeyMsg('x'), Rect::fromSize(120, 40));

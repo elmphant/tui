@@ -324,7 +324,7 @@ final readonly class ComponentRegistry
         $index = 0;
 
         foreach ($widget->children() as $child) {
-            if ($child instanceof Interactive && self::navigationOf($child) !== Navigation::Never) {
+            if ($child instanceof Interactive) {
                 array_push($stops, ...self::published($component->childAt($index, $child)));
             }
 

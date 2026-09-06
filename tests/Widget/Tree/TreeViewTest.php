@@ -228,7 +228,7 @@ final class TreeViewTest extends TestCase
             $roots[] = new SimpleTreeNode((string)$index, 'row' . $index, (string)$index);
         }
         $area = new Rect(0, 0, 30, 3);
-        $tree = TreeView::new($roots)->withFocus(true);
+        $tree = TreeView::new($roots);
 
         self::assertSame('▪ row1             1', self::draw($tree, 30, 3)[0], 'it starts at the top');
 
@@ -247,7 +247,7 @@ final class TreeViewTest extends TestCase
     public function theCursorRowIsHighlightedRightAcrossThePane(): void
     {
         $theme = Theme::dark();
-        $tree = self::orderTree()->withFocus(true);
+        $tree = self::orderTree();
         $frame = new Frame(30, 4);
 
         $tree->render($frame, new Rect(0, 0, 30, 4), RenderContext::focused($theme));
@@ -307,7 +307,7 @@ final class TreeViewTest extends TestCase
     {
         $area = new Rect(0, 0, 30, 6);
         $order = TreePath::root()->child('order');
-        $tree = self::orderTree()->withFocus(true)->cursorDown();
+        $tree = self::orderTree()->cursorDown();
 
         $onLabel = self::afterMouse($tree, 3, 0, $area);
         self::assertSame(['order'], $onLabel->cursor()->keys, 'the click moved the cursor');

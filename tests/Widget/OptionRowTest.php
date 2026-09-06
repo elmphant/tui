@@ -55,7 +55,7 @@ final class OptionRowTest extends TestCase
     #[DataProvider('rows')]
     public function walksTheCursorRoundRatherThanStoppingAtTheEnds(OptionRow $row): void
     {
-        $focused = $row->withFocus(true);
+        $focused = $row;
         $area = new Rect(0, 0, 40, 1);
 
         $left = $focused->update(new KeyMsg(Key::Left), $area)->model;
@@ -96,7 +96,7 @@ final class OptionRowTest extends TestCase
         $theme = Theme::dark();
         $frame = new Frame(40, 1);
 
-        $row->withFocus(true)->render($frame, new Rect(0, 0, 40, 1), RenderContext::focused($theme));
+        $row->render($frame, new Rect(0, 0, 40, 1), RenderContext::focused($theme));
 
         self::assertSame(
             $theme->cursorStyle->foregroundValue(),

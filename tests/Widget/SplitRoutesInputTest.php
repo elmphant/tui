@@ -21,8 +21,8 @@ final class SplitRoutesInputTest extends TestCase
         $split = Split::row(
             SplitState::even(2),
             TextInput::new(),
-            TextInput::new()->withFocus(true),
-        );
+            TextInput::new(),
+        )->withMarkedPane(1);
 
         $typed = $split->update(new KeyMsg('x'), $area)->model;
 

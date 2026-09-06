@@ -92,9 +92,6 @@ final class FocusStateTest extends TestCase
         self::assertEquals(ComponentId::named('tabs'), $resolved->focused());
     }
 
-    /**
-     * A pane whose frame is not a stop offers its first remaining field instead.
-     */
     #[Test]
     public function focusOnAStopThatLeftLandsOnTheFirstStopStillUnderItsContainer(): void
     {

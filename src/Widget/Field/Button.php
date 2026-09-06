@@ -40,7 +40,6 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
         private string $label,
         private Message $message,
         private ButtonTone $tone = ButtonTone::Default,
-        private bool $focused = false,
         private bool $disabled = false,
         private bool $armed = false,
         private ?Keybindings $customKeybindings = null,
@@ -88,16 +87,6 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
         return $this->armed;
     }
 
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
-    }
-
     public function sizing(): Sizing
     {
         return Sizing::of(
@@ -116,7 +105,6 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
 
         return match (true) {
             $message instanceof KeyMsg
-                && $this->focused
                 && $this->effectiveKeybindings()->matches($message, Actions::SELECT) => new UpdateResult($this, Cmd::message($this->message)),
             $message instanceof MouseMsg
                 && $message->action === MouseAction::Press => new UpdateResult($this->withArmed($message->inRect($area))),

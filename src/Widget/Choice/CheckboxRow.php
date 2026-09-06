@@ -40,7 +40,6 @@ final readonly class CheckboxRow implements OptionRow, PublishesHints
         private array $options = [],
         private array $checked = [],
         private int $cursor = 0,
-        private bool $focused = false,
         private string $prefix = '',
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -159,16 +158,6 @@ final readonly class CheckboxRow implements OptionRow, PublishesHints
     public function checkedIndices(): array
     {
         return array_keys(array_filter($this->checked));
-    }
-
-    public function isFocused(): bool
-    {
-        return $this->focused;
-    }
-
-    public function withFocus(bool $focused): static
-    {
-        return $this->cloneWith(focused: $focused);
     }
 
     public function sizing(): Sizing

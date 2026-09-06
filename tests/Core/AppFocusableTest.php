@@ -157,8 +157,8 @@ final class AppFocusableTest extends TestCase
     public function theQuitBindingStillQuitsWhileNoFocusableHoldsFocus(): void
     {
         $app = new TwoPanelApp(
-            left: Panel::new('Left')->withFocus(false),
-            right: Panel::new('Right')->withFocus(false),
+            left: Panel::new('Left'),
+            right: Panel::new('Right'),
         );
 
         $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
@@ -302,27 +302,13 @@ final class AppFocusableTest extends TestCase
     public function keyToUnfocusedAppReturnsUnchanged(): void
     {
         $app = new TwoPanelApp(
-            left: Panel::new('Left')->withFocus(false),
-            right: Panel::new('Right')->withFocus(false),
+            left: Panel::new('Left'),
+            right: Panel::new('Right'),
         );
 
         $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
         self::assertSame($app, $result->model);
         self::assertNull($result->command);
-    }
-
-    #[Test]
-    public function mouseDelegatesToAllFocusablesAndUpdatesFocusByClick(): void
-    {
-        $app = TwoPanelApp::create();
-        self::assertTrue($app->left->isFocused());
-        self::assertFalse($app->right->isFocused());
-
-        $result = $app->update(
-            new MouseMsg(60, 5, MouseAction::Press, MouseButton::Left),
-            Rect::fromSize(80, 24),
-        );
-        self::assertInstanceOf(TwoPanelApp::class, $result->model);
     }
 
     #[Test]
@@ -359,7 +345,6 @@ final class AppFocusableTest extends TestCase
         $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24));
 
         self::assertSame($app, $result->model);
-        self::assertTrue($result->model->panel->isFocused());
     }
 
     #[Test]
@@ -373,7 +358,6 @@ final class AppFocusableTest extends TestCase
         );
 
         self::assertSame($app, $result->model);
-        self::assertTrue($result->model->panel->isFocused());
     }
 
     #[Test]
@@ -402,7 +386,6 @@ final class AppFocusableTest extends TestCase
     public function clickInsideLeftPanelKeepsFocusOnLeft(): void
     {
         $app = TwoPanelApp::create();
-        self::assertTrue($app->left->isFocused());
 
         $result = $app->update(
             new MouseMsg(5, 5, MouseAction::Press, MouseButton::Left),
@@ -410,8 +393,7 @@ final class AppFocusableTest extends TestCase
         );
 
         self::assertInstanceOf(TwoPanelApp::class, $result->model);
-        self::assertTrue($result->model->left->isFocused());
-        self::assertFalse($result->model->right->isFocused());
+        self::assertEquals(Cmd::focus(ComponentId::named('left-panel')), $result->command);
     }
 
     #[Test]
@@ -454,8 +436,8 @@ final class AppFocusableTest extends TestCase
     public function delegateToFocusedReturnsUnchangedWhenNoFocus(): void
     {
         $app = new TwoPanelApp(
-            left: Panel::new('Left')->withFocus(false),
-            right: Panel::new('Right')->withFocus(false),
+            left: Panel::new('Left'),
+            right: Panel::new('Right'),
         );
 
         $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
@@ -558,8 +540,6 @@ final class AppFocusableTest extends TestCase
 
         self::assertInstanceOf(TabConsumingApp::class, $result->model);
         self::assertSame(1, $result->model->widget->tabCount);
-        self::assertTrue($result->model->widget->isFocused());
-        self::assertFalse($result->model->other->isFocused());
     }
 
     #[Test]
@@ -627,8 +607,6 @@ final class AppFocusableTest extends TestCase
 
         self::assertInstanceOf(TabCommandOnlyApp::class, $result->model);
         self::assertNotNull($result->command);
-        self::assertTrue($result->model->widget->isFocused());
-        self::assertFalse($result->model->other->isFocused());
     }
 
     #[Test]
@@ -823,7 +801,7 @@ final readonly class TwoPanelApp extends CopyableTestApp
     public static function create(): self
     {
         return new self(
-            left: Panel::new('Left')->withFocus(true),
+            left: Panel::new('Left'),
             right: Panel::new('Right'),
         );
     }
@@ -854,7 +832,7 @@ final readonly class InterceptApp extends CopyableTestApp
     public static function create(): self
     {
         return new self(
-            left: Panel::new('Left')->withFocus(true),
+            left: Panel::new('Left'),
             right: Panel::new('Right'),
         );
     }
@@ -1001,7 +979,7 @@ final readonly class DetachedFocusableApp extends CopyableTestApp
 
     public static function create(): self
     {
-        return new self(panel: Panel::new('Detached')->withFocus(true));
+        return new self(panel: Panel::new('Detached'));
     }
 
     public function view(): Widget
