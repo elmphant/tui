@@ -19,7 +19,7 @@ final readonly class FocusCmd extends Cmd
 {
     public function __construct(
         private ?ComponentId $target = null,
-        private FocusMove $move = FocusMove::To,
+        public FocusMove $move = FocusMove::To,
     ) {
     }
 

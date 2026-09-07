@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Core;
 
 /**
- * @internal
+ * How the keyboard reached where it is, carried by FocusMsg.
  */
 enum FocusMove
 {

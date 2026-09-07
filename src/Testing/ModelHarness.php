@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusMove;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
@@ -228,7 +229,7 @@ final class ModelHarness
         $this->focus = $this->resolvedFocus();
 
         if (!$this->focus->sameAs($previous)) {
-            $this->announceArrival();
+            $this->announceArrival(FocusMove::To);
         }
     }
 
@@ -266,19 +267,20 @@ final class ModelHarness
                 $this->focus,
                 $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
             );
-            $this->announceArrival();
+            $this->announceArrival($command->move);
         }
     }
 
-    private function announceArrival(): void
+    private function announceArrival(FocusMove $move): void
     {
         if ($this->focus->focused() === null) {
             return;
         }
 
+        $arrived = new FocusMsg(true, $move);
         $result = $this->model instanceof RoutesFocus
-            ? $this->model->update(new FocusMsg(true), $this->area, $this->focus)
-            : $this->model->update(new FocusMsg(true), $this->area);
+            ? $this->model->update($arrived, $this->area, $this->focus)
+            : $this->model->update($arrived, $this->area);
 
         /** @var TModel $next */
         $next = self::requireModel($result->model);
