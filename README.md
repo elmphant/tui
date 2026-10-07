@@ -270,6 +270,8 @@ Cmd::exec(['git', 'status'])        // run command, get full result
 Cmd::process(['tail', '-f', 'log']) // stream output in real-time
 ```
 
+`Cmd::tick()` repeats on its own, so there is no need to ask again from each `TickMsg`; asking again for an unnamed tick at the same interval keeps the one already running.
+
 Effects that may need cancellation share a typed identity:
 
 ```php

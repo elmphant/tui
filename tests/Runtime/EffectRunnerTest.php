@@ -60,6 +60,61 @@ final class EffectRunnerTest extends TestCase
     }
 
     #[Test]
+    public function askingAgainForATickAlreadyRunningKeepsOneTicker(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+        $runner->run(Cmd::tick(1.0), null);
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(2, $this->results);
+    }
+
+    #[Test]
+    public function aTickAtAnotherIntervalRunsBesideTheFirst(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0), null);
+        $runner->run(Cmd::tick(0.5), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(2, $this->results);
+    }
+
+    #[Test]
+    public function aTickWrappedForAChildRunsBesideTheHostsOwn(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0), null);
+        $runner->run(Cmd::tick(1.0), static fn (Message $message): Message => $message);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(2, $this->results);
+    }
+
+    #[Test]
+    public function namedTicksRunBesideAnAnonymousOne(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0, EffectId::named('clock')), null);
+        $runner->run(Cmd::tick(1.0), null);
+        $runner->run(Cmd::tick(1.0, EffectId::named('poll')), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(3, $this->results);
+    }
+
+    #[Test]
     public function aTickerKeepsFiringOnItsOwnInterval(): void
     {
         $runner = $this->runner();

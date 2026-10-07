@@ -340,8 +340,25 @@ final class EffectRunner
      */
     private function registerTicker(float $interval, ?EffectId $id = null, ?Closure $wrap = null): void
     {
+        if ($id === null && $this->hasAnonymousTicker($interval, $wrap)) {
+            return;
+        }
         $now = $this->clock->now();
         $this->tickers[] = new TickerRecord($now + $interval, $interval, $id, $wrap);
+    }
+
+    /**
+     * @param Closure(Message): Message|null $wrap
+     */
+    private function hasAnonymousTicker(float $interval, ?Closure $wrap): bool
+    {
+        foreach ($this->tickers as $ticker) {
+            if ($ticker->id === null && $ticker->interval === $interval && $ticker->wrap === $wrap) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
