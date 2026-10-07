@@ -102,8 +102,8 @@ final class AllocatorDivergenceTest extends TestCase
     public function aContentSizedChildTakesItsLinesAndLeavesTheRestToItsSibling(): void
     {
         $column = Layout::vertical(
-            self::paragraphOf(3)->withSizing(Sizing::of(Constraint::flex(), Constraint::content())),
-            self::paragraphOf(7),
+            self::paragraphOf(3),
+            self::paragraphOf(7)->withSizing(Sizing::of(Constraint::flex(), Constraint::flex())),
         );
 
         $heights = self::extentsAlong(
@@ -112,6 +112,20 @@ final class AllocatorDivergenceTest extends TestCase
         );
 
         self::assertSame([3, 17], $heights);
+    }
+
+    #[Test]
+    public function aColumnShortOfRowsSharesThemOutWhileAScrollingStackKeepsEveryLine(): void
+    {
+        $children = [self::paragraphOf(3), self::paragraphOf(3)];
+
+        $heights = self::extentsAlong(
+            self::rectsOf(Layout::vertical(...$children)->computeChildRects(new Rect(0, 0, 40, 4))),
+            Direction::Vertical,
+        );
+
+        self::assertSame([2, 2], $heights, 'A column has to fit the area it was given');
+        self::assertSame([3, 3], VerticalStack::layoutUsing(new KeyedCache(), $children, 40, 4)->heights, 'A stack scrolls instead');
     }
 
     #[Test]

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Attr;
@@ -105,13 +106,12 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
-    public function constraintReturnsFlex(): void
+    public function aParagraphInARoomyStackTakesTheRowsItsTextNeeds(): void
     {
-        $paragraph = Paragraph::fromText('Hello');
+        $placed = Layout::vertical(Paragraph::fromText("a\nb\nc"), Paragraph::fromText("d\ne"))
+            ->computeChildRects(new Rect(0, 0, 80, 20));
 
-        $constraint = $paragraph->sizing()->rows;
-
-        self::assertSame(1, $constraint->flex);
+        self::assertSame([3, 2], array_map(static fn (array $pair): int => $pair[1]->height, $placed));
     }
 
     #[Test]

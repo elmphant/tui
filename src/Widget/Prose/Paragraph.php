@@ -144,7 +144,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
     {
         return $this->sizingOverride ?? Sizing::of(
             Constraint::flex()->withBasis($this->widestLine()),
-            Constraint::flex(),
+            Constraint::content(),
         );
     }
 
