@@ -18,6 +18,16 @@ final class FocusStateTest extends TestCase
     }
 
     #[Test]
+    public function aPaneOnlyThePointerReachesKeepsTheKeyboardWhenTabHasNoStops(): void
+    {
+        $held = new FocusState(ComponentId::named('output'));
+
+        $resolved = $held->resolvedAgainst([], self::order('output'));
+
+        self::assertEquals(ComponentId::named('output'), $resolved->focused());
+    }
+
+    #[Test]
     public function theFirstMoveFromNothingLandsOnTheFirstComponent(): void
     {
         $moved = (new FocusState())->next(self::order('search', 'results'));

@@ -747,7 +747,7 @@ abstract readonly class App implements RoutesFocus
             $next,
             self::combineCommands(
                 $answered,
-                PointerFocus::alreadyMoved($answered) ? null : PointerFocus::after($message, $landedOn),
+                PointerFocus::alreadyMoved($answered) ? null : PointerFocus::after($landedOn),
             ),
         );
     }

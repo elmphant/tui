@@ -67,17 +67,15 @@ final readonly class FocusState
      */
     public function resolvedAgainst(array $order, ?array $reachable = null): self
     {
-        if ($order === []) {
-            return $this->cloneWith(focused: null);
-        }
-
         if (null === $this->focused && $this->decided) {
             return $this;
         }
 
-        return null === $this->indexIn($reachable ?? $order)
-            ? $this->cloneWith(focused: $this->landingIn($order))
-            : $this;
+        if (null !== $this->indexIn($reachable ?? $order)) {
+            return $this;
+        }
+
+        return $this->cloneWith(focused: $order === [] ? null : $this->landingIn($order));
     }
 
     /**

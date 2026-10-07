@@ -7,7 +7,6 @@ namespace Elmphant\Tui\Core;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
-use Elmphant\Tui\Message\MouseMsg;
 
 /**
  * What a press does to the keyboard, as rules about messages and commands
@@ -46,15 +45,12 @@ final class PointerFocus
     }
 
     /**
-     * Where the keyboard goes once the pointer has landed. A press on nothing
-     * takes it away; a wheel turn over nothing leaves it where it was.
+     * Where the keyboard goes once the pointer has landed. Landing on nothing
+     * leaves it where it was: a press on a plain row of a form must not strand
+     * the reader without a field until they press tab.
      */
-    public static function after(MouseMsg $message, ?ComponentId $landedOn): ?Cmd
+    public static function after(?ComponentId $landedOn): ?Cmd
     {
-        if ($landedOn !== null) {
-            return Cmd::focus($landedOn);
-        }
-
-        return $message->isClick() ? Cmd::focusNothing() : null;
+        return $landedOn === null ? null : Cmd::focus($landedOn);
     }
 }
