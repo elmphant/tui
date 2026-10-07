@@ -356,6 +356,19 @@ final class TreeViewTest extends TestCase
         );
     }
 
+    #[Test]
+    public function rootsThatShrinkTheTreeBelowTheScrollAreStillDrawn(): void
+    {
+        $area = new Rect(0, 0, 30, 5);
+        $roots = array_map(static fn (int $index): SimpleTreeNode => new SimpleTreeNode('n' . $index, 'node ' . $index), range(0, 29));
+        $scrolled = TreeView::new($roots)->update(new MouseMsg(1, 1, MouseAction::WheelDown, MouseButton::Left, 20), $area)->model;
+        self::assertInstanceOf(TreeView::class, $scrolled);
+
+        $shrunk = $scrolled->withRoots([new SimpleTreeNode('a', 'alpha'), new SimpleTreeNode('b', 'beta')]);
+
+        self::assertSame(['▪ alpha', '▪ beta'], array_map('trim', array_slice(self::drawIn($shrunk, $area), 0, 2)));
+    }
+
     private static function afterMouse(TreeView $tree, int $x, int $y, Rect $area): TreeView
     {
         $result = $tree->update(new MouseMsg($x, $y, MouseAction::Press, MouseButton::Left), $area);

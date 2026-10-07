@@ -319,7 +319,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         $cursor = $this->cursor();
         $row = 0;
 
-        foreach (array_slice($this->visibleRows(), $this->scrollOffset) as $visible) {
+        $rows = $this->visibleRows();
+
+        foreach (array_slice($rows, $this->offsetIn($rows, $area), $area->height) as $visible) {
             if ($row >= $area->height) {
                 return;
             }
@@ -366,9 +368,18 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             return null;
         }
 
-        $row = $this->visibleRows()[$this->scrollOffset + $message->y - $area->y] ?? null;
+        $rows = $this->visibleRows();
+        $row = $rows[$this->offsetIn($rows, $area) + $message->y - $area->y] ?? null;
 
         return $row === null || !$row['selectable'] ? null : $row;
+    }
+
+    /**
+     * @param list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}> $rows
+     */
+    private function offsetIn(array $rows, Rect $area): int
+    {
+        return ScrollWindow::clamped($this->scrollOffset, ScrollWindow::lastOffset(count($rows), $area->height));
     }
 
     /**
