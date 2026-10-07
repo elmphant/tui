@@ -71,18 +71,14 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function anActiveTabThatDoesNotExistDrawsAndRoutesNothing(): void
+    public function aTabPastTheLastOneSelectsTheLastAndTakesItsChildren(): void
     {
-        $area = new Rect(0, 0, 24, 9);
-        $tabBar = TabBar::new()->addTab('A')->withSelectedTab(3);
+        $bar = TabBar::new()->addTab('one')->addTab('two')->add(Text::line('old'))->withSelectedTab(5);
 
-        self::assertSame([], $tabBar->children(), 'No children to reach');
-        self::assertSame([], $tabBar->placedChildren($area), 'And none to place');
+        $grafted = $bar->withChildAt(0, Text::line('new'));
 
-        $frame = new Frame(24, 9);
-        $tabBar->render($frame, $area, new RenderContext(Theme::dark()));
-
-        self::assertStringNotContainsString('←', $this->screenOfTabBar($tabBar, $area), 'A single tab needs no switch hint');
+        self::assertSame(1, $grafted->selectedTab());
+        self::assertEquals([Text::line('new')], $grafted->children());
     }
 
     #[Test]

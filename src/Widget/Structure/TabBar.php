@@ -118,7 +118,7 @@ final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsC
      */
     public function withSelectedTab(int $selectedTab): self
     {
-        return $this->cloneWith(selectedTab: $selectedTab);
+        return $this->cloneWith(selectedTab: max(0, min($selectedTab, count($this->tabs) - 1)));
     }
 
     /**
