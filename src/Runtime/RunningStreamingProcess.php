@@ -36,6 +36,7 @@ final class RunningStreamingProcess implements RunningProcess
             return [];
         }
 
+        $this->process->checkTimeout();
         $messages = $this->drainOutput();
 
         if ($this->process->isRunning()) {

@@ -41,6 +41,7 @@ final class RunningExecProcess implements RunningProcess
         }
 
         try {
+            $this->process->checkTimeout();
             $this->collectOutput();
             $this->process->clearOutput();
             $this->process->clearErrorOutput();

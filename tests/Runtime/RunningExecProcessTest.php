@@ -13,6 +13,7 @@ use Elmphant\Tui\Runtime\RunningExecProcess;
 use Elmphant\Tui\Tests\Support\MessageEnvelope;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 
 final class RunningExecProcessTest extends TestCase
@@ -222,6 +223,28 @@ final class RunningExecProcessTest extends TestCase
         self::assertInstanceOf(ProcessResultMsg::class, $messages[0]);
         self::assertSame('head tail', $messages[0]->stdout);
         self::assertSame('err-tail', $messages[0]->stderr);
+    }
+
+    #[Test]
+    public function aChildOutlivingItsTimeoutEndsWithATimeoutError(): void
+    {
+        $process = new Process(['sleep', '5']);
+        $process->setTimeout(0.2);
+        $process->start();
+        $running = new RunningExecProcess($process, null);
+
+        $messages = [];
+        $deadline = microtime(true) + 2.0;
+        while ($messages === [] && microtime(true) < $deadline) {
+            usleep(20_000);
+            $messages = $running->pump();
+        }
+        $running->stop();
+
+        self::assertCount(1, $messages);
+        self::assertInstanceOf(ErrorMsg::class, $messages[0]);
+        self::assertInstanceOf(ProcessTimedOutException::class, $messages[0]->error);
+        self::assertFalse($process->isRunning());
     }
 
     #[Test]

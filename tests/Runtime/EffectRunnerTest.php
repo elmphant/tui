@@ -23,6 +23,7 @@ use PHPUnit\Framework\TestCase;
 use SplQueue;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -381,6 +382,21 @@ final class EffectRunnerTest extends TestCase
         $message = $this->results->dequeue();
         self::assertInstanceOf(ProcessResultMsg::class, $message);
         self::assertStringContainsString('tmp', $message->stdout);
+    }
+
+    #[Test]
+    public function aStreamingProcessThatOutlivesItsTimeoutEndsWithAnErrorUnderItsName(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::process(['sleep', '5'])->withTimeout(0.2)->withId(EffectId::named('slow')), null);
+
+        $this->pumpUntilQuiet($runner);
+
+        self::assertFalse($runner->hasRunningProcesses());
+        $message = $this->results->dequeue();
+        self::assertInstanceOf(ErrorMsg::class, $message);
+        self::assertInstanceOf(ProcessTimedOutException::class, $message->error);
+        self::assertEquals(EffectId::named('slow'), $message->effectId);
     }
 
     #[Test]
