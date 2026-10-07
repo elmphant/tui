@@ -976,8 +976,12 @@ abstract readonly class App implements RoutesFocus
     private function applyComponentUpdates(self $app, array $updates): self
     {
         foreach (self::foldedIntoAncestors($updates) as [$original, $widget]) {
+            // A mounted component writes back through the sub-model the tree held
+            // when it was collected, so it is looked up in the app as it stands or a
+            // second write restores the sub-model the first one changed.
+            $current = $app->componentRegistry()->get($original->id) ?? $original;
             /** @var static $app */
-            $app = $original->replaceIn($app, $widget);
+            $app = $current->replaceIn($app, $widget);
         }
 
         ComponentWriteBack::verify($app->componentRegistry(), $updates);
