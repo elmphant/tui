@@ -20,6 +20,7 @@ use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Choice\CheckboxRow;
 use Elmphant\Tui\Widget\Choice\OptionRowLayout;
 use Elmphant\Tui\Widget\Focusable;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
@@ -33,6 +34,24 @@ final class CheckboxRowTest extends TestCase
             ['←/→' => 'move', 'Enter' => 'toggle'],
             CheckboxRow::new([])->hints(),
         );
+    }
+
+    #[Test]
+    public function optionsThatReadAlikeAreRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CheckboxRow options must read differently; "a" is at 0 and 2.');
+
+        CheckboxRow::new(['a', 'b', 'a']);
+    }
+
+    #[Test]
+    public function reloadedOptionsThatReadAlikeAreRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('CheckboxRow options must read differently; "a" is at 0 and 2.');
+
+        CheckboxRow::new(['a', 'b'])->withOptions(['a', 'b', 'a']);
     }
 
     #[Test]

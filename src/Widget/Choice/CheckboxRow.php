@@ -52,6 +52,8 @@ final readonly class CheckboxRow implements OptionRow, PublishesHints
      */
     public static function new(array $options): self
     {
+        Options::assertDistinct($options, 'CheckboxRow');
+
         return new self(
             options: $options,
             checked: array_fill(0, count($options), false),
@@ -71,6 +73,8 @@ final readonly class CheckboxRow implements OptionRow, PublishesHints
      */
     public function withOptions(array $options): static
     {
+        Options::assertDistinct($options, 'CheckboxRow');
+
         if ($options === $this->options) {
             return $this;
         }

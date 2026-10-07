@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Choice\RadioRow;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +28,24 @@ final class RadioRowTest extends TestCase
             ['←/→' => 'move', 'Enter' => 'choose'],
             RadioRow::new([])->hints(),
         );
+    }
+
+    #[Test]
+    public function optionsThatReadAlikeAreRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('RadioRow options must read differently; "a" is at 0 and 2.');
+
+        RadioRow::new(['a', 'b', 'a']);
+    }
+
+    #[Test]
+    public function reloadedOptionsThatReadAlikeAreRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('RadioRow options must read differently; "a" is at 0 and 2.');
+
+        RadioRow::new(['a', 'b'])->withOptions(['a', 'b', 'a']);
     }
 
     #[Test]

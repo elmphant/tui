@@ -52,6 +52,8 @@ final readonly class RadioRow implements OptionRow, PublishesHints
      */
     public static function new(array $options): self
     {
+        Options::assertDistinct($options, 'RadioRow');
+
         return new self(options: $options);
     }
 
@@ -109,6 +111,8 @@ final readonly class RadioRow implements OptionRow, PublishesHints
      */
     public function withOptions(array $options): static
     {
+        Options::assertDistinct($options, 'RadioRow');
+
         if ($options === $this->options) {
             return $this;
         }
