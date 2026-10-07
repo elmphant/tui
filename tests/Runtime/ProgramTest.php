@@ -1538,30 +1538,162 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function drainMessageQueueErrorMsgThresholdQuitsAt10WithHandler(): void
+    public function errorsTheHandlerDealtWithNeverStopTheProgram(): void
     {
-        $errorCount = 0;
-        $program = Program::new($this->createMockModel())
-            ->onError(function () use (&$errorCount) {
-                ++$errorCount;
+        $model = new class implements Model {
+            public bool $reached = false;
+
+            public function init(): ?Cmd
+            {
+                $failing = array_fill(0, 15, Cmd::call(static fn () => throw new RuntimeException('boom')));
+
+                return Cmd::batch(...$failing, ...[Cmd::message(new TestMessage('after'))]);
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if ($message instanceof TestMessage) {
+                    $this->reached = true;
+
+                    return new UpdateResult($this, Cmd::quit());
+                }
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+        $handled = 0;
+
+        Program::new($model)
+            ->withTerminal(new VirtualTerminal(80, 24))
+            ->onError(function () use (&$handled): ?Cmd {
+                ++$handled;
 
                 return null;
+            })
+            ->start();
+
+        self::assertSame(15, $handled);
+        self::assertTrue($model->reached);
+    }
+
+    #[Test]
+    public function anUpdateFailureIsReportedBeforeTheNextQueuedKey(): void
+    {
+        $model = new class implements Model {
+            /**
+             * @var list<string>
+             */
+            public array $seen = [];
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if ($message instanceof ErrorMsg) {
+                    $this->seen[] = 'error';
+                }
+                if (!$message instanceof KeyMsg) {
+                    return new UpdateResult($this);
+                }
+                $this->seen[] = $message->key;
+
+                return match ($message->key) {
+                    'a' => throw new RuntimeException('a failed'),
+                    'q' => new UpdateResult($this, Cmd::quit()),
+                    default => new UpdateResult($this),
+                };
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('abq');
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['a', 'error', 'b', 'q'], $model->seen);
+    }
+
+    #[Test]
+    public function aRenderThatNeverRecoversEndsTheProgramWithItsError(): void
+    {
+        $model = new class implements Model {
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+                throw new RuntimeException('render is broken');
+            }
+        };
+
+        $this->expectExceptionObject(new RuntimeException('render is broken'));
+
+        Program::new($model)->withTerminal(new VirtualTerminal(80, 24))->start();
+    }
+
+    #[Test]
+    public function tenErrorsInARowFromTheHandlerItselfStopTheProgram(): void
+    {
+        $model = new class implements Model {
+            public bool $reached = false;
+
+            public function init(): ?Cmd
+            {
+                $failing = array_fill(0, 15, Cmd::call(static fn () => throw new RuntimeException('boom')));
+
+                return Cmd::batch(...$failing, ...[Cmd::message(new TestMessage('after'))]);
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if ($message instanceof TestMessage) {
+                    $this->reached = true;
+
+                    return new UpdateResult($this, Cmd::quit());
+                }
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+        $attempts = 0;
+
+        $program = Program::new($model)
+            ->withTerminal(new VirtualTerminal(80, 24))
+            ->onError(function () use (&$attempts): ?Cmd {
+                ++$attempts;
+                throw new RuntimeException('handler broken');
             });
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('running')->setValue($program, true);
-
-        $queue = new SplQueue();
-        for ($i = 0; $i < 15; ++$i) {
-            $queue->enqueue(new ErrorMsg(new RuntimeException("e$i"), ErrorSource::Update));
+        $thrown = null;
+        try {
+            $program->start();
+        } catch (RuntimeException $error) {
+            $thrown = $error;
         }
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
-        $reflection->getMethod('drainMessageQueue')->invoke($program);
-
-        self::assertSame(9, $errorCount, 'Counter increments BEFORE handler call. With threshold `>= 10`: handler runs for counts 1..9; iteration 10 increments to 10, returns without calling handler. Mutant `>` would let count reach 10 → handler called 10 times.');
-        self::assertFalse($reflection->getProperty('running')->getValue($program), 'Threshold must set running=false; FalseValue mutant flips this to true so threshold becomes a no-op');
+        self::assertSame('handler broken', $thrown?->getMessage());
+        self::assertSame(10, $attempts);
+        self::assertFalse($model->reached);
     }
 
     #[Test]

@@ -754,6 +754,8 @@ Program::new($model)
     ->start();
 ```
 
+An error your handler returns from normally never stops the program. Ten failures in a row that nothing recovers from — an `update()` that keeps throwing, a `render()` that never succeeds, or a handler that throws — stop it, and `start()` rethrows the last of them after the terminal is restored.
+
 A `Program` is intentionally one-shot. Its lifecycle is `ProgramState::New → Running → Stopped`; create a fresh `Program` to run a model again. Configuration methods are valid only while the state is `New`.
 
 The built-in interactive terminal backend currently targets POSIX TTYs. It fails explicitly when stdin is not a TTY, `proc_open()`/`stty` is unavailable, or the platform is Windows. Inject a custom `Terminal` for another backend or for tests (`SystemTerminal` is the POSIX one, `VirtualTerminal` the in-memory one).

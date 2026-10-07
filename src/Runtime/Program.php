@@ -96,6 +96,7 @@ final class Program
     private bool $running = false;
     private bool $isDirty = true;
     private int $consecutiveRenderFailures = 0;
+    private ?Throwable $fatalError = null;
     private ?float $drainDeadline = null;
     private bool $resizePending = false;
     private bool $resizeNeedsScreenClear = false;
@@ -331,6 +332,10 @@ final class Program
             } finally {
                 $this->teardown();
             }
+        }
+
+        if ($this->fatalError !== null) {
+            throw $this->fatalError;
         }
 
         /** @var TModel */
@@ -797,21 +802,21 @@ final class Program
             }
 
             if ($message instanceof ErrorMsg && $this->errorHandler !== null) {
-                ++$consecutiveErrors;
-                if ($consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
-                    $this->running = false;
-
-                    return;
-                }
                 try {
                     $errorCommand = ($this->errorHandler)($message);
                     if ($errorCommand instanceof Cmd) {
                         $this->dispatchCommand($errorCommand);
                     }
-                } catch (Throwable) {
-                    // A broken error handler must not take down the loop; the
-                    // consecutive-error counter above still bounds repeated failures.
+                } catch (Throwable $handlerError) {
+                    ++$consecutiveErrors;
+                    if ($consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
+                        $this->giveUp($handlerError);
+
+                        return;
+                    }
+                    continue;
                 }
+                $consecutiveErrors = 0;
                 continue;
             }
 
@@ -855,11 +860,11 @@ final class Program
             } catch (Throwable $error) {
                 ++$consecutiveErrors;
                 if ($consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
-                    $this->running = false;
+                    $this->giveUp($error);
 
                     return;
                 }
-                $this->messageQueue->enqueue(new ErrorMsg($error, ErrorSource::Update));
+                $this->messageQueue->unshift(new ErrorMsg($error, ErrorSource::Update));
                 continue;
             }
 
@@ -876,6 +881,12 @@ final class Program
             }
             $this->dispatchCommand($result->command);
         }
+    }
+
+    private function giveUp(Throwable $error): void
+    {
+        $this->running = false;
+        $this->fatalError = $error;
     }
 
     private function screenRect(): Rect
@@ -928,7 +939,7 @@ final class Program
             $this->animationRepaintAt = null;
             ++$this->consecutiveRenderFailures;
             if ($this->consecutiveRenderFailures >= self::MAX_CONSECUTIVE_ERRORS) {
-                $this->running = false;
+                $this->giveUp($error);
             }
             $this->messageQueue->enqueue(new ErrorMsg($error, ErrorSource::Render));
 
