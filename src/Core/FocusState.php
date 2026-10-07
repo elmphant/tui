@@ -36,15 +36,6 @@ final readonly class FocusState
     }
 
     /**
-     * Whether nobody holding the keyboard is the answer, rather than a gap left
-     * before the runtime placed it.
-     */
-    public function isNowhere(): bool
-    {
-        return null === $this->focused && $this->decided;
-    }
-
-    /**
      * Whether anything has said where the keyboard is yet. `nowhere()` is an
      * answer; this is the absence of one.
      */

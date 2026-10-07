@@ -122,18 +122,6 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
-     * @internal
-     *
-     * @param TWidget $widget
-     *
-     * @return self<TWidget>
-     */
-    public function withWidget(Widget $widget): self
-    {
-        return new self(id: $this->id, widget: $widget, replace: $this->replace, address: $this->address);
-    }
-
-    /**
      * What the child answers is grafted back into the container before the host's
      * replacement sees it, so the host still stores the one widget it bound.
      *

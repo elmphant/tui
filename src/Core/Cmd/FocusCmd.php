@@ -12,8 +12,6 @@ use Elmphant\Tui\Core\FocusState;
 /**
  * Moving the keyboard is a change to the tree, not to the model, so it travels
  * as an effect like any other.
- *
- * @internal
  */
 final readonly class FocusCmd extends Cmd
 {
