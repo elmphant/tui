@@ -80,9 +80,13 @@ final class ModelHarness
      */
     public function initialize(): self
     {
-        $this->lastCommand = $this->model->init();
+        $initCommand = $this->model->init();
+        $this->moveFocusFor($initCommand);
 
-        $this->moveFocusFor($this->lastCommand);
+        foreach ([new ResizeMsg($this->area->width, $this->area->height), ...self::messagesIn($initCommand)] as $sent) {
+            $this->dispatch($sent);
+        }
+        $this->lastCommand = $initCommand;
 
         return $this;
     }
@@ -179,6 +183,7 @@ final class ModelHarness
         $this->settleFocus();
 
         $frame = new Frame($this->area->width, $this->area->height);
+        $frame->clear($this->context->theme->base->backgroundValue());
 
         $this->context->beginFrame(0.0);
         $this->context->focusOn($this->focus);
@@ -285,6 +290,11 @@ final class ModelHarness
         /** @var TModel $next */
         $next = self::requireModel($result->model);
         $this->model = $next;
+        $this->moveFocusFor($result->command);
+
+        foreach (self::messagesIn($result->command) as $sent) {
+            $this->dispatch($sent);
+        }
     }
 
     private static function requireModel(Reducer $model): Model

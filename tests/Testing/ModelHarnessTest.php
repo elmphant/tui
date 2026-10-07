@@ -6,21 +6,25 @@ namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Core\App;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FloatMouseMsg;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Tests\Support\FloatingModel;
+use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TestPopup;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
@@ -71,6 +75,49 @@ final class ModelHarnessTest extends TestCase
 
         $harness->dispatch(new KeyMsg('q'));
         self::assertNotNull($harness->lastCommand());
+    }
+
+    #[Test]
+    public function aMessageInitSentReachesTheModel(): void
+    {
+        $model = ModelHarness::for(new HarnessRecorder(Cmd::message(new TestMessage('loaded'))))
+            ->initialize()
+            ->model();
+
+        self::assertContains(TestMessage::class, $model->seen);
+    }
+
+    #[Test]
+    public function theTerminalSizeArrivesBeforeWhatInitSent(): void
+    {
+        $model = ModelHarness::for(new HarnessRecorder(Cmd::message(new TestMessage('loaded'))))
+            ->initialize()
+            ->model();
+
+        self::assertSame([ResizeMsg::class, TestMessage::class], $model->seen);
+    }
+
+    #[Test]
+    public function whatAnArrivalAnswersWithIsCarriedOut(): void
+    {
+        $model = ModelHarness::for(new HarnessRecorder(
+            Cmd::focus(ComponentId::named('field')),
+            Cmd::message(new TestMessage('seated')),
+        ))->initialize()->model();
+
+        self::assertContains(FocusMsg::class, $model->seen);
+        self::assertContains(TestMessage::class, $model->seen);
+    }
+
+    #[Test]
+    public function aCellNothingDrewOnShowsTheThemeBackground(): void
+    {
+        $theme = Theme::solarizedDark();
+        self::assertNotSame(0, $theme->base->backgroundValue());
+
+        $frame = ModelHarness::for(new HarnessRecorder(), theme: $theme)->renderFrame();
+
+        self::assertSame($theme->base->backgroundValue(), $frame->background(5));
     }
 
     #[Test]
@@ -317,5 +364,35 @@ final readonly class ThemeEchoModel implements Model
     public function render(Frame $frame, RenderContext $context): void
     {
         $frame->putString(0, 0, 'x', $context->theme->accent->foreground?->value ?? 0);
+    }
+}
+
+final class HarnessRecorder implements Model
+{
+    /**
+     * @var list<class-string<Message>>
+     */
+    public array $seen = [];
+
+    public function __construct(
+        private readonly ?Cmd $initCommand = null,
+        private readonly ?Cmd $arrivalAnswer = null,
+    ) {
+    }
+
+    public function init(): ?Cmd
+    {
+        return $this->initCommand;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        $this->seen[] = $message::class;
+
+        return new UpdateResult($this, $message instanceof FocusMsg ? $this->arrivalAnswer : null);
+    }
+
+    public function render(Frame $frame, RenderContext $context): void
+    {
     }
 }
