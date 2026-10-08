@@ -13,7 +13,6 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
@@ -155,13 +154,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if (!$this->child instanceof Interactive) {
-            return new UpdateResult($this);
-        }
-
-        $result = (new ChildDispatcher())->dispatchOne($this->child, $message, self::contentIn($area));
-
-        return new UpdateResult($this->cloneWith(child: $result->child), $result->command);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

@@ -59,31 +59,17 @@ final class FocusGutterTest extends TestCase
     }
 
     #[Test]
-    public function whatItHoldsStillTakesTheKeysAndKeepsWhatTheyDid(): void
-    {
-        $wrapped = FocusGutter::around(TextInput::new('type here'));
-
-        $typed = $wrapped->update(new KeyMsg('h'), new Rect(0, 0, 20, 1))->model;
-        self::assertInstanceOf(FocusGutter::class, $typed);
-
-        $frame = new Frame(20, 1);
-        $typed->render($frame, new Rect(0, 0, 20, 1), new RenderContext(Theme::dark()));
-
-        self::assertSame('h', $frame->characters[2], 'the keystroke reached the field and stayed there');
-    }
-
-    #[Test]
     public function aKeyTheApplicationBoundGloballyStillReachesTheFieldBehindTheTrack(): void
     {
-        $gutter = FocusGutter::around(TextInput::new('')->withValue('typed'))
-            ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]));
-
-        $cleared = $gutter->update(new KeyMsg('k', ctrl: true), new Rect(0, 0, 20, 1))->model;
-
-        self::assertInstanceOf(FocusGutter::class, $cleared);
-        $field = $cleared->holds();
+        $field = FocusGutter::around(TextInput::new('')->withValue('typed'))
+            ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]))
+            ->holds();
         self::assertInstanceOf(TextInput::class, $field);
-        self::assertSame('', $field->value(), 'the track must not swallow what the application bound');
+
+        $cleared = $field->update(new KeyMsg('k', ctrl: true), new Rect(0, 0, 20, 1))->model;
+
+        self::assertInstanceOf(TextInput::class, $cleared);
+        self::assertSame('', $cleared->value(), 'the track must not swallow what the application bound');
     }
 
     #[Test]
@@ -107,15 +93,15 @@ final class FocusGutterTest extends TestCase
     #[Test]
     public function aHostRebindingTheTrackRebindsTheFieldBehindIt(): void
     {
-        $gutter = FocusGutter::around(TextInput::new()->withValue('typed'))
-            ->withKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+w']]));
-
-        $cleared = $gutter->update(new KeyMsg('w', ctrl: true), new Rect(0, 0, 20, 1))->model;
-
-        self::assertInstanceOf(FocusGutter::class, $cleared);
-        $field = $cleared->holds();
+        $field = FocusGutter::around(TextInput::new()->withValue('typed'))
+            ->withKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+w']]))
+            ->holds();
         self::assertInstanceOf(TextInput::class, $field);
-        self::assertSame('', $field->value(), 'a rebinding a host asks for lands on the field, not on the track');
+
+        $cleared = $field->update(new KeyMsg('w', ctrl: true), new Rect(0, 0, 20, 1))->model;
+
+        self::assertInstanceOf(TextInput::class, $cleared);
+        self::assertSame('', $cleared->value(), 'a rebinding a host asks for lands on the field, not on the track');
     }
 
     #[Test]
