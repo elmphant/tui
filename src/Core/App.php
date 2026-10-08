@@ -980,8 +980,10 @@ abstract readonly class App implements RoutesFocus
             // when it was collected, so it is looked up in the app as it stands or a
             // second write restores the sub-model the first one changed.
             $current = $app->componentRegistry()->get($original->id) ?? $original;
+            $replaced = $current->replaceIn($app, $widget);
+            ComponentWriteBack::verifyStored($current, $widget, $app, $replaced);
             /** @var static $app */
-            $app = $current->replaceIn($app, $widget);
+            $app = $replaced;
         }
 
         ComponentWriteBack::verify($app->componentRegistry(), $updates);

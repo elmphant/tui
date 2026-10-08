@@ -23,6 +23,16 @@ use LogicException;
 final class ComponentWriteBack
 {
     /**
+     * @param Component<Interactive> $component
+     */
+    public static function verifyStored(Component $component, Interactive $widget, App $before, App $after): void
+    {
+        if ($after === $before && self::asAuthored($widget) != self::asAuthored($component->widget)) {
+            throw new LogicException(sprintf('Component "%s" had nowhere to store its update: its replacement gave the model back unchanged', $component->id->value));
+        }
+    }
+
+    /**
      * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
      */
     public static function verify(ComponentRegistry $registry, array $updates): void

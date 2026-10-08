@@ -232,6 +232,25 @@ final class ComponentTest extends TestCase
 
         $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('typed')));
     }
+
+    #[Test]
+    public function aReplacementThatGivesTheModelBackUnchangedIsRefused(): void
+    {
+        $app = new DroppingComponentApp();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Component "typed" had nowhere to store its update: its replacement gave the model back unchanged');
+
+        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('typed')));
+    }
+}
+
+final readonly class DroppingComponentApp extends App
+{
+    public function view(): Widget
+    {
+        return Component::bind(ComponentId::named('typed'), TextInput::new(), static fn (self $app, TextInput $input): self => $app);
+    }
 }
 
 final readonly class ComponentContractApp extends App
