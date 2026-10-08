@@ -88,7 +88,7 @@ final readonly class ArrivalRecorder implements Focusable
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return $message instanceof FocusMsg && $message->focused
+        return $message instanceof FocusMsg
             ? UpdateResult::changed(new self($message->move))
             : UpdateResult::keep($this);
     }

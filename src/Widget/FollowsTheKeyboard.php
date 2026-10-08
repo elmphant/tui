@@ -6,7 +6,8 @@ namespace Elmphant\Tui\Widget;
 
 /**
  * A container that keeps the child the keyboard is in on screen. The runtime
- * tells it on arrival; null says the keyboard is not below it.
+ * tells it on arrival and never on departure; null is the container with no
+ * child to follow.
  */
 interface FollowsTheKeyboard
 {

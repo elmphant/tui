@@ -16,7 +16,6 @@ use Elmphant\Tui\Core\FocusMove;
 final readonly class FocusMsg implements Message
 {
     public function __construct(
-        public bool $focused,
         public FocusMove $move = FocusMove::To,
     ) {
     }

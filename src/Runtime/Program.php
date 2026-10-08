@@ -833,7 +833,7 @@ final class Program
                 if (!$resolved->sameAs($this->focus) && $resolved->focused() !== null) {
                     $this->focus = $resolved;
                     $this->messageQueue->unshift($stamped);
-                    $this->messageQueue->unshift(new FocusMsg(true));
+                    $this->messageQueue->unshift(new FocusMsg());
 
                     continue;
                 }
@@ -979,7 +979,7 @@ final class Program
         // still means "put the keyboard here". Unshifted, because one read can queue
         // a whole burst of keystrokes and an arrival behind them seats too late.
         if ($moved->focused() !== null) {
-            $this->messageQueue->unshift(new FocusMsg(true, $command->move));
+            $this->messageQueue->unshift(new FocusMsg($command->move));
         }
     }
 

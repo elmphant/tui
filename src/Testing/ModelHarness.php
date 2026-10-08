@@ -282,7 +282,7 @@ final class ModelHarness
             return;
         }
 
-        $arrived = new FocusMsg(true, $move);
+        $arrived = new FocusMsg($move);
         $result = $this->model instanceof RoutesFocus
             ? $this->model->update($arrived, $this->area, $this->focus)
             : $this->model->update($arrived, $this->area);
