@@ -25,7 +25,7 @@ use Elmphant\Tui\Widget\Widget;
  * for small, known-size data — when the reader needs to navigate rows, or the row
  * count is unbounded, use Table.
  */
-final class StaticTable implements Widget, MeasureHeight
+final readonly class StaticTable implements Widget, MeasureHeight
 {
     use Cloneable;
 
@@ -40,21 +40,15 @@ final class StaticTable implements Widget, MeasureHeight
      * @param list<string>        $headers
      * @param list<list<string>>  $rows
      * @param ?list<list<string>> $measured rows the columns are sized for, when not the rows drawn
-     * @param list<string>        $built    lines already drawn, for $builtFor columns
-     * @param ?list<int>          $demanded column widths already measured
      */
     private function __construct(
-        private readonly array $headers,
-        private readonly array $rows,
-        private readonly BorderStyle $border = BorderStyle::Solid,
-        private readonly Overflow $overflow = Overflow::Stack,
-        private readonly ?array $measured = null,
-        private readonly int $minWidth = 0,
-        private array $built = [],
-        private ?int $builtFor = null,
-        private ?int $builtUpTo = null,
-        private ?array $demanded = null,
-        private ?string $keyed = null,
+        private array $headers,
+        private array $rows,
+        private BorderStyle $border = BorderStyle::Solid,
+        private Overflow $overflow = Overflow::Stack,
+        private ?array $measured = null,
+        private int $minWidth = 0,
+        private StaticTableMemo $memo = new StaticTableMemo(),
     ) {
     }
 
@@ -173,14 +167,7 @@ final class StaticTable implements Widget, MeasureHeight
      */
     private function rebuiltWith(mixed ...$overrides): self
     {
-        return $this->cloneWith(
-            ...$overrides,
-            built: [],
-            builtFor: null,
-            builtUpTo: null,
-            demanded: null,
-            keyed: null,
-        );
+        return $this->cloneWith(...$overrides, memo: new StaticTableMemo());
     }
 
     /**
@@ -190,7 +177,7 @@ final class StaticTable implements Widget, MeasureHeight
      */
     private function contentKey(): string
     {
-        return $this->keyed ??= hash('xxh3', serialize([
+        return $this->memo->keyed ??= hash('xxh3', serialize([
             $this->headers,
             $this->rows,
             $this->measured,
@@ -207,10 +194,11 @@ final class StaticTable implements Widget, MeasureHeight
     {
         // A window held from an earlier render answers a smaller one, never a
         // larger one and never a question about the whole table.
-        if ($this->builtFor === $width
-            && (null === $this->builtUpTo || (null !== $upTo && $this->builtUpTo >= $upTo))
+        $memo = $this->memo;
+        if ($memo->builtFor === $width
+            && (null === $memo->builtUpTo || (null !== $upTo && $memo->builtUpTo >= $upTo))
         ) {
-            return $this->built;
+            return $memo->built;
         }
 
         /** @var list<string> $lines */
@@ -219,9 +207,9 @@ final class StaticTable implements Widget, MeasureHeight
             fn (): array => $this->draw($width, $upTo),
         );
 
-        $this->built = $lines;
-        $this->builtFor = $width;
-        $this->builtUpTo = $upTo;
+        $memo->built = $lines;
+        $memo->builtFor = $width;
+        $memo->builtUpTo = $upTo;
 
         return $lines;
     }
@@ -429,14 +417,14 @@ final class StaticTable implements Widget, MeasureHeight
      */
     private function demands(): array
     {
-        if (null !== $this->demanded) {
-            return $this->demanded;
+        if (null !== $this->memo->demanded) {
+            return $this->memo->demanded;
         }
 
         /** @var list<int> $demanded */
         $demanded = WrapCache::remember($this->contentKey() . ':columns', $this->measuring(...));
 
-        return $this->demanded = $demanded;
+        return $this->memo->demanded = $demanded;
     }
 
     /**
