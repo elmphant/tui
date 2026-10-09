@@ -96,9 +96,9 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         return $this->cloneWith(margin: $margin);
     }
 
-    public function withDivider(): self
+    public function withDivider(bool $divider = true): self
     {
-        return $this->cloneWith(divider: true);
+        return $this->cloneWith(divider: $divider);
     }
 
     public function sizing(): Sizing

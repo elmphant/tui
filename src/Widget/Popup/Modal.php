@@ -102,9 +102,9 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
      * MeasureHeight; content that answers neither keeps the percentage sizing for
      * the dimension it cannot speak for.
      */
-    public function withSizedToContent(): self
+    public function withSizedToContent(bool $sizedToContent = true): self
     {
-        return $this->cloneWith(sizedToContent: true);
+        return $this->cloneWith(sizedToContent: $sizedToContent);
     }
 
     public function withWidth(int $percent): self

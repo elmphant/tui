@@ -220,6 +220,13 @@ final class HeaderTest extends TestCase
     }
 
     #[Test]
+    public function aDividerCanBeTakenAwayAgain(): void
+    {
+        $header = Header::new('Title')->withDivider()->withDivider(false);
+        self::assertEquals(Constraint::exact(1), $header->sizing()->rows);
+    }
+
+    #[Test]
     public function dividerWithPaddingConstraint(): void
     {
         $header = Header::new('Title')

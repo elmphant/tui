@@ -96,6 +96,19 @@ final class ModalTest extends TestCase
     }
 
     #[Test]
+    public function fittingAroundTheContentCanBeTurnedOffAgain(): void
+    {
+        $content = Paragraph::fromText("one two three\nfour");
+        $plain = new Frame(100, 50);
+        $toggled = new Frame(100, 50);
+
+        Modal::new('T', $content)->render($plain, Rect::fromSize(100, 50), $this->context);
+        Modal::new('T', $content)->withSizedToContent()->withSizedToContent(false)->render($toggled, Rect::fromSize(100, 50), $this->context);
+
+        self::assertSame(ScreenBuffer::fromFrame($plain)->plainText(), ScreenBuffer::fromFrame($toggled)->plainText());
+    }
+
+    #[Test]
     public function fitsItselfAroundItsContent(): void
     {
         $content = Paragraph::fromText("one two three\nfour");

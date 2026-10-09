@@ -27,7 +27,6 @@ use Elmphant\Tui\Widget\Focusable;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionProperty;
 
 final class TextInputTest extends TestCase
 {
@@ -2102,58 +2101,46 @@ final class TextInputTest extends TestCase
     #[Test]
     public function homeAtCursorZeroIsANoOpAndKeepsTheViewport(): void
     {
-        $input = TextInput::new()
-                        ->withValue('abcdefghij')
-            ->withCursor(0)
-            ->withScrollOffset(5);
+        $input = TextInput::new()->withValue('abcdefghij')->withCursor(0);
         $result = $input->update(new KeyMsg(Key::Home), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(5, $this->scrollOffsetOf($result), 'Home with the cursor already at 0 must not recompute the viewport');
+        self::assertSame($input, $result, 'Home with the cursor already at 0 must not recompute the viewport');
     }
 
     #[Test]
     public function endAtTextEndIsANoOpAndKeepsTheViewport(): void
     {
-        $input = TextInput::new()
-                        ->withValue('abcdefghij')
-            ->withScrollOffset(0);
+        $input = TextInput::new()->withValue('abcdefghij');
         $result = $input->update(new KeyMsg(Key::End), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(0, $this->scrollOffsetOf($result), 'End with the cursor already at the end must not recompute the viewport');
+        self::assertSame($input, $result, 'End with the cursor already at the end must not recompute the viewport');
     }
 
     #[Test]
     public function deleteForwardAtTextEndIsANoOpAndKeepsTheViewport(): void
     {
-        $input = TextInput::new()
-                        ->withValue('abcdefghij')
-            ->withScrollOffset(0);
+        $input = TextInput::new()->withValue('abcdefghij');
         $result = $input->update(new KeyMsg(Key::Delete), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(0, $this->scrollOffsetOf($result), 'Delete at the end of the text has nothing to delete and must change nothing');
+        self::assertSame($input, $result, 'Delete at the end of the text has nothing to delete and must change nothing');
     }
 
     #[Test]
     public function deleteWordForwardAtTextEndIsANoOpAndKeepsTheViewport(): void
     {
-        $input = TextInput::new()
-                        ->withValue('abcdefghij')
-            ->withScrollOffset(0);
+        $input = TextInput::new()->withValue('abcdefghij');
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(0, $this->scrollOffsetOf($result), 'Ctrl+Delete at the end of the text must change nothing');
+        self::assertSame($input, $result, 'Ctrl+Delete at the end of the text must change nothing');
     }
 
     #[Test]
     public function deleteWordBackwardAtCursorZeroIsANoOpAndKeepsTheViewport(): void
     {
-        $input = TextInput::new()
-                        ->withValue('abcdefghij')
-            ->withCursor(0)
-            ->withScrollOffset(5);
+        $input = TextInput::new()->withValue('abcdefghij')->withCursor(0);
         $result = $input->update(new KeyMsg(Key::Backspace, ctrl: true), new Rect(0, 0, 5, 1))->model;
 
-        self::assertSame(5, $this->scrollOffsetOf($result), 'Ctrl+Backspace at position 0 has nothing to delete and must change nothing');
+        self::assertSame($input, $result, 'Ctrl+Backspace at position 0 has nothing to delete and must change nothing');
     }
 
     #[Test]
@@ -2190,10 +2177,5 @@ final class TextInputTest extends TestCase
             $field->withCharLimit(3)->update(new PasteMsg('XYZ'), $area)->model->value(),
             'a limit typing cannot pass is not one a paste walks through',
         );
-    }
-
-    private function scrollOffsetOf(TextInput $input): int
-    {
-        return (new ReflectionProperty(TextInput::class, 'scrollOffset'))->getValue($input);
     }
 }

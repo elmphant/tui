@@ -32,6 +32,19 @@ use PHPUnit\Framework\TestCase;
 final class ListViewTest extends TestCase
 {
     #[Test]
+    public function aCursorPastTheLastItemRestsOnTheLast(): void
+    {
+        self::assertSame(1, ListView::fromStrings(['a', 'b'])->withCursor(9)->cursor());
+    }
+
+    #[Test]
+    public function aSelectionPastTheLastItemSelectsNothing(): void
+    {
+        self::assertNull(ListView::fromStrings(['a', 'b'])->withSelected(9)->selectedItem());
+        self::assertSame(-1, ListView::fromStrings(['a', 'b'])->withSelected(9)->selectedIndex());
+    }
+
+    #[Test]
     public function measuresTheRowsItsItemsNeed(): void
     {
         $list = ListView::new([new SimpleListItem('a'), new SimpleListItem('b'), new SimpleListItem('c')]);

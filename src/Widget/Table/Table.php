@@ -161,7 +161,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
     public function withSelected(int $selected): self
     {
-        return $this->cloneWith(selected: $selected);
+        return $this->cloneWith(selected: isset($this->rows[$selected]) ? $selected : -1);
     }
 
     /**
@@ -184,7 +184,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withCursor(int $cursor): self
     {
-        return $this->cloneWith(cursor: $cursor, followCursor: true);
+        return $this->cloneWith(cursor: max(0, min($cursor, $this->rowCount() - 1)), followCursor: true);
     }
 
     public function selectedIndex(): int

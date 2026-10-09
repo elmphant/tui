@@ -90,14 +90,6 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         return $this->cloneWith(cursor: max(0, min($cursor, self::graphemeLength($this->value))));
     }
 
-    /**
-     * @internal viewport state is normally derived from cursor movement
-     */
-    public function withScrollOffset(int $scrollOffset): self
-    {
-        return $this->cloneWith(scrollOffset: $scrollOffset);
-    }
-
     public function echoMode(): EchoMode
     {
         return $this->echoMode;

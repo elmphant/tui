@@ -378,6 +378,22 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function aCursorPastTheLastRowRestsOnTheLast(): void
+    {
+        $table = Table\Table::new([Column::new('Name', Constraint::flex())], [Row::new('Alice'), Row::new('Bob')]);
+
+        self::assertSame(1, $table->withCursor(9)->cursor());
+    }
+
+    #[Test]
+    public function aSelectionPastTheLastRowSelectsNothing(): void
+    {
+        $table = Table\Table::new([Column::new('Name', Constraint::flex())], [Row::new('Alice'), Row::new('Bob')]);
+
+        self::assertSame(-1, $table->withSelected(9)->selectedIndex());
+    }
+
+    #[Test]
     public function cursorSkipsNonSelectableRows(): void
     {
         $table = Table\Table::new(
