@@ -15,11 +15,37 @@ use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LayoutTest extends TestCase
 {
+    #[Test]
+    public function aGapLeavesEmptyCellsBetweenChildren(): void
+    {
+        $placed = Layout::vertical(Text::new('a'), Text::new('b'), Text::new('c'))
+            ->withGap(2)
+            ->computeChildRects(new Rect(0, 0, 10, 10));
+
+        self::assertSame([0, 3, 6], array_map(static fn (array $pair): int => $pair[1]->y, $placed));
+    }
+
+    #[Test]
+    public function aNegativeGapIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Layout gap must be non-negative, got -1');
+
+        Layout::vertical()->withGap(-1);
+    }
+
+    #[Test]
+    public function aColumnCountsItsGapsInTheRowsItNeeds(): void
+    {
+        self::assertSame(7, Layout::vertical(Text::new('a'), Text::new('b'), Text::new('c'))->withGap(2)->measureHeight(10));
+    }
+
     #[Test]
     public function verticalWithExactConstraints(): void
     {

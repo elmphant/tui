@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\AxisResult;
+use Elmphant\Tui\Layout\Axis\AxisSpecification;
 use Elmphant\Tui\Layout\Axis\ContentBasis;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Rendering\Frame;
@@ -12,6 +14,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
+use InvalidArgumentException;
 
 final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
 {
@@ -37,6 +40,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         private Direction $direction,
         array $children = [],
         array $slotConstraints = [],
+        private int $gap = 0,
     ) {
         $this->children = array_values($children);
         $this->slotConstraints = $slotConstraints;
@@ -54,7 +58,20 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
             $slots[count($this->children)] = $constraint;
         }
 
-        return new self($this->direction, [...$this->children, $child], $slots);
+        return new self(direction: $this->direction, children: [...$this->children, $child], slotConstraints: $slots, gap: $this->gap);
+    }
+
+    /**
+     * Empty cells between neighbouring children; it narrows when the area cannot
+     * hold it, before any child is squeezed.
+     */
+    public function withGap(int $gap): self
+    {
+        if ($gap < 0) {
+            throw new InvalidArgumentException(sprintf('Layout gap must be non-negative, got %d', $gap));
+        }
+
+        return new self(direction: $this->direction, children: $this->children, slotConstraints: $this->slotConstraints, gap: $gap);
     }
 
     public static function vertical(Widget ...$children): self
@@ -99,7 +116,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
             }
         }
 
-        return $isVertical ? $total : $max;
+        return $isVertical ? $total + $this->gap * max(0, count($this->children) - 1) : $max;
     }
 
     /**
@@ -108,24 +125,23 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     public function computeChildRects(Rect $area): array
     {
         $isVertical = $this->direction === Direction::Vertical;
-        $sizes = $isVertical
-            ? $this->sizesFor($area->height, $area->width)
-            : $this->sizesFor($area->width);
+        $resolved = $isVertical
+            ? $this->resolved($area->height, $area->width)
+            : $this->resolved($area->width);
+        $start = $isVertical ? $area->y : $area->x;
+        $extent = $isVertical ? $area->height : $area->width;
 
         $result = [];
-        $cursor = $isVertical ? $area->y : $area->x;
-        $unplaced = $isVertical ? $area->height : $area->width;
 
         foreach ($this->children as $index => $child) {
-            $size = min($sizes[$index], $unplaced);
-            $unplaced -= $size;
+            $offset = min($resolved->offsets[$index], $extent);
+            $size = max(0, min($resolved->sizes[$index], $extent - $offset));
 
             $childArea = $isVertical
-                ? new Rect($area->x, $cursor, $area->width, $size)
-                : new Rect($cursor, $area->y, $size, $area->height);
+                ? new Rect($area->x, $start + $offset, $area->width, $size)
+                : new Rect($start + $offset, $area->y, $size, $area->height);
 
             $result[] = [$child, $childArea];
-            $cursor += $size;
         }
 
         return $result;
@@ -166,6 +182,11 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
      */
     public function sizesFor(int $totalSpace, ?int $acrossExtent = null): array
     {
+        return $this->resolved($totalSpace, $acrossExtent)->sizes;
+    }
+
+    private function resolved(int $totalSpace, ?int $acrossExtent = null): AxisResult
+    {
         $policies = [];
 
         foreach ($this->children as $index => $child) {
@@ -180,7 +201,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
             );
         }
 
-        return Allocator::resolve($policies, $totalSpace)->sizes;
+        return Allocator::resolve($policies, $totalSpace, new AxisSpecification(gap: $this->gap));
     }
 
     private function constraintHeight(Constraint $constraint): int

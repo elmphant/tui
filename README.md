@@ -172,7 +172,7 @@ return.
 ### Responsive terminal layouts
 
 Use `Layout::horizontal()` and `Layout::vertical()` for simple, fixed
-compositions. Use `Flex` when sibling widgets should reflow as the terminal
+compositions; `->withGap(1)` leaves a cell between neighbours. Use `Flex` when sibling widgets should reflow as the terminal
 width changes:
 
 ```php
