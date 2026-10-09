@@ -11,12 +11,6 @@ final readonly class Theme
     use Cloneable;
 
     /**
-     * How far a float stands off the page. Enough to see the edge without
-     * reading as a second, brighter page.
-     */
-    private const RAISED_SEPARATION = 1.35;
-
-    /**
      * Bottom-bar style for Footer and StatusBar.
      *
      * Defaults to full-strength body text on the selection background, because
@@ -67,23 +61,6 @@ final readonly class Theme
         );
         $this->warning = $warning ?? $titleStyle->withAttributes($titleStyle->attributes & ~Attr::BOLD);
         $this->info = $info ?? $accent;
-    }
-
-    /**
-     * What a popup paints so it reads as above the page rather than part of it.
-     * Derived, so a palette that recolours the page takes its floats with it, and
-     * the ink comes lifted because one step off the page is not enough to write
-     * on. With no page declared there is nothing to stand off, and the selection
-     * fill is the only surface the palette can offer.
-     */
-    public function raisedStyle(): Style
-    {
-        $page = $this->page;
-        if ($page === null) {
-            return $this->base->readableOn($this->selectedStyle);
-        }
-
-        return $this->base->readableOn(new Style(background: $page->readableOn($page, self::RAISED_SEPARATION)));
     }
 
     public function withBase(Style $base): self

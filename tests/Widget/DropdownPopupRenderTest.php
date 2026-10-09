@@ -49,26 +49,28 @@ final class DropdownPopupRenderTest extends TestCase
     }
 
     #[Test]
-    public function theSurfaceIsFilledEvenWhereNothingElseIsDrawnAndStandsOffThePage(): void
+    public function thePageFillsThePopupEvenWhereNothingElseIsDrawn(): void
     {
-        // A popup that paints the page it covers is only a border away from the
-        // content behind it, whatever the terminal background turns out to be.
-        $theme = Theme::dark();
+        $theme = Theme::solarizedDark();
         $frame = new Frame(30, 10);
+        self::assertNotSame(0, $theme->base->backgroundValue(), 'precondition: this theme paints a page at all');
 
         self::popupOf(['a', 'b'])->render($frame, new Rect(0, 0, 20, 10), new RenderContext($theme));
 
-        $blankCellBelowTheOptions = 6 * $frame->width + 5;
-        $surface = $theme->raisedStyle()->background;
-        self::assertNotNull($surface);
-        self::assertNotNull($theme->page);
+        self::assertSame($theme->base->backgroundValue(), $frame->background(6 * $frame->width + 5), 'below the options');
+        self::assertSame($theme->base->backgroundValue(), $frame->background(2 * $frame->width + 1), 'and behind an option');
+    }
 
-        self::assertSame(
-            $surface->value,
-            $frame->background($blankCellBelowTheOptions),
-            'The surface must fill the whole popup, not just where text is drawn',
-        );
-        self::assertGreaterThanOrEqual(1.25, $surface->contrastRatio($theme->page));
+    #[Test]
+    public function theOptionUnderTheCursorKeepsTheFillItChose(): void
+    {
+        $theme = Theme::dark();
+        $frame = new Frame(30, 10);
+        $context = new RenderContext($theme);
+
+        $context->withFocusHere(static fn () => self::popupOf(['json', 'yaml'])->render($frame, new Rect(0, 0, 20, 10), $context));
+
+        self::assertSame($theme->cursorStyle->backgroundValue(), $frame->background(1 * $frame->width + 1));
     }
 
     #[Test]

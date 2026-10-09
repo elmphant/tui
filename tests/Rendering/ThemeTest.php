@@ -267,35 +267,6 @@ final class ThemeTest extends TestCase
     }
 
     #[Test]
-    public function aRaisedSurfaceStandsOffThePageAndCarriesReadableInk(): void
-    {
-        foreach (self::allPresets() as $name => $theme) {
-            $page = $theme->page;
-            self::assertNotNull($page);
-
-            $raised = $theme->raisedStyle();
-            $background = $raised->background;
-            $ink = $raised->foreground;
-            self::assertNotNull($background, sprintf('%s raises nothing to float on', $name));
-            self::assertNotNull($ink);
-
-            $separation = $background->contrastRatio($page);
-            self::assertGreaterThanOrEqual(
-                1.25,
-                $separation,
-                sprintf('%s floats at %.2f:1 over its page', $name, $separation),
-            );
-
-            $readability = $ink->contrastRatio($background);
-            self::assertGreaterThanOrEqual(
-                4.5,
-                $readability,
-                sprintf('%s writes on its float at %.2f:1', $name, $readability),
-            );
-        }
-    }
-
-    #[Test]
     public function everyPresetSaysWhichPageItWasDesignedAgainst(): void
     {
         foreach (self::allPresets() as $name => $theme) {
