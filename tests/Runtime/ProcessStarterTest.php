@@ -24,6 +24,18 @@ final class ProcessStarterTest extends TestCase
     }
 
     #[Test]
+    public function aCommandWithoutATimeoutRunsForAsLongAsItTakes(): void
+    {
+        self::assertNull(ProcessStarter::processFor(['sleep', '1'], null, null, [], null)->getTimeout());
+    }
+
+    #[Test]
+    public function aCommandWithATimeoutIsHeldToIt(): void
+    {
+        self::assertSame(2.5, ProcessStarter::processFor(['sleep', '1'], null, 2.5, [], null)->getTimeout());
+    }
+
+    #[Test]
     public function itStartsAStreamingProcessTheSameWay(): void
     {
         $running = (new ProcessStarter())->streaming(Cmd::process(['echo', 'hello']), null);

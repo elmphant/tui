@@ -48,6 +48,20 @@ final class ProcessStarter
      * @param list<string>          $command
      * @param array<string, string> $env
      */
+    public static function processFor(
+        array $command,
+        ?string $workingDirectory,
+        ?float $timeout,
+        array $env,
+        ?string $input,
+    ): Process {
+        return new Process($command, $workingDirectory, $env === [] ? null : $env, $input, $timeout);
+    }
+
+    /**
+     * @param list<string>          $command
+     * @param array<string, string> $env
+     */
     private function started(
         array $command,
         ?string $workingDirectory,
@@ -55,21 +69,7 @@ final class ProcessStarter
         array $env,
         ?string $input,
     ): Process {
-        $process = new Process($command);
-
-        if ($workingDirectory !== null) {
-            $process->setWorkingDirectory($workingDirectory);
-        }
-        if ($timeout !== null) {
-            $process->setTimeout($timeout);
-        }
-        if ($env !== []) {
-            $process->setEnv($env);
-        }
-        if ($input !== null) {
-            $process->setInput($input);
-        }
-
+        $process = self::processFor($command, $workingDirectory, $timeout, $env, $input);
         $process->start();
 
         return $process;
