@@ -47,9 +47,8 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     private function __construct(
         private array $headers,
         private array $rows,
-        private string $query = '',
+        private TextInput $field,
         private ?Matcher $matcher = null,
-        private ?TextInput $field = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -63,7 +62,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     public function hints(): array
     {
         return $this->effectiveKeybindings()->hints(
-            $this->query === '' ? [] : ['clear filter' => [Actions::CLEAR_LINE, Actions::CANCEL]],
+            $this->query() === '' ? [] : ['clear filter' => [Actions::CLEAR_LINE, Actions::CANCEL]],
         );
     }
 
@@ -73,7 +72,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
      */
     public function withField(TextInput $field): self
     {
-        return $this->cloneWith(query: $field->value(), field: $field);
+        return $this->cloneWith(field: $field);
     }
 
     public function field(): TextInput
@@ -83,7 +82,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     public function query(): string
     {
-        return $this->query;
+        return $this->field->value();
     }
 
     /**
@@ -92,12 +91,12 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
      */
     public static function new(array $headers, array $rows): self
     {
-        return new self($headers, $rows);
+        return new self($headers, $rows, FilterBar::field('', false));
     }
 
     public function withQuery(string $query): self
     {
-        return $this->cloneWith(query: $query);
+        return $query === $this->query() ? $this : $this->cloneWith(field: $this->field->withValue($query));
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -107,7 +106,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
         }
 
         if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
-            return new UpdateResult($this->query === '' ? $this : $this->withQuery(''));
+            return new UpdateResult($this->withQuery(''));
         }
 
         $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->field(), $message, $this->fieldArea($area));
@@ -173,7 +172,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
      */
     public function matchingRows(): array
     {
-        if (trim($this->query) === '') {
+        if (trim($this->query()) === '') {
             return $this->rows;
         }
 
@@ -182,7 +181,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
         // A matcher may name the same row twice — nothing in the port forbids
         // it — and an index past the rows names no row at all.
         $matching = array_values(array_unique(array_filter(
-            ($this->matcher ?? new SubstringMatcher())->matching($this->query, $searched),
+            ($this->matcher ?? new SubstringMatcher())->matching($this->query(), $searched),
             fn (int $index): bool => isset($this->rows[$index]),
         )));
 
@@ -191,18 +190,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     private function fieldFocused(bool $focused): TextInput
     {
-        if ($this->field === null) {
-            return FilterBar::field($this->query, $focused);
-        }
-
-        // Re-valued only when a host changed the query underneath it: doing so every
-        // frame would drag the caret back to the end each time.
-        $field = $this->field->value() === $this->query
-            ? $this->field
-            : $this->field->withValue($this->query);
-
-        return $field
-            ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None);
+        return $this->field->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None);
     }
 
     private function renderBar(Frame $frame, Rect $area, RenderContext $context, string $summary): void
