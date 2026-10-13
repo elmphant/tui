@@ -271,6 +271,18 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function typingAfterAnUnfinishedSequenceIntroducerArrivesKeyByKey(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; });
+
+        $buffer->process("\x1b]a\x1b_bc\x03");
+        $buffer->flush();
+
+        self::assertSame(["\x1b]", 'a', "\x1b_", 'b', 'c', "\x03"], $sequences);
+    }
+
+    #[Test]
     public function aBufferHoldingNothingWaitsForNothing(): void
     {
         $buffer = new StdinBuffer(onSequence: static function (): void {});

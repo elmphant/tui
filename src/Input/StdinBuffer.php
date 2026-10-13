@@ -103,18 +103,20 @@ final class StdinBuffer
 
     public function flush(): void
     {
-        if ($this->inPaste) {
-            return;
-        }
+        while (!$this->inPaste && $this->buffer !== '') {
+            if ($this->buffer[0] !== "\x1b") {
+                ($this->onSequence)($this->buffer);
+                $this->buffer = '';
 
-        if ($this->buffer === "\x1b\x1b") {
-            ($this->onSequence)("\x1b");
-            $this->buffer = "\x1b";
-        }
+                return;
+            }
 
-        if ($this->buffer !== '') {
-            ($this->onSequence)($this->buffer);
+            $second = ord($this->buffer[1] ?? "\x1b");
+            $held = $second === 0x1B || $second >= 0x80 ? "\x1b" : substr($this->buffer, 0, 2);
+            $rest = substr($this->buffer, strlen($held));
             $this->buffer = '';
+            ($this->onSequence)($held);
+            $this->process($rest);
         }
     }
 
