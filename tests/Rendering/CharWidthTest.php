@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Rendering\CharWidth;
+use IntlChar;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -84,6 +85,30 @@ final class CharWidthTest extends TestCase
         }
 
         self::assertSame([], $narrow);
+    }
+
+    #[Test]
+    public function aCodepointIsWideExactlyWhenUnicodeCallsItWideOrFullwidth(): void
+    {
+        if (!class_exists(IntlChar::class)) {
+            self::markTestSkipped('needs ext-intl for East_Asian_Width');
+        }
+
+        $mismatches = [];
+        for ($codepoint = 0x20; $codepoint <= 0x3FFFD; ++$codepoint) {
+            $character = mb_chr($codepoint);
+            if ($character === false || CharWidth::of($character) === 0) {
+                continue;
+            }
+
+            $eastAsianWidth = IntlChar::getIntPropertyValue($codepoint, IntlChar::PROPERTY_EAST_ASIAN_WIDTH);
+            $expected = $eastAsianWidth === IntlChar::EA_WIDE || $eastAsianWidth === IntlChar::EA_FULLWIDTH ? 2 : 1;
+            if (CharWidth::of($character) !== $expected) {
+                $mismatches[] = sprintf('U+%04X', $codepoint);
+            }
+        }
+
+        self::assertSame([], array_slice($mismatches, 0, 20), sprintf('%d codepoints measure wrong', count($mismatches)));
     }
 
     #[Test]
