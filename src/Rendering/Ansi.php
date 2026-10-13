@@ -12,7 +12,6 @@ final class Ansi
     public const CURSOR_RIGHT_ONE = "\x1b[C";
     public const CURSOR_DOWN_ONE = "\x1b[B";
 
-    public const ERASE_DISPLAY = "\x1b[2J";
     public const RESET_STYLE = "\x1b[0m";
     public const DEFAULT_CURSOR_SHAPE = "\x1b[0 q";
 

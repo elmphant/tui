@@ -83,15 +83,17 @@ final class Screen
         $this->flush($backBuffer);
     }
 
-    public function clear(): void
+    /**
+     * The terminal no longer shows what this screen last wrote, so the next
+     * flush draws every cell.
+     */
+    public function forget(): void
     {
         $this->front = null;
         $this->cursorAsserted = false;
         $this->lastShape = null;
         $this->shown = false;
         $this->resetCurrentStyle();
-        $this->terminal->write(Ansi::ERASE_DISPLAY . Ansi::CURSOR_HOME . Ansi::RESET_STYLE);
-        $this->terminal->flush();
     }
 
     private function cursorChange(Frame $backBuffer): string
@@ -269,7 +271,7 @@ final class Screen
 
         for ($row = 0; $row < $backBuffer->height; ++$row) {
             if ($row === 0) {
-                $output[] = Ansi::HIDE_CURSOR . Ansi::ERASE_DISPLAY . Ansi::CURSOR_HOME . Ansi::RESET_STYLE;
+                $output[] = Ansi::HIDE_CURSOR . Ansi::CURSOR_HOME . Ansi::RESET_STYLE;
             } else {
                 $output[] = Ansi::cursorToRowStart($row);
             }

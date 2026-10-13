@@ -109,7 +109,7 @@ final class ScreenTest extends TestCase
 
         $screen->flush($frame);
 
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output);
+        self::assertStringContainsString(Ansi::CURSOR_HOME, $terminal->output);
         self::assertStringContainsString('Hello', $terminal->output);
     }
 
@@ -434,7 +434,7 @@ final class ScreenTest extends TestCase
         $buffer2->putString(0, 0, 'BBBBBBBBBB');
         $screen->flush($buffer2);
 
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output, 'Width-only change must trigger full redraw');
+        self::assertStringContainsString(Ansi::CURSOR_HOME, $terminal->output, 'Width-only change must trigger full redraw');
         self::assertStringContainsString('BBBBBBBBBB', $terminal->output);
     }
 
@@ -700,9 +700,8 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString(Ansi::SYNC_START, $terminal->output, 'Full redraw must begin with SYNC_START');
     }
 
-    // --- Mutants #21-22: L104 row===0 check ---
     #[Test]
-    public function fullRedrawUsesHideCursorAndEraseOnlyForRowZero(): void
+    public function fullRedrawSendsItsHeaderOnlyForRowZero(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
@@ -714,7 +713,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         self::assertSame(2, substr_count($terminal->output, Ansi::HIDE_CURSOR), 'HIDE_CURSOR appears in renderFull and cursor post-pass');
-        self::assertSame(1, substr_count($terminal->output, Ansi::ERASE_DISPLAY), 'ERASE_DISPLAY must appear exactly once (row 0 only)');
+        self::assertSame(1, substr_count($terminal->output, Ansi::CURSOR_HOME));
         self::assertStringContainsString("\x1b[2;1H", $terminal->output, 'Row 1 must use cursorToRowStart positioning');
         self::assertStringContainsString("\x1b[3;1H", $terminal->output, 'Row 2 must use cursorToRowStart positioning');
     }
@@ -731,7 +730,6 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         self::assertStringContainsString(Ansi::HIDE_CURSOR, $terminal->output);
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output);
         self::assertStringContainsString(Ansi::CURSOR_HOME, $terminal->output);
         self::assertStringContainsString(Ansi::RESET_STYLE, $terminal->output);
 
@@ -1600,7 +1598,7 @@ final class ScreenTest extends TestCase
         $buffer2->putString(0, 0, 'BBBBB');
         $screen->flush($buffer2);
 
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output, 'Height-only change must trigger full redraw');
+        self::assertStringContainsString(Ansi::CURSOR_HOME, $terminal->output, 'Height-only change must trigger full redraw');
     }
 
     // --- Mutant: cursor movement with negative deltaX (cursor left) ---
@@ -1688,20 +1686,6 @@ final class ScreenTest extends TestCase
         $stripped = str_replace([Ansi::SYNC_START, Ansi::SYNC_END], '', $content);
         $sgrCount = preg_match_all('/\x1b\[\d+(?:;\d+)*m/', $stripped);
         self::assertSame(1, $sgrCount, 'Only the trailing RESET_STYLE should be an SGR sequence when style is default');
-    }
-
-    // --- Test that clear() writes proper sequences and calls flush ---
-    #[Test]
-    public function clearWritesEraseAndResetSequences(): void
-    {
-        $terminal = $this->createTerminal();
-        $screen = new Screen($terminal);
-
-        $screen->clear();
-
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output);
-        self::assertStringContainsString(Ansi::CURSOR_HOME, $terminal->output);
-        self::assertStringContainsString(Ansi::RESET_STYLE, $terminal->output);
     }
 
     #[Test]
@@ -2088,13 +2072,11 @@ final class ScreenTest extends TestCase
         $syncCount = substr_count($terminal->output, Ansi::SYNC_START);
         self::assertSame(1, $syncCount, 'Size change must trigger only one render pass (full), not both full + diff');
 
-        $eraseCount = substr_count($terminal->output, Ansi::ERASE_DISPLAY);
-        self::assertSame(1, $eraseCount, 'Only one ERASE_DISPLAY from the full redraw');
+        self::assertSame(1, substr_count($terminal->output, Ansi::CURSOR_HOME), 'Only one full redraw');
     }
 
-    // --- Mutants #2-5 (L37-39): clear() method ---
     #[Test]
-    public function clearResetsStyleStateForSubsequentDiff(): void
+    public function aForgottenScreenWritesItsStylesAgain(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
@@ -2104,7 +2086,7 @@ final class ScreenTest extends TestCase
         $frame->putString(0, 0, 'AAAAA', $foreground);
         $screen->flush($frame);
 
-        $screen->clear();
+        $screen->forget();
 
         $terminal->output = '';
         $buffer2 = new Frame(5, 1);
@@ -2112,54 +2094,7 @@ final class ScreenTest extends TestCase
         $screen->flush($buffer2);
 
         $fgSgr = Color::fromValue($foreground)->toSgr(false);
-        self::assertStringContainsString($fgSgr, $terminal->output, 'After clear(), style must be re-emitted in next render because resetCurrentStyle was called');
-    }
-
-    #[Test]
-    public function clearCallsTerminalFlush(): void
-    {
-        $flushCount = 0;
-        $terminal = new class($flushCount) implements TerminalOutput {
-            public string $output = '';
-
-            public function __construct(private int &$flushCount)
-            {
-            }
-
-            public function write(string $data): void
-            {
-                $this->output .= $data;
-            }
-
-            public function flush(): void
-            {
-                ++$this->flushCount;
-            }
-        };
-        $screen = new Screen($terminal);
-
-        $screen->clear();
-
-        self::assertGreaterThanOrEqual(1, $flushCount, 'clear() must call terminal->flush()');
-    }
-
-    #[Test]
-    public function clearOutputContainsAllThreeSequencesInCorrectOrder(): void
-    {
-        $terminal = $this->createTerminal();
-        $screen = new Screen($terminal);
-
-        $screen->clear();
-
-        $erasePos = strpos($terminal->output, Ansi::ERASE_DISPLAY);
-        $homePos = strpos($terminal->output, Ansi::CURSOR_HOME);
-        $resetPos = strpos($terminal->output, Ansi::RESET_STYLE);
-
-        self::assertNotFalse($erasePos);
-        self::assertNotFalse($homePos);
-        self::assertNotFalse($resetPos);
-        self::assertLessThan($homePos, $erasePos, 'ERASE_DISPLAY must come before CURSOR_HOME');
-        self::assertLessThan($resetPos, $homePos, 'CURSOR_HOME must come before RESET_STYLE');
+        self::assertStringContainsString($fgSgr, $terminal->output);
     }
 
     // --- Mutant #20 (L100): resetCurrentStyle at start of renderFull ---
@@ -2200,19 +2135,14 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $hidePos = strpos($terminal->output, Ansi::HIDE_CURSOR);
-        $erasePos = strpos($terminal->output, Ansi::ERASE_DISPLAY);
         $homePos = strpos($terminal->output, Ansi::CURSOR_HOME);
-        $resetPos = strpos($terminal->output, Ansi::RESET_STYLE);
         $contentPos = strpos($terminal->output, 'ABC');
 
         self::assertNotFalse($hidePos);
-        self::assertNotFalse($erasePos);
         self::assertNotFalse($homePos);
-        self::assertNotFalse($resetPos);
         self::assertNotFalse($contentPos);
 
-        self::assertLessThan($erasePos, $hidePos, 'HIDE_CURSOR must come before ERASE_DISPLAY');
-        self::assertLessThan($homePos, $erasePos, 'ERASE_DISPLAY must come before CURSOR_HOME');
+        self::assertLessThan($homePos, $hidePos, 'HIDE_CURSOR must come before CURSOR_HOME');
         self::assertLessThan($contentPos, $homePos, 'CURSOR_HOME must come before content');
     }
 
@@ -2745,6 +2675,21 @@ final class ScreenTest extends TestCase
         self::assertNotFalse($cursorToPosition);
         self::assertNotFalse($showCursorPosition);
         self::assertGreaterThan($cursorToPosition, $showCursorPosition, 'SHOW_CURSOR must come after cursorTo to avoid flashing the cursor at the previous location');
+    }
+
+    #[Test]
+    public function aRedrawAfterTheScreenWasGivenUpLeavesScrollbackAlone(): void
+    {
+        $terminal = $this->createTerminal();
+        $screen = new Screen($terminal);
+        $frame = new Frame(3, 2);
+        $frame->putString(0, 0, 'ABC');
+        $screen->flush($frame);
+
+        $screen->forget();
+        $screen->flush($frame);
+
+        self::assertStringNotContainsString("\x1b[2J", $terminal->output);
     }
 
     #[Test]

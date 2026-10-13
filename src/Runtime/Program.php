@@ -452,7 +452,7 @@ final class Program
 
         $this->watch(EventLoopWatcher::Suspend, EventLoop::onSignal(SIGTSTP, fn () => $this->suspend()));
 
-        $this->screen->clear();
+        $this->screen->forget();
         $this->adoptTerminalSize();
     }
 
@@ -921,7 +921,7 @@ final class Program
 
         if ($this->resizeNeedsScreenClear) {
             $this->resizeNeedsScreenClear = false;
-            $this->screen->clear();
+            $this->screen->forget();
         }
 
         $baseBackground = $renderContext->theme->base->backgroundValue();

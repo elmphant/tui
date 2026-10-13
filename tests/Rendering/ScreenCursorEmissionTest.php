@@ -98,7 +98,7 @@ final class ScreenCursorEmissionTest extends TestCase
     public function clearingTheScreenMakesTheNextFrameReassertTheCursor(): void
     {
         $this->paint('steady');
-        $this->screen->clear();
+        $this->screen->forget();
         $this->terminal->clearOutput();
 
         $this->paint('steady');
@@ -130,7 +130,7 @@ final class ScreenCursorEmissionTest extends TestCase
     public function aClearedScreenSaysWhatShapeTheCaretIsAgain(): void
     {
         $this->paintWithCursor('one', 3, 0);
-        $this->screen->clear();
+        $this->screen->forget();
         $this->terminal->clearOutput();
 
         $this->paintWithCursor('one', 3, 0);

@@ -1277,11 +1277,15 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $screen = new Screen($terminal);
+        $reflection->getProperty('screen')->setValue($program, $screen);
         $reflection->getProperty('isDirty')->setValue($program, false);
         $queueProperty = $reflection->getProperty('messageQueue');
         $queue = new SplQueue();
         $queueProperty->setValue($program, $queue);
+        $frame = new Frame(80, 24);
+        $screen->flush($frame);
+        $terminal->clearOutput();
 
         $reflection->getMethod('resume')->invoke($program);
         $reflection->getMethod('cancelEventLoopWatchers')->invoke($program);
@@ -1297,7 +1301,8 @@ final class ProgramTest extends TestCase
         }
         self::assertTrue($found, 'resume must enqueue ResizeMsg so the model re-runs layout');
 
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output(), 'resume must clear the screen so leftover content from another app does not show through');
+        $screen->flush($frame);
+        self::assertStringContainsString(Ansi::CURSOR_HOME, $terminal->output(), 'the frame after a resume is drawn whole, so what another app left cannot show through');
     }
 
     #[Test]
@@ -3550,12 +3555,11 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('renderFrame')->invoke($program);
         $terminal->clearOutput();
 
-        // Set the resize flag; second render must explicitly call screen->clear() which writes ERASE_DISPLAY again
         $reflection->getProperty('resizeNeedsScreenClear')->setValue($program, true);
         $reflection->getMethod('renderFrame')->invoke($program);
 
         self::assertFalse($reflection->getProperty('resizeNeedsScreenClear')->getValue($program), 'Flag must clear to false after consuming it (FalseValue mutant flips it to true → would re-clear forever)');
-        self::assertStringContainsString(Ansi::ERASE_DISPLAY, $terminal->output(), 'Second render with resizeNeedsScreenClear=true must call screen->clear() which writes ERASE_DISPLAY; without it, renderDiff would not emit ERASE_DISPLAY for the unchanged content');
+        self::assertStringContainsString(Ansi::CURSOR_HOME, $terminal->output(), 'a resize redraws the unchanged content whole, which a diff would not');
     }
 
     #[Test]
