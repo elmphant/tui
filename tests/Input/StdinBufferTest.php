@@ -238,6 +238,22 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aPastedCharacterSplitAcrossReadsArrivesWhole(): void
+    {
+        $pastes = [];
+        $buffer = new StdinBuffer(
+            onSequence: static function (): void {},
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~caf\xc3");
+        $buffer->process("\xa9");
+        $buffer->process("\x1b[201~");
+
+        self::assertSame(['café'], $pastes);
+    }
+
+    #[Test]
     public function aBufferHoldingNothingWaitsForNothing(): void
     {
         $buffer = new StdinBuffer(onSequence: static function (): void {});

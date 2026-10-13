@@ -33,7 +33,7 @@ final class StdinBuffer
 
     public function process(string $data): void
     {
-        if (strlen($data) === 1 && ord($data) > 127 && (ord($data) < 0xC2 || ord($data) > 0xF4) && $this->buffer === '') {
+        if (!$this->inPaste && strlen($data) === 1 && ord($data) > 127 && (ord($data) < 0xC2 || ord($data) > 0xF4) && $this->buffer === '') {
             $data = "\x1b" . chr(ord($data) - 128);
         }
         $this->buffer .= $data;
