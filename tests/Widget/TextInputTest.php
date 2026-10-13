@@ -105,6 +105,28 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function aTypedCombiningMarkJoinsTheCharacterBeforeIt(): void
+    {
+        $area = Rect::fromSize(40, 1);
+        $input = TextInput::new()->withValue('cafe');
+
+        $accented = $input->update(new KeyMsg("\u{0301}"), $area)->model;
+        $wordLeft = $accented->update(new KeyMsg(Key::Left, alt: true), $area)->model;
+
+        self::assertSame(["cafe\u{0301}", 4, 0], [$accented->value(), $accented->cursor(), $wordLeft->cursor()]);
+    }
+
+    #[Test]
+    public function aPasteStartingWithACombiningMarkJoinsTheCharacterBeforeIt(): void
+    {
+        $input = TextInput::new()->withValue('cafe');
+
+        $pasted = $input->update(new PasteMsg("\u{0301}!"), Rect::fromSize(40, 1))->model;
+
+        self::assertSame(["cafe\u{0301}!", 5], [$pasted->value(), $pasted->cursor()]);
+    }
+
+    #[Test]
     public function altBAndAltFMoveByWordAsInReadline(): void
     {
         $area = Rect::fromSize(40, 1);

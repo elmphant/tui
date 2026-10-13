@@ -361,7 +361,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         $before = self::graphemeSubstring($this->value, 0, $this->cursor);
         $after = self::graphemeSubstring($this->value, $this->cursor);
 
-        return $this->cloneWith(value: $before . $character . $after, cursor: $this->cursor + 1);
+        return $this->cloneWith(value: $before . $character . $after, cursor: self::graphemeLength($before . $character));
     }
 
     private function pasted(string $content): ?self
@@ -385,7 +385,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
 
         return $this->cloneWith(
             value: $before . $content . $after,
-            cursor: $this->cursor + self::graphemeLength($content),
+            cursor: self::graphemeLength($before . $content),
         );
     }
 
