@@ -543,6 +543,7 @@ final class Program
         $inputStream = $this->terminal->inputStream();
         if ($inputStream !== null) {
             $this->watch(EventLoopWatcher::Input, EventLoop::onReadable($inputStream, function () {
+                $this->readInput();
                 $this->tick();
             }));
         }
@@ -643,23 +644,30 @@ final class Program
         $this->tick();
     }
 
+    private function readInput(): void
+    {
+        $newInput = $this->terminal->readInput();
+        if ($newInput === '') {
+            return;
+        }
+
+        $this->tracer?->record(TraceEvent::InputRead, [
+            'bytes' => strlen($newInput),
+            'queued' => $this->messageQueue->count(),
+        ]);
+        $this->cancelWatcher(EventLoopWatcher::EscapeFlush);
+        $this->stdinBuffer->process($newInput);
+        $flushDelay = $this->stdinBuffer->flushDelay();
+        if ($flushDelay !== null) {
+            $this->watch(EventLoopWatcher::EscapeFlush, EventLoop::delay($flushDelay, $this->flushPendingInput(...)));
+        }
+    }
+
     private function runTick(): void
     {
         $this->drainDeadline = null;
         $this->handlePendingResize();
-        $newInput = $this->terminal->readInput();
-        if ($newInput !== '') {
-            $this->tracer?->record(TraceEvent::InputRead, [
-                'bytes' => strlen($newInput),
-                'queued' => $this->messageQueue->count(),
-            ]);
-            $this->cancelWatcher(EventLoopWatcher::EscapeFlush);
-            $this->stdinBuffer->process($newInput);
-            $flushDelay = $this->stdinBuffer->flushDelay();
-            if ($flushDelay !== null) {
-                $this->watch(EventLoopWatcher::EscapeFlush, EventLoop::delay($flushDelay, $this->flushPendingInput(...)));
-            }
-        }
+        $this->readInput();
 
         $now = $this->clock->now();
         $this->effects?->fire($now);
