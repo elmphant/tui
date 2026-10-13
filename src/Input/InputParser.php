@@ -223,6 +223,10 @@ final class InputParser
             return self::parseKittyCsiU($body);
         }
 
+        if (preg_match('/^27;(\d+);(\d+)~$/', $body, $modifyOtherKeys) === 1) {
+            return self::parseKittyCsiU("{$modifyOtherKeys[2]};{$modifyOtherKeys[1]}u");
+        }
+
         if ($sequence === "\x1b[I") {
             return new TerminalFocusMsg(true);
         }

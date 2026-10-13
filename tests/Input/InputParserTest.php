@@ -2201,6 +2201,14 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function modifyOtherKeysShiftEnterIsShiftEnter(): void
+    {
+        $result = InputParser::parseSequence("\x1b[27;2;13~");
+
+        self::assertEquals(new KeyMsg(Key::Enter, shift: true), $result);
+    }
+
+    #[Test]
     public function kittyCsiUDeleteCodepoint(): void
     {
         $result = InputParser::parseSequence("\x1b[57356u");
