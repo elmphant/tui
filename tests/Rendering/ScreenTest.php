@@ -1704,9 +1704,8 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString(Ansi::RESET_STYLE, $terminal->output);
     }
 
-    // --- Test: renderFull terminal->write is called with imploded output ---
     #[Test]
-    public function fullRedrawWritesConcatenatedOutput(): void
+    public function aFullRedrawAndItsCaretGoOutInOneWrite(): void
     {
         $writeCount = 0;
         $terminal = new class($writeCount) implements TerminalOutput {
@@ -1732,7 +1731,7 @@ final class ScreenTest extends TestCase
         $frame->putString(0, 0, 'ABC');
         $screen->flush($frame);
 
-        self::assertSame(2, $writeCount, 'Full redraw calls write for content + cursor');
+        self::assertSame(1, $writeCount);
         self::assertStringContainsString('ABC', $terminal->output);
     }
 
@@ -2746,6 +2745,24 @@ final class ScreenTest extends TestCase
         self::assertNotFalse($cursorToPosition);
         self::assertNotFalse($showCursorPosition);
         self::assertGreaterThan($cursorToPosition, $showCursorPosition, 'SHOW_CURSOR must come after cursorTo to avoid flashing the cursor at the previous location');
+    }
+
+    #[Test]
+    public function theCaretIsPlacedBeforeTheSynchronizedFrameEnds(): void
+    {
+        $terminal = $this->createTerminal();
+        $screen = new Screen($terminal);
+        $frame = new Frame(10, 5);
+        $frame->putString(0, 0, 'old');
+        $frame->setCursorPosition(3, 2, CursorShape::BlinkingBar);
+        $screen->flush($frame);
+
+        $terminal->output = '';
+        $frame->putString(0, 0, 'new');
+        $frame->setCursorPosition(3, 2, CursorShape::BlinkingBar);
+        $screen->flush($frame);
+
+        self::assertStringEndsWith("\x1b[3;4H" . Ansi::SYNC_END, $terminal->output);
     }
 
     #[Test]

@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Rendering;
 use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\TerminalOutput;
 use LogicException;
+use Throwable;
 
 final class Screen
 {
@@ -56,13 +57,24 @@ final class Screen
 
     public function flush(Frame $backBuffer): void
     {
-        if ($this->front === null || $this->front->width !== $backBuffer->width || $this->front->height !== $backBuffer->height) {
-            $this->renderFull($backBuffer);
-        } else {
-            $this->renderDiff($backBuffer);
+        $painted = $this->front === null || $this->front->width !== $backBuffer->width || $this->front->height !== $backBuffer->height
+            ? $this->renderFull($backBuffer)
+            : $this->renderDiff($backBuffer);
+        $cursor = $this->cursorChange($backBuffer);
+
+        if ($painted !== '' || $cursor !== '') {
+            try {
+                $this->terminal->write(Ansi::SYNC_START . $painted . $cursor . Ansi::SYNC_END);
+                $this->terminal->flush();
+            } catch (Throwable $error) {
+                $this->front = null;
+
+                throw $error;
+            }
         }
 
-        $this->emitCursor($backBuffer);
+        $this->snapshotFrontBuffer($backBuffer);
+        $backBuffer->clearDirty();
     }
 
     public function forceRedraw(Frame $backBuffer): void
@@ -82,23 +94,25 @@ final class Screen
         $this->terminal->flush();
     }
 
-    private function emitCursor(Frame $backBuffer): void
+    private function cursorChange(Frame $backBuffer): string
     {
         $position = $backBuffer->cursorPosition;
 
         if ($this->cursorAsserted && $this->matchesLastCursor($position)) {
-            return;
+            return '';
         }
 
-        $this->terminal->write($position === null
+        $change = $position === null
             ? Ansi::HIDE_CURSOR
             : $this->shapeChangeTo($position->shape)
                 . Ansi::cursorTo($position->row, $position->col)
-                . ($this->shown ? '' : Ansi::SHOW_CURSOR));
+                . ($this->shown ? '' : Ansi::SHOW_CURSOR);
 
         $this->shown = $position !== null;
         $this->lastCursor = $position;
         $this->cursorAsserted = true;
+
+        return $change;
     }
 
     /**
@@ -128,7 +142,7 @@ final class Screen
             && $position->shape === $this->lastCursor->shape;
     }
 
-    private function renderDiff(Frame $backBuffer): void
+    private function renderDiff(Frame $backBuffer): string
     {
         $front = $this->front;
         if ($front === null) {
@@ -137,12 +151,14 @@ final class Screen
 
         $parts = $this->collectDiff($backBuffer, $front);
 
-        if ($parts !== []) {
-            $this->emitOutput($parts);
+        if ($parts === []) {
+            return '';
         }
 
-        $front->snapshotFrom($backBuffer);
-        $backBuffer->clearDirty();
+        $this->cursorAsserted = false;
+        $this->resetCurrentStyle();
+
+        return implode('', $parts) . Ansi::RESET_STYLE;
     }
 
     /**
@@ -245,11 +261,11 @@ final class Screen
         return $parts;
     }
 
-    private function renderFull(Frame $backBuffer): void
+    private function renderFull(Frame $backBuffer): string
     {
         $width = $backBuffer->width;
         $this->resetCurrentStyle();
-        $output = [Ansi::SYNC_START];
+        $output = [];
 
         for ($row = 0; $row < $backBuffer->height; ++$row) {
             if ($row === 0) {
@@ -281,13 +297,12 @@ final class Screen
             }
         }
 
-        $output[] = Ansi::RESET_STYLE . Ansi::SYNC_END;
+        $output[] = Ansi::RESET_STYLE;
         $this->resetCurrentStyle();
-        $this->terminal->write(implode('', $output));
-        $this->terminal->flush();
+        $this->shown = false;
         $this->cursorAsserted = false;
-        $this->snapshotFrontBuffer($backBuffer);
-        $backBuffer->clearDirty();
+
+        return implode('', $output);
     }
 
     /**
@@ -326,18 +341,6 @@ final class Screen
         return $frame->foregrounds[$index] === $foreground
             && $frame->backgrounds[$index] === $background
             && $frame->attributes[$index] === $attributes;
-    }
-
-    /**
-     * @param list<string> $parts
-     */
-    private function emitOutput(array $parts): void
-    {
-        $parts[] = Ansi::RESET_STYLE;
-        $this->resetCurrentStyle();
-        $this->terminal->write(Ansi::SYNC_START . implode('', $parts) . Ansi::SYNC_END);
-        $this->terminal->flush();
-        $this->cursorAsserted = false;
     }
 
     private function resetCurrentStyle(): void

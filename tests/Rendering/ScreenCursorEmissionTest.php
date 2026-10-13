@@ -143,6 +143,17 @@ final class ScreenCursorEmissionTest extends TestCase
     }
 
     #[Test]
+    public function aFullRedrawShowsTheCaretItHid(): void
+    {
+        $this->paintWithCursor('one', 3, 0);
+        $this->terminal->clearOutput();
+
+        $this->screen->forceRedraw($this->frame);
+
+        self::assertStringEndsWith(Ansi::SHOW_CURSOR . Ansi::SYNC_END, $this->terminal->output());
+    }
+
+    #[Test]
     public function aCaretAlreadyOnScreenIsNotToldToAppearAgain(): void
     {
         $this->paintWithCursor('one', 3, 0);
