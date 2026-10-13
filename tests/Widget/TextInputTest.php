@@ -75,6 +75,56 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function altLeftStopsAtTheStartOfEachWordAndEachRunOfPunctuation(): void
+    {
+        $input = TextInput::new()->withValue('foo-bar baz');
+        $area = Rect::fromSize(40, 1);
+        $stops = [];
+
+        for ($step = 0; $step < 4; ++$step) {
+            $input = $input->update(new KeyMsg(Key::Left, alt: true), $area)->model;
+            $stops[] = $input->cursor();
+        }
+
+        self::assertSame([8, 4, 3, 0], $stops);
+    }
+
+    #[Test]
+    public function altRightStopsAtTheEndOfEachWordAndEachRunOfPunctuation(): void
+    {
+        $input = TextInput::new()->withValue('foo-bar baz')->withCursor(0);
+        $area = Rect::fromSize(40, 1);
+        $stops = [];
+
+        for ($step = 0; $step < 4; ++$step) {
+            $input = $input->update(new KeyMsg(Key::Right, alt: true), $area)->model;
+            $stops[] = $input->cursor();
+        }
+
+        self::assertSame([3, 4, 7, 11], $stops);
+    }
+
+    #[Test]
+    public function deletingAWordBackwardStopsAtPunctuation(): void
+    {
+        $input = TextInput::new()->withValue('src/Widget/Field');
+
+        $deleted = $input->update(new KeyMsg(Key::Backspace, ctrl: true), Rect::fromSize(40, 1))->model;
+
+        self::assertSame('src/Widget/', $deleted->value());
+    }
+
+    #[Test]
+    public function deletingAWordForwardStopsAtPunctuation(): void
+    {
+        $input = TextInput::new()->withValue('src/Widget/Field')->withCursor(0);
+
+        $deleted = $input->update(new KeyMsg(Key::Delete, ctrl: true), Rect::fromSize(40, 1))->model;
+
+        self::assertSame('/Widget/Field', $deleted->value());
+    }
+
+    #[Test]
     public function typingAfterAValueWithMalformedUtf8AppendsToIt(): void
     {
         $input = TextInput::new()->withValue("ab\xFFcd");

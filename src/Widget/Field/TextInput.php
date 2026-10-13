@@ -53,6 +53,8 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         return new Keybindings([
             Actions::CURSOR_LEFT => ['left'],
             Actions::CURSOR_RIGHT => ['right'],
+            Actions::WORD_LEFT => ['alt+left', 'ctrl+left'],
+            Actions::WORD_RIGHT => ['alt+right', 'ctrl+right'],
             Actions::LINE_START => ['home'],
             Actions::LINE_END => ['end'],
             Actions::DELETE_CHAR_BACKWARD => ['backspace'],
@@ -216,6 +218,8 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         $updated = match (true) {
             $bindings->matches($message, Actions::CURSOR_LEFT) => $this->moveCursorLeft(),
             $bindings->matches($message, Actions::CURSOR_RIGHT) => $this->moveCursorRight(),
+            $bindings->matches($message, Actions::WORD_LEFT) => $this->moveCursorTo(self::wordStartBefore(Grapheme::split($this->value), $this->cursor)),
+            $bindings->matches($message, Actions::WORD_RIGHT) => $this->moveCursorTo(self::wordEndAfter(Grapheme::split($this->value), $this->cursor)),
             $bindings->matches($message, Actions::LINE_START) => $this->cursor > 0 ? $this->cloneWith(cursor: 0) : null,
             $bindings->matches($message, Actions::LINE_END) => $this->cursor < self::graphemeLength($this->value) ? $this->cloneWith(cursor: self::graphemeLength($this->value)) : null,
             $bindings->matches($message, Actions::CLEAR_LINE) => $this->value === '' ? null : $this->cloneWith(value: '', cursor: 0),
@@ -296,6 +300,58 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         return $this->cursor < self::graphemeLength($this->value) ? $this->cloneWith(cursor: $this->cursor + 1) : null;
     }
 
+    private function moveCursorTo(int $cursor): ?self
+    {
+        return $cursor === $this->cursor ? null : $this->cloneWith(cursor: $cursor);
+    }
+
+    /**
+     * @param list<string> $graphemes
+     */
+    private static function wordStartBefore(array $graphemes, int $cursor): int
+    {
+        while ($cursor > 0 && self::wordKindOf($graphemes[$cursor - 1]) === 'space') {
+            --$cursor;
+        }
+
+        $kind = $cursor > 0 ? self::wordKindOf($graphemes[$cursor - 1]) : null;
+        while ($cursor > 0 && self::wordKindOf($graphemes[$cursor - 1]) === $kind) {
+            --$cursor;
+        }
+
+        return $cursor;
+    }
+
+    /**
+     * @param list<string> $graphemes
+     */
+    private static function wordEndAfter(array $graphemes, int $cursor): int
+    {
+        $length = count($graphemes);
+        while ($cursor < $length && self::wordKindOf($graphemes[$cursor]) === 'space') {
+            ++$cursor;
+        }
+
+        $kind = $cursor < $length ? self::wordKindOf($graphemes[$cursor]) : null;
+        while ($cursor < $length && self::wordKindOf($graphemes[$cursor]) === $kind) {
+            ++$cursor;
+        }
+
+        return $cursor;
+    }
+
+    /**
+     * @return 'space'|'word'|'punctuation'
+     */
+    private static function wordKindOf(string $grapheme): string
+    {
+        return match (true) {
+            preg_match('/^\s/u', $grapheme) === 1 => 'space',
+            preg_match('/^[\p{L}\p{N}\p{M}_]/u', $grapheme) === 1 => 'word',
+            default => 'punctuation',
+        };
+    }
+
     private function insertCharacter(string $character): ?self
     {
         if ($this->charLimit > 0 && self::graphemeLength($this->value) >= $this->charLimit) {
@@ -363,36 +419,27 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
             return null;
         }
 
-        $before = self::graphemeSubstring($this->value, 0, $this->cursor);
-        $after = self::graphemeSubstring($this->value, $this->cursor);
+        $graphemes = Grapheme::split($this->value);
+        $newCursor = self::wordStartBefore($graphemes, $this->cursor);
 
-        $spaces = array_keys(Grapheme::split(rtrim($before)), ' ', true);
-        $newCursor = $spaces === [] ? 0 : array_pop($spaces) + 1;
-        $newBefore = self::graphemeSubstring($before, 0, $newCursor);
-
-        return $this->cloneWith(value: $newBefore . $after, cursor: $newCursor);
+        return $this->cloneWith(
+            value: implode('', array_slice($graphemes, 0, $newCursor)) . implode('', array_slice($graphemes, $this->cursor)),
+            cursor: $newCursor,
+        );
     }
 
     private function deleteWordForward(): ?self
     {
-        $textLength = self::graphemeLength($this->value);
-        if ($this->cursor >= $textLength) {
+        $graphemes = Grapheme::split($this->value);
+        if ($this->cursor >= count($graphemes)) {
             return null;
         }
 
-        $before = self::graphemeSubstring($this->value, 0, $this->cursor);
-        $after = self::graphemeSubstring($this->value, $this->cursor);
+        $wordEnd = self::wordEndAfter($graphemes, $this->cursor);
 
-        $leadingWhitespace = self::graphemeLength($after) - self::graphemeLength(ltrim($after));
-        $spaces = array_keys(Grapheme::split(ltrim($after)), ' ', true);
-        $firstSpace = $spaces === [] ? false : reset($spaces);
-        $deleteCount = $firstSpace === false
-            ? self::graphemeLength($after)
-            : $leadingWhitespace + $firstSpace;
-
-        $remaining = self::graphemeSubstring($after, $deleteCount);
-
-        return $this->cloneWith(value: $before . $remaining);
+        return $this->cloneWith(
+            value: implode('', array_slice($graphemes, 0, $this->cursor)) . implode('', array_slice($graphemes, $wordEnd)),
+        );
     }
 
     private function computeScrollOffset(int $availableWidth): int

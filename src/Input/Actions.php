@@ -27,6 +27,8 @@ final class Actions
     public const TAB_NEXT = 'tab_next';
     public const TAB_PREVIOUS = 'tab_previous';
 
+    public const WORD_LEFT = 'word_left';
+    public const WORD_RIGHT = 'word_right';
     public const LINE_START = 'line_start';
     public const LINE_END = 'line_end';
     public const DELETE_CHAR_BACKWARD = 'delete_char_backward';
