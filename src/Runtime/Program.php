@@ -708,11 +708,9 @@ final class Program
             ]);
         }
 
-        $adaptiveTicker = $this->adaptiveTicker;
-        if ($adaptiveTicker === null) {
-            throw new LogicException('Program ticker is not initialized');
-        }
-        $adaptiveTicker->refresh(
+        // A command handler may emit while init() is still being dispatched, before
+        // loop() has a ticker; loop() refreshes it from this same state when it starts.
+        $this->adaptiveTicker?->refresh(
             nextRenderDelay: $this->nextRenderDelay(),
             nextTimerDelay: $this->nextTimerDelay(),
             processesActive: $this->effects?->hasRunningProcesses() ?? false,
