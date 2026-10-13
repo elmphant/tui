@@ -756,6 +756,8 @@ Program::new($model)
     ->start();
 ```
 
+Without `withAltScreen()` the program still draws over the whole visible screen, and its last frame stays there after it exits. There is no inline mode that keeps to a few rows below the prompt.
+
 An error your handler returns from normally never stops the program. Ten failures in a row that nothing recovers from — an `update()` that keeps throwing, a `render()` that never succeeds, or a handler that throws — stop it, and `start()` rethrows the last of them after the terminal is restored.
 
 A `Program` is intentionally one-shot. Its lifecycle is `ProgramState::New → Running → Stopped`; create a fresh `Program` to run a model again. Configuration methods are valid only while the state is `New`.
