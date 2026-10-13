@@ -141,7 +141,7 @@ final class Screen
             $this->emitOutput($parts);
         }
 
-        $this->copyDirtyRows($backBuffer, $front);
+        $front->snapshotFrom($backBuffer);
         $backBuffer->clearDirty();
     }
 
@@ -150,10 +150,6 @@ final class Screen
      * touches every cell of a dirty row, and a method call per cell costs more
      * than the comparison itself. 2.35ms per 200x50 full repaint through calls,
      * 1.62ms through locals.
-     *
-     * Those locals must not outlive this method — copyDirtyRows() writes into
-     * the front buffer, and a second reference held here would make each write
-     * separate a copy of the whole array.
      *
      * @return list<string>
      */
@@ -357,13 +353,6 @@ final class Screen
             $this->front = new Frame($source->width, $source->height);
         }
         $this->front->snapshotFrom($source);
-    }
-
-    private function copyDirtyRows(Frame $backBuffer, Frame $front): void
-    {
-        foreach ($backBuffer->dirtyRows as $row => $_) {
-            $front->copyRowFrom($backBuffer, $row);
-        }
     }
 
     private function styleDelta(int $foreground, int $background, int $attributes): string

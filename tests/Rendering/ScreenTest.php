@@ -627,9 +627,8 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[2;1H", $terminal->output, 'Must reposition cursor at start of new row after end of previous row');
     }
 
-    // --- Mutant #17: L93 copyDirtyRows must be called ---
     #[Test]
-    public function diffCopiesDirtyRowsToFrontBuffer(): void
+    public function aRepaintedButUnchangedFrameWritesNothing(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
@@ -646,7 +645,7 @@ final class ScreenTest extends TestCase
         $terminal->output = '';
         $frame->markAllDirty();
         $screen->flush($frame);
-        self::assertSame('', $terminal->output, 'An unchanged buffer writes nothing after a dirty row copy');
+        self::assertSame('', $terminal->output);
     }
 
     // --- Mutant #18: L94 clearDirty must be called ---
@@ -1153,9 +1152,8 @@ final class ScreenTest extends TestCase
         self::assertStringNotContainsString('BBBBB', $terminal->output, 'Unchanged row 0 should not be re-emitted');
     }
 
-    // --- Mutants #66-67: L250-251 copyDirtyRows foreach ---
     #[Test]
-    public function copyDirtyRowsUpdatesOnlyDirtyRowsInFrontBuffer(): void
+    public function aChangeAlreadyWrittenIsNotWrittenAgain(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);

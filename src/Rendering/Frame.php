@@ -538,24 +538,6 @@ final class Frame
         return $this->attributes[$index];
     }
 
-    public function copyRowFrom(self $source, int $row): void
-    {
-        $base = $row * $this->width;
-        for ($column = 0; $column < $this->width; ++$column) {
-            $index = $base + $column;
-            $this->characters[$index] = $source->characters[$index];
-            $this->foregrounds[$index] = $source->foregrounds[$index];
-            $this->backgrounds[$index] = $source->backgrounds[$index];
-            $this->attributes[$index] = $source->attributes[$index];
-            $this->widths[$index] = $source->widths[$index];
-        }
-        if (isset($source->contentRows[$row])) {
-            $this->contentRows[$row] = true;
-        } else {
-            unset($this->contentRows[$row]);
-        }
-    }
-
     public function snapshotFrom(self $source): void
     {
         $this->characters = $source->characters;

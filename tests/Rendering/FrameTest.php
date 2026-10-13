@@ -446,27 +446,6 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function copyRowFrom(): void
-    {
-        $source = new Frame(5, 3);
-        $source->putChar(0, 1, 'X', Color::ansi(1)->value, Color::ansi(2)->value, 1);
-        $source->putChar(1, 1, 'Y', Color::ansi(3)->value);
-
-        $destination = new Frame(5, 3);
-        $destination->copyRowFrom($source, 1);
-
-        $base = 1 * 5;
-        self::assertSame('X', $destination->character($base));
-        self::assertSame(Color::ansi(1)->value, $destination->foreground($base));
-        self::assertSame(Color::ansi(2)->value, $destination->background($base));
-        self::assertSame(1, $destination->attribute($base));
-        self::assertSame('Y', $destination->character($base + 1));
-        self::assertSame(Color::ansi(3)->value, $destination->foreground($base + 1));
-
-        self::assertSame(' ', $destination->character(0), 'Row 0 should be untouched');
-    }
-
-    #[Test]
     public function snapshotFrom(): void
     {
         $source = new Frame(5, 3);
@@ -3161,55 +3140,6 @@ final class FrameTest extends TestCase
         $text = "\xF1\x80\x80\x80Z";
         $frame->putAnsi(0, 0, $text);
         self::assertSame('Z', $frame->characters[1] !== '' ? $frame->characters[1] : $frame->characters[2]);
-    }
-
-    // ── Mutant-killing: copyRowFrom loop bounds (L313) ──
-
-    #[Test]
-    public function copyRowFromCopiesExactlyOneRow(): void
-    {
-        $source = new Frame(5, 3);
-        $source->putString(0, 0, 'AAAAA', 1);
-        $source->putString(0, 1, 'BBBBB', 2);
-        $source->putString(0, 2, 'CCCCC', 3);
-
-        $destination = new Frame(5, 3);
-        $destination->copyRowFrom($source, 1);
-
-        for ($column = 0; $column < 5; ++$column) {
-            self::assertSame('B', $destination->characters[1 * 5 + $column]);
-            self::assertSame(2, $destination->foregrounds[1 * 5 + $column]);
-        }
-        self::assertSame(' ', $destination->characters[0]);
-        self::assertSame(0, $destination->foregrounds[0]);
-        self::assertSame(' ', $destination->characters[2 * 5]);
-        self::assertSame(0, $destination->foregrounds[2 * 5]);
-    }
-
-    #[Test]
-    public function copyRowFromFirstColumnCopied(): void
-    {
-        $source = new Frame(5, 2);
-        $source->putChar(0, 0, 'Z', 99);
-
-        $destination = new Frame(5, 2);
-        $destination->copyRowFrom($source, 0);
-
-        self::assertSame('Z', $destination->characters[0]);
-        self::assertSame(99, $destination->foregrounds[0]);
-    }
-
-    #[Test]
-    public function copyRowFromLastColumnCopied(): void
-    {
-        $source = new Frame(5, 2);
-        $source->putChar(4, 0, 'Z', 99);
-
-        $destination = new Frame(5, 2);
-        $destination->copyRowFrom($source, 0);
-
-        self::assertSame('Z', $destination->characters[4]);
-        self::assertSame(99, $destination->foregrounds[4]);
     }
 
     // ── Mutant-killing: overlay at height-1 must work, at height must not (L252) ──
