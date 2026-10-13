@@ -10,34 +10,6 @@ final class SgrParser
     public int $background = 0;
     public int $attributes = 0;
 
-    /**
-     * The CSI sequence beginning at `ESC [`, read to its final byte. A sequence
-     * ends at the first byte from 0x40 to 0x7E, and only 'm' makes it SGR —
-     * looking for the 'm' itself instead swallows the text of anything else
-     * (`ESC [2K` before "mid" would eat as far as that word's own m).
-     *
-     * @return array{int, ?string} where the text carries on, and the parameters
-     *                             to parse when the sequence was SGR
-     */
-    public static function csiAt(string $text, int $position): array
-    {
-        $length = strlen($text);
-        $scan = $position + 2;
-
-        while ($scan < $length && ord($text[$scan]) < 0x40) {
-            ++$scan;
-        }
-
-        if ($scan >= $length) {
-            return [$length, null];
-        }
-
-        return [
-            $scan + 1,
-            $text[$scan] === 'm' ? substr($text, $position + 2, $scan - $position - 2) : null,
-        ];
-    }
-
     public function reset(): void
     {
         $this->foreground = 0;

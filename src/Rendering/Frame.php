@@ -306,12 +306,13 @@ final class Frame
         while ($position < $length && $y < $this->height) {
             $byte = ord($text[$position]);
 
-            if ($byte === 0x1B && $position + 1 < $length && $text[$position + 1] === '[') {
-                [$position, $parameters] = SgrParser::csiAt($text, $position);
+            if ($byte === 0x1B) {
+                $end = AnsiTokenizer::sequenceEnd($text, $position);
 
-                if ($parameters !== null) {
-                    $parser->parse($parameters);
+                if (($text[$position + 1] ?? '') === '[' && $text[$end - 1] === 'm') {
+                    $parser->parse(substr($text, $position + 2, $end - $position - 3));
                 }
+                $position = $end;
                 continue;
             }
 

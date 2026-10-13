@@ -281,6 +281,16 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function putAnsiDrawsNeitherACharacterSetResetNorALinkTarget(): void
+    {
+        $frame = new Frame(20, 1);
+
+        $frame->putAnsi(0, 0, "\x1b(B\x1b]8;;http://x\x1b\\link\x1b]8;;\x1b\\ ok");
+
+        self::assertSame('link ok', trim(implode('', array_slice($frame->characters, 0, 20))));
+    }
+
+    #[Test]
     public function putAnsiKeepsTextThatMerelyContainsAnMAfterANonSgrSequence(): void
     {
         $frame = new Frame(20, 5);

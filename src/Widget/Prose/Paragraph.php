@@ -8,6 +8,8 @@ use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Rendering\AnsiTokenizer;
+use Elmphant\Tui\Rendering\AnsiTokenType;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -103,31 +105,24 @@ final readonly class Paragraph implements Widget, MeasureHeight
             $currentForeground = $parser->foreground;
             $currentBackground = $parser->background;
             $currentAttributes = $parser->attributes;
-            $length = strlen($rawLine);
-            $position = 0;
-
-            while ($position < $length) {
-                $byte = ord($rawLine[$position]);
-
-                if ($byte === 0x1B && $position + 1 < $length && $rawLine[$position + 1] === '[') {
-                    [$position, $parameters] = SgrParser::csiAt($rawLine, $position);
-
-                    if ($parameters !== null) {
-                        if ($currentText !== '') {
-                            $spans[] = self::spanFromSgrState($currentText, $currentForeground, $currentBackground, $currentAttributes);
-                            $currentText = '';
-                        }
-                        $parser->parse($parameters);
-                        $currentForeground = $parser->foreground;
-                        $currentBackground = $parser->background;
-                        $currentAttributes = $parser->attributes;
-                    }
+            foreach (AnsiTokenizer::tokenize($rawLine) as $token) {
+                if ($token->type === AnsiTokenType::Text) {
+                    $currentText .= $token->content;
                     continue;
                 }
 
-                $characterByteLength = Grapheme::sequenceLength($byte);
-                $currentText .= substr($rawLine, $position, $characterByteLength);
-                $position += $characterByteLength;
+                if ($token->type !== AnsiTokenType::Csi || !str_ends_with($token->content, 'm')) {
+                    continue;
+                }
+
+                if ($currentText !== '') {
+                    $spans[] = self::spanFromSgrState($currentText, $currentForeground, $currentBackground, $currentAttributes);
+                    $currentText = '';
+                }
+                $parser->parse(substr($token->content, 2, -1));
+                $currentForeground = $parser->foreground;
+                $currentBackground = $parser->background;
+                $currentAttributes = $parser->attributes;
             }
 
             if ($currentText !== '') {

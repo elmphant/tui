@@ -4,41 +4,41 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
-use Elmphant\Tui\Rendering\SgrParser;
+use Elmphant\Tui\Rendering\AnsiTokenizer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Where a CSI sequence ends, and whether it was a colour. Reading it to the
- * final byte is what keeps the text of every other sequence out of the output,
- * so the exact offsets are worth stating rather than inferring from a screen.
+ * Reading a sequence to its final byte is what keeps the text of every other
+ * sequence out of the output, so the exact offsets are worth stating rather
+ * than inferring from a screen.
  */
 final class CsiScanningTest extends TestCase
 {
-    /**
-     * @param array{int, ?string} $expected
-     */
     #[Test]
     #[DataProvider('sequences')]
-    public function aSequenceEndsAtItsFinalByteAndOnlyAnMIsAColour(string $text, int $position, array $expected): void
+    public function aSequenceEndsAtItsFinalByte(string $text, int $position, int $expected): void
     {
-        self::assertSame($expected, SgrParser::csiAt($text, $position));
+        self::assertSame($expected, AnsiTokenizer::sequenceEnd($text, $position));
     }
 
     /**
-     * @return iterable<string, array{string, int, array{int, ?string}}>
+     * @return iterable<string, array{string, int, int}>
      */
     public static function sequences(): iterable
     {
-        yield 'colour' => ["\e[31mRed", 0, [5, '31']];
-        yield 'several parameters' => ["\e[1;32mgo", 0, [7, '1;32']];
-        yield 'reset with no parameters' => ["\e[mplain", 0, [3, '']];
-        yield 'cursor forward is not a colour' => ["\e[5Chi", 0, [4, null]];
-        yield 'erase line before a word starting with m' => ["\e[2Kmid", 0, [4, null]];
-        yield 'private parameter' => ["\e[?25lhidden", 0, [6, null]];
-        yield 'partway along a line' => ["ab\e[7mc", 2, [6, '7']];
-        yield 'nothing after the bracket' => ["\e[", 0, [2, null]];
-        yield 'no final byte before the end' => ["\e[31", 0, [4, null]];
+        yield 'colour' => ["\e[31mRed", 0, 5];
+        yield 'several parameters' => ["\e[1;32mgo", 0, 7];
+        yield 'reset with no parameters' => ["\e[mplain", 0, 3];
+        yield 'cursor forward' => ["\e[5Chi", 0, 4];
+        yield 'erase line before a word starting with m' => ["\e[2Kmid", 0, 4];
+        yield 'private parameter' => ["\e[?25lhidden", 0, 6];
+        yield 'partway along a line' => ["ab\e[7mc", 2, 6];
+        yield 'nothing after the bracket' => ["\e[", 0, 2];
+        yield 'no final byte before the end' => ["\e[31", 0, 4];
+        yield 'character set designation' => ["\e(Bx", 0, 3];
+        yield 'link closed by ST' => ["\e]8;;http://x\e\\link", 0, 15];
+        yield 'lone escape at the end' => ["a\e", 1, 2];
     }
 }

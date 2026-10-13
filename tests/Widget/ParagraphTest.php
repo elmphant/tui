@@ -384,6 +384,16 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function fromAnsiDrawsNeitherACharacterSetResetNorALinkTarget(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Paragraph::fromAnsi("\x1b(B\x1b]8;;http://x\x1b\\link\x1b]8;;\x1b\\ ok")->render($frame, new Rect(0, 0, 20, 1), $this->context());
+
+        self::assertSame('link ok', trim(implode('', array_slice($frame->characters, 0, 20))));
+    }
+
+    #[Test]
     public function fromAnsiSplitsOnNewlines(): void
     {
         $frame = new Frame(10, 2);

@@ -23,6 +23,15 @@ final class AnsiTokenizerTest extends TestCase
     }
 
     #[Test]
+    public function aCharacterSetDesignationIsOneEscapeToken(): void
+    {
+        self::assertSame(
+            [[AnsiTokenType::Text, 'a'], [AnsiTokenType::Escape, "\x1b(B"], [AnsiTokenType::Text, 'b']],
+            self::collect("a\x1b(Bb"),
+        );
+    }
+
+    #[Test]
     public function emptyInputYieldsNoTokens(): void
     {
         self::assertSame([], self::collect(''));

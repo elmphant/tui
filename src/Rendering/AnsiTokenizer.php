@@ -34,47 +34,46 @@ final class AnsiTokenizer
             }
 
             $position = $escapePosition;
-
-            if ($position + 1 >= $length) {
-                yield new AnsiToken(AnsiTokenType::Escape, "\x1b");
-
-                return;
-            }
-
-            $introducer = $input[$position + 1];
-
-            if ($introducer === '[') {
-                $end = self::findCsiEnd($input, $position + 2, $length);
-                yield new AnsiToken(AnsiTokenType::Csi, substr($input, $position, $end - $position));
-                $position = $end;
-                continue;
-            }
-
-            $stringType = match ($introducer) {
+            $end = self::sequenceEnd($input, $position);
+            $type = match ($input[$position + 1] ?? '') {
+                '[' => AnsiTokenType::Csi,
                 ']' => AnsiTokenType::Osc,
                 'P' => AnsiTokenType::Dcs,
                 '_' => AnsiTokenType::Apc,
                 '^' => AnsiTokenType::Pm,
                 'X' => AnsiTokenType::Sos,
-                default => null,
+                'O' => AnsiTokenType::Ss3,
+                default => AnsiTokenType::Escape,
             };
-            if ($stringType !== null) {
-                $end = self::findStringEnd($input, $position + 2, $length);
-                yield new AnsiToken($stringType, substr($input, $position, $end - $position));
-                $position = $end;
-                continue;
-            }
-
-            if ($introducer === 'O') {
-                $end = min($position + 3, $length);
-                yield new AnsiToken(AnsiTokenType::Ss3, substr($input, $position, $end - $position));
-                $position = $end;
-                continue;
-            }
-
-            yield new AnsiToken(AnsiTokenType::Escape, substr($input, $position, 2));
-            $position += 2;
+            yield new AnsiToken($type, substr($input, $position, $end - $position));
+            $position = $end;
         }
+    }
+
+    /**
+     * Where the escape sequence starting at $position ends; the end of the input
+     * when it is unterminated.
+     */
+    public static function sequenceEnd(string $input, int $position): int
+    {
+        $length = strlen($input);
+
+        return match ($input[$position + 1] ?? '') {
+            '' => $length,
+            '[' => self::findCsiEnd($input, $position + 2, $length),
+            ']', 'P', '_', '^', 'X' => self::findStringEnd($input, $position + 2, $length),
+            'O' => min($position + 3, $length),
+            default => self::findEscapeEnd($input, $position + 1, $length),
+        };
+    }
+
+    private static function findEscapeEnd(string $input, int $position, int $length): int
+    {
+        while ($position < $length && ord($input[$position]) >= 0x20 && ord($input[$position]) <= 0x2F) {
+            ++$position;
+        }
+
+        return min($position + 1, $length);
     }
 
     private static function findCsiEnd(string $input, int $position, int $length): int
