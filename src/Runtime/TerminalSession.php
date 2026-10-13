@@ -142,6 +142,9 @@ final class TerminalSession
     {
         $hadActiveModes = $this->hasActiveModes();
 
+        if ($hadActiveModes) {
+            $this->attempt(fn () => $this->terminal->write(Ansi::SYNC_END));
+        }
         if ($this->mouseTrackingActive) {
             $this->mouseTrackingActive = !$this->attempt($this->terminal->disableMouseTracking(...));
         }

@@ -315,6 +315,20 @@ final class TerminalSessionTest extends TestCase
     }
 
     #[Test]
+    public function closingEndsASynchronizedUpdateAFailedFrameLeftOpen(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $session = new TerminalSession($terminal, false, false);
+        $session->start();
+        $terminal->write(Ansi::SYNC_START . 'half a fra');
+        $terminal->clearOutput();
+
+        $session->close();
+
+        self::assertStringStartsWith(Ansi::SYNC_END, $terminal->output());
+    }
+
+    #[Test]
     public function startRespectsDisabledAltScreenAndMouseTracking(): void
     {
         $terminal = new VirtualTerminal(80, 24);
