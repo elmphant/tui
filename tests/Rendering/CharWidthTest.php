@@ -61,6 +61,38 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
+    public function everyTextPresentationEmojiTakesTwoCellsWithVariationSelector16(): void
+    {
+        if (@preg_match('/\p{Emoji_Presentation}/u', '') === false) {
+            self::markTestSkipped('this PCRE has no Unicode emoji properties');
+        }
+
+        $narrow = [];
+        for ($codepoint = 0x20; $codepoint <= 0x1FFFF; ++$codepoint) {
+            $character = mb_chr($codepoint);
+            if ($character === false
+                || preg_match('/^\p{Emoji}$/u', $character) !== 1
+                || preg_match('/^\p{Emoji_Presentation}$/u', $character) === 1
+            ) {
+                continue;
+            }
+
+            CharWidth::forgetMeasurements();
+            if (CharWidth::stringWidth($character . "\u{FE0F}") !== 2) {
+                $narrow[] = sprintf('U+%04X', $codepoint);
+            }
+        }
+
+        self::assertSame([], $narrow);
+    }
+
+    #[Test]
+    public function aKeycapTakesTwoCells(): void
+    {
+        self::assertSame(2, CharWidth::stringWidth("1\u{FE0F}\u{20E3}"));
+    }
+
+    #[Test]
     public function variationSelector15KeepsAnEmojiInItsNarrowTextForm(): void
     {
         self::assertSame(1, CharWidth::stringWidth("\u{2714}\u{FE0E}"));
