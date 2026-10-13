@@ -14,6 +14,7 @@ final class Ansi
 
     public const ERASE_DISPLAY = "\x1b[2J";
     public const RESET_STYLE = "\x1b[0m";
+    public const DEFAULT_CURSOR_SHAPE = "\x1b[0 q";
 
     public const ENTER_ALT_SCREEN = "\x1b[?1049h";
     public const LEAVE_ALT_SCREEN = "\x1b[?1049l";

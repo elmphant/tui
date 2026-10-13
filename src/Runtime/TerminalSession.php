@@ -159,7 +159,7 @@ final class TerminalSession
         }
 
         if ($hadActiveModes) {
-            $this->attempt(fn () => $this->terminal->write(Ansi::RESET_STYLE));
+            $this->attempt(fn () => $this->terminal->write(Ansi::RESET_STYLE . Ansi::DEFAULT_CURSOR_SHAPE));
             if ($final && !$this->useAltScreen) {
                 $this->attempt(fn () => $this->terminal->write(Ansi::cursorToRowStart($this->height - 1) . "\n"));
             }

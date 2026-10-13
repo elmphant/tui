@@ -297,6 +297,24 @@ final class TerminalSessionTest extends TestCase
     }
 
     #[Test]
+    public function theTerminalGetsItsOwnCaretShapeBackOnSuspendAndClose(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $session = new TerminalSession($terminal, false, false);
+        $session->start();
+        $terminal->clearOutput();
+
+        $session->suspend();
+        $suspended = $terminal->output();
+        $session->resume();
+        $terminal->clearOutput();
+        $session->close();
+
+        self::assertStringContainsString("\x1b[0 q", $suspended);
+        self::assertStringContainsString("\x1b[0 q", $terminal->output());
+    }
+
+    #[Test]
     public function startRespectsDisabledAltScreenAndMouseTracking(): void
     {
         $terminal = new VirtualTerminal(80, 24);
