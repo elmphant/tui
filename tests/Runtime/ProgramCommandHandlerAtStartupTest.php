@@ -6,7 +6,9 @@ namespace Elmphant\Tui\Tests\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Model;
+use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
@@ -31,6 +33,84 @@ final class ProgramCommandHandlerAtStartupTest extends TestCase
 
         self::assertSame([], $final->errors);
         self::assertTrue($final->timerFired);
+    }
+
+    #[Test]
+    public function anEffectCancelledInAnswerToItsFirstMessageIsStopped(): void
+    {
+        $handler = new StoppableFeedHandler();
+
+        $final = Program::new(new CancellingFeedModel($handler))
+            ->withTerminal(new VirtualTerminal(40, 10))
+            ->withCommandHandler($handler)
+            ->start();
+
+        self::assertTrue($final->stoppedBeforeQuitting);
+    }
+}
+
+final readonly class StartFeed extends Cmd implements NamesItsEffect
+{
+    public function effectId(): EffectId
+    {
+        return EffectId::named('feed');
+    }
+}
+
+final readonly class FeedOpened implements Message
+{
+}
+
+final readonly class TimeToQuit implements Message
+{
+}
+
+final readonly class CancellingFeedModel implements Model
+{
+    public function __construct(
+        private StoppableFeedHandler $handler,
+        public bool $stoppedBeforeQuitting = false,
+    ) {
+    }
+
+    public function init(): ?Cmd
+    {
+        return new StartFeed();
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return match (true) {
+            $message instanceof FeedOpened => new UpdateResult($this, Cmd::batch(
+                Cmd::cancel(EffectId::named('feed')),
+                Cmd::after(0.01, static fn (): Message => new TimeToQuit()),
+            )),
+            $message instanceof TimeToQuit => new UpdateResult(new self($this->handler, $this->handler->stopped), Cmd::quit()),
+            default => new UpdateResult($this),
+        };
+    }
+
+    public function render(Frame $frame, RenderContext $context): void
+    {
+    }
+}
+
+final class StoppableFeedHandler implements CommandHandler
+{
+    public bool $stopped = false;
+
+    public function handles(Cmd $command): bool
+    {
+        return $command instanceof StartFeed;
+    }
+
+    public function start(Cmd $command, Closure $emit): ?Closure
+    {
+        $emit(new FeedOpened());
+
+        return function (): void {
+            $this->stopped = true;
+        };
     }
 }
 

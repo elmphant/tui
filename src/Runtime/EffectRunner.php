@@ -67,6 +67,10 @@ final class EffectRunner
      */
     private array $handled = [];
 
+    private bool $startingAHandler = false;
+
+    private bool $emittedWhileStarting = false;
+
     /**
      * @param SplQueue<Message>             $results  where an effect reports what it produced
      * @param Closure(?Cmd, ?Closure): void $dispatch a timer's callback may answer with a command,
@@ -210,19 +214,33 @@ final class EffectRunner
                 continue;
             }
 
+            // What the handler emits before start() returns waits for its stop closure
+            // to be registered, or a cancel answering that message would find nothing.
+            $this->startingAHandler = true;
+            $this->emittedWhileStarting = false;
             try {
                 $stop = $handler->start($command, function (Message $message) use ($wrap): void {
                     $this->report($message, $wrap);
+                    if ($this->startingAHandler) {
+                        $this->emittedWhileStarting = true;
+
+                        return;
+                    }
                     ($this->wake)();
                 });
             } catch (Throwable $error) {
                 $this->report(new ErrorMsg($error, ErrorSource::Command, $id), $wrap);
 
                 return;
+            } finally {
+                $this->startingAHandler = false;
             }
 
             if ($stop !== null) {
                 $this->handled[] = new HandledEffect($stop, $id);
+            }
+            if ($this->emittedWhileStarting) {
+                ($this->wake)();
             }
 
             return;
