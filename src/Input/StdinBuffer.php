@@ -103,6 +103,10 @@ final class StdinBuffer
 
     public function flush(): void
     {
+        if ($this->inPaste) {
+            return;
+        }
+
         if ($this->buffer === "\x1b\x1b") {
             ($this->onSequence)("\x1b");
             $this->buffer = "\x1b";

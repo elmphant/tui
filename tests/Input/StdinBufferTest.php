@@ -254,6 +254,23 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aPasteEndMarkerSplitByTheEscapeTimeoutStillEndsThePaste(): void
+    {
+        $pastes = [];
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~abc\x1b[20");
+        $buffer->flush();
+        $buffer->process('1~x');
+
+        self::assertSame([['abc'], ['x']], [$pastes, $sequences]);
+    }
+
+    #[Test]
     public function aBufferHoldingNothingWaitsForNothing(): void
     {
         $buffer = new StdinBuffer(onSequence: static function (): void {});
