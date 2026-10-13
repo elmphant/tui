@@ -64,9 +64,7 @@ final class CharWidthTest extends TestCase
     #[Test]
     public function everyTextPresentationEmojiTakesTwoCellsWithVariationSelector16(): void
     {
-        if (@preg_match('/\p{Emoji_Presentation}/u', '') === false) {
-            self::markTestSkipped('this PCRE has no Unicode emoji properties');
-        }
+        self::requireUnicode16Pcre();
 
         $narrow = [];
         for ($codepoint = 0x20; $codepoint <= 0x1FFFF; ++$codepoint) {
@@ -90,20 +88,41 @@ final class CharWidthTest extends TestCase
     #[Test]
     public function aCodepointIsWideExactlyWhenUnicodeCallsItWideOrFullwidth(): void
     {
-        if (!class_exists(IntlChar::class)) {
-            self::markTestSkipped('needs ext-intl for East_Asian_Width');
+        if (!class_exists(IntlChar::class) || IntlChar::getUnicodeVersion()[0] < 16) {
+            self::markTestSkipped('needs ext-intl with Unicode 16 for East_Asian_Width');
         }
 
         $mismatches = [];
         for ($codepoint = 0x20; $codepoint <= 0x3FFFD; ++$codepoint) {
             $character = mb_chr($codepoint);
-            if ($character === false || CharWidth::of($character) === 0) {
+            if ($character === false || CharWidth::of($character) === 0 || IntlChar::charAge($codepoint)[0] > 16) {
                 continue;
             }
 
             $eastAsianWidth = IntlChar::getIntPropertyValue($codepoint, IntlChar::PROPERTY_EAST_ASIAN_WIDTH);
             $expected = $eastAsianWidth === IntlChar::EA_WIDE || $eastAsianWidth === IntlChar::EA_FULLWIDTH ? 2 : 1;
             if (CharWidth::of($character) !== $expected) {
+                $mismatches[] = sprintf('U+%04X', $codepoint);
+            }
+        }
+
+        self::assertSame([], array_slice($mismatches, 0, 20), sprintf('%d codepoints measure wrong', count($mismatches)));
+    }
+
+    #[Test]
+    public function aCodepointIsZeroWidthExactlyWhenUnicodeCallsItAMarkOrAFormatCharacter(): void
+    {
+        self::requireUnicode16Pcre();
+
+        $mismatches = [];
+        for ($codepoint = 0xA0; $codepoint <= 0xE01EF; ++$codepoint) {
+            $character = mb_chr($codepoint);
+            if ($character === false) {
+                continue;
+            }
+
+            $zero = $codepoint !== 0xAD && preg_match('/^[\p{Mn}\p{Me}\p{Cf}\p{Zl}\p{Zp}]$/u', $character) === 1;
+            if ((CharWidth::of($character) === 0) !== $zero) {
                 $mismatches[] = sprintf('U+%04X', $codepoint);
             }
         }
@@ -905,5 +924,15 @@ final class CharWidthTest extends TestCase
         self::assertIsArray($memo);
 
         return count($memo);
+    }
+
+    /**
+     * The width tables are Unicode 16; PCRE2 knows Unicode 16 from 10.45.
+     */
+    private static function requireUnicode16Pcre(): void
+    {
+        if (version_compare(explode(' ', PCRE_VERSION)[0], '10.45', '<')) {
+            self::markTestSkipped('this PCRE predates Unicode 16');
+        }
     }
 }
