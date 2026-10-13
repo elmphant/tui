@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Field;
 
+use Elmphant\Tui\Rendering\Grapheme;
+
 enum EchoMode
 {
     case Normal;
@@ -14,7 +16,7 @@ enum EchoMode
     {
         return match ($this) {
             self::Normal => $text,
-            self::Password => str_repeat('•', max(0, (int)grapheme_strlen($text))),
+            self::Password => str_repeat('•', count(Grapheme::split($text))),
             self::None => '',
         };
     }

@@ -30,21 +30,7 @@ final class Grapheme
      */
     public static function first(string $string): string
     {
-        if ($string === '') {
-            return '';
-        }
-
-        $sequence = substr($string, 0, self::sequenceLength(ord($string[0])));
-
-        // grapheme_extract skips a lead byte it cannot decode, answering with the
-        // cluster after the one the caller is about to step over.
-        if (!mb_check_encoding($sequence, 'UTF-8')) {
-            return $string[0];
-        }
-
-        $grapheme = grapheme_extract($string, 1, GRAPHEME_EXTR_COUNT);
-
-        return $grapheme === false ? $sequence : $grapheme;
+        return self::split($string)[0] ?? '';
     }
 
     /**

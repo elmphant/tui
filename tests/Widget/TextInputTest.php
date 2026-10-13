@@ -75,11 +75,13 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function invalidUtf8ValueUsesASafeZeroCursorPosition(): void
+    public function typingAfterAValueWithMalformedUtf8AppendsToIt(): void
     {
-        $input = TextInput::new()->withValue("\xFF");
+        $input = TextInput::new()->withValue("ab\xFFcd");
 
-        self::assertSame(0, $input->cursor());
+        $typed = $input->update(new KeyMsg('x'), Rect::fromSize(40, 1))->model;
+
+        self::assertSame("ab\xFFcdx", $typed->value());
     }
 
     #[Test]

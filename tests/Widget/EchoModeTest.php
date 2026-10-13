@@ -45,4 +45,10 @@ final class EchoModeTest extends TestCase
     {
         self::assertSame('••', EchoMode::Password->mask("a\u{0301}b"));
     }
+
+    #[Test]
+    public function aMalformedByteIsMaskedLikeAnyOtherCharacter(): void
+    {
+        self::assertSame('•••', EchoMode::Password->mask("a\xFFb"));
+    }
 }

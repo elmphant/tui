@@ -415,17 +415,11 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
 
     private static function graphemeLength(string $value): int
     {
-        $length = grapheme_strlen($value);
-
-        return is_int($length) ? $length : 0;
+        return count(Grapheme::split($value));
     }
 
     private static function graphemeSubstring(string $value, int $offset, ?int $length = null): string
     {
-        $substring = $length === null
-            ? grapheme_substr($value, $offset)
-            : grapheme_substr($value, $offset, $length);
-
-        return is_string($substring) ? $substring : '';
+        return implode('', array_slice(Grapheme::split($value), $offset, $length));
     }
 }

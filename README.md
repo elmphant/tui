@@ -12,7 +12,7 @@ PHP 8.2+ | MIT License
 composer require elmphant/tui
 ```
 
-Elmphant requires PHP 8.2+, `ext-mbstring`, and `ext-intl`. Interactive
+Elmphant requires PHP 8.2+ and `ext-mbstring`. Interactive
 programs target POSIX terminals; models and widgets can be tested on any
 platform without opening a terminal.
 
