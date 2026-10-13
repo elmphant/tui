@@ -238,7 +238,7 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
-    public function escFollowedByNonPrintableByteHeldUntilFlush(): void
+    public function altBackspaceIsEmittedAtOnce(): void
     {
         $sequences = [];
         $buffer = new StdinBuffer(
@@ -246,10 +246,35 @@ final class StdinBufferTest extends TestCase
         );
 
         $buffer->process("\x1b\x7f");
-        $this->assertSame([], $sequences, 'ESC + non-printable should not be emitted as a 2-byte sequence');
 
+        $this->assertSame(["\x1b\x7f"], $sequences);
+    }
+
+    #[Test]
+    public function typingRightAfterAltEnterArrivesKeyByKey(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b\rabc");
+
+        $this->assertSame(["\x1b\r", 'a', 'b', 'c'], $sequences);
+    }
+
+    #[Test]
+    public function twoEscapesHeldUntilFlushAreTwoEscapes(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b\x1b");
         $buffer->flush();
-        $this->assertSame(["\x1b\x7f"], $sequences, 'Flush emits the buffered raw bytes');
+
+        $this->assertSame(["\x1b", "\x1b"], $sequences);
     }
 
     #[Test]
@@ -454,7 +479,7 @@ final class StdinBufferTest extends TestCase
 
         $buffer->process("\x1b\x1bx");
 
-        $this->assertSame(['1b1b', '78'], $sequences);
+        $this->assertSame(['1b', '1b', '78'], $sequences);
     }
 
     #[Test]
@@ -520,7 +545,7 @@ final class StdinBufferTest extends TestCase
 
         $buffer->process("\x1b\x1ba");
 
-        $this->assertSame(['1b1b', '61'], $sequences);
+        $this->assertSame(['1b', '1b', '61'], $sequences);
     }
 
     #[Test]

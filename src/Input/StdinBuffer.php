@@ -102,6 +102,11 @@ final class StdinBuffer
 
     public function flush(): void
     {
+        if ($this->buffer === "\x1b\x1b") {
+            ($this->onSequence)("\x1b");
+            $this->buffer = "\x1b";
+        }
+
         if ($this->buffer !== '') {
             ($this->onSequence)($this->buffer);
             $this->buffer = '';
@@ -158,12 +163,12 @@ final class StdinBuffer
                 return "\x1b";
             }
             $this->buffer = substr($this->buffer, 2);
+            ($this->onSequence)("\x1b");
 
-            return "\x1b\x1b";
+            return "\x1b";
         }
 
-        $secondByte = ord($second);
-        if ($secondByte >= 0x20 && $secondByte <= 0x7E) {
+        if (ord($second) < 0x80) {
             $sequence = substr($this->buffer, 0, 2);
             $this->buffer = substr($this->buffer, 2);
 
