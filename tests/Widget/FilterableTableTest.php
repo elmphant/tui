@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -32,6 +33,16 @@ final class FilterableTableTest extends TestCase
             $filtered->hints(),
             'the field is this widget’s own, so the key that empties it is a key this widget answers',
         );
+    }
+
+    #[Test]
+    public function aPasteFiltersLikeTyping(): void
+    {
+        $table = FilterableTable::new(['Name'], [['alpha'], ['beta'], ['gamma']]);
+
+        $pasted = $table->update(new PasteMsg('be'), new Rect(0, 0, 40, 10))->model;
+
+        self::assertSame(['be', '1 of 3'], [$pasted->query(), $pasted->summary()]);
     }
 
     #[Test]

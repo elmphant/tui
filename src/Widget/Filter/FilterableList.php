@@ -17,6 +17,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Line;
@@ -335,6 +336,10 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return $this->withMouse($message, $area);
         }
 
+        if ($message instanceof PasteMsg) {
+            return $this->typedIntoTheField($message, $area);
+        }
+
         if (!$message instanceof KeyMsg) {
             return new UpdateResult($this);
         }
@@ -360,23 +365,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return new UpdateResult($this->selectedAt($clearing ? null : $value, $this->sourceIndex()));
         }
 
-        $dispatcher = new ChildDispatcher($this->globalKeybindings);
-
         if ($this->belongsToTheList($message)) {
-            $result = $dispatcher->dispatchOne($this->list, $message, $this->listArea($area));
+            $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->list, $message, $this->listArea($area));
 
             return new UpdateResult($this->cloneWith(list: $result->child), $result->command);
         }
 
-        $result = $dispatcher->dispatchOne($this->field, $message, $this->fieldArea($area));
-        $field = $result->child;
-
-        return new UpdateResult(
-            $field->value() === $this->field->value()
-                ? $this->cloneWith(field: $field)
-                : $this->cloneWith(field: $field, matching: null)->reFiltered(),
-            $result->command,
-        );
+        return $this->typedIntoTheField($message, $area);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -400,6 +395,22 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         }
 
         $this->list->render($frame, $body, $context);
+    }
+
+    /**
+     * @return UpdateResult<static>
+     */
+    private function typedIntoTheField(KeyMsg|PasteMsg $message, Rect $area): UpdateResult
+    {
+        $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->field, $message, $this->fieldArea($area));
+        $field = $result->child;
+
+        return new UpdateResult(
+            $field->value() === $this->field->value()
+                ? $this->cloneWith(field: $field)
+                : $this->cloneWith(field: $field, matching: null)->reFiltered(),
+            $result->command,
+        );
     }
 
     private function fieldDrawnBy(RenderContext $context): TextInput

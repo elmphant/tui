@@ -13,6 +13,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
@@ -135,6 +136,14 @@ final class FilterableListTest extends TestCase
         $narrowed = $this->typed($moved, ' warm');
 
         self::assertSame(0, $narrowed->sourceIndex(), 'The cursor went back to the top of the new results');
+    }
+
+    #[Test]
+    public function aPasteFiltersLikeTyping(): void
+    {
+        $pasted = $this->commands()->update(new PasteMsg('warm'), new Rect(0, 0, 40, 10))->model;
+
+        self::assertSame(['warm', '1 of 3'], [$pasted->query(), $pasted->summary()]);
     }
 
     #[Test]

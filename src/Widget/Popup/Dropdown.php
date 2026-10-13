@@ -19,6 +19,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -150,6 +151,12 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
 
         if ($message instanceof MouseMsg) {
             return new UpdateResult($this->moused($message, $area));
+        }
+
+        if ($message instanceof PasteMsg && $this->open) {
+            $answered = $this->content->update($message, $this->popup()->contentArea($area));
+
+            return new UpdateResult($this->cloneWith(content: $answered->model), $answered->command);
         }
 
         if (!$message instanceof KeyMsg) {

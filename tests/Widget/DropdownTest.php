@@ -12,6 +12,7 @@ use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
@@ -318,6 +319,17 @@ final class DropdownTest extends TestCase
         $driven->dispatch(new KeyMsg(Key::Tab));
 
         self::assertStringNotContainsString('yaml', $driven->renderScreen()->plainText());
+    }
+
+    #[Test]
+    public function aPasteIntoAnOpenFilterListFiltersIt(): void
+    {
+        $opened = self::opened(Dropdown::new(FilterableList::new([new SimpleListItem('alpha'), new SimpleListItem('beta')])));
+
+        $content = $opened->update(new PasteMsg('be'), self::anchor())->model->content();
+
+        self::assertInstanceOf(FilterableList::class, $content);
+        self::assertSame('be', $content->query());
     }
 
     /**

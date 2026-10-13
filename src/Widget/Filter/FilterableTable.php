@@ -15,6 +15,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Search\Matcher;
@@ -101,11 +102,11 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if (!$message instanceof KeyMsg) {
+        if (!$message instanceof KeyMsg && !$message instanceof PasteMsg) {
             return new UpdateResult($this);
         }
 
-        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
+        if ($message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
             return new UpdateResult($this->withQuery(''));
         }
 

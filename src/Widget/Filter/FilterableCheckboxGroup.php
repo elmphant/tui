@@ -16,6 +16,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Search\Matcher;
@@ -169,17 +170,17 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
             return $this->dispatchedToTheBoxes($dispatcher, $message, $area);
         }
 
-        if (!$message instanceof KeyMsg) {
+        if (!$message instanceof KeyMsg && !$message instanceof PasteMsg) {
             return new UpdateResult($this);
         }
 
-        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
+        if ($message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
             return new UpdateResult(
                 $this->field->value() === '' ? $this : $this->cloneWith(field: $this->field->withValue(''), cursor: 0),
             );
         }
 
-        if ($this->isForTheBoxes($message)) {
+        if ($message instanceof KeyMsg && $this->isForTheBoxes($message)) {
             return $this->dispatchedToTheBoxes($dispatcher, $message, $area);
         }
 

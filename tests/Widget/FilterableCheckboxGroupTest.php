@@ -9,6 +9,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
@@ -45,6 +46,18 @@ final class FilterableCheckboxGroupTest extends TestCase
             ['↑/↓' => 'move', 'Enter' => 'toggle'],
             FilterableCheckboxGroup::new(['alpha'])->hints(),
         );
+    }
+
+    #[Test]
+    public function aPasteFiltersLikeTyping(): void
+    {
+        $pasted = self::pressed(FilterableCheckboxGroup::new(['alpha', 'beta']), new PasteMsg('be'));
+
+        $frame = new Frame(30, 8);
+        $pasted->render($frame, Rect::fromSize(30, 8), new RenderContext(Theme::dark()));
+        $screen = ScreenBuffer::fromFrame($frame)->plainText();
+
+        self::assertSame([true, false], [str_contains($screen, 'beta'), str_contains($screen, 'alpha')]);
     }
 
     #[Test]
