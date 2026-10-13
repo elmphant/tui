@@ -97,6 +97,7 @@ final class KeyPatternTest extends TestCase
         yield 'ctrl+alt+shift+a' => ['ctrl+alt+shift+a',  new KeyPattern(key: 'a', ctrl: true, alt: true, shift: true)];
         yield 'free order 1' => ['alt+ctrl+k',        new KeyPattern(key: 'k', ctrl: true, alt: true)];
         yield 'free order 2' => ['shift+ctrl+alt+a', new KeyPattern(key: 'a', ctrl: true, alt: true, shift: true)];
+        yield 'plus' => ['+',                 new KeyPattern(key: '+')];
     }
 
     #[DataProvider('modifierProvider')]
@@ -200,6 +201,12 @@ final class KeyPatternTest extends TestCase
             KeyPattern::fromString('alt+x'),
             KeyPattern::fromString('alt+X'),
         );
+    }
+
+    #[Test]
+    public function aModifiedPlusIsBoundByDoublingThePlus(): void
+    {
+        self::assertEquals(new KeyPattern(key: '+', ctrl: true), KeyPattern::fromString('ctrl++'));
     }
 
     #[Test]

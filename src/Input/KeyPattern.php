@@ -59,7 +59,11 @@ final readonly class KeyPattern implements Stringable
             throw new InvalidArgumentException('Empty pattern');
         }
 
-        $rawTokens = explode('+', $pattern);
+        $rawTokens = match (true) {
+            $pattern === '+' => ['+'],
+            str_ends_with($pattern, '++') => [...explode('+', substr($pattern, 0, -2)), '+'],
+            default => explode('+', $pattern),
+        };
         $tokens = array_map(
             static fn (string $token): string => strtolower(trim($token)),
             $rawTokens,
