@@ -10,7 +10,28 @@ final readonly class PasteMsg implements Message
 
     public function __construct(string $content)
     {
-        $this->content = self::textOnly($content);
+        $this->content = self::withCtrlLettersDecoded(self::textOnly($content));
+    }
+
+    /**
+     * A tmux client nested in another re-encodes the line breaks of a paste as
+     * ctrl+j keys in CSI u or modifyOtherKeys form.
+     */
+    private static function withCtrlLettersDecoded(string $content): string
+    {
+        return preg_replace_callback(
+            '/\x1b\[(?|(\d+);5u|27;5;(\d+)~)/',
+            static function (array $match): string {
+                $codepoint = (int)$match[1];
+
+                return match (true) {
+                    $codepoint >= 97 && $codepoint <= 122 => chr($codepoint - 96),
+                    $codepoint >= 65 && $codepoint <= 90 => chr($codepoint - 64),
+                    default => $match[0],
+                };
+            },
+            $content,
+        ) ?? $content;
     }
 
     /**

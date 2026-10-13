@@ -40,6 +40,12 @@ final class NewMessageTypesTest extends TestCase
     }
 
     #[Test]
+    public function aCtrlLetterANestedTmuxEncodedInAPasteIsItsControlByte(): void
+    {
+        self::assertSame("one\ntwo\nthree", (new PasteMsg("one\x1b[106;5utwo\x1b[27;5;106~three"))->content);
+    }
+
+    #[Test]
     public function terminalFocusMsgHoldsWhetherTheWindowHasIt(): void
     {
         $this->assertTrue((new TerminalFocusMsg(true))->focused);
