@@ -73,7 +73,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
     public static function fromText(string $text): self
     {
         $lines = array_map(
-            Line::raw(...),
+            static fn (string $line): Line => Line::raw(CharWidth::withTabsExpanded(self::afterLastCarriageReturn($line), 0)),
             explode("\n", $text),
         );
 
@@ -227,6 +227,18 @@ final readonly class Paragraph implements Widget, MeasureHeight
 
             ++$row;
         }
+    }
+
+    /**
+     * A progress line redraws itself after a bare CR, so the terminal shows
+     * only what came last. The CR of a CRLF ends the line and hides nothing.
+     */
+    private static function afterLastCarriageReturn(string $line): string
+    {
+        $line = str_ends_with($line, "\r") ? substr($line, 0, -1) : $line;
+        $carriageReturn = strrpos($line, "\r");
+
+        return $carriageReturn === false ? $line : substr($line, $carriageReturn + 1);
     }
 
     private function widestLine(): int

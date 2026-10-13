@@ -394,6 +394,27 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function aTabInTextMovesToTheNextTabStop(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Paragraph::fromText("ab\tc")->render($frame, new Rect(0, 0, 20, 1), $this->context());
+
+        self::assertSame('ab      c', rtrim(implode('', array_slice($frame->characters, 0, 20))));
+    }
+
+    #[Test]
+    public function aCarriageReturnStartsTheLineOver(): void
+    {
+        $frame = new Frame(10, 2);
+
+        Paragraph::fromText("10%\r20%\r30%\r\nnext")->render($frame, new Rect(0, 0, 10, 2), $this->context());
+
+        self::assertSame('30%', rtrim(implode('', array_slice($frame->characters, 0, 10))));
+        self::assertSame('next', rtrim(implode('', array_slice($frame->characters, 10, 10))));
+    }
+
+    #[Test]
     public function fromAnsiSplitsOnNewlines(): void
     {
         $frame = new Frame(10, 2);

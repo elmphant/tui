@@ -9,6 +9,8 @@ namespace Elmphant\Tui\Rendering;
  */
 final class CharWidth
 {
+    public const TAB_STOP = 8;
+
     private const ELLIPSIS = '…';
 
     private const NON_PLAIN = '/[^\x20-\x7e]/';
@@ -230,6 +232,29 @@ final class CharWidth
                 return $width + ($length - $offset);
             }
         }
+    }
+
+    /**
+     * Each tab becomes the spaces to the next tab stop, counted from $column.
+     */
+    public static function withTabsExpanded(string $text, int $column): string
+    {
+        if (!str_contains($text, "\t")) {
+            return $text;
+        }
+
+        $expanded = '';
+        foreach (explode("\t", $text) as $index => $piece) {
+            if ($index > 0) {
+                $spaces = self::TAB_STOP - ($column % self::TAB_STOP);
+                $expanded .= str_repeat(' ', $spaces);
+                $column += $spaces;
+            }
+            $expanded .= $piece;
+            $column += self::stringWidth($piece);
+        }
+
+        return $expanded;
     }
 
     public static function stripAnsi(string $str): string

@@ -332,7 +332,7 @@ final class Frame
             }
 
             if ($byte === 0x09) {
-                $tabStop = 8 - ($column % 8);
+                $tabStop = CharWidth::TAB_STOP - ($column % CharWidth::TAB_STOP);
                 for ($tabIndex = 0; $tabIndex < $tabStop && $column < $this->width; ++$tabIndex) {
                     $this->putChar($column, $y, ' ', $parser->foreground, $parser->background, $parser->attributes);
                     ++$column;
