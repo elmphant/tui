@@ -105,6 +105,18 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function altBAndAltFMoveByWordAsInReadline(): void
+    {
+        $area = Rect::fromSize(40, 1);
+        $input = TextInput::new()->withValue('one two');
+
+        $back = $input->update(new KeyMsg('b', alt: true), $area)->model;
+        $forward = $back->withCursor(0)->update(new KeyMsg('f', alt: true), $area)->model;
+
+        self::assertSame([4, 3], [$back->cursor(), $forward->cursor()]);
+    }
+
+    #[Test]
     public function deletingAWordBackwardStopsAtPunctuation(): void
     {
         $input = TextInput::new()->withValue('src/Widget/Field');

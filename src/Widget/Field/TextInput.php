@@ -53,8 +53,8 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
         return new Keybindings([
             Actions::CURSOR_LEFT => ['left'],
             Actions::CURSOR_RIGHT => ['right'],
-            Actions::WORD_LEFT => ['alt+left', 'ctrl+left'],
-            Actions::WORD_RIGHT => ['alt+right', 'ctrl+right'],
+            Actions::WORD_LEFT => ['alt+left', 'ctrl+left', 'alt+b'],
+            Actions::WORD_RIGHT => ['alt+right', 'ctrl+right', 'alt+f'],
             Actions::LINE_START => ['home'],
             Actions::LINE_END => ['end'],
             Actions::DELETE_CHAR_BACKWARD => ['backspace'],
