@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Widget\Structure;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
@@ -85,7 +86,9 @@ final readonly class Card implements Widget
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        if ($area->width < 4 || $area->height < 3) {
+        $inset = (new Inset(border: true, padding: Spacing::horizontal(1)))->fitting($area);
+        $inner = $inset->inner($area);
+        if ($inner->width < 1 || $inner->height < 1) {
             return;
         }
 
@@ -100,26 +103,24 @@ final readonly class Card implements Widget
             $bodyStyle = $bodyStyle->faint();
         }
 
-        $block = Block::new()
-            ->withBorder($this->border)
-            ->withBorderStyle($borderStyle)
-            ->withPadding(Spacing::horizontal(1));
-        $block->render($frame, $area);
-        $inner = $block->inner($area);
+        if ($inset->border) {
+            Block::new()->withBorder($this->border)->withBorderStyle($borderStyle)->render($frame, $area);
+        }
 
         // Clear inner area so stale content behind the card (e.g. column borders) doesn't bleed through.
+        $cleared = $inset->border ? $area->inner() : $area;
         $frame->fillRect(
-            $area->x + 1,
-            $area->y + 1,
-            max(0, $area->width - 2),
-            max(0, $area->height - 2),
+            $cleared->x,
+            $cleared->y,
+            $cleared->width,
+            $cleared->height,
             $borderStyle->foregroundValue(),
             $borderStyle->backgroundValue(),
             0,
             ' ',
         );
 
-        if ($this->title !== '' && $inner->height >= 1 && $inner->width > 0) {
+        if ($this->title !== '') {
             $frame->putString(
                 $inner->x,
                 $inner->y,
@@ -130,7 +131,7 @@ final readonly class Card implements Widget
             );
         }
 
-        if ($this->body !== '' && $inner->height >= 2 && $inner->width > 0) {
+        if ($this->body !== '' && $inner->height >= 2) {
             $frame->putString(
                 $inner->x,
                 $inner->y + 1,

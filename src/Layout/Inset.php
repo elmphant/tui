@@ -28,6 +28,22 @@ final readonly class Inset
         $this->padding = $padding ?? Spacing::none();
     }
 
+    /**
+     * Chrome that would leave no cell for the content is dropped, padding
+     * first, so a squeezed container still shows what it holds.
+     */
+    public function fitting(Rect $area): self
+    {
+        foreach ([$this, new self($this->margin, $this->border)] as $inset) {
+            $inner = $inset->inner($area);
+            if ($inner->width > 0 && $inner->height > 0) {
+                return $inset;
+            }
+        }
+
+        return new self($this->margin);
+    }
+
     public function inner(Rect $area): Rect
     {
         $inner = $this->margin->applyTo($area);

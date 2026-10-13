@@ -75,6 +75,17 @@ final class PanelTest extends TestCase
     }
 
     #[Test]
+    public function aPanelTooSmallForItsBorderShowsItsContentWithoutOne(): void
+    {
+        $frame = new Frame(10, 2);
+        $panel = Panel::new('Held')->withPadding(Spacing::horizontal(1))->add(Text::new('hi'));
+
+        $panel->render($frame, new Rect(0, 0, 2, 2), new RenderContext(Theme::dark()));
+
+        self::assertSame('hi', ScreenBuffer::fromFrame($frame)->textAt(0, 0, 2));
+    }
+
+    #[Test]
     public function theTitleCanBeReplacedAfterConstruction(): void
     {
         $area = new Rect(0, 0, 24, 5);
@@ -2176,11 +2187,11 @@ final class PanelTest extends TestCase
     }
 
     #[Test]
-    public function aPanelTooShortToShowAnyContentDoesNotScroll(): void
+    public function aPanelTooShortForItsBorderStillFollowsTheCursor(): void
     {
         $screen = $this->afterJumping(cursorRow: 0, jumpTarget: 5, scrollOffset: 0, area: new Rect(0, 0, 20, 2));
 
-        self::assertStringNotContainsString('cur-', $screen, 'Two rows are both border, so there is nothing to scroll');
+        self::assertStringContainsString('cur-5', $screen);
     }
 
     #[Test]

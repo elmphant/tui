@@ -208,19 +208,16 @@ final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, Key
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $borderArea = $this->effectiveMargin()->applyTo($area);
-
-        if ($borderArea->width < 3 || $borderArea->height < 3) {
-            return;
-        }
-
-        $contentArea = $this->contentArea($area);
+        $inset = $this->insetIn($area);
+        $contentArea = $inset->inner($area);
 
         if ($contentArea->width > 0 && $contentArea->height > 0) {
             $this->pane->render($frame, $contentArea, $context);
         }
 
-        $this->block($context)->render($frame, $area);
+        if ($inset->border) {
+            $this->block($context)->render($frame, $area);
+        }
     }
 
     /**
@@ -251,12 +248,17 @@ final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, Key
      */
     public function contentArea(Rect $area): Rect
     {
-        return $this->inset()->inner($area);
+        return $this->insetIn($area)->inner($area);
     }
 
     private function inset(): Inset
     {
         return new Inset($this->margin, border: true, padding: $this->padding);
+    }
+
+    private function insetIn(Rect $area): Inset
+    {
+        return $this->inset()->fitting($area);
     }
 
     private function block(RenderContext $context): Block
@@ -287,10 +289,5 @@ final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, Key
     private function withPane(ScrollPane $pane): self
     {
         return $this->cloneWith(pane: $pane);
-    }
-
-    private function effectiveMargin(): Spacing
-    {
-        return $this->margin ?? Spacing::none();
     }
 }

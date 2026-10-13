@@ -6,11 +6,11 @@ namespace Elmphant\Tui\Widget\Structure;
 
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Block;
-use Elmphant\Tui\Rendering\BorderStyle;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
@@ -111,10 +111,6 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
      */
     public function placedChildren(Rect $area): iterable
     {
-        if ($area->width < 3 || $area->height < 3) {
-            return;
-        }
-
         $contentArea = $this->contentArea($area);
         $childY = $contentArea->y;
 
@@ -140,25 +136,9 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        if ($area->width < 3 || $area->height < 3) {
-            return;
-        }
+        $inset = $this->insetIn($area);
 
-        $theme = $context->theme;
-        $borderStyle = $this->borderStyleOverride ?? $theme->borderStyle;
-        $titleStyle = $this->titleStyleOverride ?? $theme->titleStyle;
-
-        $block = Block::new()
-            ->withBorder($theme->border)
-            ->withBorderStyle($borderStyle)
-            ->withTitleStyle($titleStyle)
-            ->withTitle($this->title);
-
-        if ($this->padding !== null) {
-            $block = $block->withPadding($this->padding);
-        }
-
-        $frame->pushClip($this->contentArea($area));
+        $frame->pushClip($inset->inner($area));
 
         try {
             foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
@@ -168,16 +148,27 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
             $frame->popClip();
         }
 
+        if (!$inset->border) {
+            return;
+        }
+
+        $theme = $context->theme;
+        $block = Block::new()
+            ->withBorder($theme->border)
+            ->withBorderStyle($this->borderStyleOverride ?? $theme->borderStyle)
+            ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
+            ->withTitle($this->title);
+
         $block->render($frame, $area);
     }
 
-    /**
-     * A Box always draws a border, so the inset does not depend on the theme.
-     */
     private function contentArea(Rect $area): Rect
     {
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        return $this->insetIn($area)->inner($area);
+    }
 
-        return ($this->padding === null ? $block : $block->withPadding($this->padding))->inner($area);
+    private function insetIn(Rect $area): Inset
+    {
+        return (new Inset(border: true, padding: $this->padding))->fitting($area);
     }
 }

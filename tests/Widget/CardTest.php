@@ -12,6 +12,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Structure\Card;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -152,24 +153,14 @@ final class CardTest extends TestCase
     }
 
     #[Test]
-    public function cardSkipsWhenOnlyHeightBelowMinimum(): void
+    public function aCardTooShortForItsBorderShowsTitleAndBodyWithoutOne(): void
     {
-        // L85 LogicalOr: `||` → `&&`. With height=2 but width=10, current skips; mutation only skips when BOTH are below.
-        $frame = new Frame(10, 4);
-        $fillRow = '......';
-        for ($i = 0; $i < 40; ++$i) {
-            $frame->putChar($i % 10, intdiv($i, 10), '.');
-        }
-        $context = new RenderContext(Theme::dark());
-        $card = Card::new('X', 'y');
+        $frame = new Frame(10, 2);
 
-        // height=2 (below min) but width=10 (above min)
-        $card->render($frame, new Rect(0, 0, 10, 2), $context);
+        Card::new('X', 'y')->render($frame, new Rect(0, 0, 10, 2), new RenderContext(Theme::dark()));
 
-        // No card glyph anywhere
-        for ($i = 0; $i < 40; ++$i) {
-            self::assertSame('.', $frame->characters[$i], "Cell {$i} must remain untouched when height < 3");
-        }
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame(['X', 'y'], [rtrim($screen->lineAt(0)), rtrim($screen->lineAt(1))]);
     }
 
     #[Test]
@@ -343,23 +334,16 @@ final class CardTest extends TestCase
     }
 
     #[Test]
-    public function cardWithZeroWidthInnerDoesNotRenderTitleOrBody(): void
+    public function aCardTooNarrowForItsPaddingKeepsItsBorder(): void
     {
-        // L119/L130 `$inner->width > 0`: when inner width is 0, no title or body.
-        // Inner width = area.width - 2 (border) - 2 (horizontal padding). area.width=4 → inner width = 0.
         $frame = new Frame(4, 4);
-        $context = new RenderContext(Theme::dark());
-        $card = Card::new('Title', 'body');
 
-        $card->render($frame, new Rect(0, 0, 4, 4), $context);
+        Card::new('Title', 'body')->render($frame, new Rect(0, 0, 4, 4), new RenderContext(Theme::dark()));
 
-        // No 'T' or 'b' anywhere in the buffer
-        $found = '';
-        for ($i = 0; $i < 16; ++$i) {
-            $found .= $frame->characters[$i];
-        }
-        self::assertStringNotContainsString('T', $found, 'Title must not render when inner width is 0');
-        self::assertStringNotContainsString('b', $found, 'Body must not render when inner width is 0');
+        self::assertSame(['╭──╮', '│Ti│', '│bo│', '╰──╯'], array_map(
+            static fn (int $row): string => ScreenBuffer::fromFrame($frame)->lineAt($row),
+            [0, 1, 2, 3],
+        ));
     }
 
     private function cornerAttributes(Card $card, Rect $area): int

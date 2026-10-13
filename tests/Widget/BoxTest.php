@@ -25,6 +25,16 @@ use PHPUnit\Framework\TestCase;
 final class BoxTest extends TestCase
 {
     #[Test]
+    public function aBoxTooSmallForItsBorderShowsItsContentWithoutOne(): void
+    {
+        $frame = new Frame(10, 2);
+
+        Box::new('Held')->add(Text::new('hi'))->render($frame, new Rect(0, 0, 2, 2), RenderContext::unfocused(Theme::dark()));
+
+        self::assertSame('hi', ScreenBuffer::fromFrame($frame)->textAt(0, 0, 2));
+    }
+
+    #[Test]
     public function itExposesEachChildStackedInsideTheBorder(): void
     {
         $first = Text::new('one');
