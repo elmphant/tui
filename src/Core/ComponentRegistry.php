@@ -43,10 +43,12 @@ final readonly class ComponentRegistry
      */
     public static function for(object $owner, Closure $view): self
     {
-        /** @var WeakMap<object, self>|null $registries */
         static $registries = null;
         $registries ??= new WeakMap();
 
+        /**
+         * @var WeakMap<object, self> $registries
+         */
         return $registries[$owner] ??= self::fromWidget($view());
     }
 

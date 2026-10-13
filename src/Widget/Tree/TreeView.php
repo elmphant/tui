@@ -462,10 +462,12 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         // One keystroke asks five times over — moving the cursor, clamping the
         // scroll, drawing. The rows are a pure function of this value, so the
         // second ask onwards is free.
-        /** @var WeakMap<object, list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>>|null $rows */
         static $rows = null;
         $rows ??= new WeakMap();
 
+        /**
+         * @var WeakMap<object, list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>> $rows
+         */
         return $rows[$this] ??= $this->rowsOf($this->roots, TreePath::root(), '');
     }
 

@@ -893,27 +893,33 @@ abstract readonly class App implements RoutesFocus
 
     private function childDispatcher(): ChildDispatcher
     {
-        /** @var WeakMap<object, ChildDispatcher>|null $dispatchers */
         static $dispatchers = null;
         $dispatchers ??= new WeakMap();
 
+        /**
+         * @var WeakMap<object, ChildDispatcher> $dispatchers
+         */
         return $dispatchers[$this] ??= new ChildDispatcher($this->globalKeybindings());
     }
 
     private function resolvedQuitBindings(): Keybindings
     {
-        /** @var WeakMap<object, Keybindings>|null $bindings */
         static $bindings = null;
         $bindings ??= new WeakMap();
 
+        /**
+         * @var WeakMap<object, Keybindings> $bindings
+         */
         return $bindings[$this] ??= $this->quitBindings();
     }
 
     private function matchedApplicationAction(KeyMsg $message): ?string
     {
-        /** @var WeakMap<object, Keybindings>|null $bindings */
         static $bindings = null;
         $bindings ??= new WeakMap();
+        /**
+         * @var WeakMap<object, Keybindings> $bindings
+         */
         $applicationBindings = $bindings[$this] ??= $this->applicationKeybindings();
         foreach ($applicationBindings->actions() as $action) {
             if ($applicationBindings->matches($message, $action)) {
