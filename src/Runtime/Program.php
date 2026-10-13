@@ -59,7 +59,6 @@ use UnexpectedValueException;
  */
 final class Program
 {
-    private const ESCAPE_TIMEOUT = 0.05;
     private const MAX_MESSAGES_PER_DRAIN = 1_024;
     private const MAX_CONSECUTIVE_ERRORS = 10;
 
@@ -314,6 +313,7 @@ final class Program
                 onPaste: function (string $content): void {
                     $this->messageQueue->enqueue(new PasteMsg($content));
                 },
+                remote: getenv('SSH_CONNECTION') !== false || getenv('SSH_TTY') !== false,
             );
             $this->setup();
             $this->renderContext = new RenderContext($this->resolveTheme(), $this->resolveColorProfile());
@@ -655,7 +655,10 @@ final class Program
             ]);
             $this->cancelWatcher(EventLoopWatcher::EscapeFlush);
             $this->stdinBuffer->process($newInput);
-            $this->watch(EventLoopWatcher::EscapeFlush, EventLoop::delay(self::ESCAPE_TIMEOUT, $this->flushPendingInput(...)));
+            $flushDelay = $this->stdinBuffer->flushDelay();
+            if ($flushDelay !== null) {
+                $this->watch(EventLoopWatcher::EscapeFlush, EventLoop::delay($flushDelay, $this->flushPendingInput(...)));
+            }
         }
 
         $now = $this->clock->now();

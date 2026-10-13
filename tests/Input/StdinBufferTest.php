@@ -238,6 +238,46 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aBufferHoldingNothingWaitsForNothing(): void
+    {
+        $buffer = new StdinBuffer(onSequence: static function (): void {});
+
+        $buffer->process('abc');
+
+        self::assertNull($buffer->flushDelay());
+    }
+
+    #[Test]
+    public function aLoneEscapeIsWaitedOnBriefly(): void
+    {
+        $buffer = new StdinBuffer(onSequence: static function (): void {});
+
+        $buffer->process("\x1b");
+
+        self::assertSame(0.01, $buffer->flushDelay());
+    }
+
+    #[Test]
+    public function anUnfinishedSequenceIsWaitedOnLonger(): void
+    {
+        $buffer = new StdinBuffer(onSequence: static function (): void {});
+
+        $buffer->process("\x1b[1;");
+
+        self::assertSame(0.05, $buffer->flushDelay());
+    }
+
+    #[Test]
+    public function overARemoteConnectionALoneEscapeIsGivenTimeForTheRestOfItsSequence(): void
+    {
+        $buffer = new StdinBuffer(onSequence: static function (): void {}, remote: true);
+
+        $buffer->process("\x1b");
+
+        self::assertSame(0.1, $buffer->flushDelay());
+    }
+
+    #[Test]
     public function altBackspaceIsEmittedAtOnce(): void
     {
         $sequences = [];

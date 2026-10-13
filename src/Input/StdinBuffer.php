@@ -27,6 +27,7 @@ final class StdinBuffer
     public function __construct(
         private readonly Closure $onSequence,
         private readonly ?Closure $onPaste = null,
+        private readonly bool $remote = false,
     ) {
     }
 
@@ -111,6 +112,20 @@ final class StdinBuffer
             ($this->onSequence)($this->buffer);
             $this->buffer = '';
         }
+    }
+
+    /**
+     * How long to wait for the rest of what is held. A lone ESC is the Escape
+     * key unless a sequence follows at once, but over ssh the rest of an arrow
+     * key can arrive late.
+     */
+    public function flushDelay(): ?float
+    {
+        return match ($this->buffer) {
+            '' => null,
+            "\x1b" => $this->remote ? 0.1 : 0.01,
+            default => 0.05,
+        };
     }
 
     /**
