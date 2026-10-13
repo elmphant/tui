@@ -415,6 +415,17 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function fromAnsiStartsTheLineOverAtACarriageReturnAndKeepsItsColour(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Paragraph::fromAnsi("\x1b[31mold\rnew\x1b[0m\tx")->render($frame, new Rect(0, 0, 20, 1), $this->context());
+
+        self::assertSame('new     x', rtrim(implode('', array_slice($frame->characters, 0, 20))));
+        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[0]);
+    }
+
+    #[Test]
     public function fromAnsiSplitsOnNewlines(): void
     {
         $frame = new Frame(10, 2);

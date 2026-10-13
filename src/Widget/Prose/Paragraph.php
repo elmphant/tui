@@ -102,12 +102,24 @@ final readonly class Paragraph implements Widget, MeasureHeight
         foreach ($rawLines as $rawLine) {
             $spans = [];
             $currentText = '';
+            $column = 0;
             $currentForeground = $parser->foreground;
             $currentBackground = $parser->background;
             $currentAttributes = $parser->attributes;
+            $rawLine = str_ends_with($rawLine, "\r") ? substr($rawLine, 0, -1) : $rawLine;
             foreach (AnsiTokenizer::tokenize($rawLine) as $token) {
                 if ($token->type === AnsiTokenType::Text) {
-                    $currentText .= $token->content;
+                    $text = $token->content;
+                    $carriageReturn = strrpos($text, "\r");
+                    if ($carriageReturn !== false) {
+                        $spans = [];
+                        $currentText = '';
+                        $column = 0;
+                        $text = substr($text, $carriageReturn + 1);
+                    }
+                    $text = CharWidth::withTabsExpanded($text, $column);
+                    $column += CharWidth::stringWidth($text);
+                    $currentText .= $text;
                     continue;
                 }
 
