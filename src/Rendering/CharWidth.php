@@ -234,9 +234,6 @@ final class CharWidth
         }
     }
 
-    /**
-     * Each tab becomes the spaces to the next tab stop, counted from $column.
-     */
     public static function withTabsExpanded(string $text, int $column): string
     {
         if (!str_contains($text, "\t")) {

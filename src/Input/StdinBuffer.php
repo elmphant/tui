@@ -115,9 +115,7 @@ final class StdinBuffer
     }
 
     /**
-     * How long to wait for the rest of what is held. A lone ESC is the Escape
-     * key unless a sequence follows at once, but over ssh the rest of an arrow
-     * key can arrive late.
+     * Over ssh the rest of an arrow key can arrive well after its ESC.
      */
     public function flushDelay(): ?float
     {

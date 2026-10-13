@@ -51,8 +51,7 @@ final class AnsiTokenizer
     }
 
     /**
-     * Where the escape sequence starting at $position ends; the end of the input
-     * when it is unterminated.
+     * An unterminated sequence runs to the end of the input.
      */
     public static function sequenceEnd(string $input, int $position): int
     {

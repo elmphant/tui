@@ -9,11 +9,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Reading a sequence to its final byte is what keeps the text of every other
- * sequence out of the output, so the exact offsets are worth stating rather
- * than inferring from a screen.
- */
 final class CsiScanningTest extends TestCase
 {
     #[Test]

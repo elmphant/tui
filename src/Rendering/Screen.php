@@ -84,8 +84,7 @@ final class Screen
     }
 
     /**
-     * The terminal no longer shows what this screen last wrote, so the next
-     * flush draws every cell.
+     * For when something else has written to the terminal: the next flush draws every cell.
      */
     public function forget(): void
     {

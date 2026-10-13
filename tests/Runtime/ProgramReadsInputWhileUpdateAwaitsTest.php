@@ -20,10 +20,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop;
 
-/**
- * Stdin is level-triggered: a byte left unread while update() awaits keeps
- * waking the loop, which then spins at full CPU until the await ends.
- */
 final class ProgramReadsInputWhileUpdateAwaitsTest extends TestCase
 {
     #[Test]

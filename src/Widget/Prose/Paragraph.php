@@ -242,8 +242,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
     }
 
     /**
-     * A progress line redraws itself after a bare CR, so the terminal shows
-     * only what came last. The CR of a CRLF ends the line and hides nothing.
+     * A terminal shows only what follows a bare CR; a CRLF hides nothing.
      */
     private static function afterLastCarriageReturn(string $line): string
     {
