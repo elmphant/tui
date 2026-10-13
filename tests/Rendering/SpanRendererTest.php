@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Rendering\Attr;
+use Elmphant\Tui\Rendering\Line;
+use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\SpanRenderer;
+use Elmphant\Tui\Rendering\StyleToken;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -101,12 +104,113 @@ final class SpanRendererTest extends TestCase
     }
 
     #[Test]
-    public function headingIsSkippedProducingEmptyLine(): void
+    public function aHeadingIsABoldTitleLine(): void
     {
-        $lines = SpanRenderer::fromMarkdown('# Heading');
+        $lines = SpanRenderer::fromMarkdown("# Heading\n\nParagraph body");
 
-        self::assertCount(1, $lines);
-        self::assertCount(0, $lines[0]->spans);
+        self::assertEquals(
+            [
+                new Line([Span::token('Heading', StyleToken::Title)->bold()]),
+                new Line([new Span('Paragraph body')]),
+            ],
+            $lines,
+        );
+    }
+
+    #[Test]
+    public function aBulletListMarksEachItemAndIndentsANestedOne(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("- one\n- two\n  - nested");
+
+        self::assertEquals(
+            [
+                new Line([new Span('• '), new Span('one')]),
+                new Line([new Span('• '), new Span('two')]),
+                new Line([new Span('  '), new Span('• '), new Span('nested')]),
+            ],
+            $lines,
+        );
+    }
+
+    #[Test]
+    public function anOrderedListCountsFromItsStart(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("3. three\n4. four");
+
+        self::assertEquals(
+            [
+                new Line([new Span('3. '), new Span('three')]),
+                new Line([new Span('4. '), new Span('four')]),
+            ],
+            $lines,
+        );
+    }
+
+    #[Test]
+    public function aCodeBlockKeepsEachLineAndItsIndentation(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("```php\nif (\$x) {\n\treturn;\n}\n```");
+
+        self::assertEquals(
+            [
+                new Line([new Span('  '), Span::token('if ($x) {', StyleToken::Accent)]),
+                new Line([new Span('  '), Span::token('        return;', StyleToken::Accent)]),
+                new Line([new Span('  '), Span::token('}', StyleToken::Accent)]),
+            ],
+            $lines,
+        );
+    }
+
+    #[Test]
+    public function aQuoteMarksEveryLineOfWhatItHolds(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("> said\n>\n> - item");
+
+        self::assertEquals(
+            [
+                new Line([Span::token('│ ', StyleToken::Dim), new Span('said')]),
+                new Line([Span::token('│ ', StyleToken::Dim), new Span('• '), new Span('item')]),
+            ],
+            $lines,
+        );
+    }
+
+    #[Test]
+    public function anIndentedCodeBlockIsACodeBlockToo(): void
+    {
+        $lines = SpanRenderer::fromMarkdown('    echo 1;');
+
+        self::assertEquals([new Line([new Span('  '), Span::token('echo 1;', StyleToken::Accent)])], $lines);
+    }
+
+    #[Test]
+    public function rawHtmlIsShownAsDimText(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("<details>\n<summary>More</summary>\n</details>");
+
+        self::assertEquals(
+            [
+                new Line([Span::token('<details>', StyleToken::Dim)]),
+                new Line([Span::token('<summary>More</summary>', StyleToken::Dim)]),
+                new Line([Span::token('</details>', StyleToken::Dim)]),
+            ],
+            $lines,
+        );
+    }
+
+    #[Test]
+    public function aRuleIsADimLine(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("above\n\n---\n\nbelow");
+
+        self::assertEquals(
+            [
+                new Line([new Span('above')]),
+                new Line([Span::token('───', StyleToken::Dim)]),
+                new Line([new Span('below')]),
+            ],
+            $lines,
+        );
     }
 
     #[Test]
@@ -127,16 +231,6 @@ final class SpanRendererTest extends TestCase
 
         self::assertCount(1, $lines);
         self::assertCount(0, $lines[0]->spans);
-    }
-
-    #[Test]
-    public function headingDoesNotStopIterationOverSubsequentParagraphs(): void
-    {
-        $lines = SpanRenderer::fromMarkdown("# Heading\n\nParagraph body");
-
-        self::assertCount(1, $lines);
-        self::assertCount(1, $lines[0]->spans);
-        self::assertSame('Paragraph body', $lines[0]->spans[0]->content, 'Non-paragraph blocks must be skipped with `continue`, not break iteration');
     }
 
     #[Test]
