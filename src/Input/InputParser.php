@@ -11,7 +11,6 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Message\TerminalFocusMsg;
 use Elmphant\Tui\Rendering\Grapheme;
 
 /**
@@ -225,14 +224,6 @@ final class InputParser
 
         if (preg_match('/^27;(\d+);(\d+)~$/', $body, $modifyOtherKeys) === 1) {
             return self::parseKittyCsiU("{$modifyOtherKeys[2]};{$modifyOtherKeys[1]}u");
-        }
-
-        if ($sequence === "\x1b[I") {
-            return new TerminalFocusMsg(true);
-        }
-
-        if ($sequence === "\x1b[O") {
-            return new TerminalFocusMsg(false);
         }
 
         // `?`, `>` and `=` open a device report. Only `<` belongs to a reader, on a

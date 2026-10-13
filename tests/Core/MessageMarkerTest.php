@@ -20,7 +20,6 @@ use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\ResizeMsg;
-use Elmphant\Tui\Message\TerminalFocusMsg;
 use Elmphant\Tui\Message\TickMsg;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +34,6 @@ final class MessageMarkerTest extends TestCase
     {
         $messages = [
             new ErrorMsg(new RuntimeException(), ErrorSource::Update),
-            new TerminalFocusMsg(true),
             new HttpResultMsg(200, ''),
             new KeyMsg('a'),
             LoadingMsg::start(),

@@ -7,7 +7,6 @@ namespace Elmphant\Tui\Tests\Message;
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\PasteMsg;
-use Elmphant\Tui\Message\TerminalFocusMsg;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -43,12 +42,5 @@ final class NewMessageTypesTest extends TestCase
     public function aCtrlLetterANestedTmuxEncodedInAPasteIsItsControlByte(): void
     {
         self::assertSame("one\ntwo\nthree", (new PasteMsg("one\x1b[106;5utwo\x1b[27;5;106~three"))->content);
-    }
-
-    #[Test]
-    public function terminalFocusMsgHoldsWhetherTheWindowHasIt(): void
-    {
-        $this->assertTrue((new TerminalFocusMsg(true))->focused);
-        $this->assertFalse((new TerminalFocusMsg(false))->focused);
     }
 }
