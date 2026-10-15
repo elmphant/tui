@@ -255,7 +255,7 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
-    public function aPasteEndMarkerSplitByTheEscapeTimeoutStillEndsThePaste(): void
+    public function aPasteEndMarkerSplitAcrossReadsWaitsForThePasteTimeoutNotTheEscapeOne(): void
     {
         $pastes = [];
         $sequences = [];
@@ -265,7 +265,7 @@ final class StdinBufferTest extends TestCase
         );
 
         $buffer->process("\x1b[200~abc\x1b[20");
-        $buffer->flush();
+        self::assertSame(StdinBuffer::PASTE_TIMEOUT, $buffer->flushDelay());
         $buffer->process('1~x');
 
         self::assertSame([['abc'], ['x']], [$pastes, $sequences]);
@@ -281,6 +281,24 @@ final class StdinBufferTest extends TestCase
         $buffer->flush();
 
         self::assertSame(["\x1b]", 'a', "\x1b_", 'b', 'c', "\x03"], $sequences);
+    }
+
+    #[Test]
+    public function aPasteThatNeverEndsIsDeliveredOnTheTimeoutAndKeysWorkAgain(): void
+    {
+        $pastes = [];
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~abc");
+        self::assertNotNull($buffer->flushDelay());
+        $buffer->flush();
+        $buffer->process('q');
+
+        self::assertSame([['abc'], ['q']], [$pastes, $sequences]);
     }
 
     #[Test]

@@ -16,6 +16,7 @@ final class StdinBuffer
     private const PASTE_END = "\x1b[201~";
     public const MAX_PASTE_SIZE = 1048576;
     public const MAX_SEQUENCE_SIZE = 4096;
+    public const PASTE_TIMEOUT = 1.0;
 
     private string $buffer = '';
     private bool $inPaste = false;
@@ -103,7 +104,19 @@ final class StdinBuffer
 
     public function flush(): void
     {
-        while (!$this->inPaste && $this->buffer !== '' && $this->buffer[0] === "\x1b") {
+        if ($this->inPaste) {
+            $this->pasteBuffer .= $this->buffer;
+            $this->buffer = '';
+            $this->inPaste = false;
+            if ($this->onPaste !== null) {
+                ($this->onPaste)(substr($this->pasteBuffer, 0, self::MAX_PASTE_SIZE));
+            }
+            $this->pasteBuffer = '';
+
+            return;
+        }
+
+        while ($this->buffer !== '' && $this->buffer[0] === "\x1b") {
             $second = ord($this->buffer[1] ?? "\x1b");
             $held = $second === 0x1B || $second >= 0x80 ? "\x1b" : substr($this->buffer, 0, 2);
             $rest = substr($this->buffer, strlen($held));
@@ -116,11 +129,13 @@ final class StdinBuffer
     /**
      * Over ssh the rest of an arrow key can arrive well after its ESC. A buffer
      * that does not start with ESC holds part of a character, which only more of
-     * that character can follow, so it waits without a timeout.
+     * that character can follow, so it waits without a timeout. A paste whose end
+     * marker never comes would otherwise swallow every key after it, Ctrl+C too.
      */
     public function flushDelay(): ?float
     {
         return match (true) {
+            $this->inPaste => self::PASTE_TIMEOUT,
             $this->buffer === '' || $this->buffer[0] !== "\x1b" => null,
             $this->buffer === "\x1b" => $this->remote ? 0.1 : 0.01,
             default => 0.05,

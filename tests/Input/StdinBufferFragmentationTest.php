@@ -22,8 +22,8 @@ final class StdinBufferFragmentationTest extends TestCase
     }
 
     /**
-     * A timeout between reads may change what an escape means, never which bytes
-     * arrive or what a paste holds.
+     * An escape timeout between reads may change what an escape means, never which
+     * bytes arrive or what a paste holds.
      *
      * @param list<string> $chunks
      */
@@ -139,7 +139,8 @@ final class StdinBufferFragmentationTest extends TestCase
 
         foreach ($chunks as $chunk) {
             $buffer->process($chunk);
-            if ($flushBetween) {
+            $delay = $buffer->flushDelay();
+            if ($flushBetween && $delay !== null && $delay < StdinBuffer::PASTE_TIMEOUT) {
                 $buffer->flush();
             }
         }
