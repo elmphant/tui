@@ -46,6 +46,12 @@ final class GraphemeTest extends TestCase
      * TerminalText::plain() keeps such a byte by design, so splitting must too.
      */
     #[Test]
+    public function aBrokenByteLeavesTheClustersAroundItWhole(): void
+    {
+        self::assertSame(["e\u{301}", "\xff", "☺\u{FE0F}"], Grapheme::split("e\u{301}\xff☺\u{FE0F}"));
+    }
+
+    #[Test]
     public function aByteThatFormsNoCharacterIsKeptAsItsOwnCluster(): void
     {
         self::assertSame(['a', "\xFF", 'b'], Grapheme::split("a\xFFb"));
