@@ -31,6 +31,16 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function ansiTextNeverAttachesAControlCharacterToTheCellBeforeIt(): void
+    {
+        $frame = new Frame(20, 1);
+
+        $frame->putAnsi(0, 0, "a\u{9B}b\x7fc\u{301}");
+
+        self::assertSame(['a', 'b', "c\u{301}"], array_slice($frame->characters, 0, 3));
+    }
+
+    #[Test]
     public function aWindowsLineEndInTextTakesNoCell(): void
     {
         $frame = new Frame(20, 1);

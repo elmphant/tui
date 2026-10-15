@@ -353,7 +353,7 @@ final class Frame
 
             $characterWidth = CharWidth::of($character);
             if ($characterWidth === 0) {
-                if ($previousIndex !== null) {
+                if ($previousIndex !== null && TerminalText::plain($character) !== '') {
                     $this->characters[$previousIndex] .= $character;
                 }
                 continue;
