@@ -175,13 +175,12 @@ final readonly class ComponentRegistry
      */
     private function scopeHolding(?ComponentId $focused): ?array
     {
-        if ($focused === null) {
-            return null;
-        }
-
-        foreach ($this->scopes as $scope) {
-            if (\in_array($focused->value, $scope, true)) {
-                return $scope;
+        // A stop that just left the tree is in no scope; the pane it left is.
+        for ($id = $focused; $id !== null; $id = $id->parent()) {
+            foreach ($this->scopes as $scope) {
+                if (\in_array($id->value, $scope, true)) {
+                    return $scope;
+                }
             }
         }
 
