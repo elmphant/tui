@@ -163,7 +163,14 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
 
     public function toggle(TreePath $path): self
     {
-        return $this->isExpanded($path) ? $this->collapse($path) : $this->expand($path);
+        if ($this->isExpanded($path)) {
+            return $this->collapse($path);
+        }
+
+        $rows = $this->visibleRows();
+        $index = $this->rowIndexOf($path, $rows);
+
+        return $index !== null && $rows[$index]['node']->isExpandable() ? $this->expand($path) : $this;
     }
 
     public function first(): self
@@ -269,16 +276,18 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     public function expandOrEnter(): self
     {
         $cursor = $this->cursor();
+        $rows = $this->visibleRows();
+        $index = $this->rowIndexOf($cursor, $rows);
+
+        if ($index === null || !$rows[$index]['node']->isExpandable()) {
+            return $this;
+        }
+
         if (!$this->isExpanded($cursor)) {
             return $this->expand($cursor);
         }
 
-        $rows = $this->visibleRows();
-        $index = $this->rowIndexOf($cursor, $rows);
-
-        return $index === null || !isset($rows[$index + 1])
-            ? $this
-            : $this->withCursor($rows[$index + 1]['path']);
+        return isset($rows[$index + 1]) ? $this->withCursor($rows[$index + 1]['path']) : $this;
     }
 
     /**

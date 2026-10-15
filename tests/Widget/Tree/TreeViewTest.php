@@ -24,6 +24,19 @@ use PHPUnit\Framework\TestCase;
 final class TreeViewTest extends TestCase
 {
     #[Test]
+    public function rightOnALeafLeavesItAndTheCursorAlone(): void
+    {
+        $tree = TreeView::new([new SimpleTreeNode('a', 'a'), new SimpleTreeNode('b', 'b')]);
+
+        $once = $tree->expandOrEnter();
+        $twice = $once->expandOrEnter();
+
+        self::assertFalse($once->isExpanded(TreePath::root()->child('a')));
+        self::assertEquals(TreePath::root()->child('a'), $twice->cursor());
+        self::assertFalse($tree->toggle(TreePath::root()->child('a'))->isExpanded(TreePath::root()->child('a')));
+    }
+
+    #[Test]
     public function aNarrowTreeDrawsNothingPastItsRightEdge(): void
     {
         $deep = new SimpleTreeNode('e', 'leaf-label');
