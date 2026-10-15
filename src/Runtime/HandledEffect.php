@@ -10,14 +10,27 @@ use Elmphant\Tui\Core\EffectId;
 /**
  * @internal
  */
-final readonly class HandledEffect
+final class HandledEffect
 {
     /**
-     * @param Closure(): void $stop
+     * Stopped or finished: either way, what it emits from now on belongs to nobody.
      */
-    public function __construct(
-        public Closure $stop,
-        public ?EffectId $id = null,
-    ) {
+    public bool $over = false;
+
+    /**
+     * @var Closure(): void|null
+     */
+    public ?Closure $stopper = null;
+
+    public function __construct(public readonly ?EffectId $id = null)
+    {
+    }
+
+    public function stop(): void
+    {
+        $this->over = true;
+        if ($this->stopper !== null) {
+            ($this->stopper)();
+        }
     }
 }

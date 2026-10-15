@@ -334,10 +334,13 @@ final class RowLoader implements CommandHandler
         return $command instanceof QueryRows;
     }
 
-    public function start(Cmd $command, Closure $emit): ?Closure
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         assert($command instanceof QueryRows);
-        $query = MyAsyncDatabase::run($command->sql, static fn (array $rows) => $emit(new RowsLoaded($rows)));
+        $query = MyAsyncDatabase::run($command->sql, static function (array $rows) use ($emit, $finished): void {
+            $emit(new RowsLoaded($rows));
+            $finished();
+        });
 
         return $query->cancel(...);
     }
@@ -354,6 +357,8 @@ The closure `start()` answers with, if any, is how the runtime stops the effect
 again: on `Cmd::cancel($id)`, when a second command takes the same
 `effectId()`, and when the program shuts down. Implement `NamesItsEffect` to
 take part in that; a command without a name simply runs until the program ends.
+An effect that ends on its own calls `$finished`, so the runtime lets go of it
+rather than holding it until shutdown.
 
 Handlers are asked in the order they were registered, and only for a command the
 runtime has no effect of its own for — a handler cannot intercept `Cmd::quit()`

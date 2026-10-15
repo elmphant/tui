@@ -30,9 +30,14 @@ interface CommandHandler
      * `NamesItsEffect::effectId()`, and when the program shuts down. An effect
      * that has nothing to stop answers null.
      *
+     * An effect that ends on its own calls `$finished`: the runtime lets go of
+     * it, so its stop closure is never called and anything it emits afterwards
+     * is dropped.
+     *
      * @param Closure(Message): void $emit
+     * @param Closure(): void        $finished
      *
      * @return Closure(): void|null
      */
-    public function start(Cmd $command, Closure $emit): ?Closure;
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure;
 }

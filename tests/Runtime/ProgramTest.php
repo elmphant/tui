@@ -115,7 +115,7 @@ final class ProgramTest extends TestCase
                 return $command instanceof PlaySoundCmd;
             }
 
-            public function start(Cmd $command, Closure $emit): ?Closure
+            public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
             {
                 $emit(new TestMessage('played'));
 

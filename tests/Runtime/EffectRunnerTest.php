@@ -632,6 +632,23 @@ final class EffectRunnerTest extends TestCase
     }
 
     #[Test]
+    public function aHandlersEffectThatFinishedIsLetGoAndNotStoppedAgain(): void
+    {
+        $handler = new SoundHandler();
+        $runner = $this->runnerWith($handler);
+        $runner->run(new SoundCmd(), null);
+        $this->results->dequeue();
+        self::assertNotNull($handler->finished);
+        self::assertNotNull($handler->emit);
+
+        ($handler->finished)();
+        ($handler->emit)(new TickMsg(3.0));
+        $runner->shutdown();
+
+        self::assertSame([0, 0], [$handler->stopped, count($this->results)]);
+    }
+
+    #[Test]
     public function aSecondCommandUnderTheSameNameReplacesTheFirst(): void
     {
         $handler = new SoundHandler();
@@ -835,7 +852,7 @@ final class BrokenHandler implements CommandHandler
         return true;
     }
 
-    public function start(Cmd $command, Closure $emit): ?Closure
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         throw new LogicException('the sound card is on fire');
     }
@@ -850,7 +867,7 @@ final class GreedyHandler implements CommandHandler
         return true;
     }
 
-    public function start(Cmd $command, Closure $emit): ?Closure
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         ++$this->started;
 
@@ -869,15 +886,21 @@ final class SoundHandler implements CommandHandler
      */
     public ?Closure $emit = null;
 
+    /**
+     * @var Closure(): void|null
+     */
+    public ?Closure $finished = null;
+
     public function handles(Cmd $command): bool
     {
         return $command instanceof SoundCmd;
     }
 
-    public function start(Cmd $command, Closure $emit): ?Closure
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         ++$this->started;
         $this->emit = $emit;
+        $this->finished = $finished;
         $emit(new TickMsg(2.0));
 
         return function (): void {

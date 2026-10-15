@@ -191,7 +191,7 @@ final class EffectRunner
 
         foreach ($this->handled as $effect) {
             try {
-                ($effect->stop)();
+                $effect->stop();
             } catch (Throwable) {
             }
         }
@@ -218,13 +218,10 @@ final class EffectRunner
             // to be registered, or a cancel answering that message would find nothing.
             $this->startingAHandler = true;
             $this->emittedWhileStarting = false;
-            $effect = new class {
-                public bool $stopped = false;
-            };
+            $effect = new HandledEffect($id);
             try {
-                $stop = $handler->start($command, function (Message $message) use ($wrap, $effect): void {
-                    // An answer already in flight when the effect was stopped belongs to nobody.
-                    if ($effect->stopped) {
+                $effect->stopper = $handler->start($command, function (Message $message) use ($wrap, $effect): void {
+                    if ($effect->over) {
                         return;
                     }
                     $this->report($message, $wrap);
@@ -234,6 +231,12 @@ final class EffectRunner
                         return;
                     }
                     ($this->wake)();
+                }, function () use ($effect): void {
+                    $effect->over = true;
+                    $this->handled = array_values(array_filter(
+                        $this->handled,
+                        static fn (HandledEffect $held): bool => $held !== $effect,
+                    ));
                 });
             } catch (Throwable $error) {
                 $this->report(new ErrorMsg($error, ErrorSource::Command, $id), $wrap);
@@ -243,11 +246,8 @@ final class EffectRunner
                 $this->startingAHandler = false;
             }
 
-            if ($stop !== null) {
-                $this->handled[] = new HandledEffect(static function () use ($stop, $effect): void {
-                    $effect->stopped = true;
-                    $stop();
-                }, $id);
+            if ($effect->stopper !== null && !$effect->over) {
+                $this->handled[] = $effect;
             }
             if ($this->emittedWhileStarting) {
                 ($this->wake)();
@@ -357,7 +357,7 @@ final class EffectRunner
     private function stopHandled(HandledEffect $effect, ?Closure $wrap = null): void
     {
         try {
-            ($effect->stop)();
+            $effect->stop();
         } catch (Throwable $error) {
             $this->report(new ErrorMsg($error, ErrorSource::Cancel, $effect->id), $wrap);
         }

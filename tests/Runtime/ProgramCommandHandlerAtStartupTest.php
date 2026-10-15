@@ -118,7 +118,7 @@ final class FailingStartHandler implements CommandHandler
         return $command instanceof FailToStart;
     }
 
-    public function start(Cmd $command, Closure $emit): ?Closure
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         throw new RuntimeException('cannot start');
     }
@@ -131,7 +131,7 @@ final class LateEmittingHandler implements CommandHandler
         return $command instanceof EmitLater;
     }
 
-    public function start(Cmd $command, Closure $emit): ?Closure
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         EventLoop::delay(0.02, static fn () => $emit(new LateMessage()));
 
@@ -194,7 +194,7 @@ final class StoppableFeedHandler implements CommandHandler
         return $command instanceof StartFeed;
     }
 
-    public function start(Cmd $command, Closure $emit): ?Closure
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         $emit(new FeedOpened());
 
@@ -268,7 +268,7 @@ final class AnsweringPingHandler implements CommandHandler
         return $command instanceof StartupPing;
     }
 
-    public function start(Cmd $command, Closure $emit): ?Closure
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         $emit(new StartupPong());
 
