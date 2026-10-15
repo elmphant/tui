@@ -205,14 +205,20 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         $last = count($this->children) - 1;
         $index = 0;
 
-        foreach ($context->childrenOf($this, $area) as [$child, $pane]) {
-            $child->render($frame, $pane, $context);
+        $frame->pushClip($area);
 
-            if ($index < $last) {
-                $this->renderDivider($frame, $area, $pane, $index, $context);
+        try {
+            foreach ($context->childrenOf($this, $area) as [$child, $pane]) {
+                $child->render($frame, $pane, $context);
+
+                if ($index < $last) {
+                    $this->renderDivider($frame, $area, $pane, $index, $context);
+                }
+
+                ++$index;
             }
-
-            ++$index;
+        } finally {
+            $frame->popClip();
         }
     }
 

@@ -29,6 +29,18 @@ use PHPUnit\Framework\TestCase;
 final class SplitTest extends TestCase
 {
     #[Test]
+    public function aSplitTooNarrowForItsDividersDrawsNothingOutsideItsArea(): void
+    {
+        $split = Split::row(SplitState::even(3), Text::new('a'), Text::new('b'), Text::new('c'));
+        $frame = new Frame(10, 2);
+
+        $split->render($frame, new Rect(4, 0, 1, 2), RenderContext::unfocused(Theme::dark()));
+
+        self::assertSame('    ', implode('', array_slice($frame->characters, 0, 4)));
+        self::assertSame('     ', implode('', array_slice($frame->characters, 5, 5)));
+    }
+
+    #[Test]
     public function aGlobalRebindingReachesTheKeysAPaneAnswers(): void
     {
         $area = new Rect(0, 0, 40, 6);
