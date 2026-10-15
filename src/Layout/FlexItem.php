@@ -16,9 +16,4 @@ final readonly class FlexItem
         public Constraint $constraint,
     ) {
     }
-
-    public function initialSize(): int
-    {
-        return $this->constraint->policy()->initialSize();
-    }
 }

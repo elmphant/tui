@@ -125,7 +125,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         $isRow = $this->direction === Direction::Horizontal;
         $mainSize = $isRow ? $area->width : $area->height;
         $crossSize = $isRow ? $area->height : $area->width;
-        $lines = $this->packLines($mainSize);
+        $lines = $this->packLines($mainSize, $crossSize);
         $lineGap = $this->effectiveGap(count($lines), $crossSize);
         $crossAvailable = $crossSize - $lineGap * (count($lines) - 1);
 
@@ -194,7 +194,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
     /**
      * @return list<list<int>> item indexes grouped into main-axis lines
      */
-    private function packLines(int $mainSize): array
+    private function packLines(int $mainSize, ?int $acrossExtent = null): array
     {
         if (!$this->wrap) {
             return [array_keys($this->items)];
@@ -205,7 +205,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         $used = 0;
 
         foreach ($this->items as $index => $item) {
-            $size = $item->initialSize();
+            $size = $this->policyFor($item, $acrossExtent)->initialSize();
             if ($line === []) {
                 $line[] = $index;
                 $used = $size;

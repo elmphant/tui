@@ -147,6 +147,21 @@ final class FlexTest extends TestCase
     }
 
     #[Test]
+    public function contentSizedChildrenWrapAtTheWidthTheyAskFor(): void
+    {
+        $flex = Flex::row()
+            ->withWrap()
+            ->add(Text::new('alpha-one'), Constraint::content())
+            ->add(Text::new('bravo-two'), Constraint::content())
+            ->add(Text::new('charlie-3'), Constraint::content());
+
+        $rects = array_map(static fn (array $placed): Rect => $placed[1], $flex->computeChildRects(new Rect(0, 0, 20, 4)));
+
+        self::assertSame([[9, 0], [9, 0], [9, 2]], array_map(static fn (Rect $rect): array => [$rect->width, $rect->y], $rects));
+        self::assertSame(2, $flex->measureHeight(20));
+    }
+
+    #[Test]
     public function anOversizedGapStillLeavesEveryWrappedLineARow(): void
     {
         $flex = Flex::row()
