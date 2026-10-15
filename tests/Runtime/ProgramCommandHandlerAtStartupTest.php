@@ -20,6 +20,8 @@ use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
+use RuntimeException;
 
 final class ProgramCommandHandlerAtStartupTest extends TestCase
 {
@@ -46,6 +48,94 @@ final class ProgramCommandHandlerAtStartupTest extends TestCase
             ->start();
 
         self::assertTrue($final->stoppedBeforeQuitting);
+    }
+
+    #[Test]
+    public function aHandlerThatFailsToStartDoesNotKeepLaterMessagesWaiting(): void
+    {
+        $final = Program::new(new FirstArrivalModel(hrtime(true)))
+            ->withTerminal(new VirtualTerminal(40, 10))
+            ->withCommandHandler(new FailingStartHandler())
+            ->withCommandHandler(new LateEmittingHandler())
+            ->start();
+
+        self::assertNotNull($final->secondsUntilTheLateMessage);
+        self::assertLessThan(0.5, $final->secondsUntilTheLateMessage, 'it woke the program rather than waiting for the next timer');
+    }
+}
+
+final readonly class FailToStart extends Cmd
+{
+}
+
+final readonly class EmitLater extends Cmd
+{
+}
+
+final readonly class LateMessage implements Message
+{
+}
+
+final readonly class SafetyTimeout implements Message
+{
+}
+
+final readonly class FirstArrivalModel implements Model
+{
+    public function __construct(
+        private int|float $startedAt,
+        public ?float $secondsUntilTheLateMessage = null,
+    ) {
+    }
+
+    public function init(): ?Cmd
+    {
+        return Cmd::batch(
+            new FailToStart(),
+            new EmitLater(),
+            Cmd::after(1.0, static fn (): Message => new SafetyTimeout()),
+        );
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return match (true) {
+            $message instanceof LateMessage => new UpdateResult(new self($this->startedAt, (hrtime(true) - $this->startedAt) / 1e9), Cmd::quit()),
+            $message instanceof SafetyTimeout => new UpdateResult($this, Cmd::quit()),
+            default => new UpdateResult($this),
+        };
+    }
+
+    public function render(Frame $frame, RenderContext $context): void
+    {
+    }
+}
+
+final class FailingStartHandler implements CommandHandler
+{
+    public function handles(Cmd $command): bool
+    {
+        return $command instanceof FailToStart;
+    }
+
+    public function start(Cmd $command, Closure $emit): ?Closure
+    {
+        throw new RuntimeException('cannot start');
+    }
+}
+
+final class LateEmittingHandler implements CommandHandler
+{
+    public function handles(Cmd $command): bool
+    {
+        return $command instanceof EmitLater;
+    }
+
+    public function start(Cmd $command, Closure $emit): ?Closure
+    {
+        EventLoop::delay(0.02, static fn () => $emit(new LateMessage()));
+
+        return null;
     }
 }
 

@@ -127,6 +127,19 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function wordMotionStopsAtBothEndsAndReadsAccentedLettersAsLetters(): void
+    {
+        $area = Rect::fromSize(40, 1);
+        $input = TextInput::new()->withValue('naïve café');
+
+        $atStart = $input->withCursor(0)->update(new KeyMsg(Key::Left, alt: true), $area)->model;
+        $atEnd = $input->update(new KeyMsg(Key::Right, alt: true), $area)->model;
+        $back = $input->update(new KeyMsg(Key::Left, alt: true), $area)->model;
+
+        self::assertSame([0, 10, 6], [$atStart->cursor(), $atEnd->cursor(), $back->cursor()]);
+    }
+
+    #[Test]
     public function altBAndAltFMoveByWordAsInReadline(): void
     {
         $area = Rect::fromSize(40, 1);

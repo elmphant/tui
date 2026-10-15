@@ -207,6 +207,7 @@ final class KeyPatternTest extends TestCase
     public function aModifiedPlusIsBoundByDoublingThePlus(): void
     {
         self::assertEquals(new KeyPattern(key: '+', ctrl: true), KeyPattern::fromString('ctrl++'));
+        self::assertEquals(new KeyPattern(key: '+', ctrl: true, alt: true), KeyPattern::fromString('ctrl+alt++'));
     }
 
     #[Test]

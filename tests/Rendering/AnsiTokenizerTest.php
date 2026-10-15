@@ -32,6 +32,15 @@ final class AnsiTokenizerTest extends TestCase
     }
 
     #[Test]
+    public function everyIntermediateByteBelongsToTheEscapeAndAnUnfinishedOneEndsTheInput(): void
+    {
+        self::assertSame(
+            [[AnsiTokenType::Escape, "\x1b F"], [AnsiTokenType::Escape, "\x1b/A"], [AnsiTokenType::Text, 'x'], [AnsiTokenType::Escape, "\x1b("]],
+            self::collect("\x1b F\x1b/Ax\x1b("),
+        );
+    }
+
+    #[Test]
     public function emptyInputYieldsNoTokens(): void
     {
         self::assertSame([], self::collect(''));

@@ -214,6 +214,15 @@ final class SpanRendererTest extends TestCase
     }
 
     #[Test]
+    public function aLinkShowsItsTextInTheSurroundingStyle(): void
+    {
+        self::assertEquals(
+            [new Line([new Span('see '), new Span('docs'), new Span(' here')])],
+            SpanRenderer::fromMarkdown('see [docs](https://example.com) here'),
+        );
+    }
+
+    #[Test]
     public function hardBreakBecomesSpace(): void
     {
         $lines = SpanRenderer::fromMarkdown("Hello  \nworld");

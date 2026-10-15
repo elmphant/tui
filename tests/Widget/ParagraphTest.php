@@ -381,6 +381,7 @@ final class ParagraphTest extends TestCase
             trim(implode('', array_slice($frame->characters, 0, 12))),
             'cursor-forward is not a colour, so its bytes are not text to draw',
         );
+        self::assertSame(0, $frame->attributes[0], 'and its 5 is not read as blink');
     }
 
     #[Test]
@@ -398,9 +399,22 @@ final class ParagraphTest extends TestCase
     {
         $frame = new Frame(20, 1);
 
-        Paragraph::fromText("ab\tc")->render($frame, new Rect(0, 0, 20, 1), $this->context());
+        Paragraph::fromText("ab\tc\td")->render($frame, new Rect(0, 0, 20, 1), $this->context());
 
-        self::assertSame('ab      c', rtrim(implode('', array_slice($frame->characters, 0, 20))));
+        self::assertSame('ab      c       d', rtrim(implode('', array_slice($frame->characters, 0, 20))));
+    }
+
+    #[Test]
+    public function fromAnsiCountsTabStopsAcrossStyledRunsAndEndsALineAtCrlf(): void
+    {
+        $frame = new Frame(20, 2);
+
+        Paragraph::fromAnsi("\tx\r\na\x1b[1mb\tc")->render($frame, new Rect(0, 0, 20, 2), $this->context());
+
+        self::assertSame(['        x', 'ab      c'], [
+            rtrim(implode('', array_slice($frame->characters, 0, 20))),
+            rtrim(implode('', array_slice($frame->characters, 20, 20))),
+        ]);
     }
 
     #[Test]
