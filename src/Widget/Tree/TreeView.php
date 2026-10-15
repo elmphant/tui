@@ -337,12 +337,12 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             }
 
             $x = $area->x;
-            $x += $frame->putStyled($x, $y, $visible['guides'], $onCursor ? $rowStyle : $theme->dim);
-            $x += $frame->putStyled($x, $y, $visible['marker'], $onCursor ? $rowStyle : $theme->dim);
+            $x += $frame->putStyled($x, $y, CharWidth::truncateToWidth($visible['guides'], $area->right() - $x), $onCursor ? $rowStyle : $theme->dim);
+            $x += $frame->putStyled($x, $y, CharWidth::truncateToWidth($visible['marker'], max(0, $area->right() - $x)), $onCursor ? $rowStyle : $theme->dim);
 
             $detailX = $area->x + self::DETAIL_COLUMN;
-            $showsDetail = $x <= $detailX;
-            $labelWidth = $showsDetail ? $detailX - $x : max(0, $area->right() - $x);
+            $showsDetail = $x <= $detailX && $detailX < $area->right();
+            $labelWidth = max(0, ($showsDetail ? $detailX : $area->right()) - $x);
             $frame->putStyled($x, $y, CharWidth::truncateToWidth($visible['node']->label(), $labelWidth), $rowStyle);
 
             if ($showsDetail) {

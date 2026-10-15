@@ -24,6 +24,28 @@ use PHPUnit\Framework\TestCase;
 final class TreeViewTest extends TestCase
 {
     #[Test]
+    public function aNarrowTreeDrawsNothingPastItsRightEdge(): void
+    {
+        $deep = new SimpleTreeNode('e', 'leaf-label');
+        foreach (['d', 'c', 'b', 'a'] as $key) {
+            $deep = new SimpleTreeNode($key, "node-{$key}", '', [$deep]);
+        }
+        $root = TreePath::root();
+        $tree = TreeView::new([new SimpleTreeNode('long', 'a-rather-long-label-here', 'detail'), $deep])
+            ->expand($root->child('a'))
+            ->expand($root->child('a')->child('b'))
+            ->expand($root->child('a')->child('b')->child('c'))
+            ->expand($root->child('a')->child('b')->child('c')->child('d'));
+        $frame = new Frame(30, 7);
+
+        $tree->render($frame, new Rect(0, 0, 10, 7), RenderContext::unfocused(Theme::dark()));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        $outside = array_map(static fn (int $row): string => trim($screen->textAt($row, 10, 20)), range(0, 6));
+        self::assertSame(array_fill(0, 7, ''), $outside);
+    }
+
+    #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
         self::assertSame(
