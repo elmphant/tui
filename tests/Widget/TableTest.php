@@ -3742,6 +3742,20 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function aTallerViewportShowsTheRowsAboveTheCursorInsteadOfBlankLines(): void
+    {
+        $table = Table\Table::fromCells(
+            [Column::new('name', Constraint::flex())],
+            array_map(static fn (int $index): array => ["row{$index}"], range(0, 19)),
+        )->withHeader(false);
+
+        $atTheEnd = $table->update(new KeyMsg(Key::End), new Rect(0, 0, 10, 6))->model;
+
+        self::assertInstanceOf(Table\Table::class, $atTheEnd);
+        self::assertStringContainsString('row5', $this->screenOfTable($atTheEnd, new Rect(0, 0, 10, 15)));
+    }
+
+    #[Test]
     public function anOffsetPastTheLastRowStillShowsTheEndOfTheTable(): void
     {
         $table = Table\Table::fromCells(

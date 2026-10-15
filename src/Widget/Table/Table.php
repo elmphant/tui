@@ -768,6 +768,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             ++$offset;
         }
 
-        return $offset;
+        return min($offset, $layout->maxOffset($viewportHeight));
     }
 }
