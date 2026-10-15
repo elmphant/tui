@@ -104,7 +104,8 @@ final readonly class ComponentRegistry
      * The ring the keyboard is walking. A focus scope holding it keeps tab to its
      * own controls; from anywhere else those controls are off the ring altogether,
      * so the way in is the command that says so and tab never walks chrome on its
-     * way between the panes a reader works in.
+     * way between the panes a reader works in. A scope nested in the held one is
+     * off its ring by the same rule.
      *
      * @return list<Component<Interactive>>
      */
@@ -122,7 +123,7 @@ final readonly class ComponentRegistry
         $held = $this->scopeHolding($focused);
 
         if ($held !== null) {
-            return array_values(array_filter(
+            $walkable = array_values(array_filter(
                 $walkable,
                 static fn (Component $component): bool => \in_array($component->id->value, $held, true),
             ));
@@ -130,7 +131,7 @@ final readonly class ComponentRegistry
 
         $beside = array_values(array_filter(
             $walkable,
-            fn (Component $component): bool => !$this->isScoped($component->id->value),
+            fn (Component $component): bool => !$this->isScoped($component->id->value, $held),
         ));
 
         // Taking the chrome off the ring assumes there is content beside it. Where a
@@ -187,10 +188,15 @@ final readonly class ComponentRegistry
         return null;
     }
 
-    private function isScoped(string $id): bool
+    /**
+     * @param list<string>|null $within
+     */
+    private function isScoped(string $id, ?array $within): bool
     {
         foreach ($this->scopes as $scope) {
-            if (\in_array($id, $scope, true)) {
+            $nested = $within === null || ($scope !== $within && array_diff($scope, $within) === []);
+
+            if ($nested && \in_array($id, $scope, true)) {
                 return true;
             }
         }
