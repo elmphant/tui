@@ -53,6 +53,7 @@ use Revolt\EventLoop\UnsupportedFeatureException;
 use SplQueue;
 use Throwable;
 use UnexpectedValueException;
+use WeakReference;
 
 /**
  * @template TModel of Model
@@ -364,6 +365,12 @@ final class Program
 
     private function setup(): void
     {
+        // A fatal error skips the finally in start(), and the processes this program started would outlive it.
+        $program = WeakReference::create($this);
+        register_shutdown_function(static function () use ($program): void {
+            $program->get()?->teardown();
+        });
+
         $this->terminalSession = new TerminalSession($this->terminal, $this->useAltScreen, $this->useMouseTracking);
         $this->terminalSession->start();
         $this->terminal->queryKittyProtocol();
