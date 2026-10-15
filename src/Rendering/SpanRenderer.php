@@ -42,7 +42,7 @@ final class SpanRenderer
         $environment->addExtension(new StrikethroughExtension());
         $parser = new MarkdownParser($environment);
 
-        $document = $parser->parse($markdown);
+        $document = $parser->parse(mb_scrub($markdown, 'UTF-8'));
 
         return self::renderDocument($document);
     }

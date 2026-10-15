@@ -26,6 +26,14 @@ final class SpanRendererTest extends TestCase
     }
 
     #[Test]
+    public function aBrokenByteInTheMarkdownIsReplacedRatherThanThrown(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("ok \xff");
+
+        self::assertSame('ok ?', $lines[0]->spans[0]->content);
+    }
+
+    #[Test]
     public function boldTextProducesSpanWithBoldAttribute(): void
     {
         $lines = SpanRenderer::fromMarkdown('Hello **bold** text');
