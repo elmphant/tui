@@ -322,6 +322,19 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
+    public function pageDownInAnOpenListMovesByThePageThePopupShows(): void
+    {
+        $items = array_map(static fn (int $index): SimpleListItem => new SimpleListItem("item{$index}"), range(0, 29));
+        $opened = self::opened(Dropdown::new(FilterableList::new($items)));
+
+        $paged = $opened->update((new KeyMsg(Key::PageDown))->withScreen(new Rect(0, 0, 30, 14)), self::anchor())->model;
+        $content = $paged->content();
+
+        self::assertInstanceOf(FilterableList::class, $content);
+        self::assertGreaterThan(1, $content->sourceIndex());
+    }
+
+    #[Test]
     public function aPasteIntoAnOpenFilterListFiltersIt(): void
     {
         $opened = self::opened(Dropdown::new(FilterableList::new([new SimpleListItem('alpha'), new SimpleListItem('beta')])));

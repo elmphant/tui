@@ -154,7 +154,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
         }
 
         if ($message instanceof PasteMsg && $this->open) {
-            $answered = $this->content->update($message, $this->popup()->contentArea($area));
+            $answered = $this->content->update($message, $this->popupContentArea($area, null));
 
             return new UpdateResult($this->cloneWith(content: $answered->model), $answered->command);
         }
@@ -222,7 +222,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
      */
     private function keyedWhileOpen(KeyMsg $message, Rect $area): UpdateResult
     {
-        $answered = $this->content->update($message, $this->popup()->contentArea($area));
+        $answered = $this->content->update($message, $this->popupContentArea($area, $message->screen));
         $content = $answered->model;
 
         if ($content instanceof Committing && $content->commits($message)) {
@@ -299,6 +299,18 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
         }
 
         return $this->open ? $this->closed() : $this->opened();
+    }
+
+    /**
+     * Where the content is drawn: the popup's place on the screen, not the
+     * one-row anchor. A paste carries no screen, and the field it lands in
+     * reads only the width.
+     */
+    private function popupContentArea(Rect $anchor, ?Rect $screen): Rect
+    {
+        $popup = $this->popup();
+
+        return $popup->contentArea($screen === null ? $anchor : $popup->placement($anchor, $screen));
     }
 
     private function popup(): PopupFrame
