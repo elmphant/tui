@@ -218,8 +218,15 @@ final class EffectRunner
             // to be registered, or a cancel answering that message would find nothing.
             $this->startingAHandler = true;
             $this->emittedWhileStarting = false;
+            $effect = new class {
+                public bool $stopped = false;
+            };
             try {
-                $stop = $handler->start($command, function (Message $message) use ($wrap): void {
+                $stop = $handler->start($command, function (Message $message) use ($wrap, $effect): void {
+                    // An answer already in flight when the effect was stopped belongs to nobody.
+                    if ($effect->stopped) {
+                        return;
+                    }
                     $this->report($message, $wrap);
                     if ($this->startingAHandler) {
                         $this->emittedWhileStarting = true;
@@ -237,7 +244,10 @@ final class EffectRunner
             }
 
             if ($stop !== null) {
-                $this->handled[] = new HandledEffect($stop, $id);
+                $this->handled[] = new HandledEffect(static function () use ($stop, $effect): void {
+                    $effect->stopped = true;
+                    $stop();
+                }, $id);
             }
             if ($this->emittedWhileStarting) {
                 ($this->wake)();

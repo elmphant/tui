@@ -616,6 +616,22 @@ final class EffectRunnerTest extends TestCase
     }
 
     #[Test]
+    public function aHandlersEffectSaysNothingOnceItWasCancelled(): void
+    {
+        $handler = new SoundHandler();
+        $runner = $this->runnerWith($handler);
+        $chime = EffectId::named('chime');
+        $runner->run(new SoundCmd($chime), null);
+        $runner->run(Cmd::cancel($chime), null);
+        $this->results->dequeue();
+        self::assertNotNull($handler->emit);
+
+        ($handler->emit)(new TickMsg(3.0));
+
+        self::assertCount(0, $this->results);
+    }
+
+    #[Test]
     public function aSecondCommandUnderTheSameNameReplacesTheFirst(): void
     {
         $handler = new SoundHandler();
@@ -848,6 +864,11 @@ final class SoundHandler implements CommandHandler
 
     public int $stopped = 0;
 
+    /**
+     * @var Closure(Message): void|null
+     */
+    public ?Closure $emit = null;
+
     public function handles(Cmd $command): bool
     {
         return $command instanceof SoundCmd;
@@ -856,6 +877,7 @@ final class SoundHandler implements CommandHandler
     public function start(Cmd $command, Closure $emit): ?Closure
     {
         ++$this->started;
+        $this->emit = $emit;
         $emit(new TickMsg(2.0));
 
         return function (): void {
