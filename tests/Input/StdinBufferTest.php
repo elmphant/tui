@@ -284,6 +284,19 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aLeadByteWithoutItsContinuationDoesNotSwallowTheKeysAfterIt(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+        );
+
+        $buffer->process("\xf0\x03ab");
+
+        self::assertSame(["\xf0", "\x03", 'a', 'b'], $sequences);
+    }
+
+    #[Test]
     public function aPasteThatNeverEndsIsDeliveredOnTheTimeoutAndKeysWorkAgain(): void
     {
         $pastes = [];

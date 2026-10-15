@@ -14,6 +14,7 @@ final class StdinBuffer
 {
     private const PASTE_START = "\x1b[200~";
     private const PASTE_END = "\x1b[201~";
+    private const CONTINUATION_BYTES = "\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf";
     public const MAX_PASTE_SIZE = 1048576;
     public const MAX_SEQUENCE_SIZE = 4096;
     public const PASTE_TIMEOUT = 1.0;
@@ -89,6 +90,12 @@ final class StdinBuffer
 
             if ($byte >= 0xC0) {
                 $expectedLength = Grapheme::sequenceLength($byte);
+                $continuation = strspn($this->buffer, self::CONTINUATION_BYTES, 1, $expectedLength - 1);
+                if ($continuation < $expectedLength - 1 && 1 + $continuation < strlen($this->buffer)) {
+                    ($this->onSequence)($this->buffer[0]);
+                    $this->buffer = substr($this->buffer, 1);
+                    continue;
+                }
                 if (strlen($this->buffer) < $expectedLength) {
                     break;
                 }
