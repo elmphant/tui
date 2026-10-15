@@ -143,7 +143,7 @@ final class Frame
         }
 
         $characterWidth = CharWidth::graphemeWidth($character);
-        if ($characterWidth > 1 && ($x + $characterWidth > $this->width || $this->clipRejects($x + 1, $y))) {
+        if ($characterWidth === 0 || ($characterWidth > 1 && ($x + $characterWidth > $this->width || $this->clipRejects($x + 1, $y)))) {
             return;
         }
 

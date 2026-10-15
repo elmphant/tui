@@ -41,6 +41,16 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function aCharacterWithNoWidthPutAloneLeavesTheCellAsItWas(): void
+    {
+        $frame = new Frame(5, 1);
+
+        $frame->putChar(1, 0, "\u{FE0F}");
+
+        self::assertSame([' ', 1], [$frame->characters[1], $frame->widths[1]]);
+    }
+
+    #[Test]
     public function aWindowsLineEndInTextTakesNoCell(): void
     {
         $frame = new Frame(20, 1);
