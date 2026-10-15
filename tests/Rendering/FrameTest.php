@@ -31,6 +31,16 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function aWindowsLineEndInTextTakesNoCell(): void
+    {
+        $frame = new Frame(20, 1);
+
+        $frame->putString(0, 0, "A\r\nB");
+
+        self::assertSame('AB', implode('', array_slice($frame->characters, 0, 2)));
+    }
+
+    #[Test]
     public function constructorInitializesWithSpaces(): void
     {
         $frame = new Frame(10, 5);

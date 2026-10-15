@@ -526,7 +526,8 @@ final class CharWidth
             return 1;
         }
 
-        if (mb_strlen($grapheme) === 1) {
+        // \X keeps CRLF together as one cluster; it is a control, so it takes no column.
+        if (mb_strlen($grapheme) === 1 || ord($grapheme[0]) < 0x20) {
             return self::of($grapheme);
         }
 
