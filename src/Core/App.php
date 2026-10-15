@@ -21,6 +21,7 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\GraftsItsChildren;
@@ -626,6 +627,10 @@ abstract readonly class App implements RoutesFocus
      */
     private function offeredToWhatEncloses(Message $message, Rect $screenRect, Component $focused): UpdateResult
     {
+        if ($focused->widget instanceof CapturesKeys && $focused->widget->capturesKeys()) {
+            return new UpdateResult($this);
+        }
+
         $enclosing = array_values(array_filter(
             $this->enclosing($focused->id),
             static fn (Component $candidate): bool => $candidate->writesBack(),
