@@ -75,7 +75,7 @@ final readonly class Style
         }
 
         return $this->cloneWith(
-            foreground: $this->foreground?->readableOn($panel->background, $minimumRatio),
+            foreground: ($this->foreground ?? $panel->foreground)?->readableOn($panel->background, $minimumRatio),
             background: $panel->background,
         );
     }

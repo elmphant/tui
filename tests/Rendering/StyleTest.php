@@ -15,6 +15,17 @@ use PHPUnit\Framework\TestCase;
 final class StyleTest extends TestCase
 {
     #[Test]
+    public function anInkWithNoColourOfItsOwnTakesThePanelsInk(): void
+    {
+        $panel = new Style(foreground: Color::hex('#282A36'), background: Color::hex('#BD93F9'));
+
+        $bold = (new Style(attributes: Attr::BOLD))->readableOn($panel);
+
+        self::assertEquals(Color::hex('#282A36'), $bold->foreground);
+        self::assertSame(Attr::BOLD, $bold->attributes);
+    }
+
+    #[Test]
     public function defaultsToUnset(): void
     {
         $style = new Style();
