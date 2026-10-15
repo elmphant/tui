@@ -54,6 +54,17 @@ final class CharWidthPerfTest extends TestCase
     }
 
     #[Test]
+    public function wrappingAWordWithoutSpacesCostsInProportionToItsLength(): void
+    {
+        self::skipUnderXdebug();
+
+        $short = self::medianMicroseconds(static fn (): array => CharWidth::wrapToWidth(str_repeat('é', 500), 1), 20);
+        $long = self::medianMicroseconds(static fn (): array => CharWidth::wrapToWidth(str_repeat('é', 2000), 1), 20);
+
+        self::assertLessThan(8.0, $long / $short, 'four times the word must cost about four times as much, not sixteen');
+    }
+
+    #[Test]
     public function measuringClusterDenseTextCostsLittlePerCluster(): void
     {
         self::skipUnderXdebug();

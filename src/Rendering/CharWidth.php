@@ -391,23 +391,38 @@ final class CharWidth
                 $currentWidth = 0;
             }
 
-            while ($wordWidth > $maxWidth) {
-                $head = self::truncateToWidth($word, $maxWidth);
+            if ($wordWidth > $maxWidth) {
+                $head = '';
+                $headWidth = 0;
 
-                // A grapheme wider than the whole column fits nowhere. Drawing it
-                // anyway paints over the neighbour, so it is marked as cut and the
-                // loop advances past it on the marker's width.
-                if ($head === '') {
-                    $word = substr($word, strlen(Grapheme::first($word)));
-                    $lines[] = self::ELLIPSIS;
-                    $wordWidth = self::stringWidth($word);
+                foreach (Grapheme::split($word) as $grapheme) {
+                    $width = self::graphemeWidth($grapheme);
 
-                    continue;
+                    // A grapheme wider than the whole column fits nowhere. Drawing it
+                    // anyway paints over the neighbour, so it is marked as cut.
+                    if ($width > $maxWidth) {
+                        if ($head !== '') {
+                            $lines[] = $head;
+                        }
+                        $lines[] = self::ELLIPSIS;
+                        $head = '';
+                        $headWidth = 0;
+
+                        continue;
+                    }
+
+                    if ($headWidth + $width > $maxWidth) {
+                        $lines[] = $head;
+                        $head = '';
+                        $headWidth = 0;
+                    }
+
+                    $head .= $grapheme;
+                    $headWidth += $width;
                 }
 
-                $lines[] = $head;
-                $word = substr($word, strlen($head));
-                $wordWidth = self::stringWidth($word);
+                $word = $head;
+                $wordWidth = $headWidth;
             }
 
             $current = $word;
