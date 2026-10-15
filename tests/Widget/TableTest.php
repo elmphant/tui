@@ -3701,6 +3701,27 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function movingTheCursorAfterScrollingIntoATallRowShowsTheRowItMovedTo(): void
+    {
+        $long = implode(' ', array_map(static fn (int $index): string => "word{$index}", range(1, 40)));
+        $table = Table\Table::fromCells(
+            [Column::new('text', Constraint::flex())],
+            [[$long], ['second'], ['third'], ['fourth']],
+        )->withHeader(false);
+        $area = new Rect(0, 0, 12, 4);
+        $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
+
+        $scrolled = $table->update($wheelDown, $area)->model->update($wheelDown, $area)->model->update($wheelDown, $area)->model;
+        $moved = $scrolled->update(new KeyMsg(Key::Down), $area)->model;
+
+        self::assertInstanceOf(Table\Table::class, $moved);
+        self::assertSame(1, $moved->cursor());
+        self::assertStringContainsString('second', $this->screenOfTable($moved, $area));
+        self::assertStringContainsString('second', $this->screenOfTable($scrolled->withCursor(1), $area), 'a cursor moved from outside lands on screen too');
+        self::assertStringContainsString('second', $this->screenOfTable($scrolled->withScrollOffset(1), $area), 'and so does an explicit scroll to that row');
+    }
+
+    #[Test]
     public function anOffsetPastTheLastRowStillShowsTheEndOfTheTable(): void
     {
         $table = Table\Table::fromCells(

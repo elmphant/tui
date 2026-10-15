@@ -169,7 +169,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withScrollOffset(int $scrollOffset): self
     {
-        return $this->cloneWith(scrollOffset: $scrollOffset, followCursor: false);
+        return $this->cloneWith(scrollOffset: $scrollOffset, lineOffset: 0, followCursor: false);
     }
 
     public function cursor(): int
@@ -674,7 +674,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
     private function ensureCursorVisible(Rect $area): self
     {
-        return $this->cloneWith(scrollOffset: $this->cursorVisibleOffset($area));
+        return $this->cloneWith(scrollOffset: $this->cursorVisibleOffset($area), lineOffset: 0);
     }
 
     /**
