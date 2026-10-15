@@ -228,14 +228,16 @@ final readonly class ComponentRegistry
     private static function scopesIn(Widget $widget): array
     {
         $scopes = [];
+        // A bound scope publishes its stops through the component, so the component is the scope.
+        $self = $widget instanceof Component && $widget->widget instanceof FocusScope ? $widget->widget : $widget;
 
-        if ($widget instanceof WidgetContainer) {
-            foreach ($widget->children() as $child) {
+        if ($self instanceof WidgetContainer) {
+            foreach ($self->children() as $child) {
                 array_push($scopes, ...self::scopesIn($child));
             }
         }
 
-        if ($widget instanceof FocusScope) {
+        if ($self instanceof FocusScope) {
             $scopes[] = array_map(
                 static fn (Component $component): string => $component->id->value,
                 self::collect($widget),
