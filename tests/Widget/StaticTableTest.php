@@ -165,6 +165,19 @@ final class StaticTableTest extends TestCase
     }
 
     #[Test]
+    public function aCellWithALineBreakIsMeasuredByItsLines(): void
+    {
+        $table = StaticTable::new(['Name', 'Note'], [['one', "line one\nline two"], ['two', 'short']]);
+        $drawn = array_values(array_filter(
+            explode("\n", $this->render($table, 40, 12)),
+            static fn (string $line): bool => trim($line) !== '',
+        ));
+
+        self::assertSame(count($drawn), $table->measureHeight(40));
+        self::assertSame(19, $table->drawnWidth(40), 'the note column is as wide as its widest line');
+    }
+
+    #[Test]
     public function measuresTheHeightItWouldDraw(): void
     {
         $table = $this->table();

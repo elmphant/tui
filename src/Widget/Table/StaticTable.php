@@ -158,8 +158,9 @@ final readonly class StaticTable implements Widget, MeasureHeight
         }
 
         $rules = $this->headers === [] ? 2 : 3;
+        $rowLines = $this->memo->rowLines ??= array_sum(array_map(self::linesOfRow(...), $this->rows));
 
-        return $rules + ($this->headers === [] ? 0 : 1) + count($this->rows);
+        return $rules + ($this->headers === [] ? 0 : self::linesOfRow($this->headers)) + $rowLines;
     }
 
     /**
@@ -436,7 +437,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
 
         foreach ($this->measured ?? $this->rows as $row) {
             foreach ($row as $column => $cell) {
-                $width = CharWidth::stringWidth($cell);
+                $width = self::widestLineOf($cell);
 
                 if ($width > ($widest[$column] ?? 0)) {
                     $widest[$column] = $width;
@@ -447,10 +448,23 @@ final readonly class StaticTable implements Widget, MeasureHeight
         $demands = [];
 
         foreach ($this->headers as $column => $header) {
-            $demands[] = max(CharWidth::stringWidth($header), $widest[$column] ?? 0);
+            $demands[] = max(self::widestLineOf($header), $widest[$column] ?? 0);
         }
 
         return $demands;
+    }
+
+    private static function widestLineOf(string $cell): int
+    {
+        return max(array_map(CharWidth::stringWidth(...), explode("\n", $cell)));
+    }
+
+    /**
+     * @param list<string> $cells
+     */
+    private static function linesOfRow(array $cells): int
+    {
+        return max([1, ...array_map(static fn (string $cell): int => substr_count($cell, "\n") + 1, $cells)]);
     }
 
     /**
