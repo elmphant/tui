@@ -286,6 +286,31 @@ final class RunningStreamingProcessTest extends TestCase
     }
 
     #[Test]
+    public function aFloodIsHandedOnOneBatchAtATimeSoAKeyNeverWaitsBehindAllOfIt(): void
+    {
+        $process = new Process([PHP_BINARY, '-r', 'for ($line = 0; $line < 300; ++$line) { echo str_pad((string)$line, 1023, "-"), "\n"; } sleep(5);']);
+        $process->start();
+        $running = new RunningStreamingProcess($process, null, 1024);
+        usleep(300_000);
+
+        $expected = implode('', array_map(static fn (int $line): string => str_pad((string)$line, 1023, '-') . "\n", range(0, 299)));
+        $textOf = static fn (array $messages): string => implode('', array_map(
+            static fn (Message $message): string => $message instanceof ProcessOutputMsg ? $message->output : '',
+            $messages,
+        ));
+        $first = $running->pump();
+        $received = $textOf($first);
+        $deadline = microtime(true) + 2.0;
+        while (\strlen($received) < \strlen($expected) && microtime(true) < $deadline) {
+            $received .= $textOf($running->pump());
+        }
+        $running->stop();
+
+        self::assertLessThanOrEqual(64, count($first));
+        self::assertSame($expected, $received, 'what a batch held back still arrives, in order');
+    }
+
+    #[Test]
     public function aChildOutlivingItsTimeoutIsStoppedWithATimeoutError(): void
     {
         $process = new Process(['sleep', '5']);

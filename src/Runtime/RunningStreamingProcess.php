@@ -19,6 +19,17 @@ final class RunningStreamingProcess implements RunningProcess
 {
     use ChildProcessLifecycle;
 
+    /**
+     * Symfony reads a pipe for as long as full chunks keep coming, so one read of a flooding child can be megabytes:
+     * a key typed meanwhile would queue behind all of it.
+     */
+    private const MESSAGES_PER_TURN = 64;
+
+    /**
+     * @var list<Message>
+     */
+    private array $heldBack = [];
+
     public function __construct(
         private readonly Process $process,
         private readonly ?EffectId $effectId,
@@ -35,12 +46,15 @@ final class RunningStreamingProcess implements RunningProcess
         if ($this->finished) {
             return [];
         }
+        if ($this->heldBack !== []) {
+            return $this->nextBatch([]);
+        }
 
         $this->process->checkTimeout();
         $messages = $this->drainOutput();
 
         if ($this->process->isRunning()) {
-            return $messages;
+            return $this->nextBatch($messages);
         }
 
         $this->finished = true;
@@ -56,6 +70,19 @@ final class RunningStreamingProcess implements RunningProcess
         ));
 
         return $messages;
+    }
+
+    /**
+     * @param list<Message> $messages
+     *
+     * @return list<Message>
+     */
+    private function nextBatch(array $messages): array
+    {
+        $waiting = [...$this->heldBack, ...$messages];
+        $this->heldBack = array_slice($waiting, self::MESSAGES_PER_TURN);
+
+        return array_slice($waiting, 0, self::MESSAGES_PER_TURN);
     }
 
     /**

@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Runtime;
+
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Model;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Testing\VirtualTerminal;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
+
+final class ProgramOutputFloodTest extends TestCase
+{
+    #[Test]
+    public function aKeyTypedWhileAProcessFloodsItsOutputStillArrivesPromptly(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $typedAt = null;
+        $typist = EventLoop::delay(2.0, static function () use ($terminal, &$typedAt): void {
+            $typedAt = hrtime(true);
+            $terminal->simulateInput('q');
+        });
+
+        Program::new(new FloodedModel())->withTerminal($terminal)->start();
+        EventLoop::cancel($typist);
+
+        self::assertNotNull($typedAt);
+        self::assertNotNull(FloodedModel::$quitAt, 'the watchdog ended the run, not the key');
+        self::assertLessThan(0.5, (FloodedModel::$quitAt - $typedAt) / 1e9);
+    }
+}
+
+final class FloodedModel implements Model
+{
+    public static ?int $quitAt = null;
+
+    public function init(): ?Cmd
+    {
+        self::$quitAt = null;
+
+        return Cmd::batch(
+            Cmd::process([PHP_BINARY, '-r', '$line = str_repeat("y", 79) . "\n"; while (true) echo $line;'])->withOutputChunkBytes(1024),
+            Cmd::after(8, static fn () => Cmd::quit()),
+        );
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        usleep(500);
+
+        if ($message instanceof KeyMsg && $message->key === 'q') {
+            self::$quitAt = hrtime(true);
+
+            return new UpdateResult($this, Cmd::quit());
+        }
+
+        return new UpdateResult($this);
+    }
+
+    public function render(Frame $frame, RenderContext $context): void
+    {
+    }
+}

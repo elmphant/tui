@@ -679,7 +679,10 @@ final class Program
 
         $now = $this->clock->now();
         $this->effects?->fire($now);
-        $this->effects?->pump();
+        // Leaving a flooding child's output in its pipe blocks the child, and keeps keys from queueing behind it.
+        if ($this->messageQueue->isEmpty()) {
+            $this->effects?->pump();
+        }
         $this->flushWheelWhenDue($now);
 
         $this->drainMessageQueue();
