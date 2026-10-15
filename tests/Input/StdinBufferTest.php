@@ -211,7 +211,7 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
-    public function utf8IncompleteOnFlushEmitsRawBytes(): void
+    public function anUnfinishedCharacterOutlastsATimeoutAndJoinsItsRest(): void
     {
         $sequences = [];
         $buffer = new StdinBuffer(
@@ -219,10 +219,11 @@ final class StdinBufferTest extends TestCase
         );
 
         $buffer->process("\xC3");
-        $this->assertSame([], $sequences);
-
         $buffer->flush();
-        $this->assertSame(['c3'], $sequences);
+        $buffer->process("\xA9");
+
+        $this->assertSame(['c3a9'], $sequences);
+        $this->assertNull($buffer->flushDelay());
     }
 
     #[Test]
@@ -441,9 +442,6 @@ final class StdinBufferTest extends TestCase
 
         $buffer->process(chr(0xC2));
         $this->assertSame([], $sequences, '0xC2 should buffer as UTF-8 lead, not meta-convert');
-
-        $buffer->flush();
-        $this->assertSame(['c2'], $sequences);
     }
 
     #[Test]
@@ -456,9 +454,6 @@ final class StdinBufferTest extends TestCase
 
         $buffer->process(chr(0xF4));
         $this->assertSame([], $sequences, '0xF4 should buffer as UTF-8 lead, not meta-convert');
-
-        $buffer->flush();
-        $this->assertSame(['f4'], $sequences);
     }
 
     #[Test]

@@ -103,14 +103,7 @@ final class StdinBuffer
 
     public function flush(): void
     {
-        while (!$this->inPaste && $this->buffer !== '') {
-            if ($this->buffer[0] !== "\x1b") {
-                ($this->onSequence)($this->buffer);
-                $this->buffer = '';
-
-                return;
-            }
-
+        while (!$this->inPaste && $this->buffer !== '' && $this->buffer[0] === "\x1b") {
             $second = ord($this->buffer[1] ?? "\x1b");
             $held = $second === 0x1B || $second >= 0x80 ? "\x1b" : substr($this->buffer, 0, 2);
             $rest = substr($this->buffer, strlen($held));
@@ -121,13 +114,15 @@ final class StdinBuffer
     }
 
     /**
-     * Over ssh the rest of an arrow key can arrive well after its ESC.
+     * Over ssh the rest of an arrow key can arrive well after its ESC. A buffer
+     * that does not start with ESC holds part of a character, which only more of
+     * that character can follow, so it waits without a timeout.
      */
     public function flushDelay(): ?float
     {
-        return match ($this->buffer) {
-            '' => null,
-            "\x1b" => $this->remote ? 0.1 : 0.01,
+        return match (true) {
+            $this->buffer === '' || $this->buffer[0] !== "\x1b" => null,
+            $this->buffer === "\x1b" => $this->remote ? 0.1 : 0.01,
             default => 0.05,
         };
     }
