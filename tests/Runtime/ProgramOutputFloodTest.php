@@ -24,28 +24,31 @@ final class ProgramOutputFloodTest extends TestCase
     public function aKeyTypedWhileAProcessFloodsItsOutputStillArrivesPromptly(): void
     {
         $terminal = new VirtualTerminal(80, 24);
-        $typedAt = null;
-        $typist = EventLoop::delay(2.0, static function () use ($terminal, &$typedAt): void {
-            $typedAt = hrtime(true);
+        $handledWhenTyped = null;
+        $typist = EventLoop::delay(2.0, static function () use ($terminal, &$handledWhenTyped): void {
+            $handledWhenTyped = FloodedModel::$handled;
             $terminal->simulateInput('q');
         });
 
         Program::new(new FloodedModel())->withTerminal($terminal)->start();
         EventLoop::cancel($typist);
 
-        self::assertNotNull($typedAt);
-        self::assertNotNull(FloodedModel::$quitAt, 'the watchdog ended the run, not the key');
-        self::assertLessThan(0.5, (FloodedModel::$quitAt - $typedAt) / 1e9);
+        self::assertNotNull($handledWhenTyped);
+        self::assertNotNull(FloodedModel::$handledBeforeTheKey, 'the watchdog ended the run, not the key');
+        // The key waits behind one batch of output at most, 64 messages. A queue that starves input handled thousands first.
+        self::assertLessThan(1_024, FloodedModel::$handledBeforeTheKey - $handledWhenTyped);
     }
 }
 
 final class FloodedModel implements Model
 {
-    public static ?int $quitAt = null;
+    public static int $handled = 0;
+    public static ?int $handledBeforeTheKey = null;
 
     public function init(): ?Cmd
     {
-        self::$quitAt = null;
+        self::$handled = 0;
+        self::$handledBeforeTheKey = null;
 
         return Cmd::batch(
             Cmd::process([PHP_BINARY, '-r', '$line = str_repeat("y", 79) . "\n"; while (true) echo $line;'])->withOutputChunkBytes(1024),
@@ -58,10 +61,12 @@ final class FloodedModel implements Model
         usleep(500);
 
         if ($message instanceof KeyMsg && $message->key === 'q') {
-            self::$quitAt = hrtime(true);
+            self::$handledBeforeTheKey = self::$handled;
 
             return new UpdateResult($this, Cmd::quit());
         }
+
+        ++self::$handled;
 
         return new UpdateResult($this);
     }
