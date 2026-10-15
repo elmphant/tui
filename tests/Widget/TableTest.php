@@ -3722,6 +3722,26 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function theWheelStopsAtTheEndOfALastRowTallerThanTheViewport(): void
+    {
+        $long = implode(' ', array_map(static fn (int $index): string => "word{$index}", range(1, 40)));
+        $table = Table\Table::fromCells(
+            [Column::new('text', Constraint::flex())],
+            [['first'], ['second'], [$long]],
+        )->withHeader(false);
+        $area = new Rect(0, 0, 12, 4);
+        $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
+
+        for ($notch = 0; $notch < 60; ++$notch) {
+            $table = $table->update($wheelDown, $area)->model;
+        }
+
+        self::assertInstanceOf(Table\Table::class, $table);
+        self::assertSame(2, $table->scrollOffset());
+        self::assertStringContainsString('word40', $this->screenOfTable($table, $area));
+    }
+
+    #[Test]
     public function anOffsetPastTheLastRowStillShowsTheEndOfTheTable(): void
     {
         $table = Table\Table::fromCells(

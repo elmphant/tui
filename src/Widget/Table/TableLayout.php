@@ -157,7 +157,7 @@ final readonly class TableLayout
             --$offset;
         }
 
-        return $offset;
+        return min($offset, max(0, count($this->heights) - 1));
     }
 
     private static function textOf(Row $row, int $columnIndex): string
