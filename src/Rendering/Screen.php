@@ -222,7 +222,7 @@ final class Screen
 
                 $parts[] = $this->styleDelta($foreground, $background, $attributes);
 
-                $runCharacters = [$backCharacters[$index]];
+                $runCharacters = [self::cellText($backCharacters[$index], $backWidths[$index], $row, $column)];
                 $nextColumn = $column + max(1, $backWidths[$index]);
 
                 while ($nextColumn < $width) {
@@ -247,7 +247,7 @@ final class Screen
                         continue;
                     }
 
-                    $runCharacters[] = $nextCharacter;
+                    $runCharacters[] = self::cellText($nextCharacter, $backWidths[$nextIndex], $row, $nextColumn);
                     $nextColumn += max(1, $backWidths[$nextIndex]);
                 }
 
@@ -313,8 +313,8 @@ final class Screen
      */
     private function collectStyledRun(Frame $frame, int $rowOffset, int $startColumn, int $width, int $foreground, int $background, int $attributes): array
     {
-        $character = $frame->characters[$rowOffset + $startColumn];
-        $parts = [$character];
+        $row = intdiv($rowOffset, $width);
+        $parts = [self::cellText($frame->characters[$rowOffset + $startColumn], $frame->widths[$rowOffset + $startColumn], $row, $startColumn)];
         $nextColumn = $startColumn + max(1, $frame->widths[$rowOffset + $startColumn]);
 
         while ($nextColumn < $width) {
@@ -330,11 +330,24 @@ final class Screen
                 break;
             }
 
-            $parts[] = $nextCharacter;
+            $parts[] = self::cellText($nextCharacter, $frame->widths[$nextIndex], $row, $nextColumn);
             $nextColumn += max(1, $frame->widths[$nextIndex]);
         }
 
         return [implode('', $parts), $nextColumn];
+    }
+
+    /**
+     * A terminal draws a base character narrow and widens it only when U+FE0F
+     * arrives; tmux drops the emoji when the cell it widens into still holds part
+     * of an old wide character. Two spaces first clear both cells.
+     */
+    private static function cellText(string $character, int $width, int $row, int $column): string
+    {
+        // Back by absolute position: after a space in the last column the cursor waits to wrap, and a relative move would land one short.
+        return $width === 2 && str_contains($character, "\u{FE0F}")
+            ? '  ' . Ansi::cursorTo($row, $column) . $character
+            : $character;
     }
 
     private function cellHasStyle(Frame $frame, int $index, int $foreground, int $background, int $attributes): bool

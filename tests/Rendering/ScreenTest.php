@@ -21,6 +21,35 @@ use RuntimeException;
 final class ScreenTest extends TestCase
 {
     #[Test]
+    public function aWideEmojiThatWidensOnItsSelectorClearsItsTwoCellsFirst(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+        $frame = new Frame(10, 1);
+        $frame->putString(0, 0, "a❤\u{FE0F}c");
+
+        $screen->flush($frame);
+
+        self::assertStringContainsString("a  \x1b[1;2H❤\u{FE0F}c", $capturedOutput);
+    }
+
+    #[Test]
+    public function aWideEmojiDrawnOverAnOldWideCharacterClearsItsTwoCellsFirst(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+        $frame = new Frame(10, 1);
+        $frame->putString(0, 0, 'a漢漢');
+        $screen->flush($frame);
+        $capturedOutput = '';
+
+        $frame->putString(1, 0, "❤\u{FE0F}c");
+        $screen->flush($frame);
+
+        self::assertStringContainsString("  \x1b[1;2H❤\u{FE0F}c", $capturedOutput);
+    }
+
+    #[Test]
     public function aWideCharacterIsEmittedOnceNotTwice(): void
     {
         $capturedOutput = '';
