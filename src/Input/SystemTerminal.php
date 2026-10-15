@@ -338,7 +338,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
                 }
                 $this->writeWaitSeconds += (hrtime(true) - $waitStart) / 1e9;
                 if ($ready === false || $ready <= 0) {
-                    throw new TerminalWriteException($offset, $total);
+                    throw new TerminalWriteException($offset, $total, stalled: $ready === 0);
                 }
                 continue;
             }

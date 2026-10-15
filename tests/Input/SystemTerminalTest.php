@@ -263,6 +263,25 @@ final class SystemTerminalTest extends TestCase
     }
 
     #[Test]
+    public function aReaderThatStopsReadingStallsTheWriteRatherThanBreakingIt(): void
+    {
+        $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        self::assertIsArray($pair);
+        stream_set_blocking($pair[0], false);
+        $terminal = new SystemTerminal($this->stdin, $pair[0]);
+
+        try {
+            $terminal->write(str_repeat('x', 16 * 1024 * 1024));
+            self::fail('A reader that never reads must stall the write');
+        } catch (TerminalWriteException $error) {
+            self::assertTrue($error->stalled);
+        } finally {
+            fclose($pair[0]);
+            fclose($pair[1]);
+        }
+    }
+
+    #[Test]
     public function writeRetriesAfterAWritableStreamTemporarilyReturnsZero(): void
     {
         PartialWriteStream::register();

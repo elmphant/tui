@@ -28,6 +28,7 @@ use Elmphant\Tui\Input\ReportsOutputStats;
 use Elmphant\Tui\Input\StdinBuffer;
 use Elmphant\Tui\Input\SystemTerminal;
 use Elmphant\Tui\Input\Terminal;
+use Elmphant\Tui\Input\TerminalWriteException;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
@@ -953,7 +954,9 @@ final class Program
             $this->screen->flush($frame);
         } catch (Throwable $error) {
             $this->animationRepaintAt = null;
-            ++$this->consecutiveRenderFailures;
+            // A slow ssh link or a laptop waking up stalls output for seconds; that frame is dropped, not fatal.
+            $stalled = $error instanceof TerminalWriteException && $error->stalled;
+            $this->consecutiveRenderFailures = $stalled ? 0 : $this->consecutiveRenderFailures + 1;
             if ($this->consecutiveRenderFailures >= self::MAX_CONSECUTIVE_ERRORS) {
                 $this->giveUp($error);
             }

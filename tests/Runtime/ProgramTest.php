@@ -2944,6 +2944,54 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
+    public function aTerminalThatStallsForManyFramesDoesNotEndTheProgram(): void
+    {
+        $stalledOutput = new class implements TerminalOutput {
+            public function write(string $data): void
+            {
+                throw new TerminalWriteException(0, strlen($data), stalled: true);
+            }
+
+            public function flush(): void
+            {
+            }
+        };
+        $model = new class implements Model {
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+                $frame->putString(0, 0, 'CONTENT');
+            }
+        };
+
+        $program = $this->createRenderablePrgram($model);
+        $reflection = new ReflectionClass($program);
+        $reflection->getProperty('screen')->setValue($program, new Screen($stalledOutput));
+        $clock = new TestClock(1.0);
+        $reflection->getProperty('clock')->setValue($program, $clock);
+        $ticker = new AdaptiveTicker(fn () => null);
+        $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
+        $runTick = $reflection->getMethod('runTick');
+
+        for ($tick = 0; $tick < 20; ++$tick) {
+            $clock->advance(1.0);
+            $runTick->invoke($program);
+        }
+        $ticker->stop();
+
+        self::assertTrue($reflection->getProperty('running')->getValue($program));
+    }
+
+    #[Test]
     public function resolveThemeReturnsLightForLightColorScheme(): void
     {
         $lightTerminal = new class implements Terminal {

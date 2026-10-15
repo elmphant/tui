@@ -6,7 +6,10 @@ namespace Elmphant\Tui\Input;
 
 final class TerminalWriteException extends TerminalException
 {
-    public function __construct(public readonly int $bytesWritten, int $totalBytes)
+    /**
+     * @param bool $stalled the terminal stopped reading for a while, rather than going away
+     */
+    public function __construct(public readonly int $bytesWritten, int $totalBytes, public readonly bool $stalled = false)
     {
         parent::__construct(sprintf(
             'Terminal output stopped after %d of %d bytes',
