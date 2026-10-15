@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -154,7 +155,8 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     public function dismisses(Message $message, Rect $area): bool
     {
         if ($message instanceof KeyMsg) {
-            return $this->effectiveKeybindings()->matches($message, Actions::CANCEL);
+            return $this->effectiveKeybindings()->matches($message, Actions::CANCEL)
+                && !($this->content instanceof CapturesKeys && $this->content->capturesKeys());
         }
 
         return $message instanceof MouseMsg
