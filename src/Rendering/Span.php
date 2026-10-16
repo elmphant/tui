@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Rendering;
 
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Text\CharWidth;
 
 final readonly class Span
 {

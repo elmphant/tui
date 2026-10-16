@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Testing;
 
-use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\CursorPosition;
 use Elmphant\Tui\Rendering\CursorShape;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\Grapheme;
+use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\Grapheme;
 
 final class ScreenBuffer
 {

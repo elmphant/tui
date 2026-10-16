@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Rendering;
+namespace Elmphant\Tui\Tests\Text;
 
-use Elmphant\Tui\Rendering\CharWidth;
-use Elmphant\Tui\Rendering\Grapheme;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
+use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\Grapheme;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

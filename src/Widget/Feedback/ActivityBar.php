@@ -9,10 +9,10 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
-use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Interactive;
 
 final readonly class ActivityBar implements Interactive

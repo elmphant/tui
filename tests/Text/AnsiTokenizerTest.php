@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Rendering;
+namespace Elmphant\Tui\Tests\Text;
 
-use Elmphant\Tui\Rendering\AnsiToken;
-use Elmphant\Tui\Rendering\AnsiTokenizer;
-use Elmphant\Tui\Rendering\AnsiTokenType;
+use Elmphant\Tui\Text\AnsiToken;
+use Elmphant\Tui\Text\AnsiTokenizer;
+use Elmphant\Tui\Text\AnsiTokenType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

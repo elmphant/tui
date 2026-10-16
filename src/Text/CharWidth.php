@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Rendering;
+namespace Elmphant\Tui\Text;
 
 /**
  * The range tables are derived from the Unicode Character Database, used under the Unicode License v3 (see LICENSE).

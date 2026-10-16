@@ -11,7 +11,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Rendering\Grapheme;
+use Elmphant\Tui\Text\Grapheme;
 
 /**
  * @internal terminal-protocol parser consumed by Program

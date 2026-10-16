@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Input;
 
 use Elmphant\Tui\Rendering\Ansi;
-use Elmphant\Tui\Rendering\TerminalText;
+use Elmphant\Tui\Text\TerminalText;
 use Throwable;
 use ValueError;
 

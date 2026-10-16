@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Rendering;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Text\AnsiTokenizer;
+use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\Grapheme;
+use Elmphant\Tui\Text\TerminalText;
 
 final class Frame
 {

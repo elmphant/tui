@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Listing;
 
-use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Text\CharWidth;
 
 /**
  * How a list item occupies rows at a given width.

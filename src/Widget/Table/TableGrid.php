@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Table;
 
 use Elmphant\Tui\Rendering\BorderGlyphs;
-use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Text\CharWidth;
 
 /**
  * @internal draws the bordered grid StaticTable is made of

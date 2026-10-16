@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Rendering;
+namespace Elmphant\Tui\Tests\Text;
 
-use Elmphant\Tui\Rendering\WrapCache;
+use Elmphant\Tui\Text\WrapCache;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

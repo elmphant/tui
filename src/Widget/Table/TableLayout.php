@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Table;
 
 use Elmphant\Tui\Layout\RowExtents;
-use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Span;
+use Elmphant\Tui\Text\CharWidth;
 
 /**
  * Row heights and wrapped cell lines, shared by rendering, hit-testing and

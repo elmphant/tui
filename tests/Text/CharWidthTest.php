@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Rendering;
+namespace Elmphant\Tui\Tests\Text;
 
-use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Text\CharWidth;
 use IntlChar;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

@@ -7,12 +7,12 @@ namespace Elmphant\Tui\Widget\Bar;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
-use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Widget;
 
 final readonly class StatusBar implements Widget

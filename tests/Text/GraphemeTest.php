@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Rendering;
+namespace Elmphant\Tui\Tests\Text;
 
-use Elmphant\Tui\Rendering\Grapheme;
+use Elmphant\Tui\Text\Grapheme;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

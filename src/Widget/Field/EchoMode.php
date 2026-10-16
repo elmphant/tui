@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Field;
 
-use Elmphant\Tui\Rendering\Grapheme;
+use Elmphant\Tui\Text\Grapheme;
 
 enum EchoMode
 {

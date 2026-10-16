@@ -8,7 +8,7 @@ use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Input\ColorScheme;
 use Elmphant\Tui\Input\Terminal;
 use Elmphant\Tui\Rendering\Ansi;
-use Elmphant\Tui\Rendering\TerminalText;
+use Elmphant\Tui\Text\TerminalText;
 use RuntimeException;
 
 final class VirtualTerminal implements Terminal

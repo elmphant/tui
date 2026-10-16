@@ -8,6 +8,7 @@ use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Text\CharWidth;
 
 final readonly class Block
 {

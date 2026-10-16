@@ -12,12 +12,12 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Attr;
-use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Interactive;
 
 final readonly class ProgressBar implements Interactive

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Testing;
 
-use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Text\CharWidth;
 
 trait TerminalAssertions
 {

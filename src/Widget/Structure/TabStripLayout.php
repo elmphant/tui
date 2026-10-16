@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Structure;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Rendering\CharWidth;
+use Elmphant\Tui\Text\CharWidth;
 
 final readonly class TabStripLayout
 {

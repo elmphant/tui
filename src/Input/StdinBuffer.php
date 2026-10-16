@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Input;
 
 use Closure;
-use Elmphant\Tui\Rendering\Grapheme;
+use Elmphant\Tui\Text\Grapheme;
 
 /**
  * @internal stateful terminal-input framer consumed by Program
