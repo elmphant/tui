@@ -285,17 +285,7 @@ final class EffectRunner
      */
     private function makeRoomFor(Cmd $command, ?Closure $wrap): void
     {
-        $id = match (true) {
-            $command instanceof CancelCmd => null,
-            $command instanceof TickCmd,
-            $command instanceof AfterCmd,
-            $command instanceof HttpCmd,
-            $command instanceof ExecCmd,
-            $command instanceof ListenCmd,
-            $command instanceof ProcessCmd => $command->id,
-            default => $command instanceof NamesItsEffect ? $command->effectId() : null,
-        };
-
+        $id = $command instanceof NamesItsEffect ? $command->effectId() : null;
         if ($id !== null) {
             $this->cancel($id, $wrap);
         }

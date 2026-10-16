@@ -7,9 +7,10 @@ namespace Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\NamesItsEffect;
 use InvalidArgumentException;
 
-final readonly class HttpCmd extends Cmd
+final readonly class HttpCmd extends Cmd implements NamesItsEffect
 {
     use Cloneable;
 
@@ -29,6 +30,11 @@ final readonly class HttpCmd extends Cmd
         if ($maxBodyBytes < 1) {
             throw new InvalidArgumentException('HttpCmd maxBodyBytes must be positive');
         }
+    }
+
+    public function effectId(): ?EffectId
+    {
+        return $this->id;
     }
 
     public function withUrl(string $url): self

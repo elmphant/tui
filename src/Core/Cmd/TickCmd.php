@@ -6,12 +6,13 @@ namespace Elmphant\Tui\Core\Cmd;
 
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\NamesItsEffect;
 use InvalidArgumentException;
 
 /**
  * @internal
  */
-final readonly class TickCmd extends Cmd
+final readonly class TickCmd extends Cmd implements NamesItsEffect
 {
     public function __construct(
         public float $interval,
@@ -23,5 +24,10 @@ final readonly class TickCmd extends Cmd
         if (!is_finite($interval) || $interval <= 0) {
             throw new InvalidArgumentException("Ticker interval must be a positive number of seconds, got {$interval}");
         }
+    }
+
+    public function effectId(): ?EffectId
+    {
+        return $this->id;
     }
 }

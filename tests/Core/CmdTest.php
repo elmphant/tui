@@ -15,6 +15,7 @@ use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Model;
+use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use InvalidArgumentException;
@@ -29,6 +30,27 @@ final class CmdTest extends TestCase
         $command = Cmd::quit();
         self::assertInstanceOf(Cmd::class, $command);
         self::assertInstanceOf(QuitCmd::class, $command);
+    }
+
+    #[Test]
+    public function everyBuiltInEffectAnswersToTheNameItWasStartedUnder(): void
+    {
+        $id = EffectId::named('work');
+        [$readEnd, $writeEnd] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        $commands = [
+            Cmd::tick(1.0, $id),
+            Cmd::after(1.0, static fn (): ?Cmd => null, $id),
+            Cmd::listen($readEnd, static fn (): ?Cmd => null, $id),
+            Cmd::exec(['true'], $id),
+            Cmd::process(['true'], $id),
+            Cmd::http('https://example.test/', id: $id),
+        ];
+
+        foreach ($commands as $command) {
+            self::assertInstanceOf(NamesItsEffect::class, $command, $command::class);
+            self::assertSame($id, $command->effectId(), $command::class);
+        }
+        fclose($writeEnd);
     }
 
     #[Test]

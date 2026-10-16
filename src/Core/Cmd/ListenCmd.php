@@ -7,13 +7,14 @@ namespace Elmphant\Tui\Core\Cmd;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\Message;
 use InvalidArgumentException;
 
 /**
  * @internal
  */
-final readonly class ListenCmd extends Cmd
+final readonly class ListenCmd extends Cmd implements NamesItsEffect
 {
     /**
      * @param resource                             $stream
@@ -27,5 +28,10 @@ final readonly class ListenCmd extends Cmd
         if (!is_resource($stream)) {
             throw new InvalidArgumentException('Cmd::listen() needs an open stream resource');
         }
+    }
+
+    public function effectId(): ?EffectId
+    {
+        return $this->id;
     }
 }

@@ -7,9 +7,10 @@ namespace Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\NamesItsEffect;
 use InvalidArgumentException;
 
-final readonly class ExecCmd extends Cmd
+final readonly class ExecCmd extends Cmd implements NamesItsEffect
 {
     use Cloneable;
     use ProcessCommandBuilders;
@@ -33,6 +34,11 @@ final readonly class ExecCmd extends Cmd
         if ($maxOutputBytes < 1) {
             throw new InvalidArgumentException('ExecCmd maxOutputBytes must be positive');
         }
+    }
+
+    public function effectId(): ?EffectId
+    {
+        return $this->id;
     }
 
     public function withMaxOutputBytes(int $maxOutputBytes): self

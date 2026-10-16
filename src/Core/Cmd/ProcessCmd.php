@@ -7,9 +7,10 @@ namespace Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\NamesItsEffect;
 use InvalidArgumentException;
 
-final readonly class ProcessCmd extends Cmd
+final readonly class ProcessCmd extends Cmd implements NamesItsEffect
 {
     use Cloneable;
     use ProcessCommandBuilders;
@@ -33,6 +34,11 @@ final readonly class ProcessCmd extends Cmd
         if ($outputChunkBytes < 1) {
             throw new InvalidArgumentException('ProcessCmd outputChunkBytes must be positive');
         }
+    }
+
+    public function effectId(): ?EffectId
+    {
+        return $this->id;
     }
 
     public function withOutputChunkBytes(int $outputChunkBytes): self
