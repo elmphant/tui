@@ -451,6 +451,191 @@ final class StaticTableTest extends TestCase
         self::assertLessThan(200_000, $held, sprintf('Answering held %d bytes of drawn lines', $held));
     }
 
+    #[Test]
+    public function aTableWithoutHeadersDrawsItsCells(): void
+    {
+        $table = StaticTable::new([], [['alpha', '10'], ['beta', '200']]);
+
+        $expected = <<<'TABLE'
+            ┌───────┬─────┐
+            │ alpha │ 10  │
+            │ beta  │ 200 │
+            └───────┴─────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 30, 8));
+        self::assertSame(4, $table->measureHeight(30));
+    }
+
+    #[Test]
+    public function aSmallWindowDrawnFirstLeavesTheWholeTableItsFullHeight(): void
+    {
+        $table = $this->table();
+        $this->render($table, 40, 3);
+
+        self::assertSame($this->table()->measureHeight(40), $table->measureHeight(40));
+        self::assertSame($this->table()->measureHeight(36), $table->measureHeight(36), 'nor a table of another width');
+    }
+
+    #[Test]
+    public function tablesThatDifferOnlyInTheirHeadersDrawTheirOwnHeaders(): void
+    {
+        $this->render(StaticTable::new(['Name'], [['alpha']]), 20, 6);
+
+        self::assertStringContainsString('Title', $this->render(StaticTable::new(['Title'], [['alpha']]), 20, 6));
+    }
+
+    #[Test]
+    public function columnsNarrowerThanTheMinimumStayTabularWhereTheyFitExactly(): void
+    {
+        $expected = <<<'TABLE'
+            ┌───┬───┐
+            │ A │ B │
+            ├───┼───┤
+            │ 1 │ 2 │
+            └───┴───┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows(StaticTable::new(['A', 'B'], [['1', '2']]), 9, 6));
+    }
+
+    #[Test]
+    public function aWrappingTableKeepsEveryColumnSideBySideWhereNotEvenTheWordsFit(): void
+    {
+        $table = StaticTable::new(
+            ['Name', 'Method', 'Target', 'Type'],
+            [['about', 'ANY', 'Acme\Controller\AboutController::handleRequest', 'Module']],
+        )->withOverflow(Overflow::Wrap);
+
+        $headRule = explode("\n", $this->drawnRows($table, 24, 20))[0];
+
+        self::assertSame(3, mb_substr_count($headRule, '┬'));
+    }
+
+    #[Test]
+    public function columnsWhoseLongestWordsFillTheWidthExactlyKeepThoseWidths(): void
+    {
+        $table = StaticTable::new(['A', 'B'], [['x', 'aaaaaaaaaa bbbbbbbbbb']]);
+
+        $expected = <<<'TABLE'
+            ┌──────┬────────────┐
+            │ A    │ B          │
+            ├──────┼────────────┤
+            │ x    │ aaaaaaaaaa │
+            │      │ bbbbbbbbbb │
+            └──────┴────────────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 21, 8));
+    }
+
+    #[Test]
+    public function stackingKeepsTheCheapestColumnsInTheirOwnOrderAndCutsWhatMovesUnderTheRow(): void
+    {
+        $expected = <<<'TABLE'
+            ┌──────────────┬───────┬──────┐
+            │ Name         │ Group │ Id   │
+            │ Description  │       │      │
+            │ Note         │       │      │
+            ├──────────────┼───────┼──────┤
+            │ alpha        │ web   │ 7    │
+            │ a long desc… │       │      │
+            │ late         │       │      │
+            ├──────────────┼───────┼──────┤
+            │ beta         │ cli   │ 8    │
+            │ short        │       │      │
+            │ early        │       │      │
+            └──────────────┴───────┴──────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($this->stackingTable(), 31, 14));
+    }
+
+    #[Test]
+    public function stackingKeepsAColumnThatFillsTheWidthExactly(): void
+    {
+        $expected = <<<'TABLE'
+            ┌───────┬───────┬──────┬───────┐
+            │ Name  │ Group │ Id   │ Note  │
+            │ Desc… │       │      │       │
+            ├───────┼───────┼──────┼───────┤
+            TABLE;
+
+        self::assertStringStartsWith($expected, $this->drawnRows($this->stackingTable(), 32, 14));
+    }
+
+    #[Test]
+    public function sharingTheWidthNeverDrawsPastIt(): void
+    {
+        $table = StaticTable::new(['Ab', 'Method'], [['aaaaaaaaaaaa', 'bbbbbbbbbbbb']])->withOverflow(Overflow::Wrap);
+
+        $expected = <<<'TABLE'
+            ┌──────┬────────┐
+            │ Ab   │ Method │
+            ├──────┼────────┤
+            │ aaaa │ bbbbbb │
+            │ aaaa │ bbbbbb │
+            │ aaaa │        │
+            └──────┴────────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 17, 10));
+    }
+
+    #[Test]
+    public function belowItsHeaderWordsEveryColumnStillGetsAnEvenShareAndTheFrameCloses(): void
+    {
+        $table = StaticTable::new(['Name', 'Kind'], [['alphabet', 'consonant']])->withOverflow(Overflow::Wrap);
+
+        $narrowest = explode("\n", $this->drawnRows($table, 9, 20));
+        $oneMore = explode("\n", $this->drawnRows($table, 10, 20));
+
+        self::assertSame('┌───┬───┐', $narrowest[0], 'a column apiece');
+        self::assertSame('┌────┬───┐', $oneMore[0], 'the column left over goes to the leftmost');
+        self::assertSame('└────┴───┘', end($oneMore));
+    }
+
+    #[Test]
+    public function aRowWithNoCellsStillTakesALine(): void
+    {
+        $table = StaticTable::new(['Name'], [[]]);
+
+        self::assertSame(5, $table->measureHeight(20));
+        self::assertCount(5, explode("\n", $this->drawnRows($table, 20, 8)));
+    }
+
+    #[Test]
+    public function aSubsetIsSqueezedByTheWordsOfEveryRowItWasSizedFor(): void
+    {
+        $table = StaticTable::new(['A', 'B', 'C'], [['x', 'y', 'z']])
+            ->withWidthsFrom([['x', 'aaaaaaaaaa', 'bbbbbbbbbb']]);
+
+        $headRule = explode("\n", $this->drawnRows($table, 22, 10))[0];
+
+        self::assertSame(1, mb_substr_count($headRule, '┬'), 'the third column is stacked, as it would be for the rows it was sized for');
+    }
+
+    #[Test]
+    public function drawingLeavesTheFrameClippedAsItFoundIt(): void
+    {
+        $frame = new Frame(40, 10);
+
+        $this->table()->render($frame, new Rect(2, 2, 30, 6), new RenderContext(Theme::dark()));
+
+        self::assertEquals($frame->area(), $frame->clip());
+    }
+
+    private function stackingTable(): StaticTable
+    {
+        return StaticTable::new(
+            ['Name', 'Description', 'Group', 'Id', 'Note'],
+            [
+                ['alpha', '  a long description here', 'web', '7', 'late'],
+                ['beta', 'short', 'cli', '8', 'early'],
+            ],
+        );
+    }
+
     private function table(): StaticTable
     {
         return StaticTable::new(

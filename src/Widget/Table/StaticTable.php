@@ -117,9 +117,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     public function drawnWidth(int $width): int
     {
         // Only the opening rule is read, and every line is the same width.
-        $lines = $this->linesFor($width, 1);
-
-        return $lines === [] ? 0 : min($width, CharWidth::stringWidth($lines[0]));
+        return min($width, CharWidth::stringWidth($this->linesFor($width, 1)[0]));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -225,12 +223,12 @@ final readonly class StaticTable implements Widget, MeasureHeight
     private function draw(int $width, ?int $upTo = null): array
     {
         $widest = $this->demands();
-        $rows = null === $upTo ? $this->rows : array_slice($this->rows, 0, $upTo);
+        $rows = array_slice($this->rows, 0, $upTo);
 
         if (self::spaceFor($widest, $width) >= 0) {
             $widths = self::grown($widest, min($width, max($this->minWidth, self::widthOf($widest))), $widest);
 
-            return $this->drawn($this->headers, $rows, $widths, $upTo);
+            return $this->drawn($this->headers, $rows, $widths);
         }
 
         $floors = self::capped($this->wordFloors(), $width);
@@ -238,18 +236,18 @@ final readonly class StaticTable implements Widget, MeasureHeight
         if (self::spaceFor($floors, $width) < 0 && $this->overflow === Overflow::Stack) {
             $kept = $this->keptColumns($floors, $width);
 
-            if ($kept !== [] && count($kept) < count($floors)) {
-                return $this->drawnWithStackedColumns($kept, $floors, $width, $rows, $upTo);
+            if ($kept !== []) {
+                return $this->drawnWithStackedColumns($kept, $floors, $width, $rows);
             }
         }
 
         if (self::spaceFor($floors, $width) < 0) {
-            return $this->drawn($this->headers, $rows, $this->sharedWidths($width), $upTo);
+            return $this->drawn($this->headers, $rows, $this->sharedWidths($width));
         }
 
         $widths = self::grown($floors, $width, $widest);
 
-        return $this->drawn($this->headers, $rows, $widths, $upTo);
+        return $this->drawn($this->headers, $rows, $widths);
     }
 
     /**
@@ -263,10 +261,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
      */
     private function keptColumns(array $demands, int $width): array
     {
-        if (self::spaceFor($demands, $width) >= 0) {
-            return array_keys($demands);
-        }
-
         $order = $demands;
         asort($order);
         $kept = [0];
@@ -291,7 +285,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
      *
      * @return list<string>
      */
-    private function drawnWithStackedColumns(array $kept, array $demands, int $width, array $sourceRows, ?int $upTo = null): array
+    private function drawnWithStackedColumns(array $kept, array $demands, int $width, array $sourceRows): array
     {
         $demoted = array_values(array_diff(array_keys($demands), $kept));
         $kepts = self::at($demands, $kept, 0);
@@ -311,7 +305,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
             $rows[] = $cells;
         }
 
-        return $this->drawn($headers, $rows, $widths, $upTo);
+        return $this->drawn($headers, $rows, $widths);
     }
 
     /**
@@ -327,7 +321,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
             static fn (string $value): string => TextWrap::ellipsize(trim($value), $width),
             $values,
         );
-        $lines[0] = str_pad($lines[0], $width + strlen($lines[0]) - CharWidth::stringWidth($lines[0]));
 
         return implode("\n", $lines);
     }
@@ -339,9 +332,9 @@ final readonly class StaticTable implements Widget, MeasureHeight
      *
      * @return list<string>
      */
-    private function drawn(array $headers, array $rows, array $widths, ?int $upTo = null): array
+    private function drawn(array $headers, array $rows, array $widths): array
     {
-        return TableGrid::draw($headers, $rows, $widths, $this->border->glyphs(), $upTo);
+        return TableGrid::draw($headers, $rows, $widths, $this->border->glyphs());
     }
 
     /**
@@ -443,11 +436,16 @@ final readonly class StaticTable implements Widget, MeasureHeight
 
         $demands = [];
 
-        foreach ($this->headers as $column => $header) {
-            $demands[] = max(self::widestLineOf($header), $widest[$column] ?? 0);
+        for ($column = 0, $count = $this->columnCount(); $column < $count; ++$column) {
+            $demands[] = max(self::widestLineOf($this->headers[$column] ?? ''), $widest[$column] ?? 0);
         }
 
         return $demands;
+    }
+
+    private function columnCount(): int
+    {
+        return max([count($this->headers), ...array_map(count(...), $this->measured ?? $this->rows)]);
     }
 
     private static function widestLineOf(string $cell): int
@@ -486,7 +484,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
      */
     private function wordFloors(): array
     {
-        $floors = $this->columnFloors(count($this->headers));
+        $floors = $this->columnFloors($this->columnCount());
 
         foreach ($this->measured ?? $this->rows as $row) {
             foreach ($row as $column => $cell) {
@@ -507,7 +505,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
      */
     private function sharedWidths(int $width): array
     {
-        $count = max(1, count($this->headers));
+        $count = max(1, $this->columnCount());
         $floors = $this->columnFloors($count);
         $budget = $width - ($count * self::OVERHEAD_PER_COLUMN + 1);
 
@@ -520,10 +518,19 @@ final readonly class StaticTable implements Widget, MeasureHeight
             return $budget < $count ? $floors : self::spread($budget, $count);
         }
 
-        $share = intdiv($budget, $count);
-        $widths = array_map(static fn (int $floor): int => max($floor, $share), $floors);
-        $last = $count - 1;
-        $widths[$last] = max($floors[$last], $widths[$last] + $budget - array_sum($widths));
+        $widths = $floors;
+
+        for ($spare = $budget - array_sum($floors); $spare > 0; --$spare) {
+            $narrowest = 0;
+
+            foreach ($widths as $column => $width) {
+                if ($width <= $widths[$narrowest]) {
+                    $narrowest = $column;
+                }
+            }
+
+            ++$widths[$narrowest];
+        }
 
         return array_values($widths);
     }
