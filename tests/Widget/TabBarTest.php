@@ -571,6 +571,19 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
+    public function aHostAsksWhichTabAClickLandsOnWithoutUpdatingTheBar(): void
+    {
+        $tabBar = TabBar::new()->addTab('One')->addTab('Two');
+        $area = new Rect(0, 0, 40, 15);
+
+        self::assertSame(1, $tabBar->tabAt(new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left), $area));
+        self::assertSame(0, $tabBar->tabAt(new MouseMsg(3, 1, MouseAction::Press, MouseButton::Left), $area));
+        self::assertNull($tabBar->tabAt(new MouseMsg(10, 2, MouseAction::Press, MouseButton::Left), $area), 'below the strip');
+        self::assertNull($tabBar->tabAt(new MouseMsg(30, 1, MouseAction::Press, MouseButton::Left), $area), 'past the last tab');
+        self::assertNull($tabBar->tabAt(new MouseMsg(10, 1, MouseAction::WheelDown, MouseButton::Left), $area), 'not a click');
+    }
+
+    #[Test]
     public function aClickOnTheFirstColumnOfATabActivatesThatTab(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');

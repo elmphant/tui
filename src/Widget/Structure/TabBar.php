@@ -97,6 +97,15 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return $this->selectedTab;
     }
 
+    public function tabAt(MouseMsg $message, Rect $area): ?int
+    {
+        if (!$message->isClick() || !$this->fitsIn($area) || !$this->onStrip($message, $area)) {
+            return null;
+        }
+
+        return $this->tabStripLayout($area)->indexAt($message->x);
+    }
+
     /**
      * @param list<TabPage> $tabs
      */
@@ -220,8 +229,12 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
             return new UpdateResult($this);
         }
 
-        if ($message instanceof MouseMsg && $message->isClick() && $message->y >= $area->y && $message->y <= $area->y + 1) {
-            return $this->handleTabClick($message, $area);
+        if ($message instanceof MouseMsg && $message->isClick() && $this->onStrip($message, $area)) {
+            $index = $this->tabAt($message, $area);
+
+            return $index === null || $index === $this->selectedTab
+                ? new UpdateResult($this)
+                : new UpdateResult($this->cloneWith(selectedTab: $index));
         }
 
         if ($message instanceof KeyMsg) {
@@ -334,18 +347,9 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return new UpdateResult($this->cloneWith(selectedTab: $newIndex));
     }
 
-    /**
-     * @return UpdateResult<static>
-     */
-    private function handleTabClick(MouseMsg $message, Rect $area): UpdateResult
+    private function onStrip(MouseMsg $message, Rect $area): bool
     {
-        $index = $this->tabStripLayout($area)->indexAt($message->x);
-
-        if ($index === null || $index === $this->selectedTab) {
-            return new UpdateResult($this);
-        }
-
-        return new UpdateResult($this->cloneWith(selectedTab: $index));
+        return $message->y >= $area->y && $message->y <= $area->y + 1;
     }
 
     private function tabStripLayout(Rect $area): TabStripLayout
