@@ -237,6 +237,11 @@ abstract readonly class App implements RoutesFocus
         return UpdateResult::ignored($this);
     }
 
+    protected function geometry(Rect $screen): Geometry
+    {
+        return Geometry::from(LayoutSnapshot::planFor($this, $screen, $this->viewWidget(...)), $this->componentRegistry());
+    }
+
     /**
      * Extra keys that leave, on top of the ctrl chords applicationKeybindings()
      * already reserves. Empty by default: an unmodified letter here is honoured
