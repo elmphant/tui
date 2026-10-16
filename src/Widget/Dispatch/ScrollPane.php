@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Dispatch;
 
 use Elmphant\Tui\Core\Cloneable;
-use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
@@ -420,7 +419,8 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
                 return true;
             }
 
-            if (($widget instanceof Component || $widget instanceof GraftsItsChildren) && self::holdsAFocusable($widget->children())) {
+            $opens = $widget instanceof GraftsItsChildren || ($widget instanceof SingleMount && $widget instanceof WidgetContainer);
+            if ($opens && self::holdsAFocusable($widget->children())) {
                 return true;
             }
         }
