@@ -948,6 +948,7 @@ final class Program
         $frame->clear($baseBackground);
 
         $renderContext->beginFrame($this->clock->now());
+        $this->settleFocusBeforeDrawing();
         $renderContext->focusOn($this->focus);
 
         try {
@@ -977,6 +978,23 @@ final class Program
             : $this->clock->now() + $repaintDelay;
 
         return true;
+    }
+
+    /**
+     * An update can take away the component the keyboard was on (a modal opening
+     * over it), and the next message is too late to say so: the frame is drawn now.
+     */
+    private function settleFocusBeforeDrawing(): void
+    {
+        $resolved = $this->focus->resolvedAgainst($this->focusableIds(), $this->reachableIds());
+        if ($resolved->sameAs($this->focus)) {
+            return;
+        }
+
+        $this->focus = $resolved;
+        if ($resolved->focused() !== null) {
+            $this->messageQueue->unshift(new FocusMsg());
+        }
     }
 
     /**
