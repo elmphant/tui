@@ -10,10 +10,6 @@ final readonly class SubstringMatcher implements Matcher
     {
         $words = self::wordsIn($query);
 
-        if ($words === []) {
-            return array_keys($haystack);
-        }
-
         // An ASCII word is found byte by byte inside UTF-8 just as well, at a tenth
         // of the cost; only folds like the Kelvin sign to "k" are lost.
         $ascii = array_filter($words, static fn (string $word): bool => preg_match('/^[\x00-\x7F]*$/', $word) === 1);

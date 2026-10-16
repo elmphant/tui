@@ -67,6 +67,7 @@ final class SubstringMatcherTest extends TestCase
         $matcher = new SubstringMatcher();
 
         self::assertSame([0], $matcher->matching('GRÜSSE', ['grüsse dich']));
+        self::assertSame([1], $matcher->matching('dich GRÜSSE', ['gruesse dich', 'grüsse dich']));
     }
 
     /**
