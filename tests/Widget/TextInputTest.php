@@ -59,6 +59,47 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function aPasteInTheMiddleKeepsWhatFollowsTheCaret(): void
+    {
+        $field = TextInput::new()->withValue('ad')->withCursor(1);
+
+        $pasted = $field->update(new PasteMsg('bc'), Rect::fromSize(20, 1))->model;
+
+        self::assertSame(['abcd', 3], [$pasted->value(), $pasted->cursor()]);
+    }
+
+    #[Test]
+    public function backspaceAtTheStartLeavesTheTextAlone(): void
+    {
+        $field = TextInput::new()->withValue('abc')->withCursor(0);
+
+        $result = $field->update(new KeyMsg(Key::Backspace), Rect::fromSize(20, 1))->model;
+
+        self::assertSame(['abc', 0], [$result->value(), $result->cursor()]);
+    }
+
+    #[Test]
+    public function aWideCharacterThatDoesNotFitHidesWhatComesAfterIt(): void
+    {
+        $frame = new Frame(10, 1);
+
+        TextInput::new()->withValue('ab全c')->withCursor(0)
+            ->render($frame, new Rect(0, 0, 3, 1), RenderContext::unfocused(Theme::dark()));
+
+        self::assertSame(['a', 'b', ' '], array_slice($frame->characters, 0, 3));
+    }
+
+    #[Test]
+    public function theFieldDecoratesOnlyItsOwnRow(): void
+    {
+        $frame = new Frame(10, 2);
+
+        TextInput::new()->withValue('abc')->render($frame, new Rect(0, 0, 10, 2), RenderContext::focused(Theme::dark()));
+
+        self::assertSame([Attr::UNDERLINE, 0], [$frame->attributes[0] & Attr::UNDERLINE, $frame->attributes[10] & Attr::UNDERLINE]);
+    }
+
+    #[Test]
     public function thePlaceholderCanBeReplacedAfterConstruction(): void
     {
         $frame = new Frame(20, 1);

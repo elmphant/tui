@@ -15,8 +15,10 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Attr;
+use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Field\Button;
@@ -253,6 +255,71 @@ final class ButtonTest extends TestCase
 
         self::assertSame(0, $frame->backgrounds[11 + 2], 'beside the label');
         self::assertSame(0, $frame->backgrounds[11 + 4], 'and behind it');
+    }
+
+    #[Test]
+    public function aButtonHeldDownIsBoldEvenWhereTheThemesFocusedBorderIsNot(): void
+    {
+        $frame = new Frame(11, 3);
+        $theme = Theme::dark()->withFocusedBorderStyle(new Style(foreground: Color::ansi(4)));
+        $button = Button::new('Run', new TestMessage('run'));
+
+        $button->withArmed(true)->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));
+        $idle = new Frame(11, 3);
+        $button->render($idle, new Rect(0, 0, 11, 3), RenderContext::focused($theme));
+
+        self::assertSame(Attr::BOLD, $frame->attributes[0] & Attr::BOLD);
+        self::assertSame(0, $idle->attributes[0] & Attr::BOLD, 'focus alone takes the theme as it is');
+    }
+
+    #[Test]
+    public function anUnfocusedButtonOfNoToneIsOutlinedInThePlainBorder(): void
+    {
+        $frame = new Frame(11, 3);
+        $theme = Theme::dark();
+
+        Button::new('Run', new TestMessage('run'))->render($frame, new Rect(0, 0, 11, 3), RenderContext::unfocused($theme));
+
+        self::assertSame($theme->borderStyle->foregroundValue(), $frame->foregrounds[0]);
+    }
+
+    #[Test]
+    public function aReleaseThatRanTheButtonLeavesItNothingToRunAgain(): void
+    {
+        $area = new Rect(0, 0, 10, 3);
+        $armed = Button::new('Run', new TestMessage('run'))
+            ->update(new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left), $area)->model;
+        self::assertInstanceOf(Button::class, $armed);
+        $ran = $armed->update(new MouseMsg(5, 1, MouseAction::Release, MouseButton::Left), $area)->model;
+        self::assertInstanceOf(Button::class, $ran);
+
+        self::assertNull($ran->update(new MouseMsg(5, 1, MouseAction::Release, MouseButton::Left), $area)->command);
+    }
+
+    #[Test]
+    public function thePointerMovingOverAHeldButtonKeepsItHeld(): void
+    {
+        $wanted = new TestMessage('run');
+        $area = new Rect(0, 0, 10, 3);
+        $armed = Button::new('Run', $wanted)
+            ->update(new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left), $area)->model;
+        self::assertInstanceOf(Button::class, $armed);
+        $motion = $armed->update(new MouseMsg(6, 1, MouseAction::Motion, MouseButton::Left), $area);
+        $moved = $motion->model;
+        self::assertInstanceOf(Button::class, $moved);
+
+        self::assertNull($motion->command);
+        self::assertEmitted($wanted, $moved->update(new MouseMsg(6, 1, MouseAction::Release, MouseButton::Left), $area));
+    }
+
+    #[Test]
+    public function aKeyItDoesNotAnswerLeavesItAsItWas(): void
+    {
+        $button = Button::new('Run', new TestMessage('run'));
+
+        $result = $button->update(new KeyMsg('x'), new Rect(0, 0, 10, 3));
+
+        self::assertSame([$button, null], [$result->model, $result->command]);
     }
 
     #[Test]
