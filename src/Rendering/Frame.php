@@ -140,36 +140,13 @@ final class Frame
 
     public function putChar(int $x, int $y, string $character, int $foreground = 0, int $background = 0, int $attributes = 0): void
     {
-        if ($x < 0 || $x >= $this->width || $y < 0 || $y >= $this->height) {
-            return;
-        }
-        if ($this->clipRejects($x, $y)) {
+        if ($y < 0 || $y >= $this->height) {
             return;
         }
 
         $characterWidth = CharWidth::graphemeWidth($character);
-        if ($characterWidth === 0 || ($characterWidth > 1 && ($x + $characterWidth > $this->width || $this->clipRejects($x + 1, $y)))) {
-            return;
-        }
-
-        $rowBase = $y * $this->width;
-        $this->repairOverwriteEdges($rowBase, $x, $x + $characterWidth);
-
-        $index = $rowBase + $x;
-        $this->characters[$index] = $character;
-        $this->foregrounds[$index] = $foreground;
-        $this->backgrounds[$index] = $background;
-        $this->attributes[$index] = $attributes;
-        $this->widths[$index] = $characterWidth;
-        $this->markRowDirty($y);
-
-        if ($characterWidth > 1) {
-            $nextIndex = $index + 1;
-            $this->characters[$nextIndex] = '';
-            $this->foregrounds[$nextIndex] = $foreground;
-            $this->backgrounds[$nextIndex] = $background;
-            $this->attributes[$nextIndex] = $attributes;
-            $this->widths[$nextIndex] = 0;
+        if ($characterWidth > 0 && $this->placeGrapheme($x, $y, $character, $characterWidth, $foreground, $background, $attributes)) {
+            $this->markRowDirty($y);
         }
     }
 
@@ -195,64 +172,7 @@ final class Frame
             return $this->putClippedAsciiString($x, $y, $text, $clip, $foreground, $background, $attributes);
         }
 
-        $text = TerminalText::plain($text);
-        $graphemes = Grapheme::split($text);
-
-        $column = $x;
-        $rowBase = $y * $this->width;
-        $wroteAnything = false;
-
-        foreach ($graphemes as $character) {
-            if ($column >= $this->width) {
-                break;
-            }
-
-            $characterWidth = CharWidth::graphemeWidth($character);
-            if ($characterWidth === 0) {
-                continue;
-            }
-
-            if ($characterWidth === 2 && $column + $characterWidth > $this->width) {
-                $column += $characterWidth;
-                continue;
-            }
-
-            if ($column >= 0 && !$this->clipRejects($column, $y)) {
-                // A width-2 lead without its continuation makes Screen's diff draw the
-                // glyph past the clip while the buffer still shows the old cell there.
-                if ($characterWidth === 2 && $this->clipRejects($column + 1, $y)) {
-                    $column += $characterWidth;
-                    continue;
-                }
-
-                $this->repairOverwriteEdges($rowBase, $column, $column + $characterWidth);
-                $index = $rowBase + $column;
-                $this->characters[$index] = $character;
-                $this->foregrounds[$index] = $foreground;
-                $this->backgrounds[$index] = $background;
-                $this->attributes[$index] = $attributes;
-                $this->widths[$index] = $characterWidth;
-
-                if ($characterWidth === 2) {
-                    $nextIndex = $index + 1;
-                    $this->characters[$nextIndex] = '';
-                    $this->foregrounds[$nextIndex] = $foreground;
-                    $this->backgrounds[$nextIndex] = $background;
-                    $this->attributes[$nextIndex] = $attributes;
-                    $this->widths[$nextIndex] = 0;
-                }
-
-                $wroteAnything = true;
-            }
-
-            $column += $characterWidth;
-        }
-
-        if ($wroteAnything) {
-            $this->markRowDirty($y);
-        }
-
-        return $column - $x;
+        return $this->putGraphemes($x, $y, TerminalText::plain($text), $foreground, $background, $attributes);
     }
 
     public function putStyled(int $x, int $y, string $text, Style $style): int
@@ -647,6 +567,68 @@ final class Frame
             $this->characters[$continuationIndex] = ' ';
             $this->widths[$continuationIndex] = 1;
         }
+    }
+
+    private function putGraphemes(int $x, int $y, string $text, int $foreground, int $background, int $attributes): int
+    {
+        $column = $x;
+        $wroteAnything = false;
+
+        foreach (Grapheme::split($text) as $character) {
+            if ($column >= $this->width) {
+                break;
+            }
+
+            $characterWidth = CharWidth::graphemeWidth($character);
+            if ($characterWidth === 0) {
+                continue;
+            }
+
+            $wroteAnything = $this->placeGrapheme($column, $y, $character, $characterWidth, $foreground, $background, $attributes) || $wroteAnything;
+            $column += $characterWidth;
+        }
+
+        if ($wroteAnything) {
+            $this->markRowDirty($y);
+        }
+
+        return $column - $x;
+    }
+
+    /**
+     * Whether the cell took the character. A wide one needs its second column
+     * too: a lead without its continuation makes Screen's diff draw the glyph
+     * past the clip while the buffer still shows the old cell there.
+     */
+    private function placeGrapheme(int $column, int $y, string $character, int $characterWidth, int $foreground, int $background, int $attributes): bool
+    {
+        if ($column < 0 || $column >= $this->width || $this->clipRejects($column, $y)) {
+            return false;
+        }
+        if ($characterWidth > 1 && ($column + $characterWidth > $this->width || $this->clipRejects($column + 1, $y))) {
+            return false;
+        }
+
+        $rowBase = $y * $this->width;
+        $this->repairOverwriteEdges($rowBase, $column, $column + $characterWidth);
+
+        $index = $rowBase + $column;
+        $this->characters[$index] = $character;
+        $this->foregrounds[$index] = $foreground;
+        $this->backgrounds[$index] = $background;
+        $this->attributes[$index] = $attributes;
+        $this->widths[$index] = $characterWidth;
+
+        if ($characterWidth > 1) {
+            $continuation = $index + 1;
+            $this->characters[$continuation] = '';
+            $this->foregrounds[$continuation] = $foreground;
+            $this->backgrounds[$continuation] = $background;
+            $this->attributes[$continuation] = $attributes;
+            $this->widths[$continuation] = 0;
+        }
+
+        return true;
     }
 
     private function putAsciiString(int $x, int $y, string $text, int $foreground, int $background, int $attributes): int
