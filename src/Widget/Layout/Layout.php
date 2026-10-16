@@ -139,7 +139,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
 
         foreach ($this->children as $index => $child) {
             $offset = min($resolved->offsets[$index], $extent);
-            $size = max(0, min($resolved->sizes[$index], $extent - $offset));
+            $size = min($resolved->sizes[$index], $extent - $offset);
 
             $childArea = $isVertical
                 ? new Rect($area->x, $start + $offset, $area->width, $size)

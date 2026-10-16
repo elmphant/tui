@@ -41,6 +41,37 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
+    public function noGapIsAGapLikeAnyOther(): void
+    {
+        $placed = Layout::vertical(Text::new('a'), Text::new('b'))->withGap(0)->computeChildRects(new Rect(0, 0, 10, 10));
+
+        self::assertSame([0, 1], array_map(static fn (array $pair): int => $pair[1]->y, $placed));
+    }
+
+    #[Test]
+    public function anEmptyColumnNeedsNoRowsWhateverItsGap(): void
+    {
+        self::assertSame(0, Layout::vertical()->withGap(2)->measureHeight(10));
+    }
+
+    #[Test]
+    public function childrenHandedOverByNameAreKeptInOrder(): void
+    {
+        $first = Text::new('a');
+        $second = Text::new('b');
+
+        self::assertSame([$first, $second], Layout::vertical(...['top' => $first, 'bottom' => $second])->children());
+    }
+
+    #[Test]
+    public function aRowOfChildrenThatOnlyFlexIsOneRowTall(): void
+    {
+        $layout = Layout::horizontal($this->createWidgetWithConstraint(Constraint::flex()));
+
+        self::assertSame(1, $layout->measureHeight(10));
+    }
+
+    #[Test]
     public function aColumnCountsItsGapsInTheRowsItNeeds(): void
     {
         self::assertSame(7, Layout::vertical(Text::new('a'), Text::new('b'), Text::new('c'))->withGap(2)->measureHeight(10));

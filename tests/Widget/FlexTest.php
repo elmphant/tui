@@ -118,6 +118,60 @@ final class FlexTest extends TestCase
     }
 
     #[Test]
+    public function theGapBetweenWrappedLinesGivesWaySoEveryLineKeepsARow(): void
+    {
+        $flex = Flex::row()
+            ->withWrap()
+            ->withGap(5)
+            ->add($this->constraintWidget(Constraint::exact(4)), Constraint::exact(4))
+            ->add($this->constraintWidget(Constraint::exact(4)), Constraint::exact(4));
+        $linesAt = static fn (int $height): array => array_map(
+            static fn (array $child): array => [$child[1]->y, $child[1]->height],
+            $flex->computeChildRects(new Rect(0, 0, 6, $height)),
+        );
+
+        self::assertSame([[0, 1], [6, 1]], $linesAt(7), 'room for the whole gap and a row on each side');
+        self::assertSame([[0, 1], [1, 1]], $linesAt(2), 'no room for any gap at all');
+        self::assertSame([[0, 0], [0, 1]], $linesAt(1), 'not even a row each');
+    }
+
+    #[Test]
+    public function itemsTooLargeToCountStillWrapOntoLinesOfTheirOwn(): void
+    {
+        $flex = Flex::row()
+            ->withWrap()
+            ->add(Text::new('a'), Constraint::exact(PHP_INT_MAX))
+            ->add(Text::new('b'), Constraint::exact(PHP_INT_MAX));
+
+        self::assertEquals(
+            [new Rect(0, 0, 10, 1), new Rect(0, 1, 10, 1)],
+            array_column($flex->computeChildRects(new Rect(0, 0, 10, 2)), 1),
+        );
+    }
+
+    #[Test]
+    public function anItemGivenNoWidthAddsNoRowsToItsLine(): void
+    {
+        $flex = Flex::row()->add($this->constraintWidget(Constraint::exact(3)), Constraint::exact(0));
+
+        self::assertSame(0, $flex->measureHeight(10));
+    }
+
+    #[Test]
+    public function aColumnOfItemsThatAskForNoWidthStillClaimsACell(): void
+    {
+        $flex = Flex::column()
+            ->withWrap()
+            ->add($this->constraintWidget(Constraint::exact(0)), Constraint::exact(5))
+            ->add($this->constraintWidget(Constraint::exact(3)), Constraint::exact(5));
+
+        self::assertSame([4, 6], array_map(
+            static fn (array $child): int => $child[1]->width,
+            $flex->computeChildRects(new Rect(0, 0, 10, 6)),
+        ));
+    }
+
+    #[Test]
     public function wrappingReflowsThreeItemsFromOneLineToTwoAndThree(): void
     {
         $first = Text::new('first');

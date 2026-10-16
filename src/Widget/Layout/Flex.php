@@ -122,10 +122,6 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
      */
     public function computeChildRects(Rect $area): array
     {
-        if ($this->items === []) {
-            return [];
-        }
-
         $isRow = $this->direction === Direction::Horizontal;
         $mainSize = $isRow ? $area->width : $area->height;
         $crossSize = $isRow ? $area->height : $area->width;
@@ -363,7 +359,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             return 0;
         }
 
-        return min($this->gap, max(0, intdiv(max(0, $available - $count), $count - 1)));
+        return min($this->gap, intdiv(max(0, $available - $count), $count - 1));
     }
 
     private function intrinsicWidth(Widget $widget): int
@@ -382,12 +378,12 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             // What the content wants, held to what the widget said it would take.
             $rows = $widget->sizing()->rows;
 
-            return min(max(0, $widget->measureHeight($width), $rows->min), $rows->max);
+            return min(max($widget->measureHeight($width), $rows->min), $rows->max);
         }
 
         $constraint = $widget->sizing()->rows;
         if ($constraint->min === $constraint->max) {
-            return max(0, $constraint->min);
+            return $constraint->min;
         }
 
         return max(1, $constraint->min);
