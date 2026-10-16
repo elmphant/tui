@@ -14,6 +14,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\Trace\JsonlTracer;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Testing\InMemoryTracer;
 use Elmphant\Tui\Testing\VirtualTerminal;
@@ -110,6 +111,21 @@ final class ProgramObservabilityTest extends TestCase
         self::assertContains(['during' => 'update', 'text' => 'saw a key'], $outputs);
         self::assertContains(['during' => 'render', 'text' => 'drawing'], $outputs);
         self::assertStringNotContainsString('saw a key', $terminal->output());
+    }
+
+    #[Test]
+    public function aBufferedTraceIsWrittenWhenTheProgramStops(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'trace');
+        $tracer = JsonlTracer::toFile($path);
+        $terminal = new VirtualTerminal(30, 4);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput('q'));
+
+        Program::new(new ScriptedModel())->withTerminal($terminal)->withTracer($tracer)->start();
+
+        $written = file_get_contents($path);
+        unlink($path);
+        self::assertStringContainsString('"event":"update"', (string)$written);
     }
 
     private static function pressing(Model $model, InMemoryTracer $tracer, string $keys): void

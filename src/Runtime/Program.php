@@ -50,6 +50,7 @@ use LogicException;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
 use Revolt\EventLoop\UnsupportedFeatureException;
+use RuntimeException;
 use SplQueue;
 use Throwable;
 use UnexpectedValueException;
@@ -525,6 +526,20 @@ final class Program
         } finally {
             $this->terminalSession?->updateHeight($this->screenRect->height);
             $this->terminalSession?->close();
+            $this->flushTrace();
+        }
+    }
+
+    private function flushTrace(): void
+    {
+        if (!$this->tracer instanceof JsonlTracer) {
+            return;
+        }
+
+        try {
+            $this->tracer->close();
+        } catch (RuntimeException) {
+            // A trace that cannot be written must not stand in for the failure it was tracing.
         }
     }
 

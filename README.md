@@ -836,9 +836,9 @@ tail -f /tmp/tui.jsonl
 ```
 
 That tracer is `JsonlTracer::live()`: it writes each event as it happens, so a
-crash loses nothing. `JsonlTracer::toFile()` buffers instead and writes when the
-program stops, which costs no syscall per event — use it when profiling, and
-close it from a shutdown hook if you need a trace of a crash. In tests use
+crash loses nothing. `JsonlTracer::toFile()` buffers instead, which costs no syscall per event — use
+it when profiling. The program writes it out when it stops, a fatal error
+included. In tests use
 `Elmphant\Tui\Testing\InMemoryTracer` and assert on the flow directly:
 
 ```php fragment
