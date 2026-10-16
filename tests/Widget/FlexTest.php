@@ -389,6 +389,16 @@ final class FlexTest extends TestCase
     }
 
     #[Test]
+    public function anExactSizeHoldsWhileItsNeighboursGiveWayInARowTooNarrowForAll(): void
+    {
+        $flex = Flex::row()
+            ->add(Text::new('a long label here'), Constraint::min(8)->withFlex())
+            ->add(Text::new('fixed'), Constraint::exact(10));
+
+        self::assertSame([2, 10], $this->mainSizes($flex, Rect::fromSize(12, 1)));
+    }
+
+    #[Test]
     public function zeroGrowItemsWithHeadroomLeaveSpaceForJustification(): void
     {
         $flex = Flex::row()

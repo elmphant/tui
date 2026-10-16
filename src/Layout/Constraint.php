@@ -45,7 +45,7 @@ final readonly class Constraint
         return match ($size) {
             0 => self::exactZero(),
             1 => self::exactOne(),
-            default => new self(min: $size, max: $size),
+            default => new self(min: $size, max: $size, shrink: 0),
         };
     }
 
@@ -153,14 +153,14 @@ final readonly class Constraint
     {
         static $constraint;
 
-        return $constraint ??= new self(min: 0, max: 0);
+        return $constraint ??= new self(min: 0, max: 0, shrink: 0);
     }
 
     private static function exactOne(): self
     {
         static $constraint;
 
-        return $constraint ??= new self(min: 1, max: 1);
+        return $constraint ??= new self(min: 1, max: 1, shrink: 0);
     }
 
     private static function flexOne(): self
