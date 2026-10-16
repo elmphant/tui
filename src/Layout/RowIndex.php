@@ -40,7 +40,7 @@ final class RowIndex
 
     public static function of(int $rowCount): self
     {
-        return new self(max(0, $rowCount));
+        return new self($rowCount);
     }
 
     public function rowCount(): int

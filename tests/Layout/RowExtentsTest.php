@@ -144,6 +144,29 @@ final class RowExtentsTest extends TestCase
         self::assertSame(2, $extents->rowAtLine(1));
     }
 
+    #[Test]
+    public function aLineAfterARunOfEmptyRowsBelongsToTheRowThatFollowsThem(): void
+    {
+        $extents = RowExtents::measure(5, static fn (int $index): int => [0, 0, 2, 0, 1][$index]);
+
+        self::assertSame([2, 2, 4], array_map($extents->rowAtLine(...), range(0, 2)));
+    }
+
+    #[Test]
+    public function aRowPastTheLastHasNoHeight(): void
+    {
+        self::assertSame(0, self::sample()->heightOf(4));
+    }
+
+    #[Test]
+    public function aNegativeHeightTakesNoLines(): void
+    {
+        $extents = RowExtents::measure(3, static fn (int $index): int => $index === 1 ? -5 : 1);
+
+        self::assertSame(2, $extents->totalHeight());
+        self::assertSame(3, $extents->rowCount());
+    }
+
     /**
      * Heights 1,2,3,1 → starts 0,1,3,6 and a total of 7.
      */

@@ -87,12 +87,6 @@ final readonly class RowExtents
             }
         }
 
-        // Skip rows that start here but take no space; the line belongs to the
-        // first row after them that does.
-        while ($low < $this->rowCount() && $this->heightOf($low) === 0) {
-            ++$low;
-        }
-
         return $low;
     }
 

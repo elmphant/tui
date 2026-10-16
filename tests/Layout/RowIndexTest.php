@@ -119,6 +119,59 @@ final class RowIndexTest extends TestCase
     }
 
     #[Test]
+    public function rowsExactlyAsTallAsTheRoomDoNotOverflowIt(): void
+    {
+        $index = RowIndex::of(3);
+
+        self::assertFalse($index->exceeds(80, 3, static fn (int $row): int => 1));
+        self::assertTrue($index->exceeds(80, 2, static fn (int $row): int => 1));
+    }
+
+    #[Test]
+    public function emptyAndNegativeRowsTakeNoRoom(): void
+    {
+        self::assertFalse(RowIndex::of(4)->exceeds(80, 2, static fn (int $row): int => [1, 0, -3, 1][$row]));
+        self::assertTrue(RowIndex::of(4)->exceeds(80, 1, static fn (int $row): int => [1, 0, -3, 1][$row]));
+    }
+
+    #[Test]
+    public function answersTheSameOverflowQuestionWithoutMeasuringAgain(): void
+    {
+        $calls = 0;
+        $index = RowIndex::of(3);
+        $measure = static function (int $row) use (&$calls): int {
+            ++$calls;
+
+            return 1;
+        };
+
+        $index->exceeds(80, 5, $measure);
+        $index->exceeds(80, 5, $measure);
+
+        self::assertSame(3, $calls);
+    }
+
+    #[Test]
+    public function aDifferentHeightIsADifferentOverflowQuestion(): void
+    {
+        $index = RowIndex::of(2);
+        $fiveLinesEach = static fn (int $row): int => 5;
+
+        self::assertFalse($index->exceeds(1, 23, $fiveLinesEach));
+        self::assertTrue($index->exceeds(12, 3, $fiveLinesEach));
+        self::assertFalse($index->exceeds(12, 10, $fiveLinesEach));
+    }
+
+    #[Test]
+    public function aDifferentWidthIsADifferentOverflowQuestion(): void
+    {
+        $index = RowIndex::of(2);
+
+        self::assertTrue($index->exceeds(10, 3, static fn (int $row): int => 5));
+        self::assertFalse($index->exceeds(80, 3, static fn (int $row): int => 1));
+    }
+
+    #[Test]
     public function measuresNothingUntilAskedForAWidth(): void
     {
         $calls = 0;
