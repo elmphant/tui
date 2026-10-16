@@ -16,6 +16,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
@@ -57,11 +58,11 @@ final class ProgramModelContractTest extends TestCase
         $queue->enqueue(new TickMsg(1.0));
         $reflection->getProperty('model')->setValue($program, $model);
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
-        self::assertFalse($reflection->getProperty('running')->getValue($program));
+        self::assertSame(ProgramState::Stopping, $program->state());
         self::assertSame(10, $updates);
     }
 

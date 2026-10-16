@@ -16,6 +16,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use LogicException;
@@ -44,7 +45,7 @@ final class SearchBoxComposedTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $model);
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
 

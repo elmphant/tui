@@ -17,6 +17,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use PHPUnit\Framework\Attributes\Test;
@@ -204,7 +205,7 @@ final class CmdMapTest extends TestCase
         }));
 
         self::assertSame(0, $calls);
-        self::assertFalse((new ReflectionProperty(Program::class, 'running'))->getValue($program));
+        self::assertSame(ProgramState::Stopping, $program->state());
     }
 
     #[Test]
@@ -245,7 +246,7 @@ final class CmdMapTest extends TestCase
         /** @var SplQueue<Message> $queue */
         $queue = new SplQueue();
         (new ReflectionProperty(Program::class, 'messageQueue'))->setValue($program, $queue);
-        (new ReflectionProperty(Program::class, 'running'))->setValue($program, true);
+        (new ReflectionProperty(Program::class, 'state'))->setValue($program, ProgramState::Running);
 
         return [$program, $queue];
     }

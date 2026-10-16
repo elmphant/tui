@@ -17,6 +17,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\AdaptiveTicker;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Testing\InMemoryTracer;
 use Elmphant\Tui\Testing\TestClock;
@@ -199,7 +200,7 @@ final class ProgramTracingTest extends TestCase
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, true);
         $reflection->getProperty('lastRender')->setValue($program, $lastRender);
         $reflection->getProperty('adaptiveTicker')->setValue($program, new AdaptiveTicker(static fn (): ?float => null));

@@ -14,6 +14,8 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ProgramState;
+use Elmphant\Tui\Runtime\ShutdownAware;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +36,19 @@ final class ProgramQuitTest extends TestCase
     }
 
     #[Test]
+    public function aProgramToldToQuitIsStoppingUntilItHasTornDown(): void
+    {
+        $model = new StateAtShutdownModel();
+        $program = Program::new($model)->withTerminal(new VirtualTerminal(40, 10));
+        $model->program = $program;
+
+        $program->start();
+
+        self::assertSame(ProgramState::Stopping, $model->stateAtShutdown);
+        self::assertSame(ProgramState::Stopped, $program->state());
+    }
+
+    #[Test]
     public function aCommandBatchedBeforeAQuitStillStarts(): void
     {
         $handler = new CountingStartHandler();
@@ -49,6 +64,34 @@ final class ProgramQuitTest extends TestCase
 
 final readonly class CountedStart extends Cmd
 {
+}
+
+final class StateAtShutdownModel implements Model, ShutdownAware
+{
+    /**
+     * @var Program<self>|null
+     */
+    public ?Program $program = null;
+    public ?ProgramState $stateAtShutdown = null;
+
+    public function init(): ?Cmd
+    {
+        return Cmd::quit();
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return new UpdateResult($this);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+    }
+
+    public function onShutdown(): void
+    {
+        $this->stateAtShutdown = $this->program?->state();
+    }
 }
 
 final readonly class QuitThenStartModel implements Model

@@ -90,7 +90,6 @@ final class Program
     private float $lastWheelFlush = 0.0;
     private Model $model;
     private ?Frame $backBuffer = null;
-    private bool $running = false;
     private bool $inputClosed = false;
     private bool $isDirty = true;
     private int $consecutiveRenderFailures = 0;
@@ -316,9 +315,8 @@ final class Program
             );
             $this->setup();
             $this->renderPass = RenderPass::new($this->resolveTheme(), $this->resolveColorProfile());
-            $this->running = true;
             $this->dispatchCommand($this->model->init());
-            if ($this->running) {
+            if ($this->isRunning()) {
                 $this->loop();
             }
             if ($this->model instanceof ShutdownAware) {
@@ -518,7 +516,6 @@ final class Program
             return;
         }
         $this->state = ProgramState::Stopped;
-        $this->running = false;
 
         try {
             $this->cancelEventLoopWatchers();
@@ -715,7 +712,7 @@ final class Program
         $this->flushWheelWhenDue($now);
 
         $this->drainMessageQueue();
-        if (!$this->running) {
+        if (!$this->isRunning()) {
             $this->resumeRunSuspension();
 
             return;
@@ -724,7 +721,7 @@ final class Program
         $this->handlePendingResize();
         if (!$this->messageQueue->isEmpty()) {
             $this->drainMessageQueue();
-            if (!$this->running) {
+            if (!$this->isRunning()) {
                 $this->resumeRunSuspension();
 
                 return;
@@ -737,7 +734,7 @@ final class Program
         if (($this->isDirty || $animationDue) && $now >= $this->lastRender + $frameBudget) {
             $this->tracedRenderFrame();
             $this->lastRender = $this->clock->now();
-            if (!$this->running) {
+            if (!$this->isRunning()) {
                 $this->resumeRunSuspension();
 
                 return;
@@ -836,7 +833,7 @@ final class Program
         $this->drainDeadline ??= $this->clock->now() + self::MAX_DRAIN_SECONDS;
         $deadline = $this->drainDeadline;
 
-        while ($this->running && $processed < self::MAX_MESSAGES_PER_DRAIN && !$this->messageQueue->isEmpty()) {
+        while ($this->isRunning() && $processed < self::MAX_MESSAGES_PER_DRAIN && !$this->messageQueue->isEmpty()) {
             if ($processed > 0 && $this->clock->now() >= $deadline) {
                 return;
             }
@@ -845,7 +842,7 @@ final class Program
             $message = $this->messageQueue->dequeue();
 
             if ($message === QuitMsg::Quit) {
-                $this->running = false;
+                $this->stopRunning();
 
                 return;
             }
@@ -934,7 +931,7 @@ final class Program
 
     private function giveUp(Throwable $error): void
     {
-        $this->running = false;
+        $this->stopRunning();
         $this->fatalError = $error;
     }
 
@@ -1119,14 +1116,21 @@ final class Program
         }
     }
 
+    private function isRunning(): bool
+    {
+        return $this->state === ProgramState::Running;
+    }
+
     private function isQuitting(): bool
     {
-        return $this->state === ProgramState::Running && !$this->running;
+        return $this->state === ProgramState::Stopping;
     }
 
     private function stopRunning(): void
     {
-        $this->running = false;
+        if ($this->state === ProgramState::Running) {
+            $this->state = ProgramState::Stopping;
+        }
         $this->effects?->forgetTimers();
     }
 

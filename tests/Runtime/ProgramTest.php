@@ -499,13 +499,12 @@ final class ProgramTest extends TestCase
     {
         $program = Program::new($this->createMockModel());
 
-        $runningProperty = new ReflectionProperty(Program::class, 'running');
-        $runningProperty->setValue($program, true);
+        (new ReflectionProperty(Program::class, 'state'))->setValue($program, ProgramState::Running);
 
         $method = new ReflectionMethod(Program::class, 'dispatchCommand');
         $method->invoke($program, null);
 
-        self::assertTrue($runningProperty->getValue($program), 'null Cmd must not change running state');
+        self::assertSame(ProgramState::Running, $program->state(), 'null Cmd must not change running state');
     }
 
     #[Test]
@@ -513,13 +512,12 @@ final class ProgramTest extends TestCase
     {
         $program = Program::new($this->createMockModel());
 
-        $runningProperty = new ReflectionProperty(Program::class, 'running');
-        $runningProperty->setValue($program, true);
+        (new ReflectionProperty(Program::class, 'state'))->setValue($program, ProgramState::Running);
 
         $method = new ReflectionMethod(Program::class, 'dispatchCommand');
         $method->invoke($program, Cmd::quit());
 
-        self::assertFalse($runningProperty->getValue($program), 'QuitCmd must set running=false');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'QuitCmd must set running=false');
     }
 
     #[Test]
@@ -635,8 +633,7 @@ final class ProgramTest extends TestCase
         $modelProperty = new ReflectionProperty(Program::class, 'model');
         $modelProperty->setValue($program, $throwingModel);
 
-        $runningProperty = new ReflectionProperty(Program::class, 'running');
-        $runningProperty->setValue($program, true);
+        (new ReflectionProperty(Program::class, 'state'))->setValue($program, ProgramState::Running);
 
         $queueProperty = new ReflectionProperty(Program::class, 'messageQueue');
         $queue = new SplQueue();
@@ -648,7 +645,7 @@ final class ProgramTest extends TestCase
         $method = new ReflectionMethod(Program::class, 'drainMessageQueue');
         $method->invoke($program);
 
-        self::assertFalse($runningProperty->getValue($program), 'running must be false after 10 consecutive update errors');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'running must be false after 10 consecutive update errors');
         self::assertFalse($queue->isEmpty(), 'drain must return early leaving remaining messages unprocessed');
     }
 
@@ -811,7 +808,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         $queue->enqueue(QuitMsg::Quit);
@@ -821,7 +818,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
-        self::assertFalse($reflection->getProperty('running')->getValue($program), 'QuitMsg must stop the drain');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'QuitMsg must stop the drain');
         self::assertSame(1, $queue->count(), 'QuitMsg must return immediately, leaving the one queued TickMsg untouched');
         self::assertSame($tickMsg, $queue->dequeue(), 'Untouched message must be the original TickMsg, not an ErrorMsg from a later iteration');
     }
@@ -852,7 +849,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         $queue->enqueue(new TestMessage('first'));
@@ -861,7 +858,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
-        self::assertFalse($reflection->getProperty('running')->getValue($program), 'Cmd::quit must stop the program');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'Cmd::quit must stop the program');
         self::assertSame(1, $model->updates, 'No further messages may be delivered once the model requested quit');
     }
 
@@ -873,15 +870,14 @@ final class ProgramTest extends TestCase
         $queueProperty = new ReflectionProperty(Program::class, 'messageQueue');
         $queue = new SplQueue();
         $queueProperty->setValue($program, $queue);
-        $runningProperty = new ReflectionProperty(Program::class, 'running');
-        $runningProperty->setValue($program, true);
+        (new ReflectionProperty(Program::class, 'state'))->setValue($program, ProgramState::Running);
 
         $method = new ReflectionMethod(Program::class, 'dispatchCommand');
         $method->invoke($program, Cmd::batch(Cmd::message(new TestMessage('a')), Cmd::message(new TestMessage('b')), Cmd::quit()));
 
         self::assertSame('a', $queue->dequeue()->value, 'First batch child dispatched');
         self::assertSame('b', $queue->dequeue()->value, 'Second batch child dispatched');
-        self::assertFalse($runningProperty->getValue($program), 'Third batch child (quit) dispatched');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'Third batch child (quit) dispatched');
     }
 
     #[Test]
@@ -988,19 +984,19 @@ final class ProgramTest extends TestCase
 
         $queueProperty = $reflection->getProperty('messageQueue');
         $modelProperty = $reflection->getProperty('model');
-        $runningProperty = $reflection->getProperty('running');
         $drainMethod = $reflection->getMethod('drainMessageQueue');
 
         $queue = new SplQueue();
         $queue->enqueue('trigger');
         $queueProperty->setValue($program, $queue);
         $modelProperty->setValue($program, $model);
-        $runningProperty->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $drainMethod->invoke($program);
 
-        self::assertFalse(
-            $runningProperty->getValue($program),
+        self::assertNotSame(
+            ProgramState::Running,
+            $program->state(),
             'Program should force-quit after consecutive errors instead of looping forever'
         );
     }
@@ -1009,7 +1005,7 @@ final class ProgramTest extends TestCase
     public function aSecondDrainInTheSameTickContinuesTheBudgetInsteadOfBuyingAFreshOne(): void
     {
         $clock = new TestClock(0.0);
-        $program = $this->buildTickableProgram()->withClock($clock);
+        $program = $this->buildTickableProgram($clock);
 
         $model = new class($clock) implements Model {
             public int $updates = 0;
@@ -1043,7 +1039,7 @@ final class ProgramTest extends TestCase
         }
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $program->tick();
 
@@ -1290,7 +1286,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($countingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         for ($i = 0; $i < 15; ++$i) {
@@ -1331,7 +1327,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($alternatingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $alternatingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         for ($i = 0; $i < 50; ++$i) {
@@ -1357,7 +1353,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
@@ -1400,7 +1396,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
@@ -1445,7 +1441,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         $queue->enqueue(new ErrorMsg(new RuntimeException('original'), ErrorSource::Render));
@@ -1454,7 +1450,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
-        self::assertTrue($reflection->getProperty('running')->getValue($program), 'A single throwing errorHandler call must not stop the program');
+        self::assertSame(ProgramState::Running, $program->state(), 'A single throwing errorHandler call must not stop the program');
         self::assertTrue($tickReceived, 'Messages after the handled ErrorMsg must still be processed');
     }
 
@@ -1491,7 +1487,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
@@ -1736,7 +1732,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($constantRevisionModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $constantRevisionModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, false);
 
         $queue = new SplQueue();
@@ -1781,7 +1777,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($changingRevisionModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $changingRevisionModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, false);
 
         $queue = new SplQueue();
@@ -1815,7 +1811,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($changingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $changingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, false);
 
         $queue = new SplQueue();
@@ -1859,7 +1855,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($observingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('width')->setValue($program, 120);
         $reflection->getProperty('height')->setValue($program, 40);
 
@@ -1904,7 +1900,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($observingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('width')->setValue($program, 120);
         $reflection->getProperty('height')->setValue($program, 40);
 
@@ -1946,7 +1942,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($observingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('width')->setValue($program, 120);
         $reflection->getProperty('height')->setValue($program, 40);
 
@@ -2134,7 +2130,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($countingModel)->withClock(new TestClock(100.0));
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         for ($index = 0; $index < 1_100; ++$index) {
@@ -2146,6 +2142,51 @@ final class ProgramTest extends TestCase
 
         self::assertSame(1_024, $countingModel->updates);
         self::assertCount(76, $queue, 'A message storm must yield back to rendering and the event loop');
+    }
+
+    #[Test]
+    public function aSlowDrainYieldsOnceItHasTakenFiftyMilliseconds(): void
+    {
+        $clock = new TestClock(100.0);
+        $slowModel = new class($clock) implements Model {
+            public int $updates = 0;
+
+            public function __construct(private readonly TestClock $clock)
+            {
+            }
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                ++$this->updates;
+                $this->clock->advance(0.01);
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderPass $pass): void
+            {
+            }
+        };
+
+        $program = Program::new($slowModel)->withClock($clock);
+        $reflection = new ReflectionClass($program);
+        $reflection->getProperty('model')->setValue($program, $slowModel);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
+
+        $queue = new SplQueue();
+        for ($index = 0; $index < 20; ++$index) {
+            $queue->enqueue(new TestMessage((string)$index));
+        }
+        $reflection->getProperty('messageQueue')->setValue($program, $queue);
+
+        $reflection->getMethod('drainMessageQueue')->invoke($program);
+
+        self::assertSame(5, $slowModel->updates);
     }
 
     #[Test]
@@ -2180,7 +2221,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, true);
         $reflection->getProperty('lastRender')->setValue($program, 0.0);
 
@@ -2406,7 +2447,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, true);
         $reflection->getProperty('lastRender')->setValue($program, 0.0);
 
@@ -2437,7 +2478,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, false);
         $reflection->getProperty('lastRender')->setValue($program, microtime(true));
 
@@ -2495,7 +2536,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, false);
         $reflection->getProperty('lastRender')->setValue($program, microtime(true));
 
@@ -2877,15 +2918,13 @@ final class ProgramTest extends TestCase
         $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
         $runTick = $reflection->getMethod('runTick');
-        $running = $reflection->getProperty('running');
-
-        for ($tick = 0; $tick < 100 && $running->getValue($program) === true; ++$tick) {
+        for ($tick = 0; $tick < 100 && $program->state() === ProgramState::Running; ++$tick) {
             $clock->advance(1.0);
             $runTick->invoke($program);
         }
         $ticker->stop();
 
-        self::assertFalse($running->getValue($program), 'A render that fails every frame must end the program, not repaint nothing forever');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'A render that fails every frame must end the program, not repaint nothing forever');
         self::assertLessThanOrEqual(10, $alwaysThrowingModel->renderAttempts, 'The consecutive-failure threshold bounds the retries');
     }
 
@@ -2991,7 +3030,7 @@ final class ProgramTest extends TestCase
         }
         $ticker->stop();
 
-        self::assertTrue($reflection->getProperty('running')->getValue($program));
+        self::assertSame(ProgramState::Running, $program->state());
     }
 
     #[Test]
@@ -3324,7 +3363,7 @@ final class ProgramTest extends TestCase
 
         $program->tick();
 
-        self::assertFalse($reflection->getProperty('running')->getValue($program), 'tick must propagate QuitMsg → running=false');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'tick must propagate QuitMsg → running=false');
         self::assertSame(0, $renderCount, 'After QuitMsg the early return must skip renderFrame, even when isDirty=true and budget met');
     }
 
@@ -3427,7 +3466,7 @@ final class ProgramTest extends TestCase
             }
         };
 
-        $program = $this->buildTickableProgram()->withFps(1.0);
+        $program = $this->buildTickableProgram(framesPerSecond: 1.0);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
         $reflection->getProperty('isDirty')->setValue($program, true);
@@ -3781,11 +3820,11 @@ final class ProgramTest extends TestCase
     {
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $reflection->getMethod('teardown')->invoke($program);
 
-        self::assertFalse($reflection->getProperty('running')->getValue($program), 'teardown() must flip running to false so the loop cannot continue after cleanup');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'teardown() must flip running to false so the loop cannot continue after cleanup');
     }
 
     #[Test]
@@ -3839,7 +3878,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($countingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         $queue->enqueue(QuitMsg::Quit);
@@ -3847,7 +3886,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
-        self::assertFalse($reflection->getProperty('running')->getValue($program), 'QuitMsg must stop the program');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'QuitMsg must stop the program');
         self::assertSame(0, $countingModel->updates, 'QuitMsg is a runtime control message — the drain must return immediately instead of falling through to model->update()');
     }
 
@@ -3873,7 +3912,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($throwingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $throwingModel);
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
 
         $queue = new SplQueue();
         for ($messageIndex = 0; $messageIndex < 10; ++$messageIndex) {
@@ -3883,7 +3922,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
-        self::assertFalse($reflection->getProperty('running')->getValue($program), 'Ten consecutive failures must trip the circuit breaker');
+        self::assertNotSame(ProgramState::Running, $program->state(), 'Ten consecutive failures must trip the circuit breaker');
         self::assertSame(9, $queue->count(), 'Failures 1-9 each enqueue an ErrorMsg; the tenth trips the breaker and must return WITHOUT enqueueing another ErrorMsg');
     }
 
@@ -4271,17 +4310,20 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('isDirty')->setValue($program, true);
         $reflection->getProperty('lastRender')->setValue($program, 0.0);
 
         return $program;
     }
 
-    private function buildTickableProgram(): Program
+    private function buildTickableProgram(?Clock $clock = null, float $framesPerSecond = 30.0): Program
     {
         $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel())->withFps(30.0);
+        $program = Program::new($this->createMockModel())->withFps($framesPerSecond);
+        if ($clock !== null) {
+            $program = $program->withClock($clock);
+        }
         $reflection = new ReflectionClass($program);
 
         $reflection->getProperty('terminal')->setValue($program, $terminal);
@@ -4292,7 +4334,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('running')->setValue($program, true);
+        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
         $reflection->getProperty('adaptiveTicker')->setValue($program, new AdaptiveTicker(fn () => null));
 

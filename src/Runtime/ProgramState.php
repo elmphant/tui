@@ -8,5 +8,6 @@ enum ProgramState
 {
     case New;
     case Running;
+    case Stopping;
     case Stopped;
 }
