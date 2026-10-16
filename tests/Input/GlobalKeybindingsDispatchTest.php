@@ -25,7 +25,7 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Support\Cloneable;
-use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
+use Elmphant\Tui\Tests\Application\Support\CopyableTestApp;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Prose\Text;
