@@ -297,7 +297,7 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
-    public function aPasteThatNeverEndsIsDeliveredOnTheTimeoutAndKeysWorkAgain(): void
+    public function aPasteThatNeverEndsLetsKeysThroughAfterASecondTimeout(): void
     {
         $pastes = [];
         $sequences = [];
@@ -309,9 +309,29 @@ final class StdinBufferTest extends TestCase
         $buffer->process("\x1b[200~abc");
         self::assertNotNull($buffer->flushDelay());
         $buffer->flush();
+        $buffer->process('d');
+        self::assertNotNull($buffer->flushDelay());
+        $buffer->flush();
         $buffer->process('q');
 
-        self::assertSame([['abc'], ['q']], [$pastes, $sequences]);
+        self::assertSame([['abc', 'd'], ['q']], [$pastes, $sequences]);
+    }
+
+    #[Test]
+    public function theRestOfAStalledPasteIsStillAPasteAndNeverKeys(): void
+    {
+        $pastes = [];
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~first ");
+        $buffer->flush();
+        $buffer->process("rm -rf /tmp/x\r\x1b[201~q");
+
+        self::assertSame([['first ', "rm -rf /tmp/x\r"], ['q']], [$pastes, $sequences]);
     }
 
     #[Test]

@@ -21,6 +21,7 @@ final class StdinBuffer
 
     private string $buffer = '';
     private bool $inPaste = false;
+    private bool $pasteStalled = false;
     private string $pasteBuffer = '';
 
     /**
@@ -58,6 +59,7 @@ final class StdinBuffer
                 }
                 $this->buffer = substr($this->buffer, $endPos + 6);
                 $this->inPaste = false;
+                $this->pasteStalled = false;
                 if ($this->onPaste !== null) {
                     ($this->onPaste)($this->pasteBuffer);
                 }
@@ -111,10 +113,21 @@ final class StdinBuffer
 
     public function flush(): void
     {
+        if ($this->inPaste && !$this->pasteStalled) {
+            $this->pasteStalled = true;
+            if ($this->pasteBuffer !== '' && $this->onPaste !== null) {
+                ($this->onPaste)($this->pasteBuffer);
+            }
+            $this->pasteBuffer = '';
+
+            return;
+        }
+
         if ($this->inPaste) {
             $this->pasteBuffer .= $this->buffer;
             $this->buffer = '';
             $this->inPaste = false;
+            $this->pasteStalled = false;
             if ($this->onPaste !== null) {
                 ($this->onPaste)(substr($this->pasteBuffer, 0, self::MAX_PASTE_SIZE));
             }
@@ -138,6 +151,8 @@ final class StdinBuffer
      * that does not start with ESC holds part of a character, which only more of
      * that character can follow, so it waits without a timeout. A paste whose end
      * marker never comes would otherwise swallow every key after it, Ctrl+C too.
+     * A slow link can still send the rest of a paste after the first timeout, so
+     * only the second one gives the keys back.
      */
     public function flushDelay(): ?float
     {
