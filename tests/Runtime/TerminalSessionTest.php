@@ -11,6 +11,7 @@ use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Terminal\Terminal;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
@@ -141,6 +142,28 @@ final class TerminalSessionTest extends TestCase
     }
 
     #[Test]
+    public function aResumeThatCannotReactivateClosesTheSessionAndSaysWhy(): void
+    {
+        $terminal = $this->createMock(Terminal::class);
+        $terminal->method('enableRawMode')->willReturnOnConsecutiveCalls(
+            null,
+            self::throwException(new RuntimeException('stty failed')),
+        );
+        $session = new TerminalSession($terminal, false, false);
+        $session->start();
+        $session->suspend();
+
+        try {
+            $session->resume();
+            self::fail('Expected the resume to fail');
+        } catch (RuntimeException $error) {
+            self::assertSame('stty failed', $error->getMessage());
+        }
+
+        self::assertSame(TerminalSessionState::Closed, $session->state());
+    }
+
+    #[Test]
     public function closeIsIdempotentAndInlineCleanupUsesTheCurrentHeight(): void
     {
         $terminal = new VirtualTerminal(80, 24);
@@ -246,15 +269,30 @@ final class TerminalSessionTest extends TestCase
         self::assertSame($baseline, ShutdownRestorer::activeCount());
     }
 
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function restorations(): iterable
+    {
+        yield 'raw mode' => ['disableRawMode'];
+        yield 'bracketed paste' => ['disableBracketedPaste'];
+        yield 'cursor' => ['showCursor'];
+        yield 'alt screen' => ['leaveAltScreen'];
+        yield 'mouse tracking' => ['disableMouseTracking'];
+        yield 'kitty protocol' => ['disableKittyProtocol'];
+    }
+
     #[Test]
-    public function aModeThatNeverRestoresKeepsTheSessionRegistered(): void
+    #[DataProvider('restorations')]
+    public function aModeThatNeverRestoresKeepsTheSessionRegistered(string $restoration): void
     {
         $terminal = $this->createMock(Terminal::class);
-        $terminal->method('disableRawMode')->willThrowException(new RuntimeException('stty failed'));
+        $terminal->method($restoration)->willThrowException(new RuntimeException('restore failed'));
 
         $baseline = ShutdownRestorer::activeCount();
-        $session = new TerminalSession($terminal, false, false);
+        $session = new TerminalSession($terminal, true, true);
         $session->start();
+        $session->enableKittyProtocol();
 
         try {
             $session->close();

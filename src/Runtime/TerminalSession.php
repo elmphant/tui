@@ -105,12 +105,9 @@ final class TerminalSession
         }
 
         $this->state = TerminalSessionState::Closed;
-        try {
-            $this->restoreActiveModes(final: true);
-        } finally {
-            if (!$this->hasActiveModes()) {
-                ShutdownRestorer::unregister($this);
-            }
+        $this->restoreActiveModes(final: true);
+        if (!$this->hasActiveModes()) {
+            ShutdownRestorer::unregister($this);
         }
     }
 
