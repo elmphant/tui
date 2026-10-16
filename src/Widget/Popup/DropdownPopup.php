@@ -20,7 +20,7 @@ use Elmphant\Tui\Widget\Widget;
  *
  * Never `Dropdown` itself — the drain would redraw and requeue it
  */
-final readonly class DropdownPopup implements PopupFrame
+final readonly class DropdownPopup implements PopupFrame, Widget
 {
     private const BORDERS = 2;
 
