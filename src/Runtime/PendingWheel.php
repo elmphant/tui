@@ -21,19 +21,12 @@ final class PendingWheel
 
     private ?MouseMsg $last = null;
 
+    /**
+     * A vertical wheel event: anything that is not WheelDown counts as WheelUp.
+     */
     public function add(MouseMsg $message): void
     {
-        $step = match ($message->action) {
-            MouseAction::WheelDown => 1,
-            MouseAction::WheelUp => -1,
-            default => 0,
-        };
-
-        if ($step === 0) {
-            return;
-        }
-
-        $this->notches += $step * max(1, $message->repeat);
+        $this->notches += ($message->action === MouseAction::WheelDown ? 1 : -1) * $message->repeat;
         $this->last = $message;
     }
 

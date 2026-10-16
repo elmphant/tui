@@ -41,6 +41,28 @@ final class PendingWheelTest extends TestCase
         self::assertNull($wheel->take(), 'a hand that went nowhere moves the view nowhere');
     }
 
+    #[Test]
+    public function anEventStandingForSeveralNotchesCountsEachOfThem(): void
+    {
+        $wheel = new PendingWheel();
+
+        $wheel->add($this->notch(MouseAction::WheelUp)->withRepeat(3));
+
+        self::assertSame(3, $wheel->take()?->repeat);
+    }
+
+    #[Test]
+    public function aTakenTotalStartsTheNextOneFromNothing(): void
+    {
+        $wheel = new PendingWheel();
+        $wheel->add($this->notch(MouseAction::WheelDown));
+        $wheel->take();
+
+        $wheel->add($this->notch(MouseAction::WheelDown));
+
+        self::assertSame(1, $wheel->take()?->repeat);
+    }
+
     private function notch(MouseAction $action): MouseMsg
     {
         return new MouseMsg(1, 1, $action, MouseButton::None);
