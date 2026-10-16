@@ -61,7 +61,6 @@ final class ListItemLayout
 
     public static function height(ListItem $item, int $width): int
     {
-        // 0.11µs instead of 0.60µs per item; a list measures every item it holds.
         if ($width >= 1 && $item->description() === '' && CharWidth::stringWidth($item->title()) <= $width) {
             return 1;
         }

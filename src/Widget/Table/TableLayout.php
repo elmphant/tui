@@ -129,9 +129,6 @@ final readonly class TableLayout
         return $this->extents->rowAtLine($this->lineOf($firstRow) + max(0, $line));
     }
 
-    /**
-     * The first row that begins at or after the given line.
-     */
     public function firstRowAtOrAfter(int $line): int
     {
         return $this->extents->firstRowAtOrAfter($line);

@@ -166,8 +166,7 @@ final class Screen
      * The cell arrays are hoisted into locals and compared inline: the diff
      * touches every cell of a dirty row, and a method call per cell costs more
      * than the comparison itself. 2.35ms per 200x50 full repaint through calls,
-     * 1.62ms through locals. A dirty row equal to the front row is skipped whole
-     * before the cell walk: 1.0ms → 0.3ms per 200x60 frame with one cell changed.
+     * 1.62ms through locals.
      *
      * @return list<string>
      */
