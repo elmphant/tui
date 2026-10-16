@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Application;
 
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Widget\FollowsTheKeyboard;

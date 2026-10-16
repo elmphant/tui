@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core;
 
-use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;

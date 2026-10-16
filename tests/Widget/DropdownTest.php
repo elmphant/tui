@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Core\App;
-use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Layout;

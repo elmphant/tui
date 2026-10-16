@@ -2,8 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Application;
 
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Core\PointerFocus;
+use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;

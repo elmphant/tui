@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;

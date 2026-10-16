@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core;
 
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
-use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;

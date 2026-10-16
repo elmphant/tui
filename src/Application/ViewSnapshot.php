@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Application;
 
 use Closure;
 use Elmphant\Tui\Widget\Widget;

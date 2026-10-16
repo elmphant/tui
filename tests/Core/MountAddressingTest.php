@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core;
 
-use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
-use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Core\Mount;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;

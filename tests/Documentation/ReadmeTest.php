@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Documentation;
 
-use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Application\App;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -31,7 +31,7 @@ final class ReadmeTest extends TestCase
         $ratio = 0.42;
         $frame = new \Elmphant\Tui\Rendering\Frame(80, 24);
         $area = \Elmphant\Tui\Layout\Rect::fromSize(80, 24);
-        final readonly class ReadmeApp extends \Elmphant\Tui\Core\App {
+        final readonly class ReadmeApp extends \Elmphant\Tui\Application\App {
             public function view(): \Elmphant\Tui\Widget\Widget
             {
                 return \Elmphant\Tui\Widget\Prose\Text::new('placeholder');

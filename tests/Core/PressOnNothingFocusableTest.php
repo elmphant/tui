@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core;
 
-use Elmphant\Tui\Core\App;
-use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;

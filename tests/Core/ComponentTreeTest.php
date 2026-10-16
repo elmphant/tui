@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core;
 
-use Elmphant\Tui\Core\App;
-use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\ComponentRegistry;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Core\ComponentRegistry;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;

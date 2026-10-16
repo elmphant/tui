@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
-use Elmphant\Tui\Core\App;
-use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;

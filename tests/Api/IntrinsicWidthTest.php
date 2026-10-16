@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Api;
 
-use Elmphant\Tui\Core\Component;
-use Elmphant\Tui\Core\Mount;
+use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;

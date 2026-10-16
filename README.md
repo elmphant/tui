@@ -36,7 +36,8 @@ declare(strict_types=1);
 
 require __DIR__ . '/vendor/autoload.php';
 
-use Elmphant\Tui\Core\{App, Cmd, UpdateResult};
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Core\{Cmd, UpdateResult};
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
@@ -114,7 +115,7 @@ Hooks always return `UpdateResult`: use `UpdateResult::keep($this)` when nothing
 Keep stateful widgets as properties on the model, not local variables rebuilt inside `view()`. `view()` should compose the current state into a widget tree; if you recreate a `TextInput`, `Panel`, `Select`, or `Table` in `view()`, its cursor, selection, scroll, and focus state will be reset.
 
 ```php
-use Elmphant\Tui\Core\{App, Component};
+use Elmphant\Tui\Application\{App, Component};
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Structure\Panel;

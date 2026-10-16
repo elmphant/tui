@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Application;
 
 use Closure;
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Widget\Focus\FocusScope;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\GraftsItsChildren;

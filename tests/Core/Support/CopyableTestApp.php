@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core\Support;
 
-use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Application\App;
 
 /**
  * @internal keeps test fixtures compact by naming what they extend

@@ -38,10 +38,10 @@ parameters:
         # kept rather than store the widget. PHP spells that comparison "==".
         -
             identifier: notEqual.notAllowed
-            path: src/Core/ComponentWriteBack.php
+            path: src/Application/ComponentWriteBack.php
         -
             identifier: equal.notAllowed
-            path: src/Core/ComponentWriteBack.php
+            path: src/Application/ComponentWriteBack.php
         # This analysis reads src only, so it cannot see tests/ using the
         # consumer-facing assertion trait. TerminalAssertionsTest covers it.
         -

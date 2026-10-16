@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Runtime\Trace;
 
-use Elmphant\Tui\Core\App;
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;

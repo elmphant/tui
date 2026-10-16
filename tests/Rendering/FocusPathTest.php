@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
-use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\FocusPath;

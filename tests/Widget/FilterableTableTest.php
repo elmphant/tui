@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;

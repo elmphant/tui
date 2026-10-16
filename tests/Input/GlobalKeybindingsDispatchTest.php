@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Input;
 
-use Elmphant\Tui\Core\Component;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\UpdateResult;
