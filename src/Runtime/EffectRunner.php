@@ -24,6 +24,8 @@ use Revolt\EventLoop;
 use SplQueue;
 use Throwable;
 use UnexpectedValueException;
+use UnitEnum;
+use WeakMap;
 
 /**
  * The effects a program has started and has not finished with.
@@ -72,6 +74,11 @@ final class EffectRunner
     private bool $emittedWhileStarting = false;
 
     /**
+     * @var WeakMap<Message, EffectId> the effect each queued result came from
+     */
+    private WeakMap $producers;
+
+    /**
      * @param SplQueue<Message>             $results  where an effect reports what it produced
      * @param Closure(?Cmd, ?Closure): void $dispatch a timer's callback may answer with a command,
      *                                                and that command may be any command at all
@@ -87,6 +94,7 @@ final class EffectRunner
         private readonly HttpRequestStarter $requestStarter = new HttpRequestStarter(),
         private readonly array $handlers = [],
     ) {
+        $this->producers = new WeakMap();
     }
 
     /**
@@ -224,7 +232,7 @@ final class EffectRunner
                     if ($effect->over) {
                         return;
                     }
-                    $this->report($message, $wrap);
+                    $this->report($message, $wrap, $effect->id);
                     if ($this->startingAHandler) {
                         $this->emittedWhileStarting = true;
 
@@ -296,6 +304,8 @@ final class EffectRunner
      */
     private function cancel(EffectId $id, ?Closure $wrap = null): void
     {
+        $this->dropQueuedResultsOf($id);
+
         $this->tickers = array_values(array_filter(
             $this->tickers,
             static fn (TickerRecord $ticker): bool => $ticker->id === null || !$ticker->id->equals($id),
@@ -339,6 +349,21 @@ final class EffectRunner
             $keptHandled[] = $effect;
         }
         $this->handled = $keptHandled;
+    }
+
+    private function dropQueuedResultsOf(EffectId $id): void
+    {
+        if (count($this->producers) === 0) {
+            return;
+        }
+
+        for ($left = $this->results->count(); $left > 0; --$left) {
+            $message = $this->results->dequeue();
+            $producer = $message instanceof UnitEnum ? null : ($this->producers[$message] ?? null);
+            if ($producer === null || !$producer->equals($id)) {
+                $this->results->enqueue($message);
+            }
+        }
     }
 
     /**
@@ -411,10 +436,10 @@ final class EffectRunner
         foreach ($this->processes as $process) {
             try {
                 foreach ($process->pump() as $message) {
-                    $this->results->enqueue($message);
+                    $this->queue($message, $process->id());
                 }
             } catch (Throwable $error) {
-                $this->results->enqueue($process->map(new ErrorMsg($error, ErrorSource::Process, $process->id())));
+                $this->queue($process->map(new ErrorMsg($error, ErrorSource::Process, $process->id())), $process->id());
                 try {
                     $process->stop();
                 } catch (Throwable) {
@@ -444,10 +469,10 @@ final class EffectRunner
 
             try {
                 foreach ($subscription->read() as $message) {
-                    $this->report($message, $subscription->wrap);
+                    $this->report($message, $subscription->wrap, $subscription->id);
                 }
             } catch (Throwable $error) {
-                $this->report(new ErrorMsg($error, ErrorSource::Listen, $subscription->id), $subscription->wrap);
+                $this->report(new ErrorMsg($error, ErrorSource::Listen, $subscription->id), $subscription->wrap, $subscription->id);
                 $this->stopWatching($subscription);
                 continue;
             }
@@ -484,7 +509,7 @@ final class EffectRunner
                 continue;
             }
 
-            $this->report(new TickMsg($now), $ticker->wrap);
+            $this->report(new TickMsg($now), $ticker->wrap, $ticker->id);
             $kept[] = $ticker->rescheduled($now);
         }
 
@@ -514,19 +539,19 @@ final class EffectRunner
             try {
                 $result = ($timer->callback)();
             } catch (Throwable $error) {
-                $this->report(new ErrorMsg($error, ErrorSource::Timer, $timer->id), $timer->wrap);
+                $this->report(new ErrorMsg($error, ErrorSource::Timer, $timer->id), $timer->wrap, $timer->id);
                 continue;
             }
             if ($result instanceof Cmd) {
                 ($this->dispatch)($result, $timer->wrap);
             } elseif ($result instanceof Message) {
-                $this->report($result, $timer->wrap);
+                $this->report($result, $timer->wrap, $timer->id);
             } elseif ($result !== null) {
                 $this->report(new ErrorMsg(
                     new UnexpectedValueException('Cmd::after() callback must return Message, Cmd, or null'),
                     ErrorSource::Timer,
                     $timer->id,
-                ), $timer->wrap);
+                ), $timer->wrap, $timer->id);
             }
         }
     }
@@ -542,8 +567,17 @@ final class EffectRunner
     /**
      * @param Closure(Message): Message|null $wrap
      */
-    private function report(Message $message, ?Closure $wrap): void
+    private function report(Message $message, ?Closure $wrap, ?EffectId $producer = null): void
     {
-        $this->results->enqueue($wrap === null ? $message : $wrap($message));
+        $this->queue($wrap === null ? $message : $wrap($message), $producer);
+    }
+
+    private function queue(Message $message, ?EffectId $producer): void
+    {
+        // An enum case is one shared instance: tagging it would tag every copy in the queue.
+        if ($producer !== null && !$message instanceof UnitEnum) {
+            $this->producers[$message] = $producer;
+        }
+        $this->results->enqueue($message);
     }
 }

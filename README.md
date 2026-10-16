@@ -283,6 +283,10 @@ Cmd::http('https://example.com/archive', id: $download);
 Cmd::cancel($download); // also works for tick(), after(), exec(), and process()
 ```
 
+A cancel, or a new command under the same id, also drops the results the old
+effect produced that `update()` has not seen yet, so nothing from the old run
+arrives after it.
+
 `Cmd::call()` is an escape hatch for short synchronous side effects. Its callback
 may return a message, another command, or `null`; thrown exceptions are delivered
 as `ErrorMsg` with source `ErrorSource::Call`. It runs on the event-loop thread, so it must not

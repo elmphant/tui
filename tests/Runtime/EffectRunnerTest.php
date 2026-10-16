@@ -17,6 +17,8 @@ use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\HttpRequestStarter;
 use Elmphant\Tui\Testing\TestClock;
+use Elmphant\Tui\Tests\Support\MessageEnvelope;
+use Elmphant\Tui\Tests\Support\TestMessage;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -57,6 +59,38 @@ final class EffectRunnerTest extends TestCase
         $runner->fire($this->clock->now());
 
         self::assertInstanceOf(TickMsg::class, $this->results->dequeue());
+    }
+
+    #[Test]
+    public function aReplacementDropsWhatTheOldRunLeftWaitingAndKeepsEverythingElseInOrder(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0, EffectId::named('load')), null);
+        $runner->run(Cmd::tick(1.0, EffectId::named('clock')), static fn (Message $message): Message => new MessageEnvelope($message));
+        $this->results->enqueue(new TestMessage('before'));
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+        $this->results->enqueue(new TestMessage('after'));
+
+        $runner->run(Cmd::tick(5.0, EffectId::named('load')), null);
+
+        self::assertEquals(
+            [new TestMessage('before'), new MessageEnvelope(new TickMsg($this->clock->now())), new TestMessage('after')],
+            iterator_to_array($this->results, false),
+        );
+    }
+
+    #[Test]
+    public function aCancelDropsWhatTheEffectLeftWaiting(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0, EffectId::named('load')), static fn (Message $message): Message => new MessageEnvelope($message));
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        $runner->run(Cmd::cancel(EffectId::named('load')), null);
+
+        self::assertCount(0, $this->results);
     }
 
     #[Test]
@@ -623,7 +657,7 @@ final class EffectRunnerTest extends TestCase
         $chime = EffectId::named('chime');
         $runner->run(new SoundCmd($chime), null);
         $runner->run(Cmd::cancel($chime), null);
-        $this->results->dequeue();
+        self::assertCount(0, $this->results, 'What it said on starting was still waiting, so the cancel took it too');
         self::assertNotNull($handler->emit);
 
         ($handler->emit)(new TickMsg(3.0));
