@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Dispatch\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -29,6 +30,11 @@ final class LayoutPlan
     private SplObjectStorage $rects;
 
     /**
+     * @var SplObjectStorage<Widget, Rect>
+     */
+    private SplObjectStorage $visibleRects;
+
+    /**
      * A container object may be mounted more than once, so placements are
      * indexed by both object identity and its supplied area.
      *
@@ -39,13 +45,14 @@ final class LayoutPlan
     private function __construct()
     {
         $this->rects = new SplObjectStorage();
+        $this->visibleRects = new SplObjectStorage();
         $this->children = new SplObjectStorage();
     }
 
     public static function resolve(Widget $root, Rect $area): self
     {
         $plan = new self();
-        $plan->walk($root, $area);
+        $plan->walk($root, $area, $area);
 
         return $plan;
     }
@@ -56,6 +63,16 @@ final class LayoutPlan
     public function rects(): SplObjectStorage
     {
         return $this->rects;
+    }
+
+    /**
+     * Each rect cut to what its panes leave on screen: where the pointer can reach it.
+     *
+     * @return SplObjectStorage<Widget, Rect>
+     */
+    public function visibleRects(): SplObjectStorage
+    {
+        return $this->visibleRects;
     }
 
     /**
@@ -73,13 +90,14 @@ final class LayoutPlan
         return $byArea[self::areaKey($area)] ?? null;
     }
 
-    private function walk(Widget $widget, Rect $area): void
+    private function walk(Widget $widget, Rect $area, Rect $visible): void
     {
         if ($widget instanceof SingleMount && $this->rects->offsetExists($widget)) {
             throw new LogicException(sprintf('Widget "%s" is mounted more than once in the same widget tree. Give each place its own instance: the rect is found by object identity, so a second mount would replace the first.', $widget->mountName()));
         }
 
         $this->rects[$widget] = $area;
+        $this->visibleRects[$widget] = $area->intersect($visible);
 
         if (!$widget instanceof WidgetContainer) {
             return;
@@ -97,8 +115,9 @@ final class LayoutPlan
         $byArea[self::areaKey($area)] = $placements;
         $this->children[$widget] = $byArea;
 
+        $clip = $widget instanceof ClipsItsChildren ? $widget->viewport($area)->intersect($visible) : $visible;
         foreach ($placements as [$child, $childArea]) {
-            $this->walk($child, $childArea);
+            $this->walk($child, $childArea, $clip);
         }
     }
 

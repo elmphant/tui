@@ -545,9 +545,10 @@ abstract readonly class App implements RoutesFocus
      *
      * @return array<string, Rect>
      */
-    private function findComponentRects(Rect $screenRect, array $components): array
+    private function findComponentRects(Rect $screenRect, array $components, bool $visible = false): array
     {
-        $rectMap = LayoutSnapshot::rectsFor($this, $screenRect, $this->viewWidget(...));
+        $plan = LayoutSnapshot::planFor($this, $screenRect, $this->viewWidget(...));
+        $rectMap = $visible ? $plan->visibleRects() : $plan->rects();
         $result = [];
 
         // A component derived from a child is not itself in the tree; its widget is.
@@ -713,6 +714,15 @@ abstract readonly class App implements RoutesFocus
             $components = $current->componentRegistry()->all();
         }
         $rects = $current->findComponentRects($screenRect, $components);
+        $visible = $current->findComponentRects($screenRect, $components, visible: true);
+
+        // A child its pane scrolled away still has a rect under whatever is drawn there now.
+        $components = array_values(array_filter(
+            $components,
+            static fn (Component $component): bool => !isset($rects[$component->id->value])
+                || !$message->inRect($rects[$component->id->value])
+                || (isset($visible[$component->id->value]) && $message->inRect($visible[$component->id->value])),
+        ));
         [$updates, $childCommand] = $current->dispatchComponents(
             $components,
             $rects,
@@ -729,7 +739,7 @@ abstract readonly class App implements RoutesFocus
         $landedOn = null;
         if ($message->isClick() || $message->isWheel()) {
             foreach ($current->componentRegistry()->focusables() as $component) {
-                $rect = $rects[$component->id->value] ?? null;
+                $rect = $visible[$component->id->value] ?? null;
 
                 if ($rect === null || !$message->inRect($rect)) {
                     continue;

@@ -25,6 +25,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
+use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focus\HoldsTheKeyboard;
@@ -41,7 +42,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 /**
  * A vertical stack of children in a scrolling viewport.
  */
-final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
+final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -217,6 +218,11 @@ final readonly class ScrollPane implements FollowsTheKeyboard, GraftsItsChildren
         }
 
         return $placed;
+    }
+
+    public function viewport(Rect $area): Rect
+    {
+        return $area;
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

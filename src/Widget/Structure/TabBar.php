@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Choice\Options;
+use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
@@ -37,7 +38,7 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 
-final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsChildren, WidgetContainer, KeybindingsAware, PublishesHints
+final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKeyboard, GraftsItsChildren, WidgetContainer, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -200,6 +201,11 @@ final readonly class TabBar implements Focusable, FollowsTheKeyboard, GraftsItsC
     public function placedChildren(Rect $area): array
     {
         return [...$this->activePane()->placedChildren($this->contentArea($area))];
+    }
+
+    public function viewport(Rect $area): Rect
+    {
+        return $this->contentArea($area);
     }
 
     /**

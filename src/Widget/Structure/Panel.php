@@ -19,6 +19,7 @@ use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
@@ -31,7 +32,7 @@ use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
+final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -249,6 +250,11 @@ final readonly class Panel implements FollowsTheKeyboard, GraftsItsChildren, Key
     public function contentArea(Rect $area): Rect
     {
         return $this->insetIn($area)->inner($area);
+    }
+
+    public function viewport(Rect $area): Rect
+    {
+        return $this->contentArea($area);
     }
 
     private function inset(): Inset
