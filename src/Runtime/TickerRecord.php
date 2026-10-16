@@ -31,13 +31,8 @@ final readonly class TickerRecord
      */
     public function rescheduled(float $now): self
     {
-        $next = $this->fireAt + $this->interval;
+        $missed = floor(($now - $this->fireAt) / $this->interval);
 
-        if ($next <= $now) {
-            $missed = floor(($now - $this->fireAt) / $this->interval);
-            $next = $this->fireAt + ($missed + 1) * $this->interval;
-        }
-
-        return new self($next, $this->interval, $this->id, $this->wrap);
+        return new self($this->fireAt + ($missed + 1) * $this->interval, $this->interval, $this->id, $this->wrap);
     }
 }
