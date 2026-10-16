@@ -15,6 +15,26 @@ final class SgrParserTest extends TestCase
     // --- Reset behavior (L13-18, L22-25) ---
 
     #[Test]
+    public function aColourWithAnEmptyIndexReadsAsTheFirstPaletteEntry(): void
+    {
+        $parser = new SgrParser();
+
+        $parser->parse('38;5;');
+
+        self::assertSame(Color::C256, $parser->foreground);
+    }
+
+    #[Test]
+    public function aTrueColourWithEmptyChannelsReadsAsBlack(): void
+    {
+        $parser = new SgrParser();
+
+        $parser->parse('48;2;;;');
+
+        self::assertSame(Color::TRUE, $parser->background);
+    }
+
+    #[Test]
     public function resetClearsForeground(): void
     {
         $parser = new SgrParser();

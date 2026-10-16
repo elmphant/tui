@@ -19,12 +19,6 @@ final class SgrParser
 
     public function parse(string $params): void
     {
-        if ($params === '' || $params === '0') {
-            $this->reset();
-
-            return;
-        }
-
         $parts = explode(';', $params);
         $partCount = count($parts);
         $index = 0;

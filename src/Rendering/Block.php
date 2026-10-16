@@ -78,7 +78,7 @@ final readonly class Block
         }
 
         if ($this->border !== null) {
-            $this->renderBorder($frame, $borderArea);
+            $this->renderBorder($frame, $borderArea, $this->border);
         }
 
         if ($this->title !== null && $this->title !== '' && $this->border !== null) {
@@ -91,12 +91,8 @@ final readonly class Block
         return new Inset($this->margin, $this->border !== null, $this->padding);
     }
 
-    private function renderBorder(Frame $frame, Rect $area): void
+    private function renderBorder(Frame $frame, Rect $area, BorderStyle $border): void
     {
-        $border = $this->border;
-        if ($border === null) {
-            return;
-        }
         $foreground = $this->borderStyle->foregroundValue();
         $background = $this->borderStyle->backgroundValue();
         $attributes = $this->borderStyle->attributes;
@@ -109,13 +105,11 @@ final readonly class Block
         $horizontalWidth = $right - $left - 1;
         $verticalHeight = $bottom - $top - 1;
 
-        if ($top >= 0 && $top < $frame->height) {
-            $frame->putChar($left, $top, $glyphs->topLeft, $foreground, $background, $attributes);
-            $frame->putChar($right, $top, $glyphs->topRight, $foreground, $background, $attributes);
-            $frame->fillRect($left + 1, $top, $horizontalWidth, 1, $foreground, $background, $attributes, $glyphs->horizontal);
-        }
+        $frame->putChar($left, $top, $glyphs->topLeft, $foreground, $background, $attributes);
+        $frame->putChar($right, $top, $glyphs->topRight, $foreground, $background, $attributes);
+        $frame->fillRect($left + 1, $top, $horizontalWidth, 1, $foreground, $background, $attributes, $glyphs->horizontal);
 
-        if ($bottom >= 0 && $bottom < $frame->height && $bottom !== $top) {
+        if ($bottom !== $top) {
             $frame->putChar($left, $bottom, $glyphs->bottomLeft, $foreground, $background, $attributes);
             $frame->putChar($right, $bottom, $glyphs->bottomRight, $foreground, $background, $attributes);
             $frame->fillRect($left + 1, $bottom, $horizontalWidth, 1, $foreground, $background, $attributes, $glyphs->horizontal);
