@@ -25,4 +25,9 @@ enum TraceEvent: string
      * A frame was due but the frame budget was not yet spent.
      */
     case FrameSkipped = 'frame.skipped';
+
+    /**
+     * Something threw, wherever it was: recorded even when the model swallows the ErrorMsg.
+     */
+    case Error = 'error';
 }

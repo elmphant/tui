@@ -816,6 +816,10 @@ final class Program
                 return;
             }
 
+            if ($message instanceof ErrorMsg) {
+                $this->traceError($message->error, $message->source->value);
+            }
+
             $handledByTheErrorHandler = $message instanceof ErrorMsg && $this->errorHandler !== null;
 
             try {
@@ -929,8 +933,21 @@ final class Program
 
     private function giveUp(Throwable $error): void
     {
+        $this->traceError($error, 'fatal');
         $this->stopRunning();
         $this->fatalError = $error;
+    }
+
+    private function traceError(Throwable $error, string $source): void
+    {
+        $this->tracer?->record(TraceEvent::Error, [
+            'source' => $source,
+            'class' => $error::class,
+            'message' => $error->getMessage(),
+            'file' => $error->getFile(),
+            'line' => $error->getLine(),
+            'trace' => array_slice(explode("\n", $error->getTraceAsString()), 0, 12),
+        ]);
     }
 
     private static function requireModel(Reducer $model): Model

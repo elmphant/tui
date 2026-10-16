@@ -1,0 +1,97 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Runtime\Trace;
+
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Rendering\Context\RenderPass;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Runtime\Model;
+use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\Trace\TraceEvent;
+use Elmphant\Tui\Testing\InMemoryTracer;
+use Elmphant\Tui\Testing\VirtualTerminal;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
+use RuntimeException;
+
+final class ProgramObservabilityTest extends TestCase
+{
+    #[Test]
+    public function anUpdateThatThrowsIsTracedWithWhatWentWrongAndWhere(): void
+    {
+        $tracer = new InMemoryTracer();
+
+        self::pressing(new ScriptedModel(throwOn: 'x'), $tracer, 'x');
+
+        $errors = $tracer->fieldsOf(TraceEvent::Error);
+        self::assertCount(1, $errors);
+        self::assertSame('update', $errors[0]['source']);
+        self::assertSame(RuntimeException::class, $errors[0]['class']);
+        self::assertSame('x went wrong', $errors[0]['message']);
+        self::assertSame(__FILE__, $errors[0]['file']);
+        self::assertIsInt($errors[0]['line']);
+        self::assertIsArray($errors[0]['trace']);
+        self::assertNotSame([], $errors[0]['trace']);
+    }
+
+    #[Test]
+    public function theErrorTheProgramGivesUpOnIsTracedAsFatal(): void
+    {
+        $tracer = new InMemoryTracer();
+
+        try {
+            self::pressing(new ScriptedModel(throwOn: 'x', alsoOnErrors: true), $tracer, 'x');
+            self::fail('ten failed updates in a row end the program');
+        } catch (RuntimeException) {
+        }
+
+        $sources = array_column($tracer->fieldsOf(TraceEvent::Error), 'source');
+        self::assertSame('fatal', end($sources), implode(',', $sources));
+    }
+
+    private static function pressing(Model $model, InMemoryTracer $tracer, string $keys): void
+    {
+        $terminal = new VirtualTerminal(30, 4);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput($keys . 'q'));
+
+        Program::new($model)->withTerminal($terminal)->withTracer($tracer)->start();
+    }
+}
+
+final class ScriptedModel implements Model
+{
+    public function __construct(
+        private readonly ?string $throwOn = null,
+        private readonly bool $alsoOnErrors = false,
+    ) {
+    }
+
+    public function init(): ?Cmd
+    {
+        return null;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof KeyMsg && $message->key === $this->throwOn) {
+            throw new RuntimeException($message->key . ' went wrong');
+        }
+        if ($message instanceof ErrorMsg && $this->alsoOnErrors) {
+            throw new RuntimeException('handling it went wrong too');
+        }
+
+        return new UpdateResult($this, $message instanceof KeyMsg && $message->key === 'q' ? Cmd::quit() : null);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+    }
+}

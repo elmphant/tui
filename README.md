@@ -810,6 +810,7 @@ One JSON object per line, for grepping and totalling:
 | `command` | `command` |
 | `render` | `ms`, `paintMs`, `diffMs`, `bytes`, `blockedMs`, `drawn` |
 | `frame.skipped` | `waitMs` — the frame budget was not yet spent |
+| `error` | `source` (`update`, `render`, `command`, `process`, … or `fatal` for the one the program gave up on), `class`, `message`, `file`, `line`, `trace` — recorded even when the model swallows the `ErrorMsg` |
 
 Every message a widget or command produces reaches the model through one queue,
 and every effect through one dispatch, so these cover the runtime's whole flow —
