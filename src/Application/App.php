@@ -16,7 +16,6 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FocusMsg;
-use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
@@ -84,13 +83,6 @@ abstract readonly class App implements RoutesFocus
 
     final public function update(Message $message, Rect $screenRect, FocusState $focus = new FocusState()): UpdateResult
     {
-        // Kitty keyboard protocol reports Press AND Release for each
-        // keystroke; without dropping Release here, every onKey handler
-        // matching a key would fire twice per physical press.
-        if ($message instanceof KeyMsg && $message->eventType === KeyEventType::Release) {
-            return new UpdateResult($this);
-        }
-
         if ($message instanceof KeyMsg) {
             $action = $this->matchedApplicationAction($message);
             if ($action !== null) {
