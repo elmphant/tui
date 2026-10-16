@@ -10,6 +10,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -26,6 +27,7 @@ use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focus\Navigates;
 use Elmphant\Tui\Widget\Focus\Navigation;
+use Elmphant\Tui\Widget\Layout\ContentBasis;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
@@ -55,6 +57,8 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         private ?Spacing $margin = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private ?Widget $header = null,
+        private ?Widget $footer = null,
     ) {
         $this->pane = $pane ?? ScrollPane::of();
     }
@@ -95,6 +99,24 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     public function add(Widget $child): self
     {
         return $this->withPane($this->pane->add($child));
+    }
+
+    /**
+     * Rows that stay at the top inside the border while the children scroll below.
+     * Drawn only: not a focus stop, and no message is routed to it.
+     */
+    public function withHeader(?Widget $header): self
+    {
+        return $this->cloneWith(header: $header);
+    }
+
+    /**
+     * Rows that stay at the bottom inside the border while the children scroll above.
+     * Drawn only: not a focus stop, and no message is routed to it.
+     */
+    public function withFooter(?Widget $footer): self
+    {
+        return $this->cloneWith(footer: $footer);
     }
 
     /**
@@ -211,14 +233,15 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $inset = $this->insetIn($area);
-        $contentArea = $inset->inner($area);
+        [$headerArea, $rowsArea, $footerArea] = $this->regionsIn($area);
 
-        if ($contentArea->width > 0 && $contentArea->height > 0) {
-            $this->pane->render($frame, $contentArea, $context);
+        foreach ([[$this->header, $headerArea], [$this->pane, $rowsArea], [$this->footer, $footerArea]] as [$part, $partArea]) {
+            if ($part !== null && $partArea->width > 0 && $partArea->height > 0) {
+                $part->render($frame, $partArea, $context);
+            }
         }
 
-        if ($inset->border) {
+        if ($this->insetIn($area)->border) {
             $this->block($context)->render($frame, $area);
         }
     }
@@ -238,12 +261,15 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
             return 0;
         }
 
-        return $this->pane->measureHeight($inner->width) + ($probe->height - $inner->height);
+        return $this->pane->measureHeight($inner->width)
+            + self::rowsOf($this->header, $inner->width)
+            + self::rowsOf($this->footer, $inner->width)
+            + ($probe->height - $inner->height);
     }
 
     /**
-     * Where a child is drawn inside $area, once the border, margin and padding
-     * are taken off.
+     * Where a child is drawn inside $area, once the border, margin, padding,
+     * header and footer are taken off.
      *
      * Public because a caller that keeps a child of its own and feeds it input
      * has to hand it the rect the panel will draw it in; deriving that rect
@@ -251,7 +277,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
      */
     public function contentArea(Rect $area): Rect
     {
-        return $this->insetIn($area)->inner($area);
+        return $this->regionsIn($area)[1];
     }
 
     public function viewport(Rect $area): Rect
@@ -267,6 +293,29 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     private function insetIn(Rect $area): Inset
     {
         return $this->inset()->fitting($area);
+    }
+
+    /**
+     * @return array{Rect, Rect, Rect} header, scrolling rows, footer
+     */
+    private function regionsIn(Rect $area): array
+    {
+        $inner = $this->insetIn($area)->inner($area);
+        $headerRows = min($inner->height, self::rowsOf($this->header, $inner->width));
+        $footerRows = min($inner->height - $headerRows, self::rowsOf($this->footer, $inner->width));
+
+        return [
+            new Rect($inner->x, $inner->y, $inner->width, $headerRows),
+            new Rect($inner->x, $inner->y + $headerRows, $inner->width, $inner->height - $headerRows - $footerRows),
+            new Rect($inner->x, $inner->bottom() - $footerRows, $inner->width, $footerRows),
+        ];
+    }
+
+    private static function rowsOf(?Widget $part, int $width): int
+    {
+        return $part === null || $width < 1
+            ? 0
+            : ContentBasis::of($part, $part->sizing()->rows, Direction::Vertical, $width);
     }
 
     private function block(RenderContext $context): Block
