@@ -40,175 +40,161 @@ final class InputParser
         $position = 0;
 
         while ($position < $length) {
-            $byte = ord($raw[$position]);
+            $step = $raw[$position] === "\x1b"
+                ? self::escapeAt($raw, $position, $length, $flush)
+                : self::byteAt($raw, $position, $length);
 
-            if ($byte === 0x1B) {
-                if ($position + 1 >= $length) {
-                    if ($flush) {
-                        $messages[] = new KeyMsg(Key::Escape);
-                        ++$position;
-                        continue;
-                    }
-
-                    return new InputParseResult($messages, substr($raw, $position));
-                }
-
-                $next = $raw[$position + 1];
-
-                if ($next === '[') {
-                    $result = self::parseCsi($raw, $position, $length);
-                    if ($result !== null) {
-                        $messages[] = $result[0];
-                        $position = $result[1];
-                        continue;
-                    }
-
-                    $end = self::csiEnd($raw, $position, $length);
-
-                    if ($end === null) {
-                        if ($flush) {
-                            self::emitRemainderAsLiterals($raw, $position, $length, $messages);
-
-                            return new InputParseResult($messages);
-                        }
-
-                        return new InputParseResult($messages, substr($raw, $position));
-                    }
-
-                    // Whole, and no key of ours: the terminal answering a question
-                    // rather than anything the reader pressed.
-                    $position = $end;
-                    continue;
-                }
-
-                if ($next === 'O') {
-                    if ($position + 2 >= $length) {
-                        if ($flush) {
-                            self::emitRemainderAsLiterals($raw, $position, $length, $messages);
-
-                            return new InputParseResult($messages);
-                        }
-
-                        return new InputParseResult($messages, substr($raw, $position));
-                    }
-                    $third = $raw[$position + 2];
-                    $key = match ($third) {
-                        'P' => Key::F1,
-                        'Q' => Key::F2,
-                        'R' => Key::F3,
-                        'S' => Key::F4,
-                        'H' => Key::Home,
-                        'F' => Key::End,
-                        'A', 'a' => Key::Up,
-                        'B', 'b' => Key::Down,
-                        'C', 'c' => Key::Right,
-                        'D', 'd' => Key::Left,
-                        'M' => Key::Enter,
-                        'j' => '*',
-                        'k' => '+',
-                        'l' => ',',
-                        'm' => '-',
-                        'n' => '.',
-                        'o' => '/',
-                        'X' => '=',
-                        'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y' => chr((ord($third) - 0x40) & 0xFF),
-                        default => null,
-                    };
-                    if ($key !== null) {
-                        $messages[] = new KeyMsg($key, ctrl: $third >= 'a' && $third <= 'd');
-                        $position += 3;
-                        continue;
-                    }
-                }
-
-                $altByte = ord($next);
-                if ($altByte >= 0x20 && $altByte < 0x7F) {
-                    $messages[] = new KeyMsg($next, alt: true);
-                    $position += 2;
-                    continue;
-                }
-
-                // A control byte after ESC names its alt-combo rather than a lone
-                // escape — legacy alt+Enter arrives as ESC CR.
-                if ($altByte >= 0x01 && $altByte <= 0x1A || $altByte === 0x7F) {
-                    $namedKey = match ($altByte) {
-                        0x08, 0x7F => Key::Backspace,
-                        0x09 => Key::Tab,
-                        0x0A, 0x0D => Key::Enter,
-                        default => null,
-                    };
-
-                    $messages[] = $namedKey === null
-                        ? new KeyMsg(chr($altByte + 0x60), ctrl: true, alt: true)
-                        : new KeyMsg($namedKey, alt: true);
-                    $position += 2;
-                    continue;
-                }
-
-                $messages[] = new KeyMsg(Key::Escape);
-                ++$position;
-                continue;
+            if ($step === null) {
+                return self::incomplete($raw, $position, $length, $messages, $flush);
             }
 
-            if ($byte === 0x09) {
-                $messages[] = new KeyMsg(Key::Tab);
-                ++$position;
-                continue;
+            [$message, $position] = $step;
+            if ($message !== null) {
+                $messages[] = $message;
+            }
+        }
+
+        return new InputParseResult($messages);
+    }
+
+    /**
+     * The message an escape at $position starts, if any, and where the next
+     * one begins; null while the sequence is still arriving.
+     *
+     * @return array{KeyMsg|MouseMsg|null, int}|null
+     */
+    private static function escapeAt(string $raw, int $position, int $length, bool $flush): ?array
+    {
+        if ($position + 1 >= $length) {
+            return $flush ? [new KeyMsg(Key::Escape), $position + 1] : null;
+        }
+
+        $next = $raw[$position + 1];
+
+        if ($next === '[') {
+            $decoded = self::parseCsi($raw, $position, $length);
+            if ($decoded !== null) {
+                return $decoded;
             }
 
-            if ($byte === 0x0D || $byte === 0x0A) {
-                $messages[] = new KeyMsg(Key::Enter);
-                ++$position;
-                continue;
+            $end = self::csiEnd($raw, $position, $length);
+
+            // Whole, and no key of ours: the terminal answering a question
+            // rather than anything the reader pressed.
+            return $end === null ? null : [null, $end];
+        }
+
+        if ($next === 'O') {
+            if ($position + 2 >= $length) {
+                return null;
             }
 
-            if ($byte === 0x08 || $byte === 0x7F) {
-                $messages[] = new KeyMsg(Key::Backspace);
-                ++$position;
-                continue;
+            $third = $raw[$position + 2];
+            $key = self::ss3Key($third);
+            if ($key !== null) {
+                return [new KeyMsg($key, ctrl: $third >= 'a' && $third <= 'd'), $position + 3];
             }
+        }
 
-            if ($byte >= 0x01 && $byte <= 0x1A) {
-                $messages[] = new KeyMsg(chr($byte + 0x60), ctrl: true);
-                ++$position;
-                continue;
+        $altByte = ord($next);
+        if ($altByte >= 0x20 && $altByte < 0x7F) {
+            return [new KeyMsg($next, alt: true), $position + 2];
+        }
+
+        // A control byte after ESC names its alt-combo rather than a lone
+        // escape — legacy alt+Enter arrives as ESC CR.
+        if ($altByte >= 0x01 && $altByte <= 0x1A || $altByte === 0x7F) {
+            $namedKey = match ($altByte) {
+                0x08, 0x7F => Key::Backspace,
+                0x09 => Key::Tab,
+                0x0A, 0x0D => Key::Enter,
+                default => null,
+            };
+
+            return [
+                $namedKey === null
+                    ? new KeyMsg(chr($altByte + 0x60), ctrl: true, alt: true)
+                    : new KeyMsg($namedKey, alt: true),
+                $position + 2,
+            ];
+        }
+
+        return [new KeyMsg(Key::Escape), $position + 1];
+    }
+
+    private static function ss3Key(string $third): Key|string|null
+    {
+        return match ($third) {
+            'P' => Key::F1,
+            'Q' => Key::F2,
+            'R' => Key::F3,
+            'S' => Key::F4,
+            'H' => Key::Home,
+            'F' => Key::End,
+            'A', 'a' => Key::Up,
+            'B', 'b' => Key::Down,
+            'C', 'c' => Key::Right,
+            'D', 'd' => Key::Left,
+            'M' => Key::Enter,
+            'j' => '*',
+            'k' => '+',
+            'l' => ',',
+            'm' => '-',
+            'n' => '.',
+            'o' => '/',
+            'X' => '=',
+            'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y' => chr((ord($third) - 0x40) & 0xFF),
+            default => null,
+        };
+    }
+
+    /**
+     * Any byte but escape: a control key, a character, or nothing for a byte
+     * no keyboard produces; null while a UTF-8 character is still arriving.
+     *
+     * @return array{KeyMsg|null, int}|null
+     */
+    private static function byteAt(string $raw, int $position, int $length): ?array
+    {
+        $byte = ord($raw[$position]);
+
+        if ($byte >= 0x80) {
+            $characterLength = Grapheme::sequenceLength($byte);
+            if ($position + $characterLength > $length) {
+                return null;
             }
+            $character = substr($raw, $position, $characterLength);
 
+            // A continuation byte on its own, or a sequence that never finished.
+            // Passing it on would put invalid UTF-8 into a model, where mb_/grapheme
+            // calls answer nothing at all.
+            return [mb_check_encoding($character, 'UTF-8') ? new KeyMsg($character) : null, $position + $characterLength];
+        }
+
+        $key = match (true) {
+            $byte === 0x09 => new KeyMsg(Key::Tab),
+            $byte === 0x0D, $byte === 0x0A => new KeyMsg(Key::Enter),
+            $byte === 0x08, $byte === 0x7F => new KeyMsg(Key::Backspace),
+            $byte >= 0x01 && $byte <= 0x1A => new KeyMsg(chr($byte + 0x60), ctrl: true),
             // What is left below space: a terminal sends NUL for ctrl+space, and
             // the four bytes above escape for ctrl with the symbol 0x40 higher.
-            if ($byte <= 0x1F) {
-                $messages[] = new KeyMsg($byte === 0x00 ? ' ' : chr($byte + 0x40), ctrl: true);
-                ++$position;
-                continue;
-            }
+            $byte <= 0x1F => new KeyMsg($byte === 0x00 ? ' ' : chr($byte + 0x40), ctrl: true),
+            default => new KeyMsg($raw[$position]),
+        };
 
-            if ($byte >= 0x80) {
-                $characterLength = Grapheme::sequenceLength($byte);
-                if ($position + $characterLength > $length) {
-                    if ($flush) {
-                        self::emitRemainderAsLiterals($raw, $position, $length, $messages);
+        return [$key, $position + 1];
+    }
 
-                        return new InputParseResult($messages);
-                    }
-
-                    return new InputParseResult($messages, substr($raw, $position));
-                }
-                $character = substr($raw, $position, $characterLength);
-                $position += $characterLength;
-
-                // A byte no keyboard produces: a continuation byte on its own, or a
-                // sequence that never finished. Passing it on would put invalid
-                // UTF-8 into a model, where mb_/grapheme calls answer nothing at all.
-                if (mb_check_encoding($character, 'UTF-8')) {
-                    $messages[] = new KeyMsg($character);
-                }
-
-                continue;
-            }
-
-            $messages[] = new KeyMsg($raw[$position]);
-            ++$position;
+    /**
+     * @param list<KeyMsg|MouseMsg> $messages
+     */
+    private static function incomplete(string $raw, int $position, int $length, array $messages, bool $flush): InputParseResult
+    {
+        if (!$flush) {
+            return new InputParseResult($messages, substr($raw, $position));
         }
+
+        self::emitRemainderAsLiterals($raw, $position, $length, $messages);
 
         return new InputParseResult($messages);
     }
