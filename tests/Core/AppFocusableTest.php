@@ -30,7 +30,6 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
-use Elmphant\Tui\Tests\Core\Support\TestComponents;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
@@ -764,7 +763,7 @@ final readonly class SkippedThenReachedApp extends CopyableTestApp
     {
         return Box::new('Rows')
             ->add(Component::named('read-only', Text::new('chrome')))
-            ->add(TestComponents::bind('reached', 'reached', $this->reached));
+            ->add($this->bindProperty('reached', $this->reached, 'reached'));
     }
 }
 
@@ -780,8 +779,8 @@ final readonly class SwappingOnMouseApp extends CopyableTestApp
     public function view(): Widget
     {
         return $this->swapped
-            ? TestComponents::bind('field', 'after', $this->after)
-            : TestComponents::bind('field', 'before', $this->before);
+            ? $this->bindProperty('after', $this->after, 'field')
+            : $this->bindProperty('before', $this->before, 'field');
     }
 
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
@@ -809,8 +808,8 @@ final readonly class TwoPanelApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('left-panel', 'left', $this->left),
-            TestComponents::bind('right-panel', 'right', $this->right),
+            $this->bindProperty('left', $this->left, 'left-panel'),
+            $this->bindProperty('right', $this->right, 'right-panel'),
         );
     }
 
@@ -840,8 +839,8 @@ final readonly class InterceptApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('left-panel', 'left', $this->left),
-            TestComponents::bind('right-panel', 'right', $this->right),
+            $this->bindProperty('left', $this->left, 'left-panel'),
+            $this->bindProperty('right', $this->right, 'right-panel'),
         );
     }
 
@@ -869,7 +868,7 @@ final readonly class ApplicationShortcutApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('shortcut-widget', 'widget', $this->widget);
+        return $this->bindProperty('widget', $this->widget, 'shortcut-widget');
     }
 
     protected function applicationKeybindings(): Keybindings
@@ -899,7 +898,7 @@ final readonly class UnhandledApplicationShortcutApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('unhandled-shortcut-widget', 'widget', $this->widget);
+        return $this->bindProperty('widget', $this->widget, 'unhandled-shortcut-widget');
     }
 
     protected function applicationKeybindings(): Keybindings
@@ -920,9 +919,9 @@ final readonly class ClippedFocusApp extends CopyableTestApp
     public function view(): Widget
     {
         return Box::new('Clipped')
-            ->add(TestComponents::bind('clipped-visible', 'visible', $this->visible))
-            ->add(TestComponents::bind('clipped-middle', 'middle', $this->middle))
-            ->add(TestComponents::bind('clipped-last', 'clipped', $this->clipped));
+            ->add($this->bindProperty('visible', $this->visible, 'clipped-visible'))
+            ->add($this->bindProperty('middle', $this->middle, 'clipped-middle'))
+            ->add($this->bindProperty('clipped', $this->clipped, 'clipped-last'));
     }
 }
 
@@ -963,9 +962,9 @@ final readonly class ThreePanelApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('first-panel', 'first', $this->first),
-            TestComponents::bind('second-panel', 'second', $this->second),
-            TestComponents::bind('third-panel', 'third', $this->third),
+            $this->bindProperty('first', $this->first, 'first-panel'),
+            $this->bindProperty('second', $this->second, 'second-panel'),
+            $this->bindProperty('third', $this->third, 'third-panel'),
         );
     }
 }
@@ -1055,7 +1054,7 @@ final readonly class GlobalKeybindingsToggleApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('binding-capture', 'widget', $this->widget);
+        return $this->bindProperty('widget', $this->widget, 'binding-capture');
     }
 
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
@@ -1085,7 +1084,7 @@ final readonly class GlobalKeybindingsTickToggleApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('binding-capture', 'widget', $this->widget);
+        return $this->bindProperty('widget', $this->widget, 'binding-capture');
     }
 
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
@@ -1157,7 +1156,7 @@ final readonly class NoOpUpdateResultApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('counting-widget', 'counter', $this->counter);
+        return $this->bindProperty('counter', $this->counter, 'counting-widget');
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -1181,7 +1180,7 @@ final readonly class ToggleUpdateResultApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('counting-widget', 'counter', $this->counter);
+        return $this->bindProperty('counter', $this->counter, 'counting-widget');
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -1204,7 +1203,7 @@ final readonly class CommandOnlyUpdateResultApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('counting-widget', 'counter', $this->counter);
+        return $this->bindProperty('counter', $this->counter, 'counting-widget');
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -1227,7 +1226,7 @@ final readonly class CountingFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('counting-widget', 'counter', $this->counter);
+        return $this->bindProperty('counter', $this->counter, 'counting-widget');
     }
 
     protected function quitBindings(): Keybindings
@@ -1337,7 +1336,7 @@ final readonly class UnchangedFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('unchanged-widget', 'widget', $this->widget);
+        return $this->bindProperty('widget', $this->widget, 'unchanged-widget');
     }
 
     protected function quitBindings(): Keybindings
@@ -1355,7 +1354,7 @@ final readonly class RectCapturingFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('rect-capture', 'widget', $this->widget);
+        return $this->bindProperty('widget', $this->widget, 'rect-capture');
     }
 
     protected function quitBindings(): Keybindings
@@ -1375,8 +1374,8 @@ final readonly class TwoRectCapturingApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('left-capture', 'left', $this->left),
-            TestComponents::bind('right-capture', 'right', $this->right),
+            $this->bindProperty('left', $this->left, 'left-capture'),
+            $this->bindProperty('right', $this->right, 'right-capture'),
         );
     }
 
@@ -1397,8 +1396,8 @@ final readonly class TwoCountingFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('left-counter', 'left', $this->left),
-            TestComponents::bind('right-counter', 'right', $this->right),
+            $this->bindProperty('left', $this->left, 'left-counter'),
+            $this->bindProperty('right', $this->right, 'right-counter'),
         );
     }
 
@@ -1456,8 +1455,8 @@ final readonly class ClickTrackingFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('click-tracker', 'widget', $this->widget),
-            TestComponents::bind('other-widget', 'other', $this->other),
+            $this->bindProperty('widget', $this->widget, 'click-tracker'),
+            $this->bindProperty('other', $this->other, 'other-widget'),
         );
     }
 
@@ -1478,8 +1477,8 @@ final readonly class TwoUnchangedFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('left-widget', 'left', $this->left),
-            TestComponents::bind('right-widget', 'right', $this->right),
+            $this->bindProperty('left', $this->left, 'left-widget'),
+            $this->bindProperty('right', $this->right, 'right-widget'),
         );
     }
 
@@ -1537,8 +1536,8 @@ final readonly class TabConsumingApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('tab-consumer', 'widget', $this->widget),
-            TestComponents::bind('other-widget', 'other', $this->other),
+            $this->bindProperty('widget', $this->widget, 'tab-consumer'),
+            $this->bindProperty('other', $this->other, 'other-widget'),
         );
     }
 
@@ -1593,7 +1592,7 @@ final readonly class MouseCommandFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('click-command', 'widget', $this->widget);
+        return $this->bindProperty('widget', $this->widget, 'click-command');
     }
 
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
@@ -1620,7 +1619,7 @@ final readonly class SingleCommandOnClickApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return TestComponents::bind('click-command', 'widget', $this->widget);
+        return $this->bindProperty('widget', $this->widget, 'click-command');
     }
 
     protected function quitBindings(): Keybindings
@@ -1641,8 +1640,8 @@ final readonly class MouseTrackingFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('click-tracker', 'widget', $this->widget),
-            TestComponents::bind('other-widget', 'other', $this->other),
+            $this->bindProperty('widget', $this->widget, 'click-tracker'),
+            $this->bindProperty('other', $this->other, 'other-widget'),
         );
     }
 
@@ -1708,8 +1707,8 @@ final readonly class TabCommandOnlyApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('tab-command', 'widget', $this->widget),
-            TestComponents::bind('other-widget', 'other', $this->other),
+            $this->bindProperty('widget', $this->widget, 'tab-command'),
+            $this->bindProperty('other', $this->other, 'other-widget'),
         );
     }
 
@@ -1772,8 +1771,8 @@ final readonly class MouseSwapApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::horizontal(
-            TestComponents::bind('left-marker', 'left', $this->left),
-            TestComponents::bind('right-marker', 'right', $this->right),
+            $this->bindProperty('left', $this->left, 'left-marker'),
+            $this->bindProperty('right', $this->right, 'right-marker'),
         );
     }
 

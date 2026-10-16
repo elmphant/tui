@@ -834,7 +834,7 @@ self::assertSame(0.0, $tracer->totalOf(TraceEvent::Render, 'blockedMs'));
 
 ## Static analysis for your own app
 
-The package ships the six PHPStan rules it enforces on itself. Include
+The package ships the five PHPStan rules it enforces on itself. Include
 `rules.neon` and your application is held to the same invariants — the ones a
 test cannot catch because the code is correct today and wrong the day something
 moves:
@@ -851,17 +851,14 @@ includes:
 | `WidgetDoesNotPublishAnAxisPolicyRule` | A `Widget` handing out a bare `Constraint`, which does not say which axis it means; widgets answer with a `Sizing` |
 | `FocusIsAskedWhileDrawingRule` | A widget reading its own focus flag while rendering, which is one message behind by the time the frame is drawn |
 | `ReachableChildrenRule` | A widget rendering a child it never exposes through `WidgetContainer`, leaving anything bound inside it unreachable to focus and discovery |
-| `CloneWithEncapsulationRule` | `cloneWith()` called on someone else's object — an internal keyed write where a typed `withX()` belongs |
 
-The last two take allowlists for the places you have decided otherwise:
+The last one takes an allowlist for the places you have decided otherwise:
 
 ```neon
 parameters:
     elmphant:
         reachableChildrenAllowList:
             - App\Widget\Decoration
-        cloneWithAllowList:
-            - App\Widget\Legacy
 ```
 
 ## Messages

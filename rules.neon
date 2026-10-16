@@ -1,12 +1,10 @@
 parameters:
     elmphant:
         reachableChildrenAllowList: []
-        cloneWithAllowList: []
 
 parametersSchema:
     elmphant: structure([
         reachableChildrenAllowList: listOf(string()),
-        cloneWithAllowList: listOf(string()),
     ])
 
 services:
@@ -30,11 +28,5 @@ services:
         class: Elmphant\Tui\Stan\ReachableChildrenRule
         arguments:
             allowList: %elmphant.reachableChildrenAllowList%
-        tags:
-            - phpstan.rules.rule
-    -
-        class: Elmphant\Tui\Stan\CloneWithEncapsulationRule
-        arguments:
-            allowList: %elmphant.cloneWithAllowList%
         tags:
             - phpstan.rules.rule

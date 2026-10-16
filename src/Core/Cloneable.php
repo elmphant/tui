@@ -9,11 +9,7 @@ namespace Elmphant\Tui\Core;
  */
 trait Cloneable
 {
-    /**
-     * @internal Framework keyed write-back primitive. Public APIs should
-     *           expose typed withX() methods instead.
-     */
-    public function cloneWith(mixed ...$overrides): static
+    protected function cloneWith(mixed ...$overrides): static
     {
         $current = $this->cloneableFields();
         foreach ($overrides as $name => $value) {

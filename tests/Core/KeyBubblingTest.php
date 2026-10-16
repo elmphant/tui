@@ -127,9 +127,7 @@ final readonly class ScrollingPane implements Interactive, WidgetContainer
         return Component::bind(
             'field',
             $this->field,
-            static fn (FieldInsideAPaneApp $app, TextInput $field): FieldInsideAPaneApp => $app->cloneWith(
-                pane: $app->pane->withField($field),
-            ),
+            static fn (FieldInsideAPaneApp $app, TextInput $field): FieldInsideAPaneApp => $app->withPane($app->pane->withField($field)),
         );
     }
 }
@@ -169,6 +167,11 @@ final readonly class FieldInsideAPaneApp extends App
         public ScrollingPane $pane,
         public Bystander $bystander = new Bystander(),
     ) {
+    }
+
+    public function withPane(ScrollingPane $pane): self
+    {
+        return $this->cloneWith(pane: $pane);
     }
 
     public function view(): Widget
