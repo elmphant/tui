@@ -34,6 +34,17 @@ final class ScreenTest extends TestCase
     }
 
     #[Test]
+    public function aFullRedrawClearsEachRowBeforeWritingIt(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+
+        $screen->flush(new Frame(4, 3));
+
+        self::assertSame(3, substr_count($capturedOutput, Ansi::ERASE_TO_LINE_END));
+    }
+
+    #[Test]
     public function aWideEmojiDrawnOverAnOldWideCharacterClearsItsTwoCellsFirst(): void
     {
         $capturedOutput = '';

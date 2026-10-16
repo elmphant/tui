@@ -13,6 +13,7 @@ final class Ansi
     public const CURSOR_DOWN_ONE = "\x1b[B";
 
     public const RESET_STYLE = "\x1b[0m";
+    public const ERASE_TO_LINE_END = "\x1b[K";
     public const DEFAULT_CURSOR_SHAPE = "\x1b[0 q";
 
     public const ENTER_ALT_SCREEN = "\x1b[?1049h";

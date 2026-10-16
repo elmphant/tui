@@ -269,10 +269,12 @@ final class Screen
         $output = [];
 
         for ($row = 0; $row < $backBuffer->height; ++$row) {
+            // Every cell is written anyway, but a terminal that reflowed the old screen
+            // on a resize can keep a wide character's remnant under a narrow one (tmux).
             if ($row === 0) {
-                $output[] = Ansi::HIDE_CURSOR . Ansi::CURSOR_HOME . Ansi::RESET_STYLE;
+                $output[] = Ansi::HIDE_CURSOR . Ansi::CURSOR_HOME . Ansi::RESET_STYLE . Ansi::ERASE_TO_LINE_END;
             } else {
-                $output[] = Ansi::cursorToRowStart($row);
+                $output[] = Ansi::cursorToRowStart($row) . Ansi::ERASE_TO_LINE_END;
             }
 
             $rowOffset = $row * $width;
