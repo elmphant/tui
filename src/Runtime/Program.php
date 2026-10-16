@@ -34,6 +34,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\Trace\JsonlTracer;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Runtime\Trace\Tracer;
 use Elmphant\Tui\Terminal\Ansi;
@@ -301,6 +302,11 @@ final class Program
             throw new LogicException(sprintf('Program can only be started once; current state is %s', $this->state->name));
         }
         $this->state = ProgramState::Running;
+
+        $tracePath = getenv('ELMPHANT_TRACE');
+        if ($this->tracer === null && is_string($tracePath) && $tracePath !== '') {
+            $this->tracer = JsonlTracer::live($tracePath);
+        }
 
         try {
             $this->terminal = $this->injectedTerminal ?? new SystemTerminal();

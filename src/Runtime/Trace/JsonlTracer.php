@@ -23,6 +23,7 @@ final class JsonlTracer implements Tracer
     private function __construct(
         private readonly string $path,
         private readonly Clock $clock,
+        private readonly bool $live = false,
     ) {
         $this->startedAt = $this->clock->now();
     }
@@ -30,6 +31,15 @@ final class JsonlTracer implements Tracer
     public static function toFile(string $path, Clock $clock = new MonotonicClock()): self
     {
         return new self($path, $clock);
+    }
+
+    /**
+     * Writes each event as it happens, so `tail -f` follows a running program
+     * and a crash loses nothing — at the cost of a write per event.
+     */
+    public static function live(string $path, Clock $clock = new MonotonicClock()): self
+    {
+        return new self($path, $clock, live: true);
     }
 
     /**
@@ -50,6 +60,10 @@ final class JsonlTracer implements Tracer
             [...$fields, 'event' => $event->value, 'at' => round($this->clock->now() - $this->startedAt, 6)],
             JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION,
         );
+
+        if ($this->live) {
+            $this->close();
+        }
     }
 
     /**

@@ -57,6 +57,29 @@ final class ProgramObservabilityTest extends TestCase
         self::assertSame('fatal', end($sources), implode(',', $sources));
     }
 
+    #[Test]
+    public function tracingIsSwitchedOnByAnEnvironmentVariable(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'trace');
+        putenv('ELMPHANT_TRACE=' . $path);
+
+        try {
+            $terminal = new VirtualTerminal(30, 4);
+            EventLoop::delay(0.02, static fn () => $terminal->simulateInput('q'));
+            Program::new(new ScriptedModel())->withTerminal($terminal)->start();
+        } finally {
+            putenv('ELMPHANT_TRACE');
+        }
+
+        $events = array_map(
+            static fn (string $line): mixed => json_decode($line, true, flags: JSON_THROW_ON_ERROR)['event'],
+            file($path, FILE_IGNORE_NEW_LINES) ?: [],
+        );
+        unlink($path);
+
+        self::assertContains('update', $events);
+    }
+
     private static function pressing(Model $model, InMemoryTracer $tracer, string $keys): void
     {
         $terminal = new VirtualTerminal(30, 4);

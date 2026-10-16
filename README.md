@@ -825,9 +825,18 @@ the time the terminal made the program wait for it to accept output, and
 `paintMs`/`diffMs` split a frame into drawing it and sending the changed cells —
 that split says whether a slow frame is your widgets or the wire.
 
-Events are buffered and written when the program stops, so tracing costs no
-syscall per event — but a run killed outright writes nothing, so close it from a
-shutdown hook if you need a trace of a crash. In tests use
+To trace without touching the code, set `ELMPHANT_TRACE` and follow the file
+from a second terminal while the app runs:
+
+```bash
+ELMPHANT_TRACE=/tmp/tui.jsonl php app.php
+tail -f /tmp/tui.jsonl
+```
+
+That tracer is `JsonlTracer::live()`: it writes each event as it happens, so a
+crash loses nothing. `JsonlTracer::toFile()` buffers instead and writes when the
+program stops, which costs no syscall per event — use it when profiling, and
+close it from a shutdown hook if you need a trace of a crash. In tests use
 `Elmphant\Tui\Testing\InMemoryTracer` and assert on the flow directly:
 
 ```php fragment

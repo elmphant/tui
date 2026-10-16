@@ -34,6 +34,21 @@ final class JsonlTracerTest extends TestCase
     }
 
     #[Test]
+    public function aLiveTraceIsOnDiskAsEachEventHappens(): void
+    {
+        $tracer = JsonlTracer::live($this->path);
+
+        $tracer->record(TraceEvent::Update, ['message' => 'KeyMsg']);
+
+        self::assertCount(1, $this->lines(), 'readable by tail -f before the program stops');
+
+        $tracer->record(TraceEvent::Render, ['bytes' => 42]);
+        $tracer->close();
+
+        self::assertCount(2, $this->lines());
+    }
+
+    #[Test]
     public function stampsEachEventWithTheSecondsSinceTracingBegan(): void
     {
         $clock = new TestClock(1_000.0);
