@@ -17,6 +17,10 @@ final class HandledEffect
      */
     public bool $over = false;
 
+    public bool $starting = true;
+
+    public bool $emittedWhileStarting = false;
+
     /**
      * @var Closure(): void|null
      */

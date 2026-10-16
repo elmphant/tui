@@ -69,10 +69,6 @@ final class EffectRunner
      */
     private array $handled = [];
 
-    private bool $startingAHandler = false;
-
-    private bool $emittedWhileStarting = false;
-
     /**
      * @var WeakMap<Message, EffectId> the effect each queued result came from
      */
@@ -215,56 +211,74 @@ final class EffectRunner
      */
     private function delegate(Cmd $command, ?Closure $wrap): void
     {
-        $id = $command instanceof NamesItsEffect ? $command->effectId() : null;
+        $handler = $this->handlerFor($command);
+        $effect = new HandledEffect($command instanceof NamesItsEffect ? $command->effectId() : null);
 
-        foreach ($this->handlers as $handler) {
-            if (!$handler->handles($command)) {
-                continue;
-            }
-
-            // What the handler emits before start() returns waits for its stop closure
-            // to be registered, or a cancel answering that message would find nothing.
-            $this->startingAHandler = true;
-            $this->emittedWhileStarting = false;
-            $effect = new HandledEffect($id);
-            try {
-                $effect->stopper = $handler->start($command, function (Message $message) use ($wrap, $effect): void {
-                    if ($effect->over) {
-                        return;
-                    }
-                    $this->report($message, $wrap, $effect->id);
-                    if ($this->startingAHandler) {
-                        $this->emittedWhileStarting = true;
-
-                        return;
-                    }
-                    ($this->wake)();
-                }, function () use ($effect): void {
-                    $effect->over = true;
-                    $this->handled = array_values(array_filter(
-                        $this->handled,
-                        static fn (HandledEffect $held): bool => $held !== $effect,
-                    ));
-                });
-            } catch (Throwable $error) {
-                $this->report(new ErrorMsg($error, ErrorSource::Command, $id), $wrap);
-
-                return;
-            } finally {
-                $this->startingAHandler = false;
-            }
-
-            if ($effect->stopper !== null && !$effect->over) {
-                $this->handled[] = $effect;
-            }
-            if ($this->emittedWhileStarting) {
-                ($this->wake)();
-            }
+        try {
+            $effect->stopper = $handler->start($command, $this->emitterFor($effect, $wrap), $this->finisherFor($effect));
+        } catch (Throwable $error) {
+            $this->report(new ErrorMsg($error, ErrorSource::Command, $effect->id), $wrap);
 
             return;
+        } finally {
+            $effect->starting = false;
+        }
+
+        if ($effect->stopper !== null && !$effect->over) {
+            $this->handled[] = $effect;
+        }
+        if ($effect->emittedWhileStarting) {
+            ($this->wake)();
+        }
+    }
+
+    private function handlerFor(Cmd $command): CommandHandler
+    {
+        foreach ($this->handlers as $handler) {
+            if ($handler->handles($command)) {
+                return $handler;
+            }
         }
 
         throw new LogicException(sprintf('Unknown command type "%s" — the runtime has no dispatcher for it', $command::class));
+    }
+
+    /**
+     * What the handler emits before start() returns waits for its stop closure
+     * to be registered, or a cancel answering that message would find nothing.
+     *
+     * @param Closure(Message):Message|null $wrap
+     *
+     * @return Closure(Message): void
+     */
+    private function emitterFor(HandledEffect $effect, ?Closure $wrap): Closure
+    {
+        return function (Message $message) use ($wrap, $effect): void {
+            if ($effect->over) {
+                return;
+            }
+            $this->report($message, $wrap, $effect->id);
+            if ($effect->starting) {
+                $effect->emittedWhileStarting = true;
+
+                return;
+            }
+            ($this->wake)();
+        };
+    }
+
+    /**
+     * @return Closure(): void
+     */
+    private function finisherFor(HandledEffect $effect): Closure
+    {
+        return function () use ($effect): void {
+            $effect->over = true;
+            $this->handled = array_values(array_filter(
+                $this->handled,
+                static fn (HandledEffect $held): bool => $held !== $effect,
+            ));
+        };
     }
 
     /**
