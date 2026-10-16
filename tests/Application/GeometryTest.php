@@ -28,6 +28,16 @@ final class GeometryTest extends TestCase
     }
 
     #[Test]
+    public function aPlainWidgetIsFoundByTheInstanceTheTreeHolds(): void
+    {
+        $body = Text::new('body');
+        $root = Layout::vertical()->add(Text::new('head'), Constraint::exact(2))->add($body, Constraint::flex());
+
+        self::assertEquals(new Rect(0, 2, 20, 8), Geometry::of($root, Rect::fromSize(20, 10))->rectOf($body));
+        self::assertNull(Geometry::of($root, Rect::fromSize(20, 10))->rectOf(Text::new('body')), 'an equal widget is not the one drawn');
+    }
+
+    #[Test]
     public function aComponentNotInTheTreeIsNowhere(): void
     {
         self::assertNull(Geometry::of(self::headerAndList(), Rect::fromSize(20, 10))->rectOf('details'));

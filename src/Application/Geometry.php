@@ -34,9 +34,18 @@ final readonly class Geometry
         return new self($plan, $components);
     }
 
-    public function rectOf(ComponentId|string $id): ?Rect
+    /**
+     * A component by its id, or a plain widget by the very instance the tree holds.
+     */
+    public function rectOf(ComponentId|string|Widget $target): ?Rect
     {
-        $component = $this->components->get(\is_string($id) ? ComponentId::named($id) : $id);
+        if ($target instanceof Widget) {
+            $rects = $this->plan->rects();
+
+            return $rects->offsetExists($target) ? $rects[$target] : null;
+        }
+
+        $component = $this->components->get(\is_string($target) ? ComponentId::named($target) : $target);
 
         return $component === null ? null : $this->placed($component, $this->plan->rects());
     }
