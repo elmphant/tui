@@ -307,7 +307,7 @@ final class DropdownTest extends TestCase
     #[Test]
     public function anOpenListGoesWhenTheKeyboardMovesToAnotherComponent(): void
     {
-        $driven = ModelHarness::for(new PickerBesideAFieldApp(), 30, 12)->initialize();
+        $driven = ModelHarness::for(new PickerBesideAFieldApp(TextInput::new()), 30, 12)->initialize();
 
         $driven->dispatch(new KeyMsg(' '));
         self::assertStringContainsString(
@@ -413,8 +413,8 @@ final class DropdownTest extends TestCase
 final readonly class PickerBesideAFieldApp extends App
 {
     public function __construct(
+        public TextInput $field,
         public ?Dropdown $picker = null,
-        public TextInput $field = new TextInput(),
     ) {
     }
 

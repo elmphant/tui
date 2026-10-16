@@ -2218,7 +2218,7 @@ final class PanelTest extends TestCase
     #[Test]
     public function aFocusedPanelKeepsItsPaneWhenHandedTheSameChildren(): void
     {
-        $children = [new TextInput(), new TextInput()];
+        $children = [TextInput::new(), TextInput::new()];
         $panel = Panel::new('Log')->withChildren($children);
 
         self::assertSame($panel, $panel->withChildren($children));

@@ -37,17 +37,17 @@ final class ComponentTest extends TestCase
     #[Test]
     public function aReplacementThatReturnsADifferentAppIsRejected(): void
     {
-        $app = new ComponentContractApp();
+        $app = new ComponentContractApp(TextInput::new());
         $component = Component::bind(
             ComponentId::named('input'),
-            new TextInput(),
+            TextInput::new(),
             static fn (App $current, TextInput $input): App => new DisappearingComponentApp($input),
         );
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Component "input" replacement must return');
 
-        $component->replaceIn($app, new TextInput());
+        $component->replaceIn($app, TextInput::new());
     }
 
     #[Test]
@@ -76,7 +76,7 @@ final class ComponentTest extends TestCase
     #[Test]
     public function registryRejectsInvalidAndDuplicateBindings(): void
     {
-        $app = new ComponentContractApp();
+        $app = new ComponentContractApp(TextInput::new());
         $binding = $app->binding();
 
         try {
@@ -93,7 +93,7 @@ final class ComponentTest extends TestCase
     #[Test]
     public function registryFocusablesFiltersNonFocusableComponentsAndReindexesTheList(): void
     {
-        $app = new ComponentContractApp();
+        $app = new ComponentContractApp(TextInput::new());
         $spinner = Component::bind(
             ComponentId::named('spinner'),
             Spinner::new(),
@@ -110,8 +110,8 @@ final class ComponentTest extends TestCase
     #[Test]
     public function replacementReceivesTheCurrentAppInsteadOfACapturedOwner(): void
     {
-        $original = new ComponentContractApp(version: 1);
-        $current = new ComponentContractApp(version: 2);
+        $original = new ComponentContractApp(TextInput::new(), version: 1);
+        $current = new ComponentContractApp(TextInput::new(), version: 2);
         $updatedInput = TextInput::new()->withValue('updated');
 
         $updated = $original->binding()->replaceIn($current, $updatedInput);
@@ -124,7 +124,7 @@ final class ComponentTest extends TestCase
     #[Test]
     public function replacementClosureMustBeStatic(): void
     {
-        $app = new ComponentContractApp();
+        $app = new ComponentContractApp(TextInput::new());
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('must be static');
@@ -139,7 +139,7 @@ final class ComponentTest extends TestCase
     #[Test]
     public function replacementClosureMustNotCaptureObjectState(): void
     {
-        $app = new ComponentContractApp();
+        $app = new ComponentContractApp(TextInput::new());
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('must not capture object state');
@@ -154,7 +154,7 @@ final class ComponentTest extends TestCase
     #[Test]
     public function replacementClosureMayCaptureEnums(): void
     {
-        $app = new ComponentContractApp();
+        $app = new ComponentContractApp(TextInput::new());
         $direction = Direction::Vertical;
 
         $component = Component::bind(
@@ -170,7 +170,7 @@ final class ComponentTest extends TestCase
     public function replacementClosureMayCaptureScalarConfiguration(): void
     {
         $version = 42;
-        $app = new ComponentContractApp();
+        $app = new ComponentContractApp(TextInput::new());
         $component = Component::bind(
             ComponentId::named('configured'),
             $app->input,
@@ -205,7 +205,7 @@ final class ComponentTest extends TestCase
     {
         $ids = array_map(
             static fn (ComponentId $id): string => $id->value,
-            (new RenamedPropertyApp())->focusableIds(),
+            (new RenamedPropertyApp(TextInput::new()))->focusableIds(),
         );
 
         self::assertSame(['search-field'], $ids);
@@ -225,7 +225,7 @@ final class ComponentTest extends TestCase
     #[Test]
     public function aReplacementWritingToTheWrongPropertyIsRefused(): void
     {
-        $app = new MisdirectedComponentApp(TextInput::new());
+        $app = new MisdirectedComponentApp(TextInput::new(), TextInput::new());
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Component "typed" stored its update on another property');
@@ -256,7 +256,7 @@ final readonly class DroppingComponentApp extends App
 final readonly class ComponentContractApp extends App
 {
     public function __construct(
-        public TextInput $input = new TextInput(),
+        public TextInput $input,
         public int $version = 0,
     ) {
     }
@@ -279,7 +279,7 @@ final readonly class ComponentContractApp extends App
 final readonly class PropertyBoundApp extends App
 {
     public function __construct(
-        public TextInput $input = new TextInput(),
+        public TextInput $input,
         public int $version = 0,
     ) {
     }
@@ -292,7 +292,7 @@ final readonly class PropertyBoundApp extends App
 
 final readonly class RenamedPropertyApp extends App
 {
-    public function __construct(public TextInput $input = new TextInput())
+    public function __construct(public TextInput $input)
     {
     }
 
@@ -305,8 +305,8 @@ final readonly class RenamedPropertyApp extends App
 final readonly class MisdirectedComponentApp extends App
 {
     public function __construct(
-        public TextInput $typed = new TextInput(),
-        public TextInput $other = new TextInput(),
+        public TextInput $typed,
+        public TextInput $other,
     ) {
     }
 

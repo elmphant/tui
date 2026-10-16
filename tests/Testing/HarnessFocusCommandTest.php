@@ -27,7 +27,7 @@ final class HarnessFocusCommandTest extends TestCase
     public function aKeyboardPutDownAtStartupStaysDown(): void
     {
         $seen = new ArrayObject();
-        $harness = ModelHarness::for(new KeyboardDownApp($seen), 40, 4);
+        $harness = ModelHarness::for(new KeyboardDownApp($seen, TextInput::new()), 40, 4);
 
         $harness->initialize()->dispatch(new KeyMsg('x'));
 
@@ -41,7 +41,7 @@ final readonly class KeyboardDownApp extends App
 {
     public function __construct(
         private ArrayObject $seen,
-        public TextInput $field = new TextInput(),
+        public TextInput $field,
     ) {
     }
 

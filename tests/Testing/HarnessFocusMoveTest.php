@@ -26,7 +26,7 @@ final class HarnessFocusMoveTest extends TestCase
     #[Test]
     public function aKeyAfterFocusNextReachesTheFollowingComponent(): void
     {
-        $harness = ModelHarness::for(new MovingFieldsApp(), 40, 2);
+        $harness = ModelHarness::for(new MovingFieldsApp(TextInput::new(), TextInput::new()), 40, 2);
 
         $harness->dispatch(new KeyMsg('n'))->dispatch(new KeyMsg('x'));
 
@@ -40,8 +40,8 @@ final class HarnessFocusMoveTest extends TestCase
 final readonly class MovingFieldsApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

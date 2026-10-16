@@ -771,8 +771,8 @@ final readonly class SkippedThenReachedApp extends CopyableTestApp
 final readonly class SwappingOnMouseApp extends CopyableTestApp
 {
     public function __construct(
-        public TextInput $before = new TextInput(),
-        public TextInput $after = new TextInput(),
+        public TextInput $before,
+        public TextInput $after,
         public bool $swapped = false,
     ) {
     }

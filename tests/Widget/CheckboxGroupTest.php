@@ -28,7 +28,7 @@ final class CheckboxGroupTest extends TestCase
     {
         self::assertSame(
             ['↑/↓' => 'move', 'Enter' => 'toggle'],
-            (new CheckboxGroup())->hints(),
+            CheckboxGroup::new([])->hints(),
         );
     }
 
@@ -36,7 +36,7 @@ final class CheckboxGroupTest extends TestCase
     public function aSqueezedGroupScrollsWithinItsOwnRect(): void
     {
         $area = new Rect(0, 1, 30, 3);
-        $group = (new CheckboxGroup(['one', 'two', 'three', 'four', 'five']));
+        $group = CheckboxGroup::new(['one', 'two', 'three', 'four', 'five']);
         for ($step = 0; $step < 4; ++$step) {
             $group = $group->update(new KeyMsg(Key::Down), $area)->model;
         }
@@ -55,7 +55,7 @@ final class CheckboxGroupTest extends TestCase
     public function aLongOptionStopsAtTheRectInsteadOfBleedingPastIt(): void
     {
         $frame = new Frame(20, 2);
-        $group = new CheckboxGroup(['a very long option label', 'b']);
+        $group = CheckboxGroup::new(['a very long option label', 'b']);
 
         $group->render($frame, new Rect(0, 0, 10, 2), new RenderContext(Theme::dark()));
 
@@ -877,7 +877,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function aClickTogglesTheBoxDrawnOnThatRowAfterTheListHasScrolled(): void
     {
-        $group = new CheckboxGroup(options: ['one', 'two', 'three', 'four', 'five', 'six']);
+        $group = CheckboxGroup::new(['one', 'two', 'three', 'four', 'five', 'six']);
         $area = Rect::fromSize(20, 3);
 
         $scrolled = $group;

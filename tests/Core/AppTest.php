@@ -240,7 +240,7 @@ final class AppTest extends TestCase
     #[Test]
     public function onMouseReceivesScreenRectWithFocusables(): void
     {
-        $app = new MouseRectWithFocusablesApp();
+        $app = new MouseRectWithFocusablesApp(0, 0, TextInput::new());
         $screenRect = new Rect(0, 0, 77, 31);
 
         $result = $app->update(new MouseMsg(5, 5, MouseAction::Press, MouseButton::Left), $screenRect);
@@ -491,7 +491,7 @@ final readonly class SearchApp extends CopyableTestApp
      * @param list<string> $changedIds
      */
     public function __construct(
-        public TextInput $query = new TextInput(),
+        public TextInput $query,
         public string $lastSeenQuery = '',
         public array $changedIds = [],
     ) {
@@ -685,9 +685,9 @@ final readonly class MouseRectApp extends CopyableTestApp
 final readonly class MouseRectWithFocusablesApp extends CopyableTestApp
 {
     public function __construct(
-        public int $width = 0,
-        public int $height = 0,
-        public TextInput $input = new TextInput(),
+        public int $width,
+        public int $height,
+        public TextInput $input,
     ) {
     }
 
@@ -876,7 +876,7 @@ final readonly class RectCapturingApp extends CopyableTestApp
 final readonly class NoOpMouseApp extends CopyableTestApp
 {
     public function __construct(
-        public TextInput $input = new TextInput(),
+        public TextInput $input,
     ) {
     }
 

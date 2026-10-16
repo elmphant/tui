@@ -43,7 +43,7 @@ final class FocusRoutingTest extends TestCase
     #[Test]
     public function theNamedComponentReceivesKeysWithoutCarryingTheFlagItself(): void
     {
-        $app = new RoutedFocusApp();
+        $app = new RoutedFocusApp(TextInput::new(), TextInput::new());
 
         $typed = $app->update(
             new KeyMsg('x'),
@@ -60,8 +60,8 @@ final class FocusRoutingTest extends TestCase
 final readonly class RoutedFocusApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

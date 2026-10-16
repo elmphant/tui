@@ -40,7 +40,7 @@ final class ScrollPaneTest extends TestCase
     #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
-        self::assertSame(['↑/↓' => 'scroll'], (new ScrollPane())->hints());
+        self::assertSame(['↑/↓' => 'scroll'], ScrollPane::of()->hints());
     }
 
     /**

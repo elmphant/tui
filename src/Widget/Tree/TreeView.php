@@ -48,10 +48,8 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      * @param list<TreeNode>            $roots
      * @param array<string, true>       $expanded keyed by path, so expanding a node above the cursor cannot move it
      * @param KeyedCache<TreeRows>|null $rowsMemo
-     *
-     * @internal use TreeView::new()
      */
-    public function __construct(
+    private function __construct(
         private array $roots = [],
         private array $expanded = [],
         private ?TreePath $cursor = null,

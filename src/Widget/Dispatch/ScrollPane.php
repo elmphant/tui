@@ -60,10 +60,8 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     /**
      * @param list<Widget>                         $children
      * @param KeyedCache<VerticalStackLayout>|null $layoutMemo
-     *
-     * @internal use ScrollPane::of()
      */
-    public function __construct(
+    private function __construct(
         private array $children = [],
         private int $scrollOffset = 0,
         private ?int $followChild = null,

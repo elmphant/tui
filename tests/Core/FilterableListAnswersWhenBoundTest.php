@@ -31,7 +31,7 @@ final class FilterableListAnswersWhenBoundTest extends TestCase
 
 final readonly class SearchingApp extends App
 {
-    public function __construct(public FilterableList $list = new FilterableList([]))
+    public function __construct(public FilterableList $list)
     {
     }
 

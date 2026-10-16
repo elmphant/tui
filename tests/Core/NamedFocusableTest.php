@@ -47,7 +47,7 @@ final class NamedFocusableTest extends TestCase
         $context->beginFrame(0.0);
         $context->focusOn(new FocusState(ComponentId::named('pane')));
 
-        (new NamedPaneApp())->render($frame, $context);
+        (new NamedPaneApp(TextInput::new()))->render($frame, $context);
 
         self::assertSame('F', $frame->character(6), 'the named pane is the one the tree focused');
     }
@@ -116,7 +116,7 @@ final class NamedFocusableTest extends TestCase
     #[Test]
     public function tabOnAPlainPaneMovesTheKeyboardOn(): void
     {
-        $result = (new PlainPaneBesideAFieldApp())->update(
+        $result = (new PlainPaneBesideAFieldApp(TextInput::new()))->update(
             new KeyMsg(Key::Tab),
             new Rect(0, 0, 20, 2),
             new FocusState(ComponentId::named('pane')),
@@ -144,7 +144,7 @@ final class NamedFocusableTest extends TestCase
 
 final readonly class NamedPaneApp extends App
 {
-    public function __construct(public TextInput $field = new TextInput())
+    public function __construct(public TextInput $field)
     {
     }
 
@@ -218,7 +218,7 @@ final readonly class NamedPlainPaneKeyApp extends App
 
 final readonly class PlainPaneBesideAFieldApp extends App
 {
-    public function __construct(public TextInput $field = new TextInput())
+    public function __construct(public TextInput $field)
     {
     }
 

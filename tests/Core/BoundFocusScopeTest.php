@@ -31,7 +31,7 @@ final class BoundFocusScopeTest extends TestCase
     {
         $ring = array_map(
             static fn (ComponentId $id): string => $id->value,
-            (new BoundToolbarApp())->focusableIds(new FocusState(ComponentId::named('pane'))),
+            (new BoundToolbarApp(new ScopedToolbar([TextInput::new(), TextInput::new()]), TextInput::new()))->focusableIds(new FocusState(ComponentId::named('pane'))),
         );
 
         self::assertSame(['pane'], $ring);
@@ -83,8 +83,8 @@ final readonly class ScopedToolbar implements Interactive, GraftsItsChildren, Fo
 final readonly class BoundToolbarApp extends App
 {
     public function __construct(
-        public ScopedToolbar $toolbar = new ScopedToolbar([new TextInput(), new TextInput()]),
-        public TextInput $pane = new TextInput(),
+        public ScopedToolbar $toolbar,
+        public TextInput $pane,
     ) {
     }
 

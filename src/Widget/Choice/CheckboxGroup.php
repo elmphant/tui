@@ -36,7 +36,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
      * @param list<string> $options
      * @param list<int>    $checked
      */
-    public function __construct(
+    private function __construct(
         private array $options = [],
         private int $cursor = 0,
         private array $checked = [],

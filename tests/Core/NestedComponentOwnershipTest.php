@@ -46,7 +46,7 @@ final class NestedComponentOwnershipTest extends TestCase
 
 final readonly class HostingApp extends App
 {
-    public function __construct(public OwningPanel $panel = new OwningPanel(new TextInput()))
+    public function __construct(public OwningPanel $panel)
     {
     }
 

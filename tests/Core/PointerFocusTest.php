@@ -34,7 +34,7 @@ final class PointerFocusTest extends TestCase
     #[Test]
     public function aClickOnAnotherComponentAsksForTheKeyboardToMoveThere(): void
     {
-        $clicked = (new TwoFieldPointerApp())->update(
+        $clicked = (new TwoFieldPointerApp(TextInput::new(), TextInput::new()))->update(
             new MouseMsg(1, 0, MouseAction::Press, MouseButton::Left),
             new Rect(0, 0, 40, 2),
             new FocusState(ComponentId::named('second')),
@@ -50,7 +50,7 @@ final class PointerFocusTest extends TestCase
     #[Test]
     public function aWheelOverAFieldThatIgnoresItLeavesTheKeyboardWhereItWas(): void
     {
-        $turned = (new TwoFieldPointerApp())->update(
+        $turned = (new TwoFieldPointerApp(TextInput::new(), TextInput::new()))->update(
             new MouseMsg(1, 0, MouseAction::WheelDown, MouseButton::None),
             new Rect(0, 0, 40, 2),
             new FocusState(ComponentId::named('second')),
@@ -74,7 +74,7 @@ final class PointerFocusTest extends TestCase
     #[Test]
     public function aWheelOverNothingLeavesTheKeyboardWhereItWas(): void
     {
-        $turned = (new TwoFieldPointerApp())->update(
+        $turned = (new TwoFieldPointerApp(TextInput::new(), TextInput::new()))->update(
             new MouseMsg(1, 30, MouseAction::WheelDown, MouseButton::None),
             new Rect(0, 0, 40, 2),
             new FocusState(ComponentId::named('second')),
@@ -90,7 +90,7 @@ final class PointerFocusTest extends TestCase
     #[Test]
     public function aClickOnAPlainPaneAsksForTheKeyboard(): void
     {
-        $clicked = (new FieldAbovePlainPaneApp())->update(
+        $clicked = (new FieldAbovePlainPaneApp(TextInput::new()))->update(
             new MouseMsg(0, 1, MouseAction::Press, MouseButton::Left),
             new Rect(0, 0, 20, 2),
         );
@@ -116,7 +116,7 @@ final class PointerFocusTest extends TestCase
     #[Test]
     public function anAppThatMovesTheKeyboardOnAPressIsNotOverruledByTheDefault(): void
     {
-        $driven = ModelHarness::for(new ClickableChromeApp(), 40, 3)->initialize();
+        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->initialize();
 
         $driven->dispatch(new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left));
 
@@ -129,7 +129,7 @@ final class PointerFocusTest extends TestCase
 
 final readonly class ScrolledPaneApp extends App
 {
-    public function __construct(public ScrollPane $pane = new ScrollPane())
+    public function __construct(public ScrollPane $pane)
     {
     }
 
@@ -149,8 +149,8 @@ final readonly class ScrolledPaneApp extends App
 final readonly class TwoFieldPointerApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 
@@ -166,14 +166,14 @@ final readonly class TwoFieldPointerApp extends App
 final readonly class FieldAboveScrollingPaneApp extends App
 {
     public function __construct(
-        public TextInput $field = new TextInput(),
-        public ScrollPane $pane = new ScrollPane(),
+        public TextInput $field,
+        public ScrollPane $pane,
     ) {
     }
 
     public static function seeded(): self
     {
-        return new self(pane: ScrollPane::of(...array_map(
+        return new self(field: TextInput::new(), pane: ScrollPane::of(...array_map(
             static fn (int $row): Text => Text::new('row' . $row),
             range(1, 6),
         )));
@@ -190,7 +190,7 @@ final readonly class FieldAboveScrollingPaneApp extends App
 
 final readonly class FieldAbovePlainPaneApp extends App
 {
-    public function __construct(public TextInput $field = new TextInput())
+    public function __construct(public TextInput $field)
     {
     }
 
@@ -206,8 +206,8 @@ final readonly class FieldAbovePlainPaneApp extends App
 final readonly class ClickableChromeApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

@@ -40,7 +40,7 @@ final class FocusScopeRingTest extends TestCase
     #[Test]
     public function theControlsAreNotOnTheWayBetweenThePanes(): void
     {
-        $app = new RowAboveThePanesApp();
+        $app = new RowAboveThePanesApp(TextInput::new(), TextInput::new(), TextInput::new(), TextInput::new());
 
         self::assertSame(
             ['timeline', 'entry'],
@@ -55,7 +55,7 @@ final class FocusScopeRingTest extends TestCase
     #[Test]
     public function aScopeBelowThePanesWalksItsOwnControlsToo(): void
     {
-        $app = new RowBelowThePanesApp();
+        $app = new RowBelowThePanesApp(TextInput::new(), TextInput::new(), TextInput::new(), TextInput::new());
         $focus = new FocusState(ComponentId::named('sources'));
 
         $command = $app->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 10), $focus)->command;
@@ -76,12 +76,12 @@ final class FocusScopeRingTest extends TestCase
     #[Test]
     public function aTreeThatIsNothingButAScopeStillOffersItsControls(): void
     {
-        self::assertNotSame([], (new NothingButAScopeApp())->focusableIds());
+        self::assertNotSame([], (new NothingButAScopeApp(TextInput::new()))->focusableIds());
     }
 
     private function tabbedFrom(string $id, bool $backwards = false): ?string
     {
-        $app = new RowAboveThePanesApp();
+        $app = new RowAboveThePanesApp(TextInput::new(), TextInput::new(), TextInput::new(), TextInput::new());
         $focus = new FocusState(ComponentId::named($id));
 
         $command = $app->update(
@@ -99,10 +99,10 @@ final class FocusScopeRingTest extends TestCase
 final readonly class RowAboveThePanesApp extends App
 {
     public function __construct(
-        public TextInput $severity = new TextInput(),
-        public TextInput $search = new TextInput(),
-        public TextInput $timeline = new TextInput(),
-        public TextInput $entry = new TextInput(),
+        public TextInput $severity,
+        public TextInput $search,
+        public TextInput $timeline,
+        public TextInput $entry,
     ) {
     }
 
@@ -138,10 +138,10 @@ final readonly class RowAboveThePanesApp extends App
 final readonly class RowBelowThePanesApp extends App
 {
     public function __construct(
-        public TextInput $timeline = new TextInput(),
-        public TextInput $entry = new TextInput(),
-        public TextInput $severity = new TextInput(),
-        public TextInput $sources = new TextInput(),
+        public TextInput $timeline,
+        public TextInput $entry,
+        public TextInput $severity,
+        public TextInput $sources,
     ) {
     }
 
@@ -177,7 +177,7 @@ final readonly class RowBelowThePanesApp extends App
 final readonly class NothingButAScopeApp extends App
 {
     public function __construct(
-        public TextInput $only = new TextInput(),
+        public TextInput $only,
     ) {
     }
 

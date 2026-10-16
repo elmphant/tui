@@ -30,7 +30,7 @@ final class ProgramTracesTheKeyboardMovingTest extends TestCase
         $terminal = new VirtualTerminal(40, 6);
         $terminal->simulateInput("\t");
 
-        Program::new(new TwoNamedFieldsApp())
+        Program::new(new TwoNamedFieldsApp(TextInput::new(), TextInput::new()))
             ->withTerminal($terminal)
             ->withTracer($tracer)
             ->start();
@@ -48,8 +48,8 @@ final class ProgramTracesTheKeyboardMovingTest extends TestCase
 final readonly class TwoNamedFieldsApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

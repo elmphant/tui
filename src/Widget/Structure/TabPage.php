@@ -12,10 +12,13 @@ final readonly class TabPage
 {
     use Cloneable;
 
+    public ScrollPane $pane;
+
     public function __construct(
         public string $label,
-        public ScrollPane $pane = new ScrollPane(),
+        ?ScrollPane $pane = null,
     ) {
+        $this->pane = $pane ?? ScrollPane::of();
     }
 
     public function withLabel(string $label): self

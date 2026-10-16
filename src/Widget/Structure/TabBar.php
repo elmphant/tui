@@ -49,7 +49,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     /**
      * @param list<TabPage> $tabs
      */
-    public function __construct(
+    private function __construct(
         private array $tabs = [],
         private int $selectedTab = 0,
         private ?string $hint = null,
@@ -284,7 +284,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
     private function activePane(): ScrollPane
     {
-        return $this->tabs[$this->selectedTab]->pane ?? new ScrollPane();
+        return $this->tabs[$this->selectedTab]->pane ?? ScrollPane::of();
     }
 
     private function withActivePane(ScrollPane $pane): self

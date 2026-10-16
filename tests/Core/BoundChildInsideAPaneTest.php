@@ -24,7 +24,7 @@ final class BoundChildInsideAPaneTest extends TestCase
     #[Test]
     public function thePaneDrawsItsFocusedBorderWhileABoundChildHoldsTheKeyboard(): void
     {
-        $harness = ModelHarness::for(new BoundFieldFormApp(), 30, 6);
+        $harness = ModelHarness::for(new BoundFieldFormApp(TextInput::new()), 30, 6);
 
         self::assertSame('email', $harness->focused()?->value);
         self::assertSame(
@@ -48,7 +48,7 @@ final class BoundChildInsideAPaneTest extends TestCase
  */
 final readonly class BoundFieldBelowRowsApp extends App
 {
-    public function __construct(public TextInput $email = new TextInput(), public Panel $form = new Panel('Form'))
+    public function __construct(public TextInput $email, public Panel $form = new Panel('Form'))
     {
     }
 
@@ -68,7 +68,7 @@ final readonly class BoundFieldBelowRowsApp extends App
 
 final readonly class BoundFieldFormApp extends App
 {
-    public function __construct(public TextInput $email = new TextInput(), public int $scroll = 0)
+    public function __construct(public TextInput $email, public int $scroll = 0)
     {
     }
 

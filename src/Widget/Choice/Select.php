@@ -31,7 +31,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
     /**
      * @param list<string> $options
      */
-    public function __construct(
+    private function __construct(
         private array $options = [],
         private int $cursor = 0,
         private int $selected = -1,

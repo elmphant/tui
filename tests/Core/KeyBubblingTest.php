@@ -36,7 +36,7 @@ final class KeyBubblingTest extends TestCase
     #[Test]
     public function theEnclosingComponentAnswersWhatTheFocusedOneIgnored(): void
     {
-        $driven = ModelHarness::for(new FieldInsideAPaneApp(), 20, 4)->initialize();
+        $driven = ModelHarness::for(new FieldInsideAPaneApp(new ScrollingPane(TextInput::new())), 20, 4)->initialize();
 
         $driven->dispatch(new KeyMsg(Key::Down));
 
@@ -46,7 +46,7 @@ final class KeyBubblingTest extends TestCase
     #[Test]
     public function aKeyTheFocusedComponentAnswersNeverLeavesIt(): void
     {
-        $driven = ModelHarness::for(new FieldInsideAPaneApp(), 20, 4)->initialize();
+        $driven = ModelHarness::for(new FieldInsideAPaneApp(new ScrollingPane(TextInput::new())), 20, 4)->initialize();
 
         $driven->dispatch(new KeyMsg('x'));
 
@@ -57,7 +57,7 @@ final class KeyBubblingTest extends TestCase
     #[Test]
     public function aComponentThatDoesNotEncloseTheFocusedOneIsLeftAlone(): void
     {
-        $driven = ModelHarness::for(new FieldInsideAPaneApp(), 20, 4)->initialize();
+        $driven = ModelHarness::for(new FieldInsideAPaneApp(new ScrollingPane(TextInput::new())), 20, 4)->initialize();
 
         $driven->dispatch(new KeyMsg(Key::Down));
 
@@ -79,7 +79,7 @@ final readonly class ScrollingPane implements Interactive, WidgetContainer
     use Cloneable;
 
     public function __construct(
-        public TextInput $field = new TextInput(),
+        public TextInput $field,
         public int $scrolled = 0,
     ) {
     }
@@ -166,7 +166,7 @@ final readonly class FieldInsideAPaneApp extends App
     use Cloneable;
 
     public function __construct(
-        public ScrollingPane $pane = new ScrollingPane(),
+        public ScrollingPane $pane,
         public Bystander $bystander = new Bystander(),
     ) {
     }

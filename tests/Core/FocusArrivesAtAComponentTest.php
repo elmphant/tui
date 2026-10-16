@@ -48,7 +48,7 @@ final class FocusArrivesAtAComponentTest extends TestCase
     #[DataProvider('waysToCarryAFocusMove')]
     public function aFocusMoveIsHonouredHoweverTheCommandCarriesIt(string $key): void
     {
-        $harness = ModelHarness::for(new WrappedFocusApp(), 40, 10);
+        $harness = ModelHarness::for(new WrappedFocusApp(TextInput::new(), TextInput::new()), 40, 10);
 
         $harness->dispatch(new KeyMsg($key));
 
@@ -113,8 +113,8 @@ final class FocusArrivesAtAComponentTest extends TestCase
 final readonly class WrappedFocusApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 
@@ -140,7 +140,7 @@ final readonly class WrappedFocusApp extends App
 
 final readonly class SeededPaneForm extends App
 {
-    public function __construct(public ScrollPane $pane = new ScrollPane())
+    public function __construct(public ScrollPane $pane)
     {
     }
 

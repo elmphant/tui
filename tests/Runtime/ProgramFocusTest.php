@@ -31,7 +31,7 @@ final class ProgramFocusTest extends TestCase
         $terminal->simulateInput('x');
         $terminal->simulateInput('q');
 
-        $final = Program::new(new FocusCommandApp())->withTerminal($terminal)->start();
+        $final = Program::new(new FocusCommandApp(TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
         self::assertInstanceOf(FocusCommandApp::class, $final);
         self::assertSame('', $final->first->value());
@@ -48,7 +48,7 @@ final class ProgramFocusTest extends TestCase
         $terminal->simulateInput('x');
         $terminal->simulateInput('q');
 
-        $final = Program::new(new FocusCyclingApp())->withTerminal($terminal)->start();
+        $final = Program::new(new FocusCyclingApp(TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
         self::assertInstanceOf(FocusCyclingApp::class, $final);
         self::assertSame('x', $final->first->value());
@@ -66,7 +66,7 @@ final class ProgramFocusTest extends TestCase
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput('q');
 
-        $final = Program::new(new ResizeCountingApp())->withTerminal($terminal)->start();
+        $final = Program::new(new ResizeCountingApp(TextInput::new()))->withTerminal($terminal)->start();
 
         self::assertInstanceOf(ResizeCountingApp::class, $final);
         self::assertSame(1, $final->resizes);
@@ -121,7 +121,7 @@ final class ProgramFocusTest extends TestCase
         $terminal->simulateInput('x');
         $terminal->simulateInput('q');
 
-        $final = Program::new(new FocusCyclingApp())->withTerminal($terminal)->start();
+        $final = Program::new(new FocusCyclingApp(TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
         self::assertInstanceOf(FocusCyclingApp::class, $final);
         self::assertSame('', $final->first->value());
@@ -136,7 +136,7 @@ final class ProgramFocusTest extends TestCase
         $terminal->simulateInput('x');
         $terminal->simulateInput('q');
 
-        $final = Program::new(new FocusCyclingApp())->withTerminal($terminal)->start();
+        $final = Program::new(new FocusCyclingApp(TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
         self::assertInstanceOf(FocusCyclingApp::class, $final);
         self::assertSame('', $final->first->value());
@@ -151,7 +151,7 @@ final class ProgramFocusTest extends TestCase
         $terminal->simulateInput('x');
         $terminal->simulateInput('q');
 
-        $final = Program::new(new TabFromAPlacedFocusApp())->withTerminal($terminal)->start();
+        $final = Program::new(new TabFromAPlacedFocusApp(TextInput::new(), TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
         self::assertInstanceOf(TabFromAPlacedFocusApp::class, $final);
         self::assertSame('', $final->first->value());
@@ -163,9 +163,9 @@ final class ProgramFocusTest extends TestCase
 final readonly class TabFromAPlacedFocusApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
-        public TextInput $third = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
+        public TextInput $third,
     ) {
     }
 
@@ -191,7 +191,7 @@ final readonly class TabFromAPlacedFocusApp extends App
 
 final readonly class SeededPaneApp extends App
 {
-    public function __construct(public ScrollPane $pane = new ScrollPane())
+    public function __construct(public ScrollPane $pane)
     {
     }
 
@@ -230,7 +230,7 @@ final readonly class SeededPaneApp extends App
 final readonly class ResizeCountingApp extends App
 {
     public function __construct(
-        public TextInput $field = new TextInput(),
+        public TextInput $field,
         public int $resizes = 0,
     ) {
     }
@@ -300,8 +300,8 @@ final readonly class PaneCyclingApp extends App
 final readonly class FocusCyclingApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 
@@ -327,8 +327,8 @@ final readonly class FocusCyclingApp extends App
 final readonly class FocusCommandApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

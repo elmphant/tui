@@ -3479,7 +3479,7 @@ final readonly class TwoFieldsInATabApp extends App
 
     public function bar(): TabBar
     {
-        return $this->bar ?? TabBar::new()->addTab('Form')->add(new TextInput())->add(new TextInput());
+        return $this->bar ?? TabBar::new()->addTab('Form')->add(TextInput::new())->add(TextInput::new());
     }
 
     public function view(): Widget

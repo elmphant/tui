@@ -31,7 +31,7 @@ final class LooseKeyboardTest extends TestCase
     #[Test]
     public function aStopThatBuildsItsOwnPaneLightsTheFieldInside(): void
     {
-        $harness = ModelHarness::for(new InlinePaneApp(), 40, 8);
+        $harness = ModelHarness::for(new InlinePaneApp(new InlinePane(TextInput::new())), 40, 8);
 
         self::assertSame('pane', $harness->focused()?->value);
         self::assertNotNull(
@@ -43,7 +43,7 @@ final class LooseKeyboardTest extends TestCase
 
 final readonly class InlinePaneApp extends App
 {
-    public function __construct(public InlinePane $pane = new InlinePane())
+    public function __construct(public InlinePane $pane)
     {
     }
 
@@ -59,7 +59,7 @@ final readonly class InlinePaneApp extends App
  */
 final readonly class InlinePane implements Focusable, WidgetContainer
 {
-    public function __construct(private TextInput $field = new TextInput(), private bool $focused = false)
+    public function __construct(private TextInput $field, private bool $focused = false)
     {
     }
 

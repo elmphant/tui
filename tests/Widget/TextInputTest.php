@@ -37,13 +37,13 @@ final class TextInputTest extends TestCase
     #[Test]
     public function itNamesNoKeyWhileThereIsNothingToClear(): void
     {
-        self::assertSame([], (new TextInput())->hints());
+        self::assertSame([], TextInput::new()->hints());
     }
 
     #[Test]
     public function itNamesTheKeyThatEmptiesWhatWasTyped(): void
     {
-        self::assertSame(['Ctrl+U' => 'clear'], (new TextInput())->withValue('typed')->hints());
+        self::assertSame(['Ctrl+U' => 'clear'], TextInput::new()->withValue('typed')->hints());
     }
 
     #[Test]
@@ -1813,11 +1813,10 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderTextLengthUsesCharacterCountNotByteCount(): void
     {
-        $input = new TextInput(
-            value: "\u{1F600}\u{1F601}",
-            cursor: 2,
-            echoMode: EchoMode::Password,
-        );
+        $input = TextInput::new()
+            ->withValue("\u{1F600}\u{1F601}")
+            ->withCursor(2)
+            ->withEchoMode(EchoMode::Password);
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $context = RenderContext::focused(Theme::dark());
@@ -1830,10 +1829,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function placeholderReturnPreventsTextRendering(): void
     {
-        $input = new TextInput(
-            value: '',
-            placeholder: 'Enter...',
-        );
+        $input = TextInput::new('Enter...');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $context = new RenderContext(Theme::dark());
@@ -1848,10 +1844,7 @@ final class TextInputTest extends TestCase
     public function endKeyWithMultibyteValueGoesToCharacterCount(): void
     {
         $multibyteValue = "\u{00E9}\u{00F1}\u{00FC}";
-        $input = new TextInput(
-            value: $multibyteValue,
-            cursor: 0,
-        );
+        $input = TextInput::new()->withValue($multibyteValue)->withCursor(0);
         $area = Rect::fromSize(20, 1);
 
         $result = $input->update(new KeyMsg(Key::End), $area);
@@ -1863,10 +1856,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function clickAtPositionZeroSetsCursorToZero(): void
     {
-        $input = new TextInput(
-            value: 'hello',
-            cursor: 3,
-        );
+        $input = TextInput::new()->withValue('hello')->withCursor(3);
         $area = new Rect(5, 0, 20, 1);
         $click = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
 
@@ -1877,10 +1867,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteWordForwardWithMultibyteCharacters(): void
     {
-        $input = new TextInput(
-            value: "\u{00E9}\u{00F1} world",
-            cursor: 0,
-        );
+        $input = TextInput::new()->withValue("\u{00E9}\u{00F1} world")->withCursor(0);
         $area = Rect::fromSize(20, 1);
 
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), $area);
@@ -1890,10 +1877,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function deleteWordForwardMultibyteInAfterPortion(): void
     {
-        $input = new TextInput(
-            value: "hi \u{00E9}\u{00F1}\u{00FC} end",
-            cursor: 3,
-        );
+        $input = TextInput::new()->withValue("hi \u{00E9}\u{00F1}\u{00FC} end")->withCursor(3);
         $area = Rect::fromSize(20, 1);
 
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), $area);
@@ -1934,10 +1918,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function placeholderTruncatesMultibyteByCharacterCount(): void
     {
-        $input = new TextInput(
-            value: '',
-            placeholder: "\u{00FC}\u{00E9}\u{00F1}\u{00E4}",
-        );
+        $input = TextInput::new("\u{00FC}\u{00E9}\u{00F1}\u{00E4}");
         $frame = new Frame(3, 1);
         $area = new Rect(0, 0, 3, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1956,11 +1937,7 @@ final class TextInputTest extends TestCase
     public function placeholderReturnPreventsSubsequentCodeExecution(): void
     {
         $theme = Theme::dark();
-        $input = new TextInput(
-            value: '',
-            placeholder: 'Hello',
-            decoration: InputDecoration::None,
-        );
+        $input = TextInput::new('Hello')->withDecoration(InputDecoration::None);
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $input->render($frame, $area, new RenderContext($theme));
@@ -1987,10 +1964,7 @@ final class TextInputTest extends TestCase
         // mb_strlen = 1, strlen = 2.
         // With mb_strlen: cursor(1) >= textLength(1) => return null (no deletion).
         // With strlen: cursor(1) >= textLength(2) => false => would try to delete.
-        $input = new TextInput(
-            value: "\u{00E9}",
-            cursor: 1,
-        );
+        $input = TextInput::new()->withValue("\u{00E9}")->withCursor(1);
         $area = Rect::fromSize(20, 1);
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), $area);
         // Should return same instance (null from deleteWordForward => no update)

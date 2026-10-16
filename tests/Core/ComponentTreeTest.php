@@ -36,7 +36,7 @@ final class ComponentTreeTest extends TestCase
     #[Test]
     public function registryDiscoversNestedComponentNodesInVisualOrder(): void
     {
-        $app = new TreeComponentApp();
+        $app = new TreeComponentApp(TextInput::new());
         $spinner = Component::bind(
             ComponentId::named('spinner'),
             Spinner::new(),
@@ -54,7 +54,7 @@ final class ComponentTreeTest extends TestCase
     #[Test]
     public function duplicateComponentIdsInTheWidgetTreeAreRejected(): void
     {
-        $app = new TreeComponentApp();
+        $app = new TreeComponentApp(TextInput::new());
         $input = $app->inputNode();
 
         $this->expectException(LogicException::class);
@@ -97,7 +97,7 @@ final class ComponentTreeTest extends TestCase
     public function registryIsCachedByImmutableOwnerIdentity(): void
     {
         $owner = new stdClass();
-        $root = (new TreeComponentApp())->inputNode();
+        $root = (new TreeComponentApp(TextInput::new()))->inputNode();
         $viewCalls = 0;
         $view = static function () use (&$viewCalls, $root): Widget {
             ++$viewCalls;
@@ -125,7 +125,7 @@ final class ComponentTreeTest extends TestCase
             Spinner::new(),
             static fn (App $current, Spinner $spinner): App => $current,
         );
-        $input = (new TreeComponentApp())->inputNode();
+        $input = (new TreeComponentApp(TextInput::new()))->inputNode();
 
         $registry = ComponentRegistry::fromWidget(Layout::vertical($spinner, $status, $input));
 
@@ -156,7 +156,7 @@ final class ComponentTreeTest extends TestCase
     #[Test]
     public function registryDiscoversComponentsWithoutResolvingLayout(): void
     {
-        $component = (new TreeComponentApp())->inputNode();
+        $component = (new TreeComponentApp(TextInput::new()))->inputNode();
         $root = new StructuralOnlyContainer($component);
 
         $registry = ComponentRegistry::fromWidget($root);
@@ -216,7 +216,7 @@ final readonly class StructuralOnlyContainer implements Widget, WidgetContainer
 
 final readonly class TreeComponentApp extends App
 {
-    public function __construct(public TextInput $input = new TextInput())
+    public function __construct(public TextInput $input)
     {
     }
 

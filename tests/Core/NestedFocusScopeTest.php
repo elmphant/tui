@@ -19,7 +19,7 @@ final class NestedFocusScopeTest extends TestCase
     #[Test]
     public function aScopeNestedInTheHeldOneIsOffItsRing(): void
     {
-        $app = new NestedScopesApp();
+        $app = new NestedScopesApp(TextInput::new(), TextInput::new(), TextInput::new(), TextInput::new());
 
         self::assertSame(
             ['outer'],
@@ -34,10 +34,10 @@ final class NestedFocusScopeTest extends TestCase
 final readonly class NestedScopesApp extends App
 {
     public function __construct(
-        public TextInput $outer = new TextInput(),
-        public TextInput $innerA = new TextInput(),
-        public TextInput $innerB = new TextInput(),
-        public TextInput $pane = new TextInput(),
+        public TextInput $outer,
+        public TextInput $innerA,
+        public TextInput $innerB,
+        public TextInput $pane,
     ) {
     }
 

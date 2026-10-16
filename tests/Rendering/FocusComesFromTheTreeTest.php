@@ -55,7 +55,7 @@ final class FocusComesFromTheTreeTest extends TestCase
         $context->beginFrame(0.0);
         $context->focusOn(new FocusState(ComponentId::named('field')));
 
-        (new MixedTreeApp())->render($frame, $context);
+        (new MixedTreeApp(TextInput::new()))->render($frame, $context);
 
         self::assertSame('u', $frame->character(6), 'the unbound pane was never given the keyboard');
     }
@@ -92,7 +92,7 @@ final readonly class TwoProbeApp extends App
 
 final readonly class MixedTreeApp extends App
 {
-    public function __construct(public TextInput $field = new TextInput())
+    public function __construct(public TextInput $field)
     {
     }
 

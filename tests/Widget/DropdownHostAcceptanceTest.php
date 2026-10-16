@@ -244,7 +244,7 @@ final class DropdownHostAcceptanceTest extends TestCase
 
 final readonly class DropdownPaneApp extends App
 {
-    public function __construct(public ScrollPane $pane = new ScrollPane())
+    public function __construct(public ScrollPane $pane)
     {
     }
 

@@ -38,7 +38,7 @@ final class ProgramFocusPaintTest extends TestCase
         $context->beginFrame(0.0);
         $context->focusOn(new FocusState(ComponentId::named($target)));
 
-        (new FocusPaintApp())->render($frame, $context);
+        (new FocusPaintApp(TextInput::new(), TextInput::new()))->render($frame, $context);
 
         return implode('|', $frame->characters)
             . '#' . implode('|', $frame->foregrounds)
@@ -49,8 +49,8 @@ final class ProgramFocusPaintTest extends TestCase
 final readonly class FocusPaintApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

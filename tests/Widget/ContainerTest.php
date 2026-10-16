@@ -357,7 +357,7 @@ final class ContainerTest extends TestCase
     #[Test]
     public function wrappingAComponentPreservesComponentDiscovery(): void
     {
-        $app = new ContainerHost();
+        $app = new ContainerHost(TextInput::new());
         $component = Component::bind(
             'input',
             $app->input,
@@ -565,7 +565,7 @@ final readonly class EmptyContainerProbe implements Widget
 
 final readonly class ContainerHost extends App
 {
-    public function __construct(public TextInput $input = new TextInput())
+    public function __construct(public TextInput $input)
     {
     }
 

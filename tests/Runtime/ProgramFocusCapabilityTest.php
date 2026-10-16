@@ -52,7 +52,7 @@ final class ProgramFocusCapabilityTest extends TestCase
         $terminal = new VirtualTerminal(40, 6);
         $terminal->simulateInput('x');
 
-        Program::new(new KeyboardStartsWithTheAppApp())
+        Program::new(new KeyboardStartsWithTheAppApp(TextInput::new()))
             ->withTerminal($terminal)
             ->withTracer($tracer)
             ->start();
@@ -69,7 +69,7 @@ final class ProgramFocusCapabilityTest extends TestCase
 final readonly class KeyboardStartsWithTheAppApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
+        public TextInput $first,
     ) {
     }
 

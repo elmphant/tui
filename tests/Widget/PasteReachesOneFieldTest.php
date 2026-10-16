@@ -36,7 +36,7 @@ final class PasteReachesOneFieldTest extends TestCase
 
 final readonly class PasteTargetApp extends App
 {
-    public function __construct(public ScrollPane $pane = new ScrollPane())
+    public function __construct(public ScrollPane $pane)
     {
     }
 

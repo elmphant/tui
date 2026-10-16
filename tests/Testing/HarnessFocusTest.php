@@ -27,7 +27,7 @@ final class HarnessFocusTest extends TestCase
     #[Test]
     public function theFirstComponentDrawsFocusedWithoutBeingAsked(): void
     {
-        $frame = ModelHarness::for(new TwoFieldApp(), 40, 2)->renderFrame();
+        $frame = ModelHarness::for(new TwoFieldApp(TextInput::new(), TextInput::new()), 40, 2)->renderFrame();
 
         self::assertNotSame(
             self::row($frame, 1, 40),
@@ -49,8 +49,8 @@ final class HarnessFocusTest extends TestCase
 final readonly class TwoFieldApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

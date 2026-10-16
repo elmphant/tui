@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Widget\Field\TextInput;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +19,7 @@ final class HarnessDrawsFocusItWasGivenTest extends TestCase
     #[Test]
     public function noComponentDrawsFocusedWhileTheKeyboardIsDown(): void
     {
-        $frame = ModelHarness::for(new TwoFieldsKeyboardDownApp(), 40, 2)
+        $frame = ModelHarness::for(new TwoFieldsKeyboardDownApp(TextInput::new(), TextInput::new()), 40, 2)
             ->initialize()
             ->renderFrame();
 

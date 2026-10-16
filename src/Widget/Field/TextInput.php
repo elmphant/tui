@@ -34,7 +34,7 @@ final readonly class TextInput implements Focusable, KeybindingsAware, Publishes
     use DrawsFocus;
     use KeybindingsAwareBehavior;
 
-    public function __construct(
+    private function __construct(
         private string $value = '',
         private int $cursor = 0,
         private int $scrollOffset = 0,

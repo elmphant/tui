@@ -19,7 +19,7 @@ final class HarnessFocusRoutingTest extends TestCase
     #[Test]
     public function aTypedCharacterReachesTheComponentHoldingTheKeyboard(): void
     {
-        $harness = ModelHarness::for(new TypedFieldsApp(), 40, 2)->dispatch(new KeyMsg('x'));
+        $harness = ModelHarness::for(new TypedFieldsApp(TextInput::new(), TextInput::new()), 40, 2)->dispatch(new KeyMsg('x'));
 
         self::assertSame('x', $harness->model()->left->value());
     }
@@ -28,8 +28,8 @@ final class HarnessFocusRoutingTest extends TestCase
 final readonly class TypedFieldsApp extends App
 {
     public function __construct(
-        public TextInput $left = new TextInput(),
-        public TextInput $right = new TextInput(),
+        public TextInput $left,
+        public TextInput $right,
     ) {
     }
 

@@ -43,9 +43,11 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
      */
     private const CHROME_PROBE_HEIGHT = 1_000;
 
+    private ScrollPane $pane;
+
     public function __construct(
         private string $title = '',
-        private ScrollPane $pane = new ScrollPane(),
+        ?ScrollPane $pane = null,
         private bool $emphasizedBorder = false,
         private ?Style $borderStyleOverride = null,
         private ?Style $focusedBorderStyleOverride = null,
@@ -55,6 +57,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
+        $this->pane = $pane ?? ScrollPane::of();
     }
 
     /**

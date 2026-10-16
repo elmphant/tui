@@ -25,7 +25,7 @@ final class AppFocusCyclingTest extends TestCase
     #[Test]
     public function anAppMayBindFocusCyclingToAKeyOfItsOwn(): void
     {
-        $app = new RebindableFocusApp();
+        $app = new RebindableFocusApp(TextInput::new(), TextInput::new());
 
         $command = $app->update(new KeyMsg('n', ctrl: true), new Rect(0, 0, 40, 6), new FocusState(ComponentId::named('first')))->command;
 
@@ -39,7 +39,7 @@ final class AppFocusCyclingTest extends TestCase
     #[Test]
     public function shiftTabWalksTheOtherWayRound(): void
     {
-        $app = new PlainlyCyclingApp();
+        $app = new PlainlyCyclingApp(TextInput::new(), TextInput::new());
         $onTheSecond = new FocusState(ComponentId::named('second'));
 
         $command = $app->update(
@@ -60,8 +60,8 @@ final class AppFocusCyclingTest extends TestCase
 final readonly class PlainlyCyclingApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 
@@ -85,8 +85,8 @@ final readonly class PlainlyCyclingApp extends App
 final readonly class RebindableFocusApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

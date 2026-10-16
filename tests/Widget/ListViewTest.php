@@ -1974,9 +1974,9 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
-    public function constructorCursorIsFollowedByDefault(): void
+    public function aCursorSetBeforeTheFirstFrameIsFollowed(): void
     {
-        $list = new ListView(items: self::numberedItems(50), cursor: 20);
+        $list = ListView::new(self::numberedItems(50))->withCursor(20);
         $frame = new Frame(20, 5);
 
         $list->render($frame, new Rect(0, 0, 20, 5), new RenderContext(Theme::dark()));

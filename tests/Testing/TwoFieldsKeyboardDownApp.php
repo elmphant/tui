@@ -14,8 +14,8 @@ use Elmphant\Tui\Widget\Widget;
 final readonly class TwoFieldsKeyboardDownApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

@@ -34,7 +34,7 @@ final class ProgramFocusTraceTest extends TestCase
         $terminal = new VirtualTerminal(40, 6);
         $terminal->simulateInput("\tq");
 
-        Program::new(new TwoFieldsThenQuitApp())
+        Program::new(new TwoFieldsThenQuitApp(TextInput::new(), TextInput::new()))
             ->withTerminal($terminal)
             ->withTracer($tracer)
             ->start();
@@ -55,7 +55,7 @@ final class ProgramFocusTraceTest extends TestCase
         $terminal = new VirtualTerminal(40, 6);
         $terminal->simulateInput("\tq");
 
-        Program::new(new TwoFieldsThenQuitApp())
+        Program::new(new TwoFieldsThenQuitApp(TextInput::new(), TextInput::new()))
             ->withTerminal($terminal)
             ->withTracer($tracer)
             ->start();
@@ -80,7 +80,7 @@ final class ProgramFocusTraceTest extends TestCase
         $terminal = new VirtualTerminal(40, 6);
         $terminal->simulateInput("\tq");
 
-        Program::new(new TwoFieldsThenQuitApp())
+        Program::new(new TwoFieldsThenQuitApp(TextInput::new(), TextInput::new()))
             ->withTerminal($terminal)
             ->withTracer($tracer)
             ->start();
@@ -102,7 +102,7 @@ final class ProgramFocusTraceTest extends TestCase
         // Only the tab: quitting in the same read would end the loop before it drew.
         $terminal->simulateInput("\t");
 
-        Program::new(new TwoFieldsLeftRunningApp())
+        Program::new(new TwoFieldsLeftRunningApp(TextInput::new(), TextInput::new()))
             ->withTerminal($terminal)
             ->withTracer($tracer)
             ->withFps(1000.0)
@@ -133,8 +133,8 @@ final class ProgramFocusTraceTest extends TestCase
 final readonly class TwoFieldsLeftRunningApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 
@@ -155,8 +155,8 @@ final readonly class TwoFieldsLeftRunningApp extends App
 final readonly class TwoFieldsThenQuitApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

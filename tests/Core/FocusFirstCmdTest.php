@@ -27,7 +27,7 @@ final class FocusFirstCmdTest extends TestCase
     #[Test]
     public function theKeyboardGoesBackToWhereTheTreeBegins(): void
     {
-        $driven = ModelHarness::for(new WalkedAwayApp(), 40, 2)->initialize();
+        $driven = ModelHarness::for(new WalkedAwayApp(TextInput::new(), TextInput::new()), 40, 2)->initialize();
         $driven->dispatch(new KeyMsg('n'));
 
         $driven->dispatch(new KeyMsg('b'));
@@ -42,8 +42,8 @@ final class FocusFirstCmdTest extends TestCase
 final readonly class WalkedAwayApp extends App
 {
     public function __construct(
-        public TextInput $first = new TextInput(),
-        public TextInput $second = new TextInput(),
+        public TextInput $first,
+        public TextInput $second,
     ) {
     }
 

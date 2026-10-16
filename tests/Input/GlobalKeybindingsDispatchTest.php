@@ -158,7 +158,7 @@ final readonly class PanelledObserverApp extends CopyableTestApp
 final readonly class VimModeApp extends CopyableTestApp
 {
     public function __construct(
-        public Select $select = new Select(options: ['a', 'b', 'c']),
+        public Select $select,
     ) {
     }
 
@@ -239,7 +239,7 @@ final class GlobalKeybindingsDispatchTest extends TestCase
     #[Test]
     public function vimModeAppliedAsGlobalReachesSelect(): void
     {
-        $app = new VimModeApp();
+        $app = new VimModeApp(Select::new(['a', 'b', 'c']));
         $onSelect = new FocusState(ComponentId::named('vim-select'));
 
         $result = $app->update(new KeyMsg('j'), Rect::fromSize(40, 10), $onSelect);

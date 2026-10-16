@@ -64,7 +64,7 @@ final class FocusNothingTest extends TestCase
     {
         $seen = new ArrayObject();
 
-        $result = (new SelfAnsweringApp($seen))
+        $result = (new SelfAnsweringApp($seen, TextInput::new()))
             ->update(new KeyMsg('x'), Rect::fromSize(40, 4), FocusState::nowhere());
 
         self::assertSame(['x'], $seen->getArrayCopy());
@@ -75,7 +75,7 @@ final class FocusNothingTest extends TestCase
 final readonly class StaleFlagApp extends App
 {
     public function __construct(
-        public TextInput $field = new TextInput(),
+        public TextInput $field,
     ) {
     }
 
@@ -93,7 +93,7 @@ final readonly class SelfAnsweringApp extends App
 {
     public function __construct(
         private ArrayObject $seen,
-        public TextInput $field = new TextInput(),
+        public TextInput $field,
     ) {
     }
 

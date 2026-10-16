@@ -19,7 +19,7 @@ final class HarnessFocusOrderTest extends TestCase
     #[Test]
     public function theFirstComponentDrawsFocusedWhateverItIsNamed(): void
     {
-        $frame = ModelHarness::for(new RenamedFieldsApp(), 40, 2)->renderFrame();
+        $frame = ModelHarness::for(new RenamedFieldsApp(TextInput::new(), TextInput::new()), 40, 2)->renderFrame();
 
         self::assertNotSame(
             self::row($frame, 1, 40),
@@ -41,8 +41,8 @@ final class HarnessFocusOrderTest extends TestCase
 final readonly class RenamedFieldsApp extends App
 {
     public function __construct(
-        public TextInput $alpha = new TextInput(),
-        public TextInput $beta = new TextInput(),
+        public TextInput $alpha,
+        public TextInput $beta,
     ) {
     }
 

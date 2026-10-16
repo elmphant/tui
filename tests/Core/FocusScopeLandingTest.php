@@ -37,14 +37,14 @@ final class FocusScopeLandingTest extends TestCase
 final readonly class ScopedFiltersApp extends App
 {
     public function __construct(
-        public Panel $filters = new Panel(),
-        public TextInput $timeline = new TextInput(),
+        public Panel $filters,
+        public TextInput $timeline,
     ) {
     }
 
     public static function seeded(): self
     {
-        return new self(Panel::new('Filters')->add(TextInput::new()->withValue('a'))->add(TextInput::new()->withValue('b')));
+        return new self(Panel::new('Filters')->add(TextInput::new()->withValue('a'))->add(TextInput::new()->withValue('b')), TextInput::new());
     }
 
     public function view(): Widget

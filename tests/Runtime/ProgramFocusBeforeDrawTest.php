@@ -30,7 +30,7 @@ final class ProgramFocusBeforeDrawTest extends TestCase
     {
         $terminal = new VirtualTerminal(40, 12);
         $clock = new TestClock(1000.0);
-        $program = Program::new(new FieldBehindModalApp())->withTerminal($terminal)->withClock($clock);
+        $program = Program::new(new FieldBehindModalApp(TextInput::new()))->withTerminal($terminal)->withClock($clock);
         $caretRow = null;
 
         EventLoop::defer(static function () use ($terminal, $clock, $program, &$caretRow): void {
@@ -50,7 +50,7 @@ final class ProgramFocusBeforeDrawTest extends TestCase
 
 final readonly class FieldBehindModalApp extends App
 {
-    public function __construct(public TextInput $field = new TextInput(), public ?Modal $modal = null)
+    public function __construct(public TextInput $field, public ?Modal $modal = null)
     {
     }
 
