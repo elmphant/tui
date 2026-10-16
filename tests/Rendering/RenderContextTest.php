@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Closure;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Rendering\Context\FocusPath;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Terminal\ColorProfile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class RenderContextTest extends TestCase
 {
@@ -30,6 +33,89 @@ final class RenderContextTest extends TestCase
         $pass->focus->focusOn(new FocusState(ComponentId::named('filter/0')));
 
         self::assertEquals(ComponentId::named('filter/0'), $pass->context->focusedComponent());
+    }
+
+    #[Test]
+    public function aComponentWhoseIdOnlyBeginsLikeTheFocusedOneDoesNotHoldTheKeyboard(): void
+    {
+        $pass = RenderPass::new(Theme::dark());
+        $pass->focus->focusOn(new FocusState(ComponentId::named('tabs10')));
+        $held = null;
+
+        $pass->context->withinComponent(ComponentId::named('tabs1'), static function () use ($pass, &$held): void {
+            $held = $pass->context->hasFocus();
+        });
+
+        self::assertFalse($held);
+    }
+
+    #[Test]
+    public function eachChildLevelReadsTheNextSegmentOfTheFocusedId(): void
+    {
+        $pass = RenderPass::new(Theme::dark());
+        $pass->focus->focusOn(new FocusState(ComponentId::named('form/0/1')));
+        $indexes = [];
+
+        $pass->context->withinComponent(ComponentId::named('form'), static function () use ($pass, &$indexes): void {
+            $indexes[] = $pass->context->focusedChildIndex();
+            $pass->context->withinChild(0, static function () use ($pass, &$indexes): void {
+                $indexes[] = $pass->context->focusedChildIndex();
+            });
+        });
+
+        self::assertSame([0, 1], $indexes);
+    }
+
+    #[Test]
+    public function aNewFrameForgetsWhereTheKeyboardWasInTheLastOne(): void
+    {
+        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+        $pass->focus->focusOn(new FocusState(ComponentId::named('field')));
+
+        $pass->begin(1.0);
+
+        self::assertNull($pass->context->focusedComponent());
+    }
+
+    #[Test]
+    public function focusGivenForOneDrawEndsWithIt(): void
+    {
+        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+
+        $pass->context->withFocusHere(static function (): void {
+        });
+
+        self::assertFalse($pass->context->hasFocus());
+    }
+
+    #[Test]
+    public function aDrawThatThrowsLeavesTheFocusAsItFoundIt(): void
+    {
+        $pass = RenderPass::new(Theme::dark());
+        $pass->focus->focusOn(new FocusState(ComponentId::named('form/0/1')));
+        $throw = static function (): void {
+            throw new RuntimeException('a widget failed to draw');
+        };
+        $survive = static function (Closure $draw): void {
+            try {
+                $draw();
+            } catch (RuntimeException) {
+            }
+        };
+
+        $survive(static fn () => $pass->context->withFocusHere($throw));
+        self::assertFalse($pass->context->hasFocus(), 'withFocusHere');
+
+        $survive(static fn () => $pass->context->withinComponent(ComponentId::named('form'), $throw));
+        self::assertFalse($pass->context->hasFocus(), 'withinComponent');
+
+        $pass->context->withinComponent(ComponentId::named('form'), static function () use ($pass, $survive, $throw): void {
+            $survive(static fn () => $pass->context->withoutFocus($throw));
+            self::assertTrue($pass->context->hasFocus(), 'withoutFocus');
+
+            $survive(static fn () => $pass->context->withinChild(0, $throw));
+            self::assertSame(0, $pass->context->focusedChildIndex(), 'withinChild');
+        });
     }
 
     #[Test]

@@ -78,8 +78,6 @@ final class FocusPath
     {
         $this->focus = $this->initialFocus;
         $this->depth = $this->initialDepth;
-        $this->path = [];
-        $this->loose = false;
         $this->enclosure = [];
         $this->stopPublishers = [];
         $this->hints = [];
@@ -92,8 +90,6 @@ final class FocusPath
         // in within() asks for, and the tree settles on a component once it has one.
         $this->focus = $focus->isUndecided() ? FocusState::nowhere() : $focus;
         $this->depth = 0;
-        $this->path = [];
-        $this->loose = false;
     }
 
     public function focusedComponent(): ?ComponentId
