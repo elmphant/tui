@@ -189,6 +189,44 @@ final class FilterableCheckboxGroupTest extends TestCase
     }
 
     #[Test]
+    public function aSecondOptionActivatedJoinsTheFirst(): void
+    {
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma']);
+
+        self::assertSame(['alpha', 'gamma'], $group->activated('alpha')->activated('gamma')->checkedValues());
+    }
+
+    #[Test]
+    public function aVisibleTickCanBeTakenBackWhileAHiddenOneStays(): void
+    {
+        $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log'])->activated('sync_log');
+
+        $toggledTwice = self::pressed($group, new KeyMsg('a'), new KeyMsg('p'), new KeyMsg(' '), new KeyMsg(' '));
+
+        self::assertSame(['sync_log'], $toggledTwice->checkedValues());
+    }
+
+    #[Test]
+    public function escapePutsTheCursorBackOnTheFirstOption(): void
+    {
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma']);
+
+        $ticked = self::pressed($group, new KeyMsg('a'), new KeyMsg(Key::Down), new KeyMsg(Key::Down), new KeyMsg(Key::Escape), new KeyMsg(' '));
+
+        self::assertSame(['alpha'], $ticked->checkedValues());
+    }
+
+    #[Test]
+    public function aMatcherThatNarrowsBelowTheCursorLeavesItOnTheLastBox(): void
+    {
+        $group = self::pressed(FilterableCheckboxGroup::new(['alpha', 'beta', 'delta']), new KeyMsg('a'), new KeyMsg(Key::Down), new KeyMsg(Key::Down));
+
+        $ticked = self::pressed($group->withMatcher(new LastOptionOnlyMatcher()), new KeyMsg(' '));
+
+        self::assertSame(['delta'], $ticked->checkedValues());
+    }
+
+    #[Test]
     public function twoOptionsReadingTheSameAreRefusedWhereTheyAreHandedIn(): void
     {
         $this->expectException(InvalidArgumentException::class);

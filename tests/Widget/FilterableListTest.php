@@ -249,6 +249,32 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function newItemsHandedInWhileAQueryIsTypedAreFilteredByIt(): void
+    {
+        $list = $this->commands()->withQuery('user');
+
+        $reloaded = $list->withItems([new SimpleListItem('user:delete'), new SimpleListItem('cache:clear'), new SimpleListItem('user:list')]);
+
+        self::assertSame(['1 of 3', '2 of 3'], [$list->summary(), $reloaded->summary()]);
+        self::assertSame('user:delete', $reloaded->cursorItem()?->filterValue());
+    }
+
+    #[Test]
+    public function aMatcherHandedInWhileAQueryIsTypedFiltersAgain(): void
+    {
+        $lastOnly = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return [count($haystack) - 1];
+            }
+        };
+
+        $list = $this->commands()->withQuery('cache')->withMatcher($lastOnly);
+
+        self::assertSame(['1 of 3', 'user:create'], [$list->summary(), $list->cursorItem()?->filterValue()]);
+    }
+
+    #[Test]
     public function aChoiceSurvivesTheReaderTypingOnInTheFilter(): void
     {
         $picked = $this->commands()->withSelectedValue('cache:flush');
