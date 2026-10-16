@@ -811,6 +811,7 @@ One JSON object per line, for grepping and totalling:
 | `render` | `ms`, `paintMs`, `diffMs`, `bytes`, `blockedMs`, `drawn` |
 | `frame.skipped` | `waitMs` — the frame budget was not yet spent |
 | `log` | `message` and the context of a `Cmd::log('loaded', ['items' => 3])` — how an `update()` says what it saw, since echoing would write into the screen |
+| `output` | `during` (`init`, `update`, `render`) and `text` — what the model echoed or dumped, caught before it reached the terminal and broke the screen |
 | `error` | `source` (`update`, `render`, `command`, `process`, … or `fatal` for the one the program gave up on), `class`, `message`, `file`, `line`, `trace` — recorded even when the model swallows the `ErrorMsg` |
 
 Every message a widget or command produces reaches the model through one queue,

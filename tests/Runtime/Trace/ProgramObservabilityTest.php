@@ -96,12 +96,54 @@ final class ProgramObservabilityTest extends TestCase
         self::assertStringNotContainsString('loaded the list', $terminal->output());
     }
 
+    #[Test]
+    public function whatAModelEchoesGoesToTheTraceInsteadOfTheScreen(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(30, 4);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput('q'));
+
+        Program::new(new EchoingModel())->withTerminal($terminal)->withTracer($tracer)->start();
+
+        $outputs = $tracer->fieldsOf(TraceEvent::Output);
+        self::assertContains(['during' => 'init', 'text' => 'starting'], $outputs);
+        self::assertContains(['during' => 'update', 'text' => 'saw a key'], $outputs);
+        self::assertContains(['during' => 'render', 'text' => 'drawing'], $outputs);
+        self::assertStringNotContainsString('saw a key', $terminal->output());
+    }
+
     private static function pressing(Model $model, InMemoryTracer $tracer, string $keys): void
     {
         $terminal = new VirtualTerminal(30, 4);
         EventLoop::delay(0.02, static fn () => $terminal->simulateInput($keys . 'q'));
 
         Program::new($model)->withTerminal($terminal)->withTracer($tracer)->start();
+    }
+}
+
+final class EchoingModel implements Model
+{
+    public function init(): ?Cmd
+    {
+        echo 'starting';
+
+        return null;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if (!$message instanceof KeyMsg) {
+            return new UpdateResult($this);
+        }
+
+        echo 'saw a key';
+
+        return new UpdateResult($this, Cmd::quit());
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+        echo 'drawing';
     }
 }
 

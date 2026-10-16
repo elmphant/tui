@@ -18,6 +18,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\InputParser;
 use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\StdinBuffer;
@@ -324,7 +325,8 @@ final class Program
             );
             $this->setup();
             $this->renderPass = RenderPass::new($this->resolveTheme(), $this->resolveColorProfile());
-            $this->dispatchCommand($this->model->init());
+            $model = $this->model;
+            $this->dispatchCommand($this->capturingOutput('init', static fn (): ?Cmd => $model->init()));
             if ($this->isRunning()) {
                 $this->loop();
             }
@@ -901,9 +903,11 @@ final class Program
         }
 
         $this->focus = $resolved;
-        $result = $this->model instanceof RoutesFocus
-            ? $this->model->update($stamped, $screenRect, $this->focus)
-            : $this->model->update($stamped, $screenRect);
+        $model = $this->model;
+        $focus = $this->focus;
+        $result = $this->capturingOutput('update', static fn (): UpdateResult => $model instanceof RoutesFocus
+            ? $model->update($stamped, $screenRect, $focus)
+            : $model->update($stamped, $screenRect));
         $nextModel = self::requireModel($result->model);
         $this->tracer?->record(TraceEvent::Update, [
             'message' => $stamped::class,
@@ -943,6 +947,29 @@ final class Program
         $this->traceError($error, 'fatal');
         $this->stopRunning();
         $this->fatalError = $error;
+    }
+
+    /**
+     * stdout is the screen, so a stray echo or var_dump would land between the
+     * cells Screen wrote and leave the display out of step with its buffer.
+     *
+     * @template T
+     *
+     * @param Closure(): T $work
+     *
+     * @return T
+     */
+    private function capturingOutput(string $during, Closure $work): mixed
+    {
+        ob_start();
+        try {
+            return $work();
+        } finally {
+            $output = ob_get_clean();
+            if (is_string($output) && $output !== '') {
+                $this->tracer?->record(TraceEvent::Output, ['during' => $during, 'text' => $output]);
+            }
+        }
     }
 
     private function traceError(Throwable $error, string $source): void
@@ -991,7 +1018,8 @@ final class Program
         $pass->focus->focusOn($this->focus);
 
         try {
-            $this->model->render($frame, $pass);
+            $model = $this->model;
+            $this->capturingOutput('render', static fn () => $model->render($frame, $pass));
             $pass->floats->drainOnto($frame, $pass->context);
             $this->paintedAt = $this->clock->now();
             $this->screen->flush($frame);

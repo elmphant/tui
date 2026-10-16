@@ -35,4 +35,10 @@ enum TraceEvent: string
      * What the app itself asked to have written down, through Cmd::log().
      */
     case Log = 'log';
+
+    /**
+     * What the model echoed or dumped. Caught before it reached the terminal,
+     * where it would have broken the screen.
+     */
+    case Output = 'output';
 }
