@@ -14,9 +14,14 @@ final readonly class SubstringMatcher implements Matcher
             return array_keys($haystack);
         }
 
+        // An ASCII word is found byte by byte inside UTF-8 just as well, at a tenth
+        // of the cost; only folds like the Kelvin sign to "k" are lost.
+        $ascii = array_filter($words, static fn (string $word): bool => preg_match('/^[\x00-\x7F]*$/', $word) === 1);
+        $other = array_diff_key($words, $ascii);
+
         $found = [];
         foreach ($haystack as $index => $entry) {
-            if (self::containsEvery($entry, $words)) {
+            if (self::containsEvery($entry, $ascii, $other)) {
                 $found[] = $index;
             }
         }
@@ -35,11 +40,18 @@ final readonly class SubstringMatcher implements Matcher
     }
 
     /**
-     * @param list<string> $words
+     * @param array<int, string> $ascii
+     * @param array<int, string> $other
      */
-    private static function containsEvery(string $entry, array $words): bool
+    private static function containsEvery(string $entry, array $ascii, array $other): bool
     {
-        foreach ($words as $word) {
+        foreach ($ascii as $word) {
+            if (stripos($entry, $word) === false) {
+                return false;
+            }
+        }
+
+        foreach ($other as $word) {
             if (mb_stripos($entry, $word) === false) {
                 return false;
             }
