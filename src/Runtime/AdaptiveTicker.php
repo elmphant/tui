@@ -36,8 +36,7 @@ final class AdaptiveTicker
             return;
         }
 
-        if ($this->callbackId !== null && $this->currentInterval !== null
-            && abs($interval - $this->currentInterval) < self::HYSTERESIS_THRESHOLD) {
+        if ($this->currentInterval !== null && abs($interval - $this->currentInterval) < self::HYSTERESIS_THRESHOLD) {
             return;
         }
 

@@ -126,6 +126,36 @@ final class AdaptiveTickerTest extends TestCase
     }
 
     #[Test]
+    public function aRefreshWithNothingLeftToWaitForStopsTicking(): void
+    {
+        $ticks = 0;
+        $ticker = new AdaptiveTicker(function () use (&$ticks) { ++$ticks; });
+        $ticker->refresh(nextRenderDelay: 0.001, nextTimerDelay: null, processesActive: false);
+        $ticker->refresh(nextRenderDelay: null, nextTimerDelay: null, processesActive: false);
+
+        EventLoop::delay(0.02, fn () => EventLoop::getDriver()->stop());
+        EventLoop::run();
+
+        $ticker->stop();
+        $this->assertSame(0, $ticks);
+    }
+
+    #[Test]
+    public function aSlowerIntervalReplacesTheFasterOne(): void
+    {
+        $ticks = 0;
+        $ticker = new AdaptiveTicker(function () use (&$ticks) { ++$ticks; });
+        $ticker->refresh(nextRenderDelay: 0.001, nextTimerDelay: null, processesActive: false);
+        $ticker->refresh(nextRenderDelay: 0.5, nextTimerDelay: null, processesActive: false);
+
+        EventLoop::delay(0.02, fn () => EventLoop::getDriver()->stop());
+        EventLoop::run();
+
+        $ticker->stop();
+        $this->assertSame(0, $ticks);
+    }
+
+    #[Test]
     public function refreshWithQueuePendingSchedulesCallback(): void
     {
         $ticker = new AdaptiveTicker(fn () => null);
