@@ -21,6 +21,30 @@ final class ListItemLayoutTest extends TestCase
     }
 
     #[Test]
+    public function theHeightIsAlwaysTheNumberOfRowsDrawn(): void
+    {
+        $items = [
+            new SimpleListItem(''),
+            new SimpleListItem('exactly10!'),
+            new SimpleListItem('exactly 11!'),
+            new SimpleListItem('中文中文中'),
+            new SimpleListItem('中文中文中文'),
+            new SimpleListItem('fits', 'with a description'),
+            new SimpleListItem('one two three four five six seven eight nine ten eleven'),
+        ];
+
+        foreach ($items as $item) {
+            foreach ([0, 1, 10] as $width) {
+                self::assertSame(
+                    count(ListItemLayout::rows($item, $width)),
+                    ListItemLayout::height($item, $width),
+                    "'{$item->title()}' at width {$width}",
+                );
+            }
+        }
+    }
+
+    #[Test]
     public function oneColumnStillWrapsRatherThanGivingUp(): void
     {
         $rows = ListItemLayout::rows(new SimpleListItem('ab'), 1);

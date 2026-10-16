@@ -517,8 +517,9 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
             return -1;
         }
 
+        $wanted = $item->filterValue();
         foreach ($items as $place => $candidate) {
-            if ($candidate->filterValue() === $item->filterValue()) {
+            if ($candidate->filterValue() === $wanted) {
                 return $place;
             }
         }
