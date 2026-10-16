@@ -135,6 +135,20 @@ final class RunningStreamingProcessTest extends TestCase
     }
 
     #[Test]
+    public function aFinishedProcessAnnouncesItsEndOnlyOnce(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('isRunning')->willReturn(false);
+        $process->method('getIncrementalOutput')->willReturn('');
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+
+        $running = new RunningStreamingProcess($process, null);
+        $running->pump();
+
+        self::assertSame([], $running->pump());
+    }
+
+    #[Test]
     public function pumpReturnsEmptyWhileRunningAndNoOutput(): void
     {
         $process = $this->createMock(Process::class);

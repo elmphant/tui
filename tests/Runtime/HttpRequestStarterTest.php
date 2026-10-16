@@ -36,6 +36,24 @@ final class HttpRequestStarterTest extends TestCase
     #[Test]
     public function aConfiguredTimeoutResolvesAnIdleRequestWithAnError(): void
     {
+        $command = Cmd::http('https://example.test/', options: ['timeout' => 0]);
+        $messages = (new HttpRequestStarter($this->idleClient()))->start($command, null)->pump();
+
+        self::assertCount(1, $messages);
+        self::assertInstanceOf(ErrorMsg::class, $messages[0]);
+    }
+
+    #[Test]
+    public function aTimeoutWrittenAsANumericStringCountsAsWell(): void
+    {
+        $command = Cmd::http('https://example.test/', options: ['timeout' => '0']);
+        $messages = (new HttpRequestStarter($this->idleClient()))->start($command, null)->pump();
+
+        self::assertInstanceOf(ErrorMsg::class, $messages[0] ?? null);
+    }
+
+    private function idleClient(): HttpClientInterface
+    {
         $client = $this->createMock(HttpClientInterface::class);
         $client->method('request')->willReturn($this->createMock(ResponseInterface::class));
         $client->method('stream')->willReturnCallback(
@@ -44,10 +62,6 @@ final class HttpRequestStarterTest extends TestCase
             })()),
         );
 
-        $command = Cmd::http('https://example.test/', options: ['timeout' => 0]);
-        $messages = (new HttpRequestStarter($client))->start($command, null)->pump();
-
-        self::assertCount(1, $messages);
-        self::assertInstanceOf(ErrorMsg::class, $messages[0]);
+        return $client;
     }
 }

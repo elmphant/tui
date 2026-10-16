@@ -13,6 +13,7 @@ use Elmphant\Tui\Runtime\RunningExecProcess;
 use Elmphant\Tui\Tests\Support\MessageEnvelope;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 
@@ -254,6 +255,19 @@ final class RunningExecProcessTest extends TestCase
         $process->expects(self::once())->method('stop')->with(0.05);
 
         (new RunningExecProcess($process, null))->stop();
+    }
+
+    #[Test]
+    public function aFailedPumpEndsTheProcessAndReportsOnlyOnce(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('checkTimeout')->willThrowException(new RuntimeException('pipe broke'));
+
+        $running = new RunningExecProcess($process, null);
+        $running->pump();
+
+        self::assertFalse($running->isRunning());
+        self::assertSame([], $running->pump());
     }
 
     #[Test]

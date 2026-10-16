@@ -244,6 +244,47 @@ final class RunningHttpRequestTest extends TestCase
     }
 
     #[Test]
+    public function aFailedRequestReportsItsFailureOnlyOnce(): void
+    {
+        $client = $this->createMock(HttpClientInterface::class);
+        $client->method('stream')->willThrowException(new RuntimeException('connection reset'));
+
+        $request = new RunningHttpRequest($client, $this->createMock(ResponseInterface::class), null);
+        $request->pump();
+
+        self::assertSame([], $request->pump());
+    }
+
+    #[Test]
+    public function silenceAfterAChunkStillCountsTowardTheIdleTimeout(): void
+    {
+        $pumps = 0;
+        $client = $this->createMock(HttpClientInterface::class);
+        $client->method('stream')->willReturnCallback(
+            static function () use (&$pumps): ResponseStream {
+                ++$pumps;
+
+                return new ResponseStream((static function () use ($pumps): Generator {
+                    yield $pumps === 1
+                        ? new DataChunk(0, 'part')
+                        : new ErrorChunk(4, 'Idle timeout reached for "https://example.test".');
+                })());
+            },
+        );
+
+        $request = new RunningHttpRequest(
+            $client,
+            $this->createMock(ResponseInterface::class),
+            EffectId::named('download'),
+            timeoutSeconds: 0.0,
+        );
+        $request->pump();
+        $messages = $request->pump();
+
+        self::assertInstanceOf(ErrorMsg::class, $messages[0] ?? null);
+    }
+
+    #[Test]
     public function stopCancelsTheResponseOnce(): void
     {
         $client = new MockHttpClient(new MockResponse('body'));
