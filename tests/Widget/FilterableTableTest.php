@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Widget\Field\InputDecoration;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
 use Elmphant\Tui\Widget\Filter\FilterBar;
@@ -68,7 +69,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function anUnfocusedTableClaimsNoCaretForAFieldItWasHandedFocused(): void
     {
-        $table = $this->routes()->withField(FilterBar::field('', true));
+        $table = $this->routes()->withField(FilterBar::field(''));
 
         $frame = new Frame(60, 12);
         $table->render($frame, new Rect(0, 0, 60, 12), new RenderContext(Theme::dark()));
@@ -373,7 +374,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function drawsTheFilterFieldItIsGivenSoACaretCanSitWhereTheReaderPutIt(): void
     {
-        $field = FilterBar::field('ajax', true)->withCursor(2);
+        $field = FilterBar::field('ajax')->withCursor(2);
         $table = $this->routes()->withField($field);
 
         self::assertSame('ajax', $table->query(), 'the field it is given is the query it filters by');
@@ -394,6 +395,24 @@ final class FilterableTableTest extends TestCase
 
         self::assertSame([['ajax_bookmark', 'POST', '/ajax/bookmark']], $table->matchingRows());
         self::assertSame('1 of 3', $table->summary());
+    }
+
+    #[Test]
+    public function aMatcherRepeatingARowStillYieldsAListOfRowsInItsOrder(): void
+    {
+        $repeating = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return [1, 1, 0];
+            }
+        };
+
+        $table = $this->routes()->withMatcher($repeating)->withQuery('anything');
+
+        self::assertSame(
+            [['ajax_flush', 'GET', '/ajax/flush'], ['ajax_bookmark', 'POST', '/ajax/bookmark']],
+            $table->matchingRows(),
+        );
     }
 
     #[Test]
@@ -419,11 +438,12 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function aFieldHandedInIsUnderlinedByTheSameRuleAsOneBuiltHere(): void
     {
-        $handedIn = FilterBar::field('ajax', false);
+        $plain = FilterBar::field('ajax')->withDecoration(InputDecoration::None);
+        $underlined = FilterBar::field('ajax')->withDecoration(InputDecoration::Underline);
 
-        self::assertTrue($this->fieldIsUnderlined($this->routes()->withField($handedIn), focused: true));
+        self::assertTrue($this->fieldIsUnderlined($this->routes()->withField($plain), focused: true));
         self::assertFalse(
-            $this->fieldIsUnderlined($this->routes()->withField($handedIn)),
+            $this->fieldIsUnderlined($this->routes()->withField($underlined)),
             'A host driving the caret does not decide whether the pane is active',
         );
     }

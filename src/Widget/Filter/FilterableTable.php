@@ -74,7 +74,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     public function field(): TextInput
     {
-        return $this->fieldFocused(false);
+        return $this->field;
     }
 
     public function query(): string
@@ -88,7 +88,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
      */
     public static function new(array $headers, array $rows): self
     {
-        return new self($headers, $rows, FilterBar::field('', false));
+        return new self($headers, $rows, FilterBar::field(''));
     }
 
     public function withQuery(string $query): self

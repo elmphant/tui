@@ -29,10 +29,6 @@ final readonly class FilterMatches
      */
     public static function of(array $items, ?Matcher $matcher, string $query): self
     {
-        if (trim($query) === '') {
-            return new self($items, $matcher, $query, array_keys($items));
-        }
-
         return new self($items, $matcher, $query, FilterBar::matching(
             $matcher,
             $query,

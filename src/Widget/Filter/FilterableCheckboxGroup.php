@@ -250,7 +250,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
      */
     private function checkedAfter(CheckboxGroup $boxes): array
     {
-        return [...array_values(array_diff($this->checked, $this->matching())), ...$boxes->checkedValues()];
+        return [...array_diff($this->checked, $this->matching()), ...$boxes->checkedValues()];
     }
 
     private function fieldArea(Rect $area): Rect

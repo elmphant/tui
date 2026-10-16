@@ -11,7 +11,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
-use Elmphant\Tui\Widget\Field\InputDecoration;
+use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Field\TextInput;
 
 /**
@@ -47,7 +47,7 @@ final class FilterBar
         TextInput $field,
         ?string $summary = null,
     ): void {
-        $trailing = $summary === null ? 0 : mb_strlen($summary);
+        $trailing = $summary === null ? 0 : CharWidth::stringWidth($summary);
         $fieldWidth = $area->width - ($trailing === 0 ? 0 : $trailing + self::GAP);
 
         if ($fieldWidth > 0) {
@@ -56,7 +56,7 @@ final class FilterBar
 
         $summaryX = $area->right() - $trailing;
 
-        if ($summary !== null && $summaryX > $area->x) {
+        if ($summary !== null && $summaryX >= $area->x) {
             $frame->putStyled($summaryX, $area->y, $summary, $context->theme->dim);
         }
     }
@@ -68,16 +68,12 @@ final class FilterBar
      */
     public static function keybindings(): Keybindings
     {
-        static $instance = null;
-
-        return $instance ??= new Keybindings([Actions::CANCEL => ['esc']]);
+        return new Keybindings([Actions::CANCEL => ['esc']]);
     }
 
-    public static function field(string $query, bool $focused): TextInput
+    public static function field(string $query): TextInput
     {
-        return TextInput::new(self::PLACEHOLDER)
-            ->withValue($query)
-            ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None);
+        return TextInput::new(self::PLACEHOLDER)->withValue($query);
     }
 
     public static function barArea(Rect $area, ?int $width = null): Rect
