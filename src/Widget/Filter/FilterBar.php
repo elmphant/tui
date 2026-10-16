@@ -9,11 +9,14 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Widget\Field\InputDecoration;
 use Elmphant\Tui\Widget\Field\TextInput;
 
 /**
- * @internal shared filter bar for FilterableTable and FilterableList
+ * @internal what FilterableList, FilterableCheckboxGroup and FilterableTable share:
+ * the bar's place, its field, its cancel key and how a query narrows the entries
  */
 final class FilterBar
 {
@@ -25,6 +28,11 @@ final class FilterBar
     public const MIN_WIDTH = 20;
 
     public const PLACEHOLDER = 'Filter…';
+
+    /**
+     * The blank row a list of choices leaves under the field.
+     */
+    public const GAP_BELOW = 1;
 
     private const GAP = 3;
 
@@ -70,5 +78,40 @@ final class FilterBar
         return TextInput::new(self::PLACEHOLDER)
             ->withValue($query)
             ->withDecoration($focused ? InputDecoration::Underline : InputDecoration::None);
+    }
+
+    public static function barArea(Rect $area, ?int $width = null): Rect
+    {
+        return new Rect($area->x, $area->y, $width ?? $area->width, self::HEIGHT);
+    }
+
+    public static function bodyArea(Rect $area, int $gap = 0): Rect
+    {
+        $top = self::HEIGHT + $gap;
+
+        return new Rect($area->x, $area->y + $top, $area->width, max(0, $area->height - $top));
+    }
+
+    /**
+     * A query of nothing keeps everything, in the order it was handed in. That
+     * is not a matcher's answer to work out — asking one would cost a pass over
+     * the whole list on every keystroke back to empty.
+     *
+     * @param list<string> $haystack
+     *
+     * @return list<int>
+     */
+    public static function matching(?Matcher $matcher, string $query, array $haystack): array
+    {
+        if (trim($query) === '') {
+            return array_keys($haystack);
+        }
+
+        // A matcher may name the same entry twice — nothing in the port forbids
+        // it — and an index past the entries names nothing at all.
+        return array_values(array_unique(array_filter(
+            ($matcher ?? new SubstringMatcher())->matching($query, $haystack),
+            static fn (int $index): bool => isset($haystack[$index]),
+        )));
     }
 }

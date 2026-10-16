@@ -157,6 +157,17 @@ final class FilterableCheckboxGroupTest extends TestCase
     }
 
     #[Test]
+    public function aBlankQueryLeavesEveryBoxWhateverTheMatcher(): void
+    {
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma'])
+            ->withMatcher(new LastOptionOnlyMatcher());
+
+        $blank = self::pressed($group, new PasteMsg('  '));
+
+        self::assertSame(1 + 1 + 3, $blank->popupHeight(40), 'the field, the gap and all three boxes');
+    }
+
+    #[Test]
     public function aTickOutlivesTheQueryThatWasNarrowingTheBoxesWhenItWasMade(): void
     {
         $group = FilterableCheckboxGroup::new(['app.log', 'deprecations', 'sync_log', 'sync_trail']);

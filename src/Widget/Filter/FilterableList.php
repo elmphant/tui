@@ -23,7 +23,6 @@ use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Search\Matcher;
-use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Committing;
@@ -47,8 +46,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     use Cloneable;
     use DrawsFocus;
     use KeybindingsAwareBehavior;
-
-    private const GAP_HEIGHT = 1;
 
     /**
      * Actions the list takes; every other key is typing and belongs to the field.
@@ -292,7 +289,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             $rows += $item->height($width);
         }
 
-        return FilterBar::HEIGHT + self::GAP_HEIGHT + max(1, $rows);
+        return FilterBar::HEIGHT + FilterBar::GAP_BELOW + max(1, $rows);
     }
 
     /**
@@ -310,7 +307,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     {
         return Sizing::of(
             Constraint::flex(),
-            Constraint::min(FilterBar::HEIGHT + self::GAP_HEIGHT + 1)->withFlex(),
+            Constraint::min(FilterBar::HEIGHT + FilterBar::GAP_BELOW + 1)->withFlex(),
         );
     }
 
@@ -380,7 +377,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return;
         }
 
-        FilterBar::render($frame, $this->barArea($area), $context, $this->fieldDrawnBy($context));
+        FilterBar::render($frame, $this->fieldArea($area), $context, $this->fieldDrawnBy($context));
 
         $body = $this->listArea($area);
         if ($body->height < 1) {
@@ -434,10 +431,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * A query of nothing keeps everything, in the order it was handed in. That
-     * is not a matcher's answer to work out — asking one would cost a pass over
-     * the whole list on every keystroke back to empty.
-     *
      * @param list<ListItem> $items
      *
      * @return list<int>
@@ -448,17 +441,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return array_keys($items);
         }
 
-        $matching = ($matcher ?? new SubstringMatcher())->matching(
+        return FilterBar::matching(
+            $matcher,
             $query,
             array_map(static fn (ListItem $item): string => $item->filterValue(), $items),
         );
-
-        // A matcher may name the same item twice — nothing in the port forbids
-        // it — and a row drawn twice is one row the cursor could not address.
-        return array_values(array_unique(array_filter(
-            $matching,
-            static fn (int $index): bool => isset($items[$index]),
-        )));
     }
 
     private function belongsToTheList(KeyMsg $message): bool
@@ -522,20 +509,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->matching;
     }
 
-    private function barArea(Rect $area): Rect
-    {
-        return new Rect($area->x, $area->y, $area->width, FilterBar::HEIGHT);
-    }
-
     private function fieldArea(Rect $area): Rect
     {
-        return $this->barArea($area);
+        return FilterBar::barArea($area);
     }
 
     private function listArea(Rect $area): Rect
     {
-        $top = FilterBar::HEIGHT + self::GAP_HEIGHT;
-
-        return new Rect($area->x, $area->y + $top, $area->width, max(0, $area->height - $top));
+        return FilterBar::bodyArea($area, FilterBar::GAP_BELOW);
     }
 }

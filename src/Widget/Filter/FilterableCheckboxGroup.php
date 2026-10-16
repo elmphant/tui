@@ -19,7 +19,6 @@ use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Search\Matcher;
-use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Choice\Options;
@@ -43,8 +42,6 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
      * Keys the boxes take; every other one is typing and belongs to the field.
      */
     private const OWN_ACTIONS = [Actions::CURSOR_UP, Actions::CURSOR_DOWN, Actions::TOGGLE];
-
-    private const GAP_HEIGHT = 1;
 
     /**
      * @param list<string> $options
@@ -131,7 +128,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 
     public function popupHeight(int $width): int
     {
-        return FilterBar::HEIGHT + self::GAP_HEIGHT + \count($this->matching());
+        return FilterBar::HEIGHT + FilterBar::GAP_BELOW + \count($this->matching());
     }
 
     /**
@@ -258,17 +255,12 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 
     private function fieldArea(Rect $area): Rect
     {
-        return new Rect($area->x, $area->y, $area->width, FilterBar::HEIGHT);
+        return FilterBar::barArea($area);
     }
 
-    /**
-     * A blank row under the field, the same gap a filterable list leaves.
-     */
     private function boxesArea(Rect $area): Rect
     {
-        $top = FilterBar::HEIGHT + self::GAP_HEIGHT;
-
-        return new Rect($area->x, $area->y + $top, $area->width, max(0, $area->height - $top));
+        return FilterBar::bodyArea($area, FilterBar::GAP_BELOW);
     }
 
     /**
@@ -276,19 +268,9 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
      */
     private function matching(): array
     {
-        $query = $this->field->value();
-
-        if ($query === '') {
-            return $this->options;
-        }
-
-        $matching = ($this->matcher ?? new SubstringMatcher())->matching($query, $this->options);
-
-        // A matcher may name the same option twice — nothing in the port forbids
-        // it — and an index past the options names no box at all.
-        return array_values(array_unique(array_map(
+        return array_map(
             fn (int $index): string => $this->options[$index],
-            array_filter($matching, fn (int $index): bool => isset($this->options[$index])),
-        )));
+            FilterBar::matching($this->matcher, $this->field->value(), $this->options),
+        );
     }
 }

@@ -18,7 +18,6 @@ use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Search\Matcher;
-use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Field\InputDecoration;
@@ -37,9 +36,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     use Cloneable;
     use DrawsFocus;
     use KeybindingsAwareBehavior;
-
-    private const BAR_HEIGHT = FilterBar::HEIGHT;
-    private const MIN_BAR = FilterBar::MIN_WIDTH;
 
     /**
      * @param list<string>       $headers
@@ -130,12 +126,12 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::min(self::BAR_HEIGHT + 1));
+        return Sizing::of(Constraint::flex(), Constraint::min(FilterBar::HEIGHT + 1));
     }
 
     public function measureHeight(int $width): int
     {
-        return self::BAR_HEIGHT + $this->table()->measureHeight($width);
+        return FilterBar::HEIGHT + $this->table()->measureHeight($width);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -153,18 +149,14 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
         if ($area->y >= $clip->y && $area->y < $clip->bottom()) {
             $this->renderBar(
                 $frame,
-                new Rect($area->x, $area->y, $this->barWidth($area->width, $table), self::BAR_HEIGHT),
+                FilterBar::barArea($area, $this->barWidth($area->width, $table)),
                 $context,
                 $this->summaryOf($matching),
             );
         }
 
-        if ($area->height > self::BAR_HEIGHT) {
-            $table->render(
-                $frame,
-                new Rect($area->x, $area->y + self::BAR_HEIGHT, $area->width, $area->height - self::BAR_HEIGHT),
-                $context,
-            );
+        if ($area->height > FilterBar::HEIGHT) {
+            $table->render($frame, FilterBar::bodyArea($area), $context);
         }
     }
 
@@ -179,14 +171,10 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
         $searched = array_map(static fn (array $row): string => implode(' ', $row), $this->rows);
 
-        // A matcher may name the same row twice — nothing in the port forbids
-        // it — and an index past the rows names no row at all.
-        $matching = array_values(array_unique(array_filter(
-            ($this->matcher ?? new SubstringMatcher())->matching($this->query(), $searched),
-            fn (int $index): bool => isset($this->rows[$index]),
-        )));
-
-        return array_map(fn (int $index): array => $this->rows[$index], $matching);
+        return array_map(
+            fn (int $index): array => $this->rows[$index],
+            FilterBar::matching($this->matcher, $this->query(), $searched),
+        );
     }
 
     private function fieldFocused(bool $focused): TextInput
@@ -218,12 +206,12 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
      */
     private function fieldArea(Rect $area): Rect
     {
-        return new Rect($area->x, $area->y, $this->barWidth($area->width, $this->table()), self::BAR_HEIGHT);
+        return FilterBar::barArea($area, $this->barWidth($area->width, $this->table()));
     }
 
     private function barWidth(int $available, StaticTable $table): int
     {
-        return max(self::MIN_BAR, min($available, $table->drawnWidth($available)));
+        return max(FilterBar::MIN_WIDTH, min($available, $table->drawnWidth($available)));
     }
 
     private function table(): StaticTable
@@ -238,6 +226,6 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     {
         return StaticTable::new($this->headers, $matching)
             ->withWidthsFrom($this->rows)
-            ->withMinWidth(self::MIN_BAR);
+            ->withMinWidth(FilterBar::MIN_WIDTH);
     }
 }
