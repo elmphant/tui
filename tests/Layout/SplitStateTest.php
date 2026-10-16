@@ -25,6 +25,21 @@ final class SplitStateTest extends TestCase
     }
 
     #[Test]
+    public function threePanesHaveNoThirdDivider(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('it must be 0-1, got 2');
+
+        SplitState::even(3)->withDragging(2);
+    }
+
+    #[Test]
+    public function theLastDividerLiesBeforeTheLastPane(): void
+    {
+        self::assertSame(1, SplitState::even(3)->withDragging(1)->dragging);
+    }
+
+    #[Test]
     public function survivesTheTripThroughASessionFile(): void
     {
         $dragged = SplitState::even(2)->withPairDividedAt(0, 14, 20);

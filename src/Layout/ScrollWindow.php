@@ -30,7 +30,7 @@ final class ScrollWindow
      */
     public static function clamped(int $offset, int $maxOffset): int
     {
-        return min(max(0, $offset), max(0, $maxOffset));
+        return max(0, min($offset, $maxOffset));
     }
 
     /**
