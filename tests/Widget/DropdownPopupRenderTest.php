@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
@@ -13,6 +12,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\Select;
+use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Popup\DropdownPopup;
 use Elmphant\Tui\Widget\Popup\FloatTarget;
 use PHPUnit\Framework\Attributes\Test;

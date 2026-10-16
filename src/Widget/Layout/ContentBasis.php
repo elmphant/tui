@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Layout\Axis;
+namespace Elmphant\Tui\Widget\Layout;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;

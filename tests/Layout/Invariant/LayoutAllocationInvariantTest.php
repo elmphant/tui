@@ -6,8 +6,8 @@ namespace Elmphant\Tui\Tests\Layout\Invariant;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
-use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Widget\Layout\Layout;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

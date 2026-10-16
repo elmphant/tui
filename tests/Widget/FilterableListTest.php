@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
-use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -22,6 +21,7 @@ use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Filter\FilterBar;
+use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Listing\ListItem;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use InvalidArgumentException;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\MouseAction;
@@ -17,6 +16,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\PlacedChildren;
+use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Popup\Floating;
 use Elmphant\Tui\Widget\Popup\FloatTarget;
 use Elmphant\Tui\Widget\Popup\PointerFloating;

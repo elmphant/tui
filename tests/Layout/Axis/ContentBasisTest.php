@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Layout\Axis;
 
-use Elmphant\Tui\Layout\Axis\ContentBasis;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\Layout\ContentBasis;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;

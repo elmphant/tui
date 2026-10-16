@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout;
 
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;

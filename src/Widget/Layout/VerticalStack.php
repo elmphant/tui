@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Layout;
+namespace Elmphant\Tui\Widget\Layout;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
-use Elmphant\Tui\Layout\Axis\ContentBasis;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;

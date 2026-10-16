@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Layout;
 
-use Elmphant\Tui\Layout\LayoutSnapshot;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Widget\Plan\LayoutSnapshot;
 use Elmphant\Tui\Widget\Prose\Text;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

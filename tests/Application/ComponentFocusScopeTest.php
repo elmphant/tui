@@ -11,7 +11,6 @@ use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
@@ -19,6 +18,7 @@ use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Layout\Layout;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

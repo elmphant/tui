@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
-use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\SplitState;
 use Elmphant\Tui\Message\Key;
@@ -22,6 +21,7 @@ use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
+use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Split;
 use InvalidArgumentException;

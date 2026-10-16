@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Layout;
+namespace Elmphant\Tui\Widget\Plan;
 
 use Closure;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\Widget;
 use SplObjectStorage;
 use WeakMap;

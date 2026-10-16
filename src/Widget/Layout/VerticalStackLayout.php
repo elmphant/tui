@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Layout;
+namespace Elmphant\Tui\Widget\Layout;
 
+use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Widget\Widget;
 
 /**

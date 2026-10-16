@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Layout;
+namespace Elmphant\Tui\Widget\Layout;
 
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisResult;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
-use Elmphant\Tui\Layout\Axis\ContentBasis;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Direction;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\MeasureHeight;

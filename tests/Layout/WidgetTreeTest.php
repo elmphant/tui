@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout;
 
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
-use Elmphant\Tui\Layout\WidgetTree;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Choice\Checkbox;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Plan\WidgetTree;
 use Elmphant\Tui\Widget\Popup\Modal;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;

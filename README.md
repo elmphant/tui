@@ -116,7 +116,7 @@ Keep stateful widgets as properties on the model, not local variables rebuilt in
 
 ```php
 use Elmphant\Tui\Application\{App, Component};
-use Elmphant\Tui\Layout\Layout;
+use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
@@ -178,7 +178,7 @@ width changes:
 
 ```php
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Flex;
+use Elmphant\Tui\Widget\Layout\Flex;
 
 $content = Flex::row()
     ->withWrap()

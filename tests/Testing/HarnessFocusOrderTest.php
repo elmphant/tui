@@ -6,10 +6,10 @@ namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

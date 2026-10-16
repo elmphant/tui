@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Attr;
@@ -20,6 +19,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Text\WrapCache;
 use Elmphant\Tui\Widget\Alignment;
+use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Wrap;
 use PHPUnit\Framework\Attributes\Test;
