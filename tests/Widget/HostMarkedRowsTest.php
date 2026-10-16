@@ -15,6 +15,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focus\FocusGutter;
@@ -35,11 +36,11 @@ final class HostMarkedRowsTest extends TestCase
     public function theFirstFieldStaysQuietWhenTheHostMarksAnotherRow(): void
     {
         $frame = new Frame(30, 6);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('pane')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('pane')));
 
-        (new MarkedRowsApp())->render($frame, $context);
+        (new MarkedRowsApp())->render($frame, $pass);
 
         self::assertSame(Theme::dark()->dim->foregroundValue(), $frame->foregrounds[1 * 30 + 3], 'the unmarked first field is drawn idle');
     }

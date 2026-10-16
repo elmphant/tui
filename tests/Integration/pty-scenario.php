@@ -11,7 +11,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 use Revolt\EventLoop;
 
@@ -76,7 +76,7 @@ $model = new class($scenario, $readyFile, $resultFile) implements Model {
         return UpdateResult::keep($this);
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
         $frame->putString(0, 0, 'PTY hardening scenario');
     }

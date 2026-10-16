@@ -19,6 +19,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Interactive;
@@ -36,11 +37,11 @@ final class FocusedHintsTest extends TestCase
         /** @var ArrayObject<int, array<string, string>> $read */
         $read = new ArrayObject();
 
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('second')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('second')));
 
-        (new HintingApp($read))->render(new Frame(20, 3), $context);
+        (new HintingApp($read))->render(new Frame(20, 3), $pass);
 
         self::assertSame([['space' => 'pick']], $read->getArrayCopy());
     }
@@ -56,11 +57,11 @@ final class FocusedHintsTest extends TestCase
         /** @var ArrayObject<int, array<string, string>> $read */
         $read = new ArrayObject();
 
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('long-gone')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('long-gone')));
 
-        (new HintingApp($read))->render(new Frame(20, 3), $context);
+        (new HintingApp($read))->render(new Frame(20, 3), $pass);
 
         self::assertSame([[]], $read->getArrayCopy());
     }

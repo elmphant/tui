@@ -11,7 +11,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Testing\InMemoryTracer;
@@ -61,7 +61,7 @@ final readonly class AwaitingModel implements Model
         return new UpdateResult($this, $message instanceof KeyMsg && $message->key === 'q' ? Cmd::quit() : null);
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
     }
 }

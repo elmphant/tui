@@ -15,11 +15,13 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\FloatPlacement;
+use Elmphant\Tui\Rendering\FocusPath;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\InputRouter;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Popup\Dropdown;
 use Elmphant\Tui\Widget\Popup\DropdownPopup;
@@ -384,9 +386,9 @@ final class DropdownMouseTest extends TestCase
         $foreign = self::listOf(['json', 'yaml']);
 
         $frame = new Frame(40, 18);
-        $context = self::renderFocused(Overlay::new($mine, $foreign), $frame, $anchor);
+        $pass = self::renderFocused(Overlay::new($mine, $foreign), $frame, $anchor);
 
-        $placements = $context->floatPlacements();
+        $placements = $pass->floats->placements();
         self::assertCount(2, $placements, 'Overlay hands both dropdowns the same rect, so both popups are drawn');
 
         $foreignPopup = $placements[1];
@@ -575,21 +577,21 @@ final class DropdownMouseTest extends TestCase
     {
         $viewport ??= self::viewport();
         $frame = new Frame($viewport->width, $viewport->height);
-        $context = self::renderFocused($dropdown, $frame, $anchor ?? self::anchor());
+        $pass = self::renderFocused($dropdown, $frame, $anchor ?? self::anchor());
 
-        return InputRouter::route($mouse, $frame->area(), $context->floatPlacements());
+        return InputRouter::route($mouse, $frame->area(), $pass->floats->placements());
     }
 
-    private static function renderFocused(Widget $root, Frame $frame, Rect $anchor): RenderContext
+    private static function renderFocused(Widget $root, Frame $frame, Rect $anchor): RenderPass
     {
-        $context = RenderContext::unfocused(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->withFocusHere(static function () use ($context, $root, $frame, $anchor): void {
-            $context->renderRoot($root, $frame, $anchor);
+        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+        $pass->begin(0.0);
+        $pass->context->withFocusHere(static function () use ($pass, $root, $frame, $anchor): void {
+            RootPass::draw($pass, $root, $frame, $anchor);
         });
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
-        return $context;
+        return $pass;
     }
 
     private static function drawnPlacement(Dropdown $dropdown): Rect
@@ -604,9 +606,9 @@ final class DropdownMouseTest extends TestCase
     private static function drawnOptionRows(Dropdown $dropdown, Rect $viewport): string
     {
         $frame = new Frame($viewport->width, $viewport->height);
-        $context = self::renderFocused($dropdown, $frame, self::anchor());
+        $pass = self::renderFocused($dropdown, $frame, self::anchor());
 
-        $placements = $context->floatPlacements();
+        $placements = $pass->floats->placements();
 
         if ($placements === []) {
             throw new RuntimeException('the dropdown drew no popup');
@@ -634,9 +636,9 @@ final class DropdownMouseTest extends TestCase
     private static function drawnFloat(Dropdown $dropdown): FloatPlacement
     {
         $frame = new Frame(40, 18);
-        $context = self::renderFocused($dropdown, $frame, self::anchor());
+        $pass = self::renderFocused($dropdown, $frame, self::anchor());
 
-        $placements = $context->floatPlacements();
+        $placements = $pass->floats->placements();
 
         if ($placements === []) {
             throw new RuntimeException('the dropdown drew no popup');

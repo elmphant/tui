@@ -23,10 +23,12 @@ use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
+use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\CursorAware;
@@ -156,7 +158,7 @@ final class PanelTest extends TestCase
             $panel = $this->panelOfLines(10)->withScrollOffset($offset);
 
             $planned = new Frame(24, 6);
-            (new RenderContext(Theme::dark()))->renderWithPlan($panel, $planned, $area, LayoutPlan::resolve($panel, $area));
+            RootPass::draw(RenderPass::new(Theme::dark()), $panel, $planned, $area, LayoutPlan::resolve($panel, $area));
 
             $direct = new Frame(24, 6);
             $panel->render($direct, $area, new RenderContext(Theme::dark()));

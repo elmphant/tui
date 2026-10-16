@@ -20,7 +20,7 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Tests\Support\FloatingModel;
@@ -194,7 +194,7 @@ final class ModelHarnessTest extends TestCase
                 });
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         });
@@ -313,7 +313,7 @@ final readonly class AreaRecordingModel implements Model
         return UpdateResult::changed(new self($area->width, $area->height));
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
         $frame->putString(0, 0, "{$frame->width}x{$frame->height}");
     }
@@ -335,16 +335,16 @@ final class RepaintOnceModel implements Model
         return UpdateResult::keep($this);
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
         ++$this->renders;
 
         if ($this->renders > 1) {
-            $this->delaySeenByTheSecondRender = $context->repaintDelay();
+            $this->delaySeenByTheSecondRender = $pass->clock->repaintDelay();
         }
 
         if ($this->askForRepaint) {
-            $context->requestRepaint(0.5);
+            $pass->context->requestRepaint(0.5);
         }
     }
 }
@@ -361,9 +361,9 @@ final readonly class ThemeEchoModel implements Model
         return UpdateResult::keep($this);
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
-        $frame->putString(0, 0, 'x', $context->theme->accent->foreground?->value ?? 0);
+        $frame->putString(0, 0, 'x', $pass->context->theme->accent->foreground?->value ?? 0);
     }
 }
 
@@ -392,7 +392,7 @@ final class HarnessRecorder implements Model
         return new UpdateResult($this, $message instanceof FocusMsg ? $this->arrivalAnswer : null);
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
     }
 }

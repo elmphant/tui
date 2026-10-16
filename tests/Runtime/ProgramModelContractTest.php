@@ -14,7 +14,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use LogicException;
@@ -46,7 +46,7 @@ final class ProgramModelContractTest extends TestCase
                 return new UpdateResult(new NonModelReducer());
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -94,7 +94,7 @@ final class ProgramModelContractTest extends TestCase
                 return UpdateResult::keep($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };

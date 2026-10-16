@@ -42,7 +42,7 @@ use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
@@ -129,7 +129,7 @@ final class Program
     private bool $ticking = false;
     private ?Theme $theme = null;
     private ?ColorProfile $colorProfile = null;
-    private ?RenderContext $renderContext = null;
+    private ?RenderPass $renderPass = null;
     private float $lastRender = 0.0;
     private float $paintedAt = 0.0;
     private Clock $clock;
@@ -319,7 +319,7 @@ final class Program
                 remote: getenv('SSH_CONNECTION') !== false || getenv('SSH_TTY') !== false,
             );
             $this->setup();
-            $this->renderContext = new RenderContext($this->resolveTheme(), $this->resolveColorProfile());
+            $this->renderPass = RenderPass::new($this->resolveTheme(), $this->resolveColorProfile());
             $this->running = true;
             $this->dispatchCommand($this->model->init());
             if ($this->running) {
@@ -870,7 +870,7 @@ final class Program
 
             try {
                 $updateStart = $this->tracer === null ? 0 : hrtime(true);
-                $stamped = InputRouter::route($message, $screenRect, $this->renderContext?->floatPlacements() ?? []);
+                $stamped = InputRouter::route($message, $screenRect, $this->renderPass?->floats->placements() ?? []);
                 if ($stamped === null) {
                     continue;
                 }
@@ -958,8 +958,8 @@ final class Program
     private function renderFrame(): bool
     {
         $frame = $this->backBuffer;
-        $renderContext = $this->renderContext;
-        if ($frame === null || $renderContext === null) {
+        $pass = $this->renderPass;
+        if ($frame === null || $pass === null) {
             throw new LogicException('Program renderer is not initialized');
         }
 
@@ -972,16 +972,16 @@ final class Program
             $this->screen->forget();
         }
 
-        $baseBackground = $renderContext->theme->base->backgroundValue();
+        $baseBackground = $pass->context->theme->base->backgroundValue();
         $frame->clear($baseBackground);
 
-        $renderContext->beginFrame($this->clock->now());
+        $pass->begin($this->clock->now());
         $this->settleFocusBeforeDrawing();
-        $renderContext->focusOn($this->focus);
+        $pass->focus->focusOn($this->focus);
 
         try {
-            $this->model->render($frame, $renderContext);
-            $renderContext->drainFloatsFor($frame);
+            $this->model->render($frame, $pass);
+            $pass->floats->drainOnto($frame, $pass->context);
             $this->paintedAt = $this->clock->now();
             $this->screen->flush($frame);
         } catch (Throwable $error) {
@@ -998,9 +998,9 @@ final class Program
         }
 
         $this->consecutiveRenderFailures = 0;
-        $renderContext->commitFloatPlacements();
+        $pass->floats->commit();
 
-        $repaintDelay = $renderContext->repaintDelay();
+        $repaintDelay = $pass->clock->repaintDelay();
         $this->animationRepaintAt = $repaintDelay === null
             ? null
             : $this->clock->now() + $repaintDelay;

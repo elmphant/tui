@@ -15,6 +15,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Interactive;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,11 +38,11 @@ final class ContainerFocusScopeTest extends TestCase
             new ScopeProbe('list', $seen),
         );
 
-        $context = new RenderContext(Theme::dark());
-        $context->focusOn(new FocusState(ComponentId::named('search')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->focus->focusOn(new FocusState(ComponentId::named('search')));
 
         Component::bind('search', $searchBox, static fn (object $app, Interactive $w): object => $app)
-            ->render(new Frame(10, 2), new Rect(0, 0, 10, 2), $context);
+            ->render(new Frame(10, 2), new Rect(0, 0, 10, 2), $pass->context);
 
         self::assertSame(['field' => true, 'list' => false], $seen->getArrayCopy());
     }

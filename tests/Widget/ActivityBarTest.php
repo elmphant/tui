@@ -10,6 +10,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Feedback\ActivityBar;
 use Elmphant\Tui\Widget\Interactive;
@@ -154,11 +155,11 @@ final class ActivityBarTest extends TestCase
     {
         $bar = self::makeBar(speed: 1.0, barWidth: 20);
         $frame = new Frame(20, 1);
-        $context = self::contextAt(0.0);
+        $pass = self::passAt(0.0);
 
-        $bar->render($frame, Rect::fromSize(20, 1), $context);
+        $bar->render($frame, Rect::fromSize(20, 1), $pass->context);
 
-        self::assertSame(1.0 / 19.0, $context->repaintDelay(), 'One column step at speed 1.0 with 19 steps');
+        self::assertSame(1.0 / 19.0, $pass->clock->repaintDelay(), 'One column step at speed 1.0 with 19 steps');
     }
 
     #[Test]
@@ -166,11 +167,11 @@ final class ActivityBarTest extends TestCase
     {
         $bar = self::makeBar(speed: 0.5, barWidth: 20);
         $frame = new Frame(20, 1);
-        $context = self::contextAt(0.0);
+        $pass = self::passAt(0.0);
 
-        $bar->render($frame, Rect::fromSize(20, 1), $context);
+        $bar->render($frame, Rect::fromSize(20, 1), $pass->context);
 
-        self::assertSame(1.0 / (0.5 * 19.0), $context->repaintDelay());
+        self::assertSame(1.0 / (0.5 * 19.0), $pass->clock->repaintDelay());
     }
 
     #[Test]
@@ -178,11 +179,11 @@ final class ActivityBarTest extends TestCase
     {
         $bar = self::makeBar(speed: 1.0, barWidth: 1);
         $frame = new Frame(5, 1);
-        $context = self::contextAt(0.0);
+        $pass = self::passAt(0.0);
 
-        $bar->render($frame, Rect::fromSize(5, 1), $context);
+        $bar->render($frame, Rect::fromSize(5, 1), $pass->context);
 
-        self::assertSame(1.0, $context->repaintDelay(), 'max(1, lastIndex) guards the division for single-cell bars');
+        self::assertSame(1.0, $pass->clock->repaintDelay(), 'max(1, lastIndex) guards the division for single-cell bars');
     }
 
     #[Test]
@@ -190,11 +191,11 @@ final class ActivityBarTest extends TestCase
     {
         $bar = self::makeBar(speed: 0.0, barWidth: 20);
         $frame = new Frame(20, 1);
-        $context = self::contextAt(0.0);
+        $pass = self::passAt(0.0);
 
-        $bar->render($frame, Rect::fromSize(20, 1), $context);
+        $bar->render($frame, Rect::fromSize(20, 1), $pass->context);
 
-        self::assertSame(1.0 / (0.01 * 19.0), $context->repaintDelay(), 'Zero speed clamps to 0.01 sweeps/s');
+        self::assertSame(1.0 / (0.01 * 19.0), $pass->clock->repaintDelay(), 'Zero speed clamps to 0.01 sweeps/s');
     }
 
     #[Test]
@@ -299,11 +300,11 @@ final class ActivityBarTest extends TestCase
     {
         $bar = ActivityBar::new();
         $frame = new Frame(5, 1);
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
 
-        $bar->render($frame, new Rect(0, 0, 0, 0), $context);
+        $bar->render($frame, new Rect(0, 0, 0, 0), $pass->context);
 
-        self::assertNull($context->repaintDelay(), 'An invisible bar must not keep the render loop awake');
+        self::assertNull($pass->clock->repaintDelay(), 'An invisible bar must not keep the render loop awake');
     }
 
     #[Test]
@@ -525,11 +526,11 @@ final class ActivityBarTest extends TestCase
     {
         $bar = self::makeBar(label: 'ABCDE', barWidth: 5);
         $frame = new Frame(6, 1);
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
 
-        $bar->render($frame, Rect::fromSize(6, 1), $context);
+        $bar->render($frame, Rect::fromSize(6, 1), $pass->context);
 
-        self::assertNull($context->repaintDelay(), 'Without a visible bar there is nothing to animate');
+        self::assertNull($pass->clock->repaintDelay(), 'Without a visible bar there is nothing to animate');
     }
 
     #[Test]
@@ -603,9 +604,14 @@ final class ActivityBarTest extends TestCase
 
     private static function contextAt(float $now): RenderContext
     {
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame($now);
+        return self::passAt($now)->context;
+    }
 
-        return $context;
+    private static function passAt(float $now): RenderPass
+    {
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin($now);
+
+        return $pass;
     }
 }

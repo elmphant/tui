@@ -13,8 +13,10 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Popup\Modal;
 use Elmphant\Tui\Widget\Popup\Overlay;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -46,8 +48,8 @@ final class LayoutPlanTest extends TestCase
         self::assertTrue($right->equals(new Rect(5, 0, 5, 4)));
 
         $frame = new Frame(10, 4);
-        (new RenderContext(Theme::dark()))
-            ->renderWithPlan($root, $frame, $area, $plan);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->layout->during($plan, static fn () => $root->render($frame, $area, $pass->context));
 
         self::assertSame(2, $counter->count, 'Rendering must reuse both planned placements');
         self::assertSame('child', implode('', array_slice($frame->characters, 0, 5)));
@@ -86,8 +88,8 @@ final class LayoutPlanTest extends TestCase
         $area = Rect::fromSize(10, 4);
         $plan = LayoutPlan::resolve($container, $area);
 
-        (new RenderContext(Theme::dark()))
-            ->renderWithPlan($container, new Frame(10, 4), $area, $plan);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->layout->during($plan, static fn () => $container->render(new Frame(10, 4), $area, $pass->context));
 
         self::assertSame(1, $counter->count);
         self::assertCount(1, $inspection->children ?? []);
@@ -95,22 +97,22 @@ final class LayoutPlanTest extends TestCase
     }
 
     #[Test]
-    public function renderContextRestoresItsPreviousPlanAfterRenderFailure(): void
+    public function theLayoutInForceRestoresItsPreviousPlanAfterRenderFailure(): void
     {
         $counter = new LayoutPlanCounter();
         $container = new LayoutPlanContainer(new ThrowingLayoutWidget(), $counter);
         $area = Rect::fromSize(10, 4);
         $plan = LayoutPlan::resolve($container, $area);
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
 
         try {
-            $context->renderWithPlan($container, new Frame(10, 4), $area, $plan);
+            $pass->layout->during($plan, static fn () => $container->render(new Frame(10, 4), $area, $pass->context));
             self::fail('Precondition: child rendering must fail');
         } catch (RuntimeException) {
             // Expected: verify the context is usable without the failed plan.
         }
 
-        foreach ($context->childrenOf($container, $area) as $_) {
+        foreach (PlacedChildren::of($container, $area, $pass->context) as $_) {
             // Consume a potential lazy container implementation.
         }
 
@@ -180,7 +182,7 @@ final readonly class LayoutPlanContainer implements Widget, WidgetContainer
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
             $child->render($frame, $childArea, $context);
         }
     }

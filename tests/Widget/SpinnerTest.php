@@ -8,6 +8,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Feedback\Spinner;
@@ -71,10 +72,10 @@ final class SpinnerTest extends TestCase
     {
         $spinner = Spinner::new();
         $frame = new Frame(20, 1);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.08);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.08);
 
-        $spinner->render($frame, new Rect(0, 0, 20, 1), $context);
+        $spinner->render($frame, new Rect(0, 0, 20, 1), $pass->context);
 
         self::assertSame('⠙', $frame->characters[0]);
     }
@@ -84,10 +85,10 @@ final class SpinnerTest extends TestCase
     {
         $spinner = Spinner::new();
         $frame = new Frame(20, 1);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(10 * 0.08);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(10 * 0.08);
 
-        $spinner->render($frame, new Rect(0, 0, 20, 1), $context);
+        $spinner->render($frame, new Rect(0, 0, 20, 1), $pass->context);
 
         self::assertSame('⠋', $frame->characters[0]);
     }
@@ -98,10 +99,10 @@ final class SpinnerTest extends TestCase
         // 0.12 / 0.08 = 1.5: floor gives frame 1 (⠙); round/ceil would give frame 2 (⠹)
         $spinner = Spinner::new();
         $frame = new Frame(20, 1);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.12);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.12);
 
-        $spinner->render($frame, new Rect(0, 0, 20, 1), $context);
+        $spinner->render($frame, new Rect(0, 0, 20, 1), $pass->context);
 
         self::assertSame('⠙', $frame->characters[0]);
     }
@@ -111,10 +112,10 @@ final class SpinnerTest extends TestCase
     {
         $spinner = Spinner::new()->withInterval(0.5);
         $frame = new Frame(20, 1);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.5);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.5);
 
-        $spinner->render($frame, new Rect(0, 0, 20, 1), $context);
+        $spinner->render($frame, new Rect(0, 0, 20, 1), $pass->context);
 
         self::assertSame('⠙', $frame->characters[0]);
     }
@@ -124,11 +125,11 @@ final class SpinnerTest extends TestCase
     {
         $spinner = Spinner::new();
         $frame = new Frame(20, 1);
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
 
-        $spinner->render($frame, new Rect(0, 0, 20, 1), $context);
+        $spinner->render($frame, new Rect(0, 0, 20, 1), $pass->context);
 
-        self::assertSame(0.08, $context->repaintDelay());
+        self::assertSame(0.08, $pass->clock->repaintDelay());
     }
 
     #[Test]

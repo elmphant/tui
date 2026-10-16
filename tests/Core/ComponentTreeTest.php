@@ -85,8 +85,7 @@ final class ComponentTreeTest extends TestCase
         );
         $frame = new Frame(20, 5);
         $area = new Rect(2, 1, 10, 3);
-        $context = new RenderContext(Theme::dark());
-        $context->focusOn(FocusState::nowhere());
+        $context = RenderContext::unfocused(Theme::dark());
 
         $component->render($frame, $area, $context);
 

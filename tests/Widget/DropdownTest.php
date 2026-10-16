@@ -13,11 +13,13 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\PasteMsg;
+use Elmphant\Tui\Rendering\FocusPath;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -240,7 +242,8 @@ final class DropdownTest extends TestCase
     public function anAreaExactlyOneCellWideStillDrawsTheMarker(): void
     {
         $frame = new Frame(10, 3);
-        (new RenderContext(Theme::dark()))->renderRoot(
+        RootPass::draw(
+            RenderPass::new(Theme::dark()),
             Dropdown::new(Select::new(['json'])->activated('json')),
             $frame,
             new Rect(0, 0, 1, 1),
@@ -253,7 +256,8 @@ final class DropdownTest extends TestCase
     public function aZeroHeightAreaDrawsNothing(): void
     {
         $frame = new Frame(10, 3);
-        (new RenderContext(Theme::dark()))->renderRoot(
+        RootPass::draw(
+            RenderPass::new(Theme::dark()),
             Dropdown::new(Select::new(['json'])->activated('json')),
             $frame,
             new Rect(0, 0, 10, 0),
@@ -381,8 +385,7 @@ final class DropdownTest extends TestCase
     private static function frameFor(Dropdown $dropdown, Theme $theme, bool $focused = false): Frame
     {
         $frame = new Frame(30, 6);
-        $context = $focused ? RenderContext::focused($theme) : new RenderContext($theme);
-        $context->renderRoot($dropdown, $frame, self::anchor());
+        RootPass::draw(self::pass($theme, $focused), $dropdown, $frame, self::anchor());
 
         return $frame;
     }
@@ -398,10 +401,14 @@ final class DropdownTest extends TestCase
     private static function screen(Dropdown $dropdown, bool $focused = false): ScreenBuffer
     {
         $frame = new Frame(30, 12);
-        $context = $focused ? RenderContext::focused(Theme::dark()) : new RenderContext(Theme::dark());
-        $context->renderRoot($dropdown, $frame, self::anchor());
+        RootPass::draw(self::pass(Theme::dark(), $focused), $dropdown, $frame, self::anchor());
 
         return ScreenBuffer::fromFrame($frame);
+    }
+
+    private static function pass(Theme $theme, bool $focused): RenderPass
+    {
+        return RenderPass::new($theme, focus: $focused ? FocusPath::here() : null);
     }
 
     private static function opened(Dropdown $dropdown): Dropdown

@@ -11,7 +11,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -35,7 +35,7 @@ final class ModelTest extends TestCase
                 return UpdateResult::keep($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };

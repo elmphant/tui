@@ -8,8 +8,10 @@ use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Popup\DropdownPopup;
 use Elmphant\Tui\Widget\Popup\FloatTarget;
@@ -100,7 +102,7 @@ final class DropdownPopupRenderTest extends TestCase
         $popup = self::popupOf(['json', 'yaml', 'toml']);
 
         $planned = new Frame(30, 10);
-        (new RenderContext(Theme::dark()))->renderWithPlan($popup, $planned, $area, LayoutPlan::resolve($popup, $area));
+        RootPass::draw(RenderPass::new(Theme::dark()), $popup, $planned, $area, LayoutPlan::resolve($popup, $area));
 
         $direct = new Frame(30, 10);
         $popup->render($direct, $area, new RenderContext(Theme::dark()));

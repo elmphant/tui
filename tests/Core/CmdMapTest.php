@@ -14,7 +14,7 @@ use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\TestClock;
@@ -237,7 +237,7 @@ final class CmdMapTest extends TestCase
                 return UpdateResult::keep($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };

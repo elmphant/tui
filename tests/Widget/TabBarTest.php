@@ -28,9 +28,11 @@ use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Choice\Radio;
@@ -62,7 +64,7 @@ final class TabBarTest extends TestCase
         }
 
         $planned = new Frame(24, 9);
-        (new RenderContext(Theme::dark()))->renderWithPlan($tabBar, $planned, $area, LayoutPlan::resolve($tabBar, $area));
+        RootPass::draw(RenderPass::new(Theme::dark()), $tabBar, $planned, $area, LayoutPlan::resolve($tabBar, $area));
 
         $direct = new Frame(24, 9);
         $tabBar->render($direct, $area, new RenderContext(Theme::dark()));

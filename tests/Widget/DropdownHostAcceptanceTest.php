@@ -15,10 +15,11 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\InputRouter;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Popup\Dropdown;
@@ -87,9 +88,9 @@ final class DropdownHostAcceptanceTest extends TestCase
     {
         $pane = self::paneWithTwoDropdowns(openFirst: true);
 
-        [$firstFrame, $context] = self::drawn($pane);
+        [$firstFrame, $pass] = self::drawn($pane);
 
-        $placements = $context->floatPlacements();
+        $placements = $pass->floats->placements();
         self::assertCount(1, $placements, 'the popup is on the first frame, drawn through the fallback layout path');
 
         $popup = $placements[0]->float;
@@ -146,26 +147,26 @@ final class DropdownHostAcceptanceTest extends TestCase
 
     private static function route(ScrollPane $pane, MouseMsg $mouse): Message
     {
-        [$frame, $context] = self::drawn($pane);
+        [$frame, $pass] = self::drawn($pane);
 
-        return InputRouter::route($mouse, $frame->area(), $context->floatPlacements());
+        return InputRouter::route($mouse, $frame->area(), $pass->floats->placements());
     }
 
     /**
      * As the runtime draws a bound pane; a bare RenderContext::focused() names no child.
      *
-     * @return array{Frame, RenderContext}
+     * @return array{Frame, RenderPass}
      */
     private static function drawn(ScrollPane $pane): array
     {
         $frame = new Frame(40, 18);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('pane/0')));
-        $context->renderRoot((new DropdownPaneApp($pane))->view(), $frame, $frame->area());
-        $context->commitFloatPlacements();
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('pane/0')));
+        RootPass::draw($pass, (new DropdownPaneApp($pane))->view(), $frame);
+        $pass->floats->commit();
 
-        return [$frame, $context];
+        return [$frame, $pass];
     }
 
     private static function paneWithTwoDropdowns(bool $openFirst): ScrollPane

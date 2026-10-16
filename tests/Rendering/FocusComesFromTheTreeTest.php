@@ -14,8 +14,10 @@ use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Rendering\FocusPath;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
@@ -36,13 +38,13 @@ final class FocusComesFromTheTreeTest extends TestCase
     }
 
     #[Test]
-    public function aContextDeclaredFocusedStaysFocusedOnTheNextFrame(): void
+    public function aPassDeclaredFocusedStaysFocusedOnTheNextFrame(): void
     {
         $frame = new Frame(6, 1);
-        $context = RenderContext::focused(Theme::dark());
-        $context->beginFrame(0.0);
+        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::here());
+        $pass->begin(0.0);
 
-        (new FlaggedProbe())->render($frame, Rect::fromSize(6, 1), $context);
+        (new FlaggedProbe())->render($frame, Rect::fromSize(6, 1), $pass->context);
 
         self::assertSame('F', $frame->character(0));
     }
@@ -51,11 +53,11 @@ final class FocusComesFromTheTreeTest extends TestCase
     public function aWidgetNobodyBoundShowsNoRingOfItsOwn(): void
     {
         $frame = new Frame(6, 2);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('field')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('field')));
 
-        (new MixedTreeApp(TextInput::new()))->render($frame, $context);
+        (new MixedTreeApp(TextInput::new()))->render($frame, $pass);
 
         self::assertSame('u', $frame->character(6), 'the unbound pane was never given the keyboard');
     }
@@ -68,11 +70,11 @@ final class FocusComesFromTheTreeTest extends TestCase
     public function aBoundPaneStillFlaggedDoesNotDrawAsFocusedOnceTheKeyboardHasMoved(): void
     {
         $frame = new Frame(6, 2);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('right')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('right')));
 
-        (new TwoProbeApp())->render($frame, $context);
+        (new TwoProbeApp())->render($frame, $pass);
 
         self::assertSame('u', $frame->character(0), 'the pane that kept a stale flag');
         self::assertSame('F', $frame->character(6), 'the pane the keyboard is actually on');

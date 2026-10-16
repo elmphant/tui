@@ -19,7 +19,7 @@ use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focusable;
@@ -54,23 +54,24 @@ abstract readonly class App implements RoutesFocus
         return $this->setup();
     }
 
-    final public function render(Frame $frame, RenderContext $context): void
+    final public function render(Frame $frame, RenderPass $pass): void
     {
         $area = $frame->area();
-        $focused = $context->focusedComponent();
+        $focused = $pass->focus->focusedComponent();
 
-        $context->provideFocusedHints($this->hintsOfFocused($focused));
-        $context->provideStopPublishers($this->componentRegistry()->stopPublishers());
-        $context->provideFocusedEnclosure($focused === null ? [] : array_map(
+        $pass->focus->provideHints($this->hintsOfFocused($focused));
+        $pass->focus->provideStopPublishers($this->componentRegistry()->stopPublishers());
+        $pass->focus->provideEnclosure($focused === null ? [] : array_map(
             static fn (Component $component): string => $component->id->value,
             $this->enclosing($focused),
         ));
 
-        $context->renderRoot(
-            $this->viewWidget(),
+        $root = $this->viewWidget();
+        $plan = LayoutSnapshot::existingPlanFor($this, $area);
+        $pass->floats->drawOver(
             $frame,
-            $area,
-            LayoutSnapshot::existingPlanFor($this, $area),
+            static fn () => $pass->layout->during($plan, static fn () => $root->render($frame, $area, $pass->context)),
+            $pass->context,
         );
     }
 

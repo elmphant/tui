@@ -14,6 +14,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
@@ -120,9 +121,9 @@ final readonly class ComposedSearchModel implements Model
         );
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
-        $this->search->render($frame, Rect::fromSize($frame->width, $frame->height), $context);
+        $this->search->render($frame, Rect::fromSize($frame->width, $frame->height), $pass->context);
     }
 
     /**

@@ -30,6 +30,7 @@ use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -207,7 +208,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
             $frame->pushClip($contentRect);
 
             try {
-                foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+                foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
                     $child->render($frame, $childArea, $context);
                 }
             } finally {

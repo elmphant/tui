@@ -14,10 +14,13 @@ use Elmphant\Tui\Layout\LayoutSnapshot;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Rendering\FocusPath;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
@@ -145,7 +148,7 @@ final readonly class CountingWidgetContainer implements Widget, WidgetContainer
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
             $child->render($frame, $childArea, $context);
         }
     }
@@ -276,11 +279,8 @@ final class AppLayoutSnapshotTest extends TestCase
         BindingsCallCounter::$count = 0;
     }
 
-    private static function sayingNobodyHoldsTheKeyboard(): RenderContext
+    private static function sayingNobodyHoldsTheKeyboard(): RenderPass
     {
-        $context = new RenderContext(Theme::dark());
-        $context->focusOn(FocusState::nowhere());
-
-        return $context;
+        return RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
     }
 }

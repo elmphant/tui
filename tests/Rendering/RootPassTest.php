@@ -9,10 +9,14 @@ use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Rendering\FloatQueue;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Tests\Support\RootPass;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Popup\Floating;
 use Elmphant\Tui\Widget\Popup\FloatTarget;
 use Elmphant\Tui\Widget\Popup\PointerFloating;
@@ -28,25 +32,25 @@ final class FloatDrainCounter
     public int $count = 0;
 }
 
-final class RenderContextRenderRootTest extends TestCase
+final class RootPassTest extends TestCase
 {
     #[Test]
     public function theDrainRecordsEveryPointerFloatItRenderedInPaintOrder(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(40, 10);
         $anchor = new Rect(0, 0, 10, 1);
         $firstPopup = self::pointerFloat('first', new Rect(0, 1, 8, 1));
         $secondPopup = self::pointerFloat('second', new Rect(0, 2, 8, 1));
 
-        $context->renderRoot(
+        RootPass::draw($pass,
             self::widgetQueuingPointerFloats($anchor, $firstPopup, $secondPopup),
             $frame,
             $frame->area(),
         );
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
-        $placements = $context->floatPlacements();
+        $placements = $pass->floats->placements();
 
         self::assertCount(2, $placements);
         self::assertSame($firstPopup, $placements[0]->float);
@@ -60,76 +64,76 @@ final class RenderContextRenderRootTest extends TestCase
     #[Test]
     public function aPlainFloatingDrawsButIsNeverRecorded(): void
     {
-        $context = self::contextWithOnePublishedFloat();
+        $pass = self::passWithOnePublishedFloat();
         $frame = new Frame(10, 5);
 
-        $context->beginFrame(0.0);
-        $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 3, 1)), $frame, $frame->area());
-        $context->commitFloatPlacements();
+        $pass->begin(0.0);
+        RootPass::draw($pass, self::widgetQueuingPlacement(new Rect(0, 0, 3, 1)), $frame, $frame->area());
+        $pass->floats->commit();
 
         self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
-        self::assertSame([], $context->floatPlacements());
+        self::assertSame([], $pass->floats->placements());
     }
 
     #[Test]
     public function aFloatSkippedForZeroSizeIsNotRecorded(): void
     {
-        $context = self::contextWithOnePublishedFloat();
+        $pass = self::passWithOnePublishedFloat();
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 10, 1);
 
-        $context->beginFrame(0.0);
-        $context->renderRoot(
+        $pass->begin(0.0);
+        RootPass::draw($pass,
             self::widgetQueuingPointerFloats($anchor, self::pointerFloat('zero', new Rect(0, 0, 0, 3))),
             $frame,
             $frame->area(),
         );
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
-        self::assertSame([], $context->floatPlacements());
+        self::assertSame([], $pass->floats->placements());
     }
 
     #[Test]
     public function aStagedFrameIsOnlyRoutableOnceItIsCommitted(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(20, 5);
         $anchor = new Rect(0, 0, 5, 1);
         $published = self::pointerFloat('published', new Rect(0, 1, 5, 1));
         $staged = self::pointerFloat('staged', new Rect(0, 2, 5, 1));
 
-        $context->renderRoot(self::widgetQueuingPointerFloats($anchor, $published), $frame, $frame->area());
-        $context->commitFloatPlacements();
+        RootPass::draw($pass, self::widgetQueuingPointerFloats($anchor, $published), $frame, $frame->area());
+        $pass->floats->commit();
 
-        $context->beginFrame(0.0);
-        $context->renderRoot(self::widgetQueuingPointerFloats($anchor, $staged), $frame, $frame->area());
+        $pass->begin(0.0);
+        RootPass::draw($pass, self::widgetQueuingPointerFloats($anchor, $staged), $frame, $frame->area());
 
-        self::assertSame($published, $context->floatPlacements()[0]->float, 'a frame that was never committed must not be routable');
+        self::assertSame($published, $pass->floats->placements()[0]->float, 'a frame that was never committed must not be routable');
 
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
-        self::assertSame($staged, $context->floatPlacements()[0]->float);
+        self::assertSame($staged, $pass->floats->placements()[0]->float);
     }
 
     #[Test]
-    public function aRenderRootThatThrowsMidDrainStagesNothingToCommit(): void
+    public function aRootPassThatThrowsMidDrainStagesNothingToCommit(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 5, 1);
 
-        $context->renderRoot(
+        RootPass::draw($pass,
             self::widgetQueuingPointerFloats($anchor, self::pointerFloat('kept', $anchor)),
             $frame,
             $frame->area(),
         );
-        $context->commitFloatPlacements();
-        $committedBeforeTheThrow = $context->floatPlacements();
+        $pass->floats->commit();
+        $committedBeforeTheThrow = $pass->floats->placements();
 
-        $context->beginFrame(0.0);
+        $pass->begin(0.0);
 
         try {
-            $context->renderRoot(
+            RootPass::draw($pass,
                 self::widgetQueuingPointerFloats(
                     $anchor,
                     self::pointerFloat('drawn before the throw', $anchor),
@@ -138,17 +142,17 @@ final class RenderContextRenderRootTest extends TestCase
                 $frame,
                 $frame->area(),
             );
-            self::fail('renderRoot() should have propagated the exception');
+            self::fail('the root pass should have propagated the exception');
         } catch (RuntimeException) {
         }
 
-        self::assertSame($committedBeforeTheThrow, $context->floatPlacements(), 'the published list is untouched');
+        self::assertSame($committedBeforeTheThrow, $pass->floats->placements(), 'the published list is untouched');
 
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
         self::assertSame(
             [],
-            $context->floatPlacements(),
+            $pass->floats->placements(),
             'a half-drawn frame stages nothing — not even the floats it managed to draw',
         );
     }
@@ -156,45 +160,45 @@ final class RenderContextRenderRootTest extends TestCase
     #[Test]
     public function aCommittedFloatlessFramePublishesTheEmptyList(): void
     {
-        $context = self::contextWithOnePublishedFloat();
+        $pass = self::passWithOnePublishedFloat();
         $frame = new Frame(10, 5);
 
-        $context->beginFrame(0.0);
-        $context->renderRoot(self::emptyWidget(), $frame, $frame->area());
-        $context->commitFloatPlacements();
+        $pass->begin(0.0);
+        RootPass::draw($pass, self::emptyWidget(), $frame, $frame->area());
+        $pass->floats->commit();
 
-        self::assertSame([], $context->floatPlacements());
+        self::assertSame([], $pass->floats->placements());
     }
 
     #[Test]
-    public function beginFrameDropsACandidateThatWasNeverCommitted(): void
+    public function beginningAFrameDropsACandidateThatWasNeverCommitted(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 5, 1);
 
-        $context->beginFrame(0.0);
-        $context->renderRoot(
+        $pass->begin(0.0);
+        RootPass::draw($pass,
             self::widgetQueuingPointerFloats($anchor, self::pointerFloat('never presented', $anchor)),
             $frame,
             $frame->area(),
         );
 
-        $context->beginFrame(1.0);
-        self::emptyWidget()->render($frame, $frame->area(), $context);
-        $context->commitFloatPlacements();
+        $pass->begin(1.0);
+        self::emptyWidget()->render($frame, $frame->area(), $pass->context);
+        $pass->floats->commit();
 
         self::assertSame(
             [],
-            $context->floatPlacements(),
-            'a frame that renders without renderRoot() must not republish an earlier candidate',
+            $pass->floats->placements(),
+            'a frame that renders without a root pass must not republish an earlier candidate',
         );
     }
 
     #[Test]
     public function aFloatQueuedDuringTheDrainDrawsNextIterationAndRecordsAfter(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(20, 5);
         $anchor = new Rect(0, 0, 5, 1);
         $firstPlacement = new Rect(0, 0, 5, 1);
@@ -203,14 +207,14 @@ final class RenderContextRenderRootTest extends TestCase
         $second = self::pointerFloat('second', $secondPlacement);
         $first = self::queuingPointerFloat('first', $firstPlacement, $second, $anchor);
 
-        $context->renderRoot(
+        RootPass::draw($pass,
             self::widgetQueuingPointerFloats($anchor, $first),
             $frame,
             $frame->area(),
         );
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
-        $placements = $context->floatPlacements();
+        $placements = $pass->floats->placements();
 
         self::assertCount(2, $placements);
         self::assertSame($first->target(), $placements[0]->target());
@@ -220,26 +224,26 @@ final class RenderContextRenderRootTest extends TestCase
     #[Test]
     public function floatsStillQueuedAfterThreeIterationsAreDropped(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(20, 5);
         $anchor = new Rect(0, 0, 5, 1);
         $renders = new FloatDrainCounter();
 
-        $context->renderRoot(
+        RootPass::draw($pass,
             self::widgetQueuingSelfRequeuingFloat($anchor, $renders),
             $frame,
             $frame->area(),
         );
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
         self::assertSame(3, $renders->count, 'a float that keeps re-queuing itself draws for at most 3 iterations');
-        self::assertCount(3, $context->floatPlacements());
+        self::assertCount(3, $pass->floats->placements());
     }
 
     #[Test]
-    public function renderRootUnderALayoutPlanStillDrains(): void
+    public function aRootPassUnderALayoutPlanStillDrains(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 5, 1);
         $placementCalls = new FloatDrainCounter();
@@ -247,21 +251,21 @@ final class RenderContextRenderRootTest extends TestCase
         $root = self::containerQueuingPointerFloat($anchor, $float, $placementCalls);
         $plan = LayoutPlan::resolve($root, $frame->area());
 
-        $context->renderRoot($root, $frame, $frame->area(), $plan);
-        $context->commitFloatPlacements();
+        RootPass::draw($pass, $root, $frame, $frame->area(), $plan);
+        $pass->floats->commit();
 
-        self::assertSame(1, $placementCalls->count, 'renderRoot must reuse the plan instead of recomputing layout');
-        self::assertCount(1, $context->floatPlacements());
-        self::assertSame($float->target(), $context->floatPlacements()[0]->target());
+        self::assertSame(1, $placementCalls->count, 'the root pass must reuse the plan instead of recomputing layout');
+        self::assertCount(1, $pass->floats->placements());
+        self::assertSame($float->target(), $pass->floats->placements()[0]->target());
     }
 
     #[Test]
     public function aFloatDrawsOutsideTheClipTheTreeRenderedUnder(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(40, 10);
 
-        $context->renderRoot(self::host('POPUP', new Rect(0, 1, 40, 2)), $frame, $frame->area());
+        RootPass::draw($pass, self::host('POPUP', new Rect(0, 1, 40, 2)), $frame, $frame->area());
 
         $screen = ScreenBuffer::fromFrame($frame);
 
@@ -270,120 +274,120 @@ final class RenderContextRenderRootTest extends TestCase
     }
 
     #[Test]
-    public function renderRootResetsAnyFloatQueuedBeforeItRuns(): void
+    public function aRootPassResetsAnyFloatQueuedBeforeItRuns(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(40, 10);
-        $context->float($frame, self::labelled('STALE'), new Rect(0, 0, 10, 1));
+        $pass->context->float($frame, self::labelled('STALE'), new Rect(0, 0, 10, 1));
 
-        $context->renderRoot(self::emptyWidget(), $frame, $frame->area());
+        RootPass::draw($pass, self::emptyWidget(), $frame, $frame->area());
 
         self::assertStringNotContainsString(
             'STALE',
             ScreenBuffer::fromFrame($frame)->plainText(),
             'A float left over from before this call must not survive into this render',
         );
-        self::assertSame([], $context->floats(), 'and it is discarded, never restored afterwards');
+        self::assertSame([], $pass->floats->queued(), 'and it is discarded, never restored afterwards');
     }
 
     #[Test]
     public function aThrowDuringTheDrainStillClearsTheQueue(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 5, 1);
 
         try {
-            $context->renderRoot(
+            RootPass::draw($pass,
                 self::widgetQueuingPointerFloats($anchor, self::throwingPointerFloat($anchor)),
                 $frame,
                 $frame->area(),
             );
-            self::fail('renderRoot() should have propagated the exception');
+            self::fail('the root pass should have propagated the exception');
         } catch (RuntimeException) {
         }
 
-        self::assertSame([], $context->floats());
+        self::assertSame([], $pass->floats->queued());
     }
 
     #[Test]
     public function committingFromInsideARootPassThrows(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('commitFloatPlacements() cannot run inside a root pass; the runtime commits once the frame is on the screen.');
+        $this->expectExceptionMessage('Float placements cannot be committed inside a root pass; the runtime commits once the frame is on the screen.');
 
-        $context->renderRoot(self::widgetCommittingMidRender(), $frame, $frame->area());
+        RootPass::draw($pass, self::widgetCommittingMidRender($pass->floats), $frame, $frame->area());
     }
 
     #[Test]
-    public function nestedRenderRootThrows(): void
+    public function aNestedRootPassThrows(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('renderRoot() cannot be nested inside another renderRoot() pass.');
+        $this->expectExceptionMessage('A root pass cannot be nested inside another root pass.');
 
-        $context->renderRoot(self::widgetCallingRenderRootAgain(), $frame, $frame->area());
+        RootPass::draw($pass, self::widgetStartingAnotherRootPass($pass), $frame, $frame->area());
     }
 
     #[Test]
     public function aSecondRootPassInOneFrameThrows(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
 
-        $context->beginFrame(0.0);
-        $context->renderRoot(self::emptyWidget(), $frame, $frame->area());
+        $pass->begin(0.0);
+        RootPass::draw($pass, self::emptyWidget(), $frame, $frame->area());
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('renderRoot() may run only once per frame; compose a multi-part screen under one root.');
+        $this->expectExceptionMessage('A root pass may run only once per frame; compose a multi-part screen under one root.');
 
-        $context->renderRoot(self::emptyWidget(), $frame, $frame->area());
+        RootPass::draw($pass, self::emptyWidget(), $frame, $frame->area());
     }
 
     #[Test]
-    public function beginFrameAllowsTheNextRootPass(): void
+    public function beginningTheNextFrameAllowsTheNextRootPass(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 5, 1);
         $nextFrameFloat = self::pointerFloat('next frame', $anchor);
 
-        $context->beginFrame(0.0);
-        $context->renderRoot(self::emptyWidget(), $frame, $frame->area());
+        $pass->begin(0.0);
+        RootPass::draw($pass, self::emptyWidget(), $frame, $frame->area());
 
-        $context->beginFrame(1.0);
-        $context->renderRoot(
+        $pass->begin(1.0);
+        RootPass::draw($pass,
             self::widgetQueuingPointerFloats($anchor, $nextFrameFloat),
             $frame,
             $frame->area(),
         );
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
-        self::assertSame($nextFrameFloat, $context->floatPlacements()[0]->float);
+        self::assertSame($nextFrameFloat, $pass->floats->placements()[0]->float);
     }
 
     #[Test]
     public function aFloatQueuedAgainstAForeignFrameIsIgnoredWhileARootIsActive(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 5, 1);
         $legit = self::pointerFloat('legit', $anchor);
         $foreign = self::pointerFloat('foreign', $anchor);
 
-        $context->renderRoot(
+        RootPass::draw($pass,
             self::widgetQueuingOnRealAndForeignFrames($anchor, $legit, $foreign),
             $frame,
             $frame->area(),
         );
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
-        $placements = $context->floatPlacements();
+        $placements = $pass->floats->placements();
 
         self::assertCount(1, $placements);
         self::assertSame($legit->target(), $placements[0]->target());
@@ -392,10 +396,10 @@ final class RenderContextRenderRootTest extends TestCase
     #[Test]
     public function aPlacementExactlyOneCellWideStillRenders(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
 
-        $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 1, 1)), $frame, $frame->area());
+        RootPass::draw($pass, self::widgetQueuingPlacement(new Rect(0, 0, 1, 1)), $frame, $frame->area());
 
         self::assertStringContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
     }
@@ -403,10 +407,10 @@ final class RenderContextRenderRootTest extends TestCase
     #[Test]
     public function aZeroWidthPlacementIsSkippedEvenWhenTheHeightIsValid(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
 
-        $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 0, 3)), $frame, $frame->area());
+        RootPass::draw($pass, self::widgetQueuingPlacement(new Rect(0, 0, 0, 3)), $frame, $frame->area());
 
         self::assertStringNotContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
     }
@@ -414,10 +418,10 @@ final class RenderContextRenderRootTest extends TestCase
     #[Test]
     public function aZeroHeightPlacementIsSkippedEvenWhenTheWidthIsValid(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
 
-        $context->renderRoot(self::widgetQueuingPlacement(new Rect(0, 0, 3, 0)), $frame, $frame->area());
+        RootPass::draw($pass, self::widgetQueuingPlacement(new Rect(0, 0, 3, 0)), $frame, $frame->area());
 
         self::assertStringNotContainsString('X', ScreenBuffer::fromFrame($frame)->plainText());
     }
@@ -425,10 +429,10 @@ final class RenderContextRenderRootTest extends TestCase
     #[Test]
     public function aSkippedFloatDoesNotStopLaterFloatsFromDrawing(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
 
-        $context->renderRoot(
+        RootPass::draw($pass,
             self::widgetQueuingTwoPlacements(new Rect(0, 0, 0, 3), new Rect(0, 0, 3, 1)),
             $frame,
             $frame->area(),
@@ -440,11 +444,11 @@ final class RenderContextRenderRootTest extends TestCase
     #[Test]
     public function theLastFloatQueuedDrawsOverTheOnesBeforeIt(): void
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(40, 10);
         $anchor = new Rect(0, 0, 10, 1);
 
-        $context->renderRoot(
+        RootPass::draw($pass,
             self::twoFloats($anchor),
             $frame,
             $frame->area(),
@@ -454,29 +458,33 @@ final class RenderContextRenderRootTest extends TestCase
     }
 
     /**
-     * A context whose published list already holds one placement, so a later
+     * A pass whose published list already holds one placement, so a later
      * frame asserting an EMPTY list has something to overwrite.
      */
-    private static function contextWithOnePublishedFloat(): RenderContext
+    private static function passWithOnePublishedFloat(): RenderPass
     {
-        $context = new RenderContext(Theme::dark());
+        $pass = RenderPass::new(Theme::dark());
         $frame = new Frame(10, 5);
         $anchor = new Rect(0, 0, 5, 1);
 
-        $context->beginFrame(0.0);
-        $context->renderRoot(
+        $pass->begin(0.0);
+        RootPass::draw($pass,
             self::widgetQueuingPointerFloats($anchor, self::pointerFloat('published', $anchor)),
             $frame,
             $frame->area(),
         );
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
-        return $context;
+        return $pass;
     }
 
-    private static function widgetCommittingMidRender(): Widget
+    private static function widgetCommittingMidRender(FloatQueue $floats): Widget
     {
-        return new class implements Widget {
+        return new class($floats) implements Widget {
+            public function __construct(private readonly FloatQueue $floats)
+            {
+            }
+
             public function sizing(): Sizing
             {
                 return Sizing::of(Constraint::flex(), Constraint::flex());
@@ -484,7 +492,7 @@ final class RenderContextRenderRootTest extends TestCase
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
-                $context->commitFloatPlacements();
+                $this->floats->commit();
             }
         };
     }
@@ -716,13 +724,15 @@ final class RenderContextRenderRootTest extends TestCase
         };
     }
 
-    private static function widgetCallingRenderRootAgain(): Widget
+    private static function widgetStartingAnotherRootPass(RenderPass $pass): Widget
     {
         $inner = self::emptyWidget();
 
-        return new class($inner) implements Widget {
-            public function __construct(private readonly Widget $inner)
-            {
+        return new class($pass, $inner) implements Widget {
+            public function __construct(
+                private readonly RenderPass $pass,
+                private readonly Widget $inner,
+            ) {
             }
 
             public function sizing(): Sizing
@@ -732,7 +742,7 @@ final class RenderContextRenderRootTest extends TestCase
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
-                $context->renderRoot($this->inner, $frame, $area);
+                RootPass::draw($this->pass, $this->inner, $frame, $area);
             }
         };
     }
@@ -776,7 +786,7 @@ final class RenderContextRenderRootTest extends TestCase
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
-                foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+                foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
                     $child->render($frame, $childArea, $context);
                 }
             }

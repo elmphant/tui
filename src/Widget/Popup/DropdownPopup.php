@@ -13,6 +13,7 @@ use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
 
 /**
@@ -113,7 +114,7 @@ final readonly class DropdownPopup implements PopupFrame, Widget
         $context->theme->base->apply($frame, $area);
         Block::new()->withBorder(BorderStyle::Rounded)->withBorderStyle($context->theme->focusedBorderStyle)->render($frame, $area);
 
-        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
             $child->render($frame, $childArea, $context);
         }
     }

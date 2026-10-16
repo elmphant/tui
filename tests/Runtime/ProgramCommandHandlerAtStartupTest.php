@@ -14,7 +14,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
@@ -106,7 +106,7 @@ final readonly class FirstArrivalModel implements Model
         };
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
     }
 }
@@ -180,7 +180,7 @@ final readonly class CancellingFeedModel implements Model
         };
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
     }
 }
@@ -242,7 +242,7 @@ final class StartupPingModel implements Model
         };
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
     }
 

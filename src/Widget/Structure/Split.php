@@ -29,6 +29,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
@@ -208,7 +209,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         $frame->pushClip($area);
 
         try {
-            foreach ($context->childrenOf($this, $area) as [$child, $pane]) {
+            foreach (PlacedChildren::of($this, $area, $context) as [$child, $pane]) {
                 $child->render($frame, $pane, $context);
 
                 if ($index < $last) {

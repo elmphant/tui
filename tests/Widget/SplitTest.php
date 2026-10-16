@@ -16,7 +16,9 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
@@ -81,7 +83,7 @@ final class SplitTest extends TestCase
             $split = Split::row(new SplitState($shares), ...$children);
 
             $planned = new Frame(24, 6);
-            (new RenderContext(Theme::dark()))->renderWithPlan($split, $planned, $area, LayoutPlan::resolve($split, $area));
+            RootPass::draw(RenderPass::new(Theme::dark()), $split, $planned, $area, LayoutPlan::resolve($split, $area));
 
             $direct = new Frame(24, 6);
             $split->render($direct, $area, new RenderContext(Theme::dark()));

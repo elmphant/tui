@@ -12,7 +12,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\AdaptiveTicker;
@@ -197,7 +197,7 @@ final class ProgramTracingTest extends TestCase
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
         $reflection->getProperty('running')->setValue($program, true);
         $reflection->getProperty('isDirty')->setValue($program, true);
@@ -235,7 +235,7 @@ final class ProgramTracingTest extends TestCase
                 return new UpdateResult(new self($this->revision + 1), Cmd::after(60.0, static fn (): Cmd => Cmd::quit()));
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $frame->putString(0, 0, 'revision ' . $this->revision);
             }
@@ -262,7 +262,7 @@ final class ProgramTracingTest extends TestCase
                 );
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -284,7 +284,7 @@ final class ProgramTracingTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $frame->putString(0, 0, 'traced');
             }

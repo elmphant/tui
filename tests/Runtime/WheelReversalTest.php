@@ -13,7 +13,7 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\PendingWheel;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Tests\Support\TestMessage;
@@ -183,7 +183,7 @@ final class WheelReversalTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };

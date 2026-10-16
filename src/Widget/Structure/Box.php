@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
@@ -141,7 +142,7 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
         $frame->pushClip($inset->inner($area));
 
         try {
-            foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+            foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
                 $child->render($frame, $childArea, $context);
             }
         } finally {

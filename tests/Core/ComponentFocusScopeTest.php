@@ -16,6 +16,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Interactive;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,9 +35,9 @@ final class ComponentFocusScopeTest extends TestCase
             Component::bind('second', new FocusProbe('second', $seen), static fn (object $app, Interactive $w): object => $app),
         );
 
-        $context = new RenderContext(Theme::dark());
-        $context->focusOn(new FocusState(ComponentId::named('second')));
-        $tree->render(new Frame(10, 2), new Rect(0, 0, 10, 2), $context);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->focus->focusOn(new FocusState(ComponentId::named('second')));
+        $tree->render(new Frame(10, 2), new Rect(0, 0, 10, 2), $pass->context);
 
         self::assertSame(['first' => false, 'second' => true], $seen->getArrayCopy());
     }

@@ -30,6 +30,7 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\FloatPlacement;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
 use Elmphant\Tui\Tests\Support\TestMessage;
@@ -45,7 +46,7 @@ use ReflectionMethod;
 
 final class AppTest extends TestCase
 {
-    private RenderContext $context;
+    private RenderPass $pass;
 
     #[Test]
     public function implementsModel(): void
@@ -311,7 +312,7 @@ final class AppTest extends TestCase
     {
         $app = new CounterApp(count: 42);
         $frame = new Frame(80, 24);
-        $app->render($frame, $this->context);
+        $app->render($frame, $this->pass);
 
         $rendered = '';
         for ($column = 0; $column < 80; ++$column) {
@@ -338,7 +339,7 @@ final class AppTest extends TestCase
     {
         $app = new CounterApp(count: 7);
         $frame = new Frame(80, 24);
-        $app->render($frame, $this->context);
+        $app->render($frame, $this->pass);
 
         $rendered = '';
         for ($column = 0; $column < 80; ++$column) {
@@ -450,7 +451,7 @@ final class AppTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->context = new RenderContext(Theme::dark());
+        $this->pass = RenderPass::new(Theme::dark());
     }
 
     private static function floatMouse(): FloatMouseMsg

@@ -9,10 +9,13 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Rendering\FocusPath;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Popup\Dropdown;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
@@ -33,12 +36,12 @@ final class DropdownFrameTest extends TestCase
             ->update(new KeyMsg(' '), $anchor)->model;
 
         $frame = new Frame(30, 12);
-        $context = RenderContext::unfocused(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->withFocusHere(static function () use ($context, $dropdown, $frame, $anchor): void {
-            $context->renderRoot($dropdown, $frame, $anchor);
+        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+        $pass->begin(0.0);
+        $pass->context->withFocusHere(static function () use ($pass, $dropdown, $frame, $anchor): void {
+            RootPass::draw($pass, $dropdown, $frame, $anchor);
         });
-        $context->commitFloatPlacements();
+        $pass->floats->commit();
 
         $screen = ScreenBuffer::fromFrame($frame);
         $drawn = '';

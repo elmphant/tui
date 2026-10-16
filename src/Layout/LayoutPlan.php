@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Rendering\PlannedLayout;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Dispatch\SingleMount;
 use Elmphant\Tui\Widget\Widget;
@@ -22,7 +23,7 @@ use SplObjectStorage;
  *
  * @internal
  */
-final class LayoutPlan
+final class LayoutPlan implements PlannedLayout
 {
     /**
      * @var SplObjectStorage<Widget, Rect>
@@ -78,9 +79,9 @@ final class LayoutPlan
     /**
      * @return list<array{Widget, Rect}>|null
      */
-    public function childrenOf(WidgetContainer $container, Rect $area): ?array
+    public function childrenOf(object $container, Rect $area): ?array
     {
-        if (!$this->children->offsetExists($container)) {
+        if (!$container instanceof WidgetContainer || !$this->children->offsetExists($container)) {
             return null;
         }
 

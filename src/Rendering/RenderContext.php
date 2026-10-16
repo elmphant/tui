@@ -6,78 +6,26 @@ namespace Elmphant\Tui\Rendering;
 
 use Closure;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Input\ColorProfile;
-use Elmphant\Tui\Layout\LayoutPlan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\Popup\Floating;
-use Elmphant\Tui\Widget\Popup\PointerFloating;
-use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
-use LogicException;
 
+/**
+ * What a widget may ask while it draws.
+ */
 final class RenderContext
 {
-    private ?LayoutPlan $layoutPlan = null;
-    private FocusState $focus;
-    private FocusState $initialFocus;
-    private int $initialFocusDepth = 0;
-    private int $focusDepth = 0;
-    private int $componentDepth = 0;
-
-    /**
-     * Segments of the focused id still to be matched, below the component being
-     * drawn. Empty means the keyboard is on that component itself.
-     *
-     * @var list<string>
-     */
-    private array $focusedPath = [];
-
-    /**
-     * Components whose subtree holds the focused one without naming it in their id:
-     * a bound child inside a pane.
-     *
-     * @var list<string>
-     */
-    private array $enclosure = [];
-
-    /**
-     * @var list<string>
-     */
-    private array $stopPublishers = [];
-
-    private bool $keyboardIsLoose = false;
-
-    /**
-     * @var array<string, string>
-     */
-    private array $focusedHints = [];
-    private float $now = 0.0;
-    private ?float $repaintDelay = null;
-    private ?Frame $rootFrame = null;
-    private bool $rootPassRan = false;
-
-    /**
-     * @var list<array{Floating, Rect}>
-     */
-    private array $floats = [];
-
-    /**
-     * @var list<FloatPlacement>
-     */
-    private array $pendingPlacements = [];
-
-    /**
-     * @var list<FloatPlacement>
-     */
-    private array $placements = [];
+    private readonly FocusPath $focus;
 
     public function __construct(
         public readonly Theme $theme,
         public readonly ColorProfile $colorProfile = ColorProfile::TrueColor,
+        private readonly FrameClock $clock = new FrameClock(),
+        ?FocusPath $focus = null,
+        private readonly FloatQueue $floats = new FloatQueue(),
+        private readonly LayoutInForce $layout = new LayoutInForce(),
     ) {
-        $this->focus = new FocusState();
-        $this->initialFocus = $this->focus;
+        $this->focus = $focus ?? FocusPath::undecided();
     }
 
     /**
@@ -87,11 +35,7 @@ final class RenderContext
      */
     public static function unfocused(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor): self
     {
-        $context = new self($theme, $colorProfile);
-        $context->initialFocus = FocusState::nowhere();
-        $context->focusOn($context->initialFocus);
-
-        return $context;
+        return new self($theme, $colorProfile, focus: FocusPath::nowhere());
     }
 
     /**
@@ -99,11 +43,7 @@ final class RenderContext
      */
     public static function focused(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor): self
     {
-        $context = self::unfocused($theme, $colorProfile);
-        $context->initialFocusDepth = 1;
-        $context->focusDepth = 1;
-
-        return $context;
+        return new self($theme, $colorProfile, focus: FocusPath::here());
     }
 
     /**
@@ -114,97 +54,15 @@ final class RenderContext
      */
     public function now(): float
     {
-        return $this->now;
+        return $this->clock->now();
     }
 
     /**
      * Ask the runtime to render another frame within $delay seconds.
-     *
-     * Animated widgets call this during render(); the smallest requested
-     * delay wins. Without a request the runtime only repaints on state
-     * changes.
      */
     public function requestRepaint(float $delay): void
     {
-        if (!is_finite($delay)) {
-            return;
-        }
-
-        $delay = max(0.0, $delay);
-        $this->repaintDelay = $this->repaintDelay === null
-            ? $delay
-            : min($this->repaintDelay, $delay);
-    }
-
-    /**
-     * @internal runtime entry point: stamps the frame time, resets repaint
-     * requests, and drops staged placements that were never committed, so a
-     * frame without renderRoot() cannot publish an old popup again
-     */
-    public function beginFrame(float $now): void
-    {
-        $this->now = $now;
-        $this->repaintDelay = null;
-        $this->pendingPlacements = [];
-        $this->rootPassRan = false;
-        $this->focus = $this->initialFocus;
-        $this->focusDepth = $this->initialFocusDepth;
-        $this->componentDepth = 0;
-        $this->focusedPath = [];
-        $this->keyboardIsLoose = false;
-        $this->enclosure = [];
-        $this->stopPublishers = [];
-        $this->focusedHints = [];
-    }
-
-    /**
-     * @internal installed once per frame by the tree that knows its components
-     */
-    public function focusOn(FocusState $focus): void
-    {
-        // A tree with nothing to focus leaves the runtime still waiting for an
-        // answer. For this frame that means nobody: saying so is what the guard
-        // below asks for, and the tree settles on a component once it has one.
-        $this->focus = $focus->isUndecided() ? FocusState::nowhere() : $focus;
-        $this->focusDepth = 0;
-        $this->componentDepth = 0;
-        $this->focusedPath = [];
-        $this->keyboardIsLoose = false;
-    }
-
-    public function focusedComponent(): ?ComponentId
-    {
-        return $this->focus->focused();
-    }
-
-    /**
-     * @internal resolved once per frame by the tree that knows its components
-     *
-     * @param array<string, string> $hints
-     */
-    public function provideFocusedHints(array $hints): void
-    {
-        $this->focusedHints = $hints;
-    }
-
-    /**
-     * @internal resolved once per frame by the tree that knows its components
-     *
-     * @param list<string> $ids
-     */
-    public function provideFocusedEnclosure(array $ids): void
-    {
-        $this->enclosure = $ids;
-    }
-
-    /**
-     * @internal resolved once per frame by the tree that knows its components
-     *
-     * @param list<string> $ids
-     */
-    public function provideStopPublishers(array $ids): void
-    {
-        $this->stopPublishers = $ids;
+        $this->clock->requestRepaint($delay);
     }
 
     /**
@@ -214,7 +72,7 @@ final class RenderContext
      */
     public function keyboardIsLoose(): bool
     {
-        return $this->keyboardIsLoose && $this->hasFocus();
+        return $this->focus->keyboardIsLoose();
     }
 
     /**
@@ -225,7 +83,7 @@ final class RenderContext
      */
     public function focusedHints(): array
     {
-        return $this->focusedHints;
+        return $this->focus->hints();
     }
 
     /**
@@ -234,7 +92,7 @@ final class RenderContext
      */
     public function hasFocus(): bool
     {
-        return $this->focusDepth > 0;
+        return $this->focus->hasFocus();
     }
 
     /**
@@ -245,13 +103,7 @@ final class RenderContext
      */
     public function withFocusHere(Closure $render): void
     {
-        ++$this->focusDepth;
-
-        try {
-            $render();
-        } finally {
-            --$this->focusDepth;
-        }
+        $this->focus->withFocusHere($render);
     }
 
     /**
@@ -262,53 +114,17 @@ final class RenderContext
      */
     public function withoutFocus(Closure $render): void
     {
-        $held = $this->focusDepth;
-        $this->focusDepth = 0;
-
-        try {
-            $render();
-        } finally {
-            $this->focusDepth = $held;
-        }
+        $this->focus->withoutFocus($render);
     }
 
     /**
-     * @internal opened by Component around the subtree the keyboard is in
+     * Opened by Component around the subtree it binds.
      *
      * @param Closure(): void $render
      */
     public function withinComponent(ComponentId $id, Closure $render): void
     {
-        if ($this->focus->isUndecided()) {
-            throw new LogicException(sprintf('Component "%s" is being drawn before anything said where the keyboard is. Call focusOn() first — FocusState::nowhere() if the answer is nobody.', $id->value));
-        }
-
-        $focused = $this->focus->focused()->value ?? '';
-        $under = str_starts_with($focused, $id->value . '/');
-        $holdsFocus = $focused === $id->value || $under || in_array($id->value, $this->enclosure, true);
-        $path = $this->focusedPath;
-        $loose = $this->keyboardIsLoose;
-
-        if ($holdsFocus) {
-            ++$this->focusDepth;
-            $this->focusedPath = $under
-                ? explode('/', substr($focused, strlen($id->value) + 1))
-                : [];
-            $this->keyboardIsLoose = $focused === $id->value
-                && !in_array($id->value, $this->stopPublishers, true);
-        }
-        ++$this->componentDepth;
-
-        try {
-            $render();
-        } finally {
-            --$this->componentDepth;
-            $this->focusedPath = $path;
-            $this->keyboardIsLoose = $loose;
-            if ($holdsFocus) {
-                --$this->focusDepth;
-            }
-        }
+        $this->focus->withinComponent($id, $render);
     }
 
     /**
@@ -320,20 +136,7 @@ final class RenderContext
      */
     public function withinChild(int $index, Closure $render): void
     {
-        if ($this->focusedChildIndex() !== $index) {
-            $this->withoutFocus($render);
-
-            return;
-        }
-
-        $path = $this->focusedPath;
-        array_shift($this->focusedPath);
-
-        try {
-            $render();
-        } finally {
-            $this->focusedPath = $path;
-        }
+        $this->focus->withinChild($index, $render);
     }
 
     /**
@@ -342,189 +145,23 @@ final class RenderContext
      */
     public function focusedChildIndex(): ?int
     {
-        $segment = $this->focusedPath[0] ?? null;
-
-        return $this->hasFocus() && $segment !== null && ctype_digit($segment) ? (int)$segment : null;
-    }
-
-    /**
-     * @internal smallest repaint delay requested during the current frame, if any
-     */
-    public function repaintDelay(): ?float
-    {
-        return $this->repaintDelay;
+        return $this->focus->focusedChildIndex();
     }
 
     public function float(Frame $frame, Floating $popup, Rect $anchor): void
     {
-        if ($this->rootFrame !== null && $frame !== $this->rootFrame) {
-            return;
-        }
-
-        $intersection = $frame->clip()->intersect($anchor);
-        if ($intersection->width < 1 || $intersection->height < 1) {
-            return;
-        }
-
-        $this->floats[] = [$popup, $anchor];
+        $this->floats->float($frame, $popup, $anchor);
     }
 
     /**
-     * @internal drain order for the root render pass
+     * Positioned children only when geometry was already resolved; never invokes
+     * the container's own layout, so a large viewport-aware container can skip
+     * positioning off-screen children during a render-only pass.
      *
-     * @return list<array{Floating, Rect}>
+     * @return list<array{object, Rect}>|null
      */
-    public function floats(): array
+    public function plannedChildrenOf(object $container, Rect $area): ?array
     {
-        return $this->floats;
-    }
-
-    /**
-     * @internal runtime entry point that installs one pre-resolved layout plan
-     */
-    public function renderWithPlan(Widget $root, Frame $frame, Rect $area, LayoutPlan $plan): void
-    {
-        $previous = $this->layoutPlan;
-        $this->layoutPlan = $plan;
-
-        try {
-            $root->render($frame, $area, $this);
-        } finally {
-            $this->layoutPlan = $previous;
-        }
-    }
-
-    /**
-     * @internal renderRoot() cannot nest: a nested drain would paint before the
-     * surrounding tree finishes, violating draw-last
-     *
-     * It also runs once per frame: a second pass would draw its tree over the
-     * first pass's popup, while that popup's placement still claims the input
-     */
-    public function renderRoot(Widget $root, Frame $frame, Rect $area, ?LayoutPlan $plan = null): void
-    {
-        if ($this->rootFrame !== null) {
-            throw new LogicException('renderRoot() cannot be nested inside another renderRoot() pass.');
-        }
-
-        if ($this->rootPassRan) {
-            throw new LogicException('renderRoot() may run only once per frame; compose a multi-part screen under one root.');
-        }
-
-        $this->rootPassRan = true;
-        $this->floats = [];
-        $this->rootFrame = $frame;
-
-        try {
-            if ($plan === null) {
-                $root->render($frame, $area, $this);
-            } else {
-                $this->renderWithPlan($root, $frame, $area, $plan);
-            }
-
-            $this->pendingPlacements = $this->drawFloats($frame);
-        } finally {
-            $this->floats = [];
-            $this->rootFrame = null;
-        }
-    }
-
-    /**
-     * @internal runtime entry point for a model that paints its own screen
-     *           instead of handing a widget tree to renderRoot()
-     */
-    public function drainFloatsFor(Frame $frame): void
-    {
-        if ($this->rootPassRan || $this->floats === []) {
-            return;
-        }
-
-        $this->rootPassRan = true;
-        $this->rootFrame = $frame;
-
-        try {
-            $this->pendingPlacements = $this->drawFloats($frame);
-        } finally {
-            $this->floats = [];
-            $this->rootFrame = null;
-        }
-    }
-
-    /**
-     * @internal runtime entry point: called once the frame is on the screen, so
-     * input never routes over a frame the runtime could not show
-     */
-    public function commitFloatPlacements(): void
-    {
-        if ($this->rootFrame !== null) {
-            throw new LogicException('commitFloatPlacements() cannot run inside a root pass; the runtime commits once the frame is on the screen.');
-        }
-
-        $this->placements = $this->pendingPlacements;
-    }
-
-    /**
-     * @internal the placements of the last committed frame
-     *
-     * @return list<FloatPlacement>
-     */
-    public function floatPlacements(): array
-    {
-        return $this->placements;
-    }
-
-    /**
-     * @return iterable<array{Widget, Rect}>
-     */
-    public function childrenOf(WidgetContainer $container, Rect $area): iterable
-    {
-        return $this->plannedChildrenOf($container, $area)
-            ?? $container->placedChildren($area);
-    }
-
-    /**
-     * Returns positioned children only when geometry was already resolved.
-     *
-     * Unlike childrenOf(), this never invokes the container's fallback layout.
-     * Large viewport-aware containers use it to avoid positioning off-screen
-     * children during render-only passes.
-     *
-     * @return list<array{Widget, Rect}>|null
-     */
-    public function plannedChildrenOf(WidgetContainer $container, Rect $area): ?array
-    {
-        return $this->layoutPlan?->childrenOf($container, $area);
-    }
-
-    /**
-     * @return list<FloatPlacement>
-     */
-    private function drawFloats(Frame $frame): array
-    {
-        /** @var list<FloatPlacement> $recorded */
-        $recorded = [];
-
-        // A float may queue one of its own; three rounds is deeper than any
-        // sensible chain and stops a cycle from spinning.
-        for ($iteration = 0; $iteration < 3 && $this->floats !== []; ++$iteration) {
-            $pending = $this->floats;
-            $this->floats = [];
-
-            foreach ($pending as [$popup, $anchor]) {
-                $placement = $popup->placement($anchor, $frame->area());
-
-                if ($placement->width < 1 || $placement->height < 1) {
-                    continue;
-                }
-
-                $popup->render($frame, $placement, $this);
-
-                if ($popup instanceof PointerFloating) {
-                    $recorded[] = new FloatPlacement($popup, $anchor, $placement);
-                }
-            }
-        }
-
-        return $recorded;
+        return $this->layout->childrenOf($container, $area);
     }
 }

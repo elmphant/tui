@@ -13,7 +13,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,7 +37,7 @@ final class ProgramTerminalInjectionTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -45,10 +45,10 @@ final class ProgramTerminalInjectionTest extends TestCase
         $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24, ColorProfile::Ansi));
         $program->start();
 
-        $context = (new ReflectionClass($program))->getProperty('renderContext')->getValue($program);
+        $pass = (new ReflectionClass($program))->getProperty('renderPass')->getValue($program);
 
-        self::assertInstanceOf(RenderContext::class, $context);
-        self::assertSame(ColorProfile::Ansi, $context->colorProfile, 'A widget cannot ask the terminal itself');
+        self::assertInstanceOf(RenderPass::class, $pass);
+        self::assertSame(ColorProfile::Ansi, $pass->context->colorProfile, 'A widget cannot ask the terminal itself');
     }
 
     #[Test]
@@ -65,7 +65,7 @@ final class ProgramTerminalInjectionTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -75,10 +75,10 @@ final class ProgramTerminalInjectionTest extends TestCase
             ->withColorProfile(ColorProfile::TrueColor);
         $program->start();
 
-        $context = (new ReflectionClass($program))->getProperty('renderContext')->getValue($program);
+        $pass = (new ReflectionClass($program))->getProperty('renderPass')->getValue($program);
 
-        self::assertInstanceOf(RenderContext::class, $context);
-        self::assertSame(ColorProfile::TrueColor, $context->colorProfile);
+        self::assertInstanceOf(RenderPass::class, $pass);
+        self::assertSame(ColorProfile::TrueColor, $pass->context->colorProfile);
     }
 
     #[Test]
@@ -95,7 +95,7 @@ final class ProgramTerminalInjectionTest extends TestCase
                 return UpdateResult::keep($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -121,7 +121,7 @@ final class ProgramTerminalInjectionTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -158,7 +158,7 @@ final class ProgramTerminalInjectionTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -193,7 +193,7 @@ final class ProgramTerminalInjectionTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $frame->putString(0, 0, 'Press q to quit');
             }
@@ -235,7 +235,7 @@ final class ProgramTerminalInjectionTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };

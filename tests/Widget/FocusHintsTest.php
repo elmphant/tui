@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Focus\FocusHints;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,12 +17,12 @@ final class FocusHintsTest extends TestCase
     #[Test]
     public function drawsTheKeysWhateverHoldsTheKeyboardAnswers(): void
     {
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->provideFocusedHints(['space' => 'pick']);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->provideHints(['space' => 'pick']);
 
         $frame = new Frame(40, 1);
-        FocusHints::new()->render($frame, Rect::fromSize(40, 1), $context);
+        FocusHints::new()->render($frame, Rect::fromSize(40, 1), $pass->context);
 
         $text = implode('', array_slice($frame->characters, 0, 30));
         self::assertStringContainsString('space', $text);

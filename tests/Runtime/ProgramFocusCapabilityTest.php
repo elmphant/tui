@@ -16,7 +16,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Testing\InMemoryTracer;
@@ -129,7 +129,7 @@ final readonly class FocusRoutingModel implements RoutesFocus
         return [ComponentId::named('pane')];
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
     }
 }

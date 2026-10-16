@@ -244,9 +244,13 @@ interface Model
 {
     public function init(): ?Cmd;                         // setup commands
     public function update(Message $message, Rect $area): UpdateResult;
-    public function render(Frame $frame, RenderContext $context): void;
+    public function render(Frame $frame, RenderPass $pass): void;
 }
 ```
+
+A `RenderPass` is what the root draws a frame with: `$pass->context` is the
+`RenderContext` every widget receives, `$pass->focus` says where the keyboard is,
+and `$pass->floats` paints popups after the tree. Widgets only ever see the context.
 
 **UpdateResult** is an immutable pair `(model, ?command)` returned from every `update()` call. Never mutate application state in place. For plain `Model` implementations, use the `Cloneable` trait or your own `with()` method.
 
@@ -707,8 +711,8 @@ Rules worth knowing:
   next round; after three rounds anything still queued is dropped.
 - **Only a `PointerFloating` is recorded.** A plain `Floating` draws and is forgotten, so
   a decorative tooltip never eats a click.
-- **One root pass per frame.** `renderRoot()` draws the tree and drains the queue.
-  Calling it twice in one frame throws: the second tree would paint over the first
+- **One root pass per frame.** `FloatQueue::drawOver()` draws the tree and drains the
+  queue; `App::render()` runs it for you. Running it twice in one frame throws: the second tree would paint over the first
   pass's floats while their placements still claimed the input over them.
 - **Only what reached the screen can be clicked.** Every drawn `PointerFloating` is
   recorded with the rect it painted, and the runtime publishes that list after the frame
@@ -905,20 +909,20 @@ responsive behavior, `model()` to assert typed application state, and
 the concrete model type through the harness.
 
 A tree containing bound components cannot be drawn without saying where the
-keyboard is: `RenderContext` refuses it rather than produce a frame no terminal
+keyboard is: the drawing refuses it rather than produce a frame no terminal
 would show — every field unfocused, and a popup belonging to the focused one
 missing. `ModelHarness` and `Program` always say. A test that renders a tree by
-hand says so too, and `RenderContext::unfocused($theme)` is how it says "nobody":
+hand says so too, and `FocusPath::nowhere()` is how it says "nobody":
 
 ```php
 use Elmphant\Tui\Core\{ComponentId, FocusState};
-use Elmphant\Tui\Rendering\{RenderContext, Theme};
+use Elmphant\Tui\Rendering\{FocusPath, RenderPass, Theme};
 
-$context = RenderContext::unfocused(Theme::dark());       // a layout or wording test
-$context->renderRoot($app->view(), $frame, $area);
+$pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());   // a layout or wording test
+$app->render($frame, $pass);
 
-$context = RenderContext::unfocused(Theme::dark());       // or name the holder
-$context->focusOn(new FocusState(ComponentId::named('search')));
+$pass = RenderPass::new(Theme::dark());                                 // or name the holder
+$pass->focus->focusOn(new FocusState(ComponentId::named('search')));
 ```
 
 Not deciding is a different state from deciding nobody holds it: `FocusState::nowhere()`
@@ -956,7 +960,7 @@ narrow, medium, and wide end-to-end performance budgets, so `composer test`
 keeps them honest.
 
 ```php fragment
-public function render(Frame $frame, RenderContext $context): void
+public function render(Frame $frame, RenderPass $pass): void
 {
     // Text with color
     $frame->putString(0, 0, 'Hello', Color::hex('FF06B7')->value);

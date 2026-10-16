@@ -10,6 +10,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Feedback\Alert;
@@ -199,19 +200,19 @@ final class AlertTest extends TestCase
     #[Test]
     public function aPulsingAlertKeepsTheFramesComing(): void
     {
-        $context = self::renderedContext(Alert::warning('Low disk')->withPulsing(1.0), 0.0, ColorProfile::TrueColor);
+        $pass = self::renderedPass(Alert::warning('Low disk')->withPulsing(1.0), 0.0, ColorProfile::TrueColor);
 
-        self::assertSame(0.05, $context->repaintDelay(), 'twenty frames a second is enough to read as a fade');
+        self::assertSame(0.05, $pass->clock->repaintDelay(), 'twenty frames a second is enough to read as a fade');
     }
 
     #[Test]
     public function anAlertHoldingStillLetsTheRenderLoopSleep(): void
     {
-        $still = self::renderedContext(Alert::warning('Low disk'), 0.0, ColorProfile::TrueColor);
-        $flattened = self::renderedContext(Alert::warning('Low disk')->withPulsing(1.0), 0.0, ColorProfile::Ansi);
+        $still = self::renderedPass(Alert::warning('Low disk'), 0.0, ColorProfile::TrueColor);
+        $flattened = self::renderedPass(Alert::warning('Low disk')->withPulsing(1.0), 0.0, ColorProfile::Ansi);
 
-        self::assertNull($still->repaintDelay(), 'nothing is moving');
-        self::assertNull($flattened->repaintDelay(), 'and a fade nobody can see must not cost frames either');
+        self::assertNull($still->clock->repaintDelay(), 'nothing is moving');
+        self::assertNull($flattened->clock->repaintDelay(), 'and a fade nobody can see must not cost frames either');
     }
 
     /**
@@ -265,22 +266,22 @@ final class AlertTest extends TestCase
     private static function fillAt(Alert $alert, float $now, ColorProfile $profile = ColorProfile::TrueColor): int
     {
         $frame = new Frame(20, 1);
-        $context = new RenderContext(Theme::dark(), $profile);
-        $context->beginFrame($now);
+        $pass = RenderPass::new(Theme::dark(), $profile);
+        $pass->begin($now);
 
-        $alert->render($frame, new Rect(0, 0, 20, 1), $context);
+        $alert->render($frame, new Rect(0, 0, 20, 1), $pass->context);
 
         return $frame->backgrounds[0];
     }
 
-    private static function renderedContext(Alert $alert, float $now, ColorProfile $profile): RenderContext
+    private static function renderedPass(Alert $alert, float $now, ColorProfile $profile): RenderPass
     {
-        $context = new RenderContext(Theme::dark(), $profile);
-        $context->beginFrame($now);
+        $pass = RenderPass::new(Theme::dark(), $profile);
+        $pass->begin($now);
 
-        $alert->render(new Frame(20, 1), new Rect(0, 0, 20, 1), $context);
+        $alert->render(new Frame(20, 1), new Rect(0, 0, 20, 1), $pass->context);
 
-        return $context;
+        return $pass;
     }
 
     /**

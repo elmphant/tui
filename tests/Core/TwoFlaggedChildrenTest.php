@@ -17,6 +17,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
@@ -41,10 +42,10 @@ final class TwoFlaggedChildrenTest extends TestCase
             new FlaggedField('second', $drawn, true),
         );
 
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('second')));
-        $app->render(new Frame(20, 4), $context);
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('second')));
+        $app->render(new Frame(20, 4), $pass);
 
         self::assertSame(['first' => false, 'second' => true], $drawn->getArrayCopy());
     }

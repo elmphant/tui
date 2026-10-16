@@ -9,7 +9,7 @@ use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focus\FocusGutter;
@@ -30,11 +30,11 @@ final class PaneRowFocusTest extends TestCase
     public function theFieldOnTheHeldRowShowsItsCursor(): void
     {
         $frame = new Frame(30, 6);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('pane')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('pane')));
 
-        (new HeldRowApp())->render($frame, $context);
+        (new HeldRowApp())->render($frame, $pass);
 
         self::assertNotNull($frame->cursorPosition, 'the field the gutter marks is the one being typed in');
     }

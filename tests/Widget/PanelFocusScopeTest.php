@@ -8,7 +8,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Structure\Panel;
@@ -28,8 +28,9 @@ final class PanelFocusScopeTest extends TestCase
             ->withChildren([TextInput::new()->withValue('aa'), TextInput::new()->withValue('bb')]);
 
         $frame = new Frame(20, 8);
-        $context = new RenderContext(Theme::dark());
-        $context->focusOn(new FocusState(ComponentId::named('form/0')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->focus->focusOn(new FocusState(ComponentId::named('form/0')));
+        $context = $pass->context;
         $context->withinComponent(ComponentId::named('form'), static function () use ($panel, $frame, $context): void {
             $panel->render($frame, new Rect(0, 0, 20, 8), $context);
         });

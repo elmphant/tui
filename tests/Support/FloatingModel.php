@@ -15,6 +15,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Widget\Popup\PointerFloating;
 use Elmphant\Tui\Widget\Widget;
 use RuntimeException;
@@ -48,9 +49,9 @@ final class FloatingModel implements Model
         return new UpdateResult($this);
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
-        $context->renderRoot(self::widgetQueuing($this->float), $frame, $frame->area());
+        RootPass::draw($pass, self::widgetQueuing($this->float), $frame, $frame->area());
 
         if ($this->throwAfterRenderRoot) {
             throw new RuntimeException('the model drew its floats and then failed');

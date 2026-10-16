@@ -10,6 +10,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
@@ -80,7 +81,7 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
             $child->render($frame, $childArea, $context);
         }
     }

@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Rendering;
+
+use Elmphant\Tui\Input\ColorProfile;
+
+/**
+ * What a root model draws a frame with. Widgets only ever see the context; the
+ * runtime and the root talk to the part that owns each job.
+ */
+final readonly class RenderPass
+{
+    private function __construct(
+        public RenderContext $context,
+        public FrameClock $clock,
+        public FocusPath $focus,
+        public FloatQueue $floats,
+        public LayoutInForce $layout,
+    ) {
+    }
+
+    public static function new(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor, ?FocusPath $focus = null): self
+    {
+        $clock = new FrameClock();
+        $focus ??= FocusPath::undecided();
+        $floats = new FloatQueue();
+        $layout = new LayoutInForce();
+
+        return new self(
+            new RenderContext($theme, $colorProfile, $clock, $focus, $floats, $layout),
+            $clock,
+            $focus,
+            $floats,
+            $layout,
+        );
+    }
+
+    public function begin(float $now): void
+    {
+        $this->clock->begin($now);
+        $this->focus->begin();
+        $this->floats->begin();
+    }
+}

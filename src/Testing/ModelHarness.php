@@ -21,7 +21,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\FloatPlacement;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\InputRouter;
 use InvalidArgumentException;
@@ -41,7 +41,7 @@ final class ModelHarness
     private Rect $area;
     private ?Cmd $lastCommand = null;
     private FocusState $focus;
-    private readonly RenderContext $context;
+    private readonly RenderPass $pass;
 
     /**
      * @param TModel $model
@@ -54,7 +54,7 @@ final class ModelHarness
     ) {
         $this->area = Rect::fromSize($width, $height);
         $this->focus = new FocusState();
-        $this->context = new RenderContext($theme);
+        $this->pass = RenderPass::new($theme);
     }
 
     /**
@@ -100,7 +100,7 @@ final class ModelHarness
      */
     public function dispatch(Message $message): self
     {
-        $routed = InputRouter::route($message, $this->area, $this->context->floatPlacements());
+        $routed = InputRouter::route($message, $this->area, $this->pass->floats->placements());
         if ($routed === null) {
             return $this;
         }
@@ -175,7 +175,7 @@ final class ModelHarness
     {
         $this->renderFrame();
 
-        return $this->context->focusedHints();
+        return $this->pass->focus->hints();
     }
 
     public function renderFrame(): Frame
@@ -183,12 +183,12 @@ final class ModelHarness
         $this->settleFocus();
 
         $frame = new Frame($this->area->width, $this->area->height);
-        $frame->clear($this->context->theme->base->backgroundValue());
+        $frame->clear($this->pass->context->theme->base->backgroundValue());
 
-        $this->context->beginFrame(0.0);
-        $this->context->focusOn($this->focus);
-        $this->model->render($frame, $this->context);
-        $this->context->commitFloatPlacements();
+        $this->pass->begin(0.0);
+        $this->pass->focus->focusOn($this->focus);
+        $this->model->render($frame, $this->pass);
+        $this->pass->floats->commit();
 
         return $frame;
     }
@@ -200,7 +200,7 @@ final class ModelHarness
      */
     public function floatPlacements(): array
     {
-        return $this->context->floatPlacements();
+        return $this->pass->floats->placements();
     }
 
     public function renderScreen(): ScreenBuffer

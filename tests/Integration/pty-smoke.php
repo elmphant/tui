@@ -10,7 +10,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 
 $model = new class implements Model {
@@ -24,7 +24,7 @@ $model = new class implements Model {
         return new UpdateResult($this);
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
     }
 };

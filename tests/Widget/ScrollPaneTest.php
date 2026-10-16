@@ -22,6 +22,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;
@@ -694,8 +695,9 @@ final class ScrollPaneTest extends TestCase
     private function rowsWithKeyboardOn(ScrollPane $pane, int $child, int $width, int $height): array
     {
         $frame = new Frame($width, $height);
-        $context = new RenderContext(Theme::dark());
-        $context->focusOn(new FocusState(ComponentId::named('pane/' . $child)));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->focus->focusOn(new FocusState(ComponentId::named('pane/' . $child)));
+        $context = $pass->context;
         $context->withinComponent(
             ComponentId::named('pane'),
             static fn () => $pane->render($frame, Rect::fromSize($width, $height), $context),

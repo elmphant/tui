@@ -14,6 +14,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\VirtualTerminal;
@@ -48,12 +49,12 @@ final class ModelFloatTest extends TestCase
                 return new UpdateResult($this, $message instanceof KeyMsg ? Cmd::quit() : null);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 for ($row = 0; $row < 6; ++$row) {
-                    $frame->putStyled(0, $row, str_repeat('.', 30), $context->theme->base);
+                    $frame->putStyled(0, $row, str_repeat('.', 30), $pass->context->theme->base);
                 }
-                $context->float($frame, new class implements Floating {
+                $pass->context->float($frame, new class implements Floating {
                     public function placement(Rect $anchor, Rect $viewport): Rect
                     {
                         return new Rect($anchor->x, $anchor->bottom(), 5, 1);

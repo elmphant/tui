@@ -34,7 +34,7 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
@@ -104,7 +104,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($next);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -160,7 +160,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -286,7 +286,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($next);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
 
@@ -347,7 +347,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -389,7 +389,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -419,7 +419,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -445,7 +445,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -665,7 +665,7 @@ final class ProgramTest extends TestCase
                 throw new RuntimeException('update boom');
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -778,7 +778,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this, Cmd::quit());
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -831,7 +831,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($next);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $this->hasRendered = true;
                 $frame->putStyled(0, 0, 'R', new Style(foreground: Color::rgb(255, 0, 0)));
@@ -884,7 +884,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this, Cmd::quit());
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1018,7 +1018,7 @@ final class ProgramTest extends TestCase
                 throw new RuntimeException('always fails');
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1071,7 +1071,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1322,7 +1322,7 @@ final class ProgramTest extends TestCase
                 throw new RuntimeException('boom');
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1363,7 +1363,7 @@ final class ProgramTest extends TestCase
                 throw new RuntimeException('boom');
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1431,7 +1431,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1475,7 +1475,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1521,7 +1521,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1566,7 +1566,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1616,7 +1616,7 @@ final class ProgramTest extends TestCase
                 };
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1657,7 +1657,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1685,7 +1685,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 throw new RuntimeException('render is broken');
             }
@@ -1720,7 +1720,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1768,7 +1768,7 @@ final class ProgramTest extends TestCase
                 return 42;
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1813,7 +1813,7 @@ final class ProgramTest extends TestCase
                 return $this->rev;
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1847,7 +1847,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult(new self());
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1891,7 +1891,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1936,7 +1936,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -1978,7 +1978,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -2021,7 +2021,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $this->renderedArea = $frame->area();
             }
@@ -2166,7 +2166,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -2203,7 +2203,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 throw new RuntimeException('render boom');
             }
@@ -2217,7 +2217,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingRenderModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
@@ -2264,7 +2264,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -2311,9 +2311,9 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
-                $this->seenNow = $context->now();
+                $this->seenNow = $pass->context->now();
             }
         };
 
@@ -2342,10 +2342,10 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renders;
-                $context->requestRepaint(0.05);
+                $pass->context->requestRepaint(0.05);
             }
         };
 
@@ -2385,10 +2385,10 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renders;
-                $context->requestRepaint(0.5);
+                $pass->context->requestRepaint(0.5);
             }
         };
 
@@ -2429,7 +2429,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 throw new RuntimeException('render boom');
             }
@@ -2443,7 +2443,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingRenderModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
@@ -2474,7 +2474,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
@@ -2532,7 +2532,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
@@ -2574,7 +2574,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $this->rendered = true;
                 $frame->putString(0, 0, 'HELLO');
@@ -2589,7 +2589,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2611,7 +2611,7 @@ final class ProgramTest extends TestCase
         $oldBuffer = new Frame(80, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $oldBuffer);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2636,7 +2636,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renderCount;
                 if ($this->renderCount === 1) {
@@ -2654,7 +2654,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $sequenceModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2684,7 +2684,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $this->dirtyRowsAtRenderStart[] = array_keys($frame->dirtyRows);
             }
@@ -2698,7 +2698,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 5);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(20, 5));
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2727,7 +2727,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $this->dirtyRowsAtRenderStart[] = array_keys($frame->dirtyRows);
                 ++$this->renderCount;
@@ -2747,7 +2747,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 5);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(20, 5));
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2772,7 +2772,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $frame->putString(0, 0, 'PARTIAL-CONTENT');
                 throw new RuntimeException('boom mid-render');
@@ -2787,7 +2787,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $partialThrowingModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2808,7 +2808,7 @@ final class ProgramTest extends TestCase
         $oldBuffer = new Frame(80, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $oldBuffer);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2839,7 +2839,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $frame);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext($themeWithBg));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new($themeWithBg));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -2862,7 +2862,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 throw new RuntimeException('render boom');
             }
@@ -2876,7 +2876,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingModel);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $queue = new SplQueue();
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
 
@@ -2902,7 +2902,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renderAttempts;
 
@@ -2963,7 +2963,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $frame->putString(0, 0, 'CONTENT');
             }
@@ -3010,7 +3010,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 $frame->putString(0, 0, 'CONTENT');
             }
@@ -3201,7 +3201,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -3258,7 +3258,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -3313,7 +3313,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -3356,7 +3356,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renderCount;
             }
@@ -3397,7 +3397,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renderCount;
             }
@@ -3434,7 +3434,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renderCount;
             }
@@ -3471,7 +3471,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renderCount;
             }
@@ -3510,7 +3510,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
                 ++$this->renderCount;
             }
@@ -3551,7 +3551,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -3592,7 +3592,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -3639,7 +3639,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         // First render to establish a stable front buffer in the Screen
@@ -3678,14 +3678,14 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         });
         $themeNoBackground = Theme::dark()->withBase(
             new Style(foreground: Color::rgb(200, 200, 200)),
         );
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext($themeNoBackground));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new($themeNoBackground));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('renderFrame')->invoke($program);
@@ -3881,7 +3881,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -3915,7 +3915,7 @@ final class ProgramTest extends TestCase
                 throw new RuntimeException('update boom');
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -3951,7 +3951,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -3978,7 +3978,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('backBuffer')->setValue($program, null);
 
@@ -4009,7 +4009,7 @@ final class ProgramTest extends TestCase
                     : new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
 
@@ -4043,7 +4043,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
 
@@ -4072,7 +4072,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
 
@@ -4115,7 +4115,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
 
@@ -4195,7 +4195,7 @@ final class ProgramTest extends TestCase
                 ));
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -4234,7 +4234,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -4288,7 +4288,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($next, $this->id === null ? null : Cmd::cancel($this->id));
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };
@@ -4318,7 +4318,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('running')->setValue($program, true);
@@ -4340,7 +4340,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('width')->setValue($program, 80);
         $reflection->getProperty('height')->setValue($program, 24);
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
-        $reflection->getProperty('renderContext')->setValue($program, new RenderContext(Theme::dark()));
+        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('running')->setValue($program, true);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
@@ -4382,7 +4382,7 @@ final class ProgramTest extends TestCase
                 return new UpdateResult($this);
             }
 
-            public function render(Frame $frame, RenderContext $context): void
+            public function render(Frame $frame, RenderPass $pass): void
             {
             }
         };

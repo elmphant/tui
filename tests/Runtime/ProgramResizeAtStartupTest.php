@@ -11,7 +11,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\RequiresFunction;
@@ -59,7 +59,7 @@ final class ResizedWhileStartingModel implements Model
         return new UpdateResult($this);
     }
 
-    public function render(Frame $frame, RenderContext $context): void
+    public function render(Frame $frame, RenderPass $pass): void
     {
     }
 }

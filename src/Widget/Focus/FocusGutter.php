@@ -17,6 +17,7 @@ use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
@@ -178,7 +179,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
             return;
         }
 
-        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
             $draw = static function () use ($child, $frame, $childArea, $context): void {
                 $child->render($frame, $childArea, $context);
             };

@@ -12,6 +12,7 @@ use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
@@ -165,7 +166,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        foreach ($context->childrenOf($this, $area) as [$child, $childArea]) {
+        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
             $child->render($frame, $childArea, $context);
         }
     }

@@ -23,6 +23,7 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
@@ -43,11 +44,11 @@ final class NamedFocusableTest extends TestCase
     public function aFocusableNamedWithoutAWriteBackCanHoldTheKeyboard(): void
     {
         $frame = new Frame(6, 2);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named('pane')));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named('pane')));
 
-        (new NamedPaneApp(TextInput::new()))->render($frame, $context);
+        (new NamedPaneApp(TextInput::new()))->render($frame, $pass);
 
         self::assertSame('F', $frame->character(6), 'the named pane is the one the tree focused');
     }

@@ -10,7 +10,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Widget;
@@ -34,11 +34,11 @@ final class ProgramFocusPaintTest extends TestCase
     private static function paintWithFocusOn(string $target): string
     {
         $frame = new Frame(40, 6);
-        $context = new RenderContext(Theme::dark());
-        $context->beginFrame(0.0);
-        $context->focusOn(new FocusState(ComponentId::named($target)));
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->focusOn(new FocusState(ComponentId::named($target)));
 
-        (new FocusPaintApp(TextInput::new(), TextInput::new()))->render($frame, $context);
+        (new FocusPaintApp(TextInput::new(), TextInput::new()))->render($frame, $pass);
 
         return implode('|', $frame->characters)
             . '#' . implode('|', $frame->foregrounds)
