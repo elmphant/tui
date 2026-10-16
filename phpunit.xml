@@ -6,10 +6,15 @@
          testdox="true"
          failOnDeprecation="true"
          failOnWarning="true"
-         failOnNotice="true">
+         failOnNotice="true"
+         defaultTestSuite="unit">
     <testsuites>
         <testsuite name="unit">
             <directory>tests</directory>
+            <exclude>tests/E2e</exclude>
+        </testsuite>
+        <testsuite name="e2e">
+            <directory>tests/E2e</directory>
         </testsuite>
     </testsuites>
     <source ignoreIndirectDeprecations="true">

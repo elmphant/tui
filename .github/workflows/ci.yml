@@ -72,6 +72,12 @@ jobs:
       - name: Linux PTY hardening scenarios
         if: runner.os == 'Linux'
         run: script -qefc 'sh tests/Integration/pty-hardening.sh' /dev/null >/dev/null
+      - name: What a real terminal draws (tmux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends tmux
+          composer test:e2e
       # BSD script writes the session to its transcript, not to its own stdout,
       # so a transcript of /dev/null throws away everything the scenarios report.
       - name: macOS PTY hardening scenarios

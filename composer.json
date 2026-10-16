@@ -62,6 +62,7 @@
     },
     "scripts": {
         "test": "./vendor/bin/phpunit",
+        "test:e2e": "./vendor/bin/phpunit --testsuite e2e",
         "analyse": "./vendor/bin/phpstan analyse --no-progress --memory-limit=512M",
         "check": [
             "@analyse",
