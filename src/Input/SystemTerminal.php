@@ -284,12 +284,13 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
         return self::classifyColorScheme($matches[1][0], $matches[2][0], $matches[3][0]);
     }
 
-    public function readInput(): string
+    public function readInput(): ?string
     {
         $leftover = $this->stdinLeftover;
         $this->stdinLeftover = '';
+        $input = $leftover . (string)@fread($this->stdin, 4096);
 
-        return $leftover . (string)@fread($this->stdin, 4096);
+        return $input === '' && feof($this->stdin) ? null : $input;
     }
 
     public function waitForInput(int $timeoutMicroseconds): bool

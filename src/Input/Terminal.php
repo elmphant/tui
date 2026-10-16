@@ -46,7 +46,10 @@ interface Terminal extends TerminalOutput
 
     public function detectColorScheme(): ?ColorScheme;
 
-    public function readInput(): string;
+    /**
+     * Null once the input is closed and everything sent before has been read.
+     */
+    public function readInput(): ?string;
 
     public function waitForInput(int $timeoutMicroseconds): bool;
 

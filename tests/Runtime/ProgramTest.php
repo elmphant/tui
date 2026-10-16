@@ -1629,6 +1629,49 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
+    public function closedInputEndsTheProgramAfterTheKeysAlreadySent(): void
+    {
+        $model = new class implements Model {
+            /**
+             * @var list<string>
+             */
+            public array $keys = [];
+
+            public bool $timedOut = false;
+
+            public function init(): ?Cmd
+            {
+                return Cmd::after(2.0, function (): Cmd {
+                    $this->timedOut = true;
+
+                    return Cmd::quit();
+                });
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if ($message instanceof KeyMsg) {
+                    $this->keys[] = $message->key;
+                }
+
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderContext $context): void
+            {
+            }
+        };
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('ab');
+        $terminal->closeInput();
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['a', 'b'], $model->keys);
+        self::assertFalse($model->timedOut);
+    }
+
+    #[Test]
     public function aRenderThatNeverRecoversEndsTheProgramWithItsError(): void
     {
         $model = new class implements Model {

@@ -95,6 +95,7 @@ final class Program
     private Model $model;
     private ?Frame $backBuffer = null;
     private bool $running = false;
+    private bool $inputClosed = false;
     private bool $isDirty = true;
     private int $consecutiveRenderFailures = 0;
     private ?Throwable $fatalError = null;
@@ -663,7 +664,16 @@ final class Program
 
     private function readInput(): void
     {
+        if ($this->inputClosed) {
+            return;
+        }
+
         $newInput = $this->terminal->readInput();
+        if ($newInput === null) {
+            $this->closeInput();
+
+            return;
+        }
         if ($newInput === '') {
             return;
         }
@@ -678,6 +688,15 @@ final class Program
         if ($flushDelay !== null) {
             $this->watch(EventLoopWatcher::EscapeFlush, EventLoop::delay($flushDelay, $this->flushPendingInput(...)));
         }
+    }
+
+    private function closeInput(): void
+    {
+        $this->inputClosed = true;
+        $this->cancelWatcher(EventLoopWatcher::Input);
+        $this->cancelWatcher(EventLoopWatcher::EscapeFlush);
+        $this->stdinBuffer->flush();
+        $this->messageQueue->enqueue(QuitMsg::Quit);
     }
 
     private function runTick(): void

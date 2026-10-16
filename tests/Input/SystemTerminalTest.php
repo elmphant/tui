@@ -127,6 +127,32 @@ final class SystemTerminalTest extends TestCase
     }
 
     #[Test]
+    public function readInputAnswersNullOnceStdinIsClosedAndDrained(): void
+    {
+        [$readEnd, $writeEnd] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        stream_set_blocking($readEnd, false);
+        fwrite($writeEnd, 'last');
+        fclose($writeEnd);
+
+        $terminal = new SystemTerminal($readEnd, $this->stdout);
+
+        self::assertSame('last', $terminal->readInput());
+        self::assertNull($terminal->readInput());
+    }
+
+    #[Test]
+    public function readInputAnswersEmptyWhileStdinIsOpenButQuiet(): void
+    {
+        [$readEnd, $writeEnd] = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        stream_set_blocking($readEnd, false);
+
+        $terminal = new SystemTerminal($readEnd, $this->stdout);
+
+        self::assertSame('', $terminal->readInput());
+        fclose($writeEnd);
+    }
+
+    #[Test]
     public function colorProfileDefaultsToAsciiWhenNoEnvVars(): void
     {
         // Clear relevant env vars for this test

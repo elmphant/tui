@@ -206,9 +206,11 @@ final class VirtualTerminal implements Terminal
         return ColorScheme::Dark;
     }
 
-    public function readInput(): string
+    public function readInput(): ?string
     {
-        return (string)@fread($this->readPipe, 4096);
+        $input = (string)@fread($this->readPipe, 4096);
+
+        return $input === '' && feof($this->readPipe) ? null : $input;
     }
 
     public function waitForInput(int $timeoutMicroseconds): bool
@@ -247,6 +249,11 @@ final class VirtualTerminal implements Terminal
     public function clearOutput(): void
     {
         $this->output = '';
+    }
+
+    public function closeInput(): void
+    {
+        fclose($this->writePipe);
     }
 
     public function simulateInput(string $bytes): void
