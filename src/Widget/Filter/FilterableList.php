@@ -457,7 +457,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
         return new UpdateResult(
             $this->cloneWith(field: $field->child, list: $list->child->withSelected(null)),
-            Cmd::combine(array_values(array_filter([$field->command, $list->command]))),
+            Cmd::combine($field->command, $list->command),
         );
     }
 

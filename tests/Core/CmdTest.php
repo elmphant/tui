@@ -92,6 +92,18 @@ final class CmdTest extends TestCase
     }
 
     #[Test]
+    public function combiningLeavesOutTheCommandsThatAreNotThere(): void
+    {
+        $quit = Cmd::quit();
+        $tick = Cmd::tick(0.1);
+
+        self::assertNull(Cmd::combine());
+        self::assertNull(Cmd::combine(null, null));
+        self::assertSame($quit, Cmd::combine(null, $quit));
+        self::assertEquals(Cmd::batch($quit, $tick), Cmd::combine($quit, null, $tick));
+    }
+
+    #[Test]
     public function callWrapsCallback(): void
     {
         $callback = fn () => new TestMessage('done');

@@ -142,12 +142,12 @@ abstract readonly class Cmd
     }
 
     /**
-     * The one command in a collected list, a batch of several, or nothing at all.
-     *
-     * @param list<self> $commands
+     * The one command among these, a batch of several, or nothing at all.
      */
-    public static function combine(array $commands): ?self
+    public static function combine(?self ...$commands): ?self
     {
+        $commands = array_values(array_filter($commands));
+
         return match (count($commands)) {
             0 => null,
             1 => $commands[0],
