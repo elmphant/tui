@@ -201,43 +201,25 @@ final readonly class Paragraph implements Widget, MeasureHeight
         [$firstLine, $rowsBefore] = $this->lineAtVisualRow($skipped, $area->width);
         $dropped = $skipped - $rowsBefore;
 
-        $lines = array_map(
-            static fn (Line $line): Line => $line->withResolvedTokens($context->theme),
-            array_slice($this->lines, $firstLine, $visible->height),
-        );
-
-        $visualLines = $this->visualLines($area->width, $baseStyle, $lines, $dropped + $visible->height);
-        $visualLines = array_slice($visualLines, $dropped);
-
         $row = $skipped;
-        foreach ($visualLines as $visualLine) {
-            if ($row >= $skipped + $visible->height) {
-                break;
-            }
+        $bottom = $skipped + $visible->height;
 
-            $lineWidth = $this->visualLineWidth($visualLine);
-            $offsetX = $this->alignmentOffset($lineWidth, $area->width);
+        foreach (array_slice($this->lines, $firstLine, $visible->height) as $line) {
+            $line = $line->withResolvedTokens($context->theme);
+            $text = self::textOf($line);
 
-            $x = $area->x + $offsetX;
-            foreach ($visualLine as [$character, $style]) {
-                if ($x >= $area->x + $area->width) {
-                    break;
+            foreach ($this->rowsToDraw($line, $text, $area->width) as [$start, $length]) {
+                if ($dropped > 0) {
+                    --$dropped;
+                    continue;
                 }
-                $characterWidth = CharWidth::graphemeWidth($character);
-                if ($characterWidth > 0) {
-                    $frame->putChar(
-                        $x,
-                        $area->y + $row,
-                        $character,
-                        $style->foregroundValue(),
-                        $style->backgroundValue(),
-                        $style->attributes,
-                    );
-                    $x += $characterWidth;
+                if ($row >= $bottom) {
+                    return;
                 }
-            }
 
-            ++$row;
+                $this->drawRow($frame, $line, $text, $start, $length, $area, $area->y + $row, $baseStyle);
+                ++$row;
+            }
         }
     }
 
@@ -309,24 +291,31 @@ final readonly class Paragraph implements Widget, MeasureHeight
      * Where a line breaks depends on its characters and the width alone, so
      * measuring and rendering the same text share one cached entry.
      *
-     * A row is an offset and a length into the line's characters. Rows do not
+     * A row is a byte offset and length into the line's text. Rows do not
      * always tile: a break at a space drops that space, but a space that is
      * itself too wide for the row starts the next one instead.
      *
      * @return list<array{int, int}>
      */
-    private function wrappedRows(Line $line, int $width): array
+    private function wrappedRows(Line $line, int $width, ?string $text = null): array
     {
-        $text = '';
-        foreach ($line->spans as $span) {
-            $text .= $span->content;
-        }
+        $text ??= self::textOf($line);
 
         /** @var list<array{int, int}> */
         return WrapCache::remember(
             $width . ':' . hash('xxh3', $text),
             static fn (): array => self::rowBounds(Grapheme::split($text), $width),
         );
+    }
+
+    private static function textOf(Line $line): string
+    {
+        $text = '';
+        foreach ($line->spans as $span) {
+            $text .= $span->content;
+        }
+
+        return $text;
     }
 
     /**
@@ -374,111 +363,90 @@ final readonly class Paragraph implements Widget, MeasureHeight
 
         $rows[] = [$rowStart, count($characters) - $rowStart];
 
-        return $rows;
-    }
-
-    /**
-     * @param list<Line> $lines
-     *
-     * @return list<list<array{string, Style}>>
-     */
-    private function visualLines(int $width, Style $baseStyle, array $lines, ?int $limit = null): array
-    {
-        return $this->wrap === Wrap::WordWrap
-            ? $this->wrapLines($width, $baseStyle, $lines, $limit)
-            : $this->noWrapLines($baseStyle, $lines, $limit);
-    }
-
-    /**
-     * @param list<Line> $lines
-     *
-     * @return list<list<array{string, Style}>>
-     */
-    private function noWrapLines(Style $baseStyle, array $lines, ?int $limit = null): array
-    {
-        $result = [];
-        foreach ($lines as $line) {
-            $result[] = $this->decomposeLineToGraphemes($line, $baseStyle);
-
-            if ($limit !== null && count($result) >= $limit) {
-                break;
-            }
+        $byteAt = [0];
+        foreach ($characters as $index => $character) {
+            $byteAt[$index + 1] = $byteAt[$index] + strlen($character);
         }
 
-        return $result;
+        return array_map(
+            static fn (array $row): array => [$byteAt[$row[0]], $byteAt[$row[0] + $row[1]] - $byteAt[$row[0]]],
+            $rows,
+        );
     }
 
     /**
-     * @param list<Line> $lines
-     *
-     * @return list<list<array{string, Style}>>
+     * @return list<array{int, int}>
      */
-    private function wrapLines(int $maxWidth, Style $baseStyle, array $lines, ?int $limit = null): array
+    private function rowsToDraw(Line $line, string $text, int $width): array
     {
-        $result = [];
-        foreach ($lines as $line) {
-            $graphemes = $this->decomposeLineToGraphemes($line, $baseStyle);
-            $rows = $line->width() <= $maxWidth
-                ? [[0, count($graphemes)]]
-                : $this->wrappedRows($line, $maxWidth);
+        return $this->wrap === Wrap::NoWrap || $line->width() <= $width
+            ? [[0, strlen($text)]]
+            : $this->wrappedRows($line, $width, $text);
+    }
 
-            foreach ($rows as [$start, $length]) {
-                $result[] = array_slice($graphemes, $start, $length);
+    private function drawRow(Frame $frame, Line $line, string $text, int $start, int $length, Rect $area, int $y, Style $baseStyle): void
+    {
+        $rowText = substr($text, $start, $length);
+        $right = $area->x + $area->width;
+        $x = $area->x + $this->alignmentOffset(CharWidth::stringWidth($rowText), $area->width);
+
+        foreach (self::runsOf($line, $baseStyle, $start, $rowText) as [$run, $style]) {
+            if ($x >= $right) {
+                return;
             }
 
-            if ($limit !== null && count($result) >= $limit) {
-                break;
-            }
+            $x += $frame->putStyled($x, $y, CharWidth::truncateToWidth($run, $right - $x), $style);
         }
-
-        return $result;
     }
 
     /**
+     * The row cut where the style changes. A cluster belongs to the span it
+     * starts in, so one that straddles a span boundary is drawn whole.
+     *
      * @return list<array{string, Style}>
      */
-    private function decomposeLineToGraphemes(Line $line, Style $baseStyle): array
+    private static function runsOf(Line $line, Style $baseStyle, int $offset, string $rowText): array
     {
-        $lineStyle = $line->style !== null
-            ? $line->style->inherit($baseStyle)
-            : $baseStyle;
+        $lineStyle = $line->style?->inherit($baseStyle) ?? $baseStyle;
 
-        // Split the whole line rather than each span, so a cluster that straddles
-        // a span boundary stays whole and these offsets match wrappedRows().
-        $text = '';
-        $spanStarts = [];
+        $starts = [];
+        $styles = [];
+        $position = 0;
         foreach ($line->spans as $span) {
-            $spanStarts[] = [strlen($text), $span->style !== null ? $span->style->inherit($lineStyle) : $lineStyle];
-            $text .= $span->content;
+            $starts[] = $position;
+            $styles[] = $span->style?->inherit($lineStyle) ?? $lineStyle;
+            $position += strlen($span->content);
         }
 
-        $graphemes = [];
-        $offset = 0;
+        $runs = [];
         $spanIndex = 0;
+        $runSpan = -1;
+        $runText = '';
+        $runStyle = null;
 
-        foreach (Grapheme::split($text) as $grapheme) {
-            while (isset($spanStarts[$spanIndex + 1]) && $spanStarts[$spanIndex + 1][0] <= $offset) {
+        foreach (Grapheme::split($rowText) as $grapheme) {
+            while (isset($starts[$spanIndex + 1]) && $starts[$spanIndex + 1] <= $offset) {
                 ++$spanIndex;
             }
 
-            $graphemes[] = [$grapheme, $spanStarts[$spanIndex][1] ?? $lineStyle];
+            if ($spanIndex !== $runSpan) {
+                if ($runStyle !== null) {
+                    $runs[] = [$runText, $runStyle];
+                }
+                $runText = '';
+                $runStyle = $styles[$spanIndex] ?? $lineStyle;
+                $runSpan = $spanIndex;
+            }
+
+            $runText .= $grapheme;
             $offset += strlen($grapheme);
         }
 
-        return $graphemes;
-    }
-
-    /**
-     * @param list<array{string, Style}> $visualLine
-     */
-    private function visualLineWidth(array $visualLine): int
-    {
-        $width = 0;
-        foreach ($visualLine as [$character]) {
-            $width += CharWidth::graphemeWidth($character);
+        if ($runStyle !== null) {
+            $runs[] = [$runText, $runStyle];
         }
 
-        return $width;
+        return $runs;
     }
 
     private function alignmentOffset(int $lineWidth, int $areaWidth): int

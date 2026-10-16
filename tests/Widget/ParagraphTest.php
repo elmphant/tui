@@ -270,6 +270,22 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function aClusterSplitAcrossTwoSpansIsDrawnWholeInTheStyleItStartsIn(): void
+    {
+        $frame = new Frame(10, 1);
+        $red = new Style(foreground: Color::ansi(1));
+        $blue = new Style(foreground: Color::ansi(4));
+
+        Paragraph::fromLines([new Line([Span::styled('e', $red), Span::styled("\u{0301}x", $blue)])])
+            ->render($frame, new Rect(0, 0, 10, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame("e\u{0301}", $frame->characters[0]);
+        self::assertSame($red->foregroundValue(), $frame->foregrounds[0]);
+        self::assertSame('x', $frame->characters[1]);
+        self::assertSame($blue->foregroundValue(), $frame->foregrounds[1]);
+    }
+
+    #[Test]
     public function paragraphStyleCascadesToSpans(): void
     {
         $frame = new Frame(10, 1);
