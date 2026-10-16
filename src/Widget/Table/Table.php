@@ -517,10 +517,10 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
                     break;
                 }
 
-                $height = $layout->heightOf($rowIndex);
-                $this->renderRow($frame, $area->x, $renderY, $rowIndex, $this->rows[$rowIndex], $columnWidths, $totalWidth, $theme, $height, $focused);
+                $rowArea = new Rect($area->x, $renderY, $totalWidth, $layout->heightOf($rowIndex));
+                $this->renderRow($frame, $rowArea, $rowIndex, $columnWidths, $theme, $focused);
 
-                $renderY += $height;
+                $renderY += $rowArea->height;
             }
         } finally {
             $frame->popClip();
@@ -530,11 +530,13 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     /**
      * @param list<int> $columnWidths
      */
-    private function renderRow(Frame $frame, int $startX, int $renderY, int $rowIndex, Row $row, array $columnWidths, int $totalWidth, Theme $theme, int $height, bool $focused): void
+    private function renderRow(Frame $frame, Rect $rowArea, int $rowIndex, array $columnWidths, Theme $theme, bool $focused): void
     {
+        $row = $this->rows[$rowIndex];
+
         if ($row->spansAllColumns) {
             foreach (TableLayout::spanningLines($columnWidths, $row) as $lineIndex => $line) {
-                $frame->putStyled($startX, $renderY + $lineIndex, $line, $theme->headerStyle);
+                $frame->putStyled($rowArea->x, $rowArea->y + $lineIndex, $line, $theme->headerStyle);
             }
 
             return;
@@ -552,7 +554,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         };
 
         if ($filled) {
-            $defaultStyle->apply($frame, new Rect($startX, $renderY, $totalWidth, $height));
+            $defaultStyle->apply($frame, $rowArea);
         }
 
         $rowStyle = $row->style ?? $defaultStyle;
@@ -561,7 +563,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         }
 
         $rowLines = TableLayout::linesOfRow($columnWidths, $row);
-        $cellX = $startX;
+        $cellX = $rowArea->x;
 
         foreach (array_keys($this->columns) as $columnIndex) {
             $width = $columnWidths[$columnIndex] ?? 0;
@@ -580,8 +582,8 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
                 default => $cellStyle,
             };
 
-            for ($line = 0; $line < $height; ++$line) {
-                $frame->putStyled($cellX, $renderY + $line, $rowLines[$columnIndex][$line] ?? '', $cellRenderStyle);
+            for ($line = 0; $line < $rowArea->height; ++$line) {
+                $frame->putStyled($cellX, $rowArea->y + $line, $rowLines[$columnIndex][$line] ?? '', $cellRenderStyle);
             }
 
             $cellX += $width;
