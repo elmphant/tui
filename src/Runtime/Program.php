@@ -1077,7 +1077,7 @@ final class Program
 
     private function dispatchCommand(?Cmd $command, ?Closure $wrap = null): void
     {
-        if ($command === null) {
+        if ($command === null || $this->isQuitting()) {
             return;
         }
 
@@ -1112,6 +1112,11 @@ final class Program
         } catch (Throwable $error) {
             $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, ErrorSource::Command), $wrap));
         }
+    }
+
+    private function isQuitting(): bool
+    {
+        return $this->state === ProgramState::Running && !$this->running;
     }
 
     private function stopRunning(): void
