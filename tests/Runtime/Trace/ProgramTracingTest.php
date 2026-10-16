@@ -195,8 +195,7 @@ final class ProgramTracingTest extends TestCase
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(static fn (): ?string => null));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);

@@ -46,8 +46,7 @@ final class SearchBoxComposedTest extends TestCase
         $reflection->getProperty('model')->setValue($program, $model);
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 

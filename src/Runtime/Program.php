@@ -96,8 +96,6 @@ final class Program
     private ?float $drainDeadline = null;
     private bool $resizePending = false;
     private bool $resizeNeedsScreenClear = false;
-    private int $width = 80;
-    private int $height = 24;
     private Rect $screenRect;
     private ProgramState $state = ProgramState::New;
     private ?TerminalSession $terminalSession = null;
@@ -135,7 +133,7 @@ final class Program
         $this->focus = new FocusState();
         $this->frames = new FrameScheduler();
         $this->clock = new MonotonicClock();
-        $this->screenRect = Rect::fromSize($this->width, $this->height);
+        $this->screenRect = Rect::fromSize(80, 24);
         $this->pendingWheel = new PendingWheel();
     }
 
@@ -377,16 +375,11 @@ final class Program
         $this->terminalSession->start();
         $this->terminal->queryKittyProtocol();
 
-        // Size queries which ask the terminal for a cursor-position report race
-        // application input. Runtime startup therefore uses only the local
-        // stty/environment path; probeSize() remains an explicit low-level API.
-        [$this->width, $this->height] = $this->terminal->size();
-        $this->terminalSession->updateHeight($this->height);
-        $this->backBuffer = new Frame($this->width, $this->height);
+        // A cursor-position report would race application input, so startup asks
+        // stty and the environment only; SystemTerminal::probeSize() stays explicit.
+        $this->adoptTerminalSize();
 
         $this->registerSignalHandlers();
-
-        $this->messageQueue->enqueue(new ResizeMsg($this->width, $this->height));
     }
 
     private function registerSignalHandlers(): void
@@ -432,7 +425,7 @@ final class Program
             // Revolt installs the handlers on the loop's first tick; a resize before
             // that is dropped, so the size is asked once more after it.
             EventLoop::defer(function (): void {
-                if ($this->state === ProgramState::Running && $this->terminal->size() !== [$this->width, $this->height]) {
+                if ($this->state === ProgramState::Running && $this->terminal->size() !== [$this->screenRect->width, $this->screenRect->height]) {
                     $this->resizePending = true;
                     $this->tick();
                 }
@@ -476,10 +469,11 @@ final class Program
 
     private function adoptTerminalSize(): void
     {
-        [$this->width, $this->height] = $this->terminal->size();
-        $this->terminalSession?->updateHeight($this->height);
-        $this->backBuffer = new Frame($this->width, $this->height);
-        $this->messageQueue->enqueue(new ResizeMsg($this->width, $this->height));
+        [$width, $height] = $this->terminal->size();
+        $this->screenRect = Rect::fromSize($width, $height);
+        $this->terminalSession?->updateHeight($height);
+        $this->backBuffer = new Frame($width, $height);
+        $this->messageQueue->enqueue(new ResizeMsg($width, $height));
         $this->frames->markDirty();
     }
 
@@ -523,7 +517,7 @@ final class Program
 
             $this->effects?->shutdown();
         } finally {
-            $this->terminalSession?->updateHeight($this->height);
+            $this->terminalSession?->updateHeight($this->screenRect->height);
             $this->terminalSession?->close();
         }
     }
@@ -803,7 +797,7 @@ final class Program
     private function drainMessageQueue(): void
     {
         $consecutiveErrors = 0;
-        $screenRect = $this->screenRect();
+        $screenRect = $this->screenRect;
         $processed = 0;
         // A resize re-drain inside the same tick continues this deadline rather
         // than buying a fresh budget, or one tick could spend twice the cap.
@@ -912,15 +906,6 @@ final class Program
         $this->fatalError = $error;
     }
 
-    private function screenRect(): Rect
-    {
-        if ($this->screenRect->width !== $this->width || $this->screenRect->height !== $this->height) {
-            $this->screenRect = Rect::fromSize($this->width, $this->height);
-        }
-
-        return $this->screenRect;
-    }
-
     private static function requireModel(Reducer $model): Model
     {
         if (!$model instanceof Model) {
@@ -938,8 +923,8 @@ final class Program
             throw new LogicException('Program renderer is not initialized');
         }
 
-        if ($frame->width !== $this->width || $frame->height !== $this->height) {
-            $frame = $this->backBuffer = new Frame($this->width, $this->height);
+        if ($frame->width !== $this->screenRect->width || $frame->height !== $this->screenRect->height) {
+            $frame = $this->backBuffer = new Frame($this->screenRect->width, $this->screenRect->height);
         }
 
         if ($this->resizeNeedsScreenClear) {

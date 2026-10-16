@@ -1838,8 +1838,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('width')->setValue($program, 120);
-        $reflection->getProperty('height')->setValue($program, 40);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(120, 40));
 
         $queue = new SplQueue();
         $queue->enqueue(new TickMsg(1.0));
@@ -1883,8 +1882,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('width')->setValue($program, 120);
-        $reflection->getProperty('height')->setValue($program, 40);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(120, 40));
 
         $queue = new SplQueue();
         $queue->enqueue(new MouseMsg(3, 4, MouseAction::Press, MouseButton::Left));
@@ -1925,8 +1923,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $observingModel);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('width')->setValue($program, 120);
-        $reflection->getProperty('height')->setValue($program, 40);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(120, 40));
 
         $queue = new SplQueue();
         $queue->enqueue(new KeyMsg('x'));
@@ -2040,30 +2037,6 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
         self::assertInstanceOf(MouseMsg::class, $model->received, 'a frame that never reached the screen must not route input');
-    }
-
-    #[Test]
-    public function screenRectCacheInvalidatesForEachDimensionIndependently(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $screenRect = $reflection->getMethod('screenRect');
-
-        $initial = $screenRect->invoke($program);
-        self::assertInstanceOf(Rect::class, $initial);
-        self::assertSame($initial, $screenRect->invoke($program));
-
-        $reflection->getProperty('width')->setValue($program, 120);
-        $wider = $screenRect->invoke($program);
-        self::assertInstanceOf(Rect::class, $wider);
-        self::assertNotSame($initial, $wider);
-        self::assertSame([120, 24], [$wider->width, $wider->height]);
-
-        $reflection->getProperty('height')->setValue($program, 40);
-        $taller = $screenRect->invoke($program);
-        self::assertInstanceOf(Rect::class, $taller);
-        self::assertNotSame($wider, $taller);
-        self::assertSame([120, 40], [$taller->width, $taller->height]);
     }
 
     #[Test]
@@ -2197,8 +2170,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingRenderModel);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2422,8 +2394,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingRenderModel);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2452,8 +2423,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2509,8 +2479,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2565,8 +2534,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $model);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2586,8 +2554,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 100);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(100, 24));
         $oldBuffer = new Frame(80, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $oldBuffer);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
@@ -2630,8 +2597,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $sequenceModel);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2674,8 +2640,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 20);
-        $reflection->getProperty('height')->setValue($program, 5);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(20, 5));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(20, 5));
         $reflection->getProperty('model')->setValue($program, $model);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2723,8 +2688,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 20);
-        $reflection->getProperty('height')->setValue($program, 5);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(20, 5));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(20, 5));
         $reflection->getProperty('model')->setValue($program, $model);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2763,8 +2727,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $partialThrowingModel);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -2783,8 +2746,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 100);
-        $reflection->getProperty('height')->setValue($program, 30);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(100, 30));
         $oldBuffer = new Frame(80, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $oldBuffer);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
@@ -2815,8 +2777,7 @@ final class ProgramTest extends TestCase
         $frame = new Frame(80, 24);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, $frame);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new($themeWithBg));
@@ -2852,8 +2813,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingModel);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -3600,8 +3560,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $screen = new Screen($terminal);
         $reflection->getProperty('screen')->setValue($program, $screen);
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -3629,8 +3588,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, $frame);
         $reflection->getProperty('model')->setValue($program, new class implements Model {
             public function init(): ?Cmd
@@ -3735,7 +3693,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminalSession')->setValue($program, $session);
-        $reflection->getProperty('height')->setValue($program, 40);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 40));
 
         $reflection->getMethod('teardown')->invoke($program);
 
@@ -3784,7 +3742,7 @@ final class ProgramTest extends TestCase
         $teardown = $reflection->getMethod('teardown');
         $teardown->invoke($program);
 
-        $reflection->getProperty('height')->setValue($program, 99);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 99));
         $teardown->invoke($program);
 
         $sessionHeight = (new ReflectionProperty(TerminalSession::class, 'height'))->getValue($session);
@@ -4279,8 +4237,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $model);
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
@@ -4304,8 +4261,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-        $reflection->getProperty('width')->setValue($program, 80);
-        $reflection->getProperty('height')->setValue($program, 24);
+        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
