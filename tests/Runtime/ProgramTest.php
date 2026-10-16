@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\StdinBuffer;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
@@ -40,12 +41,14 @@ use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Runtime\RenderRevisioned;
 use Elmphant\Tui\Runtime\ShutdownAware;
 use Elmphant\Tui\Runtime\TerminalSession;
+use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Terminal\ColorProfile;
 use Elmphant\Tui\Terminal\ColorScheme;
 use Elmphant\Tui\Terminal\Terminal;
 use Elmphant\Tui\Terminal\TerminalOutput;
 use Elmphant\Tui\Terminal\TerminalWriteException;
+use Elmphant\Tui\Testing\InMemoryTracer;
 use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Support\FloatingModel;
@@ -66,9 +69,251 @@ use RuntimeException;
 use SplQueue;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
+use Throwable;
 
 final class ProgramTest extends TestCase
 {
+    #[Test]
+    public function aLoneEscapeArrivesWithoutWaitingForTheNextKey(): void
+    {
+        $model = new InputLoggingModel();
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput("\x1b"));
+        EventLoop::delay(0.15, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['esc', 'q'], $model->log);
+    }
+
+    #[Test]
+    public function anEscapeSequenceSplitAcrossReadsIsStillOneKey(): void
+    {
+        $model = new InputLoggingModel();
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput("\x1b"));
+        EventLoop::delay(0.024, static fn () => $terminal->simulateInput('['));
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput('A'));
+        EventLoop::delay(0.15, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['up', 'q'], $model->log);
+    }
+
+    #[Test]
+    public function inputHeldBackWhenTheTerminalClosesStillArrives(): void
+    {
+        $model = new InputLoggingModel();
+        $terminal = new VirtualTerminal(20, 5);
+        $terminal->simulateInput("\x1b");
+        $terminal->closeInput();
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['esc'], $model->log);
+    }
+
+    /**
+     * @param array<string, string> $environment
+     * @param list<string>          $seenAfterFiftyMilliseconds
+     */
+    #[Test]
+    #[DataProvider('sessions')]
+    public function aLoneEscapeIsWaitedOnLongerOverSsh(array $environment, array $seenAfterFiftyMilliseconds): void
+    {
+        $saved = ['SSH_CONNECTION' => getenv('SSH_CONNECTION'), 'SSH_TTY' => getenv('SSH_TTY')];
+        foreach (array_keys($saved) as $name) {
+            putenv(isset($environment[$name]) ? $name . '=' . $environment[$name] : $name);
+        }
+        $model = new InputLoggingModel();
+        $terminal = new VirtualTerminal(20, 5);
+        $seen = null;
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput("\x1b"));
+        EventLoop::delay(0.07, static function () use ($model, &$seen): void {
+            $seen = $model->log;
+        });
+        EventLoop::delay(0.2, static fn () => $terminal->simulateInput('q'));
+
+        try {
+            Program::new($model)->withTerminal($terminal)->start();
+        } finally {
+            foreach ($saved as $name => $value) {
+                putenv($value === false ? $name : $name . '=' . $value);
+            }
+        }
+
+        self::assertSame($seenAfterFiftyMilliseconds, $seen);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, string>, list<string>}>
+     */
+    public static function sessions(): iterable
+    {
+        yield 'local' => [[], ['esc']];
+        yield 'ssh connection' => [['SSH_CONNECTION' => '10.0.0.1 22 10.0.0.2 22'], []];
+        yield 'ssh tty' => [['SSH_TTY' => '/dev/pts/0'], []];
+    }
+
+    #[Test]
+    public function wheelNotchesReadTogetherReachTheModelAsOneMove(): void
+    {
+        $model = new InputLoggingModel();
+        $terminal = new VirtualTerminal(20, 5);
+        $terminal->simulateInput(str_repeat("\x1b[<65;5;3M", 3));
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['wheeldown×3', 'q'], $model->log);
+    }
+
+    #[Test]
+    public function wheelingWithinOneFrameWaitsForTheNextOneByItself(): void
+    {
+        $clock = new TestClock(100.0);
+        $model = new InputLoggingModel($clock, quitOnWheelUp: true);
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput("\x1b[<65;5;3M"));
+        EventLoop::delay(0.04, static fn () => $terminal->simulateInput(str_repeat("\x1b[<64;5;3M", 2)));
+        EventLoop::delay(0.07, static fn () => $clock->advance(0.1));
+        EventLoop::delay(0.5, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->withClock($clock)->withFps(10)->start();
+
+        self::assertSame(['wheeldown×1@100', 'wheelup×2@100.1'], $model->log);
+    }
+
+    #[Test]
+    public function anUpdateThatKeepsTheModelDrawsNoNewFrame(): void
+    {
+        $model = new InputLoggingModel();
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput('z'));
+        EventLoop::delay(0.06, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(1, $model->renders);
+    }
+
+    #[Test]
+    public function aStoppedProgramLeavesNothingBehindInTheEventLoop(): void
+    {
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput('q'));
+        $before = EventLoop::getIdentifiers();
+
+        Program::new(new InputLoggingModel(init: Cmd::after(60.0, static fn (): ?Message => null)))->withTerminal($terminal)->start();
+
+        self::assertSame([], array_values(array_diff(EventLoop::getIdentifiers(), $before)), 'a timer still due keeps the loop awake');
+    }
+
+    #[Test]
+    public function updateErrorsTheHandlerDealtWithNeverAddUpToGivingUp(): void
+    {
+        $handled = 0;
+        $terminal = new VirtualTerminal(20, 5);
+        $terminal->simulateInput(str_repeat('a', 12) . 'q');
+
+        Program::new(new InputLoggingModel(failOn: 'a'))
+            ->withTerminal($terminal)
+            ->onError(static function () use (&$handled): ?Cmd {
+                ++$handled;
+
+                return null;
+            })
+            ->start();
+
+        self::assertSame(12, $handled);
+    }
+
+    #[Test]
+    public function aCallAnsweringWithSomethingElseSaysSoRatherThanFailingQuietly(): void
+    {
+        $model = new InputLoggingModel(init: Cmd::call(static fn (): int => 42));
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['error:Call', 'q'], $model->log);
+    }
+
+    #[Test]
+    public function aFailedFrameIsNotRetriedBeforeTheFrameBudgetHasPassed(): void
+    {
+        $tracer = new InMemoryTracer();
+        $model = new ScriptedRenderModel([new RuntimeException('broken')]);
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.1, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->withClock(new TestClock(100.0))->withTracer($tracer)->start();
+
+        self::assertSame(1, $model->attempts);
+        self::assertSame([false], array_column($tracer->fieldsOf(TraceEvent::Render), 'drawn'));
+    }
+
+    #[Test]
+    public function aStalledWriteStartsTheCountOfFailedFramesAgain(): void
+    {
+        $model = new ScriptedRenderModel([new TerminalWriteException(0, 10, stalled: true), new RuntimeException('broken')]);
+
+        try {
+            Program::new($model)->withTerminal(new VirtualTerminal(20, 5))->start();
+            self::fail('ten failed frames in a row end the program');
+        } catch (RuntimeException $error) {
+            self::assertSame('broken', $error->getMessage());
+        }
+
+        self::assertSame(11, $model->attempts);
+    }
+
+    #[Test]
+    public function aFrameThatDrewStartsTheCountOfFailedFramesAgain(): void
+    {
+        $tracer = new InMemoryTracer();
+        $model = new ScriptedRenderModel([null, new RuntimeException('broken')]);
+
+        try {
+            Program::new($model)->withTerminal(new VirtualTerminal(20, 5))->withTracer($tracer)->start();
+            self::fail('ten failed frames in a row end the program');
+        } catch (RuntimeException $error) {
+            self::assertSame('broken', $error->getMessage());
+        }
+
+        self::assertSame(11, $model->attempts);
+        self::assertTrue($tracer->fieldsOf(TraceEvent::Render)[0]['drawn'] ?? null);
+    }
+
+    #[Test]
+    public function aFrameThatFailsAfterAGoodOneIsDrawnAgain(): void
+    {
+        $model = new ScriptedRenderModel([null, new RuntimeException('broken'), null]);
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.1, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertGreaterThanOrEqual(3, $model->attempts, 'a failed frame leaves the screen stale until one is drawn');
+    }
+
+    #[Test]
+    public function aFrameReportsHowLongItsPaintingTook(): void
+    {
+        $tracer = new InMemoryTracer();
+        $clock = new TestClock(100.0);
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput('q'));
+
+        Program::new(new SlowPaintModel($clock, 0.004))->withTerminal($terminal)->withClock($clock)->withTracer($tracer)->start();
+
+        $render = $tracer->fieldsOf(TraceEvent::Render)[0] ?? [];
+        self::assertEqualsWithDelta(4.0, $render['ms'] ?? null, 0.0001);
+        self::assertEqualsWithDelta(4.0, $render['paintMs'] ?? null, 0.0001);
+    }
+
     #[Test]
     public function runAndStartHaveANativeModelReturnContract(): void
     {
@@ -4314,4 +4559,108 @@ final class ProgramTest extends TestCase
 
 final readonly class UnknownTestCmd extends Cmd
 {
+}
+
+final class InputLoggingModel implements Model
+{
+    /**
+     * @var list<string>
+     */
+    public array $log = [];
+
+    public int $renders = 0;
+
+    public function __construct(
+        private readonly ?TestClock $clock = null,
+        private readonly bool $quitOnWheelUp = false,
+        private readonly ?string $failOn = null,
+        private readonly ?Cmd $init = null,
+    ) {
+    }
+
+    public function init(): ?Cmd
+    {
+        return $this->init;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof ErrorMsg) {
+            $this->log[] = 'error:' . $message->source->name;
+        }
+        if ($message instanceof MouseMsg) {
+            $this->log[] = strtolower($message->action->name) . '×' . $message->repeat . ($this->clock === null ? '' : '@' . $this->clock->now());
+
+            return new UpdateResult($this, $this->quitOnWheelUp && $message->action === MouseAction::WheelUp ? Cmd::quit() : null);
+        }
+        if (!$message instanceof KeyMsg) {
+            return new UpdateResult($this);
+        }
+        $name = ($message->alt ? 'alt+' : '') . KeyPattern::nameOf($message->key);
+        if ($name === $this->failOn) {
+            throw new RuntimeException($name . ' failed');
+        }
+        $this->log[] = $name;
+
+        return new UpdateResult($this, $name === 'q' ? Cmd::quit() : null);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+        ++$this->renders;
+    }
+}
+
+final class ScriptedRenderModel implements Model
+{
+    public int $attempts = 0;
+
+    /**
+     * @param non-empty-list<Throwable|null> $outcomes what each frame does in turn, null drawing it; the last one repeats
+     */
+    public function __construct(private readonly array $outcomes)
+    {
+    }
+
+    public function init(): ?Cmd
+    {
+        return null;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return new UpdateResult($this, $message instanceof KeyMsg && $message->key === 'q' ? Cmd::quit() : null);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+        $outcome = $this->outcomes[min($this->attempts, count($this->outcomes) - 1)];
+        ++$this->attempts;
+        $pass->context->requestRepaint(0.0);
+        if ($outcome !== null) {
+            throw $outcome;
+        }
+    }
+}
+
+final readonly class SlowPaintModel implements Model
+{
+    public function __construct(private TestClock $clock, private float $paintSeconds)
+    {
+    }
+
+    public function init(): ?Cmd
+    {
+        return null;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return new UpdateResult($this, $message instanceof KeyMsg && $message->key === 'q' ? Cmd::quit() : null);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+        $this->clock->advance($this->paintSeconds);
+    }
 }

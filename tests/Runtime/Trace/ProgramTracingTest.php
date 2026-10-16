@@ -88,6 +88,25 @@ final class ProgramTracingTest extends TestCase
     }
 
     #[Test]
+    public function anUpdateThatKeptTheModelSaysSoAndHowLongItTook(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput('q');
+
+        Program::new($this->quittingOnQ())->withTerminal($terminal)->withTracer($tracer)->start();
+
+        $updates = $tracer->fieldsOf(TraceEvent::Update);
+        self::assertNotSame([], $updates);
+        foreach ($updates as $fields) {
+            self::assertFalse($fields['changed']);
+            self::assertIsFloat($fields['ms']);
+            self::assertGreaterThanOrEqual(0.0, $fields['ms']);
+            self::assertLessThan(1000.0, $fields['ms']);
+        }
+    }
+
+    #[Test]
     public function everyEffectDispatchedIsReported(): void
     {
         $tracer = new InMemoryTracer();

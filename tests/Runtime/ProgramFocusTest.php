@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Runtime;
 
+use ArrayObject;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\ResizeMsg;
+use Elmphant\Tui\Rendering\Context\RenderPass;
+use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\RoutesFocus;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -21,6 +28,7 @@ use Elmphant\Tui\Widget\Structure\ScrollPane;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
 
 final class ProgramFocusTest extends TestCase
 {
@@ -157,6 +165,99 @@ final class ProgramFocusTest extends TestCase
         self::assertSame('', $final->first->value());
         self::assertSame('', $final->second->value());
         self::assertSame('x', $final->third->value());
+    }
+
+    #[Test]
+    public function theModelHearsTheKeyboardArriveBeforeItsFirstMessage(): void
+    {
+        $log = new ArrayObject();
+        $terminal = new VirtualTerminal(20, 5);
+        $terminal->simulateInput('q');
+
+        Program::new(new FocusLoggingModel($log))->withTerminal($terminal)->start();
+
+        self::assertSame(['focus:a', 'resize', 'key:q'], $log->getArrayCopy());
+    }
+
+    #[Test]
+    public function aFocusMoveRedrawsAndIsAnnouncedThoughTheModelIsUnchanged(): void
+    {
+        $log = new ArrayObject();
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput('n'));
+        EventLoop::delay(0.08, static fn () => $terminal->simulateInput('q'));
+
+        Program::new(new FocusLoggingModel($log))->withTerminal($terminal)->start();
+
+        self::assertSame(['focus:a', 'resize', 'render', 'key:n', 'focus:b', 'render', 'key:q'], $log->getArrayCopy());
+    }
+
+    #[Test]
+    public function aComponentLeavingFromUnderTheKeyboardIsAnnouncedOnceTheFrameIsDrawn(): void
+    {
+        $log = new ArrayObject();
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput('x'));
+        EventLoop::delay(0.08, static fn () => $terminal->simulateInput('q'));
+
+        Program::new(new FocusLoggingModel($log))->withTerminal($terminal)->start();
+
+        self::assertSame(['focus:a', 'resize', 'render', 'key:x', 'render', 'focus:b', 'key:q'], $log->getArrayCopy());
+    }
+}
+
+/**
+ * Records what reaches it: x takes the first component away, n moves the keyboard on.
+ */
+final readonly class FocusLoggingModel implements RoutesFocus
+{
+    /**
+     * @param ArrayObject<int, string> $log
+     * @param list<string>             $ids
+     */
+    public function __construct(private ArrayObject $log, private array $ids = ['a', 'b'])
+    {
+    }
+
+    public function init(): ?Cmd
+    {
+        return null;
+    }
+
+    public function update(Message $message, Rect $area, FocusState $focus = new FocusState()): UpdateResult
+    {
+        if ($message instanceof FocusMsg) {
+            $this->log->append('focus:' . $focus->focused()?->value);
+        }
+        if ($message instanceof ResizeMsg) {
+            $this->log->append('resize');
+        }
+        if (!$message instanceof KeyMsg) {
+            return new UpdateResult($this);
+        }
+        $this->log->append('key:' . $message->key);
+
+        return match ($message->key) {
+            'x' => new UpdateResult(new self($this->log, array_slice($this->ids, 1))),
+            'n' => new UpdateResult($this, Cmd::focusNext()),
+            'q' => new UpdateResult($this, Cmd::quit()),
+            default => new UpdateResult($this),
+        };
+    }
+
+    public function focusableIds(FocusState $focus = new FocusState()): array
+    {
+        return array_map(ComponentId::named(...), $this->ids);
+    }
+
+    public function reachableIds(): array
+    {
+        return $this->focusableIds();
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+        $this->log->append('render');
     }
 }
 

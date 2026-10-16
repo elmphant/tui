@@ -319,12 +319,9 @@ final class Program
                 $this->model->onShutdown();
             }
         } finally {
-            try {
-                $this->adaptiveTicker?->stop();
-                $this->adaptiveTicker = null;
-            } finally {
-                $this->teardown();
-            }
+            $this->adaptiveTicker?->stop();
+            $this->adaptiveTicker = null;
+            $this->teardown();
         }
 
         if ($this->fatalError !== null) {
@@ -553,11 +550,7 @@ final class Program
         // is fatal) and quitting resumes only this fiber instead of stopping
         // the shared driver out from under the host's other watchers.
         $this->runSuspension = EventLoop::getSuspension();
-        try {
-            $this->runSuspension->suspend();
-        } finally {
-            $this->runSuspension = null;
-        }
+        $this->runSuspension->suspend();
     }
 
     private function resumeRunSuspension(): void
@@ -855,7 +848,7 @@ final class Program
      */
     private function deliver(Message $message, Rect $screenRect): bool
     {
-        $updateStart = $this->tracer === null ? 0 : hrtime(true);
+        $updateStart = hrtime(true);
         $stamped = InputRouter::route($message, $screenRect, $this->renderPass?->floats->placements() ?? []);
         if ($stamped === null) {
             return false;
@@ -905,7 +898,7 @@ final class Program
         $this->model = $next;
         $newRevision = $next instanceof RenderRevisioned ? $next->renderRevision() : null;
 
-        if ($previousRevision === null || $newRevision === null || $previousRevision !== $newRevision) {
+        if ($previousRevision === null || $previousRevision !== $newRevision) {
             $this->frames->markDirty();
         }
     }

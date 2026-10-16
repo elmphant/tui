@@ -31,12 +31,15 @@ final class ProgramResizeAtStartupTest extends TestCase
         Program::new($model)->withTerminal($terminal)->start();
 
         self::assertSame(100, $model->lastWidth);
+        self::assertLessThan(0.1, $model->resizedAfter, 'it is asked for again at once, not when something else happens to wake the loop');
     }
 }
 
 final class ResizedWhileStartingModel implements Model
 {
     public ?int $lastWidth = null;
+    public ?float $resizedAfter = null;
+    private float $startedAt = 0.0;
 
     public function __construct(private readonly VirtualTerminal $terminal)
     {
@@ -44,6 +47,7 @@ final class ResizedWhileStartingModel implements Model
 
     public function init(): ?Cmd
     {
+        $this->startedAt = microtime(true);
         $this->terminal->resizeTo(100, 30);
         posix_kill(getmypid(), SIGWINCH);
 
@@ -54,6 +58,9 @@ final class ResizedWhileStartingModel implements Model
     {
         if ($message instanceof ResizeMsg) {
             $this->lastWidth = $message->width;
+            if ($message->width === 100) {
+                $this->resizedAfter ??= microtime(true) - $this->startedAt;
+            }
         }
 
         return new UpdateResult($this);

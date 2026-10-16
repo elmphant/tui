@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Screen;
@@ -97,6 +98,41 @@ final class ProgramKittyTest extends TestCase
         $result = Program::new($model)->withTerminal($terminal)->start();
 
         self::assertSame(['Press'], $result->keys);
+    }
+
+    #[Test]
+    public function aKeyReleaseReachesTheModelAsNothingAtAll(): void
+    {
+        $model = new class implements Model {
+            /**
+             * @var list<class-string>
+             */
+            public array $seen = [];
+
+            public function init(): ?Cmd
+            {
+                return null;
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                if (!$message instanceof ResizeMsg) {
+                    $this->seen[] = $message::class;
+                }
+
+                return new UpdateResult($this, $message instanceof KeyMsg && $message->key === 'q' ? Cmd::quit() : null);
+            }
+
+            public function render(Frame $frame, RenderPass $pass): void
+            {
+            }
+        };
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateInput("\x1b[?1u\x1b[106;1:3uq");
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame([KeyMsg::class], $model->seen);
     }
 
     #[Test]
