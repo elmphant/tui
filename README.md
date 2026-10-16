@@ -848,6 +848,26 @@ Program::new($app)->withTracer($tracer)->start();
 self::assertSame(0.0, $tracer->totalOf(TraceEvent::Render, 'blockedMs'));
 ```
 
+## Debugging
+
+The app owns the terminal, so debug it from a second one:
+
+1. **Watch the trace.** Start with `ELMPHANT_TRACE=/tmp/tui.jsonl php app.php`
+   and run `tail -f /tmp/tui.jsonl` beside it. Every key, update, render and
+   command shows up as it happens.
+2. **Say what you saw.** Return `Cmd::log('loaded', ['items' => count($rows)])`
+   from an update instead of echoing; it lands in the trace as a `log` event.
+   A stray `echo` or `var_dump` is caught and traced as `output` rather than
+   written over the screen.
+3. **Read the error.** Anything that throws is traced as `error` with its class,
+   message, file and line, even when your model handles the `ErrorMsg`. When ten
+   failures in a row end the program, the terminal is restored first and the
+   exception is printed on a clean screen.
+4. **Step through it.** Run with Xdebug (`XDEBUG_MODE=debug XDEBUG_SESSION=1 php app.php`)
+   and let your IDE listen for the connection. Breakpoints pause the program;
+   the terminal stays in raw mode until you continue, so keep the IDE in a
+   different window.
+
 ## Static analysis for your own app
 
 The package ships the five PHPStan rules it enforces on itself. Include
