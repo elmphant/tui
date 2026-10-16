@@ -159,6 +159,14 @@ final class ColorTest extends TestCase
     }
 
     #[Test]
+    public function sixCharactersThatAreNotHexDigitsAreRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Color::hex('zzzzzz');
+    }
+
+    #[Test]
     public function aThreeDigitHexReadsAsTheSixDigitColourItAbbreviates(): void
     {
         self::assertSame(Color::hex('FFAA00')->value, Color::hex('#FA0')->value);
@@ -449,6 +457,34 @@ final class ColorTest extends TestCase
         yield 'pastel red stays red' => [Color::rgb(255, 107, 107), 9];
         yield 'pastel green stays green' => [Color::rgb(143, 203, 95), 2];
         yield 'pastel blue stays blue' => [Color::rgb(95, 135, 175), 4];
+        yield 'a chroma of 24 still counts as grey' => [Color::rgb(124, 100, 100), 8];
+        yield 'hue 30 starts the yellow sector' => [Color::rgb(200, 100, 0), 3];
+        yield 'hue 90 starts the green sector' => [Color::rgb(100, 200, 0), 2];
+        yield 'hue 150 starts the cyan sector' => [Color::rgb(0, 200, 100), 6];
+        yield 'hue 270 starts the magenta sector' => [Color::rgb(100, 0, 200), 5];
+        yield 'hue 330 wraps back into the red sector' => [Color::rgb(200, 0, 100), 1];
+    }
+
+    /**
+     * @return iterable<string, array{int, array{int, int, int}}>
+     */
+    public static function xtermPaletteEntries(): iterable
+    {
+        yield 'the first grey step' => [232, [8, 8, 8]];
+        yield 'a mid grey step' => [244, [128, 128, 128]];
+        yield 'the last grey step' => [255, [238, 238, 238]];
+        yield 'a cube entry with only green' => [22, [0, 95, 0]];
+        yield 'a cube entry with all three channels' => [110, [135, 175, 215]];
+    }
+
+    #[Test]
+    #[DataProvider('xtermPaletteEntries')]
+    public function aPaletteIndexResolvesToTheXtermColourItNames(int $index, array $channels): void
+    {
+        self::assertSame(
+            Color::rgb(...$channels)->value,
+            Color::color256($index)->blend(Color::rgb(0, 0, 0), 0.0)->value,
+        );
     }
 
     #[Test]
@@ -629,6 +665,24 @@ final class ColorTest extends TestCase
 
         self::assertGreaterThanOrEqual(4.2, $lifted->contrastRatio($panel));
         self::assertLessThan(4.3, $lifted->contrastRatio($panel), 'a second step would already be too far');
+    }
+
+    #[Test]
+    public function anInkFarFromReadableStopsAtTheFirstStepThatReads(): void
+    {
+        $black = Color::rgb(0, 0, 0);
+        $white = Color::ansi(15);
+        $lifted = Color::rgb(40, 40, 40)->readableOn($black);
+
+        $steps = array_values(array_filter(
+            range(1, 32),
+            static fn (int $step): bool => Color::rgb(40, 40, 40)->blend($white, $step / 32)->value === $lifted->value,
+        ));
+
+        self::assertCount(1, $steps, 'the lift lands on one of the 32 steps towards white');
+        self::assertGreaterThan(1, $steps[0]);
+        self::assertGreaterThanOrEqual(4.5, $lifted->contrastRatio($black));
+        self::assertLessThan(4.5, Color::rgb(40, 40, 40)->blend($white, ($steps[0] - 1) / 32)->contrastRatio($black));
     }
 
     #[Test]

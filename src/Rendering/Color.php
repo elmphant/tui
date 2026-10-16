@@ -183,9 +183,9 @@ final readonly class Color
         }
 
         if ($this->value >= self::TRUE) {
-            $rgb = $this->value - self::TRUE;
+            [$red, $green, $blue] = $this->channels();
 
-            return $extended . ';2;' . (($rgb >> 16) & 0xFF) . ';' . (($rgb >> 8) & 0xFF) . ';' . ($rgb & 0xFF);
+            return "{$extended};2;{$red};{$green};{$blue}";
         }
 
         if ($this->value >= self::C256) {
@@ -275,9 +275,7 @@ final readonly class Color
     private function channels(): array
     {
         if ($this->value >= self::TRUE) {
-            $rgb = $this->value - self::TRUE;
-
-            return [($rgb >> 16) & 0xFF, ($rgb >> 8) & 0xFF, $rgb & 0xFF];
+            return [($this->value >> 16) & 0xFF, ($this->value >> 8) & 0xFF, $this->value & 0xFF];
         }
 
         if ($this->value >= self::C256) {
