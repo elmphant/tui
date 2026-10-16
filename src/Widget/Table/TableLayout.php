@@ -49,42 +49,12 @@ final readonly class TableLayout
     }
 
     /**
-     * @param list<int> $columnWidths
-     */
-    public static function heightOfRow(array $columnWidths, Row $row): int
-    {
-        if ($row->spansAllColumns) {
-            return count(self::spanningLines($columnWidths, $row));
-        }
-
-        $height = 1;
-
-        foreach ($columnWidths as $columnIndex => $width) {
-            $text = self::textOf($row, $columnIndex);
-
-            // Wrapping is the expensive part and most cells do not need it, so
-            // ask how wide the text is before asking where to break it.
-            if ($width <= 0 || (!str_contains($text, "\n") && CharWidth::stringWidth($text) <= $width)) {
-                continue;
-            }
-
-            $height = max($height, count(self::cellLines($text, $width)));
-        }
-
-        return $height;
-    }
-
-    /**
      * A cell broken at its own line breaks, then between words to fit the column.
      *
      * @return list<string>
      */
     public static function cellLines(string $cell, int $width): array
     {
-        if ($width <= 0) {
-            return [''];
-        }
-
         $lines = [];
         foreach (explode("\n", $cell) as $line) {
             array_push($lines, ...TextWrap::wrap($line, $width));
@@ -135,7 +105,7 @@ final readonly class TableLayout
      */
     public function lineOf(int $row): int
     {
-        return $this->extents->startOf(max(0, $row));
+        return $this->extents->startOf($row);
     }
 
     /**
@@ -143,11 +113,7 @@ final readonly class TableLayout
      */
     public function rowAtLine(int $firstRow, int $line): ?int
     {
-        if ($firstRow >= count($this->heights)) {
-            return null;
-        }
-
-        return $this->extents->rowAtLine($this->lineOf($firstRow) + max(0, $line));
+        return $this->extents->rowAtLine($this->lineOf($firstRow) + $line);
     }
 
     public function firstRowAtOrAfter(int $line): int
@@ -207,6 +173,32 @@ final readonly class TableLayout
         $measured[$row] = $known;
 
         return $known[$key];
+    }
+
+    /**
+     * @param list<int> $columnWidths
+     */
+    private static function heightOfRow(array $columnWidths, Row $row): int
+    {
+        if ($row->spansAllColumns) {
+            return count(self::spanningLines($columnWidths, $row));
+        }
+
+        $height = 1;
+
+        foreach ($columnWidths as $columnIndex => $width) {
+            $text = self::textOf($row, $columnIndex);
+
+            // Wrapping is the expensive part and most cells do not need it, so
+            // ask how wide the text is before asking where to break it.
+            if ($width <= 0 || (!str_contains($text, "\n") && CharWidth::stringWidth($text) <= $width)) {
+                continue;
+            }
+
+            $height = max($height, count(self::cellLines($text, $width)));
+        }
+
+        return $height;
     }
 
     private static function textOf(Row $row, int $columnIndex): string

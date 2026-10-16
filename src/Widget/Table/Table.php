@@ -221,7 +221,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         return match (true) {
             $message instanceof KeyMsg && $rowCount > 0 => $this->handleKey($message, $area),
-            $message instanceof MouseMsg => $this->handleMouse($message, $area, $rowCount),
+            $message instanceof MouseMsg => $this->handleMouse($message, $area),
             default => new UpdateResult($this),
         };
     }
@@ -270,17 +270,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function columnWidths(int $totalWidth): array
     {
-        $columnCount = count($this->columns);
-        if ($columnCount === 0) {
-            return [];
-        }
-
-        $constraints = [];
-        foreach ($this->columns as $column) {
-            $constraints[] = $column->width();
-        }
-
-        return Constraint::allocate($constraints, $totalWidth);
+        return Constraint::allocate(array_map(static fn (Column $column): Constraint => $column->width(), $this->columns), $totalWidth);
     }
 
     /**
@@ -294,7 +284,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $resting = $this->rows[$this->cursor] ?? null;
         $place = $resting === null ? null : self::rowPlaceOf(self::textOf($resting), $rows);
 
-        if ($place !== null && ($rows[$place]->selectable ?? true)) {
+        if ($place !== null && $rows[$place]->selectable) {
             return $place;
         }
 
@@ -353,7 +343,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
     private function isRowSelectable(int $index): bool
     {
-        return $this->rows[$index]->selectable ?? true;
+        return $this->rows[$index]->selectable;
     }
 
     private function findNextSelectable(int $from, int $direction): ?int
@@ -416,7 +406,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $layout = $this->layoutFor($this->columnWidthsFor($area));
 
         $target = $direction > 0
-            ? $layout->rowAtLine($this->cursor, $visibleRows) ?? max(0, $this->rowCount() - 1)
+            ? $layout->rowAtLine($this->cursor, $visibleRows) ?? $this->rowCount() - 1
             : $this->rowAPageAbove($layout, $visibleRows);
 
         while ($target !== $this->cursor && !$this->isRowSelectable($target)) {
@@ -443,7 +433,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     /**
      * @return UpdateResult<static>
      */
-    private function handleMouse(MouseMsg $message, Rect $area, int $rowCount): UpdateResult
+    private function handleMouse(MouseMsg $message, Rect $area): UpdateResult
     {
         $displayOffset = $this->displayScrollOffset($area);
 
@@ -453,7 +443,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
                 ? $this->layoutFor($this->columnWidthsFor($area))->rowAtLine($displayOffset, $localY)
                 : null;
 
-            if ($rowIndex !== null && $rowIndex < $rowCount && $this->isRowSelectable($rowIndex)) {
+            if ($rowIndex !== null && $this->isRowSelectable($rowIndex)) {
                 return new UpdateResult($this->cloneWith(cursor: $rowIndex, selected: $rowIndex, followCursor: true));
             }
         }
@@ -480,11 +470,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $cellX = $area->x;
 
         foreach ($this->columns as $index => $column) {
-            $width = $columnWidths[$index] ?? 0;
-            if ($width <= 0) {
-                continue;
-            }
-
+            $width = $columnWidths[$index];
             $title = CharWidth::truncateToWidth($column->title(), $width);
             $frame->putStyled($cellX, $area->y, $title, $headerStyle);
             $cellX += $width;
@@ -509,7 +495,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         // The first row may start above the body when it is taller than the
         // viewport, and the header sits in the same clip as the rows.
-        $frame->pushClip(new Rect($area->x, $area->y + $this->headerHeight(), $area->width, max(0, $area->height - $this->headerHeight())));
+        $frame->pushClip(new Rect($area->x, $area->y + $this->headerHeight(), $area->width, $area->height - $this->headerHeight()));
 
         try {
             for ($rowIndex = $firstRow; $rowIndex < $this->rowCount(); ++$rowIndex) {
@@ -566,11 +552,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $cellX = $rowArea->x;
 
         foreach (array_keys($this->columns) as $columnIndex) {
-            $width = $columnWidths[$columnIndex] ?? 0;
-            if ($width <= 0) {
-                continue;
-            }
-
+            $width = $columnWidths[$columnIndex];
             $cell = $row->cells[$columnIndex] ?? '';
             $cellStyle = $cell instanceof Span
                 ? $cell->withResolvedToken($theme)->style
@@ -626,7 +608,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             return [false, $widths];
         }
 
-        return [true, $this->columnWidths(max(0, $area->width - 1))];
+        return [true, $this->columnWidths($area->width - 1)];
     }
 
     /**
@@ -650,10 +632,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     private static function rowPlaceOf(?array $text, array $rows): ?int
     {
-        if ($text === null) {
-            return null;
-        }
-
         foreach ($rows as $place => $row) {
             if (self::textOf($row) === $text) {
                 return $place;
@@ -680,10 +658,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             : $this->clampedScrollOffset($area);
     }
 
-    /**
-     * An offset past the end would draw blank rows the reader cannot scroll
-     * back from.
-     */
     /**
      * A row taller than the viewport cannot be read by stepping over it, so the
      * wheel walks down its lines first and only then moves to the next row.
@@ -739,6 +713,10 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $this->cloneWith(scrollOffset: $row, lineOffset: $line, followCursor: false);
     }
 
+    /**
+     * An offset past the end would draw blank rows the reader cannot scroll
+     * back from.
+     */
     private function clampedScrollOffset(Rect $area): int
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());

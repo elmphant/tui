@@ -3803,6 +3803,333 @@ final class TableTest extends TestCase
         self::assertStringContainsString('echo', $screen, 'An offset nobody can scroll back from must settle on the last rows');
     }
 
+    #[Test]
+    public function drawingLeavesTheFrameClippedAsItFoundIt(): void
+    {
+        $frame = new Frame(30, 10);
+
+        $this->createTable()->render($frame, new Rect(2, 2, 20, 3), new RenderContext(Theme::dark()));
+
+        self::assertEquals($frame->area(), $frame->clip());
+    }
+
+    #[Test]
+    public function theScrollbarRunsDownTheRowsBelowTheHeaderAndFollowsTheCursor(): void
+    {
+        $table = $this->singleColumnTable(array_map(static fn (int $index): string => "row{$index}", range(0, 9)));
+        $area = new Rect(0, 0, 10, 4);
+
+        self::assertSame($this->scrollbarAt(new Rect(0, 1, 10, 3), 0, 10), $this->scrollbarOf($table, $area));
+        self::assertSame($this->scrollbarAt(new Rect(0, 1, 10, 3), 3, 10), $this->scrollbarOf($table->withCursor(5), $area));
+        self::assertSame($this->scrollbarAt(new Rect(0, 1, 10, 3), 4, 10), $this->scrollbarOf($table->withCursor(6), $area));
+    }
+
+    #[Test]
+    public function theScrollbarCountsTheLinesScrolledInsideATallRow(): void
+    {
+        $table = $this->singleColumnTable([implode("\n", range(1, 9)), 'b', 'c', 'd'])->withHeader(false);
+        $area = new Rect(0, 0, 10, 3);
+
+        $scrolled = $this->wheeled($table, MouseAction::WheelDown, $area, 5);
+
+        self::assertSame($this->scrollbarAt($area, 5, 12), $this->scrollbarOf($scrolled, $area));
+    }
+
+    #[Test]
+    public function aTableWithNoRowsHoldsItsCursorAtTheTop(): void
+    {
+        $empty = Table\Table::new([Column::new('A', Constraint::flex())], []);
+
+        self::assertSame(0, $empty->cursor());
+        self::assertSame(0, $empty->withCursor(3)->cursor());
+    }
+
+    #[Test]
+    public function aNewTableOpensOnTheRowItsCursorWasSeatedOn(): void
+    {
+        $rows = array_map(static fn (int $index): Row => Row::header("group{$index}"), range(0, 9));
+        $rows[] = Row::new('target');
+
+        $screen = $this->screenOfTable(Table\Table::new([Column::new('A', Constraint::flex())], $rows), new Rect(0, 0, 10, 4));
+
+        self::assertStringContainsString('target', $screen);
+    }
+
+    #[Test]
+    public function rowsLoadedIntoAnEmptyTableSeatTheCursorOnTheFirstRowItMayRestOn(): void
+    {
+        $empty = Table\Table::new([Column::new('A', Constraint::flex())], []);
+
+        self::assertSame(1, $empty->withRows([Row::header('Group'), Row::new('alpha')])->cursor());
+    }
+
+    #[Test]
+    public function theCursorStaysOnItsRowWhereverAReloadPutsIt(): void
+    {
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], [['a'], ['b'], ['c']])->withCursor(2);
+
+        self::assertSame(1, $table->withCells([['a'], ['c'], ['b']])->cursor());
+    }
+
+    #[Test]
+    public function pagingDownALoneRowStaysOnIt(): void
+    {
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], [['only']]);
+
+        self::assertSame(0, $table->update(new KeyMsg(Key::PageDown), new Rect(0, 0, 10, 5))->model->cursor());
+    }
+
+    #[Test]
+    public function aClickedRowStaysInViewWhenTheAreaShrinks(): void
+    {
+        $table = $this->singleColumnTable(array_map(static fn (int $index): string => "row{$index}", range(0, 9)));
+
+        $clicked = $table->update(new MouseMsg(1, 9, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 10, 12))->model;
+
+        self::assertInstanceOf(Table\Table::class, $clicked);
+        self::assertStringContainsString('row8', $this->screenOfTable($clicked, new Rect(0, 0, 10, 4)));
+    }
+
+    #[Test]
+    public function aTallRowScrolledIntoNeverDrawsOverTheHeader(): void
+    {
+        $table = $this->singleColumnTable(["a1\na2\na3", 'b']);
+        $area = new Rect(0, 0, 10, 3);
+
+        $lines = $this->screenLines($this->wheeled($table, MouseAction::WheelDown, $area), $area);
+
+        self::assertSame(['Text', 'a2', 'a3'], $lines);
+    }
+
+    #[Test]
+    public function everyCellStartsWhereTheColumnBeforeItEnds(): void
+    {
+        $table = Table\Table::fromCells(
+            [Column::new('X', Constraint::exact(3)), Column::new('Y', Constraint::exact(3)), Column::new('Z', Constraint::exact(3))],
+            [['a', 'b', 'c']],
+        );
+        $frame = new Frame(12, 2);
+
+        $table->render($frame, new Rect(2, 0, 9, 2), new RenderContext(Theme::dark()));
+
+        self::assertSame('  a  b  c', $this->rowText($frame, 12, 1, 0, 12));
+    }
+
+    #[Test]
+    public function theFocusedCursorRowIsFilledAcrossTheWholeTable(): void
+    {
+        $theme = Theme::dark();
+        $frame = new Frame(20, 3);
+
+        $this->singleColumnTable(['a', 'b'])->render($frame, new Rect(0, 0, 20, 3), RenderContext::focused($theme));
+
+        self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[20 + 10]);
+    }
+
+    #[Test]
+    public function aStyledRowAwayFromTheCursorDrawsInItsOwnColours(): void
+    {
+        $theme = Theme::gruvboxDark();
+        $style = new Style(foreground: Color::hex('282828'));
+        $table = Table\Table::new(
+            [Column::new('Text', Constraint::flex())],
+            [Row::new('cursor'), Row::new('styled')->withStyle($style)],
+        );
+        $frame = new Frame(20, 3);
+
+        $table->render($frame, new Rect(0, 0, 20, 3), RenderContext::focused($theme));
+
+        self::assertSame($style->foregroundValue(), $frame->foregrounds[2 * 20]);
+    }
+
+    #[Test]
+    public function twoRowsInAOneLineViewportShowAScrollbar(): void
+    {
+        $frame = new Frame(10, 2);
+
+        $this->singleColumnTable(['a', 'b'])->render($frame, new Rect(0, 0, 10, 2), new RenderContext(Theme::dark()));
+
+        self::assertSame(Scrollbar::THUMB, $frame->characters[10 + 9]);
+    }
+
+    #[Test]
+    public function inAOneLineViewportTheWheelWalksEveryLineOfARow(): void
+    {
+        $table = $this->singleColumnTable(["a1\na2", "b1\nb2", "c1\nc2"]);
+        $area = new Rect(0, 0, 10, 2);
+
+        self::assertSame(['Text', 'a2'], $this->screenLines($this->wheeled($table, MouseAction::WheelDown, $area), $area));
+        self::assertSame(['Text', 'a2'], $this->screenLines($this->wheeled($table->withScrollOffset(1), MouseAction::WheelUp, $area), $area), 'and back up onto the last line of the row above');
+    }
+
+    #[Test]
+    public function anOffsetPastTheEndOfAOneLineViewportShowsTheLastRow(): void
+    {
+        $area = new Rect(0, 0, 10, 2);
+
+        self::assertSame(['Text', 'c'], $this->screenLines($this->singleColumnTable(['a', 'b', 'c'])->withScrollOffset(99), $area));
+    }
+
+    #[Test]
+    public function wheelingUpOverShortRowsShowsEachRowWholeUnderTheHeader(): void
+    {
+        $table = $this->singleColumnTable(['r0', 'r1', 'r2', 'r3', 'r4'])->withScrollOffset(2);
+        $area = new Rect(0, 0, 10, 4);
+
+        self::assertSame(['Text', 'r1', 'r2', 'r3'], $this->screenLines($this->wheeled($table, MouseAction::WheelUp, $area), $area));
+    }
+
+    #[Test]
+    public function wheelingDownFromAViewThatFollowsTheCursorStartsAtTheTopOfTheRowInView(): void
+    {
+        $table = $this->singleColumnTable(['a', "b1\nb2\nb3", 'c', 'd'])->withHeader(false)->withScrollOffset(3)->withCursor(1);
+        $area = new Rect(0, 0, 10, 2);
+
+        self::assertSame(['b2', 'b3'], $this->screenLines($this->wheeled($table, MouseAction::WheelDown, $area), $area));
+    }
+
+    #[Test]
+    public function wheelingUpFromAViewThatFollowsTheCursorMovesToTheRowAbove(): void
+    {
+        $table = $this->singleColumnTable(['a', "b1\nb2\nb3", 'c', 'd'])->withHeader(false)->withScrollOffset(3)->withCursor(1);
+        $area = new Rect(0, 0, 10, 2);
+
+        self::assertSame(['a', 'b1'], $this->screenLines($this->wheeled($table, MouseAction::WheelUp, $area), $area));
+    }
+
+    #[Test]
+    public function wheelingUpInsideATallRowStepsBackOneLine(): void
+    {
+        $table = $this->singleColumnTable(['a', "b1\nb2\nb3\nb4"])->withHeader(false);
+        $area = new Rect(0, 0, 10, 2);
+
+        $intoTheRow = $this->wheeled($table, MouseAction::WheelDown, $area, 3);
+
+        self::assertSame(['b3', 'b4'], $this->screenLines($intoTheRow, $area));
+        self::assertSame(['b2', 'b3'], $this->screenLines($this->wheeled($intoTheRow, MouseAction::WheelUp, $area), $area));
+    }
+
+    #[Test]
+    public function aRowExactlyAsTallAsTheViewportIsLeftWithOneNotch(): void
+    {
+        $table = $this->singleColumnTable(["a1\na2", "b1\nb2", "c1\nc2"])->withHeader(false);
+        $area = new Rect(0, 0, 10, 2);
+
+        self::assertSame(['b1', 'b2'], $this->screenLines($this->wheeled($table, MouseAction::WheelDown, $area), $area));
+    }
+
+    #[Test]
+    public function oneEventOfSeveralNotchesWalksAsManyLinesOfATallRow(): void
+    {
+        $table = $this->singleColumnTable([implode("\n", range(1, 5)), 'next'])->withHeader(false);
+        $area = new Rect(0, 0, 10, 2);
+
+        $scrolled = $table->update(new MouseMsg(1, 1, MouseAction::WheelDown, MouseButton::None, repeat: 2), $area)->model;
+
+        self::assertInstanceOf(Table\Table::class, $scrolled);
+        self::assertSame(['3', '4'], $this->screenLines($scrolled, $area));
+    }
+
+    #[Test]
+    public function oneNotchOverShortRowsPutsTheNextRowRightUnderTheHeader(): void
+    {
+        $table = $this->singleColumnTable(['r0', 'r1', 'r2', 'r3', 'r4']);
+        $area = new Rect(0, 0, 10, 3);
+
+        self::assertSame(['Text', 'r1', 'r2'], $this->screenLines($this->wheeled($table, MouseAction::WheelDown, $area), $area));
+    }
+
+    #[Test]
+    public function wheelingUpLeavesTheCursorBehind(): void
+    {
+        $table = $this->singleColumnTable(array_map(static fn (int $index): string => "row{$index}", range(0, 9)))->withCursor(9);
+        $area = new Rect(0, 0, 10, 4);
+
+        self::assertSame(['Text', 'row4', 'row5', 'row6'], $this->screenLines($this->wheeled($table, MouseAction::WheelUp, $area, 3), $area));
+    }
+
+    #[Test]
+    public function theWheelStopsAtTheLastLineOfALoneTallRow(): void
+    {
+        $table = $this->singleColumnTable(["1\n2\n3"])->withHeader(false);
+        $area = new Rect(0, 0, 10, 2);
+
+        self::assertSame(['2', '3'], $this->screenLines($this->wheeled($table, MouseAction::WheelDown, $area, 3), $area));
+    }
+
+    #[Test]
+    public function aCellWithALineBreakAndALineWiderThanItsColumnCountsEveryLine(): void
+    {
+        $table = Table\Table::fromCells([Column::new('Text', Constraint::exact(5))], [["alpha beta\nxy"]]);
+
+        self::assertSame(4, $table->measureHeight(5), 'the header, alpha, beta and xy');
+    }
+
+    #[Test]
+    public function aColumnOfNoWidthAddsNoLinesToItsRow(): void
+    {
+        $table = Table\Table::fromCells(
+            [Column::new('Hidden', Constraint::exact(0)), Column::new('Shown', Constraint::flex())],
+            [["a\nb", 'x']],
+        );
+
+        self::assertSame(2, $table->measureHeight(10));
+    }
+
+    /**
+     * @param list<string> $cells
+     */
+    private function singleColumnTable(array $cells): Table\Table
+    {
+        return Table\Table::fromCells([Column::new('Text', Constraint::flex())], array_map(static fn (string $cell): array => [$cell], $cells));
+    }
+
+    private function wheeled(Table\Table $table, MouseAction $direction, Rect $area, int $notches = 1): Table\Table
+    {
+        for ($notch = 0; $notch < $notches; ++$notch) {
+            $table = $table->update(new MouseMsg($area->x + 1, $area->y + 1, $direction, MouseButton::None), $area)->model;
+        }
+
+        return $table;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function screenLines(Table\Table $table, Rect $area): array
+    {
+        $frame = new Frame($area->width, $area->height);
+        $table->render($frame, $area, new RenderContext(Theme::dark()));
+
+        return array_map(fn (int $row): string => $this->rowText($frame, $area->width, $row, 0, $area->width - 1), range(0, $area->height - 1));
+    }
+
+    private function scrollbarOf(Table\Table $table, Rect $area): string
+    {
+        $frame = new Frame($area->width, $area->height);
+        $table->render($frame, $area, new RenderContext(Theme::dark()));
+
+        return $this->rightmostColumn($frame, $area);
+    }
+
+    private function scrollbarAt(Rect $track, int $offset, int $total): string
+    {
+        $frame = new Frame($track->right(), $track->bottom());
+        Scrollbar::renderFor($frame, $track, $offset, $total, Theme::dark());
+
+        return $this->rightmostColumn($frame, new Rect(0, 0, $track->right(), $track->bottom()));
+    }
+
+    private function rightmostColumn(Frame $frame, Rect $area): string
+    {
+        $column = '';
+        for ($row = $area->y; $row < $area->bottom(); ++$row) {
+            $column .= $frame->characters[$row * $area->width + $area->right() - 1];
+        }
+
+        return $column;
+    }
+
     /**
      * @return list<Row>
      */
