@@ -120,6 +120,24 @@ final readonly class Keybindings
         return $hints;
     }
 
+    /**
+     * The keys of every action named, for prose ("Shift+←/→ to switch"); null
+     * when one of them has no key, since the sentence would promise it.
+     */
+    public function label(string ...$actions): ?string
+    {
+        $patterns = [];
+        foreach ($actions as $action) {
+            $pattern = $this->patterns[$action][0] ?? null;
+            if ($pattern === null) {
+                return null;
+            }
+            $patterns[] = $pattern;
+        }
+
+        return $patterns === [] ? null : KeyPattern::joinedLabel(...$patterns);
+    }
+
     public function merge(self $other): self
     {
         $copy = $this->patterns;

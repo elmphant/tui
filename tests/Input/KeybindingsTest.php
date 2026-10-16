@@ -352,4 +352,23 @@ final class KeybindingsTest extends TestCase
             $bindings->hints(['help' => 'help', 'search' => 'search', 'quit' => 'quit']),
         );
     }
+
+    #[Test]
+    public function theKeysOfSeveralActionsReadAsOneLabelForProse(): void
+    {
+        $bindings = new Keybindings([
+            Actions::TAB_PREVIOUS => ['shift+left'],
+            Actions::TAB_NEXT => ['shift+right'],
+        ]);
+
+        self::assertSame('Shift+←/→', $bindings->label(Actions::TAB_PREVIOUS, Actions::TAB_NEXT));
+    }
+
+    #[Test]
+    public function actionsWithoutAKeyEachHaveNoLabel(): void
+    {
+        $bindings = new Keybindings([Actions::TAB_NEXT => ['shift+right']]);
+
+        self::assertNull($bindings->label(Actions::TAB_PREVIOUS, Actions::TAB_NEXT));
+    }
 }
