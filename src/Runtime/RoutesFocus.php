@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Runtime;
 
+use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;
 

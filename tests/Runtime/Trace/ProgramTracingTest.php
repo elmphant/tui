@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime\Trace;
 
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\StdinBuffer;
 use Elmphant\Tui\Layout\Rect;
@@ -16,6 +15,7 @@ use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\AdaptiveTicker;
+use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Testing\InMemoryTracer;

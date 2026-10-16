@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Support;
 
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -16,6 +15,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\RenderPass;
+use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Widget\Popup\PointerFloating;
 use Elmphant\Tui\Widget\Widget;
 use RuntimeException;

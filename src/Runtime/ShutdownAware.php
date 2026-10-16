@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Runtime;
 
 /**
  * Opt-in hook for models that need a last word before the program exits.

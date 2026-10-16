@@ -12,9 +12,7 @@ use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusMove;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
-use Elmphant\Tui\Core\RoutesFocus;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\Message;
@@ -24,6 +22,8 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\InputRouter;
+use Elmphant\Tui\Runtime\Model;
+use Elmphant\Tui\Runtime\RoutesFocus;
 use InvalidArgumentException;
 use LogicException;
 
@@ -34,7 +34,7 @@ use LogicException;
  * model needs answered to make progress at all are: moving the keyboard, and a
  * message it sent itself, which go back through the loop as the runtime does them.
  *
- * @template TModel of Model
+ * @template TModel of \Elmphant\Tui\Runtime\Model
  */
 final class ModelHarness
 {
@@ -58,7 +58,7 @@ final class ModelHarness
     }
 
     /**
-     * @template T of Model
+     * @template T of \Elmphant\Tui\Runtime\Model
      *
      * @param T $model
      *

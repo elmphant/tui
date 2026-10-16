@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -15,6 +14,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\RenderPass;
+use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\VirtualTerminal;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
@@ -13,6 +12,7 @@ use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Screen;
+use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\TerminalSession;
 use Elmphant\Tui\Terminal\Ansi;

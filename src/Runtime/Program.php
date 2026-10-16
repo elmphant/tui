@@ -15,11 +15,7 @@ use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
-use Elmphant\Tui\Core\RenderRevisioned;
-use Elmphant\Tui\Core\RoutesFocus;
-use Elmphant\Tui\Core\ShutdownAware;
 use Elmphant\Tui\Input\InputParser;
 use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\StdinBuffer;
@@ -57,7 +53,7 @@ use UnexpectedValueException;
 use WeakReference;
 
 /**
- * @template TModel of Model
+ * @template TModel of \Elmphant\Tui\Runtime\Model
  */
 final class Program
 {
@@ -147,7 +143,7 @@ final class Program
     }
 
     /**
-     * @template T of Model
+     * @template T of \Elmphant\Tui\Runtime\Model
      *
      * @param T $model
      *
@@ -160,7 +156,7 @@ final class Program
     }
 
     /**
-     * @template T of Model
+     * @template T of \Elmphant\Tui\Runtime\Model
      *
      * @param T $model
      *

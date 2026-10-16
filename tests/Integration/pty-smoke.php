@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
+use Elmphant\Tui\Runtime\Model;
+
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Message;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Runtime;
 
 /**
  * Opt-in marker for models whose render output depends on a coarse revision

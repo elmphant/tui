@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Runtime;
 
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderPass;
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Core;
 
-use Elmphant\Tui\Core\Model;
 use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Widget\Interactive;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
