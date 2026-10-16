@@ -148,6 +148,30 @@ final readonly class Theme
         return $this->cloneWith(footerStyle: $style);
     }
 
+    /**
+     * Paints the page: every ink takes the colour as its background, and the
+     * filled rows (selection, cursor, input, footer) keep their own.
+     */
+    public function withCanvas(Color $canvas): self
+    {
+        return $this->cloneWith(
+            base: $this->base->background($canvas),
+            accent: $this->accent->background($canvas),
+            dim: $this->dim->background($canvas),
+            error: $this->error->background($canvas),
+            success: $this->success->background($canvas),
+            warning: $this->warning->background($canvas),
+            info: $this->info->background($canvas),
+            borderStyle: $this->borderStyle->background($canvas),
+            focusedBorderStyle: $this->focusedBorderStyle->background($canvas),
+            titleStyle: $this->titleStyle->background($canvas),
+            headerStyle: $this->headerStyle->background($canvas),
+            fillStyle: $this->fillStyle->background($canvas),
+            emptyStyle: $this->emptyStyle->background($canvas),
+            page: $canvas,
+        );
+    }
+
     public function withBorder(BorderStyle $border): self
     {
         return $this->cloneWith(border: $border);

@@ -329,4 +329,22 @@ final class ThemeTest extends TestCase
             }
         }
     }
+
+    #[Test]
+    public function aCanvasPaintsBehindEveryInkAndLeavesTheFilledRowsTheirOwn(): void
+    {
+        $canvas = Color::hex('101010');
+        $dark = Theme::dark();
+
+        $theme = $dark->withCanvas($canvas);
+
+        self::assertEquals($canvas, $theme->page);
+        foreach (['base', 'accent', 'dim', 'error', 'success', 'warning', 'info', 'borderStyle', 'focusedBorderStyle', 'titleStyle', 'headerStyle', 'fillStyle', 'emptyStyle'] as $ink) {
+            self::assertEquals($canvas, $theme->{$ink}->background, $ink);
+            self::assertEquals($dark->{$ink}->foreground, $theme->{$ink}->foreground, $ink);
+        }
+        foreach (['selectedStyle', 'cursorStyle', 'inputStyle', 'footerStyle'] as $filled) {
+            self::assertEquals($dark->{$filled}, $theme->{$filled}, $filled);
+        }
+    }
 }
