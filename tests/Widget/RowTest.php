@@ -31,6 +31,12 @@ final class RowTest extends TestCase
     }
 
     #[Test]
+    public function namedCellsAreKeptInTheOrderGiven(): void
+    {
+        self::assertSame(['1', 'Alice'], Row::new(id: '1', name: 'Alice')->cells);
+    }
+
+    #[Test]
     public function newCreatesSelectableRow(): void
     {
         $row = Row::new('Alice', 'Active');
