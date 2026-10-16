@@ -396,20 +396,14 @@ final class Program
                 EventLoop::defer(fn () => $this->tick());
             }));
 
-            $this->watch(EventLoopWatcher::Interrupt, EventLoop::onSignal(SIGINT, function () {
-                $this->messageQueue->enqueue(QuitMsg::Quit);
-                EventLoop::defer(fn () => $this->tick());
-            }));
-            $this->watch(EventLoopWatcher::Terminate, EventLoop::onSignal(SIGTERM, function () {
-                $this->messageQueue->enqueue(QuitMsg::Quit);
-                EventLoop::defer(fn () => $this->tick());
-            }));
-            // Closing the terminal window would otherwise kill the process
+            // SIGHUP: closing the terminal window would otherwise kill the process
             // outright, skipping both the shutdown hook and terminal restore.
-            $this->watch(EventLoopWatcher::Hangup, EventLoop::onSignal(SIGHUP, function () {
-                $this->messageQueue->enqueue(QuitMsg::Quit);
-                EventLoop::defer(fn () => $this->tick());
-            }));
+            foreach ([[EventLoopWatcher::Interrupt, SIGINT], [EventLoopWatcher::Terminate, SIGTERM], [EventLoopWatcher::Hangup, SIGHUP]] as [$watcher, $signal]) {
+                $this->watch($watcher, EventLoop::onSignal($signal, function (): void {
+                    $this->messageQueue->enqueue(QuitMsg::Quit);
+                    EventLoop::defer(fn () => $this->tick());
+                }));
+            }
 
             if (function_exists('posix_kill')) {
                 $this->watch(EventLoopWatcher::Suspend, EventLoop::onSignal(SIGTSTP, function () {
@@ -544,12 +538,7 @@ final class Program
     private function loop(): void
     {
         $this->adaptiveTicker = new AdaptiveTicker($this->tick(...));
-        $this->adaptiveTicker->refresh(
-            nextRenderDelay: $this->nextRenderDelay(),
-            nextTimerDelay: $this->nextTimerDelay(),
-            processesActive: $this->effects?->hasRunningProcesses() ?? false,
-            queuePending: !$this->messageQueue->isEmpty() || !$this->pendingWheel->isEmpty(),
-        );
+        $this->refreshTicker();
 
         $inputStream = $this->terminal->inputStream();
         if ($inputStream !== null) {
@@ -707,38 +696,48 @@ final class Program
         $this->flushWheelWhenDue($now);
 
         $this->drainMessageQueue();
+
+        if ($this->isRunning()) {
+            $this->handlePendingResize();
+            if (!$this->messageQueue->isEmpty()) {
+                $this->drainMessageQueue();
+            }
+        }
+
+        if ($this->isRunning()) {
+            $this->renderWhenDue();
+        }
+
         if (!$this->isRunning()) {
             $this->resumeRunSuspension();
 
             return;
         }
 
-        $this->handlePendingResize();
-        if (!$this->messageQueue->isEmpty()) {
-            $this->drainMessageQueue();
-            if (!$this->isRunning()) {
-                $this->resumeRunSuspension();
+        // A command handler may emit while init() is still being dispatched, before
+        // loop() has a ticker; loop() refreshes it from this same state when it starts.
+        $this->refreshTicker();
+    }
 
-                return;
-            }
-        }
-
+    private function renderWhenDue(): void
+    {
         $now = $this->clock->now();
+
         if ($this->frames->isDue($now)) {
             $this->tracedRenderFrame();
-            if (!$this->isRunning()) {
-                $this->resumeRunSuspension();
 
-                return;
-            }
-        } elseif ($this->frames->wantsFrame($now)) {
+            return;
+        }
+
+        if ($this->frames->wantsFrame($now)) {
             $this->tracer?->record(TraceEvent::FrameSkipped, [
                 'waitMs' => $this->frames->heldFor($now) * 1000,
             ]);
         }
+    }
 
-        // A command handler may emit while init() is still being dispatched, before
-        // loop() has a ticker; loop() refreshes it from this same state when it starts.
+    private function refreshTicker(): void
+    {
         $this->adaptiveTicker?->refresh(
             nextRenderDelay: $this->nextRenderDelay(),
             nextTimerDelay: $this->nextTimerDelay(),
@@ -818,85 +817,99 @@ final class Program
                 return;
             }
 
-            if ($message instanceof ErrorMsg && $this->errorHandler !== null) {
-                try {
-                    $errorCommand = ($this->errorHandler)($message);
-                    if ($errorCommand instanceof Cmd) {
-                        $this->dispatchCommand($errorCommand);
-                    }
-                } catch (Throwable $handlerError) {
-                    ++$consecutiveErrors;
-                    if ($consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
-                        $this->giveUp($handlerError);
-
-                        return;
-                    }
-                    continue;
-                }
-                $consecutiveErrors = 0;
-                continue;
-            }
+            $handledByTheErrorHandler = $message instanceof ErrorMsg && $this->errorHandler !== null;
 
             try {
-                $updateStart = $this->tracer === null ? 0 : hrtime(true);
-                $stamped = InputRouter::route($message, $screenRect, $this->renderPass?->floats->placements() ?? []);
-                if ($stamped === null) {
-                    continue;
-                }
-                $resolved = $this->focus->resolvedAgainst($this->focusableIds(), $this->reachableIds());
-
-                // The waiting message goes back behind the announcement, or the first
-                // key an application ever sees arrives before its pane is seated.
-                if (!$resolved->sameAs($this->focus) && $resolved->focused() !== null) {
-                    $this->focus = $resolved;
-                    $this->messageQueue->unshift($stamped);
-                    $this->messageQueue->unshift(new FocusMsg());
-
-                    continue;
-                }
-
-                $this->focus = $resolved;
-                $result = $this->model instanceof RoutesFocus
-                    ? $this->model->update($stamped, $screenRect, $this->focus)
-                    : $this->model->update($stamped, $screenRect);
-                $nextModel = self::requireModel($result->model);
-                $this->tracer?->record(TraceEvent::Update, [
-                    'message' => $stamped::class,
-                    'key' => $stamped instanceof KeyMsg ? self::describeKey($stamped) : null,
-                    // A key that seems to do nothing turns on where the keyboard was
-                    // when it arrived and what it could have moved to, so a trace
-                    // that named neither could not explain it.
-                    'focused' => $this->focus->focused()?->value,
-                    'ring' => array_map(
-                        static fn (ComponentId $id): string => $id->value,
-                        $this->focusableIds(),
-                    ),
-                    'ms' => (hrtime(true) - $updateStart) / 1e6,
-                    'changed' => $nextModel !== $this->model,
-                ]);
+                $delivered = $handledByTheErrorHandler
+                    ? $this->handleError($message)
+                    : $this->deliver($message, $screenRect);
             } catch (Throwable $error) {
-                ++$consecutiveErrors;
-                if ($consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
+                if (++$consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
                     $this->giveUp($error);
 
                     return;
                 }
-                $this->messageQueue->unshift(new ErrorMsg($error, ErrorSource::Update));
+                if (!$handledByTheErrorHandler) {
+                    $this->messageQueue->unshift(new ErrorMsg($error, ErrorSource::Update));
+                }
                 continue;
             }
 
-            $consecutiveErrors = 0;
-            if ($nextModel !== $this->model) {
-                $previousRevision = $this->model instanceof RenderRevisioned ? $this->model->renderRevision() : null;
-                $this->model = $nextModel;
-                $newRevision = $this->model instanceof RenderRevisioned ? $this->model->renderRevision() : null;
-                $bothRevisioned = $previousRevision !== null && $newRevision !== null;
-                $revisionUnchanged = $bothRevisioned && $previousRevision === $newRevision;
-                if (!$revisionUnchanged) {
-                    $this->frames->markDirty();
-                }
+            if ($delivered) {
+                $consecutiveErrors = 0;
             }
-            $this->dispatchCommand($result->command);
+        }
+    }
+
+    private function handleError(ErrorMsg $message): bool
+    {
+        if ($this->errorHandler !== null) {
+            $this->dispatchCommand(($this->errorHandler)($message));
+        }
+
+        return true;
+    }
+
+    /**
+     * False when the message went nowhere yet: routed away, or put back behind a focus announcement.
+     */
+    private function deliver(Message $message, Rect $screenRect): bool
+    {
+        $updateStart = $this->tracer === null ? 0 : hrtime(true);
+        $stamped = InputRouter::route($message, $screenRect, $this->renderPass?->floats->placements() ?? []);
+        if ($stamped === null) {
+            return false;
+        }
+        $resolved = $this->focus->resolvedAgainst($this->focusableIds(), $this->reachableIds());
+
+        // The waiting message goes back behind the announcement, or the first
+        // key an application ever sees arrives before its pane is seated.
+        if (!$resolved->sameAs($this->focus) && $resolved->focused() !== null) {
+            $this->focus = $resolved;
+            $this->messageQueue->unshift($stamped);
+            $this->messageQueue->unshift(new FocusMsg());
+
+            return false;
+        }
+
+        $this->focus = $resolved;
+        $result = $this->model instanceof RoutesFocus
+            ? $this->model->update($stamped, $screenRect, $this->focus)
+            : $this->model->update($stamped, $screenRect);
+        $nextModel = self::requireModel($result->model);
+        $this->tracer?->record(TraceEvent::Update, [
+            'message' => $stamped::class,
+            'key' => $stamped instanceof KeyMsg ? self::describeKey($stamped) : null,
+            // A key that seems to do nothing turns on where the keyboard was
+            // when it arrived and what it could have moved to, so a trace
+            // that named neither could not explain it.
+            'focused' => $this->focus->focused()?->value,
+            'ring' => array_map(
+                static fn (ComponentId $id): string => $id->value,
+                $this->focusableIds(),
+            ),
+            'ms' => (hrtime(true) - $updateStart) / 1e6,
+            'changed' => $nextModel !== $this->model,
+        ]);
+
+        $this->adopt($nextModel);
+        $this->dispatchCommand($result->command);
+
+        return true;
+    }
+
+    private function adopt(Model $next): void
+    {
+        if ($next === $this->model) {
+            return;
+        }
+
+        $previousRevision = $this->model instanceof RenderRevisioned ? $this->model->renderRevision() : null;
+        $this->model = $next;
+        $newRevision = $next instanceof RenderRevisioned ? $next->renderRevision() : null;
+
+        if ($previousRevision === null || $newRevision === null || $previousRevision !== $newRevision) {
+            $this->frames->markDirty();
         }
     }
 
