@@ -880,9 +880,6 @@ final class Program
         $this->tracer?->record(TraceEvent::Update, [
             'message' => $stamped::class,
             'key' => $stamped instanceof KeyMsg ? self::describeKey($stamped) : null,
-            // A key that seems to do nothing turns on where the keyboard was
-            // when it arrived and what it could have moved to, so a trace
-            // that named neither could not explain it.
             'focused' => $this->focus->focused()?->value,
             'ring' => array_map(
                 static fn (ComponentId $id): string => $id->value,
@@ -1071,9 +1068,6 @@ final class Program
             return;
         }
 
-        // These five finish here: they say what the program is doing, what its
-        // terminal shows, where the keyboard is, or they hand over a message.
-        // Anything else leaves something running, which the effects hold.
         try {
             match (true) {
                 $command instanceof QuitCmd => $this->stopRunning(),

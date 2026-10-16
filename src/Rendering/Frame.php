@@ -163,7 +163,6 @@ final class Frame
             return 0;
         }
 
-        // Fast path: pure printable ASCII skips grapheme extraction and CharWidth lookup.
         if (preg_match('/[^\x20-\x7e]/', $text) === 0) {
             if ($clip === null) {
                 return $this->putAsciiString($x, $y, $text, $foreground, $background, $attributes);

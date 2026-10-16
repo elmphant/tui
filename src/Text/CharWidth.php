@@ -254,8 +254,6 @@ final class CharWidth
 
     public static function graphemeWidth(string $grapheme): int
     {
-        // The memo comes first so a repeated cluster costs one lookup, whether it
-        // is ASCII or not; measuring is what the rest of this method is for.
         if (isset(self::$graphemeWidths[$grapheme])) {
             return self::$graphemeWidths[$grapheme];
         }

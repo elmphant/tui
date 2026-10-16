@@ -343,8 +343,7 @@ abstract readonly class App implements RoutesFocus
             return $this->delegateArrival($message, $screenRect, $holder);
         }
 
-        // A paste is typing, so it goes where the typing goes. Handed to every
-        // component it would fill every field of a form at once.
+        // Handed to every component, a paste would fill every field of a form at once.
         if ($message instanceof PasteMsg) {
             return $this->delegateToFocused($message, $screenRect, $holder);
         }
@@ -652,11 +651,8 @@ abstract readonly class App implements RoutesFocus
             $holder,
         );
 
-        // Where the pointer landed is a question about the screen, so every bound
-        // widget the keyboard can reach is asked. Routing says where the keyboard
-        // goes and never edits a flag to do it: writing one back would run the
-        // closure of a component the pointer never touched, putting its untouched
-        // state on top of whatever the one that was touched just changed.
+        // Never write a flag back to move the keyboard: that runs the closure of a
+        // component the pointer never touched, over what the touched one just changed.
         $landedOn = null;
         if ($message->isClick() || $message->isWheel()) {
             foreach ($current->componentRegistry()->focusables() as $component) {
