@@ -80,6 +80,22 @@ final class ProgramObservabilityTest extends TestCase
         self::assertContains('update', $events);
     }
 
+    #[Test]
+    public function anAppLogsThroughTheTraceWithoutTouchingTheScreen(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(30, 4);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput('q'));
+
+        Program::new(new ScriptedModel(init: Cmd::log('loaded the list', ['items' => 3])))
+            ->withTerminal($terminal)
+            ->withTracer($tracer)
+            ->start();
+
+        self::assertSame([['items' => 3, 'message' => 'loaded the list']], $tracer->fieldsOf(TraceEvent::Log));
+        self::assertStringNotContainsString('loaded the list', $terminal->output());
+    }
+
     private static function pressing(Model $model, InMemoryTracer $tracer, string $keys): void
     {
         $terminal = new VirtualTerminal(30, 4);
@@ -94,12 +110,13 @@ final class ScriptedModel implements Model
     public function __construct(
         private readonly ?string $throwOn = null,
         private readonly bool $alsoOnErrors = false,
+        private readonly ?Cmd $init = null,
     ) {
     }
 
     public function init(): ?Cmd
     {
-        return null;
+        return $this->init;
     }
 
     public function update(Message $message, Rect $area): UpdateResult

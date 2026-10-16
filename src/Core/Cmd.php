@@ -14,6 +14,7 @@ use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\ListenCmd;
+use Elmphant\Tui\Core\Cmd\LogCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
@@ -25,6 +26,17 @@ abstract readonly class Cmd
     public static function quit(): self
     {
         return new QuitCmd();
+    }
+
+    /**
+     * Writes a line to the program's trace. A TUI's stdout is the screen, so
+     * this is where an update says what it saw instead of echoing it.
+     *
+     * @param array<string, scalar|null> $context
+     */
+    public static function log(string $message, array $context = []): self
+    {
+        return new LogCmd($message, $context);
     }
 
     /**

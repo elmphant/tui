@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\CallCmd;
 use Elmphant\Tui\Core\Cmd\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
+use Elmphant\Tui\Core\Cmd\LogCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
@@ -1115,6 +1116,7 @@ final class Program
                 $command instanceof FocusCmd => $this->moveFocus($command),
                 $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
                 $command instanceof CallCmd => $this->executeCall($command, $wrap),
+                $command instanceof LogCmd => $this->tracer?->record(TraceEvent::Log, [...$command->context, 'message' => $command->message]),
                 default => $this->effects()->run($command, $wrap),
             };
         } catch (Throwable $error) {

@@ -30,4 +30,9 @@ enum TraceEvent: string
      * Something threw, wherever it was: recorded even when the model swallows the ErrorMsg.
      */
     case Error = 'error';
+
+    /**
+     * What the app itself asked to have written down, through Cmd::log().
+     */
+    case Log = 'log';
 }
