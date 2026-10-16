@@ -176,23 +176,22 @@ final class Frame
         if ($y < 0 || $y >= $this->height) {
             return 0;
         }
-        if ($this->clipStack !== []) {
-            $top = $this->clipStack[count($this->clipStack) - 1];
-            if ($y < $top->y || $y >= $top->bottom()) {
-                return 0;
-            }
+        $clip = $this->clipStack === [] ? null : $this->clipStack[count($this->clipStack) - 1];
+        if ($clip !== null && ($y < $clip->y || $y >= $clip->bottom())) {
+            return 0;
         }
 
         // Fast path: pure printable ASCII skips grapheme extraction and CharWidth lookup.
         if (preg_match('/[^\x20-\x7e]/', $text) === 0) {
-            if ($this->clipStack === []) {
+            if ($clip === null) {
                 return $this->putAsciiString($x, $y, $text, $foreground, $background, $attributes);
             }
-            $graphemes = str_split($text);
-        } else {
-            $text = TerminalText::plain($text);
-            $graphemes = Grapheme::split($text);
+
+            return $this->putClippedAsciiString($x, $y, $text, $clip, $foreground, $background, $attributes);
         }
+
+        $text = TerminalText::plain($text);
+        $graphemes = Grapheme::split($text);
 
         $column = $x;
         $rowBase = $y * $this->width;
@@ -667,6 +666,18 @@ final class Frame
         $this->markRowDirty($y);
 
         return $end - $x;
+    }
+
+    private function putClippedAsciiString(int $x, int $y, string $text, Rect $clip, int $foreground, int $background, int $attributes): int
+    {
+        $length = strlen($text);
+        $from = max($x, $clip->x, 0);
+        $to = min($x + $length, $clip->right(), $this->width);
+        if ($from < $to) {
+            $this->putAsciiString($from, $y, substr($text, $from - $x, $to - $from), $foreground, $background, $attributes);
+        }
+
+        return max(0, min($this->width, $x + $length) - $x);
     }
 
     /**

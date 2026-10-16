@@ -3583,6 +3583,58 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function asciiUnderAClipWritesOnlyTheColumnsInsideItAndReportsTheFullWidth(): void
+    {
+        $frame = new Frame(10, 2);
+        $frame->pushClip(new Rect(3, 0, 4, 2));
+
+        $consumed = $frame->putString(1, 0, 'abcdefgh');
+
+        self::assertSame('   cdef   ', implode('', array_slice($frame->characters, 0, 10)));
+        self::assertSame(8, $consumed);
+    }
+
+    #[Test]
+    public function asciiUnderAClipStartingLeftOfTheFrameReportsWhatAnUnclippedWriteWould(): void
+    {
+        $clipped = new Frame(10, 1);
+        $clipped->pushClip(new Rect(0, 0, 10, 1));
+        $unclipped = new Frame(10, 1);
+
+        self::assertSame($unclipped->putString(-3, 0, 'abcdef'), $clipped->putString(-3, 0, 'abcdef'));
+        self::assertSame($unclipped->characters, $clipped->characters);
+        self::assertSame(0, $clipped->putString(10, 0, 'abc'));
+    }
+
+    #[Test]
+    public function asciiUnderAClipRepairsAWideCharItCutsInHalf(): void
+    {
+        $frame = new Frame(10, 1);
+        $frame->putString(2, 0, '中中');
+        $frame->pushClip(new Rect(3, 0, 2, 1));
+
+        $frame->putString(3, 0, 'xy');
+
+        self::assertSame(' ', $frame->characters[2]);
+        self::assertSame(1, $frame->widths[2]);
+        self::assertSame('x', $frame->characters[3]);
+        self::assertSame('y', $frame->characters[4]);
+        self::assertSame(' ', $frame->characters[5]);
+        self::assertSame(1, $frame->widths[5]);
+    }
+
+    #[Test]
+    public function asciiUnderAClipThatHidesEveryColumnLeavesTheRowClean(): void
+    {
+        $frame = new Frame(10, 1);
+        $frame->pushClip(new Rect(5, 0, 5, 1));
+
+        $frame->putString(0, 0, 'abc');
+
+        self::assertFalse($frame->isRowDirty(0));
+    }
+
+    #[Test]
     public function aForcedFullRepaintSurvivesTheNextClear(): void
     {
         $frame = new Frame(4, 3);
