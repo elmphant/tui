@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Tree;
 
-use ArrayObject;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
@@ -41,14 +40,14 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     private const MARKER_PENDING = '⋯';
 
     /**
-     * @var KeyedCache<ArrayObject<int, array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>>
+     * @var KeyedCache<TreeRows>
      */
     private KeyedCache $rowsMemo;
 
     /**
-     * @param list<TreeNode>                                                                                                             $roots
-     * @param array<string, true>                                                                                                        $expanded keyed by path, so expanding a node above the cursor cannot move it
-     * @param KeyedCache<ArrayObject<int, array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>>|null $rowsMemo
+     * @param list<TreeNode>            $roots
+     * @param array<string, true>       $expanded keyed by path, so expanding a node above the cursor cannot move it
+     * @param KeyedCache<TreeRows>|null $rowsMemo
      *
      * @internal use TreeView::new()
      */
@@ -136,8 +135,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     public function scrolledToCursor(Rect $area): self
     {
-        $rows = $this->visibleRows();
-        $index = $this->rowIndexOf($this->cursor(), $rows);
+        $index = $this->rowIndexOf($this->cursor());
         if ($index === null || $area->height <= 0) {
             return $this;
         }
@@ -147,7 +145,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             $index,
             1,
             $area->height,
-            ScrollWindow::lastOffset(count($rows), $area->height),
+            ScrollWindow::lastOffset(count($this->visibleRows()), $area->height),
         ));
     }
 
@@ -177,7 +175,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         }
 
         $rows = $this->visibleRows();
-        $index = $this->rowIndexOf($path, $rows);
+        $index = $this->rowIndexOf($path);
 
         return $index !== null && $rows[$index]['node']->isExpandable() ? $this->expand($path) : $this;
     }
@@ -251,7 +249,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         if ($rows === []) {
             return TreePath::root();
         }
-        if ($this->cursor !== null && $this->rowIndexOf($this->cursor, $rows) !== null) {
+        if ($this->cursor !== null && $this->rowIndexOf($this->cursor) !== null) {
             return $this->cursor;
         }
 
@@ -286,7 +284,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     {
         $cursor = $this->cursor();
         $rows = $this->visibleRows();
-        $index = $this->rowIndexOf($cursor, $rows);
+        $index = $this->rowIndexOf($cursor);
 
         if ($index === null || !$rows[$index]['node']->isExpandable()) {
             return $this;
@@ -442,7 +440,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     private function cursorMovedBy(int $delta): self
     {
         $rows = $this->visibleRows();
-        $index = $this->rowIndexOf($this->cursor(), $rows);
+        $index = $this->rowIndexOf($this->cursor());
         if ($index === null) {
             return $this;
         }
@@ -456,18 +454,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $this;
     }
 
-    /**
-     * @param list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}> $rows
-     */
-    private function rowIndexOf(TreePath $path, array $rows): ?int
+    private function rowIndexOf(TreePath $path): ?int
     {
-        foreach ($rows as $index => $row) {
-            if ($row['selectable'] && self::keyOf($row['path']) === self::keyOf($path)) {
-                return $index;
-            }
-        }
-
-        return null;
+        return $this->treeRows()->indexOfPath[self::keyOf($path)] ?? null;
     }
 
     /**
@@ -477,31 +466,44 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     private function visibleRows(): array
     {
+        return $this->treeRows()->rows;
+    }
+
+    private function treeRows(): TreeRows
+    {
         // Held across the clones a cursor move makes: the rows depend on the roots,
         // what is open and the guides only, and walking a big tree costs a frame.
-        /** @var list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}> */
-        return $this->rowsMemo->at('rows', fn (): ArrayObject => new ArrayObject($this->rowsOf($this->roots, TreePath::root(), '')))->getArrayCopy();
+        return $this->rowsMemo->at('rows', function (): TreeRows {
+            $rows = [];
+            $this->appendRowsOf($this->roots, TreePath::root(), '', $rows);
+            $indexOfPath = [];
+            foreach ($rows as $index => $row) {
+                if ($row['selectable']) {
+                    $indexOfPath[self::keyOf($row['path'])] = $index;
+                }
+            }
+
+            return new TreeRows($rows, $indexOfPath);
+        });
     }
 
     /**
-     * @return KeyedCache<ArrayObject<int, array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>>
+     * @return KeyedCache<TreeRows>
      */
     private static function newRowsMemo(): KeyedCache
     {
-        /** @var KeyedCache<ArrayObject<int, array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>> $cache */
+        /** @var KeyedCache<TreeRows> $cache */
         $cache = new KeyedCache();
 
         return $cache;
     }
 
     /**
-     * @param list<TreeNode> $nodes
-     *
-     * @return list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>
+     * @param list<TreeNode>                                                                                $nodes
+     * @param list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}> $rows
      */
-    private function rowsOf(array $nodes, TreePath $parent, string $inheritedGuides): array
+    private function appendRowsOf(array $nodes, TreePath $parent, string $inheritedGuides, array &$rows): void
     {
-        $rows = [];
         $lastIndex = count($nodes) - 1;
 
         foreach ($nodes as $index => $node) {
@@ -542,14 +544,13 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
                 continue;
             }
 
-            $rows = [...$rows, ...$this->rowsOf(
+            $this->appendRowsOf(
                 $children,
                 $path,
                 $parent->isRoot() ? '' : $inheritedGuides . $this->guides->trunk($isLast),
-            )];
+                $rows,
+            );
         }
-
-        return $rows;
     }
 
     /**
