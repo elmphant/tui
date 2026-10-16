@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Tree;
 
+use ArrayObject;
 use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
@@ -11,6 +12,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\Sizing;
@@ -25,7 +27,6 @@ use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
-use WeakMap;
 
 final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
@@ -40,8 +41,14 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     private const MARKER_PENDING = '⋯';
 
     /**
-     * @param list<TreeNode>      $roots
-     * @param array<string, true> $expanded keyed by path, so expanding a node above the cursor cannot move it
+     * @var KeyedCache<ArrayObject<int, array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>>
+     */
+    private KeyedCache $rowsMemo;
+
+    /**
+     * @param list<TreeNode>                                                                                                             $roots
+     * @param array<string, true>                                                                                                        $expanded keyed by path, so expanding a node above the cursor cannot move it
+     * @param KeyedCache<ArrayObject<int, array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>>|null $rowsMemo
      *
      * @internal use TreeView::new()
      */
@@ -53,12 +60,14 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         private ?Keybindings $globalKeybindings = null,
         private int $scrollOffset = 0,
         private TreeGuides $guides = TreeGuides::Square,
+        ?KeyedCache $rowsMemo = null,
     ) {
+        $this->rowsMemo = $rowsMemo ?? self::newRowsMemo();
     }
 
     public function withGuides(TreeGuides $guides): self
     {
-        return $this->cloneWith(guides: $guides);
+        return $this->cloneWith(guides: $guides, rowsMemo: self::newRowsMemo());
     }
 
     /**
@@ -211,12 +220,12 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     public function withRoots(array $roots): self
     {
-        return $this->cloneWith(roots: $roots);
+        return $this->cloneWith(roots: $roots, rowsMemo: self::newRowsMemo());
     }
 
     public function expand(TreePath $path): self
     {
-        return $this->cloneWith(expanded: $this->expanded + [self::keyOf($path) => true]);
+        return $this->cloneWith(expanded: $this->expanded + [self::keyOf($path) => true], rowsMemo: self::newRowsMemo());
     }
 
     public function collapse(TreePath $path): self
@@ -224,7 +233,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         $expanded = $this->expanded;
         unset($expanded[self::keyOf($path)]);
 
-        return $this->cloneWith(expanded: $expanded);
+        return $this->cloneWith(expanded: $expanded, rowsMemo: self::newRowsMemo());
     }
 
     public function isExpanded(TreePath $path): bool
@@ -468,16 +477,21 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     private function visibleRows(): array
     {
-        // One keystroke asks five times over — moving the cursor, clamping the
-        // scroll, drawing. The rows are a pure function of this value, so the
-        // second ask onwards is free.
-        static $rows = null;
-        $rows ??= new WeakMap();
+        // Held across the clones a cursor move makes: the rows depend on the roots,
+        // what is open and the guides only, and walking a big tree costs a frame.
+        /** @var list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}> */
+        return $this->rowsMemo->at('rows', fn (): ArrayObject => new ArrayObject($this->rowsOf($this->roots, TreePath::root(), '')))->getArrayCopy();
+    }
 
-        /**
-         * @var WeakMap<object, list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>> $rows
-         */
-        return $rows[$this] ??= $this->rowsOf($this->roots, TreePath::root(), '');
+    /**
+     * @return KeyedCache<ArrayObject<int, array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>>
+     */
+    private static function newRowsMemo(): KeyedCache
+    {
+        /** @var KeyedCache<ArrayObject<int, array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>> $cache */
+        $cache = new KeyedCache();
+
+        return $cache;
     }
 
     /**
