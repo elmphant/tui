@@ -63,7 +63,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     private function __construct(
         private array $columns = [],
         private array $rows = [],
-        private bool $rowsAreTyped = false,
         private int $cursor = 0,
         private int $selected = -1,
         private int $scrollOffset = 0,
@@ -111,7 +110,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return new self(
             columns: $columns,
             rows: $rows,
-            rowsAreTyped: true,
             cursor: self::firstSelectablePlace($rows),
         );
     }
@@ -138,7 +136,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
 
         return $this->cloneWith(
             rows: $typed,
-            rowsAreTyped: false,
             cursor: $this->cursorAfter($typed),
             selected: self::rowPlaceOf($this->selectedRow(), $typed),
             layoutMemo: self::newLayoutMemo(),
@@ -152,7 +149,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     {
         return $this->cloneWith(
             rows: $rows,
-            rowsAreTyped: true,
             cursor: $this->cursorAfter($rows),
             selected: self::rowPlaceOf($this->selectedRow(), $rows),
             layoutMemo: self::newLayoutMemo(),
@@ -204,15 +200,8 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $row === null ? null : self::textOf($row);
     }
 
-    /**
-     * The selected row itself, for tables built from typed rows.
-     */
     public function selectedTypedRow(): ?Row
     {
-        if (!$this->rowsAreTyped) {
-            return null;
-        }
-
         return $this->rows[$this->selected] ?? null;
     }
 

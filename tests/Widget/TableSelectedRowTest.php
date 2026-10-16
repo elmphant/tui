@@ -76,11 +76,11 @@ final class TableSelectedRowTest extends TestCase
     }
 
     #[Test]
-    public function aPlainTableHasNoTypedRowToReport(): void
+    public function aPlainTableReportsTheRowItBuiltFromTheCells(): void
     {
         $plain = Table\Table::fromCells(self::columns(), [['alpha', 'eu-1a']])->withSelected(0);
 
-        self::assertNull($plain->selectedTypedRow());
+        self::assertSame(['alpha', 'eu-1a'], $plain->selectedTypedRow()?->cells);
     }
 
     /**
