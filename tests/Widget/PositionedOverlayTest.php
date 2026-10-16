@@ -11,6 +11,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Popup\PositionedOverlay;
+use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +30,19 @@ final class PositionedOverlayTest extends TestCase
         self::assertCount(1, $placements);
         self::assertSame($content, $placements[0][0]);
         self::assertTrue((new Rect(5, 3, 4, 2))->equals($placements[0][1]));
+    }
+
+    #[Test]
+    public function withoutASizeItTakesWhatIsLeftOfTheAreaAndAnExactWidgetsOwnHeight(): void
+    {
+        $area = new Rect(2, 1, 20, 10);
+        $flexible = Paragraph::fromText('Hi')->withSizing(Sizing::of(Constraint::flex(), Constraint::flex()));
+
+        $exact = iterator_to_array(PositionedOverlay::at(5, 4)->withContent(Text::new('Hi'))->placedChildren($area));
+        $filling = iterator_to_array(PositionedOverlay::at(5, 4)->withContent($flexible)->placedChildren($area));
+
+        self::assertEquals(new Rect(5, 4, 17, 1), $exact[0][1]);
+        self::assertEquals(new Rect(5, 4, 17, 7), $filling[0][1]);
     }
 
     #[Test]

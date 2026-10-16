@@ -72,7 +72,7 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
             return;
         }
 
-        $placement = $this->placementIn($area);
+        $placement = $this->placementIn($this->widget, $area);
 
         if ($placement !== null) {
             yield [$this->widget, $placement];
@@ -86,14 +86,9 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
         }
     }
 
-    private function placementIn(Rect $area): ?Rect
+    private function placementIn(Widget $widget, Rect $area): ?Rect
     {
-        $constraint = $this->widget?->sizing()->rows;
-
-        if ($constraint === null) {
-            return null;
-        }
-
+        $constraint = $widget->sizing()->rows;
         $width = $this->width ?? max(0, $area->width - ($this->x - $area->x));
         $height = $this->height ?? (
             $constraint->min === $constraint->max && $constraint->min > 0
