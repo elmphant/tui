@@ -56,10 +56,10 @@ final readonly class Counter extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            'k' => UpdateResult::changed($this->withCount($this->count + 1)),
-            'j' => UpdateResult::changed($this->withCount($this->count - 1)),
+            'k' => new UpdateResult($this->withCount($this->count + 1)),
+            'j' => new UpdateResult($this->withCount($this->count - 1)),
             'x' => $this->then(Cmd::quit()),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 
@@ -95,7 +95,7 @@ Terminal I/O, HTTP, processes, timers, and program shutdown happen only when the
 
 ### Recommended App API
 
-Most applications should extend `App`. It gives you widget-based rendering, screen-aware mouse handling, reserved Ctrl-Q/Ctrl-C quit shortcuts (both live in `applicationKeybindings()` — override it to rebind or intercept them, e.g. for a confirm-before-quit dialog), extra quit keys via `quitBindings()` (empty by default, honoured only while no component holds the keyboard), an `onResize()` hook, and focus delegation. In `onKey()`, returning a changed model or any command consumes the key; `UpdateResult::keep($this)` passes it to the focused component.
+Most applications should extend `App`. It gives you widget-based rendering, screen-aware mouse handling, reserved Ctrl-Q/Ctrl-C quit shortcuts (both live in `applicationKeybindings()` — override it to rebind or intercept them, e.g. for a confirm-before-quit dialog), extra quit keys via `quitBindings()` (empty by default, honoured only while no component holds the keyboard), an `onResize()` hook, and focus delegation. In `onKey()`, returning a changed model or any command consumes the key; `UpdateResult::ignored($this)` passes it to the focused component.
 
 ```php
 abstract readonly class App
@@ -103,14 +103,14 @@ abstract readonly class App
     abstract public function view(): Widget;                  // pure UI description
 
     protected function setup(): ?Cmd { return null; }         // initial commands
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
-    protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::keep($this); }
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
 }
 ```
 
-Hooks always return `UpdateResult`: use `UpdateResult::keep($this)` when nothing changes, `UpdateResult::changed(...)` for a state transition, or `$this->then(...)` when a transition also needs a command. `App` deliberately has no reflection-based `with()` method. The optional `Cloneable` trait remains available for compact constructor-compatible value objects, but explicit typed methods give static analysers the strongest contract.
+Hooks always return `UpdateResult`: `UpdateResult::ignored($this)` when the message meant nothing here, `new UpdateResult($next, $command)` otherwise, or `$this->then(...)` for a command alone. Passing on what a child answered is `$answer->mapModel(fn ($child) => $this->withChild($child))`, which keeps the child's command even when the child itself did not change. `App` deliberately has no reflection-based `with()` method. The optional `Cloneable` trait remains available for compact constructor-compatible value objects, but explicit typed methods give static analysers the strongest contract.
 
 Keep stateful widgets as properties on the model, not local variables rebuilt inside `view()`. `view()` should compose the current state into a widget tree; if you recreate a `TextInput`, `Panel`, `Select`, or `Table` in `view()`, its cursor, selection, scroll, and focus state will be reset.
 

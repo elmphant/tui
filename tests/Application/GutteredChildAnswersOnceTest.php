@@ -76,6 +76,6 @@ final readonly class GutteredPingerApp extends App
 
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
-        return $message instanceof Pinged ? UpdateResult::changed(new self($this->pings + 1)) : UpdateResult::keep($this);
+        return $message instanceof Pinged ? new UpdateResult(new self($this->pings + 1)) : UpdateResult::ignored($this);
     }
 }

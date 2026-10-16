@@ -92,7 +92,7 @@ final class ProgramTerminalInjectionTest extends TestCase
 
             public function update(Message $message, Rect $area): UpdateResult
             {
-                return UpdateResult::keep($this);
+                return UpdateResult::ignored($this);
             }
 
             public function render(Frame $frame, RenderPass $pass): void

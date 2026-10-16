@@ -133,7 +133,7 @@ final readonly class WrappedFocusApp extends App
         return match ($message->key) {
             'b' => $this->then(Cmd::batch(Cmd::tick(1.0), $move)),
             'm' => $this->then($move->map(static fn (Message $inner): Message => $inner)),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 }

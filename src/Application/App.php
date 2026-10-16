@@ -147,7 +147,7 @@ abstract readonly class App implements RoutesFocus
      * App-level key hook, consulted before the focused component.
      *
      * Returning a changed model or any command consumes the key — it will
-     * NOT reach the focused component. Return UpdateResult::keep($this) to
+     * NOT reach the focused component. Return UpdateResult::ignored($this) to
      * pass the key on. Keys matched by applicationKeybindings() never
      * arrive here; they go to onAction().
      *
@@ -155,7 +155,7 @@ abstract readonly class App implements RoutesFocus
      */
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     /**
@@ -170,7 +170,7 @@ abstract readonly class App implements RoutesFocus
     {
         return match ($action) {
             'quit' => $this->then(Cmd::quit()),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 
@@ -194,7 +194,7 @@ abstract readonly class App implements RoutesFocus
      */
     protected function onResize(ResizeMsg $message): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     /**
@@ -210,7 +210,7 @@ abstract readonly class App implements RoutesFocus
      */
     protected function onComponentsChanged(array $ids): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     /**
@@ -218,7 +218,7 @@ abstract readonly class App implements RoutesFocus
      */
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     /**
@@ -226,7 +226,7 @@ abstract readonly class App implements RoutesFocus
      */
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     /**
@@ -234,7 +234,7 @@ abstract readonly class App implements RoutesFocus
      */
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     /**
@@ -278,7 +278,7 @@ abstract readonly class App implements RoutesFocus
      */
     protected function then(Cmd $command): UpdateResult
     {
-        return UpdateResult::changed($this, $command);
+        return new UpdateResult($this, $command);
     }
 
     /**

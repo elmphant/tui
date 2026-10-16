@@ -21,7 +21,7 @@ final class UpdateResultTest extends TestCase
     {
         $this->expectException(TypeError::class);
 
-        UpdateResult::keep('not a model');
+        UpdateResult::ignored('not a model');
     }
 
     #[Test]
@@ -29,28 +29,28 @@ final class UpdateResultTest extends TestCase
     {
         $this->expectException(TypeError::class);
 
-        UpdateResult::keep(new stdClass());
+        UpdateResult::ignored(new stdClass());
     }
 
     #[Test]
-    public function keepReturnsResultWithModelAndNoCommand(): void
+    public function anIgnoredMessageLeavesTheModelAndAsksForNothing(): void
     {
         $model = new UpdateResultProbe();
 
-        $result = UpdateResult::keep($model);
+        $result = UpdateResult::ignored($model);
 
         self::assertSame($model, $result->model);
         self::assertNull($result->command);
     }
 
     #[Test]
-    public function changedAcceptsAModelAndOptionalCommand(): void
+    public function aResultHoldsAModelAndAnOptionalCommand(): void
     {
         $model = new UpdateResultProbe();
         $command = Cmd::quit();
 
-        $withCommand = UpdateResult::changed($model, $command);
-        $withoutCommand = UpdateResult::changed($model);
+        $withCommand = new UpdateResult($model, $command);
+        $withoutCommand = new UpdateResult($model);
 
         self::assertSame($model, $withCommand->model);
         self::assertSame($command, $withCommand->command);
@@ -63,7 +63,7 @@ final class UpdateResultTest extends TestCase
     {
         $model = new UpdateResultProbe();
         $command = Cmd::quit();
-        $result = UpdateResult::keep($model);
+        $result = UpdateResult::ignored($model);
 
         $withCommand = $result->withCommand($command);
         $withoutCommand = $withCommand->withCommand(null);
@@ -78,7 +78,7 @@ final class UpdateResultTest extends TestCase
     public function withCommandReturnsSameInstanceWhenTheCommandIsUnchanged(): void
     {
         $command = Cmd::quit();
-        $result = UpdateResult::changed(new UpdateResultProbe(), $command);
+        $result = new UpdateResult(new UpdateResultProbe(), $command);
 
         self::assertSame($result, $result->withCommand($command));
     }
@@ -88,7 +88,7 @@ final class UpdateResultTest extends TestCase
     {
         $model = new UpdateResultProbe(1);
         $command = Cmd::quit();
-        $result = UpdateResult::changed($model, $command);
+        $result = new UpdateResult($model, $command);
 
         $mapped = $result->mapModel(
             static fn (UpdateResultProbe $current): UpdateResultProbe => new UpdateResultProbe($current->value + 1),
@@ -102,7 +102,7 @@ final class UpdateResultTest extends TestCase
     #[Test]
     public function mapModelReturnsSameInstanceWhenTheModelIsUnchanged(): void
     {
-        $result = UpdateResult::keep(new UpdateResultProbe());
+        $result = UpdateResult::ignored(new UpdateResultProbe());
 
         self::assertSame($result, $result->mapModel(static fn (mixed $model): mixed => $model));
     }
@@ -112,7 +112,7 @@ final class UpdateResultTest extends TestCase
     {
         $model = new UpdateResultProbe();
         $replacement = Cmd::quit();
-        $result = UpdateResult::changed($model, Cmd::tick(0.1));
+        $result = new UpdateResult($model, Cmd::tick(0.1));
 
         $mapped = $result->mapCommand(static fn (Cmd $command): Cmd => $replacement);
 
@@ -125,7 +125,7 @@ final class UpdateResultTest extends TestCase
     public function mapCommandElidesTheCallbackAndAllocationWithoutACommand(): void
     {
         $called = false;
-        $result = UpdateResult::keep(new UpdateResultProbe());
+        $result = UpdateResult::ignored(new UpdateResultProbe());
 
         $mapped = $result->mapCommand(static function (Cmd $command) use (&$called): Cmd {
             $called = true;
@@ -140,7 +140,7 @@ final class UpdateResultTest extends TestCase
     #[Test]
     public function mapCommandReturnsSameInstanceWhenTheCommandIsUnchanged(): void
     {
-        $result = UpdateResult::changed(new UpdateResultProbe(), Cmd::quit());
+        $result = new UpdateResult(new UpdateResultProbe(), Cmd::quit());
 
         self::assertSame($result, $result->mapCommand(static fn (Cmd $command): Cmd => $command));
     }
@@ -154,6 +154,6 @@ final class UpdateResultProbe implements Reducer
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 }

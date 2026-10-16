@@ -63,6 +63,6 @@ final readonly class KeyboardDownApp extends App
     {
         $this->seen[] = $message->key;
 
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 }

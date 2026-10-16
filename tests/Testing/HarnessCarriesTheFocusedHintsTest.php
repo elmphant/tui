@@ -64,7 +64,7 @@ final readonly class TwoHintingPanesApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return $message->key === 'n' ? $this->then(Cmd::focusNext()) : UpdateResult::keep($this);
+        return $message->key === 'n' ? $this->then(Cmd::focusNext()) : UpdateResult::ignored($this);
     }
 }
 
@@ -102,7 +102,7 @@ final readonly class HintingPane implements Focusable, PublishesHints
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

@@ -60,7 +60,7 @@ final readonly class WalkedAwayApp extends App
         return match ($message->key) {
             'n' => $this->then(Cmd::focusNext()),
             'b' => $this->then(Cmd::focusFirst()),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 }

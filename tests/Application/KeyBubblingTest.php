@@ -92,8 +92,8 @@ final readonly class ScrollingPane implements Interactive, WidgetContainer
     public function update(Message $message, Rect $area): UpdateResult
     {
         return $message instanceof KeyMsg && $message->key === Key::Down
-            ? UpdateResult::changed($this->cloneWith(scrolled: $this->scrolled + 1))
-            : UpdateResult::keep($this);
+            ? new UpdateResult($this->cloneWith(scrolled: $this->scrolled + 1))
+            : UpdateResult::ignored($this);
     }
 
     public function withField(TextInput $field): self
@@ -151,7 +151,7 @@ final readonly class Bystander implements Interactive
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(seen: $this->seen + 1));
+        return new UpdateResult($this->cloneWith(seen: $this->seen + 1));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

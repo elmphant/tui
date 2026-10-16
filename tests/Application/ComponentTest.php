@@ -260,7 +260,7 @@ final readonly class PassiveInteractive implements Interactive
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

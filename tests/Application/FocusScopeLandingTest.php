@@ -72,7 +72,7 @@ final readonly class ScopedFiltersApp extends App
     {
         return match ($action) {
             'into' => new UpdateResult($this, Cmd::focus(ComponentId::named('filters/1'))),
-            'drop' => UpdateResult::keep($this->cloneWith(filters: $this->filters->withChildren([TextInput::new()->withValue('a')]))),
+            'drop' => UpdateResult::ignored($this->cloneWith(filters: $this->filters->withChildren([TextInput::new()->withValue('a')]))),
             default => parent::onAction($action, $message),
         };
     }

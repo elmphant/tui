@@ -186,10 +186,10 @@ final class ModelHarnessTest extends TestCase
 
             public function update(Message $message, Rect $area): UpdateResult
             {
-                return UpdateResult::changed(new class implements Reducer {
+                return new UpdateResult(new class implements Reducer {
                     public function update(Message $message, Rect $area): UpdateResult
                     {
-                        return UpdateResult::keep($this);
+                        return UpdateResult::ignored($this);
                     }
                 });
             }
@@ -288,9 +288,9 @@ final readonly class HarnessCounter extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            '+' => UpdateResult::changed(new self($this->count + 1)),
+            '+' => new UpdateResult(new self($this->count + 1)),
             'q' => $this->then(Cmd::quit()),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 }
@@ -310,7 +310,7 @@ final readonly class AreaRecordingModel implements Model
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::changed(new self($area->width, $area->height));
+        return new UpdateResult(new self($area->width, $area->height));
     }
 
     public function render(Frame $frame, RenderPass $pass): void
@@ -332,7 +332,7 @@ final class RepaintOnceModel implements Model
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, RenderPass $pass): void
@@ -358,7 +358,7 @@ final readonly class ThemeEchoModel implements Model
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, RenderPass $pass): void

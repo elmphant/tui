@@ -32,7 +32,7 @@ final class ModelTest extends TestCase
             {
                 $this->lastArea = $area;
 
-                return UpdateResult::keep($this);
+                return UpdateResult::ignored($this);
             }
 
             public function render(Frame $frame, RenderPass $pass): void

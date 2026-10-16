@@ -66,7 +66,7 @@ final readonly class TwoFieldApp extends App
     {
         return match ($message->key) {
             'n' => $this->then(Cmd::focusNext()),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 }

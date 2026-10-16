@@ -98,11 +98,11 @@ final readonly class ComposedSearchModel implements Model
             $this->recorder->query = $message->inner->query;
             $this->recorder->received = $message;
 
-            return UpdateResult::keep($this);
+            return UpdateResult::ignored($this);
         }
 
         if (!$message instanceof KeyMsg) {
-            return UpdateResult::keep($this);
+            return UpdateResult::ignored($this);
         }
 
         $childResult = $this->search->update($message, $area);
@@ -112,13 +112,10 @@ final readonly class ComposedSearchModel implements Model
         );
 
         if ($childResult->model === $this->search && $command === null) {
-            return UpdateResult::keep($this);
+            return UpdateResult::ignored($this);
         }
 
-        return UpdateResult::changed(
-            new self($childResult->model, $this->recorder),
-            $command,
-        );
+        return new UpdateResult(new self($childResult->model, $this->recorder), $command);
     }
 
     public function render(Frame $frame, RenderPass $pass): void
@@ -156,20 +153,20 @@ final readonly class SearchBox implements Focusable
     public function update(Message $message, Rect $area): UpdateResult
     {
         if ($message instanceof KeyMsg && $message->key === Key::Enter) {
-            return UpdateResult::changed($this, Cmd::message(new SearchSubmitted($this->input->value())));
+            return new UpdateResult($this, Cmd::message(new SearchSubmitted($this->input->value())));
         }
 
         $result = $this->input->update($message, $area);
         if ($result->model === $this->input) {
             return $result->command === null
-                ? UpdateResult::keep($this)
-                : UpdateResult::changed($this, $result->command);
+                ? UpdateResult::ignored($this)
+                : new UpdateResult($this, $result->command);
         }
         if (!$result->model instanceof TextInput) {
             throw new LogicException('TextInput update returned a different model type');
         }
 
-        return UpdateResult::changed(new self($result->model), $result->command);
+        return new UpdateResult(new self($result->model), $result->command);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

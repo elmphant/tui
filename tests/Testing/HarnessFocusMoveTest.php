@@ -57,6 +57,6 @@ final readonly class MovingFieldsApp extends App
     {
         return $message->key === 'n'
             ? $this->then(Cmd::focusNext())
-            : UpdateResult::keep($this);
+            : UpdateResult::ignored($this);
     }
 }

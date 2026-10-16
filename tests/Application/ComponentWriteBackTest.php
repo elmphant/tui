@@ -113,7 +113,7 @@ final readonly class TallyKeeper implements Focusable
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -157,10 +157,10 @@ final readonly class TallyResetter implements Focusable
     public function update(Message $message, Rect $area): UpdateResult
     {
         if ($message instanceof MouseMsg && $message->isClick() && $message->inRect($area)) {
-            return UpdateResult::changed($this->cloneWith(tally: 99));
+            return new UpdateResult($this->cloneWith(tally: 99));
         }
 
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

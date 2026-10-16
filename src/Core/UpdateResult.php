@@ -23,7 +23,8 @@ final readonly class UpdateResult
     }
 
     /**
-     * Only model identity drives a re-render; this name states intent.
+     * The message meant nothing here: an App offers a key answered this way on to
+     * what encloses the focused component. Never the answer once a child replied.
      *
      * @template T of Reducer
      *
@@ -31,23 +32,9 @@ final readonly class UpdateResult
      *
      * @return self<T>
      */
-    public static function keep(Reducer $model): self
+    public static function ignored(Reducer $model): self
     {
         return new self($model);
-    }
-
-    /**
-     * Only model identity drives a re-render; this name states intent.
-     *
-     * @template T of Reducer
-     *
-     * @param T $model
-     *
-     * @return self<T>
-     */
-    public static function changed(Reducer $model, ?Cmd $command = null): self
-    {
-        return new self($model, $command);
     }
 
     /**

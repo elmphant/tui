@@ -129,7 +129,7 @@ final readonly class Speaker implements Focusable
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::changed($this, Cmd::message(new Spoke()));
+        return new UpdateResult($this, Cmd::message(new Spoke()));
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

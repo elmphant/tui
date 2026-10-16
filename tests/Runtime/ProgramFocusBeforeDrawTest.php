@@ -66,7 +66,7 @@ final readonly class FieldBehindModalApp extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return $message->key === Key::F2
-            ? UpdateResult::changed($this->cloneWith(modal: Modal::new('M', TextInput::new('inside'))))
-            : UpdateResult::keep($this);
+            ? new UpdateResult($this->cloneWith(modal: Modal::new('M', TextInput::new('inside'))))
+            : UpdateResult::ignored($this);
     }
 }

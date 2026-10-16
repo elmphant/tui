@@ -785,7 +785,7 @@ final readonly class SwappingOnMouseApp extends CopyableTestApp
 
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::keep($this->cloneWith(swapped: true));
+        return UpdateResult::ignored($this->cloneWith(swapped: true));
     }
 }
 
@@ -847,8 +847,8 @@ final readonly class InterceptApp extends CopyableTestApp
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            ' ' => UpdateResult::changed($this->cloneWith(toggled: !$this->toggled)),
-            default => UpdateResult::keep($this),
+            ' ' => new UpdateResult($this->cloneWith(toggled: !$this->toggled)),
+            default => UpdateResult::ignored($this),
         };
     }
 }
@@ -881,7 +881,7 @@ final readonly class ApplicationShortcutApp extends CopyableTestApp
 
     protected function onAction(string $action, KeyMsg $message): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(lastAction: $action));
+        return new UpdateResult($this->cloneWith(lastAction: $action));
     }
 }
 
@@ -944,8 +944,8 @@ final readonly class SimpleCounterApp extends CopyableTestApp
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            'k', Key::Tab => UpdateResult::changed($this->cloneWith(count: $this->count + 1)),
-            default => UpdateResult::keep($this),
+            'k', Key::Tab => new UpdateResult($this->cloneWith(count: $this->count + 1)),
+            default => UpdateResult::ignored($this),
         };
     }
 }
@@ -1059,7 +1059,7 @@ final readonly class GlobalKeybindingsToggleApp extends CopyableTestApp
 
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(currentBindings: $this->nextBindings));
+        return new UpdateResult($this->cloneWith(currentBindings: $this->nextBindings));
     }
 
     protected function globalKeybindings(): Keybindings
@@ -1089,7 +1089,7 @@ final readonly class GlobalKeybindingsTickToggleApp extends CopyableTestApp
 
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(currentBindings: $this->nextBindings));
+        return new UpdateResult($this->cloneWith(currentBindings: $this->nextBindings));
     }
 
     protected function globalKeybindings(): Keybindings
@@ -1161,7 +1161,7 @@ final readonly class NoOpUpdateResultApp extends CopyableTestApp
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     protected function quitBindings(): Keybindings
@@ -1185,7 +1185,7 @@ final readonly class ToggleUpdateResultApp extends CopyableTestApp
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(toggled: true));
+        return new UpdateResult($this->cloneWith(toggled: true));
     }
 
     protected function quitBindings(): Keybindings
@@ -1208,7 +1208,7 @@ final readonly class CommandOnlyUpdateResultApp extends CopyableTestApp
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this, Cmd::quit());
+        return new UpdateResult($this, Cmd::quit());
     }
 
     protected function quitBindings(): Keybindings
@@ -1601,7 +1601,7 @@ final readonly class MouseCommandFocusableApp extends CopyableTestApp
             return $this->then(Cmd::tick(0.1));
         }
 
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     protected function quitBindings(): Keybindings
@@ -1648,10 +1648,10 @@ final readonly class MouseTrackingFocusableApp extends CopyableTestApp
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
         if ($message->isClick()) {
-            return UpdateResult::changed($this->cloneWith(mouseTracked: true));
+            return new UpdateResult($this->cloneWith(mouseTracked: true));
         }
 
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     protected function quitBindings(): Keybindings
@@ -1779,10 +1779,10 @@ final readonly class MouseSwapApp extends CopyableTestApp
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
         if ($this->swapped) {
-            return UpdateResult::keep($this);
+            return UpdateResult::ignored($this);
         }
 
-        return UpdateResult::changed($this->cloneWith(
+        return new UpdateResult($this->cloneWith(
             right: new MarkerFocusable(marker: 'replaced-right'),
             swapped: true,
         ));

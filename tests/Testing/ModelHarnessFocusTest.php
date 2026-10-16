@@ -67,7 +67,7 @@ final readonly class TwoNamedFieldApp extends App
         return match ($message->key) {
             'n' => $this->then(Cmd::focusNext()),
             'x' => $this->then(Cmd::focusNothing()),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 }

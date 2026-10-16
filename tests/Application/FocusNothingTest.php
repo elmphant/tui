@@ -110,6 +110,6 @@ final readonly class SelfAnsweringApp extends App
     {
         $this->seen[] = $message->key;
 
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 }

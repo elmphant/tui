@@ -272,7 +272,7 @@ final readonly class NoInteractivesTickApp extends CopyableTestApp
 
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(ticks: $this->ticks + 1));
+        return new UpdateResult($this->cloneWith(ticks: $this->ticks + 1));
     }
 
     protected function globalKeybindings(): Keybindings

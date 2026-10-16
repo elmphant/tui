@@ -41,7 +41,7 @@ final readonly class RecordingPane implements Focusable
     {
         $this->seen[] = $message;
 
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

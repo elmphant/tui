@@ -68,13 +68,13 @@ $model = new class($scenario, $readyFile, $resultFile) implements Model {
                     file_put_contents($this->resultFile, 'same-size-resize-rendered');
                 }
 
-                return UpdateResult::changed($next, Cmd::quit());
+                return new UpdateResult($next, Cmd::quit());
             }
 
-            return UpdateResult::changed($next);
+            return new UpdateResult($next);
         }
 
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, RenderPass $pass): void

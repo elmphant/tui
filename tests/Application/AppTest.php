@@ -479,9 +479,9 @@ final readonly class CounterApp extends CopyableTestApp
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            'k' => UpdateResult::changed($this->cloneWith(count: $this->count + 1)),
-            'j' => UpdateResult::changed($this->cloneWith(count: $this->count - 1)),
-            default => UpdateResult::keep($this),
+            'k' => new UpdateResult($this->cloneWith(count: $this->count + 1)),
+            'j' => new UpdateResult($this->cloneWith(count: $this->count - 1)),
+            default => UpdateResult::ignored($this),
         };
     }
 }
@@ -514,7 +514,7 @@ final readonly class SearchApp extends CopyableTestApp
 
     protected function onComponentsChanged(array $ids): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(
+        return new UpdateResult($this->cloneWith(
             lastSeenQuery: $this->query->value(),
             changedIds: array_map(static fn (ComponentId $id): string => $id->value, $ids),
         ));
@@ -553,7 +553,7 @@ final readonly class ResizeAwareApp extends CopyableTestApp
 
     protected function onResize(ResizeMsg $message): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(lastWidth: $message->width, lastHeight: $message->height));
+        return new UpdateResult($this->cloneWith(lastWidth: $message->width, lastHeight: $message->height));
     }
 }
 
@@ -643,7 +643,7 @@ final readonly class TickingApp extends CopyableTestApp
 
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(ticks: $this->ticks + 1));
+        return new UpdateResult($this->cloneWith(ticks: $this->ticks + 1));
     }
 }
 
@@ -661,8 +661,8 @@ final readonly class MouseApp extends CopyableTestApp
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
         return $message->isClick()
-            ? UpdateResult::changed($this->cloneWith(clicked: true))
-            : UpdateResult::keep($this);
+            ? new UpdateResult($this->cloneWith(clicked: true))
+            : UpdateResult::ignored($this);
     }
 }
 
@@ -679,7 +679,7 @@ final readonly class MouseRectApp extends CopyableTestApp
 
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(width: $screen->width, height: $screen->height));
+        return new UpdateResult($this->cloneWith(width: $screen->width, height: $screen->height));
     }
 }
 
@@ -703,7 +703,7 @@ final readonly class MouseRectWithFocusablesApp extends CopyableTestApp
 
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(width: $screen->width, height: $screen->height));
+        return new UpdateResult($this->cloneWith(width: $screen->width, height: $screen->height));
     }
 }
 
@@ -722,7 +722,7 @@ final readonly class CmdApp extends CopyableTestApp
     {
         return match ($message->key) {
             'r' => $this->cloneWith(requested: true)->then(Cmd::exec(['echo', 'hi'])),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 }
@@ -740,7 +740,7 @@ final readonly class ResizeTrackingApp extends CopyableTestApp
 
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this->cloneWith(messageReceived: true));
+        return new UpdateResult($this->cloneWith(messageReceived: true));
     }
 }
 
@@ -758,8 +758,8 @@ final readonly class FloatHookApp extends CopyableTestApp
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
         return $message instanceof FloatMouseMsg
-            ? UpdateResult::changed($this->cloneWith(received: $message))
-            : UpdateResult::keep($this);
+            ? new UpdateResult($this->cloneWith(received: $message))
+            : UpdateResult::ignored($this);
     }
 }
 
@@ -790,14 +790,14 @@ final readonly class FloatRecordingWidget implements Focusable
     public function update(Message $message, Rect $area): UpdateResult
     {
         if ($message instanceof FloatMouseMsg) {
-            return UpdateResult::changed(new self($message, $this->plainMouseSeen, $this->focused));
+            return new UpdateResult(new self($message, $this->plainMouseSeen, $this->focused));
         }
 
         if ($message instanceof MouseMsg) {
-            return UpdateResult::changed(new self($this->receivedFloat, $this->plainMouseSeen + 1, $this->focused));
+            return new UpdateResult(new self($this->receivedFloat, $this->plainMouseSeen + 1, $this->focused));
         }
 
-        return UpdateResult::keep($this);
+        return UpdateResult::ignored($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -825,8 +825,8 @@ final readonly class FloatBroadcastApp extends CopyableTestApp
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
         return $message instanceof FloatMouseMsg
-            ? UpdateResult::changed($this->cloneWith(received: $message))
-            : UpdateResult::keep($this);
+            ? new UpdateResult($this->cloneWith(received: $message))
+            : UpdateResult::ignored($this);
     }
 }
 

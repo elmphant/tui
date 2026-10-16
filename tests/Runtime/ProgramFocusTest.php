@@ -286,7 +286,7 @@ final readonly class TabFromAPlacedFocusApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::keep($this);
+        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
     }
 }
 
@@ -324,7 +324,7 @@ final readonly class SeededPaneApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::keep($this);
+        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
     }
 }
 
@@ -343,12 +343,12 @@ final readonly class ResizeCountingApp extends App
 
     protected function onResize(ResizeMsg $message): UpdateResult
     {
-        return UpdateResult::keep($this->cloneWith(resizes: $this->resizes + 1));
+        return UpdateResult::ignored($this->cloneWith(resizes: $this->resizes + 1));
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::keep($this);
+        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
     }
 }
 
@@ -394,7 +394,7 @@ final readonly class PaneCyclingApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::keep($this);
+        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
     }
 }
 
@@ -420,7 +420,7 @@ final readonly class FocusCyclingApp extends App
             'n' => $this->then(Cmd::focusNext()),
             'p' => $this->then(Cmd::focusPrevious()),
             'q' => $this->then(Cmd::quit()),
-            default => UpdateResult::keep($this),
+            default => UpdateResult::ignored($this),
         };
     }
 }
@@ -448,6 +448,6 @@ final readonly class FocusCommandApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::keep($this);
+        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
     }
 }

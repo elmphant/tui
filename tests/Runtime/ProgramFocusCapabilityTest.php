@@ -91,7 +91,7 @@ final readonly class KeyboardStartsWithTheAppApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::changed($this, Cmd::quit());
+        return new UpdateResult($this, Cmd::quit());
     }
 }
 

@@ -79,7 +79,7 @@ final readonly class SpeaksToItselfApp extends App
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
         return $message instanceof TheErrand
-            ? UpdateResult::changed($this->cloneWith(seen: [...$this->seen, 'the-errand']))
-            : UpdateResult::keep($this);
+            ? new UpdateResult($this->cloneWith(seen: [...$this->seen, 'the-errand']))
+            : UpdateResult::ignored($this);
     }
 }

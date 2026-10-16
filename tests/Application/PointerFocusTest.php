@@ -224,6 +224,6 @@ final readonly class ClickableChromeApp extends App
     {
         return $message->y === 0
             ? $this->then(Cmd::focus(ComponentId::named('second')))
-            : UpdateResult::keep($this);
+            : UpdateResult::ignored($this);
     }
 }
