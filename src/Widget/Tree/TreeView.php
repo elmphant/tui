@@ -166,7 +166,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     {
         $pending = [];
         foreach ($this->visibleRows() as $row) {
-            if (!$row['selectable'] && $row['marker'] === self::MARKER_PENDING) {
+            if (!$row['selectable']) {
                 $pending[] = $row['path'];
             }
         }
@@ -435,14 +435,13 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $this->cloneWith(scrollOffset: ScrollWindow::clamped($this->scrollOffset + $notches, $maxOffset));
     }
 
-    private function cursorMovedBy(int $delta): self
+    private function cursorMovedBy(int $step): self
     {
         $rows = $this->visibleRows();
         $index = $this->rowIndexOf($this->cursor());
         if ($index === null) {
             return $this;
         }
-        $step = $delta <=> 0;
         for ($target = $index + $step; isset($rows[$target]); $target += $step) {
             if ($rows[$target]['selectable']) {
                 return $this->withCursor($rows[$target]['path']);

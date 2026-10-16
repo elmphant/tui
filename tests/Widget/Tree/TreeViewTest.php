@@ -404,6 +404,186 @@ final class TreeViewTest extends TestCase
         self::assertSame(['▪ alpha', '▪ beta'], array_map('trim', array_slice(self::drawIn($shrunk, $area), 0, 2)));
     }
 
+    #[Test]
+    public function upLeftEnterHomeAndEndAreBoundByDefault(): void
+    {
+        $area = new Rect(0, 0, 30, 10);
+        $order = TreePath::root()->child('order');
+        $tree = self::orderTree();
+
+        $opened = self::afterKey($tree, Key::Enter, $area);
+        $atEnd = self::afterKey($opened, Key::End, $area);
+        $up = self::afterKey($atEnd, Key::Up, $area);
+        $atHome = self::afterKey($atEnd, Key::Home, $area);
+        $closed = self::afterKey($atHome, Key::Left, $area);
+
+        self::assertTrue($opened->isExpanded($order));
+        self::assertSame(['total'], $atEnd->cursor()->keys);
+        self::assertSame(['order', 'customer'], $up->cursor()->keys);
+        self::assertSame(['order'], $atHome->cursor()->keys);
+        self::assertFalse($closed->isExpanded($order));
+    }
+
+    #[Test]
+    public function theWheelScrollsTheRowsWithoutMovingTheCursor(): void
+    {
+        $area = new Rect(0, 0, 30, 3);
+        $roots = array_map(static fn (int $index): SimpleTreeNode => new SimpleTreeNode('n' . $index, 'node ' . $index), range(0, 9));
+        $tree = TreeView::new($roots);
+
+        $down = $tree->update(new MouseMsg(1, 1, MouseAction::WheelDown, MouseButton::None, 2), $area)->model;
+        self::assertInstanceOf(TreeView::class, $down);
+        $back = $down->update(new MouseMsg(1, 1, MouseAction::WheelUp, MouseButton::None), $area)->model;
+        self::assertInstanceOf(TreeView::class, $back);
+
+        self::assertSame('▪ node 2', trim(self::drawIn($down, $area)[0]));
+        self::assertSame('▪ node 1', trim(self::drawIn($back, $area)[0]));
+        self::assertSame(['n0'], $down->cursor()->keys);
+    }
+
+    #[Test]
+    public function aTreeDrawnAwayFromTheOriginLooksTheSameShifted(): void
+    {
+        $tree = self::orderTree()->expand(TreePath::root()->child('order'))->cursorDown();
+        $frame = new Frame(40, 6);
+
+        $tree->render($frame, new Rect(5, 1, 30, 4), new RenderContext(Theme::dark()));
+
+        $shifted = array_map(
+            static fn (int $row): string => rtrim(ScreenBuffer::fromFrame($frame)->textAt($row, 5, 30)),
+            range(1, 4),
+        );
+        self::assertSame(array_slice(self::draw($tree, 30, 4), 0, 4), $shifted);
+    }
+
+    #[Test]
+    public function aClickAwayFromTheOriginLandsOnTheRowAndColumnUnderIt(): void
+    {
+        $area = new Rect(5, 2, 30, 6);
+        $order = TreePath::root()->child('order');
+        $tree = self::orderTree()->cursorDown();
+
+        $onLabel = self::afterMouse($tree, 8, 2, $area);
+        $onDetail = self::afterMouse($tree, 5 + 22, 2, $area);
+        $onTotal = self::afterMouse($tree, 8, 3, $area);
+
+        self::assertTrue($onLabel->isExpanded($order));
+        self::assertSame(['order'], $onDetail->cursor()->keys);
+        self::assertFalse($onDetail->isExpanded($order));
+        self::assertSame(['total'], $onTotal->cursor()->keys);
+    }
+
+    #[Test]
+    public function aClickOnTheFirstCellOfTheDetailColumnOnlySelects(): void
+    {
+        $tree = self::orderTree()->cursorDown();
+
+        $clicked = self::afterMouse($tree, 19, 0, new Rect(0, 0, 30, 6));
+
+        self::assertSame(['order'], $clicked->cursor()->keys);
+        self::assertFalse($clicked->isExpanded(TreePath::root()->child('order')));
+    }
+
+    #[Test]
+    public function aClickOnAWaitingRowChangesNothing(): void
+    {
+        $tree = TreeView::new([
+            new SimpleTreeNode('lazy', 'lazy', 'array(3)', null),
+            new SimpleTreeNode('total', 'total', '94.2'),
+        ])->expand(TreePath::root()->child('lazy'))->withCursor(TreePath::root()->child('total'));
+
+        $clicked = self::afterMouse($tree, 1, 1, new Rect(0, 0, 30, 4));
+
+        self::assertSame(['total'], $clicked->cursor()->keys);
+        self::assertTrue($clicked->isExpanded(TreePath::root()->child('lazy')));
+    }
+
+    #[Test]
+    public function guidesAndDetailsAreDimOffTheCursorRow(): void
+    {
+        $theme = Theme::dark();
+        $tree = self::orderTree()->expand(TreePath::root()->child('order'));
+        $frame = new Frame(30, 4);
+
+        $tree->render($frame, new Rect(0, 0, 30, 4), RenderContext::unfocused($theme));
+
+        $dim = $theme->dim->foregroundValue();
+        self::assertSame($dim, $frame->foregrounds[30], 'the branch of an unselected row');
+        self::assertSame($dim, $frame->foregrounds[30 + 19], 'and its detail');
+        self::assertNotSame($dim, $frame->foregrounds[19], 'while the cursor row draws its detail in the cursor style');
+    }
+
+    #[Test]
+    public function everyOpenNodeStillWaitingIsNamed(): void
+    {
+        $tree = TreeView::new([
+            new SimpleTreeNode('a', 'a', '', null),
+            new SimpleTreeNode('b', 'b', '', null),
+        ])->expand(TreePath::root()->child('a'))->expand(TreePath::root()->child('b'));
+
+        self::assertSame([['a'], ['b']], array_map(
+            static fn (TreePath $path): array => $path->keys,
+            $tree->pendingExpansions(),
+        ));
+    }
+
+    #[Test]
+    public function aGreatGrandchildAndAWaitingRowCarryEveryAncestorsBar(): void
+    {
+        $root = TreePath::root();
+        $tree = TreeView::new([
+            new SimpleTreeNode('a', 'a', '', [
+                new SimpleTreeNode('b', 'b', '', [
+                    new SimpleTreeNode('c', 'c', '', [new SimpleTreeNode('d', 'd')]),
+                    new SimpleTreeNode('lazy', 'lazy', '', null),
+                    new SimpleTreeNode('f', 'f', '', [new SimpleTreeNode('g', 'g')]),
+                ]),
+                new SimpleTreeNode('e', 'e'),
+            ]),
+        ])
+            ->expand($root->child('a'))
+            ->expand($root->child('a')->child('b'))
+            ->expand($root->child('a')->child('b')->child('c'))
+            ->expand($root->child('a')->child('b')->child('lazy'))
+            ->expand($root->child('a')->child('b')->child('f'));
+
+        $lines = array_map('rtrim', self::draw($tree, 30, 9));
+
+        self::assertSame('│ ├─▾ c', $lines[2]);
+        self::assertSame('│ │ └─▪ d', $lines[3]);
+        self::assertSame('│ ├─▾ lazy', $lines[4]);
+        self::assertSame('│ │ └─⋯', $lines[5]);
+        self::assertSame('│ └─▾ f', $lines[6]);
+        self::assertSame('│   └─▪ g', $lines[7]);
+    }
+
+    #[Test]
+    public function nodesWithTheSameKeyUnderDifferentParentsOpenSeparately(): void
+    {
+        $tree = TreeView::new([
+            new SimpleTreeNode('a', 'a', '', [new SimpleTreeNode('x', 'x', '', [new SimpleTreeNode('0', '0')])]),
+            new SimpleTreeNode('b', 'b', '', [new SimpleTreeNode('x', 'x', '', [new SimpleTreeNode('0', '0')])]),
+            new SimpleTreeNode('a:x', 'a:x', '', [new SimpleTreeNode('0', '0')]),
+        ])->expand(TreePath::root()->child('a')->child('x'));
+
+        self::assertFalse($tree->isExpanded(TreePath::root()->child('b')->child('x')));
+        self::assertFalse($tree->isExpanded(TreePath::root()->child('a:x')));
+    }
+
+    #[Test]
+    public function aNodeFlaggedExpandableWithNoChildrenOpensToNothing(): void
+    {
+        $empty = TreePath::root()->child('empty');
+        $tree = TreeView::new([new SimpleTreeNode('total', 'total'), new SimpleTreeNode('empty', 'empty', '', [], expandable: true)])
+            ->withCursor($empty);
+
+        $entered = $tree->expandOrEnter()->expandOrEnter();
+
+        self::assertSame('▸ empty', rtrim(self::draw($tree, 30, 3)[1]));
+        self::assertTrue($entered->isExpanded($empty));
+        self::assertSame(['empty'], $entered->cursor()->keys);
+    }
+
     private static function afterMouse(TreeView $tree, int $x, int $y, Rect $area): TreeView
     {
         $result = $tree->update(new MouseMsg($x, $y, MouseAction::Press, MouseButton::Left), $area);
