@@ -212,15 +212,24 @@ final readonly class Color
         }
 
         $extreme = $background->contrastingText();
+        $backgroundLuminance = $background->relativeLuminance();
 
-        for ($step = 1; $step < self::READABILITY_STEPS; ++$step) {
+        // Blending toward the extreme moves luminance one way, so contrast falls
+        // and then rises: past the first step that reaches the ratio, every step does.
+        $low = 1;
+        $high = self::READABILITY_STEPS;
+        while ($low < $high) {
+            $step = intdiv($low + $high, 2);
             $lifted = $this->blend($extreme, $step / self::READABILITY_STEPS);
-            if ($lifted->contrastRatio($background) >= $minimumRatio) {
-                return $lifted;
+
+            if (self::ratioOf($lifted->relativeLuminance(), $backgroundLuminance) >= $minimumRatio) {
+                $high = $step;
+            } else {
+                $low = $step + 1;
             }
         }
 
-        return $extreme;
+        return $low === self::READABILITY_STEPS ? $extreme : $this->blend($extreme, $low / self::READABILITY_STEPS);
     }
 
     /**
@@ -234,10 +243,7 @@ final readonly class Color
             return 1.0;
         }
 
-        $lighter = max($this->relativeLuminance(), $other->relativeLuminance());
-        $darker = min($this->relativeLuminance(), $other->relativeLuminance());
-
-        return ($lighter + 0.05) / ($darker + 0.05);
+        return self::ratioOf($this->relativeLuminance(), $other->relativeLuminance());
     }
 
     /**
@@ -249,6 +255,11 @@ final readonly class Color
         [$red, $green, $blue] = $this->channels();
 
         return 0.2126 * self::linearize($red) + 0.7152 * self::linearize($green) + 0.0722 * self::linearize($blue);
+    }
+
+    private static function ratioOf(float $luminance, float $otherLuminance): float
+    {
+        return (max($luminance, $otherLuminance) + 0.05) / (min($luminance, $otherLuminance) + 0.05);
     }
 
     private static function linearize(int $channel): float
