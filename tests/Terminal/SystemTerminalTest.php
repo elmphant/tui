@@ -322,7 +322,6 @@ final class SystemTerminalTest extends TestCase
         try {
             (new SystemTerminal($this->stdin, $stream))->write('ABC');
             self::assertSame('ABC', PartialWriteStream::$written);
-            self::assertSame(0, PartialWriteStream::$zeroWritesRemaining);
         } finally {
             fclose($stream);
             fclose($pair[0]);
@@ -390,7 +389,10 @@ final class SystemTerminalTest extends TestCase
         $terminal = new SystemTerminal($reader, $this->stdout);
         $terminal->probeSize();
 
-        self::assertGreaterThan(0, $terminal->bytesWritten());
+        $probe = Ansi::SAVE_CURSOR . Ansi::CURSOR_TO_BOTTOM_RIGHT . Ansi::REPORT_CURSOR_POSITION . Ansi::RESTORE_CURSOR;
+        rewind($this->stdout);
+        self::assertSame($probe, stream_get_contents($this->stdout));
+        self::assertSame(strlen($probe), $terminal->bytesWritten());
 
         fclose($reader);
         fclose($writer);
@@ -540,9 +542,72 @@ final class SystemTerminalTest extends TestCase
         $terminal = new SystemTerminal($reader, $this->stdout);
 
         self::assertSame(ColorScheme::Dark, $terminal->detectColorScheme());
+        rewind($this->stdout);
+        self::assertSame("\033]11;?\033\\", stream_get_contents($this->stdout));
 
         fclose($reader);
         fclose($writer);
+    }
+
+    /**
+     * xterm answers with sixteen bits a channel; the high byte is the colour.
+     */
+    #[Test]
+    public function aSixteenBitColourReplyIsReadByItsHighByte(): void
+    {
+        [$reader, $writer] = $this->createNonBlockingSocketPair();
+        fwrite($writer, "\033]11;rgb:1e1e/1e1e/1e1e\033\\");
+
+        self::assertSame(ColorScheme::Dark, (new SystemTerminal($reader, $this->stdout))->detectColorScheme());
+
+        fclose($reader);
+        fclose($writer);
+    }
+
+    #[Test]
+    public function everyWriteCountsTowardsTheBytesWritten(): void
+    {
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
+
+        $terminal->write('abc');
+        $terminal->write('de');
+
+        self::assertSame(5, $terminal->bytesWritten());
+    }
+
+    #[Test]
+    public function eachStalledWriteAddsTheTimeItWaited(): void
+    {
+        PartialWriteStream::register();
+        PartialWriteStream::$bytesPerWrite = 0;
+        $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        self::assertIsArray($pair);
+        PartialWriteStream::$castStream = $pair[0];
+        $stream = fopen('partialwrite://output', 'w+');
+        self::assertIsResource($stream);
+        stream_set_blocking($pair[0], false);
+        while (@fwrite($pair[0], str_repeat('x', 65536)) > 0) {
+        }
+        $terminal = new SystemTerminal($this->stdin, $stream);
+        $stalledWrite = static function () use ($terminal): void {
+            try {
+                $terminal->write('A');
+            } catch (TerminalWriteException) {
+            }
+        };
+
+        try {
+            $stalledWrite();
+            $stalledWrite();
+
+            self::assertGreaterThan(0.15, $terminal->writeWaitSeconds(), 'two waits of 100 ms each');
+            self::assertLessThan(1.0, $terminal->writeWaitSeconds());
+        } finally {
+            fclose($stream);
+            fclose($pair[0]);
+            fclose($pair[1]);
+            PartialWriteStream::unregister();
+        }
     }
 
     /**
@@ -691,6 +756,22 @@ final class SystemTerminalTest extends TestCase
         }
 
         self::assertSame([80, 24], $size);
+    }
+
+    #[Test]
+    public function withoutATtyTheSizeComesFromTheEnvironment(): void
+    {
+        putenv('COLUMNS=120');
+        putenv('LINES=abc');
+
+        try {
+            $size = (new SystemTerminal(fopen('php://memory', 'rb+')))->size();
+        } finally {
+            putenv('COLUMNS');
+            putenv('LINES');
+        }
+
+        self::assertSame([120, 24], $size);
     }
 
     protected function setUp(): void

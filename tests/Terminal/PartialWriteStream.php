@@ -64,6 +64,9 @@ final class PartialWriteStream
 
         $chunk = substr($data, 0, self::$bytesPerWrite);
         self::$written .= $chunk;
+        // PHP keeps calling stream_write until it gets 0, so fwrite() only
+        // comes back short the way a full pty does if the next call refuses.
+        self::$zeroWritesRemaining = 1;
 
         return strlen($chunk);
     }

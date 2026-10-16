@@ -11,6 +11,7 @@ use ValueError;
 final class SystemTerminal implements Terminal, ReportsOutputStats
 {
     private const WRITE_TIMEOUT_MICROSECONDS = 100_000;
+    private const ANSWER_TIMEOUT_MICROSECONDS = 100_000;
 
     private string $savedTerminalSettings = '';
     private bool $rawModeEnabled = false;
@@ -200,18 +201,11 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
             $this->write(Ansi::SAVE_CURSOR . Ansi::CURSOR_TO_BOTTOM_RIGHT . Ansi::REPORT_CURSOR_POSITION);
             $this->flush();
 
-            $read = [$this->stdin];
-            $write = $except = null;
-            $answered = @stream_select($read, $write, $except, 0, 100_000) > 0;
-            $response = $answered ? (string)@fread($this->stdin, 32) : '';
+            $response = $this->answerArrives() ? (string)@fread($this->stdin, 32) : '';
 
             $this->write(Ansi::RESTORE_CURSOR);
             $this->flush();
         } catch (TerminalException) {
-            return null;
-        }
-
-        if (!$answered) {
             return null;
         }
 
@@ -261,7 +255,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
     public function detectColorScheme(): ?ColorScheme
     {
         $this->write("\033]11;?\033\\");
-        if (!$this->waitForInput(100_000)) {
+        if (!$this->answerArrives()) {
             return null;
         }
 
@@ -290,16 +284,6 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
         $input = $leftover . (string)@fread($this->stdin, 4096);
 
         return $input === '' && feof($this->stdin) ? null : $input;
-    }
-
-    public function waitForInput(int $timeoutMicroseconds): bool
-    {
-        $read = [$this->stdin];
-        $write = $except = null;
-        $seconds = (int)($timeoutMicroseconds / 1_000_000);
-        $microseconds = $timeoutMicroseconds % 1_000_000;
-
-        return @stream_select($read, $write, $except, $seconds, $microseconds) > 0;
     }
 
     public function bytesWritten(): int
@@ -389,6 +373,14 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
         $luminance = 0.299 * $red + 0.587 * $green + 0.114 * $blue;
 
         return $luminance < 0.5 ? ColorScheme::Dark : ColorScheme::Light;
+    }
+
+    private function answerArrives(): bool
+    {
+        $read = [$this->stdin];
+        $write = $except = null;
+
+        return @stream_select($read, $write, $except, 0, self::ANSWER_TIMEOUT_MICROSECONDS) > 0;
     }
 
     /**

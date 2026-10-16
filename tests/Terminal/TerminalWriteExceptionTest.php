@@ -18,6 +18,7 @@ final class TerminalWriteExceptionTest extends TestCase
 
         self::assertInstanceOf(TerminalException::class, $exception);
         self::assertSame(3, $exception->bytesWritten);
+        self::assertFalse($exception->stalled, 'a terminal that went away has not merely stalled');
         self::assertSame('Terminal output stopped after 3 of 10 bytes', $exception->getMessage());
     }
 }

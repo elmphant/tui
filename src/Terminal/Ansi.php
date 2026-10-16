@@ -51,11 +51,6 @@ final class Ansi
         return "\x1b[" . ($row + 1) . ';' . ($column + 1) . 'H';
     }
 
-    public static function cursorUp(int $count): string
-    {
-        return "\x1b[{$count}A";
-    }
-
     public static function cursorDown(int $count): string
     {
         return "\x1b[{$count}B";
@@ -64,11 +59,6 @@ final class Ansi
     public static function cursorRight(int $count): string
     {
         return "\x1b[{$count}C";
-    }
-
-    public static function cursorLeft(int $count): string
-    {
-        return "\x1b[{$count}D";
     }
 
     public static function cursorToRowStart(int $row): string
