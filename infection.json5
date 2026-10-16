@@ -21,11 +21,11 @@
         // escapes were the App hooks alone.
         "ProtectedVisibility": false
     },
-    // Measured over the whole of src on 2026-09-02, ProtectedVisibility off:
-    // 86.1% MSI / 88.6% covered (12609 mutants, 371 timeouts, which Infection
+    // Measured over the whole of src on 2026-10-16, ProtectedVisibility off:
+    // 91% MSI / 93% covered (12756 mutants, 390 timeouts, which Infection
     // counts as detected).
-    "minMsi": 86,
-    "minCoveredMsi": 88,
+    "minMsi": 90,
+    "minCoveredMsi": 92,
     "testFramework": "phpunit",
     "tmpDir": ".infection"
 }
