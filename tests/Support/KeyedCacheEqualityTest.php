@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Layout;
+namespace Elmphant\Tui\Tests\Support;
 
 use Elmphant\Tui\Support\KeyedCache;
 use PHPUnit\Framework\Attributes\Test;

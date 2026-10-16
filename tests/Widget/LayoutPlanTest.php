@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Layout;
+namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Layout;
+namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Widget\Layout\VerticalStackLayout;
 use PHPUnit\Framework\Attributes\Test;
