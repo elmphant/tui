@@ -47,16 +47,11 @@ final class StdinBuffer
                 if ($endPos === false) {
                     $consumableLength = strlen($this->buffer) - $this->trailingPasteEndPrefixLength();
                     $remaining = self::MAX_PASTE_SIZE - strlen($this->pasteBuffer);
-                    if ($remaining > 0 && $consumableLength > 0) {
-                        $this->pasteBuffer .= substr($this->buffer, 0, min($consumableLength, $remaining));
-                    }
+                    $this->pasteBuffer .= substr($this->buffer, 0, min($consumableLength, $remaining));
                     $this->buffer = substr($this->buffer, $consumableLength);
                     break;
                 }
-                $remaining = self::MAX_PASTE_SIZE - strlen($this->pasteBuffer);
-                if ($remaining > 0) {
-                    $this->pasteBuffer .= substr($this->buffer, 0, min($endPos, $remaining));
-                }
+                $this->pasteBuffer .= substr($this->buffer, 0, min($endPos, self::MAX_PASTE_SIZE - strlen($this->pasteBuffer)));
                 $this->buffer = substr($this->buffer, $endPos + 6);
                 $this->inPaste = false;
                 $this->pasteStalled = false;
@@ -92,7 +87,7 @@ final class StdinBuffer
 
             if ($byte >= 0xC0) {
                 $expectedLength = Grapheme::sequenceLength($byte);
-                $continuation = strspn($this->buffer, self::CONTINUATION_BYTES, 1, $expectedLength - 1);
+                $continuation = strspn($this->buffer, self::CONTINUATION_BYTES, 1);
                 if ($continuation < $expectedLength - 1 && 1 + $continuation < strlen($this->buffer)) {
                     ($this->onSequence)($this->buffer[0]);
                     $this->buffer = substr($this->buffer, 1);

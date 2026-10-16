@@ -297,6 +297,20 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aKeyRightAfterABrokenCharacterIsNotSwallowedWithIt(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+        );
+
+        $buffer->process("\xc3x");
+        $buffer->process("\xe2\x82y");
+
+        self::assertSame(["\xc3", 'x', "\xe2", "\x82", 'y'], $sequences);
+    }
+
+    #[Test]
     public function aPasteThatNeverEndsLetsKeysThroughAfterASecondTimeout(): void
     {
         $pastes = [];
@@ -332,6 +346,95 @@ final class StdinBufferTest extends TestCase
         $buffer->process("rm -rf /tmp/x\r\x1b[201~q");
 
         self::assertSame([['first ', "rm -rf /tmp/x\r"], ['q']], [$pastes, $sequences]);
+    }
+
+    #[Test]
+    public function aStalledPasteThatEndsLeavesTheNextPasteItsFirstTimeout(): void
+    {
+        $pastes = [];
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~a");
+        $buffer->flush();
+        $buffer->process("b\x1b[201~\x1b[200~c");
+        $buffer->flush();
+        $buffer->process("d\x1b[201~");
+
+        self::assertSame([['a', 'b', 'c', 'd'], []], [$pastes, $sequences]);
+    }
+
+    #[Test]
+    public function aPasteGivenBackAfterTwoTimeoutsLeavesTheNextPasteItsFirstTimeout(): void
+    {
+        $pastes = [];
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~a");
+        $buffer->flush();
+        $buffer->process('bc');
+        $buffer->flush();
+        $buffer->process("\x1b[200~d");
+        $buffer->flush();
+        $buffer->process("e\x1b[201~");
+
+        self::assertSame([['a', 'bc', 'd', 'e'], []], [$pastes, $sequences]);
+    }
+
+    #[Test]
+    public function aPasteThatStallsBeforeAnyContentReportsNothing(): void
+    {
+        $pastes = [];
+        $buffer = new StdinBuffer(
+            onSequence: static function (): void {},
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~");
+        $buffer->flush();
+
+        self::assertSame([], $pastes);
+    }
+
+    #[Test]
+    public function aStalledPasteWithoutAPasteHandlerIsDroppedQuietly(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+        );
+
+        $buffer->process("\x1b[200~abc");
+        $buffer->flush();
+        $buffer->process('d');
+        $buffer->flush();
+        $buffer->process('q');
+
+        self::assertSame(['q'], $sequences);
+    }
+
+    #[Test]
+    public function aPasteGivenBackAtItsCapStaysWithinIt(): void
+    {
+        $pastes = [];
+        $buffer = new StdinBuffer(
+            onSequence: static function (): void {},
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = strlen($content); },
+        );
+
+        $buffer->process("\x1b[200~x");
+        $buffer->flush();
+        $buffer->process(str_repeat('a', StdinBuffer::MAX_PASTE_SIZE) . "\x1b[20");
+        $buffer->flush();
+
+        self::assertSame([1, StdinBuffer::MAX_PASTE_SIZE], $pastes);
     }
 
     #[Test]
@@ -412,6 +515,22 @@ final class StdinBufferTest extends TestCase
         $buffer->flush();
 
         $this->assertSame(["\x1b", "\x1b"], $sequences);
+    }
+
+    #[Test]
+    public function anIntroducerHeldUntilFlushIsHandedOnWithTheEscape(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b[");
+        $buffer->flush();
+        $buffer->process("\x1bO");
+        $buffer->flush();
+
+        $this->assertSame(["\x1b[", "\x1bO"], $sequences);
     }
 
     #[Test]
