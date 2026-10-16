@@ -112,6 +112,14 @@ final class KittyParserTest extends TestCase
     public function superHeldDownIsNotDeliveredAsAPlainLetter(): void
     {
         self::assertNull(InputParser::parseSequence("\x1b[97;9u"), 'cmd+a is not an a');
+        self::assertNull(InputParser::parseSequence("\x1b[97;17u"), 'hyper');
+        self::assertNull(InputParser::parseSequence("\x1b[97;33u"), 'meta');
+    }
+
+    #[Test]
+    public function anEmptyModifierFieldIsAnUnmodifiedPress(): void
+    {
+        self::assertEquals(new KeyMsg('a'), InputParser::parseSequence("\x1b[97;;97u"));
     }
 
     /**

@@ -1469,6 +1469,55 @@ final class InputParserTest extends TestCase
         self::assertTrue($enter->alt, 'legacy alt+Enter is one key, not an escape swallowing Enter');
     }
 
+    /**
+     * @return iterable<string, array{string, KeyMsg}>
+     */
+    public static function altControlComboProvider(): iterable
+    {
+        yield 'ctrl+alt+z, the last letter' => ["\x1b\x1a", new KeyMsg('z', ctrl: true, alt: true)];
+        yield 'ctrl+alt+g, below backspace' => ["\x1b\x07", new KeyMsg('g', ctrl: true, alt: true)];
+        yield 'alt+backspace as BS' => ["\x1b\x08", new KeyMsg(Key::Backspace, alt: true)];
+        yield 'alt+enter as LF' => ["\x1b\x0a", new KeyMsg(Key::Enter, alt: true)];
+        yield 'ctrl+alt+k, above LF' => ["\x1b\x0b", new KeyMsg('k', ctrl: true, alt: true)];
+    }
+
+    #[DataProvider('altControlComboProvider')]
+    #[Test]
+    public function aControlByteAfterEscapeNamesItsKeyWithAlt(string $input, KeyMsg $expected): void
+    {
+        self::assertEquals([$expected], InputParser::parse($input)->messages);
+    }
+
+    /**
+     * @return iterable<string, array{int, bool, bool, bool}>
+     */
+    public static function mouseModifierProvider(): iterable
+    {
+        yield 'none, middle button' => [1, false, false, false];
+        yield 'shift' => [1 | 4, true, false, false];
+        yield 'alt' => [1 | 8, false, true, false];
+        yield 'ctrl' => [1 | 16, false, false, true];
+    }
+
+    #[DataProvider('mouseModifierProvider')]
+    #[Test]
+    public function bothMouseEncodingsCarryEachModifierOnItsOwnBit(int $buttonCode, bool $shift, bool $alt, bool $ctrl): void
+    {
+        $x10 = InputParser::parse("\x1b[M" . chr(32 + $buttonCode) . '!!')->messages;
+        $sgr = InputParser::parse("\x1b[<{$buttonCode};1;1M")->messages;
+
+        $expected = [new MouseMsg(0, 0, MouseAction::Press, MouseButton::Middle, shift: $shift, alt: $alt, ctrl: $ctrl)];
+        self::assertEquals($expected, $x10);
+        self::assertEquals($expected, $sgr);
+    }
+
+    #[Test]
+    public function anSgrMouseReportWithAnEmptyFieldIsDropped(): void
+    {
+        self::assertSame([], InputParser::parse("\x1b[<0;;5M")->messages);
+        self::assertSame([], InputParser::parse("\x1b[<;5;5M")->messages);
+    }
+
     // ===================================================================
     // CSI continue after successful parse (L43)
     // ===================================================================
@@ -2206,6 +2255,14 @@ final class InputParserTest extends TestCase
         $result = InputParser::parseSequence("\x1b[27;2;13~");
 
         self::assertEquals(new KeyMsg(Key::Enter, shift: true), $result);
+        self::assertNull(InputParser::parseSequence("\x1b[127;5;13~"), 'a parameter that only ends in 27 is no modifyOtherKeys report');
+    }
+
+    #[Test]
+    public function altOAndAltBracketHeldUntilATimeoutArriveAsAltCombos(): void
+    {
+        self::assertEquals(new KeyMsg('O', alt: true), InputParser::parseSequence("\x1bO"));
+        self::assertEquals(new KeyMsg('[', alt: true), InputParser::parseSequence("\x1b["));
     }
 
     #[Test]

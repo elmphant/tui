@@ -20,6 +20,10 @@ final class InputParser
 {
     public static function parseSequence(string $sequence): ?Message
     {
+        if ($sequence === "\x1b[" || $sequence === "\x1bO") {
+            return new KeyMsg($sequence[1], alt: true);
+        }
+
         if (str_starts_with($sequence, "\x1b[")) {
             return self::parseSequenceCsi($sequence);
         }
@@ -31,10 +35,6 @@ final class InputParser
 
     public static function parse(string $raw, bool $flush = false): InputParseResult
     {
-        if ($raw === '') {
-            return new InputParseResult([]);
-        }
-
         $messages = [];
         $length = strlen($raw);
         $position = 0;
@@ -214,23 +214,13 @@ final class InputParser
 
         // `?`, `>` and `=` open a device report. Only `<` belongs to a reader, on a
         // mouse press.
-        if (self::endsACsiSequence($final) && in_array($body[0] ?? '', ['?', '>', '='], true)) {
+        if (in_array($body[0] ?? '', ['?', '>', '='], true)) {
             return null;
         }
 
-        $decoded = self::parseCsi($sequence, 0, strlen($sequence));
-
-        if ($decoded !== null) {
-            return $decoded[0];
-        }
-
-        // A finished sequence we do not know is the terminal answering a question, and
-        // reading its bytes as text invents a keystroke. An unfinished one is still text.
-        if (self::endsACsiSequence($final)) {
-            return null;
-        }
-
-        return self::parse($sequence, flush: true)->messages[0] ?? null;
+        // A sequence we do not know is the terminal answering a question, and
+        // reading its bytes as text invents a keystroke.
+        return self::parseCsi($sequence, 0, strlen($sequence))[0] ?? null;
     }
 
     private static function wheelAction(int $base): MouseAction
@@ -241,11 +231,6 @@ final class InputParser
             2 => MouseAction::WheelLeft,
             default => MouseAction::WheelRight,
         };
-    }
-
-    private static function endsACsiSequence(string $byte): bool
-    {
-        return $byte !== '' && ord($byte) >= 0x40 && ord($byte) <= 0x7E;
     }
 
     private static function parseKittyCsiU(string $body): ?KeyMsg
@@ -332,14 +317,10 @@ final class InputParser
     {
         $position = $escapePosition + 2;
 
-        // An X10 mouse report carries three raw bytes after its final one, and any
-        // of them may look like a final byte itself.
+        // Only an X10 mouse report whose three raw bytes are still arriving gets
+        // here, and any of them may look like a final byte itself.
         if (($raw[$position] ?? '') === 'M') {
-            return $position + 4 <= $length ? $position + 4 : null;
-        }
-
-        if (($raw[$position] ?? '') === '<') {
-            ++$position;
+            return null;
         }
 
         while ($position < $length) {
@@ -358,11 +339,10 @@ final class InputParser
      */
     private static function parseCsi(string $raw, int $position, int $length): ?array
     {
-        $start = $position;
         $position += 2;
 
         if ($position < $length && $raw[$position] === '<') {
-            return self::parseSgrMouse($raw, $start, $position + 1, $length);
+            return self::parseSgrMouse($raw, $position + 1, $length);
         }
 
         if ($position < $length && $raw[$position] === 'M') {
@@ -378,9 +358,6 @@ final class InputParser
             }
             $parameters .= $raw[$position];
             ++$position;
-            if ($position - $start > 24) {
-                break;
-            }
         }
 
         if ($position >= $length) {
@@ -478,9 +455,9 @@ final class InputParser
     {
         $parts = explode(':', $modifierParam);
         $modifierValue = max(0, (int)$parts[0] - 1);
-        $eventType = match ((int)($parts[1] ?? 1)) {
-            2 => KeyEventType::Repeat,
-            3 => KeyEventType::Release,
+        $eventType = match ($parts[1] ?? null) {
+            '2' => KeyEventType::Repeat,
+            '3' => KeyEventType::Release,
             default => KeyEventType::Press,
         };
 
@@ -540,7 +517,7 @@ final class InputParser
     /**
      * @return array{MouseMsg, int}|null
      */
-    private static function parseSgrMouse(string $raw, int $start, int $position, int $length): ?array
+    private static function parseSgrMouse(string $raw, int $position, int $length): ?array
     {
         $parameters = '';
         while ($position < $length) {
@@ -550,9 +527,6 @@ final class InputParser
             }
             $parameters .= $character;
             ++$position;
-            if ($position - $start > 32) {
-                return null;
-            }
         }
 
         if ($position >= $length) {
@@ -562,17 +536,16 @@ final class InputParser
         $isRelease = $raw[$position] === 'm';
         ++$position;
 
-        $parts = explode(';', $parameters);
-        if (count($parts) !== 3) {
+        if (preg_match('/^(\d+);(\d+);(\d+)$/', $parameters, $fields) !== 1) {
             return null;
         }
 
-        $buttonCode = (int)$parts[0];
+        $buttonCode = (int)$fields[1];
         $shift = ($buttonCode & 4) !== 0;
         $alt = ($buttonCode & 8) !== 0;
         $ctrl = ($buttonCode & 16) !== 0;
-        $column = (int)$parts[1] - 1;
-        $row = (int)$parts[2] - 1;
+        $column = (int)$fields[2] - 1;
+        $row = (int)$fields[3] - 1;
         $hasMotion = (bool)($buttonCode & 32);
         $buttonBase = $buttonCode & 3;
 
