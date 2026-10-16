@@ -64,7 +64,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         private array $columns = [],
         private array $rows = [],
         private int $cursor = 0,
-        private int $selected = -1,
+        private ?int $selected = null,
         private int $scrollOffset = 0,
         private int $lineOffset = 0,
         private bool $followCursor = true,
@@ -155,9 +155,9 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         );
     }
 
-    public function withSelected(int $selected): self
+    public function withSelected(?int $selected): self
     {
-        return $this->cloneWith(selected: isset($this->rows[$selected]) ? $selected : -1);
+        return $this->cloneWith(selected: $selected !== null && isset($this->rows[$selected]) ? $selected : null);
     }
 
     /**
@@ -183,7 +183,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         return $this->cloneWith(cursor: max(0, min($cursor, $this->rowCount() - 1)), followCursor: true);
     }
 
-    public function selectedIndex(): int
+    public function selectedIndex(): ?int
     {
         return $this->selected;
     }
@@ -195,14 +195,14 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function selectedRow(): ?array
     {
-        $row = $this->rows[$this->selected] ?? null;
+        $row = $this->selectedTypedRow();
 
         return $row === null ? null : self::textOf($row);
     }
 
     public function selectedTypedRow(): ?Row
     {
-        return $this->rows[$this->selected] ?? null;
+        return $this->selected === null ? null : $this->rows[$this->selected] ?? null;
     }
 
     public function scrollOffset(): int
@@ -292,9 +292,9 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     private function cursorAfter(array $rows): int
     {
         $resting = $this->rows[$this->cursor] ?? null;
-        $place = $resting === null ? -1 : self::rowPlaceOf(self::textOf($resting), $rows);
+        $place = $resting === null ? null : self::rowPlaceOf(self::textOf($resting), $rows);
 
-        if ($place >= 0 && ($rows[$place]->selectable ?? true)) {
+        if ($place !== null && ($rows[$place]->selectable ?? true)) {
             return $place;
         }
 
@@ -641,15 +641,15 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     }
 
     /**
-     * -1 where no row reads like that any more. Rows reading alike count as one.
+     * Null where no row reads like that any more. Rows reading alike count as one.
      *
      * @param ?list<string> $text
      * @param list<Row>     $rows
      */
-    private static function rowPlaceOf(?array $text, array $rows): int
+    private static function rowPlaceOf(?array $text, array $rows): ?int
     {
         if ($text === null) {
-            return -1;
+            return null;
         }
 
         foreach ($rows as $place => $row) {
@@ -658,7 +658,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             }
         }
 
-        return -1;
+        return null;
     }
 
     private function ensureCursorVisible(Rect $area): self

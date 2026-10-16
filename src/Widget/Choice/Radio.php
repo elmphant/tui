@@ -37,7 +37,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     private function __construct(
         private array $options = [],
         private int $cursor = 0,
-        private int $selected = 0,
+        private ?int $selected = 0,
         private string $label = '',
         private string $emptyCaption = '',
         private ?Keybindings $customKeybindings = null,
@@ -72,14 +72,14 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         // choice to the first rather than to none.
         return $this->cloneWith(
             options: $options,
-            selected: max(0, Options::placeOf($this->selectedValue(), $options)),
+            selected: Options::placeOf($this->selectedValue(), $options) ?? 0,
             cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
         );
     }
 
-    public function withSelected(int $selected): self
+    public function withSelected(?int $selected): self
     {
-        return $this->cloneWith(selected: $selected);
+        return $this->cloneWith(selected: $selected !== null && isset($this->options[$selected]) ? $selected : null);
     }
 
     /**
@@ -88,7 +88,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
      */
     public function withSelectedValue(?string $value): self
     {
-        return $this->cloneWith(selected: max(0, Options::placeOf($value, $this->options)));
+        return $this->cloneWith(selected: Options::placeOf($value, $this->options) ?? 0);
     }
 
     public function withLabel(string $label): self
@@ -111,14 +111,14 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         return $this->cloneWith(cursor: $cursor);
     }
 
-    public function selectedIndex(): int
+    public function selectedIndex(): ?int
     {
         return $this->selected;
     }
 
     public function selectedValue(): ?string
     {
-        return $this->options[$this->selected] ?? null;
+        return $this->selected === null ? null : $this->options[$this->selected] ?? null;
     }
 
     /**
@@ -127,7 +127,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
      */
     public function caption(): string
     {
-        return $this->options[$this->selected] ?? $this->emptyCaption;
+        return $this->selectedValue() ?? $this->emptyCaption;
     }
 
     public function hasChoice(): bool

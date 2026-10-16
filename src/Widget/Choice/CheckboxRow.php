@@ -83,7 +83,7 @@ final readonly class CheckboxRow implements OptionRow, PublishesHints
         foreach ($this->checkedIndices() as $index) {
             $place = Options::placeOf($this->options[$index] ?? null, $options);
 
-            if ($place >= 0) {
+            if ($place !== null) {
                 $ticked[$place] = true;
             }
         }

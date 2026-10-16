@@ -41,7 +41,7 @@ final class ListViewTest extends TestCase
     public function aSelectionPastTheLastItemSelectsNothing(): void
     {
         self::assertNull(ListView::fromStrings(['a', 'b'])->withSelected(9)->selectedItem());
-        self::assertSame(-1, ListView::fromStrings(['a', 'b'])->withSelected(9)->selectedIndex());
+        self::assertNull(ListView::fromStrings(['a', 'b'])->withSelected(9)->selectedIndex());
     }
 
     #[Test]
@@ -62,7 +62,7 @@ final class ListViewTest extends TestCase
         $replaced = $list->withItems([new SimpleListItem('a'), new SimpleListItem('b'), new SimpleListItem('c')]);
 
         self::assertSame(3, $replaced->itemCount());
-        self::assertSame(-1, $replaced->selectedIndex(), 'Nothing is selected to begin with');
+        self::assertNull($replaced->selectedIndex(), 'Nothing is selected to begin with');
         self::assertSame(1, $replaced->withSelected(1)->selectedIndex());
     }
 
@@ -441,7 +441,7 @@ final class ListViewTest extends TestCase
     public function selectedStartsAtMinusOne(): void
     {
         $list = ListView::fromStrings(['A', 'B']);
-        self::assertSame(-1, $list->selectedIndex());
+        self::assertNull($list->selectedIndex());
     }
 
     // --- L94: MatchArmRemoval — empty list update returns self unchanged ---

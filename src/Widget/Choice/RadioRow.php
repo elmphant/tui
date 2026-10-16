@@ -38,7 +38,7 @@ final readonly class RadioRow implements OptionRow, PublishesHints
      */
     public function __construct(
         private array $options = [],
-        private int $selected = -1,
+        private ?int $selected = null,
         private int $cursor = 0,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -134,9 +134,9 @@ final readonly class RadioRow implements OptionRow, PublishesHints
         return $this->cloneWith(cursor: $cursor);
     }
 
-    public function withSelected(int $selected): self
+    public function withSelected(?int $selected): self
     {
-        return $this->cloneWith(selected: $selected);
+        return $this->cloneWith(selected: $selected !== null && isset($this->options[$selected]) ? $selected : null);
     }
 
     /**
@@ -147,7 +147,7 @@ final readonly class RadioRow implements OptionRow, PublishesHints
     {
         $place = Options::placeOf($value, $this->options);
 
-        return $this->cloneWith(selected: $place, cursor: max(0, $place));
+        return $this->cloneWith(selected: $place, cursor: $place ?? 0);
     }
 
     public function sizing(): Sizing
@@ -163,14 +163,14 @@ final readonly class RadioRow implements OptionRow, PublishesHints
         return OptionRowLayout::height($this->entries(), $width);
     }
 
-    public function selectedIndex(): int
+    public function selectedIndex(): ?int
     {
         return $this->selected;
     }
 
     public function selectedValue(): ?string
     {
-        return $this->options[$this->selected] ?? null;
+        return $this->selected === null ? null : $this->options[$this->selected] ?? null;
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -241,9 +241,9 @@ final readonly class RadioRow implements OptionRow, PublishesHints
      * What a press lands on: the option it went to, or nothing at all when that is
      * the one already picked and this row may be cleared.
      */
-    private function picking(int $index): int
+    private function picking(int $index): ?int
     {
-        return $this->clearable && $this->selected === $index ? -1 : $index;
+        return $this->clearable && $this->selected === $index ? null : $index;
     }
 
     /**

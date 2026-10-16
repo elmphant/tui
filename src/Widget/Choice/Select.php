@@ -34,7 +34,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
     private function __construct(
         private array $options = [],
         private int $cursor = 0,
-        private int $selected = -1,
+        private ?int $selected = null,
         private string $emptyCaption = '',
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -71,9 +71,9 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         );
     }
 
-    public function withSelected(int $selected): self
+    public function withSelected(?int $selected): self
     {
-        return $this->cloneWith(selected: $selected);
+        return $this->cloneWith(selected: $selected !== null && isset($this->options[$selected]) ? $selected : null);
     }
 
     /**
@@ -100,19 +100,19 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $this->cloneWith(cursor: $cursor);
     }
 
-    public function selectedIndex(): int
+    public function selectedIndex(): ?int
     {
         return $this->selected;
     }
 
     public function selectedValue(): ?string
     {
-        return $this->options[$this->selected] ?? null;
+        return $this->selected === null ? null : $this->options[$this->selected] ?? null;
     }
 
     public function caption(): string
     {
-        return $this->options[$this->selected] ?? $this->emptyCaption;
+        return $this->selectedValue() ?? $this->emptyCaption;
     }
 
     public function hasChoice(): bool

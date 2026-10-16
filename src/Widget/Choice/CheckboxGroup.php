@@ -73,7 +73,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         foreach ($this->checkedValues() as $value) {
             $place = Options::placeOf($value, $options);
 
-            if ($place >= 0) {
+            if ($place !== null) {
                 $checked[] = $place;
             }
         }
@@ -105,7 +105,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         foreach ($values as $value) {
             $place = Options::placeOf($value, $this->options);
 
-            if ($place >= 0) {
+            if ($place !== null) {
                 $checked[] = $place;
             }
         }

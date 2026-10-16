@@ -97,7 +97,7 @@ final class SelectTest extends TestCase
 
         $cleared = $select->update(new KeyMsg(Key::Enter), $area)->model;
 
-        self::assertSame(-1, $cleared->selectedIndex(), 'pressing the one already picked puts it back down');
+        self::assertNull($cleared->selectedIndex(), 'pressing the one already picked puts it back down');
         self::assertNull($cleared->selectedValue());
     }
 
@@ -116,7 +116,7 @@ final class SelectTest extends TestCase
     {
         $select = Select::new(['A', 'B', 'C'])->withClearable()->withSelected(0);
 
-        self::assertSame(-1, $select->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
+        self::assertNull($select->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
     }
 
     #[Test]
@@ -217,7 +217,7 @@ final class SelectTest extends TestCase
     public function defaultSelectedIsMinusOne(): void
     {
         $select = Select::new(['A', 'B', 'C']);
-        self::assertSame(-1, $select->selectedIndex());
+        self::assertNull($select->selectedIndex());
     }
 
     #[Test]

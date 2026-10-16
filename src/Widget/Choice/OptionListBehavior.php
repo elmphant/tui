@@ -140,8 +140,8 @@ trait OptionListBehavior
      * What a press lands on: the option it went to, or nothing at all when that is
      * the one already picked and this list may be cleared.
      */
-    private function picking(int $index): int
+    private function picking(int $index): ?int
     {
-        return $this->clearable && $this->selected === $index ? -1 : $index;
+        return $this->clearable && $this->selected === $index ? null : $index;
     }
 }

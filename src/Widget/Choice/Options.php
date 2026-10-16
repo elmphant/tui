@@ -28,20 +28,20 @@ final class Options
     }
 
     /**
-     * -1 where the value is gone. Options read differently from one another, so a
-     * value that is there names one place and only one.
+     * Null where the value is gone. Options read differently from one another, so
+     * a value that is there names one place and only one.
      *
      * @param list<string> $options
      */
-    public static function placeOf(?string $value, array $options): int
+    public static function placeOf(?string $value, array $options): ?int
     {
         if ($value === null) {
-            return -1;
+            return null;
         }
 
         $place = array_search($value, $options, true);
 
-        return $place === false ? -1 : $place;
+        return $place === false ? null : $place;
     }
 
     /**
@@ -51,6 +51,6 @@ final class Options
      */
     public static function cursorAfter(?string $under, array $options): int
     {
-        return max(0, self::placeOf($under, $options));
+        return self::placeOf($under, $options) ?? 0;
     }
 }

@@ -391,7 +391,7 @@ final class TableTest extends TestCase
     {
         $table = Table\Table::new([Column::new('Name', Constraint::flex())], [Row::new('Alice'), Row::new('Bob')]);
 
-        self::assertSame(-1, $table->withSelected(9)->selectedIndex());
+        self::assertNull($table->withSelected(9)->selectedIndex());
     }
 
     #[Test]
@@ -721,7 +721,7 @@ final class TableTest extends TestCase
     public function selectedStartsAtMinusOne(): void
     {
         $table = $this->createTable();
-        self::assertSame(-1, $table->selectedIndex());
+        self::assertNull($table->selectedIndex());
     }
 
     // --- L59: DecrementInteger — fromRows initial cursor = 0 when first row is selectable ---
@@ -3453,7 +3453,7 @@ final class TableTest extends TestCase
             [['one'], ['two'], ['three']],
         )->withCursor(1);
 
-        self::assertSame(-1, $table->selectedIndex(), 'Nothing is selected to begin with');
+        self::assertNull($table->selectedIndex(), 'Nothing is selected to begin with');
 
         $selected = $table->update(new KeyMsg(Key::Enter), $area)->model;
         self::assertInstanceOf(Table\Table::class, $selected);

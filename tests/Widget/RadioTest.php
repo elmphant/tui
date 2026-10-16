@@ -71,7 +71,7 @@ final class RadioTest extends TestCase
     {
         $radio = Radio::new(['A', 'B', 'C'])->withClearable()->withSelected(0);
 
-        self::assertSame(-1, $radio->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
+        self::assertNull($radio->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
     }
 
     #[Test]
@@ -280,7 +280,7 @@ final class RadioTest extends TestCase
 
         $cleared = $radio->update(new KeyMsg(' '), $area)->model;
 
-        self::assertSame(-1, $cleared->selectedIndex(), 'pressing the one already picked puts it back down');
+        self::assertNull($cleared->selectedIndex(), 'pressing the one already picked puts it back down');
     }
 
     #[Test]
@@ -291,7 +291,7 @@ final class RadioTest extends TestCase
 
         $cleared = $radio->update(new MouseMsg(5, 8, MouseAction::Press, MouseButton::Left), $area)->model;
 
-        self::assertSame(-1, $cleared->selectedIndex());
+        self::assertNull($cleared->selectedIndex());
         self::assertSame(1, $cleared->cursor(), 'the cursor still rests where the pointer left it');
     }
 

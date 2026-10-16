@@ -55,7 +55,7 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     private function __construct(
         private array $items = [],
         private int $cursor = 0,
-        private int $selected = -1,
+        private ?int $selected = null,
         private int $scrollOffset = 0,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -106,13 +106,13 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
             items: $items,
             rowIndex: RowIndex::of(count($items)),
             selected: self::placeOf($this->selectedItem(), $items),
-            cursor: max(0, self::placeOf($this->items[$this->cursor] ?? null, $items)),
+            cursor: self::placeOf($this->items[$this->cursor] ?? null, $items) ?? 0,
         );
     }
 
-    public function withSelected(int $selected): self
+    public function withSelected(?int $selected): self
     {
-        return $this->cloneWith(selected: isset($this->items[$selected]) ? $selected : -1);
+        return $this->cloneWith(selected: $selected !== null && isset($this->items[$selected]) ? $selected : null);
     }
 
     /**
@@ -140,14 +140,14 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         return $this->cloneWith(cursor: max(0, min($cursor, count($this->items) - 1)), followCursor: true);
     }
 
-    public function selectedIndex(): int
+    public function selectedIndex(): ?int
     {
         return $this->selected;
     }
 
     public function selectedItem(): ?ListItem
     {
-        return $this->items[$this->selected] ?? null;
+        return $this->selected === null ? null : $this->items[$this->selected] ?? null;
     }
 
     public function scrollOffset(): int
@@ -505,14 +505,14 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * -1 where the item is gone. Two items filtering alike count as the same record.
+     * Null where the item is gone. Two items filtering alike count as the same record.
      *
      * @param list<ListItem> $items
      */
-    private static function placeOf(?ListItem $item, array $items): int
+    private static function placeOf(?ListItem $item, array $items): ?int
     {
         if ($item === null) {
-            return -1;
+            return null;
         }
 
         $wanted = $item->filterValue();
@@ -522,6 +522,6 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
             }
         }
 
-        return -1;
+        return null;
     }
 }
