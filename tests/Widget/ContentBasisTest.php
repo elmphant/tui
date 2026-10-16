@@ -40,6 +40,12 @@ final class ContentBasisTest extends TestCase
     }
 
     #[Test]
+    public function aSingleColumnIsStillRoomToMeasureIn(): void
+    {
+        self::assertSame(9, ContentBasis::of($this->measuring(9), Constraint::flex(), Direction::Vertical, 1));
+    }
+
+    #[Test]
     public function acrossARowAChildIsNotMeasured(): void
     {
         $basis = ContentBasis::of($this->measuring(9), Constraint::min(2), Direction::Horizontal, 20);

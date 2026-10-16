@@ -105,16 +105,9 @@ final class VerticalStack
 
         $policies = [];
         foreach ($constraints as $index => $constraint) {
-            // What was measured is a floor, so a stack never shrinks a child
-            // below the rows it needs; a declared basis is only a starting size,
-            // and neither measurement nor basis lifts a declared ceiling.
-            $floor = null === $constraint->basis
-                ? min($bases[$index], $constraint->max)
-                : $constraint->min;
-
             $policies[] = new ItemPolicy(
                 basis: $bases[$index],
-                min: $floor,
+                min: $constraint->min,
                 max: $constraint->max,
                 grow: $constraint->flex,
             );

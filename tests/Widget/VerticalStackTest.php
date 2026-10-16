@@ -45,6 +45,24 @@ final class VerticalStackTest extends TestCase
     }
 
     #[Test]
+    public function aViewportWhoseDigitsRunTogetherIsStillADifferentViewport(): void
+    {
+        $child = new CountingStackWidget(Constraint::flex(), new VerticalStackCalls());
+        $memo = new KeyedCache();
+
+        self::assertSame([23], VerticalStack::layoutUsing($memo, [$child], 1, 23)->heights);
+        self::assertSame([3], VerticalStack::layoutUsing($memo, [$child], 12, 3)->heights);
+    }
+
+    #[Test]
+    public function aChildWithACeilingOfNothingIsGivenNoRow(): void
+    {
+        $child = new CountingStackWidget(Constraint::max(0), new VerticalStackCalls());
+
+        self::assertSame([0], $this->heightsOf([$child], 80, 5));
+    }
+
+    #[Test]
     public function aFreshCacheMeasuresTheStackAgain(): void
     {
         $calls = new VerticalStackCalls();
