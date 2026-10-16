@@ -5,26 +5,17 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Feedback\Spinner;
 use Elmphant\Tui\Widget\Feedback\SpinnerStyle;
-use Elmphant\Tui\Widget\Interactive;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class SpinnerTest extends TestCase
 {
-    #[Test]
-    public function implementsInteractive(): void
-    {
-        self::assertInstanceOf(Interactive::class, Spinner::new());
-    }
-
     #[Test]
     public function constraintIsExactOne(): void
     {
@@ -133,15 +124,6 @@ final class SpinnerTest extends TestCase
     }
 
     #[Test]
-    public function tickMessagesNeverChangeTheSpinner(): void
-    {
-        $spinner = Spinner::new();
-        $result = $spinner->update(new TickMsg(0.0), new Rect(0, 0, 20, 1));
-
-        self::assertSame($spinner, $result->model);
-    }
-
-    #[Test]
     public function lineStyleUsesLineFrames(): void
     {
         $frame = new Frame(20, 1);
@@ -150,15 +132,6 @@ final class SpinnerTest extends TestCase
         $spinner->render($frame, new Rect(0, 0, 20, 1), $context);
 
         self::assertSame('-', $frame->characters[0]);
-    }
-
-    #[Test]
-    public function ignoresNonTickMessages(): void
-    {
-        $spinner = Spinner::new();
-        $result = $spinner->update(new TestMessage('random'), new Rect(0, 0, 20, 1));
-
-        self::assertSame($spinner, $result->model);
     }
 
     #[Test]

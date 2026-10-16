@@ -9,11 +9,17 @@ use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\ComponentRegistry;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Widget\Feedback\Spinner;
+use Elmphant\Tui\Rendering\Context\RenderContext;
+use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
 use LogicException;
@@ -27,8 +33,8 @@ final class ComponentTest extends TestCase
     {
         $component = Component::bind(
             'search',
-            Spinner::new(),
-            static fn (ComponentContractApp $app, Spinner $spinner): ComponentContractApp => $app,
+            TextInput::new(),
+            static fn (ComponentContractApp $app, TextInput $field): ComponentContractApp => $app,
         );
 
         self::assertSame('search', $component->id->value);
@@ -58,8 +64,8 @@ final class ComponentTest extends TestCase
 
         Component::bind(
             '',
-            Spinner::new(),
-            static fn (ComponentContractApp $app, Spinner $spinner): ComponentContractApp => $app,
+            TextInput::new(),
+            static fn (ComponentContractApp $app, TextInput $field): ComponentContractApp => $app,
         );
     }
 
@@ -94,14 +100,14 @@ final class ComponentTest extends TestCase
     public function registryFocusablesFiltersNonFocusableComponentsAndReindexesTheList(): void
     {
         $app = new ComponentContractApp(TextInput::new());
-        $spinner = Component::bind(
-            ComponentId::named('spinner'),
-            Spinner::new(),
-            static fn (App $current, Spinner $spinner): App => $current,
+        $passive = Component::bind(
+            ComponentId::named('passive'),
+            new PassiveInteractive(),
+            static fn (App $current, PassiveInteractive $widget): App => $current,
         );
         $input = $app->binding();
 
-        $focusables = ComponentRegistry::from([$spinner, $input])->focusables();
+        $focusables = ComponentRegistry::from([$passive, $input])->focusables();
 
         self::assertSame([$input], $focusables);
         self::assertSame([0], array_keys($focusables));
@@ -242,6 +248,23 @@ final class ComponentTest extends TestCase
         $this->expectExceptionMessage('Component "typed" had nowhere to store its update: its replacement gave the model back unchanged');
 
         $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('typed')));
+    }
+}
+
+final readonly class PassiveInteractive implements Interactive
+{
+    public function sizing(): Sizing
+    {
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return UpdateResult::keep($this);
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
     }
 }
 

@@ -18,7 +18,6 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\Feedback\Spinner;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -37,17 +36,17 @@ final class ComponentTreeTest extends TestCase
     public function registryDiscoversNestedComponentNodesInVisualOrder(): void
     {
         $app = new TreeComponentApp(TextInput::new());
-        $spinner = Component::bind(
-            ComponentId::named('spinner'),
-            Spinner::new(),
-            static fn (App $current, Spinner $spinner): App => $current,
+        $probe = Component::bind(
+            ComponentId::named('probe'),
+            new ComponentRenderProbe(),
+            static fn (App $current, ComponentRenderProbe $probe): App => $current,
         );
         $input = $app->inputNode();
-        $root = Layout::vertical($spinner, Layout::horizontal($input));
+        $root = Layout::vertical($probe, Layout::horizontal($input));
 
         $registry = ComponentRegistry::fromWidget($root);
 
-        self::assertSame([$spinner, $input], $registry->all());
+        self::assertSame([$probe, $input], $registry->all());
         self::assertSame([$input], $registry->focusables());
     }
 
@@ -116,13 +115,13 @@ final class ComponentTreeTest extends TestCase
     {
         $spinner = Component::bind(
             ComponentId::named('spinner'),
-            Spinner::new(),
-            static fn (App $current, Spinner $spinner): App => $current,
+            TextInput::new(),
+            static fn (App $current, TextInput $field): App => $current,
         );
         $status = Component::bind(
             ComponentId::named('status'),
-            Spinner::new(),
-            static fn (App $current, Spinner $spinner): App => $current,
+            TextInput::new(),
+            static fn (App $current, TextInput $field): App => $current,
         );
         $input = (new TreeComponentApp(TextInput::new()))->inputNode();
 
@@ -136,13 +135,13 @@ final class ComponentTreeTest extends TestCase
     {
         $behind = Component::bind(
             ComponentId::named('behind'),
-            Spinner::new(),
-            static fn (App $current, Spinner $spinner): App => $current,
+            TextInput::new(),
+            static fn (App $current, TextInput $field): App => $current,
         );
         $inside = Component::bind(
             ComponentId::named('inside'),
-            Spinner::new(),
-            static fn (App $current, Spinner $spinner): App => $current,
+            TextInput::new(),
+            static fn (App $current, TextInput $field): App => $current,
         );
 
         $registry = ComponentRegistry::fromWidget(

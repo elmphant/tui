@@ -37,11 +37,6 @@ interface Terminal extends TerminalOutput
      */
     public function size(): array;
 
-    /**
-     * @return array{int, int}|null [width, height] or null on failure
-     */
-    public function probeSize(): ?array;
-
     public function colorProfile(): ColorProfile;
 
     public function detectColorScheme(): ?ColorScheme;
@@ -50,8 +45,6 @@ interface Terminal extends TerminalOutput
      * Null once the input is closed and everything sent before has been read.
      */
     public function readInput(): ?string;
-
-    public function waitForInput(int $timeoutMicroseconds): bool;
 
     public function write(string $data): void;
 

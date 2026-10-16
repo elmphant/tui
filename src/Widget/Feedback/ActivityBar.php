@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Feedback;
 
-use Elmphant\Tui\Core\Message;
-use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -13,9 +11,9 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
-use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Widget;
 
-final readonly class ActivityBar implements Interactive
+final readonly class ActivityBar implements Widget
 {
     use Cloneable;
 
@@ -56,11 +54,6 @@ final readonly class ActivityBar implements Interactive
         $label = $this->label === '' ? 0 : CharWidth::stringWidth($this->label) + 1;
 
         return Sizing::of(Constraint::flex()->withBasis($label + $this->barWidth), Constraint::exact(1));
-    }
-
-    public function update(Message $message, Rect $area): UpdateResult
-    {
-        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

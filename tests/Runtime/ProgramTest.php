@@ -3108,11 +3108,6 @@ final class ProgramTest extends TestCase
                 return [80, 24];
             }
 
-            public function probeSize(): ?array
-            {
-                return [80, 24];
-            }
-
             public function colorProfile(): ColorProfile
             {
                 return ColorProfile::TrueColor;
@@ -3126,11 +3121,6 @@ final class ProgramTest extends TestCase
             public function readInput(): string
             {
                 return '';
-            }
-
-            public function waitForInput(int $timeoutMicroseconds): bool
-            {
-                return false;
             }
 
             public function write(string $data): void

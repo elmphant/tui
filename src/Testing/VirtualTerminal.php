@@ -19,7 +19,6 @@ final class VirtualTerminal implements Terminal
     private bool $cursorVisible = true;
     private bool $mouseTrackingEnabled = false;
     private int $sizeCalls = 0;
-    private int $probeSizeCalls = 0;
 
     /**
      * @var resource
@@ -176,24 +175,9 @@ final class VirtualTerminal implements Terminal
         return [$this->width, $this->height];
     }
 
-    /**
-     * @return array{int, int}|null
-     */
-    public function probeSize(): ?array
-    {
-        ++$this->probeSizeCalls;
-
-        return [$this->width, $this->height];
-    }
-
     public function sizeCallCount(): int
     {
         return $this->sizeCalls;
-    }
-
-    public function probeSizeCallCount(): int
-    {
-        return $this->probeSizeCalls;
     }
 
     public function colorProfile(): ColorProfile
@@ -211,20 +195,6 @@ final class VirtualTerminal implements Terminal
         $input = (string)@fread($this->readPipe, 4096);
 
         return $input === '' && feof($this->readPipe) ? null : $input;
-    }
-
-    public function waitForInput(int $timeoutMicroseconds): bool
-    {
-        $read = [$this->readPipe];
-        $write = $except = null;
-
-        return @stream_select(
-            $read,
-            $write,
-            $except,
-            (int)($timeoutMicroseconds / 1_000_000),
-            $timeoutMicroseconds % 1_000_000,
-        ) > 0;
     }
 
     public function write(string $data): void

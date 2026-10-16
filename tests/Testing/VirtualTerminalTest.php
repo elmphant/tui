@@ -63,27 +63,6 @@ final class VirtualTerminalTest extends TestCase
     }
 
     #[Test]
-    public function waitForInputReturnsTrueWhenBuffered(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $terminal->simulateInput('x');
-        $this->assertTrue($terminal->waitForInput(0));
-    }
-
-    #[Test]
-    public function waitForInputWaitsAsLongAsItWasAskedTo(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-
-        $startedAt = hrtime(true);
-        $answered = $terminal->waitForInput(30_000);
-        $elapsedMicroseconds = (hrtime(true) - $startedAt) / 1_000;
-
-        self::assertFalse($answered);
-        self::assertGreaterThan(20_000, $elapsedMicroseconds, 'a timeout it ignores makes a test that waits for output pass by luck');
-    }
-
-    #[Test]
     public function queryKittyProtocolWritesQuerySequence(): void
     {
         $terminal = new VirtualTerminal(80, 24);

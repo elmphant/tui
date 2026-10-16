@@ -6,49 +6,20 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Feedback\ActivityBar;
-use Elmphant\Tui\Widget\Interactive;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class ActivityBarTest extends TestCase
 {
     #[Test]
-    public function implementsInteractive(): void
-    {
-        self::assertInstanceOf(Interactive::class, ActivityBar::new());
-    }
-
-    #[Test]
     public function constraintIsExactOne(): void
     {
         self::assertEquals(Constraint::exact(1), ActivityBar::new()->sizing()->rows);
-    }
-
-    #[Test]
-    public function tickMessagesNeverChangeTheBar(): void
-    {
-        $bar = ActivityBar::new();
-
-        $result = $bar->update(new TickMsg(1.0), Rect::fromSize(40, 1));
-
-        self::assertSame($bar, $result->model);
-    }
-
-    #[Test]
-    public function keyMessagesNeverChangeTheBar(): void
-    {
-        $bar = ActivityBar::new();
-
-        $result = $bar->update(new KeyMsg('a'), Rect::fromSize(40, 1));
-
-        self::assertSame($bar, $result->model);
     }
 
     #[Test]
