@@ -214,7 +214,7 @@ final class ModelHarness
     private static function messagesIn(?Cmd $command): array
     {
         if ($command instanceof MappedCmd) {
-            return self::messagesIn($command->inner);
+            return array_map($command->wrap, self::messagesIn($command->inner));
         }
 
         if ($command instanceof BatchCmd) {
