@@ -41,6 +41,7 @@ final class ProcessStarter
             $command->id,
             $command->outputChunkBytes,
             $wrap,
+            $command->framesLines,
         );
     }
 

@@ -300,6 +300,48 @@ final class RunningStreamingProcessTest extends TestCase
     }
 
     #[Test]
+    public function aFramedStreamDeliversOnlyWholeLinesAndTheUnterminatedTailWhenTheChildEnds(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls("one\ntw", "o\nthr", '', '');
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturnOnConsecutiveCalls(true, true, false);
+        $process->method('getExitCode')->willReturn(0);
+        $process->method('isSuccessful')->willReturn(true);
+        $running = new RunningStreamingProcess($process, null, framesLines: true);
+
+        self::assertSame(["one\n"], self::outputsOf($running->pump()));
+        self::assertSame(["two\n"], self::outputsOf($running->pump()));
+        $last = $running->pump();
+        self::assertSame(['thr'], self::outputsOf($last));
+        self::assertInstanceOf(ProcessFinishedMsg::class, $last[1]);
+    }
+
+    #[Test]
+    public function aCharacterSplitAcrossTwoReadsArrivesWhole(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls("a\xC3", "\xA9b");
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(true);
+        $running = new RunningStreamingProcess($process, null);
+
+        self::assertSame(['a'], self::outputsOf($running->pump()));
+        self::assertSame(['éb'], self::outputsOf($running->pump()));
+    }
+
+    #[Test]
+    public function aChunkNeverEndsInsideACharacter(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturn('aéb');
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(true);
+
+        self::assertSame(['a', 'é', 'b'], self::outputsOf((new RunningStreamingProcess($process, null, 2))->pump()));
+    }
+
+    #[Test]
     public function aFloodIsHandedOnOneBatchAtATimeSoAKeyNeverWaitsBehindAllOfIt(): void
     {
         $process = new Process([PHP_BINARY, '-r', 'for ($line = 0; $line < 300; ++$line) { echo str_pad((string)$line, 1023, "-"), "\n"; } sleep(5);']);
@@ -354,6 +396,23 @@ final class RunningStreamingProcessTest extends TestCase
         $process->expects(self::once())->method('stop')->with(0.05);
 
         (new RunningStreamingProcess($process, null))->stop();
+    }
+
+    /**
+     * @param list<Message> $messages
+     *
+     * @return list<string>
+     */
+    private static function outputsOf(array $messages): array
+    {
+        $outputs = [];
+        foreach ($messages as $message) {
+            if ($message instanceof ProcessOutputMsg) {
+                $outputs[] = $message->output;
+            }
+        }
+
+        return $outputs;
     }
 
     private static function envelope(Message $message): MessageEnvelope

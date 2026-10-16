@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Runtime\ProcessStarter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -41,5 +42,25 @@ final class ProcessStarterTest extends TestCase
         $running = (new ProcessStarter())->streaming(Cmd::process(['echo', 'hello']), null);
 
         self::assertTrue($running->isRunning());
+    }
+
+    #[Test]
+    public function aStreamAskedForLinesHandsOverALineWrittenInTwoGoesWhole(): void
+    {
+        $script = 'echo "on"; flush(); usleep(150000); echo "e\n";';
+        $running = (new ProcessStarter())->streaming(Cmd::process([PHP_BINARY, '-r', $script])->withLineFraming(), null);
+
+        $outputs = [];
+        $deadline = microtime(true) + 5.0;
+        while ($running->isRunning() && microtime(true) < $deadline) {
+            foreach ($running->pump() as $message) {
+                if ($message instanceof ProcessOutputMsg) {
+                    $outputs[] = $message->output;
+                }
+            }
+            usleep(10_000);
+        }
+
+        self::assertSame(["one\n"], $outputs);
     }
 }

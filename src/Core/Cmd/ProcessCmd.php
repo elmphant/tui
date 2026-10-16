@@ -27,6 +27,7 @@ final readonly class ProcessCmd extends Cmd implements NamesItsEffect
         public array $env = [],
         public ?string $input = null,
         public int $outputChunkBytes = 65_536,
+        public bool $framesLines = false,
     ) {
         if ($command === []) {
             throw new InvalidArgumentException('ProcessCmd requires a non-empty command array');
@@ -44,5 +45,14 @@ final readonly class ProcessCmd extends Cmd implements NamesItsEffect
     public function withOutputChunkBytes(int $outputChunkBytes): self
     {
         return $this->cloneWith(outputChunkBytes: $outputChunkBytes);
+    }
+
+    /**
+     * Each ProcessOutputMsg then holds whole lines, whatever the pipe reads cut; a
+     * last line with no newline arrives when the child ends. Chunk bytes no longer apply.
+     */
+    public function withLineFraming(bool $framesLines = true): self
+    {
+        return $this->cloneWith(framesLines: $framesLines);
     }
 }

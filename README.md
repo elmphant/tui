@@ -419,7 +419,11 @@ $message instanceof ProcessResultMsg
 
 ### `Cmd::process()` — Stream output
 
-Runs a command and streams output as it arrives. Sends bounded `ProcessOutputMsg` chunks (64 KiB by default), clears consumed Symfony Process buffers, and sends `ProcessFinishedMsg` when the process exits.
+Runs a command and streams output as it arrives. Sends bounded `ProcessOutputMsg` chunks (64 KiB by default, never cut inside a character), clears consumed Symfony Process buffers, and sends `ProcessFinishedMsg` when the process exits.
+
+A pipe read can stop in the middle of a line. When each line means something — JSON
+lines, a log — ask for `->withLineFraming()`: every `ProcessOutputMsg` then holds
+whole lines, and a last line without a newline arrives when the child ends.
 
 ```php fragment
 use Elmphant\Tui\Message\{ProcessOutputMsg, ProcessFinishedMsg, ProcessStream};
