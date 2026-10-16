@@ -45,6 +45,7 @@ use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\TabBar;
 use Elmphant\Tui\Widget\Structure\TabPage;
 use Elmphant\Tui\Widget\Widget;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionObject;
@@ -53,6 +54,15 @@ use ReflectionProperty;
 final class TabBarTest extends TestCase
 {
     // ── Basic construction & interface ──
+
+    #[Test]
+    public function aChildAddedBeforeAnyTabIsRefusedRatherThanLost(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('addTab()');
+
+        TabBar::new()->add(Text::line('orphan'));
+    }
 
     #[Test]
     public function aPreResolvedLayoutPlanDrawsExactlyWhatDirectLayoutDraws(): void
@@ -361,13 +371,6 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()->addTab('A')->addTab('B')->add(Text::new('Hello'));
         self::assertNotSame($tabBar, $tabBar->add(Text::new('World')));
-    }
-
-    #[Test]
-    public function addWithoutTabReturnsUnchanged(): void
-    {
-        $tabBar = TabBar::new();
-        self::assertSame($tabBar, $tabBar->add(Text::new('Orphan')));
     }
 
     #[Test]

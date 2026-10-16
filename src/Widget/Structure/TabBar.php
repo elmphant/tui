@@ -82,7 +82,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     public function add(Widget $child): self
     {
         if ($this->tabs === []) {
-            return $this;
+            throw new LogicException('TabBar::add() puts a child on the last tab, and there is none yet: call addTab() first');
         }
 
         $tabs = $this->tabs;
