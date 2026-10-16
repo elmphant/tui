@@ -8,6 +8,7 @@ use Elmphant\Tui\Layout\RowExtents;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\TextWrap;
+use WeakMap;
 
 /**
  * Row heights and wrapped cell lines, shared by rendering, hit-testing and
@@ -41,7 +42,7 @@ final readonly class TableLayout
         $heights = [];
 
         foreach ($rows as $row) {
-            $heights[] = self::heightOfRow($columnWidths, $row);
+            $heights[] = self::rememberedHeightOfRow($columnWidths, $row);
         }
 
         return new self($heights, array_sum($heights));
@@ -174,6 +175,38 @@ final readonly class TableLayout
         }
 
         return min($offset, max(0, count($this->heights) - 1));
+    }
+
+    /**
+     * A host that rebuilds its table every frame hands back the same Row
+     * objects, and a Row cannot change, so its height at given widths is
+     * remembered. Two layouts are kept per row: the full width and the one
+     * beside a scrollbar.
+     *
+     * @param list<int> $columnWidths
+     */
+    private static function rememberedHeightOfRow(array $columnWidths, Row $row): int
+    {
+        /** @var WeakMap<Row, array<string, int>>|null $measured */
+        static $measured = null;
+        $measured ??= new WeakMap();
+
+        $key = implode(',', $columnWidths);
+        /** @var array<string, int> $known */
+        $known = $measured[$row] ?? [];
+
+        if (isset($known[$key])) {
+            return $known[$key];
+        }
+
+        if (count($known) >= 2) {
+            unset($known[array_key_first($known)]);
+        }
+
+        $known[$key] = self::heightOfRow($columnWidths, $row);
+        $measured[$row] = $known;
+
+        return $known[$key];
     }
 
     private static function textOf(Row $row, int $columnIndex): string
