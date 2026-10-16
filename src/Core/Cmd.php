@@ -189,7 +189,7 @@ abstract readonly class Cmd
 
     /**
      * @param array<string, string> $headers
-     * @param array<string, mixed>  $options passed to the HTTP client; $options['timeout'] also bounds the whole request — past it the effect resolves as an ErrorMsg instead of idling forever
+     * @param array<string, mixed>  $options passed to the HTTP client; past $options['timeout'] seconds without data the effect resolves as an ErrorMsg instead of idling forever, and $options['max_duration'] bounds the whole request
      */
     public static function http(
         string $url,
