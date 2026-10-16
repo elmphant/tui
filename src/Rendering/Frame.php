@@ -199,9 +199,6 @@ final class Frame
         $start = $x;
 
         foreach ($line->spans as $span) {
-            if ($x >= $limit) {
-                break;
-            }
             $content = CharWidth::truncateToWidth($span->content, $limit - $x);
             if ($content === '') {
                 continue;
@@ -425,6 +422,9 @@ final class Frame
                 if ($source->widths[$sourceIndex] === 2 && $destinationX + 1 >= $this->width) {
                     continue;
                 }
+                if ($source->widths[$sourceIndex] === 0 && $destinationX === 0) {
+                    continue;
+                }
 
                 $this->repairOverwriteEdges($destinationBase, $destinationX, $destinationX + 1);
                 $destinationIndex = $destinationBase + $destinationX;
@@ -637,6 +637,9 @@ final class Frame
         $startByte = max(0, -$x);
         $writeColumn = max(0, $x);
         $end = min($this->width, $x + $length);
+        if ($writeColumn >= $end) {
+            return max(0, $end - $x);
+        }
 
         $this->repairOverwriteEdges($rowBase, $writeColumn, $end);
 
@@ -657,7 +660,7 @@ final class Frame
     private function putClippedAsciiString(int $x, int $y, string $text, Rect $clip, int $foreground, int $background, int $attributes): int
     {
         $length = strlen($text);
-        $from = max($x, $clip->x, 0);
+        $from = max($x, $clip->x);
         $to = min($x + $length, $clip->right(), $this->width);
         if ($from < $to) {
             $this->putAsciiString($from, $y, substr($text, $from - $x, $to - $from), $foreground, $background, $attributes);

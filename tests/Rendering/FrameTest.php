@@ -3646,4 +3646,144 @@ final class FrameTest extends TestCase
             self::assertTrue($frame->isRowDirty($row), "Row {$row} was forced dirty, so clear() must keep it dirty");
         }
     }
+
+    #[Test]
+    public function asciiStartingPastTheRightEdgeConsumesNothingAndLeavesTheRowClean(): void
+    {
+        $frame = new Frame(10, 1);
+        $frame->clearDirty();
+
+        self::assertSame(0, $frame->putString(12, 0, 'abc'));
+        self::assertFalse($frame->isRowDirty(0));
+
+        $frame->pushClip(new Rect(0, 0, 10, 1));
+        self::assertSame(0, $frame->putString(12, 0, 'abc'));
+    }
+
+    #[Test]
+    public function overlayLeavesTheCellAloneWhereOnlyTheRightHalfOfAWideCharacterLands(): void
+    {
+        $source = new Frame(2, 1);
+        $source->putString(0, 0, '中');
+        $destination = new Frame(4, 1);
+        $destination->putString(0, 0, 'abcd');
+
+        $destination->overlay($source, -1, 0);
+
+        self::assertSame('a', $destination->characters[0]);
+        self::assertSame(1, $destination->widths[0]);
+    }
+
+    #[Test]
+    public function aGraphemeWriteReportsOnlyTheColumnsUpToTheRightEdge(): void
+    {
+        $frame = new Frame(6, 1);
+
+        self::assertSame(2, $frame->putString(4, 0, 'ébc'));
+    }
+
+    #[Test]
+    public function aWideCharacterThatDoesNotFitLeavesTheRowClean(): void
+    {
+        $frame = new Frame(6, 1);
+        $frame->clearDirty();
+
+        $frame->putString(5, 0, '中');
+
+        self::assertFalse($frame->isRowDirty(0));
+    }
+
+    #[Test]
+    public function overlayDrawsAWideCharacterThatEndsInTheLastColumn(): void
+    {
+        $source = new Frame(2, 1);
+        $source->putString(0, 0, '中');
+        $destination = new Frame(5, 1);
+
+        $destination->overlay($source, 3, 0);
+
+        self::assertSame('中', $destination->characters[3]);
+        self::assertSame(2, $destination->widths[3]);
+    }
+
+    #[Test]
+    public function ansiTextKeepsCountingColumnsPastAWideCharacterTheClipCutInHalf(): void
+    {
+        $frame = new Frame(10, 1);
+        $frame->pushClip(new Rect(0, 0, 3, 1));
+
+        $end = $frame->putAnsi(0, 0, 'ab中cd');
+
+        self::assertSame([6, 0], $end);
+        self::assertSame('ab        ', implode('', array_slice($frame->characters, 0, 10)));
+    }
+
+    #[Test]
+    public function ansiCsiThatIsNotSgrLeavesTheStyleAlone(): void
+    {
+        $frame = new Frame(4, 1);
+
+        $frame->putAnsi(0, 0, "\e[2Kx");
+
+        self::assertSame(0, $frame->attributes[0]);
+    }
+
+    #[Test]
+    public function aTwoByteEscapeEndingInMLeavesTheStyleAlone(): void
+    {
+        $frame = new Frame(4, 1);
+
+        $frame->putAnsi(0, 0, "\e[31m\emx");
+
+        self::assertSame('x', $frame->characters[0]);
+        self::assertSame(Color::ANSI + 1, $frame->foregrounds[0]);
+    }
+
+    #[Test]
+    public function anSgrSequenceAfterTextReadsOnlyItsOwnParameters(): void
+    {
+        $frame = new Frame(10, 1);
+
+        $frame->putAnsi(0, 0, "ab\e[1;3m;4c");
+
+        self::assertSame(Attr::BOLD | Attr::ITALIC, $frame->attributes[2]);
+    }
+
+    #[Test]
+    public function aLineStartingLeftOfTheFrameShowsItsTail(): void
+    {
+        $frame = new Frame(6, 1);
+
+        $frame->putLine(-2, 0, Line::raw('abcdef'));
+
+        self::assertSame('cdef  ', implode('', $frame->characters));
+    }
+
+    #[Test]
+    public function aLineStopsAtItsMaximumWidthAcrossSpans(): void
+    {
+        $frame = new Frame(8, 1);
+
+        $drawn = $frame->putLine(2, 0, new Line([new Span('ab'), new Span(''), new Span('cdef')]), maxWidth: 3);
+
+        self::assertSame(3, $drawn);
+        self::assertSame('  abc   ', implode('', $frame->characters));
+    }
+
+    #[Test]
+    public function aLineStyleSitsBetweenTheBaseAndItsSpans(): void
+    {
+        $frame = new Frame(4, 1);
+        $line = new Line(
+            [new Span('a'), Span::styled('b', new Style(foreground: Color::hex('0000FF'), background: Color::hex('AAAAAA')))],
+            new Style(foreground: Color::hex('FF0000')),
+        );
+
+        $frame->putLine(0, 0, $line, new Style(foreground: Color::hex('00FF00'), background: Color::hex('222222')));
+
+        self::assertSame(Color::hex('FF0000')->value, $frame->foregrounds[0], 'the line colour covers the base');
+        self::assertSame(Color::hex('222222')->value, $frame->backgrounds[0], 'the base background shows where nothing covers it');
+        self::assertSame(Color::hex('0000FF')->value, $frame->foregrounds[1], 'a span colour covers the line');
+        self::assertSame(Color::hex('AAAAAA')->value, $frame->backgrounds[1], 'and a span background covers the base');
+    }
 }
