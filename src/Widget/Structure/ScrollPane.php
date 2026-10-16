@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget\Dispatch;
+namespace Elmphant\Tui\Widget\Structure;
 
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
@@ -25,16 +25,17 @@ use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focus\HoldsTheKeyboard;
+use Elmphant\Tui\Widget\Focus\Navigates;
+use Elmphant\Tui\Widget\Focus\Navigation;
 use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\FollowsTheKeyboard;
-use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\Layout\VerticalStack;
 use Elmphant\Tui\Widget\Layout\VerticalStackLayout;
 use Elmphant\Tui\Widget\MeasureHeight;
-use Elmphant\Tui\Widget\Navigates;
-use Elmphant\Tui\Widget\Navigation;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 

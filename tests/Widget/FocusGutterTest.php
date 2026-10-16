@@ -12,8 +12,8 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Field\TextInput;
-use Elmphant\Tui\Widget\Focus\FocusGutter;
 use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\FocusGutter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

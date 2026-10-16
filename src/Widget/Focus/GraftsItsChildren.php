@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Focus;
+
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
  * A container whose focusable children are each a stop on the ring in their own

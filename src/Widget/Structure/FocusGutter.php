@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget\Focus;
+namespace Elmphant\Tui\Widget\Structure;
 
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
@@ -13,8 +13,9 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
+use Elmphant\Tui\Widget\Focus\HoldsTheKeyboard;
 use Elmphant\Tui\Widget\Focusable;
-use Elmphant\Tui\Widget\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PlacedChildren;

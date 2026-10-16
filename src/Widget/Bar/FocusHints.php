@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget\Focus;
+namespace Elmphant\Tui\Widget\Bar;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Widget\Bar\StatusBar;
 use Elmphant\Tui\Widget\Widget;
 
 /**

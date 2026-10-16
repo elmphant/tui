@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget\Popup;
+namespace Elmphant\Tui\Widget\Focus;
 
 /**
  * A widget that owns input while it is on screen.

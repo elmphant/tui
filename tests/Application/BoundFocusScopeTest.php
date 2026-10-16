@@ -17,7 +17,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focus\FocusScope;
-use Elmphant\Tui\Widget\GraftsItsChildren;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Widget;

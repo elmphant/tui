@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget;
+namespace Elmphant\Tui\Widget\Focus;
 
 /**
  * A container that keeps the child the keyboard is in on screen. The runtime

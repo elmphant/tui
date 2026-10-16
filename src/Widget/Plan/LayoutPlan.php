@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Widget\Plan;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Context\PlannedLayout;
 use Elmphant\Tui\Widget\ClipsItsChildren;
-use Elmphant\Tui\Widget\Dispatch\SingleMount;
+use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;

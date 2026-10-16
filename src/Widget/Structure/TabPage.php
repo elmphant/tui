@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Structure;
 
 use Elmphant\Tui\Support\Cloneable;
-use Elmphant\Tui\Widget\Dispatch\ScrollPane;
 use Elmphant\Tui\Widget\Widget;
 
 final readonly class TabPage

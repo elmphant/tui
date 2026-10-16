@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Application;
 
 use Elmphant\Tui\Input\KeybindingsAware;
-use Elmphant\Tui\Widget\FollowsTheKeyboard;
+use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Interactive;
 use LogicException;
 

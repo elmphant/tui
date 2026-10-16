@@ -10,7 +10,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
-use Elmphant\Tui\Widget\Focus\FocusGutter;
+use Elmphant\Tui\Widget\Structure\FocusGutter;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
