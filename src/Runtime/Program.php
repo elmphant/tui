@@ -427,6 +427,15 @@ final class Program
                 $this->resume();
                 EventLoop::defer(fn () => $this->tick());
             }));
+
+            // Revolt installs the handlers on the loop's first tick; a resize before
+            // that is dropped, so the size is asked once more after it.
+            EventLoop::defer(function (): void {
+                if ($this->state === ProgramState::Running && $this->terminal->size() !== [$this->width, $this->height]) {
+                    $this->resizePending = true;
+                    $this->tick();
+                }
+            });
         } catch (UnsupportedFeatureException) {
             // The active EventLoop driver cannot watch signals; keep running
             // with whatever watchers were registered before the throw.

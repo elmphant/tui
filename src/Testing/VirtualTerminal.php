@@ -35,8 +35,8 @@ final class VirtualTerminal implements Terminal
     private bool $kittyEnabled = false;
 
     public function __construct(
-        private readonly int $width,
-        private readonly int $height,
+        private int $width,
+        private int $height,
         private readonly ColorProfile $simulatedColorProfile = ColorProfile::TrueColor,
     ) {
         $pipes = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
@@ -155,6 +155,15 @@ final class VirtualTerminal implements Terminal
     {
         $sanitized = TerminalText::singleLine($title);
         $this->write("\x1b]0;{$sanitized}\x07");
+    }
+
+    /**
+     * What a window manager does to the real one; the program hears of it by SIGWINCH.
+     */
+    public function resizeTo(int $width, int $height): void
+    {
+        $this->width = $width;
+        $this->height = $height;
     }
 
     /**
