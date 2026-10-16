@@ -962,6 +962,7 @@ abstract readonly class App implements RoutesFocus
      */
     private function applyComponentUpdatesAndNotify(self $app, array $updates): array
     {
+        $updates = self::withoutLetGo($updates);
         if ($updates === []) {
             return [$app, null];
         }
@@ -1048,6 +1049,65 @@ abstract readonly class App implements RoutesFocus
         }
 
         return $nearest;
+    }
+
+    /**
+     * A container's own answer may let go of a child that answered too (a tab
+     * switched pages); grafting into whatever sits there now would overwrite a
+     * stranger, so the container's answer wins.
+     *
+     * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
+     *
+     * @return array<array-key, array{Component<Interactive>, Interactive}>
+     */
+    private static function withoutLetGo(array $updates): array
+    {
+        $byId = [];
+        foreach ($updates as [$component, $widget]) {
+            $byId[$component->id->value] = [$component, $widget];
+        }
+
+        $letGo = [];
+        foreach ($byId as [$component]) {
+            $ancestor = self::nearestAnswering($component->id, $byId);
+            if ($ancestor === null) {
+                continue;
+            }
+
+            [$ancestorComponent, $ancestorWidget] = $byId[$ancestor];
+            if (self::heldAt($ancestorWidget, $component->id->pathBelow($ancestorComponent->id)) !== $component->widget) {
+                $letGo[] = $component->id;
+            }
+        }
+
+        return array_filter($updates, static function (array $update) use ($letGo): bool {
+            foreach ($letGo as $gone) {
+                if ($update[0]->id->equals($gone) || $update[0]->id->isUnder($gone)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * @param list<int> $path
+     */
+    private static function heldAt(Widget $container, array $path): ?Widget
+    {
+        foreach ($path as $index) {
+            if (!$container instanceof GraftsItsChildren) {
+                return null;
+            }
+
+            $container = [...$container->children()][$index] ?? null;
+            if ($container === null) {
+                return null;
+            }
+        }
+
+        return $container;
     }
 
     /**
