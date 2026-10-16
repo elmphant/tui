@@ -6,6 +6,8 @@ namespace Elmphant\Tui\Widget\Prose;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\RowExtents;
+use Elmphant\Tui\Layout\RowIndex;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -30,16 +32,20 @@ final readonly class Paragraph implements Widget, MeasureHeight
 {
     use Cloneable;
 
+    private RowIndex $rowIndex;
+
     /**
      * @param list<Line> $lines
      */
-    public function __construct(
+    private function __construct(
         public array $lines = [],
         public Alignment $alignment = Alignment::Left,
         public Wrap $wrap = Wrap::WordWrap,
         public ?Style $style = null,
         public ?Sizing $sizingOverride = null,
+        ?RowIndex $rowIndex = null,
     ) {
+        $this->rowIndex = $rowIndex ?? RowIndex::of(count($lines));
     }
 
     /**
@@ -47,7 +53,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
      */
     public function withLines(array $lines): self
     {
-        return $this->cloneWith(lines: $lines);
+        return $this->cloneWith(lines: $lines, rowIndex: RowIndex::of(count($lines)));
     }
 
     public function withAlignment(Alignment $alignment): self
@@ -165,13 +171,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
             return count($this->lines);
         }
 
-        $rows = 0;
-
-        foreach ($this->lines as $line) {
-            $rows += $this->rowsOfLine($line, $width);
-        }
-
-        return $rows;
+        return $this->rowsAt($width)->totalHeight();
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -247,9 +247,6 @@ final readonly class Paragraph implements Widget, MeasureHeight
     /**
      * Which source line owns visual row $target, and how many rows precede it.
      *
-     * Walks only as far as the band being drawn, so an unscrolled paragraph
-     * settles immediately.
-     *
      * @return array{int, int}
      */
     private function lineAtVisualRow(int $target, int $width): array
@@ -262,18 +259,17 @@ final readonly class Paragraph implements Widget, MeasureHeight
             return [$target, $target];
         }
 
-        $rows = 0;
-        foreach ($this->lines as $index => $line) {
-            $height = $this->rowsOfLine($line, $width);
+        $rows = $this->rowsAt($width);
+        $line = $rows->rowAtLine($target);
 
-            if ($rows + $height > $target) {
-                return [$index, $rows];
-            }
+        return $line === null
+            ? [count($this->lines), $rows->totalHeight()]
+            : [$line, $rows->startOf($line)];
+    }
 
-            $rows += $height;
-        }
-
-        return [count($this->lines), $rows];
+    private function rowsAt(int $width): RowExtents
+    {
+        return $this->rowIndex->at($width, fn (int $index): int => $this->rowsOfLine($this->lines[$index], $width));
     }
 
     /**

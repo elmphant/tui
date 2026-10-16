@@ -584,10 +584,8 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function measureHeightNoWrapReturnsInputLineCount(): void
     {
-        $paragraph = (new Paragraph(
-            lines: [Line::raw('this is a long single line that exceeds width')],
-            wrap: Wrap::NoWrap,
-        ));
+        $paragraph = Paragraph::fromLines([Line::raw('this is a long single line that exceeds width')])
+            ->withWrap(Wrap::NoWrap);
 
         self::assertSame(1, $paragraph->measureHeight(10), 'NoWrap must return exactly one visual line per input line, regardless of width');
     }
