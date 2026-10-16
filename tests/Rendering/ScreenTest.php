@@ -2823,6 +2823,74 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('91', $terminal->output, 'Downsampling still answers after the cache is dropped');
     }
 
+    #[Test]
+    public function aChangedRunIsWrittenOnceThenTheStyleIsReset(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+        $screen->flush(new Frame(6, 1));
+        $capturedOutput = '';
+        $frame = new Frame(6, 1);
+        $frame->putString(2, 0, 'ab');
+
+        $screen->flush($frame);
+
+        self::assertSame(
+            Ansi::SYNC_START . Ansi::cursorTo(0, 2) . 'ab' . Ansi::RESET_STYLE . Ansi::HIDE_CURSOR . Ansi::SYNC_END,
+            $capturedOutput,
+        );
+    }
+
+    #[Test]
+    public function droppingEveryAttributeResetsWithABareZero(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+        $frame = new Frame(4, 1);
+        $frame->putString(0, 0, 'a', attributes: Attr::BOLD);
+        $frame->putString(1, 0, 'b');
+
+        $screen->flush($frame);
+
+        self::assertStringContainsString("\x1b[1ma\x1b[0mb", $capturedOutput);
+    }
+
+    #[Test]
+    public function aFullRedrawResetsTheStyleBeforeErasingTheFirstRow(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+
+        $screen->flush(new Frame(4, 2));
+
+        self::assertStringContainsString(Ansi::RESET_STYLE . Ansi::ERASE_TO_LINE_END, $capturedOutput);
+    }
+
+    #[Test]
+    public function aFullRedrawMovesToEachRowBeforeErasingIt(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+
+        $screen->flush(new Frame(4, 2));
+
+        self::assertStringContainsString(Ansi::cursorToRowStart(1) . Ansi::ERASE_TO_LINE_END, $capturedOutput);
+    }
+
+    #[Test]
+    public function aCellDifferingInEveryStyleAspectStartsARunOfItsOwn(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+        $frame = new Frame(4, 1);
+        $frame->putString(0, 0, 'a', Color::ansi(1)->value);
+        $frame->putString(1, 0, 'b', Color::ansi(4)->value, Color::ansi(3)->value, Attr::BOLD);
+
+        $screen->flush($frame);
+
+        self::assertStringContainsString("a\x1b[1;34;43mb", $capturedOutput);
+    }
+
     private static function cacheSize(Screen $screen, string $property): int
     {
         /** @var array<int, mixed> $cache */

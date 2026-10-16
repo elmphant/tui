@@ -8,7 +8,6 @@ use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Terminal\ColorProfile;
 use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Terminal\TerminalOutput;
-use LogicException;
 use Throwable;
 
 final class Screen
@@ -61,7 +60,7 @@ final class Screen
     {
         $painted = $this->front === null || $this->front->width !== $backBuffer->width || $this->front->height !== $backBuffer->height
             ? $this->renderFull($backBuffer)
-            : $this->renderDiff($backBuffer);
+            : $this->renderDiff($backBuffer, $this->front);
         $cursor = $this->cursorChange($backBuffer);
 
         if ($painted !== '' || $cursor !== '') {
@@ -91,10 +90,7 @@ final class Screen
     public function forget(): void
     {
         $this->front = null;
-        $this->cursorAsserted = false;
         $this->lastShape = null;
-        $this->shown = false;
-        $this->resetCurrentStyle();
     }
 
     private function cursorChange(Frame $backBuffer): string
@@ -145,13 +141,8 @@ final class Screen
             && $position->shape === $this->lastCursor->shape;
     }
 
-    private function renderDiff(Frame $backBuffer): string
+    private function renderDiff(Frame $backBuffer, Frame $front): string
     {
-        $front = $this->front;
-        if ($front === null) {
-            throw new LogicException('Cannot diff before the front buffer is initialized');
-        }
-
         $parts = $this->collectDiff($backBuffer, $front);
 
         if ($parts === []) {
@@ -188,11 +179,9 @@ final class Screen
         $parts = [];
         $cursorX = -1;
         $cursorY = -1;
-        $needMove = true;
 
         for ($row = 0; $row < $backBuffer->height; ++$row) {
             if (!$backBuffer->isRowDirty($row)) {
-                $needMove = true;
                 continue;
             }
 
@@ -201,7 +190,6 @@ final class Screen
                 && array_slice($backForegrounds, $rowOffset, $width) === array_slice($frontForegrounds, $rowOffset, $width)
                 && array_slice($backBackgrounds, $rowOffset, $width) === array_slice($frontBackgrounds, $rowOffset, $width)
                 && array_slice($backAttributes, $rowOffset, $width) === array_slice($frontAttributes, $rowOffset, $width)) {
-                $needMove = true;
                 continue;
             }
 
@@ -214,16 +202,13 @@ final class Screen
                     && $backForegrounds[$index] === $frontForegrounds[$index]
                     && $backBackgrounds[$index] === $frontBackgrounds[$index]
                     && $backAttributes[$index] === $frontAttributes[$index]) {
-                    $needMove = true;
-                    $column += $backWidths[$index] > 1 ? $backWidths[$index] : 1;
+                    $column += max(1, $backWidths[$index]);
                     continue;
                 }
 
-                if ($needMove || $cursorX !== $column || $cursorY !== $row) {
+                if ($cursorX !== $column || $cursorY !== $row) {
                     $parts[] = self::moveCursor($column, $row, $cursorX, $cursorY);
-                    $cursorX = $column;
                     $cursorY = $row;
-                    $needMove = false;
                 }
 
                 $foreground = $backForegrounds[$index];
@@ -233,7 +218,7 @@ final class Screen
                 $parts[] = $this->styleDelta($foreground, $background, $attributes);
 
                 $runCharacters = [self::cellText($backCharacters[$index], $backWidths[$index], $row, $column)];
-                $nextColumn = $column + ($backWidths[$index] > 1 ? $backWidths[$index] : 1);
+                $nextColumn = $column + max(1, $backWidths[$index]);
 
                 while ($nextColumn < $width) {
                     $nextIndex = $rowOffset + $nextColumn;
@@ -258,15 +243,13 @@ final class Screen
                     }
 
                     $runCharacters[] = self::cellText($nextCharacter, $backWidths[$nextIndex], $row, $nextColumn);
-                    $nextColumn += $backWidths[$nextIndex] > 1 ? $backWidths[$nextIndex] : 1;
+                    $nextColumn += max(1, $backWidths[$nextIndex]);
                 }
 
                 $parts[] = implode('', $runCharacters);
                 $cursorX = $nextColumn;
                 $column = $nextColumn;
             }
-
-            $needMove = true;
         }
 
         return $parts;
@@ -275,7 +258,6 @@ final class Screen
     private function renderFull(Frame $backBuffer): string
     {
         $width = $backBuffer->width;
-        $this->resetCurrentStyle();
         $output = [];
 
         for ($row = 0; $row < $backBuffer->height; ++$row) {
@@ -413,12 +395,10 @@ final class Screen
                 $sgrParts[] = $this->attributesToSgr($addedAttributes);
             }
             if ($foreground !== $this->currentForeground) {
-                $sgrParts[] = $foreground !== 0 ? $this->colorToSgr($foreground, background: false)
-                    : '39';
+                $sgrParts[] = $this->colorToSgr($foreground, background: false);
             }
             if ($background !== $this->currentBackground) {
-                $sgrParts[] = $background !== 0 ? $this->colorToSgr($background, background: true)
-                    : '49';
+                $sgrParts[] = $this->colorToSgr($background, background: true);
             }
         }
 
@@ -433,23 +413,14 @@ final class Screen
     {
         if ($targetY === $currentY) {
             $deltaX = $targetX - $currentX;
-            if ($deltaX === 0) {
-                return '';
-            }
-            if ($deltaX === 1) {
-                return Ansi::CURSOR_RIGHT_ONE;
-            }
 
-            return $deltaX > 0 ? Ansi::cursorRight($deltaX) : Ansi::cursorLeft(-$deltaX);
+            return $deltaX === 1 ? Ansi::CURSOR_RIGHT_ONE : Ansi::cursorRight($deltaX);
         }
 
         if ($targetX === $currentX) {
             $deltaY = $targetY - $currentY;
-            if ($deltaY === 1) {
-                return Ansi::CURSOR_DOWN_ONE;
-            }
 
-            return $deltaY > 0 ? Ansi::cursorDown($deltaY) : Ansi::cursorUp(-$deltaY);
+            return $deltaY === 1 ? Ansi::CURSOR_DOWN_ONE : Ansi::cursorDown($deltaY);
         }
 
         return Ansi::cursorTo($targetY, $targetX);
@@ -457,7 +428,7 @@ final class Screen
 
     private function downsample(int $color): int
     {
-        if ($this->colorProfile === ColorProfile::TrueColor || $color === 0) {
+        if ($this->colorProfile === ColorProfile::TrueColor) {
             return $color;
         }
 
