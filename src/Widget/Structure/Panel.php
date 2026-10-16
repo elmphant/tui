@@ -10,7 +10,6 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -28,7 +27,6 @@ use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focus\Navigates;
 use Elmphant\Tui\Widget\Focus\Navigation;
-use Elmphant\Tui\Widget\Layout\ContentBasis;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
@@ -58,11 +56,8 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         private ?Spacing $margin = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
-        private ?Widget $header = null,
-        private ?Widget $footer = null,
-        private bool $footerRuled = false,
-        private ?string $footerCaption = null,
-        private int $footerGap = 0,
+        private ?PinnedRows $header = null,
+        private ?PinnedRows $footer = null,
     ) {
         $this->pane = $pane ?? ScrollPane::of();
     }
@@ -108,23 +103,22 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     /**
      * Rows that stay at the top inside the border while the children scroll below.
      * Drawn only: not a focus stop, and no message is routed to it.
+     *
+     * A ruled header is set off by a line joined into the border, with the caption
+     * at its right end. The gap is blank rows below it, given up before the
+     * children would lose a row they need.
      */
-    public function withHeader(?Widget $header): self
+    public function withHeader(?Widget $header, bool $ruled = false, ?string $caption = null, int $gap = 0): self
     {
-        return $this->cloneWith(header: $header);
+        return $this->cloneWith(header: $header === null ? null : new PinnedRows($header, $ruled, $caption, max(0, $gap)));
     }
 
     /**
-     * Rows that stay at the bottom inside the border while the children scroll above.
-     * Drawn only: not a focus stop, and no message is routed to it.
-     *
-     * A ruled footer is set off by a line joined into the border, with the caption
-     * at its right end. The gap is blank rows above it, given up before the
-     * children would lose a row they need.
+     * withHeader()'s counterpart at the bottom: the rule and the gap go above it.
      */
     public function withFooter(?Widget $footer, bool $ruled = false, ?string $caption = null, int $gap = 0): self
     {
-        return $this->cloneWith(footer: $footer, footerRuled: $ruled, footerCaption: $caption, footerGap: max(0, $gap));
+        return $this->cloneWith(footer: $footer === null ? null : new PinnedRows($footer, $ruled, $caption, max(0, $gap)));
     }
 
     /**
@@ -241,9 +235,9 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        [$headerArea, $rowsArea, $footerArea, $ruleRow] = $this->regionsIn($area);
+        [$headerArea, $rowsArea, $footerArea, $headerRule, $footerRule] = $this->regionsIn($area);
 
-        foreach ([[$this->header, $headerArea], [$this->pane, $rowsArea], [$this->footer, $footerArea]] as [$part, $partArea]) {
+        foreach ([[$this->header?->widget, $headerArea], [$this->pane, $rowsArea], [$this->footer?->widget, $footerArea]] as [$part, $partArea]) {
             if ($part !== null && $partArea->width > 0 && $partArea->height > 0) {
                 $part->render($frame, $partArea, $context);
             }
@@ -256,8 +250,10 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
 
         $this->block($context)->render($frame, $area);
 
-        if ($ruleRow !== null) {
-            $this->renderRule($frame, $inset->margin->applyTo($area), $ruleRow, $context);
+        foreach ([[$this->header, $headerRule], [$this->footer, $footerRule]] as [$pinned, $row]) {
+            if ($pinned !== null && $row !== null) {
+                $this->renderRule($frame, $inset->margin->applyTo($area), $row, $pinned->caption, $context);
+            }
         }
     }
 
@@ -276,12 +272,12 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
             return 0;
         }
 
-        return $this->pane->measureHeight($inner->width)
-            + self::rowsOf($this->header, $inner->width)
-            + self::rowsOf($this->footer, $inner->width)
-            + $this->ruleRows()
-            + ($this->footer === null ? 0 : $this->footerGap)
-            + ($probe->height - $inner->height);
+        $pinned = 0;
+        foreach (array_filter([$this->header, $this->footer]) as $part) {
+            $pinned += $part->rows($inner->width) + $part->ruleRows() + $part->gap;
+        }
+
+        return $this->pane->measureHeight($inner->width) + $pinned + ($probe->height - $inner->height);
     }
 
     /**
@@ -321,41 +317,52 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     }
 
     /**
-     * @return array{Rect, Rect, Rect, ?int} header, scrolling rows, footer, the rule's row
+     * @return array{Rect, Rect, Rect, ?int, ?int} header, scrolling rows, footer, and the rows of their rules
      */
     private function regionsIn(Rect $area): array
     {
         $inner = $this->insetIn($area)->inner($area);
-        $headerRows = min($inner->height, self::rowsOf($this->header, $inner->width));
-        $footerRows = min($inner->height - $headerRows, self::rowsOf($this->footer, $inner->width));
-        $ruleRows = min($this->ruleRows(), $inner->height - $headerRows - $footerRows);
-        $left = $inner->height - $headerRows - $footerRows - $ruleRows;
-        $gap = min($this->footer === null ? 0 : $this->footerGap, $left);
+        $left = $inner->height;
+        $headerRows = $this->taken($left, $this->header?->rows($inner->width) ?? 0);
+        $headerRule = $this->taken($left, $this->header?->ruleRows() ?? 0);
+        $footerRows = $this->taken($left, $this->footer?->rows($inner->width) ?? 0);
+        $footerRule = $this->taken($left, $this->footer?->ruleRows() ?? 0);
+        $headerGap = $this->header->gap ?? 0;
+        $footerGap = $this->footer->gap ?? 0;
 
-        if ($gap > 0 && $this->pane->measureHeight($inner->width) > $left - $gap) {
-            $gap = 0;
+        if ($headerGap + $footerGap > $left - $this->pane->measureHeight($inner->width)) {
+            $headerGap = 0;
+            $footerGap = 0;
         }
 
         $footerTop = $inner->bottom() - $footerRows;
+        $rowsTop = $inner->y + $headerRows + $headerRule + $headerGap;
 
         return [
             new Rect($inner->x, $inner->y, $inner->width, $headerRows),
-            new Rect($inner->x, $inner->y + $headerRows, $inner->width, $left - $gap),
+            new Rect($inner->x, $rowsTop, $inner->width, $left - $headerGap - $footerGap),
             new Rect($inner->x, $footerTop, $inner->width, $footerRows),
-            $ruleRows > 0 ? $footerTop - 1 : null,
+            $headerRule > 0 ? $inner->y + $headerRows : null,
+            $footerRule > 0 ? $footerTop - 1 : null,
         ];
     }
 
-    private function ruleRows(): int
+    /**
+     * What a part takes of the rows still left, never more than is.
+     */
+    private function taken(int &$left, int $wanted): int
     {
-        return $this->footer !== null && $this->footerRuled ? 1 : 0;
+        $taken = min($wanted, $left);
+        $left -= $taken;
+
+        return $taken;
     }
 
     /**
      * The line keeps the quiet border style; only where it meets the frame does it
      * take the frame's, so a focused pane lights its outline and not the divider.
      */
-    private function renderRule(Frame $frame, Rect $border, int $row, RenderContext $context): void
+    private function renderRule(Frame $frame, Rect $border, int $row, ?string $caption, RenderContext $context): void
     {
         $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
         $glyphs = $context->theme->borderFor($prominent)->glyphs();
@@ -363,22 +370,15 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         $joint = ($prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride) ?? $context->theme->borderStyleFor($prominent);
 
         $span = max(0, $border->width - 2);
-        $caption = $this->footerCaption === null ? '' : ' ' . $this->footerCaption . ' ';
-        $captionWidth = CharWidth::stringWidth($caption);
-        $line = $captionWidth > 0 && $span - $captionWidth >= 1
-            ? str_repeat($glyphs->horizontal, $span - $captionWidth) . $caption
+        $label = $caption === null ? '' : ' ' . $caption . ' ';
+        $labelWidth = CharWidth::stringWidth($label);
+        $line = $labelWidth > 0 && $span - $labelWidth >= 1
+            ? str_repeat($glyphs->horizontal, $span - $labelWidth) . $label
             : str_repeat($glyphs->horizontal, $span);
 
         $frame->putStyled($border->x + 1, $row, $line, $quiet);
         $frame->putStyled($border->x, $row, $glyphs->teeRight, $joint);
         $frame->putStyled($border->right() - 1, $row, $glyphs->teeLeft, $joint);
-    }
-
-    private static function rowsOf(?Widget $part, int $width): int
-    {
-        return $part === null || $width < 1
-            ? 0
-            : ContentBasis::of($part, $part->sizing()->rows, Direction::Vertical, $width);
     }
 
     private function block(RenderContext $context): Block

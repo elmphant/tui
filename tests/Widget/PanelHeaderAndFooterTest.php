@@ -135,6 +135,26 @@ final class PanelHeaderAndFooterTest extends TestCase
         );
     }
 
+    #[Test]
+    public function aRuledHeaderIsSeparatedByALineJoinedIntoTheBorderBelowIt(): void
+    {
+        $screen = self::drawn(self::tenRows()->withHeader(Text::new('HEAD'), ruled: true), 20, 8);
+
+        self::assertStringContainsString('HEAD', $screen->lineAt(1));
+        self::assertSame('├' . str_repeat('─', 18) . '┤', $screen->lineAt(2));
+        self::assertStringContainsString('row 0', $screen->lineAt(3));
+    }
+
+    #[Test]
+    public function aGapBelowTheHeadersRuleIsKeptWhileTheRowsStillFit(): void
+    {
+        $fits = self::rows(2)->withHeader(Text::new('HEAD'), ruled: true, gap: 1);
+        $overflows = self::tenRows()->withHeader(Text::new('HEAD'), ruled: true, gap: 1);
+
+        self::assertEquals(new Rect(1, 4, 18, 3), $fits->contentArea(Rect::fromSize(20, 8)));
+        self::assertEquals(new Rect(1, 3, 18, 4), $overflows->contentArea(Rect::fromSize(20, 8)));
+    }
+
     private static function tenRows(): Panel
     {
         return self::rows(10);
