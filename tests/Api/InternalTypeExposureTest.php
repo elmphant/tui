@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Api;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
+use ReflectionClassConstant;
+use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionProperty;
@@ -29,15 +32,41 @@ final class InternalTypeExposureTest extends TestCase
     #[Test]
     public function noPublicSignatureExposesAnInternalType(): void
     {
-        $internal = self::internalTypes();
+        $exposures = self::exposuresIn(self::declaredTypes());
+
+        self::assertSame([], $exposures, "Public signatures must not hand out @internal types:\n" . implode("\n", $exposures));
+    }
+
+    #[Test]
+    public function aConstantHoldingAnInternalValueAndAnIntersectionNamingOneAreExposures(): void
+    {
+        self::assertSame(
+            [
+                'PublicFixture::MODE exposes InternalModeFixture',
+                'PublicFixture::paired() exposes InternalModeFixture',
+            ],
+            self::exposuresIn([PublicFixture::class, InternalModeFixture::class, PairedFixture::class]),
+        );
+    }
+
+    /**
+     * @param list<string> $types
+     *
+     * @return list<string>
+     */
+    private static function exposuresIn(array $types): array
+    {
+        $internal = self::internalTypes($types);
         $exposures = [];
 
-        foreach (self::declaredTypes() as $name) {
+        foreach ($types as $name) {
             if (isset($internal[$name])) {
                 continue;
             }
 
-            foreach ((new ReflectionClass($name))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            $class = new ReflectionClass($name);
+
+            foreach ($class->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 if ($method->getDeclaringClass()->getName() !== $name || self::marksInternal($method->getDocComment())) {
                     continue;
                 }
@@ -49,7 +78,7 @@ final class InternalTypeExposureTest extends TestCase
                 }
             }
 
-            foreach ((new ReflectionClass($name))->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
+            foreach ($class->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
                 if ($property->getDeclaringClass()->getName() !== $name || self::marksInternal($property->getDocComment())) {
                     continue;
                 }
@@ -60,11 +89,22 @@ final class InternalTypeExposureTest extends TestCase
                     }
                 }
             }
+
+            foreach ($class->getReflectionConstants(ReflectionClassConstant::IS_PUBLIC) as $constant) {
+                if ($constant->getDeclaringClass()->getName() !== $name || self::marksInternal($constant->getDocComment())) {
+                    continue;
+                }
+
+                $value = $constant->getValue();
+                if (is_object($value) && isset($internal[$value::class])) {
+                    $exposures[] = sprintf('%s::%s exposes %s', self::shortName($name), $constant->getName(), self::shortName($value::class));
+                }
+            }
         }
 
         sort($exposures);
 
-        self::assertSame([], $exposures, "Public signatures must not hand out @internal types:\n" . implode("\n", $exposures));
+        return $exposures;
     }
 
     /**
@@ -92,7 +132,7 @@ final class InternalTypeExposureTest extends TestCase
             return $type->isBuiltin() ? [] : [$type->getName()];
         }
 
-        if ($type instanceof ReflectionUnionType) {
+        if ($type instanceof ReflectionUnionType || $type instanceof ReflectionIntersectionType) {
             $names = [];
             foreach ($type->getTypes() as $member) {
                 foreach (self::namesOf($member) as $name) {
@@ -107,13 +147,15 @@ final class InternalTypeExposureTest extends TestCase
     }
 
     /**
+     * @param list<string> $types
+     *
      * @return array<string, true>
      */
-    private static function internalTypes(): array
+    private static function internalTypes(array $types): array
     {
         $internal = [];
 
-        foreach (self::declaredTypes() as $name) {
+        foreach ($types as $name) {
             if (self::marksInternal((new ReflectionClass($name))->getDocComment())) {
                 $internal[$name] = true;
             }
@@ -161,5 +203,27 @@ final class InternalTypeExposureTest extends TestCase
         $position = strrpos($type, '\\');
 
         return $position === false ? $type : substr($type, $position + 1);
+    }
+}
+
+/**
+ * @internal
+ */
+enum InternalModeFixture
+{
+    case On;
+}
+
+interface PairedFixture
+{
+}
+
+final class PublicFixture
+{
+    public const MODE = InternalModeFixture::On;
+
+    public function paired(): PairedFixture&InternalModeFixture
+    {
+        throw new LogicException('never called');
     }
 }
