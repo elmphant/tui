@@ -207,6 +207,20 @@ final class SpanRendererTest extends TestCase
     }
 
     #[Test]
+    public function rawHtmlLeftOpenAtTheEndEndsOnItsLastLine(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("<script>\nx\n\n");
+
+        self::assertEquals(
+            [
+                new Line([Span::token('<script>', StyleToken::Dim)]),
+                new Line([Span::token('x', StyleToken::Dim)]),
+            ],
+            $lines,
+        );
+    }
+
+    #[Test]
     public function aRuleIsADimLine(): void
     {
         $lines = SpanRenderer::fromMarkdown("above\n\n---\n\nbelow");

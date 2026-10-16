@@ -254,4 +254,14 @@ final class StyleTest extends TestCase
         self::assertGreaterThanOrEqual(4.5, $placed->foreground->contrastRatio(Color::hex('3E4451')));
         self::assertSame(Attr::ITALIC, $placed->attributes);
     }
+
+    #[Test]
+    public function anInkPlacedOnAPanelKeepsItsOwnColourOverThePanelInk(): void
+    {
+        $panel = new Style(foreground: Color::hex('282A36'), background: Color::hex('FFFFFF'));
+
+        $placed = (new Style(foreground: Color::hex('FF0000')))->readableOn($panel, 1.0);
+
+        self::assertEquals(Color::hex('FF0000'), $placed->foreground);
+    }
 }
