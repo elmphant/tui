@@ -6,8 +6,8 @@ namespace Elmphant\Tui\Runtime;
 
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderPass;
 
 interface Model extends Reducer
 {

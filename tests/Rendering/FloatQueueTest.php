@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Rendering\FloatQueue;
+use Elmphant\Tui\Rendering\Context\Floating;
+use Elmphant\Tui\Rendering\Context\FloatQueue;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Widget\Popup\Floating;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -7,8 +7,8 @@ namespace Elmphant\Tui\Widget\Prose;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Widget;
 
 final readonly class Spacer implements Widget

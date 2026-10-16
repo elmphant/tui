@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
-use Elmphant\Tui\Rendering\FrameClock;
+use Elmphant\Tui\Rendering\Context\FrameClock;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Rendering;
+namespace Elmphant\Tui\Rendering\Context;
 
 use Closure;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Terminal\ColorProfile;
-use Elmphant\Tui\Widget\Popup\Floating;
 
 /**
  * What a widget may ask while it draws.

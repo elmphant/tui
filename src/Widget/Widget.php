@@ -6,8 +6,8 @@ namespace Elmphant\Tui\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 
 interface Widget
 {

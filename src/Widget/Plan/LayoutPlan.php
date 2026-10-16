@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Plan;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Rendering\PlannedLayout;
+use Elmphant\Tui\Rendering\Context\PlannedLayout;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Dispatch\SingleMount;
 use Elmphant\Tui\Widget\Widget;

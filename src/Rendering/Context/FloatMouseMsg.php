@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Message;
+namespace Elmphant\Tui\Rendering\Context;
 
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Rendering\FloatPlacement;
-use Elmphant\Tui\Widget\Popup\PointerFloating;
+use Elmphant\Tui\Message\MouseMsg;
 
 /**
  * A pointer event that landed on a float the last frame drew.

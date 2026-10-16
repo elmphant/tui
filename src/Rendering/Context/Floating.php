@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget\Popup;
+namespace Elmphant\Tui\Rendering\Context;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 
 /**
  * Queued with RenderContext::float() during render, drawn after the tree, unclipped.

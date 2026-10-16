@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout\Invariant;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Table\StaticTable;
 use PHPUnit\Framework\Attributes\DataProvider;

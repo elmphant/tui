@@ -14,13 +14,14 @@ use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
-use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
+use Elmphant\Tui\Rendering\Context\FloatMouseMsg;
+use Elmphant\Tui\Rendering\Context\FloatTarget;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Committing;
@@ -62,7 +63,7 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
      * The chrome drawn around the open list. Without one the list gets a rounded
      * border; supply a factory to put something else around it.
      *
-     * @param Closure(DropdownContent, FloatTarget): PopupFrame $frame
+     * @param Closure(DropdownContent, FloatTarget):PopupFrame $frame
      *
      * @return self<TContent>
      */

@@ -6,8 +6,8 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Attr;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
 use PHPUnit\Framework\Attributes\Test;

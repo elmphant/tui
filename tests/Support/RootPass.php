@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Support;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Context\PlannedLayout;
+use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\PlannedLayout;
-use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Widget\Widget;
 
 final class RootPass

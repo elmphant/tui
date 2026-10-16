@@ -11,8 +11,9 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\Context\FloatTarget;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
 

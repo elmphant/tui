@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Rendering;
+namespace Elmphant\Tui\Rendering\Context;
 
 use Closure;
 use Elmphant\Tui\Core\ComponentId;

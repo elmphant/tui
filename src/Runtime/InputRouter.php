@@ -6,10 +6,10 @@ namespace Elmphant\Tui\Runtime;
 
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Rendering\FloatPlacement;
+use Elmphant\Tui\Rendering\Context\FloatMouseMsg;
+use Elmphant\Tui\Rendering\Context\FloatPlacement;
 
 /**
  * @internal one routing rule for every runtime: stamp the screen rect, then

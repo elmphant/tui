@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Widget\Popup;
+namespace Elmphant\Tui\Rendering\Context;
 
 use Elmphant\Tui\Message\MouseAction;
 

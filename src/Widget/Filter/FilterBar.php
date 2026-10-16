@@ -7,8 +7,8 @@ namespace Elmphant\Tui\Widget\Filter;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Field\InputDecoration;
 use Elmphant\Tui\Widget\Field\TextInput;
 

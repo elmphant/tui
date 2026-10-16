@@ -6,9 +6,9 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Rendering\Context\RenderContext;
+use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Feedback\Spinner;

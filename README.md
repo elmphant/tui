@@ -916,7 +916,8 @@ hand says so too, and `FocusPath::nowhere()` is how it says "nobody":
 
 ```php
 use Elmphant\Tui\Core\{ComponentId, FocusState};
-use Elmphant\Tui\Rendering\{FocusPath, RenderPass, Theme};
+use Elmphant\Tui\Rendering\Context\{FocusPath, RenderPass};
+use Elmphant\Tui\Rendering\Theme;
 
 $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());   // a layout or wording test
 $app->render($frame, $pass);

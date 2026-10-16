@@ -10,13 +10,13 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
-use Elmphant\Tui\Message\FloatMouseMsg;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\Context\FloatMouseMsg;
+use Elmphant\Tui\Rendering\Context\PointerFloating;
+use Elmphant\Tui\Rendering\Context\RenderContext;
+use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
-use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Runtime\Model;
-use Elmphant\Tui\Widget\Popup\PointerFloating;
 use Elmphant\Tui\Widget\Widget;
 use RuntimeException;
 

@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Rendering;
+namespace Elmphant\Tui\Rendering\Context;
 
 use Closure;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Widget\Popup\Floating;
-use Elmphant\Tui\Widget\Popup\PointerFloating;
+use Elmphant\Tui\Rendering\Frame;
 use LogicException;
 
 /**

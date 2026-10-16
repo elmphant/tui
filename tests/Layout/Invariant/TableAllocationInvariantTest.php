@@ -6,8 +6,8 @@ namespace Elmphant\Tui\Tests\Layout\Invariant;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Table;

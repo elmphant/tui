@@ -8,9 +8,9 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\Context\FloatTarget;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Popup\DropdownPopup;
-use Elmphant\Tui\Widget\Popup\FloatTarget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
