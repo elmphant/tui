@@ -136,15 +136,7 @@ final readonly class Keybindings
         foreach ($other->patterns as $action => $newPatterns) {
             $existing = $copy[$action] ?? [];
             foreach ($newPatterns as $pattern) {
-                $canonical = (string)$pattern;
-                $duplicate = false;
-                foreach ($existing as $existingPattern) {
-                    if ((string)$existingPattern === $canonical) {
-                        $duplicate = true;
-                        break;
-                    }
-                }
-                if (!$duplicate) {
+                if (!in_array((string)$pattern, array_map(strval(...), $existing), true)) {
                     $existing[] = $pattern;
                 }
             }

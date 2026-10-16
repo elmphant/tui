@@ -27,6 +27,14 @@ final class KeyPatternTest extends TestCase
     }
 
     #[Test]
+    public function everyKeyIsNamedSoThePatternParserReadsItBack(): void
+    {
+        foreach ([...Key::cases(), ' ', 'x'] as $key) {
+            self::assertSame($key, KeyPattern::fromString(KeyPattern::nameOf($key))->key);
+        }
+    }
+
+    #[Test]
     public function fromStringParsesSingleChar(): void
     {
         $pattern = KeyPattern::fromString('q');

@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Input;
 
 use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
-use LogicException;
 
 /**
  * Stateful multi-key sequence tracker.
@@ -40,25 +39,22 @@ final class ChordTracker
             return $msg;
         }
 
-        if ($this->buffer !== [] && $this->lastKeyTime !== null
-            && ($now - $this->lastKeyTime) * 1000.0 > $this->timeoutMs
-        ) {
+        if ($this->lastKeyTime !== null && ($now - $this->lastKeyTime) * 1000.0 > $this->timeoutMs) {
             $this->buffer = [];
             $this->lastKeyTime = null;
         }
 
         $candidate = [...$this->buffer, KeyPattern::fromKeyMsg($msg)];
-        $match = $this->classify($candidate);
+        $action = $this->actionFor($candidate);
 
-        if ($match === ChordMatch::Complete) {
-            $action = $this->actionFor($candidate);
+        if ($action !== null) {
             $this->buffer = [];
             $this->lastKeyTime = null;
 
             return $action;
         }
 
-        if ($match === ChordMatch::Prefix) {
+        if ($this->startsABinding($candidate)) {
             $this->buffer = $candidate;
             $this->lastKeyTime = $now;
 
@@ -88,32 +84,29 @@ final class ChordTracker
     /**
      * @param list<KeyPattern> $candidate
      */
-    private function classify(array $candidate): ChordMatch
-    {
-        $isPrefix = false;
-        foreach ($this->bindings->allSequences() as ['pattern' => $seq]) {
-            if ($this->sequencesEqual($candidate, $seq)) {
-                return ChordMatch::Complete;
-            }
-            if (count($candidate) < count($seq) && $this->isPrefixOf($candidate, $seq)) {
-                $isPrefix = true;
-            }
-        }
-
-        return $isPrefix ? ChordMatch::Prefix : ChordMatch::None;
-    }
-
-    /**
-     * @param list<KeyPattern> $candidate
-     */
-    private function actionFor(array $candidate): string
+    private function actionFor(array $candidate): ?string
     {
         foreach ($this->bindings->allSequences() as $entry) {
             if ($this->sequencesEqual($candidate, $entry['pattern'])) {
                 return $entry['action'];
             }
         }
-        throw new LogicException('actionFor called without a complete match');
+
+        return null;
+    }
+
+    /**
+     * @param list<KeyPattern> $candidate
+     */
+    private function startsABinding(array $candidate): bool
+    {
+        foreach ($this->bindings->allSequences() as ['pattern' => $sequence]) {
+            if ($this->isPrefixOf($candidate, $sequence)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
