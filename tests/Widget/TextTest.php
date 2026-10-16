@@ -306,6 +306,12 @@ final class TextTest extends TestCase
     }
 
     #[Test]
+    public function aLineAsksForTheWidthOfAllItsSpans(): void
+    {
+        self::assertSame(7, Text::line('ab', Span::token('cde', StyleToken::Accent), 'fg')->sizing()->columns->min);
+    }
+
+    #[Test]
     public function renderTruncatesContentToAreaWidth(): void
     {
         $frame = new Frame(15, 1);

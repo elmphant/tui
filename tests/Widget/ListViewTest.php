@@ -286,6 +286,31 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
+    public function aPageUpLeavesTheItemItLandsOnAtTheBottomOfTheView(): void
+    {
+        $list = ListView::fromStrings(array_map(fn (int $index) => "Item $index", range(0, 19)));
+        $area = Rect::fromSize(40, 5);
+
+        $paged = $list->update(new KeyMsg(Key::End), $area)->model->update(new KeyMsg(Key::PageUp), $area)->model;
+
+        self::assertSame(['Item 10', 'Item 11', 'Item 12', 'Item 13', 'Item 14'], $this->titlesOnScreen($paged, $area));
+    }
+
+    #[Test]
+    public function itemsReplacedWithoutTheOneUnderTheCursorPutItOnTheFirst(): void
+    {
+        $list = ListView::fromStrings(['a', 'b', 'c'])->withCursor(2);
+
+        self::assertSame(0, $list->withItems([new SimpleListItem('x'), new SimpleListItem('y')])->cursor());
+    }
+
+    #[Test]
+    public function aListGivenNoWidthNeedsNoRows(): void
+    {
+        self::assertSame(0, ListView::fromStrings(['a', 'b'])->measureHeight(0));
+    }
+
+    #[Test]
     public function mouseClickSelectsItem(): void
     {
         $list = ListView::fromStrings(['A', 'B', 'C']);

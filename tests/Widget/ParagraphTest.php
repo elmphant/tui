@@ -445,6 +445,67 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function aCrlfLineKeepsEveryCharacterBeforeIt(): void
+    {
+        $frame = new Frame(10, 1);
+
+        Paragraph::fromText("line\r\nnext")->render($frame, new Rect(0, 0, 10, 1), $this->context());
+
+        self::assertSame('line', rtrim(implode('', array_slice($frame->characters, 0, 10))));
+    }
+
+    #[Test]
+    public function fromAnsiCountsATabStopFromEveryStyledRunBeforeIt(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Paragraph::fromAnsi("ab\x1b[1mcd\x1b[0me\tx")->render($frame, new Rect(0, 0, 20, 1), $this->context());
+
+        self::assertSame('abcde   x', rtrim(implode('', array_slice($frame->characters, 0, 20))));
+    }
+
+    #[Test]
+    public function twoTextsOfTheSameWidthWrapEachByItsOwnWords(): void
+    {
+        $first = Paragraph::fromText('aaaa bbbb');
+        $second = Paragraph::fromText('cc dd ee ff');
+
+        self::assertSame([2, 2], [$first->measureHeight(5), $second->measureHeight(5)]);
+        self::assertSame(['cc dd', 'ee ff'], $this->rowsOf($second, 5, 2));
+    }
+
+    #[Test]
+    public function aLongLineWrapsAtEverySpaceItReaches(): void
+    {
+        self::assertSame(['aa bb', 'cc dd', 'ee ff', 'gg'], $this->rowsOf(Paragraph::fromText('aa bb cc dd ee ff gg'), 5, 4));
+    }
+
+    #[Test]
+    public function wrappedMultibyteTextIsCutBetweenCharactersNotBytes(): void
+    {
+        self::assertSame(['äö üß', 'éè'], $this->rowsOf(Paragraph::fromText('äö üß éè'), 5, 2));
+    }
+
+    #[Test]
+    public function styledSpansDrawnAwayFromTheOriginKeepTheirPlaceAndStyle(): void
+    {
+        $frame = new Frame(12, 1);
+        $line = new Line([
+            Span::styled('ab', new Style(foreground: Color::ansi(1))),
+            Span::styled('cd', new Style(foreground: Color::ansi(2))),
+            Span::styled('ef', new Style(foreground: Color::ansi(3))),
+        ]);
+
+        Paragraph::fromLines([$line])->render($frame, new Rect(3, 0, 9, 1), $this->context());
+
+        self::assertSame('   abcdef', rtrim(implode('', $frame->characters)));
+        self::assertSame(
+            [Color::ansi(1)->value, Color::ansi(2)->value, Color::ansi(3)->value],
+            [$frame->foregrounds[3], $frame->foregrounds[5], $frame->foregrounds[7]],
+        );
+    }
+
+    #[Test]
     public function fromAnsiStartsTheLineOverAtACarriageReturnAndKeepsItsColour(): void
     {
         $frame = new Frame(20, 1);
@@ -1109,5 +1170,17 @@ final class ParagraphTest extends TestCase
     private function context(): RenderContext
     {
         return new RenderContext(Theme::dark());
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function rowsOf(Paragraph $paragraph, int $width, int $height): array
+    {
+        $frame = new Frame($width, $height);
+        $paragraph->render($frame, new Rect(0, 0, $width, $height), $this->context());
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        return array_map(static fn (int $row): string => rtrim($screen->lineAt($row)), range(0, $height - 1));
     }
 }
