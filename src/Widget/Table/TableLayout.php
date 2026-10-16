@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Layout\RowExtents;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\TextWrap;
 
 /**
  * Row heights and wrapped cell lines, shared by rendering, hit-testing and
@@ -66,7 +67,7 @@ final readonly class TableLayout
                 continue;
             }
 
-            $height = max($height, count(CharWidth::wrapToWidth($text, $width)));
+            $height = max($height, count(TextWrap::wrap($text, $width)));
         }
 
         return $height;
@@ -84,7 +85,7 @@ final readonly class TableLayout
         $lines = [];
 
         foreach ($columnWidths as $columnIndex => $width) {
-            $lines[] = $width > 0 ? CharWidth::wrapToWidth(self::textOf($row, $columnIndex), $width) : [''];
+            $lines[] = $width > 0 ? TextWrap::wrap(self::textOf($row, $columnIndex), $width) : [''];
         }
 
         return $lines;
@@ -100,7 +101,7 @@ final readonly class TableLayout
      */
     public static function spanningLines(array $columnWidths, Row $row): array
     {
-        return CharWidth::wrapToWidth(self::textOf($row, 0), max(1, array_sum($columnWidths)));
+        return TextWrap::wrap(self::textOf($row, 0), max(1, array_sum($columnWidths)));
     }
 
     public function heightOf(int $row): int

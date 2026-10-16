@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Text;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
+use Elmphant\Tui\Text\TextWrap;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -58,8 +59,8 @@ final class CharWidthPerfTest extends TestCase
     {
         self::skipUnderXdebug();
 
-        $short = self::medianMicroseconds(static fn (): array => CharWidth::wrapToWidth(str_repeat('é', 500), 1), 20);
-        $long = self::medianMicroseconds(static fn (): array => CharWidth::wrapToWidth(str_repeat('é', 2000), 1), 20);
+        $short = self::medianMicroseconds(static fn (): array => TextWrap::wrap(str_repeat('é', 500), 1), 20);
+        $long = self::medianMicroseconds(static fn (): array => TextWrap::wrap(str_repeat('é', 2000), 1), 20);
 
         self::assertLessThan(8.0, $long / $short, 'four times the word must cost about four times as much, not sixteen');
     }

@@ -12,6 +12,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\TextWrap;
 use Elmphant\Tui\Text\WrapCache;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Overflow;
@@ -328,7 +329,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     private static function stacked(array $values, int $width): string
     {
         $lines = array_map(
-            static fn (string $value): string => CharWidth::ellipsize(trim($value), $width),
+            static fn (string $value): string => TextWrap::ellipsize(trim($value), $width),
             $values,
         );
         $lines[0] = str_pad($lines[0], $width + strlen($lines[0]) - CharWidth::stringWidth($lines[0]));
@@ -482,7 +483,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
         $folded = [];
 
         foreach ($cells as $column => $cell) {
-            $folded[] = implode("\n", CharWidth::wrapToWidth($cell, max(1, $widths[$column] ?? 0)));
+            $folded[] = implode("\n", TextWrap::wrap($cell, max(1, $widths[$column] ?? 0)));
         }
 
         return $folded;

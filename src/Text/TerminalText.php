@@ -21,21 +21,32 @@ final class TerminalText
         return str_replace(["\t", "\n", "\r"], '', self::plain($text));
     }
 
+    /**
+     * Escape sequences removed, control bytes kept: `plain()` removes those too.
+     */
+    public static function stripAnsi(string $text): string
+    {
+        if (!str_contains($text, "\x1b")) {
+            return $text;
+        }
+
+        $plain = '';
+        foreach (AnsiTokenizer::tokenize($text) as $token) {
+            if ($token->type === AnsiTokenType::Text) {
+                $plain .= $token->content;
+            }
+        }
+
+        return $plain;
+    }
+
     public static function plain(string $text): string
     {
         if (preg_match('/^[\x20-\x7E]*\z/', $text) === 1) {
             return $text;
         }
 
-        if (str_contains($text, "\x1b")) {
-            $plain = '';
-            foreach (AnsiTokenizer::tokenize($text) as $token) {
-                if ($token->type === AnsiTokenType::Text) {
-                    $plain .= $token->content;
-                }
-            }
-            $text = $plain;
-        }
+        $text = self::stripAnsi($text);
 
         $result = '';
         $length = strlen($text);

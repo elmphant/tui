@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Widget\Table;
 
 use Elmphant\Tui\Rendering\BorderGlyphs;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\TextWrap;
 
 /**
  * @internal draws the bordered grid StaticTable is made of
@@ -118,7 +119,7 @@ final class TableGrid
         $lines = [];
 
         foreach (explode("\n", $cell) as $line) {
-            foreach (CharWidth::wrapToWidth($line, max(1, $width)) as $wrapped) {
+            foreach (TextWrap::wrap($line, max(1, $width)) as $wrapped) {
                 foreach (self::hardWrapped($wrapped, $width) as $hardWrapped) {
                     $lines[] = $hardWrapped;
                 }

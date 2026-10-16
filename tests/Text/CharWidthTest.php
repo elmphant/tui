@@ -172,36 +172,6 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
-    public function stripAnsi(): void
-    {
-        self::assertSame('hello', CharWidth::stripAnsi("\x1b[31mhello\x1b[0m"));
-    }
-
-    /**
-     * @return iterable<string, array{string, string}>
-     */
-    public static function stripAnsiEcma48Provider(): iterable
-    {
-        yield 'OSC title with BEL' => ["\x1b]0;my title\x07text", 'text'];
-        yield 'OSC with ST' => ["a\x1b]10;rgb:ff/ff/ff\x1b\\b", 'ab'];
-        yield 'private mode CSI' => ["a\x1b[?25lb", 'ab'];
-        yield 'CSI with intermediate' => ["a\x1b[4 qb", 'ab'];
-        yield 'truecolor with colons' => ["\x1b[38:2:255:0:0mred\x1b[m", 'red'];
-        yield 'DCS' => ["a\x1bP1\$r0m\x1b\\b", 'ab'];
-        yield 'APC' => ["a\x1b_Gi=1\x1b\\b", 'ab'];
-        yield 'SS3' => ["a\x1bOPb", 'ab'];
-        yield 'lone escape at end' => ["ab\x1b", 'ab'];
-        yield 'two-byte escape' => ["a\x1b7b", 'ab'];
-    }
-
-    #[DataProvider('stripAnsiEcma48Provider')]
-    #[Test]
-    public function stripAnsiRemovesAllEcma48SequenceKinds(string $input, string $expected): void
-    {
-        self::assertSame($expected, CharWidth::stripAnsi($input));
-    }
-
-    #[Test]
     public function ansiAwareWidthIgnoresOscPayload(): void
     {
         self::assertSame(2, CharWidth::ansiAwareWidth("\x1b]0;a very long window title\x07ab"));
@@ -211,13 +181,6 @@ final class CharWidthTest extends TestCase
     public function combiningMarkWidthIsZero(): void
     {
         self::assertSame(0, CharWidth::of("\u{0300}"));
-    }
-
-    #[Test]
-    public function stripAnsiRemovesAllSequences(): void
-    {
-        $input = "\x1b[31mHello\x1b[0m \x1b[1;32mWorld\x1b[0m";
-        self::assertSame('Hello World', CharWidth::stripAnsi($input));
     }
 
     #[Test]
@@ -648,19 +611,6 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
-    public function droppingColumnsNeverLeavesHalfOfAWideCharacter(): void
-    {
-        self::assertSame('cdef', CharWidth::dropColumns('abcdef', 2));
-        self::assertSame('abc', CharWidth::dropColumns('abc', 0));
-        self::assertSame('', CharWidth::dropColumns('ab', 5));
-        self::assertSame(
-            'b',
-            CharWidth::dropColumns("a\u{4F60}b", 2),
-            'the wide character straddles the cut, so it goes rather than showing half',
-        );
-    }
-
-    #[Test]
     public function truncateToWidthEmptyString(): void
     {
         self::assertSame('', CharWidth::truncateToWidth('', 10));
@@ -812,92 +762,6 @@ final class CharWidthTest extends TestCase
     public function stringWidthPureAsciiUsesStrlen(): void
     {
         self::assertSame(11, CharWidth::stringWidth('Hello World'));
-    }
-
-    #[Test]
-    public function wrapToWidthKeepsShortTextOnOneLine(): void
-    {
-        self::assertSame(['Hello world'], CharWidth::wrapToWidth('Hello world', 20));
-    }
-
-    #[Test]
-    public function wrapToWidthBreaksOnWordBoundaries(): void
-    {
-        self::assertSame(
-            ['Flush saved', 'caches with tags'],
-            CharWidth::wrapToWidth('Flush saved caches with tags', 16),
-        );
-    }
-
-    #[Test]
-    public function wrapToWidthHardBreaksAWordWiderThanTheColumn(): void
-    {
-        self::assertSame(['abcde', 'fghij', 'k'], CharWidth::wrapToWidth('abcdefghijk', 5));
-    }
-
-    #[Test]
-    public function wrapToWidthCollapsesTheSpaceItBreaksOn(): void
-    {
-        foreach (CharWidth::wrapToWidth('one two three four', 9) as $line) {
-            self::assertSame($line, trim($line), 'No line keeps the break space');
-            self::assertLessThanOrEqual(9, CharWidth::stringWidth($line));
-        }
-    }
-
-    #[Test]
-    public function wrapToWidthHandlesDegenerateInput(): void
-    {
-        self::assertSame([''], CharWidth::wrapToWidth('', 10));
-        self::assertSame([''], CharWidth::wrapToWidth('anything', 0));
-    }
-
-    #[Test]
-    public function wrapToWidthMeasuresWideCharacters(): void
-    {
-        // Each ideograph is two cells wide, so only two fit in four columns.
-        self::assertSame(
-            ["\u{4E16}\u{754C}", "\u{4E16}"],
-            CharWidth::wrapToWidth("\u{4E16}\u{754C}\u{4E16}", 4),
-        );
-    }
-
-    #[Test]
-    public function wrapToWidthMarksAGraphemeWiderThanTheColumnAsCut(): void
-    {
-        self::assertSame(['…', '…'], CharWidth::wrapToWidth("\u{4E16}\u{754C}", 1));
-    }
-
-    #[Test]
-    public function ellipsizeReturnsShortTextUnchanged(): void
-    {
-        self::assertSame('Hello', CharWidth::ellipsize('Hello', 10));
-        self::assertSame('Hello', CharWidth::ellipsize('Hello', 5), 'Text that exactly fits keeps every character');
-    }
-
-    #[Test]
-    public function ellipsizeMarksCutOffText(): void
-    {
-        // Truncation without a marker looks like a rendering fault.
-        self::assertSame('Hello wor…', CharWidth::ellipsize('Hello world', 10));
-        self::assertSame(10, CharWidth::stringWidth(CharWidth::ellipsize('Hello world', 10)));
-    }
-
-    #[Test]
-    public function ellipsizeHandlesDegenerateWidths(): void
-    {
-        self::assertSame('', CharWidth::ellipsize('Hello', 0));
-        self::assertSame('', CharWidth::ellipsize('Hello', -3));
-        self::assertSame('…', CharWidth::ellipsize('Hello', 1));
-    }
-
-    #[Test]
-    public function ellipsizeKeepsWideCharactersWhole(): void
-    {
-        // The marker takes one cell, leaving an odd number for wide graphemes.
-        $result = CharWidth::ellipsize("\u{4E16}\u{754C}\u{4E16}", 4);
-
-        self::assertSame("\u{4E16}…", $result);
-        self::assertLessThanOrEqual(4, CharWidth::stringWidth($result));
     }
 
     #[Test]

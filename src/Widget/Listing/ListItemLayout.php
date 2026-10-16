@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Listing;
 
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\TextWrap;
 
 /**
  * How a list item occupies rows at a given width.
@@ -42,7 +43,7 @@ final class ListItemLayout
 
         $rows = [];
 
-        foreach (CharWidth::wrapToWidth($item->title(), $width) as $line) {
+        foreach (TextWrap::wrap($item->title(), $width) as $line) {
             $rows[] = ['text' => $line, 'indent' => 0, 'isDescription' => false];
         }
 
@@ -51,7 +52,7 @@ final class ListItemLayout
         if ($description !== '') {
             $descriptionWidth = max(1, $width - self::DESCRIPTION_INDENT);
 
-            foreach (CharWidth::wrapToWidth($description, $descriptionWidth) as $line) {
+            foreach (TextWrap::wrap($description, $descriptionWidth) as $line) {
                 $rows[] = ['text' => $line, 'indent' => self::DESCRIPTION_INDENT, 'isDescription' => true];
             }
         }
@@ -83,7 +84,7 @@ final class ListItemLayout
         $last = $kept[self::MAX_ROWS - 1];
         $available = max(1, $width - $last['indent']);
 
-        $last['text'] = CharWidth::ellipsize($last['text'] . ' ' . $rows[self::MAX_ROWS]['text'], $available);
+        $last['text'] = TextWrap::ellipsize($last['text'] . ' ' . $rows[self::MAX_ROWS]['text'], $available);
         $kept[self::MAX_ROWS - 1] = $last;
 
         return $kept;

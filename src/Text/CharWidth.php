@@ -11,8 +11,6 @@ final class CharWidth
 {
     public const TAB_STOP = 8;
 
-    private const ELLIPSIS = '…';
-
     private const NON_PLAIN = '/[^\x20-\x7e]/';
 
     private const PLAIN_PAIR = '/[\x20-\x7e][\x20-\x7e]/';
@@ -334,149 +332,9 @@ final class CharWidth
         return $expanded;
     }
 
-    public static function stripAnsi(string $str): string
-    {
-        if (!str_contains($str, "\x1b")) {
-            return $str;
-        }
-
-        $text = '';
-        foreach (AnsiTokenizer::tokenize($str) as $token) {
-            if ($token->type === AnsiTokenType::Text) {
-                $text .= $token->content;
-            }
-        }
-
-        return $text;
-    }
-
     public static function ansiAwareWidth(string $str): int
     {
-        return self::stringWidth(self::stripAnsi($str));
-    }
-
-    /**
-     * Break text into lines no wider than $maxWidth, on word boundaries.
-     *
-     * A word wider than the column is split across lines, because leaving it
-     * whole would overflow whatever it is drawn into.
-     *
-     * @return list<string> always at least one line
-     */
-    public static function wrapToWidth(string $text, int $maxWidth): array
-    {
-        if ($maxWidth <= 0 || $text === '') {
-            return [''];
-        }
-
-        $lines = [];
-        $current = '';
-        $currentWidth = 0;
-
-        foreach (explode(' ', $text) as $word) {
-            // Measured once per word and carried, not re-measured over the whole
-            // line each time: a space ends a grapheme cluster, so the widths add.
-            $wordWidth = self::stringWidth($word);
-            $candidateWidth = $current === '' ? $wordWidth : $currentWidth + 1 + $wordWidth;
-
-            if ($candidateWidth <= $maxWidth) {
-                $current = $current === '' ? $word : $current . ' ' . $word;
-                $currentWidth = $candidateWidth;
-                continue;
-            }
-
-            if ($current !== '') {
-                $lines[] = $current;
-                $current = '';
-                $currentWidth = 0;
-            }
-
-            if ($wordWidth > $maxWidth) {
-                $head = '';
-                $headWidth = 0;
-
-                foreach (Grapheme::split($word) as $grapheme) {
-                    $width = self::graphemeWidth($grapheme);
-
-                    // A grapheme wider than the whole column fits nowhere. Drawing it
-                    // anyway paints over the neighbour, so it is marked as cut.
-                    if ($width > $maxWidth) {
-                        if ($head !== '') {
-                            $lines[] = $head;
-                        }
-                        $lines[] = self::ELLIPSIS;
-                        $head = '';
-                        $headWidth = 0;
-
-                        continue;
-                    }
-
-                    if ($headWidth + $width > $maxWidth) {
-                        $lines[] = $head;
-                        $head = '';
-                        $headWidth = 0;
-                    }
-
-                    $head .= $grapheme;
-                    $headWidth += $width;
-                }
-
-                $word = $head;
-                $wordWidth = $headWidth;
-            }
-
-            $current = $word;
-            $currentWidth = $wordWidth;
-        }
-
-        if ($current !== '' || $lines === []) {
-            $lines[] = $current;
-        }
-
-        return $lines;
-    }
-
-    /**
-     * Truncate to $maxWidth, marking the cut with an ellipsis.
-     *
-     * Text that simply stops at the edge reads as a rendering fault; the marker
-     * says "there is more" — use this wherever content may exceed its column.
-     */
-    public static function ellipsize(string $text, int $maxWidth): string
-    {
-        if ($maxWidth <= 0) {
-            return '';
-        }
-
-        if (self::stringWidth($text) <= $maxWidth) {
-            return $text;
-        }
-
-        // The marker occupies one cell; a wide grapheme may not fill the rest.
-        return self::truncateToWidth($text, $maxWidth - 1) . self::ELLIPSIS;
-    }
-
-    /**
-     * The text from $columns display columns on. A character straddling the cut
-     * goes with the part being dropped: half of one is not a character.
-     */
-    public static function dropColumns(string $text, int $columns): string
-    {
-        if ($columns <= 0) {
-            return $text;
-        }
-
-        $skipped = 0;
-        $kept = '';
-        foreach (Grapheme::split($text) as $grapheme) {
-            if ($skipped >= $columns) {
-                $kept .= $grapheme;
-                continue;
-            }
-            $skipped += self::graphemeWidth($grapheme);
-        }
-
-        return $kept;
+        return self::stringWidth(TerminalText::stripAnsi($str));
     }
 
     public static function truncateToWidth(string $text, int $maxWidth): string

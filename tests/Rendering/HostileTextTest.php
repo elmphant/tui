@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\TextWrap;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +21,7 @@ final class HostileTextTest extends TestCase
     public function noLineOfWrappedTextIsWiderThanTheWidthItWasGiven(string $text): void
     {
         foreach ([1, 2, 5, 20] as $width) {
-            foreach (CharWidth::wrapToWidth($text, $width) as $line) {
+            foreach (TextWrap::wrap($text, $width) as $line) {
                 self::assertLessThanOrEqual(
                     $width,
                     CharWidth::stringWidth($line),
