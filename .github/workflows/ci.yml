@@ -26,6 +26,7 @@ jobs:
       - run: composer validate --strict
       - run: composer audit
       - run: composer analyse
+      - run: composer deptrac -- --formatter=github-actions
       - run: composer cs:check
 
   test:
