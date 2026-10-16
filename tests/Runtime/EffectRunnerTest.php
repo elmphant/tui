@@ -423,7 +423,7 @@ final class EffectRunnerTest extends TestCase
 
         $message = $this->results->dequeue();
         self::assertInstanceOf(ProcessResultMsg::class, $message);
-        self::assertStringContainsString('hello', $message->stdout);
+        self::assertStringContainsString('hello', $message->stdout, sprintf('exit %d, stderr "%s"', $message->exitCode, $message->stderr));
     }
 
     #[Test]
@@ -500,7 +500,7 @@ final class EffectRunnerTest extends TestCase
 
         $message = $this->results->dequeue();
         self::assertInstanceOf(ProcessResultMsg::class, $message);
-        self::assertStringContainsString('hello-env', $message->stdout);
+        self::assertStringContainsString('hello-env', $message->stdout, sprintf('exit %d, stderr "%s"', $message->exitCode, $message->stderr));
     }
 
     #[Test]
