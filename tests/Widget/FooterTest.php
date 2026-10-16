@@ -37,6 +37,15 @@ final class FooterTest extends TestCase
     private RenderContext $context;
 
     #[Test]
+    public function itsChildrenAreEverySlotFilledInOrder(): void
+    {
+        $left = Text::new('l');
+        $right = Text::new('r');
+
+        self::assertSame([$left, $right], Footer::new()->withLeft($left)->withRight($right)->children());
+    }
+
+    #[Test]
     public function aGlobalRebindingReachesTheKeysASlotAnswers(): void
     {
         $footer = Footer::new()

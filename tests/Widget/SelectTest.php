@@ -25,6 +25,12 @@ use PHPUnit\Framework\TestCase;
 final class SelectTest extends TestCase
 {
     #[Test]
+    public function aPlaceItDoesNotHaveSelectsNothing(): void
+    {
+        self::assertNull(Select::new(['a', 'b'])->withSelected(1)->withSelected(5)->selectedIndex());
+    }
+
+    #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
         self::assertSame(

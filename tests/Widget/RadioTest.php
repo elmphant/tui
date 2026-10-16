@@ -29,6 +29,18 @@ final class RadioTest extends TestCase
     private const MARK_WIDTH = 4;
 
     #[Test]
+    public function aValueItHasSelectsThatOption(): void
+    {
+        self::assertSame(1, Radio::new(['a', 'b', 'c'])->withSelectedValue('b')->selectedIndex());
+    }
+
+    #[Test]
+    public function aPlaceItDoesNotHaveSelectsNothing(): void
+    {
+        self::assertNull(Radio::new(['a', 'b'])->withSelected(1)->withSelected(5)->selectedIndex());
+    }
+
+    #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
         self::assertSame(

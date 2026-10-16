@@ -117,6 +117,26 @@ final class RadioRowTest extends TestCase
     }
 
     #[Test]
+    public function aClearableRowStillPicksAnOptionItDoesNotHold(): void
+    {
+        $area = new Rect(0, 0, 40, 1);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelected(0);
+
+        $moved = $row->update(new KeyMsg(Key::Right), $area)->model;
+        self::assertInstanceOf(RadioRow::class, $moved);
+        $picked = $moved->update(new KeyMsg(' '), $area)->model;
+        self::assertInstanceOf(RadioRow::class, $picked);
+
+        self::assertSame('avif', $picked->selectedValue());
+    }
+
+    #[Test]
+    public function aPlaceTheRowDoesNotHaveSelectsNothing(): void
+    {
+        self::assertNull(RadioRow::new(['webp', 'avif'])->withSelected(0)->withSelected(5)->selectedIndex());
+    }
+
+    #[Test]
     public function clickingTheOptionAClearableRowHoldsPutsItBackDown(): void
     {
         $area = new Rect(0, 0, 40, 1);

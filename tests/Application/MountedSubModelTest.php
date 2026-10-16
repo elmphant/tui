@@ -15,6 +15,7 @@ use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
@@ -40,6 +41,14 @@ final class MountedSubModelTest extends TestCase
 
         self::assertInstanceOf(MountingApp::class, $updated);
         self::assertSame('after', $updated->panel->field->value());
+    }
+
+    #[Test]
+    public function anAppWhoseViewIsAMountDrawsWhatTheMountHolds(): void
+    {
+        $harness = ModelHarness::for(new MountingApp(new MountedPanel(TextInput::new()->withValue('mounted'))), 20, 1);
+
+        self::assertStringContainsString('mounted', $harness->renderScreen()->plainText());
     }
 
     #[Test]
