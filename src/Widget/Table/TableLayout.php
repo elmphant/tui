@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Table;
 
+use Elmphant\Tui\Layout\RowExtents;
 use Elmphant\Tui\Rendering\CharWidth;
 use Elmphant\Tui\Rendering\Span;
 
@@ -20,11 +21,14 @@ use Elmphant\Tui\Rendering\Span;
  */
 final readonly class TableLayout
 {
+    private RowExtents $extents;
+
     /**
      * @param list<int> $heights
      */
     private function __construct(public array $heights, public int $totalHeight)
     {
+        $this->extents = RowExtents::measure(count($heights), static fn (int $row): int => $heights[$row]);
     }
 
     /**
@@ -110,14 +114,7 @@ final readonly class TableLayout
      */
     public function lineOf(int $row): int
     {
-        $line = 0;
-        $rows = min($row, count($this->heights));
-
-        for ($index = 0; $index < $rows; ++$index) {
-            $line += $this->heights[$index];
-        }
-
-        return $line;
+        return $this->extents->startOf(max(0, $row));
     }
 
     /**
@@ -125,17 +122,19 @@ final readonly class TableLayout
      */
     public function rowAtLine(int $firstRow, int $line): ?int
     {
-        $bottom = 0;
-
-        for ($row = $firstRow; $row < count($this->heights); ++$row) {
-            $bottom += $this->heights[$row];
-
-            if ($line < $bottom) {
-                return $row;
-            }
+        if ($firstRow >= count($this->heights)) {
+            return null;
         }
 
-        return null;
+        return $this->extents->rowAtLine($this->lineOf($firstRow) + max(0, $line));
+    }
+
+    /**
+     * The first row that begins at or after the given line.
+     */
+    public function firstRowAtOrAfter(int $line): int
+    {
+        return $this->extents->firstRowAtOrAfter($line);
     }
 
     /**

@@ -1666,6 +1666,24 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function aCursorAmongWrappedRowsScrollsJustFarEnoughToShowItsFirstLine(): void
+    {
+        $rows = array_map(
+            static fn (int $index): array => [$index % 2 === 0 ? "r{$index}" : "r{$index} wraps here"],
+            range(0, 9),
+        );
+        $table = Table\Table::fromCells([Column::new('Row', Constraint::exact(10))], $rows)->withCursor(7);
+        $frame = new Frame(20, 5);
+
+        $table->render($frame, Rect::fromSize(20, 5), new RenderContext(Theme::dark()));
+
+        self::assertSame('r5 wraps', $this->rowText($frame, 20, 1, 0, 8));
+        self::assertSame('here', $this->rowText($frame, 20, 2, 0, 4));
+        self::assertSame('r6', $this->rowText($frame, 20, 3, 0, 2));
+        self::assertSame('r7 wraps', $this->rowText($frame, 20, 4, 0, 8));
+    }
+
+    #[Test]
     public function cursorScrollsUpWhenAboveViewport(): void
     {
         $rows = array_map(fn (int $index) => [(string)$index], range(0, 19));
