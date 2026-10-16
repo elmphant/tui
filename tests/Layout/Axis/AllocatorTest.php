@@ -252,6 +252,31 @@ final class AllocatorTest extends TestCase
         self::assertSame([3, 3, 4], $resolved->sizes);
     }
 
+    /**
+     * @return iterable<string, array{list<ItemPolicy>, int, list<int>, Remainder}>
+     */
+    public static function cappedShares(): iterable
+    {
+        foreach ([Remainder::StrongestClaim, Remainder::RearmostFirst] as $remainder) {
+            yield "a capped pane beside one, {$remainder->name}" => [[new ItemPolicy(max: 12, grow: 2), new ItemPolicy(grow: 1)], 40, [12, 28], $remainder];
+            yield "a capped pane beside two, {$remainder->name}" => [[new ItemPolicy(max: 6, grow: 1), new ItemPolicy(grow: 1), new ItemPolicy(grow: 1)], 40, [6, 17, 17], $remainder];
+            yield "the rest shared by their own weights, {$remainder->name}" => [[new ItemPolicy(max: 4, grow: 1), new ItemPolicy(grow: 2), new ItemPolicy(grow: 1)], 40, [4, 24, 12], $remainder];
+        }
+    }
+
+    /**
+     * @param list<ItemPolicy> $policies
+     * @param list<int>        $expected
+     */
+    #[Test]
+    #[DataProvider('cappedShares')]
+    public function whatACappedSlotCannotTakeIsSharedByTheOthersWeights(array $policies, int $available, array $expected, Remainder $remainder): void
+    {
+        $resolved = Allocator::resolve($policies, $available, new AxisSpecification(remainder: $remainder, distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame($expected, $resolved->sizes);
+    }
+
     #[Test]
     public function sharingAcrossTheWholeAxisStopsEverySlotAtItsCeiling(): void
     {

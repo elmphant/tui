@@ -103,34 +103,57 @@ final class Allocator
      */
     private static function sharedAcross(array $policies, int $available, Remainder $remainder): array
     {
-        $weight = 0;
-        foreach ($policies as $policy) {
-            $weight += $policy->grow;
-        }
+        $sizes = array_fill(0, count($policies), 0);
+        $claims = $sizes;
+        $open = array_filter($policies, static fn (ItemPolicy $policy): bool => $policy->grow > 0);
 
-        if ($weight === 0) {
+        if ($open === []) {
             return array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies);
         }
 
-        $sizes = [];
-        $claims = [];
-        $handedOut = 0;
+        // A slot whose share reaches its ceiling settles there, and the others
+        // share what it could not take by their own weights, until none is capped.
+        $left = $available;
+        do {
+            $weight = self::weightOf($open);
+            $capped = array_filter($open, static fn (ItemPolicy $policy): bool => intdiv($left * $policy->grow, $weight) >= $policy->max);
 
-        foreach ($policies as $index => $policy) {
-            $exact = $available * $policy->grow;
-            $whole = intdiv($exact, $weight);
-            $sizes[$index] = min($whole, $policy->max);
-            $claims[$index] = $exact - $whole * $weight;
-            $handedOut += $sizes[$index];
+            foreach ($capped as $index => $policy) {
+                $sizes[$index] = $policy->max;
+                $left -= $policy->max;
+                unset($open[$index]);
+            }
+        } while ($capped !== [] && $open !== []);
+
+        $weight = self::weightOf($open);
+        $pool = $left;
+        foreach ($open as $index => $policy) {
+            $exact = $pool * $policy->grow;
+            $sizes[$index] = intdiv($exact, $weight);
+            $claims[$index] = $exact - $sizes[$index] * $weight;
+            $left -= $sizes[$index];
         }
 
-        self::handOutRemainder($remainder, $sizes, $policies, $claims, $available - $handedOut);
+        self::handOutRemainder($remainder, $sizes, $policies, $claims, $left);
 
         foreach ($policies as $index => $policy) {
             $sizes[$index] = max($sizes[$index], $policy->initialSize());
         }
 
         return array_values($sizes);
+    }
+
+    /**
+     * @param array<int, ItemPolicy> $policies
+     */
+    private static function weightOf(array $policies): int
+    {
+        $weight = 0;
+        foreach ($policies as $policy) {
+            $weight += $policy->grow;
+        }
+
+        return $weight;
     }
 
     /**
