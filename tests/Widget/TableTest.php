@@ -22,6 +22,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Focusable;
@@ -1550,6 +1551,22 @@ final class TableTest extends TestCase
 
         // Header, two lines for the first row, one for the second.
         self::assertSame(4, $table->measureHeight(20));
+    }
+
+    #[Test]
+    public function aLineBreakInACellStartsANewLineOfTheRow(): void
+    {
+        $table = Table\Table::fromCells(
+            [Column::new('Title', Constraint::exact(10))],
+            [["one\ntwo"]],
+        )->withHeader(false);
+        $frame = new Frame(10, 3);
+
+        $table->render($frame, Rect::fromSize(10, 3), RenderContext::unfocused(Theme::dark()));
+
+        self::assertSame(2, $table->measureHeight(10));
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame(['one', 'two', ''], [rtrim($screen->lineAt(0)), rtrim($screen->lineAt(1)), rtrim($screen->lineAt(2))]);
     }
 
     #[Test]

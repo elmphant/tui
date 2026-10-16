@@ -63,14 +63,33 @@ final readonly class TableLayout
 
             // Wrapping is the expensive part and most cells do not need it, so
             // ask how wide the text is before asking where to break it.
-            if ($width <= 0 || CharWidth::stringWidth($text) <= $width) {
+            if ($width <= 0 || (!str_contains($text, "\n") && CharWidth::stringWidth($text) <= $width)) {
                 continue;
             }
 
-            $height = max($height, count(TextWrap::wrap($text, $width)));
+            $height = max($height, count(self::cellLines($text, $width)));
         }
 
         return $height;
+    }
+
+    /**
+     * A cell broken at its own line breaks, then between words to fit the column.
+     *
+     * @return list<string>
+     */
+    public static function cellLines(string $cell, int $width): array
+    {
+        if ($width <= 0) {
+            return [''];
+        }
+
+        $lines = [];
+        foreach (explode("\n", $cell) as $line) {
+            array_push($lines, ...TextWrap::wrap($line, $width));
+        }
+
+        return $lines;
     }
 
     /**
@@ -85,7 +104,7 @@ final readonly class TableLayout
         $lines = [];
 
         foreach ($columnWidths as $columnIndex => $width) {
-            $lines[] = $width > 0 ? TextWrap::wrap(self::textOf($row, $columnIndex), $width) : [''];
+            $lines[] = self::cellLines(self::textOf($row, $columnIndex), $width);
         }
 
         return $lines;
@@ -101,7 +120,7 @@ final readonly class TableLayout
      */
     public static function spanningLines(array $columnWidths, Row $row): array
     {
-        return TextWrap::wrap(self::textOf($row, 0), max(1, array_sum($columnWidths)));
+        return self::cellLines(self::textOf($row, 0), max(1, array_sum($columnWidths)));
     }
 
     public function heightOf(int $row): int

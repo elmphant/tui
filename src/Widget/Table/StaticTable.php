@@ -249,12 +249,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
 
         $widths = self::grown($floors, $width, $widest);
 
-        return $this->drawn(
-            $this->headers,
-            array_map(static fn (array $row): array => self::folded($row, $widths), $rows),
-            $widths,
-            $upTo,
-        );
+        return $this->drawn($this->headers, $rows, $widths, $upTo);
     }
 
     /**
@@ -466,27 +461,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
     private static function linesOfRow(array $cells): int
     {
         return max([1, ...array_map(static fn (string $cell): int => substr_count($cell, "\n") + 1, $cells)]);
-    }
-
-    /**
-     * Cells wrapped between words to their column.
-     *
-     * The renderer would wrap them itself, but only ever mid-word.
-     *
-     * @param list<string> $cells
-     * @param list<int>    $widths
-     *
-     * @return list<string>
-     */
-    private static function folded(array $cells, array $widths): array
-    {
-        $folded = [];
-
-        foreach ($cells as $column => $cell) {
-            $folded[] = implode("\n", TextWrap::wrap($cell, max(1, $widths[$column] ?? 0)));
-        }
-
-        return $folded;
     }
 
     /**

@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Widget\Table;
 
 use Elmphant\Tui\Rendering\BorderGlyphs;
 use Elmphant\Tui\Text\CharWidth;
-use Elmphant\Tui\Text\TextWrap;
 
 /**
  * @internal draws the bordered grid StaticTable is made of
@@ -89,7 +88,7 @@ final class TableGrid
         $height = 1;
 
         foreach ($widths as $column => $width) {
-            $columns[$column] = self::linesOf($cells[$column] ?? '', $width);
+            $columns[$column] = TableLayout::cellLines($cells[$column] ?? '', $width);
             $height = max($height, count($columns[$column]));
         }
 
@@ -106,54 +105,6 @@ final class TableGrid
         }
 
         return $lines;
-    }
-
-    /**
-     * Broken between words, and only inside one when the word alone is wider
-     * than its column.
-     *
-     * @return list<string>
-     */
-    private static function linesOf(string $cell, int $width): array
-    {
-        $lines = [];
-
-        foreach (explode("\n", $cell) as $line) {
-            foreach (TextWrap::wrap($line, max(1, $width)) as $wrapped) {
-                foreach (self::hardWrapped($wrapped, $width) as $hardWrapped) {
-                    $lines[] = $hardWrapped;
-                }
-            }
-        }
-
-        return $lines;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function hardWrapped(string $line, int $width): array
-    {
-        if ($width < 1) {
-            return [''];
-        }
-
-        $wrapped = [];
-
-        while (CharWidth::stringWidth($line) > $width) {
-            $head = CharWidth::truncateToWidth($line, $width);
-
-            if ($head === '') {
-                break;
-            }
-
-            $wrapped[] = $head;
-            $line = mb_substr($line, mb_strlen($head));
-        }
-
-        $wrapped[] = $line;
-
-        return $wrapped;
     }
 
     private static function padded(string $text, int $width): string
