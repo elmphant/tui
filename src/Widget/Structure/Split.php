@@ -264,10 +264,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
             }
         }
 
-        if ($panes === []) {
-            return new UpdateResult($this);
-        }
-
         $batch = (new ChildDispatcher($this->globalKeybindings))->dispatchList($panes, $rects, $message);
 
         if ($batch->overrides === []) {
@@ -304,8 +300,8 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
     }
 
     /**
-     * Sizes trimmed or padded to the space there is, taking from and giving to
-     * whichever panes have room above their floor.
+     * Floors lifted after the sharing out can overrun the axis, so the overrun is
+     * taken back from whichever panes sit above their floor, foremost first.
      *
      * @param list<int> $sizes
      * @param list<int> $floors
@@ -316,27 +312,10 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
     {
         $excess = array_sum($sizes) - $available;
 
-        while ($excess > 0) {
-            $room = 0;
-
-            foreach ($sizes as $index => $size) {
-                $slack = $size - $floors[$index];
-
-                if ($slack > 0 && $excess > 0) {
-                    $take = min($slack, $excess);
-                    $sizes[$index] -= $take;
-                    $excess -= $take;
-                    $room += $slack;
-                }
-            }
-
-            if ($room === 0) {
-                break;
-            }
-        }
-
-        if ($excess < 0 && $sizes !== []) {
-            $sizes[count($sizes) - 1] -= $excess;
+        foreach ($sizes as $index => $size) {
+            $take = min($size - $floors[$index], $excess);
+            $sizes[$index] -= $take;
+            $excess -= $take;
         }
 
         return $sizes;
@@ -402,12 +381,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
     {
         $panes = count($this->children);
         $axis = $this->direction === Direction::Horizontal ? $area->width : $area->height;
-        $available = $axis - self::GAP * min($panes - 1, max(0, $axis));
-
-        if ($available <= 0) {
-            return array_fill(0, $panes, 0);
-        }
-
+        $available = $axis - self::GAP * min($panes - 1, $axis);
         $minimums = $this->resolvedMinimums($panes);
 
         $floorsDoNotFit = array_sum($minimums) > $available;

@@ -6,7 +6,9 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\SplitState;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -24,9 +26,11 @@ use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Split;
+use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class SplitTest extends TestCase
 {
@@ -462,6 +466,101 @@ final class SplitTest extends TestCase
             $this->dividerColour($this->drag($split, $area, from: 10, to: 10), $area),
             'A divider under the pointer looks different from one at rest',
         );
+    }
+
+    #[Test]
+    public function onlyTheDividerBeingDraggedTakesTheAccent(): void
+    {
+        $area = Rect::fromSize(32, 3);
+        $split = $this->drag(Split::row(SplitState::even(3), Text::new('a'), Text::new('b'), Text::new('c')), $area, from: 21, to: 21);
+
+        $frame = new Frame(32, 3);
+        $split->render($frame, $area, new RenderContext(Theme::dark()));
+
+        self::assertSame(Theme::dark()->borderStyle->foreground?->value, $frame->foregrounds[10]);
+        self::assertSame(Theme::dark()->accent->foreground?->value, $frame->foregrounds[21]);
+    }
+
+    #[Test]
+    public function aRowDrawsItsDividerDownTheWholeHeight(): void
+    {
+        $frame = new Frame(5, 10);
+        Split::row(SplitState::even(2), Text::new('a'), Text::new('b'))
+            ->render($frame, Rect::fromSize(5, 10), new RenderContext(Theme::dark()));
+
+        self::assertSame('│', $frame->characters[9 * 5 + 2]);
+    }
+
+    #[Test]
+    public function aPaneThatFailsToDrawLeavesTheRestOfTheFrameDrawable(): void
+    {
+        $failing = new class implements Widget {
+            public function sizing(): Sizing
+            {
+                return Sizing::of(Constraint::flex(), Constraint::flex());
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                throw new RuntimeException('cannot draw');
+            }
+        };
+        $frame = new Frame(40, 2);
+
+        try {
+            Split::row(SplitState::even(2), $failing, Text::new('b'))->render($frame, Rect::fromSize(10, 2), new RenderContext(Theme::dark()));
+        } catch (RuntimeException) {
+        }
+        $frame->putChar(30, 0, 'x');
+
+        self::assertSame('x', $frame->characters[30]);
+    }
+
+    #[Test]
+    public function aDragPastTheFarEndStopsAtTheMinimumOfThePaneBeyond(): void
+    {
+        $area = Rect::fromSize(21, 4);
+        $split = Split::row(SplitState::even(2), Text::new('left'), Text::new('right'))->withMinimums(1, 5);
+
+        self::assertSame(
+            SplitState::even(2)->withPairDividedAt(0, 15, 20)->shares,
+            $this->drag($split, $area, from: 10, to: 20)->state()->shares,
+        );
+    }
+
+    #[Test]
+    public function aClickReachesTheWidgetInThePaneUnderIt(): void
+    {
+        $area = Rect::fromSize(21, 6);
+        $list = ListView::new(array_map(static fn (string $label) => new SimpleListItem($label), ['a', 'b', 'c', 'd']));
+        $split = Split::row(SplitState::even(2), $list, Text::new('right'));
+
+        $clicked = $split->update(new MouseMsg(1, 2, MouseAction::Press, MouseButton::Left), $area)->model;
+
+        $panes = $clicked->placedChildren($area);
+        self::assertInstanceOf(ListView::class, $panes[0][0]);
+        self::assertSame(2, $panes[0][0]->cursor());
+    }
+
+    #[Test]
+    public function theWheelReachesThePaneUnderItThoughNoPaneIsMarked(): void
+    {
+        $area = Rect::fromSize(21, 3);
+        $list = ListView::new(array_map(static fn (int $row) => new SimpleListItem("row $row"), range(1, 20)));
+        $split = Split::row(SplitState::even(2), $list, Text::new('right'));
+
+        $scrolled = $split->update(new MouseMsg(1, 1, MouseAction::WheelDown, MouseButton::None), $area)->model;
+
+        self::assertNotSame($list, $scrolled->placedChildren($area)[0][0]);
+    }
+
+    #[Test]
+    public function aColumnKeepsChildrenHandedOverByNameInOrder(): void
+    {
+        $top = Text::new('top');
+        $bottom = Text::new('bottom');
+
+        self::assertSame([$top, $bottom], Split::column(SplitState::even(2), ...['first' => $top, 'second' => $bottom])->children());
     }
 
     #[Test]
