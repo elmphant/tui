@@ -467,6 +467,17 @@ Cmd::process(['npm', 'run', 'build'])
 
 The same `EffectId` instance appears as `$message->effectId` on every result message, allowing precise routing and cancellation.
 
+Cancel, a replacement under the same id, a timeout and quitting all stop the
+process the command started. They do not stop processes that this process
+starts itself. If you run a shell, start the real command with `exec`, so it
+replaces the shell instead of running beside it:
+
+```php
+use Elmphant\Tui\Core\Cmd;
+
+Cmd::exec(['sh', '-c', 'cd /app && exec npm install']);
+```
+
 ## HTTP Requests
 
 `Cmd::http()` runs through the same update loop as every other effect. Start the request with a command, then handle `HttpResultMsg`.
