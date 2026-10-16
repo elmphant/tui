@@ -82,6 +82,17 @@ final class FrameSchedulerTest extends TestCase
     }
 
     #[Test]
+    public function aDroppedRepaintIsDrawnAgainOnceTheBudgetHasPassed(): void
+    {
+        $frames = new FrameScheduler(10.0);
+        $frames->drawn(1.0, 0.5);
+
+        $frames->dropped(1.5);
+
+        self::assertTrue($frames->isDue(1.6), 'the screen still shows whatever the failed frame left behind');
+    }
+
+    #[Test]
     public function theRateNeverFallsBelowOneFramePerSecond(): void
     {
         self::assertSame(1.0, (new FrameScheduler(0.5))->budget());

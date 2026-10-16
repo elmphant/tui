@@ -58,6 +58,7 @@ final class FrameScheduler
 
     public function dropped(float $at): void
     {
+        $this->dirty = true;
         $this->lastFrameAt = $at;
         $this->repaintAt = null;
     }
