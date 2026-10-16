@@ -175,23 +175,23 @@ final class Program
     /**
      * @return self<TModel>
      */
-    public function withAltScreen(): self
+    public function withAltScreen(bool $enabled = true): self
     {
-        $this->assertConfigurable();
-        $this->useAltScreen = true;
+        $program = $this->configured();
+        $program->useAltScreen = $enabled;
 
-        return $this;
+        return $program;
     }
 
     /**
      * @return self<TModel>
      */
-    public function withMouseTracking(): self
+    public function withMouseTracking(bool $enabled = true): self
     {
-        $this->assertConfigurable();
-        $this->useMouseTracking = true;
+        $program = $this->configured();
+        $program->useMouseTracking = $enabled;
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -199,10 +199,10 @@ final class Program
      */
     public function withFps(float $framesPerSecond): self
     {
-        $this->assertConfigurable();
-        $this->framesPerSecond = max(1.0, $framesPerSecond);
+        $program = $this->configured();
+        $program->framesPerSecond = max(1.0, $framesPerSecond);
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -212,10 +212,10 @@ final class Program
      */
     public function onError(Closure $handler): self
     {
-        $this->assertConfigurable();
-        $this->errorHandler = $handler;
+        $program = $this->configured();
+        $program->errorHandler = $handler;
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -223,10 +223,10 @@ final class Program
      */
     public function withTerminal(Terminal $terminal): self
     {
-        $this->assertConfigurable();
-        $this->injectedTerminal = $terminal;
+        $program = $this->configured();
+        $program->injectedTerminal = $terminal;
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -238,10 +238,10 @@ final class Program
      */
     public function withColorProfile(ColorProfile $profile): self
     {
-        $this->assertConfigurable();
-        $this->colorProfile = $profile;
+        $program = $this->configured();
+        $program->colorProfile = $profile;
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -249,10 +249,10 @@ final class Program
      */
     public function withTheme(Theme $theme): self
     {
-        $this->assertConfigurable();
-        $this->theme = $theme;
+        $program = $this->configured();
+        $program->theme = $theme;
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -260,10 +260,10 @@ final class Program
      */
     public function withClock(Clock $clock): self
     {
-        $this->assertConfigurable();
-        $this->clock = $clock;
+        $program = $this->configured();
+        $program->clock = $clock;
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -271,10 +271,10 @@ final class Program
      */
     public function withTracer(Tracer $tracer): self
     {
-        $this->assertConfigurable();
-        $this->tracer = $tracer;
+        $program = $this->configured();
+        $program->tracer = $tracer;
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -285,10 +285,10 @@ final class Program
      */
     public function withCommandHandler(CommandHandler $handler): self
     {
-        $this->assertConfigurable();
-        $this->commandHandlers[] = $handler;
+        $program = $this->configured();
+        $program->commandHandlers[] = $handler;
 
-        return $this;
+        return $program;
     }
 
     /**
@@ -354,11 +354,16 @@ final class Program
         }
     }
 
-    private function assertConfigurable(): void
+    /**
+     * @return self<TModel>
+     */
+    private function configured(): self
     {
         if ($this->state !== ProgramState::New) {
             throw new LogicException(sprintf('Program cannot be configured in state %s', $this->state->name));
         }
+
+        return clone $this;
     }
 
     private function setup(): void

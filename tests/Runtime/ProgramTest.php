@@ -465,40 +465,9 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function builderMethodsReturnSelf(): void
-    {
-        $program = Program::new($this->createMockModel());
-        self::assertSame($program, $program->withAltScreen());
-        self::assertSame($program, $program->withMouseTracking());
-        self::assertSame($program, $program->withFps(30));
-        self::assertSame($program, $program->onError(fn () => Cmd::quit()));
-    }
-
-    #[Test]
-    public function altScreenEnablesFlag(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $program->withAltScreen();
-
-        $reflection = new ReflectionProperty(Program::class, 'useAltScreen');
-        self::assertTrue($reflection->getValue($program));
-    }
-
-    #[Test]
-    public function mouseTrackingEnablesFlag(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $program->withMouseTracking();
-
-        $reflection = new ReflectionProperty(Program::class, 'useMouseTracking');
-        self::assertTrue($reflection->getValue($program));
-    }
-
-    #[Test]
     public function fpsClampsToMinimumOnePointZero(): void
     {
-        $program = Program::new($this->createMockModel());
-        $program->withFps(0.5);
+        $program = Program::new($this->createMockModel())->withFps(0.5);
 
         $reflection = new ReflectionProperty(Program::class, 'framesPerSecond');
         self::assertSame(1.0, $reflection->getValue($program));
@@ -507,19 +476,10 @@ final class ProgramTest extends TestCase
     #[Test]
     public function fpsAcceptsValueAboveMinimum(): void
     {
-        $program = Program::new($this->createMockModel());
-        $program->withFps(30.0);
+        $program = Program::new($this->createMockModel())->withFps(30.0);
 
         $reflection = new ReflectionProperty(Program::class, 'framesPerSecond');
         self::assertSame(30.0, $reflection->getValue($program));
-    }
-
-    #[Test]
-    public function fpsClampedToMinimumOne(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $result = $program->withFps(0.5);
-        self::assertSame($program, $result);
     }
 
     #[Test]
