@@ -110,8 +110,8 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             $bindings->matches($message, Actions::CURSOR_RIGHT) => $this->expandOrEnter(),
             $bindings->matches($message, Actions::CURSOR_LEFT) => $this->collapseOrLeave(),
             $bindings->matches($message, Actions::TOGGLE) => $this->toggle($this->cursor()),
-            $bindings->matches($message, Actions::HOME) => $this->first(),
-            $bindings->matches($message, Actions::END) => $this->last(),
+            $bindings->matches($message, Actions::HOME) => $this->cursorToFirst(),
+            $bindings->matches($message, Actions::END) => $this->cursorToLast(),
             default => $this,
         };
 
@@ -178,7 +178,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $index !== null && $rows[$index]['node']->isExpandable() ? $this->expand($path) : $this;
     }
 
-    public function first(): self
+    public function cursorToFirst(): self
     {
         foreach ($this->visibleRows() as $row) {
             if ($row['selectable']) {
@@ -189,7 +189,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $this;
     }
 
-    public function last(): self
+    public function cursorToLast(): self
     {
         foreach (array_reverse($this->visibleRows()) as $row) {
             if ($row['selectable']) {

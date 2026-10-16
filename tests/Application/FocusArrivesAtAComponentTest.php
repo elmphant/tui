@@ -131,8 +131,8 @@ final readonly class WrappedFocusApp extends App
         $move = Cmd::focus(ComponentId::named('second'));
 
         return match ($message->key) {
-            'b' => $this->withCmd(Cmd::batch(Cmd::tick(1.0), $move)),
-            'm' => $this->withCmd($move->map(static fn (Message $inner): Message => $inner)),
+            'b' => $this->then(Cmd::batch(Cmd::tick(1.0), $move)),
+            'm' => $this->then($move->map(static fn (Message $inner): Message => $inner)),
             default => UpdateResult::keep($this),
         };
     }

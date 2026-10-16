@@ -58,7 +58,7 @@ final readonly class Counter extends App
         return match ($message->key) {
             'k' => UpdateResult::changed($this->withCount($this->count + 1)),
             'j' => UpdateResult::changed($this->withCount($this->count - 1)),
-            'x' => $this->withCmd(Cmd::quit()),
+            'x' => $this->then(Cmd::quit()),
             default => UpdateResult::keep($this),
         };
     }
@@ -110,7 +110,7 @@ abstract readonly class App
 }
 ```
 
-Hooks always return `UpdateResult`: use `UpdateResult::keep($this)` when nothing changes, `UpdateResult::changed(...)` for a state transition, or `$this->withCmd(...)` when a transition also needs a command. `App` deliberately has no reflection-based `with()` method. The optional `Cloneable` trait remains available for compact constructor-compatible value objects, but explicit typed methods give static analysers the strongest contract.
+Hooks always return `UpdateResult`: use `UpdateResult::keep($this)` when nothing changes, `UpdateResult::changed(...)` for a state transition, or `$this->then(...)` when a transition also needs a command. `App` deliberately has no reflection-based `with()` method. The optional `Cloneable` trait remains available for compact constructor-compatible value objects, but explicit typed methods give static analysers the strongest contract.
 
 Keep stateful widgets as properties on the model, not local variables rebuilt inside `view()`. `view()` should compose the current state into a widget tree; if you recreate a `TextInput`, `Panel`, `Select`, or `Table` in `view()`, its cursor, selection, scroll, and focus state will be reset.
 
@@ -502,7 +502,7 @@ $packages = EffectId::named('packages');
 
 // In onKey() or update():
 $message instanceof KeyMsg && $message->key === 'r'
-    => $this->withLoading(true)->withCmd(
+    => $this->withLoading(true)->then(
         Cmd::http('https://packagist.org/search.json?q=markdown')
             ->withId($packages)
             ->withMaxBodyBytes(4 * 1024 * 1024)

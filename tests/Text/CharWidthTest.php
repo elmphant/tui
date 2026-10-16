@@ -16,14 +16,14 @@ final class CharWidthTest extends TestCase
     #[Test]
     public function asciiWidthIsOne(): void
     {
-        self::assertSame(1, CharWidth::of('A'));
-        self::assertSame(1, CharWidth::of('z'));
+        self::assertSame(1, CharWidth::codepointWidth('A'));
+        self::assertSame(1, CharWidth::codepointWidth('z'));
     }
 
     #[Test]
     public function cjkWidthIsTwo(): void
     {
-        self::assertSame(2, CharWidth::of("\u{4E16}")); // 世
+        self::assertSame(2, CharWidth::codepointWidth("\u{4E16}")); // 世
     }
 
     #[Test]
@@ -50,7 +50,7 @@ final class CharWidthTest extends TestCase
     #[DataProvider('textPresentationEmoji')]
     public function anEmojiThatTerminalsDrawAsTextTakesOneCell(string $character): void
     {
-        self::assertSame(1, CharWidth::of($character));
+        self::assertSame(1, CharWidth::codepointWidth($character));
         self::assertSame(1, CharWidth::stringWidth($character));
     }
 
@@ -95,13 +95,13 @@ final class CharWidthTest extends TestCase
         $mismatches = [];
         for ($codepoint = 0x20; $codepoint <= 0x3FFFD; ++$codepoint) {
             $character = mb_chr($codepoint);
-            if ($character === false || CharWidth::of($character) === 0 || IntlChar::charAge($codepoint)[0] > 16) {
+            if ($character === false || CharWidth::codepointWidth($character) === 0 || IntlChar::charAge($codepoint)[0] > 16) {
                 continue;
             }
 
             $eastAsianWidth = IntlChar::getIntPropertyValue($codepoint, IntlChar::PROPERTY_EAST_ASIAN_WIDTH);
             $expected = $eastAsianWidth === IntlChar::EA_WIDE || $eastAsianWidth === IntlChar::EA_FULLWIDTH ? 2 : 1;
-            if (CharWidth::of($character) !== $expected) {
+            if (CharWidth::codepointWidth($character) !== $expected) {
                 $mismatches[] = sprintf('U+%04X', $codepoint);
             }
         }
@@ -122,7 +122,7 @@ final class CharWidthTest extends TestCase
             }
 
             $zero = $codepoint !== 0xAD && preg_match('/^[\p{Mn}\p{Me}\p{Cf}\p{Zl}\p{Zp}]$/u', $character) === 1;
-            if ((CharWidth::of($character) === 0) !== $zero) {
+            if ((CharWidth::codepointWidth($character) === 0) !== $zero) {
                 $mismatches[] = sprintf('U+%04X', $codepoint);
             }
         }
@@ -180,7 +180,7 @@ final class CharWidthTest extends TestCase
     #[Test]
     public function combiningMarkWidthIsZero(): void
     {
-        self::assertSame(0, CharWidth::of("\u{0300}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{0300}"));
     }
 
     #[Test]
@@ -196,7 +196,7 @@ final class CharWidthTest extends TestCase
     #[Test]
     public function emptyStringIsZeroWidth(): void
     {
-        self::assertSame(0, CharWidth::of(''));
+        self::assertSame(0, CharWidth::codepointWidth(''));
     }
 
     #[Test]
@@ -208,7 +208,7 @@ final class CharWidthTest extends TestCase
     #[Test]
     public function nullCharacterIsZeroWidth(): void
     {
-        self::assertSame(0, CharWidth::of("\0"));
+        self::assertSame(0, CharWidth::codepointWidth("\0"));
     }
 
     // --- L56: invalid multibyte ord returns 1 (fallback) ---
@@ -217,14 +217,14 @@ final class CharWidthTest extends TestCase
     public function invalidUtf8ByteReturnsFallbackWidth(): void
     {
         // mb_ord returns false for invalid UTF-8 sequences
-        self::assertSame(1, CharWidth::of("\xC0"));
+        self::assertSame(1, CharWidth::codepointWidth("\xC0"));
     }
 
     #[Test]
     public function invalidUtf8ContinuationByteReturnsFallbackWidth(): void
     {
-        self::assertSame(0, CharWidth::of("\x80"));
-        self::assertSame(0, CharWidth::of("\x9F"));
+        self::assertSame(0, CharWidth::codepointWidth("\x80"));
+        self::assertSame(0, CharWidth::codepointWidth("\x9F"));
     }
 
     // --- L58: printable ASCII range boundaries (0x20 to 0x7E) ---
@@ -233,21 +233,21 @@ final class CharWidthTest extends TestCase
     public function spaceCharacterIsOneWidth(): void
     {
         // 0x20 — exact lower boundary of printable ASCII
-        self::assertSame(1, CharWidth::of(' '));
+        self::assertSame(1, CharWidth::codepointWidth(' '));
     }
 
     #[Test]
     public function tildeIsOneWidth(): void
     {
         // 0x7E — last char before 0x7F, upper boundary of printable ASCII
-        self::assertSame(1, CharWidth::of('~'));
+        self::assertSame(1, CharWidth::codepointWidth('~'));
     }
 
     #[Test]
     public function exclamationMarkIsOneWidth(): void
     {
         // 0x21 — one above the lower boundary
-        self::assertSame(1, CharWidth::of('!'));
+        self::assertSame(1, CharWidth::codepointWidth('!'));
     }
 
     // --- L59: control characters below 0x20 return 0 ---
@@ -256,21 +256,21 @@ final class CharWidthTest extends TestCase
     public function controlCharacterBelowSpaceIsZeroWidth(): void
     {
         // 0x01 SOH
-        self::assertSame(0, CharWidth::of("\x01"));
+        self::assertSame(0, CharWidth::codepointWidth("\x01"));
     }
 
     #[Test]
     public function lastControlCharacterBeforeSpaceIsZeroWidth(): void
     {
         // 0x1F — exact boundary, one below 0x20
-        self::assertSame(0, CharWidth::of("\x1F"));
+        self::assertSame(0, CharWidth::codepointWidth("\x1F"));
     }
 
     #[Test]
     public function escapeCharacterIsZeroWidth(): void
     {
         // 0x1B ESC — another control char
-        self::assertSame(0, CharWidth::of("\x1B"));
+        self::assertSame(0, CharWidth::codepointWidth("\x1B"));
     }
 
     // --- L60: DEL (0x7F) returns 0 ---
@@ -278,7 +278,7 @@ final class CharWidthTest extends TestCase
     #[Test]
     public function deleteCharacterIsZeroWidth(): void
     {
-        self::assertSame(0, CharWidth::of("\x7F"));
+        self::assertSame(0, CharWidth::codepointWidth("\x7F"));
     }
 
     // --- L58 boundary: 0x80 is NOT in printable ASCII, falls through to general lookup ---
@@ -287,8 +287,8 @@ final class CharWidthTest extends TestCase
     public function firstNonAsciiCodepointIsOneWidth(): void
     {
         // 0x80 — just above ASCII range, not in any zero-width or wide table
-        self::assertSame(0, CharWidth::of("\u{0080}"));
-        self::assertSame(0, CharWidth::of("\u{009F}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{0080}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{009F}"));
     }
 
     // --- Zero-width range boundary tests (exercises inRanges binary search) ---
@@ -297,49 +297,49 @@ final class CharWidthTest extends TestCase
     public function combiningMarkAtStartOfFirstRangeIsZeroWidth(): void
     {
         // 0x0300 — first codepoint of first ZERO_WIDTH range
-        self::assertSame(0, CharWidth::of("\u{0300}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{0300}"));
     }
 
     #[Test]
     public function combiningMarkAtEndOfFirstRangeIsZeroWidth(): void
     {
         // 0x036F — last codepoint of first ZERO_WIDTH range
-        self::assertSame(0, CharWidth::of("\u{036F}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{036F}"));
     }
 
     #[Test]
     public function codepointJustBeforeZeroWidthRangeIsNotZeroWidth(): void
     {
         // 0x02FF — just before the first ZERO_WIDTH range [0x0300, 0x036F]
-        self::assertSame(1, CharWidth::of("\u{02FF}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{02FF}"));
     }
 
     #[Test]
     public function codepointJustAfterZeroWidthRangeIsNotZeroWidth(): void
     {
         // 0x0370 — just after the first ZERO_WIDTH range [0x0300, 0x036F]
-        self::assertSame(1, CharWidth::of("\u{0370}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{0370}"));
     }
 
     #[Test]
     public function zeroWidthSpaceIsZeroWidth(): void
     {
         // 0x200B — zero-width space, in ZERO_WIDTH table
-        self::assertSame(0, CharWidth::of("\u{200B}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{200B}"));
     }
 
     #[Test]
     public function variationSelectorIsZeroWidth(): void
     {
         // 0xFE0F — variation selector 16, last of [0xFE00, 0xFE0F]
-        self::assertSame(0, CharWidth::of("\u{FE0F}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{FE0F}"));
     }
 
     #[Test]
     public function softHyphenIsOneWidth(): void
     {
         // 0x00AD — not in any zero-width or wide range
-        self::assertSame(1, CharWidth::of("\u{00AD}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{00AD}"));
     }
 
     // --- Wide range boundary tests ---
@@ -348,56 +348,56 @@ final class CharWidthTest extends TestCase
     public function hangulJamoStartIsDoubleWidth(): void
     {
         // 0x1100 — first codepoint of first WIDE range
-        self::assertSame(2, CharWidth::of("\u{1100}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{1100}"));
     }
 
     #[Test]
     public function hangulJamoEndIsDoubleWidth(): void
     {
         // 0x115F — last codepoint of first WIDE range
-        self::assertSame(2, CharWidth::of("\u{115F}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{115F}"));
     }
 
     #[Test]
     public function codepointJustBeforeWideRangeIsNotWide(): void
     {
         // 0x10FF — just before [0x1100, 0x115F]
-        self::assertSame(1, CharWidth::of("\u{10FF}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{10FF}"));
     }
 
     #[Test]
     public function codepointJustAfterFirstWideRangeIsNotWide(): void
     {
         // 0x1160 — just after [0x1100, 0x115F]
-        self::assertSame(1, CharWidth::of("\u{1160}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{1160}"));
     }
 
     #[Test]
     public function fullwidthExclamationIsDoubleWidth(): void
     {
         // 0xFF01 — fullwidth exclamation mark, in WIDE table
-        self::assertSame(2, CharWidth::of("\u{FF01}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{FF01}"));
     }
 
     #[Test]
     public function lastWideRangeEndIsDoubleWidth(): void
     {
         // 0x3FFFD — last codepoint in the last WIDE range [0x30000, 0x3FFFD]
-        self::assertSame(2, CharWidth::of("\u{3FFFD}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{3FFFD}"));
     }
 
     #[Test]
     public function codepointAfterAllWideRangesIsOneWidth(): void
     {
         // 0x3FFFE — just after the last WIDE range
-        self::assertSame(1, CharWidth::of("\u{3FFFE}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{3FFFE}"));
     }
 
     #[Test]
     public function emojiIsDoubleWidth(): void
     {
         // 0x1F600 — grinning face, in [0x1F300, 0x1F64F]
-        self::assertSame(2, CharWidth::of("\u{1F600}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{1F600}"));
     }
 
     // --- inRanges binary search: mid-range hits to exercise all branches ---
@@ -406,28 +406,28 @@ final class CharWidthTest extends TestCase
     public function codepointInMiddleOfWideTableIsDoubleWidth(): void
     {
         // 0x2E80 — CJK radical, in [0x2E80, 0x303E] which is roughly middle of WIDE
-        self::assertSame(2, CharWidth::of("\u{2E80}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{2E80}"));
     }
 
     #[Test]
     public function codepointBetweenWideRangesIsOneWidth(): void
     {
         // 0x231C — between [0x231A, 0x231B] and [0x2329, 0x232A] in WIDE table
-        self::assertSame(1, CharWidth::of("\u{231C}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{231C}"));
     }
 
     #[Test]
     public function supplementaryPlaneZeroWidthIsZero(): void
     {
         // 0xE0001 — language tag, in ZERO_WIDTH [0xE0001, 0xE0001]
-        self::assertSame(0, CharWidth::of("\u{E0001}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{E0001}"));
     }
 
     #[Test]
     public function supplementaryPlaneWideIsTwo(): void
     {
         // 0x20000 — CJK Unified Ideograph Extension B start
-        self::assertSame(2, CharWidth::of("\u{20000}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{20000}"));
     }
 
     // --- L92-100: Binary search edge cases ---
@@ -436,14 +436,14 @@ final class CharWidthTest extends TestCase
     public function binarySearchFindsFirstElement(): void
     {
         // 0x0300 is in the first range of ZERO_WIDTH — lo=0, should match immediately
-        self::assertSame(0, CharWidth::of("\u{0300}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{0300}"));
     }
 
     #[Test]
     public function binarySearchFindsLastElement(): void
     {
         // 0xE01EF is in the last range of ZERO_WIDTH — should require traversing to hi end
-        self::assertSame(0, CharWidth::of("\u{E01EF}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{E01EF}"));
     }
 
     #[Test]
@@ -451,7 +451,7 @@ final class CharWidthTest extends TestCase
     {
         // 0x0200 — below all ZERO_WIDTH ranges, binary search should exhaust and return false
         // This codepoint is not in WIDE either, so width=1
-        self::assertSame(1, CharWidth::of("\u{0200}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{0200}"));
     }
 
     #[Test]
@@ -459,14 +459,14 @@ final class CharWidthTest extends TestCase
     {
         // 0xE01F0 — above all ZERO_WIDTH ranges
         // Also not in WIDE, so width=1
-        self::assertSame(1, CharWidth::of("\u{E01F0}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{E01F0}"));
     }
 
     #[Test]
     public function binarySearchMissesBetweenRanges(): void
     {
         // 0x0370 — between ZERO_WIDTH ranges [0x0300,0x036F] and [0x0483,0x0489]
-        self::assertSame(1, CharWidth::of("\u{0370}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{0370}"));
     }
 
     // --- ansiAwareWidth ---
@@ -489,21 +489,21 @@ final class CharWidthTest extends TestCase
     public function watchEmojiIsDoubleWidth(): void
     {
         // 0x231A — start of [0x231A, 0x231B], a 2-element WIDE range
-        self::assertSame(2, CharWidth::of("\u{231A}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{231A}"));
     }
 
     #[Test]
     public function hourglassEmojiIsDoubleWidth(): void
     {
         // 0x231B — end of [0x231A, 0x231B]
-        self::assertSame(2, CharWidth::of("\u{231B}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{231B}"));
     }
 
     #[Test]
     public function mahjongTileIsDoubleWidth(): void
     {
         // 0x1F004 — single-codepoint WIDE range [0x1F004, 0x1F004]
-        self::assertSame(2, CharWidth::of("\u{1F004}"));
+        self::assertSame(2, CharWidth::codepointWidth("\u{1F004}"));
     }
 
     // --- inRanges with exactly one element above and below to stress $mid calculation ---
@@ -512,14 +512,14 @@ final class CharWidthTest extends TestCase
     public function codepointBelowSingleElementWideRange(): void
     {
         // 0x1F003 — just below [0x1F004, 0x1F004]
-        self::assertSame(1, CharWidth::of("\u{1F003}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{1F003}"));
     }
 
     #[Test]
     public function codepointAboveSingleElementWideRange(): void
     {
         // 0x1F005 — just above [0x1F004, 0x1F004], below [0x1F0CF, 0x1F0CF]
-        self::assertSame(1, CharWidth::of("\u{1F005}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{1F005}"));
     }
 
     #[Test]
@@ -527,7 +527,7 @@ final class CharWidthTest extends TestCase
     {
         // 0x0300 is exactly ranges[$mid][0] for the first zero-width range
         // If < becomes <=, this would incorrectly go to hi branch
-        self::assertSame(0, CharWidth::of("\u{0300}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{0300}"));
     }
 
     #[Test]
@@ -535,7 +535,7 @@ final class CharWidthTest extends TestCase
     {
         // 0x036F is exactly ranges[$mid][1] for the first zero-width range
         // If > becomes >=, this would incorrectly go to lo branch
-        self::assertSame(0, CharWidth::of("\u{036F}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{036F}"));
     }
 
     #[Test]
@@ -543,7 +543,7 @@ final class CharWidthTest extends TestCase
     {
         // 0xFEFF — BOM, single-codepoint zero-width range [0xFEFF, 0xFEFF]
         // When lo==hi, if <= becomes <, the loop won't execute and this will return 1 instead of 0
-        self::assertSame(0, CharWidth::of("\u{FEFF}"));
+        self::assertSame(0, CharWidth::codepointWidth("\u{FEFF}"));
     }
 
     #[Test]
@@ -552,7 +552,7 @@ final class CharWidthTest extends TestCase
         // After narrowing, when lo==hi and the element doesn't match,
         // the loop must still check that single element
         // 0xFEFE — just before [0xFEFF, 0xFEFF], should NOT be zero-width
-        self::assertSame(1, CharWidth::of("\u{FEFE}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{FEFE}"));
     }
 
     #[Test]
@@ -561,7 +561,7 @@ final class CharWidthTest extends TestCase
         // Test that hi = mid - 1 (not mid) by finding a value just below a range
         // that is found by the binary search as the mid element.
         // 0x0482 — just below [0x0483, 0x0489], the second zero-width range
-        self::assertSame(1, CharWidth::of("\u{0482}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{0482}"));
     }
 
     #[Test]
@@ -569,7 +569,7 @@ final class CharWidthTest extends TestCase
     {
         // Test that lo = mid + 1 (not mid) by finding a value just above a range
         // 0x048A — just above [0x0483, 0x0489]
-        self::assertSame(1, CharWidth::of("\u{048A}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{048A}"));
     }
 
     #[Test]
@@ -578,9 +578,9 @@ final class CharWidthTest extends TestCase
         // Verify the mid calculation uses >>1 (divide by 2).
         // With a large range table, incorrect >>0 (no divide) would cause out-of-bounds.
         // Test many different codepoints across both tables to exercise the full search.
-        self::assertSame(0, CharWidth::of("\u{E0020}")); // Near end of zero-width table
-        self::assertSame(2, CharWidth::of("\u{AC00}")); // Hangul syllable, middle of wide table
-        self::assertSame(0, CharWidth::of("\u{20D0}")); // Combining mark, mid-table
+        self::assertSame(0, CharWidth::codepointWidth("\u{E0020}")); // Near end of zero-width table
+        self::assertSame(2, CharWidth::codepointWidth("\u{AC00}")); // Hangul syllable, middle of wide table
+        self::assertSame(0, CharWidth::codepointWidth("\u{20D0}")); // Combining mark, mid-table
     }
 
     #[Test]
@@ -588,8 +588,8 @@ final class CharWidthTest extends TestCase
     {
         // Both return 0, but via || not &&. If || becomes &&, both must be true
         // which is impossible since '' !== "\0". So either branch alone must work.
-        self::assertSame(0, CharWidth::of(''));
-        self::assertSame(0, CharWidth::of("\0"));
+        self::assertSame(0, CharWidth::codepointWidth(''));
+        self::assertSame(0, CharWidth::codepointWidth("\0"));
     }
 
     #[Test]
@@ -638,7 +638,7 @@ final class CharWidthTest extends TestCase
     public function asciiLowerBoundary0x20IsWidth1(): void
     {
         // Space 0x20 hits the $ord >= 0x20 && $ord < 0x7F fast path
-        self::assertSame(1, CharWidth::of("\x20"));
+        self::assertSame(1, CharWidth::codepointWidth("\x20"));
     }
 
     #[Test]
@@ -646,7 +646,7 @@ final class CharWidthTest extends TestCase
     {
         // 0x7E (~) should be width 1 from the fast path, not 0
         // If the fast path boundary were $ord < 0x7E instead of 0x7F, ~ would miss
-        self::assertSame(1, CharWidth::of("\x7E"));
+        self::assertSame(1, CharWidth::codepointWidth("\x7E"));
     }
 
     #[Test]

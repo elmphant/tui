@@ -97,10 +97,10 @@ abstract readonly class App implements RoutesFocus
         $registry = $this->componentRegistry();
 
         if ($registry->focusables() === []) {
-            return $this->handleLayerOne($message, $screenRect, $registry->all());
+            return $this->routeWithoutFocus($message, $screenRect, $registry->all());
         }
 
-        return $this->handleLayerTwo($message, $screenRect, $focus->focused());
+        return $this->routeByFocus($message, $screenRect, $focus->focused());
     }
 
     /**
@@ -169,7 +169,7 @@ abstract readonly class App implements RoutesFocus
     protected function onAction(string $action, KeyMsg $message): UpdateResult
     {
         return match ($action) {
-            'quit' => $this->withCmd(Cmd::quit()),
+            'quit' => $this->then(Cmd::quit()),
             default => UpdateResult::keep($this),
         };
     }
@@ -276,7 +276,7 @@ abstract readonly class App implements RoutesFocus
     /**
      * @return UpdateResult<static>
      */
-    protected function withCmd(Cmd $command): UpdateResult
+    protected function then(Cmd $command): UpdateResult
     {
         return UpdateResult::changed($this, $command);
     }
@@ -299,7 +299,7 @@ abstract readonly class App implements RoutesFocus
      *
      * @return UpdateResult<static>
      */
-    private function handleLayerOne(Message $message, Rect $screenRect, array $components): UpdateResult
+    private function routeWithoutFocus(Message $message, Rect $screenRect, array $components): UpdateResult
     {
         if ($message instanceof KeyMsg) {
             if ($this->resolvedQuitBindings()->matches($message, 'quit')) {
@@ -319,7 +319,7 @@ abstract readonly class App implements RoutesFocus
     /**
      * @return UpdateResult<static>
      */
-    private function handleLayerTwo(Message $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
+    private function routeByFocus(Message $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
         if ($message instanceof KeyMsg) {
             $bindings = $this->focusCycleBindings();
@@ -332,7 +332,7 @@ abstract readonly class App implements RoutesFocus
                 return $this->handleTab($message, $screenRect, $holder, $message->shift);
             }
 
-            return $this->handleLayerTwoKey($message, $screenRect, $holder);
+            return $this->routeKeyByFocus($message, $screenRect, $holder);
         }
 
         if ($message instanceof MouseMsg) {
@@ -478,7 +478,7 @@ abstract readonly class App implements RoutesFocus
     /**
      * @return UpdateResult<static>
      */
-    private function handleLayerTwoKey(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
+    private function routeKeyByFocus(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
         if ($this->componentRegistry()->focusable($holder) === null
             && $this->resolvedQuitBindings()->matches($message, 'quit')

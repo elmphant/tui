@@ -289,7 +289,7 @@ final readonly class HarnessCounter extends App
     {
         return match ($message->key) {
             '+' => UpdateResult::changed(new self($this->count + 1)),
-            'q' => $this->withCmd(Cmd::quit()),
+            'q' => $this->then(Cmd::quit()),
             default => UpdateResult::keep($this),
         };
     }

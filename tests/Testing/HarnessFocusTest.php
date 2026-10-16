@@ -65,7 +65,7 @@ final readonly class TwoFieldApp extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            'n' => $this->withCmd(Cmd::focusNext()),
+            'n' => $this->then(Cmd::focusNext()),
             default => UpdateResult::keep($this),
         };
     }

@@ -1598,7 +1598,7 @@ final readonly class MouseCommandFocusableApp extends CopyableTestApp
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
         if ($message->isClick()) {
-            return $this->withCmd(Cmd::tick(0.1));
+            return $this->then(Cmd::tick(0.1));
         }
 
         return UpdateResult::keep($this);

@@ -64,7 +64,7 @@ final readonly class TwoHintingPanesApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return $message->key === 'n' ? $this->withCmd(Cmd::focusNext()) : UpdateResult::keep($this);
+        return $message->key === 'n' ? $this->then(Cmd::focusNext()) : UpdateResult::keep($this);
     }
 }
 

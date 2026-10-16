@@ -223,7 +223,7 @@ final readonly class ClickableChromeApp extends App
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
     {
         return $message->y === 0
-            ? $this->withCmd(Cmd::focus(ComponentId::named('second')))
+            ? $this->then(Cmd::focus(ComponentId::named('second')))
             : UpdateResult::keep($this);
     }
 }

@@ -721,7 +721,7 @@ final readonly class CmdApp extends CopyableTestApp
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            'r' => $this->cloneWith(requested: true)->withCmd(Cmd::exec(['echo', 'hi'])),
+            'r' => $this->cloneWith(requested: true)->then(Cmd::exec(['echo', 'hi'])),
             default => UpdateResult::keep($this),
         };
     }

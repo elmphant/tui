@@ -206,7 +206,7 @@ final class CharWidth
      */
     private static array $graphemeWidths = [];
 
-    public static function of(string $char): int
+    public static function codepointWidth(string $char): int
     {
         if ($char === '' || $char === "\0") {
             return 0;
@@ -265,7 +265,7 @@ final class CharWidth
         }
 
         $width = strlen($grapheme) === 1 && ord($grapheme) < 0x80
-            ? self::of($grapheme)
+            ? self::codepointWidth($grapheme)
             : self::measureGrapheme($grapheme);
 
         if (count(self::$graphemeWidths) >= self::GRAPHEME_BUDGET) {
@@ -401,7 +401,7 @@ final class CharWidth
 
         // \X keeps CRLF together as one cluster; it is a control, so it takes no column.
         if (mb_strlen($grapheme) === 1 || ord($grapheme[0]) < 0x20) {
-            return self::of($grapheme);
+            return self::codepointWidth($grapheme);
         }
 
         $firstCodepoint = mb_ord($grapheme);

@@ -275,7 +275,7 @@ final class Frame
             $character = substr($text, $position, $characterByteLength);
             $position += $characterByteLength;
 
-            $characterWidth = CharWidth::of($character);
+            $characterWidth = CharWidth::codepointWidth($character);
             if ($characterWidth === 0) {
                 if ($previousIndex !== null && TerminalText::plain($character) !== '') {
                     $this->characters[$previousIndex] .= $character;

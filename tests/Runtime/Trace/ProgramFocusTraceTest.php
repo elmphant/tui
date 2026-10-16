@@ -170,6 +170,6 @@ final readonly class TwoFieldsThenQuitApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return $message->key === 'q' ? $this->withCmd(Cmd::quit()) : UpdateResult::keep($this);
+        return $message->key === 'q' ? $this->then(Cmd::quit()) : UpdateResult::keep($this);
     }
 }
