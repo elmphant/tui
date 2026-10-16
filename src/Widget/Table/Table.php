@@ -76,17 +76,17 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         $this->layoutMemo = $layoutMemo ?? self::newLayoutMemo();
     }
 
-    public static function defaultKeybindings(): Keybindings
+    /**
+     * @param list<Column> $columns
+     * @param list<Row>    $rows
+     */
+    public static function new(array $columns, array $rows): self
     {
-        return Keybindings::rowNavigation();
-    }
-
-    public function hints(): array
-    {
-        return $this->effectiveKeybindings()->hints([
-            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
-            'choose' => Actions::SELECT,
-        ]);
+        return new self(
+            columns: $columns,
+            rows: $rows,
+            cursor: self::firstSelectablePlace($rows),
+        );
     }
 
     /**
@@ -101,17 +101,17 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         );
     }
 
-    /**
-     * @param list<Column> $columns
-     * @param list<Row>    $rows
-     */
-    public static function new(array $columns, array $rows): self
+    public static function defaultKeybindings(): Keybindings
     {
-        return new self(
-            columns: $columns,
-            rows: $rows,
-            cursor: self::firstSelectablePlace($rows),
-        );
+        return Keybindings::rowNavigation();
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints([
+            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
+            'choose' => Actions::SELECT,
+        ]);
     }
 
     /**

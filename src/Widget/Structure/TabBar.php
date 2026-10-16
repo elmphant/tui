@@ -61,17 +61,17 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     ) {
     }
 
+    public static function new(): self
+    {
+        return new self();
+    }
+
     public static function defaultKeybindings(): Keybindings
     {
         return (new Keybindings([
             Actions::TAB_NEXT => ['right'],
             Actions::TAB_PREVIOUS => ['left'],
         ]))->merge(ScrollPane::defaultKeybindings());
-    }
-
-    public static function new(): self
-    {
-        return new self();
     }
 
     public function addTab(string $label): self

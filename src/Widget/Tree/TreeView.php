@@ -62,6 +62,14 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         $this->rowsMemo = $rowsMemo ?? self::newRowsMemo();
     }
 
+    /**
+     * @param list<TreeNode> $roots
+     */
+    public static function new(array $roots): self
+    {
+        return new self($roots);
+    }
+
     public function withGuides(TreeGuides $guides): self
     {
         return $this->cloneWith(guides: $guides, rowsMemo: self::newRowsMemo());
@@ -198,14 +206,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         }
 
         return $this;
-    }
-
-    /**
-     * @param list<TreeNode> $roots
-     */
-    public static function new(array $roots): self
-    {
-        return new self($roots);
     }
 
     /**
