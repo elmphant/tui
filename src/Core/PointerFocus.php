@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Core;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
+use Elmphant\Tui\Core\Cmd\ScopedCmd;
 
 /**
  * What a press does to the keyboard, as rules about messages and commands
@@ -27,7 +28,7 @@ final class PointerFocus
             return true;
         }
 
-        if ($command instanceof MappedCmd) {
+        if ($command instanceof MappedCmd || $command instanceof ScopedCmd) {
             return self::alreadyMoved($command->inner);
         }
 

@@ -292,6 +292,22 @@ A cancel, or a new command under the same id, also drops the results the old
 effect produced that `update()` has not seen yet, so nothing from the old run
 arrives after it.
 
+An id is one name for the whole program. A part of the app that hands its child's
+commands on scopes them, so two children can both call their effect `load`:
+
+```php
+use Elmphant\Tui\Core\{Cmd, EffectId};
+
+$load = Cmd::exec(['composer', 'show'], id: EffectId::named('load'));
+
+$dashboard = $load->scopedTo('dashboard');
+$log = $load->scopedTo('log'); // runs beside the dashboard's, not instead of it
+```
+
+A cancel or a replacement then reaches `load` in that scope only. The result still
+answers `$message->isFrom('load')`, because the scope belongs to the runtime, not to
+the child.
+
 `Cmd::call()` is an escape hatch for short synchronous side effects. Its callback
 may return a message, another command, or `null`; thrown exceptions are delivered
 as `ErrorMsg` with source `ErrorSource::Call`. It runs on the event-loop thread, so it must not

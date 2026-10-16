@@ -75,11 +75,11 @@ final class EffectRunner
     private WeakMap $producers;
 
     /**
-     * @param SplQueue<Message>             $results  where an effect reports what it produced
-     * @param Closure(?Cmd, ?Closure): void $dispatch a timer's callback may answer with a command,
-     *                                                and that command may be any command at all
-     * @param Closure(): void               $wake     a stream that became readable has to reach the loop
-     * @param list<CommandHandler>          $handlers what runs a command the runtime has no effect for
+     * @param SplQueue<Message>                      $results  where an effect reports what it produced
+     * @param Closure(?Cmd, ?Closure, ?string): void $dispatch a timer's callback may answer with a command,
+     *                                                         and that command may be any command at all
+     * @param Closure(): void                        $wake     a stream that became readable has to reach the loop
+     * @param list<CommandHandler>                   $handlers what runs a command the runtime has no effect for
      */
     public function __construct(
         private readonly SplQueue $results,
@@ -96,34 +96,35 @@ final class EffectRunner
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    public function run(Cmd $command, ?Closure $wrap): void
+    public function run(Cmd $command, ?Closure $wrap, ?string $scope = null): void
     {
-        $this->makeRoomFor($command, $wrap);
+        $id = self::scoped($command instanceof NamesItsEffect ? $command->effectId() : null, $scope);
+        $this->makeRoomFor($id, $wrap);
 
         match (true) {
-            $command instanceof TickCmd => $this->registerTicker($command->interval, $command->id, $wrap),
-            $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $command->id, $wrap),
-            $command instanceof CancelCmd => $this->cancel($command->id, $wrap),
+            $command instanceof TickCmd => $this->registerTicker($command->interval, $id, $wrap),
+            $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $id, $wrap, $scope),
+            $command instanceof CancelCmd => $this->cancel($scope === null ? $command->id : $command->id->within($scope), $wrap),
             $command instanceof HttpCmd => $this->keep(
-                fn (): RunningProcess => $this->requestStarter->start($command, $wrap),
+                fn (): RunningProcess => $this->requestStarter->start($command->withId($id), $wrap),
                 ErrorSource::Http,
-                $command->id,
+                $id,
                 $wrap,
             ),
             $command instanceof ExecCmd => $this->keep(
-                fn (): RunningProcess => $this->processStarter->exec($command, $wrap),
+                fn (): RunningProcess => $this->processStarter->exec($command->withId($id), $wrap),
                 ErrorSource::Process,
-                $command->id,
+                $id,
                 $wrap,
             ),
             $command instanceof ProcessCmd => $this->keep(
-                fn (): RunningProcess => $this->processStarter->streaming($command, $wrap),
+                fn (): RunningProcess => $this->processStarter->streaming($command->withId($id), $wrap),
                 ErrorSource::Process,
-                $command->id,
+                $id,
                 $wrap,
             ),
-            $command instanceof ListenCmd => $this->subscribeToStream($command, $wrap),
-            default => $this->delegate($command, $wrap),
+            $command instanceof ListenCmd => $this->subscribeToStream($command, $id, $wrap),
+            default => $this->delegate($command, $id, $wrap),
         };
     }
 
@@ -202,6 +203,11 @@ final class EffectRunner
         $this->handled = [];
     }
 
+    private static function scoped(?EffectId $id, ?string $scope): ?EffectId
+    {
+        return $scope === null ? $id : $id?->within($scope);
+    }
+
     /**
      * A command of the application's own: the first handler that claims it runs
      * it, and whatever it answers with is held under the command's name so a
@@ -209,10 +215,10 @@ final class EffectRunner
      *
      * @param Closure(Message):Message|null $wrap
      */
-    private function delegate(Cmd $command, ?Closure $wrap): void
+    private function delegate(Cmd $command, ?EffectId $id, ?Closure $wrap): void
     {
         $handler = $this->handlerFor($command);
-        $effect = new HandledEffect($command instanceof NamesItsEffect ? $command->effectId() : null);
+        $effect = new HandledEffect($id);
 
         try {
             $effect->stopper = $handler->start($command, $this->emitterFor($effect, $wrap), $this->finisherFor($effect));
@@ -305,9 +311,8 @@ final class EffectRunner
      *
      * @param Closure(Message):Message|null $wrap
      */
-    private function makeRoomFor(Cmd $command, ?Closure $wrap): void
+    private function makeRoomFor(?EffectId $id, ?Closure $wrap): void
     {
-        $id = $command instanceof NamesItsEffect ? $command->effectId() : null;
         if ($id !== null) {
             $this->cancel($id, $wrap);
         }
@@ -422,17 +427,17 @@ final class EffectRunner
      * @param Closure():((Message|Cmd|null)) $then
      * @param Closure(Message):Message|null  $wrap
      */
-    private function registerTimer(float $delay, Closure $then, ?EffectId $id = null, ?Closure $wrap = null): void
+    private function registerTimer(float $delay, Closure $then, ?EffectId $id, ?Closure $wrap, ?string $scope): void
     {
-        $this->timers[] = new TimerRecord($this->clock->now() + $delay, $then, $id, $wrap);
+        $this->timers[] = new TimerRecord($this->clock->now() + $delay, $then, $id, $wrap, $scope);
     }
 
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    private function subscribeToStream(ListenCmd $command, ?Closure $wrap = null): void
+    private function subscribeToStream(ListenCmd $command, ?EffectId $id, ?Closure $wrap): void
     {
-        $subscription = new StreamSubscription($command->stream, $command->onReadable, $command->id, $wrap);
+        $subscription = new StreamSubscription($command->stream, $command->onReadable, $id, $wrap);
         $subscription->watcherId = EventLoop::onReadable($command->stream, function () use ($subscription): void {
             $subscription->readable = true;
             ($this->wake)();
@@ -545,7 +550,7 @@ final class EffectRunner
                 continue;
             }
             if ($result instanceof Cmd) {
-                ($this->dispatch)($result, $timer->wrap);
+                ($this->dispatch)($result, $timer->wrap, $timer->scope);
             } elseif ($result instanceof Message) {
                 $this->report($result, $timer->wrap, $timer->id);
             } elseif ($result !== null) {

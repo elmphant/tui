@@ -19,6 +19,7 @@ use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
+use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 
 abstract readonly class Cmd
@@ -180,6 +181,15 @@ abstract readonly class Cmd
     public function map(callable $wrap): self
     {
         return new MappedCmd($this, $wrap(...));
+    }
+
+    /**
+     * The effects started from here answer to their names within this scope only:
+     * a replacement or a cancel reaches the same name in the same scope and no other.
+     */
+    public function scopedTo(string $scope): self
+    {
+        return new ScopedCmd($this, $scope);
     }
 
     /**

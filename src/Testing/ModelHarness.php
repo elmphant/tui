@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
+use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusMove;
 use Elmphant\Tui\Core\FocusState;
@@ -217,6 +218,10 @@ final class ModelHarness
             return array_map($command->wrap, self::messagesIn($command->inner));
         }
 
+        if ($command instanceof ScopedCmd) {
+            return self::messagesIn($command->inner);
+        }
+
         if ($command instanceof BatchCmd) {
             return array_merge(...array_map(self::messagesIn(...), $command->commands));
         }
@@ -253,7 +258,7 @@ final class ModelHarness
      */
     private function moveFocusFor(?Cmd $command): void
     {
-        if ($command instanceof MappedCmd) {
+        if ($command instanceof MappedCmd || $command instanceof ScopedCmd) {
             $this->moveFocusFor($command->inner);
 
             return;

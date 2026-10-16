@@ -14,6 +14,7 @@ use Elmphant\Tui\Core\Cmd\LogCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
+use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
@@ -1130,7 +1131,7 @@ final class Program
         return $this->model instanceof RoutesFocus ? $this->model->reachableIds() : [];
     }
 
-    private function dispatchCommand(?Cmd $command, ?Closure $wrap = null): void
+    private function dispatchCommand(?Cmd $command, ?Closure $wrap = null, ?string $scope = null): void
     {
         if ($command === null || $this->isQuitting()) {
             return;
@@ -1139,14 +1140,20 @@ final class Program
         $this->tracer?->record(TraceEvent::Command, ['command' => $command::class]);
 
         if ($command instanceof MappedCmd) {
-            $this->dispatchCommand($command->inner, self::composeWrap($command->wrap, $wrap));
+            $this->dispatchCommand($command->inner, self::composeWrap($command->wrap, $wrap), $scope);
+
+            return;
+        }
+
+        if ($command instanceof ScopedCmd) {
+            $this->dispatchCommand($command->inner, $wrap, $scope === null ? $command->scope : $scope . '/' . $command->scope);
 
             return;
         }
 
         if ($command instanceof BatchCmd) {
             foreach ($command->commands as $child) {
-                $this->dispatchCommand($child, $wrap);
+                $this->dispatchCommand($child, $wrap, $scope);
             }
 
             return;
@@ -1158,9 +1165,9 @@ final class Program
                 $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
                 $command instanceof FocusCmd => $this->moveFocus($command),
                 $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
-                $command instanceof CallCmd => $this->executeCall($command, $wrap),
+                $command instanceof CallCmd => $this->executeCall($command, $wrap, $scope),
                 $command instanceof LogCmd => $this->tracer?->record(TraceEvent::Log, [...$command->context, 'message' => $command->message]),
-                default => $this->effects()->run($command, $wrap),
+                default => $this->effects()->run($command, $wrap, $scope),
             };
         } catch (Throwable $error) {
             $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, ErrorSource::Command), $wrap));
@@ -1199,7 +1206,7 @@ final class Program
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    private function executeCall(CallCmd $command, ?Closure $wrap = null): void
+    private function executeCall(CallCmd $command, ?Closure $wrap, ?string $scope): void
     {
         try {
             $result = ($command->callback)();
@@ -1210,7 +1217,7 @@ final class Program
         }
 
         if ($result instanceof Cmd) {
-            $this->dispatchCommand($result, $wrap);
+            $this->dispatchCommand($result, $wrap, $scope);
         } elseif ($result instanceof Message) {
             $this->messageQueue->enqueue(self::mapMessage($result, $wrap));
         } elseif ($result !== null) {

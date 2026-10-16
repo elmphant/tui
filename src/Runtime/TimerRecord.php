@@ -22,6 +22,7 @@ final readonly class TimerRecord
         public Closure $callback,
         public ?EffectId $id = null,
         public ?Closure $wrap = null,
+        public ?string $scope = null,
     ) {
     }
 }
