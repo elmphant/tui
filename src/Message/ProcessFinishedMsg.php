@@ -9,6 +9,8 @@ use Elmphant\Tui\Core\Message;
 
 final readonly class ProcessFinishedMsg implements Message
 {
+    use ComesFromAnEffect;
+
     public function __construct(
         public int $exitCode,
         public bool $successful,

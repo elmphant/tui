@@ -10,6 +10,8 @@ use Throwable;
 
 final readonly class ErrorMsg implements Message
 {
+    use ComesFromAnEffect;
+
     public function __construct(
         public Throwable $error,
         public ErrorSource $source,

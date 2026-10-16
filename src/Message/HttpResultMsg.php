@@ -9,6 +9,8 @@ use Elmphant\Tui\Core\Message;
 
 final readonly class HttpResultMsg implements Message
 {
+    use ComesFromAnEffect;
+
     /**
      * @param array<string, list<string>> $headers
      */

@@ -9,6 +9,8 @@ use Elmphant\Tui\Core\Message;
 
 final readonly class ProcessOutputMsg implements Message
 {
+    use ComesFromAnEffect;
+
     public function __construct(
         public string $output,
         public ProcessStream $stream = ProcessStream::Stdout,
