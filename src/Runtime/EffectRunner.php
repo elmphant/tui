@@ -373,7 +373,7 @@ final class EffectRunner
 
         for ($left = $this->results->count(); $left > 0; --$left) {
             $message = $this->results->dequeue();
-            $producer = $message instanceof UnitEnum ? null : ($this->producers[$message] ?? null);
+            $producer = $this->producers[$message] ?? null;
             if ($producer === null || !$producer->equals($id)) {
                 $this->results->enqueue($message);
             }
@@ -442,10 +442,6 @@ final class EffectRunner
 
     private function pumpProcesses(): void
     {
-        if ($this->processes === []) {
-            return;
-        }
-
         $remaining = [];
         foreach ($this->processes as $process) {
             try {
@@ -469,10 +465,6 @@ final class EffectRunner
 
     private function pumpSubscriptions(): void
     {
-        if ($this->subscriptions === []) {
-            return;
-        }
-
         $remaining = [];
         foreach ($this->subscriptions as $subscription) {
             if (!$subscription->readable) {
@@ -532,10 +524,6 @@ final class EffectRunner
 
     private function fireTimers(float $now): void
     {
-        if ($this->timers === []) {
-            return;
-        }
-
         $due = [];
         foreach ($this->timers as $timer) {
             if ($now >= $timer->fireAt) {

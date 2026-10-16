@@ -12,6 +12,7 @@ use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\ProcessResultMsg;
+use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\EffectRunner;
@@ -22,6 +23,7 @@ use Elmphant\Tui\Tests\Support\TestMessage;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
 use SplQueue;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -769,6 +771,248 @@ final class EffectRunnerTest extends TestCase
         self::assertSame(1, $woken, 'a message nobody wakes for waits in the queue until the next keystroke');
     }
 
+    #[Test]
+    public function aProcessThatCannotStartSaysWhyAtOnce(): void
+    {
+        $this->runner()->run(Cmd::exec(['pwd'])->withWorkingDirectory('/definitely/not/here'), null);
+
+        $message = $this->results->dequeue();
+        self::assertInstanceOf(ErrorMsg::class, $message);
+        self::assertSame(ErrorSource::Process, $message->source);
+    }
+
+    #[Test]
+    public function cancellingAProcessByNameEndsTheChild(): void
+    {
+        if (!function_exists('posix_kill')) {
+            self::markTestSkipped('asking whether a pid is still alive needs ext-posix');
+        }
+
+        $pidFile = tempnam(sys_get_temp_dir(), 'elmphant-child-');
+        self::assertIsString($pidFile);
+        $runner = $this->runner();
+        $runner->run(Cmd::process(['sh', '-c', 'echo $$ > ' . escapeshellarg($pidFile) . '; sleep 30'], EffectId::named('job')), null);
+        $pid = self::pidWrittenTo($pidFile);
+
+        $runner->run(Cmd::cancel(EffectId::named('job')), null);
+
+        self::assertFalse(posix_kill($pid, 0), 'a cancelled child must not keep running unseen');
+        unlink($pidFile);
+    }
+
+    #[Test]
+    public function aProcessThatFailsLeavesTheOnesAfterItRunning(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::process(['sleep', '5'])->withTimeout(0.1), null);
+        $runner->run(Cmd::process(['sleep', '30'], EffectId::named('survivor')), null);
+
+        for ($attempt = 0; $attempt < 100 && $this->results->isEmpty(); ++$attempt) {
+            usleep(10_000);
+            $runner->pump();
+        }
+
+        self::assertInstanceOf(ErrorMsg::class, $this->results->dequeue());
+        self::assertTrue($runner->hasRunningProcesses(), 'the second process is still held');
+        $runner->shutdown();
+    }
+
+    #[Test]
+    public function cancellingOneHandlersEffectLeavesTheOtherToTheEnd(): void
+    {
+        $handler = new SoundHandler();
+        $runner = $this->runnerWith($handler);
+        $runner->run(new SoundCmd(EffectId::named('chime')), null);
+        $runner->run(new SoundCmd(EffectId::named('bell')), null);
+
+        $runner->run(Cmd::cancel(EffectId::named('chime')), null);
+        self::assertSame(1, $handler->stopped);
+
+        $runner->shutdown();
+        self::assertSame(2, $handler->stopped, 'the bell was still held, so the end reached it');
+    }
+
+    #[Test]
+    public function aHandlersEffectThatFailsToStopSaysSo(): void
+    {
+        $runner = $this->runnerWith(new StuckHandler());
+        $runner->run(new SoundCmd(EffectId::named('chime')), null);
+
+        $runner->run(Cmd::cancel(EffectId::named('chime')), null);
+
+        $message = $this->results->dequeue();
+        self::assertInstanceOf(ErrorMsg::class, $message);
+        self::assertSame(ErrorSource::Cancel, $message->source);
+    }
+
+    #[Test]
+    public function aTickerNotYetDueDoesNotHoldUpOneThatIs(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(5.0), null);
+        $runner->run(Cmd::tick(1.0), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount(1, $this->results);
+    }
+
+    #[Test]
+    public function aCancelledTimerDoesNotHoldUpTheRestOfThePass(): void
+    {
+        $runner = $this->selfDispatchingRunner();
+        $runner->run(Cmd::after(1.0, static fn (): Cmd => Cmd::cancel(EffectId::named('retry'))), null);
+        $runner->run(Cmd::after(1.0, static fn (): Message => new TestMessage('retry'), id: EffectId::named('retry')), null);
+        $runner->run(Cmd::after(1.0, static fn (): Message => new TestMessage('later')), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertEquals([new TestMessage('later')], iterator_to_array($this->results, false));
+    }
+
+    #[Test]
+    public function aThrowingTimerDoesNotHoldUpTheRestOfThePass(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::after(1.0, static function (): never {
+            throw new LogicException('broken');
+        }), null);
+        $runner->run(Cmd::after(1.0, static fn (): Message => new TestMessage('later')), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertInstanceOf(ErrorMsg::class, $this->results->dequeue());
+        self::assertEquals(new TestMessage('later'), $this->results->dequeue());
+    }
+
+    #[Test]
+    public function aCancelLeavesAnEnumCaseQueuedBecauseEveryCopyIsTheSameInstance(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::after(1.0, static fn (): Message => QuitMsg::Quit, id: EffectId::named('load')), null);
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+        $this->results->enqueue(QuitMsg::Quit);
+
+        $runner->run(Cmd::cancel(EffectId::named('load')), null);
+
+        self::assertContains(QuitMsg::Quit, iterator_to_array($this->results, false), 'the host\'s own quit must survive');
+    }
+
+    #[Test]
+    public function shuttingDownStopsWatchingAStream(): void
+    {
+        [$read, $write] = self::streamPair();
+        $woken = 0;
+        $runner = $this->wakeCountingRunner($woken);
+        $runner->run(Cmd::listen($read, self::reader(...)), null);
+
+        $runner->shutdown();
+        fwrite($write, 'late');
+        self::letTheLoopNotice();
+
+        self::assertSame(0, $woken);
+    }
+
+    #[Test]
+    public function cancellingOneStreamLeavesTheOtherListening(): void
+    {
+        [$firstRead] = self::streamPair();
+        [$secondRead, $secondWrite] = self::streamPair();
+        $runner = $this->runner();
+        $runner->run(Cmd::listen($firstRead, self::reader(...), EffectId::named('first')), null);
+        $runner->run(Cmd::listen($secondRead, self::reader(...), EffectId::named('second')), null);
+
+        $runner->run(Cmd::cancel(EffectId::named('first')), null);
+        fwrite($secondWrite, 'still here');
+        self::letTheLoopNotice();
+        $runner->pump();
+
+        self::assertEquals([new TestMessage('still here')], iterator_to_array($this->results, false));
+    }
+
+    #[Test]
+    public function aQuietStreamDoesNotHoldUpOneWithSomethingToSay(): void
+    {
+        [$quietRead] = self::streamPair();
+        [$read, $write] = self::streamPair();
+        $runner = $this->runner();
+        $runner->run(Cmd::listen($quietRead, self::reader(...)), null);
+        $runner->run(Cmd::listen($read, self::reader(...)), null);
+
+        fwrite($write, 'hello');
+        self::letTheLoopNotice();
+        $runner->pump();
+
+        self::assertEquals([new TestMessage('hello')], iterator_to_array($this->results, false));
+    }
+
+    #[Test]
+    public function aStreamIsReadOnlyAfterItBecameReadable(): void
+    {
+        [$read, $write] = self::streamPair();
+        $reads = 0;
+        $runner = $this->runner();
+        $runner->run(Cmd::listen($read, static function (mixed $stream) use (&$reads): iterable {
+            ++$reads;
+
+            return self::reader($stream);
+        }), null);
+        fwrite($write, 'hello');
+        self::letTheLoopNotice();
+        $runner->pump();
+
+        $runner->pump();
+
+        self::assertSame(1, $reads);
+    }
+
+    #[Test]
+    public function aStreamWhoseReaderThrowsSaysSoStopsAndDoesNotHoldUpTheNext(): void
+    {
+        [$brokenRead, $brokenWrite] = self::streamPair();
+        [$read, $write] = self::streamPair();
+        $runner = $this->runner();
+        $runner->run(Cmd::listen($brokenRead, static function (): never {
+            throw new LogicException('unreadable');
+        }, EffectId::named('broken')), null);
+        $runner->run(Cmd::listen($read, self::reader(...)), null);
+        fwrite($brokenWrite, 'x');
+        fwrite($write, 'hello');
+        self::letTheLoopNotice();
+
+        $runner->pump();
+        fwrite($brokenWrite, 'y');
+        self::letTheLoopNotice();
+        $runner->pump();
+
+        $error = $this->results->dequeue();
+        self::assertInstanceOf(ErrorMsg::class, $error);
+        self::assertSame(ErrorSource::Listen, $error->source);
+        self::assertEquals(EffectId::named('broken'), $error->effectId);
+        self::assertEquals([new TestMessage('hello')], iterator_to_array($this->results, false), 'a stopped reader is not asked again');
+    }
+
+    #[Test]
+    public function aStreamThatEndedDoesNotHoldUpTheNext(): void
+    {
+        [$endedRead, $endedWrite] = self::streamPair();
+        [$read, $write] = self::streamPair();
+        $runner = $this->runner();
+        $runner->run(Cmd::listen($endedRead, self::reader(...)), null);
+        $runner->run(Cmd::listen($read, self::reader(...)), null);
+        fclose($endedWrite);
+        fwrite($write, 'hello');
+        self::letTheLoopNotice();
+
+        $runner->pump();
+
+        self::assertEquals([new TestMessage('hello')], iterator_to_array($this->results, false));
+    }
+
     protected function setUp(): void
     {
         /** @var SplQueue<Message> $results */
@@ -852,6 +1096,49 @@ final class EffectRunnerTest extends TestCase
         return $runner;
     }
 
+    private function wakeCountingRunner(int &$woken): EffectRunner
+    {
+        return new EffectRunner(
+            $this->results,
+            $this->clock,
+            static function (): void {
+            },
+            static function () use (&$woken): void {
+                ++$woken;
+            },
+        );
+    }
+
+    /**
+     * @return array{resource, resource}
+     */
+    private static function streamPair(): array
+    {
+        $pair = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        self::assertIsArray($pair);
+        stream_set_blocking($pair[0], false);
+        stream_set_blocking($pair[1], false);
+
+        return [$pair[0], $pair[1]];
+    }
+
+    /**
+     * @return list<Message>
+     */
+    private static function reader(mixed $stream): array
+    {
+        self::assertIsResource($stream);
+        $data = fread($stream, 1024);
+
+        return $data === false || $data === '' ? [] : [new TestMessage($data)];
+    }
+
+    private static function letTheLoopNotice(): void
+    {
+        EventLoop::delay(0.01, static fn () => EventLoop::getDriver()->stop());
+        EventLoop::run();
+    }
+
     private function pumpUntilQuiet(EffectRunner $runner): void
     {
         for ($attempt = 0; $attempt < 400 && $runner->hasRunningProcesses(); ++$attempt) {
@@ -889,6 +1176,21 @@ final class BrokenHandler implements CommandHandler
     public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
     {
         throw new LogicException('the sound card is on fire');
+    }
+}
+
+final class StuckHandler implements CommandHandler
+{
+    public function handles(Cmd $command): bool
+    {
+        return true;
+    }
+
+    public function start(Cmd $command, Closure $emit, Closure $finished): ?Closure
+    {
+        return static function (): never {
+            throw new LogicException('it will not stop');
+        };
     }
 }
 
