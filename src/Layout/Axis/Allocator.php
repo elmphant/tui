@@ -124,12 +124,7 @@ final class Allocator
             $handedOut += $sizes[$index];
         }
 
-        $spare = $available - $handedOut;
-        if ($spare > 0) {
-            $remainder === Remainder::StrongestClaim
-                ? self::byStrongestClaim($sizes, $policies, $claims, $spare)
-                : self::nudgeRearmost($sizes, $policies, $spare, true);
-        }
+        self::handOutRemainder($remainder, $sizes, $policies, $claims, $available - $handedOut);
 
         foreach ($policies as $index => $policy) {
             $sizes[$index] = max($sizes[$index], $policy->initialSize());
@@ -351,9 +346,7 @@ final class Allocator
             $spare -= $handedOut;
 
             if ($handedOut === 0) {
-                $spare -= $remainder === Remainder::StrongestClaim
-                    ? self::byStrongestClaim($sizes, $policies, $claims, $spare)
-                    : self::nudgeRearmost($sizes, $policies, $spare, true);
+                self::handOutRemainder($remainder, $sizes, $policies, $claims, $spare);
                 break;
             }
         }
@@ -368,10 +361,27 @@ final class Allocator
      *
      * @param-out array<int, int> $sizes
      */
-    private static function byStrongestClaim(array &$sizes, array $policies, array $claims, int $cells): int
+    private static function handOutRemainder(Remainder $remainder, array &$sizes, array $policies, array $claims, int $cells): void
+    {
+        if ($remainder === Remainder::StrongestClaim) {
+            self::byStrongestClaim($sizes, $policies, $claims, $cells);
+
+            return;
+        }
+
+        self::nudgeRearmost($sizes, $policies, $cells, true);
+    }
+
+    /**
+     * @param array<int, int>  $sizes
+     * @param list<ItemPolicy> $policies
+     * @param array<int, int>  $claims
+     *
+     * @param-out array<int, int> $sizes
+     */
+    private static function byStrongestClaim(array &$sizes, array $policies, array $claims, int $cells): void
     {
         arsort($claims);
-        $moved = 0;
 
         foreach (array_keys($claims) as $index) {
             if ($cells <= 0) {
@@ -384,10 +394,7 @@ final class Allocator
 
             ++$sizes[$index];
             --$cells;
-            ++$moved;
         }
-
-        return $moved;
     }
 
     /**
@@ -399,10 +406,8 @@ final class Allocator
      *
      * @param-out array<int, int> $sizes
      */
-    private static function nudgeRearmost(array &$sizes, array $policies, int $cells, bool $growing): int
+    private static function nudgeRearmost(array &$sizes, array $policies, int $cells, bool $growing): void
     {
-        $moved = 0;
-
         while ($cells > 0) {
             $movedThisPass = 0;
 
@@ -422,7 +427,6 @@ final class Allocator
 
                 $sizes[$index] += $growing ? 1 : -1;
                 --$cells;
-                ++$moved;
                 ++$movedThisPass;
             }
 
@@ -430,8 +434,6 @@ final class Allocator
                 break;
             }
         }
-
-        return $moved;
     }
 
     /**
@@ -475,7 +477,7 @@ final class Allocator
             $deficit -= $taken;
 
             if ($taken === 0) {
-                $deficit -= self::nudgeRearmost($sizes, $policies, $deficit, false);
+                self::nudgeRearmost($sizes, $policies, $deficit, false);
                 break;
             }
         }

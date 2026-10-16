@@ -233,6 +233,87 @@ final class AllocatorTest extends TestCase
     }
 
     #[Test]
+    public function sharingAcrossTheWholeAxisWithNoWeightLeavesEachSlotAtWhatItAsked(): void
+    {
+        $policies = [new ItemPolicy(basis: 2), new ItemPolicy(basis: 3)];
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([2, 3], $resolved->sizes);
+    }
+
+    #[Test]
+    public function sharingAcrossTheWholeAxisHandsTheUndividedCellToTheRearmostSlot(): void
+    {
+        $policies = array_fill(0, 3, new ItemPolicy(grow: 1));
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([3, 3, 4], $resolved->sizes);
+    }
+
+    #[Test]
+    public function sharingAcrossTheWholeAxisStopsEverySlotAtItsCeiling(): void
+    {
+        $policies = array_fill(0, 2, new ItemPolicy(max: 2, grow: 1));
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([2, 2], $resolved->sizes);
+    }
+
+    #[Test]
+    public function theStrongestClaimPassesItsCellOnOnceItsSlotIsFull(): void
+    {
+        $across = new AxisSpecification(remainder: Remainder::StrongestClaim, distribution: Distribution::AcrossTheWholeAxis);
+
+        self::assertSame(
+            [6, 4],
+            Allocator::resolve([new ItemPolicy(max: 6, grow: 2), new ItemPolicy(grow: 1)], 10, $across)->sizes,
+            'Two thirds of ten is six and two thirds: the larger claim, but no room left under its ceiling',
+        );
+        self::assertSame(
+            [7, 3],
+            Allocator::resolve([new ItemPolicy(max: 7, grow: 2), new ItemPolicy(grow: 1)], 10, $across)->sizes,
+            'With one cell of room it takes the cell itself',
+        );
+    }
+
+    #[Test]
+    public function aFullSlotPassesTheCellNoShareDividesToTheSlotBeforeIt(): void
+    {
+        $policies = [new ItemPolicy(basis: PHP_INT_MAX), new ItemPolicy(basis: PHP_INT_MAX), new ItemPolicy(max: 0)];
+
+        self::assertSame([5, 6, 0], Allocator::resolve($policies, 11)->sizes);
+    }
+
+    #[Test]
+    public function squeezingPastTheFloorsNeverTakesFromASlotThatWillNotGiveWay(): void
+    {
+        $policies = [
+            new ItemPolicy(basis: 5, min: 5, shrink: 1),
+            new ItemPolicy(basis: 5, min: 5, shrink: 1),
+            new ItemPolicy(basis: 3, min: 3),
+        ];
+
+        $resolved = Allocator::resolve($policies, 12, new AxisSpecification(overflow: Overflow::SqueezeToFloor));
+
+        self::assertSame([5, 4, 3], $resolved->sizes);
+    }
+
+    #[Test]
+    public function aSlotAlreadyAtItsFloorDoesNotDiluteWhatTheOthersGiveUp(): void
+    {
+        $policies = [
+            new ItemPolicy(basis: 1, shrink: 1),
+            new ItemPolicy(basis: 2, shrink: 1),
+            new ItemPolicy(basis: 2, min: 2, shrink: 2),
+        ];
+
+        self::assertSame([1, 0, 2], Allocator::resolve($policies, 3)->sizes);
+    }
+
+    #[Test]
     public function slotsThatMayGiveWayGiveUpCellsByTheirWeight(): void
     {
         $wide = new ItemPolicy(basis: 6, shrink: 1);
