@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\EffectId;
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Message\ProcessStream;

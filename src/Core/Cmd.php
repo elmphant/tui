@@ -19,7 +19,6 @@ use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
-use Elmphant\Tui\Message\Message;
 
 abstract readonly class Cmd
 {
@@ -87,7 +86,7 @@ abstract readonly class Cmd
     }
 
     /**
-     * @param Closure(): (Message|Cmd|null) $then
+     * @param Closure():((Message|Cmd|null)) $then
      */
     public static function after(float $delay, Closure $then, ?EffectId $id = null): self
     {
@@ -106,8 +105,8 @@ abstract readonly class Cmd
      * stream yourself needs `Cmd::cancel($id)` first, in that order: the driver
      * cannot select over a closed stream and takes the loop down with it.
      *
-     * @param resource                             $stream
-     * @param Closure(resource): iterable<Message> $onReadable
+     * @param resource                            $stream
+     * @param Closure(resource):iterable<Message> $onReadable
      */
     public static function listen(mixed $stream, Closure $onReadable, ?EffectId $id = null): self
     {
@@ -156,7 +155,7 @@ abstract readonly class Cmd
      * work should use a dedicated asynchronous command such as exec() or
      * http() instead.
      *
-     * @param Closure(): (Message|Cmd|null) $callback
+     * @param Closure():((Message|Cmd|null)) $callback
      */
     public static function call(Closure $callback): self
     {
@@ -164,7 +163,7 @@ abstract readonly class Cmd
     }
 
     /**
-     * @param callable(Message): Message $wrap
+     * @param callable(Message):Message $wrap
      */
     public function map(callable $wrap): self
     {

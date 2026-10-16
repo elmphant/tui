@@ -14,10 +14,10 @@ use Elmphant\Tui\Core\Cmd\ListenCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use LogicException;
 use Revolt\EventLoop;
@@ -98,7 +98,7 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     public function run(Cmd $command, ?Closure $wrap): void
     {
@@ -211,7 +211,7 @@ final class EffectRunner
      * it, and whatever it answers with is held under the command's name so a
      * cancellation, a replacement or a shutdown reaches it like any other effect.
      *
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function delegate(Cmd $command, ?Closure $wrap): void
     {
@@ -271,8 +271,8 @@ final class EffectRunner
      * Hold on to what a starter began, or say why it could not begin. Starting is
      * the starter's to know; what a failure is worth saying is not.
      *
-     * @param Closure(): RunningProcess      $start
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(): RunningProcess     $start
+     * @param Closure(Message):Message|null $wrap
      */
     private function keep(Closure $start, ErrorSource $source, ?EffectId $id, ?Closure $wrap): void
     {
@@ -289,7 +289,7 @@ final class EffectRunner
      * host can tell apart, and a ticker re-registered on every config
      * change would silently multiply.
      *
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function makeRoomFor(Cmd $command, ?Closure $wrap): void
     {
@@ -300,7 +300,7 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function cancel(EffectId $id, ?Closure $wrap = null): void
     {
@@ -367,7 +367,7 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function stopHandled(HandledEffect $effect, ?Closure $wrap = null): void
     {
@@ -379,7 +379,7 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function registerTicker(float $interval, ?EffectId $id = null, ?Closure $wrap = null): void
     {
@@ -391,7 +391,7 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function hasAnonymousTicker(float $interval, ?Closure $wrap): bool
     {
@@ -405,8 +405,8 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(): (Message|Cmd|null)  $then
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure():((Message|Cmd|null)) $then
+     * @param Closure(Message):Message|null  $wrap
      */
     private function registerTimer(float $delay, Closure $then, ?EffectId $id = null, ?Closure $wrap = null): void
     {
@@ -414,7 +414,7 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function subscribeToStream(ListenCmd $command, ?Closure $wrap = null): void
     {
@@ -565,7 +565,7 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function report(Message $message, ?Closure $wrap, ?EffectId $producer = null): void
     {

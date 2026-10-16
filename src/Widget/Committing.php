@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 
 /**
  * Content that finishes its choice, so the popup holding it closes.

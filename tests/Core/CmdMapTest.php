@@ -7,10 +7,10 @@ namespace Elmphant\Tui\Tests\Core;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderPass;
@@ -271,7 +271,7 @@ final class CmdMapTest extends TestCase
     }
 
     /**
-     * @return Closure(Message): Message
+     * @return Closure(Message):Message
      */
     private function wrap(string $scope): Closure
     {

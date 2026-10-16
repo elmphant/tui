@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\HttpResultMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\LoadingMsg;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime\Trace;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\StdinBuffer;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Screen;

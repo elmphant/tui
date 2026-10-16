@@ -6,9 +6,9 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Symfony\Component\Process\Process;
 use Throwable;

@@ -304,7 +304,7 @@ the model or write directly to the terminal.
 Application-defined messages implement the empty `Message` marker:
 
 ```php
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 
 final readonly class SearchSubmitted implements Message
 {
@@ -322,8 +322,7 @@ place that does anything:
 
 ```php
 use Closure;
-use Elmphant\Tui\Core\{Cmd, EffectId, NamesItsEffect};
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\{Cmd, EffectId, Message, NamesItsEffect};
 use Elmphant\Tui\Runtime\{CommandHandler, Program};
 
 final readonly class QueryRows extends Cmd implements NamesItsEffect

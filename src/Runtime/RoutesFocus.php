@@ -6,9 +6,9 @@ namespace Elmphant\Tui\Runtime;
 
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\Message;
 
 /**
  * A model whose keyboard the runtime places, rather than the widgets deciding

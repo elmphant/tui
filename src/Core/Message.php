@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Message;
+namespace Elmphant\Tui\Core;
 
 /**
  * Marker interface for every message that may flow through the runtime.

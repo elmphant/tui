@@ -15,6 +15,7 @@ use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Input\InputParser;
 use Elmphant\Tui\Input\KeyPattern;
@@ -24,7 +25,6 @@ use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
@@ -1132,7 +1132,7 @@ final class Program
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private function executeCall(CallCmd $command, ?Closure $wrap = null): void
     {
@@ -1159,10 +1159,10 @@ final class Program
     /**
      * Compose an inner map with an optional outer map.
      *
-     * @param Closure(Message): Message      $inner
-     * @param Closure(Message): Message|null $outer
+     * @param Closure(Message):Message      $inner
+     * @param Closure(Message):Message|null $outer
      *
-     * @return Closure(Message): Message
+     * @return Closure(Message):Message
      */
     private static function composeWrap(Closure $inner, ?Closure $outer): Closure
     {
@@ -1174,7 +1174,7 @@ final class Program
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     private static function mapMessage(Message $message, ?Closure $wrap): Message
     {

@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Runtime;
 use Closure;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 use Symfony\Component\Process\Process;
 
 /**
@@ -19,7 +19,7 @@ use Symfony\Component\Process\Process;
 final class ProcessStarter
 {
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     public function exec(ExecCmd $command, ?Closure $wrap): RunningProcess
     {
@@ -32,7 +32,7 @@ final class ProcessStarter
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     public function streaming(ProcessCmd $command, ?Closure $wrap): RunningProcess
     {

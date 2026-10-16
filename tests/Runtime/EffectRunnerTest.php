@@ -7,10 +7,10 @@ namespace Elmphant\Tui\Tests\Runtime;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Runtime\CommandHandler;
@@ -916,7 +916,7 @@ final class SoundHandler implements CommandHandler
     public int $stopped = 0;
 
     /**
-     * @var Closure(Message): void|null
+     * @var Closure(Message):void|null
      */
     public ?Closure $emit = null;
 

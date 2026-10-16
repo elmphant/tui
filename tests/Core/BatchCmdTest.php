@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Message\QuitMsg;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

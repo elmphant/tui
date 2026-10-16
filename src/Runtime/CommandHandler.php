@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 
 /**
  * Runs a command the runtime has no dispatcher for, so an application can add
@@ -34,8 +34,8 @@ interface CommandHandler
      * it, so its stop closure is never called and anything it emits afterwards
      * is dropped.
      *
-     * @param Closure(Message): void $emit
-     * @param Closure(): void        $finished
+     * @param Closure(Message):void $emit
+     * @param Closure(): void       $finished
      *
      * @return Closure(): void|null
      */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Message;
 
+use Elmphant\Tui\Core\Message;
 use InvalidArgumentException;
 
 final readonly class ResizeMsg implements Message

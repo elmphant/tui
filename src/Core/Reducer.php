@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Core;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\Message;
 
 interface Reducer
 {

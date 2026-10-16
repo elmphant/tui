@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 use RuntimeException;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -24,7 +24,7 @@ final class HttpRequestStarter
     }
 
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     public function start(HttpCmd $command, ?Closure $wrap): RunningProcess
     {

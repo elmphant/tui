@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\EffectId;
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 
 /**
  * @internal
@@ -14,7 +14,7 @@ use Elmphant\Tui\Message\Message;
 final readonly class TickerRecord
 {
     /**
-     * @param Closure(Message): Message|null $wrap
+     * @param Closure(Message):Message|null $wrap
      */
     public function __construct(
         public float $fireAt,

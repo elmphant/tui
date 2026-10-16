@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Api;
 
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\Mount;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
@@ -13,7 +14,6 @@ use Elmphant\Tui\Layout\Flex;
 use Elmphant\Tui\Layout\Layout;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\SplitState;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;

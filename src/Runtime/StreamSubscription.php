@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\EffectId;
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 
 /**
  * @internal
@@ -18,9 +18,9 @@ final class StreamSubscription
     public ?string $watcherId = null;
 
     /**
-     * @param resource|closed-resource             $stream     a reader may close it, and often does on finding its end
-     * @param Closure(resource): iterable<Message> $onReadable
-     * @param Closure(Message): Message|null       $wrap
+     * @param resource|closed-resource            $stream     a reader may close it, and often does on finding its end
+     * @param Closure(resource):iterable<Message> $onReadable
+     * @param Closure(Message):Message|null       $wrap
      */
     public function __construct(
         public readonly mixed $stream,

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Application;
 
 use Closure;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Widget\Widget;
@@ -25,9 +25,9 @@ use Elmphant\Tui\Widget\WidgetContainer;
 final readonly class Mount implements Widget, WidgetContainer
 {
     /**
-     * @param TModel                         $model
-     * @param Closure(TApp, TModel): TApp    $mount
-     * @param Closure(Message): Message|null $address
+     * @param TModel                        $model
+     * @param Closure(TApp, TModel): TApp   $mount
+     * @param Closure(Message):Message|null $address
      */
     private function __construct(
         public Reducer $model,
@@ -47,7 +47,7 @@ final readonly class Mount implements Widget, WidgetContainer
      *
      * @param TBoundModel                                $model
      * @param Closure(TBoundApp, TBoundModel): TBoundApp $mount
-     * @param Closure(Message): Message|null             $address
+     * @param Closure(Message):Message|null              $address
      *
      * @return self<TBoundApp, TBoundModel>
      */

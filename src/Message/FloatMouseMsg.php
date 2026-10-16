@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Message;
 
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\FloatPlacement;
 use Elmphant\Tui\Widget\Popup\PointerFloating;

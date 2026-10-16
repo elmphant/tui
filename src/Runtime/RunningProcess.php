@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Runtime;
 
 use Elmphant\Tui\Core\EffectId;
-use Elmphant\Tui\Message\Message;
+use Elmphant\Tui\Core\Message;
 
 /**
  * @internal

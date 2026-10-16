@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\HttpResultMsg;
-use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Runtime\EffectOutputLimitExceeded;
 use Elmphant\Tui\Runtime\RunningHttpRequest;
 use Elmphant\Tui\Tests\Support\MessageEnvelope;

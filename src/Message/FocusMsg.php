@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Message;
 
 use Elmphant\Tui\Core\FocusMove;
+use Elmphant\Tui\Core\Message;
 
 /**
  * Sent only on a move: a widget that already holds the keyboard must never see

@@ -7,8 +7,8 @@ namespace Elmphant\Tui\Core\Cmd;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
-use Elmphant\Tui\Message\Message;
 use InvalidArgumentException;
 
 /**
@@ -17,8 +17,8 @@ use InvalidArgumentException;
 final readonly class ListenCmd extends Cmd implements NamesItsEffect
 {
     /**
-     * @param resource                             $stream
-     * @param Closure(resource): iterable<Message> $onReadable
+     * @param resource                            $stream
+     * @param Closure(resource):iterable<Message> $onReadable
      */
     public function __construct(
         public mixed $stream,

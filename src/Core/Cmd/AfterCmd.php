@@ -7,8 +7,8 @@ namespace Elmphant\Tui\Core\Cmd;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
-use Elmphant\Tui\Message\Message;
 use InvalidArgumentException;
 
 /**
@@ -17,7 +17,7 @@ use InvalidArgumentException;
 final readonly class AfterCmd extends Cmd implements NamesItsEffect
 {
     /**
-     * @param Closure(): (Message|Cmd|null) $then
+     * @param Closure():((Message|Cmd|null)) $then
      */
     public function __construct(
         public float $delay,
