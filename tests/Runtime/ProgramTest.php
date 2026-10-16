@@ -465,24 +465,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function fpsClampsToMinimumOnePointZero(): void
-    {
-        $program = Program::new($this->createMockModel())->withFps(0.5);
-
-        $reflection = new ReflectionProperty(Program::class, 'framesPerSecond');
-        self::assertSame(1.0, $reflection->getValue($program));
-    }
-
-    #[Test]
-    public function fpsAcceptsValueAboveMinimum(): void
-    {
-        $program = Program::new($this->createMockModel())->withFps(30.0);
-
-        $reflection = new ReflectionProperty(Program::class, 'framesPerSecond');
-        self::assertSame(30.0, $reflection->getValue($program));
-    }
-
-    #[Test]
     public function builderMethodsChainable(): void
     {
         $program = Program::new($this->createMockModel())
@@ -1062,14 +1044,14 @@ final class ProgramTest extends TestCase
         $queueProperty = $reflection->getProperty('messageQueue');
         $queue = new SplQueue();
         $queueProperty->setValue($program, $queue);
-        $reflection->getProperty('isDirty')->setValue($program, false);
+        $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
         $reflection->getProperty('resizeNeedsScreenClear')->setValue($program, false);
 
         $method = $reflection->getMethod('handlePendingResize');
         $method->invoke($program);
 
         self::assertTrue($queue->isEmpty(), 'No ResizeMsg should be enqueued when no resize is pending');
-        self::assertFalse($reflection->getProperty('isDirty')->getValue($program));
+        self::assertFalse($reflection->getProperty('frames')->getValue($program)->isDirty());
         self::assertFalse($reflection->getProperty('resizeNeedsScreenClear')->getValue($program));
     }
 
@@ -1235,7 +1217,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $screen = new Screen($terminal);
         $reflection->getProperty('screen')->setValue($program, $screen);
-        $reflection->getProperty('isDirty')->setValue($program, false);
+        $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
         $queueProperty = $reflection->getProperty('messageQueue');
         $queue = new SplQueue();
         $queueProperty->setValue($program, $queue);
@@ -1246,7 +1228,7 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('resume')->invoke($program);
         $reflection->getMethod('cancelEventLoopWatchers')->invoke($program);
 
-        self::assertTrue($reflection->getProperty('isDirty')->getValue($program), 'resume must mark renderer dirty so the next frame is drawn');
+        self::assertTrue($reflection->getProperty('frames')->getValue($program)->isDirty(), 'resume must mark renderer dirty so the next frame is drawn');
 
         $found = false;
         while (!$queue->isEmpty()) {
@@ -1733,7 +1715,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $constantRevisionModel);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, false);
+        $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
 
         $queue = new SplQueue();
         $queue->enqueue(new TickMsg(0.0));
@@ -1742,7 +1724,7 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
         self::assertNotSame($constantRevisionModel, $reflection->getProperty('model')->getValue($program), 'Model instance must have swapped (update returned new self())');
-        self::assertFalse($reflection->getProperty('isDirty')->getValue($program), 'When the model implements RenderRevisioned and renderRevision() is unchanged, isDirty must stay false even though the model instance differs');
+        self::assertFalse($reflection->getProperty('frames')->getValue($program)->isDirty(), 'When the model implements RenderRevisioned and renderRevision() is unchanged, isDirty must stay false even though the model instance differs');
     }
 
     #[Test]
@@ -1778,7 +1760,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $changingRevisionModel);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, false);
+        $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
 
         $queue = new SplQueue();
         $queue->enqueue(new TickMsg(0.0));
@@ -1786,7 +1768,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
-        self::assertTrue($reflection->getProperty('isDirty')->getValue($program), 'renderRevision actually changed (0 → 1) → isDirty must flip to true');
+        self::assertTrue($reflection->getProperty('frames')->getValue($program)->isDirty(), 'renderRevision actually changed (0 → 1) → isDirty must flip to true');
     }
 
     #[Test]
@@ -1812,7 +1794,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $changingModel);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, false);
+        $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
 
         $queue = new SplQueue();
         $queue->enqueue(new TickMsg(0.0));
@@ -1821,7 +1803,7 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
         self::assertTrue(
-            $reflection->getProperty('isDirty')->getValue($program),
+            $reflection->getProperty('frames')->getValue($program)->isDirty(),
             'isDirty must be true after the model instance changed during update'
         );
     }
@@ -2092,7 +2074,8 @@ final class ProgramTest extends TestCase
             ->withClock($clock)
             ->withFps(2.0);
         $reflection = new ReflectionClass($program);
-        $reflection->getProperty('lastRender')->setValue($program, 10.0);
+        $reflection->getProperty('frames')->getValue($program)->drawn(10.0, null);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
         $nextRenderDelay = $reflection->getMethod('nextRenderDelay');
 
         self::assertEqualsWithDelta(0.25, $nextRenderDelay->invoke($program), 0.000_001);
@@ -2100,7 +2083,7 @@ final class ProgramTest extends TestCase
         $clock->advance(1.0);
         self::assertSame(0.0, $nextRenderDelay->invoke($program));
 
-        $reflection->getProperty('isDirty')->setValue($program, false);
+        $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
         self::assertNull($nextRenderDelay->invoke($program));
     }
 
@@ -2222,8 +2205,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        $reflection->getProperty('lastRender')->setValue($program, 0.0);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
 
         $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
@@ -2360,7 +2342,7 @@ final class ProgramTest extends TestCase
 
         $reflection->getMethod('runTick')->invoke($program);
         self::assertSame(1, $animatedModel->renders);
-        self::assertFalse($reflection->getProperty('isDirty')->getValue($program));
+        self::assertFalse($reflection->getProperty('frames')->getValue($program)->isDirty());
 
         // Advancing to exactly the requested delay must already repaint (>=, not >).
         $clock->advance(0.05);
@@ -2448,8 +2430,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        $reflection->getProperty('lastRender')->setValue($program, 0.0);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
 
         $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
@@ -2458,7 +2439,7 @@ final class ProgramTest extends TestCase
         $ticker->stop();
 
         self::assertTrue(
-            $reflection->getProperty('isDirty')->getValue($program),
+            $reflection->getProperty('frames')->getValue($program)->isDirty(),
             'A failed render must leave the frame dirty so the next tick retries instead of freezing a blank frame'
         );
     }
@@ -2479,8 +2460,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, false);
-        $reflection->getProperty('lastRender')->setValue($program, microtime(true));
+        $reflection->getProperty('frames')->getValue($program)->drawn(microtime(true), null);
 
         $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);
@@ -2537,8 +2517,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, false);
-        $reflection->getProperty('lastRender')->setValue($program, microtime(true));
+        $reflection->getProperty('frames')->getValue($program)->drawn(microtime(true), null);
 
         $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::process(['sleep', '30']));
 
@@ -3358,8 +3337,7 @@ final class ProgramTest extends TestCase
         $queue = $reflection->getProperty('messageQueue')->getValue($program);
         $queue->enqueue(QuitMsg::Quit);
 
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        $reflection->getProperty('lastRender')->setValue($program, 0.0);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
 
         $program->tick();
 
@@ -3395,13 +3373,12 @@ final class ProgramTest extends TestCase
         $program = $this->buildTickableProgram();
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        $reflection->getProperty('lastRender')->setValue($program, 0.0);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
 
         $program->tick();
 
         self::assertSame(1, $renderCount, 'tick must call renderFrame → model.render exactly once when dirty and budget met');
-        self::assertFalse($reflection->getProperty('isDirty')->getValue($program), 'After render, isDirty must clear to false');
+        self::assertFalse($reflection->getProperty('frames')->getValue($program)->isDirty(), 'After render, isDirty must clear to false');
     }
 
     #[Test]
@@ -3432,13 +3409,13 @@ final class ProgramTest extends TestCase
         $program = $this->buildTickableProgram();
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        $reflection->getProperty('lastRender')->setValue($program, $reflection->getProperty('clock')->getValue($program)->now() + 10.0);
+        $reflection->getProperty('frames')->getValue($program)->drawn($reflection->getProperty('clock')->getValue($program)->now() + 10.0, null);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
 
         $program->tick();
 
         self::assertSame(0, $renderCount, 'tick must NOT render when fresh lastRender means frame budget (1/fps) is not yet elapsed');
-        self::assertTrue($reflection->getProperty('isDirty')->getValue($program), 'isDirty must stay true when render is skipped');
+        self::assertTrue($reflection->getProperty('frames')->getValue($program)->isDirty(), 'isDirty must stay true when render is skipped');
     }
 
     #[Test]
@@ -3469,8 +3446,8 @@ final class ProgramTest extends TestCase
         $program = $this->buildTickableProgram(framesPerSecond: 1.0);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        $reflection->getProperty('lastRender')->setValue($program, $reflection->getProperty('clock')->getValue($program)->now());
+        $reflection->getProperty('frames')->getValue($program)->drawn($reflection->getProperty('clock')->getValue($program)->now(), null);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
 
         $program->tick();
 
@@ -3508,9 +3485,8 @@ final class ProgramTest extends TestCase
         $program = $this->buildTickableProgram();
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $countingModel);
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        // Set lastRender far enough in the past that now >= lastRender + frameBudget holds
-        $reflection->getProperty('lastRender')->setValue($program, $reflection->getProperty('clock')->getValue($program)->now() - 1.0);
+        $reflection->getProperty('frames')->getValue($program)->drawn($reflection->getProperty('clock')->getValue($program)->now() - 1.0, null);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
 
         $program->tick();
 
@@ -3605,14 +3581,14 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('resizePending')->setValue($program, true);
         $reflection->getProperty('resizeNeedsScreenClear')->setValue($program, false);
-        $reflection->getProperty('isDirty')->setValue($program, false);
+        $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
 
         $reflection->getMethod('handlePendingResize')->invoke($program);
 
         self::assertFalse($reflection->getProperty('resizePending')->getValue($program), 'resizePending must clear to false after handling');
         self::assertTrue($reflection->getProperty('resizeNeedsScreenClear')->getValue($program), 'resizeNeedsScreenClear must be set so the next renderFrame clears the screen');
-        self::assertTrue($reflection->getProperty('isDirty')->getValue($program), 'Resize must mark renderer dirty');
+        self::assertTrue($reflection->getProperty('frames')->getValue($program)->isDirty(), 'Resize must mark renderer dirty');
     }
 
     #[Test]
@@ -4311,8 +4287,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        $reflection->getProperty('lastRender')->setValue($program, 0.0);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
 
         return $program;
     }

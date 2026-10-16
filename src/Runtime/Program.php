@@ -68,7 +68,7 @@ final class Program
 
     private bool $useAltScreen = false;
     private bool $useMouseTracking = false;
-    private float $framesPerSecond = 60.0;
+    private FrameScheduler $frames;
     /**
      * @var (Closure(ErrorMsg): (Cmd|null))|null
      */
@@ -91,7 +91,6 @@ final class Program
     private Model $model;
     private ?Frame $backBuffer = null;
     private bool $inputClosed = false;
-    private bool $isDirty = true;
     private int $consecutiveRenderFailures = 0;
     private ?Throwable $fatalError = null;
     private ?float $drainDeadline = null;
@@ -111,7 +110,6 @@ final class Program
 
     private ?Terminal $injectedTerminal = null;
     private ?AdaptiveTicker $adaptiveTicker = null;
-    private ?float $animationRepaintAt = null;
     private StdinBuffer $stdinBuffer;
     /**
      * @var array<string, string> loop watcher ids, keyed by EventLoopWatcher name
@@ -125,7 +123,6 @@ final class Program
     private ?Theme $theme = null;
     private ?ColorProfile $colorProfile = null;
     private ?RenderPass $renderPass = null;
-    private float $lastRender = 0.0;
     private float $paintedAt = 0.0;
     private Clock $clock;
     private FocusState $focus;
@@ -136,6 +133,7 @@ final class Program
     private function __construct(private readonly Model $initialModel)
     {
         $this->focus = new FocusState();
+        $this->frames = new FrameScheduler();
         $this->clock = new MonotonicClock();
         $this->screenRect = Rect::fromSize($this->width, $this->height);
         $this->pendingWheel = new PendingWheel();
@@ -199,7 +197,7 @@ final class Program
     public function withFps(float $framesPerSecond): self
     {
         $program = $this->configured();
-        $program->framesPerSecond = max(1.0, $framesPerSecond);
+        $program->frames = new FrameScheduler($framesPerSecond);
 
         return $program;
     }
@@ -361,7 +359,10 @@ final class Program
             throw new LogicException(sprintf('Program cannot be configured in state %s', $this->state->name));
         }
 
-        return clone $this;
+        $program = clone $this;
+        $program->frames = clone $this->frames;
+
+        return $program;
     }
 
     private function setup(): void
@@ -479,7 +480,7 @@ final class Program
         $this->terminalSession?->updateHeight($this->height);
         $this->backBuffer = new Frame($this->width, $this->height);
         $this->messageQueue->enqueue(new ResizeMsg($this->width, $this->height));
-        $this->isDirty = true;
+        $this->frames->markDirty();
     }
 
     private function watch(EventLoopWatcher $watcher, string $id): void
@@ -621,7 +622,7 @@ final class Program
 
     private function flushWheelWhenDue(float $now): void
     {
-        if ($this->pendingWheel->isEmpty() || $now < $this->lastWheelFlush + 1.0 / $this->framesPerSecond) {
+        if ($this->pendingWheel->isEmpty() || $now < $this->lastWheelFlush + $this->frames->budget()) {
             return;
         }
 
@@ -728,20 +729,17 @@ final class Program
             }
         }
 
-        $frameBudget = 1.0 / $this->framesPerSecond;
         $now = $this->clock->now();
-        $animationDue = $this->animationRepaintAt !== null && $now >= $this->animationRepaintAt;
-        if (($this->isDirty || $animationDue) && $now >= $this->lastRender + $frameBudget) {
+        if ($this->frames->isDue($now)) {
             $this->tracedRenderFrame();
-            $this->lastRender = $this->clock->now();
             if (!$this->isRunning()) {
                 $this->resumeRunSuspension();
 
                 return;
             }
-        } elseif ($this->isDirty || $animationDue) {
+        } elseif ($this->frames->wantsFrame($now)) {
             $this->tracer?->record(TraceEvent::FrameSkipped, [
-                'waitMs' => ($this->lastRender + $frameBudget - $now) * 1000,
+                'waitMs' => $this->frames->heldFor($now) * 1000,
             ]);
         }
 
@@ -762,22 +760,7 @@ final class Program
 
     private function nextRenderDelay(): ?float
     {
-        $budgetReadyAt = $this->lastRender + (1.0 / $this->framesPerSecond);
-
-        $nextRenderAt = null;
-        if ($this->isDirty) {
-            $nextRenderAt = $budgetReadyAt;
-        }
-        if ($this->animationRepaintAt !== null) {
-            $animationReadyAt = max($this->animationRepaintAt, $budgetReadyAt);
-            $nextRenderAt = $nextRenderAt === null ? $animationReadyAt : min($nextRenderAt, $animationReadyAt);
-        }
-
-        if ($nextRenderAt === null) {
-            return null;
-        }
-
-        return max(0.0, $nextRenderAt - $this->clock->now());
+        return $this->frames->nextDelay($this->clock->now());
     }
 
     private function handlePendingResize(): void
@@ -793,9 +776,7 @@ final class Program
     private function tracedRenderFrame(): void
     {
         if ($this->tracer === null) {
-            if ($this->renderFrame()) {
-                $this->isDirty = false;
-            }
+            $this->renderFrame();
 
             return;
         }
@@ -807,10 +788,6 @@ final class Program
         $this->paintedAt = $start;
 
         $rendered = $this->renderFrame();
-        if ($rendered) {
-            $this->isDirty = false;
-        }
-
         $finished = $this->clock->now();
 
         $this->tracer->record(TraceEvent::Render, [
@@ -922,7 +899,7 @@ final class Program
                 $bothRevisioned = $previousRevision !== null && $newRevision !== null;
                 $revisionUnchanged = $bothRevisioned && $previousRevision === $newRevision;
                 if (!$revisionUnchanged) {
-                    $this->isDirty = true;
+                    $this->frames->markDirty();
                 }
             }
             $this->dispatchCommand($result->command);
@@ -983,7 +960,7 @@ final class Program
             $this->paintedAt = $this->clock->now();
             $this->screen->flush($frame);
         } catch (Throwable $error) {
-            $this->animationRepaintAt = null;
+            $this->frames->dropped($this->clock->now());
             // A slow ssh link or a laptop waking up stalls output for seconds; that frame is dropped, not fatal.
             $stalled = $error instanceof TerminalWriteException && $error->stalled;
             $this->consecutiveRenderFailures = $stalled ? 0 : $this->consecutiveRenderFailures + 1;
@@ -998,10 +975,7 @@ final class Program
         $this->consecutiveRenderFailures = 0;
         $pass->floats->commit();
 
-        $repaintDelay = $pass->clock->repaintDelay();
-        $this->animationRepaintAt = $repaintDelay === null
-            ? null
-            : $this->clock->now() + $repaintDelay;
+        $this->frames->drawn($this->clock->now(), $pass->clock->repaintDelay());
 
         return true;
     }
@@ -1038,7 +1012,7 @@ final class Program
             ]);
 
             $this->focus = $moved;
-            $this->isDirty = true;
+            $this->frames->markDirty();
         }
 
         // Announced even when the move lands back where it started: a ring of one

@@ -201,8 +201,8 @@ final class ProgramTracingTest extends TestCase
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('isDirty')->setValue($program, true);
-        $reflection->getProperty('lastRender')->setValue($program, $lastRender);
+        $reflection->getProperty('frames')->getValue($program)->drawn($lastRender, null);
+        $reflection->getProperty('frames')->getValue($program)->markDirty();
         $reflection->getProperty('adaptiveTicker')->setValue($program, new AdaptiveTicker(static fn (): ?float => null));
 
         return $program;
