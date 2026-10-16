@@ -1214,7 +1214,7 @@ final class ProgramTest extends TestCase
         $drainMethod = $reflection->getMethod('drainMessageQueue');
 
         $queue = new SplQueue();
-        $queue->enqueue('trigger');
+        $queue->enqueue(new TestMessage('trigger'));
         $queueProperty->setValue($program, $queue);
         $modelProperty->setValue($program, $model);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);

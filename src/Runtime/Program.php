@@ -50,6 +50,7 @@ use Revolt\EventLoop\UnsupportedFeatureException;
 use SplQueue;
 use Throwable;
 use UnexpectedValueException;
+use WeakMap;
 use WeakReference;
 
 /**
@@ -86,6 +87,10 @@ final class Program
      * @var SplQueue<Message>
      */
     private SplQueue $messageQueue;
+    /**
+     * @var WeakMap<Message, int>
+     */
+    private WeakMap $errorChain;
     private PendingWheel $pendingWheel;
     private float $lastWheelFlush = 0.0;
     private Model $model;
@@ -135,6 +140,7 @@ final class Program
         $this->clock = new MonotonicClock();
         $this->screenRect = Rect::fromSize(80, 24);
         $this->pendingWheel = new PendingWheel();
+        $this->errorChain = new WeakMap();
     }
 
     /**
@@ -823,7 +829,9 @@ final class Program
                     return;
                 }
                 if (!$handledByTheErrorHandler) {
-                    $this->messageQueue->unshift(new ErrorMsg($error, ErrorSource::Update));
+                    $failure = new ErrorMsg($error, ErrorSource::Update);
+                    $this->errorChain[$failure] = $this->errorChain[$message] ?? 0;
+                    $this->messageQueue->unshift($failure);
                 }
                 continue;
             }
@@ -834,10 +842,26 @@ final class Program
         }
     }
 
+    /**
+     * An answer that only leads to the same failure again would loop forever, so
+     * the messages it queues carry how many answers in a row led to them.
+     */
     private function handleError(ErrorMsg $message): bool
     {
+        $depth = ($this->errorChain[$message] ?? 0) + 1;
+        if ($depth >= self::MAX_CONSECUTIVE_ERRORS) {
+            $this->giveUp($message->error);
+
+            return true;
+        }
+
+        $queued = $this->messageQueue->count();
         if ($this->errorHandler !== null) {
             $this->dispatchCommand(($this->errorHandler)($message));
+        }
+
+        for ($index = $queued; $index < $this->messageQueue->count(); ++$index) {
+            $this->errorChain[$this->messageQueue[$index]] = $depth;
         }
 
         return true;
