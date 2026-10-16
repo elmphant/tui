@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\Geometry;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
@@ -79,11 +80,71 @@ final class PanelHeaderAndFooterTest extends TestCase
         self::assertSame('pane', $geometry->componentAt(2, 6)?->value);
     }
 
+    #[Test]
+    public function aRuledFooterIsSeparatedByALineJoinedIntoTheBorder(): void
+    {
+        $screen = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true), 20, 8);
+
+        self::assertSame('├' . str_repeat('─', 18) . '┤', $screen->lineAt(5));
+        self::assertStringContainsString('RUN', $screen->lineAt(6));
+    }
+
+    #[Test]
+    public function aCaptionRidesOnTheRuleAtItsRightEnd(): void
+    {
+        $screen = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true, caption: 'why'), 20, 8);
+
+        self::assertSame('├' . str_repeat('─', 13) . ' why ┤', $screen->lineAt(5));
+    }
+
+    #[Test]
+    public function aGapAboveTheRuleIsKeptWhileTheRowsStillFit(): void
+    {
+        $panel = self::rows(2)->withFooter(Text::new('RUN'), ruled: true, gap: 1);
+
+        self::assertEquals(new Rect(1, 1, 18, 3), $panel->contentArea(Rect::fromSize(20, 8)));
+        self::assertSame(str_repeat(' ', 18), mb_substr(self::drawn($panel, 20, 8)->lineAt(4), 1, 18));
+    }
+
+    #[Test]
+    public function theGapIsGivenUpBeforeARowOfContentWouldBe(): void
+    {
+        $panel = self::tenRows()->withFooter(Text::new('RUN'), ruled: true, gap: 1);
+
+        self::assertEquals(new Rect(1, 1, 18, 4), $panel->contentArea(Rect::fromSize(20, 8)));
+    }
+
+    #[Test]
+    public function theFooterIsWhereAHostAimsAPressAtWhatItDraws(): void
+    {
+        $panel = self::tenRows()
+            ->withPadding(Spacing::only(top: 1, right: 1, bottom: 0, left: 1))
+            ->withFooter(Paragraph::fromText("one\ntwo"), ruled: true);
+
+        self::assertEquals(new Rect(2, 5, 16, 2), $panel->footerArea(Rect::fromSize(20, 8)));
+    }
+
+    #[Test]
+    public function aPanelMeasuresItsRuleAndGapWithItsRows(): void
+    {
+        $plain = self::rows(2);
+
+        self::assertSame(
+            $plain->measureHeight(20) + 3,
+            $plain->withFooter(Text::new('RUN'), ruled: true, gap: 1)->measureHeight(20),
+        );
+    }
+
     private static function tenRows(): Panel
+    {
+        return self::rows(10);
+    }
+
+    private static function rows(int $count): Panel
     {
         return Panel::new('Rows')->withChildren(array_map(
             static fn (int $row): Text => Text::new('row ' . $row),
-            range(0, 9),
+            range(0, $count - 1),
         ));
     }
 
