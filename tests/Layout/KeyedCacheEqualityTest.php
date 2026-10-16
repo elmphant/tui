@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Layout;
 
-use Elmphant\Tui\Layout\KeyedCache;
+use Elmphant\Tui\Support\KeyedCache;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use stdClass;

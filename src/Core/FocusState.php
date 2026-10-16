@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Core;
 
+use Elmphant\Tui\Support\Cloneable;
+
 /**
  * Which component the keyboard reaches, or nobody. One field, so two can never
  * claim it.

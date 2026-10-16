@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Layout;
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\ContentBasis;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
+use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 

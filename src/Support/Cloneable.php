@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Core;
+namespace Elmphant\Tui\Support;
 
 /**
  * @internal framework keyed write-back primitive; expose typed withX() methods instead

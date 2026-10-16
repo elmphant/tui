@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout;
 
 use Closure;
+use Elmphant\Tui\Support\KeyedCache;
 
 /**
  * Row measurements for one collection, kept per layout key.

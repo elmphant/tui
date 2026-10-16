@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Core;
 
 use Elmphant\Tui\Core\App;
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Constraint;
@@ -17,6 +16,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Message;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Interactive;

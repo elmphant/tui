@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Message;
 
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Support\Cloneable;
 
 final readonly class KeyMsg implements Message
 {

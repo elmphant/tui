@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
 use Elmphant\Tui\Layout\Axis\ContentBasis;
@@ -13,6 +12,7 @@ use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Axis\Overflow;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Core\App;
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Dispatch\ScrollPane;

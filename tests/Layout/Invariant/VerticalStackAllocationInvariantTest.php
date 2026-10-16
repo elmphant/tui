@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout\Invariant;
 
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\KeyedCache;
 use Elmphant\Tui\Layout\VerticalStack;
+use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DataProviderExternal;

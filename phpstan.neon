@@ -29,10 +29,10 @@ parameters:
         # that every subclass takes them.
         -
             identifier: argument.type
-            path: src/Core/Cloneable.php
+            path: src/Support/Cloneable.php
         -
             identifier: new.static
-            path: src/Core/Cloneable.php
+            path: src/Support/Cloneable.php
         # The component guard asks what two widgets are worth, not whether they
         # are the same instance: a model may rebuild a component from what it
         # kept rather than store the widget. PHP spells that comparison "==".

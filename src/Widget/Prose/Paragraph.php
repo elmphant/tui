@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Prose;
 
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -21,6 +20,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\SpanRenderer;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\WrapCache;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;

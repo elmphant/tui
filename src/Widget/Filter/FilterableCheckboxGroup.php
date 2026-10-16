@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Filter;
 
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
@@ -21,6 +20,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Choice\Options;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;

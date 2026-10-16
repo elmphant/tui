@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Table;
 
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Support\Cloneable;
 
 final readonly class Row
 {

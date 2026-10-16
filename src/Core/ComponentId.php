@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Core;
 
+use Elmphant\Tui\Support\NamedIdentifier;
 use Stringable;
 
 final readonly class ComponentId implements Stringable

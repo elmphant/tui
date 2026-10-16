@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Input;
 
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
@@ -25,6 +24,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\RenderContext;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Tests\Core\Support\CopyableTestApp;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Focusable;

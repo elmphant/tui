@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Core\Cmd;
 
-use Elmphant\Tui\Core\Cloneable;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\NamesItsEffect;
+use Elmphant\Tui\Support\Cloneable;
 use InvalidArgumentException;
 
 final readonly class HttpCmd extends Cmd implements NamesItsEffect

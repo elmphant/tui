@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Core;
+namespace Elmphant\Tui\Tests\Support;
 
-use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Support\Cloneable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Stan\Fixtures;
 
-use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Support\Cloneable;
 
 final readonly class NamedRebuilder
 {

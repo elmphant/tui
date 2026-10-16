@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
-use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Support\Cloneable;
 
 final readonly class Theme
 {

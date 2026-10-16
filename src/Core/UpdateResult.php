@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Core;
 
+use Elmphant\Tui\Support\Cloneable;
+
 /**
  * @template-covariant TModel of Reducer
  */

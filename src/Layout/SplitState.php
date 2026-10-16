@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
-use Elmphant\Tui\Core\Cloneable;
+use Elmphant\Tui\Support\Cloneable;
 use InvalidArgumentException;
 
 /**
