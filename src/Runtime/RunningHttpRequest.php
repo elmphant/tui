@@ -24,7 +24,7 @@ final class RunningHttpRequest implements RunningProcess
 
     private bool $finished = false;
     private string $body = '';
-    private float $startedAt;
+    private float $lastHeardAt;
 
     public function __construct(
         private readonly HttpClientInterface $client,
@@ -37,7 +37,7 @@ final class RunningHttpRequest implements RunningProcess
         private readonly ?Closure $wrap = null,
         private readonly ?float $timeoutSeconds = null,
     ) {
-        $this->startedAt = hrtime(true) / self::NANOSECONDS_PER_SECOND;
+        $this->lastHeardAt = hrtime(true) / self::NANOSECONDS_PER_SECOND;
     }
 
     public function pump(): array
@@ -49,11 +49,11 @@ final class RunningHttpRequest implements RunningProcess
         try {
             foreach ($this->client->stream([$this->response], 0) as $chunk) {
                 if ($chunk->isTimeout()) {
-                    if ($this->pastDeadline()) {
+                    if ($this->idleTooLong()) {
                         $this->stop();
 
                         return [$this->map(new ErrorMsg(
-                            new RuntimeException(sprintf('HTTP request timed out after %g seconds.', $this->timeoutSeconds)),
+                            new RuntimeException(sprintf('HTTP request timed out after %g seconds without data.', $this->timeoutSeconds)),
                             ErrorSource::Http,
                             $this->requestId,
                         ))];
@@ -62,6 +62,7 @@ final class RunningHttpRequest implements RunningProcess
                     return [];
                 }
 
+                $this->lastHeardAt = hrtime(true) / self::NANOSECONDS_PER_SECOND;
                 $this->body .= $chunk->getContent();
                 if (strlen($this->body) > $this->maxBodyBytes) {
                     $this->stop();
@@ -119,9 +120,9 @@ final class RunningHttpRequest implements RunningProcess
         return $this->requestId;
     }
 
-    private function pastDeadline(): bool
+    private function idleTooLong(): bool
     {
         return $this->timeoutSeconds !== null
-            && hrtime(true) / self::NANOSECONDS_PER_SECOND - $this->startedAt >= $this->timeoutSeconds;
+            && hrtime(true) / self::NANOSECONDS_PER_SECOND - $this->lastHeardAt >= $this->timeoutSeconds;
     }
 }

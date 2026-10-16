@@ -48,7 +48,7 @@ final class HttpRequestStarter
             $command->id,
             $command->maxBodyBytes,
             $wrap,
-            self::deadlineOf($options),
+            self::idleTimeoutOf($options),
         );
     }
 
@@ -69,7 +69,7 @@ final class HttpRequestStarter
     /**
      * @param array<string, mixed> $options
      */
-    private static function deadlineOf(array $options): ?float
+    private static function idleTimeoutOf(array $options): ?float
     {
         return is_numeric($options['timeout'] ?? null) ? (float)$options['timeout'] : null;
     }
