@@ -36,6 +36,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
 use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Layout\Breakpoint;
 use Elmphant\Tui\Widget\Layout\Flex;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Listing\ListView;
@@ -251,6 +252,7 @@ final class IntrinsicWidthTest extends TestCase
         yield 'ScrollPane' => [ScrollPane::of(Separator::new())];
         yield 'Overlay' => [Overlay::new(Separator::new(), Separator::new())];
         yield 'Split' => [Split::row(new SplitState([1, 1]), Separator::new(), Separator::new())];
+        yield 'Breakpoint' => [Breakpoint::at(10, Separator::new(), Separator::new())];
     }
 
     /**
