@@ -84,6 +84,38 @@ final class WrapCacheTest extends TestCase
         self::assertSame(0, $recomputed, 'Dropping the entry in use would re-wrap it every single frame');
     }
 
+    #[Test]
+    public function aBudgetFilledExactlyKeepsEverything(): void
+    {
+        WrapCache::remember('first', static fn (): array => array_fill(0, 20_000, 'row'));
+        WrapCache::remember('second', static fn (): array => array_fill(0, 30_000, 'row'));
+
+        self::assertFalse(self::recomputes('first'));
+    }
+
+    #[Test]
+    public function oneRowOverTheBudgetEvictsTheOldest(): void
+    {
+        WrapCache::remember('first', static fn (): array => array_fill(0, 20_000, 'row'));
+        WrapCache::remember('second', static fn (): array => array_fill(0, 30_001, 'row'));
+
+        self::assertTrue(self::recomputes('first'));
+    }
+
+    #[Test]
+    public function anEvictionGivesBackExactlyTheRowsItFreed(): void
+    {
+        WrapCache::remember('first', static fn (): array => array_fill(0, 20_000, 'row'));
+        WrapCache::remember('second', static fn (): array => array_fill(0, 40_000, 'row'));
+        WrapCache::remember('third', static fn (): array => array_fill(0, 9_000, 'row'));
+
+        self::assertFalse(self::recomputes('second'), '40 000 + 9 000 rows still fit');
+
+        WrapCache::remember('fourth', static fn (): array => array_fill(0, 2_000, 'row'));
+
+        self::assertTrue(self::recomputes('second'), '40 000 + 9 000 + 2 000 rows do not');
+    }
+
     protected function setUp(): void
     {
         WrapCache::clear();
@@ -92,5 +124,17 @@ final class WrapCacheTest extends TestCase
     protected function tearDown(): void
     {
         WrapCache::clear();
+    }
+
+    private static function recomputes(string $key): bool
+    {
+        $recomputed = false;
+        WrapCache::remember($key, static function () use (&$recomputed): array {
+            $recomputed = true;
+
+            return ['row'];
+        });
+
+        return $recomputed;
     }
 }

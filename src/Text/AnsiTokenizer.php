@@ -58,7 +58,6 @@ final class AnsiTokenizer
         $length = strlen($input);
 
         return match ($input[$position + 1] ?? '') {
-            '' => $length,
             '[' => self::findCsiEnd($input, $position + 2, $length),
             ']', 'P', '_', '^', 'X' => self::findStringEnd($input, $position + 2, $length),
             'O' => min($position + 3, $length),
@@ -95,7 +94,7 @@ final class AnsiTokenizer
             if ($byte === 0x07) {
                 return $position + 1;
             }
-            if ($byte === 0x1B && $position + 1 < $length && $input[$position + 1] === '\\') {
+            if ($byte === 0x1B && ($input[$position + 1] ?? '') === '\\') {
                 return $position + 2;
             }
             ++$position;

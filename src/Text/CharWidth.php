@@ -262,9 +262,7 @@ final class CharWidth
             return 0;
         }
 
-        $width = strlen($grapheme) === 1 && ord($grapheme) < 0x80
-            ? self::codepointWidth($grapheme)
-            : self::measureGrapheme($grapheme);
+        $width = self::measureGrapheme($grapheme);
 
         if (count(self::$graphemeWidths) >= self::GRAPHEME_BUDGET) {
             self::$graphemeWidths = [];
@@ -389,16 +387,8 @@ final class CharWidth
 
     private static function measureGrapheme(string $grapheme): int
     {
-        if (!mb_check_encoding($grapheme, 'UTF-8')) {
-            if (strlen($grapheme) === 1 && ord($grapheme) >= 0x80 && ord($grapheme) <= 0x9F) {
-                return 0;
-            }
-
-            return 1;
-        }
-
         // \X keeps CRLF together as one cluster; it is a control, so it takes no column.
-        if (mb_strlen($grapheme) === 1 || ord($grapheme[0]) < 0x20) {
+        if (!mb_check_encoding($grapheme, 'UTF-8') || mb_strlen($grapheme) === 1 || ord($grapheme[0]) < 0x20) {
             return self::codepointWidth($grapheme);
         }
 

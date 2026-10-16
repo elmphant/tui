@@ -40,7 +40,6 @@ final class TextWrap
             if ($current !== '') {
                 $lines[] = $current;
                 $current = '';
-                $currentWidth = 0;
             }
 
             if ($wordWidth > $maxWidth) {
