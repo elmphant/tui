@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Input;
+namespace Elmphant\Tui\Terminal;
 
 /**
  * Optional: a Program traces these when its terminal offers them.

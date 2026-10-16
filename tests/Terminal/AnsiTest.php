@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Rendering;
+namespace Elmphant\Tui\Tests\Terminal;
 
-use Elmphant\Tui\Rendering\Ansi;
-use Elmphant\Tui\Rendering\CursorShape;
+use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\CursorShape;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

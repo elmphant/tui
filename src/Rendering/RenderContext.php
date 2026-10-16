@@ -6,8 +6,8 @@ namespace Elmphant\Tui\Rendering;
 
 use Closure;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Terminal\ColorProfile;
 use Elmphant\Tui\Widget\Popup\Floating;
 
 /**

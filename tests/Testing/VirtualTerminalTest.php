@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Testing;
 
-use Elmphant\Tui\Rendering\Ansi;
+use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

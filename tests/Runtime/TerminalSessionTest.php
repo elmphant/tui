@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Runtime;
 
-use Elmphant\Tui\Input\Terminal;
-use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Runtime\ShutdownRestorer;
 use Elmphant\Tui\Runtime\TerminalSession;
 use Elmphant\Tui\Runtime\TerminalSessionState;
+use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\Terminal;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;

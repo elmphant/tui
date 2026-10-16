@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Input;
+namespace Elmphant\Tui\Terminal;
 
 final class TerminalWriteException extends TerminalException
 {

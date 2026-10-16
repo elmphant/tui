@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Input;
+namespace Elmphant\Tui\Tests\Terminal;
 
 /**
  * Stream wrapper that simulates partial writes for testing Terminal::write() backpressure handling.

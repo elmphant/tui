@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Input;
+namespace Elmphant\Tui\Tests\Terminal;
 
-use Elmphant\Tui\Input\ColorProfile;
+use Elmphant\Tui\Terminal\ColorProfile;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

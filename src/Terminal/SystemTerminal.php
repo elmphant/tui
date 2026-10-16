@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Input;
+namespace Elmphant\Tui\Terminal;
 
-use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Text\TerminalText;
 use Throwable;
 use ValueError;

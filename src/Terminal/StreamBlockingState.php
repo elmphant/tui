@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Input;
+namespace Elmphant\Tui\Terminal;
 
 /**
  * @internal exact inherited blocking state for a terminal input stream

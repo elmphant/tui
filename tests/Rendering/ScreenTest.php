@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
-use Elmphant\Tui\Input\ColorProfile;
-use Elmphant\Tui\Input\TerminalOutput;
-use Elmphant\Tui\Rendering\Ansi;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
-use Elmphant\Tui\Rendering\CursorShape;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\ColorProfile;
+use Elmphant\Tui\Terminal\CursorShape;
+use Elmphant\Tui\Terminal\TerminalOutput;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;

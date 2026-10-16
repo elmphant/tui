@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Testing;
 
-use Elmphant\Tui\Input\ColorProfile;
-use Elmphant\Tui\Input\ColorScheme;
-use Elmphant\Tui\Input\Terminal;
-use Elmphant\Tui\Rendering\Ansi;
+use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\ColorProfile;
+use Elmphant\Tui\Terminal\ColorScheme;
+use Elmphant\Tui\Terminal\Terminal;
 use Elmphant\Tui\Text\TerminalText;
 use RuntimeException;
 

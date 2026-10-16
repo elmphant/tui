@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
-use Elmphant\Tui\Input\ColorProfile;
-use Elmphant\Tui\Input\TerminalOutput;
+use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\ColorProfile;
+use Elmphant\Tui\Terminal\CursorShape;
+use Elmphant\Tui\Terminal\TerminalOutput;
 use LogicException;
 use Throwable;
 

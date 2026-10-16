@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
-use Elmphant\Tui\Input\ColorProfile;
+use Elmphant\Tui\Terminal\ColorProfile;
 use InvalidArgumentException;
 
 final readonly class Color

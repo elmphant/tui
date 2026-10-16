@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Input;
+namespace Elmphant\Tui\Tests\Terminal;
 
-use Elmphant\Tui\Input\ColorProfile;
-use Elmphant\Tui\Input\ColorScheme;
-use Elmphant\Tui\Input\SystemTerminal;
-use Elmphant\Tui\Input\TerminalException;
-use Elmphant\Tui\Input\TerminalWriteException;
-use Elmphant\Tui\Rendering\Ansi;
+use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\ColorProfile;
+use Elmphant\Tui\Terminal\ColorScheme;
+use Elmphant\Tui\Terminal\SystemTerminal;
+use Elmphant\Tui\Terminal\TerminalException;
+use Elmphant\Tui\Terminal\TerminalWriteException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

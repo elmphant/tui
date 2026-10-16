@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Rendering;
+namespace Elmphant\Tui\Terminal;
 
 enum CursorShape: int
 {

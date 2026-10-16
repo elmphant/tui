@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
-use Elmphant\Tui\Input\ColorProfile;
+use Elmphant\Tui\Terminal\ColorProfile;
 
 /**
  * What a root model draws a frame with. Widgets only ever see the context; the

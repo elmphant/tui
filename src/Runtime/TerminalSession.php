@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Runtime;
 
 use Closure;
-use Elmphant\Tui\Input\Terminal;
-use Elmphant\Tui\Rendering\Ansi;
+use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\Terminal;
 use LogicException;
 use Throwable;
 

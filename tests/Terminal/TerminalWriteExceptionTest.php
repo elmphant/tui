@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Elmphant\Tui\Tests\Input;
+namespace Elmphant\Tui\Tests\Terminal;
 
-use Elmphant\Tui\Input\TerminalException;
-use Elmphant\Tui\Input\TerminalWriteException;
+use Elmphant\Tui\Terminal\TerminalException;
+use Elmphant\Tui\Terminal\TerminalWriteException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -6,10 +6,10 @@ namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
-use Elmphant\Tui\Input\ColorProfile;
 use Elmphant\Tui\Rendering\RenderContext;
 use Elmphant\Tui\Rendering\RenderPass;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Terminal\ColorProfile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

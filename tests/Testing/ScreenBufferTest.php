@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Testing;
 
-use Elmphant\Tui\Rendering\CursorShape;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

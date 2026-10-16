@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
-use Elmphant\Tui\Rendering\Ansi;
-use Elmphant\Tui\Rendering\CursorShape;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Screen;
+use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
