@@ -411,9 +411,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         $attributes = $borderStyle->attributes;
         $baselineY = $area->y + 2;
 
-        $isFirstActive = $this->selectedTab === 0;
-        $baselineLeft = $isFirstActive ? $border->vertical : $border->topLeft;
-        $frame->putChar($area->x, $baselineY, $baselineLeft, $foreground, $background, $attributes);
+        $frame->putChar($area->x, $baselineY, $border->topLeft, $foreground, $background, $attributes);
         $frame->fillRect($area->x + 1, $baselineY, $area->width - 2, 1, $foreground, $background, $attributes, $border->horizontal);
         $frame->putChar($area->right() - 1, $baselineY, $border->topRight, $foreground, $background, $attributes);
 

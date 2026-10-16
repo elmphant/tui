@@ -3130,6 +3130,38 @@ final class TabBarTest extends TestCase
         self::assertSame(0, $shrunk->selectedTab(), 'Gamma is gone, so the first page shows');
     }
 
+    #[Test]
+    public function aTabBarToldWhereTheKeyboardIsBringsThatChildIntoView(): void
+    {
+        $area = Rect::fromSize(20, 6);
+        $bar = $this->tallPage();
+
+        self::assertStringNotContainsString('field', $this->screenOfTabBar($bar, $area), 'precondition: below the fold');
+        self::assertStringContainsString('field', $this->screenOfTabBar($bar->withKeyboardAt(6), $area));
+    }
+
+    #[Test]
+    public function aGlobalRebindingScrollsThePageOfTheActiveTab(): void
+    {
+        $area = Rect::fromSize(20, 6);
+        $bar = $this->tallPage()->withGlobalKeybindings(new Keybindings([Actions::SCROLL_DOWN => ['x']]));
+
+        $scrolled = $bar->update(new KeyMsg('x'), $area)->model;
+        self::assertInstanceOf(TabBar::class, $scrolled);
+
+        self::assertStringNotContainsString('row0', $this->screenOfTabBar($scrolled, $area));
+    }
+
+    private function tallPage(): TabBar
+    {
+        $bar = TabBar::new()->addTab('Page');
+        foreach (range(0, 5) as $index) {
+            $bar = $bar->add(Text::new('row' . $index));
+        }
+
+        return $bar->add(TextInput::new()->withValue('field'));
+    }
+
     private function screenWithTheme(TabBar $bar, Rect $area, Theme $theme, bool $focused = false): string
     {
         $frame = new Frame($area->width, $area->height);
