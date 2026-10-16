@@ -30,7 +30,6 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
-use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Plan\LayoutSnapshot;
@@ -71,7 +70,7 @@ abstract readonly class App implements RoutesFocus
         $pass->focus->provideStopPublishers($this->componentRegistry()->stopPublishers());
         $pass->focus->provideEnclosure($focused === null ? [] : array_map(
             static fn (Component $component): string => $component->id->value,
-            $this->enclosing($focused),
+            $this->componentRegistry()->enclosing($focused),
         ));
 
         $root = $this->viewWidget();
@@ -104,14 +103,12 @@ abstract readonly class App implements RoutesFocus
         }
 
         $registry = $this->componentRegistry();
-        $components = $registry->all();
-        $focusables = $registry->focusables();
 
-        if ($focusables === []) {
-            return $this->handleLayerOne($message, $screenRect, $components);
+        if ($registry->focusables() === []) {
+            return $this->handleLayerOne($message, $screenRect, $registry->all());
         }
 
-        return $this->handleLayerTwo($message, $screenRect, $focusables, $focus->focused());
+        return $this->handleLayerTwo($message, $screenRect, $focus->focused());
     }
 
     /**
@@ -328,24 +325,22 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * @param list<Component<Interactive>> $focusables
-     *
      * @return UpdateResult<static>
      */
-    private function handleLayerTwo(Message $message, Rect $screenRect, array $focusables, ?ComponentId $holder): UpdateResult
+    private function handleLayerTwo(Message $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
         if ($message instanceof KeyMsg) {
             $bindings = $this->focusCycleBindings();
 
             if ($bindings->matches($message, Actions::FOCUS_PREVIOUS_CYCLE)) {
-                return $this->handleTab($message, $screenRect, $focusables, $holder, true);
+                return $this->handleTab($message, $screenRect, $holder, true);
             }
 
             if ($bindings->matches($message, Actions::FOCUS_CYCLE)) {
-                return $this->handleTab($message, $screenRect, $focusables, $holder, $message->shift);
+                return $this->handleTab($message, $screenRect, $holder, $message->shift);
             }
 
-            return $this->handleLayerTwoKey($message, $screenRect, $focusables, $holder);
+            return $this->handleLayerTwoKey($message, $screenRect, $holder);
         }
 
         if ($message instanceof MouseMsg) {
@@ -353,13 +348,13 @@ abstract readonly class App implements RoutesFocus
         }
 
         if ($message instanceof FocusMsg) {
-            return $this->delegateArrival($message, $screenRect, $focusables, $holder);
+            return $this->delegateArrival($message, $screenRect, $holder);
         }
 
         // A paste is typing, so it goes where the typing goes. Handed to every
         // component it would fill every field of a form at once.
         if ($message instanceof PasteMsg) {
-            return $this->delegateToFocused($message, $screenRect, $focusables, $holder);
+            return $this->delegateToFocused($message, $screenRect, $holder);
         }
 
         return $this->handleUnrouted($message, $screenRect);
@@ -369,13 +364,11 @@ abstract readonly class App implements RoutesFocus
      * The containers above hear where below them the keyboard landed; the
      * component itself hears the message.
      *
-     * @param list<Component<Interactive>> $focusables
-     *
      * @return UpdateResult<static>
      */
-    private function delegateArrival(FocusMsg $message, Rect $screenRect, array $focusables, ?ComponentId $holder): UpdateResult
+    private function delegateArrival(FocusMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
-        $focused = $this->findFocusedComponent($focusables, $holder);
+        $focused = $this->componentRegistry()->focusable($holder);
 
         if ($focused === null) {
             return new UpdateResult($this);
@@ -383,7 +376,7 @@ abstract readonly class App implements RoutesFocus
 
         $updates = $this->keyboardAnnouncements($focused);
         $command = null;
-        $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value] ?? null;
+        $rect = $this->findComponentRects($screenRect, [$focused])[$focused->id->value] ?? null;
 
         if ($focused->writesBack() && $rect !== null) {
             /** @var Interactive $widget */
@@ -411,7 +404,7 @@ abstract readonly class App implements RoutesFocus
     {
         $updates = [];
 
-        foreach ($this->enclosing($focused->id) as $ancestor) {
+        foreach ($this->componentRegistry()->enclosing($focused->id) as $ancestor) {
             /** @var Interactive $container */
             $container = $ancestor->widget;
 
@@ -421,7 +414,7 @@ abstract readonly class App implements RoutesFocus
 
             $child = $focused->id->isUnder($ancestor->id)
                 ? $focused->id->pathBelow($ancestor->id)[0]
-                : self::childHolding($container, $focused->id);
+                : ComponentRegistry::childHolding($container, $focused->id);
 
             if ($child === null) {
                 continue;
@@ -435,21 +428,6 @@ abstract readonly class App implements RoutesFocus
         }
 
         return $updates;
-    }
-
-    private static function childHolding(WidgetContainer $container, ComponentId $id): ?int
-    {
-        $index = 0;
-
-        foreach ($container->children() as $child) {
-            if (self::holdsComponent($child, $id)) {
-                return $index;
-            }
-
-            ++$index;
-        }
-
-        return null;
     }
 
     /**
@@ -473,18 +451,16 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * @param list<Component<Interactive>> $focusables
-     *
      * @return UpdateResult<static>
      */
-    private function handleTab(KeyMsg $message, Rect $screenRect, array $focusables, ?ComponentId $holder, bool $reverse): UpdateResult
+    private function handleTab(KeyMsg $message, Rect $screenRect, ?ComponentId $holder, bool $reverse): UpdateResult
     {
-        $focused = $this->findFocusedComponent($focusables, $holder);
+        $focused = $this->componentRegistry()->focusable($holder);
 
         if ($focused !== null && $focused->writesBack()) {
             /** @var Focusable $widget */
             $widget = $focused->widget;
-            $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value] ?? null;
+            $rect = $this->findComponentRects($screenRect, [$focused])[$focused->id->value] ?? null;
 
             if ($rect === null) {
                 return new UpdateResult($this, $reverse ? Cmd::focusPrevious() : Cmd::focusNext());
@@ -508,13 +484,11 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * @param list<Component<Interactive>> $focusables
-     *
      * @return UpdateResult<static>
      */
-    private function handleLayerTwoKey(KeyMsg $message, Rect $screenRect, array $focusables, ?ComponentId $holder): UpdateResult
+    private function handleLayerTwoKey(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
-        if ($this->findFocusedComponent($focusables, $holder) === null
+        if ($this->componentRegistry()->focusable($holder) === null
             && $this->resolvedQuitBindings()->matches($message, 'quit')
         ) {
             return new UpdateResult($this, Cmd::quit());
@@ -526,27 +500,7 @@ abstract readonly class App implements RoutesFocus
             return $appResult;
         }
 
-        return $this->delegateToFocused($message, $screenRect, $focusables, $holder);
-    }
-
-    /**
-     * @param list<Component<Interactive>> $focusables
-     *
-     * @return Component<Interactive>|null
-     */
-    private function findFocusedComponent(array $focusables, ?ComponentId $holder): ?Component
-    {
-        if ($holder === null) {
-            return null;
-        }
-
-        foreach ($focusables as $component) {
-            if ($component->id->equals($holder)) {
-                return $component;
-            }
-        }
-
-        return null;
+        return $this->delegateToFocused($message, $screenRect, $holder);
     }
 
     /**
@@ -575,13 +529,11 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * @param list<Component<Interactive>> $focusables
-     *
      * @return UpdateResult<static>
      */
-    private function delegateToFocused(Message $message, Rect $screenRect, array $focusables, ?ComponentId $holder): UpdateResult
+    private function delegateToFocused(Message $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
-        $focused = $this->findFocusedComponent($focusables, $holder);
+        $focused = $this->componentRegistry()->focusable($holder);
 
         if ($focused === null || !$focused->writesBack()) {
             return new UpdateResult($this);
@@ -589,7 +541,7 @@ abstract readonly class App implements RoutesFocus
 
         /** @var Focusable $widget */
         $widget = $focused->widget;
-        $rect = $this->findComponentRects($screenRect, $focusables)[$focused->id->value] ?? null;
+        $rect = $this->findComponentRects($screenRect, [$focused])[$focused->id->value] ?? null;
 
         if ($rect === null) {
             return $this->offeredToWhatEncloses($message, $screenRect, $focused);
@@ -642,7 +594,7 @@ abstract readonly class App implements RoutesFocus
         }
 
         $enclosing = array_values(array_filter(
-            $this->enclosing($focused->id),
+            $this->componentRegistry()->enclosing($focused->id),
             static fn (Component $candidate): bool => $candidate->writesBack(),
         ));
         $rects = $this->findComponentRects($screenRect, $enclosing);
@@ -671,38 +623,6 @@ abstract readonly class App implements RoutesFocus
         }
 
         return new UpdateResult($this);
-    }
-
-    /**
-     * The components whose subtree holds $id, outermost first.
-     *
-     * @return list<Component<Interactive>>
-     */
-    private function enclosing(ComponentId $id): array
-    {
-        return array_values(array_filter(
-            $this->componentRegistry()->all(),
-            static fn (Component $candidate): bool => !$candidate->id->equals($id) && self::holdsComponent($candidate, $id),
-        ));
-    }
-
-    private static function holdsComponent(Widget $widget, ComponentId $id): bool
-    {
-        if ($widget instanceof Component && ($widget->id->equals($id) || $id->isUnder($widget->id))) {
-            return true;
-        }
-
-        if (!$widget instanceof WidgetContainer) {
-            return false;
-        }
-
-        foreach ($widget->children() as $child) {
-            if (self::holdsComponent($child, $id)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -981,7 +901,7 @@ abstract readonly class App implements RoutesFocus
      */
     private function applyComponentUpdatesAndNotify(self $app, array $updates): array
     {
-        $updates = self::withoutLetGo($updates);
+        $updates = ComponentWriteBack::withoutLetGo($updates);
         if ($updates === []) {
             return [$app, null];
         }
@@ -1006,7 +926,7 @@ abstract readonly class App implements RoutesFocus
      */
     private function applyComponentUpdates(self $app, array $updates): self
     {
-        foreach (self::foldedIntoAncestors($updates) as [$original, $widget]) {
+        foreach (ComponentWriteBack::foldedIntoAncestors($updates) as [$original, $widget]) {
             // A mounted component writes back through the sub-model the tree held
             // when it was collected, so it is looked up in the app as it stands or a
             // second write restores the sub-model the first one changed.
@@ -1020,137 +940,5 @@ abstract readonly class App implements RoutesFocus
         ComponentWriteBack::verify($app->componentRegistry(), $updates);
 
         return $app;
-    }
-
-    /**
-     * A grafted child writes back through its container as it was when the tree
-     * was collected, so beside the container's own answer one of the two is lost.
-     *
-     * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
-     *
-     * @return list<array{Component<Interactive>, Interactive}>
-     */
-    private static function foldedIntoAncestors(array $updates): array
-    {
-        $byId = [];
-
-        foreach ($updates as [$component, $widget]) {
-            $byId[$component->id->value] = [$component, $widget];
-        }
-
-        foreach ($byId as $id => [$component, $widget]) {
-            $ancestor = self::nearestAnswering($component->id, $byId);
-
-            if ($ancestor === null) {
-                continue;
-            }
-
-            [$ancestorComponent, $ancestorWidget] = $byId[$ancestor];
-            $path = $component->id->pathBelow($ancestorComponent->id);
-            $byId[$ancestor] = [$ancestorComponent, self::grafted($ancestorWidget, $path, $widget)];
-            unset($byId[$id]);
-        }
-
-        return array_values($byId);
-    }
-
-    /**
-     * @param array<string, array{Component<Interactive>, Interactive}> $byId
-     */
-    private static function nearestAnswering(ComponentId $id, array $byId): ?string
-    {
-        $nearest = null;
-
-        foreach ($byId as $candidate => [$component]) {
-            if ($id->isUnder($component->id) && ($nearest === null || strlen($candidate) > strlen($nearest))) {
-                $nearest = $candidate;
-            }
-        }
-
-        return $nearest;
-    }
-
-    /**
-     * A container's own answer may let go of a child that answered too (a tab
-     * switched pages); grafting into whatever sits there now would overwrite a
-     * stranger, so the container's answer wins.
-     *
-     * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
-     *
-     * @return array<array-key, array{Component<Interactive>, Interactive}>
-     */
-    private static function withoutLetGo(array $updates): array
-    {
-        $byId = [];
-        foreach ($updates as [$component, $widget]) {
-            $byId[$component->id->value] = [$component, $widget];
-        }
-
-        $letGo = [];
-        foreach ($byId as [$component]) {
-            $ancestor = self::nearestAnswering($component->id, $byId);
-            if ($ancestor === null) {
-                continue;
-            }
-
-            [$ancestorComponent, $ancestorWidget] = $byId[$ancestor];
-            if (self::heldAt($ancestorWidget, $component->id->pathBelow($ancestorComponent->id)) !== $component->widget) {
-                $letGo[] = $component->id;
-            }
-        }
-
-        return array_filter($updates, static function (array $update) use ($letGo): bool {
-            foreach ($letGo as $gone) {
-                if ($update[0]->id->equals($gone) || $update[0]->id->isUnder($gone)) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-    }
-
-    /**
-     * @param list<int> $path
-     */
-    private static function heldAt(Widget $container, array $path): ?Widget
-    {
-        foreach ($path as $index) {
-            if (!$container instanceof GraftsItsChildren) {
-                return null;
-            }
-
-            $container = [...$container->children()][$index] ?? null;
-            if ($container === null) {
-                return null;
-            }
-        }
-
-        return $container;
-    }
-
-    /**
-     * @param non-empty-list<int> $path
-     */
-    private static function grafted(Interactive $container, array $path, Interactive $child): Interactive
-    {
-        if (!$container instanceof GraftsItsChildren) {
-            throw new LogicException(sprintf('%s published a child but does not graft one back', $container::class));
-        }
-
-        $index = $path[0];
-        $rest = array_slice($path, 1);
-
-        if ($rest === []) {
-            return $container->withChildAt($index, $child);
-        }
-
-        $inner = [...$container->children()][$index] ?? null;
-
-        if (!$inner instanceof Interactive) {
-            throw new LogicException(sprintf('%s has no interactive child at %d to graft into', $container::class, $index));
-        }
-
-        return $container->withChildAt($index, self::grafted($inner, $rest, $child));
     }
 }

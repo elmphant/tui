@@ -150,6 +150,52 @@ final readonly class ComponentRegistry
     }
 
     /**
+     * @return Component<Interactive>|null
+     */
+    public function focusable(?ComponentId $id): ?Component
+    {
+        if ($id === null) {
+            return null;
+        }
+
+        foreach ($this->focusables as $component) {
+            if ($component->id->equals($id)) {
+                return $component;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The components whose subtree holds $id, outermost first.
+     *
+     * @return list<Component<Interactive>>
+     */
+    public function enclosing(ComponentId $id): array
+    {
+        return array_values(array_filter(
+            $this->components,
+            static fn (Component $candidate): bool => !$candidate->id->equals($id) && self::holdsComponent($candidate, $id),
+        ));
+    }
+
+    public static function childHolding(WidgetContainer $container, ComponentId $id): ?int
+    {
+        $index = 0;
+
+        foreach ($container->children() as $child) {
+            if (self::holdsComponent($child, $id)) {
+                return $index;
+            }
+
+            ++$index;
+        }
+
+        return null;
+    }
+
+    /**
      * Focus landing on one of these exactly is the reader on its own control — a
      * tab strip — rather than adrift in everything it draws.
      *
@@ -360,6 +406,25 @@ final readonly class ComponentRegistry
     private static function navigationOf(Widget $widget): Navigation
     {
         return $widget instanceof Navigates ? $widget->navigation() : Navigation::Regular;
+    }
+
+    private static function holdsComponent(Widget $widget, ComponentId $id): bool
+    {
+        if ($widget instanceof Component && ($widget->id->equals($id) || $id->isUnder($widget->id))) {
+            return true;
+        }
+
+        if (!$widget instanceof WidgetContainer) {
+            return false;
+        }
+
+        foreach ($widget->children() as $child) {
+            if (self::holdsComponent($child, $id)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
