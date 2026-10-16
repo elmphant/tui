@@ -65,6 +65,11 @@ final class RenderContext
         $this->clock->requestRepaint($delay);
     }
 
+    public function focusedComponent(): ?ComponentId
+    {
+        return $this->focus->focusedComponent();
+    }
+
     /**
      * The keyboard is on this subtree as a whole, nothing within it having a name
      * of its own. A container drawing under one shows its first focusable, or the
