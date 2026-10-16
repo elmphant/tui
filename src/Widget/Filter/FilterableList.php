@@ -61,14 +61,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     /**
      * What the query kept, worked out once. Every read of the highlighted item
      * asks for it, and matching a long list is far too costly to repeat per read.
-     *
-     * @var list<int>
      */
-    private array $matching;
+    private FilterMatches $matching;
 
     /**
      * @param list<ListItem> $items
-     * @param list<int>|null $matching
      */
     private function __construct(
         private array $items,
@@ -78,13 +75,15 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private string $noMatchText = 'No matches',
         private ?string $selectedValue = null,
         private string $emptyCaption = '',
-        ?array $matching = null,
+        ?FilterMatches $matching = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
         private ?int $selectedSourceIndex = null,
     ) {
-        $this->matching = $matching ?? self::matching($matcher, $field->value(), $items);
+        $this->matching = $matching !== null && $matching->isFor($items, $matcher, $field->value())
+            ? $matching
+            : FilterMatches::of($items, $matcher, $field->value());
     }
 
     /**
@@ -108,12 +107,12 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     {
         ListItems::assertAll($items, 'FilterableList');
 
-        return $this->cloneWith(items: $items, matching: null)->reFiltered();
+        return $this->cloneWith(items: $items)->reFiltered();
     }
 
     public function withMatcher(Matcher $matcher): self
     {
-        return $this->cloneWith(matcher: $matcher, matching: null)->reFiltered();
+        return $this->cloneWith(matcher: $matcher)->reFiltered();
     }
 
     public function withPlaceholder(string $placeholder): self
@@ -155,7 +154,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return $this;
         }
 
-        return $this->cloneWith(field: $this->field->withValue($query), matching: null)->reFiltered();
+        return $this->cloneWith(field: $this->field->withValue($query))->reFiltered();
     }
 
     /**
@@ -405,7 +404,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return new UpdateResult(
             $field->value() === $this->field->value()
                 ? $this->cloneWith(field: $field)
-                : $this->cloneWith(field: $field, matching: null)->reFiltered(),
+                : $this->cloneWith(field: $field)->reFiltered(),
             $result->command,
         );
     }
@@ -427,24 +426,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(
             selectedValue: $filterValue,
             selectedSourceIndex: $filterValue === null ? null : $index,
-        );
-    }
-
-    /**
-     * @param list<ListItem> $items
-     *
-     * @return list<int>
-     */
-    private static function matching(?Matcher $matcher, string $query, array $items): array
-    {
-        if (trim($query) === '') {
-            return array_keys($items);
-        }
-
-        return FilterBar::matching(
-            $matcher,
-            $query,
-            array_map(static fn (ListItem $item): string => $item->filterValue(), $items),
         );
     }
 
@@ -506,7 +487,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
      */
     private function matchingIndexes(): array
     {
-        return $this->matching;
+        return $this->matching->indexes;
     }
 
     private function fieldArea(Rect $area): Rect
