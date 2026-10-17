@@ -42,6 +42,7 @@ $listing = $layer('Widget\Listing', 'Widget/Listing/.*');
 $table = $layer('Widget\Table', 'Widget/Table/.*');
 $structure = $layer('Widget\Structure', 'Widget/Structure/.*');
 $filter = $layer('Widget\Filter', 'Widget/Filter/.*');
+$form = $layer('Widget\Form', 'Widget/Form/.*');
 $runtime = $layer('Runtime', 'Runtime/.*');
 $application = $layer('Application', 'Application/.*');
 $testing = $layer('Testing', 'Testing/.*');
@@ -78,6 +79,7 @@ $rules = [
     [$table, ...$contract, $bar],
     [$structure, ...$contract, $bar, $stackers],
     [$filter, ...$contract, $field, $listing, $table, $prose, $choice, $popup],
+    [$form, ...$contract, $field, $listing, $prose, $choice, $popup, $filter, $structure, $stackers, $bar],
     [$runtime, ...$drawing],
     [$application, ...$contract, $plan, $runtime],
 ];
@@ -85,7 +87,7 @@ $rules = [
 $layers = [
     $support, $text, $search, $geometry, $core, $message, $terminal, $input, $rendering, $drawingContext,
     $widget, $focus, $plan, $dispatch, $stackers, $prose, $feedback, $bar, $field, $popup, $tree, $choice,
-    $listing, $table, $structure, $filter, $runtime, $application, $testing, $stan,
+    $listing, $table, $structure, $filter, $form, $runtime, $application, $testing, $stan,
 ];
 $rules[] = [$testing, ...array_filter($layers, static fn (Layer $candidate): bool => $candidate !== $testing)];
 $rules[] = [$stan, ...array_filter($layers, static fn (Layer $candidate): bool => $candidate !== $stan)];

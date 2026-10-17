@@ -36,6 +36,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
 use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Form\ChoiceField;
 use Elmphant\Tui\Widget\Layout\Breakpoint;
 use Elmphant\Tui\Widget\Layout\Flex;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -294,6 +295,7 @@ final class IntrinsicWidthTest extends TestCase
         yield 'CheckboxGroup' => [CheckboxGroup::new(['short', 'a much longer option'])];
         yield 'CheckboxRow' => [CheckboxRow::new(['yes', 'no'])];
         yield 'RadioRow' => [RadioRow::new(['yes', 'no'])];
+        yield 'ChoiceField' => [ChoiceField::new(['a' => 'Alpha', 'b' => 'Beta'])];
         yield 'Dropdown' => [Dropdown::new(Select::new(['short', 'a much longer option']))];
         yield 'Dropdown showing a selection' => [Dropdown::new(Select::new(['short', 'a much longer option'])->withSelected(1))];
         yield 'Container' => [Container::around(Text::new('a label'))];
