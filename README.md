@@ -1004,6 +1004,21 @@ Not deciding is a different state from deciding nobody holds it: `FocusState::no
 is an answer the runtime never fills in, which is what lets an app keep the keyboard
 for itself with `Cmd::focusNothing()`.
 
+A widget is tested without an app around it: `WidgetHarness` hosts it, gives it the
+keyboard, and offers the same input, screen and effect methods as `ModelHarness`.
+The fields of a `Panel` are stops `tab` walks, popups open, and the result of an
+effect the widget started comes back to it:
+
+```php
+use Elmphant\Tui\Testing\WidgetHarness;
+use Elmphant\Tui\Widget\Field\TextInput;
+
+$field = WidgetHarness::for(TextInput::new('name'), width: 20, height: 1)->type('Ada');
+
+$field->widget()->value();       // 'Ada', the widget as the last update left it
+$field->screen()->rowOf('Ada');  // 0
+```
+
 A `ScreenBuffer` answers where text is and how a cell looks, so a test never
 counts columns or indexes `Frame` arrays by hand:
 
