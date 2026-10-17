@@ -20,6 +20,8 @@ final readonly class Field
 {
     use Cloneable;
 
+    public const TEXT_WIDTH = 48;
+
     private function __construct(
         public string $name,
         public string $label,
@@ -32,7 +34,7 @@ final readonly class Field
 
     public static function text(string $name, string $label, string $description = ''): self
     {
-        return new self($name, $label, $description, TextInput::new()->withDecoration(InputDecoration::Underline));
+        return new self($name, $label, $description, TextInput::new()->withDecoration(InputDecoration::Underline)->withWidth(self::TEXT_WIDTH));
     }
 
     /**

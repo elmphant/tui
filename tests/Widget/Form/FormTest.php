@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget\Form;
 
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Form\Field;
@@ -46,6 +47,17 @@ final class FormTest extends TestCase
             ['username' => 'ada', 'password' => '', 'site' => 'intranet', 'admin' => true],
             $form->widget()->values(),
         );
+    }
+
+    #[Test]
+    public function aTextFieldIsAsWideAsALineOneTypesNotAsWideAsThePane(): void
+    {
+        $screen = WidgetHarness::for(self::userForm(), 120, 24)->screen();
+
+        $field = $screen->locate('Username')['row'] + 1;
+        $column = $screen->locate('Username')['column'];
+        self::assertSame(Attr::UNDERLINE, $screen->styleAt($field, $column + Field::TEXT_WIDTH - 1)->attributes & Attr::UNDERLINE);
+        self::assertSame(0, $screen->styleAt($field, $column + Field::TEXT_WIDTH)->attributes & Attr::UNDERLINE);
     }
 
     #[Test]

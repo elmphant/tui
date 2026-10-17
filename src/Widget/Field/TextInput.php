@@ -46,6 +46,7 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
         private CursorShape $cursorShape = CursorShape::BlinkingBlock,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private ?int $width = null,
     ) {
     }
 
@@ -142,13 +143,23 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
         return $this->cloneWith(decoration: $styled ? InputDecoration::Filled : InputDecoration::None);
     }
 
+    /**
+     * At most this many columns wide, however much room it is given.
+     */
+    public function withWidth(?int $columns): self
+    {
+        return $this->cloneWith(width: $columns);
+    }
+
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+        return Sizing::of($this->width === null ? Constraint::flex() : Constraint::max($this->width), Constraint::exact(1));
     }
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        $area = $this->narrowed($area);
+
         return match (true) {
             $message instanceof KeyMsg => $this->handleKey($message, $area),
             $message instanceof PasteMsg => new UpdateResult($this->pasted($message->content) ?? $this),
@@ -159,6 +170,7 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
+        $area = $this->narrowed($area);
         if ($area->width <= 0 || $area->height < 1) {
             return;
         }
@@ -189,6 +201,13 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
                 $frame->setCursorPosition($cursorScreenX, $area->y, $this->cursorShape);
             }
         }
+    }
+
+    private function narrowed(Rect $area): Rect
+    {
+        return $this->width === null || $area->width <= $this->width
+            ? $area
+            : new Rect($area->x, $area->y, $this->width, $area->height);
     }
 
     /**

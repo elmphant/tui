@@ -682,6 +682,27 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function aFieldGivenAWidthStopsThereHoweverWideItsArea(): void
+    {
+        $frame = new Frame(30, 1);
+
+        TextInput::new()->withWidth(10)->render($frame, new Rect(0, 0, 30, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame(Attr::UNDERLINE, $frame->attributes[9] & Attr::UNDERLINE);
+        self::assertSame(0, $frame->attributes[10] & Attr::UNDERLINE);
+    }
+
+    #[Test]
+    public function aFieldGivenAWidthIgnoresAClickBesideIt(): void
+    {
+        $input = TextInput::new()->withValue('hello')->withCursor(0)->withWidth(10);
+
+        $clicked = $input->update(new MouseMsg(20, 0, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 30, 1))->model;
+
+        self::assertSame(0, $clicked->cursor());
+    }
+
+    #[Test]
     public function theUnderlineIsOneColourAcrossTheWholeField(): void
     {
         // Terminals draw the underline in the text colour, so the placeholder
