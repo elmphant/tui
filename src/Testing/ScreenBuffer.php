@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Testing;
 
+use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\CursorPosition;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\SgrParser;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
@@ -17,13 +20,20 @@ final class ScreenBuffer
      */
     private array $cells = [];
 
+    /**
+     * @var array<int, array<int, array{int, int, int}>> foreground, background, attributes
+     */
+    private array $styles = [];
+
     private int $cursorRow = 0;
     private int $cursorCol = 0;
     private CursorShape $cursorShape = CursorShape::BlinkingBlock;
     private bool $cursorVisible = true;
+    private readonly SgrParser $sgr;
 
     public function __construct(string $ansiOutput, private readonly int $width, private readonly int $height)
     {
+        $this->sgr = new SgrParser();
         // The grid is sparse: readers fall back to ' ' for unwritten cells.
         $this->processAnsi($ansiOutput);
     }
@@ -36,6 +46,11 @@ final class ScreenBuffer
             $offset = $row * $frame->width;
             for ($col = 0; $col < $frame->width; ++$col) {
                 $screen->cells[$row][$col] = $frame->characters[$offset + $col];
+                $screen->styles[$row][$col] = [
+                    $frame->foregrounds[$offset + $col],
+                    $frame->backgrounds[$offset + $col],
+                    $frame->attributes[$offset + $col],
+                ];
             }
         }
 
@@ -99,6 +114,55 @@ final class ScreenBuffer
         return $text;
     }
 
+    /**
+     * Where the text starts on screen, counted in display columns; $nth = 1 is
+     * the second match, reading row by row.
+     *
+     * @return array{row: int, column: int}|null
+     */
+    public function find(string $text, int $nth = 0): ?array
+    {
+        for ($row = 0; $row < $this->height; ++$row) {
+            for ($column = 0; $column < $this->width; ++$column) {
+                if ($this->startsAt($row, $column, $text) && $nth-- === 0) {
+                    return ['row' => $row, 'column' => $column];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public function rowOf(string $text): ?int
+    {
+        return $this->find($text)['row'] ?? null;
+    }
+
+    public function styleAt(int $row, int $col): Style
+    {
+        [$foreground, $background, $attributes] = $this->styles[$row][$col] ?? [0, 0, 0];
+
+        return new Style(
+            $foreground === 0 ? null : Color::fromValue($foreground),
+            $background === 0 ? null : Color::fromValue($background),
+            $attributes,
+        );
+    }
+
+    private function startsAt(int $row, int $column, string $text): bool
+    {
+        if ($text === '' || ($this->cells[$row][$column] ?? ' ') === '') {
+            return false;
+        }
+
+        $read = '';
+        for ($c = $column; $c < $this->width && \strlen($read) < \strlen($text); ++$c) {
+            $read .= $this->cells[$row][$c] ?? ' ';
+        }
+
+        return $read === $text;
+    }
+
     private function processAnsi(string $data): void
     {
         $length = strlen($data);
@@ -136,9 +200,12 @@ final class ScreenBuffer
                 continue;
             }
 
+            $style = [$this->sgr->foreground, $this->sgr->background, $this->sgr->attributes];
             $this->cells[$this->cursorRow][$this->cursorCol] = $grapheme;
+            $this->styles[$this->cursorRow][$this->cursorCol] = $style;
             for ($continuation = 1; $continuation < $cellWidth; ++$continuation) {
                 $this->cells[$this->cursorRow][$this->cursorCol + $continuation] = '';
+                $this->styles[$this->cursorRow][$this->cursorCol + $continuation] = $style;
             }
             $this->cursorCol += $cellWidth;
         }
@@ -166,7 +233,9 @@ final class ScreenBuffer
         ++$position;
         $parts = $params !== '' ? array_map(intval(...), explode(';', $params)) : [];
 
-        if ($final === 'H' || $final === 'f') {
+        if ($final === 'm') {
+            $this->sgr->parse($params);
+        } elseif ($final === 'H' || $final === 'f') {
             $this->cursorRow = isset($parts[0])
                 ? max(0, min($this->height - 1, $parts[0] - 1))
                 : 0;

@@ -982,6 +982,23 @@ Not deciding is a different state from deciding nobody holds it: `FocusState::no
 is an answer the runtime never fills in, which is what lets an app keep the keyboard
 for itself with `Cmd::focusNothing()`.
 
+A `ScreenBuffer` answers where text is and how a cell looks, so a test never
+counts columns or indexes `Frame` arrays by hand:
+
+```php
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Testing\ScreenBuffer;
+
+$frame = new Frame(20, 2);
+$frame->putString(4, 1, 'Run');
+$screen = ScreenBuffer::fromFrame($frame);
+
+$screen->find('Run');     // ['row' => 1, 'column' => 4], in display columns
+$screen->find('Run', 1);  // the second match, or null
+$screen->rowOf('Run');    // 1
+$screen->styleAt(1, 4);   // a Style: foreground, background, attributes
+```
+
 Use `VirtualTerminal` only for runtime integration tests that need ANSI output,
 input bytes, resizing, or terminal capabilities. `ScreenBuffer::fromFrame()`
 provides Unicode-safe screen assertions without parsing an ANSI stream, while
