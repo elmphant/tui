@@ -793,7 +793,9 @@ $form->withErrorsShown(ShowErrors::AfterLeaving);     // or tell a field's probl
 ```
 
 Bind it like any pane (`Component::bind('form', $this->form, …)`) and answer the
-submit message in `onMessage()`. `Field::choice()` shows a row of marks where they
+submit message in `onMessage()`. `withIntro()` puts what the form is about above the
+fields, `withFoot()` and `withSubmitDisabled()` say what the button will do or why it
+cannot, and `withCancel()` names the message an escape sends. `Field::choice()` shows a row of marks where they
 fit and collapses into a filterable list where they would wrap; `Field::of()`
 takes any widget that implements `HoldsAValue`.
 
