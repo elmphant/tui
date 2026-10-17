@@ -110,6 +110,11 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $this->selected === null ? null : $this->options[$this->selected] ?? null;
     }
 
+    public function value(): ?string
+    {
+        return $this->selectedValue();
+    }
+
     public function caption(): string
     {
         return $this->selectedValue() ?? $this->emptyCaption;

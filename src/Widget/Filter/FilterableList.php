@@ -200,6 +200,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(selectedValue: $filterValue, selectedSourceIndex: null);
     }
 
+    public function value(): ?string
+    {
+        return $this->selectedItem()?->filterValue();
+    }
+
     public function selectedItem(): ?ListItem
     {
         if ($this->selectedValue === null) {

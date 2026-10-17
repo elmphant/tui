@@ -20,10 +20,11 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 use LogicException;
 
-final readonly class CheckboxRow implements OptionRow, PublishesHints
+final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -162,6 +163,14 @@ final readonly class CheckboxRow implements OptionRow, PublishesHints
     public function checkedIndices(): array
     {
         return array_keys(array_filter($this->checked));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function value(): array
+    {
+        return array_map(fn (int $index): string => $this->options[$index], $this->checkedIndices());
     }
 
     public function sizing(): Sizing

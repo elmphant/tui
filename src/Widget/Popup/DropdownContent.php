@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget\Popup;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\HoldsAValue;
 
 /**
  * What a Dropdown can hold: focus to receive keys, a caption for the closed row,
@@ -15,7 +16,7 @@ use Elmphant\Tui\Widget\Focusable;
  *
  * Committing is not part of this: content without it is multiple choice.
  */
-interface DropdownContent extends Focusable
+interface DropdownContent extends Focusable, HoldsAValue
 {
     /**
      * What the widget reads as when it is collapsed behind the trigger row.

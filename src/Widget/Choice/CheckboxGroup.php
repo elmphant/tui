@@ -159,6 +159,14 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     /**
      * @return list<string>
      */
+    public function value(): array
+    {
+        return $this->checkedValues();
+    }
+
+    /**
+     * @return list<string>
+     */
     public function checkedValues(): array
     {
         $values = [];

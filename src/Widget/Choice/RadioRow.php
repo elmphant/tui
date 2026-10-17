@@ -18,13 +18,14 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
+use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 
 /**
  * One choice out of several, side by side on a row: the horizontal Radio, as
  * CheckboxRow is the horizontal CheckboxGroup.
  */
-final readonly class RadioRow implements OptionRow, PublishesHints
+final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -171,6 +172,11 @@ final readonly class RadioRow implements OptionRow, PublishesHints
     public function selectedValue(): ?string
     {
         return $this->selected === null ? null : $this->options[$this->selected] ?? null;
+    }
+
+    public function value(): ?string
+    {
+        return $this->selectedValue();
     }
 
     public function update(Message $message, Rect $area): UpdateResult

@@ -28,6 +28,7 @@ use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 
 /**
@@ -38,7 +39,7 @@ use Elmphant\Tui\Widget\PublishesHints;
  *
  * @template-covariant TContent of DropdownContent
  */
-final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesHints, CapturesKeys
+final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, CapturesKeys
 {
     use Cloneable;
     use DrawsFocus;
@@ -90,6 +91,14 @@ final readonly class Dropdown implements Focusable, KeybindingsAware, PublishesH
     public function content(): DropdownContent
     {
         return $this->content;
+    }
+
+    /**
+     * @return string|bool|list<string>|null
+     */
+    public function value(): string|bool|array|null
+    {
+        return $this->content->value();
     }
 
     /**

@@ -21,9 +21,10 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 
-final readonly class Checkbox implements Focusable, KeybindingsAware, PublishesHints
+final readonly class Checkbox implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -68,6 +69,11 @@ final readonly class Checkbox implements Focusable, KeybindingsAware, PublishesH
     }
 
     public function isChecked(): bool
+    {
+        return $this->checked;
+    }
+
+    public function value(): bool
     {
         return $this->checked;
     }

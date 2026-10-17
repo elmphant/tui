@@ -121,6 +121,11 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         return $this->selected === null ? null : $this->options[$this->selected] ?? null;
     }
 
+    public function value(): ?string
+    {
+        return $this->selectedValue();
+    }
+
     /**
      * A radio rests on its first option from the start, so the empty caption
      * only ever shows for a radio with nothing to offer.

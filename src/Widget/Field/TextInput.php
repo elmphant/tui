@@ -26,9 +26,10 @@ use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 
-final readonly class TextInput implements Focusable, KeybindingsAware, PublishesHints
+final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;

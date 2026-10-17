@@ -94,6 +94,14 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     /**
      * @return list<string>
      */
+    public function value(): array
+    {
+        return $this->checkedValues();
+    }
+
+    /**
+     * @return list<string>
+     */
     public function checkedValues(): array
     {
         return array_values(array_filter(
