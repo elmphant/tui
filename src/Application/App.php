@@ -245,7 +245,7 @@ abstract readonly class App implements RoutesFocus
      * An App that shows only some of them at a time (tabs) should list them all,
      * so answers still reach the hidden ones.
      *
-     * @return list<Mount<App, Reducer>>
+     * @return list<Mount<*>>
      */
     protected function mounts(): array
     {
@@ -474,7 +474,7 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * @return Mount<App, Reducer>|null
+     * @return Mount<*>|null
      */
     private function mountNamed(ComponentId $id): ?Mount
     {
@@ -491,7 +491,7 @@ abstract readonly class App implements RoutesFocus
      * Updates the mounted model and writes it back into the App. What the model
      * asks for is marked so the answer comes back to it.
      *
-     * @param Mount<App, Reducer> $mount
+     * @param Mount<*> $mount
      *
      * @return UpdateResult<static>
      */
@@ -515,7 +515,7 @@ abstract readonly class App implements RoutesFocus
     /**
      * The area the mount is drawn in, or the whole screen if it is not drawn.
      *
-     * @param Mount<App, Reducer> $mount
+     * @param Mount<*> $mount
      */
     private function areaOf(Mount $mount, Rect $screenRect): Rect
     {

@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Application;
 
 use Closure;
 use Elmphant\Tui\Core\ComponentId;
-use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Widget\Focus\FocusScope;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focus\InputLayer;
@@ -29,8 +28,8 @@ final readonly class ComponentRegistry
      * @param array<string, Component<Interactive>> $byId
      * @param list<Component<Interactive>>          $focusables
      * @param list<list<string>>                    $scopes
-     * @param list<Mount<App, Reducer>>             $mounts
-     * @param list<Mount<App, Reducer>>             $listening  the mounts input can reach: none behind an open modal
+     * @param list<Mount<*>>             $mounts
+     * @param list<Mount<*>>             $listening  the mounts input can reach: none behind an open modal
      */
     private function __construct(
         private array $components,
@@ -108,7 +107,7 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * @return list<Mount<App, Reducer>>
+     * @return list<Mount<*>>
      */
     public function mounts(): array
     {
@@ -119,7 +118,7 @@ final readonly class ComponentRegistry
      * The mounts that keys and the pointer can reach. A mount behind an open modal
      * is not one of them.
      *
-     * @return list<Mount<App, Reducer>>
+     * @return list<Mount<*>>
      */
     public function listeningMounts(): array
     {
@@ -330,7 +329,7 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * @return list<Mount<App, Reducer>>
+     * @return list<Mount<*>>
      */
     private static function mountsIn(Widget $widget): array
     {
@@ -349,7 +348,7 @@ final readonly class ComponentRegistry
      * Mounts the same way collectLayer() finds components: once an input layer is
      * found, the mounts behind it are dropped.
      *
-     * @return array{list<Mount<App, Reducer>>, bool}
+     * @return array{list<Mount<*>>, bool}
      */
     private static function listeningMountsIn(Widget $widget): array
     {
