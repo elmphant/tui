@@ -414,6 +414,63 @@ return $childResult
     );
 ```
 
+### Mounting a sub-model
+
+For a whole part of an app with its own state, components and effects (a tab, a
+module), mount it under a name. The framework then does the plumbing:
+
+- Its components are known as `name/component`. Inside the sub-model you use the
+  local names, also in `Cmd::focus()`.
+- It hears a key before its components, as an App does. The key goes to the mount
+  that holds the keyboard, or to every mount on screen if none does.
+- Answers to what it asks for (processes, timers, `Cmd::message()`) come back to
+  it, and it is updated with the area it is drawn in.
+- A model that implements `Initializes` starts with the App.
+
+```php
+use Elmphant\Tui\Application\{App, Initializes, Mount};
+use Elmphant\Tui\Core\{Cmd, EffectId, Message, Reducer, UpdateResult};
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\ProcessResultMsg;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Uptime implements Reducer, Initializes
+{
+    public function __construct(public string $shown = 'asking…') {}
+
+    public function init(): ?Cmd
+    {
+        return Cmd::exec(['uptime'])->withId(EffectId::named('uptime'));
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return $message instanceof ProcessResultMsg && $message->isFrom('uptime')
+            ? new UpdateResult(new self(trim($message->stdout)))
+            : UpdateResult::ignored($this);
+    }
+
+    public function view(): Widget
+    {
+        return Text::new($this->shown);
+    }
+}
+
+final readonly class Machine extends App
+{
+    public function __construct(public Uptime $uptime = new Uptime()) {}
+
+    public function view(): Widget
+    {
+        return Mount::named('uptime', $this->uptime, $this->uptime->view(), static fn (self $app, Uptime $uptime): self => new self($uptime));
+    }
+}
+```
+
+An App that shows only some of its mounts at a time, such as tabs, overrides
+`mounts()` to list them all, so the hidden ones still get their answers.
+
 ## Running Processes
 
 Two modes for executing OS commands, both non-blocking:
