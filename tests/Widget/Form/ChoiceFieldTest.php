@@ -36,6 +36,12 @@ final class ChoiceFieldTest extends TestCase
     }
 
     #[Test]
+    public function aCollapsedFieldWithNothingChosenAsksForAChoice(): void
+    {
+        self::assertStringContainsString('▾ choose…', WidgetHarness::for(ChoiceField::new(self::SITES), 30, 3)->screen()->lineAt(0));
+    }
+
+    #[Test]
     public function whatIsChosenIsTheValueNotTheLabel(): void
     {
         $field = WidgetHarness::for(ChoiceField::new(self::SITES), 80, 3)->press('right', 'enter');

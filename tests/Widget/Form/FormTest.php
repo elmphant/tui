@@ -66,6 +66,15 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aProblemKeepsABlankLineBeforeTheNextField(): void
+    {
+        $screen = WidgetHarness::for(self::userForm()->submitted(), 70, 24)->screen();
+
+        $problem = $screen->locate('Username is required')['row'];
+        self::assertSame($problem + 2, $screen->locate('Password')['row']);
+    }
+
+    #[Test]
     public function aMissingFieldStopsSayingSoOnceItIsFilledIn(): void
     {
         $form = WidgetHarness::for(self::userForm()->submitted(), 70, 24)->type('ada');

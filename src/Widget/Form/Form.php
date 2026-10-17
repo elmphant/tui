@@ -310,7 +310,9 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     {
         $problem = $this->shows($field) ? $field->problem() : null;
 
-        return $problem === null ? Text::new('') : Text::line(Span::token($problem, StyleToken::Error));
+        return $problem === null
+            ? Text::new('')
+            : Paragraph::fromLines([new Line([Span::token($problem, StyleToken::Error)]), new Line([])]);
     }
 
     private function shows(Field $field): bool

@@ -34,6 +34,8 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
 {
     use Cloneable;
 
+    public const NOTHING_CHOSEN = 'choose…';
+
     /**
      * @param array<array-key, string> $options value => label
      * @param Dropdown<FilterableList> $list
@@ -170,7 +172,7 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
         return Dropdown::new(FilterableList::new(array_map(
             static fn (string $label): SimpleListItem => new SimpleListItem($label),
             $labels,
-        ))->withSelectedValue($label));
+        ))->withSelectedValue($label)->withEmptyCaption(self::NOTHING_CHOSEN));
     }
 
     private function fitsOnOneRow(int $width): bool
