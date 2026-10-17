@@ -185,6 +185,24 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function escapeTheFieldsLeaveAloneSendsTheCancelMessage(): void
+    {
+        $form = WidgetHarness::for(self::userForm()->withCancel(new TestMessage('cancel')), 70, 24)->press('esc');
+
+        self::assertEquals([new MessageCmd(new TestMessage('cancel'))], $form->issued(MessageCmd::class));
+    }
+
+    #[Test]
+    public function escapeThatClosesAnOpenListIsNotACancel(): void
+    {
+        $form = WidgetHarness::for(self::userForm()->withCancel(new TestMessage('cancel')), 30, 24)
+            ->press('tab', 'tab', 'enter');
+        self::assertStringContainsString('Intranet', $form->screen()->plainText(), 'the list is open');
+
+        self::assertSame([], $form->press('esc')->issued(MessageCmd::class));
+    }
+
+    #[Test]
     public function aBarMarksTheFieldThatHoldsTheKeyboard(): void
     {
         $screen = WidgetHarness::for(self::userForm(), 70, 24)->press('tab')->screen();

@@ -113,6 +113,16 @@ final class FocusStateTest extends TestCase
     }
 
     #[Test]
+    public function focusOnAContainerThatIsNoStopLandsOnTheFirstStopUnderIt(): void
+    {
+        $container = new FocusState(ComponentId::named('form'));
+
+        $resolved = $container->resolvedAgainst(self::order('side/0', 'form/1', 'form/4'));
+
+        self::assertEquals(ComponentId::named('form/1'), $resolved->focused());
+    }
+
+    #[Test]
     public function aTreeWithNothingFocusableKeepsTheKeyboardOnNothing(): void
     {
         self::assertNull((new FocusState(ComponentId::named('search')))->resolvedAgainst([])->focused());

@@ -101,7 +101,7 @@ final readonly class FocusState
      */
     private function landingIn(array $order): ComponentId
     {
-        for ($ancestor = $this->focused?->parent(); $ancestor !== null; $ancestor = $ancestor->parent()) {
+        for ($ancestor = $this->focused; $ancestor !== null; $ancestor = $ancestor->parent()) {
             foreach ($order as $stop) {
                 if ($stop->equals($ancestor)) {
                     return $stop;

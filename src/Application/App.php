@@ -677,6 +677,10 @@ abstract readonly class App implements RoutesFocus
             }
         }
 
+        if ($landedOn === null && $message->isClick()) {
+            $landedOn = $current->containerEnteredBy($message, $visible, $holder);
+        }
+
         [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates);
         $answered = self::combineCommands($appResult->command, $childCommand, $hookCommand);
 
@@ -687,6 +691,32 @@ abstract readonly class App implements RoutesFocus
                 PointerFocus::alreadyMoved($answered) ? null : PointerFocus::after($landedOn),
             ),
         );
+    }
+
+    /**
+     * A press on a plain row of a container whose children are the stops brings
+     * the keyboard in from outside, to the stop focus lands on for the container.
+     * Inside it, the keyboard stays on the field it was in.
+     *
+     * @param array<string, Rect> $visible
+     */
+    private function containerEnteredBy(MouseMsg $message, array $visible, ?ComponentId $holder): ?ComponentId
+    {
+        $stops = $this->componentRegistry()->focusables();
+        $entered = null;
+
+        foreach ($this->componentRegistry()->all() as $component) {
+            $rect = $visible[$component->id->value] ?? null;
+            $holdsStops = array_filter($stops, static fn (Component $stop): bool => $stop->id->isUnder($component->id)) !== [];
+
+            if ($rect !== null && $message->inRect($rect) && $holdsStops && ($entered === null || $component->id->isUnder($entered))) {
+                $entered = $component->id;
+            }
+        }
+
+        return $entered === null || ($holder !== null && ($holder->equals($entered) || $holder->isUnder($entered)))
+            ? null
+            : $entered;
     }
 
     /**

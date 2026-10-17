@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Form;
 
+use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
@@ -11,6 +12,8 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Line;
@@ -71,6 +74,7 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         private ?string $keyboardIn = null,
         private ?Widget $intro = null,
         private ?string $disabledBecause = null,
+        private ?Message $cancel = null,
     ) {
     }
 
@@ -119,6 +123,14 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     public function withSubmitDisabled(?string $because): self
     {
         return $this->cloneWith(submit: $this->submit?->withDisabled($because !== null), disabledBecause: $because);
+    }
+
+    /**
+     * Sent for an escape the fields leave alone: a list open in one closes first.
+     */
+    public function withCancel(?Message $message): self
+    {
+        return $this->cloneWith(cancel: $message);
     }
 
     public function withErrorsShown(ShowErrors $shown): self
@@ -220,6 +232,10 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        if ($this->cancel !== null && $message instanceof KeyMsg && $message->key === Key::Escape) {
+            return new UpdateResult($this, Cmd::message($this->cancel));
+        }
+
         $drawn = $this->drawn();
 
         return $drawn->update($message, $area)
