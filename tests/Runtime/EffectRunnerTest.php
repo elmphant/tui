@@ -11,6 +11,7 @@ use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
+use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\TickMsg;
@@ -488,6 +489,22 @@ final class EffectRunnerTest extends TestCase
         self::assertInstanceOf(ErrorMsg::class, $message);
         self::assertInstanceOf(ProcessTimedOutException::class, $message->error);
         self::assertEquals(EffectId::named('slow'), $message->effectId);
+    }
+
+    #[Test]
+    public function aFinishedProcessIsTimedOnTheRunnersClock(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::process(['true']), null);
+
+        $this->pumpUntilQuiet($runner);
+
+        $finished = null;
+        foreach ($this->results as $message) {
+            $finished = $message instanceof ProcessFinishedMsg ? $message : $finished;
+        }
+        self::assertNotNull($finished);
+        self::assertSame(100.0, $finished->startedAt);
     }
 
     #[Test]

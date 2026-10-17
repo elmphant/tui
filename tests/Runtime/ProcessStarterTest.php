@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Runtime\ProcessStarter;
+use Elmphant\Tui\Testing\TestClock;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -62,5 +64,26 @@ final class ProcessStarterTest extends TestCase
         }
 
         self::assertSame(["one\n"], $outputs);
+    }
+
+    #[Test]
+    public function aFinishedProcessSaysWhenItStartedAndWhenItEnded(): void
+    {
+        $clock = new TestClock(100.0);
+        $running = (new ProcessStarter($clock))->streaming(Cmd::process(['true']), null);
+        $clock->advance(2.5);
+
+        $finished = null;
+        $deadline = microtime(true) + 5.0;
+        while ($finished === null && microtime(true) < $deadline) {
+            foreach ($running->pump() as $message) {
+                $finished = $message instanceof ProcessFinishedMsg ? $message : $finished;
+            }
+            usleep(10_000);
+        }
+
+        self::assertNotNull($finished);
+        self::assertSame(100.0, $finished->startedAt);
+        self::assertSame(102.5, $finished->finishedAt);
     }
 }

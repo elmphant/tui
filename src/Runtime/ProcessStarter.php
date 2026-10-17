@@ -18,6 +18,10 @@ use Symfony\Component\Process\Process;
  */
 final class ProcessStarter
 {
+    public function __construct(private readonly ?Clock $clock = null)
+    {
+    }
+
     /**
      * @param Closure(Message):Message|null $wrap
      */
@@ -42,6 +46,7 @@ final class ProcessStarter
             $command->outputChunkBytes,
             $wrap,
             $command->framesLines,
+            $this->clock,
         );
     }
 

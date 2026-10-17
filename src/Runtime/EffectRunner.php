@@ -74,6 +74,8 @@ final class EffectRunner
      */
     private WeakMap $producers;
 
+    private readonly ProcessStarter $processStarter;
+
     /**
      * @param SplQueue<Message>                      $results  where an effect reports what it produced
      * @param Closure(?Cmd, ?Closure, ?string): void $dispatch a timer's callback may answer with a command,
@@ -86,10 +88,11 @@ final class EffectRunner
         private readonly Clock $clock,
         private readonly Closure $dispatch,
         private readonly Closure $wake,
-        private readonly ProcessStarter $processStarter = new ProcessStarter(),
+        ?ProcessStarter $processStarter = null,
         private readonly HttpRequestStarter $requestStarter = new HttpRequestStarter(),
         private readonly array $handlers = [],
     ) {
+        $this->processStarter = $processStarter ?? new ProcessStarter($clock);
         $this->producers = new WeakMap();
     }
 

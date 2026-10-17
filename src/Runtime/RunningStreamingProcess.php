@@ -31,6 +31,7 @@ final class RunningStreamingProcess implements RunningProcess
     private array $heldBack = [];
     private string $pendingStdout = '';
     private string $pendingStderr = '';
+    private readonly ?float $startedAt;
 
     public function __construct(
         private readonly Process $process,
@@ -41,7 +42,9 @@ final class RunningStreamingProcess implements RunningProcess
          */
         private readonly ?Closure $wrap = null,
         private readonly bool $framesLines = false,
+        private readonly ?Clock $clock = null,
     ) {
+        $this->startedAt = $clock?->now();
     }
 
     public function pump(): array
@@ -70,6 +73,8 @@ final class RunningStreamingProcess implements RunningProcess
             $this->process->getExitCode() ?? -1,
             $this->process->isSuccessful(),
             $this->effectId,
+            $this->startedAt,
+            $this->clock?->now(),
         ));
 
         return $messages;
