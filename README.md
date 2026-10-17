@@ -957,7 +957,22 @@ $app->press('tab', 'shift+tab', 'ctrl+r', 'enter');
 $app->type('cache:flush');
 $app->click('Run');          // where "Run" is drawn now: press and release
 $app->wheel('Output', 3);    // three notches down; -3 is up
+
+// Effects are described, never run: the test sees what was asked for and answers it.
+$app->issued(ExecCmd::class);                     // batches, maps and scopes taken apart
+$app->answer('load', stdout: '{"items": []}');    // ProcessResultMsg for Cmd::exec()
+$app->stream('tail', "a line\n");                 // ProcessOutputMsg for Cmd::process()
+$app->finish('tail', exitCode: 0);                // ProcessFinishedMsg
+$app->respond('page', 200, '<html>');             // HttpResultMsg for Cmd::http()
+$app->fail('load', 'timed out');                  // ErrorMsg from that effect
 ```
+
+An answer arrives the way `Program` delivers it: with the `EffectId` the effect ran
+under, scope included, and through every `Cmd::map()` it was handed through, so a
+parent that addresses its children's results gets them addressed. Answering an
+effect the model never started, or one that has already ended, throws: the test
+learns the model did not ask for what the test assumed. When the same name runs
+in two scopes, name the one meant: `EffectId::named('load')->within('dashboard')`.
 
 A test that calls `update()` itself builds the same messages with `UserInput`:
 `UserInput::key('shift+tab')`, `UserInput::typed('ok')`, `UserInput::click($column, $row)`.
