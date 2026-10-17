@@ -956,6 +956,7 @@ self::assertNotNull($app->lastCommand()); // described, not executed
 $app->press('tab', 'shift+tab', 'ctrl+r', 'enter');
 $app->type('cache:flush');
 $app->click('Run');          // where "Run" is drawn now: press and release
+$app->click('search', offset: 7);   // seven columns to the right of it
 $app->wheel('Output', 3);    // three notches down; -3 is up
 
 // Effects are described, never run: the test sees what was asked for and answers it.
@@ -964,6 +965,7 @@ $app->answer('load', stdout: '{"items": []}');    // ProcessResultMsg for Cmd::e
 $app->stream('tail', "a line\n");                 // ProcessOutputMsg for Cmd::process()
 $app->finish('tail', exitCode: 0);                // ProcessFinishedMsg
 $app->respond('page', 200, '<html>');             // HttpResultMsg for Cmd::http()
+$app->tick('clock', at: 12.5);                    // one beat of a running Cmd::tick()
 $app->fail('load', 'timed out');                  // ErrorMsg from that effect
 ```
 
@@ -1025,6 +1027,7 @@ A `ScreenBuffer` answers where text is and how a cell looks, so a test never
 counts columns or indexes `Frame` arrays by hand:
 
 ```php
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Testing\ScreenBuffer;
 
@@ -1034,6 +1037,8 @@ $screen = ScreenBuffer::fromFrame($frame);
 
 $screen->find('Run');     // ['row' => 1, 'column' => 4], in display columns
 $screen->find('Run', 1);  // the second match, or null
+$screen->find('Run', within: new Rect(10, 0, 10, 2));   // only matches starting in that area
+$screen->locate('Run');   // like find(), but throws '"Run" is not on screen'
 $screen->rowOf('Run');    // 1
 $screen->styleAt(1, 4);   // a Style: foreground, background, attributes
 ```

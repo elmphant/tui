@@ -16,6 +16,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Message\ProcessResultMsg;
+use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
@@ -116,6 +117,19 @@ final class HarnessEffectsTest extends TestCase
     }
 
     #[Test]
+    public function aRunningTickerTicksWhenTheTestSaysSoAndKeepsRunning(): void
+    {
+        $model = ModelHarness::for(new EffectAsker())->press('t')->tick('clock', at: 12.5)->tick('clock')->model();
+
+        $ticks = array_values(array_filter(
+            array_map(static fn (Message $said): Message => $said instanceof ChildSaid ? $said->message : $said, $model->received),
+            static fn (Message $message): bool => $message instanceof TickMsg,
+        ));
+        self::assertCount(2, $ticks);
+        self::assertSame(12.5, $ticks[0]->timestamp);
+    }
+
+    #[Test]
     public function anEffectTheModelNeverStartedCannotBeAnswered(): void
     {
         $this->expectException(LogicException::class);
@@ -178,6 +192,7 @@ final class EffectAsker implements Model
             'l' => Cmd::batch(Cmd::exec(['ls'], EffectId::named('load')), Cmd::log('asked')),
             's' => Cmd::process(['tail', '-f', 'log'], EffectId::named('tail')),
             'h' => Cmd::http('https://example.com', id: EffectId::named('page')),
+            't' => Cmd::tick(1.0, EffectId::named('clock')),
             'c' => Cmd::cancel(EffectId::named('load')),
             default => null,
         };

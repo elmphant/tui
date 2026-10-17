@@ -15,6 +15,7 @@ use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
+use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\FocusMove;
@@ -32,6 +33,7 @@ use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\ProcessStream;
 use Elmphant\Tui\Message\ResizeMsg;
+use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Context\FloatPlacement;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
@@ -238,6 +240,16 @@ final class ModelHarness
     }
 
     /**
+     * One beat of a running Cmd::tick(), which keeps running.
+     *
+     * @return self<TModel>
+     */
+    public function tick(EffectId|string $effect, float $at = 0.0): self
+    {
+        return $this->delivered($this->runningAs($effect, TickCmd::class), new TickMsg($at));
+    }
+
+    /**
      * Ends any running effect with the error it could not get past.
      *
      * @return self<TModel>
@@ -281,24 +293,34 @@ final class ModelHarness
     }
 
     /**
-     * Presses and lets go where the text is drawn now; $nth = 1 is its second
-     * place on screen.
+     * Presses and lets go where the text is drawn now, $offset columns to its
+     * right; $nth = 1 is its second place on screen.
      *
      * @return self<TModel>
      */
-    public function click(string $text, int $nth = 0): self
+    public function click(string $text, int $nth = 0, int $offset = 0): self
     {
-        ['row' => $row, 'column' => $column] = $this->whereIs($text, $nth);
+        ['row' => $row, 'column' => $column] = $this->renderScreen()->locate($text, $nth);
 
-        return $this->clickAt($column, $row);
+        return $this->clickAt($column + $offset, $row);
     }
 
     /**
+     * One action: what it led to, as issued() tells it, is what the press and
+     * the release led to together.
+     *
      * @return self<TModel>
      */
     public function clickAt(int $column, int $row): self
     {
-        return $this->dispatch(UserInput::click($column, $row))->dispatch(UserInput::release($column, $row));
+        $this->issued = [];
+        ++$this->depth;
+
+        try {
+            return $this->dispatch(UserInput::click($column, $row))->dispatch(UserInput::release($column, $row));
+        } finally {
+            --$this->depth;
+        }
     }
 
     /**
@@ -308,7 +330,7 @@ final class ModelHarness
      */
     public function wheel(string $text, int $notches): self
     {
-        ['row' => $row, 'column' => $column] = $this->whereIs($text, 0);
+        ['row' => $row, 'column' => $column] = $this->renderScreen()->locate($text);
 
         return $this->dispatch(UserInput::wheel($column, $row, $notches));
     }
@@ -492,15 +514,6 @@ final class ModelHarness
     private function delivered(array $running, Message $message): self
     {
         return $this->dispatch($running['wrap'] === null ? $message : ($running['wrap'])($message));
-    }
-
-    /**
-     * @return array{row: int, column: int}
-     */
-    private function whereIs(string $text, int $nth): array
-    {
-        return $this->renderScreen()->find($text, $nth)
-            ?? throw new LogicException(sprintf('"%s" is not on screen', $text));
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
@@ -55,6 +56,22 @@ final class HarnessInputTest extends TestCase
     }
 
     #[Test]
+    public function aClickLandsAnOffsetAwayFromTheTextItIsAimedBy(): void
+    {
+        $model = ModelHarness::for(new InputRecorder(), 20, 3)->click('Run', offset: 2)->model();
+
+        self::assertEquals([[MouseAction::Press, 6, 1], [MouseAction::Release, 6, 1]], $model->pointer());
+    }
+
+    #[Test]
+    public function whatAClickLedToCountsItsPressAsWellAsItsRelease(): void
+    {
+        $harness = ModelHarness::for(new InputRecorder(answersPresses: true), 20, 3)->click('Run');
+
+        self::assertCount(1, $harness->issued(TickCmd::class), 'the press asked for it, the release did not');
+    }
+
+    #[Test]
     public function aClickOnTextThatIsNotOnScreenSaysSo(): void
     {
         $this->expectException(LogicException::class);
@@ -90,6 +107,10 @@ final class InputRecorder implements Model
      */
     private array $received = [];
 
+    public function __construct(private readonly bool $answersPresses = false)
+    {
+    }
+
     public function init(): ?Cmd
     {
         return null;
@@ -98,8 +119,9 @@ final class InputRecorder implements Model
     public function update(Message $message, Rect $area): UpdateResult
     {
         $this->received[] = $message;
+        $pressed = $message instanceof MouseMsg && $message->action === MouseAction::Press;
 
-        return new UpdateResult($this);
+        return new UpdateResult($this, $this->answersPresses && $pressed ? Cmd::tick(1.0) : null);
     }
 
     public function render(Frame $frame, RenderPass $pass): void

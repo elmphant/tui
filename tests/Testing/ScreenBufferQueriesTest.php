@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Testing;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -52,6 +54,35 @@ final class ScreenBufferQueriesTest extends TestCase
     {
         self::assertNull(ScreenBuffer::fromFrame(new Frame(10, 2))->find('Run'));
         self::assertNull(ScreenBuffer::fromFrame(new Frame(10, 2))->rowOf('Run'));
+    }
+
+    #[Test]
+    public function aSearchStaysInsideTheAreaItIsGiven(): void
+    {
+        $frame = new Frame(20, 3);
+        $frame->putString(0, 0, 'Run');
+        $frame->putString(12, 1, 'Run');
+
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame(['row' => 1, 'column' => 12], $screen->find('Run', within: new Rect(10, 0, 10, 3)));
+        self::assertSame(1, $screen->rowOf('Run', within: new Rect(10, 0, 10, 3)));
+        self::assertNull($screen->find('Run', within: new Rect(0, 2, 20, 1)));
+        self::assertNull($screen->find('Run', within: new Rect(13, 1, 7, 1)), 'a match must start inside the area');
+    }
+
+    #[Test]
+    public function locatingTextThatIsNotThereSaysWhatWasLookedFor(): void
+    {
+        $frame = new Frame(20, 2);
+        $frame->putString(4, 1, 'Run');
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame(['row' => 1, 'column' => 4], $screen->locate('Run'));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('"Stop" is not on screen');
+        $screen->locate('Stop');
     }
 
     #[Test]

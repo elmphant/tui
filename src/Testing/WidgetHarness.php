@@ -88,9 +88,9 @@ final class WidgetHarness
     /**
      * @return self<TWidget>
      */
-    public function click(string $text, int $nth = 0): self
+    public function click(string $text, int $nth = 0, int $offset = 0): self
     {
-        $this->harness->click($text, $nth);
+        $this->harness->click($text, $nth, $offset);
 
         return $this;
     }
@@ -165,6 +165,16 @@ final class WidgetHarness
     public function finish(EffectId|string $effect, int $exitCode = 0): self
     {
         $this->harness->finish($effect, $exitCode);
+
+        return $this;
+    }
+
+    /**
+     * @return self<TWidget>
+     */
+    public function tick(EffectId|string $effect, float $at = 0.0): self
+    {
+        $this->harness->tick($effect, $at);
 
         return $this;
     }

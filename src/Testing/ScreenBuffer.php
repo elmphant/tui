@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Testing;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\CursorPosition;
 use Elmphant\Tui\Rendering\Frame;
@@ -12,6 +13,7 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
+use LogicException;
 
 final class ScreenBuffer
 {
@@ -116,14 +118,17 @@ final class ScreenBuffer
 
     /**
      * Where the text starts on screen, counted in display columns; $nth = 1 is
-     * the second match, reading row by row.
+     * the second match, reading row by row. Within an area, a match must start
+     * inside it.
      *
      * @return array{row: int, column: int}|null
      */
-    public function find(string $text, int $nth = 0): ?array
+    public function find(string $text, int $nth = 0, ?Rect $within = null): ?array
     {
-        for ($row = 0; $row < $this->height; ++$row) {
-            for ($column = 0; $column < $this->width; ++$column) {
+        $area = ($within ?? Rect::fromSize($this->width, $this->height))->intersect(Rect::fromSize($this->width, $this->height));
+
+        for ($row = $area->y; $row < $area->bottom(); ++$row) {
+            for ($column = $area->x; $column < $area->right(); ++$column) {
                 if ($this->startsAt($row, $column, $text) && $nth-- === 0) {
                     return ['row' => $row, 'column' => $column];
                 }
@@ -133,9 +138,19 @@ final class ScreenBuffer
         return null;
     }
 
-    public function rowOf(string $text): ?int
+    /**
+     * find() for text a test expects: failing to find it is the failure.
+     *
+     * @return array{row: int, column: int}
+     */
+    public function locate(string $text, int $nth = 0, ?Rect $within = null): array
     {
-        return $this->find($text)['row'] ?? null;
+        return $this->find($text, $nth, $within) ?? throw new LogicException(sprintf('"%s" is not on screen', $text));
+    }
+
+    public function rowOf(string $text, ?Rect $within = null): ?int
+    {
+        return $this->find($text, within: $within)['row'] ?? null;
     }
 
     public function styleAt(int $row, int $col): Style
