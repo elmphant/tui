@@ -213,7 +213,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return [...$this->activePane()->placedChildren($this->contentArea($area))];
     }
 
-    public function viewport(Rect $area): Rect
+    public function viewport(Rect $area, Widget $child): Rect
     {
         return $this->contentArea($area);
     }

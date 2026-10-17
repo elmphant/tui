@@ -301,7 +301,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         return $this->regionsIn($area)[2];
     }
 
-    public function viewport(Rect $area): Rect
+    public function viewport(Rect $area, Widget $child): Rect
     {
         return $this->contentArea($area);
     }

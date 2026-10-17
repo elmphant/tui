@@ -117,8 +117,8 @@ final class LayoutPlan implements PlannedLayout
         $byArea[self::areaKey($area)] = $placements;
         $this->children[$widget] = $byArea;
 
-        $clip = $widget instanceof ClipsItsChildren ? $widget->viewport($area)->intersect($visible) : $visible;
         foreach ($placements as [$child, $childArea]) {
+            $clip = $widget instanceof ClipsItsChildren ? $widget->viewport($area, $child)->intersect($visible) : $visible;
             $this->walk($child, $childArea, $clip);
         }
     }

@@ -12,5 +12,9 @@ use Elmphant\Tui\Layout\Rect;
  */
 interface ClipsItsChildren extends WidgetContainer
 {
-    public function viewport(Rect $area): Rect;
+    /**
+     * The part of $area that $child shows through: a pinned row outside the
+     * scrolling region answers with its own rows, not the region's.
+     */
+    public function viewport(Rect $area, Widget $child): Rect;
 }

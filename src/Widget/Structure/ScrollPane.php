@@ -218,7 +218,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         return $placed;
     }
 
-    public function viewport(Rect $area): Rect
+    public function viewport(Rect $area, Widget $child): Rect
     {
         return $area;
     }
