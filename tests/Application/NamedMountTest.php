@@ -26,6 +26,8 @@ use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Popup\Modal;
+use Elmphant\Tui\Widget\Popup\Overlay;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -80,6 +82,14 @@ final class NamedMountTest extends TestCase
         $harness = ModelHarness::for(new HostOfAQuietMount(), 40, 6)->initialize()->press('r');
 
         self::assertSame(1, $harness->model()->quiet->refreshed);
+    }
+
+    #[Test]
+    public function aMountBehindAnOpenModalHearsNoKey(): void
+    {
+        $harness = ModelHarness::for(new HostOfAQuietMount(behindAModal: true), 40, 12)->initialize()->press('r');
+
+        self::assertSame(0, $harness->model()->quiet->refreshed);
     }
 
     #[Test]
@@ -164,17 +174,22 @@ final readonly class HostOfAQuietMount extends App
 {
     use Cloneable;
 
-    public function __construct(public QuietModel $quiet = new QuietModel(), public bool $besideASidebar = false)
-    {
+    public function __construct(
+        public QuietModel $quiet = new QuietModel(),
+        public bool $besideASidebar = false,
+        public bool $behindAModal = false,
+    ) {
     }
 
     public function view(): Widget
     {
         $mount = Mount::named('quiet', $this->quiet, Text::new('nothing to focus'), static fn (self $host, QuietModel $quiet): self => $host->cloneWith(quiet: $quiet));
 
-        return $this->besideASidebar
-            ? Layout::horizontal()->add(Text::new('sidebar'), Constraint::exact(10))->add($mount, Constraint::flex())
-            : $mount;
+        return match (true) {
+            $this->besideASidebar => Layout::horizontal()->add(Text::new('sidebar'), Constraint::exact(10))->add($mount, Constraint::flex()),
+            $this->behindAModal => Overlay::new($mount, Modal::new('Notice', Text::new('read me'))),
+            default => $mount,
+        };
     }
 }
 

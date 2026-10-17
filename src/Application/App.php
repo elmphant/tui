@@ -592,7 +592,7 @@ abstract readonly class App implements RoutesFocus
      */
     private function offeredToMounts(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): ?UpdateResult
     {
-        $drawn = $this->componentRegistry()->mounts();
+        $drawn = $this->componentRegistry()->listeningMounts();
         $holding = array_values(array_filter(
             $drawn,
             static fn (Mount $mount): bool => $holder !== null && $holder->isUnder($mount->id),
@@ -813,7 +813,7 @@ abstract readonly class App implements RoutesFocus
         $rects = LayoutSnapshot::planFor($this, $screenRect, $this->viewWidget(...))->visibleRects();
         $under = null;
 
-        foreach ($this->componentRegistry()->mounts() as $mount) {
+        foreach ($this->componentRegistry()->listeningMounts() as $mount) {
             if ($rects->contains($mount) && $message->inRect($rects[$mount])) {
                 $under = $mount;
             }

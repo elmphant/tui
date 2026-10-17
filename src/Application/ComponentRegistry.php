@@ -30,6 +30,7 @@ final readonly class ComponentRegistry
      * @param list<Component<Interactive>>          $focusables
      * @param list<list<string>>                    $scopes
      * @param list<Mount<App, Reducer>>             $mounts
+     * @param list<Mount<App, Reducer>>             $listening  the mounts input can reach: none behind an open modal
      */
     private function __construct(
         private array $components,
@@ -37,6 +38,7 @@ final readonly class ComponentRegistry
         private array $focusables,
         private array $scopes = [],
         private array $mounts = [],
+        private array $listening = [],
     ) {
     }
 
@@ -60,7 +62,14 @@ final readonly class ComponentRegistry
     {
         $registry = self::from(self::collect($root))->withScopes(self::scopesIn($root));
 
-        return new self($registry->components, $registry->byId, $registry->focusables, $registry->scopes, self::mountsIn($root));
+        return new self(
+            components: $registry->components,
+            byId: $registry->byId,
+            focusables: $registry->focusables,
+            scopes: $registry->scopes,
+            mounts: self::mountsIn($root),
+            listening: self::listeningMountsIn($root)[0],
+        );
     }
 
     /**
@@ -104,6 +113,17 @@ final readonly class ComponentRegistry
     public function mounts(): array
     {
         return $this->mounts;
+    }
+
+    /**
+     * The mounts that keys and the pointer can reach. A mount behind an open modal
+     * is not one of them.
+     *
+     * @return list<Mount<App, Reducer>>
+     */
+    public function listeningMounts(): array
+    {
+        return $this->listening;
     }
 
     /**
@@ -277,6 +297,7 @@ final readonly class ComponentRegistry
                 focusables: $this->focusables,
                 scopes: $scopes,
                 mounts: $this->mounts,
+                listening: $this->listening,
             );
     }
 
@@ -322,6 +343,32 @@ final readonly class ComponentRegistry
         }
 
         return $mounts;
+    }
+
+    /**
+     * Mounts the same way collectLayer() finds components: once an input layer is
+     * found, the mounts behind it are dropped.
+     *
+     * @return array{list<Mount<App, Reducer>>, bool}
+     */
+    private static function listeningMountsIn(Widget $widget): array
+    {
+        $own = $widget instanceof Mount ? [$widget] : [];
+        $mounts = $own;
+        $layer = null;
+
+        if ($widget instanceof WidgetContainer) {
+            foreach ($widget->children() as $child) {
+                [$childMounts, $childIsLayered] = self::listeningMountsIn($child);
+                if ($childIsLayered) {
+                    $layer = $childMounts;
+                }
+
+                array_push($mounts, ...$childMounts);
+            }
+        }
+
+        return $layer === null ? [$mounts, $widget instanceof InputLayer] : [[...$own, ...$layer], true];
     }
 
     /**

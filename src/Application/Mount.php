@@ -94,9 +94,8 @@ final readonly class Mount implements Widget, WidgetContainer
 
     /**
      * Marks what the model or its components ask for, so the answer comes back
-     * here. Effect ids and focus targets inside it belong to this mount.
-     *
-     * @internal
+     * here. Effect ids and focus targets inside it belong to this mount. An App
+     * that asks for something on the model's behalf marks it the same way.
      */
     public function addressed(?Cmd $command): ?Cmd
     {
