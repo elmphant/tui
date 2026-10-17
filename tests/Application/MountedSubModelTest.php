@@ -33,7 +33,7 @@ final class MountedSubModelTest extends TestCase
     {
         $app = new MountingApp(new MountedPanel(TextInput::new()->withValue('before')));
 
-        $component = ComponentRegistry::fromWidget($app->view())->get(ComponentId::named('field'));
+        $component = ComponentRegistry::fromWidget($app->view())->get(ComponentId::named('sub/field'));
 
         self::assertNotNull($component, 'the walk has to reach through the mount');
 
@@ -59,7 +59,7 @@ final class MountedSubModelTest extends TestCase
         $updated = $app->update(
             new KeyMsg('x'),
             Rect::fromSize(40, 10),
-            new FocusState(ComponentId::named('form/0')),
+            new FocusState(ComponentId::named('sub/form/0')),
         )->model;
 
         self::assertInstanceOf(MountingFormApp::class, $updated);
@@ -77,7 +77,8 @@ final readonly class MountingFormApp extends App
 
     public function view(): Widget
     {
-        return Mount::of(
+        return Mount::named(
+            'sub',
             $this->form,
             $this->form->view(),
             static fn (self $app, MountedForm $form): self => new self($form),
@@ -119,7 +120,8 @@ final readonly class MountingApp extends App
 
     public function view(): Widget
     {
-        return Mount::of(
+        return Mount::named(
+            'sub',
             $this->panel,
             $this->panel->view(),
             static fn (self $app, MountedPanel $panel): self => $app->withPanel($panel),

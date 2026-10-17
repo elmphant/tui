@@ -1163,7 +1163,7 @@ final class Program
             match (true) {
                 $command instanceof QuitCmd => $this->stopRunning(),
                 $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
-                $command instanceof FocusCmd => $this->moveFocus($command),
+                $command instanceof FocusCmd => $this->moveFocus($command->within($scope)),
                 $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
                 $command instanceof CallCmd => $this->executeCall($command, $wrap, $scope),
                 $command instanceof LogCmd => $this->tracer?->record(TraceEvent::Log, [...$command->context, 'message' => $command->message]),

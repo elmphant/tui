@@ -31,9 +31,9 @@ use UnitEnum;
 final readonly class Component implements Widget, WidgetContainer, SingleMount
 {
     /**
-     * @param TWidget      $widget
-     * @param Closure|null $replace validated by bind(); null when named()
-     * @param Closure|null $address set by the Mount that owns this, if any
+     * @param TWidget                    $widget
+     * @param Closure|null               $replace validated by bind(); null when named()
+     * @param (Closure(?Cmd): ?Cmd)|null $address set by the Mount that owns this, if any
      */
     private function __construct(
         public ComponentId $id,
@@ -153,29 +153,35 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     /**
      * @internal
      *
-     * @param Closure $mount validated by Mount::of()
+     * @param Closure             $mount   validated by Mount::named()
+     * @param Closure(?Cmd): ?Cmd $address
      *
      * @return self<TWidget>
      */
-    public function nestedIn(Reducer $owner, Closure $mount, ?Closure $address = null): self
+    public function nestedIn(Reducer $owner, Closure $mount, Closure $address): self
     {
         $replace = $this->replace;
-
-        if ($replace === null) {
-            return $this;
-        }
 
         return new self(
             id: $this->id,
             widget: $this->widget,
-            replace: static fn (App $app, Interactive $widget): App => $mount($app, $replace($owner, $widget)),
+            replace: $replace === null ? null : static fn (App $app, Interactive $widget): App => $mount($app, $replace($owner, $widget)),
             address: $address,
         );
     }
 
     /**
-     * What this component's own effects say, marked as coming from it. A host that
-     * mounts several models cannot tell a bare message apart once it is out.
+     * @internal
+     *
+     * @return self<TWidget>
+     */
+    public function under(ComponentId $mount): self
+    {
+        return new self(ComponentId::named($mount->value . '/' . $this->id->value), $this->widget, $this->replace, $this->address);
+    }
+
+    /**
+     * What this component's own effects say, marked as coming from what mounted it.
      *
      * @internal
      */
@@ -183,7 +189,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     {
         $address = $this->address;
 
-        return $command === null || $address === null ? $command : $command->map($address);
+        return $command === null || $address === null ? $command : $address($command);
     }
 
     public function replaceIn(App $app, Interactive $widget): App

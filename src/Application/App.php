@@ -57,7 +57,10 @@ abstract readonly class App implements RoutesFocus
 
     final public function init(): ?Cmd
     {
-        return $this->setup();
+        return Cmd::combine($this->setup(), ...array_map(
+            static fn (Mount $mount): ?Cmd => $mount->model instanceof Initializes ? $mount->addressed($mount->model->init()) : null,
+            $this->mounts(),
+        ));
     }
 
     final public function render(Frame $frame, RenderPass $pass): void
@@ -237,6 +240,18 @@ abstract readonly class App implements RoutesFocus
         return UpdateResult::ignored($this);
     }
 
+    /**
+     * Every model this App mounts, drawn or not. By default, the mounts in the view.
+     * An App that shows only some of them at a time (tabs) should list them all,
+     * so answers still reach the hidden ones.
+     *
+     * @return list<Mount<App, Reducer>>
+     */
+    protected function mounts(): array
+    {
+        return $this->componentRegistry()->mounts();
+    }
+
     protected function geometry(Rect $screen): Geometry
     {
         return Geometry::from(LayoutSnapshot::planFor($this, $screen, $this->viewWidget(...)), $this->componentRegistry());
@@ -311,7 +326,11 @@ abstract readonly class App implements RoutesFocus
                 return new UpdateResult($this, Cmd::quit());
             }
 
-            return $this->onKey($message, $screenRect);
+            $appResult = $this->onKey($message, $screenRect);
+
+            return $appResult->model !== $this || $appResult->command !== null
+                ? $appResult
+                : $this->offeredToMounts($message, $screenRect, null) ?? $appResult;
         }
 
         if ($message instanceof MouseMsg) {
@@ -435,6 +454,14 @@ abstract readonly class App implements RoutesFocus
      */
     private function handleUnrouted(Message $message, Rect $screenRect): UpdateResult
     {
+        if ($message instanceof MountedMsg) {
+            $mount = $this->mountNamed($message->mount);
+
+            return $mount === null
+                ? UpdateResult::ignored($this)
+                : $this->answeredBy($mount, $message->message, $screenRect);
+        }
+
         if ($message instanceof TickMsg) {
             return $this->broadcastAfter($this->onTick($message, $screenRect), $message, $screenRect);
         }
@@ -444,6 +471,63 @@ abstract readonly class App implements RoutesFocus
         }
 
         return $this->onMessage($message, $screenRect);
+    }
+
+    /**
+     * @return Mount<App, Reducer>|null
+     */
+    private function mountNamed(ComponentId $id): ?Mount
+    {
+        foreach ($this->mounts() as $mount) {
+            if ($mount->id->equals($id)) {
+                return $mount;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Updates the mounted model and writes it back into the App. What the model
+     * asks for is marked so the answer comes back to it.
+     *
+     * @param Mount<App, Reducer> $mount
+     *
+     * @return UpdateResult<static>
+     */
+    private function answeredBy(Mount $mount, Message $message, Rect $screenRect): UpdateResult
+    {
+        $result = $mount->model->update($message, $this->areaOf($mount, $screenRect));
+        $command = $mount->addressed($result->command);
+
+        if ($result->model === $mount->model) {
+            return new UpdateResult($this, $command);
+        }
+
+        $app = $mount->writtenBack($this, $result->model);
+        if (!$app instanceof static) {
+            throw new LogicException(sprintf('Mount "%s" must write back a %s, got %s', $mount->id->value, static::class, $app::class));
+        }
+
+        return new UpdateResult($app, $command);
+    }
+
+    /**
+     * The area the mount is drawn in, or the whole screen if it is not drawn.
+     *
+     * @param Mount<App, Reducer> $mount
+     */
+    private function areaOf(Mount $mount, Rect $screenRect): Rect
+    {
+        $rects = LayoutSnapshot::planFor($this, $screenRect, $this->viewWidget(...))->rects();
+
+        foreach ($this->componentRegistry()->mounts() as $drawn) {
+            if ($drawn->id->equals($mount->id) && $rects->contains($drawn)) {
+                return $rects[$drawn];
+            }
+        }
+
+        return $screenRect;
     }
 
     /**
@@ -496,7 +580,33 @@ abstract readonly class App implements RoutesFocus
             return $appResult;
         }
 
-        return $this->delegateToFocused($message, $screenRect, $holder);
+        return $this->offeredToMounts($message, $screenRect, $holder)
+            ?? $this->delegateToFocused($message, $screenRect, $holder);
+    }
+
+    /**
+     * A mounted model gets a key before its components do. The key goes to the
+     * mount that holds the keyboard; if no mount holds it, to every mount on screen.
+     *
+     * @return UpdateResult<static>|null
+     */
+    private function offeredToMounts(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): ?UpdateResult
+    {
+        $drawn = $this->componentRegistry()->mounts();
+        $holding = array_values(array_filter(
+            $drawn,
+            static fn (Mount $mount): bool => $holder !== null && $holder->isUnder($mount->id),
+        ));
+
+        foreach ($holding === [] ? $drawn : [end($holding)] as $mount) {
+            $answered = $this->answeredBy($mount, $message, $screenRect);
+
+            if ($answered->model !== $this || $answered->command !== null) {
+                return $answered;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -633,6 +743,8 @@ abstract readonly class App implements RoutesFocus
         ?ComponentId $holder = null,
     ): UpdateResult {
         $appResult = $this->onMouse($message, $screenRect);
+        $pressed = $this->appModel($appResult)->offeredToTheMountUnder($message, $screenRect);
+        $appResult = new UpdateResult($pressed->model, self::combineCommands($appResult->command, $pressed->command));
         $current = $this->appModel($appResult);
 
         if ($current !== $this) {
@@ -694,9 +806,26 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * A press on a plain row of a container whose children are the stops brings
-     * the keyboard in from outside, to the stop focus lands on for the container.
-     * Inside it, the keyboard stays on the field it was in.
+     * @return UpdateResult<static>
+     */
+    private function offeredToTheMountUnder(MouseMsg $message, Rect $screenRect): UpdateResult
+    {
+        $rects = LayoutSnapshot::planFor($this, $screenRect, $this->viewWidget(...))->visibleRects();
+        $under = null;
+
+        foreach ($this->componentRegistry()->mounts() as $mount) {
+            if ($rects->contains($mount) && $message->inRect($rects[$mount])) {
+                $under = $mount;
+            }
+        }
+
+        return $under === null ? new UpdateResult($this) : $this->answeredBy($under, $message, $screenRect);
+    }
+
+    /**
+     * A press on a plain row of a container whose children are focus stops moves
+     * the keyboard into the container, if it was outside. If it was already
+     * inside, it stays on its field.
      *
      * @param array<string, Rect> $visible
      */

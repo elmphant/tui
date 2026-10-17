@@ -22,6 +22,18 @@ final readonly class FocusCmd extends Cmd
     }
 
     /**
+     * A target named inside a scope is one of that scope's own components.
+     *
+     * @internal
+     */
+    public function within(?string $scope): self
+    {
+        return $scope === null || $this->target === null
+            ? $this
+            : new self(target: ComponentId::named($scope . '/' . $this->target->value), move: $this->move);
+    }
+
+    /**
      * @param list<ComponentId> $focusables the focusable components, in tree order
      */
     public function applyTo(FocusState $focus, array $focusables): FocusState

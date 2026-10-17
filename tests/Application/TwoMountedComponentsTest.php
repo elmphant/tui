@@ -89,6 +89,6 @@ final readonly class MountedTickerHost extends App
 
     public function view(): Widget
     {
-        return Mount::of($this->pair, $this->pair->view(), static fn (self $host, MountedTickerPair $pair): self => new self($pair));
+        return Mount::named('pair', $this->pair, $this->pair->view(), static fn (self $host, MountedTickerPair $pair): self => new self($pair));
     }
 }

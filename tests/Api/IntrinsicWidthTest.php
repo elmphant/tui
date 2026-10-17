@@ -216,7 +216,8 @@ final class IntrinsicWidthTest extends TestCase
         yield 'FilterableList' => [FilterableList::new([new SimpleListItem('alpha')])];
         yield 'FocusHints' => [FocusHints::new()];
         yield 'Component' => [Component::bind('field', TextInput::new()->withValue('typed'), static fn (object $app, object $widget): object => $app)];
-        yield 'Mount' => [Mount::of(
+        yield 'Mount' => [Mount::named(
+            'measured',
             new MeasuredSubModel(),
             TextInput::new()->withValue('typed'),
             static fn (object $app, object $model): object => $app,

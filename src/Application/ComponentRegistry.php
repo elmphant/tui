@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Application;
 
 use Closure;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Widget\Focus\FocusScope;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focus\InputLayer;
@@ -28,12 +29,14 @@ final readonly class ComponentRegistry
      * @param array<string, Component<Interactive>> $byId
      * @param list<Component<Interactive>>          $focusables
      * @param list<list<string>>                    $scopes
+     * @param list<Mount<App, Reducer>>             $mounts
      */
     private function __construct(
         private array $components,
         private array $byId,
         private array $focusables,
         private array $scopes = [],
+        private array $mounts = [],
     ) {
     }
 
@@ -55,7 +58,9 @@ final readonly class ComponentRegistry
 
     public static function fromWidget(Widget $root): self
     {
-        return self::from(self::collect($root))->withScopes(self::scopesIn($root));
+        $registry = self::from(self::collect($root))->withScopes(self::scopesIn($root));
+
+        return new self($registry->components, $registry->byId, $registry->focusables, $registry->scopes, self::mountsIn($root));
     }
 
     /**
@@ -91,6 +96,14 @@ final readonly class ComponentRegistry
     public function all(): array
     {
         return $this->components;
+    }
+
+    /**
+     * @return list<Mount<App, Reducer>>
+     */
+    public function mounts(): array
+    {
+        return $this->mounts;
     }
 
     /**
@@ -263,6 +276,7 @@ final readonly class ComponentRegistry
                 byId: $this->byId,
                 focusables: $this->focusables,
                 scopes: $scopes,
+                mounts: $this->mounts,
             );
     }
 
@@ -292,6 +306,22 @@ final readonly class ComponentRegistry
         }
 
         return $scopes;
+    }
+
+    /**
+     * @return list<Mount<App, Reducer>>
+     */
+    private static function mountsIn(Widget $widget): array
+    {
+        $mounts = $widget instanceof Mount ? [$widget] : [];
+
+        if ($widget instanceof WidgetContainer) {
+            foreach ($widget->children() as $child) {
+                array_push($mounts, ...self::mountsIn($child));
+            }
+        }
+
+        return $mounts;
     }
 
     /**

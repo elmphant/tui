@@ -42,6 +42,11 @@ final class FocusPath
     private bool $loose = false;
 
     /**
+     * The name of the mount being drawn, which qualifies every component id in it.
+     */
+    private string $mount = '';
+
+    /**
      * @var array<string, string>
      */
     private array $hints = [];
@@ -171,8 +176,25 @@ final class FocusPath
     /**
      * @param Closure(): void $render
      */
+    /**
+     * @param Closure(): void $render
+     */
+    public function withinMount(ComponentId $id, Closure $render): void
+    {
+        $outer = $this->mount;
+        $this->mount = $this->qualified($id)->value;
+
+        try {
+            $render();
+        } finally {
+            $this->mount = $outer;
+        }
+    }
+
     public function withinComponent(ComponentId $id, Closure $render): void
     {
+        $id = $this->qualified($id);
+
         if ($this->focus->isUndecided()) {
             throw new LogicException(sprintf('Component "%s" is being drawn before anything said where the keyboard is. Call focusOn() first — FocusState::nowhere() if the answer is nobody.', $id->value));
         }
@@ -229,5 +251,10 @@ final class FocusPath
         $segment = $this->path[0] ?? null;
 
         return $this->hasFocus() && $segment !== null && ctype_digit($segment) ? (int)$segment : null;
+    }
+
+    private function qualified(ComponentId $id): ComponentId
+    {
+        return $this->mount === '' ? $id : ComponentId::named($this->mount . '/' . $id->value);
     }
 }

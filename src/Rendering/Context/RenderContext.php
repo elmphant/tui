@@ -134,6 +134,16 @@ final class RenderContext
     }
 
     /**
+     * Draw what a mount holds: its components are known under its name.
+     *
+     * @param Closure(): void $render
+     */
+    public function withinMount(ComponentId $id, Closure $render): void
+    {
+        $this->focus->withinMount($id, $render);
+    }
+
+    /**
      * Draw one child of a container that publishes its children as stops of their
      * own. The keyboard reaches at most one of them, and what is left of the path
      * says which.

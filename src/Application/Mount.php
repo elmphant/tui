@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Application;
 
 use Closure;
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Layout\Rect;
@@ -15,9 +17,9 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
- * A sub-model embedded in an App, with the drawing it asked for and the way back
- * into the App. What it mounts binds its own components, so an App may host a
- * model it knows nothing about.
+ * A sub-model placed inside an App under a name. Its components are known as
+ * `name/component`, and answers to what the model or its components ask for come
+ * back to the model. So an App can host a model it knows nothing about.
  *
  * @template TApp of App
  * @template TModel of Reducer
@@ -25,35 +27,29 @@ use Elmphant\Tui\Widget\WidgetContainer;
 final readonly class Mount implements Widget, WidgetContainer
 {
     /**
-     * @param TModel                        $model
-     * @param Closure(TApp, TModel): TApp   $mount
-     * @param Closure(Message):Message|null $address
+     * @param TModel                      $model
+     * @param Closure(TApp, TModel): TApp $mount
      */
     private function __construct(
+        public ComponentId $id,
         public Reducer $model,
         private Widget $content,
         private Closure $mount,
-        private ?Closure $address = null,
     ) {
     }
 
     /**
-     * A component this mounts speaks for the model, not for the App that hosts it.
-     * $address wraps whatever its commands emit, so a host with several mounted
-     * models can tell which one a message came from once it is out.
-     *
      * @template TBoundApp of App
      * @template TBoundModel of Reducer
      *
      * @param TBoundModel                                $model
      * @param Closure(TBoundApp, TBoundModel): TBoundApp $mount
-     * @param Closure(Message):Message|null              $address
      *
      * @return self<TBoundApp, TBoundModel>
      */
-    public static function of(Reducer $model, Widget $content, Closure $mount, ?Closure $address = null): self
+    public static function named(ComponentId|string $id, Reducer $model, Widget $view, Closure $mount): self
     {
-        return new self($model, $content, $mount, $address);
+        return new self(\is_string($id) ? ComponentId::named($id) : $id, $model, $view, $mount);
     }
 
     public function sizing(): Sizing
@@ -63,7 +59,7 @@ final readonly class Mount implements Widget, WidgetContainer
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $this->content->render($frame, $area, $context);
+        $context->withinMount($this->id, fn () => $this->content->render($frame, $area, $context));
     }
 
     /**
@@ -93,6 +89,32 @@ final readonly class Mount implements Widget, WidgetContainer
      */
     public function own(Component $component): Component
     {
-        return $component->nestedIn($this->model, $this->mount, $this->address);
+        return $component->nestedIn($this->model, $this->mount, $this->addressed(...))->under($this->id);
+    }
+
+    /**
+     * Marks what the model or its components ask for, so the answer comes back
+     * here. Effect ids and focus targets inside it belong to this mount.
+     *
+     * @internal
+     */
+    public function addressed(?Cmd $command): ?Cmd
+    {
+        $id = $this->id;
+
+        return $command?->map(static fn (Message $message): Message => new MountedMsg($id, $message))->scopedTo($id->value);
+    }
+
+    /**
+     * @internal
+     *
+     * @param TApp   $app
+     * @param TModel $model
+     *
+     * @return TApp
+     */
+    public function writtenBack(App $app, Reducer $model): App
+    {
+        return ($this->mount)($app, $model);
     }
 }

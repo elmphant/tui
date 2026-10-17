@@ -563,24 +563,30 @@ final class ModelHarness
      * the harness has to honour one or a test can never press one key to move
      * the keyboard and a second to use it.
      */
-    private function moveFocusFor(?Cmd $command): void
+    private function moveFocusFor(?Cmd $command, ?string $scope = null): void
     {
-        if ($command instanceof MappedCmd || $command instanceof ScopedCmd) {
-            $this->moveFocusFor($command->inner);
+        if ($command instanceof MappedCmd) {
+            $this->moveFocusFor($command->inner, $scope);
+
+            return;
+        }
+
+        if ($command instanceof ScopedCmd) {
+            $this->moveFocusFor($command->inner, $scope === null ? $command->scope : $scope . '/' . $command->scope);
 
             return;
         }
 
         if ($command instanceof BatchCmd) {
             foreach ($command->commands as $child) {
-                $this->moveFocusFor($child);
+                $this->moveFocusFor($child, $scope);
             }
 
             return;
         }
 
         if ($command instanceof FocusCmd) {
-            $this->focus = $command->applyTo(
+            $this->focus = $command->within($scope)->applyTo(
                 $this->focus,
                 $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
             );
