@@ -120,7 +120,7 @@ final class ComponentTest extends TestCase
         $current = new ComponentContractApp(TextInput::new(), version: 2);
         $updatedInput = TextInput::new()->withValue('updated');
 
-        $updated = $original->binding()->replaceIn($current, $updatedInput);
+        $updated = $original->binding()->replaceIn($current, $updatedInput)->model;
 
         self::assertInstanceOf(ComponentContractApp::class, $updated);
         self::assertSame(2, $updated->version);
@@ -183,7 +183,7 @@ final class ComponentTest extends TestCase
             static fn (App $current, TextInput $input): App => new ComponentContractApp($input, $version),
         );
 
-        $updated = $component->replaceIn($app, TextInput::new()->withValue('safe'));
+        $updated = $component->replaceIn($app, TextInput::new()->withValue('safe'))->model;
 
         self::assertInstanceOf(ComponentContractApp::class, $updated);
         self::assertSame(42, $updated->version);

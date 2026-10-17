@@ -39,7 +39,7 @@ final class NestedComponentOwnershipTest extends TestCase
             static fn (?Cmd $command): ?Cmd => $command,
         );
 
-        $updated = $bound->replaceIn($app, TextInput::new()->withValue('after'));
+        $updated = $bound->replaceIn($app, TextInput::new()->withValue('after'))->model;
 
         self::assertInstanceOf(HostingApp::class, $updated);
         self::assertSame('after', $updated->panel->field->value());

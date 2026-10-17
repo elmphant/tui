@@ -69,6 +69,14 @@ final class NamedMountTest extends TestCase
     }
 
     #[Test]
+    public function whatWritingAMountedComponentBackAsksForComesBackToItsModel(): void
+    {
+        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(echoes: true)), 40, 6)->initialize()->type('a');
+
+        self::assertSame(['typed a'], $harness->model()->notes->heard);
+    }
+
+    #[Test]
     public function aMountedModelSendsTheKeyboardToItsComponentsByTheirOwnNames(): void
     {
         $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->initialize()->press('enter');
@@ -279,6 +287,7 @@ final readonly class NotesModel implements Reducer
         public array $heard = [],
         public bool $lamp = false,
         public bool $namer = false,
+        public bool $echoes = false,
     ) {
     }
 
@@ -296,7 +305,9 @@ final readonly class NotesModel implements Reducer
         $field = Component::bind(
             'field',
             $this->field ?? TextInput::new(),
-            static fn (self $model, TextInput $field): self => $model->cloneWith(field: $field),
+            static fn (self $model, TextInput $field): self|UpdateResult => $model->echoes
+                ? new UpdateResult($model->cloneWith(field: $field), Cmd::message(new Heard('typed ' . $field->value())))
+                : $model->cloneWith(field: $field),
         );
 
         return match (true) {

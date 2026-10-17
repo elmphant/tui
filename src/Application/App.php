@@ -1058,7 +1058,7 @@ abstract readonly class App implements RoutesFocus
             return [$app, null];
         }
 
-        $updated = $this->applyComponentUpdates($app, $updates);
+        [$updated, $written] = $this->applyComponentUpdates($app, $updates);
 
         $ids = [];
         foreach ($updates as [$original]) {
@@ -1067,30 +1067,33 @@ abstract readonly class App implements RoutesFocus
 
         $result = $updated->onComponentsChanged($ids);
 
-        return [$updated->appModel($result), $result->command];
+        return [$updated->appModel($result), self::combineCommands($written, $result->command)];
     }
 
     /**
      * @param static                                                       $app
      * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
      *
-     * @return static
+     * @return array{static, ?Cmd} the App, and what writing the components back asked for
      */
-    private function applyComponentUpdates(self $app, array $updates): self
+    private function applyComponentUpdates(self $app, array $updates): array
     {
+        $commands = [];
+
         foreach (ComponentWriteBack::foldedIntoAncestors($updates) as [$original, $widget]) {
             // A mounted component writes back through the sub-model the tree held
             // when it was collected, so it is looked up in the app as it stands or a
             // second write restores the sub-model the first one changed.
             $current = $app->componentRegistry()->get($original->id) ?? $original;
             $replaced = $current->replaceIn($app, $widget);
-            ComponentWriteBack::verifyStored($current, $widget, $app, $replaced);
+            ComponentWriteBack::verifyStored($current, $widget, $app, $replaced->model);
             /** @var static $app */
-            $app = $replaced;
+            $app = $replaced->model;
+            $commands[] = $replaced->command;
         }
 
         ComponentWriteBack::verify($app->componentRegistry(), $updates);
 
-        return $app;
+        return [$app, self::combineCommands(...$commands)];
     }
 }

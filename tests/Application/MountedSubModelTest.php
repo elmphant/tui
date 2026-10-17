@@ -37,7 +37,7 @@ final class MountedSubModelTest extends TestCase
 
         self::assertNotNull($component, 'the walk has to reach through the mount');
 
-        $updated = $component->replaceIn($app, TextInput::new()->withValue('after'));
+        $updated = $component->replaceIn($app, TextInput::new()->withValue('after'))->model;
 
         self::assertInstanceOf(MountingApp::class, $updated);
         self::assertSame('after', $updated->panel->field->value());

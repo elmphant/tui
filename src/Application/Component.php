@@ -8,6 +8,7 @@ use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -70,13 +71,14 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
 
     /**
      * The owner is whatever bound it: the root App, or a sub-model that a Mount
-     * joins to one.
+     * joins to one. The replacement may answer with an UpdateResult when writing
+     * the widget back also asks for work, such as loading what it now shows.
      *
      * @template TBoundOwner of Reducer
      * @template TBoundWidget of Interactive
      *
-     * @param TBoundWidget                                    $widget
-     * @param Closure(TBoundOwner, TBoundWidget): TBoundOwner $replace
+     * @param TBoundWidget                                                                $widget
+     * @param Closure(TBoundOwner, TBoundWidget): (TBoundOwner|UpdateResult<TBoundOwner>) $replace
      *
      * @return self<TBoundWidget>
      */
@@ -145,7 +147,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
         return new self(
             id: $id,
             widget: $child,
-            replace: static fn (Reducer $owner, Interactive $updated): Reducer => $replace($owner, $container->withChildAt($index, $updated)),
+            replace: static fn (Reducer $owner, Interactive $updated): Reducer|UpdateResult => $replace($owner, $container->withChildAt($index, $updated)),
             address: $this->address,
         );
     }
@@ -165,7 +167,13 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
         return new self(
             id: $this->id,
             widget: $this->widget,
-            replace: $replace === null ? null : static fn (App $app, Interactive $widget): App => $mount($app, $replace($owner, $widget)),
+            replace: $replace === null ? null : static function (App $app, Interactive $widget) use ($owner, $mount, $replace, $address): UpdateResult {
+                $answered = $replace($owner, $widget);
+
+                return $answered instanceof UpdateResult
+                    ? new UpdateResult($mount($app, $answered->model), $address($answered->command))
+                    : new UpdateResult($mount($app, $answered));
+            },
             address: $address,
         );
     }
@@ -192,19 +200,23 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
         return $command === null || $address === null ? $command : $address($command);
     }
 
-    public function replaceIn(App $app, Interactive $widget): App
+    /**
+     * @return UpdateResult<App>
+     */
+    public function replaceIn(App $app, Interactive $widget): UpdateResult
     {
         if ($this->replace === null) {
             throw new LogicException(sprintf('Component "%s" was named, not bound: its host drives it, so nothing can be written back', $this->id->value));
         }
 
-        $updated = ($this->replace)($app, $widget);
+        $answered = ($this->replace)($app, $widget);
+        $result = $answered instanceof UpdateResult ? $answered : new UpdateResult($answered);
 
-        if ($updated::class !== $app::class) {
-            throw new LogicException(sprintf('Component "%s" replacement must return %s, got %s', $this->id->value, $app::class, $updated::class));
+        if ($result->model::class !== $app::class) {
+            throw new LogicException(sprintf('Component "%s" replacement must return %s, got %s', $this->id->value, $app::class, get_debug_type($result->model)));
         }
 
-        return $updated;
+        return $result;
     }
 
     private static function assertSafeReplacement(Closure $replace): void
