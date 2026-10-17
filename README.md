@@ -550,6 +550,8 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `CheckboxGroup` | Group of checkboxes |
 | `TextInput` | Single-line text input with cursor, char limit, echo mode; underlined field bounds by default (`withDecoration(InputDecoration::Filled\|Underline\|None)`) |
 | `Button` | Labelled press action |
+| `Form` | Named fields as focus stops, with labels, required marks, inline problems and a submit button pinned to the foot — see [Forms](#forms) |
+| `ChoiceField` | One of a set of values by label: a row of marks where they fit, a filterable list where they would wrap |
 | `ProgressBar` | Fractional fill bar with spring animation |
 | `ListView` | Scrollable list with custom `ListItem` rendering; wraps long item text, keeps an externally moved cursor visible |
 | `Table` | Interactive table: cursor, selection, mouse, scrolling; constraint-based columns, wrapping cells, optional header (`withHeader(false)`) |
@@ -762,6 +764,38 @@ Broadcasting it to every pane is safe: ownership is token-checked and foreign me
 are dropped. A host that drops unknown message types silently swallows every click in a
 popup: `FilterableList`, for one, forwards only `KeyMsg` today, so a `Dropdown` inside it
 would never see one.
+
+### Forms
+
+A `Form` is a pane of named fields with a submit button pinned to its foot. Each
+field is a real widget the keyboard stops at, so tab walks them and a click
+lands on one, and what the form holds is asked of those widgets — the app
+keeps no copy of its own:
+
+```php
+use Elmphant\Tui\Core\{ComponentId, Message};
+use Elmphant\Tui\Widget\Form\{Field, Form, ShowErrors};
+
+final readonly class CreateUser implements Message {}
+
+$form = Form::new('Create backend user')
+    ->withField(Field::text('username', 'Username', 'The login name')->required())
+    ->withField(Field::text('password', 'Password')->secret())
+    ->withField(Field::choice('site', 'Site', ['main' => 'Main website', 'shop' => 'Shop']))
+    ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
+    ->withSubmit('Run', new CreateUser(), foot: '❯ backend:user:create');
+
+$tried = $form->submitted();                          // from now on, problems show under their fields
+$tried->missing();                                    // ['username']
+$tried->stopOf('username', ComponentId::named('form')); // where Cmd::focus() sends the keyboard
+$form->values();                                      // ['username' => '', 'password' => '', 'site' => null, 'admin' => false]
+$form->withErrorsShown(ShowErrors::AfterLeaving);     // or tell a field's problem as soon as the reader leaves it
+```
+
+Bind it like any pane (`Component::bind('form', $this->form, …)`) and answer the
+submit message in `onMessage()`. `Field::choice()` shows a row of marks where they
+fit and collapses into a filterable list where they would wrap; `Field::of()`
+takes any widget that implements `HoldsAValue`.
 
 ### Example: Settings Form
 
