@@ -52,7 +52,7 @@ final readonly class PlainDecorator implements Widget, WidgetContainer
     {
     }
 
-    private function wrapped(): Widget
+    protected function wrapped(): Widget
     {
         return $this->child;
     }
@@ -73,7 +73,7 @@ final readonly class TallDecorator implements Widget, WidgetContainer
         return Sizing::of($this->wrappedSizing()->columns, Constraint::exact(3));
     }
 
-    private function wrapped(): Widget
+    protected function wrapped(): Widget
     {
         return $this->child;
     }

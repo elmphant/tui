@@ -43,5 +43,5 @@ trait DecoratesOneChild
         $this->wrapped()->render($frame, $area, $context);
     }
 
-    abstract private function wrapped(): Widget;
+    abstract protected function wrapped(): Widget;
 }
