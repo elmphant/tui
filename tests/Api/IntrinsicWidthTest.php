@@ -37,6 +37,8 @@ use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
 use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
 use Elmphant\Tui\Widget\Form\ChoiceField;
+use Elmphant\Tui\Widget\Form\Form;
+use Elmphant\Tui\Widget\Form\FormFoot;
 use Elmphant\Tui\Widget\Layout\Breakpoint;
 use Elmphant\Tui\Widget\Layout\Flex;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -204,6 +206,7 @@ final class IntrinsicWidthTest extends TestCase
     public static function rowTakers(): iterable
     {
         yield 'TextInput' => [TextInput::new()->withValue('typed')];
+        yield 'FormFoot' => [new FormFoot('run it', 7)];
         yield 'FocusGutter' => [FocusGutter::around(TextInput::new()->withValue('typed'))];
         yield 'Table' => [Table\Table::fromCells([Column::new('A', Constraint::flex())], [['x']])];
         yield 'FilterableCheckboxGroup' => [FilterableCheckboxGroup::new(['alpha'])];
@@ -254,6 +257,7 @@ final class IntrinsicWidthTest extends TestCase
         yield 'Overlay' => [Overlay::new(Separator::new(), Separator::new())];
         yield 'Split' => [Split::row(new SplitState([1, 1]), Separator::new(), Separator::new())];
         yield 'Breakpoint' => [Breakpoint::at(10, Separator::new(), Separator::new())];
+        yield 'Form' => [Form::new('title')];
     }
 
     /**
