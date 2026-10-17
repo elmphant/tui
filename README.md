@@ -939,11 +939,9 @@ Use `ModelHarness` for most application tests. It drives the same
 no terminal I/O and never executes commands:
 
 ```php fragment
-use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 
-$app = ModelHarness::for(new Counter(), width: 40, height: 5)
-    ->dispatch(new KeyMsg('k'));
+$app = ModelHarness::for(new Counter(), width: 40, height: 5)->press('k');
 
 self::assertSame(
     'Count: 1',
@@ -951,9 +949,18 @@ self::assertSame(
 );
 self::assertNull($app->lastCommand());
 
-$app->dispatch(new KeyMsg('x'));
+$app->press('x');
 self::assertNotNull($app->lastCommand()); // described, not executed
+
+// Input goes in the way a reader gives it, in the key spelling Keybindings use:
+$app->press('tab', 'shift+tab', 'ctrl+r', 'enter');
+$app->type('cache:flush');
+$app->click('Run');          // where "Run" is drawn now: press and release
+$app->wheel('Output', 3);    // three notches down; -3 is up
 ```
+
+A test that calls `update()` itself builds the same messages with `UserInput`:
+`UserInput::key('shift+tab')`, `UserInput::typed('ok')`, `UserInput::click($column, $row)`.
 
 Call `initialize()` to capture the model's initial command, `resize()` to test
 responsive behavior, `model()` to assert typed application state, and

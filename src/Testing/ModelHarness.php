@@ -129,6 +129,65 @@ final class ModelHarness
     }
 
     /**
+     * Keys in the spelling Keybindings use, one after the other.
+     *
+     * @return self<TModel>
+     */
+    public function press(string ...$patterns): self
+    {
+        foreach ($patterns as $pattern) {
+            $this->dispatch(UserInput::key($pattern));
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return self<TModel>
+     */
+    public function type(string $text): self
+    {
+        foreach (UserInput::typed($text) as $key) {
+            $this->dispatch($key);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Presses and lets go where the text is drawn now; $nth = 1 is its second
+     * place on screen.
+     *
+     * @return self<TModel>
+     */
+    public function click(string $text, int $nth = 0): self
+    {
+        ['row' => $row, 'column' => $column] = $this->whereIs($text, $nth);
+
+        return $this->clickAt($column, $row);
+    }
+
+    /**
+     * @return self<TModel>
+     */
+    public function clickAt(int $column, int $row): self
+    {
+        return $this->dispatch(UserInput::click($column, $row))->dispatch(UserInput::release($column, $row));
+    }
+
+    /**
+     * Turns the wheel over the text: notches down, or up where negative.
+     *
+     * @return self<TModel>
+     */
+    public function wheel(string $text, int $notches): self
+    {
+        ['row' => $row, 'column' => $column] = $this->whereIs($text, 0);
+
+        return $this->dispatch(UserInput::wheel($column, $row, $notches));
+    }
+
+    /**
      * Resizes the terminal the model believes it is running in: the new area
      * arrives as a ResizeMsg, exactly as the runtime delivers it.
      *
@@ -207,6 +266,15 @@ final class ModelHarness
     public function renderScreen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
+    }
+
+    /**
+     * @return array{row: int, column: int}
+     */
+    private function whereIs(string $text, int $nth): array
+    {
+        return $this->renderScreen()->find($text, $nth)
+            ?? throw new LogicException(sprintf('"%s" is not on screen', $text));
     }
 
     /**
