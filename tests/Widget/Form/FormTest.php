@@ -149,13 +149,22 @@ final class FormTest extends TestCase
     }
 
     #[Test]
-    public function atItsLeastHeightAFormStillShowsItsFootAndARowOfItsFields(): void
+    public function atItsLeastHeightAFormStillShowsItsFootAndTheFieldTheKeyboardIsIn(): void
     {
         $form = self::userForm();
         $screen = WidgetHarness::for($form, 70, $form->leastHeight(70))->screen();
 
         self::assertStringContainsString('Run', $screen->plainText());
-        self::assertStringContainsString('Username', $screen->plainText());
+        self::assertStringContainsString('▎', $screen->lineAt($screen->locate('├')['row'] - 1));
+    }
+
+    #[Test]
+    public function itsLeastHeightGivesUpTheBlankAboveTheFoot(): void
+    {
+        $form = Form::new('About')->withIntro(Text::new('Clears every cache'))->withSubmit('Run', new TestMessage('run'));
+        $screen = WidgetHarness::for($form, 70, $form->leastHeight(70))->screen();
+
+        self::assertStringContainsString('Clears every cache', $screen->lineAt($screen->locate('├')['row'] - 1));
     }
 
     #[Test]
@@ -174,6 +183,23 @@ final class FormTest extends TestCase
         self::assertLessThan($screen->locate('Username')['row'], $screen->locate('Creates a user')['row']);
         self::assertSame('ada', $form->widget()->values()['username']);
         self::assertEquals(ComponentId::named('form/5'), $intro->stopOf('password', ComponentId::named('form')));
+    }
+
+    #[Test]
+    public function aFieldScrolledToComesIntoViewWithItsLabel(): void
+    {
+        $form = WidgetHarness::for(self::tallForm(), 50, 10)->press('tab', 'tab', 'tab', 'tab');
+
+        self::assertStringContainsString('Field 5', $form->screen()->plainText());
+    }
+
+    #[Test]
+    public function reachingTheSubmitLeavesTheFieldsWhereTheyWere(): void
+    {
+        $onTheLast = WidgetHarness::for(self::tallForm(), 50, 12)->press('tab', 'tab', 'tab', 'tab', 'tab');
+        self::assertStringContainsString('Field 6', $onTheLast->screen()->plainText());
+
+        self::assertStringContainsString('Field 6', $onTheLast->press('tab')->screen()->plainText());
     }
 
     #[Test]
@@ -210,6 +236,16 @@ final class FormTest extends TestCase
         $password = $screen->locate('Password');
         self::assertSame('▎', $screen->textAt($password['row'], $password['column'] - 2, 1));
         self::assertNotSame('▎', $screen->textAt($screen->locate('Username')['row'], $password['column'] - 2, 1));
+    }
+
+    private static function tallForm(): Form
+    {
+        $form = Form::new('Tall')->withSubmit('Run', new TestMessage('run'));
+        foreach (range(1, 6) as $number) {
+            $form = $form->withField(Field::text('field' . $number, 'Field ' . $number));
+        }
+
+        return $form;
     }
 
     private static function userForm(): Form

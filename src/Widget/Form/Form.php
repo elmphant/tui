@@ -222,7 +222,7 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
      */
     public function leastHeight(int $width): int
     {
-        return $this->drawn()->withChildren([Text::new(' ')])->measureHeight($width);
+        return $this->drawn(gapAboveTheFoot: 0)->withChildren([Text::new(' ')])->measureHeight($width);
     }
 
     public function navigation(): Navigation
@@ -281,8 +281,12 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
             ? [...$this->left, $this->keyboardIn]
             : $this->left;
 
+        $followed = $child === $this->submitChild() && $this->fields !== [] ? \count($this->fields) - 1 : $at;
+
         return $this->cloneWith(
-            pane: $this->pane->withKeyboardAt($child !== null && $child < $this->submitChild() ? $child : null),
+            pane: $followed === null
+                ? $this->pane->withKeyboardAt(null)
+                : $this->pane->withFollowChild($this->widgetChild($followed) - self::WIDGET_OF_FIELD, self::WIDGET_OF_FIELD + 1),
             keyboardIn: $in,
             left: $left,
         );
@@ -322,7 +326,7 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         $this->renderBar($frame, $area, $pane, $context);
     }
 
-    private function drawn(): Panel
+    private function drawn(int $gapAboveTheFoot = 1): Panel
     {
         $pane = $this->pane
             ->withChildren($this->rows())
@@ -330,7 +334,7 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
 
         return $this->submit === null
             ? $pane
-            : $pane->withFooter(new FormFoot($this->foot, $this->buttonWidth()), ruled: true, caption: $this->caption(), gap: 1);
+            : $pane->withFooter(new FormFoot($this->foot, $this->buttonWidth()), ruled: true, caption: $this->caption(), gap: $gapAboveTheFoot);
     }
 
     /**
