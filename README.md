@@ -168,7 +168,9 @@ capturing object state, preventing a cached view from writing an updated widget
 back into a stale App value. Always update the supplied `$app`; prefer explicit
 typed methods such as `$app->withForm($form)` when the transition has
 invariants. PHPStan also infers one App type across the closure input and
-return.
+return. When writing the widget back should also start work, for example
+loading what a newly selected row shows, return
+`new UpdateResult($app->withList($list), $command)` instead of the App.
 
 ### Responsive terminal layouts
 
