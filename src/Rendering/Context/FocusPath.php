@@ -97,9 +97,21 @@ final class FocusPath
         $this->depth = 0;
     }
 
+    /**
+     * While a mount is drawn, the focused component by its name inside that mount,
+     * or null when the keyboard is outside it.
+     */
     public function focusedComponent(): ?ComponentId
     {
-        return $this->focus->focused();
+        $focused = $this->focus->focused();
+
+        if ($this->mount === '' || $focused === null) {
+            return $focused;
+        }
+
+        return $focused->isUnder(ComponentId::named($this->mount))
+            ? ComponentId::named(substr($focused->value, \strlen($this->mount) + 1))
+            : null;
     }
 
     /**

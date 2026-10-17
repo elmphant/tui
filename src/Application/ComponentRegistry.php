@@ -318,6 +318,13 @@ final readonly class ComponentRegistry
             }
         }
 
+        if ($self instanceof Mount) {
+            $scopes = array_map(
+                static fn (array $ids): array => array_map(static fn (string $id): string => $self->id->value . '/' . $id, $ids),
+                $scopes,
+            );
+        }
+
         if ($self instanceof FocusScope) {
             $scopes[] = array_map(
                 static fn (Component $component): string => $component->id->value,

@@ -10,6 +10,7 @@ use Elmphant\Tui\Application\Initializes;
 use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
@@ -52,6 +53,14 @@ final class NamedMountTest extends TestCase
     }
 
     #[Test]
+    public function insideAMountTheFocusedComponentGoesByItsLocalName(): void
+    {
+        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(namer: true)), 40, 6)->initialize();
+
+        self::assertStringContainsString('focused: field', $harness->renderScreen()->plainText());
+    }
+
+    #[Test]
     public function whatAMountedComponentAsksForComesBackToItsModel(): void
     {
         $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->initialize()->press('enter');
@@ -85,6 +94,17 @@ final class NamedMountTest extends TestCase
     }
 
     #[Test]
+    public function aFocusScopeInAMountKeepsTabToItsOwnControls(): void
+    {
+        $host = new HostOfAScopedMount();
+
+        self::assertSame(
+            ['scoped/a', 'scoped/b'],
+            array_map(static fn (ComponentId $id): string => $id->value, $host->focusableIds(new FocusState(ComponentId::named('scoped/a')))),
+        );
+    }
+
+    #[Test]
     public function aMountBehindAnOpenModalHearsNoKey(): void
     {
         $harness = ModelHarness::for(new HostOfAQuietMount(behindAModal: true), 40, 12)->initialize()->press('r');
@@ -106,6 +126,33 @@ final class NamedMountTest extends TestCase
         $harness = ModelHarness::for(new HostOfAHiddenMount(), 40, 6)->initialize();
 
         self::assertSame(['started'], $harness->model()->hidden->heard);
+    }
+}
+
+final readonly class ScopedModel implements Reducer
+{
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return UpdateResult::ignored($this);
+    }
+
+    public function view(): Widget
+    {
+        $field = static fn (string $id): Component => Component::bind($id, TextInput::new(), static fn (self $model, TextInput $field): self => $model);
+
+        return Layout::vertical(new FilterRowScope(Layout::horizontal($field('a'), $field('b'))), $field('pane'));
+    }
+}
+
+final readonly class HostOfAScopedMount extends App
+{
+    public function __construct(public ScopedModel $scoped = new ScopedModel())
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Mount::named('scoped', $this->scoped, $this->scoped->view(), static fn (self $host, ScopedModel $scoped): self => $host);
     }
 }
 
@@ -227,8 +274,12 @@ final readonly class NotesModel implements Reducer
     /**
      * @param list<string> $heard
      */
-    public function __construct(public ?TextInput $field = null, public array $heard = [], public bool $lamp = false)
-    {
+    public function __construct(
+        public ?TextInput $field = null,
+        public array $heard = [],
+        public bool $lamp = false,
+        public bool $namer = false,
+    ) {
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -248,9 +299,24 @@ final readonly class NotesModel implements Reducer
             static fn (self $model, TextInput $field): self => $model->cloneWith(field: $field),
         );
 
-        return $this->lamp
-            ? Layout::vertical(Component::bind('lamp', new Lamp(), static fn (self $model, Lamp $lamp): self => $model), $field)
-            : Layout::vertical($field);
+        return match (true) {
+            $this->lamp => Layout::vertical(Component::bind('lamp', new Lamp(), static fn (self $model, Lamp $lamp): self => $model), $field),
+            $this->namer => Layout::vertical($field, new FocusNamer()),
+            default => Layout::vertical($field),
+        };
+    }
+}
+
+final readonly class FocusNamer implements Widget
+{
+    public function sizing(): Sizing
+    {
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        $frame->putString($area->x, $area->y, 'focused: ' . ($context->focusedComponent()->value ?? 'nothing'));
     }
 }
 
