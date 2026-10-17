@@ -69,6 +69,8 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         private ShowErrors $errorsShown = ShowErrors::AfterSubmit,
         private array $left = [],
         private ?string $keyboardIn = null,
+        private ?Widget $intro = null,
+        private ?string $disabledBecause = null,
     ) {
     }
 
@@ -89,9 +91,34 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return $this->cloneWith(fields: array_values($fields));
     }
 
+    /**
+     * What the form is about, above its fields and scrolling with them.
+     */
+    public function withIntro(?Widget $intro): self
+    {
+        return $this->cloneWith(intro: $intro);
+    }
+
     public function withSubmit(string $label, Message $message, string $foot = ''): self
     {
-        return $this->cloneWith(submit: Button::new($label, $message), foot: $foot);
+        return $this->cloneWith(submit: Button::new($label, $message)->withDisabled($this->disabledBecause !== null), foot: $foot);
+    }
+
+    /**
+     * The line beside the submit button: what pressing it will do.
+     */
+    public function withFoot(string $foot): self
+    {
+        return $this->cloneWith(foot: $foot);
+    }
+
+    /**
+     * A submit that cannot be pressed, and the reason, which the rule above the foot
+     * gives in place of what is missing.
+     */
+    public function withSubmitDisabled(?string $because): self
+    {
+        return $this->cloneWith(submit: $this->submit?->withDisabled($because !== null), disabledBecause: $because);
     }
 
     public function withErrorsShown(ShowErrors $shown): self
@@ -165,7 +192,7 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     {
         $at = $this->indexOf($name) ?? throw new LogicException(sprintf('The form has no field named "%s"', $name));
 
-        return ComponentId::named($form->value . '/' . self::widgetChild($at));
+        return ComponentId::named($form->value . '/' . $this->widgetChild($at));
     }
 
     public function sizing(): Sizing
@@ -178,6 +205,14 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return $this->drawn()->measureHeight($width);
     }
 
+    /**
+     * The rows that still show the foot and one row of what scrolls above it.
+     */
+    public function leastHeight(int $width): int
+    {
+        return $this->drawn()->withChildren([Text::new(' ')])->measureHeight($width);
+    }
+
     public function navigation(): Navigation
     {
         return Navigation::Never;
@@ -185,8 +220,10 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return $this->drawn()->update($message, $area)
-            ->mapModel(fn (Panel $pane): self => $pane === $this->drawn() ? $this : $this->cloneWith(pane: $pane));
+        $drawn = $this->drawn();
+
+        return $drawn->update($message, $area)
+            ->mapModel(fn (Panel $pane): self => $pane === $drawn ? $this : $this->cloneWith(pane: $pane));
     }
 
     /**
@@ -203,10 +240,11 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
             return $this->cloneWith(submit: $child);
         }
 
-        $field = $this->fields[intdiv($index, self::CHILDREN_PER_FIELD)] ?? null;
-        if ($field === null || $index !== self::widgetChild(intdiv($index, self::CHILDREN_PER_FIELD))) {
+        $at = $this->fieldOf($index);
+        if ($at === null || $index !== $this->widgetChild($at)) {
             return $this;
         }
+        $field = $this->fields[$at];
 
         if (!$child instanceof Focusable || !$child instanceof HoldsAValue) {
             throw new LogicException(sprintf('A field of a form is written back as a widget holding a value, got %s', $child::class));
@@ -221,8 +259,8 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
      */
     public function withKeyboardAt(?int $child): static
     {
-        $field = $child === null ? null : $this->fields[intdiv($child, self::CHILDREN_PER_FIELD)] ?? null;
-        $in = $child === $this->submitChild() ? null : $field?->name;
+        $at = $child === null ? null : $this->fieldOf($child);
+        $in = $at === null ? null : $this->fields[$at]->name;
         $left = $this->keyboardIn !== null && $this->keyboardIn !== $in && !\in_array($this->keyboardIn, $this->left, true)
             ? [...$this->left, $this->keyboardIn]
             : $this->left;
@@ -284,7 +322,7 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
      */
     private function rows(): array
     {
-        $rows = [];
+        $rows = $this->intro === null ? [] : [$this->intro];
         foreach ($this->fields as $field) {
             $rows[] = self::labelOf($field);
             $rows[] = $field->widget;
@@ -323,6 +361,10 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
 
     private function caption(): ?string
     {
+        if ($this->disabledBecause !== null) {
+            return $this->disabledBecause;
+        }
+
         foreach ($this->fields as $field) {
             if ($this->shows($field) && $field->problem() !== null) {
                 return self::BLOCKED_CAPTION;
@@ -349,12 +391,12 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
 
     private function renderBar(Frame $frame, Rect $area, Panel $pane, RenderContext $context): void
     {
-        $focused = $context->focusedChildIndex();
-        if ($focused === null || $focused >= $this->submitChild()) {
+        $at = $this->fieldOf($context->focusedChildIndex() ?? -1);
+        if ($at === null) {
             return;
         }
 
-        $first = intdiv($focused, self::CHILDREN_PER_FIELD) * self::CHILDREN_PER_FIELD;
+        $first = $this->widgetChild($at) - self::WIDGET_OF_FIELD;
         $placed = [...$pane->placedChildren($area)];
         $label = $placed[$first][1] ?? null;
         $widget = $placed[$first + self::WIDGET_OF_FIELD][1] ?? null;
@@ -371,12 +413,24 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
 
     private function submitChild(): int
     {
-        return \count($this->fields) * self::CHILDREN_PER_FIELD;
+        return $this->firstFieldChild() + \count($this->fields) * self::CHILDREN_PER_FIELD;
     }
 
-    private static function widgetChild(int $field): int
+    private function widgetChild(int $field): int
     {
-        return $field * self::CHILDREN_PER_FIELD + self::WIDGET_OF_FIELD;
+        return $this->firstFieldChild() + $field * self::CHILDREN_PER_FIELD + self::WIDGET_OF_FIELD;
+    }
+
+    private function fieldOf(int $child): ?int
+    {
+        $offset = $child - $this->firstFieldChild();
+
+        return $offset < 0 || $child >= $this->submitChild() ? null : intdiv($offset, self::CHILDREN_PER_FIELD);
+    }
+
+    private function firstFieldChild(): int
+    {
+        return $this->intro === null ? 0 : 1;
     }
 
     private function indexOf(string $name): ?int

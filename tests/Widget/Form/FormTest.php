@@ -6,12 +6,15 @@ namespace Elmphant\Tui\Tests\Widget\Form;
 
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Attr;
+use Elmphant\Tui\Testing\UserInput;
 use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Form\Field;
 use Elmphant\Tui\Widget\Form\Form;
 use Elmphant\Tui\Widget\Form\ShowErrors;
+use Elmphant\Tui\Widget\Prose\Text;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -129,9 +132,56 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function theFootCanBeRewrittenAsTheFieldsChange(): void
+    {
+        $screen = WidgetHarness::for(self::userForm()->withFoot('❯ backend:user:create ada'), 70, 24)->screen();
+
+        self::assertStringContainsString('❯ backend:user:create ada', $screen->plainText());
+    }
+
+    #[Test]
+    public function aDisabledSubmitSaysWhyAndSendsNothing(): void
+    {
+        $form = WidgetHarness::for(self::userForm()->withSubmitDisabled('not from here'), 70, 24)->click('Run', offset: 1);
+
+        self::assertStringContainsString('not from here', $form->screen()->plainText());
+        self::assertSame([], $form->issued(MessageCmd::class));
+    }
+
+    #[Test]
+    public function atItsLeastHeightAFormStillShowsItsFootAndARowOfItsFields(): void
+    {
+        $form = self::userForm();
+        $screen = WidgetHarness::for($form, 70, $form->leastHeight(70))->screen();
+
+        self::assertStringContainsString('Run', $screen->plainText());
+        self::assertStringContainsString('Username', $screen->plainText());
+    }
+
+    #[Test]
     public function aFieldIsNamedForTheKeyboardToBeSentTo(): void
     {
         self::assertEquals(ComponentId::named('form/4'), self::userForm()->stopOf('password', ComponentId::named('form')));
+    }
+
+    #[Test]
+    public function anIntroStandsAboveTheFieldsAndTheFieldsStillTakeTheKeyboard(): void
+    {
+        $intro = self::userForm()->withIntro(Text::new('Creates a user in the backend'));
+        $form = WidgetHarness::for($intro, 70, 24)->type('ada');
+
+        $screen = $form->screen();
+        self::assertLessThan($screen->locate('Username')['row'], $screen->locate('Creates a user')['row']);
+        self::assertSame('ada', $form->widget()->values()['username']);
+        self::assertEquals(ComponentId::named('form/5'), $intro->stopOf('password', ComponentId::named('form')));
+    }
+
+    #[Test]
+    public function aKeyTheFormHasNoUseForIsLeftToItsHost(): void
+    {
+        $form = self::userForm();
+
+        self::assertSame($form, $form->update(UserInput::key('esc'), Rect::fromSize(70, 24))->model);
     }
 
     #[Test]

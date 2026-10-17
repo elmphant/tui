@@ -13,6 +13,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Choice\RadioRow;
 use Elmphant\Tui\Widget\Filter\FilterableList;
@@ -44,6 +45,8 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
         private array $options,
         private RadioRow $row,
         private Dropdown $list,
+        private ?Matcher $matcher,
+        private bool $clearable,
     ) {
     }
 
@@ -52,12 +55,12 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
      */
     public static function new(array $options): self
     {
-        return self::choosing($options, null);
+        return self::built($options, null, null, false);
     }
 
     public function withValue(?string $value): self
     {
-        return self::choosing($this->options, $value);
+        return self::built($this->options, $value, $this->matcher, $this->clearable);
     }
 
     /**
@@ -67,7 +70,23 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
      */
     public function withOptions(array $options): self
     {
-        return self::choosing($options, $this->value());
+        return self::built($options, $this->value(), $this->matcher, $this->clearable);
+    }
+
+    /**
+     * How the collapsed list narrows to what the reader types.
+     */
+    public function withMatcher(Matcher $matcher): self
+    {
+        return self::built($this->options, $this->value(), $matcher, $this->clearable);
+    }
+
+    /**
+     * Choosing what is already chosen takes it back, for a field that may be left empty.
+     */
+    public function withClearable(bool $clearable = true): self
+    {
+        return self::built($this->options, $this->value(), $this->matcher, $clearable);
     }
 
     public function value(): ?string
@@ -109,7 +128,7 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
             return $this->row->update($message, $area)
                 ->mapModel(fn (RadioRow $row): self => $row === $this->row ? $this : $this->cloneWith(
                     row: $row,
-                    list: self::listChoosing(array_values($this->options), $row->selectedValue()),
+                    list: self::listChoosing(array_values($this->options), $row->selectedValue(), $this->matcher, $this->clearable),
                 ));
         }
 
@@ -154,12 +173,13 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
     /**
      * @param array<array-key, string> $options
      */
-    private static function choosing(array $options, ?string $value): self
+    private static function built(array $options, ?string $value, ?Matcher $matcher, bool $clearable): self
     {
         $labels = array_values($options);
         $label = $value === null ? null : $options[$value] ?? null;
+        $row = RadioRow::new($labels)->withSelectedValue($label)->withClearable($clearable)->withWrapping(false);
 
-        return new self($options, RadioRow::new($labels)->withSelectedValue($label), self::listChoosing($labels, $label));
+        return new self($options, $row, self::listChoosing($labels, $label, $matcher, $clearable), $matcher, $clearable);
     }
 
     /**
@@ -167,12 +187,14 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
      *
      * @return Dropdown<FilterableList>
      */
-    private static function listChoosing(array $labels, ?string $label): Dropdown
+    private static function listChoosing(array $labels, ?string $label, ?Matcher $matcher, bool $clearable): Dropdown
     {
-        return Dropdown::new(FilterableList::new(array_map(
+        $list = FilterableList::new(array_map(
             static fn (string $label): SimpleListItem => new SimpleListItem($label),
             $labels,
-        ))->withSelectedValue($label)->withEmptyCaption(self::NOTHING_CHOSEN));
+        ))->withSelectedValue($label)->withEmptyCaption(self::NOTHING_CHOSEN)->withClearable($clearable);
+
+        return Dropdown::new($matcher === null ? $list : $list->withMatcher($matcher));
     }
 
     private function fitsOnOneRow(int $width): bool

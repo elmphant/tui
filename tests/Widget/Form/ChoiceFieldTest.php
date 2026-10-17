@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget\Form;
 
+use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Widget\Form\ChoiceField;
 use PHPUnit\Framework\Attributes\Test;
@@ -90,6 +91,35 @@ final class ChoiceFieldTest extends TestCase
 
         self::assertSame('shop', $field->withOptions(['shop' => 'Shop', 'docs' => 'Docs'])->value());
         self::assertNull($field->withOptions(['docs' => 'Docs'])->value());
+    }
+
+    #[Test]
+    public function aCollapsedFieldFiltersWithTheMatcherItIsGiven(): void
+    {
+        $initials = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return array_keys(array_filter(
+                    $haystack,
+                    static fn (string $label): bool => implode('', array_map(static fn (string $word): string => $word[0], explode(' ', strtolower($label)))) === $query,
+                ));
+            }
+        };
+
+        $field = WidgetHarness::for(ChoiceField::new(self::SITES)->withMatcher($initials), 30, 8)
+            ->press('enter')->type('ip')->press('enter');
+
+        self::assertSame('intranet', $field->widget()->value());
+    }
+
+    #[Test]
+    public function aClearableChoiceIsTakenBackByChoosingItAgain(): void
+    {
+        $row = WidgetHarness::for(ChoiceField::new(self::SITES)->withValue('main')->withClearable(), 80, 3)->press('enter');
+        $list = WidgetHarness::for(ChoiceField::new(self::SITES)->withValue('main')->withClearable(), 30, 8)->press('enter', 'enter');
+
+        self::assertNull($row->widget()->value());
+        self::assertNull($list->widget()->value());
     }
 
     #[Test]
