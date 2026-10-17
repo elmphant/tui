@@ -33,6 +33,10 @@ parameters:
         -
             identifier: new.static
             path: src/Support/Cloneable.php
+        # Shipped for applications' own wrappers; nothing in the package wraps one child plainly.
+        -
+            identifier: trait.unused
+            path: src/Widget/DecoratesOneChild.php
         # The component guard asks what two widgets are worth, not whether they
         # are the same instance: a model may rebuild a component from what it
         # kept rather than store the widget. PHP spells that comparison "==".
