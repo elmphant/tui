@@ -973,6 +973,8 @@ parent that addresses its children's results gets them addressed. Answering an
 effect the model never started, or one that has already ended, throws: the test
 learns the model did not ask for what the test assumed. When the same name runs
 in two scopes, name the one meant: `EffectId::named('load')->within('dashboard')`.
+A test that calls `update()` itself takes the command it got apart the same way:
+`Issued::in($result->command, ExecCmd::class)`.
 
 A test that calls `update()` itself builds the same messages with `UserInput`:
 `UserInput::key('shift+tab')`, `UserInput::typed('ok')`, `UserInput::click($column, $row)`.
