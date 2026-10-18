@@ -13,6 +13,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Widget\Feedback\ProgressBar;
 use Elmphant\Tui\Widget\Structure\Card;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,20 @@ final class CardTest extends TestCase
         self::assertSame('╔', $frame->characters[0], 'A double border replaces the rounded default');
         self::assertSame('N', $frame->characters[20 + 2], 'The replacement title');
         self::assertSame('f', $frame->characters[40 + 2], 'The replacement body');
+    }
+
+    #[Test]
+    public function aCardHoldsAWidgetBelowItsTitle(): void
+    {
+        $frame = new Frame(20, 4);
+        $card = Card::new('CPU', ProgressBar::new(0.5));
+
+        $card->render($frame, new Rect(0, 0, 20, 4), new RenderContext(Theme::dark()));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertStringContainsString('CPU', $screen->lineAt(1));
+        self::assertStringContainsString('50%', $screen->lineAt(2));
+        self::assertEquals([[ProgressBar::new(0.5), new Rect(2, 2, 16, 1)]], [...$card->placedChildren(new Rect(0, 0, 20, 4))]);
     }
 
     #[Test]
