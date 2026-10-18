@@ -59,7 +59,7 @@ abstract readonly class App implements RoutesFocus
     {
         return Cmd::combine($this->setup(), ...array_map(
             static fn (Mount $mount): ?Cmd => $mount->model instanceof Initializes ? $mount->addressed($mount->model->init()) : null,
-            $this->mounts(),
+            $this->allMounts(),
         ));
     }
 
@@ -241,15 +241,14 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * Every model this App mounts, drawn or not. By default, the mounts in the view.
-     * An App that shows only some of them at a time (tabs) should list them all,
-     * so answers still reach the hidden ones.
+     * The mounts this App holds but does not draw now, such as hidden tabs, so
+     * they start and hear their answers too. The mounts in the view are added.
      *
      * @return list<Mount<*>>
      */
     protected function mounts(): array
     {
-        return $this->componentRegistry()->mounts();
+        return [];
     }
 
     protected function geometry(Rect $screen): Geometry
@@ -478,13 +477,26 @@ abstract readonly class App implements RoutesFocus
      */
     private function mountNamed(ComponentId $id): ?Mount
     {
-        foreach ($this->mounts() as $mount) {
+        foreach ($this->allMounts() as $mount) {
             if ($mount->id->equals($id)) {
                 return $mount;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @return list<Mount<*>>
+     */
+    private function allMounts(): array
+    {
+        $mounts = [];
+        foreach ([...$this->componentRegistry()->mounts(), ...$this->mounts()] as $mount) {
+            $mounts[$mount->id->value] ??= $mount;
+        }
+
+        return array_values($mounts);
     }
 
     /**

@@ -135,6 +135,35 @@ final class NamedMountTest extends TestCase
 
         self::assertSame(['started'], $harness->model()->hidden->heard);
     }
+
+    #[Test]
+    public function aDrawnMountStartsAndHearsItsAnswerBesideTheHiddenOnesAnAppLists(): void
+    {
+        $harness = ModelHarness::for(new HostOfAShownAndAHiddenMount(), 40, 6)->initialize();
+
+        self::assertSame(['started'], $harness->model()->shown->heard);
+    }
+}
+
+final readonly class HostOfAShownAndAHiddenMount extends App
+{
+    use Cloneable;
+
+    public function __construct(
+        public StartingModel $shown = new StartingModel(),
+        public StartingModel $hidden = new StartingModel(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Mount::named('shown', $this->shown, Text::new('shown'), static fn (self $host, StartingModel $shown): self => $host->cloneWith(shown: $shown));
+    }
+
+    protected function mounts(): array
+    {
+        return [Mount::named('hidden', $this->hidden, Text::new('hidden'), static fn (self $host, StartingModel $hidden): self => $host->cloneWith(hidden: $hidden))];
+    }
 }
 
 final readonly class ScopedModel implements Reducer
