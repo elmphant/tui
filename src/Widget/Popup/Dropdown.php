@@ -221,7 +221,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         // drawn anyway, the list would hang over rows the reader has moved to and
         // no key of theirs would reach it to shut it.
         if ($this->open && $this->drawsFocused($context)) {
-            $context->float($frame, $this->popup(), $area);
+            $context->float($frame, $this->popup(), self::anchorIn($area));
         }
     }
 
@@ -327,11 +327,17 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
      * one-row anchor. A paste carries no screen, and the field it lands in
      * reads only the width.
      */
-    private function popupContentArea(Rect $anchor, ?Rect $screen): Rect
+    private function popupContentArea(Rect $area, ?Rect $screen): Rect
     {
         $popup = $this->popup();
+        $anchor = self::anchorIn($area);
 
         return $popup->contentArea($screen === null ? $anchor : $popup->placement($anchor, $screen));
+    }
+
+    private static function anchorIn(Rect $area): Rect
+    {
+        return new Rect($area->x, $area->y, $area->width, 1);
     }
 
     private function popup(): PopupFrame

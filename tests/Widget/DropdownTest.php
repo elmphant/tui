@@ -18,6 +18,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Choice\Select;
@@ -51,6 +52,18 @@ final class DropdownTest extends TestCase
         self::assertInstanceOf(Dropdown::class, $open);
         self::assertTrue($open->isOpen(), 'Enter must have opened it');
         self::assertSame(['Esc' => 'close'], $open->hints());
+    }
+
+    #[Test]
+    public function givenMoreThanOneRowTheListOpensRightUnderTheRowItDraws(): void
+    {
+        $screen = WidgetHarness::for(Dropdown::new(Select::new(['Inbox', 'Work', 'Home'])), width: 40, height: 12)
+            ->press('enter')
+            ->screen();
+
+        self::assertSame(0, $screen->rowOf('▾'));
+        self::assertSame(1, $screen->rowOf('╭'));
+        self::assertNotNull($screen->find('Work'));
     }
 
     #[Test]
