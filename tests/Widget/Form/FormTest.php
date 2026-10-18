@@ -134,6 +134,27 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function enterInATextFieldMovesOnToTheNextField(): void
+    {
+        $form = WidgetHarness::for(self::userForm(), 70, 24)->type('ada')->press('enter')->type('secret');
+
+        self::assertSame('secret', $form->widget()->values()['password']);
+    }
+
+    #[Test]
+    public function enterInTheLastFieldSubmits(): void
+    {
+        $form = Form::new('Login')
+            ->withField(Field::text('username', 'Username'))
+            ->withField(Field::text('password', 'Password'))
+            ->withSubmit('Log in', new TestMessage('login'));
+
+        $harness = WidgetHarness::for($form, 70, 24)->press('tab')->type('secret')->press('enter');
+
+        self::assertEquals([new MessageCmd(new TestMessage('login'))], $harness->issued(MessageCmd::class));
+    }
+
+    #[Test]
     public function theSubmitButtonIsTheLastStopAndSendsItsMessage(): void
     {
         $form = WidgetHarness::for(self::userForm(), 70, 24)->press('tab', 'tab', 'tab', 'tab', 'enter');

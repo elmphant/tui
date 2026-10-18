@@ -105,7 +105,7 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
 
         return match (true) {
             $message instanceof KeyMsg
-                && $this->effectiveKeybindings()->matches($message, Actions::SELECT) => new UpdateResult($this, Cmd::message($this->message)),
+                && $this->effectiveKeybindings()->matches($message, Actions::SELECT) => new UpdateResult($this, $this->press()),
             $message instanceof MouseMsg
                 && $message->action === MouseAction::Press => new UpdateResult($this->withArmed($message->inRect($area))),
             $message instanceof MouseMsg
@@ -114,6 +114,14 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
                     : new UpdateResult($this->withArmed(false)),
             default => new UpdateResult($this),
         };
+    }
+
+    /**
+     * What pressing it sends; null while it is disabled.
+     */
+    public function press(): ?Cmd
+    {
+        return $this->disabled ? null : Cmd::message($this->message);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

@@ -236,6 +236,10 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
             return new UpdateResult($this, Cmd::message($this->cancel));
         }
 
+        if ($this->keyboardIn !== null && $message instanceof KeyMsg && $message->key === Key::Enter) {
+            return new UpdateResult($this, $this->enteredIn($this->keyboardIn));
+        }
+
         $drawn = $this->drawn();
 
         return $drawn->update($message, $area)
@@ -324,6 +328,17 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         }
 
         $this->renderBar($frame, $area, $pane, $context);
+    }
+
+    /**
+     * An enter the field leaves alone moves on to the next field, and submits from
+     * the last one.
+     */
+    private function enteredIn(string $field): ?Cmd
+    {
+        $last = $this->fields[\count($this->fields) - 1]->name;
+
+        return $field === $last && $this->submit !== null ? $this->submit->press() : Cmd::focusNext();
     }
 
     private function drawn(int $gapAboveTheFoot = 1): Panel
