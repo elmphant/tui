@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
@@ -49,6 +50,22 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
         $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->press('tab')->type('ne');
 
         self::assertSame(['n', 'edit'], $harness->model()->shortcuts);
+    }
+
+    #[Test]
+    public function aQuitLetterQuitsWhileAListHoldsTheKeyboard(): void
+    {
+        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->press('tab', 'q');
+
+        self::assertInstanceOf(QuitCmd::class, $harness->lastCommand());
+    }
+
+    #[Test]
+    public function aQuitLetterIsTypedWhileAFieldHoldsTheKeyboard(): void
+    {
+        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->type('q');
+
+        self::assertSame('q', $harness->model()->field->value());
     }
 
     #[Test]
@@ -111,6 +128,11 @@ final readonly class ShortcutsAroundAFieldApp extends App
     protected function applicationKeybindings(): Keybindings
     {
         return parent::applicationKeybindings()->merge(new Keybindings(['edit' => ['e', 'ctrl+e']]));
+    }
+
+    protected function quitBindings(): Keybindings
+    {
+        return new Keybindings(['quit' => ['q']]);
     }
 
     protected function onAction(string $action, KeyMsg $message): UpdateResult

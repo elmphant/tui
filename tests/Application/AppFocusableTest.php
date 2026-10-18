@@ -144,12 +144,12 @@ final class AppFocusableTest extends TestCase
     }
 
     #[Test]
-    public function noAutoQuitOnRegularKeysWithFocusables(): void
+    public function theQuitBindingQuitsWhileAPanelHoldsTheKeyboard(): void
     {
         $app = TwoPanelApp::create();
 
         $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24), self::keyboardOn('left-panel'));
-        self::assertNotInstanceOf(QuitCmd::class, $result->command);
+        self::assertInstanceOf(QuitCmd::class, $result->command);
     }
 
     #[Test]

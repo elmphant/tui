@@ -243,10 +243,8 @@ abstract readonly class App implements RoutesFocus
 
     /**
      * Extra keys that leave, on top of the ctrl chords applicationKeybindings()
-     * already reserves. Empty by default: an unmodified letter here is honoured
-     * only while no component holds focus, and an app that routes the keyboard
-     * itself registers no components, so the letter would never reach what is
-     * being typed into.
+     * already reserves. A letter here is typed instead while the focused
+     * component takes text.
      */
     protected function quitBindings(): Keybindings
     {
@@ -618,9 +616,7 @@ abstract readonly class App implements RoutesFocus
      */
     private function routeKeyByFocus(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
-        if ($this->componentRegistry()->focusable($holder) === null
-            && $this->resolvedQuitBindings()->matches($message, 'quit')
-        ) {
+        if ($this->resolvedQuitBindings()->matches($message, 'quit')) {
             return new UpdateResult($this, Cmd::quit());
         }
 
