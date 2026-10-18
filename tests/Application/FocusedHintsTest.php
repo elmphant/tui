@@ -11,7 +11,10 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -20,7 +23,9 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\PublishesHints;
@@ -76,6 +81,77 @@ final class FocusedHintsTest extends TestCase
             $driven->focusedHints(),
             'a footer names the keys vim mode made active, not the ones it was authored with',
         );
+    }
+
+    #[Test]
+    public function aWidgetNamesTheKeyThatMovesTheKeyboardOnByItsAction(): void
+    {
+        $driven = ModelHarness::for(new FocusCyclingApp(), 40, 10)->initialize();
+
+        self::assertSame(['Tab' => 'next pane'], $driven->focusedHints());
+    }
+
+    #[Test]
+    public function theKeyNamedFollowsTheAppsOwnFocusCycleBinding(): void
+    {
+        $driven = ModelHarness::for(new FocusCyclingApp(rebound: true), 40, 10)->initialize();
+
+        self::assertSame(['Ctrl+N' => 'next pane'], $driven->focusedHints());
+    }
+}
+
+final readonly class FocusCyclingApp extends App
+{
+    public function __construct(private bool $rebound = false)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('pane', new NextPaneHint(), static fn (self $app): self => $app);
+    }
+
+    protected function focusCycleBindings(): Keybindings
+    {
+        return $this->rebound
+            ? new Keybindings([Actions::FOCUS_CYCLE => ['ctrl+n'], Actions::FOCUS_PREVIOUS_CYCLE => ['ctrl+p']])
+            : parent::focusCycleBindings();
+    }
+}
+
+final readonly class NextPaneHint implements Focusable, KeybindingsAware, PublishesHints
+{
+    use Cloneable;
+    use KeybindingsAwareBehavior;
+
+    public function __construct(
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
+    ) {
+    }
+
+    public static function defaultKeybindings(): Keybindings
+    {
+        return Keybindings::empty();
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints(['next pane' => Actions::FOCUS_CYCLE]);
+    }
+
+    public function sizing(): Sizing
+    {
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return UpdateResult::ignored($this);
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
     }
 }
 

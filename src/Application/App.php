@@ -975,9 +975,10 @@ abstract readonly class App implements RoutesFocus
         $widget = $this->componentRegistry()->get($focused)?->widget;
 
         // The stored widget is the authored one: routing hands the globals over on
-        // the way in and unwraps again, so nothing kept has them.
+        // the way in and unwraps again, so nothing kept has them. The focus cycle
+        // keys are added here only, so a widget can name them but never answers them.
         if ($widget instanceof KeybindingsAware) {
-            $widget = $widget->withGlobalKeybindings($this->globalKeybindings());
+            $widget = $widget->withGlobalKeybindings($this->globalKeybindings()->append($this->focusCycleBindings()));
         }
 
         return $widget instanceof PublishesHints ? $widget->hints() : [];
