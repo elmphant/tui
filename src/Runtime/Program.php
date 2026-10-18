@@ -129,6 +129,10 @@ final class Program
     private ?Suspension $runSuspension = null;
     private bool $ticking = false;
     private ?Theme $theme = null;
+
+    private ?Theme $startTheme = null;
+
+    private ?Theme $drawnTheme = null;
     private ?ColorProfile $colorProfile = null;
     private ?RenderPass $renderPass = null;
     private float $paintedAt = 0.0;
@@ -326,7 +330,8 @@ final class Program
                 remote: getenv('SSH_CONNECTION') !== false || getenv('SSH_TTY') !== false,
             );
             $this->setup();
-            $this->renderPass = RenderPass::new($this->resolveTheme(), $this->resolveColorProfile());
+            $this->startTheme = $this->drawnTheme = $this->resolveTheme();
+            $this->renderPass = RenderPass::new($this->startTheme, $this->resolveColorProfile());
             $model = $this->model;
             $this->dispatchCommand($this->capturingOutput('init', static fn (): ?Cmd => $model->init()));
             if ($this->isRunning()) {
@@ -1026,12 +1031,11 @@ final class Program
             $this->screen->forget();
         }
 
-        $baseBackground = $pass->context->theme->base->backgroundValue();
-        $frame->clear($baseBackground);
-
         $pass->begin($this->clock->now());
 
         try {
+            $pass = $this->inChosenTheme($pass);
+            $frame->clear($pass->context->theme->base->backgroundValue());
             $this->settleFocusBeforeDrawing();
             $pass->focus->focusOn($this->focus);
             $model = $this->model;
@@ -1058,6 +1062,18 @@ final class Program
         $this->frames->drawn($this->clock->now(), $pass->clock->repaintDelay());
 
         return true;
+    }
+
+    private function inChosenTheme(RenderPass $pass): RenderPass
+    {
+        $chosen = ($this->model instanceof ChoosesItsTheme ? $this->model->theme() : null) ?? $this->startTheme;
+        if ($chosen === null || $chosen === $this->drawnTheme) {
+            return $pass;
+        }
+
+        $this->drawnTheme = $chosen;
+
+        return $this->renderPass = $pass->withTheme($chosen);
     }
 
     /**

@@ -40,6 +40,7 @@ use Elmphant\Tui\Rendering\Context\FloatPlacement;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\InputRouter;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\RoutesFocus;
@@ -63,7 +64,7 @@ final class ModelHarness
     private Rect $area;
     private ?Cmd $lastCommand = null;
     private FocusState $focus;
-    private readonly RenderPass $pass;
+    private RenderPass $pass;
     private int $depth = 0;
 
     /**
@@ -88,7 +89,7 @@ final class ModelHarness
         private Model $model,
         int $width,
         int $height,
-        Theme $theme,
+        private readonly Theme $theme,
     ) {
         $this->area = Rect::fromSize($width, $height);
         $this->focus = new FocusState();
@@ -461,6 +462,7 @@ final class ModelHarness
     public function renderFrame(): Frame
     {
         $this->settleFocus();
+        $this->pass = $this->pass->withTheme(($this->model instanceof ChoosesItsTheme ? $this->model->theme() : null) ?? $this->theme);
 
         $frame = new Frame($this->area->width, $this->area->height);
         $frame->clear($this->pass->context->theme->base->backgroundValue());

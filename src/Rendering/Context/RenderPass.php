@@ -38,6 +38,20 @@ final readonly class RenderPass
         );
     }
 
+    /**
+     * The same pass drawn in another theme: the clock, focus, floats and layout carry over.
+     */
+    public function withTheme(Theme $theme): self
+    {
+        return new self(
+            context: new RenderContext($theme, $this->context->colorProfile, $this->clock, $this->focus, $this->floats, $this->layout),
+            clock: $this->clock,
+            focus: $this->focus,
+            floats: $this->floats,
+            layout: $this->layout,
+        );
+    }
+
     public function begin(float $now): void
     {
         $this->clock->begin($now);

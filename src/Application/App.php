@@ -25,6 +25,8 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Context\FloatMouseMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\RoutesFocus;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Committing;
@@ -41,7 +43,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 use WeakMap;
 
-abstract readonly class App implements RoutesFocus
+abstract readonly class App implements RoutesFocus, ChoosesItsTheme
 {
     use Cloneable;
 
@@ -125,6 +127,15 @@ abstract readonly class App implements RoutesFocus
         return $this->applicationKeybindings()
             ->append($this->resolvedQuitBindings())
             ->hints([$description => 'quit']);
+    }
+
+    /**
+     * The theme to draw the next frame in, from what this App holds; null keeps
+     * the one the program started with.
+     */
+    public function theme(): ?Theme
+    {
+        return null;
     }
 
     protected function setup(): ?Cmd
