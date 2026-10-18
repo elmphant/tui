@@ -188,9 +188,6 @@ final class FocusPath
     /**
      * @param Closure(): void $render
      */
-    /**
-     * @param Closure(): void $render
-     */
     public function withinMount(ComponentId $id, Closure $render): void
     {
         $outer = $this->mount;
@@ -214,26 +211,27 @@ final class FocusPath
         $focused = $this->focus->focused()->value ?? '';
         $under = str_starts_with($focused, $id->value . '/');
         $holdsFocus = $focused === $id->value || $under || in_array($id->value, $this->enclosure, true);
+        if (!$holdsFocus) {
+            $this->withoutFocus($render);
+
+            return;
+        }
+
         $path = $this->path;
         $loose = $this->loose;
-
-        if ($holdsFocus) {
-            ++$this->depth;
-            $this->path = $under
-                ? explode('/', substr($focused, strlen($id->value) + 1))
-                : [];
-            $this->loose = $focused === $id->value
-                && !in_array($id->value, $this->stopPublishers, true);
-        }
+        ++$this->depth;
+        $this->path = $under
+            ? explode('/', substr($focused, strlen($id->value) + 1))
+            : [];
+        $this->loose = $focused === $id->value
+            && !in_array($id->value, $this->stopPublishers, true);
 
         try {
             $render();
         } finally {
             $this->path = $path;
             $this->loose = $loose;
-            if ($holdsFocus) {
-                --$this->depth;
-            }
+            --$this->depth;
         }
     }
 
