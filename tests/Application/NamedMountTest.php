@@ -143,6 +143,60 @@ final class NamedMountTest extends TestCase
 
         self::assertSame(['started'], $harness->model()->shown->heard);
     }
+
+    #[Test]
+    public function aMountedModelTellsItsHostAndOnlyItsHost(): void
+    {
+        $harness = ModelHarness::for(new HostOfATellingMount(), 40, 6)->initialize()->press('t');
+
+        self::assertSame(['told'], $harness->model()->heard);
+        self::assertSame([], $harness->model()->teller->heard);
+    }
+}
+
+final readonly class TellingModel implements Reducer
+{
+    use Cloneable;
+
+    /**
+     * @param list<string> $heard
+     */
+    public function __construct(public array $heard = [])
+    {
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return match (true) {
+            $message instanceof KeyMsg && $message->key === 't' => new UpdateResult($this, Mount::toHost(new Heard('told'))),
+            $message instanceof Heard => new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what])),
+            default => UpdateResult::ignored($this),
+        };
+    }
+}
+
+final readonly class HostOfATellingMount extends App
+{
+    use Cloneable;
+
+    /**
+     * @param list<string> $heard
+     */
+    public function __construct(public TellingModel $teller = new TellingModel(), public array $heard = [])
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Mount::named('teller', $this->teller, Text::new('teller'), static fn (self $host, TellingModel $teller): self => $host->cloneWith(teller: $teller));
+    }
+
+    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    {
+        return $message instanceof Heard
+            ? new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]))
+            : UpdateResult::ignored($this);
+    }
 }
 
 final readonly class HostOfAShownAndAHiddenMount extends App

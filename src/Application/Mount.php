@@ -53,6 +53,14 @@ final readonly class Mount implements Widget, WidgetContainer
         return new self(\is_string($id) ? ComponentId::named($id) : $id, $model, $view, $mount);
     }
 
+    /**
+     * A message a mounted model sends to whatever mounted it, instead of to itself.
+     */
+    public static function toHost(Message $message): Cmd
+    {
+        return Cmd::message(new TellsTheHost($message));
+    }
+
     public function sizing(): Sizing
     {
         return $this->content->sizing();
@@ -102,7 +110,7 @@ final readonly class Mount implements Widget, WidgetContainer
     {
         $id = $this->id;
 
-        return $command?->map(static fn (Message $message): Message => new MountedMsg($id, $message))->scopedTo($id->value);
+        return $command?->map(static fn (Message $message): Message => $message instanceof TellsTheHost ? $message->message : new MountedMsg($id, $message))->scopedTo($id->value);
     }
 
     /**
