@@ -13,6 +13,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Terminal\ColorProfile;
 use Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Row;
@@ -57,6 +58,23 @@ final class TableCursorHighlightTest extends TestCase
             $ink->contrastRatio($band),
             'a reversed row could not be measured at all, which is the point of the change',
         );
+    }
+
+    #[Test]
+    public function withoutColourTheCursorRowIsDrawnInReverseVideo(): void
+    {
+        $frame = new Frame(30, 4);
+
+        Table\Table::new(
+            [Column::new('ID', Constraint::exact(4)), Column::new('Name', Constraint::flex())],
+            [Row::new('1', Span::styled('Alice', new Style(foreground: Color::ansi(2)))), Row::new('2', 'Bob')],
+        )->render($frame, Rect::fromSize(30, 4), RenderContext::focused(Theme::dark(), ColorProfile::Ascii));
+
+        $cursorRow = array_slice($frame->attributes, 30, 30);
+        $otherRow = array_slice($frame->attributes, 60, 30);
+
+        self::assertSame([], array_filter($cursorRow, static fn (int $attributes): bool => 0 === ($attributes & Attr::REVERSE)));
+        self::assertSame([], array_filter($otherRow, static fn (int $attributes): bool => 0 !== ($attributes & Attr::REVERSE)));
     }
 
     private static function tableOf(): Table\Table

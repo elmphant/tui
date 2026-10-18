@@ -71,7 +71,7 @@ final readonly class Style
     public function readableOn(self $panel, float $minimumRatio = 4.5): Style
     {
         if ($panel->background === null) {
-            return $this;
+            return $this->withAttributes($panel->attributes & Attr::REVERSE);
         }
 
         return $this->cloneWith(

@@ -16,16 +16,18 @@ use Elmphant\Tui\Terminal\ColorProfile;
  */
 final class RenderContext
 {
+    public readonly Theme $theme;
     private readonly FocusPath $focus;
 
     public function __construct(
-        public readonly Theme $theme,
+        Theme $theme,
         public readonly ColorProfile $colorProfile = ColorProfile::TrueColor,
         private readonly FrameClock $clock = new FrameClock(),
         ?FocusPath $focus = null,
         private readonly FloatQueue $floats = new FloatQueue(),
         private readonly LayoutInForce $layout = new LayoutInForce(),
     ) {
+        $this->theme = $theme->shownIn($colorProfile);
         $this->focus = $focus ?? FocusPath::undecided();
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Rendering;
 
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Terminal\ColorProfile;
 
 final readonly class Theme
 {
@@ -190,6 +191,39 @@ final readonly class Theme
     public function borderFor(bool $prominent): BorderStyle
     {
         return $prominent ? $this->focusedBorder : $this->border;
+    }
+
+    /**
+     * A terminal without colour drops every fill, so a filled row (cursor,
+     * selection, input, bars) is drawn in reverse video instead.
+     */
+    public function shownIn(ColorProfile $profile): self
+    {
+        if (ColorProfile::Ascii !== $profile) {
+            return $this;
+        }
+
+        return new self(
+            base: $this->withoutColour($this->base),
+            accent: $this->withoutColour($this->accent),
+            dim: $this->withoutColour($this->dim),
+            error: $this->withoutColour($this->error),
+            success: $this->withoutColour($this->success),
+            borderStyle: $this->withoutColour($this->borderStyle),
+            focusedBorderStyle: $this->withoutColour($this->focusedBorderStyle),
+            titleStyle: $this->withoutColour($this->titleStyle),
+            headerStyle: $this->withoutColour($this->headerStyle),
+            selectedStyle: $this->withoutColour($this->selectedStyle),
+            cursorStyle: $this->withoutColour($this->cursorStyle),
+            fillStyle: $this->withoutColour($this->fillStyle),
+            emptyStyle: $this->withoutColour($this->emptyStyle),
+            inputStyle: $this->withoutColour($this->inputStyle),
+            footerStyle: $this->withoutColour($this->footerStyle),
+            warning: $this->withoutColour($this->warning),
+            info: $this->withoutColour($this->info),
+            border: $this->border,
+            focusedBorder: $this->focusedBorder,
+        );
     }
 
     public function borderStyleFor(bool $prominent): Style
@@ -425,5 +459,12 @@ final readonly class Theme
             footerStyle: new Style(foreground: Color::hex('FBF1C7'), background: Color::hex('3C3836')),
             warning: new Style(foreground: Color::hex('AF3A03'), background: $background),
         );
+    }
+
+    private function withoutColour(Style $style): Style
+    {
+        $filled = null !== $style->background && $style->background->value !== $this->page?->value;
+
+        return new Style(attributes: $style->attributes | ($filled ? Attr::REVERSE : 0));
     }
 }
