@@ -120,6 +120,15 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         return $this->open;
     }
 
+    /**
+     * The list draws only while the dropdown holds the keyboard, so a host
+     * opening it from elsewhere sends the keyboard there too.
+     */
+    public function withOpen(bool $open = true): static
+    {
+        return $this->cloneWith(open: $open);
+    }
+
     public function capturesKeys(): bool
     {
         return $this->open;
@@ -187,7 +196,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         if (!$this->open) {
             return new UpdateResult(
                 $this->effectiveKeybindings()->matches($message, Actions::TOGGLE)
-                    ? $this->opened()
+                    ? $this->withOpen()
                     : $this,
             );
         }
@@ -225,16 +234,6 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         }
     }
 
-    private function opened(): static
-    {
-        return $this->cloneWith(open: true);
-    }
-
-    private function closed(): static
-    {
-        return $this->cloneWith(open: false);
-    }
-
     /**
      * The content answers first; only a key it left alone is the popup's own.
      * Consumption is a changed model or any command, as App defines it.
@@ -247,7 +246,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         $content = $answered->model;
 
         if ($content instanceof Committing && $content->commits($message)) {
-            return new UpdateResult($this->cloneWith(content: $content)->closed(), $answered->command);
+            return new UpdateResult($this->cloneWith(content: $content)->withOpen(false), $answered->command);
         }
 
         if ($content !== $this->content || $answered->command !== null) {
@@ -255,7 +254,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         }
 
         if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
-            return new UpdateResult($this->closed());
+            return new UpdateResult($this->withOpen(false));
         }
 
         return new UpdateResult($this, $answered->command);
@@ -305,7 +304,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         $content = $this->content->activated($option);
 
         return $content instanceof Committing
-            ? $this->cloneWith(content: $content)->closed()
+            ? $this->cloneWith(content: $content)->withOpen(false)
             : $this->cloneWith(content: $content);
     }
 
@@ -316,10 +315,10 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         }
 
         if (!$message->inRect($area)) {
-            return $this->open ? $this->closed() : $this;
+            return $this->open ? $this->withOpen(false) : $this;
         }
 
-        return $this->open ? $this->closed() : $this->opened();
+        return $this->open ? $this->withOpen(false) : $this->withOpen();
     }
 
     /**

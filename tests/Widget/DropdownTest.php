@@ -67,6 +67,15 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
+    public function aHostCanOpenAndCloseTheListWithoutAKey(): void
+    {
+        $open = Dropdown::new(Select::new(['Inbox', 'Work']))->withOpen();
+
+        self::assertNotNull(WidgetHarness::for($open, width: 40, height: 12)->screen()->find('Work'));
+        self::assertFalse($open->withOpen(false)->isOpen());
+    }
+
+    #[Test]
     public function holdsAWidgetAndLetsItAnswerForItself(): void
     {
         $dropdown = Dropdown::new(Select::new(['json', 'yaml'])->withEmptyCaption('choose a format'));
