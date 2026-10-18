@@ -18,6 +18,8 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\HttpRequestStarter;
+use Elmphant\Tui\Runtime\Trace\TraceEvent;
+use Elmphant\Tui\Testing\InMemoryTracer;
 use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Tests\Support\MessageEnvelope;
 use Elmphant\Tui\Tests\Support\TestMessage;
@@ -97,6 +99,21 @@ final class EffectRunnerTest extends TestCase
             [new TestMessage('before'), new MessageEnvelope(new TickMsg($this->clock->now(), EffectId::named('clock'))), new TestMessage('after')],
             iterator_to_array($this->results, false),
         );
+    }
+
+    #[Test]
+    public function aReplacementIsTracedUnderTheNameItTookOver(): void
+    {
+        $tracer = new InMemoryTracer();
+        $runner = new EffectRunner($this->results, $this->clock, static function (): void {
+        }, static function (): void {
+        }, tracer: $tracer);
+        $runner->run(Cmd::tick(1.0, EffectId::named('ps')), null, 'monitor');
+        $runner->run(Cmd::tick(2.0, EffectId::named('other')), null);
+
+        $runner->run(Cmd::tick(1.0, EffectId::named('ps')), null, 'monitor');
+
+        self::assertSame([['effect' => 'monitor/ps']], $tracer->fieldsOf(TraceEvent::EffectReplaced));
     }
 
     #[Test]

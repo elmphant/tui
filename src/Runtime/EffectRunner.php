@@ -20,6 +20,8 @@ use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Runtime\Trace\TraceEvent;
+use Elmphant\Tui\Runtime\Trace\Tracer;
 use LogicException;
 use Revolt\EventLoop;
 use SplQueue;
@@ -92,6 +94,7 @@ final class EffectRunner
         ?ProcessStarter $processStarter = null,
         private readonly HttpRequestStarter $requestStarter = new HttpRequestStarter(),
         private readonly array $handlers = [],
+        private readonly ?Tracer $tracer = null,
     ) {
         $this->processStarter = $processStarter ?? new ProcessStarter($clock);
         $this->producers = new WeakMap();
@@ -318,17 +321,17 @@ final class EffectRunner
      */
     private function makeRoomFor(?EffectId $id, ?Closure $wrap): void
     {
-        if ($id !== null) {
-            $this->cancel($id, $wrap);
+        if ($id !== null && $this->cancel($id, $wrap)) {
+            $this->tracer?->record(TraceEvent::EffectReplaced, ['effect' => (string)$id]);
         }
     }
 
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    private function cancel(EffectId $id, ?Closure $wrap = null): void
+    private function cancel(EffectId $id, ?Closure $wrap = null): bool
     {
-        $this->cancelWhere(static fn (EffectId $running): bool => $running->equals($id), $wrap);
+        return $this->cancelWhere(static fn (EffectId $running): bool => $running->equals($id), $wrap);
     }
 
     /**
@@ -342,10 +345,13 @@ final class EffectRunner
     /**
      * @param Closure(EffectId): bool       $matches
      * @param Closure(Message):Message|null $wrap
+     *
+     * @return bool whether anything was still running
      */
-    private function cancelWhere(Closure $matches, ?Closure $wrap = null): void
+    private function cancelWhere(Closure $matches, ?Closure $wrap = null): bool
     {
         $this->dropQueuedResultsOf($matches);
+        $runningBefore = $this->runningCount();
 
         $this->tickers = array_values(array_filter(
             $this->tickers,
@@ -390,6 +396,13 @@ final class EffectRunner
             $keptHandled[] = $effect;
         }
         $this->handled = $keptHandled;
+
+        return $this->runningCount() < $runningBefore;
+    }
+
+    private function runningCount(): int
+    {
+        return count($this->tickers) + count($this->timers) + count($this->subscriptions) + count($this->processes) + count($this->handled);
     }
 
     /**

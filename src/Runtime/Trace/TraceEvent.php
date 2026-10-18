@@ -27,6 +27,11 @@ enum TraceEvent: string
     case FrameSkipped = 'frame.skipped';
 
     /**
+     * A command took over a name an effect was still running under, and stopped it.
+     */
+    case EffectReplaced = 'effect.replaced';
+
+    /**
      * Something threw, wherever it was: recorded even when the model swallows the ErrorMsg.
      */
     case Error = 'error';

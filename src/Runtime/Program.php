@@ -1200,6 +1200,7 @@ final class Program
             $this->dispatchCommand(...),
             $this->tick(...),
             handlers: $this->commandHandlers,
+            tracer: $this->tracer,
         );
     }
 
