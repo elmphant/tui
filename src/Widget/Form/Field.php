@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Form;
 
+use Closure;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Choice\Checkbox;
 use Elmphant\Tui\Widget\Field\EchoMode;
@@ -22,6 +23,9 @@ final readonly class Field
 
     public const TEXT_WIDTH = 48;
 
+    /**
+     * @param list<Closure(string|bool|list<string>):?string> $rules
+     */
     private function __construct(
         public string $name,
         public string $label,
@@ -29,6 +33,7 @@ final readonly class Field
         public Focusable&HoldsAValue $widget,
         public bool $required = false,
         public bool $labelledByItsWidget = false,
+        private array $rules = [],
     ) {
     }
 
@@ -65,6 +70,17 @@ final readonly class Field
     }
 
     /**
+     * A check on what the field holds, answering the problem told under it or null.
+     * An empty field is left to required().
+     *
+     * @param Closure(string|bool|list<string>):?string $rule
+     */
+    public function withRule(Closure $rule): self
+    {
+        return $this->cloneWith(rules: [...$this->rules, $rule]);
+    }
+
+    /**
      * Typed in as dots: only a text field has anything to hide.
      */
     public function secret(): self
@@ -83,11 +99,31 @@ final readonly class Field
     {
         $value = $this->widget->value();
 
-        return $value === null || $value === false || $value === [] || (\is_string($value) && trim($value) === '');
+        return $value === null || self::isBlank($value);
     }
 
     public function problem(): ?string
     {
-        return $this->required && $this->isEmpty() ? $this->label . ' is required' : null;
+        $value = $this->widget->value();
+        if ($value === null || self::isBlank($value)) {
+            return $this->required ? $this->label . ' is required' : null;
+        }
+
+        foreach ($this->rules as $rule) {
+            $problem = $rule($value);
+            if ($problem !== null) {
+                return $problem;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string|bool|list<string> $value
+     */
+    private static function isBlank(string|bool|array $value): bool
+    {
+        return $value === false || $value === [] || (\is_string($value) && trim($value) === '');
     }
 }

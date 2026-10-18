@@ -99,6 +99,30 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aFieldTellsWhatItsOwnRuleFindsWrongWithWhatWasTypedIn(): void
+    {
+        $form = Form::new('Task')
+            ->withField(Field::text('due', 'Due')->withRule(
+                static fn (mixed $value): ?string => \is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? null : 'Due is not a YYYY-MM-DD date',
+            ))
+            ->submitted();
+
+        $typed = WidgetHarness::for($form, 70, 24)->type('tomorrow');
+
+        self::assertStringContainsString('Due is not a YYYY-MM-DD date', $typed->screen()->plainText());
+        self::assertSame(['due' => 'Due is not a YYYY-MM-DD date'], $typed->widget()->problems());
+    }
+
+    #[Test]
+    public function aRuleLeavesAnEmptyFieldToRequired(): void
+    {
+        $form = Form::new('Task')
+            ->withField(Field::text('due', 'Due')->withRule(static fn (mixed $value): string => 'never valid'));
+
+        self::assertSame([], $form->problems());
+    }
+
+    #[Test]
     public function aFormCanSayWhatIsMissingAsSoonAsTheReaderLeavesAField(): void
     {
         $form = WidgetHarness::for(self::userForm()->withErrorsShown(ShowErrors::AfterLeaving), 70, 24);
