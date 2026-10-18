@@ -30,7 +30,36 @@ final class ScreenTest extends TestCase
 
         $screen->flush($frame);
 
-        self::assertStringContainsString("a  \x1b[1;2H❤\u{FE0F}c", $capturedOutput);
+        self::assertStringContainsString("a  \x1b[1;2H❤\u{FE0F}\x1b[1;4Hc", $capturedOutput);
+    }
+
+    #[Test]
+    public function aClusterTerminalsMeasureDifferentlyLeavesTheCursorWhereTheFrameSaysItEnds(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+        $frame = new Frame(10, 1);
+        $frame->putString(0, 0, "👩\u{200D}👧x");
+
+        $screen->flush($frame);
+
+        self::assertStringContainsString("👩\u{200D}👧\x1b[1;3Hx", $capturedOutput);
+    }
+
+    #[Test]
+    public function aClusterDrawnAgainRedrawsTheRestOfItsRowThatItMayHaveCovered(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+        $frame = new Frame(6, 1);
+        $frame->putString(0, 0, "👩\u{200D}👧ab|");
+        $screen->flush($frame);
+        $capturedOutput = '';
+
+        $frame->putString(0, 0, "👨\u{200D}👧");
+        $screen->flush($frame);
+
+        self::assertStringContainsString("👨\u{200D}👧\x1b[1;3Hab|", $capturedOutput);
     }
 
     #[Test]
@@ -57,7 +86,7 @@ final class ScreenTest extends TestCase
         $frame->putString(1, 0, "❤\u{FE0F}c");
         $screen->flush($frame);
 
-        self::assertStringContainsString("  \x1b[1;2H❤\u{FE0F}c", $capturedOutput);
+        self::assertStringContainsString("  \x1b[1;2H❤\u{FE0F}\x1b[1;4Hc", $capturedOutput);
     }
 
     #[Test]

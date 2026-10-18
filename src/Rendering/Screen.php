@@ -194,11 +194,13 @@ final class Screen
             }
 
             $column = 0;
+            $repaintsTheRest = false;
 
             while ($column < $width) {
                 $index = $rowOffset + $column;
 
-                if ($backCharacters[$index] === $frontCharacters[$index]
+                if (!$repaintsTheRest
+                    && $backCharacters[$index] === $frontCharacters[$index]
                     && $backForegrounds[$index] === $frontForegrounds[$index]
                     && $backBackgrounds[$index] === $frontBackgrounds[$index]
                     && $backAttributes[$index] === $frontAttributes[$index]) {
@@ -218,12 +220,14 @@ final class Screen
                 $parts[] = $this->styleDelta($foreground, $background, $attributes);
 
                 $runCharacters = [self::cellText($backCharacters[$index], $backWidths[$index], $row, $column)];
+                $repaintsTheRest = $repaintsTheRest || self::isCluster($backCharacters[$index], $backWidths[$index]);
                 $nextColumn = $column + max(1, $backWidths[$index]);
 
                 while ($nextColumn < $width) {
                     $nextIndex = $rowOffset + $nextColumn;
 
-                    if ($backCharacters[$nextIndex] === $frontCharacters[$nextIndex]
+                    if (!$repaintsTheRest
+                        && $backCharacters[$nextIndex] === $frontCharacters[$nextIndex]
                         && $backForegrounds[$nextIndex] === $frontForegrounds[$nextIndex]
                         && $backBackgrounds[$nextIndex] === $frontBackgrounds[$nextIndex]
                         && $backAttributes[$nextIndex] === $frontAttributes[$nextIndex]) {
@@ -243,6 +247,7 @@ final class Screen
                     }
 
                     $runCharacters[] = self::cellText($nextCharacter, $backWidths[$nextIndex], $row, $nextColumn);
+                    $repaintsTheRest = $repaintsTheRest || self::isCluster($nextCharacter, $backWidths[$nextIndex]);
                     $nextColumn += max(1, $backWidths[$nextIndex]);
                 }
 
@@ -338,10 +343,25 @@ final class Screen
      */
     private static function cellText(string $character, int $width, int $row, int $column): string
     {
+        if (!self::isCluster($character, $width)) {
+            return $character;
+        }
+
         // Back by absolute position: after a space in the last column the cursor waits to wrap, and a relative move would land one short.
-        return $width === 2 && str_contains($character, "\u{FE0F}")
-            ? '  ' . Ansi::cursorTo($row, $column) . $character
-            : $character;
+        $text = str_contains($character, "\u{FE0F}") ? '  ' . Ansi::cursorTo($row, $column) . $character : $character;
+
+        return $text . Ansi::cursorTo($row, $column + 2);
+    }
+
+    /**
+     * A wide cluster of several code points, which terminals disagree on: tmux
+     * 3.5a advances four columns for 👩‍👩‍👧‍👦. Placing the cursor after it keeps
+     * the cells behind it in their columns, and the rest of its row is redrawn
+     * over whatever it spilled into.
+     */
+    private static function isCluster(string $character, int $width): bool
+    {
+        return $width === 2 && strlen($character) > 4;
     }
 
     private function cellHasStyle(Frame $frame, int $index, int $foreground, int $background, int $attributes): bool
