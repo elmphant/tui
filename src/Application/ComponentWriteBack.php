@@ -110,7 +110,7 @@ final class ComponentWriteBack
             $rebound = $registry->get($original->id);
 
             if ($rebound === null) {
-                throw new LogicException(sprintf('Component "%s" disappeared during an update', $original->id->value));
+                continue;
             }
 
             /*

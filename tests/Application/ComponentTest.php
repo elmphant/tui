@@ -218,14 +218,15 @@ final class ComponentTest extends TestCase
     }
 
     #[Test]
-    public function aComponentCannotDisappearWhileItsUpdateIsBeingApplied(): void
+    public function aWriteBackMayCloseTheComponentItStores(): void
     {
         $app = new DisappearingComponentApp(TextInput::new());
 
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Component "input" disappeared during an update');
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('input')));
 
-        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('input')));
+        self::assertInstanceOf(DisappearingComponentApp::class, $result->model);
+        self::assertSame('x', $result->model->input->value());
+        self::assertSame([], $result->model->focusableIds());
     }
 
     #[Test]
