@@ -144,6 +144,7 @@ final class Frame
             return;
         }
 
+        $character = self::wellFormed($character);
         $characterWidth = CharWidth::graphemeWidth($character);
         if ($characterWidth > 0 && $this->placeGrapheme($x, $y, $character, $characterWidth, $foreground, $background, $attributes)) {
             $this->markRowDirty($y);
@@ -267,9 +268,13 @@ final class Frame
                 continue;
             }
 
-            $characterByteLength = Grapheme::sequenceLength($byte);
-            $character = substr($text, $position, $characterByteLength);
-            $position += $characterByteLength;
+            $character = substr($text, $position, Grapheme::sequenceLength($byte));
+            if (mb_check_encoding($character, 'UTF-8')) {
+                $position += strlen($character);
+            } else {
+                $position += Grapheme::malformedLength($text, $position);
+                $character = TerminalText::plain($character[0]);
+            }
 
             $characterWidth = CharWidth::codepointWidth($character);
             if ($characterWidth === 0) {
@@ -336,6 +341,7 @@ final class Frame
             $endY = min($endY, $top->bottom());
         }
 
+        $character = self::wellFormed($character);
         $characterWidth = CharWidth::graphemeWidth($character);
         if ($characterWidth === 0) {
             return;
@@ -518,6 +524,11 @@ final class Frame
             $this->dirtyRows[$row] = true;
             $this->contentRows[$row] = true;
         }
+    }
+
+    private static function wellFormed(string $character): string
+    {
+        return mb_check_encoding($character, 'UTF-8') ? $character : TerminalText::plain($character);
     }
 
     private static function spanStyleOver(?Style $span, Style $base): Style

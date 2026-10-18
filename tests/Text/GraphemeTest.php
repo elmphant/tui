@@ -58,6 +58,12 @@ final class GraphemeTest extends TestCase
         self::assertSame(["\xFF"], Grapheme::split("\xFF"));
     }
 
+    #[Test]
+    public function aCharacterCutShortIsOneCluster(): void
+    {
+        self::assertSame(['a', "\xe2\x82", 'b'], Grapheme::split("a\xe2\x82b"));
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

@@ -3005,6 +3005,27 @@ final class FrameTest extends TestCase
         self::assertSame('X', $frame->characters[1]);
     }
 
+    #[Test]
+    public function malformedUtf8ReachesNoCellByAnyWay(): void
+    {
+        $frame = new Frame(8, 5);
+        $frame->putString(0, 0, "a\xe2\x82\x07\xac|");
+        $frame->putLine(0, 1, new Line([new Span("a\xe2\x82\x07\xac|")]));
+        $frame->putAnsi(0, 2, "\x1b[1ma\xe2\x82\x07\xac|");
+        $frame->putChar(0, 3, "\xe2\x82");
+        $frame->fillRect(0, 4, 2, 1, character: "\xac");
+
+        $rows = [];
+        for ($row = 0; $row < 5; ++$row) {
+            $rows[] = rtrim(implode('', array_slice($frame->characters, $row * 8, 8)));
+        }
+
+        self::assertSame(
+            ["a\u{FFFD}\u{FFFD}|", "a\u{FFFD}\u{FFFD}|", "a\u{FFFD}\u{FFFD}|", "\u{FFFD}", "\u{FFFD}\u{FFFD}"],
+            $rows,
+        );
+    }
+
     // ── Mutant-killing: putAnsi zero-width char in putAnsi (L197) ──
 
     #[Test]

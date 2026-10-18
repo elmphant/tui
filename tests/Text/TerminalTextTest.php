@@ -77,11 +77,18 @@ final class TerminalTextTest extends TestCase
     }
 
     #[Test]
-    public function plainTextPreservesUnicodeAndMalformedNonControlBytesVerbatim(): void
+    public function plainTextPreservesUnicodeVerbatim(): void
     {
-        $input = "é€😀\xA0\xC0\xF8";
+        self::assertSame('é€😀', TerminalText::plain('é€😀'));
+    }
 
-        self::assertSame($input, TerminalText::plain($input));
+    #[Test]
+    public function everyMalformedSequenceBecomesOneReplacementCharacter(): void
+    {
+        self::assertSame("\u{FFFD}\u{FFFD}\u{FFFD}", TerminalText::plain("\xA0\xC0\xF8"));
+        self::assertSame("a\u{FFFD}\u{FFFD}|", TerminalText::plain("a\xe2\x82\x07\xac|"));
+        self::assertSame("\u{FFFD}x", TerminalText::plain("\xf0\x9f\x98x"));
+        self::assertSame("\u{FFFD}\u{FFFD}", TerminalText::plain("\xe0\xa0\xe0\xa0"));
     }
 
     #[Test]

@@ -82,9 +82,9 @@ final class TerminalText
                 continue;
             }
 
-            // Preserve malformed non-control bytes verbatim.
-            $result .= $text[$position];
-            ++$position;
+            // The terminal draws nothing for it, so the screen would drift from the frame.
+            $result .= "\u{FFFD}";
+            $position += Grapheme::malformedLength($text, $position);
         }
 
         return $result;
