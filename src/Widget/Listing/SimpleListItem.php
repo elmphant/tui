@@ -9,6 +9,7 @@ final readonly class SimpleListItem implements ListItem
     public function __construct(
         private string $title,
         private string $description = '',
+        private ?string $key = null,
     ) {
     }
 
@@ -25,6 +26,14 @@ final readonly class SimpleListItem implements ListItem
     public function filterValue(): string
     {
         return $this->title;
+    }
+
+    /**
+     * The key given, else the title.
+     */
+    public function key(): string
+    {
+        return $this->key ?? $this->title;
     }
 
     public function height(int $width): int

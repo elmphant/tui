@@ -25,6 +25,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
@@ -102,11 +103,13 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
             return $this;
         }
 
+        $keys = array_map(static fn (ListItem $item): string => $item->key(), $items);
+
         return $this->cloneWith(
             items: $items,
             rowIndex: RowIndex::of(count($items)),
-            selected: self::placeOf($this->selectedItem(), $items),
-            cursor: self::placeOf($this->items[$this->cursor] ?? null, $items) ?? 0,
+            selected: Places::placeOf($this->selectedItem()?->key(), $keys, $this->selected ?? 0),
+            cursor: Places::cursorAfter(($this->items[$this->cursor] ?? null)?->key(), $keys, $this->cursor),
         );
     }
 
@@ -502,26 +505,5 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
         $cursor = min(max(0, $this->cursor), count($this->items) - 1);
 
         return $this->extents($area)->offsetShowing($cursor, $area->height, $this->scrollOffset);
-    }
-
-    /**
-     * Null where the item is gone. Two items filtering alike count as the same record.
-     *
-     * @param list<ListItem> $items
-     */
-    private static function placeOf(?ListItem $item, array $items): ?int
-    {
-        if ($item === null) {
-            return null;
-        }
-
-        $wanted = $item->filterValue();
-        foreach ($items as $place => $candidate) {
-            if ($candidate->filterValue() === $wanted) {
-                return $place;
-            }
-        }
-
-        return null;
     }
 }

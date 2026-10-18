@@ -13,6 +13,12 @@ interface ListItem
     public function filterValue(): string;
 
     /**
+     * What the cursor and the selection follow across ListView::withItems(): a
+     * record's id, so a renamed item keeps them and two that read alike stay two.
+     */
+    public function key(): string;
+
+    /**
      * How many rows this item occupies when drawn $width columns wide.
      *
      * Width matters because titles and descriptions wrap, so an item is taller

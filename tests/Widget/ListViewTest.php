@@ -297,11 +297,31 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
-    public function itemsReplacedWithoutTheOneUnderTheCursorPutItOnTheFirst(): void
+    public function itemsReplacedWithoutTheOneUnderTheCursorPutItOnTheItemThatTookItsPlace(): void
     {
-        $list = ListView::fromStrings(['a', 'b', 'c'])->withCursor(2);
+        $list = ListView::fromStrings(['a', 'b', 'c', 'd'])->withCursor(2);
 
-        self::assertSame(0, $list->withItems([new SimpleListItem('x'), new SimpleListItem('y')])->cursor());
+        self::assertSame(2, $list->withItems([new SimpleListItem('a'), new SimpleListItem('b'), new SimpleListItem('d')])->cursor());
+    }
+
+    #[Test]
+    public function aKeyedItemKeepsTheCursorAndTheSelectionWhenItsTitleChanges(): void
+    {
+        $list = ListView::new([new SimpleListItem('Buy milk', key: '1'), new SimpleListItem('Call Bob', key: '2')])
+            ->withCursor(1)
+            ->withSelected(1);
+
+        $renamed = $list->withItems([new SimpleListItem('Call Bob back', key: '2'), new SimpleListItem('Buy milk', key: '1')]);
+
+        self::assertSame([0, 0], [$renamed->cursor(), $renamed->selectedIndex()]);
+    }
+
+    #[Test]
+    public function itemsReadingAlikeKeepTheCursorOnTheOneNearestWhereItWas(): void
+    {
+        $list = ListView::fromStrings(['task', 'other', 'task'])->withCursor(2);
+
+        self::assertSame(2, $list->withItems([new SimpleListItem('task'), new SimpleListItem('other'), new SimpleListItem('task')])->cursor());
     }
 
     #[Test]
@@ -2290,6 +2310,11 @@ final readonly class CountingListItem implements ListItem
     }
 
     public function filterValue(): string
+    {
+        return $this->title;
+    }
+
+    public function key(): string
     {
         return $this->title;
     }
