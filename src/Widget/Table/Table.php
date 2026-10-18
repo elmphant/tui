@@ -30,6 +30,7 @@ use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\Wrap;
 
 /**
  * A table the reader navigates: cursor, selection, mouse, and a scrolled viewport.
@@ -547,7 +548,7 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
             $rowStyle = $rowStyle->readableOn($defaultStyle);
         }
 
-        $rowLines = TableLayout::linesOfRow($columnWidths, $row);
+        $rowLines = TableLayout::linesOfRow($columnWidths, $row, $this->wraps());
         $cellX = $rowArea->x;
 
         foreach (array_keys($this->columns) as $columnIndex) {
@@ -578,8 +579,16 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     {
         return $this->layoutMemo->at(
             implode(',', $columnWidths),
-            fn (): TableLayout => TableLayout::forRows($columnWidths, $this->rows),
+            fn (): TableLayout => TableLayout::forRows($columnWidths, $this->rows, $this->wraps()),
         );
+    }
+
+    /**
+     * @return list<Wrap>
+     */
+    private function wraps(): array
+    {
+        return array_map(static fn (Column $column): Wrap => $column->wrap(), $this->columns);
     }
 
     /**

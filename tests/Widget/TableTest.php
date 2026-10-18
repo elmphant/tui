@@ -29,6 +29,7 @@ use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Row;
+use Elmphant\Tui\Widget\Wrap;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -4084,6 +4085,20 @@ final class TableTest extends TestCase
         $moved = $table->update(new KeyMsg(Key::Down), $area)->model->update(new KeyMsg(Key::Down), $area)->model;
 
         self::assertStringContainsString('row2 gamma', implode("\n", $this->screenLines($moved, $area)));
+    }
+
+    #[Test]
+    public function aColumnThatDoesNotWrapCutsItsCellsWithAnEllipsis(): void
+    {
+        $table = Table\Table::fromCells(
+            [Column::new('Subject', Constraint::flex())->withWrap(Wrap::NoWrap)],
+            [['a long subject that would wrap'], ['next']],
+        );
+        $frame = new Frame(12, 3);
+
+        $table->render($frame, Rect::fromSize(12, 3), new RenderContext(Theme::dark()));
+
+        self::assertSame(['a long subj…', 'next'], [$this->rowText($frame, 12, 1, 0, 12), $this->rowText($frame, 12, 2, 0, 12)]);
     }
 
     #[Test]
