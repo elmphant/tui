@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
@@ -131,6 +132,15 @@ final class HarnessEffectsTest extends TestCase
     }
 
     #[Test]
+    public function anEffectOfTheApplicationsOwnSaysWhatItProducesAndKeepsRunning(): void
+    {
+        $model = ModelHarness::for(new EffectAsker())->press('u')->emit('feed', new Beat(1))->emit('feed', new Beat(2))->model();
+
+        $beats = array_values(array_filter($model->received, static fn (Message $message): bool => $message instanceof ChildSaid && $message->message instanceof Beat));
+        self::assertEquals([new ChildSaid(new Beat(1)), new ChildSaid(new Beat(2))], $beats);
+    }
+
+    #[Test]
     public function anEffectTheModelNeverStartedCannotBeAnswered(): void
     {
         $this->expectException(LogicException::class);
@@ -155,6 +165,21 @@ final class HarnessEffectsTest extends TestCase
 
         $this->expectException(LogicException::class);
         $harness->answer('load');
+    }
+}
+
+final readonly class Beat implements Message
+{
+    public function __construct(public int $count)
+    {
+    }
+}
+
+final readonly class FeedCmd extends Cmd implements NamesItsEffect
+{
+    public function effectId(): EffectId
+    {
+        return EffectId::named('feed');
     }
 }
 
@@ -195,6 +220,7 @@ final class EffectAsker implements Model
             'h' => Cmd::http('https://example.com', id: EffectId::named('page')),
             't' => Cmd::tick(1.0, EffectId::named('clock')),
             'c' => Cmd::cancel(EffectId::named('load')),
+            'u' => new FeedCmd(),
             default => null,
         };
 

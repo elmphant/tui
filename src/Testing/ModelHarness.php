@@ -253,6 +253,17 @@ final class ModelHarness
     }
 
     /**
+     * What a running effect produces, as its CommandHandler's $emit would hand
+     * it on. The effect keeps running.
+     *
+     * @return self<TModel>
+     */
+    public function emit(EffectId|string $effect, Message $message): self
+    {
+        return $this->delivered($this->runningAs($effect, Cmd::class), $message);
+    }
+
+    /**
      * Ends any running effect with the error it could not get past.
      *
      * @return self<TModel>
