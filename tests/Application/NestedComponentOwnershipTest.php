@@ -11,6 +11,7 @@ use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,7 +40,7 @@ final class NestedComponentOwnershipTest extends TestCase
             static fn (?Cmd $command): ?Cmd => $command,
         );
 
-        $updated = $bound->replaceIn($app, TextInput::new()->withValue('after'))->model;
+        $updated = $bound->replaceIn($app, TextInput::new()->withValue('after'), new KeyMsg('x'))->model;
 
         self::assertInstanceOf(HostingApp::class, $updated);
         self::assertSame('after', $updated->panel->field->value());

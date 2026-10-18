@@ -53,7 +53,7 @@ final class ComponentTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Component "input" replacement must return');
 
-        $component->replaceIn($app, TextInput::new());
+        $component->replaceIn($app, TextInput::new(), new KeyMsg('x'));
     }
 
     #[Test]
@@ -120,7 +120,7 @@ final class ComponentTest extends TestCase
         $current = new ComponentContractApp(TextInput::new(), version: 2);
         $updatedInput = TextInput::new()->withValue('updated');
 
-        $updated = $original->binding()->replaceIn($current, $updatedInput)->model;
+        $updated = $original->binding()->replaceIn($current, $updatedInput, new KeyMsg('x'))->model;
 
         self::assertInstanceOf(ComponentContractApp::class, $updated);
         self::assertSame(2, $updated->version);
@@ -183,7 +183,7 @@ final class ComponentTest extends TestCase
             static fn (App $current, TextInput $input): App => new ComponentContractApp($input, $version),
         );
 
-        $updated = $component->replaceIn($app, TextInput::new()->withValue('safe'))->model;
+        $updated = $component->replaceIn($app, TextInput::new()->withValue('safe'), new KeyMsg('x'))->model;
 
         self::assertInstanceOf(ComponentContractApp::class, $updated);
         self::assertSame(42, $updated->version);

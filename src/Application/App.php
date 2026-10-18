@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\RoutesFocus;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
@@ -437,7 +438,7 @@ abstract readonly class App implements RoutesFocus
             $command = $focused->addressed($dispatch->command);
         }
 
-        [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $updates);
+        [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $updates, $message);
 
         return new UpdateResult($current, self::combineCommands($command, $hookCommand));
     }
@@ -595,7 +596,7 @@ abstract readonly class App implements RoutesFocus
 
             if ($dispatch->changed || $dispatch->command !== null) {
                 [$current, $hookCommand] = $dispatch->changed
-                    ? $this->applyComponentUpdatesAndNotify($this, $this->focusedUpdate($focused, $dispatch->child))
+                    ? $this->applyComponentUpdatesAndNotify($this, $this->focusedUpdate($focused, $dispatch->child), $message)
                     : [$this, null];
 
                 return new UpdateResult(
@@ -700,8 +701,8 @@ abstract readonly class App implements RoutesFocus
 
         $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
 
-        if ($dispatch->changed) {
-            [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $this->focusedUpdate($focused, $dispatch->child));
+        if ($dispatch->changed || ($widget instanceof Committing && $widget->commits($message))) {
+            [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $this->focusedUpdate($focused, $dispatch->child), $message);
 
             return new UpdateResult(
                 $current,
@@ -760,7 +761,7 @@ abstract readonly class App implements RoutesFocus
             );
 
             if ($dispatch->changed) {
-                [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, [[$candidate, $dispatch->child]]);
+                [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, [[$candidate, $dispatch->child]], $message);
 
                 return new UpdateResult(
                     $current,
@@ -844,7 +845,7 @@ abstract readonly class App implements RoutesFocus
             $landedOn = $current->containerEnteredBy($message, $visible, $holder);
         }
 
-        [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates);
+        [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates, $message);
         $answered = self::combineCommands($appResult->command, $childCommand, $hookCommand);
 
         return new UpdateResult(
@@ -936,7 +937,7 @@ abstract readonly class App implements RoutesFocus
             $current->childDispatcher(),
         );
 
-        [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates);
+        [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates, $message);
 
         return new UpdateResult(
             $next,
@@ -1103,14 +1104,14 @@ abstract readonly class App implements RoutesFocus
      *
      * @return array{static, ?Cmd}
      */
-    private function applyComponentUpdatesAndNotify(self $app, array $updates): array
+    private function applyComponentUpdatesAndNotify(self $app, array $updates, Message $message): array
     {
         $updates = ComponentWriteBack::withoutLetGo($updates);
         if ($updates === []) {
             return [$app, null];
         }
 
-        [$updated, $written] = $this->applyComponentUpdates($app, $updates);
+        [$updated, $written] = $this->applyComponentUpdates($app, $updates, $message);
 
         $ids = [];
         foreach ($updates as [$original]) {
@@ -1128,7 +1129,7 @@ abstract readonly class App implements RoutesFocus
      *
      * @return array{static, ?Cmd} the App, and what writing the components back asked for
      */
-    private function applyComponentUpdates(self $app, array $updates): array
+    private function applyComponentUpdates(self $app, array $updates, Message $message): array
     {
         $commands = [];
 
@@ -1137,7 +1138,7 @@ abstract readonly class App implements RoutesFocus
             // when it was collected, so it is looked up in the app as it stands or a
             // second write restores the sub-model the first one changed.
             $current = $app->componentRegistry()->get($original->id) ?? $original;
-            $replaced = $current->replaceIn($app, $widget);
+            $replaced = $current->replaceIn($app, $widget, $message);
             ComponentWriteBack::verifyStored($current, $widget, $app, $replaced->model);
             /** @var static $app */
             $app = $replaced->model;

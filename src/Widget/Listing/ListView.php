@@ -27,12 +27,13 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
 
-final readonly class ListView implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints
+final readonly class ListView implements Committing, Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -151,6 +152,13 @@ final readonly class ListView implements Focusable, KeybindingsAware, MeasureHei
     public function selectedItem(): ?ListItem
     {
         return $this->selected === null ? null : $this->items[$this->selected] ?? null;
+    }
+
+    public function commits(Message $message): bool
+    {
+        return $message instanceof KeyMsg
+            && $this->items !== []
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT);
     }
 
     public function scrollOffset(): int

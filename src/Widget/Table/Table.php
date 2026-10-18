@@ -26,6 +26,7 @@ use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -43,7 +44,7 @@ use Elmphant\Tui\Widget\Wrap;
  * Rows given as plain cell text become Row values on the way in, so there is
  * one key path and one row renderer whichever shape the caller used.
  */
-final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints
+final readonly class Table implements Committing, Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -203,6 +204,13 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     public function selectedTypedRow(): ?Row
     {
         return $this->selected === null ? null : $this->rows[$this->selected] ?? null;
+    }
+
+    public function commits(Message $message): bool
+    {
+        return $message instanceof KeyMsg
+            && ($this->rows[$this->cursor] ?? null)?->selectable === true
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT);
     }
 
     public function scrollOffset(): int

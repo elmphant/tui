@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Application;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
@@ -75,11 +76,15 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      * joins to one. The replacement may answer with an UpdateResult when writing
      * the widget back also asks for work, such as loading what it now shows.
      *
+     * It is handed the message the widget answered, too, so a host can ask a
+     * `Committing` widget whether that message committed: a widget that commits
+     * is written back even when nothing in it changed, as on a second enter.
+     *
      * @template TBoundOwner of Reducer
      * @template TBoundWidget of Interactive
      *
-     * @param TBoundWidget                                                                $widget
-     * @param Closure(TBoundOwner, TBoundWidget): (TBoundOwner|UpdateResult<TBoundOwner>) $replace
+     * @param TBoundWidget                                                                         $widget
+     * @param Closure(TBoundOwner, TBoundWidget, Message): (TBoundOwner|UpdateResult<TBoundOwner>) $replace
      *
      * @return self<TBoundWidget>
      */
@@ -204,13 +209,13 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     /**
      * @return UpdateResult<App>
      */
-    public function replaceIn(App $app, Interactive $widget): UpdateResult
+    public function replaceIn(App $app, Interactive $widget, Message $message): UpdateResult
     {
         if ($this->replace === null) {
             throw new LogicException(sprintf('Component "%s" was named, not bound: its host drives it, so nothing can be written back', $this->id->value));
         }
 
-        $answered = ($this->replace)($app, $widget);
+        $answered = ($this->replace)($app, $widget, $message);
         $result = $answered instanceof UpdateResult ? $answered : new UpdateResult($answered);
 
         if ($result->model::class !== $app::class) {
