@@ -68,7 +68,8 @@ final readonly class FocusState
      *
      * Whether it may stay is asked of everything it can reach. When it may not, it
      * goes to the nearest stop around it, else back to the last stop it held that is
-     * still there (a modal closed), else the first place tab stops. A pointer-only pane is in the first list
+     * still there (a modal closed), else the first place tab stops — inside it, when
+     * it is a strip with stops of its own. A pointer-only pane is in the first list
      * and not the second, so a press seats the keyboard there and tab still walks past.
      *
      * @param list<ComponentId> $order     where tab stops, in tree order
@@ -132,6 +133,12 @@ final readonly class FocusState
                 if ($stop->equals($earlier)) {
                     return $stop;
                 }
+            }
+        }
+
+        foreach ($order as $stop) {
+            if ($stop->isUnder($order[0])) {
+                return $stop;
             }
         }
 

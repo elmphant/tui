@@ -21,15 +21,14 @@ use PHPUnit\Framework\TestCase;
 final class TabBarOnTheRingTest extends TestCase
 {
     /**
-     * The strip is the first stop, so the fields come after it: two walks reach
-     * the second one.
+     * The keyboard starts in the first field of the page rather than on the strip,
+     * so one walk reaches the second one.
      */
     #[Test]
     public function aCharacterLandsInTheFieldTheReaderTabbedTo(): void
     {
         $harness = ModelHarness::for(new TabbedFormApp(), 60, 20);
 
-        $harness->dispatch(new KeyMsg(Key::Tab));
         $harness->dispatch(new KeyMsg(Key::Tab));
         $harness->dispatch(new KeyMsg('x'));
 
@@ -47,6 +46,7 @@ final class TabBarOnTheRingTest extends TestCase
     {
         $harness = ModelHarness::for(new TabbedFormApp(), 60, 20);
 
+        $harness->press('shift+tab');
         $harness->dispatch(new KeyMsg('a'));
 
         $model = $harness->model();
@@ -58,6 +58,7 @@ final class TabBarOnTheRingTest extends TestCase
     public function theStripHoldingTheKeyboardDrawsNoCaretInAField(): void
     {
         $harness = ModelHarness::for(new TabbedFormApp(), 60, 20);
+        $harness->press('shift+tab');
 
         self::assertSame('bar', $harness->focused()?->value);
         self::assertNull($harness->renderFrame()->cursorPosition, 'no field holds the keyboard, so none draws a caret');

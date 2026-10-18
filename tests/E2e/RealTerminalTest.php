@@ -32,7 +32,7 @@ final class RealTerminalTest extends TestCase
     public function aDropdownOpenedAndClosedLeavesTheScreenAsItWas(): void
     {
         $screen = $this->started();
-        $screen->keys('Tab', 'Tab');
+        $screen->keys('Tab');
         $before = $screen->screen();
 
         $screen->keys('Enter');
@@ -46,7 +46,6 @@ final class RealTerminalTest extends TestCase
     public function wideTextTypedAndDeletedAgainLeavesTheScreenAsItWas(): void
     {
         $screen = $this->started();
-        $screen->keys('Tab');
         $before = $screen->screen();
 
         $screen->text('漢字😀é');
