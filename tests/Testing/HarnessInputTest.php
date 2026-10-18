@@ -14,6 +14,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
@@ -92,11 +93,32 @@ final class HarnessInputTest extends TestCase
     }
 
     #[Test]
+    public function aDragPressesMovesWithTheButtonHeldAndLetsGoWhereItEnds(): void
+    {
+        $model = ModelHarness::for(new InputRecorder(), 20, 3)->drag(4, 1, 9, 2)->model();
+
+        self::assertEquals(
+            [[MouseAction::Press, 4, 1], [MouseAction::Motion, 9, 2], [MouseAction::Release, 9, 2]],
+            $model->pointer(),
+        );
+    }
+
+    #[Test]
+    public function aPasteArrivesAsOneMessage(): void
+    {
+        $model = ModelHarness::for(new InputRecorder())->paste("two\nlines")->model();
+
+        self::assertEquals([new PasteMsg("two\nlines")], $model->pastes());
+    }
+
+    #[Test]
     public function theSameInputIsAtHandForATestThatCallsUpdateItself(): void
     {
         self::assertEquals(new KeyMsg(Key::Tab, shift: true), UserInput::key('shift+tab'));
         self::assertEquals([new KeyMsg('o'), new KeyMsg('k')], UserInput::typed('ok'));
         self::assertEquals(new MouseMsg(4, 1, MouseAction::Press, MouseButton::Left), UserInput::click(4, 1));
+        self::assertEquals(new MouseMsg(9, 2, MouseAction::Motion, MouseButton::Left), UserInput::drag(9, 2));
+        self::assertEquals(new PasteMsg('text'), UserInput::paste('text'));
     }
 }
 
@@ -149,6 +171,14 @@ final class InputRecorder implements Model
             static fn (MouseMsg $mouse): array => [$mouse->action, $mouse->x, $mouse->y],
             array_values(array_filter($this->received, static fn (Message $message): bool => $message instanceof MouseMsg && !$message->isWheel())),
         );
+    }
+
+    /**
+     * @return list<PasteMsg>
+     */
+    public function pastes(): array
+    {
+        return array_values(array_filter($this->received, static fn (Message $message): bool => $message instanceof PasteMsg));
     }
 
     /**

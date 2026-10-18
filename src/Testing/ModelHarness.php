@@ -369,6 +369,33 @@ final class ModelHarness
     }
 
     /**
+     * Presses, moves with the button held, and lets go: one action, as clickAt() is.
+     *
+     * @return self<TModel>
+     */
+    public function drag(int $fromColumn, int $fromRow, int $toColumn, int $toRow): self
+    {
+        $this->issued = [];
+        ++$this->depth;
+
+        try {
+            return $this->dispatch(UserInput::click($fromColumn, $fromRow))
+                ->dispatch(UserInput::drag($toColumn, $toRow))
+                ->dispatch(UserInput::release($toColumn, $toRow));
+        } finally {
+            --$this->depth;
+        }
+    }
+
+    /**
+     * @return self<TModel>
+     */
+    public function paste(string $text): self
+    {
+        return $this->dispatch(UserInput::paste($text));
+    }
+
+    /**
      * Turns the wheel over the text: notches down, or up where negative.
      *
      * @return self<TModel>

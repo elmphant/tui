@@ -9,6 +9,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Text\Grapheme;
 
 /**
@@ -43,6 +44,19 @@ final class UserInput
     public static function release(int $column, int $row): MouseMsg
     {
         return new MouseMsg($column, $row, MouseAction::Release, MouseButton::Left);
+    }
+
+    /**
+     * The pointer moving with the left button held.
+     */
+    public static function drag(int $column, int $row): MouseMsg
+    {
+        return new MouseMsg($column, $row, MouseAction::Motion, MouseButton::Left);
+    }
+
+    public static function paste(string $text): PasteMsg
+    {
+        return new PasteMsg($text);
     }
 
     /**

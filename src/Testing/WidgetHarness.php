@@ -108,6 +108,26 @@ final class WidgetHarness
     /**
      * @return self<TWidget>
      */
+    public function drag(int $fromColumn, int $fromRow, int $toColumn, int $toRow): self
+    {
+        $this->harness->drag($fromColumn, $fromRow, $toColumn, $toRow);
+
+        return $this;
+    }
+
+    /**
+     * @return self<TWidget>
+     */
+    public function paste(string $text): self
+    {
+        $this->harness->paste($text);
+
+        return $this;
+    }
+
+    /**
+     * @return self<TWidget>
+     */
     public function wheel(string $text, int $notches): self
     {
         $this->harness->wheel($text, $notches);
