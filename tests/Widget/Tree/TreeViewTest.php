@@ -588,6 +588,21 @@ final class TreeViewTest extends TestCase
     }
 
     #[Test]
+    public function onlyAnUpdateThatOpensAWaitingNodeAsksForItsChildren(): void
+    {
+        $closed = TreeView::new([
+            new SimpleTreeNode('a', 'a', '', null),
+            new SimpleTreeNode('b', 'b'),
+        ]);
+        $opened = $closed->expand(TreePath::root()->child('a'));
+        $movedOn = $opened->cursorDown();
+
+        self::assertSame([['a']], array_map(static fn (TreePath $path): array => $path->keys, $opened->pendingSince($closed)));
+        self::assertSame([], $movedOn->pendingSince($opened), 'the load was asked for already');
+        self::assertSame([['a']], array_map(static fn (TreePath $path): array => $path->keys, $movedOn->pendingExpansions()));
+    }
+
+    #[Test]
     public function aGreatGrandchildAndAWaitingRowCarryEveryAncestorsBar(): void
     {
         $root = TreePath::root();

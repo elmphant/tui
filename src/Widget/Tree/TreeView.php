@@ -157,9 +157,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * The expanded nodes still missing their children, for a host to go and
-     * fetch. Derived on every read, so answering one cannot leave a stale entry
-     * behind.
+     * The expanded nodes still missing their children, those already being
+     * fetched included: `pendingSince()` names only the new ones. Derived on
+     * every read, so answering one cannot leave a stale entry behind.
      *
      * @return list<TreePath>
      */
@@ -173,6 +173,25 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         }
 
         return $pending;
+    }
+
+    /**
+     * The expansions that started waiting since $before: what a host fetches
+     * after an update, so a key that leaves a load running does not ask again.
+     *
+     * @return list<TreePath>
+     */
+    public function pendingSince(self $before): array
+    {
+        $earlier = [];
+        foreach ($before->pendingExpansions() as $path) {
+            $earlier[self::keyOf($path)] = true;
+        }
+
+        return array_values(array_filter(
+            $this->pendingExpansions(),
+            static fn (TreePath $path): bool => !isset($earlier[self::keyOf($path)]),
+        ));
     }
 
     public function toggle(TreePath $path): self
