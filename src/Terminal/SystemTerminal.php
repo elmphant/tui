@@ -230,7 +230,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
             return $this->detectedColorProfile;
         }
 
-        if (getenv('NO_COLOR') !== false) {
+        if (!in_array(getenv('NO_COLOR'), [false, ''], true)) {
             return $this->detectedColorProfile = ColorProfile::Ascii;
         }
 

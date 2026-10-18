@@ -212,6 +212,19 @@ final class SystemTerminalTest extends TestCase
     }
 
     #[Test]
+    public function anEmptyNoColorKeepsColour(): void
+    {
+        putenv('NO_COLOR=');
+        putenv('COLORTERM=truecolor');
+
+        $terminal = new SystemTerminal($this->stdin, $this->stdout);
+        self::assertSame(ColorProfile::TrueColor, $terminal->colorProfile());
+
+        putenv('NO_COLOR');
+        putenv('COLORTERM');
+    }
+
+    #[Test]
     public function readInputReadsExactly4096BytesWhenMoreAvailable(): void
     {
         fwrite($this->stdin, str_repeat('A', 4097));
