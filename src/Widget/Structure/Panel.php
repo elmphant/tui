@@ -162,14 +162,24 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         return $this->withPane($this->pane->withScrollOffset($scrollOffset));
     }
 
-    public function scrollOffset(): int
+    public function scrollOffset(Rect $area): int
     {
-        return $this->pane->scrollOffset();
+        return $this->pane->scrollOffset($this->contentArea($area));
     }
 
     public function withFollowChild(?int $index, int $span = 1): self
     {
         return $this->withPane($this->pane->withFollowChild($index, $span));
+    }
+
+    public function withFollowingTheEnd(bool $follows = true): self
+    {
+        return $this->withPane($this->pane->withFollowingTheEnd($follows));
+    }
+
+    public function followsTheEnd(): bool
+    {
+        return $this->pane->followsTheEnd();
     }
 
     public function withKeyboardAt(?int $child): static

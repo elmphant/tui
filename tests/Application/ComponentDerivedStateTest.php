@@ -94,7 +94,7 @@ final readonly class DerivedTitleApp extends App
                     Text::new('six'),
                 ])
                 ->withScrollOffset($this->scroll),
-            static fn (self $app, Panel $pane): self => $app->cloneWith(scroll: $pane->scrollOffset()),
+            static fn (self $app, Panel $pane): self => $app->cloneWith(scroll: $pane->scrollOffset(new Rect(0, 0, 20, 5))),
         );
     }
 }
@@ -119,7 +119,7 @@ final readonly class DerivedScrollApp extends App
                     Text::new('six'),
                 ])
                 ->withScrollOffset($this->scroll),
-            static fn (self $app, Panel $pane): self => $app->cloneWith(scroll: $pane->scrollOffset()),
+            static fn (self $app, Panel $pane): self => $app->cloneWith(scroll: $pane->scrollOffset(new Rect(0, 0, 20, 5))),
         );
     }
 }

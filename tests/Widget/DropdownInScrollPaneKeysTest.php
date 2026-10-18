@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
@@ -30,11 +31,11 @@ final class DropdownInScrollPaneKeysTest extends TestCase
         $harness = self::opened();
         $harness->dispatch(new KeyMsg(Key::Down));
         $harness->dispatch(new KeyMsg(Key::Down));
-        $offset = self::appOf($harness)->pane->scrollOffset();
+        $offset = self::appOf($harness)->pane->scrollOffset(Rect::fromSize(40, 12));
 
         $harness->dispatch(new KeyMsg(Key::Down));
 
-        self::assertSame($offset, self::appOf($harness)->pane->scrollOffset());
+        self::assertSame($offset, self::appOf($harness)->pane->scrollOffset(Rect::fromSize(40, 12)));
     }
 
     /**

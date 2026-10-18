@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\Structure\ScrollPane;
 use Elmphant\Tui\Widget\Structure\TabPage;
 use PHPUnit\Framework\Attributes\Test;
@@ -16,7 +17,7 @@ final class TabPageTest extends TestCase
     {
         $page = new TabPage(label: 'Test');
 
-        self::assertSame(0, $page->pane->scrollOffset());
+        self::assertSame(0, $page->pane->scrollOffset(Rect::fromSize(20, 5)));
     }
 
     #[Test]

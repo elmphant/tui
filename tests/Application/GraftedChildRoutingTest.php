@@ -43,7 +43,7 @@ final class GraftedChildRoutingTest extends TestCase
         )->model;
 
         self::assertInstanceOf(ScrollableFormApp::class, $paged);
-        self::assertGreaterThan(0, $paged->form->scrollOffset());
+        self::assertGreaterThan(0, $paged->form->scrollOffset(Rect::fromSize(30, 6)));
     }
 
     /**
@@ -61,7 +61,7 @@ final class GraftedChildRoutingTest extends TestCase
         $counter = [...$wheeled->outer->children()][0];
         self::assertInstanceOf(WheelCounter::class, $counter);
         self::assertSame(1, $counter->count);
-        self::assertSame(1, $wheeled->outer->scrollOffset());
+        self::assertSame(1, $wheeled->outer->scrollOffset(Rect::fromSize(20, 6)));
     }
 
     #[Test]

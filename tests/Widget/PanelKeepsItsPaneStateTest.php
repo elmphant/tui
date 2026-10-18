@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,7 +23,7 @@ final class PanelKeepsItsPaneStateTest extends TestCase
 
         $rebuilt = $panel->withChildren([...self::panelOfLines(10)->children()]);
 
-        self::assertSame(3, $rebuilt->scrollOffset());
+        self::assertSame(3, $rebuilt->scrollOffset(Rect::fromSize(20, 6)));
     }
 
     private static function panelOfLines(int $count): Panel

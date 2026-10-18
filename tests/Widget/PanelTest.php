@@ -547,14 +547,14 @@ final class PanelTest extends TestCase
         }
         $area = new Rect(0, 0, 20, 5);
 
-        self::assertSame(0, $panel->scrollOffset());
+        self::assertSame(0, $panel->scrollOffset($area));
 
         $scrolled = $panel->update(
             new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None),
             $area,
         )->model;
 
-        self::assertGreaterThan(0, $scrolled->scrollOffset());
+        self::assertGreaterThan(0, $scrolled->scrollOffset($area));
     }
 
     #[Test]
@@ -2058,13 +2058,13 @@ final class PanelTest extends TestCase
         $panel = $panel->withScrollOffset(3);
 
         $afterDefault = $panel->update(new KeyMsg(Key::Up), $area)->model;
-        self::assertLessThan(3, $afterDefault->scrollOffset());
+        self::assertLessThan(3, $afterDefault->scrollOffset($area));
 
         $custom = $panel->withKeybindings(new Keybindings([Actions::SCROLL_UP => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Up), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
-        self::assertLessThan(3, $afterCustom->scrollOffset());
+        self::assertLessThan(3, $afterCustom->scrollOffset($area));
     }
 
     #[Test]
@@ -2077,13 +2077,13 @@ final class PanelTest extends TestCase
         }
 
         $afterDefault = $panel->update(new KeyMsg(Key::Down), $area)->model;
-        self::assertGreaterThan(0, $afterDefault->scrollOffset());
+        self::assertGreaterThan(0, $afterDefault->scrollOffset($area));
 
         $custom = $panel->withKeybindings(new Keybindings([Actions::SCROLL_DOWN => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Down), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
-        self::assertGreaterThan(0, $afterCustom->scrollOffset());
+        self::assertGreaterThan(0, $afterCustom->scrollOffset($area));
     }
 
     #[Test]
@@ -2373,11 +2373,6 @@ final class PanelTest extends TestCase
                 return $this->cursorRow;
             }
         };
-    }
-
-    private function scrollOffsetOf(Panel $panel): int
-    {
-        return $panel->scrollOffset();
     }
 
     private function createFocusableWidget(): Focusable

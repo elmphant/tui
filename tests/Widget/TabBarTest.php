@@ -3076,7 +3076,7 @@ final class TabBarTest extends TestCase
 
         $result = $tabBar->update(new KeyMsg('x'), $area)->model;
 
-        self::assertSame(3, $this->selectedTabScrollOffset($result), 'A cursor that stays visible must not move the scroll offset');
+        self::assertSame(3, $this->selectedTabScrollOffset($result, 4), 'A cursor that stays visible must not move the scroll offset');
     }
 
     #[Test]
@@ -3088,7 +3088,7 @@ final class TabBarTest extends TestCase
 
         $result = $tabBar->update(new KeyMsg('x'), $area)->model;
 
-        self::assertSame(0, $this->selectedTabScrollOffset($result), 'With no visible content rows there is nothing to scroll into view');
+        self::assertSame(0, $this->selectedTabScrollOffset($result, 0), 'With no visible content rows there is nothing to scroll into view');
     }
 
     #[Test]
@@ -3458,9 +3458,9 @@ final class TabBarTest extends TestCase
         };
     }
 
-    private function selectedTabScrollOffset(TabBar $tabBar): int
+    private function selectedTabScrollOffset(TabBar $tabBar, int $viewportRows): int
     {
-        return $tabBar->tabs()[$tabBar->selectedTab()]->pane->scrollOffset();
+        return $tabBar->tabs()[$tabBar->selectedTab()]->pane->scrollOffset(new Rect(0, 0, 38, $viewportRows));
     }
 }
 

@@ -211,7 +211,7 @@ final class DropdownHostAcceptanceTest extends TestCase
 
     private static function scrollOffsetOf(ScrollPane $pane): int
     {
-        return $pane->scrollOffset();
+        return $pane->scrollOffset(self::area());
     }
 
     private static function rowOf(ScrollPane $pane, string $needle): int

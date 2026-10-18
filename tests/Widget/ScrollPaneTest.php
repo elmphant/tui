@@ -391,7 +391,7 @@ final class ScrollPaneTest extends TestCase
     {
         $pane = ScrollPane::of(Text::new('one'), Text::new('two'))->withScrollOffset(-5);
 
-        self::assertSame(0, $pane->scrollOffset());
+        self::assertSame(0, $pane->scrollOffset(Rect::fromSize(20, 2)));
         self::assertStringStartsWith('one', $this->rows($pane, 20, 2)[0], 'Nothing is pushed below the top edge');
     }
 

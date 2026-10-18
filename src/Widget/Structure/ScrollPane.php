@@ -67,6 +67,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         private ?int $followChild = null,
         private int $followSpan = 1,
         private bool $scrolledAway = false,
+        private bool $followingTheEnd = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         ?KeyedCache $layoutMemo = null,
@@ -92,9 +93,14 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         return $this->cloneWith(children: $children, layoutMemo: self::newLayoutMemo());
     }
 
-    public function scrollOffset(): int
+    /**
+     * The rows scrolled past when drawn in $area, a followed child or the end included.
+     */
+    public function scrollOffset(Rect $area): int
     {
-        return $this->scrollOffset;
+        $layout = VerticalStack::layoutUsing($this->layoutMemo, $this->children, $area->width, $area->height);
+
+        return $this->resolvedOffset($layout, $area->height);
     }
 
     /**
@@ -111,6 +117,20 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     public function withFollowChild(?int $index, int $span = 1): self
     {
         return $this->cloneWith(followChild: $index, followSpan: max(1, $span), scrolledAway: false);
+    }
+
+    /**
+     * Keep the last row in view as children arrive, until the reader scrolls up;
+     * scrolling back down to the end follows it again.
+     */
+    public function withFollowingTheEnd(bool $follows = true): self
+    {
+        return $this->cloneWith(followingTheEnd: $follows, scrolledAway: false);
+    }
+
+    public function followsTheEnd(): bool
+    {
+        return $this->followingTheEnd && !$this->scrolledAway && !$this->following();
     }
 
     public function withKeyboardAt(?int $child): static
@@ -340,11 +360,17 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         $shown = $this->resolvedOffset($layout, $area->height);
         $offset = min($layout->maxScrollOffset($area->height), max(0, $shown + $rows));
 
-        if ($offset === $this->scrollOffset && !$this->following()) {
+        if ($offset === $shown && !$this->following()) {
             return null;
         }
 
-        return $this->cloneWith(scrollOffset: $offset, scrolledAway: true);
+        $atTheEnd = $this->followingTheEnd && $offset === $layout->maxScrollOffset($area->height);
+
+        return $this->cloneWith(
+            scrollOffset: $offset,
+            followChild: $atTheEnd ? null : $this->followChild,
+            scrolledAway: !$atTheEnd,
+        );
     }
 
     private function following(): bool
@@ -360,8 +386,12 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     {
         $offset = $layout->clampScrollOffset($this->scrollOffset, $viewportHeight);
 
-        if (!$this->following() || $viewportHeight < 1) {
+        if ($viewportHeight < 1) {
             return $offset;
+        }
+
+        if (!$this->following()) {
+            return $this->followsTheEnd() ? $layout->maxScrollOffset($viewportHeight) : $offset;
         }
 
         $first = max(0, $this->followChild ?? 0);

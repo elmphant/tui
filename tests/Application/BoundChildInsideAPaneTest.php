@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -78,6 +79,6 @@ final readonly class BoundFieldFormApp extends App
             ->add(Component::bind('email', $this->email, static fn (self $app, TextInput $email): self => $app->cloneWith(email: $email)))
             ->withScrollOffset($this->scroll);
 
-        return Component::bind('form', $form, static fn (self $app, Panel $form): self => $app->cloneWith(scroll: $form->scrollOffset()));
+        return Component::bind('form', $form, static fn (self $app, Panel $form): self => $app->cloneWith(scroll: $form->scrollOffset(Rect::fromSize(30, 6))));
     }
 }
