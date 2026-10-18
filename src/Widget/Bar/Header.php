@@ -27,6 +27,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
+    private const TITLE_GAP = 1;
 
     private function __construct(
         private string $title = '',
@@ -192,22 +193,25 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         $titleWidth = CharWidth::stringWidth($this->title);
 
         if ($titleWidth > 0 && ($this->centerSlot === null || $this->leftSlot === null)) {
-            $gapStart = $this->centerSlot === null
-                ? max($contentX, $contentX + (int)floor(($contentWidth - $titleWidth) / 2))
-                : $contentX;
             $gapEnd = $contentX + $contentWidth;
-
-            $leftRect = $this->leftSlot !== null ? BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context) : null;
-
-            if ($leftRect !== null) {
-                $gapStart = max($gapStart, $leftRect->right());
-            }
 
             $centreRect = $this->centerSlot !== null ? BarSlotRenderer::rectFor($this->centerSlot, Alignment::Center, $contentArea, $context) : null;
 
             if ($centreRect !== null) {
                 $gapEnd = min($gapEnd, $centreRect->x);
             }
+
+            $rightRect = $this->rightSlot !== null ? BarSlotRenderer::rectFor($this->rightSlot, Alignment::Right, $contentArea, $context) : null;
+
+            if ($rightRect !== null) {
+                $gapEnd = min($gapEnd, $rightRect->x - self::TITLE_GAP);
+            }
+
+            $leftRect = $this->leftSlot !== null ? BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context) : null;
+            $leftEdge = $leftRect?->right() ?? $contentX;
+            $gapStart = $this->centerSlot === null
+                ? max($leftEdge, min($contentX + intdiv($contentWidth - $titleWidth, 2), $gapEnd - $titleWidth))
+                : $leftEdge;
 
             $available = $gapEnd - $gapStart;
             if ($available > 0) {

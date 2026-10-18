@@ -88,6 +88,23 @@ final class HeaderTitleSlotTest extends TestCase
         self::assertStringContainsString('status', $drawn);
     }
 
+    #[Test]
+    public function aCentredTitleStepsLeftOfAWideRightSlot(): void
+    {
+        $drawn = self::draw(Header::new('htop-lite')->withRight(Text::new('theme dark  sort pid')), 40);
+
+        self::assertStringContainsString('htop-lite', $drawn);
+        self::assertStringEndsWith('theme dark  sort pid', $drawn);
+    }
+
+    #[Test]
+    public function aTitleTooLongForTheRoomStopsBeforeTheRightSlot(): void
+    {
+        $drawn = self::draw(Header::new(str_repeat('t', 60))->withRight(Text::new('status')), 20);
+
+        self::assertMatchesRegularExpression('/^t+ +status$/', $drawn);
+    }
+
     private static function draw(Header $header, int $width = 40): string
     {
         $frame = new Frame($width, 1);
