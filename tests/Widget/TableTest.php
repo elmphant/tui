@@ -1683,7 +1683,7 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function aCursorAmongWrappedRowsScrollsJustFarEnoughToShowItsFirstLine(): void
+    public function aCursorAmongWrappedRowsScrollsJustFarEnoughToShowItsLastLine(): void
     {
         $rows = array_map(
             static fn (int $index): array => [$index % 2 === 0 ? "r{$index}" : "r{$index} wraps here"],
@@ -1694,10 +1694,9 @@ final class TableTest extends TestCase
 
         $table->render($frame, Rect::fromSize(20, 5), new RenderContext(Theme::dark()));
 
-        self::assertSame('r5 wraps', $this->rowText($frame, 20, 1, 0, 8));
-        self::assertSame('here', $this->rowText($frame, 20, 2, 0, 4));
-        self::assertSame('r6', $this->rowText($frame, 20, 3, 0, 2));
-        self::assertSame('r7 wraps', $this->rowText($frame, 20, 4, 0, 8));
+        self::assertSame('r6', $this->rowText($frame, 20, 1, 0, 2));
+        self::assertSame('r7 wraps', $this->rowText($frame, 20, 2, 0, 8));
+        self::assertSame('here', $this->rowText($frame, 20, 3, 0, 4));
     }
 
     #[Test]
@@ -4074,6 +4073,28 @@ final class TableTest extends TestCase
         );
 
         self::assertSame(2, $table->measureHeight(10));
+    }
+
+    #[Test]
+    public function aWrappedCursorRowMovedPastTheBottomIsShownWhole(): void
+    {
+        $area = Rect::fromSize(12, 8);
+        $table = $this->singleColumnTable(array_map(static fn (int $row): string => "row{$row} alpha row{$row} beta row{$row} gamma", range(0, 9)));
+
+        $moved = $table->update(new KeyMsg(Key::Down), $area)->model->update(new KeyMsg(Key::Down), $area)->model;
+
+        self::assertStringContainsString('row2 gamma', implode("\n", $this->screenLines($moved, $area)));
+    }
+
+    #[Test]
+    public function aCursorRowTallerThanTheViewportShowsItsFirstLine(): void
+    {
+        $area = Rect::fromSize(12, 3);
+        $table = $this->singleColumnTable(array_map(static fn (int $row): string => "row{$row} alpha row{$row} beta row{$row} gamma", range(0, 2)));
+
+        $moved = $table->update(new KeyMsg(Key::Down), $area)->model;
+
+        self::assertStringContainsString('row1 alpha', implode("\n", $this->screenLines($moved, $area)));
     }
 
     /**

@@ -711,7 +711,8 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());
         $layout = $this->layoutFor($this->columnWidthsFor($area));
-        $firstRowShowingTheCursor = $layout->firstRowAtOrAfter($layout->lineOf($this->cursor) - $viewportHeight + 1);
+        $linesOfTheCursorInView = min($layout->heightOf($this->cursor), $viewportHeight);
+        $firstRowShowingTheCursor = $layout->firstRowAtOrAfter($layout->lineOf($this->cursor) + $linesOfTheCursorInView - $viewportHeight);
         $offset = max(min($this->scrollOffset, $this->cursor), $firstRowShowingTheCursor);
 
         return min($offset, $layout->maxOffset($viewportHeight));
