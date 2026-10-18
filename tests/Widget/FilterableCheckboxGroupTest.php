@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
@@ -75,18 +77,25 @@ final class FilterableCheckboxGroupTest extends TestCase
     }
 
     #[Test]
-    public function aGlobalRebindingWalksTheBoxesInsteadOfTypingIntoTheField(): void
+    public function aGlobalLetterIsTypedIntoTheFieldRatherThanWalkTheBoxes(): void
     {
-        $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'jam'])
             ->withGlobalKeybindings(VimMode::keybindings());
 
         $ticked = self::pressed($group, new KeyMsg('j'), new KeyMsg(' '));
 
-        self::assertSame(
-            ['beta'],
-            $ticked->checkedValues(),
-            'vim mode bound j to the cursor, so it walks the boxes rather than landing in the filter',
-        );
+        self::assertSame(['jam'], $ticked->checkedValues());
+    }
+
+    #[Test]
+    public function aGlobalChordWalksTheBoxes(): void
+    {
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta'])
+            ->withGlobalKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['ctrl+n']]));
+
+        $ticked = self::pressed($group, new KeyMsg('n', ctrl: true), new KeyMsg(' '));
+
+        self::assertSame(['beta'], $ticked->checkedValues());
     }
 
     #[Test]

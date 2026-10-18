@@ -8,6 +8,7 @@ use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
@@ -45,6 +46,15 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     }
 
     #[Test]
+    public function aGlobalLetterBindingIsTypedIntoAFilter(): void
+    {
+        $finder = FilterableList::new([new SimpleListItem('jekyll'), new SimpleListItem('kafka')]);
+        $harness = ModelHarness::for(new VimFinderApp($finder))->initialize()->type('jek');
+
+        self::assertSame('jek', $harness->model()->finder->query());
+    }
+
+    #[Test]
     public function lettersAreShortcutsWhileAListHoldsTheKeyboard(): void
     {
         $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->press('tab')->type('ne');
@@ -74,6 +84,23 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
         $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->press('ctrl+e');
 
         self::assertSame(['edit'], $harness->model()->shortcuts);
+    }
+}
+
+final readonly class VimFinderApp extends App
+{
+    public function __construct(public FilterableList $finder)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return $this->bindProperty('finder', $this->finder);
+    }
+
+    protected function globalKeybindings(): Keybindings
+    {
+        return VimMode::keybindings();
     }
 }
 

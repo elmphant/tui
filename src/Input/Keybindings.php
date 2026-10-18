@@ -138,6 +138,20 @@ final readonly class Keybindings
         return $patterns === [] ? null : KeyPattern::joinedLabel(...$patterns);
     }
 
+    /**
+     * Only the modified and special keys: what a widget taking text keeps of them.
+     */
+    public function withoutText(): self
+    {
+        return new self(bindings: array_map(
+            static fn (array $patterns): array => array_values(array_filter(
+                $patterns,
+                static fn (KeyPattern $pattern): bool => !is_string($pattern->key) || $pattern->ctrl || $pattern->alt,
+            )),
+            $this->patterns,
+        ));
+    }
+
     public function merge(self $other): self
     {
         $copy = $this->patterns;
