@@ -26,6 +26,21 @@ final class ModalAroundABoundFormTest extends TestCase
 
         self::assertNotNull($harness->renderScreen()->find('Delta'));
     }
+
+    #[Test]
+    public function tabWalksTheFieldsOfABoundFormAndNeverTheModalAroundThem(): void
+    {
+        $harness = ModelHarness::for(new BoundFormInModalApp(), width: 80, height: 30)->initialize();
+        $visited = [];
+
+        for ($step = 0; $step < 6; ++$step) {
+            $visited[] = $harness->focused()?->value;
+            $harness->press('tab');
+        }
+
+        self::assertSame('form/1', $visited[0]);
+        self::assertNotContains('modal', $visited);
+    }
 }
 
 final readonly class BoundFormInModalApp extends App

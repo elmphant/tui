@@ -28,15 +28,18 @@ use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\InputLayer;
+use Elmphant\Tui\Widget\Focus\Navigates;
+use Elmphant\Tui\Widget\Focus\Navigation;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class Modal implements Interactive, WidgetContainer, Focusable, InputLayer, KeybindingsAware, PublishesHints
+final readonly class Modal implements Interactive, WidgetContainer, Navigates, InputLayer, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -152,6 +155,15 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
     }
 
     /**
+     * Where a bound component inside holds the keyboard's stops, those are the
+     * stops and the frame around them is not one.
+     */
+    public function navigation(): Navigation
+    {
+        return self::mountsAFocusable([$this->content], false) ? Navigation::Never : Navigation::Regular;
+    }
+
+    /**
      * Asked, never stored, for the reasons {@see Committing} gives.
      */
     public function dismisses(Message $message, Rect $area): bool
@@ -231,6 +243,24 @@ final readonly class Modal implements Interactive, WidgetContainer, Focusable, I
             $result->changed ? $this->cloneWith(content: $result->child) : $this,
             $result->command,
         );
+    }
+
+    /**
+     * @param iterable<Widget> $widgets
+     */
+    private static function mountsAFocusable(iterable $widgets, bool $mounted): bool
+    {
+        foreach ($widgets as $widget) {
+            if ($mounted && $widget instanceof Focusable && (!$widget instanceof Navigates || $widget->navigation() !== Navigation::Never)) {
+                return true;
+            }
+
+            if ($widget instanceof WidgetContainer && self::mountsAFocusable($widget->children(), $mounted || $widget instanceof SingleMount)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function computeModalRect(Rect $area): Rect
