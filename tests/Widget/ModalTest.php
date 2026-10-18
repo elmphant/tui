@@ -341,6 +341,16 @@ final class ModalTest extends TestCase
     }
 
     #[Test]
+    public function aModalHoldingWorkStaysUpThroughAClickOutsideIt(): void
+    {
+        $modal = Modal::new('Title', Text::new('Content'))->withOutsideClickDismissal(false);
+        $area = new Rect(0, 0, 80, 24);
+
+        self::assertFalse($modal->dismisses(new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left), $area));
+        self::assertTrue($modal->dismisses(new KeyMsg(Key::Escape), $area));
+    }
+
+    #[Test]
     public function mouseClickInsideModalDoesNotDismiss(): void
     {
         $modal = Modal::new('Title', Text::new('Content'));

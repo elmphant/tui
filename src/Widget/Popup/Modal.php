@@ -61,6 +61,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         private ?Style $titleStyleOverride = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private bool $outsideClickDismisses = true,
     ) {
     }
 
@@ -137,6 +138,11 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         return $this->cloneWith(sizedToContent: $sizedToContent);
     }
 
+    public function withOutsideClickDismissal(bool $dismisses = true): static
+    {
+        return $this->cloneWith(outsideClickDismisses: $dismisses);
+    }
+
     public function withWidth(int $percent): static
     {
         return $this->cloneWith(widthPercent: max(10, min(100, $percent)));
@@ -197,7 +203,8 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
                 && !($this->content instanceof CapturesKeys && $this->content->capturesKeys());
         }
 
-        return $message instanceof MouseMsg
+        return $this->outsideClickDismisses
+            && $message instanceof MouseMsg
             && $message->isClick()
             && !$message->inRect($this->computeModalRect($area));
     }
