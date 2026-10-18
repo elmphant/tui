@@ -410,6 +410,31 @@ final class ModalTest extends TestCase
     // ---------------------------------------------------------------
 
     #[Test]
+    public function aModalLeftUnborderedLeavesTheFrameToItsContent(): void
+    {
+        $frame = new Frame(40, 10);
+        Modal::new('Title', Text::new('body'))->withBorder(false)->render($frame, Rect::fromSize(40, 10), $this->context);
+
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertNull($screen->find('╭'));
+        self::assertNotNull($screen->find('body'));
+    }
+
+    #[Test]
+    public function anUnborderedModalSizedToItsContentIsExactlyTheContentTall(): void
+    {
+        $frame = new Frame(40, 10);
+        Modal::new('Title', Paragraph::fromText("one\ntwo"))->withBorder(false)->withSizedToContent()
+            ->render($frame, Rect::fromSize(40, 10), $this->context);
+
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame(1, ($screen->rowOf('two') ?? 0) - ($screen->rowOf('one') ?? 0));
+        self::assertSame(4, $screen->rowOf('one'));
+    }
+
+    #[Test]
     public function aModalAnswersWithTheContentItHolds(): void
     {
         $content = Text::new('body');

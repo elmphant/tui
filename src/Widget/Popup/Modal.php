@@ -62,6 +62,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $outsideClickDismisses = true,
+        private bool $bordered = true,
     ) {
     }
 
@@ -136,6 +137,15 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
     public function withSizedToContent(bool $sizedToContent = true): static
     {
         return $this->cloneWith(sizedToContent: $sizedToContent);
+    }
+
+    /**
+     * Off for content that frames itself, such as a Form, so one border and
+     * one title remain.
+     */
+    public function withBorder(bool $bordered = true): static
+    {
+        return $this->cloneWith(bordered: $bordered);
     }
 
     public function withOutsideClickDismissal(bool $dismisses = true): static
@@ -226,7 +236,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $modalRect = $this->computeModalRect($area);
-        if ($modalRect->width < 3 || $modalRect->height < 3) {
+        if ($modalRect->width < $this->smallestSide() || $modalRect->height < $this->smallestSide()) {
             return;
         }
 
@@ -235,14 +245,17 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         $baseBackground = $context->theme->base->backgroundValue();
         $this->clearModalArea($frame, $modalRect, $baseBackground);
 
-        $theme = $context->theme;
-        $block = Block::new()
-            ->withBorder($theme->border)
-            ->withBorderStyle($this->borderStyleOverride ?? $theme->focusedBorderStyle)
-            ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
-            ->withTitle($this->title);
-        $block->render($frame, $modalRect);
-        $contentRect = $block->inner($modalRect);
+        if ($this->bordered) {
+            $theme = $context->theme;
+            Block::new()
+                ->withBorder($theme->border)
+                ->withBorderStyle($this->borderStyleOverride ?? $theme->focusedBorderStyle)
+                ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
+                ->withTitle($this->title)
+                ->render($frame, $modalRect);
+        }
+
+        $contentRect = $this->contentRectIn($modalRect);
 
         if ($contentRect->width > 0 && $contentRect->height > 0) {
             $frame->pushClip($contentRect);
@@ -292,9 +305,9 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
 
     private function computeModalRect(Rect $area): Rect
     {
-        $modalWidth = $this->fittedWidth($area) ?? max(3, (int)($area->width * $this->widthPercent / 100));
-        $modalHeight = $this->fittedHeight($modalWidth - self::BORDERS)
-            ?? max(3, (int)($area->height * $this->heightPercent / 100));
+        $modalWidth = $this->fittedWidth($area) ?? max($this->smallestSide(), (int)($area->width * $this->widthPercent / 100));
+        $modalHeight = $this->fittedHeight($modalWidth - $this->borders())
+            ?? max($this->smallestSide(), (int)($area->height * $this->heightPercent / 100));
 
         $modalWidth = min($modalWidth, $area->width);
         $modalHeight = min($modalHeight, $area->height);
@@ -312,9 +325,9 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
             return null;
         }
 
-        $title = CharWidth::stringWidth($this->title) + self::BORDERS;
+        $title = $this->bordered ? CharWidth::stringWidth($this->title) + self::BORDERS : 0;
 
-        return min($area->width, max(3, $contentWidth + self::BORDERS, $title));
+        return min($area->width, max($this->smallestSide(), $contentWidth + $this->borders(), $title));
     }
 
     private function fittedHeight(int $contentWidth): ?int
@@ -323,15 +336,27 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
             return null;
         }
 
-        return max(3, $this->content->measureHeight(max(1, $contentWidth)) + self::BORDERS);
+        return max($this->smallestSide(), $this->content->measureHeight(max(1, $contentWidth)) + $this->borders());
     }
 
     private function computeContentRect(Rect $area): Rect
     {
-        $modalRect = $this->computeModalRect($area);
-        $block = Block::new()->withBorder(BorderStyle::Rounded);
+        return $this->contentRectIn($this->computeModalRect($area));
+    }
 
-        return $block->inner($modalRect);
+    private function contentRectIn(Rect $modalRect): Rect
+    {
+        return $this->bordered ? Block::new()->withBorder(BorderStyle::Rounded)->inner($modalRect) : $modalRect;
+    }
+
+    private function borders(): int
+    {
+        return $this->bordered ? self::BORDERS : 0;
+    }
+
+    private function smallestSide(): int
+    {
+        return $this->borders() + 1;
     }
 
     private function dimBackground(Frame $frame, Rect $area): void
