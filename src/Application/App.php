@@ -747,8 +747,14 @@ abstract readonly class App implements RoutesFocus
         $appResult = new UpdateResult($pressed->model, self::combineCommands($appResult->command, $pressed->command));
         $current = $this->appModel($appResult);
 
+        // A press goes only to what was on screen when it was made. A popup the press
+        // opened would otherwise read it as a click outside its box and close.
         if ($current !== $this) {
-            $components = $current->componentRegistry()->all();
+            $before = array_flip(array_map(static fn (Component $component): string => $component->id->value, $components));
+            $components = array_values(array_filter(
+                $current->componentRegistry()->all(),
+                static fn (Component $component): bool => isset($before[$component->id->value]),
+            ));
         }
         $rects = $current->findComponentRects($screenRect, $components);
         $visible = $current->findComponentRects($screenRect, $components, visible: true);
