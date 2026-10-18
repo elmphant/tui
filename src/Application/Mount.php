@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Application;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
@@ -102,6 +103,14 @@ final readonly class Mount implements Widget, WidgetContainer
         $id = $this->id;
 
         return $command?->map(static fn (Message $message): Message => new MountedMsg($id, $message))->scopedTo($id->value);
+    }
+
+    /**
+     * @internal what the App asks for once this mount is gone from it
+     */
+    public function left(): Cmd
+    {
+        return (new CancelScopeCmd())->scopedTo($this->id->value);
     }
 
     /**

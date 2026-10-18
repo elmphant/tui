@@ -37,6 +37,11 @@ final readonly class EffectId implements Stringable
         return $this->value === $other->value && $this->scope === $other->scope;
     }
 
+    public function isWithin(string $scope): bool
+    {
+        return $this->scope !== null && ($this->scope === $scope || str_starts_with($this->scope, $scope . '/'));
+    }
+
     public function __toString(): string
     {
         return $this->scope === null ? $this->value : $this->scope . '/' . $this->value;

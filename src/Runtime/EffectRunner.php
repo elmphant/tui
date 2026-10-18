@@ -8,6 +8,7 @@ use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\AfterCmd;
 use Elmphant\Tui\Core\Cmd\CancelCmd;
+use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\ListenCmd;
@@ -108,6 +109,7 @@ final class EffectRunner
             $command instanceof TickCmd => $this->registerTicker($command->interval, $id, $wrap),
             $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $id, $wrap, $scope),
             $command instanceof CancelCmd => $this->cancel($scope === null ? $command->id : $command->id->within($scope), $wrap),
+            $command instanceof CancelScopeCmd => $this->cancelWithin($scope ?? throw new LogicException('A scope can only be cancelled from inside it'), $wrap),
             $command instanceof HttpCmd => $this->keep(
                 fn (): RunningProcess => $this->requestStarter->start($command->withId($id), $wrap),
                 ErrorSource::Http,
@@ -326,20 +328,37 @@ final class EffectRunner
      */
     private function cancel(EffectId $id, ?Closure $wrap = null): void
     {
-        $this->dropQueuedResultsOf($id);
+        $this->cancelWhere(static fn (EffectId $running): bool => $running->equals($id), $wrap);
+    }
+
+    /**
+     * @param Closure(Message):Message|null $wrap
+     */
+    private function cancelWithin(string $scope, ?Closure $wrap): void
+    {
+        $this->cancelWhere(static fn (EffectId $running): bool => $running->isWithin($scope), $wrap);
+    }
+
+    /**
+     * @param Closure(EffectId): bool       $matches
+     * @param Closure(Message):Message|null $wrap
+     */
+    private function cancelWhere(Closure $matches, ?Closure $wrap = null): void
+    {
+        $this->dropQueuedResultsOf($matches);
 
         $this->tickers = array_values(array_filter(
             $this->tickers,
-            static fn (TickerRecord $ticker): bool => $ticker->id === null || !$ticker->id->equals($id),
+            static fn (TickerRecord $ticker): bool => $ticker->id === null || !$matches($ticker->id),
         ));
         $this->timers = array_values(array_filter(
             $this->timers,
-            static fn (TimerRecord $timer): bool => $timer->id === null || !$timer->id->equals($id),
+            static fn (TimerRecord $timer): bool => $timer->id === null || !$matches($timer->id),
         ));
 
         $keptSubscriptions = [];
         foreach ($this->subscriptions as $subscription) {
-            if ($subscription->id !== null && $subscription->id->equals($id)) {
+            if ($subscription->id !== null && $matches($subscription->id)) {
                 $this->stopWatching($subscription);
                 continue;
             }
@@ -350,11 +369,11 @@ final class EffectRunner
         $remaining = [];
         foreach ($this->processes as $process) {
             $effectId = $process->id();
-            if ($effectId !== null && $effectId->equals($id)) {
+            if ($effectId !== null && $matches($effectId)) {
                 try {
                     $process->stop();
                 } catch (Throwable $error) {
-                    $this->report(new ErrorMsg($error, ErrorSource::Cancel, $id), $wrap);
+                    $this->report(new ErrorMsg($error, ErrorSource::Cancel, $effectId), $wrap);
                 }
                 continue;
             }
@@ -364,7 +383,7 @@ final class EffectRunner
 
         $keptHandled = [];
         foreach ($this->handled as $effect) {
-            if ($effect->id !== null && $effect->id->equals($id)) {
+            if ($effect->id !== null && $matches($effect->id)) {
                 $this->stopHandled($effect, $wrap);
                 continue;
             }
@@ -373,7 +392,10 @@ final class EffectRunner
         $this->handled = $keptHandled;
     }
 
-    private function dropQueuedResultsOf(EffectId $id): void
+    /**
+     * @param Closure(EffectId): bool $matches
+     */
+    private function dropQueuedResultsOf(Closure $matches): void
     {
         if (count($this->producers) === 0) {
             return;
@@ -382,7 +404,7 @@ final class EffectRunner
         for ($left = $this->results->count(); $left > 0; --$left) {
             $message = $this->results->dequeue();
             $producer = $this->producers[$message] ?? null;
-            if ($producer === null || !$producer->equals($id)) {
+            if ($producer === null || !$matches($producer)) {
                 $this->results->enqueue($message);
             }
         }

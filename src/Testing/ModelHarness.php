@@ -8,6 +8,7 @@ use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\CancelCmd;
+use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
@@ -450,6 +451,12 @@ final class ModelHarness
         }
 
         $this->issued[] = $command;
+        if ($command instanceof CancelScopeCmd && $scope !== null) {
+            $this->running = array_filter($this->running, static fn (array $running): bool => !$running['id']->isWithin($scope));
+
+            return;
+        }
+
         $id = match (true) {
             $command instanceof CancelCmd => $command->id,
             $command instanceof NamesItsEffect => $command->effectId(),

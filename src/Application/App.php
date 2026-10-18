@@ -86,24 +86,7 @@ abstract readonly class App implements RoutesFocus
 
     final public function update(Message $message, Rect $screenRect, FocusState $focus = new FocusState()): UpdateResult
     {
-        if ($message instanceof KeyMsg) {
-            $action = $this->matchedApplicationAction($message);
-            if ($action !== null) {
-                return $this->onAction($action, $message);
-            }
-        }
-
-        if ($message instanceof ResizeMsg) {
-            return $this->onResize($message);
-        }
-
-        $registry = $this->componentRegistry();
-
-        if ($registry->focusables() === []) {
-            return $this->routeWithoutFocus($message, $screenRect, $registry->all());
-        }
-
-        return $this->routeByFocus($message, $screenRect, $focus->focused());
+        return $this->stoppingWhatLeft($this->routed($message, $screenRect, $focus));
     }
 
     /**
@@ -311,6 +294,55 @@ abstract readonly class App implements RoutesFocus
             Actions::FOCUS_CYCLE => ['tab'],
             Actions::FOCUS_PREVIOUS_CYCLE => ['shift+tab'],
         ]);
+    }
+
+    /**
+     * @param UpdateResult<static> $result
+     *
+     * @return UpdateResult<static>
+     */
+    private function stoppingWhatLeft(UpdateResult $result): UpdateResult
+    {
+        $app = $result->model;
+        if ($app === $this) {
+            return $result;
+        }
+        $mounts = $this->allMounts();
+        if ($mounts === []) {
+            return $result;
+        }
+
+        $kept = array_map(static fn (Mount $mount): string => $mount->id->value, $app->allMounts());
+        $left = array_values(array_filter($mounts, static fn (Mount $mount): bool => !\in_array($mount->id->value, $kept, true)));
+
+        return $left === []
+            ? $result
+            : $result->withCommand(Cmd::combine(...[...array_map(static fn (Mount $mount): Cmd => $mount->left(), $left), $result->command]));
+    }
+
+    /**
+     * @return UpdateResult<static>
+     */
+    private function routed(Message $message, Rect $screenRect, FocusState $focus): UpdateResult
+    {
+        if ($message instanceof KeyMsg) {
+            $action = $this->matchedApplicationAction($message);
+            if ($action !== null) {
+                return $this->onAction($action, $message);
+            }
+        }
+
+        if ($message instanceof ResizeMsg) {
+            return $this->onResize($message);
+        }
+
+        $registry = $this->componentRegistry();
+
+        if ($registry->focusables() === []) {
+            return $this->routeWithoutFocus($message, $screenRect, $registry->all());
+        }
+
+        return $this->routeByFocus($message, $screenRect, $focus->focused());
     }
 
     /**
