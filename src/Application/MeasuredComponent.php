@@ -10,6 +10,8 @@ use Elmphant\Tui\Widget\Widget;
 /**
  * A component around a widget that measures itself, so binding it hides nothing from a container measuring it.
  *
+ * @internal Component::bind() answers it; a host names Component
+ *
  * @template-covariant TWidget of Widget
  *
  * @extends Component<TWidget>
