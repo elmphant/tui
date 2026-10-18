@@ -337,6 +337,20 @@ final class TreeViewTest extends TestCase
     }
 
     #[Test]
+    public function aLabelExpandsItsTabsAndShowsWhereItBreaks(): void
+    {
+        $tree = TreeView::new([
+            new SimpleTreeNode('tab', "a\tb", "x\ty"),
+            new SimpleTreeNode('break', "new\nline.txt"),
+        ]);
+
+        self::assertSame(
+            ['▪ a' . str_repeat(' ', 5) . 'b' . str_repeat(' ', 10) . 'x' . str_repeat(' ', 4) . 'y', '▪ new↵line.txt'],
+            array_map('rtrim', self::draw($tree, 40, 2)),
+        );
+    }
+
+    #[Test]
     public function aLongLabelTakesTheRoomItHasAndMarksWhereItIsCut(): void
     {
         $tree = TreeView::new([

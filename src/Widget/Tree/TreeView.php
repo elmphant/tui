@@ -348,13 +348,13 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             $detailX = $area->x + $detailColumn;
             $showsDetail = $visible['node']->detail() !== '' && $x < $detailX && $detailX < $area->right();
             $labelWidth = max(0, ($showsDetail ? $detailX - 1 : $area->right()) - $x);
-            $frame->putStyled($x, $y, TextWrap::ellipsize($visible['node']->label(), $labelWidth), $rowStyle);
+            $frame->putStyled($x, $y, TextWrap::ellipsize(self::oneRow($visible['node']->label(), $x - $area->x), $labelWidth), $rowStyle);
 
             if ($showsDetail) {
                 $frame->putStyled(
                     $detailX,
                     $y,
-                    CharWidth::truncateToWidth($visible['node']->detail(), max(0, $area->right() - $detailX)),
+                    CharWidth::truncateToWidth(self::oneRow($visible['node']->detail(), $detailColumn), max(0, $area->right() - $detailX)),
                     $onCursor ? $rowStyle : $theme->dim,
                 );
             }
@@ -515,8 +515,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
                 $indexOfPath[self::keyOf($row['path'])] = $index;
                 $detail = $row['node']->detail();
                 if ($detail !== '') {
-                    $labelEnd = max($labelEnd, CharWidth::stringWidth($row['guides'] . $row['marker'] . $row['node']->label()));
-                    $detailWidth = max($detailWidth, CharWidth::stringWidth($detail));
+                    $labelStart = CharWidth::stringWidth($row['guides'] . $row['marker']);
+                    $labelEnd = max($labelEnd, $labelStart + CharWidth::stringWidth(self::oneRow($row['node']->label(), $labelStart)));
+                    $detailWidth = max($detailWidth, CharWidth::stringWidth(self::oneRow($detail, 0)));
                 }
             }
 
@@ -588,6 +589,15 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
                 $rows,
             );
         }
+    }
+
+    /**
+     * Tabs expand as a Paragraph expands them; a line break, which a row cannot
+     * take, shows as ↵ rather than vanishing.
+     */
+    private static function oneRow(string $text, int $column): string
+    {
+        return CharWidth::withTabsExpanded(str_replace(["\r\n", "\n", "\r"], '↵', $text), $column);
     }
 
     /**
