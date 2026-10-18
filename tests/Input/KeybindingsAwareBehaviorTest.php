@@ -104,7 +104,7 @@ final class KeybindingsAwareBehaviorTest extends TestCase
     }
 
     #[Test]
-    public function instanceOverrideStillReplacesPerAction(): void
+    public function anInstanceOverrideReplacesTheDefaultsAndKeepsTheGlobals(): void
     {
         $widget = new FakeKeybindingsWidget();
         $global = new Keybindings([Actions::CURSOR_DOWN => ['tab']]);
@@ -118,7 +118,7 @@ final class KeybindingsAwareBehaviorTest extends TestCase
 
         self::assertTrue($bindings->matches(new KeyMsg('z'), Actions::CURSOR_DOWN));
         self::assertFalse($bindings->matches(new KeyMsg('j'), Actions::CURSOR_DOWN));
-        self::assertFalse($bindings->matches(new KeyMsg(Key::Tab), Actions::CURSOR_DOWN));
+        self::assertTrue($bindings->matches(new KeyMsg(Key::Tab), Actions::CURSOR_DOWN));
     }
 
     #[Test]

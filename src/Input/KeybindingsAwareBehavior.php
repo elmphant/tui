@@ -6,22 +6,27 @@ namespace Elmphant\Tui\Input;
 
 trait KeybindingsAwareBehavior
 {
+    /**
+     * A host's own bindings replace the defaults per action; the globals add to
+     * whatever is left, so overriding one widget never switches them off for it.
+     */
     public function effectiveKeybindings(): Keybindings
     {
         $bindings = static::defaultKeybindings();
-        if ($this->globalKeybindings !== null) {
-            $globals = $this instanceof TakesText && $this->takesText()
-                ? $this->globalKeybindings->withoutText()
-                : $this->globalKeybindings;
-            // Globals lead: they still only add keys, but a hint names the key an
-            // action leads with, and what the host bound is what it shows.
-            $bindings = $globals->append($bindings);
-        }
         if ($this->customKeybindings !== null) {
             $bindings = $bindings->merge($this->customKeybindings);
         }
+        if ($this->globalKeybindings === null) {
+            return $bindings;
+        }
 
-        return $bindings;
+        $globals = $this instanceof TakesText && $this->takesText()
+            ? $this->globalKeybindings->withoutText()
+            : $this->globalKeybindings;
+
+        // Globals lead: a hint names the key an action leads with, and what the
+        // host bound is what it shows.
+        return $globals->append($bindings);
     }
 
     public function withKeybindings(?Keybindings $keybindings): static
