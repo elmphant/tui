@@ -95,22 +95,35 @@ Terminal I/O, HTTP, processes, timers, and program shutdown happen only when the
 
 ### Recommended App API
 
-Most applications should extend `App`. It gives you widget-based rendering, screen-aware mouse handling, reserved Ctrl-Q/Ctrl-C quit shortcuts (both live in `applicationKeybindings()` — override it to rebind or intercept them, e.g. for a confirm-before-quit dialog), extra quit keys via `quitBindings()` (empty by default, honoured only while no component holds the keyboard), an `onResize()` hook, and focus delegation. In `onKey()`, returning a changed model or any command consumes the key; `UpdateResult::ignored($this)` passes it to the focused component.
+Most applications should extend `App`. It gives you widget-based rendering, screen-aware mouse handling, reserved Ctrl-Q/Ctrl-C quit shortcuts (both live in `applicationKeybindings()` — override it to rebind or intercept them, e.g. for a confirm-before-quit dialog), extra quit keys via `quitBindings()` (empty by default), an `onResize()` hook, and focus delegation. In `onKey()`, returning a changed model or any command consumes the key; `UpdateResult::ignored($this)` passes it to the focused component.
 
 ```php
 abstract readonly class App
 {
     abstract public function view(): Widget;                  // pure UI description
+    public function theme(): ?Theme { return null; }          // asked every frame; null keeps the start theme
 
     protected function setup(): ?Cmd { return null; }         // initial commands
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onAction(string $action, KeyMsg $message): UpdateResult {}  // 'quit' quits
     protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onResize(ResizeMsg $message): UpdateResult { return UpdateResult::ignored($this); }
     protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onComponentsChanged(array $ids): UpdateResult { return UpdateResult::ignored($this); }
+
+    protected function applicationKeybindings(): Keybindings {} // actions for onAction(), before any component
+    protected function quitBindings(): Keybindings {}           // extra keys that quit
+    protected function globalKeybindings(): Keybindings {}      // bindings every widget inherits (VimMode)
+    protected function focusCycleBindings(): Keybindings {}     // tab / shift+tab
+    protected function mounts(): array { return []; }           // mounts held but not drawn now
+    protected function bindProperty(string $property, Interactive $widget): Component {}
 }
 ```
 
-Hooks always return `UpdateResult`: `UpdateResult::ignored($this)` when the message meant nothing here, `new UpdateResult($next, $command)` otherwise, or `$this->then(...)` for a command alone. Passing on what a child answered is `$answer->mapModel(fn ($child) => $this->withChild($child))`, which keeps the child's command even when the child itself did not change. `App` deliberately has no reflection-based `with()` method. The optional `Cloneable` trait remains available for compact constructor-compatible value objects, but explicit typed methods give static analysers the strongest contract.
+`onAction()` hears the actions `applicationKeybindings()` matched; `onComponentsChanged()` runs after bound widgets were written back, on the App that already holds them — the place to re-filter a list when a bound search field changed. `theme()` is asked before every frame, so a theme switch is a field on the App: `return $this->dark ? Theme::dark() : Theme::light();`. `bindProperty('list', $this->list)` binds a widget to the property it lives on, so the write-back cannot name another.
+
+Hooks always return `UpdateResult`: `UpdateResult::ignored($this)` when the message meant nothing here, `new UpdateResult($next, $command)` otherwise, or `$this->then(...)` for a command alone. Passing on what a child answered is `$answer->mapModel(fn ($child) => $this->withChild($child))`, which keeps the child's command even when the child itself did not change. Under PHPStan level 9 the hooks answer `UpdateResult<static>`. `App` uses `Cloneable`, so a subclass may call the protected `$this->cloneWith(list: $list)` (named arguments; it returns `$this` when nothing changed) — never redeclare it, a private `cloneWith()` in a subclass is fatal. Typed `withX()` methods still give static analysers the strongest contract.
 
 Keep stateful widgets as properties on the model, not local variables rebuilt inside `view()`. `view()` should compose the current state into a widget tree; if you recreate a `TextInput`, `Panel`, `Select`, or `Table` in `view()`, its cursor, selection, scroll, and focus state will be reset.
 
@@ -160,7 +173,8 @@ widget. Pass a readable string ID normally; use `ComponentId::named()` when the
 same ID value is shared elsewhere. IDs must be unique within the mounted tree. An interactive
 object held in model state but not mounted as a `Component` is passive. For
 global shortcuts in apps with focusable widgets, handle them in `onKey()`
-before the focused widget receives the key.
+before the focused widget receives the key — see [Keys](#keys) for why those
+shortcuts should be Ctrl chords.
 
 Replacement closures must be declared `static` and may capture scalar
 configuration only. `Component::bind()` rejects closures bound to `$this` or
@@ -171,6 +185,45 @@ invariants. PHPStan also infers one App type across the closure input and
 return. When writing the widget back should also start work, for example
 loading what a newly selected row shows, return
 `new UpdateResult($app->withList($list), $command)` instead of the App.
+
+The write-back is the only way a bound widget's state reaches the App, and it
+runs when a message changed the widget. It is handed that message as a third
+argument, so a host can ask a `Committing` widget (`ListView`, `Table`,
+`FilterableList`) whether the message chose something — such a widget is
+written back even when nothing in it changed, so picking the same row twice is
+seen: `static fn (self $app, ListView $list, Message $message): self => $list->commits($message) ? $app->opened($list) : $app->withList($list)`.
+A write-back may also close the component it came from — set the modal or the
+picker to `null` in the App it returns.
+
+### Keys
+
+`KeyMsg::$key` is a `Key` case for a named key (`Key::Enter`, `Key::Escape`,
+`Key::Up`, `Key::F2`) and a string only for text (`'a'`, `'é'`, `' '`).
+`new KeyMsg('enter')` becomes `Key::Enter`, so `$message->key === 'esc'` never
+matches anything; the shipped `KeyNameIsNotTextRule` reports it. `isText()` is
+true for an unmodified text key. Bindings spell keys as patterns: `'enter'`,
+`'ctrl+r'`, `'shift+tab'`.
+
+While the focused component takes text (`TextInput`, `FilterableList`, an open
+`Dropdown`, any widget implementing `TakesText`), an unmodified printable key is
+text for that component alone: `onKey()`, `applicationKeybindings()`,
+`quitBindings()`, mounts and global letter bindings never see it. Modified and
+named keys stay shortcuts, so give app-wide commands Ctrl chords (`ctrl+n`, not
+`n`); a bare letter works only while a list or a button holds the keyboard.
+
+A widget's bindings are its `defaultKeybindings()`, then what `withKeybindings()`
+replaces per action, then the App's `globalKeybindings()` on top.
+`VimMode::keybindings()` binds `j`/`k` (cursor and scroll), `ctrl+d`/`ctrl+u`
+(page) and `h`/`l` (previous/next tab); a tree's expand letters are the
+application's to bind.
+
+The keyboard starts on the first stop in tree order — inside a `TabBar`'s first
+page (`tabs/0`), not on its strip — so a header control drawn above a field takes
+it first; return `Cmd::focus(ComponentId::named('composer'))` from `setup()` to
+start elsewhere. `Cmd::focus()` to a component not on screen is refused, and the
+keyboard stays. When the component holding the keyboard leaves the tree, it goes
+to the nearest ancestor that is a stop, else the first stop under it, else the
+most recent stop still there, else the first stop.
 
 ### Responsive terminal layouts
 
@@ -194,16 +247,25 @@ Every child is sized by the same `Constraint` the stacking layouts use — here 
 the row's own axis. A widget asked how big it wants to be answers with a `Sizing`,
 which pairs one `Constraint` per axis so neither side has to guess which was meant.
 `basis` is the preferred main-axis size used when deciding where to wrap.
-`flex` and `shrink` are relative weights; `min` and `max` bound normal
-resizing. If declared minimums cannot fit, terminal bounds take precedence so
-children never receive rectangles outside their container. Builders are
-immutable, so a layout remains a pure value in `view()`.
+`flex` is the weight a child grows by; the `shrink` constructor argument is the
+weight it gives space back by when the row is too narrow (there is no `shrink()`
+factory). `Constraint::min(n)` is a floor, not a size: on its own it never grows,
+and `min(n)->withFlex()` means "n at least, then a share of what is left".
+`max(n)` carries a weight already, so it grows to fill but stops at n. Every
+declared minimum is reserved first; if they cannot fit, terminal bounds take
+precedence so children never receive rectangles outside their container.
+Builders are immutable, so a layout remains a pure value in `view()`.
+
+A `Flex::row()` asks for the rows its content needs, so a row of cards inside
+`Layout::vertical()` takes only its height; a `Flex::column()` fills. Items
+stretch across the line by default; `withCrossAlignment(CrossAlignment::Start)`
+(or `Center`, `End`) keeps each at its own size.
 
 This is intentionally a terminal-oriented subset rather than CSS Flexbox:
-row/column direction, wrapping, cell gaps, basis/min/max, grow/shrink, and
-start/center/end/space justification. Browser-specific concepts such as
-percentages, ordering, reverse directions, and a full alignment model are not
-part of the API.
+row/column direction, wrapping, cell gaps, basis/min/max, grow/shrink,
+start/center/end/space justification and cross alignment. Browser-specific
+concepts such as percentages, ordering and reverse directions are not part of
+the API.
 
 ### Universal widget decoration
 
@@ -268,16 +330,27 @@ Cmd::quit()                         // stop the program
 Cmd::tick(0.05)                     // send TickMsg every 50ms
 Cmd::after(2.0, fn() => $msg)       // send one delayed message or command
 Cmd::batch($cmd1, $cmd2)            // dispatch multiple commands
+Cmd::combine($cmd1, null, $cmd2)    // the one, a batch, or null when all are null
 Cmd::message($message)              // enqueue a Message immediately
 Cmd::call(fn() => $message)          // run a short synchronous side effect
 Cmd::http('https://example.com')     // non-blocking HTTP request
+Cmd::listen($socket, fn($stream) => $messages) // read a stream whenever it is readable
+Cmd::log('loaded', ['items' => 3])  // a line in the trace; stdout is the screen
+Cmd::copy($text)                    // put text on the clipboard (OSC 52)
+
+// Focus
+Cmd::focus(ComponentId::named('search'))  // move the keyboard to a component
+Cmd::focusNext() / Cmd::focusPrevious()   // as tab / shift+tab
+Cmd::focusFirst() / Cmd::focusNothing()   // the first stop, or keep the keyboard for the App
 
 // Process execution (powered by symfony/process)
 Cmd::exec(['git', 'status'])        // run command, get full result
 Cmd::process(['tail', '-f', 'log']) // stream output in real-time
 ```
 
-`Cmd::tick()` repeats on its own, so there is no need to ask again from each `TickMsg`; asking again for an unnamed tick at the same interval keeps the one already running.
+`Cmd::tick()` repeats on its own, so there is no need to ask again from each `TickMsg`; asking again for an unnamed tick at the same interval keeps the one already running. Name a ticker (`Cmd::tick(1.0, EffectId::named('clock'))`) and its beats answer `$message->isFrom('clock')`, so an App with two tickers tells them apart. An interval of 0 or less throws where the command is built, so a `Cmd::tick(0)` made in `update()` arrives as an `ErrorMsg` from the update.
+
+`Cmd::listen()` watches a socket or pipe and calls the reader with the stream each time it is readable; the reader yields messages. It ends at EOF or on `Cmd::cancel($id)` — cancel before you close the stream yourself.
 
 Effects that may need cancellation share a typed identity:
 
@@ -392,6 +465,9 @@ however greedily it answers `handles()`. A command no handler claims is a
 `LogicException`, so a typo in `handles()` is loud rather than silent. Anything
 `start()` throws arrives as `ErrorMsg` with source `ErrorSource::Command`.
 
+A test runs no handler: `ModelHarness::emit('rows', new RowsLoaded($rows))`
+delivers what `$emit` would, under the effect's scope and maps.
+
 ### Composing child widgets
 
 Use `Cmd::map()` to keep a reusable child in its own message namespace. The
@@ -422,7 +498,7 @@ For a whole part of an app with its own state, components and effects (a tab, a
 module), mount it under a name. The framework then does the plumbing:
 
 - Its components are known as `name/component`. Inside the sub-model you use the
-  local names, also in `Cmd::focus()`.
+  local names, also in `Cmd::focus(ComponentId::named('field'))`.
 - It hears a key before its components, as an App does. The key goes to the mount
   that holds the keyboard, or to every mount on screen if none does.
 - Answers to what it asks for (processes, timers, `Cmd::message()`) come back to
@@ -470,8 +546,15 @@ final readonly class Machine extends App
 }
 ```
 
-An App that shows only some of its mounts at a time, such as tabs, overrides
-`mounts()` to list them all, so the hidden ones still get their answers.
+The last argument of `Mount::named()` is the write-back: it runs whenever the
+model changed and is the only way its state reaches the App. Everything the model
+emits comes back to the model; `Mount::toHost($message)` is the command that sends
+a message to the App's `onMessage()` instead.
+
+An App that shows only some of its mounts at a time, such as tabs, lists the
+hidden ones in `mounts()`, so they start and still get their answers. The mounts
+drawn now count without being listed. A mount that leaves the App — neither drawn
+nor listed — has its named effects cancelled.
 
 ## Running Processes
 
@@ -479,7 +562,7 @@ Two modes for executing OS commands, both non-blocking:
 
 ### `Cmd::exec()` — Run and collect
 
-Runs a command in the background. Sends a single `ProcessResultMsg` when it finishes with stdout, stderr, and the exit code. Collected output is capped at 8 MiB by default; exceeding the limit produces `ErrorMsg` with `EffectOutputLimitExceeded`.
+Runs a command in the background. Sends a single `ProcessResultMsg` when it finishes with stdout, stderr, and the exit code. Collected output is capped at 8 MiB by default; exceeding the limit produces `ErrorMsg` with `EffectOutputLimitExceeded`. A binary that does not exist is not an error: it arrives as exit code 127 with empty output, so check `exitCode`.
 
 ```php fragment
 use Elmphant\Tui\Message\ProcessResultMsg;
@@ -599,7 +682,7 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 
 | Widget | Description |
 |--------|-------------|
-| `Panel` | Scrollable container with border, title, focus management |
+| `Panel` | Scrollable container with border, title, focus management; Home/End, and `withFollowingTheEnd()` for a log — see [Scrolling](#scrolling) |
 | `Header` | Top bar with title, left/center/right slots, optional divider |
 | `Footer` | Bottom bar with slots; `Footer::forHints([...])` renders key hints |
 | `FocusHints` | The keys whatever holds the keyboard answers, asked at render time |
@@ -611,21 +694,21 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `Button` | Labelled press action |
 | `Form` | Named fields as focus stops, with labels, required marks, inline problems and a submit button pinned to the foot — see [Forms](#forms) |
 | `ChoiceField` | One of a set of values by label: a row of marks where they fit, a filterable list where they would wrap |
-| `ProgressBar` | Fractional fill bar with spring animation |
+| `ProgressBar` | Fractional fill bar that springs towards its value over time (`withSpringFactor()`); a click sets it only after `withClickable()` |
 | `ListView` | Scrollable list with custom `ListItem` rendering; wraps long item text, keeps an externally moved cursor visible |
-| `Table` | Interactive table: cursor, selection, mouse, scrolling; constraint-based columns, wrapping cells, optional header (`withHeader(false)`) |
+| `Table` | Interactive table: cursor, selection, mouse, scrolling; constraint-based columns, wrapping cells (`Column::withWrap(Wrap::NoWrap)` cuts with `…` instead), optional header (`withHeader(false)`) |
 | `StaticTable` | Static bordered table: draws every row, no cursor or scrolling, columns sized to content |
 | `FilterableList` | Search field over a list: typing filters, arrows/Enter navigate and choose; `sourceIndex()` maps the cursor back to your items |
 | `FilterableTable` | The same search field over a `StaticTable` |
 | `TabBar` | Tabbed container with keyboard/mouse tab switching |
 | `Split` | Two panes with a draggable divider |
-| `TreeView` | Lazy tree — children load on expand (`pendingExpansions()` names what to fetch); the cursor is a path, so it survives reloads |
-| `Modal` | Centered overlay with background dim |
-| `Dropdown` | Collapsed one-row control with a filterable option list that floats above the layout. Enter/Space opens, typing filters, Enter picks, Escape clears a typed filter before it closes; `hasFilterText()` lets a host label that key |
+| `TreeView` | Lazy tree — children load on expand (`pendingSince($before)` names what started waiting in the last update, so a key fetches each node once); the cursor is a path, so it survives reloads |
+| `Modal` | Centered overlay with background dim — see [Modals](#modals) |
+| `Dropdown` | Collapsed one-row control whose content (`Select`, `FilterableList`, …) floats above the layout. Enter/Space opens, Enter picks, Escape closes; typing filters only when the content filters (`Dropdown::new(FilterableList::new($items))`), and then Escape clears the filter first — `content()->query() !== ''` tells a host which. `withOpen()` opens it from the App, together with a `Cmd::focus()` to it |
 | `Overlay` / `PositionedOverlay` | Stack widgets above a base layer |
 | `Spinner` | Animated loading indicator (frame-clock driven, no wiring) |
 | `ActivityBar` | Bouncing activity indicator (frame-clock driven, no wiring) |
-| `Card` / `Box` / `Container` | Composition and decoration helpers |
+| `Card` / `Box` / `Container` | Composition and decoration helpers; a `Card` body is a string or any widget |
 | `Text` | Static text label |
 | `Paragraph` | Multi-line text with wrapping, alignment, ANSI/Markdown |
 | `Separator` | Horizontal line |
@@ -756,7 +839,8 @@ Three levels, each extending the previous:
 
 - **Widget** — `sizing()` + `render(buffer, rect, context)` — passive rendering only
 - **Interactive** — adds `update(message, rect)` returning `UpdateResult` — responds to input
-- **Focusable** — adds `isFocused()` + `withFocus(bool)` — can receive keyboard focus
+- **Focusable** — an empty marker: it can hold the keyboard. A widget never stores
+  whether it does; it asks `$context->hasFocus()` while it draws
 
 A fourth, separate contract lets a widget draw outside its own rect:
 
@@ -858,6 +942,120 @@ cannot, and `withCancel()` names the message an escape sends. `Field::choice()` 
 fit and collapses into a filterable list where they would wrap; `Field::of()`
 takes any widget that implements `HoldsAValue`.
 
+`required()` is one check; `withRule()` adds your own. A rule gets what the field
+holds and answers the problem to tell under it, or `null`; rules add up, the
+first problem wins, and an empty field never reaches them:
+
+```php
+use Elmphant\Tui\Widget\Form\Field;
+
+Field::text('due', 'Due date')
+    ->withRule(static fn (string $date): ?string => strtotime($date) === false ? 'Not a date' : null);
+```
+
+`withValues(['username' => 'ada', 'admin' => true])` fills fields in by name, for
+an edit form; a name the form does not have throws. Enter in a field that leaves
+it alone moves to the next field, and in the last one presses submit.
+
+### Modals
+
+A `Modal` is an input layer: while it is on screen, everything behind it stops
+taking keys and clicks, and the keyboard moves inside it. Bind it — an unbound
+`Modal` around a bound component throws — and keep what it holds in the App, not
+the modal itself. Escape, or a click outside it, sends `ModalDismissed`; closing
+is the App's to do:
+
+```php
+use Elmphant\Tui\Application\{App, Component};
+use Elmphant\Tui\Core\{Message, UpdateResult};
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Widget\Form\{Field, Form};
+use Elmphant\Tui\Widget\Popup\{Modal, ModalDismissed, Overlay};
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class NoteSaved implements Message {}
+
+final readonly class Notes extends App
+{
+    /** @param list<string> $notes */
+    public function __construct(private array $notes = [], private ?Form $editor = null) {}
+
+    public function view(): Widget
+    {
+        $page = Text::new($this->notes === [] ? 'Ctrl+N adds a note' : implode("\n", $this->notes));
+
+        if ($this->editor === null) {
+            return $page;
+        }
+
+        $form = Component::bind('editor', $this->editor, static fn (self $app, Form $editor): self => $app->cloneWith(editor: $editor));
+
+        return Overlay::new($page, Component::bind(
+            'modal',
+            Modal::new('', $form)->withBorder(false)->withSizedToContent(),
+            static fn (self $app): self => $app,
+        ));
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        if ($this->editor !== null || !$message->ctrl || $message->key !== 'n') {
+            return UpdateResult::ignored($this);
+        }
+
+        return new UpdateResult($this->cloneWith(editor: Form::new('New note')
+            ->withField(Field::text('title', 'Title')->required())
+            ->withSubmit('Save', new NoteSaved())));
+    }
+
+    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    {
+        return match (true) {
+            $message instanceof ModalDismissed => new UpdateResult($this->cloneWith(editor: null)),
+            $message instanceof NoteSaved && $this->editor?->problems() === [] => new UpdateResult(
+                $this->cloneWith(notes: [...$this->notes, (string)$this->editor->values()['title']], editor: null),
+            ),
+            $message instanceof NoteSaved => new UpdateResult($this->cloneWith(editor: $this->editor?->submitted())),
+            default => UpdateResult::ignored($this),
+        };
+    }
+}
+```
+
+When the modal closes, the keyboard goes back to where it was before.
+`withBorder(false)` drops the modal's frame when the content draws its own,
+`withOutsideClickDismissal(false)` keeps a half-filled form open on a stray
+click, and `content()` answers what the modal holds.
+
+### Scrolling
+
+A `Panel` (and the `ScrollPane` under it) scrolls with the wheel, PageUp/PageDown
+and Home/End, and brings a tabbed-to child into view. `scrollOffset($area)`
+answers the rows scrolled past when drawn in that area. For a log or a chat,
+`withFollowingTheEnd()` keeps the last row in view as children arrive, until the
+reader scrolls up; scrolling back to the end follows again. Keep the pane in the
+App and add to it (or rebuild its rows with `withChildren()`), so the follow
+survives:
+
+```php
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Panel;
+
+$log = Panel::new('Log')->withFollowingTheEnd();
+$log = $log->add(Text::new('build finished'));
+```
+
+### Lists keep their place
+
+A reload keeps the cursor and the selection on the same row, found by its key.
+The key defaults to the text shown, so give rows that can share a text, or whose
+text changes, a key of their own: `new SimpleListItem($title, $description, key: $id)`
+(`ListItem::key()` on your own items), `Row::withKey($id)` and
+`new TabPage($label, key: $id)`. When the cursor's row is gone, it moves to a
+neighbour.
+
 ### Example: Settings Form
 
 ```php
@@ -885,19 +1083,24 @@ $right = Panel::new('System')
 
 ```php
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Program;
 
 Program::new($model)
     ->withAltScreen()       // use alternate screen buffer
     ->withMouseTracking()   // enable mouse click/scroll/drag
     ->withFps(30)           // frame rate limit (default: 60)
+    ->withTheme(Theme::dracula()) // the theme to start in
     ->onError(fn(ErrorMsg $error) => null) // may return a recovery Cmd
     ->start();
 ```
 
+To switch themes while running, answer `App::theme()` from a field of the App;
+it is asked before every frame.
+
 Without `withAltScreen()` the program still draws over the whole visible screen, and its last frame stays there after it exits. There is no inline mode that keeps to a few rows below the prompt.
 
-An error your handler returns from normally never stops the program. Ten failures in a row that nothing recovers from — an `update()` that keeps throwing, a `render()` that never succeeds, or a handler that throws — stop it, and `start()` rethrows the last of them after the terminal is restored.
+A throw in `view()` arrives at `onError()` as `ErrorSource::Render`, like one in `render()`. An error your handler returns from normally never stops the program. Ten failures in a row that nothing recovers from — an `update()` that keeps throwing, a `render()` that never succeeds, or a handler that throws — stop it, and `start()` rethrows the last of them after the terminal is restored.
 
 A `Program` is intentionally one-shot. Its lifecycle is `ProgramState::New → Running → Stopped`; create a fresh `Program` to run a model again. Configuration methods are valid only while the state is `New`.
 
@@ -985,7 +1188,7 @@ The app owns the terminal, so debug it from a second one:
 
 ## Static analysis for your own app
 
-The package ships the five PHPStan rules it enforces on itself. Include
+The package ships the seven PHPStan rules it enforces on itself. Include
 `rules.neon` and your application is held to the same invariants — the ones a
 test cannot catch because the code is correct today and wrong the day something
 moves:
@@ -1002,8 +1205,10 @@ includes:
 | `WidgetDoesNotPublishAnAxisPolicyRule` | A `Widget` handing out a bare `Constraint`, which does not say which axis it means; widgets answer with a `Sizing` |
 | `FocusIsAskedWhileDrawingRule` | A widget reading its own focus flag while rendering, which is one message behind by the time the frame is drawn |
 | `ReachableChildrenRule` | A widget rendering a child it never exposes through `WidgetContainer`, leaving anything bound inside it unreachable to focus and discovery |
+| `KeyNameIsNotTextRule` | `$message->key === 'esc'` and the like: a named key arrives as a `Key` case, so the comparison never matches |
+| `SplitIsBoundRule` | A `Split` an App draws outside every `Component::bind()`, which never hears a divider drag |
 
-The last one takes an allowlist for the places you have decided otherwise:
+`ReachableChildrenRule` takes an allowlist for the places you have decided otherwise:
 
 ```neon
 parameters:
@@ -1018,11 +1223,12 @@ All messages flow through `update()` via the unified `Elmphant\Tui\Message` name
 
 | Message | When |
 |---------|------|
-| `KeyMsg` | Any key press. Properties: `key`, `ctrl`, `alt`, `shift` |
+| `KeyMsg` | Any key press. Properties: `key` (a `Key` case or text), `ctrl`, `alt`, `shift`; `isText()` |
 | `MouseMsg` | Mouse click/scroll/drag. Methods: `isClick()`, `inRect()` |
-| `TickMsg` | Periodic timer fired (from `Cmd::tick()`) |
+| `PasteMsg` | Bracketed paste. Property: `content` |
+| `TickMsg` | Periodic timer fired (from `Cmd::tick()`). Properties: `timestamp`, `effectId`; `isFrom('clock')` |
 | `ResizeMsg` | Terminal resized. Properties: `width`, `height` |
-| `HttpResultMsg` | `Cmd::http()` completed. Properties: `statusCode`, `body`, `headers`, `id` |
+| `HttpResultMsg` | `Cmd::http()` completed. Properties: `statusCode`, `body`, `headers`, `effectId` |
 | `ProcessResultMsg` | `Cmd::exec()` completed |
 | `ProcessOutputMsg` | `Cmd::process()` output chunk |
 | `ProcessFinishedMsg` | `Cmd::process()` exited |
@@ -1053,6 +1259,8 @@ $app->type('cache:flush');
 $app->click('Run');          // where "Run" is drawn now: press and release
 $app->click('search', offset: 7);   // seven columns to the right of it
 $app->wheel('Output', 3);    // three notches down; -3 is up
+$app->paste("two\nlines");   // a bracketed paste
+$app->drag(30, 5, 40, 5);    // press at one cell, move, release at another
 
 // Effects are described, never run: the test sees what was asked for and answers it.
 $app->issued(ExecCmd::class);                     // batches, maps and scopes taken apart
@@ -1062,6 +1270,8 @@ $app->finish('tail', exitCode: 0);                // ProcessFinishedMsg
 $app->respond('page', 200, '<html>');             // HttpResultMsg for Cmd::http()
 $app->tick('clock', at: 12.5);                    // one beat of a running Cmd::tick()
 $app->fail('load', 'timed out');                  // ErrorMsg from that effect
+$app->emit('rows', new RowsLoaded([]));           // what an effect of your own hands its $emit
+$app->runCalls();                                 // run the Cmd::call()s issued so far
 ```
 
 An answer arrives the way `Program` delivers it: with the `EffectId` the effect ran
@@ -1074,7 +1284,9 @@ A test that calls `update()` itself takes the command it got apart the same way:
 `Issued::in($result->command, ExecCmd::class)`.
 
 A test that calls `update()` itself builds the same messages with `UserInput`:
-`UserInput::key('shift+tab')`, `UserInput::typed('ok')`, `UserInput::click($column, $row)`.
+`UserInput::key('shift+tab')`, `UserInput::typed('ok')`, `UserInput::click($column, $row)`,
+`UserInput::drag($column, $row)` (a motion with the button held), `UserInput::release($column, $row)`
+and `UserInput::paste('text')`.
 
 Call `initialize()` to capture the model's initial command, `resize()` to test
 responsive behavior, `model()` to assert typed application state, and
@@ -1118,6 +1330,8 @@ $field->widget()->value();       // 'Ada', the widget as the last update left it
 $field->screen()->rowOf('Ada');  // 0
 ```
 
+It draws floats too, so an open `Dropdown` shows its list in `screen()`.
+
 A `ScreenBuffer` answers where text is and how a cell looks, so a test never
 counts columns or indexes `Frame` arrays by hand:
 
@@ -1135,6 +1349,8 @@ $screen->find('Run', 1);  // the second match, or null
 $screen->find('Run', within: new Rect(10, 0, 10, 2));   // only matches starting in that area
 $screen->locate('Run');   // like find(), but throws '"Run" is not on screen'
 $screen->rowOf('Run');    // 1
+$screen->lineAt(1);       // one row as text, the full width
+$screen->plainText();     // every row without trailing blanks, joined by newlines
 $screen->styleAt(1, 4);   // a Style: foreground, background, attributes
 ```
 
