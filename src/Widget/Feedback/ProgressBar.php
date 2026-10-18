@@ -35,7 +35,7 @@ final readonly class ProgressBar implements Interactive
         private ?Style $emptyStyleOverride = null,
         private string $label = '',
         private bool $showPercent = true,
-        private bool $clickable = true,
+        private bool $clickable = false,
         private float $springFactor = 0.15,
     ) {
         $this->progress = max(0.0, min(1.0, $progress));
@@ -71,7 +71,7 @@ final readonly class ProgressBar implements Interactive
         return $this->cloneWith(showPercent: $showPercent);
     }
 
-    public function withClickable(bool $clickable): self
+    public function withClickable(bool $clickable = true): self
     {
         return $this->cloneWith(clickable: $clickable);
     }

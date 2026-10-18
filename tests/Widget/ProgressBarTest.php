@@ -201,7 +201,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function clickSetsProgressFromMousePosition(): void
     {
-        $progressBar = ProgressBar::new()->withProgress(0.0);
+        $progressBar = ProgressBar::new()->withProgress(0.0)->withClickable();
         $area = new Rect(0, 0, 20, 1);
         $mouseMessage = new MouseMsg(10, 0, MouseAction::Press, MouseButton::Left);
 
@@ -214,7 +214,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function clickOutsideAreaDoesNothing(): void
     {
-        $progressBar = ProgressBar::new()->withProgress(0.0);
+        $progressBar = ProgressBar::new()->withProgress(0.0)->withClickable();
         $area = new Rect(0, 0, 20, 1);
         $mouseMessage = new MouseMsg(10, 5, MouseAction::Press, MouseButton::Left);
 
@@ -223,11 +223,9 @@ final class ProgressBarTest extends TestCase
     }
 
     #[Test]
-    public function notClickableIgnoresMouseClick(): void
+    public function aBarTakesNoClickUnlessAskedTo(): void
     {
-        $progressBar = ProgressBar::new()
-            ->withProgress(0.0)
-            ->withClickable(false);
+        $progressBar = ProgressBar::new()->withProgress(0.0);
         $area = new Rect(0, 0, 20, 1);
         $mouseMessage = new MouseMsg(10, 0, MouseAction::Press, MouseButton::Left);
 
@@ -293,9 +291,9 @@ final class ProgressBarTest extends TestCase
     }
 
     #[Test]
-    public function clickOnNonClickableBarDoesNothing(): void
+    public function aClickableBarCanBeMadeStillAgain(): void
     {
-        $bar = ProgressBar::new()->withClickable(false);
+        $bar = ProgressBar::new()->withClickable()->withClickable(false);
         $area = new Rect(0, 0, 50, 1);
         $click = new MouseMsg(25, 0, MouseAction::Press, MouseButton::Left);
         $result = $bar->update($click, $area);
@@ -388,7 +386,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function clickAccountsForAreaOffset(): void
     {
-        $progressBar = ProgressBar::new()->withProgress(0.0);
+        $progressBar = ProgressBar::new()->withProgress(0.0)->withClickable();
         // Area starts at x=10, width=20
         $area = new Rect(10, 0, 20, 1);
         // Click at absolute x=20 => local x=10, fraction=10/20=0.5
@@ -403,7 +401,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function clickAtAreaStartSetsProgressToZero(): void
     {
-        $progressBar = ProgressBar::new()->withProgress(0.5);
+        $progressBar = ProgressBar::new()->withProgress(0.5)->withClickable();
         $area = new Rect(5, 0, 20, 1);
         // Click at start of area (x=5) => localX=0 => fraction=0
         $click = new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left);
@@ -999,7 +997,8 @@ final class ProgressBarTest extends TestCase
         // Label "ABCDE" => labelWidth = 6, area width = 6 => barWidth = 0
         $progressBar = ProgressBar::new()
             ->withLabel('ABCDE')
-            ->withProgress(0.0);
+            ->withProgress(0.0)
+            ->withClickable();
 
         $area = new Rect(0, 0, 6, 1);
         // Click inside area but bar portion has zero width
@@ -1083,7 +1082,8 @@ final class ProgressBarTest extends TestCase
         // Label "AB" => labelWidth = 3, area = (0,0,23,1), barArea = (3,0,20,1)
         $progressBar = ProgressBar::new()
             ->withLabel('AB')
-            ->withProgress(0.0);
+            ->withProgress(0.0)
+            ->withClickable();
 
         $area = new Rect(0, 0, 23, 1);
         // Click at x=13 => localX = 13 - 3 = 10, fraction = 10/20 = 0.5
@@ -1098,7 +1098,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function mouseMoveDoesNotChangeProgress(): void
     {
-        $progressBar = ProgressBar::new()->withProgress(0.0);
+        $progressBar = ProgressBar::new()->withProgress(0.0)->withClickable();
         $area = new Rect(0, 0, 20, 1);
         $mouseMove = new MouseMsg(10, 0, MouseAction::Motion, MouseButton::None);
 
