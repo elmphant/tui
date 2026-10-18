@@ -20,6 +20,7 @@ final readonly class Row
         public ?Style $style = null,
         public bool $selectable = true,
         public bool $spansAllColumns = false,
+        private ?string $key = null,
     ) {
     }
 
@@ -52,5 +53,25 @@ final readonly class Row
     public function withSelectable(bool $selectable): self
     {
         return $this->cloneWith(selectable: $selectable);
+    }
+
+    /**
+     * What the cursor and the selection follow across withRows(), for a row
+     * whose cells change while it stays the same row: a process by its pid.
+     */
+    public function withKey(?string $key): self
+    {
+        return $this->cloneWith(key: $key);
+    }
+
+    /**
+     * The key given, else the row's cell text.
+     */
+    public function key(): string
+    {
+        return $this->key ?? implode("\x1F", array_map(
+            static fn (string|Span $cell): string => $cell instanceof Span ? $cell->content : $cell,
+            $this->cells,
+        ));
     }
 }

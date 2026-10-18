@@ -23,6 +23,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\KeyedCache;
+use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
@@ -132,25 +133,23 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
      */
     public function withCells(array $cells): self
     {
-        $typed = self::asTypedRows($cells);
-
-        return $this->cloneWith(
-            rows: $typed,
-            cursor: $this->cursorAfter($typed),
-            selected: self::rowPlaceOf($this->selectedRow(), $typed),
-            layoutMemo: self::newLayoutMemo(),
-        );
+        return $this->withRows(self::asTypedRows($cells));
     }
 
     /**
+     * The cursor and the selection stay on the rows they were on, matched by
+     * Row::key().
+     *
      * @param list<Row> $rows
      */
     public function withRows(array $rows): self
     {
+        $keys = array_map(static fn (Row $row): string => $row->key(), $rows);
+
         return $this->cloneWith(
             rows: $rows,
-            cursor: $this->cursorAfter($rows),
-            selected: self::rowPlaceOf($this->selectedRow(), $rows),
+            cursor: self::selectablePlaceNear(Places::cursorAfter(($this->rows[$this->cursor] ?? null)?->key(), $keys, $this->cursor), $rows),
+            selected: Places::placeOf($this->selectedTypedRow()?->key(), $keys, $this->selected ?? 0),
             layoutMemo: self::newLayoutMemo(),
         );
     }
@@ -274,21 +273,21 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
     }
 
     /**
-     * The row the cursor was on, wherever the reload put it — and off a row that
-     * cannot be chosen, since only a reload can seat it on one.
+     * Off a row that cannot be chosen, since only a reload can seat the cursor on one.
      *
      * @param list<Row> $rows
      */
-    private function cursorAfter(array $rows): int
+    private static function selectablePlaceNear(int $place, array $rows): int
     {
-        $resting = $this->rows[$this->cursor] ?? null;
-        $place = $resting === null ? null : self::rowPlaceOf(self::textOf($resting), $rows);
-
-        if ($place !== null && $rows[$place]->selectable) {
-            return $place;
+        for ($distance = 0, $count = count($rows); $distance < $count; ++$distance) {
+            foreach ([$place + $distance, $place - $distance] as $candidate) {
+                if (($rows[$candidate] ?? null)?->selectable === true) {
+                    return $candidate;
+                }
+            }
         }
 
-        return self::firstSelectablePlace($rows);
+        return 0;
     }
 
     /**
@@ -622,23 +621,6 @@ final readonly class Table implements Focusable, KeybindingsAware, MeasureHeight
         }
 
         return $cells;
-    }
-
-    /**
-     * Null where no row reads like that any more. Rows reading alike count as one.
-     *
-     * @param ?list<string> $text
-     * @param list<Row>     $rows
-     */
-    private static function rowPlaceOf(?array $text, array $rows): ?int
-    {
-        foreach ($rows as $place => $row) {
-            if (self::textOf($row) === $text) {
-                return $place;
-            }
-        }
-
-        return null;
     }
 
     private function ensureCursorVisible(Rect $area): self
