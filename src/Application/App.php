@@ -14,6 +14,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
@@ -132,7 +133,8 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * App-level key hook, consulted before the focused component.
+     * App-level key hook, consulted before the focused component. A key that is
+     * text goes straight to a focused component that takes text (TakesText).
      *
      * Returning a changed model or any command consumes the key — it will
      * NOT reach the focused component. Return UpdateResult::ignored($this) to
@@ -163,11 +165,9 @@ abstract readonly class App implements RoutesFocus
     }
 
     /**
-     * Reserved application shortcuts, evaluated before focused components.
-     *
-     * Keep printable, unmodified keys out of this map when the reader should be
-     * able to type them into an input. Widget action inheritance belongs in
-     * globalKeybindings() instead.
+     * Reserved application shortcuts, evaluated before focused components,
+     * except a key that is text while the focused component takes text.
+     * Widget action inheritance belongs in globalKeybindings() instead.
      *
      * Overriding without a ctrl+c binding lets the app intercept ctrl+c
      * (e.g. for a confirm-before-quit dialog).
@@ -327,6 +327,10 @@ abstract readonly class App implements RoutesFocus
      */
     private function routed(Message $message, Rect $screenRect, FocusState $focus): UpdateResult
     {
+        if ($message instanceof KeyMsg && $message->isText() && $this->takesText($focus->focused())) {
+            return $this->delegateToFocused($message, $screenRect, $focus->focused());
+        }
+
         if ($message instanceof KeyMsg) {
             $action = $this->matchedApplicationAction($message);
             if ($action !== null) {
@@ -741,7 +745,9 @@ abstract readonly class App implements RoutesFocus
      */
     private function offeredToWhatEncloses(Message $message, Rect $screenRect, Component $focused): UpdateResult
     {
-        if ($focused->widget instanceof CapturesKeys && $focused->widget->capturesKeys()) {
+        if (($focused->widget instanceof CapturesKeys && $focused->widget->capturesKeys())
+            || ($message instanceof KeyMsg && $message->isText() && $this->takesText($focused->id))
+        ) {
             return new UpdateResult($this);
         }
 
@@ -1049,6 +1055,13 @@ abstract readonly class App implements RoutesFocus
          * @var WeakMap<object, ChildDispatcher> $dispatchers
          */
         return $dispatchers[$this] ??= new ChildDispatcher($this->globalKeybindings());
+    }
+
+    private function takesText(?ComponentId $holder): bool
+    {
+        $widget = $this->componentRegistry()->focusable($holder)?->widget;
+
+        return $widget instanceof TakesText && $widget->takesText();
     }
 
     private function resolvedQuitBindings(): Keybindings

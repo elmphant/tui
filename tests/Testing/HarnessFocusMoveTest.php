@@ -28,7 +28,7 @@ final class HarnessFocusMoveTest extends TestCase
     {
         $harness = ModelHarness::for(new MovingFieldsApp(TextInput::new(), TextInput::new()), 40, 2);
 
-        $harness->dispatch(new KeyMsg('n'))->dispatch(new KeyMsg('x'));
+        $harness->dispatch(new KeyMsg('n', ctrl: true))->dispatch(new KeyMsg('x'));
 
         $model = $harness->model();
         self::assertInstanceOf(MovingFieldsApp::class, $model);
@@ -55,7 +55,7 @@ final readonly class MovingFieldsApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return $message->key === 'n'
+        return $message->ctrl && $message->key === 'n'
             ? $this->then(Cmd::focusNext())
             : UpdateResult::ignored($this);
     }

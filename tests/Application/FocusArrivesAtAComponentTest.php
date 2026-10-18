@@ -50,7 +50,7 @@ final class FocusArrivesAtAComponentTest extends TestCase
     {
         $harness = ModelHarness::for(new WrappedFocusApp(TextInput::new(), TextInput::new()), 40, 10);
 
-        $harness->dispatch(new KeyMsg($key));
+        $harness->dispatch(new KeyMsg($key, ctrl: true));
 
         self::assertTrue(
             $harness->focused()?->equals(ComponentId::named('second')),
@@ -130,7 +130,7 @@ final readonly class WrappedFocusApp extends App
     {
         $move = Cmd::focus(ComponentId::named('second'));
 
-        return match ($message->key) {
+        return match ($message->ctrl ? $message->key : null) {
             'b' => $this->then(Cmd::batch(Cmd::tick(1.0), $move)),
             'm' => $this->then($move->map(static fn (Message $inner): Message => $inner)),
             default => UpdateResult::ignored($this),

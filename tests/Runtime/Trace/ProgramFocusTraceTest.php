@@ -7,8 +7,6 @@ namespace Elmphant\Tui\Tests\Runtime\Trace;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
@@ -32,7 +30,7 @@ final class ProgramFocusTraceTest extends TestCase
     {
         $tracer = new InMemoryTracer();
         $terminal = new VirtualTerminal(40, 6);
-        $terminal->simulateInput("\tq");
+        $terminal->simulateInput("\t\x11");
 
         Program::new(new TwoFieldsThenQuitApp(TextInput::new(), TextInput::new()))
             ->withTerminal($terminal)
@@ -53,7 +51,7 @@ final class ProgramFocusTraceTest extends TestCase
     {
         $tracer = new InMemoryTracer();
         $terminal = new VirtualTerminal(40, 6);
-        $terminal->simulateInput("\tq");
+        $terminal->simulateInput("\t\x11");
 
         Program::new(new TwoFieldsThenQuitApp(TextInput::new(), TextInput::new()))
             ->withTerminal($terminal)
@@ -78,7 +76,7 @@ final class ProgramFocusTraceTest extends TestCase
     {
         $tracer = new InMemoryTracer();
         $terminal = new VirtualTerminal(40, 6);
-        $terminal->simulateInput("\tq");
+        $terminal->simulateInput("\t\x11");
 
         Program::new(new TwoFieldsThenQuitApp(TextInput::new(), TextInput::new()))
             ->withTerminal($terminal)
@@ -166,10 +164,5 @@ final readonly class TwoFieldsThenQuitApp extends App
             Component::bind('first', $this->first, static fn (self $app, TextInput $field): self => $app->cloneWith(first: $field)),
             Component::bind('second', $this->second, static fn (self $app, TextInput $field): self => $app->cloneWith(second: $field)),
         );
-    }
-
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return $message->key === 'q' ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
     }
 }

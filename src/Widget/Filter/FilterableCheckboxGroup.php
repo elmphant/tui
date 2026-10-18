@@ -10,6 +10,7 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -34,7 +35,7 @@ use Elmphant\Tui\Widget\ValueItCannotHold;
  * A tick is held by name rather than by row: the query decides which rows exist,
  * so a row number means something different from one keystroke to the next.
  */
-final readonly class FilterableCheckboxGroup implements DropdownContent, KeybindingsAware, PublishesHints
+final readonly class FilterableCheckboxGroup implements DropdownContent, KeybindingsAware, PublishesHints, TakesText
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -62,6 +63,11 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     public static function defaultKeybindings(): Keybindings
     {
         return CheckboxGroup::defaultKeybindings()->append(FilterBar::keybindings());
+    }
+
+    public function takesText(): bool
+    {
+        return true;
     }
 
     public function hints(): array

@@ -11,6 +11,7 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -42,7 +43,7 @@ use Elmphant\Tui\Widget\ValueItCannotHold;
 /**
  * A scrollable list with a free-text filter over it.
  */
-final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing, PublishesHints
+final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing, PublishesHints, TakesText
 {
     use Cloneable;
     use DrawsFocus;
@@ -133,6 +134,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     public function withEmptyCaption(string $caption): self
     {
         return $this->cloneWith(emptyCaption: $caption);
+    }
+
+    public function takesText(): bool
+    {
+        return true;
     }
 
     public function hints(): array

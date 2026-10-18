@@ -11,6 +11,7 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -39,7 +40,7 @@ use Elmphant\Tui\Widget\PublishesHints;
  *
  * @template-covariant TContent of DropdownContent
  */
-final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, CapturesKeys
+final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, CapturesKeys, TakesText
 {
     use Cloneable;
     use DrawsFocus;
@@ -132,6 +133,11 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     public function capturesKeys(): bool
     {
         return $this->open;
+    }
+
+    public function takesText(): bool
+    {
+        return $this->open && $this->content instanceof TakesText && $this->content->takesText();
     }
 
     public function withGlobalKeybindings(?Keybindings $keybindings): static

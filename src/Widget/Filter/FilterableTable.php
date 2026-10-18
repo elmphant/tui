@@ -10,6 +10,7 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -31,7 +32,7 @@ use Elmphant\Tui\Widget\Table\StaticTable;
 /**
  * A table with a free-text filter over its rows.
  */
-final readonly class FilterableTable implements Focusable, MeasureHeight, KeybindingsAware, PublishesHints
+final readonly class FilterableTable implements Focusable, MeasureHeight, KeybindingsAware, PublishesHints, TakesText
 {
     use Cloneable;
     use DrawsFocus;
@@ -54,6 +55,11 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     public static function defaultKeybindings(): Keybindings
     {
         return FilterBar::keybindings()->append(TextInput::defaultKeybindings());
+    }
+
+    public function takesText(): bool
+    {
+        return true;
     }
 
     public function hints(): array

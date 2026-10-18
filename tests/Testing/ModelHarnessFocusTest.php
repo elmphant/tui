@@ -40,7 +40,7 @@ final class ModelHarnessFocusTest extends TestCase
     {
         $driven = ModelHarness::for(new TwoNamedFieldApp(TextInput::new(), TextInput::new()), 40, 2)->initialize();
 
-        $driven->dispatch(new KeyMsg('x'));
+        $driven->dispatch(new KeyMsg('x', ctrl: true));
 
         self::assertNull($driven->focused(), 'nowhere is an answer, not a gap left for the tree to fill');
     }
@@ -64,7 +64,7 @@ final readonly class TwoNamedFieldApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return match ($message->key) {
+        return match ($message->ctrl ? $message->key : null) {
             'n' => $this->then(Cmd::focusNext()),
             'x' => $this->then(Cmd::focusNothing()),
             default => UpdateResult::ignored($this),

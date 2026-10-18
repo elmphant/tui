@@ -37,7 +37,7 @@ final class ProgramFocusTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput('x');
-        $terminal->simulateInput('q');
+        $terminal->simulateInput("\x11");
 
         $final = Program::new(new FocusCommandApp(TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
@@ -54,7 +54,7 @@ final class ProgramFocusTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput('x');
-        $terminal->simulateInput('q');
+        $terminal->simulateInput("\x11");
 
         $final = Program::new(new FocusCyclingApp(TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
@@ -72,7 +72,7 @@ final class ProgramFocusTest extends TestCase
     public function theMessageWaitingOnTheFirstPlacementIsHandledExactlyOnce(): void
     {
         $terminal = new VirtualTerminal(80, 24);
-        $terminal->simulateInput('q');
+        $terminal->simulateInput("\x11");
 
         $final = Program::new(new ResizeCountingApp(TextInput::new()))->withTerminal($terminal)->start();
 
@@ -85,7 +85,7 @@ final class ProgramFocusTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput('x');
-        $terminal->simulateInput('q');
+        $terminal->simulateInput("\x11");
 
         $final = Program::new(SeededPaneApp::twoFields())->withTerminal($terminal)->start();
 
@@ -98,7 +98,7 @@ final class ProgramFocusTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput('a');
-        $terminal->simulateInput('q');
+        $terminal->simulateInput("\x11");
 
         $final = Program::new(PaneCyclingApp::seeded())->withTerminal($terminal)->start();
 
@@ -111,7 +111,7 @@ final class ProgramFocusTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 24);
 
-        foreach (['a', "\t", 'b', "\t", 'c', "\t", 'd', 'q'] as $keystroke) {
+        foreach (['a', "\t", 'b', "\t", 'c', "\t", 'd', "\x11"] as $keystroke) {
             $terminal->simulateInput($keystroke);
         }
 
@@ -125,9 +125,9 @@ final class ProgramFocusTest extends TestCase
     public function focusNextWalksTheComponentsTheViewPublishes(): void
     {
         $terminal = new VirtualTerminal(80, 24);
-        $terminal->simulateInput('n');
+        $terminal->simulateInput("\x0e");
         $terminal->simulateInput('x');
-        $terminal->simulateInput('q');
+        $terminal->simulateInput("\x11");
 
         $final = Program::new(new FocusCyclingApp(TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
@@ -140,9 +140,9 @@ final class ProgramFocusTest extends TestCase
     public function steppingBackFromTheFirstComponentWrapsToTheLast(): void
     {
         $terminal = new VirtualTerminal(80, 24);
-        $terminal->simulateInput('p');
+        $terminal->simulateInput("\x10");
         $terminal->simulateInput('x');
-        $terminal->simulateInput('q');
+        $terminal->simulateInput("\x11");
 
         $final = Program::new(new FocusCyclingApp(TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
@@ -157,7 +157,7 @@ final class ProgramFocusTest extends TestCase
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput("\t");
         $terminal->simulateInput('x');
-        $terminal->simulateInput('q');
+        $terminal->simulateInput("\x11");
 
         $final = Program::new(new TabFromAPlacedFocusApp(TextInput::new(), TextInput::new(), TextInput::new()))->withTerminal($terminal)->start();
 
@@ -283,11 +283,6 @@ final readonly class TabFromAPlacedFocusApp extends App
     {
         return Cmd::focus(ComponentId::named('second'));
     }
-
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
-    }
 }
 
 final readonly class SeededPaneApp extends App
@@ -321,11 +316,6 @@ final readonly class SeededPaneApp extends App
 
         return $values;
     }
-
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
-    }
 }
 
 final readonly class ResizeCountingApp extends App
@@ -344,11 +334,6 @@ final readonly class ResizeCountingApp extends App
     protected function onResize(ResizeMsg $message): UpdateResult
     {
         return UpdateResult::ignored($this->cloneWith(resizes: $this->resizes + 1));
-    }
-
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
     }
 }
 
@@ -391,11 +376,6 @@ final readonly class PaneCyclingApp extends App
 
         return $values;
     }
-
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
-    }
 }
 
 final readonly class FocusCyclingApp extends App
@@ -416,10 +396,9 @@ final readonly class FocusCyclingApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return match ($message->key) {
+        return match ($message->ctrl ? $message->key : null) {
             'n' => $this->then(Cmd::focusNext()),
             'p' => $this->then(Cmd::focusPrevious()),
-            'q' => $this->then(Cmd::quit()),
             default => UpdateResult::ignored($this),
         };
     }
@@ -444,10 +423,5 @@ final readonly class FocusCommandApp extends App
     protected function setup(): ?Cmd
     {
         return Cmd::focus(ComponentId::named('second'));
-    }
-
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return 'q' === $message->key ? $this->then(Cmd::quit()) : UpdateResult::ignored($this);
     }
 }

@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget\Form;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -32,7 +33,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
  * row, a list that opens where they would wrap. Which of the two is asked of the
  * area each time, so a resize switches over and what was chosen stays chosen.
  */
-final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue, PublishesHints, WidgetContainer
+final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue, PublishesHints, TakesText, WidgetContainer
 {
     use Cloneable;
 
@@ -111,6 +112,11 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
     public function capturesKeys(): bool
     {
         return $this->list->capturesKeys();
+    }
+
+    public function takesText(): bool
+    {
+        return $this->list->takesText();
     }
 
     public function hints(): array

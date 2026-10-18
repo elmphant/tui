@@ -87,7 +87,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aKeyReachesTheMountHoldingTheKeyboardBeforeItsComponents(): void
     {
-        $harness = ModelHarness::for(new HostOfOneMount(), 40, 6)->initialize()->type('ax');
+        $harness = ModelHarness::for(new HostOfOneMount(), 40, 6)->initialize()->type('a')->press('ctrl+x');
 
         self::assertSame(['key:x'], $harness->model()->notes->heard);
         self::assertSame('a', $harness->model()->notes->field?->value());
@@ -378,7 +378,7 @@ final readonly class NotesModel implements Reducer
     {
         return match (true) {
             $message instanceof Heard => new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]), Cmd::focus(ComponentId::named('field'))),
-            $message instanceof KeyMsg && $message->key === 'x' => new UpdateResult($this->cloneWith(heard: [...$this->heard, 'key:x'])),
+            $message instanceof KeyMsg && $message->ctrl && $message->key === 'x' => new UpdateResult($this->cloneWith(heard: [...$this->heard, 'key:x'])),
             default => UpdateResult::ignored($this),
         };
     }

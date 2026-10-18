@@ -37,6 +37,11 @@ final readonly class KeyMsg implements Message
         return $this->eventType === KeyEventType::Release;
     }
 
+    public function isText(): bool
+    {
+        return is_string($this->key) && !$this->ctrl && !$this->alt;
+    }
+
     public function withScreen(Rect $screen): self
     {
         return $this->cloneWith(screen: $screen);

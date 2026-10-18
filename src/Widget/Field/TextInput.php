@@ -10,6 +10,7 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\ScrollWindow;
@@ -30,7 +31,7 @@ use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
 
-final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints
+final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, TakesText
 {
     use Cloneable;
     use DrawsFocus;
@@ -78,6 +79,11 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
         return $this->effectiveKeybindings()->hints(
             $this->value === '' ? [] : ['clear' => Actions::CLEAR_LINE],
         );
+    }
+
+    public function takesText(): bool
+    {
+        return true;
     }
 
     public function value(): string
