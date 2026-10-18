@@ -32,4 +32,21 @@ enum Key
     case F10;
     case F11;
     case F12;
+
+    public const NAMES = [
+        'enter' => self::Enter, 'return' => self::Enter,
+        'esc' => self::Escape, 'escape' => self::Escape,
+        'tab' => self::Tab,
+        'backspace' => self::Backspace, 'bs' => self::Backspace,
+        'delete' => self::Delete, 'del' => self::Delete,
+        'insert' => self::Insert, 'ins' => self::Insert,
+        'up' => self::Up, 'down' => self::Down,
+        'left' => self::Left, 'right' => self::Right,
+        'home' => self::Home, 'end' => self::End,
+        'page_up' => self::PageUp, 'pgup' => self::PageUp, 'pageup' => self::PageUp,
+        'page_down' => self::PageDown, 'pgdn' => self::PageDown, 'pagedown' => self::PageDown,
+        'f1' => self::F1, 'f2' => self::F2, 'f3' => self::F3, 'f4' => self::F4,
+        'f5' => self::F5, 'f6' => self::F6, 'f7' => self::F7, 'f8' => self::F8,
+        'f9' => self::F9, 'f10' => self::F10, 'f11' => self::F11, 'f12' => self::F12,
+    ];
 }

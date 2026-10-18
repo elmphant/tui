@@ -39,6 +39,14 @@ final class KeyMsgTest extends TestCase
     }
 
     #[Test]
+    public function aKeyGivenByNameIsThatKey(): void
+    {
+        self::assertSame(Key::Enter, (new KeyMsg('enter'))->key);
+        self::assertSame(Key::Escape, (new KeyMsg('Esc'))->key);
+        self::assertSame(Key::PageDown, (new KeyMsg('pgdn'))->key);
+    }
+
+    #[Test]
     public function ctrlModifier(): void
     {
         $msg = new KeyMsg('c', ctrl: true);

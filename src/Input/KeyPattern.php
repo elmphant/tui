@@ -11,23 +11,7 @@ use Stringable;
 
 final readonly class KeyPattern implements Stringable
 {
-    private const NAMED_KEYS = [
-        'enter' => Key::Enter, 'return' => Key::Enter,
-        'esc' => Key::Escape, 'escape' => Key::Escape,
-        'tab' => Key::Tab,
-        'backspace' => Key::Backspace, 'bs' => Key::Backspace,
-        'delete' => Key::Delete, 'del' => Key::Delete,
-        'insert' => Key::Insert, 'ins' => Key::Insert,
-        'up' => Key::Up, 'down' => Key::Down,
-        'left' => Key::Left, 'right' => Key::Right,
-        'home' => Key::Home, 'end' => Key::End,
-        'page_up' => Key::PageUp, 'pgup' => Key::PageUp, 'pageup' => Key::PageUp,
-        'page_down' => Key::PageDown, 'pgdn' => Key::PageDown, 'pagedown' => Key::PageDown,
-        'f1' => Key::F1, 'f2' => Key::F2, 'f3' => Key::F3, 'f4' => Key::F4,
-        'f5' => Key::F5, 'f6' => Key::F6, 'f7' => Key::F7, 'f8' => Key::F8,
-        'f9' => Key::F9, 'f10' => Key::F10, 'f11' => Key::F11, 'f12' => Key::F12,
-        'space' => ' ',
-    ];
+    private const NAMED_KEYS = [...Key::NAMES, 'space' => ' '];
 
     public function __construct(
         public Key|string $key,
