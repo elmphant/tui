@@ -397,6 +397,13 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         $first = max(0, $this->followChild ?? 0);
         $top = array_sum(array_slice($layout->heights, 0, $first));
         $span = array_sum(array_slice($layout->heights, $first, $this->followSpan));
+
+        // The last child of a span holds the keyboard, so it keeps the rows when the span does not fit.
+        if ($span > $viewportHeight && $this->followSpan > 1) {
+            $last = min($first + $this->followSpan, \count($layout->heights)) - 1;
+            $top += array_sum(array_slice($layout->heights, $first, $last - $first));
+            $span = $layout->heights[$last] ?? 0;
+        }
         $child = $this->children[$first] ?? null;
 
         // A child that knows where its cursor is says so; showing its top would

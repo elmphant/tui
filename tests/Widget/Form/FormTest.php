@@ -247,6 +247,13 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aFormTooShortForALabelAndItsFieldShowsTheField(): void
+    {
+        $form = WidgetHarness::for(self::tallForm(), 28, 6)->type('typed');
+        self::assertNotNull($form->screen()->find('typed'));
+    }
+
+    #[Test]
     public function reachingTheSubmitLeavesTheFieldsWhereTheyWere(): void
     {
         $onTheLast = WidgetHarness::for(self::tallForm(), 50, 12)->press('tab', 'tab', 'tab', 'tab', 'tab');

@@ -331,12 +331,20 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
      */
     private function regionsIn(Rect $area): array
     {
-        $inner = $this->insetIn($area)->inner($area);
+        $inset = $this->insetIn($area);
+        $inner = $inset->inner($area);
+        $pinnedRows = ($this->header?->rows($inner->width) ?? 0) + ($this->footer?->rows($inner->width) ?? 0);
+        $reserved = $this->pane->measureHeight($inner->width) > 0 ? 1 : 0;
+        if ($inner->height - $pinnedRows < $reserved) {
+            $sidesOnly = Spacing::only(right: $inset->padding->right, left: $inset->padding->left);
+            $inner = (new Inset($inset->margin, $inset->border, $sidesOnly))->inner($area);
+        }
+
         $left = $inner->height;
         $headerRows = $this->taken($left, $this->header?->rows($inner->width) ?? 0);
-        $headerRule = $this->taken($left, $this->header?->ruleRows() ?? 0);
         $footerRows = $this->taken($left, $this->footer?->rows($inner->width) ?? 0);
-        $footerRule = $this->taken($left, $this->footer?->ruleRows() ?? 0);
+        $headerRule = $this->taken($left, min($this->header?->ruleRows() ?? 0, max(0, $left - $reserved)));
+        $footerRule = $this->taken($left, min($this->footer?->ruleRows() ?? 0, max(0, $left - $reserved)));
         $headerGap = $this->header->gap ?? 0;
         $footerGap = $this->footer->gap ?? 0;
 
