@@ -24,6 +24,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
@@ -115,13 +116,11 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
             return $this;
         }
 
-        $place = array_search(
-            ($this->tabs[$this->selectedTab] ?? null)?->label,
-            array_map(static fn (TabPage $tab): string => $tab->label, $tabs),
-            true,
-        );
-
-        return $this->cloneWith(tabs: $tabs, selectedTab: $place === false ? 0 : $place);
+        return $this->cloneWith(tabs: $tabs, selectedTab: Places::cursorAfter(
+            ($this->tabs[$this->selectedTab] ?? null)?->key(),
+            array_map(static fn (TabPage $tab): string => $tab->key(), $tabs),
+            $this->selectedTab,
+        ));
     }
 
     /**

@@ -3140,7 +3140,17 @@ final class TabBarTest extends TestCase
         self::assertSame(3, $grown->selectedTab(), 'Gamma moved along, and the reader with it');
 
         $shrunk = $bar->withTabs([new TabPage('Alpha'), new TabPage('Beta')]);
-        self::assertSame(0, $shrunk->selectedTab(), 'Gamma is gone, so the first page shows');
+        self::assertSame(1, $shrunk->selectedTab(), 'Gamma is gone, so its neighbour shows');
+    }
+
+    #[Test]
+    public function aKeyedTabStaysSelectedWhenItsLabelChanges(): void
+    {
+        $bar = TabBar::new()->withTabs([new TabPage('Inbox', key: 'inbox'), new TabPage('Work (1)', key: 'work')])->withSelectedTab(1);
+
+        $relabelled = $bar->withTabs([new TabPage('Inbox', key: 'inbox'), new TabPage('Work (2)', key: 'work')]);
+
+        self::assertSame(1, $relabelled->selectedTab());
     }
 
     #[Test]
