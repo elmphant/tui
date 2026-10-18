@@ -141,6 +141,25 @@ final class HarnessEffectsTest extends TestCase
     }
 
     #[Test]
+    public function aCallIsRunWhenTheTestSaysSoAndItsMessageArrivesThroughItsMaps(): void
+    {
+        $harness = ModelHarness::for(new EffectAsker())->press('k');
+        self::assertSame([], array_filter($harness->model()->received, static fn (Message $message): bool => $message instanceof ChildSaid));
+
+        self::assertEquals(new ChildSaid(new Beat(7)), $harness->runCalls()->model()->lastOf(ChildSaid::class));
+    }
+
+    #[Test]
+    public function aCommandACallAnswersWithRunsInTheScopeOfTheCall(): void
+    {
+        $model = ModelHarness::for(new EffectAsker())->press('e')->runCalls()->answer(EffectId::named('load')->within('child'), stdout: 'later')->model();
+
+        $answer = $model->lastOf(ChildSaid::class)->message;
+        self::assertInstanceOf(ProcessResultMsg::class, $answer);
+        self::assertSame('later', $answer->stdout);
+    }
+
+    #[Test]
     public function anEffectTheModelNeverStartedCannotBeAnswered(): void
     {
         $this->expectException(LogicException::class);
@@ -221,6 +240,8 @@ final class EffectAsker implements Model
             't' => Cmd::tick(1.0, EffectId::named('clock')),
             'c' => Cmd::cancel(EffectId::named('load')),
             'u' => new FeedCmd(),
+            'k' => Cmd::call(static fn (): Message => new Beat(7)),
+            'e' => Cmd::call(static fn (): Cmd => Cmd::exec(['ls'], EffectId::named('load'))),
             default => null,
         };
 

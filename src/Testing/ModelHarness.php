@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Testing;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
+use Elmphant\Tui\Core\Cmd\CallCmd;
 use Elmphant\Tui\Core\Cmd\CancelCmd;
 use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
@@ -46,6 +47,7 @@ use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
 use Throwable;
+use UnexpectedValueException;
 
 /**
  * Drives a model's pure update and render paths without starting a terminal.
@@ -73,6 +75,11 @@ final class ModelHarness
      * @var array<string, array{command: Cmd, wrap: ?Closure, id: EffectId}> by scoped id
      */
     private array $running = [];
+
+    /**
+     * @var list<array{command: CallCmd, wrap: ?Closure, scope: ?string}> issued and not run yet
+     */
+    private array $calls = [];
 
     /**
      * @param TModel $model
@@ -261,6 +268,30 @@ final class ModelHarness
     public function emit(EffectId|string $effect, Message $message): self
     {
         return $this->delivered($this->runningAs($effect, Cmd::class), $message);
+    }
+
+    /**
+     * Runs every Cmd::call() issued so far, as the runtime would: what a callback
+     * answers with goes through the maps and the scope the call was issued in.
+     *
+     * @return self<TModel>
+     */
+    public function runCalls(): self
+    {
+        $calls = $this->calls;
+        $this->calls = [];
+        $this->issued = [];
+        ++$this->depth;
+
+        try {
+            foreach ($calls as ['command' => $call, 'wrap' => $wrap, 'scope' => $scope]) {
+                $this->answeredCall($call, $wrap, $scope);
+            }
+        } finally {
+            --$this->depth;
+        }
+
+        return $this;
     }
 
     /**
@@ -464,6 +495,11 @@ final class ModelHarness
         }
 
         $this->issued[] = $command;
+        if ($command instanceof CallCmd) {
+            $this->calls[] = ['command' => $command, 'wrap' => $wrap, 'scope' => $scope];
+
+            return;
+        }
         if ($command instanceof CancelScopeCmd && $scope !== null) {
             $this->running = array_filter($this->running, static fn (array $running): bool => !$running['id']->isWithin($scope));
 
@@ -484,6 +520,34 @@ final class ModelHarness
 
         if (!$command instanceof CancelCmd) {
             $this->running[(string)$scoped] = ['command' => $command, 'wrap' => $wrap, 'id' => $scoped];
+        }
+    }
+
+    /**
+     * @param (Closure(Message): Message)|null $wrap
+     */
+    private function answeredCall(CallCmd $call, ?Closure $wrap, ?string $scope): void
+    {
+        try {
+            $result = ($call->callback)();
+        } catch (Throwable $error) {
+            $result = new ErrorMsg($error, ErrorSource::Call);
+        }
+
+        if ($result instanceof Cmd) {
+            $this->record($result, $wrap, $scope);
+            $this->moveFocusFor($result, $scope);
+            $sent = self::messagesIn($result);
+        } else {
+            $sent = match (true) {
+                $result instanceof Message => [$result],
+                $result === null => [],
+                default => [new ErrorMsg(new UnexpectedValueException('Cmd::call() callback must return Message, Cmd, or null'), ErrorSource::Call)],
+            };
+        }
+
+        foreach ($sent as $message) {
+            $this->dispatch($wrap === null ? $message : $wrap($message));
         }
     }
 
