@@ -118,7 +118,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             $bindings->matches($message, Actions::CURSOR_UP) => $this->cursorUp(),
             $bindings->matches($message, Actions::CURSOR_RIGHT) => $this->expandOrEnter(),
             $bindings->matches($message, Actions::CURSOR_LEFT) => $this->collapseOrLeave(),
-            $bindings->matches($message, Actions::TOGGLE) => $this->toggle($this->cursor()),
+            $bindings->matches($message, Actions::TOGGLE) => $this->toggle($this->shownCursor()),
             $bindings->matches($message, Actions::HOME) => $this->cursorToFirst(),
             $bindings->matches($message, Actions::END) => $this->cursorToLast(),
             default => $this,
@@ -142,7 +142,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     public function scrolledToCursor(Rect $area): self
     {
-        $index = $this->rowIndexOf($this->cursor());
+        $index = $this->rowIndexOf($this->shownCursor());
         if ($index === null || $area->height <= 0) {
             return $this;
         }
@@ -239,26 +239,15 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Where the keyboard is, derived rather than remembered: a stored path that
-     * a collapse has taken off the screen would otherwise point at nothing.
+     * Where the keyboard is. A node hidden by a collapse hands the cursor to the
+     * branch that hid it; one whose branch is still loading keeps it, so a
+     * reload does not move the cursor away and back.
      */
     public function cursor(): TreePath
     {
-        $rows = $this->visibleRows();
-        if ($rows === []) {
-            return TreePath::root();
-        }
-        if ($this->cursor !== null && $this->rowIndexOf($this->cursor) !== null) {
-            return $this->cursor;
-        }
+        $shown = $this->shownCursor();
 
-        foreach ($rows as $row) {
-            if ($row['selectable']) {
-                return $row['path'];
-            }
-        }
-
-        return TreePath::root();
+        return $this->cursor !== null && $this->awaitsChildren($shown) ? $this->cursor : $shown;
     }
 
     public function withCursor(TreePath $path): self
@@ -281,7 +270,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     public function expandOrEnter(): self
     {
-        $cursor = $this->cursor();
+        $cursor = $this->shownCursor();
         $rows = $this->visibleRows();
         $index = $this->rowIndexOf($cursor);
 
@@ -302,7 +291,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     public function collapseOrLeave(): self
     {
-        $cursor = $this->cursor();
+        $cursor = $this->shownCursor();
         if ($this->isExpanded($cursor)) {
             return $this->collapse($cursor);
         }
@@ -331,7 +320,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         }
 
         $theme = $context->theme;
-        $cursor = $this->cursor();
+        $cursor = $this->shownCursor();
         $row = 0;
 
         $rows = $this->visibleRows();
@@ -453,7 +442,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     private function cursorMovedBy(int $step): self
     {
         $rows = $this->visibleRows();
-        $index = $this->rowIndexOf($this->cursor());
+        $index = $this->rowIndexOf($this->shownCursor());
         if ($index === null) {
             return $this;
         }
@@ -464,6 +453,34 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         }
 
         return $this;
+    }
+
+    /**
+     * The row the highlight is on: the cursor, else its nearest ancestor on
+     * screen, else the first row.
+     */
+    private function shownCursor(): TreePath
+    {
+        for ($path = $this->cursor; $path !== null && !$path->isRoot(); $path = $path->parent()) {
+            if ($this->rowIndexOf($path) !== null) {
+                return $path;
+            }
+        }
+
+        foreach ($this->visibleRows() as $row) {
+            if ($row['selectable']) {
+                return $row['path'];
+            }
+        }
+
+        return TreePath::root();
+    }
+
+    private function awaitsChildren(TreePath $path): bool
+    {
+        $index = $this->rowIndexOf($path);
+
+        return $index !== null && $this->isExpanded($path) && $this->visibleRows()[$index]['node']->children() === null;
     }
 
     private function rowIndexOf(TreePath $path): ?int

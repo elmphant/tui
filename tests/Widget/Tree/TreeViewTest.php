@@ -313,6 +313,30 @@ final class TreeViewTest extends TestCase
     }
 
     #[Test]
+    public function theCursorStaysOnItsNodeWhileTheBranchAboveItReloads(): void
+    {
+        $loaded = [new SimpleTreeNode('dir', 'dir', children: [new SimpleTreeNode('x', 'x'), new SimpleTreeNode('y', 'y')])];
+        $tree = TreeView::new($loaded)->expand(new TreePath('dir'))->withCursor(new TreePath('dir', 'y'));
+
+        $reloading = $tree->withRoots([new SimpleTreeNode('dir', 'dir', children: null)]);
+
+        self::assertSame(['dir', 'y'], $reloading->cursor()->keys);
+        self::assertSame(['dir', 'y'], $reloading->withRoots($loaded)->cursor()->keys);
+    }
+
+    #[Test]
+    public function closingTheBranchAroundTheCursorLeavesTheCursorOnThatBranch(): void
+    {
+        $lines = new TreePath('order', 'lines');
+        $tree = self::orderTree()
+            ->expand(new TreePath('order'))
+            ->expand($lines)
+            ->withCursor(new TreePath('order', 'lines', '0'));
+
+        self::assertSame(['order', 'lines'], $tree->collapse($lines)->cursor()->keys);
+    }
+
+    #[Test]
     public function aLongLabelTakesTheRoomItHasAndMarksWhereItIsCut(): void
     {
         $tree = TreeView::new([
