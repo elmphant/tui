@@ -197,13 +197,13 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
                 : $contentX;
             $gapEnd = $contentX + $contentWidth;
 
-            $leftRect = $this->leftSlot !== null ? BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea) : null;
+            $leftRect = $this->leftSlot !== null ? BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context) : null;
 
             if ($leftRect !== null) {
                 $gapStart = max($gapStart, $leftRect->right());
             }
 
-            $centreRect = $this->centerSlot !== null ? BarSlotRenderer::rectFor($this->centerSlot, Alignment::Center, $contentArea) : null;
+            $centreRect = $this->centerSlot !== null ? BarSlotRenderer::rectFor($this->centerSlot, Alignment::Center, $contentArea, $context) : null;
 
             if ($centreRect !== null) {
                 $gapEnd = min($gapEnd, $centreRect->x);

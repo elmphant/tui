@@ -41,8 +41,21 @@ final readonly class FocusHints implements Widget
         return StatusBar::forHints($this->leading)->sizing();
     }
 
+    /**
+     * The width the hints take while drawing: `sizing()` cannot know who holds the keyboard.
+     */
+    public function widthIn(RenderContext $context): int
+    {
+        return $this->bar($context)->sizing()->columns->intrinsic();
+    }
+
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        StatusBar::forHints([...$this->leading, ...$context->focusedHints()])->render($frame, $area, $context);
+        $this->bar($context)->render($frame, $area, $context);
+    }
+
+    private function bar(RenderContext $context): StatusBar
+    {
+        return StatusBar::forHints([...$this->leading, ...$context->focusedHints()]);
     }
 }

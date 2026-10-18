@@ -195,7 +195,7 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         $contentWidth = $contentArea->width;
 
         if ($this->leftSlot !== null) {
-            BarSlotRenderer::drawIn($frame, $this->leftSlot, $this->leftRect($contentArea), $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $this->leftSlot, $this->leftRect($contentArea, $context), $barBg, $context);
         }
 
         if ($this->centerSlot !== null) {
@@ -223,17 +223,17 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
      * A left slot that grows takes the row up to the right slot, unless a centre
      * slot needs the middle.
      */
-    private function leftRect(Rect $contentArea): ?Rect
+    private function leftRect(Rect $contentArea, ?RenderContext $context = null): ?Rect
     {
         if ($this->leftSlot === null) {
             return null;
         }
 
         if ($this->centerSlot !== null || $this->leftSlot->sizing()->columns->flex === 0) {
-            return BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea);
+            return BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context);
         }
 
-        $right = $this->rightSlot === null ? null : BarSlotRenderer::rectFor($this->rightSlot, Alignment::Right, $contentArea);
+        $right = $this->rightSlot === null ? null : BarSlotRenderer::rectFor($this->rightSlot, Alignment::Right, $contentArea, $context);
         $width = $right === null ? $contentArea->width : $right->x - $contentArea->x - self::SLOT_GAP;
 
         return $width < 1 ? null : new Rect($contentArea->x, $contentArea->y, $width, 1);

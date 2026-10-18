@@ -125,9 +125,12 @@ final class BarSlotRenderer
      * Never grown by flex: a stretched slot leaves the centre and right nothing
      * to align against.
      */
-    public static function rectFor(Widget $widget, Alignment $alignment, Rect $contentArea): ?Rect
+    public static function rectFor(Widget $widget, Alignment $alignment, Rect $contentArea, ?RenderContext $context = null): ?Rect
     {
-        $width = min($widget->sizing()->columns->intrinsic(), $contentArea->width);
+        $wanted = $widget instanceof FocusHints && null !== $context
+            ? $widget->widthIn($context)
+            : $widget->sizing()->columns->intrinsic();
+        $width = min($wanted, $contentArea->width);
 
         if ($width < 1) {
             return null;
@@ -184,7 +187,7 @@ final class BarSlotRenderer
         int $barBackground,
         RenderContext $context,
     ): void {
-        self::drawIn($frame, $widget, self::rectFor($widget, $alignment, new Rect($contentX, $contentY, $contentWidth, 1)), $barBackground, $context);
+        self::drawIn($frame, $widget, self::rectFor($widget, $alignment, new Rect($contentX, $contentY, $contentWidth, 1), $context), $barBackground, $context);
     }
 
     /**
