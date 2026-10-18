@@ -106,6 +106,19 @@ final class ScrollPaneTest extends TestCase
     }
 
     #[Test]
+    public function endShowsTheLastChildAndHomeTheFirst(): void
+    {
+        $pane = ScrollPane::of(...array_map(static fn (int $index): Text => Text::new("line{$index}"), range(0, 9)));
+        $area = Rect::fromSize(20, 3);
+
+        $atTheEnd = $pane->update(new KeyMsg(Key::End), $area)->model;
+        $atTheTop = $atTheEnd->update(new KeyMsg(Key::Home), $area)->model;
+
+        self::assertStringContainsString('line9', implode("\n", $this->rows($atTheEnd, 20, 3)));
+        self::assertStringStartsWith('line0', $this->rows($atTheTop, 20, 3)[0]);
+    }
+
+    #[Test]
     public function nothingIsDrawnAboveTheViewport(): void
     {
         $pane = ScrollPane::of(Text::new('first'), Text::new('second'), Text::new('third'));

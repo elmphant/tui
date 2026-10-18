@@ -51,6 +51,11 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     private const KEY_STEP = 1;
 
     /**
+     * Half of PHP_INT_MAX, so adding it to an offset cannot overflow into a float.
+     */
+    private const ALL_THE_WAY = PHP_INT_MAX >> 1;
+
+    /**
      * Reset whenever the children change, kept otherwise.
      *
      * @var KeyedCache<VerticalStackLayout>
@@ -154,6 +159,8 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
             Actions::SCROLL_DOWN => ['down'],
             Actions::PAGE_UP => ['shift+up', 'page_up'],
             Actions::PAGE_DOWN => ['shift+down', 'page_down'],
+            Actions::HOME => ['home'],
+            Actions::END => ['end'],
         ]);
     }
 
@@ -337,6 +344,8 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
             $bindings->matches($message, Actions::SCROLL_UP) => $this->scrolledBy(-self::KEY_STEP, $area),
             $bindings->matches($message, Actions::PAGE_DOWN) => $this->scrolledBy($area->height, $area),
             $bindings->matches($message, Actions::PAGE_UP) => $this->scrolledBy(-$area->height, $area),
+            $bindings->matches($message, Actions::END) => $this->scrolledBy(self::ALL_THE_WAY, $area),
+            $bindings->matches($message, Actions::HOME) => $this->scrolledBy(-self::ALL_THE_WAY, $area),
             default => null,
         };
     }
