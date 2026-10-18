@@ -17,6 +17,9 @@ use Elmphant\Tui\Widget\Widget;
 
 final readonly class StatusBar implements Widget
 {
+    private const ELLIPSIS = '…';
+    private const HINT_GAP = 2;
+
     /**
      * @param list<array{string, string}> $hints
      */
@@ -88,14 +91,26 @@ final readonly class StatusBar implements Widget
         $keyStyle = $theme->accent->background($barStyle->background ?? Color::ansi(0))->bold();
         $x = $area->x;
         $rightEdge = $area->x + $area->width;
+        $last = \count($this->hints) - 1;
 
-        foreach ($this->hints as [$key, $description]) {
+        foreach ($this->hints as $index => [$key, $description]) {
             $keyText = ' ' . $key . ' ';
             $descText = ' ' . $description . '  ';
-            $remainingWidth = max(0, $rightEdge - $x);
-            $x += $frame->putStyled($x, $area->y, CharWidth::truncateToWidth($keyText, $remainingWidth), $keyStyle);
-            $remainingWidth = max(0, $rightEdge - $x);
-            $x += $frame->putStyled($x, $area->y, CharWidth::truncateToWidth($descText, $remainingWidth), $barStyle);
+            $width = CharWidth::stringWidth($keyText . $descText);
+            $fits = $index === $last
+                ? $x + $width - self::HINT_GAP <= $rightEdge
+                : $x + $width + CharWidth::stringWidth(self::ELLIPSIS) <= $rightEdge;
+
+            if (!$fits) {
+                if ($x + CharWidth::stringWidth(self::ELLIPSIS) <= $rightEdge) {
+                    $frame->putStyled($x, $area->y, self::ELLIPSIS, $barStyle);
+                }
+
+                return;
+            }
+
+            $x += $frame->putStyled($x, $area->y, $keyText, $keyStyle);
+            $x += $frame->putStyled($x, $area->y, CharWidth::truncateToWidth($descText, max(0, $rightEdge - $x)), $barStyle);
         }
     }
 }

@@ -16,7 +16,10 @@ use Elmphant\Tui\Widget\Widget;
  */
 final readonly class FocusHints implements Widget
 {
-    private function __construct()
+    /**
+     * @param array<string, string> $leading
+     */
+    private function __construct(private array $leading = [])
     {
     }
 
@@ -25,13 +28,21 @@ final readonly class FocusHints implements Widget
         return new self();
     }
 
+    /**
+     * @param array<string, string> $hints
+     */
+    public function withLeadingHints(array $hints): self
+    {
+        return new self(leading: $hints);
+    }
+
     public function sizing(): Sizing
     {
-        return StatusBar::forHints([])->sizing();
+        return StatusBar::forHints($this->leading)->sizing();
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        StatusBar::forHints($context->focusedHints())->render($frame, $area, $context);
+        StatusBar::forHints([...$this->leading, ...$context->focusedHints()])->render($frame, $area, $context);
     }
 }

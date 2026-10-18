@@ -142,6 +142,19 @@ final class BarSlotRenderer
         return new Rect($offsetX, $contentArea->y, $width, 1);
     }
 
+    public static function drawIn(Frame $frame, Widget $widget, ?Rect $rect, int $barBackground, RenderContext $context): void
+    {
+        if (null === $rect) {
+            return;
+        }
+
+        $frame->pushClip($rect);
+        $widget->render($frame, $rect, $context);
+        $frame->popClip();
+
+        self::keepBarBackground($frame, $rect, $barBackground);
+    }
+
     /**
      * Typing has one destination, and a bar cycles nothing, so the slot the host
      * marked is the answer.
@@ -171,17 +184,7 @@ final class BarSlotRenderer
         int $barBackground,
         RenderContext $context,
     ): void {
-        $rect = self::rectFor($widget, $alignment, new Rect($contentX, $contentY, $contentWidth, 1));
-
-        if (null === $rect) {
-            return;
-        }
-
-        $frame->pushClip($rect);
-        $widget->render($frame, $rect, $context);
-        $frame->popClip();
-
-        self::keepBarBackground($frame, $rect, $barBackground);
+        self::drawIn($frame, $widget, self::rectFor($widget, $alignment, new Rect($contentX, $contentY, $contentWidth, 1)), $barBackground, $context);
     }
 
     /**

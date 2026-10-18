@@ -28,4 +28,17 @@ final class FocusHintsTest extends TestCase
         self::assertStringContainsString('space', $text);
         self::assertStringContainsString('pick', $text);
     }
+
+    #[Test]
+    public function theHostsOwnKeysComeFirst(): void
+    {
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->provideHints(['space' => 'pick']);
+
+        $frame = new Frame(40, 1);
+        FocusHints::new()->withLeadingHints(['q' => 'quit'])->render($frame, Rect::fromSize(40, 1), $pass->context);
+
+        self::assertSame(' q  quit   space  pick', rtrim(implode('', array_slice($frame->characters, 0, 40))));
+    }
 }

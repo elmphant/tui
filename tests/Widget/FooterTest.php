@@ -25,6 +25,7 @@ use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TickTally;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Bar\Footer;
+use Elmphant\Tui\Widget\Bar\StatusBar;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -959,6 +960,19 @@ final class FooterTest extends TestCase
         self::assertSame(' ', $frame->characters[0]);
         self::assertSame('q', $frame->characters[1]);
         self::assertSame(' ', $frame->characters[2]);
+    }
+
+    #[Test]
+    public function aGrowingLeftSlotStopsShortOfTheRightOne(): void
+    {
+        $footer = Footer::new()
+            ->withLeft(StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three', 'd' => 'four']))
+            ->withRight(Text::new('Support'));
+        $frame = new Frame(40, 1);
+
+        $footer->render($frame, Rect::fromSize(40, 1), $this->context);
+
+        self::assertSame(' a  one   b  two   c  three  …   Support', $this->extractText($frame, 0, 40));
     }
 
     protected function setUp(): void

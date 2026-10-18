@@ -392,6 +392,26 @@ final class StatusBarTest extends TestCase
     }
 
     #[Test]
+    public function aHintThatDoesNotFitIsLeftOutAndAnEllipsisSaysSo(): void
+    {
+        $bar = StatusBar::forHints(['Tab' => 'cycle', 'Esc' => 'quit']);
+        $frame = new Frame(16, 1);
+        $bar->render($frame, Rect::fromSize(16, 1), $this->context);
+
+        self::assertSame(' Tab  cycle  …', rtrim($this->extractText($frame, 0, 16)));
+    }
+
+    #[Test]
+    public function theLastHintNeedsNoRoomForTheGapAfterIt(): void
+    {
+        $bar = StatusBar::forHints(['Tab' => 'cycle', 'Esc' => 'quit']);
+        $frame = new Frame(23, 1);
+        $bar->render($frame, Rect::fromSize(23, 1), $this->context);
+
+        self::assertSame(' Tab  cycle   Esc  quit', $this->extractText($frame, 0, 23));
+    }
+
+    #[Test]
     public function hintsDoNotOverflowAreaBoundary(): void
     {
         $bar = StatusBar::forHints(['K' => 'description text']);
