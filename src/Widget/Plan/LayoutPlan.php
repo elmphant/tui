@@ -60,6 +60,30 @@ final class LayoutPlan implements PlannedLayout
     }
 
     /**
+     * Where $target is placed, found without laying out anything inside it or
+     * after it.
+     */
+    public static function rectOf(Widget $root, Rect $area, Widget $target): ?Rect
+    {
+        if ($root === $target) {
+            return $area;
+        }
+
+        if (!$root instanceof WidgetContainer) {
+            return null;
+        }
+
+        foreach ($root->placedChildren($area) as [$child, $childArea]) {
+            $found = self::rectOf($child, $childArea, $target);
+            if ($found !== null) {
+                return $found;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @return SplObjectStorage<Widget, Rect>
      */
     public function rects(): SplObjectStorage

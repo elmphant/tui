@@ -31,6 +31,7 @@ use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Plan\LayoutSnapshot;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
@@ -563,11 +564,11 @@ abstract readonly class App implements RoutesFocus
      */
     private function areaOf(Mount $mount, Rect $screenRect): Rect
     {
-        $rects = LayoutSnapshot::planFor($this, $screenRect, $this->viewWidget(...))->rects();
-
         foreach ($this->componentRegistry()->mounts() as $drawn) {
-            if ($drawn->id->equals($mount->id) && $rects->contains($drawn)) {
-                return $rects[$drawn];
+            $rect = $drawn->id->equals($mount->id) ? LayoutPlan::rectOf($this->viewWidget(), $screenRect, $drawn) : null;
+
+            if ($rect !== null) {
+                return $rect;
             }
         }
 
