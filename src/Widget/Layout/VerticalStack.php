@@ -20,7 +20,11 @@ use Elmphant\Tui\Widget\Widget;
 final class VerticalStack
 {
     /**
-     * @param KeyedCache<VerticalStackLayout> $memo
+     * The memo is keyed by the viewport alone, so a caller hands in a new one
+     * whenever the children change. Keying by the children too would cost a walk
+     * of the list on every hit, and a plan asks once per child.
+     *
+     * @param KeyedCache<VerticalStackLayout> $memo     one per child list
      * @param list<Widget>                    $children
      */
     public static function layoutUsing(
@@ -33,27 +37,9 @@ final class VerticalStack
         $height = max(0, $availableHeight);
 
         return $memo->at(
-            self::keyFor($children, $width, $height),
+            $width . ':' . $height,
             static fn (): VerticalStackLayout => self::compute($children, $width, $height),
         );
-    }
-
-    /**
-     * Widgets are immutable, so a child that changed is a different object.
-     * Identity is therefore enough to tell two child lists apart, and it costs
-     * no traversal of their contents.
-     *
-     * @param list<Widget> $children
-     */
-    private static function keyFor(array $children, int $width, int $height): string
-    {
-        $key = $width . ':' . $height;
-
-        foreach ($children as $child) {
-            $key .= ':' . spl_object_id($child);
-        }
-
-        return $key;
     }
 
     /**
@@ -73,7 +59,7 @@ final class VerticalStack
             $totalHeight = array_sum($heights);
         }
 
-        return new VerticalStackLayout($heights, $totalHeight, $childWidth, $hasScrollbar, $children);
+        return new VerticalStackLayout($heights, $totalHeight, $childWidth, $hasScrollbar);
     }
 
     /**

@@ -330,7 +330,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         $headerGap = $this->header->gap ?? 0;
         $footerGap = $this->footer->gap ?? 0;
 
-        if ($headerGap + $footerGap > $left - $this->pane->measureHeight($inner->width)) {
+        if ($headerGap + $footerGap > 0 && $headerGap + $footerGap > $left - $this->pane->measureHeight($inner->width)) {
             $headerGap = 0;
             $footerGap = 0;
         }
