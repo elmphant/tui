@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
@@ -27,9 +28,9 @@ use UnitEnum;
  * A widget the tree knows by a stable ID: bound to an immutable App replacement,
  * or named for the keyboard's sake while its host drives it.
  *
- * @template TWidget of Widget
+ * @template-covariant TWidget of Widget
  */
-final readonly class Component implements Widget, WidgetContainer, SingleMount
+readonly class Component implements Widget, WidgetContainer, SingleMount
 {
     /**
      * @param TWidget                    $widget
@@ -57,7 +58,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public static function named(ComponentId|string $id, Widget $widget): self
     {
-        return new self(
+        return self::wrapping(
             is_string($id) ? ComponentId::named($id) : $id,
             $widget,
             null,
@@ -86,7 +87,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     {
         self::assertSafeReplacement($replace);
 
-        return new self(
+        return self::wrapping(
             is_string($id) ? ComponentId::named($id) : $id,
             $widget,
             $replace,
@@ -141,10 +142,10 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
         $container = $this->widget;
 
         if ($replace === null || !$container instanceof GraftsItsChildren) {
-            return new self(id: $id, widget: $child, replace: null, address: $this->address);
+            return self::wrapping(id: $id, widget: $child, replace: null, address: $this->address);
         }
 
-        return new self(
+        return self::wrapping(
             id: $id,
             widget: $child,
             replace: static fn (Reducer $owner, Interactive $updated): Reducer|UpdateResult => $replace($owner, $container->withChildAt($index, $updated)),
@@ -164,7 +165,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
     {
         $replace = $this->replace;
 
-        return new self(
+        return self::wrapping(
             id: $this->id,
             widget: $this->widget,
             replace: $replace === null ? null : static function (App $app, Interactive $widget) use ($owner, $mount, $replace, $address): UpdateResult {
@@ -185,7 +186,7 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function under(ComponentId $mount): self
     {
-        return new self(ComponentId::named($mount->value . '/' . $this->id->value), $this->widget, $this->replace, $this->address);
+        return self::wrapping(ComponentId::named($mount->value . '/' . $this->id->value), $this->widget, $this->replace, $this->address);
     }
 
     /**
@@ -217,6 +218,20 @@ final readonly class Component implements Widget, WidgetContainer, SingleMount
         }
 
         return $result;
+    }
+
+    /**
+     * @template TWrapped of Widget
+     *
+     * @param TWrapped $widget
+     *
+     * @return self<TWrapped>
+     */
+    private static function wrapping(ComponentId $id, Widget $widget, ?Closure $replace, ?Closure $address = null): self
+    {
+        return $widget instanceof MeasureHeight
+            ? new MeasuredComponent($id, $widget, $replace, $address)
+            : new self($id, $widget, $replace, $address);
     }
 
     private static function assertSafeReplacement(Closure $replace): void
