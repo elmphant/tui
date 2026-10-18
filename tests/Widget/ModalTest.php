@@ -400,38 +400,33 @@ final class ModalTest extends TestCase
     // ---------------------------------------------------------------
 
     #[Test]
-    public function renderSkipsWhenWidthBelowFive(): void
+    public function aScreenFourRowsTallStillShowsTheModalItHolds(): void
     {
-        $modal = Modal::new('Title', Text::new('Content'));
-        $frame = new Frame(4, 10);
-        $area = new Rect(0, 0, 4, 10);
-        $modal->render($frame, $area, $this->context);
+        $frame = new Frame(40, 4);
+        Modal::new('Help', Text::new('keys'))->render($frame, Rect::fromSize(40, 4), $this->context);
 
-        // No border corner should appear since render returns early
-        $hasCorner = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
-            if ($frame->characters[$index] === '╭') {
-                $hasCorner = true;
-            }
-        }
-        self::assertFalse($hasCorner, 'No rendering should happen when width < 5');
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertNotNull($screen->find('Help'));
+        self::assertNotNull($screen->find('keys'));
     }
 
     #[Test]
-    public function renderSkipsWhenHeightBelowFive(): void
+    public function aScreenFourColumnsWideStillShowsTheModalFrame(): void
     {
-        $modal = Modal::new('Title', Text::new('Content'));
-        $frame = new Frame(80, 4);
-        $area = new Rect(0, 0, 80, 4);
-        $modal->render($frame, $area, $this->context);
+        $frame = new Frame(4, 10);
+        Modal::new('Title', Text::new('Content'))->render($frame, Rect::fromSize(4, 10), $this->context);
 
-        $hasCorner = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
-            if ($frame->characters[$index] === '╭') {
-                $hasCorner = true;
-            }
-        }
-        self::assertFalse($hasCorner, 'No rendering should happen when height < 5');
+        self::assertNotNull(ScreenBuffer::fromFrame($frame)->find('╭'));
+    }
+
+    #[Test]
+    public function aScreenTooShortForAFrameDrawsNoModal(): void
+    {
+        $frame = new Frame(40, 2);
+        Modal::new('Help', Text::new('keys'))->render($frame, Rect::fromSize(40, 2), $this->context);
+
+        self::assertNull(ScreenBuffer::fromFrame($frame)->find('╭'));
     }
 
     #[Test]
@@ -449,40 +444,6 @@ final class ModalTest extends TestCase
             }
         }
         self::assertTrue($hasCorner, 'Rendering should happen when area is exactly 5x5');
-    }
-
-    #[Test]
-    public function renderSkipsWhenWidthExactlyFourEvenWithLargeHeight(): void
-    {
-        $modal = Modal::new('T', Text::new('X'));
-        $frame = new Frame(4, 100);
-        $area = new Rect(0, 0, 4, 100);
-        $modal->render($frame, $area, $this->context);
-
-        $hasCorner = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
-            if ($frame->characters[$index] === '╭') {
-                $hasCorner = true;
-            }
-        }
-        self::assertFalse($hasCorner);
-    }
-
-    #[Test]
-    public function renderSkipsWhenHeightExactlyFourEvenWithLargeWidth(): void
-    {
-        $modal = Modal::new('T', Text::new('X'));
-        $frame = new Frame(100, 4);
-        $area = new Rect(0, 0, 100, 4);
-        $modal->render($frame, $area, $this->context);
-
-        $hasCorner = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
-            if ($frame->characters[$index] === '╭') {
-                $hasCorner = true;
-            }
-        }
-        self::assertFalse($hasCorner);
     }
 
     // ---------------------------------------------------------------

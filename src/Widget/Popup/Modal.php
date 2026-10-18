@@ -194,16 +194,12 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        if ($area->width < 5 || $area->height < 5) {
-            return;
-        }
-
-        $this->dimBackground($frame, $area);
-
         $modalRect = $this->computeModalRect($area);
         if ($modalRect->width < 3 || $modalRect->height < 3) {
             return;
         }
+
+        $this->dimBackground($frame, $area);
 
         $baseBackground = $context->theme->base->backgroundValue();
         $this->clearModalArea($frame, $modalRect, $baseBackground);
