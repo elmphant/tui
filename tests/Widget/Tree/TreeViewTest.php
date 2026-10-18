@@ -301,7 +301,7 @@ final class TreeViewTest extends TestCase
             $node = new SimpleTreeNode('level' . $level, 'level' . $level, '', [$node]);
         }
         $path = TreePath::root();
-        $tree = TreeView::new([$node]);
+        $tree = TreeView::new([$node, new SimpleTreeNode('wide', 'wide', str_repeat('x', 21))]);
         foreach (range(10, 1) as $level) {
             $path = $path->child('level' . $level);
             $tree = $tree->expand($path);
@@ -310,6 +310,28 @@ final class TreeViewTest extends TestCase
         $lines = self::draw($tree, 40, 12);
 
         self::assertSame('deep', rtrim(mb_substr($lines[10], 22)), 'the guides reach past the detail column, so the label takes the rest of the row');
+    }
+
+    #[Test]
+    public function aLongLabelTakesTheRoomItHasAndMarksWhereItIsCut(): void
+    {
+        $tree = TreeView::new([
+            new SimpleTreeNode('long', 'a-directory-name-of-thirty-chars', expandable: true),
+            new SimpleTreeNode('file', 'invalid-utf8-file.txt', '42'),
+        ]);
+
+        self::assertSame(
+            ['▸ a-directory-name-of-thirty-chars', '▪ invalid-utf8-file.txt 42'],
+            array_map('rtrim', self::draw($tree, 60, 2)),
+        );
+        self::assertSame(
+            ['▸ a-directory-name-of-th…', '▪ invalid-utf8-file.t… 42'],
+            array_map('rtrim', self::draw($tree, 25, 2)),
+        );
+        self::assertSame(
+            ['▸ a-directory-name-o…', '▪ invalid-utf8-fi… 42'],
+            array_map('rtrim', self::draw($tree, 21, 2)),
+        );
     }
 
     #[Test]

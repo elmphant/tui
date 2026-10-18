@@ -22,6 +22,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\TextWrap;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -33,7 +34,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     use DrawsFocus;
     use KeybindingsAwareBehavior;
 
-    private const DETAIL_COLUMN = 19;
+    private const MIN_DETAIL_COLUMN = 19;
     private const MARKER_COLLAPSED = '▸ ';
     private const MARKER_EXPANDED = '▾ ';
     private const MARKER_LEAF = '▪ ';
@@ -334,6 +335,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         $row = 0;
 
         $rows = $this->visibleRows();
+        $detailColumn = $this->detailColumn($area->width);
 
         foreach (array_slice($rows, $this->offsetIn($rows, $area), $area->height) as $visible) {
             if ($row >= $area->height) {
@@ -354,10 +356,10 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             $x += $frame->putStyled($x, $y, CharWidth::truncateToWidth($visible['guides'], $area->right() - $x), $onCursor ? $rowStyle : $theme->dim);
             $x += $frame->putStyled($x, $y, CharWidth::truncateToWidth($visible['marker'], max(0, $area->right() - $x)), $onCursor ? $rowStyle : $theme->dim);
 
-            $detailX = $area->x + self::DETAIL_COLUMN;
-            $showsDetail = $x <= $detailX && $detailX < $area->right();
-            $labelWidth = max(0, ($showsDetail ? $detailX : $area->right()) - $x);
-            $frame->putStyled($x, $y, CharWidth::truncateToWidth($visible['node']->label(), $labelWidth), $rowStyle);
+            $detailX = $area->x + $detailColumn;
+            $showsDetail = $visible['node']->detail() !== '' && $x < $detailX && $detailX < $area->right();
+            $labelWidth = max(0, ($showsDetail ? $detailX - 1 : $area->right()) - $x);
+            $frame->putStyled($x, $y, TextWrap::ellipsize($visible['node']->label(), $labelWidth), $rowStyle);
 
             if ($showsDetail) {
                 $frame->putStyled(
@@ -422,10 +424,23 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
 
         $selected = $this->withCursor($row['path']);
 
-        $drawsDetail = CharWidth::stringWidth($row['guides']) + CharWidth::stringWidth($row['marker']) <= self::DETAIL_COLUMN;
-        $onDetail = $drawsDetail && $message->x - $area->x >= self::DETAIL_COLUMN;
+        $detailColumn = $this->detailColumn($area->width);
+        $drawsDetail = $row['node']->detail() !== ''
+            && CharWidth::stringWidth($row['guides'] . $row['marker']) < $detailColumn;
+        $onDetail = $drawsDetail && $message->x - $area->x >= $detailColumn;
 
         return $onDetail ? $selected : $selected->toggle($row['path']);
+    }
+
+    /**
+     * Just past the widest label, so no label is cut while the row has room;
+     * never left of the minimum, and never so far right that a detail is cut.
+     */
+    private function detailColumn(int $width): int
+    {
+        $rows = $this->treeRows();
+
+        return max(self::MIN_DETAIL_COLUMN, min($rows->labelEnd + 1, $width - $rows->detailWidth));
     }
 
     private function scrolledBy(int $notches, Rect $area): self
@@ -474,13 +489,21 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             $rows = [];
             $this->appendRowsOf($this->roots, TreePath::root(), '', $rows);
             $indexOfPath = [];
+            $labelEnd = 0;
+            $detailWidth = 0;
             foreach ($rows as $index => $row) {
-                if ($row['selectable']) {
-                    $indexOfPath[self::keyOf($row['path'])] = $index;
+                if (!$row['selectable']) {
+                    continue;
+                }
+                $indexOfPath[self::keyOf($row['path'])] = $index;
+                $detail = $row['node']->detail();
+                if ($detail !== '') {
+                    $labelEnd = max($labelEnd, CharWidth::stringWidth($row['guides'] . $row['marker'] . $row['node']->label()));
+                    $detailWidth = max($detailWidth, CharWidth::stringWidth($detail));
                 }
             }
 
-            return new TreeRows($rows, $indexOfPath);
+            return new TreeRows($rows, $indexOfPath, $labelEnd, $detailWidth);
         });
     }
 
