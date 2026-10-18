@@ -25,6 +25,7 @@ final readonly class ProgressBar implements Interactive
     use Cloneable;
 
     private const BLOCKS = [' ', '▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'];
+    private const SPRING_FRAME = 1 / 60;
 
     private float $progress;
 
@@ -37,6 +38,7 @@ final readonly class ProgressBar implements Interactive
         private bool $showPercent = true,
         private bool $clickable = false,
         private float $springFactor = 0.15,
+        private ?float $lastTick = null,
     ) {
         $this->progress = max(0.0, min(1.0, $progress));
     }
@@ -85,6 +87,9 @@ final readonly class ProgressBar implements Interactive
         return $this->cloneWith(display: $display);
     }
 
+    /**
+     * The share of the remaining distance the bar closes every sixtieth of a second.
+     */
     public function withSpringFactor(float $springFactor): self
     {
         return $this->cloneWith(springFactor: $springFactor);
@@ -113,7 +118,7 @@ final readonly class ProgressBar implements Interactive
     public function update(Message $message, Rect $area): UpdateResult
     {
         return match (true) {
-            $message instanceof TickMsg => $this->handleTick(),
+            $message instanceof TickMsg => $this->handleTick($message),
             $message instanceof MouseMsg && $this->clickable && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area),
             default => new UpdateResult($this),
         };
@@ -181,17 +186,20 @@ final readonly class ProgressBar implements Interactive
     /**
      * @return UpdateResult<static>
      */
-    private function handleTick(): UpdateResult
+    private function handleTick(TickMsg $tick): UpdateResult
     {
         // Springing from what was last drawn, not from zero, is what keeps the
         // first tick after a change from jerking the bar backwards.
         $display = $this->displayValue();
         $difference = $this->progress - $display;
         if (abs($difference) < 0.001) {
-            return new UpdateResult($this->cloneWith(display: $this->progress));
+            return new UpdateResult($this->cloneWith(display: $this->progress, lastTick: null));
         }
 
-        return new UpdateResult($this->cloneWith(display: $display + $difference * $this->springFactor));
+        $frames = null === $this->lastTick ? 1.0 : max(0.0, ($tick->timestamp - $this->lastTick) / self::SPRING_FRAME);
+        $closed = 1.0 - (1.0 - $this->springFactor) ** $frames;
+
+        return new UpdateResult($this->cloneWith(display: $display + $difference * $closed, lastTick: $tick->timestamp));
     }
 
     /**

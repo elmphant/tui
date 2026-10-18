@@ -173,6 +173,24 @@ final class ProgressBarTest extends TestCase
     }
 
     #[Test]
+    public function theSpringMovesByTimeNotByHowOftenItIsTicked(): void
+    {
+        $area = Rect::fromSize(20, 1);
+        $rarely = ProgressBar::new()->withDisplay(0.0)->withProgress(0.8);
+        $often = $rarely;
+
+        for ($tick = 0; $tick <= 3; ++$tick) {
+            $rarely = $rarely->update(new TickMsg($tick * 0.05), $area)->model;
+        }
+        for ($tick = 0; $tick <= 30; ++$tick) {
+            $often = $often->update(new TickMsg($tick * 0.005), $area)->model;
+        }
+
+        self::assertEqualsWithDelta($often->displayValue(), $rarely->displayValue(), 0.01);
+        self::assertLessThan(0.8, $rarely->displayValue());
+    }
+
+    #[Test]
     public function springAnimationMovesGradually(): void
     {
         $progressBar = ProgressBar::new()->withDisplay(0.0)->withProgress(1.0);
@@ -1119,7 +1137,7 @@ final class ProgressBarTest extends TestCase
         $result = $progressBar->update(new TickMsg(0.0), $area);
         self::assertSame(0.5, $result->model->displayValue(), 'One tick covers half the remaining distance');
 
-        $second = $result->model->update(new TickMsg(0.0), $area);
+        $second = $result->model->update(new TickMsg(1 / 60), $area);
         self::assertSame(0.75, $second->model->displayValue(), 'Then half of what is left');
     }
 
@@ -1130,7 +1148,7 @@ final class ProgressBarTest extends TestCase
         // default springFactor = 0.15, so one tick covers 0.0 + (1.0 - 0.0) * 0.15
         $area = Rect::fromSize(20, 1);
         $result = $progressBar->update(new TickMsg(0.0), $area);
-        self::assertSame(0.15, $result->model->displayValue());
+        self::assertEqualsWithDelta(0.15, $result->model->displayValue(), 1e-12);
     }
 
     /**
