@@ -1030,10 +1030,10 @@ final class Program
         $frame->clear($baseBackground);
 
         $pass->begin($this->clock->now());
-        $this->settleFocusBeforeDrawing();
-        $pass->focus->focusOn($this->focus);
 
         try {
+            $this->settleFocusBeforeDrawing();
+            $pass->focus->focusOn($this->focus);
             $model = $this->model;
             $this->capturingOutput('render', static fn () => $model->render($frame, $pass));
             $pass->floats->drainOnto($frame, $pass->context);
