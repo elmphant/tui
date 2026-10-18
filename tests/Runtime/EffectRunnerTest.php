@@ -65,6 +65,22 @@ final class EffectRunnerTest extends TestCase
     }
 
     #[Test]
+    public function aTickSaysWhichTickerFiredIt(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0, EffectId::named('clock')), null);
+        $runner->run(Cmd::tick(2.0, EffectId::named('sample')), null);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        $tick = $this->results->dequeue();
+        self::assertInstanceOf(TickMsg::class, $tick);
+        self::assertTrue($tick->isFrom('clock'));
+        self::assertFalse($tick->isFrom('sample'));
+    }
+
+    #[Test]
     public function aReplacementDropsWhatTheOldRunLeftWaitingAndKeepsEverythingElseInOrder(): void
     {
         $runner = $this->runner();
@@ -78,7 +94,7 @@ final class EffectRunnerTest extends TestCase
         $runner->run(Cmd::tick(5.0, EffectId::named('load')), null);
 
         self::assertEquals(
-            [new TestMessage('before'), new MessageEnvelope(new TickMsg($this->clock->now())), new TestMessage('after')],
+            [new TestMessage('before'), new MessageEnvelope(new TickMsg($this->clock->now(), EffectId::named('clock'))), new TestMessage('after')],
             iterator_to_array($this->results, false),
         );
     }

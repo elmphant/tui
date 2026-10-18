@@ -545,7 +545,7 @@ final class EffectRunner
                 continue;
             }
 
-            $this->report(new TickMsg($now), $ticker->wrap, $ticker->id);
+            $this->report(new TickMsg($now, $ticker->id), $ticker->wrap, $ticker->id);
             $kept[] = $ticker->rescheduled($now);
         }
 

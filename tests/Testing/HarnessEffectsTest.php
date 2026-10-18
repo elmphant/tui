@@ -127,6 +127,7 @@ final class HarnessEffectsTest extends TestCase
         ));
         self::assertCount(2, $ticks);
         self::assertSame(12.5, $ticks[0]->timestamp);
+        self::assertTrue($ticks[0]->isFrom('clock'));
     }
 
     #[Test]

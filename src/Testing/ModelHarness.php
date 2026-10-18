@@ -247,7 +247,9 @@ final class ModelHarness
      */
     public function tick(EffectId|string $effect, float $at = 0.0): self
     {
-        return $this->delivered($this->runningAs($effect, TickCmd::class), new TickMsg($at));
+        $running = $this->runningAs($effect, TickCmd::class);
+
+        return $this->delivered($running, new TickMsg($at, $running['id']));
     }
 
     /**
