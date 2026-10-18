@@ -84,7 +84,10 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::flex());
+        return Sizing::of(
+            Constraint::flex(),
+            $this->direction === Direction::Horizontal ? Constraint::content() : Constraint::flex(),
+        );
     }
 
     public function measureHeight(int $width): int

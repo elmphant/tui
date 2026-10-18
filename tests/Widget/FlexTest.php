@@ -13,9 +13,12 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Layout\Flex;
+use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Plan\WidgetTree;
+use Elmphant\Tui\Widget\Prose\Spacer;
 use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Box;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -603,6 +606,20 @@ final class FlexTest extends TestCase
 
         self::assertEquals(new Rect(0, 0, 3, 2), $children[0][1]);
         self::assertEquals(new Rect(0, 3, 3, 4), $children[1][1]);
+    }
+
+    #[Test]
+    public function aRowInAVerticalLayoutTakesTheRowsItsTallestItemNeeds(): void
+    {
+        $cards = Flex::row()
+            ->add(Box::new()->add(Text::new('one')))
+            ->add(Box::new()->add(Text::new('two')));
+        $layout = Layout::vertical($cards, Text::new('below'), Spacer::new());
+
+        $placed = $layout->placedChildren(Rect::fromSize(40, 20));
+
+        self::assertSame(3, $placed[0][1]->height);
+        self::assertSame(3, $placed[1][1]->y);
     }
 
     #[Test]
