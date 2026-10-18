@@ -98,6 +98,17 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return $this->selectedTab;
     }
 
+    /**
+     * Every page, the hidden ones too, so a host can carry a page's widgets into
+     * the next withTabs() with their cursors.
+     *
+     * @return list<TabPage>
+     */
+    public function tabs(): array
+    {
+        return $this->tabs;
+    }
+
     public function tabAt(MouseMsg $message, Rect $area): ?int
     {
         if (!$message->isClick() || !$this->fitsIn($area) || !$this->onStrip($message, $area)) {

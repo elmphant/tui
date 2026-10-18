@@ -39,6 +39,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -48,8 +49,6 @@ use Elmphant\Tui\Widget\Widget;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionObject;
-use ReflectionProperty;
 
 final class TabBarTest extends TestCase
 {
@@ -2841,14 +2840,14 @@ final class TabBarTest extends TestCase
         $widget = TabBar::new()->addTab('One')->addTab('Two');
 
         $afterDefault = $widget->update(new KeyMsg(Key::Right), $area)->model;
-        $activeAfterDefault = (new ReflectionProperty($afterDefault, 'selectedTab'))->getValue($afterDefault);
+        $activeAfterDefault = $afterDefault->selectedTab();
         self::assertSame(1, $activeAfterDefault);
 
         $custom = $widget->withKeybindings(new Keybindings([Actions::TAB_NEXT => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Right), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
-        $activeAfterCustom = (new ReflectionProperty($afterCustom, 'selectedTab'))->getValue($afterCustom);
+        $activeAfterCustom = $afterCustom->selectedTab();
         self::assertSame(1, $activeAfterCustom);
     }
 
@@ -2860,14 +2859,14 @@ final class TabBarTest extends TestCase
         $widget = $widget->withSelectedTab(1);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Left), $area)->model;
-        $activeAfterDefault = (new ReflectionProperty($afterDefault, 'selectedTab'))->getValue($afterDefault);
+        $activeAfterDefault = $afterDefault->selectedTab();
         self::assertSame(0, $activeAfterDefault);
 
         $custom = $widget->withKeybindings(new Keybindings([Actions::TAB_PREVIOUS => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Left), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
-        $activeAfterCustom = (new ReflectionProperty($afterCustom, 'selectedTab'))->getValue($afterCustom);
+        $activeAfterCustom = $afterCustom->selectedTab();
         self::assertSame(0, $activeAfterCustom);
     }
 
@@ -2883,9 +2882,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()
             ->addTab('T1')->add($multiLine);
 
-        $tabsProperty = (new ReflectionObject($tabBar))->getProperty('tabs');
-        /** @var list<TabPage> $tabs */
-        $tabs = $tabsProperty->getValue($tabBar);
+        $tabs = $tabBar->tabs();
         $tabBar = $tabBar->withTabs([$tabs[0]->withPane($tabs[0]->pane->withScrollOffset(3))]);
 
         // TabBar starts at y=5, leaving rows 0..4 belonging to other widgets.
@@ -3072,7 +3069,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()->addTab('One')
             ->add($this->cursorJumpChild(4, 5));
-        $tabs = (new ReflectionProperty(TabBar::class, 'tabs'))->getValue($tabBar);
+        $tabs = $tabBar->tabs();
         // Six rows of content in a four-row viewport, so three is as far as it scrolls.
         $tabBar = $tabBar->withTabs([$tabs[0]->withPane($tabs[0]->pane->withScrollOffset(3))]);
         $area = new Rect(0, 0, 40, 8);
@@ -3141,6 +3138,15 @@ final class TabBarTest extends TestCase
 
         $shrunk = $bar->withTabs([new TabPage('Alpha'), new TabPage('Beta')]);
         self::assertSame(1, $shrunk->selectedTab(), 'Gamma is gone, so its neighbour shows');
+    }
+
+    #[Test]
+    public function aHostReadsAPageThatIsNotShowing(): void
+    {
+        $list = ListView::fromStrings(['a', 'b', 'c'])->withCursor(2);
+        $bar = TabBar::new()->addTab('Inbox')->add($list)->addTab('Work')->withSelectedTab(1);
+
+        self::assertSame([$list], [...$bar->tabs()[0]->pane->children()]);
     }
 
     #[Test]
@@ -3454,11 +3460,7 @@ final class TabBarTest extends TestCase
 
     private function selectedTabScrollOffset(TabBar $tabBar): int
     {
-        /** @var list<TabPage> $tabs */
-        $tabs = (new ReflectionProperty(TabBar::class, 'tabs'))->getValue($tabBar);
-        $activeTab = (new ReflectionProperty(TabBar::class, 'selectedTab'))->getValue($tabBar);
-
-        return $tabs[$activeTab]->pane->scrollOffset();
+        return $tabBar->tabs()[$tabBar->selectedTab()]->pane->scrollOffset();
     }
 }
 
