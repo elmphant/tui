@@ -27,7 +27,8 @@ use InvalidArgumentException;
  *
  * Items are packed on the main axis from an explicit basis, grow or shrink
  * within their bounds, and may wrap onto additional lines. Cross-axis lines
- * stretch to consume the supplied Rect so child widgets always remain bounded.
+ * stretch to consume the supplied Rect so child widgets always remain bounded;
+ * an item fills its line unless withCrossAlignment() says otherwise.
  */
 final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 {
@@ -42,6 +43,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         private bool $wrap = false,
         private int $gap = 0,
         private Justification $justify = Justification::Start,
+        private CrossAlignment $crossAlignment = CrossAlignment::Stretch,
     ) {
     }
 
@@ -74,12 +76,14 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         return $this->cloneWith(justify: $justify);
     }
 
+    public function withCrossAlignment(CrossAlignment $crossAlignment): self
+    {
+        return $this->cloneWith(crossAlignment: $crossAlignment);
+    }
+
     public function add(Widget $widget, ?Constraint $constraint = null): self
     {
-        $items = $this->items;
-        $items[] = new FlexItem($widget, $constraint ?? Constraint::flex());
-
-        return new self($this->direction, $items, $this->wrap, $this->gap, $this->justify);
+        return $this->cloneWith(items: [...$this->items, new FlexItem($widget, $constraint ?? Constraint::flex())]);
     }
 
     public function sizing(): Sizing
@@ -134,6 +138,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 
         $linePlacements = [];
         $desiredCrossSizes = [];
+        $itemCrossSizes = [];
         foreach ($lines as $line) {
             $placements = $this->resolveMainPlacements($line, $mainSize, $crossAvailable);
             $linePlacements[] = $placements;
@@ -141,9 +146,10 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             $desired = 0;
             foreach ($placements as [$itemIndex, , $itemMainSize]) {
                 $widget = $this->items[$itemIndex]->widget;
-                $desired = max($desired, $isRow
+                $itemCrossSizes[$itemIndex] = $isRow
                     ? $this->intrinsicHeight($widget, $itemMainSize)
-                    : $this->intrinsicWidth($widget));
+                    : $this->intrinsicWidth($widget);
+                $desired = max($desired, $itemCrossSizes[$itemIndex]);
             }
             $desiredCrossSizes[] = $desired;
         }
@@ -157,9 +163,17 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 
             foreach ($placements as [$itemIndex, $mainOffset, $itemMainSize]) {
                 $item = $this->items[$itemIndex];
+                $itemCrossSize = $this->crossAlignment === CrossAlignment::Stretch
+                    ? $lineCrossSize
+                    : min($lineCrossSize, $itemCrossSizes[$itemIndex]);
+                $crossOffset = $crossCursor + match ($this->crossAlignment) {
+                    CrossAlignment::Stretch, CrossAlignment::Start => 0,
+                    CrossAlignment::Center => intdiv($lineCrossSize - $itemCrossSize, 2),
+                    CrossAlignment::End => $lineCrossSize - $itemCrossSize,
+                };
                 $childArea = $isRow
-                    ? new Rect($area->x + $mainOffset, $area->y + $crossCursor, $itemMainSize, $lineCrossSize)
-                    : new Rect($area->x + $crossCursor, $area->y + $mainOffset, $lineCrossSize, $itemMainSize);
+                    ? new Rect($area->x + $mainOffset, $area->y + $crossOffset, $itemMainSize, $itemCrossSize)
+                    : new Rect($area->x + $crossOffset, $area->y + $mainOffset, $itemCrossSize, $itemMainSize);
                 $result[] = [$item->widget, $childArea];
             }
 

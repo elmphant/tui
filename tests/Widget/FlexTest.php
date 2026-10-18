@@ -12,6 +12,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Layout\CrossAlignment;
 use Elmphant\Tui\Widget\Layout\Flex;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -620,6 +621,26 @@ final class FlexTest extends TestCase
 
         self::assertSame(3, $placed[0][1]->height);
         self::assertSame(3, $placed[1][1]->y);
+    }
+
+    #[Test]
+    public function aShortItemKeepsItsOwnHeightWhenItemsAreNotStretched(): void
+    {
+        $cards = Flex::row()
+            ->add(Box::new()->add(Text::new('one')))
+            ->add(Box::new()->add(Text::new('two'))->add(Text::new('more'))->add(Text::new('most')));
+        $area = Rect::fromSize(40, 5);
+
+        $stretched = $cards->computeChildRects($area);
+        $atTheTop = $cards->withCrossAlignment(CrossAlignment::Start)->computeChildRects($area);
+        $centred = $cards->withCrossAlignment(CrossAlignment::Center)->computeChildRects($area);
+        $atTheBottom = $cards->withCrossAlignment(CrossAlignment::End)->computeChildRects($area);
+
+        self::assertEquals(new Rect(0, 0, 20, 5), $stretched[0][1]);
+        self::assertEquals(new Rect(0, 0, 20, 3), $atTheTop[0][1]);
+        self::assertEquals(new Rect(0, 1, 20, 3), $centred[0][1]);
+        self::assertEquals(new Rect(0, 2, 20, 3), $atTheBottom[0][1]);
+        self::assertEquals(new Rect(20, 0, 20, 5), $atTheTop[1][1]);
     }
 
     #[Test]
