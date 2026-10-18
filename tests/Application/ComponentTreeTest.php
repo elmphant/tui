@@ -144,11 +144,31 @@ final class ComponentTreeTest extends TestCase
             static fn (App $current, TextInput $field): App => $current,
         );
 
-        $registry = ComponentRegistry::fromWidget(
-            Overlay::new($behind, Modal::new('Support', $inside)),
+        $modal = Component::bind(
+            ComponentId::named('modal'),
+            Modal::new('Support', $inside),
+            static fn (App $current, Modal $modal): App => $current,
         );
 
-        self::assertSame([$inside], $registry->all(), 'nothing behind the modal stays reachable');
+        $registry = ComponentRegistry::fromWidget(Overlay::new($behind, $modal));
+
+        self::assertNotContains($behind, $registry->all(), 'nothing behind the modal stays reachable');
+        self::assertContains($inside, $registry->all());
+    }
+
+    #[Test]
+    public function aModalAroundBoundComponentsMustBeBoundItself(): void
+    {
+        $inside = Component::bind(
+            ComponentId::named('inside'),
+            TextInput::new(),
+            static fn (App $current, TextInput $field): App => $current,
+        );
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Component::bind()');
+
+        ComponentRegistry::fromWidget(Overlay::new(TextInput::new(), Modal::new('Support', $inside)));
     }
 
     #[Test]

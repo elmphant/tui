@@ -400,6 +400,14 @@ final class ModalTest extends TestCase
     // ---------------------------------------------------------------
 
     #[Test]
+    public function aModalAnswersWithTheContentItHolds(): void
+    {
+        $content = Text::new('body');
+
+        self::assertSame($content, Modal::new('Title', $content)->content());
+    }
+
+    #[Test]
     public function aScreenFourRowsTallStillShowsTheModalItHolds(): void
     {
         $frame = new Frame(40, 4);

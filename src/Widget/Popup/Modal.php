@@ -39,12 +39,18 @@ use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
+/**
+ * @template-covariant TContent of Widget
+ */
 final readonly class Modal implements Interactive, WidgetContainer, Navigates, InputLayer, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
     private const BORDERS = 2;
 
+    /**
+     * @param TContent $content
+     */
     private function __construct(
         private string $title,
         private Widget $content,
@@ -58,6 +64,13 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
     ) {
     }
 
+    /**
+     * @template T of Widget
+     *
+     * @param T $content
+     *
+     * @return self<T>
+     */
     public static function new(string $title, Widget $content): self
     {
         return new self(
@@ -69,11 +82,22 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         );
     }
 
-    public function withTitle(string $title): self
+    /**
+     * @return TContent
+     */
+    public function content(): Widget
+    {
+        return $this->content;
+    }
+
+    public function withTitle(string $title): static
     {
         return $this->cloneWith(title: $title);
     }
 
+    /**
+     * @return self<Widget>
+     */
     public function withContent(Widget $content): self
     {
         return $this->cloneWith(content: $content);
@@ -108,27 +132,27 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
      * MeasureHeight; content that answers neither keeps the percentage sizing for
      * the dimension it cannot speak for.
      */
-    public function withSizedToContent(bool $sizedToContent = true): self
+    public function withSizedToContent(bool $sizedToContent = true): static
     {
         return $this->cloneWith(sizedToContent: $sizedToContent);
     }
 
-    public function withWidth(int $percent): self
+    public function withWidth(int $percent): static
     {
         return $this->cloneWith(widthPercent: max(10, min(100, $percent)));
     }
 
-    public function withHeight(int $percent): self
+    public function withHeight(int $percent): static
     {
         return $this->cloneWith(heightPercent: max(10, min(100, $percent)));
     }
 
-    public function withBorderStyle(Style $style): self
+    public function withBorderStyle(Style $style): static
     {
         return $this->cloneWith(borderStyleOverride: $style);
     }
 
-    public function withTitleStyle(Style $style): self
+    public function withTitleStyle(Style $style): static
     {
         return $this->cloneWith(titleStyleOverride: $style);
     }

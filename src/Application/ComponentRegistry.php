@@ -394,7 +394,7 @@ final readonly class ComponentRegistry
      *
      * @return array{list<Component<Interactive>>, bool}
      */
-    private static function collectLayer(Widget $widget): array
+    private static function collectLayer(Widget $widget, bool $bound = false): array
     {
         $components = [];
 
@@ -406,7 +406,7 @@ final readonly class ComponentRegistry
         $layerComponents = null;
         if ($widget instanceof WidgetContainer) {
             foreach ($widget->children() as $child) {
-                [$childComponents, $childIsLayered] = self::collectLayer($child);
+                [$childComponents, $childIsLayered] = self::collectLayer($child, $widget instanceof Component);
                 if ($childIsLayered) {
                     $layerComponents = $childComponents;
                 }
@@ -417,6 +417,10 @@ final readonly class ComponentRegistry
 
         if ($layerComponents !== null) {
             return [self::reowned($widget, [...self::ownComponent($widget), ...$layerComponents]), true];
+        }
+
+        if ($widget instanceof InputLayer && !$bound && $components !== []) {
+            throw new LogicException(sprintf('%s holds the bound component "%s" but is not bound itself, so it never hears the keys and clicks that component leaves alone: wrap it in Component::bind()', get_debug_type($widget), $components[0]->id->value));
         }
 
         return [self::reowned($widget, $components), $widget instanceof InputLayer];
