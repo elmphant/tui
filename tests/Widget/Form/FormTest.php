@@ -64,6 +64,14 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aFormIsFilledInByNameForEditing(): void
+    {
+        $values = ['username' => 'ada', 'password' => 'secret', 'site' => 'shop', 'admin' => true];
+
+        self::assertSame($values, self::userForm()->withValues($values)->values());
+    }
+
+    #[Test]
     public function aRequiredFieldLeftEmptyIsMissing(): void
     {
         self::assertSame(['username'], self::userForm()->missing());

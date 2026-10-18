@@ -20,6 +20,7 @@ use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 
 final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, DropdownContent, Committing, PublishesHints
 {
@@ -124,6 +125,13 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     public function value(): ?string
     {
         return $this->selectedValue();
+    }
+
+    public function withValue(string|bool|array|null $value): static
+    {
+        return \is_string($value) || $value === null
+            ? $this->withSelectedValue($value)
+            : throw ValueItCannotHold::given($this, $value);
     }
 
     /**

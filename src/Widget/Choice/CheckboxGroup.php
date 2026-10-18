@@ -24,6 +24,7 @@ use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 
 final readonly class CheckboxGroup implements Focusable, KeybindingsAware, CursorAware, DropdownContent, PublishesHints
 {
@@ -162,6 +163,13 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     public function value(): array
     {
         return $this->checkedValues();
+    }
+
+    public function withValue(string|bool|array|null $value): static
+    {
+        return \is_array($value) || $value === null
+            ? $this->withCheckedValues($value ?? [])
+            : throw ValueItCannotHold::given($this, $value);
     }
 
     /**

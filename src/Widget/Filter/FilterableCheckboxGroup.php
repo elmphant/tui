@@ -26,6 +26,7 @@ use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 
 /**
  * Boxes to tick with a free-text filter over them, for a list too long to walk.
@@ -97,6 +98,13 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     public function value(): array
     {
         return $this->checkedValues();
+    }
+
+    public function withValue(string|bool|array|null $value): static
+    {
+        return \is_array($value) || $value === null
+            ? $this->cloneWith(checked: array_values(array_intersect($this->options, $value ?? [])))
+            : throw ValueItCannotHold::given($this, $value);
     }
 
     /**

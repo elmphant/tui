@@ -17,4 +17,13 @@ interface HoldsAValue extends Widget
      * @return string|bool|list<string>|null
      */
     public function value(): string|bool|array|null;
+
+    /**
+     * The widget filled in with a value of the kind value() answers; null empties it.
+     *
+     * @param string|bool|list<string>|null $value
+     *
+     * @throws ValueItCannotHold for a value of another kind
+     */
+    public function withValue(string|bool|array|null $value): static;
 }

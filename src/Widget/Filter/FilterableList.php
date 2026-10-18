@@ -37,6 +37,7 @@ use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 
 /**
  * A scrollable list with a free-text filter over it.
@@ -203,6 +204,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     public function value(): ?string
     {
         return $this->selectedItem()?->filterValue();
+    }
+
+    public function withValue(string|bool|array|null $value): static
+    {
+        return \is_string($value) || $value === null
+            ? $this->withSelectedValue($value)
+            : throw ValueItCannotHold::given($this, $value);
     }
 
     public function selectedItem(): ?ListItem

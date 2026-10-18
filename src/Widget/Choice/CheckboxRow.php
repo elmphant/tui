@@ -22,6 +22,7 @@ use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 use LogicException;
 
 final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHints
@@ -171,6 +172,15 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
     public function value(): array
     {
         return array_map(fn (int $index): string => $this->options[$index], $this->checkedIndices());
+    }
+
+    public function withValue(string|bool|array|null $value): static
+    {
+        if (!\is_array($value) && $value !== null) {
+            throw ValueItCannotHold::given($this, $value);
+        }
+
+        return $this->withChecked(array_map(static fn (string $option): bool => \in_array($option, $value ?? [], true), $this->options));
     }
 
     public function sizing(): Sizing

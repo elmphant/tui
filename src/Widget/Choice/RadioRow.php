@@ -20,6 +20,7 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 
 /**
  * One choice out of several, side by side on a row: the horizontal Radio, as
@@ -177,6 +178,13 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     public function value(): ?string
     {
         return $this->selectedValue();
+    }
+
+    public function withValue(string|bool|array|null $value): static
+    {
+        return \is_string($value) || $value === null
+            ? $this->withSelectedValue($value)
+            : throw ValueItCannotHold::given($this, $value);
     }
 
     public function update(Message $message, Rect $area): UpdateResult

@@ -23,6 +23,7 @@ use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 
 final readonly class Checkbox implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints
 {
@@ -76,6 +77,13 @@ final readonly class Checkbox implements Focusable, HoldsAValue, KeybindingsAwar
     public function value(): bool
     {
         return $this->checked;
+    }
+
+    public function withValue(string|bool|array|null $value): static
+    {
+        return \is_bool($value) || $value === null
+            ? $this->cloneWith(checked: $value ?? false)
+            : throw ValueItCannotHold::given($this, $value);
     }
 
     public function withChecked(bool $checked): self

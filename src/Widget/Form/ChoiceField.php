@@ -23,6 +23,7 @@ use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Popup\Dropdown;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
@@ -58,9 +59,11 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
         return self::built($options, null, null, false);
     }
 
-    public function withValue(?string $value): self
+    public function withValue(string|bool|array|null $value): static
     {
-        return self::built($this->options, $value, $this->matcher, $this->clearable);
+        return \is_string($value) || $value === null
+            ? self::built($this->options, $value, $this->matcher, $this->clearable)
+            : throw ValueItCannotHold::given($this, $value);
     }
 
     /**

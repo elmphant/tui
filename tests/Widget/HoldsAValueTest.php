@@ -16,6 +16,7 @@ use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Popup\Dropdown;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -48,5 +49,25 @@ final class HoldsAValueTest extends TestCase
     public function aFieldSaysWhatItHolds(HoldsAValue $field, string|bool|array|null $expected): void
     {
         self::assertSame($expected, $field->value());
+    }
+
+    /**
+     * @param string|bool|list<string>|null $expected
+     */
+    #[Test]
+    #[DataProvider('fields')]
+    public function aFieldHoldsWhatItIsGiven(HoldsAValue $field, string|bool|array|null $expected): void
+    {
+        $emptied = $field->withValue(null);
+
+        self::assertSame($expected, $emptied->withValue($expected)->value());
+    }
+
+    #[Test]
+    public function aTextFieldRefusesAListOfValues(): void
+    {
+        $this->expectException(ValueItCannotHold::class);
+
+        TextInput::new()->withValue(['a']);
     }
 }

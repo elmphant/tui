@@ -28,6 +28,7 @@ use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\ValueItCannotHold;
 
 final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints
 {
@@ -99,9 +100,15 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
         return $this->echoMode;
     }
 
-    public function withValue(string $value): self
+    public function withValue(string|bool|array|null $value): static
     {
-        return $this->cloneWith(value: $value, cursor: self::graphemeLength($value));
+        $text = match (true) {
+            \is_string($value) => $value,
+            $value === null => '',
+            default => throw ValueItCannotHold::given($this, $value),
+        };
+
+        return $this->cloneWith(value: $text, cursor: self::graphemeLength($text));
     }
 
     public function withCharLimit(int $limit): self

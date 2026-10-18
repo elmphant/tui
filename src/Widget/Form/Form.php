@@ -155,6 +155,22 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     }
 
     /**
+     * The fields filled in by name, as for editing what values() once answered.
+     *
+     * @param array<string, string|bool|list<string>|null> $values
+     */
+    public function withValues(array $values): self
+    {
+        $form = $this;
+        foreach ($values as $name => $value) {
+            $field = $this->field($name) ?? throw new LogicException(sprintf('The form has no field named "%s"', $name));
+            $form = $form->withField($field->withWidget($field->widget->withValue($value)));
+        }
+
+        return $form;
+    }
+
+    /**
      * @return array<string, string|bool|list<string>|null>
      */
     public function values(): array

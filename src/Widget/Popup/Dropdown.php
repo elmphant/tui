@@ -101,6 +101,11 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         return $this->content->value();
     }
 
+    public function withValue(string|bool|array|null $value): static
+    {
+        return $this->cloneWith(content: $this->content->withValue($value));
+    }
+
     /**
      * What the closed row reads, marker and all, so a host laying a row out can
      * measure it without knowing how a dropdown draws itself.
