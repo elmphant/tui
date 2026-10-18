@@ -26,8 +26,9 @@ final class FocusCycleCmdTest extends TestCase
         $moved = $command->applyTo(
             new FocusState(ComponentId::named('search')),
             [ComponentId::named('search'), ComponentId::named('results')],
+            [],
         );
 
-        self::assertEquals(ComponentId::named('results'), $moved->focused());
+        self::assertEquals(ComponentId::named('results'), $moved?->focused());
     }
 }

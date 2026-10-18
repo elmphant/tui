@@ -64,6 +64,50 @@ final class ProgramFocusCapabilityTest extends TestCase
 
         self::assertSame([], $landedOn, 'nowhere is a decision, not the absence of one');
     }
+
+    #[Test]
+    public function aFocusCommandForAComponentNotOnScreenLeavesTheKeyboardWhereItIs(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(40, 6);
+        $terminal->simulateInput("\t\x07x\x11");
+
+        $final = Program::new(new FocusElsewhereApp(TextInput::new(), TextInput::new()))
+            ->withTerminal($terminal)
+            ->withTracer($tracer)
+            ->start();
+
+        self::assertInstanceOf(FocusElsewhereApp::class, $final);
+        self::assertSame('x', $final->second->value());
+        self::assertSame(
+            ['from' => 'second', 'to' => 'second', 'requested' => 'hidden/composer'],
+            array_slice($tracer->fieldsOf(TraceEvent::Focus), -1)[0] ?? null,
+        );
+    }
+}
+
+final readonly class FocusElsewhereApp extends App
+{
+    public function __construct(
+        public TextInput $first,
+        public TextInput $second,
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Component::bind('first', $this->first, static fn (self $app, TextInput $field): self => $app->cloneWith(first: $field)),
+            Component::bind('second', $this->second, static fn (self $app, TextInput $field): self => $app->cloneWith(second: $field)),
+        );
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        return $message->ctrl && $message->key === 'g'
+            ? new UpdateResult($this, Cmd::focus(ComponentId::named('hidden/composer')))
+            : UpdateResult::ignored($this);
+    }
 }
 
 final readonly class KeyboardStartsWithTheAppApp extends App

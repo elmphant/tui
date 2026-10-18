@@ -606,10 +606,17 @@ final class ModelHarness
         }
 
         if ($command instanceof FocusCmd) {
-            $this->focus = $command->within($scope)->applyTo(
+            $moved = $command->within($scope)->applyTo(
                 $this->focus,
                 $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
+                $this->model instanceof RoutesFocus ? $this->model->reachableIds() : null,
             );
+
+            if ($moved === null) {
+                return;
+            }
+
+            $this->focus = $moved;
             $this->announceArrival($command->move);
         }
     }

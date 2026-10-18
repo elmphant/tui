@@ -36,6 +36,7 @@ final class FocusNothingTest extends TestCase
             $command->applyTo(
                 new FocusState(ComponentId::named('search')),
                 [ComponentId::named('search')],
+                [ComponentId::named('search')],
             ),
         );
     }

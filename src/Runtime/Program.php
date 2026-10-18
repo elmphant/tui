@@ -1083,14 +1083,25 @@ final class Program
      */
     private function moveFocus(FocusCmd $command): void
     {
-        $moved = $command->applyTo($this->focus, $this->focusableIds());
+        $moved = $command->applyTo(
+            $this->focus,
+            $this->focusableIds(),
+            $this->model instanceof RoutesFocus ? $this->model->reachableIds() : null,
+        );
 
-        if (!$moved->sameAs($this->focus)) {
+        if ($moved === null || $command->target !== null || !$moved->sameAs($this->focus)) {
             $this->tracer?->record(TraceEvent::Focus, [
                 'from' => $this->focus->focused()?->value,
-                'to' => $moved->focused()?->value,
+                'to' => ($moved ?? $this->focus)->focused()?->value,
+                ...($command->target === null ? [] : ['requested' => $command->target->value]),
             ]);
+        }
 
+        if ($moved === null) {
+            return;
+        }
+
+        if (!$moved->sameAs($this->focus)) {
             $this->focus = $moved;
             $this->frames->markDirty();
         }

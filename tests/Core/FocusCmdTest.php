@@ -25,7 +25,28 @@ final class FocusCmdTest extends TestCase
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
             new FocusState(ComponentId::named('search')),
-            $command->applyTo(new FocusState(), []),
+            $command->applyTo(new FocusState(), [ComponentId::named('search')], [ComponentId::named('search')]),
+        );
+    }
+
+    #[Test]
+    public function aComponentNotOnScreenCannotTakeTheKeyboard(): void
+    {
+        $command = Cmd::focus(ComponentId::named('hidden/search'));
+
+        self::assertInstanceOf(FocusCmd::class, $command);
+        self::assertNull($command->applyTo(new FocusState(ComponentId::named('list')), [ComponentId::named('list')], [ComponentId::named('list')]));
+    }
+
+    #[Test]
+    public function aContainerTakesTheKeyboardForTheStopsUnderIt(): void
+    {
+        $command = Cmd::focus(ComponentId::named('form'));
+
+        self::assertInstanceOf(FocusCmd::class, $command);
+        self::assertEquals(
+            new FocusState(ComponentId::named('form')),
+            $command->applyTo(new FocusState(), [ComponentId::named('form/0')], []),
         );
     }
 }

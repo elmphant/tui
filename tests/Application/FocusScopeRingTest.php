@@ -63,7 +63,7 @@ final class FocusScopeRingTest extends TestCase
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertSame(
             'severity',
-            $command->applyTo($focus, $app->focusableIds($focus))->focused()?->value,
+            $command->applyTo($focus, $app->focusableIds($focus), $app->reachableIds())?->focused()?->value,
             'a scope is a ring wherever it sits, not only when it comes first',
         );
     }
@@ -92,7 +92,7 @@ final class FocusScopeRingTest extends TestCase
 
         self::assertInstanceOf(FocusCmd::class, $command);
 
-        return $command->applyTo($focus, $app->focusableIds($focus))->focused()?->value;
+        return $command->applyTo($focus, $app->focusableIds($focus), $app->reachableIds())?->focused()?->value;
     }
 }
 

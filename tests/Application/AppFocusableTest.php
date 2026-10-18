@@ -745,7 +745,7 @@ final class AppFocusableTest extends TestCase
 
         $start = new FocusState(null === $from ? null : ComponentId::named($from));
 
-        return $command->applyTo($start, $order)->focused();
+        return $command->applyTo($start, $order, $order)?->focused();
     }
 }
 
