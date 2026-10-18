@@ -42,11 +42,11 @@ final readonly class FocusCmd extends Cmd
     public function applyTo(FocusState $focus, array $focusables, ?array $reachable): ?FocusState
     {
         return match ($this->move) {
-            FocusMove::To => $reachable === null || $this->isOnScreen([...$focusables, ...$reachable]) ? new FocusState($this->target) : null,
+            FocusMove::To => $reachable === null || $this->isOnScreen([...$focusables, ...$reachable]) ? $focus->movedTo($this->target) : null,
             // Undecided rather than the first id outright: a tree that has just
             // changed may not have grown its components yet, and undecided is
             // what settles on the first once it has.
-            FocusMove::First => new FocusState($focusables[0] ?? null),
+            FocusMove::First => $focus->movedTo($focusables[0] ?? null),
             FocusMove::Nowhere => FocusState::nowhere(),
             FocusMove::Next => $focus->next($focusables),
             FocusMove::Previous => $focus->previous($focusables),
