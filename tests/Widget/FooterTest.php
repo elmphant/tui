@@ -963,6 +963,17 @@ final class FooterTest extends TestCase
     }
 
     #[Test]
+    public function textInASlotSitsOnTheBarRatherThanOnThePage(): void
+    {
+        $theme = Theme::dark()->withCanvas(Color::hex('101010'));
+        $frame = new Frame(20, 1);
+
+        Footer::new()->withRight(Text::new('v1'))->render($frame, Rect::fromSize(20, 1), new RenderContext($theme));
+
+        self::assertSame($theme->footerStyle->backgroundValue(), $frame->backgrounds[18]);
+    }
+
+    #[Test]
     public function aGrowingLeftSlotStopsShortOfTheRightOne(): void
     {
         $footer = Footer::new()

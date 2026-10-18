@@ -152,7 +152,7 @@ final class BarSlotRenderer
         $widget->render($frame, $rect, $context);
         $frame->popClip();
 
-        self::keepBarBackground($frame, $rect, $barBackground);
+        self::keepBarBackground($frame, $rect, $barBackground, $context->theme->page->value ?? 0);
     }
 
     /**
@@ -189,9 +189,10 @@ final class BarSlotRenderer
 
     /**
      * Frame writes carry a background unconditionally, so a slot styled without
-     * one would punch its own text out of the bar's fill.
+     * one would punch its own text out of the bar's fill. A theme with a canvas
+     * gives every ink the page colour, which punches the same hole.
      */
-    private static function keepBarBackground(Frame $frame, Rect $rect, int $barBackground): void
+    private static function keepBarBackground(Frame $frame, Rect $rect, int $barBackground, int $page): void
     {
         if (0 === $barBackground || $rect->y < 0 || $rect->y >= $frame->height) {
             return;
@@ -201,7 +202,7 @@ final class BarSlotRenderer
 
         for ($x = max(0, $rect->x); $x < min($frame->width, $rect->right()); ++$x) {
             $index = $rowBase + $x;
-            if (0 === $frame->backgrounds[$index]) {
+            if (0 === $frame->backgrounds[$index] || $page === $frame->backgrounds[$index]) {
                 $frame->backgrounds[$index] = $barBackground;
                 $frame->markRowDirty($rect->y);
             }
