@@ -300,8 +300,38 @@ final readonly class Paragraph implements Widget, MeasureHeight
         /** @var list<array{int, int}> */
         return WrapCache::remember(
             $width . ':' . hash('xxh3', $text),
-            static fn (): array => self::rowBounds(Grapheme::split($text), $width),
+            static fn (): array => preg_match('/[^\x20-\x7e]/', $text) === 0
+                ? self::plainRowBounds($text, $width)
+                : self::rowBounds(Grapheme::split($text), $width),
         );
+    }
+
+    /**
+     * rowBounds() for printable ASCII, where a byte is a cell: it looks only
+     * where a row can break, so a 1 MB line wraps in milliseconds, not 100.
+     *
+     * @return list<array{int, int}>
+     */
+    private static function plainRowBounds(string $text, int $maxWidth): array
+    {
+        $rows = [];
+        $rowStart = 0;
+        $length = strlen($text);
+
+        while ($length - $rowStart > $maxWidth) {
+            $space = strrpos(substr($text, $rowStart, $maxWidth + 1), ' ');
+            if ($space === false) {
+                $rows[] = [$rowStart, $maxWidth];
+                $rowStart += $maxWidth;
+                continue;
+            }
+            $rows[] = [$rowStart, $space];
+            $rowStart += $space + 1;
+        }
+
+        $rows[] = [$rowStart, $length - $rowStart];
+
+        return $rows;
     }
 
     private static function textOf(Line $line): string

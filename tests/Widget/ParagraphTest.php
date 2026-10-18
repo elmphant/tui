@@ -36,6 +36,22 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function plainTextBreaksWhereTextWithAnyOtherCharacterWouldBreak(): void
+    {
+        $texts = ['ab cd ef', 'abcdefghijkl', '  lead and  double  ', 'word ' . str_repeat('x', 13) . ' y', 'abcd efgh ijkl ', ' ', 'ab   cd'];
+
+        foreach ($texts as $text) {
+            foreach (range(1, 9) as $width) {
+                WrapCache::clear();
+                $plain = Paragraph::fromText($text);
+                $mixed = Paragraph::fromText($text . "\u{200B}");
+                self::assertSame($mixed->measureHeight($width), $plain->measureHeight($width), "'{$text}' at {$width}");
+                self::assertSame($this->rowsOf($mixed, $width, 30), $this->rowsOf($plain, $width, 30), "'{$text}' at {$width}");
+            }
+        }
+    }
+
+    #[Test]
     public function theLinesCanBeReplacedAfterConstruction(): void
     {
         $frame = new Frame(10, 2);
