@@ -137,7 +137,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
             $bindings = $bindings->append($widget->effectiveKeybindings());
         }
 
-        return $bindings->chords();
+        return $this->takesText($focus->focused()) ? $bindings->chords()->withoutText() : $bindings->chords();
     }
 
     /**

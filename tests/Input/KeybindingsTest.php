@@ -365,6 +365,15 @@ final class KeybindingsTest extends TestCase
     }
 
     #[Test]
+    public function aChordThatStartsWithTextIsLeftOutForAFieldAndAModifiedOneIsKept(): void
+    {
+        $bindings = (new Keybindings(['top' => ['g g'], 'save' => ['ctrl+x ctrl+s']]))->withoutText();
+
+        self::assertSame([], $bindings->get('top'));
+        self::assertSame('ctrl+x ctrl+s', (string)$bindings->get('save')[0]);
+    }
+
+    #[Test]
     public function actionsWithoutAKeyEachHaveNoLabel(): void
     {
         $bindings = new Keybindings([Actions::TAB_NEXT => ['shift+right']]);
