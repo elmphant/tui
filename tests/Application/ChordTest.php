@@ -26,6 +26,17 @@ final class ChordTest extends TestCase
     }
 
     #[Test]
+    public function aChordNothingOnScreenAnswersIsNoChordAtAll(): void
+    {
+        $list = ListView::fromStrings(['one', 'two'])->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['t']]));
+        $globals = new Keybindings([Actions::HOME => ['g g'], Actions::TAB_NEXT => ['g t']]);
+
+        $harness = ModelHarness::for(new ChordListApp($list, $globals), 30, 8)->initialize()->press('g', 't');
+
+        self::assertSame(1, $harness->model()->list->cursor());
+    }
+
+    #[Test]
     public function theKeysOfAChordAreTypedIntoAFocusedField(): void
     {
         $harness = ModelHarness::for(new ChordFieldApp(), 30, 8)->initialize()->type('gg');

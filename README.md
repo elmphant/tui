@@ -219,7 +219,9 @@ not go on with the chord releases the held keys first and is handled after them;
 Esc cancels it; and if nothing follows for half a second the held keys are
 handled on their own, so a widget that binds a plain `g` still gets it. While
 the focused component takes text, a chord that starts with a text key is typed
-instead, as a single letter is.
+instead, as a single letter is. A global chord binds only while the focused
+component or a container around it answers its action: with no `TabBar` around
+the keyboard, `g t` is no chord, and `g` then `t` are two keys.
 
 ```php
 use Elmphant\Tui\Input\Actions;
@@ -808,9 +810,11 @@ $hints = Keybindings::rowNavigation()->hints([
 not `Shift+G`) and a chord as its keys are typed (`gg`, `gt/gT`).
 
 While a chord is open, `FocusHints` swaps the hints for what can follow it, read
-from `RenderContext::pendingChord()`: after `g` in vim mode the footer reads
+from `RenderContext::pendingChord()`: after `g` in vim mode, on a list inside a
+`TabBar`, the footer reads
 `g…     g  top   t  next tab   T  previous tab   Esc  cancel`, and goes back once the
-chord completes, is cancelled or times out.
+chord completes, is cancelled or times out. On a list with no `TabBar` around it
+`gt` answers nothing, so it is left out.
 
 A bar places each slot in the width the slot's own `Sizing` declares — a bar is
 not an allocator, so a flexible slot is not stretched to the row. A widget with

@@ -128,16 +128,27 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         );
     }
 
+    /**
+     * A global chord binds only while the focused component or a container around
+     * it answers its action; otherwise its first key is just a key.
+     */
     final public function chords(FocusState $focus): Keybindings
     {
-        $bindings = $this->applicationKeybindings()->append($this->globalKeybindings());
-        $widget = $this->componentRegistry()->focusable($focus->focused())?->widget;
+        $answering = Keybindings::empty();
+        $focused = $this->componentRegistry()->focusable($focus->focused());
 
-        if ($widget instanceof KeybindingsAware) {
-            $bindings = $bindings->append($widget->effectiveKeybindings());
+        foreach ($focused === null ? [] : [$focused, ...$this->componentRegistry()->enclosing($focused->id)] as $component) {
+            if ($component->widget instanceof KeybindingsAware) {
+                $answering = $answering->append($component->widget->effectiveKeybindings());
+            }
         }
 
-        return $this->takesText($focus->focused()) ? $bindings->chords()->withoutText() : $bindings->chords();
+        $chords = $this->applicationKeybindings()
+            ->append($answering)
+            ->append($this->globalKeybindings()->restrictedTo(...$answering->actions()))
+            ->chords();
+
+        return $this->takesText($focus->focused()) ? $chords->withoutText() : $chords;
     }
 
     /**

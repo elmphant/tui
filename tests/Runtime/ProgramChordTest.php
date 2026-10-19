@@ -109,7 +109,7 @@ final class ProgramChordTest extends TestCase
         $program->start();
 
         [$before, $open, $completed, $reopened, $cancelled] = $footers;
-        self::assertSame('g…     g  top   t  next tab   Esc  cancel', $open);
+        self::assertSame('g…     g  top   Esc  cancel', $open);
         self::assertSame($before, $completed);
         self::assertSame($open, $reopened);
         self::assertSame($before, $cancelled);

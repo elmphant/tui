@@ -99,6 +99,11 @@ final readonly class Keybindings
         return null;
     }
 
+    public function restrictedTo(string ...$actions): self
+    {
+        return new self(array_intersect_key($this->patterns, array_flip($actions)));
+    }
+
     /**
      * Only the bindings that take more than one key.
      */
