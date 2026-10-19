@@ -211,6 +211,12 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
             }
         }
 
+        foreach ($this->mountsHearingKeys($focus->focused()) as $mount) {
+            if ($mount->model instanceof NamesItsKeys) {
+                $groups[ucfirst($mount->id->value)] = $mount->model->ownKeys();
+            }
+        }
+
         $groups['Anywhere'] = $this->described(
             $this->applicationKeybindings()
                 ->append($this->resolvedQuitBindings())

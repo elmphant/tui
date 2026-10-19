@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\Mount;
+use Elmphant\Tui\Application\NamesItsKeys;
+use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\Presets\VimMode;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\ScreenBuffer;
@@ -17,6 +23,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
+use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -114,6 +121,15 @@ final class KeyHelpTest extends TestCase
         self::assertSame([false, true, true, false], $shown, 'opens on ?, swallows Enter, closes on ?');
     }
 
+    #[Test]
+    public function aMountedModelListsTheKeysItAnswersItself(): void
+    {
+        $screen = ModelHarness::for(new ReportMountingApp(new ReportModel()), 60, 30)->initialize()->press('?')->renderScreen()->plainText();
+
+        self::assertStringContainsString('Report', $screen);
+        self::assertMatchesRegularExpression('/r\s+refresh/u', $screen);
+    }
+
     private static function list(): ListView
     {
         return ListView::new([new SimpleListItem('one'), new SimpleListItem('two')]);
@@ -122,6 +138,31 @@ final class KeyHelpTest extends TestCase
     private static function harness(): ModelHarness
     {
         return ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 30)->initialize();
+    }
+}
+
+final readonly class ReportModel implements Reducer, NamesItsKeys
+{
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return UpdateResult::ignored($this);
+    }
+
+    public function ownKeys(): array
+    {
+        return (new Keybindings(['refresh' => ['r']]))->hints(['refresh' => 'refresh']);
+    }
+}
+
+final readonly class ReportMountingApp extends CopyableTestApp
+{
+    public function __construct(public ReportModel $report)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Mount::named('report', $this->report, Text::new('report'), static fn (self $app, ReportModel $report): self => new self($report));
     }
 }
 

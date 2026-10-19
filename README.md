@@ -272,7 +272,9 @@ the wheel when it is taller than the screen. While a field takes the keys, `?` i
 typed instead. An action is described by `Actions::description()`; override
 `actionDescription()` to name the actions the app binds itself,
 `keyHelpBindings()` to choose another key (or `Keybindings::empty()` for none),
-and show it in a footer with `$this->keyHelpHints()`.
+and show it in a footer with `$this->keyHelpHints()`. A mounted model that
+answers keys of its own, outside any component, implements `NamesItsKeys` and
+lists them from its bindings in `ownKeys()`; they appear under the mount's name.
 
 The keyboard starts on the first stop in tree order — inside a `TabBar`'s first
 page (`tabs/0`), not on its strip — so a header control drawn above a field takes
