@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Support;
 
+use Elmphant\Tui\Text\CellMap;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\WrapCache;
 use PHPUnit\Event\Test\Prepared;
@@ -27,6 +28,7 @@ final class ForgetStaticCaches implements Extension, PreparedSubscriber
     public function notify(Prepared $event): void
     {
         WrapCache::clear();
+        CellMap::clear();
         CharWidth::forgetMeasurements();
     }
 }

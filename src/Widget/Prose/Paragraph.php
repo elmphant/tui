@@ -20,6 +20,7 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\AnsiTokenizer;
 use Elmphant\Tui\Text\AnsiTokenType;
+use Elmphant\Tui\Text\CellMap;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
 use Elmphant\Tui\Text\WrapCache;
@@ -272,15 +273,9 @@ final readonly class Paragraph implements Widget, MeasureHeight
         return $this->rowIndex->at($width, fn (int $index): int => $this->rowsOfLine($this->lines[$index], $width));
     }
 
-    /**
-     * Wrapping is the expensive part and a line narrower than the column
-     * cannot wrap, so ask how wide it is before wrapping it.
-     */
     private function rowsOfLine(Line $line, int $width): int
     {
-        return $line->width() <= $width
-            ? 1
-            : count($this->wrappedRows($line, $width));
+        return count($this->wrappedRows(self::textOf($line), $width));
     }
 
     /**
@@ -293,45 +288,20 @@ final readonly class Paragraph implements Widget, MeasureHeight
      *
      * @return list<array{int, int}>
      */
-    private function wrappedRows(Line $line, int $width, ?string $text = null): array
+    private function wrappedRows(string $text, int $width): array
     {
-        $text ??= self::textOf($line);
+        // A cell holds at least one byte, so a line this short cannot wrap.
+        if (strlen($text) <= $width) {
+            return [[0, strlen($text)]];
+        }
 
         /** @var list<array{int, int}> */
         return WrapCache::remember(
             $width . ':' . hash('xxh3', $text),
-            static fn (): array => preg_match('/[^\x20-\x7e]/', $text) === 0
-                ? self::plainRowBounds($text, $width)
-                : self::rowBounds(Grapheme::split($text), $width),
+            static fn (): array => $width === 1
+                ? self::rowBounds(Grapheme::split($text), $width)
+                : CellMap::of($text)->rowsAt($width),
         );
-    }
-
-    /**
-     * rowBounds() for printable ASCII, where a byte is a cell: it looks only
-     * where a row can break, so a 1 MB line wraps in milliseconds, not 100.
-     *
-     * @return list<array{int, int}>
-     */
-    private static function plainRowBounds(string $text, int $maxWidth): array
-    {
-        $rows = [];
-        $rowStart = 0;
-        $length = strlen($text);
-
-        while ($length - $rowStart > $maxWidth) {
-            $space = strrpos(substr($text, $rowStart, $maxWidth + 1), ' ');
-            if ($space === false) {
-                $rows[] = [$rowStart, $maxWidth];
-                $rowStart += $maxWidth;
-                continue;
-            }
-            $rows[] = [$rowStart, $space];
-            $rowStart += $space + 1;
-        }
-
-        $rows[] = [$rowStart, $length - $rowStart];
-
-        return $rows;
     }
 
     private static function textOf(Line $line): string
@@ -405,9 +375,9 @@ final readonly class Paragraph implements Widget, MeasureHeight
      */
     private function rowsToDraw(Line $line, string $text, int $width): array
     {
-        return $this->wrap === Wrap::NoWrap || $line->width() <= $width
+        return $this->wrap === Wrap::NoWrap
             ? [[0, strlen($text)]]
-            : $this->wrappedRows($line, $width, $text);
+            : $this->wrappedRows($text, $width);
     }
 
     private function drawRow(Frame $frame, Line $line, string $text, int $start, int $length, Rect $area, int $y, Style $baseStyle): void
