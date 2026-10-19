@@ -911,7 +911,7 @@ final class Program
         if ($stamped === null) {
             return false;
         }
-        $resolved = $this->focus->resolvedAgainst($this->focusableIds(), $this->reachableIds());
+        $resolved = $this->resolvedFocus();
 
         // The waiting message goes back behind the announcement, or the first
         // key an application ever sees arrives before its pane is seated.
@@ -1082,13 +1082,11 @@ final class Program
      */
     private function settleFocusBeforeDrawing(): void
     {
-        $resolved = $this->focus->resolvedAgainst($this->focusableIds(), $this->reachableIds());
-        if ($resolved->sameAs($this->focus)) {
-            return;
-        }
-
+        $resolved = $this->resolvedFocus();
+        $moved = !$resolved->sameAs($this->focus);
         $this->focus = $resolved;
-        if ($resolved->focused() !== null) {
+
+        if ($moved && $resolved->focused() !== null) {
             $this->messageQueue->unshift(new FocusMsg());
         }
     }
@@ -1140,6 +1138,15 @@ final class Program
             . ($message->alt ? 'alt+' : '')
             . ($message->shift ? 'shift+' : '')
             . KeyPattern::nameOf($message->key);
+    }
+
+    private function resolvedFocus(): FocusState
+    {
+        return $this->focus->resolvedAgainst(
+            $this->focusableIds(),
+            $this->reachableIds(),
+            $this->model instanceof RoutesFocus ? $this->model->enclosingIds(...) : null,
+        );
     }
 
     /**

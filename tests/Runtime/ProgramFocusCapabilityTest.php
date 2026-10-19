@@ -173,6 +173,11 @@ final readonly class FocusRoutingModel implements RoutesFocus
         return [ComponentId::named('pane')];
     }
 
+    public function enclosingIds(ComponentId $id): array
+    {
+        return [];
+    }
+
     public function render(Frame $frame, RenderPass $pass): void
     {
     }

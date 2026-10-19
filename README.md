@@ -222,8 +222,10 @@ page (`tabs/0`), not on its strip — so a header control drawn above a field ta
 it first; return `Cmd::focus(ComponentId::named('composer'))` from `setup()` to
 start elsewhere. `Cmd::focus()` to a component not on screen is refused, and the
 keyboard stays. When the component holding the keyboard leaves the tree, it goes
-to the nearest ancestor that is a stop, else the first stop under it, else the
-most recent stop still there, else the first stop.
+to the nearest ancestor that is a stop, else the first stop under it, else into
+the nearest component it sat inside that is still on screen (closing the tab of
+mounts that held it lands in the next tab), else the most recent stop still
+there, else the first stop.
 
 ### Responsive terminal layouts
 

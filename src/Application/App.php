@@ -117,6 +117,17 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme
     }
 
     /**
+     * @return list<ComponentId>
+     */
+    final public function enclosingIds(ComponentId $id): array
+    {
+        return array_map(
+            static fn (Component $component): ComponentId => $component->id,
+            $this->componentRegistry()->enclosing($id),
+        );
+    }
+
+    /**
      * How to label the keys that really leave, for a footer to show rather than
      * repeat: a hardcoded hint outlives the binding it was copied from.
      *

@@ -255,6 +255,11 @@ final readonly class FocusLoggingModel implements RoutesFocus
         return $this->focusableIds();
     }
 
+    public function enclosingIds(ComponentId $id): array
+    {
+        return [];
+    }
+
     public function render(Frame $frame, RenderPass $pass): void
     {
         $this->log->append('render');

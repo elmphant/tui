@@ -501,6 +501,10 @@ final readonly class ComponentRegistry
             return true;
         }
 
+        if ($widget instanceof Mount && $id->isUnder($widget->id)) {
+            return true;
+        }
+
         if (!$widget instanceof WidgetContainer) {
             return false;
         }

@@ -35,4 +35,12 @@ interface RoutesFocus extends Model
      * @return list<ComponentId>
      */
     public function reachableIds(): array;
+
+    /**
+     * The components $id sits inside, outermost first. When the keyboard's
+     * component leaves, it lands in the nearest of these still on screen.
+     *
+     * @return list<ComponentId>
+     */
+    public function enclosingIds(ComponentId $id): array;
 }
