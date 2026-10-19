@@ -11,9 +11,10 @@ namespace Elmphant\Tui\Application;
 interface NamesItsKeys
 {
     /**
-     * Derived from the bindings the model matches, as a footer hint is.
+     * Derived from the bindings the model matches, as a footer hint is. A label
+     * such as `1` arrives as an integer key, the way PHP keeps numeric strings.
      *
-     * @return array<string, string> key label => what it does
+     * @return array<array-key, string> key label => what it does
      */
     public function ownKeys(): array;
 }

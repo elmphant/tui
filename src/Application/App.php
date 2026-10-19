@@ -203,22 +203,30 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
 
     final public function keyHelp(FocusState $focus): array
     {
+        // Closest first, and a key is listed once: in the closest group that answers it.
         $globals = $this->resolvedGlobalKeybindings();
         $focused = $this->componentRegistry()->focusable($focus->focused());
+        $listed = [];
         $groups = [];
 
         if ($focused !== null) {
-            $groups['In the footer'] = $this->hintsOfFocused($focused->id);
-            $groups['Here'] = $this->keysOf($focused->widget, $globals);
+            $groups['Here'] = $this->keysOf($focused->widget, $globals, $listed);
             $groups['Around it'] = [];
             foreach (array_reverse($this->componentRegistry()->enclosing($focused->id)) as $component) {
-                $groups['Around it'] += $this->keysOf($component->widget, $globals);
+                $groups['Around it'] += $this->keysOf($component->widget, $globals, $listed);
             }
         }
 
         foreach ($this->mountsHearingKeys($focus->focused()) as $mount) {
             if ($mount->model instanceof NamesItsKeys) {
-                $groups[ucfirst($mount->id->value)] = $mount->model->ownKeys();
+                $own = $mount->model->ownKeys();
+                foreach (array_keys($own) as $label) {
+                    $label = (string)$label;
+                    foreach ($label === '/' ? ['/'] : explode('/', $label) as $key) {
+                        $listed[$key] = true;
+                    }
+                }
+                $groups[ucfirst($mount->id->value)] = $own;
             }
         }
 
@@ -227,8 +235,9 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
                 ->append($this->resolvedQuitBindings())
                 ->append($this->focusCycleBindings())
                 ->append($this->keyHelpBindings()),
+            $listed,
         );
-        $groups['In every pane'] = $this->described($globals);
+        $groups['In every pane'] = $this->described($globals, $listed);
 
         return $groups;
     }
@@ -1199,9 +1208,11 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     /**
      * The keys a widget answers, with the global ones it answers too.
      *
+     * @param array<string, true> $listed
+     *
      * @return array<string, string>
      */
-    private function keysOf(Widget $widget, Keybindings $globals): array
+    private function keysOf(Widget $widget, Keybindings $globals, array &$listed): array
     {
         if (!$widget instanceof KeybindingsAware) {
             return [];
@@ -1209,26 +1220,33 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
 
         $own = $widget->withGlobalKeybindings(null)->effectiveKeybindings()->actions();
 
-        return $this->described($widget->withGlobalKeybindings($globals)->effectiveKeybindings()->restrictedTo(...$own));
+        return $this->described($widget->withGlobalKeybindings($globals)->effectiveKeybindings()->restrictedTo(...$own), $listed);
     }
 
     /**
+     * One line per action, naming only the keys no closer group has listed yet.
+     *
+     * @param array<string, true> $listed the key labels already listed, added to as this lists more
+     *
      * @return array<string, string> key label => what it does
      */
-    private function described(Keybindings $bindings): array
+    private function described(Keybindings $bindings, array &$listed): array
     {
         $described = [];
 
         foreach ($bindings->actions() as $action) {
-            $labels = array_values(array_unique(array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $bindings->get($action))));
-
-            if ($labels === []) {
-                continue;
+            $labels = [];
+            foreach ($bindings->get($action) as $pattern) {
+                $label = $pattern->label();
+                if (!isset($listed[$label])) {
+                    $listed[$label] = true;
+                    $labels[] = $label;
+                }
             }
 
-            $label = implode('/', $labels);
-            $description = $this->actionDescription($action);
-            $described[$label] = isset($described[$label]) ? $described[$label] . ', ' . $description : $description;
+            if ($labels !== []) {
+                $described[implode('/', $labels)] = $this->actionDescription($action);
+            }
         }
 
         return $described;

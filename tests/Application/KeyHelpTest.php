@@ -11,20 +11,30 @@ use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Input\Presets\VimMode;
+use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Rendering\Context\RenderContext;
+use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Application\Support\CopyableTestApp;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -64,6 +74,22 @@ final class KeyHelpTest extends TestCase
         self::assertMatchesRegularExpression('/j\/↓\s+down/u', $screen);
         self::assertMatchesRegularExpression('/gg\/Home\s+top/u', $screen);
         self::assertStringContainsString('In every pane', $screen);
+    }
+
+    #[Test]
+    public function aKeyIsListedOnceInTheClosestGroupThatAnswersIt(): void
+    {
+        $rows = self::keyHelpRows(ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 70, 60)->initialize()->press('?'));
+        $keys = [];
+        foreach ($rows as $row) {
+            if (preg_match('/^(\S+)\s{2,}\S/u', $row, $match) === 1) {
+                array_push($keys, ...($match[1] === '/' ? ['/'] : explode('/', $match[1])));
+            }
+        }
+
+        self::assertNotContains('In the footer', $rows);
+        self::assertContains('j/↓                  down', $rows);
+        self::assertSame(array_values(array_unique($keys)), $keys);
     }
 
     #[Test]
@@ -126,11 +152,11 @@ final class KeyHelpTest extends TestCase
     {
         $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 10)->initialize()->press('?');
 
-        self::assertStringContainsString('In the footer', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('Here', $harness->renderScreen()->plainText());
 
         $harness->press('end');
 
-        self::assertStringNotContainsString('In the footer', $harness->renderScreen()->plainText());
+        self::assertStringNotContainsString('Here', $harness->renderScreen()->plainText());
         self::assertMatchesRegularExpression('/\?\/Ctrl\+K\s+keys/u', $harness->renderScreen()->plainText());
     }
 
@@ -177,6 +203,31 @@ final class KeyHelpTest extends TestCase
         self::assertMatchesRegularExpression('/r\s+refresh/u', $screen);
     }
 
+    /**
+     * @return list<string> the rows inside the key help's box, trimmed
+     */
+    private static function keyHelpRows(ModelHarness $harness): array
+    {
+        $rows = [];
+        $left = null;
+
+        foreach (explode("\n", $harness->renderScreen()->plainText()) as $line) {
+            $left ??= mb_strpos($line, '╭ Keys') === false ? null : mb_strpos($line, '╭ Keys');
+            if ($left === null || str_contains($line, '╭ Keys')) {
+                continue;
+            }
+
+            $cell = mb_substr($line, (int)$left);
+            if (str_starts_with($cell, '╰')) {
+                break;
+            }
+
+            $rows[] = trim(mb_substr($cell, 1, (int)mb_strpos($cell, '│', 1) - 1));
+        }
+
+        return $rows;
+    }
+
     private static function list(): ListView
     {
         return ListView::new([new SimpleListItem('one'), new SimpleListItem('two')]);
@@ -210,6 +261,52 @@ final readonly class ReportMountingApp extends CopyableTestApp
     public function view(): Widget
     {
         return Mount::named('report', $this->report, Text::new('report'), static fn (self $app, ReportModel $report): self => new self($report));
+    }
+}
+
+final readonly class WordedWidget implements Focusable, KeybindingsAware, PublishesHints
+{
+    use Cloneable;
+    use KeybindingsAwareBehavior;
+
+    public function __construct(private ?Keybindings $customKeybindings = null, private ?Keybindings $globalKeybindings = null)
+    {
+    }
+
+    public static function defaultKeybindings(): Keybindings
+    {
+        return new Keybindings([Actions::SELECT => ['enter']]);
+    }
+
+    public function hints(): array
+    {
+        return $this->effectiveKeybindings()->hints(['fill in' => Actions::SELECT]);
+    }
+
+    public function sizing(): Sizing
+    {
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return new UpdateResult($this);
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+    }
+}
+
+final readonly class WordedApp extends CopyableTestApp
+{
+    public function __construct(public WordedWidget $widget)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('worded', $this->widget, static fn (self $app, WordedWidget $widget): self => new self($widget));
     }
 }
 

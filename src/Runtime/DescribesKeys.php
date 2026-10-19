@@ -20,7 +20,7 @@ interface DescribesKeys
     /**
      * Every key that works where the keyboard is, read off the live bindings.
      *
-     * @return array<string, array<string, string>> group title => key label => what it does
+     * @return array<string, array<array-key, string>> group title => key label => what it does
      */
     public function keyHelp(FocusState $focus): array;
 }
