@@ -82,6 +82,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
         private ?int $selectedSourceIndex = null,
+        private bool $keysOnTheList = false,
     ) {
         $this->matching = $matching !== null && $matching->isFor($items, $matcher, $field->value())
             ? $matching
@@ -136,9 +137,18 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(emptyCaption: $caption);
     }
 
+    /**
+     * For a host whose letters walk the list: the field keeps its query but takes
+     * no text and shows no caret until the keys are handed back.
+     */
+    public function withKeysOnTheList(bool $onTheList = true): self
+    {
+        return $this->cloneWith(keysOnTheList: $onTheList);
+    }
+
     public function takesText(): bool
     {
-        return true;
+        return !$this->keysOnTheList;
     }
 
     public function hints(): array
@@ -386,6 +396,10 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return new UpdateResult($this->cloneWith(list: $result->child), $result->command);
         }
 
+        if ($this->keysOnTheList && $message->isText()) {
+            return new UpdateResult($this);
+        }
+
         return $this->typedIntoTheField($message, $area);
     }
 
@@ -395,7 +409,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return;
         }
 
-        FilterBar::render($frame, $this->fieldArea($area), $context, $this->fieldDrawnBy($context));
+        $field = fn () => FilterBar::render($frame, $this->fieldArea($area), $context, $this->fieldDrawnBy($context));
+        $this->keysOnTheList ? $context->withoutFocus($field) : $field();
 
         $body = $this->listArea($area);
         if ($body->height < 1) {
