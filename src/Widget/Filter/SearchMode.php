@@ -5,13 +5,19 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Filter;
 
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 
 /**
- * @internal where a filter's keys go. While nothing binds Actions::SEARCH the field
- * takes them, as always; once something does, the content holds them until that
- * key, and Esc or Enter hands them back with the query kept.
+ * Where a filter's keys go. While nothing binds Actions::SEARCH the field takes
+ * them, as always; once something does, the content holds them until that key,
+ * and Esc or Enter hands them back with the query kept.
+ *
+ * A widget with a filter field of its own uses it beside Cloneable and
+ * KeybindingsAwareBehavior, and declares `private bool $searching = false`.
+ *
+ * @phpstan-require-implements TakesText
  */
 trait SearchMode
 {

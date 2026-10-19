@@ -254,6 +254,9 @@ holds the keys: `j`/`k`, `gg`/`G` and `ctrl+d`/`ctrl+u` move the list, a
 caret, and global letters work. `/` hands the keys to the field; Esc or Enter
 hands them back and keeps the query, and Esc on the list then clears it. The
 footer hints say which of the two holds the keys (`/ search`, `Esc/Enter back`).
+A widget with a filter field of its own follows the same rule by using the
+`Widget\Filter\SearchMode` trait: `takesText()`, `searchToggledBy($key)` and
+`searchHints()` come with it.
 
 The keyboard starts on the first stop in tree order — inside a `TabBar`'s first
 page (`tabs/0`), not on its strip — so a header control drawn above a field takes
