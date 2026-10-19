@@ -37,6 +37,7 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     use Cloneable;
     use DrawsFocus;
     use KeybindingsAwareBehavior;
+    use SearchMode;
 
     /**
      * @param list<string>       $headers
@@ -49,23 +50,24 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
         private ?Matcher $matcher = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private bool $searching = false,
     ) {
     }
 
+    /**
+     * Enter only hands the keys back from a search; the field has no use for it.
+     */
     public static function defaultKeybindings(): Keybindings
     {
-        return FilterBar::keybindings()->append(TextInput::defaultKeybindings());
-    }
-
-    public function takesText(): bool
-    {
-        return true;
+        return FilterBar::keybindings()
+            ->append(new Keybindings([Actions::SELECT => ['enter']]))
+            ->append(TextInput::defaultKeybindings());
     }
 
     public function hints(): array
     {
-        return $this->effectiveKeybindings()->hints(
-            $this->query() === '' ? [] : ['clear filter' => [Actions::CLEAR_LINE, Actions::CANCEL]],
+        return $this->searchHints(
+            $this->query() === '' ? [] : ['clear filter' => $this->searchIsBound() ? Actions::CANCEL : [Actions::CLEAR_LINE, Actions::CANCEL]],
         );
     }
 
@@ -108,8 +110,17 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
             return new UpdateResult($this);
         }
 
+        $toggled = $message instanceof KeyMsg ? $this->searchToggledBy($message) : null;
+        if ($toggled !== null) {
+            return new UpdateResult($toggled);
+        }
+
         if ($message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
             return new UpdateResult($this->withQuery(''));
+        }
+
+        if ($message instanceof KeyMsg && !$this->takesText()) {
+            return new UpdateResult($this);
         }
 
         $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->field(), $message, $this->fieldArea($area));
@@ -190,13 +201,15 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
 
     private function renderBar(Frame $frame, Rect $area, RenderContext $context, string $summary): void
     {
-        FilterBar::render(
+        $bar = fn () => FilterBar::render(
             $frame,
             $area,
             $context,
             $this->fieldFocused($this->drawsFocused($context)),
             $summary,
         );
+
+        $this->fieldHoldsTheKeys($context) ? $bar() : $context->withoutFocus($bar);
     }
 
     /**

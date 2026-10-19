@@ -245,11 +245,12 @@ replaces per action, then the App's `globalKeybindings()` on top.
 | `L` / `H`, `gt` / `gT` | next / previous tab |
 | `/` | search: hand the keys to a filter's field (`Actions::SEARCH`) |
 
-A filter (`FilterableList`, and a `Dropdown` holding one) asks whether its
-bindings name a key for `Actions::SEARCH`. While none does, its field takes the
-keys, as it always has. Once one does — vim mode, or a host's
-`withKeybindings()` — the list holds the keys: `j`/`k`, `gg`/`G` and
-`ctrl+d`/`ctrl+u` move it, the field shows no caret, and global letters work. `/` hands the keys to the field; Esc or Enter hands them back and
+A filter (`FilterableList`, `FilterableTable`, and a `Dropdown` holding one)
+asks whether its bindings name a key for `Actions::SEARCH`. While none does, its
+field takes the keys, as it always has. Once one does — vim mode, or a host's
+`withKeybindings()` — the list or table holds the keys: `j`/`k`, `gg`/`G` and
+`ctrl+d`/`ctrl+u` move the list, a `FilterableTable` leaves them to the pane it
+scrolls in, the field shows no caret, and global letters work. `/` hands the keys to the field; Esc or Enter hands them back and
 keeps the query, and Esc on the list then clears it. The footer hints say which
 of the two holds the keys (`/ search`, `Esc/Enter back`).
 
