@@ -13,11 +13,15 @@ final readonly class KeyPattern implements Stringable
 {
     private const NAMED_KEYS = [...Key::NAMES, 'space' => ' '];
 
+    /**
+     * @param list<self> $preceding the keys of a chord typed before this one
+     */
     public function __construct(
         public Key|string $key,
         public bool $ctrl = false,
         public bool $alt = false,
         public bool $shift = false,
+        public array $preceding = [],
     ) {
     }
 
@@ -37,79 +41,22 @@ final readonly class KeyPattern implements Stringable
         return $key instanceof Key ? strtolower($key->name) : $key;
     }
 
+    /**
+     * One key ("ctrl+s"), or a chord of keys typed one after the other, separated
+     * by spaces ("g g", "ctrl+x ctrl+s").
+     */
     public static function fromString(string $pattern): self
     {
-        if ($pattern === '') {
-            throw new InvalidArgumentException('Empty pattern');
+        $steps = preg_split('/(?<!\+)\s+(?!\+)/', trim($pattern));
+
+        if ($steps === false || count($steps) < 2) {
+            return self::fromKeyString($pattern);
         }
 
-        $rawTokens = match (true) {
-            $pattern === '+' => ['+'],
-            str_ends_with($pattern, '++') => [...explode('+', substr($pattern, 0, -2)), '+'],
-            default => explode('+', $pattern),
-        };
-        $tokens = array_map(
-            static fn (string $token): string => strtolower(trim($token)),
-            $rawTokens,
-        );
-        $count = count($tokens);
+        $keys = array_map(self::fromKeyString(...), $steps);
+        $last = array_pop($keys);
 
-        $modifiers = ['ctrl', 'alt', 'shift'];
-
-        if ($count === 1 && in_array($tokens[0], $modifiers, true)) {
-            throw new InvalidArgumentException("Pattern '{$pattern}' has no key");
-        }
-
-        $ctrl = $alt = $shift = false;
-        $seen = [];
-
-        for ($i = 0; $i < $count - 1; ++$i) {
-            $token = $tokens[$i];
-
-            if ($token === '') {
-                throw new InvalidArgumentException("Empty modifier in pattern '{$pattern}'");
-            }
-
-            if (isset($seen[$token])) {
-                throw new InvalidArgumentException("Duplicate modifier '{$token}' in pattern '{$pattern}'");
-            }
-            $seen[$token] = true;
-
-            match ($token) {
-                'ctrl' => $ctrl = true,
-                'alt' => $alt = true,
-                'shift' => $shift = true,
-                default => throw new InvalidArgumentException("Unknown modifier '{$token}' in pattern '{$pattern}'"),
-            };
-        }
-
-        $keyToken = $tokens[$count - 1];
-
-        if ($keyToken === '') {
-            throw new InvalidArgumentException("Empty key in pattern '{$pattern}'");
-        }
-
-        if (isset(self::NAMED_KEYS[$keyToken])) {
-            $key = self::NAMED_KEYS[$keyToken];
-        } elseif (strlen($keyToken) === 1) {
-            $key = $keyToken;
-        } elseif (ctype_alpha($keyToken) && strlen($keyToken) >= 4) {
-            throw new InvalidArgumentException("Unknown key '{$keyToken}' in pattern '{$pattern}'");
-        } else {
-            throw new InvalidArgumentException("Multi-character key '{$keyToken}' is not a named key in pattern '{$pattern}'");
-        }
-
-        // Shifted letter normalization: bare uppercase single letter A-Z in the
-        // ORIGINAL input (no modifier yet set) implies shift.
-        $originalKeyToken = trim($rawTokens[$count - 1]);
-        if (!$ctrl && !$alt && !$shift
-            && strlen($originalKeyToken) === 1
-            && $originalKeyToken >= 'A' && $originalKeyToken <= 'Z'
-        ) {
-            $shift = true;
-        }
-
-        return new self(key: $key, ctrl: $ctrl, alt: $alt, shift: $shift);
+        return new self($last->key, $last->ctrl, $last->alt, $last->shift, $keys);
     }
 
     public function __toString(): string
@@ -131,7 +78,7 @@ final readonly class KeyPattern implements Stringable
 
         $parts[] = $keyStr;
 
-        return implode('+', $parts);
+        return implode(' ', [...array_map(strval(...), $this->preceding), implode('+', $parts)]);
     }
 
     /**
@@ -217,10 +164,112 @@ final readonly class KeyPattern implements Stringable
             $shift = true;
         }
 
+        if (count($this->preceding) !== count($msg->preceding)) {
+            return false;
+        }
+
+        foreach ($this->preceding as $index => $step) {
+            if (!$step->matches($msg->preceding[$index])) {
+                return false;
+            }
+        }
+
         return $this->key === $key
             && $this->ctrl === $msg->ctrl
             && $this->alt === $msg->alt
             && $this->shift === $shift;
+    }
+
+    /**
+     * The key that goes on from $typed when this chord begins with them and is
+     * longer; null otherwise.
+     */
+    public function stepAfter(KeyMsg ...$typed): ?self
+    {
+        $steps = [...$this->preceding, new self($this->key, $this->ctrl, $this->alt, $this->shift)];
+
+        foreach (array_values($typed) as $index => $key) {
+            if (!isset($steps[$index]) || !$steps[$index]->matches($key)) {
+                return null;
+            }
+        }
+
+        return $steps[count($typed)] ?? null;
+    }
+
+    private static function fromKeyString(string $pattern): self
+    {
+        if ($pattern === '') {
+            throw new InvalidArgumentException('Empty pattern');
+        }
+
+        $rawTokens = match (true) {
+            $pattern === '+' => ['+'],
+            str_ends_with($pattern, '++') => [...explode('+', substr($pattern, 0, -2)), '+'],
+            default => explode('+', $pattern),
+        };
+        $tokens = array_map(
+            static fn (string $token): string => strtolower(trim($token)),
+            $rawTokens,
+        );
+        $count = count($tokens);
+
+        $modifiers = ['ctrl', 'alt', 'shift'];
+
+        if ($count === 1 && in_array($tokens[0], $modifiers, true)) {
+            throw new InvalidArgumentException("Pattern '{$pattern}' has no key");
+        }
+
+        $ctrl = $alt = $shift = false;
+        $seen = [];
+
+        for ($i = 0; $i < $count - 1; ++$i) {
+            $token = $tokens[$i];
+
+            if ($token === '') {
+                throw new InvalidArgumentException("Empty modifier in pattern '{$pattern}'");
+            }
+
+            if (isset($seen[$token])) {
+                throw new InvalidArgumentException("Duplicate modifier '{$token}' in pattern '{$pattern}'");
+            }
+            $seen[$token] = true;
+
+            match ($token) {
+                'ctrl' => $ctrl = true,
+                'alt' => $alt = true,
+                'shift' => $shift = true,
+                default => throw new InvalidArgumentException("Unknown modifier '{$token}' in pattern '{$pattern}'"),
+            };
+        }
+
+        $keyToken = $tokens[$count - 1];
+
+        if ($keyToken === '') {
+            throw new InvalidArgumentException("Empty key in pattern '{$pattern}'");
+        }
+
+        if (isset(self::NAMED_KEYS[$keyToken])) {
+            $key = self::NAMED_KEYS[$keyToken];
+        } elseif (strlen($keyToken) === 1) {
+            $key = $keyToken;
+        } elseif (ctype_alpha($keyToken) && strlen($keyToken) >= 4) {
+            throw new InvalidArgumentException("Unknown key '{$keyToken}' in pattern '{$pattern}'");
+        } else {
+            throw new InvalidArgumentException("Multi-character key '{$keyToken}' is not a named key in pattern '{$pattern}'");
+        }
+
+        // Shifted letter normalization: bare uppercase single letter A-Z in the
+        // ORIGINAL input (no modifier yet set) implies shift.
+        $originalKeyToken = trim($rawTokens[$count - 1]);
+        if (!$ctrl && !$alt && !$shift
+            && strlen($originalKeyToken) === 1
+            && $originalKeyToken >= 'A' && $originalKeyToken <= 'Z'
+        ) {
+            $shift = true;
+        }
+
+        return new self(key: $key, ctrl: $ctrl, alt: $alt, shift: $shift);
     }
 
     /**

@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\Context\FloatMouseMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\RoutesFocus;
 use Elmphant\Tui\Support\Cloneable;
@@ -43,7 +44,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 use WeakMap;
 
-abstract readonly class App implements RoutesFocus, ChoosesItsTheme
+abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
 {
     use Cloneable;
 
@@ -125,6 +126,18 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme
             static fn (Component $component): ComponentId => $component->id,
             $this->componentRegistry()->enclosing($id),
         );
+    }
+
+    final public function chords(FocusState $focus): Keybindings
+    {
+        $bindings = $this->applicationKeybindings()->append($this->globalKeybindings());
+        $widget = $this->componentRegistry()->focusable($focus->focused())?->widget;
+
+        if ($widget instanceof KeybindingsAware) {
+            $bindings = $bindings->append($widget->effectiveKeybindings());
+        }
+
+        return $bindings->chords();
     }
 
     /**
@@ -1097,17 +1110,11 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme
     {
         static $bindings = null;
         $bindings ??= new WeakMap();
+
         /**
          * @var WeakMap<object, Keybindings> $bindings
          */
-        $applicationBindings = $bindings[$this] ??= $this->applicationKeybindings();
-        foreach ($applicationBindings->actions() as $action) {
-            if ($applicationBindings->matches($message, $action)) {
-                return $action;
-            }
-        }
-
-        return null;
+        return ($bindings[$this] ??= $this->applicationKeybindings())->actionOf($message);
     }
 
     /**

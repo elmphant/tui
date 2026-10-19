@@ -25,11 +25,13 @@ use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Input\ChordTracker;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\HttpResultMsg;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Message\ProcessResultMsg;
@@ -40,6 +42,7 @@ use Elmphant\Tui\Rendering\Context\FloatPlacement;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\InputRouter;
 use Elmphant\Tui\Runtime\Model;
@@ -66,6 +69,7 @@ final class ModelHarness
     private FocusState $focus;
     private RenderPass $pass;
     private int $depth = 0;
+    private ChordTracker $chordTracker;
 
     /**
      * @var list<Cmd> what the last action asked for, batches and wraps taken apart
@@ -94,6 +98,7 @@ final class ModelHarness
         $this->area = Rect::fromSize($width, $height);
         $this->focus = new FocusState();
         $this->pass = RenderPass::new($theme);
+        $this->chordTracker = new ChordTracker();
     }
 
     /**
@@ -151,37 +156,22 @@ final class ModelHarness
         if ($routed === null) {
             return $this;
         }
-        if ($this->depth === 0) {
-            $this->issued = [];
-        }
-        ++$this->depth;
 
-        try {
+        $model = $this->model;
+        if ($routed instanceof KeyMsg && $model instanceof BindsChords) {
             $this->settleFocus();
+            $keys = $this->chordTracker->feed($routed, $model->chords($this->focus));
 
-            $result = $this->model instanceof RoutesFocus
-                ? $this->model->update($routed, $this->area, $this->focus)
-                : $this->model->update($routed, $this->area);
+            if ($keys !== [$routed]) {
+                foreach ($keys as $key) {
+                    $this->handled($key);
+                }
 
-            /** @var TModel $next */
-            $next = self::requireModel($result->model);
-            $this->model = $next;
-            $this->lastCommand = $result->command;
-            $this->record($this->lastCommand);
-            $this->moveFocusFor($this->lastCommand);
-
-            foreach (self::messagesIn($this->lastCommand) as $sent) {
-                $this->dispatch($sent);
+                return $this;
             }
-
-            // What the caller pressed is what it asks about afterwards, so the errands
-            // that press left behind do not take the answer's place.
-            $this->lastCommand = $result->command;
-        } finally {
-            --$this->depth;
         }
 
-        return $this;
+        return $this->handled($routed);
     }
 
     /**
@@ -488,6 +478,44 @@ final class ModelHarness
     public function renderScreen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
+    }
+
+    /**
+     * @return self<TModel>
+     */
+    private function handled(Message $routed): self
+    {
+        if ($this->depth === 0) {
+            $this->issued = [];
+        }
+        ++$this->depth;
+
+        try {
+            $this->settleFocus();
+
+            $result = $this->model instanceof RoutesFocus
+                ? $this->model->update($routed, $this->area, $this->focus)
+                : $this->model->update($routed, $this->area);
+
+            /** @var TModel $next */
+            $next = self::requireModel($result->model);
+            $this->model = $next;
+            $this->lastCommand = $result->command;
+            $this->record($this->lastCommand);
+            $this->moveFocusFor($this->lastCommand);
+
+            foreach (self::messagesIn($this->lastCommand) as $sent) {
+                $this->dispatch($sent);
+            }
+
+            // What the caller pressed is what it asks about afterwards, so the errands
+            // that press left behind do not take the answer's place.
+            $this->lastCommand = $result->command;
+        } finally {
+            --$this->depth;
+        }
+
+        return $this;
     }
 
     /**

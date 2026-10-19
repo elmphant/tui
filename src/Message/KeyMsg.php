@@ -17,6 +17,9 @@ final readonly class KeyMsg implements Message
      */
     public Key|string $key;
 
+    /**
+     * @param list<self> $preceding the keys of a chord this one completes
+     */
     public function __construct(
         Key|string $key,
         public bool $ctrl = false,
@@ -24,6 +27,7 @@ final readonly class KeyMsg implements Message
         public bool $shift = false,
         public KeyEventType $eventType = KeyEventType::Press,
         public ?Rect $screen = null,
+        public array $preceding = [],
     ) {
         $this->key = is_string($key) ? Key::NAMES[strtolower($key)] ?? $key : $key;
     }
@@ -39,11 +43,19 @@ final readonly class KeyMsg implements Message
 
     public function isText(): bool
     {
-        return is_string($this->key) && !$this->ctrl && !$this->alt;
+        return is_string($this->key) && !$this->ctrl && !$this->alt && $this->preceding === [];
     }
 
     public function withScreen(Rect $screen): self
     {
         return $this->cloneWith(screen: $screen);
+    }
+
+    /**
+     * @param list<self> $keys
+     */
+    public function withPreceding(array $keys): self
+    {
+        return $this->cloneWith(preceding: $keys);
     }
 }

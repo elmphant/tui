@@ -20,6 +20,7 @@ use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\ChordTracker;
 use Elmphant\Tui\Input\InputParser;
 use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\StdinBuffer;
@@ -97,6 +98,11 @@ final class Program
      */
     private WeakMap $errorChain;
     private PendingWheel $pendingWheel;
+    private ChordTracker $chordTracker;
+    /**
+     * @var WeakMap<Message, true> keys the chord tracker already let through
+     */
+    private WeakMap $pastTheChords;
     private float $lastWheelFlush = 0.0;
     private Model $model;
     private ?Frame $backBuffer = null;
@@ -321,6 +327,8 @@ final class Program
             $this->screen = new Screen($this->terminal, $this->resolveColorProfile());
             $this->messageQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();
+            $this->chordTracker = new ChordTracker();
+            $this->pastTheChords = new WeakMap();
             $this->model = $this->initialModel;
             $this->stdinBuffer = new StdinBuffer(
                 onSequence: $this->handleInputSequence(...),
@@ -924,6 +932,17 @@ final class Program
         }
 
         $this->focus = $resolved;
+
+        if ($stamped instanceof KeyMsg && $this->model instanceof BindsChords && !isset($this->pastTheChords[$message])) {
+            $keys = $this->chordTracker->feed($stamped, $this->model->chords($this->focus));
+
+            if ($keys !== [$stamped]) {
+                $this->handleBeforeTheQueue($keys);
+
+                return false;
+            }
+        }
+
         $model = $this->model;
         $focus = $this->focus;
         $result = $this->capturingOutput('update', static fn (): UpdateResult => $model instanceof RoutesFocus
@@ -946,6 +965,17 @@ final class Program
         $this->dispatchCommand($result->command);
 
         return true;
+    }
+
+    /**
+     * @param list<KeyMsg> $keys
+     */
+    private function handleBeforeTheQueue(array $keys): void
+    {
+        foreach (array_reverse($keys) as $key) {
+            $this->pastTheChords[$key] = true;
+            $this->messageQueue->unshift($key);
+        }
     }
 
     private function adopt(Model $next): void

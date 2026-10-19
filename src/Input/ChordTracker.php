@@ -4,141 +4,50 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Input;
 
-use Elmphant\Tui\Message\KeyEventType;
 use Elmphant\Tui\Message\KeyMsg;
 
 /**
- * Stateful multi-key sequence tracker.
+ * The keys of a chord typed so far. Mutable on purpose: it is input state the
+ * runtime holds between keystrokes, like a process handle, never part of a model.
  *
- * This class is intentionally MUTABLE — it represents external input state,
- * same category as a process handle or HTTP stream, and does NOT belong in
- * the immutable TEA model. Apps hold a single tracker instance for their
- * lifetime and pass the same reference across state transitions; do not
- * clone via `with()`.
- *
- * @internal stateful runtime matcher; applications configure immutable ChordBindings instead
+ * @internal the runtime feeds it; applications bind chords as "g g" in Keybindings
  */
 final class ChordTracker
 {
     /**
-     * @var list<KeyPattern>
+     * @var list<KeyMsg>
      */
-    private array $buffer = [];
-
-    private ?float $lastKeyTime = null;
-
-    public function __construct(
-        private readonly ChordBindings $bindings,
-        private readonly int $timeoutMs = 500,
-    ) {
-    }
-
-    public function feed(KeyMsg $msg, float $now): string|KeyMsg|null
-    {
-        if ($msg->eventType !== KeyEventType::Press) {
-            return $msg;
-        }
-
-        if ($this->lastKeyTime !== null && ($now - $this->lastKeyTime) * 1000.0 > $this->timeoutMs) {
-            $this->buffer = [];
-            $this->lastKeyTime = null;
-        }
-
-        $candidate = [...$this->buffer, KeyPattern::fromKeyMsg($msg)];
-        $action = $this->actionFor($candidate);
-
-        if ($action !== null) {
-            $this->buffer = [];
-            $this->lastKeyTime = null;
-
-            return $action;
-        }
-
-        if ($this->startsABinding($candidate)) {
-            $this->buffer = $candidate;
-            $this->lastKeyTime = $now;
-
-            return null;
-        }
-
-        $this->buffer = [];
-        $this->lastKeyTime = null;
-
-        return $msg;
-    }
+    private array $held = [];
 
     /**
-     * @return list<KeyPattern>
+     * The keys to handle now, in order: none while a chord is still open, the
+     * completed chord as one key, or the held keys followed by a key that broke them off.
+     *
+     * @return list<KeyMsg>
      */
-    public function buffer(): array
+    public function feed(KeyMsg $key, Keybindings $chords): array
     {
-        return $this->buffer;
-    }
+        $completed = $key->withPreceding($this->held);
 
-    public function reset(): void
-    {
-        $this->buffer = [];
-        $this->lastKeyTime = null;
-    }
+        if ($this->held !== [] && $chords->actionOf($completed) !== null) {
+            $this->held = [];
 
-    /**
-     * @param list<KeyPattern> $candidate
-     */
-    private function actionFor(array $candidate): ?string
-    {
-        foreach ($this->bindings->allSequences() as $entry) {
-            if ($this->sequencesEqual($candidate, $entry['pattern'])) {
-                return $entry['action'];
-            }
+            return [$completed];
         }
 
-        return null;
-    }
+        if ($chords->continues(...[...$this->held, $key])) {
+            $this->held[] = $key;
 
-    /**
-     * @param list<KeyPattern> $candidate
-     */
-    private function startsABinding(array $candidate): bool
-    {
-        foreach ($this->bindings->allSequences() as ['pattern' => $sequence]) {
-            if ($this->isPrefixOf($candidate, $sequence)) {
-                return true;
-            }
+            return [];
         }
 
-        return false;
-    }
-
-    /**
-     * @param list<KeyPattern> $a
-     * @param list<KeyPattern> $b
-     */
-    private function sequencesEqual(array $a, array $b): bool
-    {
-        if (count($a) !== count($b)) {
-            return false;
-        }
-        foreach ($a as $index => $step) {
-            if ((string)$step !== (string)$b[$index]) {
-                return false;
-            }
+        if ($this->held === []) {
+            return [$key];
         }
 
-        return true;
-    }
+        $flushed = $this->held;
+        $this->held = [];
 
-    /**
-     * @param list<KeyPattern> $prefix
-     * @param list<KeyPattern> $full
-     */
-    private function isPrefixOf(array $prefix, array $full): bool
-    {
-        foreach ($prefix as $index => $step) {
-            if (!isset($full[$index]) || (string)$step !== (string)$full[$index]) {
-                return false;
-            }
-        }
-
-        return true;
+        return [...$flushed, ...$this->feed($key, $chords)];
     }
 }

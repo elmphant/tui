@@ -88,6 +88,41 @@ final readonly class Keybindings
         return false;
     }
 
+    public function actionOf(KeyMsg $msg): ?string
+    {
+        foreach ($this->actions() as $action) {
+            if ($this->matches($msg, $action)) {
+                return $action;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Only the bindings that take more than one key.
+     */
+    public function chords(): self
+    {
+        return $this->filtered(static fn (KeyPattern $pattern): bool => $pattern->preceding !== []);
+    }
+
+    /**
+     * Whether a chord begins with $typed and goes on.
+     */
+    public function continues(KeyMsg ...$typed): bool
+    {
+        foreach ($this->patterns as $patterns) {
+            foreach ($patterns as $pattern) {
+                if ($pattern->stepAfter(...$typed) !== null) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Build a key-hint map (display label => description) from these bindings,
      * so footers and status bars stay in sync with what actually matches.
@@ -143,13 +178,11 @@ final readonly class Keybindings
      */
     public function withoutText(): self
     {
-        return new self(bindings: array_map(
-            static fn (array $patterns): array => array_values(array_filter(
-                $patterns,
-                static fn (KeyPattern $pattern): bool => !is_string($pattern->key) || $pattern->ctrl || $pattern->alt,
-            )),
-            $this->patterns,
-        ));
+        return $this->filtered(static function (KeyPattern $pattern): bool {
+            $first = $pattern->preceding[0] ?? $pattern;
+
+            return !is_string($first->key) || $first->ctrl || $first->alt;
+        });
     }
 
     public function merge(self $other): self
@@ -176,5 +209,16 @@ final readonly class Keybindings
         }
 
         return new self($copy);
+    }
+
+    /**
+     * @param callable(KeyPattern): bool $keep
+     */
+    private function filtered(callable $keep): self
+    {
+        return new self(bindings: array_map(
+            static fn (array $patterns): array => array_values(array_filter($patterns, $keep)),
+            $this->patterns,
+        ));
     }
 }
