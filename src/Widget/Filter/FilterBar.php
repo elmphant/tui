@@ -12,7 +12,9 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\WrapCache;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Throwable;
 
 /**
  * @internal what FilterableList, FilterableCheckboxGroup and FilterableTable share:
@@ -102,6 +104,10 @@ final class FilterBar
      * is not a matcher's answer to work out — asking one would cost a pass over
      * the whole list on every keystroke back to empty.
      *
+     * Any other answer is kept by content — the matcher, the query and the
+     * entries — because a widget rebuilt by view() asks again on every measure.
+     * A matcher that cannot be serialized is asked every time.
+     *
      * @param list<string> $haystack
      *
      * @return list<int>
@@ -112,11 +118,21 @@ final class FilterBar
             return array_keys($haystack);
         }
 
+        $matcher ??= new SubstringMatcher();
         // A matcher may name the same entry twice — nothing in the port forbids
         // it — and an index past the entries names nothing at all.
-        return array_values(array_unique(array_filter(
-            ($matcher ?? new SubstringMatcher())->matching($query, $haystack),
+        $search = static fn (): array => array_values(array_unique(array_filter(
+            $matcher->matching($query, $haystack),
             static fn (int $index): bool => isset($haystack[$index]),
         )));
+
+        try {
+            $key = hash('xxh3', serialize([$matcher, $query, $haystack]));
+        } catch (Throwable) {
+            return $search();
+        }
+
+        /** @var list<int> */
+        return WrapCache::remember('matches:' . $key, $search);
     }
 }

@@ -8,6 +8,8 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use Elmphant\Tui\Text\WrapCache;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
@@ -73,6 +75,25 @@ final class FilterableTablePerfTest extends TestCase
         );
     }
 
+    #[Test]
+    public function aTableRebuiltEveryFrameAsksItsMatcherOncePerQuery(): void
+    {
+        TallyingMatcher::$runs = 0;
+        $context = RenderContext::unfocused(Theme::dark());
+        $area = new Rect(0, 0, 80, 12);
+        $rows = self::rows(50);
+
+        foreach (range(1, 3) as $frame) {
+            $table = FilterableTable::new(['Name', 'Method', 'Path'], $rows)
+                ->withMatcher(new TallyingMatcher())
+                ->withQuery('row-1');
+            $table->measureHeight(80);
+            $table->render(new Frame(80, 12), $area, $context);
+        }
+
+        self::assertSame(1, TallyingMatcher::$runs, 'the same rows and query were matched again');
+    }
+
     /**
      * @return list<list<string>>
      */
@@ -85,5 +106,20 @@ final class FilterableTablePerfTest extends TestCase
         }
 
         return $rows;
+    }
+}
+
+/**
+ * The tally is static: a count on the instance would change what the matcher serializes to, and so its cache key.
+ */
+final class TallyingMatcher implements Matcher
+{
+    public static int $runs = 0;
+
+    public function matching(string $query, array $haystack): array
+    {
+        ++self::$runs;
+
+        return (new SubstringMatcher())->matching($query, $haystack);
     }
 }
