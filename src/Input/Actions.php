@@ -36,4 +36,18 @@ final class Actions
     public const DELETE_WORD_BACKWARD = 'delete_word_backward';
     public const CLEAR_LINE = 'clear_line';
     public const DELETE_WORD_FORWARD = 'delete_word_forward';
+
+    /**
+     * What an action does, in the words of a key hint.
+     */
+    public static function description(string $action): string
+    {
+        return match ($action) {
+            self::HOME => 'top',
+            self::END => 'bottom',
+            self::TAB_NEXT => 'next tab',
+            self::TAB_PREVIOUS => 'previous tab',
+            default => str_replace('_', ' ', $action),
+        };
+    }
 }

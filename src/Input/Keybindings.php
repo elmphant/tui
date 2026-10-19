@@ -108,6 +108,26 @@ final readonly class Keybindings
     }
 
     /**
+     * What each key that can follow $typed does, for a reader halfway through a chord.
+     *
+     * @return array<string, string> key label => description
+     */
+    public function continuations(KeyMsg ...$typed): array
+    {
+        $continuations = [];
+        foreach ($this->patterns as $action => $patterns) {
+            foreach ($patterns as $pattern) {
+                $next = $pattern->stepAfter(...$typed);
+                if ($next !== null) {
+                    $continuations[$next->label()] ??= Actions::description($action);
+                }
+            }
+        }
+
+        return $continuations;
+    }
+
+    /**
      * Whether a chord begins with $typed and goes on.
      */
     public function continues(KeyMsg ...$typed): bool

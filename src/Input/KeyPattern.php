@@ -155,7 +155,7 @@ final readonly class KeyPattern implements Stringable
             $shift = true;
         }
 
-        return new self(key: $key, ctrl: $msg->ctrl, alt: $msg->alt, shift: $shift);
+        return new self(key: $key, ctrl: $msg->ctrl, alt: $msg->alt, shift: $shift, preceding: array_map(self::fromKeyMsg(...), $msg->preceding));
     }
 
     public function matches(KeyMsg $msg): bool

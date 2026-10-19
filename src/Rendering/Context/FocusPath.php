@@ -51,6 +51,8 @@ final class FocusPath
      */
     private array $hints = [];
 
+    private ?PendingChord $chord = null;
+
     private function __construct(private readonly FocusState $initialFocus, private readonly int $initialDepth)
     {
         $this->focus = $initialFocus;
@@ -122,6 +124,11 @@ final class FocusPath
         $this->hints = $hints;
     }
 
+    public function provideChord(?PendingChord $chord): void
+    {
+        $this->chord = $chord;
+    }
+
     /**
      * @param list<string> $ids
      */
@@ -149,6 +156,11 @@ final class FocusPath
     public function hints(): array
     {
         return $this->hints;
+    }
+
+    public function chord(): ?PendingChord
+    {
+        return $this->chord;
     }
 
     public function hasFocus(): bool

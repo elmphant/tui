@@ -34,6 +34,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\ResizeMsg;
+use Elmphant\Tui\Rendering\Context\PendingChord;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Screen;
@@ -726,7 +727,10 @@ final class Program
 
         $now = $this->clock->now();
         $this->effects?->fire($now);
-        $this->handleBeforeTheQueue($this->chordTracker->expired($now));
+        $expired = $this->chordTracker->expired($now);
+        if ($expired !== []) {
+            $this->handleBeforeTheQueue($expired);
+        }
         // Leaving a flooding child's output in its pipe blocks the child, and keeps keys from queueing behind it.
         if ($this->messageQueue->isEmpty()) {
             $this->effects?->pump();
@@ -975,10 +979,15 @@ final class Program
     }
 
     /**
+     * An open chord is drawn in the footer, so opening or closing one makes the
+     * screen stale though no model changed.
+     *
      * @param list<KeyMsg> $keys
      */
     private function handleBeforeTheQueue(array $keys): void
     {
+        $this->frames->markDirty();
+
         foreach (array_reverse($keys) as $key) {
             $this->pastTheChords[$key] = true;
             $this->messageQueue->unshift($key);
@@ -1075,6 +1084,7 @@ final class Program
             $frame->clear($pass->context->theme->base->backgroundValue());
             $this->settleFocusBeforeDrawing();
             $pass->focus->focusOn($this->focus);
+            $pass->focus->provideChord($this->pendingChord());
             $model = $this->model;
             $this->capturingOutput('render', static fn () => $model->render($frame, $pass));
             $pass->floats->drainOnto($frame, $pass->context);
@@ -1099,6 +1109,21 @@ final class Program
         $this->frames->drawn($this->clock->now(), $pass->clock->repaintDelay());
 
         return true;
+    }
+
+    private function pendingChord(): ?PendingChord
+    {
+        $held = $this->chordTracker->held();
+        $last = end($held);
+
+        if ($last === false || !$this->model instanceof BindsChords) {
+            return null;
+        }
+
+        return new PendingChord(
+            KeyPattern::fromKeyMsg($last->withPreceding(array_slice($held, 0, -1)))->label(),
+            $this->model->chords($this->focus)->continuations(...$held),
+        );
     }
 
     private function inChosenTheme(RenderPass $pass): RenderPass

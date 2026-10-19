@@ -95,6 +95,14 @@ final class RenderContext
     }
 
     /**
+     * The chord the reader is halfway through, or null.
+     */
+    public function pendingChord(): ?PendingChord
+    {
+        return $this->focus->chord();
+    }
+
+    /**
      * Whether the keyboard is in the widget being rendered. A widget asks rather
      * than remembers, so it cannot disagree with where the keys are routed.
      */

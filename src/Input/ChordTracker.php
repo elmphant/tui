@@ -81,6 +81,14 @@ final class ChordTracker
         return $flushed;
     }
 
+    /**
+     * @return list<KeyMsg>
+     */
+    public function held(): array
+    {
+        return $this->held;
+    }
+
     public function deadline(): ?float
     {
         return $this->deadline;
