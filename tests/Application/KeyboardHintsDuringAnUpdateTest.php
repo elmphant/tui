@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Elmphant\Tui\Tests\Application;
+
+use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Tests\Application\Support\CopyableTestApp;
+use Elmphant\Tui\Widget\Listing\ListView;
+use Elmphant\Tui\Widget\Listing\SimpleListItem;
+use Elmphant\Tui\Widget\Widget;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class KeyboardHintsDuringAnUpdateTest extends TestCase
+{
+    #[Test]
+    public function aMouseHookKnowsTheHintsTheFooterShows(): void
+    {
+        $harness = ModelHarness::for(new HintsRecordingApp(ListView::new([new SimpleListItem('one')])), 30, 4)->initialize();
+
+        $harness->clickAt(1, 0);
+
+        self::assertSame($harness->focusedHints(), $harness->model()->recorded);
+        self::assertNotSame([], $harness->model()->recorded);
+    }
+}
+
+final readonly class HintsRecordingApp extends CopyableTestApp
+{
+    /**
+     * @param array<string, string> $recorded
+     */
+    public function __construct(public ListView $list, public array $recorded = [])
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('list', $this->list, static fn (self $app, ListView $list): self => new self($list, $app->recorded));
+    }
+
+    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    {
+        return new UpdateResult(new self($this->list, $this->keyboardHints()));
+    }
+}

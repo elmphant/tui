@@ -1013,6 +1013,19 @@ final class FooterTest extends TestCase
         self::assertSame(' a  one   b  two   c  three   d  four         Support', $this->extractText($frame, 0, 53));
     }
 
+    #[Test]
+    public function aHostAsksWhereTheRightSlotIsDrawnForTheHintsShown(): void
+    {
+        $footer = Footer::new()
+            ->withLeft(FocusHints::new()->withLeadingHints(['a' => 'one', 'b' => 'two']))
+            ->withRight(Text::new('Support · 0.1.0'), Text::new('Support'));
+        $area = Rect::fromSize(53, 1);
+
+        self::assertEquals(new Rect(38, 0, 15, 1), $footer->rightSlotArea($area));
+        self::assertEquals(new Rect(46, 0, 7, 1), $footer->rightSlotArea($area, ['c' => 'three', 'd' => 'four']));
+        self::assertNull($footer->rightSlotArea($area, ['c' => 'three', 'd' => 'four', 'e' => 'five']));
+    }
+
     protected function setUp(): void
     {
         $this->context = new RenderContext(Theme::dark());

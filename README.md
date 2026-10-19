@@ -833,7 +833,10 @@ chord completes, is cancelled or times out. On a list with no `TabBar` around it
 When the hints in a footer's left slot do not fit, the right slot gives way
 first. Hand `withRight()` shorter forms after the first, longest to shortest:
 the footer draws the first that leaves every hint whole, and no right slot at
-all when even the shortest would not. Only then is a hint left out.
+all when even the shortest would not. Only then is a hint left out. A host that
+hit-tests the right slot itself asks where it is drawn:
+`$footer->rightSlotArea($area, $this->keyboardHints())` inside an App hook answers
+the rect of the form shown, or null once the slot has given way.
 
 ```php
 use Elmphant\Tui\Widget\Bar\{FocusHints, Footer};

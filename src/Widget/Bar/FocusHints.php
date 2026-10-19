@@ -49,6 +49,16 @@ final readonly class FocusHints implements Widget
         return $this->bar($context)->sizing()->columns->intrinsic();
     }
 
+    /**
+     * The width with these hints of whatever holds the keyboard, for a host asking outside drawing.
+     *
+     * @param array<string, string> $focusedHints
+     */
+    public function widthWith(array $focusedHints): int
+    {
+        return StatusBar::forHints([...$this->leading, ...$focusedHints])->sizing()->columns->intrinsic();
+    }
+
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $this->bar($context)->render($frame, $area, $context);

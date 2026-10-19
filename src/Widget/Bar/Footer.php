@@ -160,6 +160,31 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             : [[$this->leftSlot, $left], ...array_values($placements)];
     }
 
+    /**
+     * Where the right slot is drawn, in whichever form fits beside these hints of
+     * whatever holds the keyboard; null where it has given way. For a host that
+     * hit-tests the slot itself.
+     *
+     * @param array<string, string> $focusedHints
+     */
+    public function rightSlotArea(Rect $area, array $focusedHints = []): ?Rect
+    {
+        $contentArea = $this->contentArea($area);
+
+        if ($contentArea === null) {
+            return null;
+        }
+
+        $leftWidth = match (true) {
+            $this->leftSlot instanceof FocusHints => $this->leftSlot->widthWith($focusedHints),
+            $this->leftSlot !== null => $this->leftSlot->sizing()->columns->intrinsic(),
+            default => 0,
+        };
+        $right = $this->rightBeside($contentArea, $leftWidth);
+
+        return $right === null ? null : BarSlotRenderer::rectFor($right, Alignment::Right, $contentArea);
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
         $contentArea = $this->contentArea($area);
@@ -257,12 +282,20 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
 
     private function rightDrawn(Rect $contentArea, RenderContext $context): ?Widget
     {
+        $left = $this->leftSlot === null
+            ? null
+            : BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, new Rect($contentArea->x, $contentArea->y, \PHP_INT_MAX, 1), $context);
+
+        return $this->rightBeside($contentArea, $left === null ? 0 : $left->width);
+    }
+
+    private function rightBeside(Rect $contentArea, int $leftWidth): ?Widget
+    {
         if ($this->rightSlot === null || $this->leftSlot === null || !$this->leftGrows()) {
             return $this->rightSlot;
         }
 
-        $left = BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, new Rect($contentArea->x, $contentArea->y, \PHP_INT_MAX, 1), $context);
-        $room = $contentArea->width - ($left === null ? 0 : $left->width + self::SLOT_GAP);
+        $room = $contentArea->width - ($leftWidth === 0 ? 0 : $leftWidth + self::SLOT_GAP);
 
         foreach ([$this->rightSlot, ...$this->shorterRight] as $form) {
             if ($form->sizing()->columns->intrinsic() <= $room) {
