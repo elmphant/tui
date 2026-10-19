@@ -502,4 +502,28 @@ final class KeyPatternTest extends TestCase
         self::assertSame('Ctrl+Alt+Shift+X', KeyPattern::fromString('ctrl+alt+shift+x')->label());
         self::assertSame('Alt+↓', KeyPattern::fromString('alt+down')->label());
     }
+
+    #[Test]
+    public function aCapitalLetterIsLabelledAsItself(): void
+    {
+        self::assertSame('G', KeyPattern::fromString('G')->label());
+        self::assertSame('G', KeyPattern::fromString('shift+g')->label());
+        self::assertSame('Ctrl+Shift+G', KeyPattern::fromString('ctrl+shift+g')->label());
+        self::assertSame('Shift+1', KeyPattern::fromString('shift+1')->label());
+    }
+
+    #[Test]
+    public function aChordIsLabelledAsItsKeysAreTyped(): void
+    {
+        self::assertSame('gg', KeyPattern::fromString('g g')->label());
+        self::assertSame('gT', KeyPattern::fromString('g T')->label());
+        self::assertSame('Ctrl+X Ctrl+S', KeyPattern::fromString('ctrl+x ctrl+s')->label());
+    }
+
+    #[Test]
+    public function chordsSharingAFirstKeyAreJoinedWhole(): void
+    {
+        self::assertSame('gt/gT', KeyPattern::joinedLabel(KeyPattern::fromString('g t'), KeyPattern::fromString('g T')));
+        self::assertSame('H/L', KeyPattern::joinedLabel(KeyPattern::fromString('H'), KeyPattern::fromString('L')));
+    }
 }

@@ -82,10 +82,22 @@ final readonly class KeyPattern implements Stringable
     }
 
     /**
-     * Human-readable display form for key hints, e.g. "Ctrl+Q", "↑", "Esc".
+     * Human-readable display form for key hints, e.g. "Ctrl+Q", "↑", "Esc", "G";
+     * a chord as its keys are typed, "gg".
      */
     public function label(): string
     {
+        if ($this->preceding !== []) {
+            $labels = array_map(static fn (self $step): string => $step->label(), $this->steps());
+            $single = array_filter($labels, static fn (string $label): bool => mb_strlen($label) === 1) === $labels;
+
+            return implode($single ? '' : ' ', $labels);
+        }
+
+        if ($this->shift && !$this->ctrl && !$this->alt && is_string($this->key) && ctype_lower($this->key)) {
+            return strtoupper($this->key);
+        }
+
         $parts = [];
         if ($this->ctrl) {
             $parts[] = 'Ctrl';
@@ -186,7 +198,7 @@ final readonly class KeyPattern implements Stringable
      */
     public function stepAfter(KeyMsg ...$typed): ?self
     {
-        $steps = [...$this->preceding, new self($this->key, $this->ctrl, $this->alt, $this->shift)];
+        $steps = $this->steps();
 
         foreach (array_values($typed) as $index => $key) {
             if (!isset($steps[$index]) || !$steps[$index]->matches($key)) {
@@ -195,6 +207,14 @@ final readonly class KeyPattern implements Stringable
         }
 
         return $steps[count($typed)] ?? null;
+    }
+
+    /**
+     * @return non-empty-list<self>
+     */
+    private function steps(): array
+    {
+        return [...$this->preceding, new self($this->key, $this->ctrl, $this->alt, $this->shift)];
     }
 
     private static function fromKeyString(string $pattern): self
