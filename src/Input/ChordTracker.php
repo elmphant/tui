@@ -19,24 +19,37 @@ final class ChordTracker
      */
     private array $held = [];
 
+    private ?float $deadline = null;
+
+    public function __construct(private readonly float $timeout = 0.5)
+    {
+    }
+
     /**
      * The keys to handle now, in order: none while a chord is still open, the
      * completed chord as one key, or the held keys followed by a key that broke them off.
      *
      * @return list<KeyMsg>
      */
-    public function feed(KeyMsg $key, Keybindings $chords): array
+    public function feed(KeyMsg $key, Keybindings $chords, float $now): array
     {
         $completed = $key->withPreceding($this->held);
 
         if ($this->held !== [] && $chords->actionOf($completed) !== null) {
-            $this->held = [];
+            $this->reset();
 
             return [$completed];
         }
 
+        if ($this->held !== [] && KeyPattern::fromString('esc')->matches($key)) {
+            $this->reset();
+
+            return [];
+        }
+
         if ($chords->continues(...[...$this->held, $key])) {
             $this->held[] = $key;
+            $this->deadline = $now + $this->timeout;
 
             return [];
         }
@@ -46,8 +59,36 @@ final class ChordTracker
         }
 
         $flushed = $this->held;
-        $this->held = [];
+        $this->reset();
 
-        return [...$flushed, ...$this->feed($key, $chords)];
+        return [...$flushed, ...$this->feed($key, $chords, $now)];
+    }
+
+    /**
+     * The held keys, once nothing followed them in time; they are handled on their own.
+     *
+     * @return list<KeyMsg>
+     */
+    public function expired(float $now): array
+    {
+        if ($this->deadline === null || $now < $this->deadline) {
+            return [];
+        }
+
+        $flushed = $this->held;
+        $this->reset();
+
+        return $flushed;
+    }
+
+    public function deadline(): ?float
+    {
+        return $this->deadline;
+    }
+
+    private function reset(): void
+    {
+        $this->held = [];
+        $this->deadline = null;
     }
 }

@@ -156,6 +156,8 @@ final class Program
         $this->screenRect = Rect::fromSize(80, 24);
         $this->pendingWheel = new PendingWheel();
         $this->errorChain = new WeakMap();
+        $this->chordTracker = new ChordTracker();
+        $this->pastTheChords = new WeakMap();
     }
 
     /**
@@ -327,8 +329,6 @@ final class Program
             $this->screen = new Screen($this->terminal, $this->resolveColorProfile());
             $this->messageQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();
-            $this->chordTracker = new ChordTracker();
-            $this->pastTheChords = new WeakMap();
             $this->model = $this->initialModel;
             $this->stdinBuffer = new StdinBuffer(
                 onSequence: $this->handleInputSequence(...),
@@ -726,6 +726,7 @@ final class Program
 
         $now = $this->clock->now();
         $this->effects?->fire($now);
+        $this->handleBeforeTheQueue($this->chordTracker->expired($now));
         // Leaving a flooding child's output in its pipe blocks the child, and keeps keys from queueing behind it.
         if ($this->messageQueue->isEmpty()) {
             $this->effects?->pump();
@@ -785,7 +786,13 @@ final class Program
 
     private function nextTimerDelay(): ?float
     {
-        return $this->effects?->nextDelay();
+        $chordDeadline = $this->chordTracker->deadline();
+        $delays = array_filter(
+            [$this->effects?->nextDelay(), $chordDeadline === null ? null : max(0.0, $chordDeadline - $this->clock->now())],
+            static fn (?float $delay): bool => $delay !== null,
+        );
+
+        return $delays === [] ? null : min($delays);
     }
 
     private function nextRenderDelay(): ?float
@@ -934,7 +941,7 @@ final class Program
         $this->focus = $resolved;
 
         if ($stamped instanceof KeyMsg && $this->model instanceof BindsChords && !isset($this->pastTheChords[$message])) {
-            $keys = $this->chordTracker->feed($stamped, $this->model->chords($this->focus));
+            $keys = $this->chordTracker->feed($stamped, $this->model->chords($this->focus), $this->clock->now());
 
             if ($keys !== [$stamped]) {
                 $this->handleBeforeTheQueue($keys);

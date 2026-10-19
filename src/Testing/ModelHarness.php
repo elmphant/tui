@@ -160,7 +160,7 @@ final class ModelHarness
         $model = $this->model;
         if ($routed instanceof KeyMsg && $model instanceof BindsChords) {
             $this->settleFocus();
-            $keys = $this->chordTracker->feed($routed, $model->chords($this->focus));
+            $keys = $this->chordTracker->feed($routed, $model->chords($this->focus), 0.0);
 
             if ($keys !== [$routed]) {
                 foreach ($keys as $key) {
