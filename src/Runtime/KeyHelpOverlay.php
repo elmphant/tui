@@ -73,6 +73,13 @@ final class KeyHelpOverlay
             return true;
         }
 
+        // A shortcut such as Ctrl+Q must still work: it closes the help and acts.
+        if ($message->ctrl || $message->alt) {
+            $this->open = false;
+
+            return false;
+        }
+
         $this->scrollBy(match (true) {
             $message->key === Key::Up, $message->key === 'k' => -1,
             $message->key === Key::Down, $message->key === 'j' => 1,

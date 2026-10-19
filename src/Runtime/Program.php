@@ -956,10 +956,14 @@ final class Program
             }
         }
 
+        $keyHelpWasOpen = $this->keyHelp->isOpen();
         if ($this->keyHelp->takes($stamped, $this->model, $this->focus)) {
             $this->frames->markDirty();
 
             return false;
+        }
+        if ($keyHelpWasOpen) {
+            $this->frames->markDirty();
         }
 
         $model = $this->model;

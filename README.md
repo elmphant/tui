@@ -267,7 +267,7 @@ screen: the hints the footer shows, every key the focused widget answers
 (including the ones the footer leaves out), the containers around it, the app's
 own keys and the global ones such as vim mode's, each labelled the way the footer
 labels it. It is read off the live bindings, so it cannot go stale. `?` or Esc
-closes it, and it scrolls with `↑`/`↓`, `j`/`k`, PageUp/PageDown, Home/End and
+closes it, a Ctrl or Alt shortcut closes it and still acts (Ctrl+Q quits), and it scrolls with `↑`/`↓`, `j`/`k`, PageUp/PageDown, Home/End and
 the wheel when it is taller than the screen. While a field takes the keys, `?` is
 typed instead, and F1 opens it. An action is described by `Actions::description()`; override
 `actionDescription()` to name the actions the app binds itself,

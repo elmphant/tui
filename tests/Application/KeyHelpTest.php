@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Application\NamesItsKeys;
+use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
@@ -72,6 +73,37 @@ final class KeyHelpTest extends TestCase
 
         self::assertSame('?', $harness->model()->field->value());
         self::assertStringNotContainsString('Keys', $harness->renderScreen()->plainText());
+    }
+
+    #[Test]
+    public function aRunningProgramRedrawsWhenAShortcutThatChangesNothingClosesTheKeyHelp(): void
+    {
+        $terminal = new VirtualTerminal(60, 30);
+        $clock = new TestClock(1000.0);
+        $program = Program::new(new KeyHelpApp(self::list(), TextInput::new()))->withTerminal($terminal)->withClock($clock);
+        $shown = [];
+
+        EventLoop::defer(static function () use ($terminal, $clock, $program, &$shown): void {
+            foreach (['?', "\x02"] as $input) {
+                $terminal->simulateInput($input);
+                $clock->advance(1);
+                $program->tick();
+                $shown[] = str_contains((new ScreenBuffer($terminal->output(), 60, 30))->plainText(), 'Esc to close');
+            }
+            $terminal->simulateInput("\x11");
+        });
+        $program->start();
+
+        self::assertSame([true, false], $shown);
+    }
+
+    #[Test]
+    public function aModifiedKeyClosesItAndStillActsSoCtrlQQuits(): void
+    {
+        $harness = self::harness()->press('?', 'ctrl+q');
+
+        self::assertInstanceOf(QuitCmd::class, $harness->lastCommand());
+        self::assertStringNotContainsString('Esc to close', $harness->renderScreen()->plainText());
     }
 
     #[Test]
