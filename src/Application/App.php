@@ -148,6 +148,16 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
             ->append($this->globalKeybindings()->restrictedTo(...$answering->actions()))
             ->chords();
 
+        $holder = $focus->focused();
+        foreach ($this->mountsHearingKeys($holder) as $mount) {
+            if ($mount->model instanceof BindsChords) {
+                $inside = $holder !== null && $holder->isUnder($mount->id)
+                    ? ComponentId::named(substr($holder->value, \strlen($mount->id->value) + 1))
+                    : null;
+                $chords = $chords->append($mount->model->chords(new FocusState($inside, decided: true))->chords());
+            }
+        }
+
         return $this->takesText($focus->focused()) ? $chords->withoutText() : $chords;
     }
 
@@ -684,13 +694,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
      */
     private function offeredToMounts(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): ?UpdateResult
     {
-        $drawn = $this->componentRegistry()->listeningMounts();
-        $holding = array_values(array_filter(
-            $drawn,
-            static fn (Mount $mount): bool => $holder !== null && $holder->isUnder($mount->id),
-        ));
-
-        foreach ($holding === [] ? $drawn : [end($holding)] as $mount) {
+        foreach ($this->mountsHearingKeys($holder) as $mount) {
             $answered = $this->answeredBy($mount, $message, $screenRect);
 
             if ($answered->model !== $this || $answered->command !== null) {
@@ -699,6 +703,22 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         }
 
         return null;
+    }
+
+    /**
+     * The innermost mount holding the keyboard, else every mount on screen.
+     *
+     * @return list<Mount<*>>
+     */
+    private function mountsHearingKeys(?ComponentId $holder): array
+    {
+        $drawn = $this->componentRegistry()->listeningMounts();
+        $holding = array_values(array_filter(
+            $drawn,
+            static fn (Mount $mount): bool => $holder !== null && $holder->isUnder($mount->id),
+        ));
+
+        return $holding === [] ? $drawn : [end($holding)];
     }
 
     /**

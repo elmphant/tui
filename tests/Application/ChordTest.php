@@ -5,8 +5,16 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\Mount;
+use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Tests\Application\Support\CopyableTestApp;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -37,6 +45,17 @@ final class ChordTest extends TestCase
     }
 
     #[Test]
+    public function aMountedModelHearsAChordOfItsOwnWhileTheKeyboardIsInIt(): void
+    {
+        $harness = ModelHarness::for(new ChordMountingApp(new ChordMountedLog(ListView::fromStrings(['a', 'b']))), 30, 8)
+            ->initialize()
+            ->press('d', 'd');
+
+        self::assertSame('log/list', $harness->focused()?->value);
+        self::assertTrue($harness->model()->log->cleared);
+    }
+
+    #[Test]
     public function theKeysOfAChordAreTypedIntoAFocusedField(): void
     {
         $harness = ModelHarness::for(new ChordFieldApp(), 30, 8)->initialize()->type('gg');
@@ -62,6 +81,42 @@ final class ChordTest extends TestCase
         $harness = ModelHarness::for(new ChordListApp($list), 30, 8)->initialize()->press('g', 'up');
 
         self::assertSame(0, $harness->model()->list->cursor());
+    }
+}
+
+final readonly class ChordMountingApp extends CopyableTestApp
+{
+    public function __construct(public ChordMountedLog $log)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Mount::named('log', $this->log, $this->log->view(), static fn (self $app, ChordMountedLog $log): self => new self($log));
+    }
+}
+
+final readonly class ChordMountedLog implements Reducer, BindsChords
+{
+    public function __construct(public ListView $list, public bool $cleared = false)
+    {
+    }
+
+    public function chords(FocusState $focus): Keybindings
+    {
+        return new Keybindings(['clear' => ['d d']]);
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return $message instanceof KeyMsg && $this->chords(new FocusState())->matches($message, 'clear')
+            ? new UpdateResult(new self($this->list, true))
+            : new UpdateResult($this);
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('list', $this->list, static fn (self $log, ListView $list): self => new self($list, $log->cleared));
     }
 }
 
