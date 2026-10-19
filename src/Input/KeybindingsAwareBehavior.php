@@ -20,8 +20,9 @@ trait KeybindingsAwareBehavior
             return $bindings;
         }
 
+        // A field keeps its own line-editing keys, as it keeps every text key.
         $globals = $this instanceof TakesText && $this->takesText()
-            ? $this->globalKeybindings->withoutText()
+            ? $this->globalKeybindings->withoutText()->except($bindings)
             : $this->globalKeybindings;
 
         // Globals lead: a hint names the key an action leads with, and what the

@@ -210,6 +210,21 @@ final readonly class Keybindings
         });
     }
 
+    /**
+     * Without the keys $other binds to anything.
+     */
+    public function except(self $other): self
+    {
+        $taken = [];
+        foreach ($other->patterns as $patterns) {
+            foreach ($patterns as $pattern) {
+                $taken[(string)$pattern] = true;
+            }
+        }
+
+        return $this->filtered(static fn (KeyPattern $pattern): bool => !isset($taken[(string)$pattern]));
+    }
+
     public function merge(self $other): self
     {
         $copy = $this->patterns;

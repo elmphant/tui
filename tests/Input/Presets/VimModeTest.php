@@ -14,6 +14,9 @@ use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Tests\Application\ChordListApp;
 use Elmphant\Tui\Tests\Application\Support\CopyableTestApp;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
+use Elmphant\Tui\Widget\Filter\FilterableList;
+use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Structure\TabBar;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Table;
@@ -138,6 +141,38 @@ final class VimModeTest extends TestCase
     }
 
     #[Test]
+    public function ctrlUClearsAFocusedField(): void
+    {
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L', 'L')->type('abc')->press('ctrl+u');
+
+        $field = $harness->model()->bar->children()[0];
+        self::assertInstanceOf(TextInput::class, $field);
+        self::assertSame('', $field->value());
+    }
+
+    #[Test]
+    public function ctrlUClearsTheFieldOfAFilterableList(): void
+    {
+        $list = FilterableList::new(array_map(static fn (int $index): SimpleListItem => new SimpleListItem("item $index"), range(0, 30)));
+
+        $harness = ModelHarness::for(new VimFilterApp($list), 40, 8)->initialize()->type('item')->press('ctrl+u');
+
+        self::assertSame('', $harness->model()->list->query());
+    }
+
+    #[Test]
+    public function ctrlUClearsTheFieldOfAFilterableCheckboxGroup(): void
+    {
+        $harness = ModelHarness::for(new VimCheckboxFilterApp(FilterableCheckboxGroup::new(['alpha', 'beta'])), 40, 8)->initialize()->type('alp');
+
+        self::assertNull($harness->renderScreen()->find('beta'));
+
+        $harness->press('ctrl+u');
+
+        self::assertNotNull($harness->renderScreen()->find('beta'));
+    }
+
+    #[Test]
     public function isCachedSingleton(): void
     {
         self::assertSame(VimMode::keybindings(), VimMode::keybindings());
@@ -182,6 +217,40 @@ final class VimModeTest extends TestCase
         $field = $harness->model()->bar->children()[0];
         self::assertInstanceOf(TextInput::class, $field);
         self::assertSame('hLl', $field->value());
+    }
+}
+
+final readonly class VimFilterApp extends CopyableTestApp
+{
+    public function __construct(public FilterableList $list)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('list', $this->list, static fn (self $app, FilterableList $list): self => new self($list));
+    }
+
+    protected function globalKeybindings(): Keybindings
+    {
+        return VimMode::keybindings();
+    }
+}
+
+final readonly class VimCheckboxFilterApp extends CopyableTestApp
+{
+    public function __construct(public FilterableCheckboxGroup $group)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('group', $this->group, static fn (self $app, FilterableCheckboxGroup $group): self => new self($group));
+    }
+
+    protected function globalKeybindings(): Keybindings
+    {
+        return VimMode::keybindings();
     }
 }
 
