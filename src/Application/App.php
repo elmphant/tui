@@ -178,13 +178,16 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * How to label the key that opens the key help, for a footer to show.
+     * How to label the keys that open the key help, for a footer to show: all of
+     * them, since a field that takes `?` as text leaves only the other.
      *
      * @return array<string, string>
      */
     public function keyHelpHints(string $description = 'keys'): array
     {
-        return $this->keyHelpBindings()->hints([$description => Actions::HELP]);
+        $labels = array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $this->keyHelpBindings()->get(Actions::HELP));
+
+        return $labels === [] ? [] : [implode('/', $labels) => $description];
     }
 
     final public function opensKeyHelp(KeyMsg $key, FocusState $focus): bool
@@ -399,12 +402,12 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
      * the usual reason.
      */
     /**
-     * The key that opens the key help, `?` unless overridden; return
-     * Keybindings::empty() to offer none.
+     * The keys that open the key help: `?`, and F1 for while a field takes `?` as
+     * text. Return Keybindings::empty() to offer none.
      */
     protected function keyHelpBindings(): Keybindings
     {
-        return new Keybindings([Actions::HELP => ['?']]);
+        return new Keybindings([Actions::HELP => ['?', 'f1']]);
     }
 
     /**

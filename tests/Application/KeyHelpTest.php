@@ -75,6 +75,20 @@ final class KeyHelpTest extends TestCase
     }
 
     #[Test]
+    public function f1OpensItWhileAFieldTakesTheQuestionMark(): void
+    {
+        $harness = self::harness()->press('tab', 'f1');
+
+        self::assertStringContainsString('Esc to close', $harness->renderScreen()->plainText());
+    }
+
+    #[Test]
+    public function theFooterHintNamesBothKeys(): void
+    {
+        self::assertSame(['?/F1' => 'keys'], self::harness()->model()->keyHelpHints());
+    }
+
+    #[Test]
     public function aKeyHelpTallerThanTheScreenScrolls(): void
     {
         $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 10)->initialize()->press('?');
@@ -84,7 +98,7 @@ final class KeyHelpTest extends TestCase
         $harness->press('end');
 
         self::assertStringNotContainsString('In the footer', $harness->renderScreen()->plainText());
-        self::assertMatchesRegularExpression('/\?\s+keys/u', $harness->renderScreen()->plainText());
+        self::assertMatchesRegularExpression('/\?\/F1\s+keys/u', $harness->renderScreen()->plainText());
     }
 
     #[Test]

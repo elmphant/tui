@@ -269,10 +269,10 @@ own keys and the global ones such as vim mode's, each labelled the way the foote
 labels it. It is read off the live bindings, so it cannot go stale. `?` or Esc
 closes it, and it scrolls with `↑`/`↓`, `j`/`k`, PageUp/PageDown, Home/End and
 the wheel when it is taller than the screen. While a field takes the keys, `?` is
-typed instead. An action is described by `Actions::description()`; override
+typed instead, and F1 opens it. An action is described by `Actions::description()`; override
 `actionDescription()` to name the actions the app binds itself,
-`keyHelpBindings()` to choose another key (or `Keybindings::empty()` for none),
-and show it in a footer with `$this->keyHelpHints()`. A mounted model that
+`keyHelpBindings()` to choose other keys (or `Keybindings::empty()` for none),
+and show them in a footer with `$this->keyHelpHints()` (`?/F1  keys`). A mounted model that
 answers keys of its own, outside any component, implements `NamesItsKeys` and
 lists them from its bindings in `ownKeys()`; they appear under the mount's name.
 
