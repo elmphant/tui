@@ -262,19 +262,22 @@ A widget with a filter field of its own follows the same rule by using the
 
 #### Key help
 
-`?` opens a list of every key that works where the keyboard is, laid over the
-screen: the hints the footer shows, every key the focused widget answers
-(including the ones the footer leaves out), the containers around it, the app's
-own keys and the global ones such as vim mode's, each labelled the way the footer
-labels it. It is read off the live bindings, so it cannot go stale. `?` or Esc
-closes it, a Ctrl or Alt shortcut closes it and still acts (Ctrl+Q quits), and it scrolls with `↑`/`↓`, `j`/`k`, PageUp/PageDown, Home/End and
-the wheel when it is taller than the screen. While a field takes the keys, `?` is
-typed instead, and F1 opens it. An action is described by `Actions::description()`; override
-`actionDescription()` to name the actions the app binds itself,
-`keyHelpBindings()` to choose other keys (or `Keybindings::empty()` for none),
-and show them in a footer with `$this->keyHelpHints()` (`?/F1  keys`). A mounted model that
-answers keys of its own, outside any component, implements `NamesItsKeys` and
-lists them from its bindings in `ownKeys()`; they appear under the mount's name.
+`?` or Ctrl+K opens a list of every key that works where the keyboard is, laid
+over the screen: the hints the footer shows, every key the focused widget
+answers (including the ones the footer leaves out), the containers around it,
+the app's own keys and the global ones such as vim mode's, each labelled the way
+the footer labels it. It is read off the live bindings, so it cannot go stale.
+`?`, Ctrl+K or Esc closes it, a Ctrl or Alt shortcut closes it and still acts
+(Ctrl+Q quits), and it scrolls with `↑`/`↓`, `j`/`k`, PageUp/PageDown, Home/End
+and the wheel when it is taller than the screen. While a field takes the keys,
+`?` is typed instead and Ctrl+K still opens it. An action is described by
+`Actions::description()`; override `actionDescription()` to name the actions the
+app binds itself, `keyHelpBindings()` to choose other keys (or
+`Keybindings::empty()` for none), and show it in a footer with
+`$this->keyHelpHints()`, which names the key that works everywhere
+(`Ctrl+K  keys`). A mounted model that answers keys of its own, outside any
+component, implements `NamesItsKeys` and lists them from its bindings in
+`ownKeys()`; they appear under the mount's name.
 
 The keyboard starts on the first stop in tree order — inside a `TabBar`'s first
 page (`tabs/0`), not on its strip — so a header control drawn above a field takes

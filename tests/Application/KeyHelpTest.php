@@ -107,17 +107,18 @@ final class KeyHelpTest extends TestCase
     }
 
     #[Test]
-    public function f1OpensItWhileAFieldTakesTheQuestionMark(): void
+    public function ctrlKOpensItFromInsideAField(): void
     {
-        $harness = self::harness()->press('tab', 'f1');
+        $harness = self::harness()->press('tab', 'ctrl+k');
 
         self::assertStringContainsString('Esc to close', $harness->renderScreen()->plainText());
+        self::assertSame('', $harness->model()->field->value());
     }
 
     #[Test]
-    public function theFooterHintNamesBothKeys(): void
+    public function theFooterHintNamesTheKeyThatWorksEverywhere(): void
     {
-        self::assertSame(['?/F1' => 'keys'], self::harness()->model()->keyHelpHints());
+        self::assertSame(['Ctrl+K' => 'keys'], self::harness()->model()->keyHelpHints());
     }
 
     #[Test]
@@ -130,7 +131,7 @@ final class KeyHelpTest extends TestCase
         $harness->press('end');
 
         self::assertStringNotContainsString('In the footer', $harness->renderScreen()->plainText());
-        self::assertMatchesRegularExpression('/\?\/F1\s+keys/u', $harness->renderScreen()->plainText());
+        self::assertMatchesRegularExpression('/\?\/Ctrl\+K\s+keys/u', $harness->renderScreen()->plainText());
     }
 
     #[Test]

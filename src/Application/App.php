@@ -178,14 +178,16 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * How to label the keys that open the key help, for a footer to show: all of
-     * them, since a field that takes `?` as text leaves only the other.
+     * How to label the key that opens the key help, for a footer to show: one that
+     * is not text where there is one, since a field takes `?` as text.
      *
      * @return array<string, string>
      */
     public function keyHelpHints(string $description = 'keys'): array
     {
-        $labels = array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $this->keyHelpBindings()->get(Actions::HELP));
+        $bindings = $this->keyHelpBindings();
+        $everywhere = $bindings->withoutText()->get(Actions::HELP);
+        $labels = array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $everywhere === [] ? $bindings->get(Actions::HELP) : $everywhere);
 
         return $labels === [] ? [] : [implode('/', $labels) => $description];
     }
@@ -402,12 +404,12 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
      * the usual reason.
      */
     /**
-     * The keys that open the key help: `?`, and F1 for while a field takes `?` as
-     * text. Return Keybindings::empty() to offer none.
+     * The keys that open the key help: `?`, and Ctrl+K for while a field takes `?`
+     * as text. Return Keybindings::empty() to offer none.
      */
     protected function keyHelpBindings(): Keybindings
     {
-        return new Keybindings([Actions::HELP => ['?', 'f1']]);
+        return new Keybindings([Actions::HELP => ['?', 'ctrl+k']]);
     }
 
     /**
