@@ -13,6 +13,10 @@ trait KeybindingsAwareBehavior
     public function effectiveKeybindings(): Keybindings
     {
         $bindings = static::defaultKeybindings();
+        if ($this instanceof BindsForTheMoment) {
+            // Leading, so a key such as Esc means what it means in this state.
+            $bindings = $this->momentaryKeybindings()->append($bindings);
+        }
         if ($this->customKeybindings !== null) {
             $bindings = $bindings->merge($this->customKeybindings);
         }

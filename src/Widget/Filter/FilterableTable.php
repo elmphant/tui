@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget\Filter;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
@@ -32,7 +33,7 @@ use Elmphant\Tui\Widget\Table\StaticTable;
 /**
  * A table with a free-text filter over its rows.
  */
-final readonly class FilterableTable implements Focusable, MeasureHeight, KeybindingsAware, PublishesHints, TakesText
+final readonly class FilterableTable implements Focusable, MeasureHeight, KeybindingsAware, PublishesHints, TakesText, BindsForTheMoment
 {
     use Cloneable;
     use DrawsFocus;

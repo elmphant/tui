@@ -258,7 +258,10 @@ hands them back and keeps the query, and Esc on the list then clears it. The
 footer hints say which of the two holds the keys (`/ search`, `Esc/Enter back`).
 A widget with a filter field of its own follows the same rule by using the
 `Widget\Filter\SearchMode` trait: `takesText()`, `searchToggledBy($key)` and
-`searchHints()` come with it.
+`searchHints()` come with it, and `momentaryKeybindings()` for
+`BindsForTheMoment` — Esc and Enter (`Actions::LEAVE_SEARCH`) are bound only
+while the field holds the keys, so a key help never lists an Enter the content
+has no use for.
 
 #### Key help
 

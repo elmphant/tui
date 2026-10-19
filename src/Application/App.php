@@ -12,6 +12,7 @@ use Elmphant\Tui\Core\PointerFocus;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeyPattern;
@@ -1224,9 +1225,13 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
             return [];
         }
 
-        $own = $widget->withGlobalKeybindings(null)->effectiveKeybindings()->actions();
+        $bound = $widget->withGlobalKeybindings($globals);
+        $own = [
+            ...$widget->withGlobalKeybindings(null)->effectiveKeybindings()->actions(),
+            ...($bound instanceof BindsForTheMoment ? $bound->momentaryKeybindings()->actions() : []),
+        ];
 
-        return $this->described($widget->withGlobalKeybindings($globals)->effectiveKeybindings()->restrictedTo(...$own), $listed, $wording);
+        return $this->described($bound->effectiveKeybindings()->restrictedTo(...$own), $listed, $wording);
     }
 
     /**

@@ -33,6 +33,11 @@ final class Actions
     public const SEARCH = 'search';
 
     /**
+     * Hands the keys back from a filter's field to its content, bound only while the field holds them.
+     */
+    public const LEAVE_SEARCH = 'leave_search';
+
+    /**
      * Lists every key that works where the keyboard is.
      */
     public const HELP = 'help';
@@ -73,6 +78,7 @@ final class Actions
             self::DELETE_WORD_FORWARD => 'delete word',
             self::CLEAR_LINE => 'clear',
             self::HELP => 'keys',
+            self::LEAVE_SEARCH => 'back',
             default => str_replace('_', ' ', $action),
         };
     }

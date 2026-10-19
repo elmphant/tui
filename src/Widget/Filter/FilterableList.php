@@ -8,6 +8,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
@@ -43,7 +44,7 @@ use Elmphant\Tui\Widget\ValueItCannotHold;
 /**
  * A scrollable list with a free-text filter over it.
  */
-final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing, PublishesHints, TakesText
+final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing, PublishesHints, TakesText, BindsForTheMoment
 {
     use Cloneable;
     use DrawsFocus;

@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget\Filter;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
@@ -35,7 +36,7 @@ use Elmphant\Tui\Widget\ValueItCannotHold;
  * A tick is held by name rather than by row: the query decides which rows exist,
  * so a row number means something different from one keystroke to the next.
  */
-final readonly class FilterableCheckboxGroup implements DropdownContent, KeybindingsAware, PublishesHints, TakesText
+final readonly class FilterableCheckboxGroup implements DropdownContent, KeybindingsAware, PublishesHints, TakesText, BindsForTheMoment
 {
     use Cloneable;
     use KeybindingsAwareBehavior;

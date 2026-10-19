@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
@@ -46,7 +47,7 @@ final class SearchModeTest extends TestCase
     }
 }
 
-final readonly class OwnFilter implements Focusable, KeybindingsAware, PublishesHints, TakesText
+final readonly class OwnFilter implements Focusable, KeybindingsAware, PublishesHints, TakesText, BindsForTheMoment
 {
     use Cloneable;
     use KeybindingsAwareBehavior;

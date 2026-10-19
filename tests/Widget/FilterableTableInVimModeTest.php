@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Rect;
@@ -18,6 +19,19 @@ use PHPUnit\Framework\TestCase;
 
 final class FilterableTableInVimModeTest extends TestCase
 {
+    #[Test]
+    public function theKeyHelpListsEnterOnlyWhileItHandsTheKeysBack(): void
+    {
+        $harness = self::harness();
+
+        self::assertArrayNotHasKey('Enter', self::keysHere($harness), 'Enter does nothing on the table');
+
+        $harness->press('/');
+
+        self::assertSame('back', self::keysHere($harness)['Esc/Enter'] ?? null, 'as the footer says');
+        self::assertSame(['Esc/Enter' => 'back'], $harness->focusedHints());
+    }
+
     #[Test]
     public function jScrollsThePaneAroundTheTableAndTypesNothing(): void
     {
@@ -88,6 +102,17 @@ final class FilterableTableInVimModeTest extends TestCase
 
         self::assertSame('route 1j', $harness->model()->table()->query());
         self::assertNotNull($harness->renderFrame()->cursorPosition);
+    }
+
+    /**
+     * @return array<array-key, string>
+     */
+    private static function keysHere(ModelHarness $harness): array
+    {
+        $app = $harness->model();
+        self::assertInstanceOf(VimOutputApp::class, $app);
+
+        return $app->keyHelp(new FocusState($harness->focused(), decided: true))['Here'] ?? [];
     }
 
     private static function harness(bool $vim = true): ModelHarness

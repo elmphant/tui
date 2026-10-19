@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Filter;
 
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\BindsForTheMoment;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -18,12 +21,22 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
  * KeybindingsAwareBehavior, and declares `private bool $searching = false`.
  *
  * @phpstan-require-implements TakesText
+ * @phpstan-require-implements BindsForTheMoment
  */
 trait SearchMode
 {
     public function takesText(): bool
     {
         return $this->searching || !$this->searchIsBound();
+    }
+
+    /**
+     * Esc and Enter hand the keys back while the field holds them, and Enter means
+     * nothing to the content of a filter that does not bind it itself.
+     */
+    public function momentaryKeybindings(): Keybindings
+    {
+        return $this->isSearching() ? FilterBar::backKeybindings() : Keybindings::empty();
     }
 
     private function searchIsBound(): bool
@@ -45,7 +58,7 @@ trait SearchMode
         $bindings = $this->effectiveKeybindings();
 
         if ($this->isSearching()) {
-            return $bindings->matches($message, Actions::CANCEL) || $bindings->matches($message, Actions::SELECT)
+            return $bindings->matches($message, Actions::LEAVE_SEARCH)
                 ? $this->cloneWith(searching: false)
                 : null;
         }
@@ -62,11 +75,14 @@ trait SearchMode
      */
     private function searchHints(array $onTheContent): array
     {
-        return $this->effectiveKeybindings()->hints(match (true) {
-            $this->isSearching() => ['back' => [Actions::CANCEL, Actions::SELECT]],
-            $this->searchIsBound() => [...$onTheContent, 'search' => Actions::SEARCH],
-            default => $onTheContent,
-        });
+        $bindings = $this->effectiveKeybindings();
+        $back = $bindings->get(Actions::LEAVE_SEARCH);
+
+        if ($this->isSearching() && $back !== []) {
+            return [KeyPattern::joinedLabel(...$back) => Actions::description(Actions::LEAVE_SEARCH)];
+        }
+
+        return $bindings->hints($this->searchIsBound() ? [...$onTheContent, 'search' => Actions::SEARCH] : $onTheContent);
     }
 
     private function fieldHoldsTheKeys(RenderContext $context): bool

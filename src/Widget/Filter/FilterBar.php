@@ -62,14 +62,22 @@ final class FilterBar
     }
 
     /**
-     * The keys every filter in the family cancels and confirms on. A filter with
-     * something in it clears; an empty one must return itself rather than hand the
-     * key to its field, or a host above never learns the escape went spare. Either
-     * key hands the keys back from a search.
+     * The key every filter in the family cancels on. A filter with something in it
+     * clears; an empty one must return itself rather than hand the key to its field,
+     * or a host above never learns the escape went spare.
      */
     public static function keybindings(): Keybindings
     {
-        return new Keybindings([Actions::CANCEL => ['esc'], Actions::SELECT => ['enter']]);
+        return new Keybindings([Actions::CANCEL => ['esc']]);
+    }
+
+    /**
+     * The keys that hand the keys back from a search, bound only while the field
+     * holds them, so the content never lists an Enter it has no use for.
+     */
+    public static function backKeybindings(): Keybindings
+    {
+        return new Keybindings([Actions::LEAVE_SEARCH => ['esc', 'enter']]);
     }
 
     public static function field(string $query): TextInput
