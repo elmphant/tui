@@ -14,6 +14,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\FocusMsg;
@@ -28,6 +29,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
+use Elmphant\Tui\Runtime\DescribesKeys;
 use Elmphant\Tui\Runtime\RoutesFocus;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Committing;
@@ -44,7 +46,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 use WeakMap;
 
-abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
+abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords, DescribesKeys
 {
     use Cloneable;
 
@@ -173,6 +175,51 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         return $this->applicationKeybindings()
             ->append($this->resolvedQuitBindings())
             ->hints([$description => 'quit']);
+    }
+
+    /**
+     * How to label the key that opens the key help, for a footer to show.
+     *
+     * @return array<string, string>
+     */
+    public function keyHelpHints(string $description = 'keys'): array
+    {
+        return $this->keyHelpBindings()->hints([$description => Actions::HELP]);
+    }
+
+    final public function opensKeyHelp(KeyMsg $key, FocusState $focus): bool
+    {
+        if ($key->isText() && $this->takesText($focus->focused())) {
+            return false;
+        }
+
+        return $this->keyHelpBindings()->matches($key, Actions::HELP);
+    }
+
+    final public function keyHelp(FocusState $focus): array
+    {
+        $globals = $this->resolvedGlobalKeybindings();
+        $focused = $this->componentRegistry()->focusable($focus->focused());
+        $groups = [];
+
+        if ($focused !== null) {
+            $groups['In the footer'] = $this->hintsOfFocused($focused->id);
+            $groups['Here'] = $this->keysOf($focused->widget, $globals);
+            $groups['Around it'] = [];
+            foreach (array_reverse($this->componentRegistry()->enclosing($focused->id)) as $component) {
+                $groups['Around it'] += $this->keysOf($component->widget, $globals);
+            }
+        }
+
+        $groups['Anywhere'] = $this->described(
+            $this->applicationKeybindings()
+                ->append($this->resolvedQuitBindings())
+                ->append($this->focusCycleBindings())
+                ->append($this->keyHelpBindings()),
+        );
+        $groups['In every pane'] = $this->described($globals);
+
+        return $groups;
     }
 
     /**
@@ -345,6 +392,24 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
      * to put focus cycling somewhere else; a form that types tab characters is
      * the usual reason.
      */
+    /**
+     * The key that opens the key help, `?` unless overridden; return
+     * Keybindings::empty() to offer none.
+     */
+    protected function keyHelpBindings(): Keybindings
+    {
+        return new Keybindings([Actions::HELP => ['?']]);
+    }
+
+    /**
+     * What an action does, in the words of the key help. Override to name the
+     * actions this app binds itself.
+     */
+    protected function actionDescription(string $action): string
+    {
+        return Actions::description($action);
+    }
+
     protected function focusCycleBindings(): Keybindings
     {
         return new Keybindings([
@@ -1118,6 +1183,44 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
          * @var WeakMap<object, ChildDispatcher> $dispatchers
          */
         return $dispatchers[$this] ??= new ChildDispatcher($this->resolvedGlobalKeybindings());
+    }
+
+    /**
+     * The keys a widget answers, with the global ones it answers too.
+     *
+     * @return array<string, string>
+     */
+    private function keysOf(Widget $widget, Keybindings $globals): array
+    {
+        if (!$widget instanceof KeybindingsAware) {
+            return [];
+        }
+
+        $own = $widget->withGlobalKeybindings(null)->effectiveKeybindings()->actions();
+
+        return $this->described($widget->withGlobalKeybindings($globals)->effectiveKeybindings()->restrictedTo(...$own));
+    }
+
+    /**
+     * @return array<string, string> key label => what it does
+     */
+    private function described(Keybindings $bindings): array
+    {
+        $described = [];
+
+        foreach ($bindings->actions() as $action) {
+            $labels = array_values(array_unique(array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $bindings->get($action))));
+
+            if ($labels === []) {
+                continue;
+            }
+
+            $label = implode('/', $labels);
+            $description = $this->actionDescription($action);
+            $described[$label] = isset($described[$label]) ? $described[$label] . ', ' . $description : $description;
+        }
+
+        return $described;
     }
 
     private function resolvedGlobalKeybindings(): Keybindings

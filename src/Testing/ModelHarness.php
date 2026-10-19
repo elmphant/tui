@@ -45,6 +45,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\InputRouter;
+use Elmphant\Tui\Runtime\KeyHelpOverlay;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\RoutesFocus;
 use InvalidArgumentException;
@@ -70,6 +71,7 @@ final class ModelHarness
     private RenderPass $pass;
     private int $depth = 0;
     private ChordTracker $chordTracker;
+    private KeyHelpOverlay $keyHelp;
 
     /**
      * @var list<Cmd> what the last action asked for, batches and wraps taken apart
@@ -99,6 +101,7 @@ final class ModelHarness
         $this->focus = new FocusState();
         $this->pass = RenderPass::new($theme);
         $this->chordTracker = new ChordTracker();
+        $this->keyHelp = new KeyHelpOverlay();
     }
 
     /**
@@ -460,6 +463,7 @@ final class ModelHarness
         $this->pass->begin(0.0);
         $this->pass->focus->focusOn($this->focus);
         $this->model->render($frame, $this->pass);
+        $this->keyHelp->drawOver($frame, $this->pass->context, $this->model, $this->focus);
         $this->pass->floats->commit();
 
         return $frame;
@@ -492,6 +496,10 @@ final class ModelHarness
 
         try {
             $this->settleFocus();
+
+            if ($this->keyHelp->takes($routed, $this->model, $this->focus)) {
+                return $this;
+            }
 
             $result = $this->model instanceof RoutesFocus
                 ? $this->model->update($routed, $this->area, $this->focus)

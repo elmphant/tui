@@ -100,6 +100,7 @@ final class Program
     private WeakMap $errorChain;
     private PendingWheel $pendingWheel;
     private ChordTracker $chordTracker;
+    private KeyHelpOverlay $keyHelp;
     /**
      * @var WeakMap<Message, true> keys the chord tracker already let through
      */
@@ -158,6 +159,7 @@ final class Program
         $this->pendingWheel = new PendingWheel();
         $this->errorChain = new WeakMap();
         $this->chordTracker = new ChordTracker();
+        $this->keyHelp = new KeyHelpOverlay();
         $this->pastTheChords = new WeakMap();
     }
 
@@ -954,6 +956,12 @@ final class Program
             }
         }
 
+        if ($this->keyHelp->takes($stamped, $this->model, $this->focus)) {
+            $this->frames->markDirty();
+
+            return false;
+        }
+
         $model = $this->model;
         $focus = $this->focus;
         $result = $this->capturingOutput('update', static fn (): UpdateResult => $model instanceof RoutesFocus
@@ -1088,6 +1096,7 @@ final class Program
             $model = $this->model;
             $this->capturingOutput('render', static fn () => $model->render($frame, $pass));
             $pass->floats->drainOnto($frame, $pass->context);
+            $this->keyHelp->drawOver($frame, $pass->context, $model, $this->focus);
             $this->paintedAt = $this->clock->now();
             $this->screen->flush($frame);
         } catch (Throwable $error) {

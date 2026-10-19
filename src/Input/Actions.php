@@ -32,6 +32,11 @@ final class Actions
      */
     public const SEARCH = 'search';
 
+    /**
+     * Lists every key that works where the keyboard is.
+     */
+    public const HELP = 'help';
+
     public const WORD_LEFT = 'word_left';
     public const WORD_RIGHT = 'word_right';
     public const LINE_START = 'line_start';
@@ -48,10 +53,26 @@ final class Actions
     public static function description(string $action): string
     {
         return match ($action) {
+            self::SELECT => 'choose',
+            self::CANCEL => 'back',
             self::HOME => 'top',
             self::END => 'bottom',
+            self::CURSOR_UP => 'up',
+            self::CURSOR_DOWN => 'down',
+            self::CURSOR_LEFT => 'left',
+            self::CURSOR_RIGHT => 'right',
+            self::FOCUS_CYCLE => 'next pane',
+            self::FOCUS_PREVIOUS_CYCLE => 'previous pane',
             self::TAB_NEXT => 'next tab',
             self::TAB_PREVIOUS => 'previous tab',
+            self::WORD_LEFT => 'word left',
+            self::WORD_RIGHT => 'word right',
+            self::DELETE_CHAR_BACKWARD => 'delete back',
+            self::DELETE_CHAR_FORWARD => 'delete',
+            self::DELETE_WORD_BACKWARD => 'delete word back',
+            self::DELETE_WORD_FORWARD => 'delete word',
+            self::CLEAR_LINE => 'clear',
+            self::HELP => 'keys',
             default => str_replace('_', ' ', $action),
         };
     }

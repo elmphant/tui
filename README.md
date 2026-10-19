@@ -116,6 +116,8 @@ abstract readonly class App
     protected function quitBindings(): Keybindings {}           // extra keys that quit
     protected function globalKeybindings(): Keybindings {}      // bindings every widget inherits (VimMode)
     protected function focusCycleBindings(): Keybindings {}     // tab / shift+tab
+    protected function keyHelpBindings(): Keybindings {}        // ? opens the key help; empty offers none
+    protected function actionDescription(string $action): string {} // what an action does, in the key help
     protected function mounts(): array { return []; }           // mounts held but not drawn now
     protected function bindProperty(string $property, Interactive $widget): Component {}
 }
@@ -257,6 +259,20 @@ footer hints say which of the two holds the keys (`/ search`, `Esc/Enter back`).
 A widget with a filter field of its own follows the same rule by using the
 `Widget\Filter\SearchMode` trait: `takesText()`, `searchToggledBy($key)` and
 `searchHints()` come with it.
+
+#### Key help
+
+`?` opens a list of every key that works where the keyboard is, laid over the
+screen: the hints the footer shows, every key the focused widget answers
+(including the ones the footer leaves out), the containers around it, the app's
+own keys and the global ones such as vim mode's, each labelled the way the footer
+labels it. It is read off the live bindings, so it cannot go stale. `?` or Esc
+closes it, and it scrolls with `↑`/`↓`, `j`/`k`, PageUp/PageDown, Home/End and
+the wheel when it is taller than the screen. While a field takes the keys, `?` is
+typed instead. An action is described by `Actions::description()`; override
+`actionDescription()` to name the actions the app binds itself,
+`keyHelpBindings()` to choose another key (or `Keybindings::empty()` for none),
+and show it in a footer with `$this->keyHelpHints()`.
 
 The keyboard starts on the first stop in tree order — inside a `TabBar`'s first
 page (`tabs/0`), not on its strip — so a header control drawn above a field takes
