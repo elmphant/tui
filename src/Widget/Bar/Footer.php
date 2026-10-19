@@ -28,6 +28,9 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
     use KeybindingsAwareBehavior;
     private const SLOT_GAP = 2;
 
+    /**
+     * @param list<Widget> $shorterRight
+     */
     private function __construct(
         private ?Widget $leftSlot = null,
         private ?Widget $centerSlot = null,
@@ -38,6 +41,7 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         private ?Spacing $margin = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private array $shorterRight = [],
     ) {
     }
 
@@ -85,9 +89,14 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         return $this->cloneWith(centerSlot: $widget);
     }
 
-    public function withRight(Widget $widget): self
+    /**
+     * The right slot gives way first: beside a left slot that grows, the footer
+     * draws the first of these forms, longest to shortest, that leaves the left
+     * slot all it wants, and none of them when even the shortest would not.
+     */
+    public function withRight(Widget $widget, Widget ...$shorter): self
     {
-        return $this->cloneWith(rightSlot: $widget);
+        return $this->cloneWith(rightSlot: $widget, shorterRight: array_values($shorter));
     }
 
     /**
@@ -144,7 +153,7 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         }
 
         $placements = BarSlotRenderer::placements([...$this->slots(), 'leftSlot' => null], $contentArea);
-        $left = $this->leftRect($contentArea);
+        $left = $this->leftRect($contentArea, rightSlot: $this->rightSlot);
 
         return $left === null || $this->leftSlot === null
             ? array_values($placements)
@@ -194,16 +203,18 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         $contentY = $contentArea->y;
         $contentWidth = $contentArea->width;
 
+        $right = $this->rightDrawn($contentArea, $context);
+
         if ($this->leftSlot !== null) {
-            BarSlotRenderer::drawIn($frame, $this->leftSlot, $this->leftRect($contentArea, $context), $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $this->leftSlot, $this->leftRect($contentArea, $context, $right), $barBg, $context);
         }
 
         if ($this->centerSlot !== null) {
             BarSlotRenderer::renderCentered($frame, $this->centerSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
         }
 
-        if ($this->rightSlot !== null) {
-            BarSlotRenderer::renderRight($frame, $this->rightSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+        if ($right !== null) {
+            BarSlotRenderer::renderRight($frame, $right, $contentX, $contentY, $contentWidth, $barBg, $context);
         }
     }
 
@@ -223,20 +234,43 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
      * A left slot that grows takes the row up to the right slot, unless a centre
      * slot needs the middle.
      */
-    private function leftRect(Rect $contentArea, ?RenderContext $context = null): ?Rect
+    private function leftRect(Rect $contentArea, ?RenderContext $context = null, ?Widget $rightSlot = null): ?Rect
     {
         if ($this->leftSlot === null) {
             return null;
         }
 
-        if ($this->centerSlot !== null || $this->leftSlot->sizing()->columns->flex === 0) {
+        if (!$this->leftGrows()) {
             return BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context);
         }
 
-        $right = $this->rightSlot === null ? null : BarSlotRenderer::rectFor($this->rightSlot, Alignment::Right, $contentArea, $context);
+        $right = $rightSlot === null ? null : BarSlotRenderer::rectFor($rightSlot, Alignment::Right, $contentArea, $context);
         $width = $right === null ? $contentArea->width : $right->x - $contentArea->x - self::SLOT_GAP;
 
         return $width < 1 ? null : new Rect($contentArea->x, $contentArea->y, $width, 1);
+    }
+
+    private function leftGrows(): bool
+    {
+        return $this->leftSlot !== null && $this->centerSlot === null && $this->leftSlot->sizing()->columns->flex > 0;
+    }
+
+    private function rightDrawn(Rect $contentArea, RenderContext $context): ?Widget
+    {
+        if ($this->rightSlot === null || $this->leftSlot === null || !$this->leftGrows()) {
+            return $this->rightSlot;
+        }
+
+        $left = BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, new Rect($contentArea->x, $contentArea->y, \PHP_INT_MAX, 1), $context);
+        $room = $contentArea->width - ($left === null ? 0 : $left->width + self::SLOT_GAP);
+
+        foreach ([$this->rightSlot, ...$this->shorterRight] as $form) {
+            if ($form->sizing()->columns->intrinsic() <= $room) {
+                return $form;
+            }
+        }
+
+        return null;
     }
 
     private function contentArea(Rect $area): ?Rect

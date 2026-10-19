@@ -830,6 +830,20 @@ from `RenderContext::pendingChord()`: after `g` in vim mode, on a list inside a
 chord completes, is cancelled or times out. On a list with no `TabBar` around it
 `gt` answers nothing, so it is left out.
 
+When the hints in a footer's left slot do not fit, the right slot gives way
+first. Hand `withRight()` shorter forms after the first, longest to shortest:
+the footer draws the first that leaves every hint whole, and no right slot at
+all when even the shortest would not. Only then is a hint left out.
+
+```php
+use Elmphant\Tui\Widget\Bar\{FocusHints, Footer};
+use Elmphant\Tui\Widget\Prose\Text;
+
+Footer::new()
+    ->withLeft(FocusHints::new())
+    ->withRight(Text::new('Support · 1.2.0'), Text::new('Support'));
+```
+
 A bar places each slot in the width the slot's own `Sizing` declares — a bar is
 not an allocator, so a flexible slot is not stretched to the row. A widget with
 no width of its own (`ProgressBar`, `Separator`, and the other fill-only ones)

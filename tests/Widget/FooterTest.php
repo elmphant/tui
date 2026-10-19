@@ -18,12 +18,14 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
+use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TickTally;
 use Elmphant\Tui\Widget\Alignment;
+use Elmphant\Tui\Widget\Bar\FocusHints;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Bar\StatusBar;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -974,21 +976,54 @@ final class FooterTest extends TestCase
     }
 
     #[Test]
-    public function aGrowingLeftSlotStopsShortOfTheRightOne(): void
+    public function aGrowingLeftSlotTakesTheWholeRowOnceTheRightOneHasGivenWay(): void
     {
         $footer = Footer::new()
             ->withLeft(StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three', 'd' => 'four']))
             ->withRight(Text::new('Support'));
-        $frame = new Frame(40, 1);
 
-        $footer->render($frame, Rect::fromSize(40, 1), $this->context);
+        self::assertSame(' a  one   b  two   c  three  …', $this->drawnAt($footer, 32));
+    }
 
-        self::assertSame(' a  one   b  two   c  three  …   Support', $this->extractText($frame, 0, 40));
+    #[Test]
+    public function theRightSlotGivesWayToItsShorterFormsBeforeAHintIsLeftOut(): void
+    {
+        $footer = Footer::new()
+            ->withLeft(StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three', 'd' => 'four']))
+            ->withRight(Text::new('Support · 0.1.0'), Text::new('Support'));
+
+        self::assertSame(' a  one   b  two   c  three   d  four  Support · 0.1.0', $this->drawnAt($footer, 54));
+        self::assertSame(' a  one   b  two   c  three   d  four         Support', $this->drawnAt($footer, 53));
+        self::assertSame(' a  one   b  two   c  three   d  four', $this->drawnAt($footer, 45));
+    }
+
+    #[Test]
+    public function theRightSlotMakesRoomForTheHintsOfWhateverHoldsTheKeyboard(): void
+    {
+        $pass = RenderPass::new(Theme::dark());
+        $pass->begin(0.0);
+        $pass->focus->provideHints(['c' => 'three', 'd' => 'four']);
+        $footer = Footer::new()
+            ->withLeft(FocusHints::new()->withLeadingHints(['a' => 'one', 'b' => 'two']))
+            ->withRight(Text::new('Support · 0.1.0'), Text::new('Support'));
+        $frame = new Frame(53, 1);
+
+        $footer->render($frame, Rect::fromSize(53, 1), $pass->context);
+
+        self::assertSame(' a  one   b  two   c  three   d  four         Support', $this->extractText($frame, 0, 53));
     }
 
     protected function setUp(): void
     {
         $this->context = new RenderContext(Theme::dark());
+    }
+
+    private function drawnAt(Footer $footer, int $width): string
+    {
+        $frame = new Frame($width, 1);
+        $footer->render($frame, Rect::fromSize($width, 1), $this->context);
+
+        return rtrim($this->extractText($frame, 0, $width));
     }
 
     private function extractText(Frame $frame, int $startX, int $length): string
