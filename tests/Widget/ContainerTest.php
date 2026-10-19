@@ -48,7 +48,7 @@ final class ContainerTest extends TestCase
         $screen = ScreenBuffer::fromFrame($frame);
 
         self::assertStringContainsString('X', $screen->lineAt(1), 'Precondition: the child did draw inside the container');
-        self::assertSame('', trim($screen->textAt(1, 12, 28)), 'nothing of it reached past the border');
+        self::assertSame('', trim($screen->textAt(12, 1, 28)), 'nothing of it reached past the border');
         self::assertStringContainsString('╰', $screen->lineAt(5), 'and the border ring is intact');
     }
 

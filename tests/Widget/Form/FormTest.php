@@ -59,8 +59,8 @@ final class FormTest extends TestCase
 
         $field = $screen->locate('Username')['row'] + 1;
         $column = $screen->locate('Username')['column'];
-        self::assertSame(Attr::UNDERLINE, $screen->styleAt($field, $column + Field::TEXT_WIDTH - 1)->attributes & Attr::UNDERLINE);
-        self::assertSame(0, $screen->styleAt($field, $column + Field::TEXT_WIDTH)->attributes & Attr::UNDERLINE);
+        self::assertSame(Attr::UNDERLINE, $screen->styleAt($column + Field::TEXT_WIDTH - 1, $field)->attributes & Attr::UNDERLINE);
+        self::assertSame(0, $screen->styleAt($column + Field::TEXT_WIDTH, $field)->attributes & Attr::UNDERLINE);
     }
 
     #[Test]
@@ -294,8 +294,8 @@ final class FormTest extends TestCase
         $screen = WidgetHarness::for(self::userForm(), 70, 24)->press('tab')->screen();
 
         $password = $screen->locate('Password');
-        self::assertSame('▎', $screen->textAt($password['row'], $password['column'] - 2, 1));
-        self::assertNotSame('▎', $screen->textAt($screen->locate('Username')['row'], $password['column'] - 2, 1));
+        self::assertSame('▎', $screen->textAt($password['column'] - 2, $password['row'], 1));
+        self::assertNotSame('▎', $screen->textAt($password['column'] - 2, $screen->locate('Username')['row'], 1));
     }
 
     private static function tallForm(): Form

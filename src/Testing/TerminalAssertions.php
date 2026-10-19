@@ -13,16 +13,16 @@ trait TerminalAssertions
         static::assertStringContainsString($text, $screen->plainText());
     }
 
-    public function assertTextAt(int $row, int $col, string $expected, ScreenBuffer $screen): void
+    public function assertTextAt(int $column, int $row, string $expected, ScreenBuffer $screen): void
     {
-        static::assertSame($expected, $screen->textAt($row, $col, CharWidth::stringWidth($expected)));
+        static::assertSame($expected, $screen->textAt($column, $row, CharWidth::stringWidth($expected)));
     }
 
-    public function assertCursorAt(int $row, int $col, ScreenBuffer $screen): void
+    public function assertCursorAt(int $column, int $row, ScreenBuffer $screen): void
     {
-        $pos = $screen->cursorPosition();
-        static::assertSame($row, $pos->row, "Cursor row mismatch: expected {$row}, got {$pos->row}");
-        static::assertSame($col, $pos->col, "Cursor col mismatch: expected {$col}, got {$pos->col}");
+        $position = $screen->cursorPosition();
+        static::assertSame($column, $position->col, "Cursor column mismatch: expected {$column}, got {$position->col}");
+        static::assertSame($row, $position->row, "Cursor row mismatch: expected {$row}, got {$position->row}");
     }
 
     public function assertCursorHidden(ScreenBuffer $screen): void

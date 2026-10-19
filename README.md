@@ -1354,7 +1354,8 @@ $screen->locate('Run');   // like find(), but throws '"Run" is not on screen'
 $screen->rowOf('Run');    // 1
 $screen->lineAt(1);       // one row as text, the full width
 $screen->plainText();     // every row without trailing blanks, joined by newlines
-$screen->styleAt(1, 4);   // a Style: foreground, background, attributes
+$screen->textAt(4, 1, 3);  // 'Run': column, then row, as the frame was written
+$screen->styleAt(4, 1);   // a Style: foreground, background, attributes
 ```
 
 Use `VirtualTerminal` only for runtime integration tests that need ANSI output,

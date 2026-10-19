@@ -43,7 +43,7 @@ final class TerminalAssertionsTest extends TestCase
     public function aCursorWhereItIsExpectedPasses(): void
     {
         $screen = new ScreenBuffer("\x1b[3;5H", 80, 24);
-        $this->assertCursorAt(2, 4, $screen);
+        $this->assertCursorAt(4, 2, $screen);
     }
 
     #[Test]
@@ -52,7 +52,7 @@ final class TerminalAssertionsTest extends TestCase
         $screen = new ScreenBuffer("\x1b[3;5H", 80, 24);
 
         $this->expectException(AssertionFailedError::class);
-        $this->assertCursorAt(1, 4, $screen);
+        $this->assertCursorAt(4, 1, $screen);
     }
 
     #[Test]
@@ -61,7 +61,7 @@ final class TerminalAssertionsTest extends TestCase
         $screen = new ScreenBuffer("\x1b[3;5H", 80, 24);
 
         $this->expectException(AssertionFailedError::class);
-        $this->assertCursorAt(2, 3, $screen);
+        $this->assertCursorAt(3, 2, $screen);
     }
 
     #[Test]

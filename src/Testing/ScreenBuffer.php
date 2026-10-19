@@ -106,11 +106,11 @@ final class ScreenBuffer
         return $line;
     }
 
-    public function textAt(int $row, int $col, int $length): string
+    public function textAt(int $column, int $row, int $length): string
     {
         $text = '';
-        for ($c = $col; $c < $col + $length; ++$c) {
-            $text .= $this->cells[$row][$c] ?? ' ';
+        for ($cell = $column; $cell < $column + $length; ++$cell) {
+            $text .= $this->cells[$row][$cell] ?? ' ';
         }
 
         return $text;
@@ -153,9 +153,9 @@ final class ScreenBuffer
         return $this->find($text, within: $within)['row'] ?? null;
     }
 
-    public function styleAt(int $row, int $col): Style
+    public function styleAt(int $column, int $row): Style
     {
-        [$foreground, $background, $attributes] = $this->styles[$row][$col] ?? [0, 0, 0];
+        [$foreground, $background, $attributes] = $this->styles[$row][$column] ?? [0, 0, 0];
 
         return new Style(
             $foreground === 0 ? null : Color::fromValue($foreground),

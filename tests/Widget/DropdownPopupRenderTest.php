@@ -27,7 +27,7 @@ final class DropdownPopupRenderTest extends TestCase
 
         self::assertSame('╭', $screen->textAt(0, 0, 1), 'the border is the popup');
         self::assertSame('json', $screen->textAt(1, 1, 4), 'and the first row inside it is the content');
-        self::assertSame('yaml', $screen->textAt(2, 1, 4));
+        self::assertSame('yaml', $screen->textAt(1, 2, 4));
     }
 
     #[Test]

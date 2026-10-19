@@ -54,7 +54,7 @@ final class TreeViewTest extends TestCase
         $tree->render($frame, new Rect(0, 0, 10, 7), RenderContext::unfocused(Theme::dark()));
 
         $screen = ScreenBuffer::fromFrame($frame);
-        $outside = array_map(static fn (int $row): string => trim($screen->textAt($row, 10, 20)), range(0, 6));
+        $outside = array_map(static fn (int $row): string => trim($screen->textAt(10, $row, 20)), range(0, 6));
         self::assertSame(array_fill(0, 7, ''), $outside);
     }
 
@@ -510,7 +510,7 @@ final class TreeViewTest extends TestCase
         $tree->render($frame, new Rect(5, 1, 30, 4), new RenderContext(Theme::dark()));
 
         $shifted = array_map(
-            static fn (int $row): string => rtrim(ScreenBuffer::fromFrame($frame)->textAt($row, 5, 30)),
+            static fn (int $row): string => rtrim(ScreenBuffer::fromFrame($frame)->textAt(5, $row, 30)),
             range(1, 4),
         );
         self::assertSame(array_slice(self::draw($tree, 30, 4), 0, 4), $shifted);

@@ -29,8 +29,8 @@ final class SplitFocusTest extends TestCase
         $left = $screen->locate('LEFT one');
         $right = $screen->locate('RIGHT one');
 
-        self::assertNotNull($screen->styleAt($right['row'], $right['column'])->background);
-        self::assertNull($screen->styleAt($left['row'], $left['column'])->background);
+        self::assertNotNull($screen->styleAt($right['column'], $right['row'])->background);
+        self::assertNull($screen->styleAt($left['column'], $left['row'])->background);
     }
 
     private static function table(string $name): Table

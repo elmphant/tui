@@ -93,8 +93,20 @@ final class ScreenBufferQueriesTest extends TestCase
 
         $screen = ScreenBuffer::fromFrame($frame);
 
-        self::assertEquals(new Style(Color::hex('FF8700'), Color::ansi(0), Attr::BOLD), $screen->styleAt(0, 2));
+        self::assertEquals(new Style(Color::hex('FF8700'), Color::ansi(0), Attr::BOLD), $screen->styleAt(2, 0));
         self::assertEquals(new Style(), $screen->styleAt(0, 0));
+    }
+
+    #[Test]
+    public function aCellIsAddressedByColumnThenRowAsTheFrameWroteIt(): void
+    {
+        $frame = new Frame(5, 4);
+        $frame->putStyled(3, 1, 'x', new Style(Color::ansi(2)));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame('x', $screen->textAt(3, 1, 1));
+        self::assertEquals(new Style(Color::ansi(2)), $screen->styleAt(3, 1));
     }
 
     #[Test]
@@ -103,6 +115,6 @@ final class ScreenBufferQueriesTest extends TestCase
         $screen = new ScreenBuffer("\e[1;31mred\e[0m plain", 20, 1);
 
         self::assertEquals(new Style(Color::ansi(1), null, Attr::BOLD), $screen->styleAt(0, 0));
-        self::assertEquals(new Style(), $screen->styleAt(0, 4));
+        self::assertEquals(new Style(), $screen->styleAt(4, 0));
     }
 }

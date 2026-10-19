@@ -23,7 +23,7 @@ final class ScreenBufferTest extends TestCase
         $screen = ScreenBuffer::fromFrame($frame);
 
         self::assertSame('世é', $screen->textAt(0, 0, 3));
-        self::assertSame('row two', $screen->textAt(1, 0, 7));
+        self::assertSame('row two', $screen->textAt(0, 1, 7));
         self::assertSame(1, $screen->cursorPosition()?->row);
         self::assertSame(4, $screen->cursorPosition()?->col);
         self::assertSame(CursorShape::SteadyBar, $screen->cursorShape());
@@ -62,7 +62,7 @@ final class ScreenBufferTest extends TestCase
     {
         $screen = new ScreenBuffer("\x1b[1;1Ha\x1b[2BX", 4, 4);
 
-        self::assertSame('X', $screen->textAt(2, 1, 1));
+        self::assertSame('X', $screen->textAt(1, 2, 1));
     }
 
     #[Test]
@@ -111,7 +111,7 @@ final class ScreenBufferTest extends TestCase
     {
         $screen = new ScreenBuffer("\x1b[1;1HA\x1b[1;5HB", 80, 24);
         $this->assertSame('A', $screen->textAt(0, 0, 1));
-        $this->assertSame('B', $screen->textAt(0, 4, 1));
+        $this->assertSame('B', $screen->textAt(4, 0, 1));
     }
 
     #[Test]
@@ -243,7 +243,7 @@ final class ScreenBufferTest extends TestCase
     {
         $screen = new ScreenBuffer("\x1b[3HA", 8, 4);
 
-        self::assertSame('A', $screen->textAt(2, 0, 1));
+        self::assertSame('A', $screen->textAt(0, 2, 1));
         self::assertSame(2, $screen->cursorPosition()?->row);
         self::assertSame(1, $screen->cursorPosition()?->col);
     }
@@ -252,7 +252,7 @@ final class ScreenBufferTest extends TestCase
     public function hvpFinalByteFPositionsLikeCup(): void
     {
         $screen = new ScreenBuffer("\x1b[2;3fZ", 10, 5);
-        $this->assertSame('Z', $screen->textAt(1, 2, 1));
+        $this->assertSame('Z', $screen->textAt(2, 1, 1));
     }
 
     #[Test]
@@ -309,14 +309,14 @@ final class ScreenBufferTest extends TestCase
     public function getTextAtOutsideWrittenAreaReturnsSpaces(): void
     {
         $screen = new ScreenBuffer('A', 10, 5);
-        $this->assertSame('   ', $screen->textAt(4, 7, 3));
+        $this->assertSame('   ', $screen->textAt(7, 4, 3));
     }
 
     #[Test]
     public function cellsPastTheRightEdgeAreNeverWritten(): void
     {
         $screen = new ScreenBuffer("\x1b[1;5HXYZ", 5, 2);
-        $this->assertSame('  ', $screen->textAt(0, 5, 2), 'Overflowing writes must not land in cells beyond the grid width');
+        $this->assertSame('  ', $screen->textAt(5, 0, 2), 'Overflowing writes must not land in cells beyond the grid width');
     }
 
     #[Test]
