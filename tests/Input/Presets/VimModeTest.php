@@ -8,11 +8,15 @@ use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\Presets\VimMode;
+use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Tests\Application\ChordListApp;
 use Elmphant\Tui\Tests\Application\Support\CopyableTestApp;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Structure\TabBar;
+use Elmphant\Tui\Widget\Table\Column;
+use Elmphant\Tui\Widget\Table\Table;
 use Elmphant\Tui\Widget\Tree\SimpleTreeNode;
 use Elmphant\Tui\Widget\Tree\TreePath;
 use Elmphant\Tui\Widget\Tree\TreeView;
@@ -69,6 +73,62 @@ final class VimModeTest extends TestCase
     }
 
     #[Test]
+    public function ggAndCapitalGJumpAListToItsEnds(): void
+    {
+        $harness = ModelHarness::for(new ChordListApp(globals: VimMode::keybindings()), 30, 8)->initialize()->press('G');
+
+        self::assertSame(3, $harness->model()->list->cursor());
+
+        $harness->press('g', 'g');
+
+        self::assertSame(0, $harness->model()->list->cursor());
+    }
+
+    #[Test]
+    public function ggAndCapitalGJumpATableToItsEnds(): void
+    {
+        $harness = ModelHarness::for(new VimTableApp(), 40, 10)->initialize()->press('G');
+
+        self::assertSame(5, $harness->model()->table->cursor());
+
+        $harness->press('g', 'g');
+
+        self::assertSame(0, $harness->model()->table->cursor());
+    }
+
+    #[Test]
+    public function gtAndGCapitalTSwitchTabsFromInsideATree(): void
+    {
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('g', 't');
+
+        self::assertSame(1, $harness->model()->bar->selectedTab());
+
+        $harness->press('g', 'T');
+
+        self::assertSame(0, $harness->model()->bar->selectedTab());
+    }
+
+    #[Test]
+    public function theKeysOfAChordAreTypedIntoAFieldOnATab(): void
+    {
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L', 'L')->type('ggtG');
+
+        self::assertSame(2, $harness->model()->bar->selectedTab());
+        $field = $harness->model()->bar->children()[0];
+        self::assertInstanceOf(TextInput::class, $field);
+        self::assertSame('ggtG', $field->value());
+    }
+
+    #[Test]
+    public function aTabBarStillLeadsItsHintsWithCapitalHAndL(): void
+    {
+        self::assertSame(
+            ['H' => 'previous tab', 'L' => 'next tab'],
+            TabBar::new()->withGlobalKeybindings(VimMode::keybindings())->hints(),
+        );
+    }
+
+    #[Test]
     public function isCachedSingleton(): void
     {
         self::assertSame(VimMode::keybindings(), VimMode::keybindings());
@@ -113,6 +173,29 @@ final class VimModeTest extends TestCase
         $field = $harness->model()->bar->children()[0];
         self::assertInstanceOf(TextInput::class, $field);
         self::assertSame('hLl', $field->value());
+    }
+}
+
+final readonly class VimTableApp extends CopyableTestApp
+{
+    public Table $table;
+
+    public function __construct(?Table $table = null)
+    {
+        $this->table = $table ?? Table::fromCells(
+            [Column::new('Name', Constraint::flex())],
+            array_map(static fn (int $index): array => ["row $index"], range(0, 5)),
+        );
+    }
+
+    public function view(): Widget
+    {
+        return Component::bind('table', $this->table, static fn (self $app, Table $table): self => $app->cloneWith(table: $table));
+    }
+
+    protected function globalKeybindings(): Keybindings
+    {
+        return VimMode::keybindings();
     }
 }
 
