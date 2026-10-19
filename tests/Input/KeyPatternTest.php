@@ -521,6 +521,15 @@ final class KeyPatternTest extends TestCase
     }
 
     #[Test]
+    public function lettersAreJoinedInTheOrderTheySitOnTheKeyboard(): void
+    {
+        self::assertSame('j/k', KeyPattern::joinedLabel(KeyPattern::fromString('k'), KeyPattern::fromString('j')));
+        self::assertSame('h/l', KeyPattern::joinedLabel(KeyPattern::fromString('l'), KeyPattern::fromString('h')));
+        self::assertSame('y/n', KeyPattern::joinedLabel(KeyPattern::fromString('y'), KeyPattern::fromString('n')));
+        self::assertSame('↑/↓', KeyPattern::joinedLabel(KeyPattern::fromString('up'), KeyPattern::fromString('down')));
+    }
+
+    #[Test]
     public function chordsSharingAFirstKeyAreJoinedWhole(): void
     {
         self::assertSame('gt/gT', KeyPattern::joinedLabel(KeyPattern::fromString('g t'), KeyPattern::fromString('g T')));

@@ -14,6 +14,11 @@ final readonly class KeyPattern implements Stringable
     private const NAMED_KEYS = [...Key::NAMES, 'space' => ' '];
 
     /**
+     * Letters joined in one label read left to right, as they sit: "h/l", "j/k".
+     */
+    private const KEYBOARD_ORDER = 'qwertyuiopasdfghjklzxcvbnm';
+
+    /**
      * @param list<self> $preceding the keys of a chord typed before this one
      */
     public function __construct(
@@ -123,6 +128,12 @@ final readonly class KeyPattern implements Stringable
         $labels = [$first->label()];
         foreach ($rest as $pattern) {
             $labels[] = $pattern->label();
+        }
+
+        if (array_filter($labels, static fn (string $label): bool => strlen($label) === 1 && ctype_alpha($label)) === $labels) {
+            usort($labels, static fn (string $left, string $right): int => stripos(self::KEYBOARD_ORDER, $left) <=> stripos(self::KEYBOARD_ORDER, $right));
+
+            return implode('/', $labels);
         }
 
         $lastModifier = strrpos($labels[0], '+');
