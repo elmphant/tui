@@ -54,14 +54,9 @@ final readonly class FilterableTable implements Focusable, MeasureHeight, Keybin
     ) {
     }
 
-    /**
-     * Enter only hands the keys back from a search; the field has no use for it.
-     */
     public static function defaultKeybindings(): Keybindings
     {
-        return FilterBar::keybindings()
-            ->append(new Keybindings([Actions::SELECT => ['enter']]))
-            ->append(TextInput::defaultKeybindings());
+        return FilterBar::keybindings()->append(TextInput::defaultKeybindings());
     }
 
     public function hints(): array

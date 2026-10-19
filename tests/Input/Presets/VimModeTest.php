@@ -167,7 +167,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function ctrlUClearsTheFieldOfAFilterableCheckboxGroup(): void
     {
-        $harness = ModelHarness::for(new VimCheckboxFilterApp(FilterableCheckboxGroup::new(['alpha', 'beta'])), 40, 8)->initialize()->type('alp');
+        $harness = ModelHarness::for(new VimCheckboxFilterApp(FilterableCheckboxGroup::new(['alpha', 'beta'])), 40, 8)->initialize()->press('/')->type('alp');
 
         self::assertNull($harness->renderScreen()->find('beta'));
 

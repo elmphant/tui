@@ -77,12 +77,12 @@ final class FilterableCheckboxGroupTest extends TestCase
     }
 
     #[Test]
-    public function aGlobalLetterIsTypedIntoTheFieldRatherThanWalkTheBoxes(): void
+    public function aGlobalLetterIsTypedIntoTheFieldOnceSlashOpensIt(): void
     {
         $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'jam'])
             ->withGlobalKeybindings(VimMode::keybindings());
 
-        $ticked = self::pressed($group, new KeyMsg('j'), new KeyMsg(' '));
+        $ticked = self::pressed($group, new KeyMsg('/'), new KeyMsg('j'), new KeyMsg('enter'), new KeyMsg(' '));
 
         self::assertSame(['jam'], $ticked->checkedValues());
     }

@@ -39,6 +39,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
+    use SearchMode;
 
     /**
      * Keys the boxes take; every other one is typing and belongs to the field.
@@ -57,6 +58,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         private ?Matcher $matcher = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private bool $searching = false,
     ) {
     }
 
@@ -65,14 +67,9 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         return CheckboxGroup::defaultKeybindings()->append(FilterBar::keybindings());
     }
 
-    public function takesText(): bool
-    {
-        return true;
-    }
-
     public function hints(): array
     {
-        return $this->effectiveKeybindings()->hints([
+        return $this->searchHints([
             'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
             'toggle' => Actions::TOGGLE,
             ...($this->field->value() === '' ? [] : ['clear filter' => Actions::CANCEL]),
@@ -193,6 +190,11 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
             return new UpdateResult($this);
         }
 
+        $toggled = $message instanceof KeyMsg ? $this->searchToggledBy($message) : null;
+        if ($toggled !== null) {
+            return new UpdateResult($toggled);
+        }
+
         if ($message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
             return new UpdateResult(
                 $this->field->value() === '' ? $this : $this->cloneWith(field: $this->field->withValue(''), cursor: 0),
@@ -201,6 +203,10 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 
         if ($message instanceof KeyMsg && $this->isForTheBoxes($message)) {
             return $this->dispatchedToTheBoxes($dispatcher, $message, $area);
+        }
+
+        if ($message instanceof KeyMsg && !$this->takesText()) {
+            return new UpdateResult($this);
         }
 
         $field = $dispatcher->dispatchOne($this->field, $message, $this->fieldArea($area))->child;
@@ -219,7 +225,8 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
             return;
         }
 
-        FilterBar::render($frame, $this->fieldArea($area), $context, $this->field);
+        $field = fn () => FilterBar::render($frame, $this->fieldArea($area), $context, $this->field);
+        $this->fieldHoldsTheKeys($context) ? $field() : $context->withoutFocus($field);
 
         $body = $this->boxesArea($area);
         if ($body->height > 0) {
