@@ -248,10 +248,11 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
      */
     private function keyedWhileOpen(KeyMsg $message, Rect $area): UpdateResult
     {
+        $commits = $this->content instanceof Committing && $this->content->commits($message);
         $answered = $this->content->update($message, $this->popupContentArea($area, $message->screen));
         $content = $answered->model;
 
-        if ($content instanceof Committing && $content->commits($message)) {
+        if ($commits) {
             return new UpdateResult($this->cloneWith(content: $content)->withOpen(false), $answered->command);
         }
 

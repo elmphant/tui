@@ -27,6 +27,11 @@ final class Actions
     public const TAB_NEXT = 'tab_next';
     public const TAB_PREVIOUS = 'tab_previous';
 
+    /**
+     * Once bound, a filter's list or table holds the keys, and this key hands them to its field.
+     */
+    public const SEARCH = 'search';
+
     public const WORD_LEFT = 'word_left';
     public const WORD_RIGHT = 'word_right';
     public const LINE_START = 'line_start';

@@ -48,6 +48,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     use Cloneable;
     use DrawsFocus;
     use KeybindingsAwareBehavior;
+    use SearchMode;
 
     /**
      * Actions the list takes; every other key is typing and belongs to the field.
@@ -57,6 +58,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         Actions::CURSOR_DOWN,
         Actions::PAGE_UP,
         Actions::PAGE_DOWN,
+        Actions::HOME,
+        Actions::END,
         Actions::SELECT,
     ];
 
@@ -82,7 +85,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
         private ?int $selectedSourceIndex = null,
-        private bool $keysOnTheList = false,
+        private bool $searching = false,
     ) {
         $this->matching = $matching !== null && $matching->isFor($items, $matcher, $field->value())
             ? $matching
@@ -137,26 +140,12 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(emptyCaption: $caption);
     }
 
-    /**
-     * For a host whose letters walk the list: the field keeps its query but takes
-     * no text and shows no caret until the keys are handed back.
-     */
-    public function withKeysOnTheList(bool $onTheList = true): self
-    {
-        return $this->cloneWith(keysOnTheList: $onTheList);
-    }
-
-    public function takesText(): bool
-    {
-        return !$this->keysOnTheList;
-    }
-
     public function hints(): array
     {
-        return $this->effectiveKeybindings()->hints([
+        return $this->searchHints([
             'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
             'choose' => Actions::SELECT,
-            ...($this->query() === '' ? [] : ['clear filter' => [Actions::CLEAR_LINE, Actions::CANCEL]]),
+            ...($this->query() === '' ? [] : ['clear filter' => $this->searchIsBound() ? Actions::CANCEL : [Actions::CLEAR_LINE, Actions::CANCEL]]),
         ]);
     }
 
@@ -327,6 +316,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     public function commits(Message $message): bool
     {
         return $message instanceof KeyMsg
+            && !$this->isSearching()
             && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
             && $this->cursorItem() !== null;
     }
@@ -341,7 +331,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
     /**
      * Only the keys the list navigates with: `space` and Home/End stay with the
-     * field, where they type and move the caret.
+     * field, where they type and move the caret. Top and bottom are answered
+     * without a key, so a global binding for them (vim's `gg`/`G`) reaches the list.
      */
     public static function defaultKeybindings(): Keybindings
     {
@@ -350,6 +341,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             Actions::CURSOR_DOWN => ['down'],
             Actions::PAGE_UP => ['shift+up', 'page_up'],
             Actions::PAGE_DOWN => ['shift+down', 'page_down'],
+            Actions::HOME => [],
+            Actions::END => [],
             Actions::SELECT => ['enter'],
         ]))->merge(FilterBar::keybindings())
             ->append(TextInput::defaultKeybindings());
@@ -367,6 +360,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
         if (!$message instanceof KeyMsg) {
             return new UpdateResult($this);
+        }
+
+        $toggled = $this->searchToggledBy($message);
+        if ($toggled !== null) {
+            return new UpdateResult($toggled);
         }
 
         if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
@@ -396,11 +394,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return new UpdateResult($this->cloneWith(list: $result->child), $result->command);
         }
 
-        if ($this->keysOnTheList && $message->isText()) {
-            return new UpdateResult($this);
-        }
-
-        return $this->typedIntoTheField($message, $area);
+        return $this->takesText() ? $this->typedIntoTheField($message, $area) : new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -410,7 +404,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         }
 
         $field = fn () => FilterBar::render($frame, $this->fieldArea($area), $context, $this->fieldDrawnBy($context));
-        $this->keysOnTheList ? $context->withoutFocus($field) : $field();
+        $this->fieldHoldsTheKeys($context) ? $field() : $context->withoutFocus($field);
 
         $body = $this->listArea($area);
         if ($body->height < 1) {

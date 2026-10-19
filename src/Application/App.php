@@ -75,6 +75,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         $focused = $pass->focus->focusedComponent();
 
         $pass->focus->provideHints($this->hintsOfFocused($focused));
+        $pass->focus->provideTakesText($this->takesText($focused));
         $pass->focus->provideStopPublishers($this->componentRegistry()->stopPublishers());
         $pass->focus->provideEnclosure($focused === null ? [] : array_map(
             static fn (Component $component): string => $component->id->value,
@@ -1116,12 +1117,27 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         /**
          * @var WeakMap<object, ChildDispatcher> $dispatchers
          */
-        return $dispatchers[$this] ??= new ChildDispatcher($this->globalKeybindings());
+        return $dispatchers[$this] ??= new ChildDispatcher($this->resolvedGlobalKeybindings());
+    }
+
+    private function resolvedGlobalKeybindings(): Keybindings
+    {
+        static $resolved = null;
+        $resolved ??= new WeakMap();
+
+        /**
+         * @var WeakMap<object, Keybindings> $resolved
+         */
+        return $resolved[$this] ??= $this->globalKeybindings();
     }
 
     private function takesText(?ComponentId $holder): bool
     {
         $widget = $this->componentRegistry()->focusable($holder)?->widget;
+
+        if ($widget instanceof KeybindingsAware) {
+            $widget = $widget->withGlobalKeybindings($this->resolvedGlobalKeybindings());
+        }
 
         return $widget instanceof TakesText && $widget->takesText();
     }

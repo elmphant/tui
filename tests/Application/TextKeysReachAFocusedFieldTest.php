@@ -46,10 +46,10 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     }
 
     #[Test]
-    public function aGlobalLetterBindingIsTypedIntoAFilter(): void
+    public function aGlobalLetterBindingIsTypedIntoAFilterOnceSlashOpensIt(): void
     {
         $finder = FilterableList::new([new SimpleListItem('jekyll'), new SimpleListItem('kafka')]);
-        $harness = ModelHarness::for(new VimFinderApp($finder))->initialize()->type('jek');
+        $harness = ModelHarness::for(new VimFinderApp($finder))->initialize()->press('/')->type('jek');
 
         self::assertSame('jek', $harness->model()->finder->query());
     }

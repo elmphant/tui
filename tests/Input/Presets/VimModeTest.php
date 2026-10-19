@@ -155,7 +155,11 @@ final class VimModeTest extends TestCase
     {
         $list = FilterableList::new(array_map(static fn (int $index): SimpleListItem => new SimpleListItem("item $index"), range(0, 30)));
 
-        $harness = ModelHarness::for(new VimFilterApp($list), 40, 8)->initialize()->type('item')->press('ctrl+u');
+        $harness = ModelHarness::for(new VimFilterApp($list), 40, 8)->initialize()->press('/')->type('item');
+
+        self::assertSame('item', $harness->model()->list->query());
+
+        $harness->press('ctrl+u');
 
         self::assertSame('', $harness->model()->list->query());
     }

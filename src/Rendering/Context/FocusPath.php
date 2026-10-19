@@ -53,6 +53,8 @@ final class FocusPath
 
     private ?PendingChord $chord = null;
 
+    private ?bool $takesText = null;
+
     private function __construct(private readonly FocusState $initialFocus, private readonly int $initialDepth)
     {
         $this->focus = $initialFocus;
@@ -88,6 +90,7 @@ final class FocusPath
         $this->enclosure = [];
         $this->stopPublishers = [];
         $this->hints = [];
+        $this->takesText = null;
     }
 
     public function focusOn(FocusState $focus): void
@@ -124,6 +127,11 @@ final class FocusPath
         $this->hints = $hints;
     }
 
+    public function provideTakesText(bool $takesText): void
+    {
+        $this->takesText = $takesText;
+    }
+
     public function provideChord(?PendingChord $chord): void
     {
         $this->chord = $chord;
@@ -156,6 +164,11 @@ final class FocusPath
     public function hints(): array
     {
         return $this->hints;
+    }
+
+    public function takesText(): ?bool
+    {
+        return $this->takesText;
     }
 
     public function chord(): ?PendingChord

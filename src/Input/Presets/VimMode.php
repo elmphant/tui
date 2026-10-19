@@ -26,6 +26,7 @@ final class VimMode
             Actions::TAB_PREVIOUS => ['H', 'g T'],
             Actions::SCROLL_UP => ['k'],
             Actions::SCROLL_DOWN => ['j'],
+            Actions::SEARCH => ['/'],
         ]);
     }
 }

@@ -95,6 +95,15 @@ final class RenderContext
     }
 
     /**
+     * Whether the app hands text to whatever holds the keyboard, asked with the
+     * app's global bindings; null when no app said, as for a widget drawn on its own.
+     */
+    public function keyboardTakesText(): ?bool
+    {
+        return $this->focus->takesText();
+    }
+
+    /**
      * The chord the reader is halfway through, or null.
      */
     public function pendingChord(): ?PendingChord
