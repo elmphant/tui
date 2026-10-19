@@ -319,6 +319,11 @@ A `RenderPass` is what the root draws a frame with: `$pass->context` is the
 `RenderContext` every widget receives, `$pass->focus` says where the keyboard is,
 and `$pass->floats` paints popups after the tree. Widgets only ever see the context.
 
+A model that draws by hand says where its keyboard is while it draws:
+`$context->withFocusHere(fn () => $field->render(...))` for one widget, and
+`$context->withFocusOnChild(2, fn () => $panel->render(...))` for the third
+child of a `Panel`.
+
 **UpdateResult** is an immutable pair `(model, ?command)` returned from every `update()` call. Never mutate application state in place. For plain `Model` implementations, use the `Cloneable` trait or your own `with()` method.
 
 **Immutability model.** Models and widgets are immutable values: `update()` returns a fresh model (or `$this` when nothing changed, thanks to `Cloneable::cloneWith()`'s no-op elision). Prefer public, typed `withX()` builders in application code. The render target — `Frame` — is mutable for performance. This matches Ratatui, Iced, and Bubbletea conventions.

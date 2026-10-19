@@ -7,11 +7,15 @@ namespace Elmphant\Tui\Tests\Rendering;
 use Closure;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Context\FocusPath;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
+use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Terminal\ColorProfile;
+use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Structure\Panel;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -116,6 +120,22 @@ final class RenderContextTest extends TestCase
             $survive(static fn () => $pass->context->withinChild(0, $throw));
             self::assertSame(0, $pass->context->focusedChildIndex(), 'withinChild');
         });
+    }
+
+    #[Test]
+    public function aHandDrawnPanelCanHandTheKeyboardToOneOfItsChildren(): void
+    {
+        $context = RenderContext::unfocused(Theme::dark());
+        $panel = Panel::new()->add(TextInput::new())->add(TextInput::new());
+        $caretRow = static function (int $child) use ($context, $panel): ?int {
+            $frame = new Frame(20, 6);
+            $context->withFocusOnChild($child, static fn () => $panel->render($frame, new Rect(0, 0, 20, 6), $context));
+
+            return $frame->cursorPosition?->row;
+        };
+
+        self::assertNotNull($caretRow(0));
+        self::assertSame($caretRow(0) + 1, $caretRow(1));
     }
 
     #[Test]

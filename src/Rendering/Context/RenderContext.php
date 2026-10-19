@@ -115,6 +115,17 @@ final class RenderContext
     }
 
     /**
+     * Draw a container with the keyboard in its child $index: how a model that
+     * draws by hand, rather than through App, focuses a field inside a Panel.
+     *
+     * @param Closure(): void $render
+     */
+    public function withFocusOnChild(int $index, Closure $render): void
+    {
+        $this->focus->withFocusOnChild($index, $render);
+    }
+
+    /**
      * Draw a part that must not show the focus its container holds — the list
      * beside the field, the pane that is not the active one.
      *
