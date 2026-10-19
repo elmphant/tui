@@ -37,6 +37,8 @@ final readonly class StaticTable implements Widget, MeasureHeight
 
     private const MIN_COLUMN = 4;
 
+    private const SMALLEST_WINDOW = 64;
+
     /**
      * @param list<string>        $headers
      * @param list<list<string>>  $rows
@@ -192,6 +194,11 @@ final readonly class StaticTable implements Widget, MeasureHeight
      */
     private function linesFor(int $width, ?int $upTo = null): array
     {
+        // Rounded up to a window, so scrolling a line asks for the window already drawn.
+        if (null !== $upTo) {
+            $upTo = max(self::SMALLEST_WINDOW, 1 << (int)ceil(log(max(1, $upTo), 2)));
+        }
+
         // A window held from an earlier render answers a smaller one, never a
         // larger one and never a question about the whole table.
         $memo = $this->memo;

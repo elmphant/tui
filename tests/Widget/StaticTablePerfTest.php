@@ -123,6 +123,26 @@ final class StaticTablePerfTest extends TestCase
         );
     }
 
+    #[Test]
+    public function scrollingATableRebuiltEveryFrameDoesNotDrawItAgainForEveryLine(): void
+    {
+        $context = RenderContext::unfocused(Theme::dark());
+        $rows = self::rows(300);
+
+        $drawAt = static function (int $scroll) use ($rows, $context): void {
+            StaticTable::new(['A', 'B', 'C'], $rows)
+                ->render(new Frame(60, 10), new Rect(0, -$scroll, 60, 310), $context);
+        };
+
+        $drawAt(0);
+        $firstFrame = WrapCache::wraps();
+        foreach (range(1, 20) as $scroll) {
+            $drawAt($scroll);
+        }
+
+        self::assertSame($firstFrame, WrapCache::wraps(), 'a line scrolled drew the table again');
+    }
+
     /**
      * @return list<list<string>>
      */
