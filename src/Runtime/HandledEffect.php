@@ -26,8 +26,10 @@ final class HandledEffect
      */
     public ?Closure $stopper = null;
 
-    public function __construct(public readonly ?EffectId $id = null)
-    {
+    public function __construct(
+        public readonly ?EffectId $id = null,
+        public readonly ?string $scope = null,
+    ) {
     }
 
     public function stop(): void

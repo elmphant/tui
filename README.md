@@ -455,7 +455,8 @@ its own namespace — and wakes a loop that was waiting for input.
 The closure `start()` answers with, if any, is how the runtime stops the effect
 again: on `Cmd::cancel($id)`, when a second command takes the same
 `effectId()`, and when the program shuts down. Implement `NamesItsEffect` to
-take part in that; a command without a name simply runs until the program ends.
+take part in that; a command without a name runs until the program ends, or
+until the mount that started it leaves the App.
 An effect that ends on its own calls `$finished`, so the runtime lets go of it
 rather than holding it until shutdown.
 
@@ -554,7 +555,7 @@ a message to the App's `onMessage()` instead.
 An App that shows only some of its mounts at a time, such as tabs, lists the
 hidden ones in `mounts()`, so they start and still get their answers. The mounts
 drawn now count without being listed. A mount that leaves the App — neither drawn
-nor listed — has its named effects cancelled.
+nor listed — has every effect it started stopped, named or not.
 
 ## Running Processes
 

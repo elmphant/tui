@@ -21,6 +21,7 @@ final readonly class TickerRecord
         public float $interval,
         public ?EffectId $id = null,
         public ?Closure $wrap = null,
+        public ?string $scope = null,
     ) {
     }
 
@@ -33,6 +34,6 @@ final readonly class TickerRecord
     {
         $missed = floor(($now - $this->fireAt) / $this->interval);
 
-        return new self($this->fireAt + ($missed + 1) * $this->interval, $this->interval, $this->id, $this->wrap);
+        return new self($this->fireAt + ($missed + 1) * $this->interval, $this->interval, $this->id, $this->wrap, $this->scope);
     }
 }

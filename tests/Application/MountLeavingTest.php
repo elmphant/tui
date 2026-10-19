@@ -8,6 +8,7 @@ use Closure;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Initializes;
 use Elmphant\Tui\Application\Mount;
+use Elmphant\Tui\Application\MountedMsg;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
@@ -17,7 +18,9 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Testing\InMemoryTracer;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -38,6 +41,117 @@ final class MountLeavingTest extends TestCase
             ->start();
 
         self::assertSame(['start feed', 'stop feed', 'quit'], $journal->entries);
+    }
+
+    #[Test]
+    public function aMountThatLeavesTheAppStopsTheEffectsItStartedWithoutAName(): void
+    {
+        $journal = new Journal();
+        $tracer = new InMemoryTracer();
+        $marker = sys_get_temp_dir() . '/elmphant-mount-leaving-' . bin2hex(random_bytes(4));
+
+        Program::new(new HostOfABusyMount($journal, new BusyModel($journal, $marker)))
+            ->withTerminal(new VirtualTerminal(40, 6))
+            ->withCommandHandler(new UnnamedFeedHandler($journal))
+            ->withTracer($tracer)
+            ->start();
+
+        $updates = array_column($tracer->fieldsOf(TraceEvent::Update), 'message');
+        $afterLeaving = \array_slice($updates, (int)array_search(LeaveNow::class, $updates, true));
+        self::assertContains(LeaveNow::class, $updates);
+        self::assertContains(MountedMsg::class, $updates);
+        self::assertNotContains(MountedMsg::class, $afterLeaving);
+        self::assertSame(['start feed', 'stop feed', 'quit'], $journal->entries);
+        self::assertFileDoesNotExist($marker);
+    }
+}
+
+final readonly class UnnamedFeedCmd extends Cmd
+{
+}
+
+final readonly class UnnamedFeedHandler implements CommandHandler
+{
+    public function __construct(private Journal $journal)
+    {
+    }
+
+    public function handles(Cmd $command): bool
+    {
+        return $command instanceof UnnamedFeedCmd;
+    }
+
+    public function start(Cmd $command, Closure $emit, Closure $finished): Closure
+    {
+        $this->journal->entries[] = 'start feed';
+
+        return fn () => $this->journal->entries[] = 'stop feed';
+    }
+}
+
+final readonly class BusyModel implements Reducer, Initializes
+{
+    public function __construct(private Journal $journal, private string $marker)
+    {
+    }
+
+    public function init(): Cmd
+    {
+        $journal = $this->journal;
+
+        return Cmd::batch(
+            Cmd::tick(0.01),
+            Cmd::after(0.08, static function () use ($journal): null {
+                $journal->entries[] = 'after fired';
+
+                return null;
+            }),
+            Cmd::exec(['sh', '-c', 'sleep 0.1; touch ' . escapeshellarg($this->marker)]),
+            new UnnamedFeedCmd(),
+        );
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return UpdateResult::ignored($this);
+    }
+}
+
+final readonly class HostOfABusyMount extends App
+{
+    use Cloneable;
+
+    public function __construct(private Journal $journal, public ?BusyModel $busy)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return $this->busy === null
+            ? Text::new('gone')
+            : Layout::vertical(Mount::named('busy', $this->busy, Text::new('busy'), static fn (self $host, BusyModel $busy): self => $host->cloneWith(busy: $busy)));
+    }
+
+    protected function setup(): Cmd
+    {
+        return Cmd::batch(
+            Cmd::after(0.03, static fn (): Message => new LeaveNow()),
+            Cmd::after(0.3, static fn (): Message => new QuitNow()),
+        );
+    }
+
+    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    {
+        if ($message instanceof LeaveNow) {
+            return new UpdateResult($this->cloneWith(busy: null));
+        }
+        if ($message instanceof QuitNow) {
+            $this->journal->entries[] = 'quit';
+
+            return new UpdateResult($this, Cmd::quit());
+        }
+
+        return UpdateResult::ignored($this);
     }
 }
 

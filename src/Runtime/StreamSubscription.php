@@ -27,6 +27,7 @@ final class StreamSubscription
         public readonly Closure $onReadable,
         public readonly ?EffectId $id = null,
         public readonly ?Closure $wrap = null,
+        public readonly ?string $scope = null,
     ) {
     }
 

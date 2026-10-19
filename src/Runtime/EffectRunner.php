@@ -73,7 +73,12 @@ final class EffectRunner
     private array $handled = [];
 
     /**
-     * @var WeakMap<Message, EffectId> the effect each queued result came from
+     * @var WeakMap<RunningProcess, string>
+     */
+    private WeakMap $processScopes;
+
+    /**
+     * @var WeakMap<Message, array{?EffectId, ?string}> the effect each queued result came from, and its scope
      */
     private WeakMap $producers;
 
@@ -97,6 +102,7 @@ final class EffectRunner
         private readonly ?Tracer $tracer = null,
     ) {
         $this->processStarter = $processStarter ?? new ProcessStarter($clock);
+        $this->processScopes = new WeakMap();
         $this->producers = new WeakMap();
     }
 
@@ -109,7 +115,7 @@ final class EffectRunner
         $this->makeRoomFor($id, $wrap);
 
         match (true) {
-            $command instanceof TickCmd => $this->registerTicker($command->interval, $id, $wrap),
+            $command instanceof TickCmd => $this->registerTicker($command->interval, $id, $wrap, $scope),
             $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $id, $wrap, $scope),
             $command instanceof CancelCmd => $this->cancel($scope === null ? $command->id : $command->id->within($scope), $wrap),
             $command instanceof CancelScopeCmd => $this->cancelWithin($scope ?? throw new LogicException('A scope can only be cancelled from inside it'), $wrap),
@@ -118,21 +124,24 @@ final class EffectRunner
                 ErrorSource::Http,
                 $id,
                 $wrap,
+                $scope,
             ),
             $command instanceof ExecCmd => $this->keep(
                 fn (): RunningProcess => $this->processStarter->exec($command->withId($id), $wrap),
                 ErrorSource::Process,
                 $id,
                 $wrap,
+                $scope,
             ),
             $command instanceof ProcessCmd => $this->keep(
                 fn (): RunningProcess => $this->processStarter->streaming($command->withId($id), $wrap),
                 ErrorSource::Process,
                 $id,
                 $wrap,
+                $scope,
             ),
-            $command instanceof ListenCmd => $this->subscribeToStream($command, $id, $wrap),
-            default => $this->delegate($command, $id, $wrap),
+            $command instanceof ListenCmd => $this->subscribeToStream($command, $id, $wrap, $scope),
+            default => $this->delegate($command, $id, $wrap, $scope),
         };
     }
 
@@ -223,10 +232,10 @@ final class EffectRunner
      *
      * @param Closure(Message):Message|null $wrap
      */
-    private function delegate(Cmd $command, ?EffectId $id, ?Closure $wrap): void
+    private function delegate(Cmd $command, ?EffectId $id, ?Closure $wrap, ?string $scope): void
     {
         $handler = $this->handlerFor($command);
-        $effect = new HandledEffect($id);
+        $effect = new HandledEffect($id, $scope);
 
         try {
             $effect->stopper = $handler->start($command, $this->emitterFor($effect, $wrap), $this->finisherFor($effect));
@@ -271,7 +280,7 @@ final class EffectRunner
             if ($effect->over) {
                 return;
             }
-            $this->report($message, $wrap, $effect->id);
+            $this->report($message, $wrap, $effect->id, $effect->scope);
             if ($effect->starting) {
                 $effect->emittedWhileStarting = true;
 
@@ -302,12 +311,18 @@ final class EffectRunner
      * @param Closure(): RunningProcess     $start
      * @param Closure(Message):Message|null $wrap
      */
-    private function keep(Closure $start, ErrorSource $source, ?EffectId $id, ?Closure $wrap): void
+    private function keep(Closure $start, ErrorSource $source, ?EffectId $id, ?Closure $wrap, ?string $scope): void
     {
         try {
-            $this->processes[] = $start();
+            $process = $start();
         } catch (Throwable $error) {
             $this->report(new ErrorMsg($error, $source, $id), $wrap);
+
+            return;
+        }
+        $this->processes[] = $process;
+        if ($scope !== null) {
+            $this->processScopes[$process] = $scope;
         }
     }
 
@@ -331,7 +346,7 @@ final class EffectRunner
      */
     private function cancel(EffectId $id, ?Closure $wrap = null): bool
     {
-        return $this->cancelWhere(static fn (EffectId $running): bool => $running->equals($id), $wrap);
+        return $this->cancelWhere(static fn (?EffectId $running): bool => $running !== null && $running->equals($id), $wrap);
     }
 
     /**
@@ -339,12 +354,15 @@ final class EffectRunner
      */
     private function cancelWithin(string $scope, ?Closure $wrap): void
     {
-        $this->cancelWhere(static fn (EffectId $running): bool => $running->isWithin($scope), $wrap);
+        $this->cancelWhere(
+            static fn (?EffectId $running, ?string $startedIn): bool => $startedIn !== null && ($startedIn === $scope || str_starts_with($startedIn, $scope . '/')),
+            $wrap,
+        );
     }
 
     /**
-     * @param Closure(EffectId): bool       $matches
-     * @param Closure(Message):Message|null $wrap
+     * @param Closure(?EffectId, ?string): bool $matches the effect's name and the scope it was started in
+     * @param Closure(Message):Message|null     $wrap
      *
      * @return bool whether anything was still running
      */
@@ -355,16 +373,16 @@ final class EffectRunner
 
         $this->tickers = array_values(array_filter(
             $this->tickers,
-            static fn (TickerRecord $ticker): bool => $ticker->id === null || !$matches($ticker->id),
+            static fn (TickerRecord $ticker): bool => !$matches($ticker->id, $ticker->scope),
         ));
         $this->timers = array_values(array_filter(
             $this->timers,
-            static fn (TimerRecord $timer): bool => $timer->id === null || !$matches($timer->id),
+            static fn (TimerRecord $timer): bool => !$matches($timer->id, $timer->scope),
         ));
 
         $keptSubscriptions = [];
         foreach ($this->subscriptions as $subscription) {
-            if ($subscription->id !== null && $matches($subscription->id)) {
+            if ($matches($subscription->id, $subscription->scope)) {
                 $this->stopWatching($subscription);
                 continue;
             }
@@ -375,7 +393,7 @@ final class EffectRunner
         $remaining = [];
         foreach ($this->processes as $process) {
             $effectId = $process->id();
-            if ($effectId !== null && $matches($effectId)) {
+            if ($matches($effectId, $this->processScopes[$process] ?? null)) {
                 try {
                     $process->stop();
                 } catch (Throwable $error) {
@@ -389,7 +407,7 @@ final class EffectRunner
 
         $keptHandled = [];
         foreach ($this->handled as $effect) {
-            if ($effect->id !== null && $matches($effect->id)) {
+            if ($matches($effect->id, $effect->scope)) {
                 $this->stopHandled($effect, $wrap);
                 continue;
             }
@@ -406,7 +424,7 @@ final class EffectRunner
     }
 
     /**
-     * @param Closure(EffectId): bool $matches
+     * @param Closure(?EffectId, ?string): bool $matches
      */
     private function dropQueuedResultsOf(Closure $matches): void
     {
@@ -417,7 +435,7 @@ final class EffectRunner
         for ($left = $this->results->count(); $left > 0; --$left) {
             $message = $this->results->dequeue();
             $producer = $this->producers[$message] ?? null;
-            if ($producer === null || !$matches($producer)) {
+            if ($producer === null || !$matches(...$producer)) {
                 $this->results->enqueue($message);
             }
         }
@@ -438,22 +456,22 @@ final class EffectRunner
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    private function registerTicker(float $interval, ?EffectId $id = null, ?Closure $wrap = null): void
+    private function registerTicker(float $interval, ?EffectId $id, ?Closure $wrap, ?string $scope): void
     {
-        if ($id === null && $this->hasAnonymousTicker($interval, $wrap)) {
+        if ($id === null && $this->hasAnonymousTicker($interval, $wrap, $scope)) {
             return;
         }
         $now = $this->clock->now();
-        $this->tickers[] = new TickerRecord($now + $interval, $interval, $id, $wrap);
+        $this->tickers[] = new TickerRecord($now + $interval, $interval, $id, $wrap, $scope);
     }
 
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    private function hasAnonymousTicker(float $interval, ?Closure $wrap): bool
+    private function hasAnonymousTicker(float $interval, ?Closure $wrap, ?string $scope): bool
     {
         foreach ($this->tickers as $ticker) {
-            if ($ticker->id === null && $ticker->interval === $interval && $ticker->wrap === $wrap) {
+            if ($ticker->id === null && $ticker->interval === $interval && $ticker->wrap === $wrap && $ticker->scope === $scope) {
                 return true;
             }
         }
@@ -473,9 +491,9 @@ final class EffectRunner
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    private function subscribeToStream(ListenCmd $command, ?EffectId $id, ?Closure $wrap): void
+    private function subscribeToStream(ListenCmd $command, ?EffectId $id, ?Closure $wrap, ?string $scope): void
     {
-        $subscription = new StreamSubscription($command->stream, $command->onReadable, $id, $wrap);
+        $subscription = new StreamSubscription($command->stream, $command->onReadable, $id, $wrap, $scope);
         $subscription->watcherId = EventLoop::onReadable($command->stream, function () use ($subscription): void {
             $subscription->readable = true;
             ($this->wake)();
@@ -487,12 +505,13 @@ final class EffectRunner
     {
         $remaining = [];
         foreach ($this->processes as $process) {
+            $scope = $this->processScopes[$process] ?? null;
             try {
                 foreach ($process->pump() as $message) {
-                    $this->queue($message, $process->id());
+                    $this->queue($message, $process->id(), $scope);
                 }
             } catch (Throwable $error) {
-                $this->queue($process->map(new ErrorMsg($error, ErrorSource::Process, $process->id())), $process->id());
+                $this->queue($process->map(new ErrorMsg($error, ErrorSource::Process, $process->id())), $process->id(), $scope);
                 try {
                     $process->stop();
                 } catch (Throwable) {
@@ -518,10 +537,10 @@ final class EffectRunner
 
             try {
                 foreach ($subscription->read() as $message) {
-                    $this->report($message, $subscription->wrap, $subscription->id);
+                    $this->report($message, $subscription->wrap, $subscription->id, $subscription->scope);
                 }
             } catch (Throwable $error) {
-                $this->report(new ErrorMsg($error, ErrorSource::Listen, $subscription->id), $subscription->wrap, $subscription->id);
+                $this->report(new ErrorMsg($error, ErrorSource::Listen, $subscription->id), $subscription->wrap, $subscription->id, $subscription->scope);
                 $this->stopWatching($subscription);
                 continue;
             }
@@ -558,7 +577,7 @@ final class EffectRunner
                 continue;
             }
 
-            $this->report(new TickMsg($now, $ticker->id), $ticker->wrap, $ticker->id);
+            $this->report(new TickMsg($now, $ticker->id), $ticker->wrap, $ticker->id, $ticker->scope);
             $kept[] = $ticker->rescheduled($now);
         }
 
@@ -584,19 +603,19 @@ final class EffectRunner
             try {
                 $result = ($timer->callback)();
             } catch (Throwable $error) {
-                $this->report(new ErrorMsg($error, ErrorSource::Timer, $timer->id), $timer->wrap, $timer->id);
+                $this->report(new ErrorMsg($error, ErrorSource::Timer, $timer->id), $timer->wrap, $timer->id, $timer->scope);
                 continue;
             }
             if ($result instanceof Cmd) {
                 ($this->dispatch)($result, $timer->wrap, $timer->scope);
             } elseif ($result instanceof Message) {
-                $this->report($result, $timer->wrap, $timer->id);
+                $this->report($result, $timer->wrap, $timer->id, $timer->scope);
             } elseif ($result !== null) {
                 $this->report(new ErrorMsg(
                     new UnexpectedValueException('Cmd::after() callback must return Message, Cmd, or null'),
                     ErrorSource::Timer,
                     $timer->id,
-                ), $timer->wrap, $timer->id);
+                ), $timer->wrap, $timer->id, $timer->scope);
             }
         }
     }
@@ -612,16 +631,16 @@ final class EffectRunner
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    private function report(Message $message, ?Closure $wrap, ?EffectId $producer = null): void
+    private function report(Message $message, ?Closure $wrap, ?EffectId $producer = null, ?string $scope = null): void
     {
-        $this->queue($wrap === null ? $message : $wrap($message), $producer);
+        $this->queue($wrap === null ? $message : $wrap($message), $producer, $scope);
     }
 
-    private function queue(Message $message, ?EffectId $producer): void
+    private function queue(Message $message, ?EffectId $producer, ?string $scope): void
     {
         // An enum case is one shared instance: tagging it would tag every copy in the queue.
-        if ($producer !== null && !$message instanceof UnitEnum) {
-            $this->producers[$message] = $producer;
+        if (($producer !== null || $scope !== null) && !$message instanceof UnitEnum) {
+            $this->producers[$message] = [$producer, $scope];
         }
         $this->results->enqueue($message);
     }
