@@ -267,10 +267,12 @@ has no use for.
 
 `?` or Ctrl+K opens a list of every key that works where the keyboard is, laid
 over the screen: every key the focused widget answers (including the ones the
-footer leaves out), the containers around it, the app's own keys and the global
-ones such as vim mode's, each labelled the way the footer labels it. A key is
-listed once, in the closest group that answers it, one action per line, in the
-words of the hints its widget publishes (a pane whose Enter "fill in"s says so).
+footer leaves out), the containers around it and the app's own keys, each
+labelled the way the footer labels it. A global key such as vim mode's is listed
+with whatever on screen answers its action, and not at all where nothing does,
+as a global chord binds only there. A key is listed once, in the closest group
+that answers it, one action per line, in the words of the hints its widget
+publishes (a pane whose Enter "fill in"s says so).
 It is read off the live bindings, so it cannot go stale.
 `?`, Ctrl+K or Esc closes it, a Ctrl or Alt shortcut closes it and still acts
 (Ctrl+Q quits), and it scrolls with `↑`/`↓`, `j`/`k`, PageUp/PageDown, Home/End

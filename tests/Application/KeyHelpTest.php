@@ -67,13 +67,13 @@ final class KeyHelpTest extends TestCase
     }
 
     #[Test]
-    public function inVimModeItNamesTheVimKeysAndTheChords(): void
+    public function inVimModeItNamesTheVimKeysAndChordsTheListAnswersAndNoOthers(): void
     {
         $screen = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->initialize()->press('?')->renderScreen()->plainText();
 
         self::assertMatchesRegularExpression('/j\/↓\s+down/u', $screen);
         self::assertMatchesRegularExpression('/gg\/Home\s+top/u', $screen);
-        self::assertStringContainsString('In every pane', $screen);
+        self::assertDoesNotMatchRegularExpression('/│ h\s+left/u', $screen, 'nothing here moves left');
     }
 
     #[Test]

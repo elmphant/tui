@@ -32,11 +32,16 @@ trait SearchMode
 
     /**
      * Esc and Enter hand the keys back while the field holds them, and Enter means
-     * nothing to the content of a filter that does not bind it itself.
+     * nothing to the content of a filter that does not bind it itself. On the
+     * content the filter answers the search key, whichever binding names it.
      */
     public function momentaryKeybindings(): Keybindings
     {
-        return $this->isSearching() ? FilterBar::backKeybindings() : Keybindings::empty();
+        return match (true) {
+            $this->isSearching() => FilterBar::backKeybindings(),
+            $this->searchIsBound() => new Keybindings([Actions::SEARCH => []]),
+            default => Keybindings::empty(),
+        };
     }
 
     private function searchIsBound(): bool

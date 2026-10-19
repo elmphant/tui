@@ -205,6 +205,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     final public function keyHelp(FocusState $focus): array
     {
         // Closest first, and a key is listed once: in the closest group that answers it.
+        // A global key is listed only where something on screen answers its action.
         $globals = $this->resolvedGlobalKeybindings();
         $focused = $this->componentRegistry()->focusable($focus->focused());
         $listed = [];
@@ -242,7 +243,6 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
                 ->append($this->keyHelpBindings()),
             $listed,
         );
-        $groups['In every pane'] = $this->described($globals, $listed);
 
         return $groups;
     }
