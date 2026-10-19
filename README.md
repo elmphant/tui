@@ -214,8 +214,8 @@ named keys stay shortcuts, so give app-wide commands Ctrl chords (`ctrl+n`, not
 A widget's bindings are its `defaultKeybindings()`, then what `withKeybindings()`
 replaces per action, then the App's `globalKeybindings()` on top.
 `VimMode::keybindings()` binds `j`/`k` (cursor and scroll), `ctrl+d`/`ctrl+u`
-(page) and `h`/`l` (previous/next tab); a tree's expand letters are the
-application's to bind.
+(page), `h`/`l` (left/right: collapse or leave and expand or enter in a tree,
+the cursor in a row of choices) and `H`/`L` (previous/next tab).
 
 The keyboard starts on the first stop in tree order — inside a `TabBar`'s first
 page (`tabs/0`), not on its strip — so a header control drawn above a field takes

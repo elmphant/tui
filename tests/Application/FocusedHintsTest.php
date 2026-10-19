@@ -77,7 +77,7 @@ final class FocusedHintsTest extends TestCase
         $driven = ModelHarness::for(new VimTabsApp(), 40, 10)->initialize();
 
         self::assertSame(
-            ['h' => 'previous tab', 'l' => 'next tab'],
+            ['Shift+H' => 'previous tab', 'Shift+L' => 'next tab'],
             $driven->focusedHints(),
             'a footer names the keys vim mode made active, not the ones it was authored with',
         );
