@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\Keyboard;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
@@ -658,7 +659,7 @@ final readonly class MouseApp extends CopyableTestApp
         return Text::new($this->clicked ? 'clicked' : 'waiting');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return $message->isClick()
             ? new UpdateResult($this->cloneWith(clicked: true))
@@ -677,7 +678,7 @@ final readonly class MouseRectApp extends CopyableTestApp
         return Text::new('x');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return new UpdateResult($this->cloneWith(width: $screen->width, height: $screen->height));
     }
@@ -701,7 +702,7 @@ final readonly class MouseRectWithFocusablesApp extends CopyableTestApp
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return new UpdateResult($this->cloneWith(width: $screen->width, height: $screen->height));
     }

@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\Keyboard;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
@@ -61,7 +62,7 @@ final readonly class PopupOnPressApp extends App
             : $base;
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return $this->open || !$message->isClick() ? UpdateResult::ignored($this) : new UpdateResult(new self(true));
     }

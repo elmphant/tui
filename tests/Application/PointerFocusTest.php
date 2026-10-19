@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\Keyboard;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\ComponentId;
@@ -220,7 +221,7 @@ final readonly class ClickableChromeApp extends App
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return $message->y === 0
             ? $this->then(Cmd::focus(ComponentId::named('second')))

@@ -106,7 +106,7 @@ abstract readonly class App
     protected function setup(): ?Cmd { return null; }         // initial commands
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
     protected function onAction(string $action, KeyMsg $message): UpdateResult {}  // 'quit' quits
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult { return UpdateResult::ignored($this); }  // $keyboard: focused(), hints()
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
     protected function onResize(ResizeMsg $message): UpdateResult { return UpdateResult::ignored($this); }
     protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
@@ -835,8 +835,10 @@ first. Hand `withRight()` shorter forms after the first, longest to shortest:
 the footer draws the first that leaves every hint whole, and no right slot at
 all when even the shortest would not. Only then is a hint left out. A host that
 hit-tests the right slot itself asks where it is drawn:
-`$footer->rightSlotArea($area, $this->keyboardHints())` inside an App hook answers
-the rect of the form shown, or null once the slot has given way.
+`$footer->rightSlotArea($area, $keyboard->hints())` in `onMouse()` answers the
+rect of the form shown, or null once the slot has given way. The `Keyboard` an
+`onMouse()` hook is handed says who holds the keyboard for that press
+(`focused()`) and the hints its footer shows (`hints()`).
 
 ```php
 use Elmphant\Tui\Widget\Bar\{FocusHints, Footer};

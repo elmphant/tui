@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Keyboard;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
@@ -129,7 +130,7 @@ final readonly class HookRecordingApp extends App
         return UpdateResult::ignored(new self('action:' . $action));
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return UpdateResult::ignored(new self('mouse'));
     }

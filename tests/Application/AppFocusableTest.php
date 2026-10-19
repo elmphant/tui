@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\Keyboard;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
@@ -783,7 +784,7 @@ final readonly class SwappingOnMouseApp extends CopyableTestApp
             : $this->bindProperty('before', $this->before, 'field');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return UpdateResult::ignored($this->cloneWith(swapped: true));
     }
@@ -1057,7 +1058,7 @@ final readonly class GlobalKeybindingsToggleApp extends CopyableTestApp
         return $this->bindProperty('widget', $this->widget, 'binding-capture');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return new UpdateResult($this->cloneWith(currentBindings: $this->nextBindings));
     }
@@ -1595,7 +1596,7 @@ final readonly class MouseCommandFocusableApp extends CopyableTestApp
         return $this->bindProperty('widget', $this->widget, 'click-command');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         if ($message->isClick()) {
             return $this->then(Cmd::tick(0.1));
@@ -1645,7 +1646,7 @@ final readonly class MouseTrackingFocusableApp extends CopyableTestApp
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         if ($message->isClick()) {
             return new UpdateResult($this->cloneWith(mouseTracked: true));
@@ -1776,7 +1777,7 @@ final readonly class MouseSwapApp extends CopyableTestApp
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         if ($this->swapped) {
             return UpdateResult::ignored($this);

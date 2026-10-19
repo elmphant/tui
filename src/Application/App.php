@@ -93,19 +93,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
 
     final public function update(Message $message, Rect $screenRect, FocusState $focus = new FocusState()): UpdateResult
     {
-        $updating = self::focusDuringUpdate();
-        $outer = $updating[$this] ?? null;
-        $updating[$this] = $focus;
-
-        try {
-            return $this->stoppingWhatLeft($this->routed($message, $screenRect, $focus));
-        } finally {
-            if ($outer === null) {
-                unset($updating[$this]);
-            } else {
-                $updating[$this] = $outer;
-            }
-        }
+        return $this->stoppingWhatLeft($this->routed($message, $screenRect, $focus));
     }
 
     /**
@@ -273,7 +261,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     /**
      * @return UpdateResult<static>
      */
-    protected function onMouse(MouseMsg $message, Rect $screen): UpdateResult
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return UpdateResult::ignored($this);
     }
@@ -350,19 +338,6 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     protected function then(Cmd $command): UpdateResult
     {
         return new UpdateResult($this, $command);
-    }
-
-    /**
-     * The keys whatever holds the keyboard answers, as `FocusHints` shows them, for
-     * a hook that hit-tests what a footer drew. Empty outside an update.
-     *
-     * @return array<string, string>
-     */
-    final protected function keyboardHints(): array
-    {
-        $focus = self::focusDuringUpdate()[$this] ?? null;
-
-        return $focus === null ? [] : $this->hintsOfFocused($focus->focused());
     }
 
     /**
@@ -882,7 +857,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         array $components,
         ?ComponentId $holder = null,
     ): UpdateResult {
-        $appResult = $this->onMouse($message, $screenRect);
+        $appResult = $this->onMouse($message, $screenRect, new Keyboard($holder, fn (): array => $this->hintsOfFocused($holder)));
         $pressed = $this->appModel($appResult)->offeredToTheMountUnder($message, $screenRect);
         $appResult = new UpdateResult($pressed->model, self::combineCommands($appResult->command, $pressed->command));
         $current = $this->appModel($appResult);
@@ -1143,19 +1118,6 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
          * @var WeakMap<object, ChildDispatcher> $dispatchers
          */
         return $dispatchers[$this] ??= new ChildDispatcher($this->resolvedGlobalKeybindings());
-    }
-
-    /**
-     * Where the keyboard is while an update of that App value runs: a hook asks
-     * through keyboardHints(), and the entry is gone once the update returns.
-     *
-     * @return WeakMap<self, FocusState>
-     */
-    private static function focusDuringUpdate(): WeakMap
-    {
-        static $updating = null;
-
-        return $updating ??= new WeakMap();
     }
 
     private function resolvedGlobalKeybindings(): Keybindings
