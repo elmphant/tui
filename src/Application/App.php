@@ -210,10 +210,14 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         $groups = [];
 
         if ($focused !== null) {
-            $groups['Here'] = $this->keysOf($focused->widget, $globals, $listed);
+            $groups['Here'] = $this->keysOf($focused->widget, $globals, $listed, $this->hintsOfFocused($focused->id));
             $groups['Around it'] = [];
             foreach (array_reverse($this->componentRegistry()->enclosing($focused->id)) as $component) {
-                $groups['Around it'] += $this->keysOf($component->widget, $globals, $listed);
+                $widget = $component->widget;
+                $wording = $widget instanceof PublishesHints && $widget instanceof KeybindingsAware
+                    ? $widget->withGlobalKeybindings($globals)->hints()
+                    : [];
+                $groups['Around it'] += $this->keysOf($widget, $globals, $listed, $wording);
             }
         }
 
@@ -1206,13 +1210,15 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * The keys a widget answers, with the global ones it answers too.
+     * The keys a widget answers, with the global ones it answers too, in the words
+     * of the hints it publishes.
      *
-     * @param array<string, true> $listed
+     * @param array<string, true>   $listed
+     * @param array<string, string> $wording
      *
      * @return array<string, string>
      */
-    private function keysOf(Widget $widget, Keybindings $globals, array &$listed): array
+    private function keysOf(Widget $widget, Keybindings $globals, array &$listed, array $wording): array
     {
         if (!$widget instanceof KeybindingsAware) {
             return [];
@@ -1220,21 +1226,26 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
 
         $own = $widget->withGlobalKeybindings(null)->effectiveKeybindings()->actions();
 
-        return $this->described($widget->withGlobalKeybindings($globals)->effectiveKeybindings()->restrictedTo(...$own), $listed);
+        return $this->described($widget->withGlobalKeybindings($globals)->effectiveKeybindings()->restrictedTo(...$own), $listed, $wording);
     }
 
     /**
-     * One line per action, naming only the keys no closer group has listed yet.
+     * One line per action, naming only the keys no closer group has listed yet. A
+     * hint whose label is the key an action leads with names that action; the
+     * rest are described by actionDescription().
      *
-     * @param array<string, true> $listed the key labels already listed, added to as this lists more
+     * @param array<string, true>   $listed  the key labels already listed, added to as this lists more
+     * @param array<string, string> $wording key label => description, as hints are
      *
      * @return array<string, string> key label => what it does
      */
-    private function described(Keybindings $bindings, array &$listed): array
+    private function described(Keybindings $bindings, array &$listed, array $wording = []): array
     {
         $described = [];
 
         foreach ($bindings->actions() as $action) {
+            $leading = ($bindings->get($action)[0] ?? null)?->label();
+            $description = $leading !== null && isset($wording[$leading]) ? $wording[$leading] : $this->actionDescription($action);
             $labels = [];
             foreach ($bindings->get($action) as $pattern) {
                 $label = $pattern->label();
@@ -1245,7 +1256,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
             }
 
             if ($labels !== []) {
-                $described[implode('/', $labels)] = $this->actionDescription($action);
+                $described[implode('/', $labels)] = $description;
             }
         }
 

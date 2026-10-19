@@ -266,8 +266,9 @@ A widget with a filter field of its own follows the same rule by using the
 over the screen: every key the focused widget answers (including the ones the
 footer leaves out), the containers around it, the app's own keys and the global
 ones such as vim mode's, each labelled the way the footer labels it. A key is
-listed once, in the closest group that answers it, one action per line. It is
-read off the live bindings, so it cannot go stale.
+listed once, in the closest group that answers it, one action per line, in the
+words of the hints its widget publishes (a pane whose Enter "fill in"s says so).
+It is read off the live bindings, so it cannot go stale.
 `?`, Ctrl+K or Esc closes it, a Ctrl or Alt shortcut closes it and still acts
 (Ctrl+Q quits), and it scrolls with `↑`/`↓`, `j`/`k`, PageUp/PageDown, Home/End
 and the wheel when it is taller than the screen. While a field takes the keys,

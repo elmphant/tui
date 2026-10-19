@@ -77,6 +77,14 @@ final class KeyHelpTest extends TestCase
     }
 
     #[Test]
+    public function aKeyIsDescribedInTheWordsOfTheHintsItsWidgetPublishes(): void
+    {
+        $rows = self::keyHelpRows(ModelHarness::for(new WordedApp(new WordedWidget()), 60, 30)->initialize()->press('?'));
+
+        self::assertContains('Enter  fill in', array_map(static fn (string $row): string => preg_replace('/\s{2,}/u', '  ', $row) ?? $row, $rows));
+    }
+
+    #[Test]
     public function aKeyIsListedOnceInTheClosestGroupThatAnswersIt(): void
     {
         $rows = self::keyHelpRows(ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 70, 60)->initialize()->press('?'));
