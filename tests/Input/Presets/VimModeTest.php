@@ -129,6 +129,15 @@ final class VimModeTest extends TestCase
     }
 
     #[Test]
+    public function afterGTheFooterOffersTopThenNextAndPreviousTab(): void
+    {
+        self::assertSame(
+            ['g' => 'top', 't' => 'next tab', 'T' => 'previous tab'],
+            VimMode::keybindings()->chords()->continuations(new KeyMsg('g')),
+        );
+    }
+
+    #[Test]
     public function isCachedSingleton(): void
     {
         self::assertSame(VimMode::keybindings(), VimMode::keybindings());

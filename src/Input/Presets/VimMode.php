@@ -22,8 +22,8 @@ final class VimMode
             Actions::END => ['G'],
             Actions::CURSOR_LEFT => ['h'],
             Actions::CURSOR_RIGHT => ['l'],
-            Actions::TAB_PREVIOUS => ['H', 'g T'],
             Actions::TAB_NEXT => ['L', 'g t'],
+            Actions::TAB_PREVIOUS => ['H', 'g T'],
             Actions::SCROLL_UP => ['k'],
             Actions::SCROLL_DOWN => ['j'],
         ]);

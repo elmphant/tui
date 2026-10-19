@@ -211,11 +211,36 @@ text for that component alone: `onKey()`, `applicationKeybindings()`,
 named keys stay shortcuts, so give app-wide commands Ctrl chords (`ctrl+n`, not
 `n`); a bare letter works only while a list or a button holds the keyboard.
 
+A pattern of several keys separated by spaces is a chord, typed one key after the
+other: `'g g'`, `'g T'`, `'ctrl+x ctrl+s'`. The runtime holds the first keys back
+until the chord completes, then hands the last key on with the others in
+`KeyMsg::$preceding`, so a chord matches like any other pattern. A key that does
+not go on with the chord releases the held keys first and is handled after them;
+Esc cancels it; and if nothing follows for half a second the held keys are
+handled on their own, so a widget that binds a plain `g` still gets it. While
+the focused component takes text, a chord that starts with a text key is typed
+instead, as a single letter is.
+
+```php
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
+
+$bindings = new Keybindings([Actions::HOME => ['g g'], Actions::END => ['G']]);
+
+assert($bindings->hints(['top' => Actions::HOME, 'bottom' => Actions::END]) === ['gg' => 'top', 'G' => 'bottom']);
+```
+
 A widget's bindings are its `defaultKeybindings()`, then what `withKeybindings()`
 replaces per action, then the App's `globalKeybindings()` on top.
-`VimMode::keybindings()` binds `j`/`k` (cursor and scroll), `ctrl+d`/`ctrl+u`
-(page), `h`/`l` (left/right: collapse or leave and expand or enter in a tree,
-the cursor in a row of choices) and `H`/`L` (previous/next tab).
+`VimMode::keybindings()` adds:
+
+| Keys | Action |
+|---|---|
+| `j` / `k` | cursor down / up, and scroll |
+| `h` / `l` | left / right: collapse or leave and expand or enter in a tree, the cursor in a row of choices |
+| `gg` / `G` | top / bottom (`Actions::HOME` / `Actions::END`) |
+| `ctrl+d` / `ctrl+u` | page down / up (there is no half-page action) |
+| `L` / `H`, `gt` / `gT` | next / previous tab |
 
 The keyboard starts on the first stop in tree order — inside a `TabBar`'s first
 page (`tabs/0`), not on its strip — so a header control drawn above a field takes
@@ -779,7 +804,13 @@ $hints = Keybindings::rowNavigation()->hints([
 // ['(Shift+)↑/↓' => 'select', 'Enter' => 'choose']
 ```
 
-`KeyPattern::label()` formats a single pattern.
+`KeyPattern::label()` formats a single pattern: a capital letter as itself (`G`,
+not `Shift+G`) and a chord as its keys are typed (`gg`, `gt/gT`).
+
+While a chord is open, `FocusHints` swaps the hints for what can follow it, read
+from `RenderContext::pendingChord()`: after `g` in vim mode the footer reads
+`g…     g  top   t  next tab   T  previous tab   Esc  cancel`, and goes back once the
+chord completes, is cancelled or times out.
 
 A bar places each slot in the width the slot's own `Sizing` declares — a bar is
 not an allocator, so a flexible slot is not stretched to the row. A widget with
