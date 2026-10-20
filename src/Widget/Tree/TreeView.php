@@ -128,16 +128,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * The node a pointer event lands on, or null past the last row.
-     */
-    public function pathAt(MouseMsg $message, Rect $area): ?TreePath
-    {
-        $row = $this->rowAt($message, $area);
-
-        return $row === null ? null : $row['path'];
-    }
-
-    /**
      * Bring the cursor back into a viewport it has stepped out of.
      */
     public function scrolledToCursor(Rect $area): self
