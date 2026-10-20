@@ -122,6 +122,34 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function everyRuleOfAFieldIsAsked(): void
+    {
+        $form = Form::new('Task')->withField(Field::text('due', 'Due')
+            ->withRule(static fn (mixed $value): ?string => $value === 'never' ? 'Due cannot be never' : null)
+            ->withRule(static fn (mixed $value): ?string => $value === 'soon' ? 'Due needs a date' : null));
+
+        self::assertSame(['due' => 'Due cannot be never'], $form->withValues(['due' => 'never'])->problems());
+        self::assertSame(['due' => 'Due needs a date'], $form->withValues(['due' => 'soon'])->problems());
+    }
+
+    #[Test]
+    public function aSecretFieldShowsDotsForWhatIsTyped(): void
+    {
+        $form = WidgetHarness::for(self::userForm(), 70, 24)->press('tab')->type('hunter2');
+
+        self::assertStringNotContainsString('hunter2', $form->screen()->plainText());
+        self::assertSame('hunter2', $form->widget()->values()['password']);
+    }
+
+    #[Test]
+    public function theRuleAboveTheFootSaysWhatIsMissingOnceASubmitIsTried(): void
+    {
+        self::assertStringNotContainsString('fill in what is required', WidgetHarness::for(self::userForm(), 70, 24)->screen()->plainText());
+
+        self::assertStringContainsString('fill in what is required', WidgetHarness::for(self::userForm()->submitted(), 70, 24)->screen()->plainText());
+    }
+
+    #[Test]
     public function aRuleLeavesAnEmptyFieldToRequired(): void
     {
         $form = Form::new('Task')
@@ -139,6 +167,21 @@ final class FormTest extends TestCase
         $form->press('tab');
 
         self::assertStringContainsString('Username is required', $form->screen()->plainText());
+    }
+
+    #[Test]
+    public function aFieldLeftEarlierStillSaysWhatIsWrongAfterTheNextIsLeft(): void
+    {
+        $form = Form::new('Login')
+            ->withField(Field::text('username', 'Username')->required())
+            ->withField(Field::text('password', 'Password')->required())
+            ->withField(Field::text('site', 'Site'))
+            ->withErrorsShown(ShowErrors::AfterLeaving);
+
+        $screen = WidgetHarness::for($form, 70, 24)->press('tab', 'tab')->screen()->plainText();
+
+        self::assertStringContainsString('Username is required', $screen);
+        self::assertStringContainsString('Password is required', $screen);
     }
 
     #[Test]
