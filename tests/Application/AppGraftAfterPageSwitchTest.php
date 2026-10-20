@@ -30,9 +30,9 @@ final class AppGraftAfterPageSwitchTest extends TestCase
             ->addTab('Form')->add(Panel::new('Form')->add(Dropdown::new(Select::new(['a', 'b', 'c']))))
             ->addTab('About')->add(Paragraph::fromText('prose'))), 60, 12)->initialize();
         $harness->renderFrame();
-        $harness->dispatch(new KeyMsg(Key::Tab));
         $harness->dispatch(new KeyMsg(Key::Enter));
         $harness->renderFrame();
+        self::assertStringContainsString('│││a', $harness->renderScreen()->plainText());
         $about = mb_strpos($harness->renderScreen()->lineAt(1), 'About');
         self::assertNotFalse($about);
 
