@@ -367,6 +367,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return TabStripLayout::across(
             array_map(static fn (TabPage $tab): string => $tab->label, $this->tabs),
             $area,
+            $this->selectedTab,
         );
     }
 
@@ -384,10 +385,11 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
         $layout = $this->tabStripLayout($area);
 
-        foreach ($this->tabs as $tabIndex => $tab) {
+        foreach (array_keys($this->tabs) as $tabIndex) {
             $cell = $layout->rectOf($tabIndex);
-            if ($cell === null) {
-                break;
+            $label = $layout->labelOf($tabIndex);
+            if ($cell === null || $label === null) {
+                continue;
             }
 
             $labelRow = $cell->y + 1;
@@ -401,12 +403,22 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
                 $frame->putChar($cell->x, $labelRow, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
                 $frame->putChar($cell->x + 1, $labelRow, ' ', $borderForeground, $borderBackground);
-                $frame->putStyled($cell->x + 2, $labelRow, $tab->label, $theme->titleStyle);
+                $frame->putStyled($cell->x + 2, $labelRow, $label, $theme->titleStyle);
                 $frame->putChar($tabRight - 1, $labelRow, ' ', $borderForeground, $borderBackground);
                 $frame->putChar($tabRight, $labelRow, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
             } else {
-                $frame->putStyled($cell->x + 2, $labelRow, $tab->label, $theme->dim);
+                $frame->putStyled($cell->x + 2, $labelRow, $label, $theme->dim);
             }
+        }
+
+        $hiddenBefore = $layout->hiddenBeforeColumn();
+        if ($hiddenBefore !== null) {
+            $frame->putStyled($hiddenBefore, $area->y + 1, TabStripLayout::HIDDEN_BEFORE, $theme->dim);
+        }
+
+        $hiddenAfter = $layout->hiddenAfterColumn();
+        if ($hiddenAfter !== null) {
+            $frame->putStyled($hiddenAfter, $area->y + 1, TabStripLayout::HIDDEN_AFTER, $theme->dim);
         }
 
         $this->renderTabHint($frame, $area, $layout->columnAfterLastTab(), $theme, $focused);
@@ -437,7 +449,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         $frame->putChar(
             $cell->x,
             $baselineY,
-            $this->selectedTab === 0 ? $border->vertical : $border->bottomRight,
+            $cell->x === $area->x ? $border->vertical : $border->bottomRight,
             $foreground,
             $background,
             $attributes,
