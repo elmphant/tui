@@ -31,6 +31,18 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aRequiredFlagShowsItIsRequiredBeforeTheFormIsSubmitted(): void
+    {
+        $form = Form::new('Sign up')
+            ->withField(Field::flag('terms', 'Accept the terms', 'You must agree to continue')->required());
+
+        $screen = WidgetHarness::for($form, 70, 24)->screen();
+
+        self::assertStringContainsString('*required  You must agree to continue', $screen->plainText());
+        self::assertStringContainsString('[ ] Accept the terms', $screen->plainText());
+    }
+
+    #[Test]
     public function theKeyboardArrivesOnTheFirstFieldAndTabWalksOnToTheNext(): void
     {
         $form = WidgetHarness::for(self::userForm(), 70, 24)->type('ada')->press('tab')->type('secret');

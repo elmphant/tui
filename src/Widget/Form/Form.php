@@ -386,11 +386,16 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     private static function labelOf(Field $field): Widget
     {
         $name = $field->labelledByItsWidget ? '' : $field->label;
-        $spacer = $name === '' || $field->description === '' ? '' : '  ';
+        $mark = match (true) {
+            !$field->required => '',
+            $name === '' => '*required',
+            default => ' *required',
+        };
+        $spacer = $name . $mark === '' || $field->description === '' ? '' : '  ';
 
         return Paragraph::fromLines([new Line([
             Span::token($name, StyleToken::Base)->bold(),
-            Span::token($name !== '' && $field->required ? ' *required' : '', StyleToken::Accent),
+            Span::token($mark, StyleToken::Accent),
             Span::token($spacer . $field->description, StyleToken::Dim),
         ])])->withWrap(Wrap::WordWrap);
     }
