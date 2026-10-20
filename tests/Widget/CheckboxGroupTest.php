@@ -426,6 +426,20 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($group, $result->model);
     }
 
+    #[Test]
+    public function aClickOnTheLabelOfAScrolledGroupTicksNothing(): void
+    {
+        $area = new Rect(0, 0, 30, 4);
+        $group = CheckboxGroup::new(['one', 'two', 'three', 'four', 'five'], 'Pick');
+        foreach (range(1, 4) as $step) {
+            $group = $group->update(new KeyMsg(Key::Down), $area)->model;
+        }
+
+        $clicked = $group->update(new MouseMsg(5, 0, MouseAction::Press, MouseButton::Left), $area)->model;
+
+        self::assertSame([], $clicked->value());
+    }
+
     // L118: GreaterThanOrEqualTo — clicking on blank line after label does nothing
     #[Test]
     public function mouseClickOnBlankLineAfterLabelDoesNotToggle(): void

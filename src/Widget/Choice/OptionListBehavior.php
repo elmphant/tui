@@ -70,9 +70,9 @@ trait OptionListBehavior
             return null;
         }
 
-        $row = $message->y - $area->y + $this->cursorScrollOffset($area->height) - $this->rowOffset();
+        $index = $this->optionIndexAt($message, $area, count($this->options));
 
-        return $this->options[$row] ?? null;
+        return $index === null ? null : $this->options[$index];
     }
 
     public function hasOption(string $option): bool

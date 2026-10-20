@@ -59,9 +59,10 @@ trait OptionCursor
      */
     protected function optionIndexAt(MouseMsg $message, Rect $area, int $count): ?int
     {
-        $index = $message->y - $area->y + $this->cursorScrollOffset($area->height) - $this->rowOffset();
+        $row = $message->y - $area->y - $this->rowOffset();
+        $index = $row + $this->cursorScrollOffset($area->height);
 
-        return $index >= 0 && $index < $count ? $index : null;
+        return $row >= 0 && $index < $count ? $index : null;
     }
 
     /**
