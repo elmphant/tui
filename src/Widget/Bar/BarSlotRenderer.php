@@ -95,11 +95,12 @@ final class BarSlotRenderer
     /**
      * Route a message to whichever bar slots are interactive.
      *
-     * @param array{leftSlot: ?Widget, centerSlot: ?Widget, rightSlot: ?Widget} $slots keyed by the constructor property to override
+     * @param array{leftSlot: ?Widget, centerSlot: ?Widget, rightSlot: ?Widget} $slots   keyed by the constructor property to override
+     * @param array<string, ?Rect>                                              $drawnAt where a slot is drawn somewhere other than its own width puts it
      *
      * @return array{array<string, Interactive>, ?Cmd}
      */
-    public static function updateSlots(array $slots, Message $message, Rect $contentArea, ?Alignment $markedSlot = null, ?Keybindings $globalKeybindings = null): array
+    public static function updateSlots(array $slots, Message $message, Rect $contentArea, ?Alignment $markedSlot = null, ?Keybindings $globalKeybindings = null, array $drawnAt = []): array
     {
         /** @var array<string, Interactive> $interactive */
         $interactive = array_filter($slots, static fn (?Widget $slot): bool => $slot instanceof Interactive);
@@ -108,7 +109,7 @@ final class BarSlotRenderer
         foreach ($interactive as $key => $slot) {
             // A slot with no width of its own is still on the bar and still takes
             // keys; only a click has nowhere to land.
-            $areas[$key] = self::rectFor($slot, self::ALIGNMENTS[$key], $contentArea)
+            $areas[$key] = (\array_key_exists($key, $drawnAt) ? $drawnAt[$key] : self::rectFor($slot, self::ALIGNMENTS[$key], $contentArea))
                 ?? new Rect($contentArea->x, $contentArea->y, 0, 1);
         }
 

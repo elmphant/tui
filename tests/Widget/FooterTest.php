@@ -22,12 +22,14 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\UserInput;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TickTally;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Bar\FocusHints;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Bar\StatusBar;
+use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -1024,6 +1026,31 @@ final class FooterTest extends TestCase
         self::assertEquals(new Rect(38, 0, 15, 1), $footer->rightSlotArea($area));
         self::assertEquals(new Rect(46, 0, 7, 1), $footer->rightSlotArea($area, ['c' => 'three', 'd' => 'four']));
         self::assertNull($footer->rightSlotArea($area, ['c' => 'three', 'd' => 'four', 'e' => 'five']));
+    }
+
+    #[Test]
+    public function aClickOnTheHintsNeverPressesARightSlotThatHasGivenWay(): void
+    {
+        $footer = Footer::new()
+            ->withLeft(StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three', 'd' => 'four']))
+            ->withRight(Button::new('Support · 0.1.0', new TestMessage('support')), Button::new('Support', new TestMessage('support')));
+        $area = Rect::fromSize(45, 1);
+
+        $pressed = $footer->update(UserInput::click(30, 0), $area)->model;
+        self::assertInstanceOf(Footer::class, $pressed);
+
+        self::assertNull($pressed->update(UserInput::release(30, 0), $area)->command);
+    }
+
+    #[Test]
+    public function aRightSlotThatHasGivenWayIsPlacedNowhere(): void
+    {
+        $hints = StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three', 'd' => 'four']);
+        $footer = Footer::new()
+            ->withLeft($hints)
+            ->withRight(Text::new('Support · 0.1.0'), Text::new('Support'));
+
+        self::assertEquals([[$hints, Rect::fromSize(45, 1)]], $footer->placedChildren(Rect::fromSize(45, 1)));
     }
 
     protected function setUp(): void

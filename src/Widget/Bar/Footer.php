@@ -152,12 +152,15 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             return [];
         }
 
-        $placements = BarSlotRenderer::placements([...$this->slots(), 'leftSlot' => null], $contentArea);
-        $left = $this->leftRect($contentArea, rightSlot: $this->rightSlot);
+        $right = $this->rightRectIn($contentArea);
+        $left = $this->leftRect($contentArea, $right);
+        $center = BarSlotRenderer::placements([...$this->slots(), 'leftSlot' => null, 'rightSlot' => null], $contentArea);
 
-        return $left === null || $this->leftSlot === null
-            ? array_values($placements)
-            : [[$this->leftSlot, $left], ...array_values($placements)];
+        return [
+            ...($this->leftSlot === null || $left === null ? [] : [[$this->leftSlot, $left]]),
+            ...array_values($center),
+            ...($this->rightSlot === null || $right === null ? [] : [[$this->rightSlot, $right]]),
+        ];
     }
 
     /**
@@ -175,14 +178,7 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             return null;
         }
 
-        $leftWidth = match (true) {
-            $this->leftSlot instanceof FocusHints => $this->leftSlot->widthWith($focusedHints),
-            $this->leftSlot !== null => $this->leftSlot->sizing()->columns->intrinsic(),
-            default => 0,
-        };
-        $right = $this->rightBeside($contentArea, $leftWidth);
-
-        return $right === null ? null : BarSlotRenderer::rectFor($right, Alignment::Right, $contentArea);
+        return $this->rightRectIn($contentArea, $focusedHints);
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -193,7 +189,14 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             return new UpdateResult($this);
         }
 
-        [$overrides, $command] = BarSlotRenderer::updateSlots($this->slots(), $message, $contentArea, $this->markedSlot, $this->globalKeybindings);
+        [$overrides, $command] = BarSlotRenderer::updateSlots(
+            $this->slots(),
+            $message,
+            $contentArea,
+            $this->markedSlot,
+            $this->globalKeybindings,
+            drawnAt: ['rightSlot' => $this->rightRectIn($contentArea)],
+        );
 
         if ($overrides !== []) {
             return new UpdateResult($this->cloneWith(...$overrides), $command);
@@ -229,9 +232,10 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         $contentWidth = $contentArea->width;
 
         $right = $this->rightDrawn($contentArea, $context);
+        $rightRect = $right === null ? null : BarSlotRenderer::rectFor($right, Alignment::Right, $contentArea, $context);
 
         if ($this->leftSlot !== null) {
-            BarSlotRenderer::drawIn($frame, $this->leftSlot, $this->leftRect($contentArea, $context, $right), $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $this->leftSlot, $this->leftRect($contentArea, $rightRect, $context), $barBg, $context);
         }
 
         if ($this->centerSlot !== null) {
@@ -239,7 +243,7 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         }
 
         if ($right !== null) {
-            BarSlotRenderer::renderRight($frame, $right, $contentX, $contentY, $contentWidth, $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $right, $rightRect, $barBg, $context);
         }
     }
 
@@ -259,7 +263,7 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
      * A left slot that grows takes the row up to the right slot, unless a centre
      * slot needs the middle.
      */
-    private function leftRect(Rect $contentArea, ?RenderContext $context = null, ?Widget $rightSlot = null): ?Rect
+    private function leftRect(Rect $contentArea, ?Rect $right, ?RenderContext $context = null): ?Rect
     {
         if ($this->leftSlot === null) {
             return null;
@@ -269,7 +273,6 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             return BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context);
         }
 
-        $right = $rightSlot === null ? null : BarSlotRenderer::rectFor($rightSlot, Alignment::Right, $contentArea, $context);
         $width = $right === null ? $contentArea->width : $right->x - $contentArea->x - self::SLOT_GAP;
 
         return $width < 1 ? null : new Rect($contentArea->x, $contentArea->y, $width, 1);
@@ -278,6 +281,21 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
     private function leftGrows(): bool
     {
         return $this->leftSlot !== null && $this->centerSlot === null && $this->leftSlot->sizing()->columns->flex > 0;
+    }
+
+    /**
+     * @param array<string, string> $focusedHints
+     */
+    private function rightRectIn(Rect $contentArea, array $focusedHints = []): ?Rect
+    {
+        $leftWidth = match (true) {
+            $this->leftSlot instanceof FocusHints => $this->leftSlot->widthWith($focusedHints),
+            $this->leftSlot !== null => $this->leftSlot->sizing()->columns->intrinsic(),
+            default => 0,
+        };
+        $right = $this->rightBeside($contentArea, $leftWidth);
+
+        return $right === null ? null : BarSlotRenderer::rectFor($right, Alignment::Right, $contentArea);
     }
 
     private function rightDrawn(Rect $contentArea, RenderContext $context): ?Widget
