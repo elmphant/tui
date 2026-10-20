@@ -178,6 +178,18 @@ final class TreeViewTest extends TestCase
     }
 
     #[Test]
+    public function enteringAnOpenEmptyBranchKeepsTheCursorOnIt(): void
+    {
+        $empty = TreePath::root()->child('empty');
+        $tree = TreeView::new([
+            new SimpleTreeNode('empty', 'empty', expandable: true),
+            new SimpleTreeNode('next', 'next'),
+        ])->withCursor($empty)->expandOrEnter();
+
+        self::assertSame(['empty'], $tree->expandOrEnter()->cursor()->keys);
+    }
+
+    #[Test]
     public function theArrowKeysMoveTheCursorAndOpenWhatItSitsOn(): void
     {
         $area = new Rect(0, 0, 30, 10);

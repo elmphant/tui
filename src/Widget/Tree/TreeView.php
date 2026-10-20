@@ -301,7 +301,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             return $this->expand($cursor);
         }
 
-        return isset($rows[$index + 1]) ? $this->withCursor($rows[$index + 1]['path']) : $this;
+        return ($rows[$index]['node']->children() ?? []) !== [] ? $this->withCursor($rows[$index + 1]['path']) : $this;
     }
 
     /**
