@@ -486,7 +486,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
 
     private function ensureCursorVisible(Rect $area): self
     {
-        return $this->cloneWith(scrollOffset: $this->cursorVisibleOffset($area));
+        return $this->cloneWith(scrollOffset: $this->cursorVisibleOffset($area), followCursor: true);
     }
 
     /**

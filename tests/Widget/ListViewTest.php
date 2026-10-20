@@ -45,6 +45,23 @@ final class ListViewTest extends TestCase
     }
 
     #[Test]
+    public function aKeyAfterTheWheelKeepsTheCursorInViewThroughAResize(): void
+    {
+        $tall = new Rect(0, 0, 20, 10);
+        $short = new Rect(0, 0, 20, 5);
+        $topRow = new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left);
+        $list = ListView::fromStrings(array_map(strval(...), range(0, 19)));
+        $wheeled = $list->update(new MouseMsg(0, 0, MouseAction::WheelDown, MouseButton::None), $tall)->model;
+
+        $atTheEnd = $wheeled->update(new KeyMsg(Key::End), $tall)->model;
+
+        self::assertSame(
+            $list->update(new KeyMsg(Key::End), $tall)->model->indexAt($topRow, $short),
+            $atTheEnd->indexAt($topRow, $short),
+        );
+    }
+
+    #[Test]
     public function measuresTheRowsItsItemsNeed(): void
     {
         $list = ListView::new([new SimpleListItem('a'), new SimpleListItem('b'), new SimpleListItem('c')]);
