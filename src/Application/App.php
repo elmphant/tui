@@ -1011,7 +1011,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
             $next,
             self::combineCommands(
                 $answered,
-                PointerFocus::alreadyMoved($answered) ? null : PointerFocus::after($landedOn),
+                PointerFocus::alreadyMoved($answered) ? null : PointerFocus::after($landedOn, $holder),
             ),
         );
     }

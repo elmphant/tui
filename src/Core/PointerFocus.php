@@ -48,10 +48,11 @@ final class PointerFocus
     /**
      * Where the keyboard goes once the pointer has landed. Landing on nothing
      * leaves it where it was: a press on a plain row of a form must not strand
-     * the reader without a field until they press tab.
+     * the reader without a field until they press tab. Landing where it already
+     * is leaves it too: an arrival would scroll the panes around it back to it.
      */
-    public static function after(?ComponentId $landedOn): ?Cmd
+    public static function after(?ComponentId $landedOn, ?ComponentId $holder): ?Cmd
     {
-        return $landedOn === null ? null : Cmd::focus($landedOn);
+        return $landedOn === null || ($holder !== null && $landedOn->equals($holder)) ? null : Cmd::focus($landedOn);
     }
 }
