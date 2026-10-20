@@ -88,6 +88,19 @@ final class ChordTrackerTest extends TestCase
     }
 
     #[Test]
+    public function everyHeldKeyOfALongerChordExpiresInTheOrderTyped(): void
+    {
+        $tracker = new ChordTracker(0.5);
+        $chords = new Keybindings(['rename' => ['ctrl+x r t']]);
+        $first = new KeyMsg('x', ctrl: true);
+        $second = new KeyMsg('r');
+        $tracker->feed($first, $chords, 10.0);
+        $tracker->feed($second, $chords, 10.1);
+
+        self::assertSame([$first, $second], $tracker->expired(10.6));
+    }
+
+    #[Test]
     public function escapeCancelsAnOpenChordAndIsHandledNowhere(): void
     {
         $tracker = new ChordTracker();

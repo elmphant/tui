@@ -32,6 +32,18 @@ final class PressOnNothingFocusableTest extends TestCase
     }
 
     #[Test]
+    public function aPressOnAPlainRowOfAFormLeavesTheKeyboardOnALaterField(): void
+    {
+        $harness = ModelHarness::for(new FormWithAPlainRow(), 30, 8);
+        $harness->press('tab');
+        self::assertSame('form/1', $harness->focused()?->value);
+
+        $harness->click('plain');
+
+        self::assertSame('form/1', $harness->focused()?->value);
+    }
+
+    #[Test]
     public function aPressOnAPlainRowOfAFormTheKeyboardIsOutsideOfBringsItIntoTheForm(): void
     {
         $harness = ModelHarness::for(new SearchBesideAForm(), 30, 10);

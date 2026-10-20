@@ -126,6 +126,16 @@ final class PointerFocusTest extends TestCase
             'the app answered the press and named where the keys go, so the keys have to be there',
         );
     }
+
+    #[Test]
+    public function anAppThatMovesTheKeyboardOnAPressOverAFieldIsNotOverruledByTheField(): void
+    {
+        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->initialize();
+
+        $driven->dispatch(new MouseMsg(0, 1, MouseAction::Press, MouseButton::Left));
+
+        self::assertSame('second', $driven->focused()?->value);
+    }
 }
 
 final readonly class ScrolledPaneApp extends App
@@ -223,8 +233,8 @@ final readonly class ClickableChromeApp extends App
 
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
-        return $message->y === 0
-            ? $this->then(Cmd::focus(ComponentId::named('second')))
+        return $message->isClick()
+            ? $this->then(Cmd::batch(Cmd::log('pressed'), Cmd::focus(ComponentId::named('second'))))
             : UpdateResult::ignored($this);
     }
 }
