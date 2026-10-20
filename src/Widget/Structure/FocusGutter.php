@@ -67,9 +67,13 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
      */
     public function measureHeight(int $width): int
     {
+        if (!$this->child instanceof MeasureHeight) {
+            return $this->child->sizing()->rows->min;
+        }
+
         $inner = $width - self::COLUMNS;
 
-        if ($inner < 1 || !$this->child instanceof MeasureHeight) {
+        if ($inner < 1) {
             return 0;
         }
 

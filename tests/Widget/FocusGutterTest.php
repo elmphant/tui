@@ -11,8 +11,11 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Box;
 use Elmphant\Tui\Widget\Structure\FocusGutter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,6 +33,14 @@ final class FocusGutterTest extends TestCase
         self::assertCount(1, $placements);
         self::assertSame($child, $placements[0][0]);
         self::assertTrue((new Rect(2, 0, 10, 2))->equals($placements[0][1]));
+    }
+
+    #[Test]
+    public function aBoxGivesAButtonBesideTheTrackEveryRowItsBorderNeeds(): void
+    {
+        $box = Box::new()->withChildren([FocusGutter::around(Button::new('OK', new TestMessage('ok')))]);
+
+        self::assertSame(5, $box->measureHeight(20), 'three rows of button, and the border above and below them');
     }
 
     #[Test]
