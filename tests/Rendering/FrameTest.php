@@ -625,6 +625,19 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function putLineEndsAtTheFirstSpanCutShortSoALaterSpanNeverFillsTheGap(): void
+    {
+        $frame = new Frame(20, 1);
+        $line = new Line([new Span('a'), new Span('世'), new Span('b')]);
+
+        $drawn = $frame->putLine(0, 0, $line, new Style(), maxWidth: 2);
+
+        self::assertSame(1, $drawn);
+        self::assertSame('a', $frame->characters[0]);
+        self::assertSame(' ', $frame->characters[1]);
+    }
+
+    #[Test]
     public function putStyledWithUnsetColorsUsesZero(): void
     {
         $frame = new Frame(20, 1);

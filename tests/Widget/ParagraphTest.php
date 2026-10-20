@@ -184,6 +184,15 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function anUnwrappedRowEndsAtTheFirstSpanCutShortSoALaterSpanNeverFillsTheGap(): void
+    {
+        $paragraph = Paragraph::fromLines([new Line([new Span('a'), new Span('世'), new Span('b')])])
+            ->withWrap(Wrap::NoWrap);
+
+        self::assertSame(['a'], $this->rowsOf($paragraph, 2, 1));
+    }
+
+    #[Test]
     public function wrapTrimsLeadingSpaceOnContinuationLine(): void
     {
         $frame = new Frame(6, 2);

@@ -101,6 +101,9 @@ final readonly class Text implements Widget
             $resolved = $span->withResolvedToken($context->theme);
             $content = CharWidth::truncateToWidth($resolved->content, $rightEdge - $x);
             $x += $frame->putStyled($x, $area->y, $content, $resolved->style ?? $context->theme->base);
+            if ($content !== $resolved->content) {
+                break;
+            }
         }
     }
 }

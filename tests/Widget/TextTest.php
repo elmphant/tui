@@ -34,6 +34,17 @@ final class TextTest extends TestCase
     }
 
     #[Test]
+    public function aSpanCutShortEndsTheTextSoALaterSpanNeverFillsTheGap(): void
+    {
+        $frame = new Frame(10, 1);
+
+        Text::line('a', '世', 'b')->render($frame, new Rect(0, 0, 2, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame('a', $frame->characters[0]);
+        self::assertSame(' ', $frame->characters[1]);
+    }
+
+    #[Test]
     public function styledAppliesExplicitStyle(): void
     {
         $frame = new Frame(10, 1);

@@ -201,10 +201,12 @@ final class Frame
 
         foreach ($line->spans as $span) {
             $content = CharWidth::truncateToWidth($span->content, $limit - $x);
-            if ($content === '') {
-                continue;
+            if ($content !== '') {
+                $x += $this->putStyled($x, $y, $content, self::spanStyleOver($span->style, $under));
             }
-            $x += $this->putStyled($x, $y, $content, self::spanStyleOver($span->style, $under));
+            if ($content !== $span->content) {
+                break;
+            }
         }
 
         return $x - $start;

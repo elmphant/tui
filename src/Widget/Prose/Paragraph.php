@@ -391,7 +391,11 @@ final readonly class Paragraph implements Widget, MeasureHeight
                 return;
             }
 
-            $x += $frame->putStyled($x, $y, CharWidth::truncateToWidth($run, $right - $x), $style);
+            $content = CharWidth::truncateToWidth($run, $right - $x);
+            $x += $frame->putStyled($x, $y, $content, $style);
+            if ($content !== $run) {
+                return;
+            }
         }
     }
 
