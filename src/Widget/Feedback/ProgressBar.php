@@ -149,7 +149,7 @@ final readonly class ProgressBar implements Interactive
         $labelColor = $baseStyle->foregroundValue();
         $baseBackground = $baseStyle->backgroundValue();
 
-        if ($this->label !== '' && $area->width > $barWidth) {
+        if ($this->label !== '') {
             $frame->putString($area->x, $rowY, $this->label, $labelColor, $baseBackground);
         }
 
@@ -209,10 +209,9 @@ final readonly class ProgressBar implements Interactive
     {
         $barArea = $this->barRect($area);
         if ($message->inRect($barArea)) {
-            $localX = $message->x - $barArea->x;
-            $fraction = $barArea->width > 0 ? $localX / $barArea->width : 0.0;
+            $lastCell = $barArea->width - 1;
 
-            return new UpdateResult($this->withProgress(max(0.0, min(1.0, $fraction))));
+            return new UpdateResult($this->withProgress($lastCell === 0 ? 1.0 : ($message->x - $barArea->x) / $lastCell));
         }
 
         return new UpdateResult($this);

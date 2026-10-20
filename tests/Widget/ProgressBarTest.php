@@ -220,13 +220,33 @@ final class ProgressBarTest extends TestCase
     public function clickSetsProgressFromMousePosition(): void
     {
         $progressBar = ProgressBar::new()->withProgress(0.0)->withClickable();
-        $area = new Rect(0, 0, 20, 1);
+        $area = new Rect(0, 0, 21, 1);
         $mouseMessage = new MouseMsg(10, 0, MouseAction::Press, MouseButton::Left);
 
         $result = $progressBar->update($mouseMessage, $area);
         $updated = $result->model;
         self::assertInstanceOf(ProgressBar::class, $updated);
         self::assertSame(0.5, $updated->progress());
+    }
+
+    #[Test]
+    public function aClickOnTheLastCellFillsTheBar(): void
+    {
+        $progressBar = ProgressBar::new()->withProgress(0.0)->withClickable();
+
+        $result = $progressBar->update(new MouseMsg(19, 0, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 20, 1));
+
+        self::assertSame(1.0, $result->model->progress());
+    }
+
+    #[Test]
+    public function aClickOnABarOfOneCellFillsIt(): void
+    {
+        $progressBar = ProgressBar::new()->withProgress(0.0)->withClickable();
+
+        $result = $progressBar->update(new MouseMsg(4, 0, MouseAction::Press, MouseButton::Left), new Rect(4, 0, 1, 1));
+
+        self::assertSame(1.0, $result->model->progress());
     }
 
     #[Test]
@@ -397,17 +417,11 @@ final class ProgressBarTest extends TestCase
         self::assertSame(0.5005, $result->model->displayValue());
     }
 
-    /**
-     * L112: Minus — $message->x - $barArea->x must account for area offset.
-     * L113: GreaterThan + OneZeroFloat — $barArea->width > 0 ternary.
-     */
     #[Test]
     public function clickAccountsForAreaOffset(): void
     {
         $progressBar = ProgressBar::new()->withProgress(0.0)->withClickable();
-        // Area starts at x=10, width=20
-        $area = new Rect(10, 0, 20, 1);
-        // Click at absolute x=20 => local x=10, fraction=10/20=0.5
+        $area = new Rect(10, 0, 21, 1);
         $click = new MouseMsg(20, 0, MouseAction::Press, MouseButton::Left);
         $result = $progressBar->update($click, $area);
         self::assertSame(0.5, $result->model->progress());
@@ -1097,14 +1111,12 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function clickOnLabeledBarAccountsForLabelOffset(): void
     {
-        // Label "AB" => labelWidth = 3, area = (0,0,23,1), barArea = (3,0,20,1)
         $progressBar = ProgressBar::new()
             ->withLabel('AB')
             ->withProgress(0.0)
             ->withClickable();
 
-        $area = new Rect(0, 0, 23, 1);
-        // Click at x=13 => localX = 13 - 3 = 10, fraction = 10/20 = 0.5
+        $area = new Rect(0, 0, 24, 1);
         $click = new MouseMsg(13, 0, MouseAction::Press, MouseButton::Left);
         $result = $progressBar->update($click, $area);
         self::assertSame(0.5, $result->model->progress());
