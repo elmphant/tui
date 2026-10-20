@@ -497,6 +497,12 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function aWideCharacterThatNoLongerFitsAfterTheBreakingSpaceStartsARowOfItsOwn(): void
+    {
+        self::assertSame(['', 'ab', '東'], $this->rowsOf(Paragraph::fromText(' ab東'), 3, 3));
+    }
+
+    #[Test]
     public function wrappedMultibyteTextIsCutBetweenCharactersNotBytes(): void
     {
         self::assertSame(['äö üß', 'éè'], $this->rowsOf(Paragraph::fromText('äö üß éè'), 5, 2));

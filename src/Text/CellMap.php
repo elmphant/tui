@@ -105,27 +105,21 @@ final class CellMap
         $rows = [];
         $rowStart = 0;
         $byteStart = 0;
-        $limit = $maxWidth;
         $width = strlen($this->cells);
 
-        while ($width - $rowStart > $limit) {
-            $space = strrpos(substr($this->cells, $rowStart, $limit + 1), ' ');
+        while ($width - $rowStart > $maxWidth) {
+            $space = strrpos(substr($this->cells, $rowStart, $maxWidth + 1), ' ');
 
             if ($space !== false) {
                 $spaceByte = $this->byteAt($rowStart + $space);
                 $rows[] = [$byteStart, $spaceByte - $byteStart];
                 $byteStart = $spaceByte + 1;
-                // A row that opens with the space it breaks at keeps the wide
-                // grapheme straddling its edge whole on the next row, one cell over.
-                $limit = $space === 0 && ($this->cells[$rowStart + $maxWidth + 1] ?? '') === self::SECOND_HALF
-                    ? $maxWidth + 1
-                    : $maxWidth;
                 $rowStart += $space + 1;
 
                 continue;
             }
 
-            $end = $rowStart + $limit;
+            $end = $rowStart + $maxWidth;
             if ($this->cells[$end] === self::SECOND_HALF) {
                 --$end;
             }
@@ -133,7 +127,6 @@ final class CellMap
             $rows[] = [$byteStart, $endByte - $byteStart];
             $byteStart = $endByte;
             $rowStart = $end;
-            $limit = $maxWidth;
         }
 
         $rows[] = [$byteStart, $this->length - $byteStart];

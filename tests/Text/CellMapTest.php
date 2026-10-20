@@ -39,12 +39,12 @@ final class CellMapTest extends TestCase
     }
 
     #[Test]
-    public function aRowOpeningWithItsBreakingSpaceKeepsTheWideGraphemeAtItsEdgeWhole(): void
+    public function aWideGraphemeThatNoLongerFitsAfterTheBreakingSpaceStartsTheNextRow(): void
     {
         $text = ' a東b';
 
         self::assertSame(self::walkedRows($text, 2), CellMap::of($text)->rowsAt(2));
-        self::assertSame([[0, 0], [1, 4], [5, 1]], CellMap::of($text)->rowsAt(2));
+        self::assertSame([[0, 0], [1, 1], [2, 3], [5, 1]], CellMap::of($text)->rowsAt(2));
     }
 
     #[Test]
@@ -98,6 +98,11 @@ final class CellMapTest extends TestCase
                     $rows[] = [$rowStart, $lastSpaceOffset];
                     $rowStart += $lastSpaceOffset + 1;
                     $currentWidth = $currentWidth - $widthAtLastSpace - 1 + $characterWidth;
+                    if ($currentWidth > $maxWidth && $index > $rowStart) {
+                        $rows[] = [$rowStart, $index - $rowStart];
+                        $rowStart = $index;
+                        $currentWidth = $characterWidth;
+                    }
                 } else {
                     $rows[] = [$rowStart, $index - $rowStart];
                     $rowStart = $index;
