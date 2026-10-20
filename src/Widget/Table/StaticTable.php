@@ -298,8 +298,11 @@ final readonly class StaticTable implements Widget, MeasureHeight
         $kepts = self::at($demands, $kept, 0);
         $widths = self::grown($kepts, $width, [$width, ...array_slice($kepts, 1)]);
         $host = $widths[0];
-        $headers = self::at($this->headers, $kept);
-        $headers[0] = self::stacked([$headers[0], ...self::at($this->headers, $demoted)], $host);
+        $headers = [];
+        if ($this->headers !== []) {
+            $headers = self::at($this->headers, $kept);
+            $headers[0] = self::stacked([$headers[0], ...self::at($this->headers, $demoted)], $host);
+        }
         $rows = [];
 
         foreach ($sourceRows as $index => $row) {

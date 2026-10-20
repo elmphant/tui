@@ -361,6 +361,22 @@ final class StaticTableTest extends TestCase
     }
 
     #[Test]
+    public function aTableWithoutHeadersStacksItsColumnsWithoutAHeader(): void
+    {
+        $table = StaticTable::new([], [['description', 'b c d e f g']]);
+
+        $expected = <<<'TABLE'
+            ┌──────────┐
+            │ descrip… │
+            │ b c d e… │
+            └──────────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 12, 8));
+        self::assertSame(4, $table->measureHeight(12));
+    }
+
+    #[Test]
     public function keepsEveryColumnWhenAskedToWrapInstead(): void
     {
         $table = StaticTable::new(
