@@ -15,6 +15,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Focusable;
 use InvalidArgumentException;
@@ -268,6 +269,14 @@ final class CheckboxGroupTest extends TestCase
         $group = $group->update(new KeyMsg(Key::Enter), $area)->model;
 
         self::assertSame(['A', 'C'], $group->checkedValues());
+    }
+
+    #[Test]
+    public function tickedValuesComeInTheOrderTheOptionsAreOffered(): void
+    {
+        $ticked = WidgetHarness::for(CheckboxGroup::new(['A', 'B', 'C']), 40, 5)->press('down', 'down', 'enter', 'up', 'up', 'enter');
+
+        self::assertSame(['A', 'C'], $ticked->widget()->value());
     }
 
     #[Test]

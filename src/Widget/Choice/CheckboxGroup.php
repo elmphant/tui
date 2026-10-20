@@ -78,7 +78,6 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
                 $checked[] = $place;
             }
         }
-        sort($checked);
 
         return $this->cloneWith(
             options: $options,
@@ -110,7 +109,6 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
                 $checked[] = $place;
             }
         }
-        sort($checked);
 
         return $this->cloneWith(checked: $checked);
     }
@@ -178,9 +176,9 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     public function checkedValues(): array
     {
         $values = [];
-        foreach ($this->checked as $index) {
-            if (isset($this->options[$index])) {
-                $values[] = $this->options[$index];
+        foreach ($this->options as $index => $option) {
+            if ($this->isChecked($index)) {
+                $values[] = $option;
             }
         }
 
