@@ -268,9 +268,6 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     }
 
     /**
-     * The width available to items, once any scrollbar gutter is reserved.
-     */
-    /**
      * Every row its items need. A caller that sizes a list to its content asks
      * this; the viewport it is then given may still be shorter.
      */
