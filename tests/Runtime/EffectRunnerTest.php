@@ -12,6 +12,7 @@ use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
+use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\TickMsg;
@@ -27,6 +28,7 @@ use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop;
+use RuntimeException;
 use SplQueue;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -522,6 +524,22 @@ final class EffectRunnerTest extends TestCase
         self::assertInstanceOf(ErrorMsg::class, $message);
         self::assertInstanceOf(ProcessTimedOutException::class, $message->error);
         self::assertEquals(EffectId::named('slow'), $message->effectId);
+    }
+
+    #[Test]
+    public function aProcessWhoseOutputTheAppFailsToMapIsStopped(): void
+    {
+        $marker = sys_get_temp_dir() . '/elmphant-still-running-' . uniqid();
+        $runner = $this->runner();
+        $runner->run(
+            Cmd::process(['sh', '-c', 'echo go; sleep 0.3; touch ' . $marker]),
+            static fn (Message $message): Message => $message instanceof ProcessOutputMsg ? throw new RuntimeException('cannot map') : $message,
+        );
+
+        $this->pumpUntilQuiet($runner);
+        usleep(600_000);
+
+        self::assertFileDoesNotExist($marker, 'the child must not run on once its output can no longer reach the app');
     }
 
     #[Test]
