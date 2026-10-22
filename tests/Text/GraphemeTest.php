@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Text;
 
+use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
+use Elmphant\Tui\Text\TerminalText;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -62,6 +64,33 @@ final class GraphemeTest extends TestCase
     public function aCharacterCutShortIsOneCluster(): void
     {
         self::assertSame(['a', "\xe2\x82", 'b'], Grapheme::split("a\xe2\x82b"));
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>, string}>
+     */
+    public static function malformedSequences(): iterable
+    {
+        yield 'a character cut short' => ["a\xe2\x82b", ['a', "\xe2\x82", 'b'], "a\u{FFFD}b"];
+        yield 'an emoji cut short' => ["a\xf0\x9f\x98b", ['a', "\xf0\x9f\x98", 'b'], "a\u{FFFD}b"];
+        yield 'an overlong lead' => ["a\xc0\xafb", ['a', "\xc0", "\xaf", 'b'], "a\u{FFFD}\u{FFFD}b"];
+        yield 'an overlong three-byte form' => ["a\xe0\x80\xafb", ['a', "\xe0", "\x80", "\xaf", 'b'], "a\u{FFFD}\u{FFFD}b"];
+        yield 'a surrogate' => ["a\xed\xa0\x80b", ['a', "\xed", "\xa0", "\x80", 'b'], "a\u{FFFD}\u{FFFD}b"];
+        yield 'past the last code point' => ["a\xf4\x90\x80\x80b", ['a', "\xf4", "\x90", "\x80", "\x80", 'b'], "a\u{FFFD}b"];
+    }
+
+    /**
+     * A stray byte in 0x80–0x9F would be a C1 control, so plain() drops it and it takes no column.
+     *
+     * @param list<string> $clusters
+     */
+    #[Test]
+    #[DataProvider('malformedSequences')]
+    public function eachMalformedSequenceIsOneClusterOneColumnAndOneReplacementCharacter(string $text, array $clusters, string $plain): void
+    {
+        self::assertSame($clusters, Grapheme::split($text));
+        self::assertSame($plain, TerminalText::plain($text));
+        self::assertSame(CharWidth::stringWidth($plain), CharWidth::stringWidth($text));
     }
 
     /**
