@@ -28,6 +28,7 @@ use Elmphant\Tui\Widget\Focus\Navigates;
 use Elmphant\Tui\Widget\Focus\Navigation;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
+use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -96,10 +97,14 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     }
 
     /**
-     * What the form is about, above its fields and scrolling with them.
+     * What the form is about, above its fields and scrolling with them. Prose only: an input belongs in a Field.
      */
     public function withIntro(?Widget $intro): self
     {
+        if ($intro instanceof Interactive) {
+            throw new LogicException(sprintf('A form\'s intro is prose; put %s in a Field instead', $intro::class));
+        }
+
         return $this->cloneWith(intro: $intro);
     }
 

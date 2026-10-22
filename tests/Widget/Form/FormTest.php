@@ -11,10 +11,12 @@ use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Testing\UserInput;
 use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Tests\Support\TestMessage;
+use Elmphant\Tui\Widget\Choice\Checkbox;
 use Elmphant\Tui\Widget\Form\Field;
 use Elmphant\Tui\Widget\Form\Form;
 use Elmphant\Tui\Widget\Form\ShowErrors;
 use Elmphant\Tui\Widget\Prose\Text;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -291,6 +293,14 @@ final class FormTest extends TestCase
         self::assertLessThan($screen->locate('Username')['row'], $screen->locate('Creates a user')['row']);
         self::assertSame('ada', $form->widget()->values()['username']);
         self::assertEquals(ComponentId::named('form/5'), $intro->stopOf('password', ComponentId::named('form')));
+    }
+
+    #[Test]
+    public function anIntroThatTakesInputIsRefusedBecauseNothingWouldKeepWhatItTook(): void
+    {
+        $this->expectException(LogicException::class);
+
+        self::userForm()->withIntro(Checkbox::new('Agree'));
     }
 
     #[Test]
