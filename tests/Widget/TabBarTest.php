@@ -360,6 +360,15 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
+    public function aShortHintThatDoesNotFitEitherIsLeftOut(): void
+    {
+        $tabBar = TabBar::new()->addTab('A')->addTab('B')
+            ->withHint('shift+←/→ to switch', 'shift+←/→');
+
+        self::assertStringNotContainsString('shift', $this->screenOfTabBar($tabBar, new Rect(0, 0, 18, 6)));
+    }
+
+    #[Test]
     public function implementsFocusable(): void
     {
         self::assertInstanceOf(Focusable::class, TabBar::new());
