@@ -296,6 +296,19 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
+    public function aBarWithOnlyTheNextDirectionBoundStillDrawsAndSwitches(): void
+    {
+        $tabBar = TabBar::new()->addTab('A')->addTab('B')->withKeybindings(new Keybindings([
+            Actions::TAB_PREVIOUS => [],
+        ]));
+
+        $screen = $this->screenOfTabBar($tabBar, new Rect(0, 0, 40, 6), focused: true);
+
+        self::assertStringNotContainsString('to switch', $screen, 'Half a pair is not offered as the switch hint');
+        self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), Rect::fromSize(40, 6))->model->selectedTab());
+    }
+
+    #[Test]
     public function anEmphasizedBorderFollowsTheThemeItIsRenderedWith(): void
     {
         $area = new Rect(0, 0, 20, 8);
