@@ -256,38 +256,6 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function overlay(): void
-    {
-        $destination = new Frame(10, 5);
-        $source = new Frame(3, 2);
-        $source->putChar(0, 0, 'A');
-        $source->putChar(1, 0, 'B');
-        $source->putChar(0, 1, 'C');
-
-        $destination->overlay($source, 2, 1);
-
-        self::assertSame('A', $destination->characters[1 * 10 + 2]);
-        self::assertSame('B', $destination->characters[1 * 10 + 3]);
-        self::assertSame('C', $destination->characters[2 * 10 + 2]);
-        self::assertSame(' ', $destination->characters[0]);
-    }
-
-    #[Test]
-    public function overlaySkipsBlankCells(): void
-    {
-        $destination = new Frame(10, 5);
-        $destination->putChar(2, 1, 'X');
-
-        $source = new Frame(3, 2);
-        $source->putChar(1, 0, 'Y');
-
-        $destination->overlay($source, 2, 1);
-
-        self::assertSame('X', $destination->characters[1 * 10 + 2]);
-        self::assertSame('Y', $destination->characters[1 * 10 + 3]);
-    }
-
-    #[Test]
     public function putAnsiPlainText(): void
     {
         $frame = new Frame(20, 5);
@@ -521,31 +489,6 @@ final class FrameTest extends TestCase
         $frame = new Frame(10, 1);
         $columns = $frame->putString(-3, 0, 'Hello');
         self::assertGreaterThan(0, $columns);
-    }
-
-    #[Test]
-    public function overlayWithOffset(): void
-    {
-        $dest = new Frame(10, 5);
-        $src = new Frame(3, 2);
-        $src->putString(0, 0, 'AB');
-        $src->putString(0, 1, 'CD');
-        $dest->overlay($src, 5, 2);
-        self::assertSame('A', $dest->character(2 * 10 + 5));
-        self::assertSame('B', $dest->character(2 * 10 + 6));
-        self::assertSame('C', $dest->character(3 * 10 + 5));
-        self::assertSame('D', $dest->character(3 * 10 + 6));
-    }
-
-    #[Test]
-    public function overlayNegativeOffsetClips(): void
-    {
-        $dest = new Frame(5, 5);
-        $src = new Frame(3, 3);
-        $src->putString(0, 1, 'ABC');
-        $dest->overlay($src, -1, -1);
-        self::assertSame('B', $dest->character(0));
-        self::assertSame('C', $dest->character(1));
     }
 
     #[Test]
@@ -848,21 +791,6 @@ final class FrameTest extends TestCase
         $frame->putString(10, 0, 'ab');
 
         self::assertSame('z', $frame->characters[9], 'A fully clipped write must not repair anything');
-    }
-
-    #[Test]
-    public function singleCellOverlayOverLeadBlanksItsContinuation(): void
-    {
-        $frame = new Frame(10, 1);
-        $frame->putChar(0, 0, "\u{4E16}");
-
-        $source = new Frame(1, 1);
-        $source->putChar(0, 0, 'x');
-        $frame->overlay($source, 0, 0);
-
-        self::assertSame('x', $frame->characters[0]);
-        self::assertSame(' ', $frame->characters[1]);
-        self::assertSame(1, $frame->widths[1]);
     }
 
     #[Test]
@@ -1343,24 +1271,6 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function overlayCuttingWideCharactersBlanksOrphansAtBothEdges(): void
-    {
-        $frame = new Frame(10, 1);
-        $frame->putString(0, 0, "\u{4E16}\u{4E16}");
-
-        $source = new Frame(2, 1);
-        $source->putString(0, 0, 'ab');
-        $frame->overlay($source, 1, 0);
-
-        self::assertSame(' ', $frame->characters[0], 'Lead cut at overlay left edge must be blanked');
-        self::assertSame(1, $frame->widths[0]);
-        self::assertSame('a', $frame->characters[1]);
-        self::assertSame('b', $frame->characters[2]);
-        self::assertSame(' ', $frame->characters[3], 'Continuation cut at overlay right edge must be blanked');
-        self::assertSame(1, $frame->widths[3]);
-    }
-
-    #[Test]
     public function fillRectDoesNotAffectOutsideArea(): void
     {
         $frame = new Frame(10, 5);
@@ -1440,144 +1350,6 @@ final class FrameTest extends TestCase
         self::assertTrue($frame->isRowDirty(0));
         self::assertTrue($frame->isRowDirty(1));
         self::assertFalse($frame->isRowDirty(2));
-    }
-
-    // ── overlay (L248-288) ──
-
-    #[Test]
-    public function overlaySkipsEntirelyBlankCells(): void
-    {
-        $destination = new Frame(10, 5);
-        $destination->putChar(2, 1, 'X', 1, 2, 3);
-
-        $source = new Frame(5, 3);
-
-        $destination->overlay($source, 0, 0);
-        self::assertSame('X', $destination->characters[1 * 10 + 2]);
-        self::assertSame(1, $destination->foregrounds[1 * 10 + 2]);
-    }
-
-    #[Test]
-    public function overlayCopiesCellWithNonDefaultForeground(): void
-    {
-        $destination = new Frame(10, 5);
-        $source = new Frame(3, 1);
-        $source->putChar(0, 0, 'A', 1);
-
-        $destination->overlay($source, 0, 0);
-        self::assertSame('A', $destination->characters[0]);
-        self::assertSame(1, $destination->foregrounds[0]);
-    }
-
-    #[Test]
-    public function overlayCopiesCellWithNonDefaultBackground(): void
-    {
-        $destination = new Frame(10, 5);
-        $source = new Frame(3, 1);
-        $source->putChar(0, 0, ' ', 0, 1);
-
-        $destination->overlay($source, 0, 0);
-        self::assertSame(1, $destination->backgrounds[0]);
-    }
-
-    #[Test]
-    public function overlayCopiesCellWithNonDefaultAttributes(): void
-    {
-        $destination = new Frame(10, 5);
-        $source = new Frame(3, 1);
-        $source->putChar(0, 0, ' ', 0, 0, Attr::BOLD);
-
-        $destination->overlay($source, 0, 0);
-        self::assertSame(Attr::BOLD, $destination->attributes[0]);
-    }
-
-    #[Test]
-    public function overlayCopiesCellWithNonSpaceCharacter(): void
-    {
-        $destination = new Frame(10, 5);
-        $source = new Frame(3, 1);
-        $source->putChar(0, 0, '#');
-
-        $destination->overlay($source, 0, 0);
-        self::assertSame('#', $destination->characters[0]);
-    }
-
-    #[Test]
-    public function overlayClipsSourceBeyondDestinationRight(): void
-    {
-        $destination = new Frame(5, 5);
-        $source = new Frame(3, 1);
-        $source->putString(0, 0, 'ABC');
-
-        $destination->overlay($source, 4, 0);
-        self::assertSame('A', $destination->characters[4]);
-        self::assertSame(' ', $destination->characters[3]);
-    }
-
-    #[Test]
-    public function overlayClipsSourceBeyondDestinationBottom(): void
-    {
-        $destination = new Frame(5, 5);
-        $source = new Frame(1, 3);
-        $source->putChar(0, 0, 'A');
-        $source->putChar(0, 1, 'B');
-        $source->putChar(0, 2, 'C');
-
-        $destination->overlay($source, 0, 4);
-        self::assertSame('A', $destination->characters[4 * 5 + 0]);
-        self::assertSame(' ', $destination->characters[3 * 5 + 0]);
-    }
-
-    #[Test]
-    public function overlayWithNegativeOffsetClipsSourceLeft(): void
-    {
-        $destination = new Frame(5, 5);
-        $source = new Frame(3, 1);
-        $source->putString(0, 0, 'ABC');
-
-        $destination->overlay($source, -1, 0);
-        self::assertSame('B', $destination->characters[0]);
-        self::assertSame('C', $destination->characters[1]);
-    }
-
-    #[Test]
-    public function overlayWithNegativeOffsetClipsSourceTop(): void
-    {
-        $destination = new Frame(5, 5);
-        $source = new Frame(1, 3);
-        $source->putChar(0, 0, 'A');
-        $source->putChar(0, 1, 'B');
-        $source->putChar(0, 2, 'C');
-
-        $destination->overlay($source, 0, -1);
-        self::assertSame('B', $destination->characters[0]);
-        self::assertSame('C', $destination->characters[5]);
-    }
-
-    #[Test]
-    public function overlayMarksDirtyRowOnlyWhenContentCopied(): void
-    {
-        $destination = new Frame(10, 5);
-        $source = new Frame(3, 3);
-        $source->putChar(1, 1, 'X');
-
-        $destination->overlay($source, 0, 0);
-
-        self::assertFalse($destination->isRowDirty(0), 'Row with all blank cells should not be dirty');
-        self::assertTrue($destination->isRowDirty(1), 'Row with copied content should be dirty');
-        self::assertFalse($destination->isRowDirty(2), 'Row with all blank cells should not be dirty');
-    }
-
-    #[Test]
-    public function overlayDoesNotMarkDirtyRowWhenAllCellsAreBlank(): void
-    {
-        $destination = new Frame(10, 5);
-        $source = new Frame(3, 2);
-
-        $destination->overlay($source, 0, 0);
-
-        self::assertFalse($destination->isRowDirty(0));
-        self::assertFalse($destination->isRowDirty(1));
     }
 
     // ── markAllDirty (L349-353) ──
@@ -1763,33 +1535,6 @@ final class FrameTest extends TestCase
         self::assertSame([], $frame->dirtyRows);
     }
 
-    // ── overlay full copy of non-blank source ──
-
-    #[Test]
-    public function overlayFullCopyWithAllProperties(): void
-    {
-        $destination = new Frame(10, 5);
-        $source = new Frame(2, 2);
-        $source->putChar(0, 0, 'A', 1, 2, 3);
-        $source->putChar(1, 0, 'B', 4, 5, 6);
-        $source->putChar(0, 1, 'C', 7, 8, 9);
-        $source->putChar(1, 1, 'D', 10, 11, 12);
-
-        $destination->overlay($source, 3, 2);
-
-        $indexA = 2 * 10 + 3;
-        self::assertSame('A', $destination->characters[$indexA]);
-        self::assertSame(1, $destination->foregrounds[$indexA]);
-        self::assertSame(2, $destination->backgrounds[$indexA]);
-        self::assertSame(3, $destination->attributes[$indexA]);
-
-        $indexD = 3 * 10 + 4;
-        self::assertSame('D', $destination->characters[$indexD]);
-        self::assertSame(10, $destination->foregrounds[$indexD]);
-        self::assertSame(11, $destination->backgrounds[$indexD]);
-        self::assertSame(12, $destination->attributes[$indexD]);
-    }
-
     // ── Additional mutant-killing tests ──
 
     #[Test]
@@ -1949,61 +1694,6 @@ final class FrameTest extends TestCase
         self::assertSame('X', $frame->characters[0]);
         self::assertSame('X', $frame->characters[5]);
         self::assertSame(' ', $frame->characters[10]);
-    }
-
-    #[Test]
-    public function overlaySourceEntirelyOutsideDestinationRightIsNoop(): void
-    {
-        $destination = new Frame(5, 5);
-        $destination->putChar(0, 0, 'X');
-        $destination->clearDirty();
-
-        $source = new Frame(3, 1);
-        $source->putString(0, 0, 'ABC');
-
-        $destination->overlay($source, 5, 0);
-        self::assertSame('X', $destination->characters[0]);
-        self::assertFalse($destination->isRowDirty(0));
-    }
-
-    #[Test]
-    public function overlaySourceEntirelyOutsideDestinationBottomIsNoop(): void
-    {
-        $destination = new Frame(5, 5);
-        $source = new Frame(1, 1);
-        $source->putChar(0, 0, 'A');
-
-        $destination->overlay($source, 0, 5);
-        for ($i = 0; $i < $destination->size; ++$i) {
-            self::assertSame(' ', $destination->characters[$i]);
-        }
-    }
-
-    #[Test]
-    public function overlaySourceEntirelyAboveDestinationIsNoop(): void
-    {
-        $destination = new Frame(5, 5);
-        $source = new Frame(1, 2);
-        $source->putChar(0, 0, 'A');
-        $source->putChar(0, 1, 'B');
-
-        $destination->overlay($source, 0, -2);
-        for ($i = 0; $i < $destination->size; ++$i) {
-            self::assertSame(' ', $destination->characters[$i]);
-        }
-    }
-
-    #[Test]
-    public function overlaySourceEntirelyLeftOfDestinationIsNoop(): void
-    {
-        $destination = new Frame(5, 5);
-        $source = new Frame(2, 1);
-        $source->putString(0, 0, 'AB');
-
-        $destination->overlay($source, -2, 0);
-        for ($i = 0; $i < $destination->size; ++$i) {
-            self::assertSame(' ', $destination->characters[$i]);
-        }
     }
 
     #[Test]
@@ -2206,23 +1896,6 @@ final class FrameTest extends TestCase
         self::assertSame($buffer2->foregrounds, $buffer1->foregrounds);
         self::assertSame($buffer2->backgrounds, $buffer1->backgrounds);
         self::assertSame($buffer2->attributes, $buffer1->attributes);
-    }
-
-    #[Test]
-    public function overlayIndexCalculationUsesSourceAndDestinationWidths(): void
-    {
-        $destination = new Frame(8, 4);
-        $source = new Frame(3, 2);
-        $source->putChar(2, 1, 'Q', 1);
-
-        $destination->overlay($source, 4, 2);
-
-        $expectedIndex = 3 * 8 + 6;
-        self::assertSame('Q', $destination->characters[$expectedIndex]);
-        self::assertSame(1, $destination->foregrounds[$expectedIndex]);
-
-        self::assertSame(' ', $destination->characters[$expectedIndex - 1]);
-        self::assertSame(' ', $destination->characters[$expectedIndex + 1]);
     }
 
     #[Test]
@@ -2836,77 +2509,6 @@ final class FrameTest extends TestCase
         self::assertSame(true, $frame->dirtyRows[1]);
     }
 
-    // ── Mutant-killing: overlay default params (L248) ──
-
-    #[Test]
-    public function overlayDefaultOffsetXIsZero(): void
-    {
-        $destination = new Frame(5, 1);
-        $source = new Frame(2, 1);
-        $source->putChar(0, 0, 'A', 1);
-        $destination->overlay($source);
-        self::assertSame('A', $destination->characters[0]);
-    }
-
-    #[Test]
-    public function overlayDefaultOffsetYIsZero(): void
-    {
-        $destination = new Frame(5, 2);
-        $source = new Frame(1, 1);
-        $source->putChar(0, 0, 'A', 1);
-        $destination->overlay($source);
-        self::assertSame('A', $destination->characters[0]);
-        self::assertSame(' ', $destination->characters[5]);
-    }
-
-    // ── Mutant-killing: overlay bounds (L252) ──
-
-    #[Test]
-    public function overlayDestinationYAtHeightMinus1Succeeds(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 1);
-        $source->putChar(0, 0, 'A', 1);
-        $destination->overlay($source, 0, 2);
-        self::assertSame('A', $destination->characters[2 * 5]);
-    }
-
-    #[Test]
-    public function overlayDestinationYAtExactHeightSkips(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 1);
-        $source->putChar(0, 0, 'A', 1);
-        $destination->overlay($source, 0, 3);
-        for ($i = 0; $i < $destination->size; ++$i) {
-            self::assertSame(' ', $destination->characters[$i]);
-        }
-    }
-
-    #[Test]
-    public function overlayDestinationYNegativeOneSkips(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 1);
-        $source->putChar(0, 0, 'A', 1);
-        $destination->overlay($source, 0, -1);
-        for ($i = 0; $i < $destination->size; ++$i) {
-            self::assertSame(' ', $destination->characters[$i]);
-        }
-    }
-
-    // ── Mutant-killing: overlay dirty uses true (L285) ──
-
-    #[Test]
-    public function overlayDirtyRowIsActuallyTrue(): void
-    {
-        $destination = new Frame(10, 3);
-        $source = new Frame(1, 1);
-        $source->putChar(0, 0, 'A', 1);
-        $destination->overlay($source, 0, 1);
-        self::assertSame(true, $destination->dirtyRows[1]);
-    }
-
     // ── Mutant-killing: markAllDirty uses true (L352) ──
 
     #[Test]
@@ -3087,48 +2689,6 @@ final class FrameTest extends TestCase
         self::assertSame(' ', $frame->characters[3]);
     }
 
-    // ── Mutant-killing: overlay >= vs > on height (L252) ──
-
-    #[Test]
-    public function overlayAtLastRowSucceeds(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 3);
-        $source->putChar(0, 0, 'A', 1);
-        $source->putChar(0, 1, 'B', 1);
-        $source->putChar(0, 2, 'C', 1);
-        $destination->overlay($source, 0, 0);
-        self::assertSame('A', $destination->characters[0 * 5]);
-        self::assertSame('B', $destination->characters[1 * 5]);
-        self::assertSame('C', $destination->characters[2 * 5]);
-    }
-
-    #[Test]
-    public function overlayAtExactHeightRowIsSkipped(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 4);
-        $source->putChar(0, 3, 'D', 1);
-        $destination->overlay($source, 0, 0);
-        self::assertSame(' ', $destination->characters[2 * 5]);
-    }
-
-    // ── Mutant-killing: overlay || vs && on bounds (L252) ──
-
-    #[Test]
-    public function overlayNegativeDestYSkipsThatRow(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 2);
-        $source->putChar(0, 0, 'A', 1);
-        $source->putChar(0, 1, 'B', 1);
-        $destination->overlay($source, 0, -1);
-        self::assertSame('B', $destination->characters[0]);
-        for ($i = 5; $i < $destination->size; ++$i) {
-            self::assertSame(' ', $destination->characters[$i]);
-        }
-    }
-
     // ── Mutant-killing: putChar default params (L45) ──
 
     #[Test]
@@ -3216,33 +2776,6 @@ final class FrameTest extends TestCase
         self::assertSame('Z', $frame->characters[1] !== '' ? $frame->characters[1] : $frame->characters[2]);
     }
 
-    // ── Mutant-killing: overlay at height-1 must work, at height must not (L252) ──
-
-    #[Test]
-    public function overlayRowAtDestinationHeightMinusOneIsWritten(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 1);
-        $source->putChar(0, 0, 'X', 1);
-        $destination->overlay($source, 0, 2);
-        self::assertSame('X', $destination->characters[2 * 5]);
-        self::assertSame(1, $destination->foregrounds[2 * 5]);
-    }
-
-    #[Test]
-    public function overlayRowAtDestinationHeightIsNotWritten(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 2);
-        $source->putChar(0, 0, 'A', 1);
-        $source->putChar(0, 1, 'B', 1);
-        $destination->overlay($source, 0, 2);
-        self::assertSame('A', $destination->characters[2 * 5]);
-        for ($i = 0; $i < 2 * 5; ++$i) {
-            self::assertSame(' ', $destination->characters[$i]);
-        }
-    }
-
     // ── Mutant-killing: fillRect max(0,x) - with x=0, max(0,0)=0 vs max(-1,0)=0 ──
     // Need test where x is positive but small, so max(0,x) != max(-1,x)
 
@@ -3284,30 +2817,6 @@ final class FrameTest extends TestCase
         $frame->fillRect(0, -1, 1, 3, 0, 0, 0, 'X');
         self::assertCount(5, $frame->characters, 'No extra entries should exist at negative indices');
         self::assertSame(range(0, 4), array_keys($frame->characters));
-    }
-
-    // ── Mutant-killing: overlay at exact height would write out of bounds (L252) ──
-
-    #[Test]
-    public function overlayAtHeightDoesNotCreateOutOfBoundsEntries(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 4);
-        $source->putChar(0, 3, 'X', 1);
-        $destination->overlay($source, 0, 0);
-        self::assertCount(15, $destination->characters, 'No extra entries should exist beyond buffer size');
-    }
-
-    #[Test]
-    public function overlayNegativeYDoesNotCreateOutOfBoundsEntries(): void
-    {
-        $destination = new Frame(5, 3);
-        $source = new Frame(1, 2);
-        $source->putChar(0, 0, 'X', 1);
-        $source->putChar(0, 1, 'Y', 1);
-        $destination->overlay($source, 0, -1);
-        self::assertCount(15, $destination->characters, 'No extra entries should exist');
-        self::assertSame(range(0, 14), array_keys($destination->characters));
     }
 
     #[Test]
@@ -3593,19 +3102,6 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function overlayDropsAWideLeadWithNoRoomForItsContinuation(): void
-    {
-        $source = new Frame(2, 1);
-        $source->putChar(0, 0, '中');
-        $destination = new Frame(5, 1);
-
-        $destination->overlay($source, 4, 0);
-
-        self::assertSame(' ', $destination->characters[4], 'A wide lead must not land in the last column, where its continuation cannot follow');
-        self::assertSame(1, $destination->widths[4], 'No width-2 lead may be left without a continuation');
-    }
-
-    #[Test]
     public function putStringLeavesTheRowCleanWhenEveryCellWasClipped(): void
     {
         $frame = new Frame(10, 5);
@@ -3695,20 +3191,6 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function overlayLeavesTheCellAloneWhereOnlyTheRightHalfOfAWideCharacterLands(): void
-    {
-        $source = new Frame(2, 1);
-        $source->putString(0, 0, '中');
-        $destination = new Frame(4, 1);
-        $destination->putString(0, 0, 'abcd');
-
-        $destination->overlay($source, -1, 0);
-
-        self::assertSame('a', $destination->characters[0]);
-        self::assertSame(1, $destination->widths[0]);
-    }
-
-    #[Test]
     public function aGraphemeWriteReportsOnlyTheColumnsUpToTheRightEdge(): void
     {
         $frame = new Frame(6, 1);
@@ -3725,19 +3207,6 @@ final class FrameTest extends TestCase
         $frame->putString(5, 0, '中');
 
         self::assertFalse($frame->isRowDirty(0));
-    }
-
-    #[Test]
-    public function overlayDrawsAWideCharacterThatEndsInTheLastColumn(): void
-    {
-        $source = new Frame(2, 1);
-        $source->putString(0, 0, '中');
-        $destination = new Frame(5, 1);
-
-        $destination->overlay($source, 3, 0);
-
-        self::assertSame('中', $destination->characters[3]);
-        self::assertSame(2, $destination->widths[3]);
     }
 
     #[Test]

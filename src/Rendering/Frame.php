@@ -399,57 +399,6 @@ final class Frame
         }
     }
 
-    public function overlay(self $source, int $offsetX = 0, int $offsetY = 0): void
-    {
-        for ($sourceY = 0; $sourceY < $source->height; ++$sourceY) {
-            $destinationY = $sourceY + $offsetY;
-            if ($destinationY < 0 || $destinationY >= $this->height) {
-                continue;
-            }
-
-            $sourceBase = $sourceY * $source->width;
-            $destinationBase = $destinationY * $this->width;
-            $changed = false;
-
-            for ($sourceX = 0; $sourceX < $source->width; ++$sourceX) {
-                $destinationX = $sourceX + $offsetX;
-                if ($destinationX < 0 || $destinationX >= $this->width) {
-                    continue;
-                }
-
-                $sourceIndex = $sourceBase + $sourceX;
-                if (
-                    $source->characters[$sourceIndex] === ' '
-                    && $source->foregrounds[$sourceIndex] === 0
-                    && $source->backgrounds[$sourceIndex] === 0
-                    && $source->attributes[$sourceIndex] === 0
-                ) {
-                    continue;
-                }
-
-                if ($source->widths[$sourceIndex] === 2 && $destinationX + 1 >= $this->width) {
-                    continue;
-                }
-                if ($source->widths[$sourceIndex] === 0 && $destinationX === 0) {
-                    continue;
-                }
-
-                $this->repairOverwriteEdges($destinationBase, $destinationX, $destinationX + 1);
-                $destinationIndex = $destinationBase + $destinationX;
-                $this->characters[$destinationIndex] = $source->characters[$sourceIndex];
-                $this->foregrounds[$destinationIndex] = $source->foregrounds[$sourceIndex];
-                $this->backgrounds[$destinationIndex] = $source->backgrounds[$sourceIndex];
-                $this->attributes[$destinationIndex] = $source->attributes[$sourceIndex];
-                $this->widths[$destinationIndex] = $source->widths[$sourceIndex];
-                $changed = true;
-            }
-
-            if ($changed) {
-                $this->markRowDirty($destinationY);
-            }
-        }
-    }
-
     public function character(int $index): string
     {
         return $this->characters[$index];
