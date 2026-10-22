@@ -331,6 +331,22 @@ final class RunningStreamingProcessTest extends TestCase
     }
 
     #[Test]
+    public function aCharacterSplitAcrossTwoReadsOfTheErrorStreamArrivesWhole(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturn('');
+        $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls("a\xE2\x82", "\xACb");
+        $process->method('isRunning')->willReturn(true);
+        $running = new RunningStreamingProcess($process, null);
+
+        $first = $running->pump();
+        self::assertSame(['a'], self::outputsOf($first));
+        self::assertInstanceOf(ProcessOutputMsg::class, $first[0]);
+        self::assertSame(ProcessStream::Stderr, $first[0]->stream);
+        self::assertSame(['€b'], self::outputsOf($running->pump()));
+    }
+
+    #[Test]
     public function aChunkNeverEndsInsideACharacter(): void
     {
         $process = $this->createMock(Process::class);
