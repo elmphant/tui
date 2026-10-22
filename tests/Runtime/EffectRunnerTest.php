@@ -987,7 +987,7 @@ final class EffectRunnerTest extends TestCase
     #[Test]
     public function aQuietStreamDoesNotHoldUpOneWithSomethingToSay(): void
     {
-        [$quietRead] = self::streamPair();
+        [$quietRead, $quietWrite] = self::streamPair();
         [$read, $write] = self::streamPair();
         $runner = $this->runner();
         $runner->run(Cmd::listen($quietRead, self::reader(...)), null);
@@ -998,6 +998,7 @@ final class EffectRunnerTest extends TestCase
         $runner->pump();
 
         self::assertEquals([new TestMessage('hello')], iterator_to_array($this->results, false));
+        self::assertIsResource($quietWrite);
     }
 
     #[Test]
@@ -1044,6 +1045,26 @@ final class EffectRunnerTest extends TestCase
         self::assertSame(ErrorSource::Listen, $error->source);
         self::assertEquals(EffectId::named('broken'), $error->effectId);
         self::assertEquals([new TestMessage('hello')], iterator_to_array($this->results, false), 'a stopped reader is not asked again');
+    }
+
+    #[Test]
+    public function aStreamWhoseReaderThrowsNoLongerWakesTheLoop(): void
+    {
+        [$read, $write] = self::streamPair();
+        $woken = 0;
+        $runner = $this->wakeCountingRunner($woken);
+        $runner->run(Cmd::listen($read, static function (): never {
+            throw new LogicException('unreadable');
+        }), null);
+        fwrite($write, 'x');
+        self::letTheLoopNotice();
+        $runner->pump();
+
+        $woken = 0;
+        fwrite($write, 'y');
+        self::letTheLoopNotice();
+
+        self::assertSame(0, $woken);
     }
 
     #[Test]
