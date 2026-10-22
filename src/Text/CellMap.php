@@ -93,10 +93,8 @@ final class CellMap
 
     /**
      * Rows no wider than $maxWidth, as byte offset and length, breaking at the
-     * last space that fits and dropping it.
-     *
-     * A width of one cannot hold a wide grapheme, which the per-grapheme walk
-     * places alone; this only answers from two cells up.
+     * last space that fits and dropping it. A wide grapheme that opens a row
+     * of one cell gets the row to itself.
      *
      * @return list<array{int, int}>
      */
@@ -107,8 +105,13 @@ final class CellMap
         $byteStart = 0;
         $width = strlen($this->cells);
 
-        while ($width - $rowStart > $maxWidth) {
-            $space = strrpos(substr($this->cells, $rowStart, $maxWidth + 1), ' ');
+        while (true) {
+            $rowWidth = ($this->cells[$rowStart + 1] ?? '') === self::SECOND_HALF ? max($maxWidth, 2) : $maxWidth;
+            if ($width - $rowStart <= $rowWidth) {
+                break;
+            }
+
+            $space = strrpos(substr($this->cells, $rowStart, $rowWidth + 1), ' ');
 
             if ($space !== false) {
                 $spaceByte = $this->byteAt($rowStart + $space);
@@ -119,7 +122,7 @@ final class CellMap
                 continue;
             }
 
-            $end = $rowStart + $maxWidth;
+            $end = $rowStart + $rowWidth;
             if ($this->cells[$end] === self::SECOND_HALF) {
                 --$end;
             }

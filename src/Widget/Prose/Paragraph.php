@@ -298,9 +298,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
         /** @var list<array{int, int}> */
         return WrapCache::remember(
             $width . ':' . hash('xxh3', $text),
-            static fn (): array => $width === 1
-                ? self::rowBounds(Grapheme::split($text), $width)
-                : CellMap::of($text)->rowsAt($width),
+            static fn (): array => CellMap::of($text)->rowsAt($width),
         );
     }
 
@@ -312,62 +310,6 @@ final readonly class Paragraph implements Widget, MeasureHeight
         }
 
         return $text;
-    }
-
-    /**
-     * @param list<string> $characters
-     *
-     * @return list<array{int, int}>
-     */
-    private static function rowBounds(array $characters, int $maxWidth): array
-    {
-        $rows = [];
-        $rowStart = 0;
-        $currentWidth = 0;
-        $lastSpaceOffset = -1;
-        $widthAtLastSpace = 0;
-
-        foreach ($characters as $index => $character) {
-            $characterWidth = CharWidth::graphemeWidth($character);
-
-            if ($characterWidth === 0) {
-                continue;
-            }
-
-            if ($character === ' ') {
-                $lastSpaceOffset = $index - $rowStart;
-                $widthAtLastSpace = $currentWidth;
-            }
-
-            if ($currentWidth + $characterWidth > $maxWidth && $index > $rowStart) {
-                if ($lastSpaceOffset >= 0) {
-                    $rows[] = [$rowStart, $lastSpaceOffset];
-                    $rowStart += $lastSpaceOffset + 1;
-                    $currentWidth = $currentWidth - $widthAtLastSpace - 1 + $characterWidth;
-                } else {
-                    $rows[] = [$rowStart, $index - $rowStart];
-                    $rowStart = $index;
-                    $currentWidth = $characterWidth;
-                }
-                $lastSpaceOffset = -1;
-                $widthAtLastSpace = 0;
-                continue;
-            }
-
-            $currentWidth += $characterWidth;
-        }
-
-        $rows[] = [$rowStart, count($characters) - $rowStart];
-
-        $byteAt = [0];
-        foreach ($characters as $index => $character) {
-            $byteAt[$index + 1] = $byteAt[$index] + strlen($character);
-        }
-
-        return array_map(
-            static fn (array $row): array => [$byteAt[$row[0]], $byteAt[$row[0] + $row[1]] - $byteAt[$row[0]]],
-            $rows,
-        );
     }
 
     /**

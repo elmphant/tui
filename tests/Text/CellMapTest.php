@@ -48,6 +48,14 @@ final class CellMapTest extends TestCase
     }
 
     #[Test]
+    public function aRowOfOneCellHoldsOneGraphemeAndGivesAWideOneARowOfItsOwn(): void
+    {
+        self::assertSame([[0, 3], [4, 1], [5, 3], [8, 1]], CellMap::of('東 a東b')->rowsAt(1));
+        self::assertSame([[0, 1], [2, 1]], CellMap::of('a b')->rowsAt(1));
+        self::assertSame([[0, 6]], CellMap::of("\u{200B}東")->rowsAt(1));
+    }
+
+    #[Test]
     public function measuresAsWideAsItsGraphemes(): void
     {
         $text = "a東\u{0301} 👩‍👩‍👧\u{200B}";
