@@ -24,6 +24,8 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Testing\WidgetHarness;
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Popup\Modal;
@@ -38,6 +40,16 @@ use ReflectionObject;
 final class ModalTest extends TestCase
 {
     private RenderContext $context;
+
+    #[Test]
+    public function aBoundModalHandsKeysToAFieldInsideItThatIsNotBoundItself(): void
+    {
+        $modal = WidgetHarness::for(Modal::new('Name', TextInput::new()), 40, 10)->type('ada');
+
+        $content = $modal->widget()->content();
+        self::assertInstanceOf(TextInput::class, $content);
+        self::assertSame('ada', $content->value());
+    }
 
     #[Test]
     public function itNamesTheKeysItAnswers(): void
