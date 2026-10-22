@@ -241,11 +241,6 @@ final class Screen
                     }
 
                     $nextCharacter = $backCharacters[$nextIndex];
-                    if ($nextCharacter === '') {
-                        ++$nextColumn;
-                        continue;
-                    }
-
                     $runCharacters[] = self::cellText($nextCharacter, $backWidths[$nextIndex], $row, $nextColumn);
                     $repaintsTheRest = $repaintsTheRest || self::isCluster($nextCharacter, $backWidths[$nextIndex]);
                     $nextColumn += max(1, $backWidths[$nextIndex]);
@@ -279,13 +274,6 @@ final class Screen
 
             while ($column < $width) {
                 $index = $rowOffset + $column;
-                $character = $backBuffer->characters[$index];
-
-                if ($character === '') {
-                    ++$column;
-                    continue;
-                }
-
                 $foreground = $backBuffer->foregrounds[$index];
                 $background = $backBuffer->backgrounds[$index];
                 $attributes = $backBuffer->attributes[$index];
@@ -319,11 +307,6 @@ final class Screen
         while ($nextColumn < $width) {
             $nextIndex = $rowOffset + $nextColumn;
             $nextCharacter = $frame->characters[$nextIndex];
-
-            if ($nextCharacter === '') {
-                ++$nextColumn;
-                continue;
-            }
 
             if (!$this->cellHasStyle($frame, $nextIndex, $foreground, $background, $attributes)) {
                 break;
