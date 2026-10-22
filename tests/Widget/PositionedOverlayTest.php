@@ -214,4 +214,18 @@ final class PositionedOverlayTest extends TestCase
             self::assertSame('.', $frame->characters[$i], "Cell {$i} must remain untouched without content");
         }
     }
+
+    #[Test]
+    public function aSizeLargerThanTheAreaStaysInsideIt(): void
+    {
+        $frame = new Frame(30, 4);
+        $area = new Rect(0, 0, 10, 2);
+        $overlay = PositionedOverlay::at(5, 0)->withSize(20, 3)->withContent(Text::new('abcdefghijklmnop'));
+
+        $overlay->render($frame, $area, new RenderContext(Theme::dark()));
+
+        self::assertSame('abcde', implode('', array_slice($frame->characters, 5, 5)));
+        self::assertSame(' ', $frame->characters[10], 'Nothing past the right edge of the area');
+        self::assertEquals(new Rect(5, 0, 5, 2), iterator_to_array($overlay->placedChildren($area))[0][1], 'And a click past it misses');
+    }
 }

@@ -96,6 +96,8 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
                 : max(0, $area->height - ($this->y - $area->y))
         );
 
-        return $width <= 0 || $height <= 0 ? null : new Rect($this->x, $this->y, $width, $height);
+        $placement = (new Rect($this->x, $this->y, max(0, $width), max(0, $height)))->intersect($area);
+
+        return $placement->width <= 0 || $placement->height <= 0 ? null : $placement;
     }
 }
