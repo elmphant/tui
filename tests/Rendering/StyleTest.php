@@ -26,6 +26,18 @@ final class StyleTest extends TestCase
     }
 
     #[Test]
+    public function anInkOnAReversedPanelWithoutBackgroundIsReversedButKeepsItsOwnAttributes(): void
+    {
+        $panel = new Style(attributes: Attr::REVERSE | Attr::BOLD);
+
+        $ink = (new Style(foreground: Color::ansi(2), attributes: Attr::ITALIC))->readableOn($panel);
+
+        self::assertEquals(Color::ansi(2), $ink->foreground);
+        self::assertNull($ink->background);
+        self::assertSame(Attr::ITALIC | Attr::REVERSE, $ink->attributes);
+    }
+
+    #[Test]
     public function defaultsToUnset(): void
     {
         $style = new Style();
