@@ -791,8 +791,8 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `Spinner` | Animated loading indicator (frame-clock driven, no wiring) |
 | `ActivityBar` | Bouncing activity indicator (frame-clock driven, no wiring) |
 | `Card` / `Box` / `Container` | Composition and decoration helpers; a `Card` body is a string or any widget |
-| `Text` | Static text label |
-| `Paragraph` | Multi-line text with wrapping, alignment, ANSI/Markdown |
+| `Text` | Static text label (`Text::new($text)`) |
+| `Paragraph` | Multi-line text with wrapping, alignment, ANSI/Markdown. Named by what you hand it: `Paragraph::fromText()`, `fromLines()`, `fromMarkdown()`, `fromAnsi()` |
 | `Separator` | Horizontal line |
 | `Spacer` | Empty space |
 | `StatusBar` | Status line with key-hint rendering |
