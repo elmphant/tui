@@ -87,6 +87,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private bool $clearable = false,
         private ?int $selectedSourceIndex = null,
         private bool $searching = false,
+        private string $noItemsText = '',
     ) {
         $this->matching = $matching !== null && $matching->isFor($items, $matcher, $field->value())
             ? $matching
@@ -134,6 +135,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     public function withNoMatchText(string $noMatchText): self
     {
         return $this->cloneWith(noMatchText: $noMatchText);
+    }
+
+    public function withNoItemsText(string $noItemsText): self
+    {
+        return $this->cloneWith(noItemsText: $noItemsText);
     }
 
     public function withEmptyCaption(string $caption): self
@@ -413,7 +419,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         }
 
         if ($this->list->itemCount() === 0) {
-            Paragraph::fromLines([new Line([Span::token($this->noMatchText, StyleToken::Dim)])])
+            Paragraph::fromLines([new Line([Span::token($this->items === [] ? $this->noItemsText : $this->noMatchText, StyleToken::Dim)])])
                 ->render($frame, $body, $context);
 
             return;

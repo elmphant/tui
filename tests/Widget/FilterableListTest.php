@@ -120,6 +120,14 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function aListWithNoItemsReadsItsNoItemsText(): void
+    {
+        $list = FilterableList::new([])->withNoItemsText('No tasks yet');
+
+        self::assertStringContainsString('No tasks yet', $this->render($list));
+    }
+
+    #[Test]
     public function aHostCanSayWhatAQueryThatKeptNothingReads(): void
     {
         $list = $this->typed($this->commands()->withNoMatchText('No command by that name'), 'nonsense');
