@@ -12,12 +12,12 @@ use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use Elmphant\Tui\Text\WrapCache;
-use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
 use Elmphant\Tui\Widget\Table\StaticTable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class FilterableTablePerfTest extends TestCase
+final class FilterableStaticTablePerfTest extends TestCase
 {
     use PerformanceBudget;
 
@@ -52,7 +52,7 @@ final class FilterableTablePerfTest extends TestCase
         $wrapped = self::medianMicrosecondsAfterSetup(
             static function () use (&$filterable, $rows): void {
                 WrapCache::clear();
-                $filterable = FilterableTable::new(['Name', 'Method', 'Path'], $rows);
+                $filterable = FilterableStaticTable::new(['Name', 'Method', 'Path'], $rows);
             },
             static function () use (&$filterable, $area, $context): void {
                 $filterable?->render(new Frame(80, 12), $area, $context);
@@ -84,7 +84,7 @@ final class FilterableTablePerfTest extends TestCase
         $rows = self::rows(50);
 
         foreach (range(1, 3) as $frame) {
-            $table = FilterableTable::new(['Name', 'Method', 'Path'], $rows)
+            $table = FilterableStaticTable::new(['Name', 'Method', 'Path'], $rows)
                 ->withMatcher(new TallyingMatcher())
                 ->withQuery('row-1');
             $table->measureHeight(80);

@@ -17,7 +17,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Throwable;
 
 /**
- * @internal what FilterableList, FilterableCheckboxGroup and FilterableTable share:
+ * @internal what FilterableList, FilterableCheckboxGroup and FilterableStaticTable share:
  * the bar's place, its field, its cancel key and how a query narrows the entries
  */
 final class FilterBar

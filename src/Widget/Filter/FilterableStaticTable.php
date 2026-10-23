@@ -30,10 +30,7 @@ use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Table\StaticTable;
 
-/**
- * A table with a free-text filter over its rows.
- */
-final readonly class FilterableTable implements Focusable, MeasureHeight, KeybindingsAware, PublishesHints, TakesText, BindsForTheMoment
+final readonly class FilterableStaticTable implements Focusable, MeasureHeight, KeybindingsAware, PublishesHints, TakesText, BindsForTheMoment
 {
     use Cloneable;
     use DrawsFocus;

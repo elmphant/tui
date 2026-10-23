@@ -13,7 +13,7 @@ use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Feedback\ProgressBar;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableList;
-use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Table\StaticTable;
@@ -92,7 +92,7 @@ final class BuilderLawTest extends TestCase
      */
     public static function builders(): iterable
     {
-        yield 'FilterableTable' => [FilterableTable::new(['A', 'B'], [['a', 'b'], ['c', 'd']])];
+        yield 'FilterableStaticTable' => [FilterableStaticTable::new(['A', 'B'], [['a', 'b'], ['c', 'd']])];
         yield 'StaticTable' => [StaticTable::new(['A'], [['a']])];
         yield 'FilterableList' => [FilterableList::new([])];
         yield 'ListView' => [ListView::fromStrings(['a', 'b'])];

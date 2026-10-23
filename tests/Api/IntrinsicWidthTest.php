@@ -35,7 +35,7 @@ use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
 use Elmphant\Tui\Widget\Filter\FilterableList;
-use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
 use Elmphant\Tui\Widget\Form\ChoiceField;
 use Elmphant\Tui\Widget\Form\Form;
 use Elmphant\Tui\Widget\Form\FormFoot;
@@ -178,7 +178,7 @@ final class IntrinsicWidthTest extends TestCase
     {
         yield 'Modal' => [Modal::new('title', Text::new('body'))];
         yield 'Header' => [Header::new('title')];
-        yield 'FilterableTable' => [FilterableTable::new(['A'], [['1']])];
+        yield 'FilterableStaticTable' => [FilterableStaticTable::new(['A'], [['1']])];
     }
 
     /**

@@ -17,17 +17,17 @@ use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Widget\Field\InputDecoration;
 use Elmphant\Tui\Widget\Field\TextInput;
-use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
 use Elmphant\Tui\Widget\Filter\FilterBar;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class FilterableTableTest extends TestCase
+final class FilterableStaticTableTest extends TestCase
 {
     #[Test]
     public function aTableWithSomethingTypedInItNamesEveryKeyThatClearsIt(): void
     {
-        $filtered = FilterableTable::new(['Name'], [['alpha']])->withQuery('al');
+        $filtered = FilterableStaticTable::new(['Name'], [['alpha']])->withQuery('al');
 
         self::assertSame(
             ['Ctrl+U/Esc' => 'clear filter'],
@@ -39,7 +39,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function aPasteFiltersLikeTyping(): void
     {
-        $table = FilterableTable::new(['Name'], [['alpha'], ['beta'], ['gamma']]);
+        $table = FilterableStaticTable::new(['Name'], [['alpha'], ['beta'], ['gamma']]);
 
         $pasted = $table->update(new PasteMsg('be'), new Rect(0, 0, 40, 10))->model;
 
@@ -174,7 +174,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function holdsTheColumnWidthsItStartedWithWhileFiltering(): void
     {
-        $table = FilterableTable::new(
+        $table = FilterableStaticTable::new(
             ['Alias', 'Namespace'],
             [['core', 'Acme\Core\ViewHelpers'], ['f', 'X\Y']],
         );
@@ -193,7 +193,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function endsTheBarWhereTheTableEnds(): void
     {
-        $narrower = FilterableTable::new(
+        $narrower = FilterableStaticTable::new(
             ['Alias', 'Namespace'],
             [['core', 'Acme\Core\ViewHelpers'], ['formvh', 'Acme\Form\ViewHelpers']],
         );
@@ -209,7 +209,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function drawsNoTableNarrowerThanItsOwnFilterBar(): void
     {
-        $rows = $this->screen(FilterableTable::new(['Locale'], [['de_DE.utf8'], ['en_US.UTF-8']]), 90, 12);
+        $rows = $this->screen(FilterableStaticTable::new(['Locale'], [['de_DE.utf8'], ['en_US.UTF-8']]), 90, 12);
 
         self::assertSame(
             mb_strlen($rows[0]),
@@ -221,7 +221,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function keepsTheBarWideEnoughForItsOwnControls(): void
     {
-        $bar = $this->barRow(FilterableTable::new(['A'], [['x']]), 90);
+        $bar = $this->barRow(FilterableStaticTable::new(['A'], [['x']]), 90);
 
         self::assertSame('Filter…', mb_substr($bar, 0, 7), 'The field sits at the left edge');
         self::assertSame('1 of 1', mb_substr($bar, 14, 6), 'and the count ends a bar that holds room for nothing else');
@@ -464,7 +464,7 @@ final class FilterableTableTest extends TestCase
     {
         $table = $this->routes();
 
-        $component = Component::bind('routes', $table, static fn (Model $app, FilterableTable $replacement): Model => $app);
+        $component = Component::bind('routes', $table, static fn (Model $app, FilterableStaticTable $replacement): Model => $app);
 
         self::assertEquals($table->sizing(), $component->sizing(), 'The component stands in for the table it was given');
     }
@@ -477,7 +477,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function clearingTheQueryClearsWhatTheFieldShows(): void
     {
-        $typedIn = FilterableTable::new(['Name'], [['alpha'], ['beta']])
+        $typedIn = FilterableStaticTable::new(['Name'], [['alpha'], ['beta']])
             ->withField(TextInput::new()->withValue('alpha'));
         self::assertSame('alpha', $typedIn->field()->value(), 'precondition: a filter was typed');
 
@@ -491,7 +491,7 @@ final class FilterableTableTest extends TestCase
 
         $cleared = $table->update(new KeyMsg(Key::Escape), new Rect(0, 0, 40, 6))->model;
 
-        self::assertInstanceOf(FilterableTable::class, $cleared);
+        self::assertInstanceOf(FilterableStaticTable::class, $cleared);
         self::assertSame('', $cleared->query(), 'the first escape belongs to the query');
         self::assertNotSame($table, $cleared, 'and a changed model is how it says it took the key');
     }
@@ -507,7 +507,7 @@ final class FilterableTableTest extends TestCase
         self::assertNull($answered->command);
     }
 
-    private function fieldIsUnderlined(FilterableTable $table, bool $focused = false): bool
+    private function fieldIsUnderlined(FilterableStaticTable $table, bool $focused = false): bool
     {
         $frame = new Frame(60, 12);
         $context = $focused ? RenderContext::focused(Theme::dark()) : RenderContext::unfocused(Theme::dark());
@@ -525,7 +525,7 @@ final class FilterableTableTest extends TestCase
     /**
      * @return list<string>
      */
-    private function screen(FilterableTable $table, int $width, int $height): array
+    private function screen(FilterableStaticTable $table, int $width, int $height): array
     {
         $frame = new Frame($width, $height);
         $table->render($frame, Rect::fromSize($width, $height), new RenderContext(Theme::dark()));
@@ -538,7 +538,7 @@ final class FilterableTableTest extends TestCase
         return $rows;
     }
 
-    private function barRow(FilterableTable $table, int $width): string
+    private function barRow(FilterableStaticTable $table, int $width): string
     {
         $frame = new Frame($width, 1);
         $table->render($frame, new Rect(0, 0, $width, 1), new RenderContext(Theme::dark()));
@@ -557,9 +557,9 @@ final class FilterableTableTest extends TestCase
         return $line;
     }
 
-    private function routes(): FilterableTable
+    private function routes(): FilterableStaticTable
     {
-        return FilterableTable::new(
+        return FilterableStaticTable::new(
             ['Name', 'Method', 'Path'],
             [
                 ['ajax_bookmark', 'POST', '/ajax/bookmark'],

@@ -45,7 +45,7 @@ final class StaticTableTest extends TestCase
     }
 
     /**
-     * FilterableTable sizes its columns from every row while drawing only the
+     * FilterableStaticTable sizes its columns from every row while drawing only the
      * matching ones, so the rows it draws must not be the rows it measured.
      */
     #[Test]

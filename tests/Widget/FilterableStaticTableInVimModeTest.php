@@ -11,13 +11,13 @@ use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Tests\Application\Support\CopyableTestApp;
-use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class FilterableTableInVimModeTest extends TestCase
+final class FilterableStaticTableInVimModeTest extends TestCase
 {
     #[Test]
     public function theKeyHelpListsEnterOnlyWhileItHandsTheKeysBack(): void
@@ -135,7 +135,7 @@ final class FilterableTableInVimModeTest extends TestCase
     private static function outputPane(): Panel
     {
         return Panel::new('Output')->add(
-            FilterableTable::new(['Route'], array_map(static fn (int $index): array => ["route $index"], range(1, 40))),
+            FilterableStaticTable::new(['Route'], array_map(static fn (int $index): array => ["route $index"], range(1, 40))),
         );
     }
 }
@@ -151,10 +151,10 @@ final readonly class VimOutputApp extends CopyableTestApp
         return $this->panel->scrollOffset(new Rect(0, 0, 40, 10));
     }
 
-    public function table(): FilterableTable
+    public function table(): FilterableStaticTable
     {
         $table = iterator_to_array($this->panel->children())[0];
-        TestCase::assertInstanceOf(FilterableTable::class, $table);
+        TestCase::assertInstanceOf(FilterableStaticTable::class, $table);
 
         return $table;
     }

@@ -252,12 +252,12 @@ replaces per action, then the App's `globalKeybindings()` on top.
 | `L` / `H`, `gt` / `gT` | next / previous tab |
 | `/` | search: hand the keys to a filter's field (`Actions::SEARCH`) |
 
-A filter (`FilterableList`, `FilterableTable`, `FilterableCheckboxGroup`, and a
+A filter (`FilterableList`, `FilterableStaticTable`, `FilterableCheckboxGroup`, and a
 `Dropdown` holding one) asks whether its bindings name a key for
 `Actions::SEARCH`. While none does, its field takes the keys, as it always has.
 Once one does — vim mode, or a host's `withKeybindings()` — the list or table
 holds the keys: `j`/`k`, `gg`/`G` and `ctrl+d`/`ctrl+u` move the list, a
-`FilterableTable` leaves them to the pane it scrolls in, the field shows no
+`FilterableStaticTable` leaves them to the pane it scrolls in, the field shows no
 caret, and global letters work. `/` hands the keys to the field; Esc or Enter
 hands them back and keeps the query, and Esc on the list then clears it. The
 footer hints say which of the two holds the keys (`/ search`, `Esc/Enter back`).
@@ -781,7 +781,7 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `Table` | Interactive table: cursor, selection, mouse, scrolling; constraint-based columns, wrapping cells (`Column::withWrap(Wrap::NoWrap)` cuts with `…` instead), optional header (`withHeader(false)`) |
 | `StaticTable` | Static bordered table: draws every row, no cursor or scrolling, columns sized to content |
 | `FilterableList` | Search field over a list: typing filters, arrows/Enter navigate and choose; `sourceIndex()` maps the cursor back to your items |
-| `FilterableTable` | The same search field over a `StaticTable` |
+| `FilterableStaticTable` | The same search field over a `StaticTable` |
 | `TabBar` | Tabbed container with keyboard/mouse tab switching |
 | `Split` | Two panes with a draggable divider |
 | `TreeView` | Lazy tree — children load on expand (`pendingSince($before)` names what started waiting in the last update, so a key fetches each node once); the cursor is a path, so it survives reloads |

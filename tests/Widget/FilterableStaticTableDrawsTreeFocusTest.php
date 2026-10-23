@@ -9,16 +9,16 @@ use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class FilterableTableDrawsTreeFocusTest extends TestCase
+final class FilterableStaticTableDrawsTreeFocusTest extends TestCase
 {
     #[Test]
     public function aTableTheTreeFocusesUnderlinesItsField(): void
     {
-        $table = FilterableTable::new(['Name'], [['one'], ['two']]);
+        $table = FilterableStaticTable::new(['Name'], [['one'], ['two']]);
         $area = new Rect(0, 0, 40, 6);
 
         $focused = new Frame(40, 6);
