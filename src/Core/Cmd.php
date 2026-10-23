@@ -44,9 +44,9 @@ abstract readonly class Cmd
      * Puts the keyboard on a component. The tree owns which one that is, so an
      * app asks rather than setting a flag on the widget.
      */
-    public static function focus(ComponentId $target): self
+    public static function focus(ComponentId|string $target): self
     {
-        return new FocusCmd($target);
+        return new FocusCmd(is_string($target) ? ComponentId::named($target) : $target);
     }
 
     /**

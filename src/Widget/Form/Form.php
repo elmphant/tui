@@ -221,11 +221,11 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
      * The stop a field's widget is, inside the component this form is bound as —
      * where a host sends the keyboard to fix what is missing.
      */
-    public function stopOf(string $name, ComponentId $form): ComponentId
+    public function stopOf(string $name, ComponentId|string $form): ComponentId
     {
         $at = $this->indexOf($name) ?? throw new LogicException(sprintf('The form has no field named "%s"', $name));
 
-        return ComponentId::named($form->value . '/' . $this->widgetChild($at));
+        return ComponentId::named($form . '/' . $this->widgetChild($at));
     }
 
     public function sizing(): Sizing

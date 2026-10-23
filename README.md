@@ -110,7 +110,7 @@ abstract readonly class App
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
     protected function onResize(ResizeMsg $message): UpdateResult { return UpdateResult::ignored($this); }
     protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
-    protected function onComponentsChanged(array $ids): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onComponentsChanged(array $ids): UpdateResult { return UpdateResult::ignored($this); } // list<ComponentId>, not strings: compare $id->value
 
     protected function applicationKeybindings(): Keybindings {} // actions for onAction(), before any component
     protected function quitBindings(): Keybindings {}           // extra keys that quit
@@ -123,7 +123,7 @@ abstract readonly class App
 }
 ```
 
-`onAction()` hears the actions `applicationKeybindings()` matched; `onComponentsChanged()` runs after bound widgets were written back, on the App that already holds them — the place to re-filter a list when a bound search field changed. `theme()` is asked before every frame, so a theme switch is a field on the App: `return $this->dark ? Theme::dark() : Theme::light();`. `bindProperty('list', $this->list)` binds a widget to the property it lives on, so the write-back cannot name another.
+`onAction()` hears the actions `applicationKeybindings()` matched; `onComponentsChanged()` runs after bound widgets were written back, on the App that already holds them — the place to re-filter a list when a bound search field changed. The ids are `ComponentId` objects, so `in_array('search', $ids, true)` is always false; ask `$id->value === 'search'` instead. `theme()` is asked before every frame, so a theme switch is a field on the App: `return $this->dark ? Theme::dark() : Theme::light();`. `bindProperty('list', $this->list)` binds a widget to the property it lives on, so the write-back cannot name another.
 
 Hooks always return `UpdateResult`: `UpdateResult::ignored($this)` when the message meant nothing here, `new UpdateResult($next, $command)` otherwise, or `$this->then(...)` for a command alone. Passing on what a child answered is `$answer->mapModel(fn ($child) => $this->withChild($child))`, which keeps the child's command even when the child itself did not change. Under PHPStan level 9 the hooks answer `UpdateResult<static>`. `App` uses `Cloneable`, so a subclass may call the protected `$this->cloneWith(list: $list)` (named arguments; it returns `$this` when nothing changed) — never redeclare it, a private `cloneWith()` in a subclass is fatal. Typed `withX()` methods still give static analysers the strongest contract.
 
@@ -288,7 +288,7 @@ component, implements `NamesItsKeys` and lists them from its bindings in
 
 The keyboard starts on the first stop in tree order — inside a `TabBar`'s first
 page (`tabs/0`), not on its strip — so a header control drawn above a field takes
-it first; return `Cmd::focus(ComponentId::named('composer'))` from `setup()` to
+it first; return `Cmd::focus('composer')` from `setup()` to
 start elsewhere. `Cmd::focus()` to a component not on screen is refused, and the
 keyboard stays. When the component holding the keyboard leaves the tree, it goes
 to the nearest ancestor that is a stop, else the first stop under it, else into
@@ -415,7 +415,7 @@ Cmd::log('loaded', ['items' => 3])  // a line in the trace; stdout is the screen
 Cmd::copy($text)                    // put text on the clipboard (OSC 52)
 
 // Focus
-Cmd::focus(ComponentId::named('search'))  // move the keyboard to a component
+Cmd::focus('search')                      // move the keyboard to a component
 Cmd::focusNext() / Cmd::focusPrevious()   // as tab / shift+tab
 Cmd::focusFirst() / Cmd::focusNothing()   // the first stop, or keep the keyboard for the App
 
@@ -575,7 +575,7 @@ For a whole part of an app with its own state, components and effects (a tab, a
 module), mount it under a name. The framework then does the plumbing:
 
 - Its components are known as `name/component`. Inside the sub-model you use the
-  local names, also in `Cmd::focus(ComponentId::named('field'))`.
+  local names, also in `Cmd::focus('field')`.
 - It hears a key before its components, as an App does. The key goes to the mount
   that holds the keyboard, or to every mount on screen if none does.
 - Answers to what it asks for (processes, timers, `Cmd::message()`) come back to

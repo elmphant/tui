@@ -284,6 +284,12 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function theFormCanBeNamedByTheStringItWasBoundWith(): void
+    {
+        self::assertEquals(ComponentId::named('form/4'), self::userForm()->stopOf('password', 'form'));
+    }
+
+    #[Test]
     public function anIntroStandsAboveTheFieldsAndTheFieldsStillTakeTheKeyboard(): void
     {
         $intro = self::userForm()->withIntro(Text::new('Creates a user in the backend'));

@@ -30,6 +30,12 @@ final class FocusCmdTest extends TestCase
     }
 
     #[Test]
+    public function aComponentCanBeNamedByTheStringItWasBoundWith(): void
+    {
+        self::assertEquals(Cmd::focus(ComponentId::named('search')), Cmd::focus('search'));
+    }
+
+    #[Test]
     public function aComponentNotOnScreenCannotTakeTheKeyboard(): void
     {
         $command = Cmd::focus(ComponentId::named('hidden/search'));
