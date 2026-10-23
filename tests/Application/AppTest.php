@@ -156,7 +156,7 @@ final class AppTest extends TestCase
     #[Test]
     public function onComponentsChangedIsNotCalledWhenAMouseEventChangesNoComponent(): void
     {
-        $app = new NoOpMouseApp(input: TextInput::new('x'));
+        $app = new NoOpMouseApp(input: TextInput::new()->withPlaceholder('x'));
 
         $result = $app->update(
             new MouseMsg(0, 0, MouseAction::WheelDown, MouseButton::None),
@@ -501,7 +501,7 @@ final readonly class SearchApp extends CopyableTestApp
 
     public static function create(): self
     {
-        return new self(query: TextInput::new('search'));
+        return new self(query: TextInput::new()->withPlaceholder('search'));
     }
 
     public function view(): Widget

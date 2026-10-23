@@ -103,7 +103,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
         return new self(
             $items,
-            TextInput::new(FilterBar::PLACEHOLDER)->withDecoration(InputDecoration::None),
+            TextInput::new()->withPlaceholder(FilterBar::PLACEHOLDER)->withDecoration(InputDecoration::None),
             ListView::new($items),
         );
     }

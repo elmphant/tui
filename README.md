@@ -1428,7 +1428,7 @@ effect the widget started comes back to it:
 use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
 
-$field = WidgetHarness::for(TextInput::new('name'), width: 20, height: 1)->type('Ada');
+$field = WidgetHarness::for(TextInput::new()->withPlaceholder('name'), width: 20, height: 1)->type('Ada');
 
 $field->widget()->value();       // 'Ada', the widget as the last update left it
 $field->screen()->rowOf('Ada');  // 0

@@ -48,7 +48,7 @@ final readonly class E2eApp extends App
         }
 
         $form = Panel::new('Form')
-            ->add(TextInput::new('type here'))
+            ->add(TextInput::new()->withPlaceholder('type here'))
             ->add(Dropdown::new(Select::new(['alpha', 'beta', '漢字 gamma', 'delta 😀', 'epsilon'])))
             ->add(Text::new('Under the dropdown 漢字漢字'))
             ->add(Text::new('Under the dropdown 😀😀😀'))

@@ -67,7 +67,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function aRowScrolledUnderTheFooterIsOutOfThePointersReach(): void
     {
-        $fields = array_map(static fn (int $row): TextInput => TextInput::new('field ' . $row), range(0, 9));
+        $fields = array_map(static fn (int $row): TextInput => TextInput::new()->withPlaceholder('field ' . $row), range(0, 9));
         $pane = Component::bind(
             'pane',
             Panel::new('Form')->withChildren($fields)->withFooter(Text::new('RUN')),

@@ -93,7 +93,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     {
         Options::assertDistinct($options, 'FilterableCheckboxGroup');
 
-        return new self($options, TextInput::new(FilterBar::PLACEHOLDER));
+        return new self($options, TextInput::new()->withPlaceholder(FilterBar::PLACEHOLDER));
     }
 
     /**

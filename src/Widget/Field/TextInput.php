@@ -69,9 +69,9 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
         ]);
     }
 
-    public static function new(string $placeholder = ''): self
+    public static function new(string $value = ''): self
     {
-        return new self(placeholder: $placeholder);
+        return (new self())->withValue($value);
     }
 
     public function hints(): array

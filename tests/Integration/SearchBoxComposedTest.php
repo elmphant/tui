@@ -142,7 +142,7 @@ final readonly class SearchBox implements Focusable
 
     public static function new(): self
     {
-        return new self(TextInput::new('Search'));
+        return new self(TextInput::new()->withPlaceholder('Search'));
     }
 
     public function sizing(): Sizing

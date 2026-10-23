@@ -100,10 +100,19 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function aFieldMadeWithTextHoldsItAsItsValue(): void
+    {
+        $field = TextInput::new('https://example.test');
+
+        self::assertSame('https://example.test', $field->value());
+        self::assertSame(20, $field->cursor());
+    }
+
+    #[Test]
     public function thePlaceholderCanBeReplacedAfterConstruction(): void
     {
         $frame = new Frame(20, 1);
-        TextInput::new('type here')->withPlaceholder('or here')
+        TextInput::new()->withPlaceholder('type here')->withPlaceholder('or here')
             ->render($frame, new Rect(0, 0, 20, 1), new RenderContext(Theme::dark()));
 
         $line = '';
@@ -503,7 +512,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function rendersPlaceholderWhenEmptyAndNotFocused(): void
     {
-        $input = TextInput::new('Type here...');
+        $input = TextInput::new()->withPlaceholder('Type here...');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -515,7 +524,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function rendersPlaceholderWhileFocusedAndEmpty(): void
     {
-        $input = TextInput::new('Type here...');
+        $input = TextInput::new()->withPlaceholder('Type here...');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -549,7 +558,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function rendersTheCursorOverThePlaceholderWhileFocused(): void
     {
-        $input = TextInput::new('Type here...');
+        $input = TextInput::new()->withPlaceholder('Type here...');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, RenderContext::focused(Theme::dark()));
@@ -561,7 +570,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function typingReplacesThePlaceholder(): void
     {
-        $input = TextInput::new('Type here...')->withValue('x');
+        $input = TextInput::new()->withPlaceholder('Type here...')->withValue('x');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -657,7 +666,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function styledAppliesBackgroundToPlaceholder(): void
     {
-        $input = TextInput::new('Type here...')->withStyled();
+        $input = TextInput::new()->withPlaceholder('Type here...')->withStyled();
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -707,7 +716,7 @@ final class TextInputTest extends TestCase
     {
         // Terminals draw the underline in the text colour, so the placeholder
         // and the empty tail must share one tone or the rule looks broken.
-        $input = TextInput::new('Search commands…');
+        $input = TextInput::new()->withPlaceholder('Search commands…');
         $frame = new Frame(40, 1);
 
         $input->render($frame, new Rect(0, 0, 40, 1), new RenderContext(Theme::dark()));
@@ -723,7 +732,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function theUnderlineIsOneColourOnceTextIsTyped(): void
     {
-        $input = TextInput::new('Search commands…')->withValue('cache');
+        $input = TextInput::new()->withPlaceholder('Search commands…')->withValue('cache');
         $frame = new Frame(40, 1);
 
         $input->render($frame, new Rect(0, 0, 40, 1), new RenderContext(Theme::dark()));
@@ -1207,7 +1216,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderPlaceholderTruncatedToAvailableWidth(): void
     {
-        $input = TextInput::new('Hello World, this is a long placeholder');
+        $input = TextInput::new()->withPlaceholder('Hello World, this is a long placeholder');
         $frame = new Frame(5, 1);
         $area = new Rect(0, 0, 5, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1222,7 +1231,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderMultibytePlaceholderTruncation(): void
     {
-        $input = TextInput::new("\u{4F60}\u{597D}\u{4E16}\u{754C}\u{1F600}");
+        $input = TextInput::new()->withPlaceholder("\u{4F60}\u{597D}\u{4E16}\u{754C}\u{1F600}");
         $frame = new Frame(3, 1);
         $area = new Rect(0, 0, 3, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1233,7 +1242,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderDoesNotShowPlaceholderWhenValueExists(): void
     {
-        $input = TextInput::new('placeholder')->withValue('x');
+        $input = TextInput::new()->withPlaceholder('placeholder')->withValue('x');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1797,7 +1806,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderStyledPlaceholderUsesInputStyleFaint(): void
     {
-        $input = TextInput::new('Hello')->withStyled();
+        $input = TextInput::new()->withPlaceholder('Hello')->withStyled();
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
@@ -1809,7 +1818,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderStyledPlaceholderKeepsTheInputBackgroundWhileFocused(): void
     {
-        $input = TextInput::new('Hello')->withStyled();
+        $input = TextInput::new()->withPlaceholder('Hello')->withStyled();
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
@@ -1824,7 +1833,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderPlaceholderNotShownWhenValuePresent(): void
     {
-        $input = TextInput::new('placeholder text');
+        $input = TextInput::new()->withPlaceholder('placeholder text');
         $input = $input->withValue('x')->withCursor(0);
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -1891,7 +1900,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function placeholderReturnPreventsTextRendering(): void
     {
-        $input = TextInput::new('Enter...');
+        $input = TextInput::new()->withPlaceholder('Enter...');
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $context = new RenderContext(Theme::dark());
@@ -1980,7 +1989,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function placeholderTruncatesMultibyteByCharacterCount(): void
     {
-        $input = TextInput::new("\u{00FC}\u{00E9}\u{00F1}\u{00E4}");
+        $input = TextInput::new()->withPlaceholder("\u{00FC}\u{00E9}\u{00F1}\u{00E4}");
         $frame = new Frame(3, 1);
         $area = new Rect(0, 0, 3, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1999,7 +2008,7 @@ final class TextInputTest extends TestCase
     public function placeholderReturnPreventsSubsequentCodeExecution(): void
     {
         $theme = Theme::dark();
-        $input = TextInput::new('Hello')->withDecoration(InputDecoration::None);
+        $input = TextInput::new()->withPlaceholder('Hello')->withDecoration(InputDecoration::None);
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $input->render($frame, $area, new RenderContext($theme));

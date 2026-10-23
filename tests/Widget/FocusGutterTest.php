@@ -49,7 +49,7 @@ final class FocusGutterTest extends TestCase
         $frame = new Frame(12, 1);
         $theme = Theme::dark();
 
-        FocusGutter::around(TextInput::new(''))
+        FocusGutter::around(TextInput::new())
             ->render($frame, new Rect(0, 0, 12, 1), RenderContext::focused($theme));
 
         self::assertSame(FocusGutter::BAR, $frame->characters[0], 'the bar says where the keys land');
@@ -72,7 +72,7 @@ final class FocusGutterTest extends TestCase
     #[Test]
     public function aKeyTheApplicationBoundGloballyStillReachesTheFieldBehindTheTrack(): void
     {
-        $field = FocusGutter::around(TextInput::new('')->withValue('typed'))
+        $field = FocusGutter::around(TextInput::new()->withValue('typed'))
             ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]))
             ->holds();
         self::assertInstanceOf(TextInput::class, $field);
@@ -118,7 +118,7 @@ final class FocusGutterTest extends TestCase
     #[Test]
     public function itSaysWhatItHoldsAndWhereThatLandsForAHostWalkingTheTree(): void
     {
-        $field = TextInput::new('type here');
+        $field = TextInput::new()->withPlaceholder('type here');
 
         $gutter = FocusGutter::around($field);
 
@@ -131,7 +131,7 @@ final class FocusGutterTest extends TestCase
     {
         $frame = new Frame(20, 1);
 
-        FocusGutter::around(TextInput::new('type here'))
+        FocusGutter::around(TextInput::new()->withPlaceholder('type here'))
             ->render($frame, new Rect(0, 0, 20, 1), new RenderContext(Theme::dark()));
 
         self::assertSame('t', $frame->characters[2], 'the field begins past the track, focused or not');
@@ -143,7 +143,7 @@ final class FocusGutterTest extends TestCase
         $frame = new Frame(12, 1);
         $theme = Theme::dark();
 
-        FocusGutter::around(TextInput::new(''))
+        FocusGutter::around(TextInput::new())
             ->render($frame, new Rect(0, 0, 12, 1), new RenderContext($theme));
 
         self::assertSame(FocusGutter::RAIL, $frame->characters[0], 'the column is a track, never a gap');

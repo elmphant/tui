@@ -84,7 +84,7 @@ final class FilterBar
 
     public static function field(string $query): TextInput
     {
-        return TextInput::new(self::PLACEHOLDER)->withValue($query);
+        return TextInput::new($query)->withPlaceholder(self::PLACEHOLDER);
     }
 
     public static function barArea(Rect $area, ?int $width = null): Rect

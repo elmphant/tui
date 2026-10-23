@@ -30,7 +30,7 @@ final class WidgetHarnessTest extends TestCase
     #[Test]
     public function aWidgetHostedAloneHoldsTheKeyboard(): void
     {
-        $field = WidgetHarness::for(TextInput::new('name'), 20, 1)->type('Ada');
+        $field = WidgetHarness::for(TextInput::new()->withPlaceholder('name'), 20, 1)->type('Ada');
 
         self::assertSame('Ada', $field->widget()->value());
         self::assertSame(0, $field->screen()->rowOf('Ada'));
@@ -47,7 +47,7 @@ final class WidgetHarnessTest extends TestCase
     #[Test]
     public function theFieldsOfAPaneAreStopsTheKeyboardWalks(): void
     {
-        $form = WidgetHarness::for(Panel::new('Form')->withChildren([TextInput::new('a'), TextInput::new('b')]), 30, 8)
+        $form = WidgetHarness::for(Panel::new('Form')->withChildren([TextInput::new()->withPlaceholder('a'), TextInput::new()->withPlaceholder('b')]), 30, 8)
             ->press('tab')
             ->type('x');
 

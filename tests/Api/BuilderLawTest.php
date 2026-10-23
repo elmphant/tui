@@ -98,7 +98,7 @@ final class BuilderLawTest extends TestCase
         yield 'ListView' => [ListView::fromStrings(['a', 'b'])];
         yield 'Select' => [Select::new(['a', 'b'])];
         yield 'Radio' => [Radio::new(['a', 'b'])];
-        yield 'TextInput' => [TextInput::new('text')];
+        yield 'TextInput' => [TextInput::new()->withPlaceholder('text')];
         yield 'Checkbox' => [Checkbox::new('label')];
         yield 'CheckboxGroup' => [CheckboxGroup::new(['a', 'b'])];
         yield 'ProgressBar' => [ProgressBar::new()];

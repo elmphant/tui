@@ -92,7 +92,7 @@ final class GeometryTest extends TestCase
     {
         return Component::bind(
             'form',
-            Panel::new('Form')->withChildren([TextInput::new('a'), TextInput::new('b')]),
+            Panel::new('Form')->withChildren([TextInput::new()->withPlaceholder('a'), TextInput::new()->withPlaceholder('b')]),
             static fn (GeometryAskingApp $app, Panel $panel): GeometryAskingApp => $app,
         );
     }
