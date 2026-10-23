@@ -36,6 +36,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
 use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
+use Elmphant\Tui\Widget\Filter\FilterableTable;
 use Elmphant\Tui\Widget\Form\ChoiceField;
 use Elmphant\Tui\Widget\Form\Form;
 use Elmphant\Tui\Widget\Form\FormFoot;
@@ -246,6 +247,7 @@ final class IntrinsicWidthTest extends TestCase
     public static function fillOnlyWidgets(): iterable
     {
         yield 'Separator' => [Separator::new()];
+        yield 'FilterableTable' => [FilterableTable::new([Column::new('A', Constraint::flex())], [Table\Row::new('x')])];
         yield 'Panel' => [Panel::new()];
         yield 'Box' => [Box::new()];
         yield 'Card' => [Card::new('title', 'body')];

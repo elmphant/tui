@@ -252,7 +252,7 @@ replaces per action, then the App's `globalKeybindings()` on top.
 | `L` / `H`, `gt` / `gT` | next / previous tab |
 | `/` | search: hand the keys to a filter's field (`Actions::SEARCH`) |
 
-A filter (`FilterableList`, `FilterableStaticTable`, `FilterableCheckboxGroup`, and a
+A filter (`FilterableList`, `FilterableTable`, `FilterableStaticTable`, `FilterableCheckboxGroup`, and a
 `Dropdown` holding one) asks whether its bindings name a key for
 `Actions::SEARCH`. While none does, its field takes the keys, as it always has.
 Once one does — vim mode, or a host's `withKeybindings()` — the list or table
@@ -781,6 +781,7 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `Table` | Interactive table: cursor, selection, mouse, scrolling; constraint-based columns, wrapping cells (`Column::withWrap(Wrap::NoWrap)` cuts with `…` instead), optional header (`withHeader(false)`) |
 | `StaticTable` | Static bordered table: draws every row, no cursor or scrolling, columns sized to content |
 | `FilterableList` | Search field over a list: typing filters, arrows/Enter navigate and choose; `sourceIndex()` maps the cursor back to your items |
+| `FilterableTable` | The same search field over an interactive `Table`: arrows and Enter go to the rows, typing to the field; `cursorRow()`, `selectedRow()` and `sourceIndex()` answer for the rows handed in, and a query keeps the cursor on its row by `Row::key()` |
 | `FilterableStaticTable` | The same search field over a `StaticTable` |
 | `TabBar` | Tabbed container with keyboard/mouse tab switching |
 | `Split` | Two panes with a draggable divider |

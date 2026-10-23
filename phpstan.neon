@@ -12,6 +12,7 @@ parameters:
             - Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup
             - Elmphant\Tui\Widget\Filter\FilterableList
             - Elmphant\Tui\Widget\Filter\FilterableStaticTable
+            - Elmphant\Tui\Widget\Filter\FilterableTable
             - Elmphant\Tui\Widget\Popup\Dropdown
     level: 9
     paths:
