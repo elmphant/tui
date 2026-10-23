@@ -231,7 +231,6 @@ final class RunningHttpRequestTest extends TestCase
             'response_headers' => ['content-type' => 'text/plain'],
         ]));
         $response = $client->request('GET', 'https://example.test');
-        self::assertSame(404, $response->getStatusCode());
 
         $request = new RunningHttpRequest($client, $response, null);
         $messages = $request->pump();

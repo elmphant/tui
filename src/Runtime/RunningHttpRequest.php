@@ -62,6 +62,11 @@ final class RunningHttpRequest implements RunningProcess
                     return [];
                 }
 
+                if ($chunk->isFirst()) {
+                    // Symfony throws on a 4xx or 5xx status as the stream goes on, unless the status was read first.
+                    $this->response->getStatusCode();
+                }
+
                 $this->lastHeardAt = hrtime(true) / self::NANOSECONDS_PER_SECOND;
                 $this->body .= $chunk->getContent();
                 if (strlen($this->body) > $this->maxBodyBytes) {
