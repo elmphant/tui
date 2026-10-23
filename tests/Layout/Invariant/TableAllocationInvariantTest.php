@@ -45,7 +45,7 @@ final class TableAllocationInvariantTest extends TestCase
         $row = Layout::horizontal(...array_map(
             static fn (Constraint $constraint): ConstrainedWidget => new ConstrainedWidget($constraint),
             $constraints,
-        ));
+        ))->withGap(1);
 
         self::assertSame($row->sizesFor($extent), $this->table($constraints)->columnWidths($extent));
     }
@@ -56,11 +56,12 @@ final class TableAllocationInvariantTest extends TestCase
     {
         $remaining = $extent;
         $expected = [];
+        $gap = self::gapIn($constraints, $extent);
 
         foreach ($this->table($constraints)->columnWidths($extent) as $width) {
             $fits = min($width, $remaining);
             $expected[] = $fits;
-            $remaining -= $fits;
+            $remaining -= $fits + min($gap, $remaining - $fits);
         }
 
         self::assertSame($expected, $this->drawnWidths($constraints, $extent));
@@ -82,7 +83,10 @@ final class TableAllocationInvariantTest extends TestCase
     #[DataProviderExternal(ConstraintSweep::class, 'casesWithAnUncappedWeightedChild')]
     public function aWeightedColumnWithoutACeilingLeavesNoCellUnused(array $constraints, int $extent): void
     {
-        self::assertSame($extent, array_sum($this->table($constraints)->columnWidths($extent)));
+        $gaps = self::gapIn($constraints, $extent) * (count($constraints) - 1);
+        $floors = array_sum(array_map(static fn (Constraint $constraint): int => $constraint->min, $constraints));
+
+        self::assertSame(max($extent, $floors + $gaps), array_sum($this->table($constraints)->columnWidths($extent)) + $gaps);
     }
 
     #[Test]
@@ -108,6 +112,16 @@ final class TableAllocationInvariantTest extends TestCase
 
         self::assertSame(2, $table->measureHeight(20));
         self::assertSame(2, $table->measureHeight(15), 'The columns keep their floors, so no cell wraps into the width that is missing');
+    }
+
+    /**
+     * The one cell between columns gives way only where the gaps alone would not fit.
+     *
+     * @param list<Constraint> $constraints
+     */
+    private static function gapIn(array $constraints, int $extent): int
+    {
+        return count($constraints) < 2 ? 0 : min(1, intdiv($extent, count($constraints) - 1));
     }
 
     private static function areaOf(int $extent): Rect

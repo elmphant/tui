@@ -10,6 +10,10 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
+use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\AxisResult;
+use Elmphant\Tui\Layout\Axis\AxisSpecification;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\ScrollWindow;
@@ -49,6 +53,8 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     use Cloneable;
     use DrawsFocus;
     use KeybindingsAwareBehavior;
+
+    private const COLUMN_GAP = 1;
 
     /**
      * Row heights for the current rows, shared with every clone that keeps
@@ -242,17 +248,17 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
 
         $theme = $context->theme;
         $visibleRows = $area->height - $this->headerHeight();
-        [$showScrollbar, $columnWidths] = $this->scrollbarAndColumnWidths($area);
+        [$showScrollbar, $placement] = $this->scrollbarAndColumns($area);
 
         $frame->pushClip($area);
         try {
             if ($this->header) {
-                $this->renderHeader($frame, $area, $columnWidths, $theme);
+                $this->renderHeader($frame, $area, $placement, $theme);
             }
-            $this->renderRows($frame, $area, $columnWidths, $theme, $this->drawsFocused($context));
+            $this->renderRows($frame, $area, $placement, $theme, $this->drawsFocused($context));
 
             if ($showScrollbar) {
-                $layout = $this->layoutFor($columnWidths);
+                $layout = $this->layoutFor($placement->sizes);
                 $topRow = $this->displayScrollOffset($area);
 
                 Scrollbar::renderFor(
@@ -278,7 +284,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
      */
     public function columnWidths(int $totalWidth): array
     {
-        return Constraint::allocate(array_map(static fn (Column $column): Constraint => $column->width(), $this->columns), $totalWidth);
+        return $this->columnPlacement($totalWidth)->sizes;
     }
 
     /**
@@ -469,29 +475,21 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return new UpdateResult($this);
     }
 
-    /**
-     * @param list<int> $columnWidths
-     */
-    private function renderHeader(Frame $frame, Rect $area, array $columnWidths, Theme $theme): void
+    private function renderHeader(Frame $frame, Rect $area, AxisResult $placement, Theme $theme): void
     {
         $headerStyle = $theme->headerStyle->underline();
-        $cellX = $area->x;
 
         foreach ($this->columns as $index => $column) {
-            $width = $columnWidths[$index];
-            $title = CharWidth::truncateToWidth($column->title(), $width);
-            $frame->putStyled($cellX, $area->y, $title, $headerStyle);
-            $cellX += $width;
+            $title = CharWidth::truncateToWidth($column->title(), $placement->sizes[$index]);
+            $frame->putStyled($area->x + $placement->offsets[$index], $area->y, $title, $headerStyle);
         }
     }
 
-    /**
-     * @param list<int> $columnWidths
-     */
-    private function renderRows(Frame $frame, Rect $area, array $columnWidths, Theme $theme, bool $focused): void
+    private function renderRows(Frame $frame, Rect $area, AxisResult $placement, Theme $theme, bool $focused): void
     {
-        $layout = $this->layoutFor($columnWidths);
-        $totalWidth = array_sum($columnWidths);
+        $layout = $this->layoutFor($placement->sizes);
+        $last = array_key_last($placement->sizes);
+        $totalWidth = $last === null ? 0 : $placement->offsets[$last] + $placement->sizes[$last];
         $renderY = $area->y + $this->headerHeight();
 
         // A scroll container sizes its child to the child's whole content and
@@ -512,7 +510,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
                 }
 
                 $rowArea = new Rect($area->x, $renderY, $totalWidth, $layout->heightOf($rowIndex));
-                $this->renderRow($frame, $rowArea, $rowIndex, $columnWidths, $theme, $focused);
+                $this->renderRow($frame, $rowArea, $rowIndex, $placement, $theme, $focused);
 
                 $renderY += $rowArea->height;
             }
@@ -521,15 +519,12 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         }
     }
 
-    /**
-     * @param list<int> $columnWidths
-     */
-    private function renderRow(Frame $frame, Rect $rowArea, int $rowIndex, array $columnWidths, Theme $theme, bool $focused): void
+    private function renderRow(Frame $frame, Rect $rowArea, int $rowIndex, AxisResult $placement, Theme $theme, bool $focused): void
     {
         $row = $this->rows[$rowIndex];
 
         if ($row->spansAllColumns) {
-            foreach (TableLayout::spanningLines($columnWidths, $row) as $lineIndex => $line) {
+            foreach (TableLayout::spanningLines($placement->sizes, $row) as $lineIndex => $line) {
                 $frame->putStyled($rowArea->x, $rowArea->y + $lineIndex, $line, $theme->headerStyle);
             }
 
@@ -556,11 +551,10 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
             $rowStyle = $rowStyle->readableOn($defaultStyle);
         }
 
-        $rowLines = TableLayout::linesOfRow($columnWidths, $row, $this->wraps());
-        $cellX = $rowArea->x;
+        $rowLines = TableLayout::linesOfRow($placement->sizes, $row, $this->wraps());
 
         foreach (array_keys($this->columns) as $columnIndex) {
-            $width = $columnWidths[$columnIndex];
+            $cellX = $rowArea->x + $placement->offsets[$columnIndex];
             $cell = $row->cells[$columnIndex] ?? '';
             $cellStyle = $cell instanceof Span
                 ? $cell->withResolvedToken($theme)->style
@@ -575,8 +569,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
             for ($line = 0; $line < $rowArea->height; ++$line) {
                 $frame->putStyled($cellX, $rowArea->y + $line, $rowLines[$columnIndex][$line] ?? '', $cellRenderStyle);
             }
-
-            $cellX += $width;
         }
     }
 
@@ -604,27 +596,36 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
      */
     private function columnWidthsFor(Rect $area): array
     {
-        return $this->scrollbarAndColumnWidths($area)[1];
+        return $this->scrollbarAndColumns($area)[1]->sizes;
     }
 
     /**
-     * Whether the rows need a scrollbar, and the widths that leaves. Cells wrap,
+     * Whether the rows need a scrollbar, and the columns that leaves. Cells wrap,
      * so what has to fit is the lines the rows come to and not how many rows
      * there are; a scrollbar then takes a column, which can only wrap them
      * further, so needing one at the full width still needs one once narrowed.
      *
-     * @return array{bool, list<int>}
+     * @return array{bool, AxisResult}
      */
-    private function scrollbarAndColumnWidths(Rect $area): array
+    private function scrollbarAndColumns(Rect $area): array
     {
         $visibleLines = max(1, $area->height - $this->headerHeight());
-        $widths = $this->columnWidths($area->width);
+        $placement = $this->columnPlacement($area->width);
 
-        if (!Scrollbar::needsScrollbar($this->layoutFor($widths)->totalHeight, $visibleLines)) {
-            return [false, $widths];
+        if (!Scrollbar::needsScrollbar($this->layoutFor($placement->sizes)->totalHeight, $visibleLines)) {
+            return [false, $placement];
         }
 
-        return [true, $this->columnWidths($area->width - 1)];
+        return [true, $this->columnPlacement($area->width - 1)];
+    }
+
+    private function columnPlacement(int $totalWidth): AxisResult
+    {
+        return Allocator::resolve(
+            array_map(static fn (Column $column): ItemPolicy => $column->width()->policy(), $this->columns),
+            $totalWidth,
+            new AxisSpecification(gap: self::COLUMN_GAP),
+        );
     }
 
     /**

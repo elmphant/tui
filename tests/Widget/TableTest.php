@@ -446,7 +446,7 @@ final class TableTest extends TestCase
         }
 
         self::assertSame('aaaaaa', substr($row, 0, 6), 'Clipped to its own six columns');
-        self::assertSame('bb', substr($row, 6, 2), 'The next column starts on time');
+        self::assertSame(' bb', substr($row, 6, 3), 'The next column starts on time, after the gap');
     }
 
     #[Test]
@@ -476,7 +476,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aColumnFloorIsReservedBeforeTheFlexColumnsShare(): void
     {
-        $frame = new Frame(21, 3);
+        $frame = new Frame(23, 3);
         $table = Table\Table::fromCells(
             [
                 Column::new('A', Constraint::min(10)),
@@ -486,22 +486,22 @@ final class TableTest extends TestCase
             [['one', 'two', 'three']],
         );
 
-        $table->render($frame, new Rect(0, 0, 21, 3), new RenderContext(Theme::dark()));
+        $table->render($frame, new Rect(0, 0, 23, 3), new RenderContext(Theme::dark()));
 
         $header = '';
-        for ($column = 0; $column < 21; ++$column) {
+        for ($column = 0; $column < 23; ++$column) {
             $header .= $frame->characters[$column];
         }
 
         self::assertSame('A', $header[0]);
-        self::assertSame('B', $header[10], 'The floor is reserved before anything is shared');
-        self::assertSame('C', $header[15], 'The eleven cells left over split five and six');
+        self::assertSame('B', $header[11], 'The floor is reserved before anything is shared');
+        self::assertSame('C', $header[17], 'The eleven cells left over split five and six');
     }
 
     #[Test]
     public function flexColumnsShareWhatTheFixedColumnsLeaveAndTheLastTakesTheRemainder(): void
     {
-        $frame = new Frame(41, 3);
+        $frame = new Frame(43, 3);
         $table = Table\Table::fromCells(
             [
                 Column::new('A', Constraint::exact(10)),
@@ -511,19 +511,19 @@ final class TableTest extends TestCase
             [['one', 'two', 'three']],
         );
 
-        $table->render($frame, new Rect(0, 0, 41, 3), new RenderContext(Theme::dark()));
+        $table->render($frame, new Rect(0, 0, 43, 3), new RenderContext(Theme::dark()));
 
         $header = '';
-        for ($column = 0; $column < 41; ++$column) {
+        for ($column = 0; $column < 43; ++$column) {
             $header .= $frame->characters[$column];
         }
 
-        // 41 columns less the fixed 10 leaves 31 for flex weights 1 and 2:
-        // floor(31/3)=10 and floor(62/3)=20, and the last flex column takes the
-        // leftover column so the three widths account for all 41.
+        // 43 columns less two gaps and the fixed 10 leaves 31 for flex weights 1
+        // and 2: floor(31/3)=10 and floor(62/3)=20, and the last flex column takes
+        // the leftover column so the widths and gaps account for all 43.
         self::assertSame('A', $header[0]);
-        self::assertSame('B', $header[10]);
-        self::assertSame('C', $header[20]);
+        self::assertSame('B', $header[11]);
+        self::assertSame('C', $header[22]);
     }
 
     #[Test]
@@ -1295,6 +1295,17 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function aColumnFilledToItsWidthLeavesASpaceBeforeTheNext(): void
+    {
+        $table = Table\Table::fromCells(
+            [Column::new('Date', Constraint::exact(10)), Column::new('Merchant', Constraint::flex())],
+            [['2026-10-01', 'Bakery']],
+        );
+
+        self::assertSame('2026-10-01 Bakery', rtrim($this->screenLines($table, Rect::fromSize(30, 3))[1]));
+    }
+
+    #[Test]
     public function computeColumnWidthsExactColumnsGetExactWidth(): void
     {
         $table = Table\Table::fromCells(
@@ -1307,8 +1318,9 @@ final class TableTest extends TestCase
         self::assertSame('A', $frame->characters[0]);
         self::assertSame('A', $frame->characters[1]);
         self::assertSame(' ', $frame->characters[2]);
-        self::assertSame('B', $frame->characters[3]);
+        self::assertSame(' ', $frame->characters[3]);
         self::assertSame('B', $frame->characters[4]);
+        self::assertSame('B', $frame->characters[5]);
     }
 
     #[Test]
@@ -1365,7 +1377,7 @@ final class TableTest extends TestCase
         }
 
         self::assertSame('F', $frame->characters[30]);
-        self::assertSame('F', $frame->characters[30 + 10]);
+        self::assertSame('F', $frame->characters[30 + 11]);
     }
 
     #[Test]
@@ -1408,7 +1420,8 @@ final class TableTest extends TestCase
         self::assertSame('3', $frame->characters[20 + 2]);
         self::assertSame('4', $frame->characters[20 + 3]);
         self::assertSame('5', $frame->characters[20 + 4]);
-        self::assertSame('F', $frame->characters[20 + 5]);
+        self::assertSame(' ', $frame->characters[20 + 5]);
+        self::assertSame('F', $frame->characters[20 + 6]);
     }
 
     #[Test]
@@ -1428,7 +1441,7 @@ final class TableTest extends TestCase
                 break;
             }
         }
-        self::assertSame(5, $firstBPosition);
+        self::assertSame(6, $firstBPosition);
 
         $lastBPosition = -1;
         for ($column = 10; $column >= 0; --$column) {
@@ -1600,8 +1613,9 @@ final class TableTest extends TestCase
         self::assertSame('A', $frame->characters[1]);
         self::assertSame(' ', $frame->characters[2]);
         self::assertSame(' ', $frame->characters[3]);
-        self::assertSame('B', $frame->characters[4]);
+        self::assertSame(' ', $frame->characters[4]);
         self::assertSame('B', $frame->characters[5]);
+        self::assertSame('B', $frame->characters[6]);
     }
 
     #[Test]
@@ -1614,12 +1628,7 @@ final class TableTest extends TestCase
         $frame = new Frame(20, 3);
         $table->render($frame, Rect::fromSize(20, 3), new RenderContext(Theme::dark()));
 
-        self::assertSame('a', $frame->characters[20 + 0]);
-        self::assertSame('b', $frame->characters[20 + 1]);
-        self::assertSame('c', $frame->characters[20 + 2]);
-        self::assertSame('d', $frame->characters[20 + 3]);
-        self::assertSame('e', $frame->characters[20 + 4]);
-        self::assertSame('f', $frame->characters[20 + 5]);
+        self::assertSame('abc def', $this->rowText($frame, 20, 1, 0, 7));
     }
 
     // --- Render with offset area ---
@@ -2025,7 +2034,7 @@ final class TableTest extends TestCase
         $frame = new Frame(20, 9);
         $table->render($frame, Rect::fromSize(20, 9), new RenderContext(Theme::dark()));
 
-        self::assertSame('Ada   dev', $this->rowText($frame, 20, 3, 0, 9));
+        self::assertSame('Ada    dev', $this->rowText($frame, 20, 3, 0, 10));
     }
 
     #[Test]
@@ -2038,7 +2047,7 @@ final class TableTest extends TestCase
         $frame = new Frame(20, 6);
         $table->render($frame, Rect::fromSize(20, 6), new RenderContext(Theme::dark()));
 
-        self::assertSame('Ada   dev', $this->rowText($frame, 20, 1, 0, 9));
+        self::assertSame('Ada    dev', $this->rowText($frame, 20, 1, 0, 10));
     }
 
     #[Test]
@@ -2171,12 +2180,7 @@ final class TableTest extends TestCase
         $frame = new Frame(20, 3);
         $table->render($frame, Rect::fromSize(20, 3), new RenderContext(Theme::dark()));
 
-        self::assertSame('a', $frame->characters[20 + 0]);
-        self::assertSame('b', $frame->characters[20 + 1]);
-        self::assertSame('c', $frame->characters[20 + 2]);
-        self::assertSame('d', $frame->characters[20 + 3]);
-        self::assertSame('e', $frame->characters[20 + 4]);
-        self::assertSame('f', $frame->characters[20 + 5]);
+        self::assertSame('abc def', $this->rowText($frame, 20, 1, 0, 7));
     }
 
     #[Test]
@@ -2733,8 +2737,8 @@ final class TableTest extends TestCase
         $table->render($frame, Rect::fromSize(30, 3), new RenderContext(Theme::dark()));
 
         self::assertSame('A', $frame->characters[30 + 0]);
-        self::assertSame('B', $frame->characters[30 + 5]);
-        self::assertSame(' ', $frame->characters[30 + 10]);
+        self::assertSame('B', $frame->characters[30 + 6]);
+        self::assertSame(' ', $frame->characters[30 + 11]);
     }
 
     // --- L302: lastFlexIndex = -1 ---
@@ -2786,16 +2790,16 @@ final class TableTest extends TestCase
             [Column::new('A', Constraint::flex(1)), Column::new('B', Constraint::flex(1))],
             [['AAAAAAAAAA', 'BBBBBBBBBB']],
         );
-        $frame = new Frame(11, 3);
-        $table->render($frame, Rect::fromSize(11, 3), new RenderContext(Theme::dark()));
+        $frame = new Frame(12, 3);
+        $table->render($frame, Rect::fromSize(12, 3), new RenderContext(Theme::dark()));
 
         $aCount = 0;
         $bCount = 0;
-        for ($column = 0; $column < 11; ++$column) {
-            if ($frame->characters[11 + $column] === 'A') {
+        for ($column = 0; $column < 12; ++$column) {
+            if ($frame->characters[12 + $column] === 'A') {
                 ++$aCount;
             }
-            if ($frame->characters[11 + $column] === 'B') {
+            if ($frame->characters[12 + $column] === 'B') {
                 ++$bCount;
             }
         }
@@ -2868,7 +2872,7 @@ final class TableTest extends TestCase
     // --- L348: totalWidth = array_sum(columnWidths) ---
 
     #[Test]
-    public function totalWidthIsArraySumOfColumnWidths(): void
+    public function theCursorBandEndsWithTheLastColumn(): void
     {
         $table = Table\Table::fromCells(
             [Column::new('A', Constraint::exact(5)), Column::new('B', Constraint::exact(7))],
@@ -2880,8 +2884,9 @@ final class TableTest extends TestCase
 
         $band = $theme->cursorStyle->backgroundValue();
         self::assertSame($band, $frame->backgrounds[30 + 0]);
-        self::assertSame($band, $frame->backgrounds[30 + 11], 'the highlight runs to the last column');
-        self::assertNotSame($band, $frame->backgrounds[30 + 12], 'and stops there');
+        self::assertSame($band, $frame->backgrounds[30 + 5], 'the gap between columns is part of the band');
+        self::assertSame($band, $frame->backgrounds[30 + 12], 'the highlight runs to the last column');
+        self::assertNotSame($band, $frame->backgrounds[30 + 13], 'and stops there');
     }
 
     // --- L350-353: visibleIndex loop and break ---
@@ -3902,17 +3907,17 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function everyCellStartsWhereTheColumnBeforeItEnds(): void
+    public function everyCellStartsOneCellAfterTheColumnBeforeIt(): void
     {
         $table = Table\Table::fromCells(
             [Column::new('X', Constraint::exact(3)), Column::new('Y', Constraint::exact(3)), Column::new('Z', Constraint::exact(3))],
             [['a', 'b', 'c']],
         );
-        $frame = new Frame(12, 2);
+        $frame = new Frame(14, 2);
 
-        $table->render($frame, new Rect(2, 0, 9, 2), new RenderContext(Theme::dark()));
+        $table->render($frame, new Rect(2, 0, 11, 2), new RenderContext(Theme::dark()));
 
-        self::assertSame('  a  b  c', $this->rowText($frame, 12, 1, 0, 12));
+        self::assertSame('  a   b   c', $this->rowText($frame, 14, 1, 0, 14));
     }
 
     #[Test]
