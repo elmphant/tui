@@ -147,6 +147,14 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         return $index === null ? null : $this->rows[$index];
     }
 
+    /**
+     * @return list<Row>
+     */
+    public function matchingRows(): array
+    {
+        return array_map(fn (int $index): Row => $this->rows[$index], $this->matchingIndexes());
+    }
+
     public function selectedRow(): ?Row
     {
         return $this->table->selectedTypedRow();
@@ -294,9 +302,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     private function reFiltered(): self
     {
-        return $this->cloneWith(table: $this->table->withRows(
-            array_map(fn (int $index): Row => $this->rows[$index], $this->matchingIndexes()),
-        ));
+        return $this->cloneWith(table: $this->table->withRows($this->matchingRows()));
     }
 
     /**

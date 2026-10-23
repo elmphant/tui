@@ -11,6 +11,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\WidgetHarness;
@@ -191,6 +192,15 @@ final class FilterableTableTest extends TestCase
         })->withQuery('nothing like it');
 
         self::assertSame('3 of 3', $everything->summary());
+    }
+
+    #[Test]
+    public function theRowsTheQueryKeptAreThereToAddUp(): void
+    {
+        $table = $this->harness()->type('r')->widget();
+
+        self::assertInstanceOf(FilterableTable::class, $table);
+        self::assertSame(['Office rent', 'Train'], array_map(static fn (Row $row): string|Span => $row->cells[1], $table->matchingRows()));
     }
 
     private function harness(): WidgetHarness
