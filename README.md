@@ -212,6 +212,11 @@ text for that component alone: `onKey()`, `applicationKeybindings()`,
 `quitBindings()`, mounts and global letter bindings never see it. Modified and
 named keys stay shortcuts, so give app-wide commands Ctrl chords (`ctrl+n`, not
 `n`); a bare letter works only while a list or a button holds the keyboard.
+App bindings are matched before the focused widget's, so a chord the app binds
+is taken from the field. A `TextInput` already uses `ctrl+u` (clear the line),
+`ctrl+backspace` and `ctrl+delete` (delete a word), and `ctrl+left`/`ctrl+right`
+and `alt+b`/`alt+f` (move by a word); the key help (`?`) lists what the focused
+widget binds.
 
 A pattern of several keys separated by spaces is a chord, typed one key after the
 other: `'g g'`, `'g T'`, `'ctrl+x ctrl+s'`. The runtime holds the first keys back
