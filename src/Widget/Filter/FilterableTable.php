@@ -32,13 +32,14 @@ use Elmphant\Tui\Widget\Field\InputDecoration;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Row;
 use Elmphant\Tui\Widget\Table\Table;
 
-final readonly class FilterableTable implements Focusable, KeybindingsAware, Committing, PublishesHints, TakesText, BindsForTheMoment
+final readonly class FilterableTable implements Focusable, MeasureHeight, KeybindingsAware, Committing, PublishesHints, TakesText, BindsForTheMoment
 {
     use Cloneable;
     use DrawsFocus;
@@ -201,6 +202,13 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
             Constraint::flex(),
             Constraint::min(FilterBar::HEIGHT + FilterBar::GAP_BELOW + 1)->withFlex(),
         );
+    }
+
+    public function measureHeight(int $width): int
+    {
+        $body = $this->matchingIndexes() === [] ? 1 : $this->table->measureHeight($width);
+
+        return FilterBar::HEIGHT + FilterBar::GAP_BELOW + $body;
     }
 
     public function update(Message $message, Rect $area): UpdateResult
