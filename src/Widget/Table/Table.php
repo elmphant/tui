@@ -36,6 +36,7 @@ use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Wrap;
+use InvalidArgumentException;
 
 /**
  * A table the reader navigates: cursor, selection, mouse, and a scrolled viewport.
@@ -53,8 +54,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     use Cloneable;
     use DrawsFocus;
     use KeybindingsAwareBehavior;
-
-    private const COLUMN_GAP = 1;
 
     /**
      * Row heights for the current rows, shared with every clone that keeps
@@ -81,6 +80,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         ?KeyedCache $layoutMemo = null,
+        private int $columnGap = 1,
     ) {
         $this->layoutMemo = $layoutMemo ?? self::newLayoutMemo();
     }
@@ -129,6 +129,15 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     public function withColumns(array $columns): self
     {
         return $this->cloneWith(columns: $columns, layoutMemo: self::newLayoutMemo());
+    }
+
+    public function withColumnGap(int $gap): self
+    {
+        if ($gap < 0) {
+            throw new InvalidArgumentException(sprintf('Table column gap must be non-negative, got %d', $gap));
+        }
+
+        return $this->cloneWith(columnGap: $gap);
     }
 
     public function withHeader(bool $visible): self
@@ -624,7 +633,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return Allocator::resolve(
             array_map(static fn (Column $column): ItemPolicy => $column->width()->policy(), $this->columns),
             $totalWidth,
-            new AxisSpecification(gap: self::COLUMN_GAP),
+            new AxisSpecification(gap: $this->columnGap),
         );
     }
 

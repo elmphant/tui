@@ -30,6 +30,7 @@ use Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Row;
 use Elmphant\Tui\Widget\Wrap;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -1303,6 +1304,25 @@ final class TableTest extends TestCase
         );
 
         self::assertSame('2026-10-01 Bakery', rtrim($this->screenLines($table, Rect::fromSize(30, 3))[1]));
+    }
+
+    #[Test]
+    public function aDenseTableCanAskForNoGapBetweenColumns(): void
+    {
+        $table = Table\Table::fromCells(
+            [Column::new('Date', Constraint::exact(10)), Column::new('Merchant', Constraint::flex())],
+            [['2026-10-01', 'Bakery']],
+        )->withColumnGap(0);
+
+        self::assertSame('2026-10-01Bakery', rtrim($this->screenLines($table, Rect::fromSize(30, 3))[1]));
+    }
+
+    #[Test]
+    public function aNegativeColumnGapIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Table\Table::fromCells([Column::new('A', Constraint::flex())], [])->withColumnGap(-1);
     }
 
     #[Test]

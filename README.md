@@ -778,7 +778,7 @@ Built-in widgets handle common UI patterns. All are immutable value objects.
 | `ChoiceField` | One of a set of values by label: a row of marks where they fit, a filterable list where they would wrap |
 | `ProgressBar` | Fractional fill bar that springs towards its value over time (`withSpringFactor()`); a click sets it only after `withClickable()` |
 | `ListView` | Scrollable list with custom `ListItem` rendering; wraps long item text, keeps an externally moved cursor visible |
-| `Table` | Interactive table: cursor, selection, mouse, scrolling; constraint-based columns, wrapping cells (`Column::withWrap(Wrap::NoWrap)` cuts with `…` instead), optional header (`withHeader(false)`) |
+| `Table` | Interactive table: cursor, selection, mouse, scrolling; constraint-based columns one cell apart (`withColumnGap(0)` for a dense table), wrapping cells (`Column::withWrap(Wrap::NoWrap)` cuts with `…` instead), optional header (`withHeader(false)`) |
 | `StaticTable` | Static bordered table: draws every row, no cursor or scrolling, columns sized to content |
 | `FilterableList` | Search field over a list: typing filters, arrows/Enter navigate and choose; `sourceIndex()` maps the cursor back to your items |
 | `FilterableTable` | The same search field over an interactive `Table`: arrows and Enter go to the rows, typing to the field; `cursorRow()`, `selectedRow()` and `sourceIndex()` answer for the rows handed in, and a query keeps the cursor on its row by `Row::key()` |
