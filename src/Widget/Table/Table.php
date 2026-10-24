@@ -267,7 +267,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
             $this->renderRows($frame, $area, $placement, $theme, $this->drawsFocused($context));
 
             if ($showScrollbar) {
-                $layout = $this->layoutFor($placement->sizes);
+                $layout = $this->layoutFor($placement);
                 $topRow = $this->displayScrollOffset($area);
 
                 Scrollbar::renderFor(
@@ -285,7 +285,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
 
     public function measureHeight(int $width): int
     {
-        return $this->headerHeight() + $this->layoutFor($this->columnWidths($width))->totalHeight;
+        return $this->headerHeight() + $this->layoutFor($this->columnPlacement($width))->totalHeight;
     }
 
     /**
@@ -426,7 +426,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
      */
     private function rowAPageAway(int $direction, int $visibleRows, Rect $area): int
     {
-        $layout = $this->layoutFor($this->columnWidthsFor($area));
+        $layout = $this->layoutFor($this->placementFor($area));
 
         $target = $direction > 0
             ? $layout->rowAtLine($this->cursor, $visibleRows) ?? $this->rowCount() - 1
@@ -463,7 +463,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         if ($message->isClick() && $message->inRect($area)) {
             $localY = $message->y - $area->y - $this->headerHeight();
             $rowIndex = $localY >= 0
-                ? $this->layoutFor($this->columnWidthsFor($area))->rowAtLine($displayOffset, $localY)
+                ? $this->layoutFor($this->placementFor($area))->rowAtLine($displayOffset, $localY)
                 : null;
 
             if ($rowIndex !== null && $this->isRowSelectable($rowIndex)) {
@@ -496,9 +496,8 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
 
     private function renderRows(Frame $frame, Rect $area, AxisResult $placement, Theme $theme, bool $focused): void
     {
-        $layout = $this->layoutFor($placement->sizes);
-        $last = array_key_last($placement->sizes);
-        $totalWidth = $last === null ? 0 : $placement->offsets[$last] + $placement->sizes[$last];
+        $layout = $this->layoutFor($placement);
+        $totalWidth = self::spanWidthOf($placement);
         $renderY = $area->y + $this->headerHeight();
 
         // A scroll container sizes its child to the child's whole content and
@@ -533,7 +532,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         $row = $this->rows[$rowIndex];
 
         if ($row->spansAllColumns) {
-            foreach (TableLayout::spanningLines($placement->sizes, $row) as $lineIndex => $line) {
+            foreach (TableLayout::spanningLines(self::spanWidthOf($placement), $row) as $lineIndex => $line) {
                 $frame->putStyled($rowArea->x, $rowArea->y + $lineIndex, $line, $theme->headerStyle);
             }
 
@@ -581,15 +580,21 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         }
     }
 
-    /**
-     * @param list<int> $columnWidths
-     */
-    private function layoutFor(array $columnWidths): TableLayout
+    private function layoutFor(AxisResult $placement): TableLayout
     {
+        $spanWidth = self::spanWidthOf($placement);
+
         return $this->layoutMemo->at(
-            implode(',', $columnWidths),
-            fn (): TableLayout => TableLayout::forRows($columnWidths, $this->rows, $this->wraps()),
+            implode(',', $placement->sizes) . '|' . $spanWidth,
+            fn (): TableLayout => TableLayout::forRows($placement->sizes, $this->rows, $this->wraps(), $spanWidth),
         );
+    }
+
+    private static function spanWidthOf(AxisResult $placement): int
+    {
+        $last = array_key_last($placement->sizes);
+
+        return $last === null ? 0 : $placement->offsets[$last] + $placement->sizes[$last];
     }
 
     /**
@@ -600,12 +605,9 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return array_map(static fn (Column $column): Wrap => $column->wrap(), $this->columns);
     }
 
-    /**
-     * @return list<int>
-     */
-    private function columnWidthsFor(Rect $area): array
+    private function placementFor(Rect $area): AxisResult
     {
-        return $this->scrollbarAndColumns($area)[1]->sizes;
+        return $this->scrollbarAndColumns($area)[1];
     }
 
     /**
@@ -621,7 +623,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         $visibleLines = max(1, $area->height - $this->headerHeight());
         $placement = $this->columnPlacement($area->width);
 
-        if (!Scrollbar::needsScrollbar($this->layoutFor($placement->sizes)->totalHeight, $visibleLines)) {
+        if (!Scrollbar::needsScrollbar($this->layoutFor($placement)->totalHeight, $visibleLines)) {
             return [false, $placement];
         }
 
@@ -674,7 +676,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     private function scrolledDown(int $steps, int $fromRow, Rect $area): self
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());
-        $layout = $this->layoutFor($this->columnWidthsFor($area));
+        $layout = $this->layoutFor($this->placementFor($area));
         $maxOffset = $layout->maxOffset($viewportHeight);
         $row = $fromRow;
         $line = $row === $this->scrollOffset ? $this->lineOffset : 0;
@@ -701,7 +703,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     private function scrolledUp(int $steps, int $fromRow, Rect $area): self
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());
-        $layout = $this->layoutFor($this->columnWidthsFor($area));
+        $layout = $this->layoutFor($this->placementFor($area));
         $row = $fromRow;
         $line = $row === $this->scrollOffset ? $this->lineOffset : 0;
 
@@ -729,7 +731,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     private function clampedScrollOffset(Rect $area): int
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());
-        $layout = $this->layoutFor($this->columnWidthsFor($area));
+        $layout = $this->layoutFor($this->placementFor($area));
 
         return ScrollWindow::clamped($this->scrollOffset, $layout->maxOffset($viewportHeight));
     }
@@ -737,7 +739,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     private function cursorVisibleOffset(Rect $area): int
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());
-        $layout = $this->layoutFor($this->columnWidthsFor($area));
+        $layout = $this->layoutFor($this->placementFor($area));
         $linesOfTheCursorInView = min($layout->heightOf($this->cursor), $viewportHeight);
         $firstRowShowingTheCursor = $layout->firstRowAtOrAfter($layout->lineOf($this->cursor) + $linesOfTheCursorInView - $viewportHeight);
         $offset = max(min($this->scrollOffset, $this->cursor), $firstRowShowingTheCursor);

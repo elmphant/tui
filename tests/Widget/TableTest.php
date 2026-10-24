@@ -2058,6 +2058,17 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function aGroupHeaderUsesTheGapsBetweenColumnsToo(): void
+    {
+        $table = Table\Table::new(
+            [Column::new('Name', Constraint::exact(6)), Column::new('Role', Constraint::exact(6))],
+            [Row::header('Engineering 1'), Row::new('Ada', 'dev')],
+        );
+
+        self::assertSame(['Name   Role', 'Engineering 1', 'Ada    dev'], array_map(rtrim(...), $this->screenLines($table, Rect::fromSize(20, 3))));
+    }
+
+    #[Test]
     public function aRowThatCannotBeSelectedStillShowsEveryColumn(): void
     {
         $table = Table\Table::new(
@@ -2991,7 +3002,7 @@ final class TableTest extends TestCase
         for ($column = 0; $column < 10; ++$column) {
             $headerContent .= $frame->characters[20 + $column];
         }
-        self::assertSame('ABCDEFG   ', $headerContent);
+        self::assertSame('ABCDEFGH  ', $headerContent, 'three and four columns wide, and the gap between them');
     }
 
     // --- L425: rowStyle fallback for typed row without custom style ---

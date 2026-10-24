@@ -38,13 +38,15 @@ final readonly class TableLayout
      * @param list<int>  $columnWidths
      * @param list<Row>  $rows
      * @param list<Wrap> $wraps        per column, word wrap where missing
+     * @param ?int       $spanWidth    what a spanning row is drawn across, the gaps between columns included
      */
-    public static function forRows(array $columnWidths, array $rows, array $wraps = []): self
+    public static function forRows(array $columnWidths, array $rows, array $wraps = [], ?int $spanWidth = null): self
     {
         $heights = [];
+        $spanWidth ??= array_sum($columnWidths);
 
         foreach ($rows as $row) {
-            $heights[] = self::rememberedHeightOfRow($columnWidths, $wraps, $row);
+            $heights[] = self::rememberedHeightOfRow($columnWidths, $wraps, $spanWidth, $row);
         }
 
         return new self($heights, array_sum($heights));
@@ -94,13 +96,11 @@ final readonly class TableLayout
      * A spanning row's label wrapped to the whole table, which is the width it
      * is drawn across.
      *
-     * @param list<int> $columnWidths
-     *
      * @return list<string>
      */
-    public static function spanningLines(array $columnWidths, Row $row): array
+    public static function spanningLines(int $spanWidth, Row $row): array
     {
-        return self::cellLines(self::textOf($row, 0), max(1, array_sum($columnWidths)));
+        return self::cellLines(self::textOf($row, 0), max(1, $spanWidth));
     }
 
     public function heightOf(int $row): int
@@ -161,13 +161,13 @@ final readonly class TableLayout
      * @param list<int>  $columnWidths
      * @param list<Wrap> $wraps
      */
-    private static function rememberedHeightOfRow(array $columnWidths, array $wraps, Row $row): int
+    private static function rememberedHeightOfRow(array $columnWidths, array $wraps, int $spanWidth, Row $row): int
     {
         /** @var WeakMap<Row, array<string, int>>|null $measured */
         static $measured = null;
         $measured ??= new WeakMap();
 
-        $key = implode(',', $columnWidths) . '|' . implode(',', array_map(static fn (Wrap $wrap): string => $wrap->name, $wraps));
+        $key = implode(',', $columnWidths) . '|' . implode(',', array_map(static fn (Wrap $wrap): string => $wrap->name, $wraps)) . '|' . $spanWidth;
         /** @var array<string, int> $known */
         $known = $measured[$row] ?? [];
 
@@ -179,7 +179,7 @@ final readonly class TableLayout
             unset($known[array_key_first($known)]);
         }
 
-        $known[$key] = self::heightOfRow($columnWidths, $wraps, $row);
+        $known[$key] = self::heightOfRow($columnWidths, $wraps, $spanWidth, $row);
         $measured[$row] = $known;
 
         return $known[$key];
@@ -189,10 +189,10 @@ final readonly class TableLayout
      * @param list<int>  $columnWidths
      * @param list<Wrap> $wraps
      */
-    private static function heightOfRow(array $columnWidths, array $wraps, Row $row): int
+    private static function heightOfRow(array $columnWidths, array $wraps, int $spanWidth, Row $row): int
     {
         if ($row->spansAllColumns) {
-            return count(self::spanningLines($columnWidths, $row));
+            return count(self::spanningLines($spanWidth, $row));
         }
 
         $height = 1;
