@@ -45,6 +45,8 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     use KeybindingsAwareBehavior;
     use SearchMode;
 
+    private const HEADER_AND_A_ROW = 2;
+
     /**
      * Actions the table takes; every other key is typing and belongs to the field.
      */
@@ -199,7 +201,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     {
         return Sizing::of(
             Constraint::flex(),
-            Constraint::min(FilterBar::HEIGHT + FilterBar::GAP_BELOW + 1)->withFlex(),
+            Constraint::min(FilterBar::HEIGHT + FilterBar::GAP_BELOW + self::HEADER_AND_A_ROW)->withFlex(),
         );
     }
 

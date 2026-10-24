@@ -16,6 +16,9 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Row;
 use PHPUnit\Framework\Attributes\Test;
@@ -201,6 +204,26 @@ final class FilterableTableTest extends TestCase
 
         self::assertInstanceOf(FilterableTable::class, $table);
         self::assertSame(['Office rent', 'Train'], array_map(static fn (Row $row): string|Span => $row->cells[1], $table->matchingRows()));
+    }
+
+    #[Test]
+    public function squeezedByItsNeighboursTheTableStillShowsARowUnderItsHeader(): void
+    {
+        $table = $this->harness()->widget();
+        self::assertInstanceOf(FilterableTable::class, $table);
+
+        $screen = WidgetHarness::for(Panel::new()->add($table)->add(Text::new('after')), 40, 6)->screen();
+
+        self::assertNotNull($screen->find('Office rent'));
+    }
+
+    #[Test]
+    public function inALayoutItAsksForNoMoreRoomThanItsFloor(): void
+    {
+        $table = $this->harness()->widget();
+        self::assertInstanceOf(FilterableTable::class, $table);
+
+        self::assertSame(4, Layout::vertical($table)->measureHeight(40), 'it scrolls its own rows, so it must not ask a layout for all of them');
     }
 
     private function harness(): WidgetHarness
