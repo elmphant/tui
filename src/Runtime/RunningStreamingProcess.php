@@ -7,9 +7,12 @@ namespace Elmphant\Tui\Runtime;
 use Closure;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Message\ProcessStream;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 
 /**
@@ -56,7 +59,13 @@ final class RunningStreamingProcess implements RunningProcess
             return $this->nextBatch([]);
         }
 
-        $this->process->checkTimeout();
+        try {
+            $this->process->checkTimeout();
+        } catch (ProcessTimedOutException $timeout) {
+            $this->finished = true;
+
+            return [...$this->drainOutput(ending: true), $this->map(new ErrorMsg($timeout, ErrorSource::Process, $this->effectId))];
+        }
         $messages = $this->drainOutput(ending: false);
 
         if ($this->process->isRunning()) {

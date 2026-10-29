@@ -394,15 +394,14 @@ final class RunningStreamingProcessTest extends TestCase
         $deadline = microtime(true) + 2.0;
         while ($error === null && microtime(true) < $deadline) {
             usleep(20_000);
-            try {
-                $running->pump();
-            } catch (ProcessTimedOutException $timedOut) {
-                $error = $timedOut;
+            foreach ($running->pump() as $message) {
+                $error = $message instanceof ErrorMsg ? $message : $error;
             }
         }
         $running->stop();
 
-        self::assertInstanceOf(ProcessTimedOutException::class, $error);
+        self::assertInstanceOf(ProcessTimedOutException::class, $error?->error);
+        self::assertFalse($process->isRunning());
     }
 
     #[Test]
