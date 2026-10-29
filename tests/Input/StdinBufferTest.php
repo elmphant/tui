@@ -478,6 +478,16 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function overARemoteConnectionAnUnfinishedSequenceIsGivenAsMuchTimeAsALoneEscape(): void
+    {
+        $buffer = new StdinBuffer(onSequence: static function (): void {}, remote: true);
+
+        $buffer->process("\x1b[");
+
+        self::assertSame(0.1, $buffer->flushDelay());
+    }
+
+    #[Test]
     public function altBackspaceIsEmittedAtOnce(): void
     {
         $sequences = [];

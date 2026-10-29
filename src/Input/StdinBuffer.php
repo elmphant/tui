@@ -154,7 +154,8 @@ final class StdinBuffer
         return match (true) {
             $this->inPaste => self::PASTE_TIMEOUT,
             $this->buffer === '' || $this->buffer[0] !== "\x1b" => null,
-            $this->buffer === "\x1b" => $this->remote ? 0.1 : 0.01,
+            $this->remote => 0.1,
+            $this->buffer === "\x1b" => 0.01,
             default => 0.05,
         };
     }
