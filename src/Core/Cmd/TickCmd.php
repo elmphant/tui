@@ -22,7 +22,7 @@ final readonly class TickCmd extends Cmd implements NamesItsEffect
         // then reads as due on every pass of the loop; INF schedules a tick the
         // program can never reach.
         if (!is_finite($interval) || $interval <= 0) {
-            throw new InvalidArgumentException("Ticker interval must be a positive number of seconds, got {$interval}");
+            throw new InvalidArgumentException('Ticker interval must be a positive number of seconds, got ' . var_export($interval, true));
         }
     }
 

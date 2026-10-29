@@ -27,7 +27,7 @@ final readonly class AfterCmd extends Cmd implements NamesItsEffect
         // NAN fails every comparison, so a timer holding one is never due and
         // never cancelled by being due; INF names a moment no program reaches.
         if (!is_finite($delay) || $delay < 0) {
-            throw new InvalidArgumentException("Delay must be a non-negative number of seconds, got {$delay}");
+            throw new InvalidArgumentException('Delay must be a non-negative number of seconds, got ' . var_export($delay, true));
         }
     }
 
