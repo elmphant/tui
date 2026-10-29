@@ -727,14 +727,16 @@ final class Program
         $this->handlePendingResize();
         $this->readInput();
 
+        // Leaving a flooding child's output in its pipe blocks the child, and keeps keys from queueing behind it.
+        // Asked before the timers fire: a ticker due on every turn would otherwise keep the pipes unread for good.
+        $readsEffectOutput = $this->messageQueue->isEmpty();
         $now = $this->clock->now();
         $this->effects?->fire($now);
         $expired = $this->chordTracker->expired($now);
         if ($expired !== []) {
             $this->handleBeforeTheQueue($expired);
         }
-        // Leaving a flooding child's output in its pipe blocks the child, and keeps keys from queueing behind it.
-        if ($this->messageQueue->isEmpty()) {
+        if ($readsEffectOutput) {
             $this->effects?->pump();
         }
         $this->flushWheelWhenDue($now);
