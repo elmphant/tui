@@ -2323,6 +2323,16 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function aModifiedLetterBeyondAsciiArrivesUnderTheKittyProtocol(): void
+    {
+        $result = InputParser::parseSequence("\x1b[228;3u");
+
+        $this->assertInstanceOf(KeyMsg::class, $result);
+        $this->assertSame('ä', $result->key);
+        $this->assertTrue($result->alt);
+    }
+
+    #[Test]
     public function kittyCsiUWithModifiersAndEventType(): void
     {
         $result = InputParser::parseSequence("\x1b[57356;5:3u");

@@ -282,7 +282,7 @@ final class InputParser
             57413 => '+',
             57414 => Key::Enter,
             57415 => '=',
-            default => ($codepoint >= 32 && $codepoint < 127) ? chr($codepoint) : null,
+            default => self::isPrintable($codepoint) ? mb_chr($codepoint, 'UTF-8') : null,
         };
 
         if ($key === null) {
@@ -290,6 +290,19 @@ final class InputParser
         }
 
         return new KeyMsg($key, ctrl: $ctrl, alt: $alt, shift: $shift, eventType: $eventType);
+    }
+
+    /**
+     * Kitty sends the functional keys it has no legacy code for as private-use codepoints, so an unknown one is a key
+     * this parser cannot name, never text.
+     */
+    private static function isPrintable(int $codepoint): bool
+    {
+        return $codepoint >= 32
+            && ($codepoint < 127 || $codepoint >= 160)
+            && ($codepoint < 0xD800 || $codepoint > 0xDFFF)
+            && ($codepoint < 0xE000 || $codepoint > 0xF8FF)
+            && $codepoint <= 0x10FFFF;
     }
 
     /**
