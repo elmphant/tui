@@ -51,8 +51,9 @@ Cmd::cancel($download); // also works for tick(), after(), exec(), and process()
 ```
 
 The result then answers `$message->isFrom('download')`. Starting a new command
-under the same name replaces the old one. After a cancel or a replacement, no
-late result of the old one arrives.
+under the same name replaces the old one, and no late result of the old one
+arrives after that. A cancel stops the command; what it had already sent still
+arrives, but nothing more.
 
 Two parts of an app can use the same name without clashing, when the parent
 scopes its children's commands:

@@ -119,16 +119,29 @@ final class EffectRunnerTest extends TestCase
     }
 
     #[Test]
-    public function aCancelDropsWhatTheEffectLeftWaiting(): void
+    public function aReplacementDropsWhatTheOldEffectLeftWaiting(): void
     {
         $runner = $this->runner();
         $runner->run(Cmd::tick(1.0, EffectId::named('load')), static fn (Message $message): Message => new MessageEnvelope($message));
         $this->clock->advance(1.0);
         $runner->fire($this->clock->now());
 
-        $runner->run(Cmd::cancel(EffectId::named('load')), null);
+        $runner->run(Cmd::tick(5.0, EffectId::named('load')), null);
 
         self::assertCount(0, $this->results);
+    }
+
+    #[Test]
+    public function aCancelLeavesWhatTheEffectHadAlreadySaid(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0, EffectId::named('load')), null);
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        $runner->run(Cmd::cancel(EffectId::named('load')), null);
+
+        self::assertCount(1, $this->results);
     }
 
     #[Test]
@@ -727,7 +740,8 @@ final class EffectRunnerTest extends TestCase
         $chime = EffectId::named('chime');
         $runner->run(new SoundCmd($chime), null);
         $runner->run(Cmd::cancel($chime), null);
-        self::assertCount(0, $this->results, 'What it said on starting was still waiting, so the cancel took it too');
+        self::assertCount(1, $this->results, 'What it said on starting was already said, so it still arrives');
+        $this->results->dequeue();
         self::assertNotNull($handler->emit);
 
         ($handler->emit)(new TickMsg(3.0));
