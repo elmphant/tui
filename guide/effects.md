@@ -87,7 +87,8 @@ $message instanceof ProcessResultMsg
 
 **`Cmd::process()`** sends the output in pieces while the command runs
 (`ProcessOutputMsg`), then a `ProcessFinishedMsg`. A piece can end in the middle
-of a line; call `->withLineFraming()` to get whole lines only.
+of a line; call `->withLineFraming()` to get whole lines only. On a timeout you
+get the output so far, an `ErrorMsg`, and then the `ProcessFinishedMsg`.
 
 ```php fragment
 use Elmphant\Tui\Message\{ProcessOutputMsg, ProcessFinishedMsg, ProcessStream};

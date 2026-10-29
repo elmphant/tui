@@ -64,7 +64,11 @@ final class RunningStreamingProcess implements RunningProcess
         } catch (ProcessTimedOutException $timeout) {
             $this->finished = true;
 
-            return [...$this->drainOutput(ending: true), $this->map(new ErrorMsg($timeout, ErrorSource::Process, $this->effectId))];
+            return [
+                ...$this->drainOutput(ending: true),
+                $this->map(new ErrorMsg($timeout, ErrorSource::Process, $this->effectId)),
+                $this->finishedMessage(),
+            ];
         }
         $messages = $this->drainOutput(ending: false);
 
@@ -76,17 +80,7 @@ final class RunningStreamingProcess implements RunningProcess
 
         // isRunning() reads the pipes into Symfony's own buffer, so a flush the child
         // made between the drain above and this check is only visible now.
-        $messages = [...$messages, ...$this->drainOutput(ending: true)];
-
-        $messages[] = $this->map(new ProcessFinishedMsg(
-            $this->process->getExitCode() ?? -1,
-            $this->process->isSuccessful(),
-            $this->effectId,
-            $this->startedAt,
-            $this->clock?->now(),
-        ));
-
-        return $messages;
+        return [...$messages, ...$this->drainOutput(ending: true), $this->finishedMessage()];
     }
 
     /**
@@ -100,6 +94,17 @@ final class RunningStreamingProcess implements RunningProcess
         $this->heldBack = array_slice($waiting, self::MESSAGES_PER_TURN);
 
         return array_slice($waiting, 0, self::MESSAGES_PER_TURN);
+    }
+
+    private function finishedMessage(): Message
+    {
+        return $this->map(new ProcessFinishedMsg(
+            $this->process->getExitCode() ?? -1,
+            $this->process->isSuccessful(),
+            $this->effectId,
+            $this->startedAt,
+            $this->clock?->now(),
+        ));
     }
 
     /**
