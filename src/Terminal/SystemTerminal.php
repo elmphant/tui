@@ -255,17 +255,24 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
     public function detectColorScheme(): ?ColorScheme
     {
         $this->write("\033]11;?\033\\");
-        if (!$this->answerArrives()) {
-            return null;
-        }
 
-        $response = (string)@fread($this->stdin, 256);
+        // Another reply, such as the kitty keyboard protocol's, can arrive first and in a read of its own.
+        $response = '';
+        $deadline = microtime(true) + self::ANSWER_TIMEOUT_MICROSECONDS / 1_000_000;
         // A terminal ends an OSC reply with either the string terminator or BEL,
         // whatever it was asked with.
-        if (preg_match('/\033\]11;rgb:([0-9a-f]{2,4})\/([0-9a-f]{2,4})\/([0-9a-f]{2,4})(?:\x1b\\\\?|\x07)/', $response, $matches, PREG_OFFSET_CAPTURE) !== 1) {
-            $this->stdinLeftover .= $response;
+        while (true) {
+            if (preg_match('/\033\]11;rgb:([0-9a-f]{2,4})\/([0-9a-f]{2,4})\/([0-9a-f]{2,4})(?:\x1b\\\\?|\x07)/', $response, $matches, PREG_OFFSET_CAPTURE) === 1) {
+                break;
+            }
+            $remaining = (int)(($deadline - microtime(true)) * 1_000_000);
+            $read = $remaining > 0 && $this->answerArrives($remaining) ? (string)@fread($this->stdin, 256) : '';
+            if ($read === '') {
+                $this->stdinLeftover .= $response;
 
-            return null;
+                return null;
+            }
+            $response .= $read;
         }
 
         $matchStart = $matches[0][1];
@@ -375,12 +382,12 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
         return $luminance < 0.5 ? ColorScheme::Dark : ColorScheme::Light;
     }
 
-    private function answerArrives(): bool
+    private function answerArrives(int $microseconds = self::ANSWER_TIMEOUT_MICROSECONDS): bool
     {
         $read = [$this->stdin];
         $write = $except = null;
 
-        return @stream_select($read, $write, $except, 0, self::ANSWER_TIMEOUT_MICROSECONDS) > 0;
+        return @stream_select($read, $write, $except, 0, $microseconds) > 0;
     }
 
     /**

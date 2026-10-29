@@ -656,6 +656,26 @@ final class SystemTerminalTest extends TestCase
     }
 
     #[Test]
+    public function aBackgroundAnswerThatArrivesAfterAnotherReplyIsStillRead(): void
+    {
+        $replies = proc_open(
+            [PHP_BINARY, '-r', 'echo "\033[?1u"; flush(); usleep(30000); echo "\033]11;rgb:ff/ff/ff\033\\\\";'],
+            [1 => ['pipe', 'w']],
+            $pipes,
+        );
+        self::assertIsResource($replies);
+        stream_set_blocking($pipes[1], false);
+
+        $terminal = new SystemTerminal($pipes[1], $this->stdout);
+
+        self::assertSame(ColorScheme::Light, $terminal->detectColorScheme());
+        self::assertSame("\033[?1u", $terminal->readInput(), 'the other reply is input the program still reads');
+
+        fclose($pipes[1]);
+        proc_close($replies);
+    }
+
+    #[Test]
     public function detectColorSchemeUsesEachRgbChannelInItsCorrectPosition(): void
     {
         $cases = [
