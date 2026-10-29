@@ -110,7 +110,7 @@ final class ReadmeTest extends TestCase
         $broken = [];
 
         foreach (self::pages() as $page) {
-            preg_match_all('/\]\((?!https?:)([^)#]+)/', (string)file_get_contents($page), $links, PREG_SET_ORDER);
+            preg_match_all('/(?:\]\(|src="|srcset=")(?!https?:)([^)#"]+)/', (string)file_get_contents($page), $links, PREG_SET_ORDER);
 
             foreach ($links as [$link, $target]) {
                 if (!is_file(dirname($page) . '/' . $target)) {

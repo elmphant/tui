@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="720" height="824" viewBox="0 0 720 824" role="img" aria-labelledby="program-tick-title program-tick-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="program-tick-title">One turn of the event loop</title>
+<desc id="program-tick-desc">Woken by a key, a signal or a timer, Program reads the input, runs due timers and collects process output, then hands every queued message to update. If the program quit, start returns with the terminal restored. Otherwise it draws a frame only when one is due, and sleeps until the next event.</desc>
+<defs>
+    <marker id="pt-arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0, 10 4, 0 8" fill="#4f5d75"/></marker>
+</defs>
+<rect width="100%" height="100%" fill="#f5f5f5"/>
+
+<g fill="none" stroke="#4f5d75" stroke-width="1.4">
+    <g marker-end="url(#pt-arrow)">
+        <line x1="224" y1="80" x2="224" y2="112"/>
+        <line x1="224" y1="176" x2="224" y2="208"/>
+        <line x1="224" y1="272" x2="224" y2="304"/>
+        <line x1="224" y1="368" x2="224" y2="400"/>
+        <line x1="344" y1="440" x2="432" y2="440"/>
+        <line x1="224" y1="480" x2="224" y2="520"/>
+        <line x1="344" y1="560" x2="432" y2="560"/>
+        <line x1="224" y1="660" x2="224" y2="688"/>
+    </g>
+    <line x1="224" y1="600" x2="224" y2="652"/>
+    <path d="M 536,592 V 648 Q 536,656 528,656 H 228"/>
+</g>
+<circle cx="224" cy="656" r="4" fill="#2d3142"/>
+
+<g font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace" letter-spacing="0.04em" text-anchor="middle" fill="#4f5d75">
+    <rect x="372" y="418" width="32" height="16" rx="2" fill="#f5f5f5"/><text x="388" y="430">NO</text>
+    <rect x="232" y="492" width="36" height="16" rx="2" fill="#f5f5f5"/><text x="250" y="504">YES</text>
+    <rect x="370" y="538" width="36" height="16" rx="2" fill="#f5f5f5"/><text x="388" y="550">YES</text>
+    <rect x="232" y="612" width="32" height="16" rx="2" fill="#f5f5f5"/><text x="248" y="624">NO</text>
+</g>
+
+<g text-anchor="middle">
+    <rect x="80" y="24" width="288" height="56" rx="28" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+    <text x="224" y="48" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">Wake up</text>
+    <text x="224" y="68" fill="#4f5d75" font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace">a key, a signal or a timer</text>
+
+    <rect x="80" y="112" width="288" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+    <text x="224" y="140" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">Read input</text>
+    <text x="224" y="160" fill="#4f5d75" font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace">keys, mouse, paste</text>
+
+    <rect x="80" y="208" width="288" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+    <text x="224" y="236" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">Run timers and effects</text>
+    <text x="224" y="256" fill="#4f5d75" font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace">ticks and process output</text>
+
+    <rect x="80" y="304" width="288" height="64" rx="6" fill="#f5f5f5"/>
+    <rect x="80" y="304" width="288" height="64" rx="6" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.4"/>
+    <text x="224" y="332" fill="#bf4520" font-size="16" font-weight="600" font-family="'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">Drain the queue</text>
+    <text x="224" y="352" fill="#2d3142" font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace">update() per message</text>
+
+    <polygon points="224,400 344,440 224,480 104,440" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+    <text x="224" y="446" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">Still running?</text>
+
+    <rect x="432" y="412" width="208" height="56" rx="28" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+    <text x="536" y="436" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace">start() returns</text>
+    <text x="536" y="456" fill="#4f5d75" font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace">terminal restored</text>
+
+    <polygon points="224,520 344,560 224,600 104,560" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+    <text x="224" y="566" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">Redraw now?</text>
+
+    <rect x="432" y="528" width="208" height="64" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+    <text x="536" y="556" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">Draw a frame</text>
+    <text x="536" y="576" fill="#4f5d75" font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace">only changed cells</text>
+
+    <rect x="80" y="688" width="288" height="56" rx="28" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+    <text x="224" y="712" fill="#2d3142" font-size="16" font-weight="600" font-family="'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">Sleep</text>
+    <text x="224" y="732" fill="#4f5d75" font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace">until the next event</text>
+</g>
+
+<g font-family="'Instrument Serif',Georgia,serif" font-style="italic" font-size="20" fill="#4f5d75">
+    <text x="432" y="708">An idle app costs nothing:</text>
+    <text x="432" y="732">the loop waits for a key.</text>
+</g>
+
+<line x1="24" y1="776" x2="696" y2="776" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
+<g font-size="12" font-family="'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace" fill="#4f5d75" letter-spacing="0.04em">
+    <rect x="104" y="796" width="32" height="16" rx="8" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+    <text x="148" y="808">START, END</text>
+    <rect x="256" y="796" width="24" height="16" rx="3" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+    <text x="292" y="808">STEP</text>
+    <polygon points="372,794 386,804 372,814 358,804" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+    <text x="396" y="808">QUESTION</text>
+    <rect x="488" y="796" width="24" height="16" rx="3" fill="rgba(191,69,32,0.08)" stroke="#bf4520" stroke-width="1.2"/>
+    <text x="524" y="808">YOUR CODE RUNS</text>
+</g>
+</svg>

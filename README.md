@@ -82,19 +82,11 @@ Save it as `counter.php` and run `php counter.php`.
 
 ## How it works
 
-```
-  ┌─► terminal / timers / HTTP / processes
-  │        │
-  │        ▼
-  │   messages: KeyMsg, MouseMsg, TickMsg, HttpResultMsg, ...
-  │        │
-  │        ▼
-  │   update(message) -> UpdateResult(newModel, ?Cmd)
-  │        │
-  │        ▼
-  │   view(newModel) -> widget tree -> only the changed cells are drawn
-  └────────┘
-```
+<picture>
+  <source media="(max-width: 700px)" srcset="diagrams/update-cycle-narrow.svg">
+  <img width="720" src="diagrams/update-cycle.svg"
+       alt="A message goes to update, which returns a new immutable model and maybe a command. view draws the widgets of that model, Screen sends only the changed cells to the terminal, and what the reader does next becomes the next message.">
+</picture>
 
 1. Something happens: a key, a click, a timer, a finished process. It arrives as
    a **message**.
@@ -105,6 +97,7 @@ Save it as `counter.php` and run `php counter.php`.
 
 `update()` and `view()` never do the work themselves. That is why an app is easy
 to test: a test checks which command was asked for, and nothing runs.
+[How it works](guide/how-it-works.md) follows one key press through the framework.
 
 ## Guides
 
@@ -118,6 +111,7 @@ to test: a test checks which command was asked for, and nothing runs.
 | [Testing](guide/testing.md) | Driving an app or one widget from a test, and checking the screen |
 | [Running and debugging](guide/running.md) | Program options, errors, tracing, debugging, and the PHPStan rules |
 | [Custom widgets](guide/custom-widgets.md) | Writing your own widget, popups, and drawing cells by hand |
+| [How it works](guide/how-it-works.md) | What the framework does between a key press and the screen, in four diagrams |
 
 ## License
 
