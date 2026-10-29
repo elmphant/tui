@@ -136,15 +136,9 @@ Cmd::process(['npm', 'run', 'build'])
     ->withOutputChunkBytes(64 * 1024);
 ```
 
-Cancelling, a timeout and quitting stop the process you started, but not
-processes it started itself. If you go through a shell, start the real command
-with `exec` so it replaces the shell:
-
-```php
-use Elmphant\Tui\Core\Cmd;
-
-Cmd::exec(['sh', '-c', 'cd /app && exec npm install']);
-```
+Cancelling, a timeout and quitting stop the process you started and every
+process it started in turn, such as the commands a shell runs. A process gets
+50 ms to end on its own before it is killed.
 
 ## HTTP requests
 

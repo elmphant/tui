@@ -32,10 +32,16 @@ trait ChildProcessLifecycle
 
     public function stop(): void
     {
-        if (!$this->finished) {
-            $this->process->stop(self::TERMINATION_GRACE_SECONDS);
-            $this->finished = true;
+        if ($this->finished) {
+            return;
         }
+
+        $pid = $this->process->getPid();
+        $descendants = $pid === null ? [] : ProcessTree::descendantsOf($pid);
+        ProcessTree::terminate($descendants);
+        $this->process->stop(self::TERMINATION_GRACE_SECONDS);
+        ProcessTree::kill($descendants);
+        $this->finished = true;
     }
 
     public function isRunning(): bool
