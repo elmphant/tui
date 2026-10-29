@@ -393,6 +393,9 @@ final class InputParser
         if (str_contains($parameters, ';')) {
             $parameterParts = explode(';', $parameters);
             if (count($parameterParts) >= 2) {
+                if (self::holdsAModifierWeCannotName($parameterParts[count($parameterParts) - 1])) {
+                    return null;
+                }
                 [$shift, $alt, $ctrl, $eventType] = self::parseModifiers($parameterParts[count($parameterParts) - 1]);
                 $parameters = $parameterParts[0];
             }

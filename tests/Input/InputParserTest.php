@@ -2343,6 +2343,12 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function anArrowHeldWithSuperIsNotTakenForAPlainArrow(): void
+    {
+        self::assertNull(InputParser::parseSequence("\x1b[1;9A"));
+    }
+
+    #[Test]
     public function csiArrowWithKittyEventTypeRelease(): void
     {
         $result = InputParser::parseSequence("\x1b[1;5:3A");
