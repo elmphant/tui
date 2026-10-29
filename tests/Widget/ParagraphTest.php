@@ -383,6 +383,30 @@ final class ParagraphTest extends TestCase
     }
 
     #[Test]
+    public function aMarkdownLinkIsALinkTheReaderCanOpen(): void
+    {
+        $frame = new Frame(20, 1);
+
+        Paragraph::fromMarkdown('Read [the docs](https://example.com/docs)')->render($frame, new Rect(0, 0, 20, 1), $this->context());
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame('https://example.com/docs', $screen->styleAt(5, 0)->link);
+        self::assertNull($screen->styleAt(0, 0)->link);
+    }
+
+    #[Test]
+    public function aMarkdownLinkWrappedOntoTheNextLineIsStillALinkThere(): void
+    {
+        $frame = new Frame(12, 2);
+
+        Paragraph::fromMarkdown('Read [the full docs](https://example.com/docs)')->render($frame, new Rect(0, 0, 12, 2), $this->context());
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame('full docs', trim($screen->lineAt(1)));
+        self::assertSame('https://example.com/docs', $screen->styleAt(0, 1)->link);
+    }
+
+    #[Test]
     public function fromMarkdownMultiParagraph(): void
     {
         $frame = new Frame(20, 3);

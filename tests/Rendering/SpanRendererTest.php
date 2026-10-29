@@ -236,10 +236,10 @@ final class SpanRendererTest extends TestCase
     }
 
     #[Test]
-    public function aLinkShowsItsTextInTheSurroundingStyle(): void
+    public function aLinkShowsItsTextInTheSurroundingStyleAndCarriesItsUrl(): void
     {
         self::assertEquals(
-            [new Line([new Span('see '), new Span('docs'), new Span(' here')])],
+            [new Line([new Span('see '), Span::link('docs', 'https://example.com'), new Span(' here')])],
             SpanRenderer::fromMarkdown('see [docs](https://example.com) here'),
         );
     }

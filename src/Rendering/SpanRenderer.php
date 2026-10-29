@@ -16,6 +16,7 @@ use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
 use League\CommonMark\Extension\CommonMark\Node\Block\ThematicBreak;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Code;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Emphasis;
+use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
 use League\CommonMark\Extension\CommonMark\Node\Inline\Strong;
 use League\CommonMark\Extension\Strikethrough\Strikethrough;
 use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
@@ -135,24 +136,35 @@ final class SpanRenderer
     /**
      * @return list<Span>
      */
-    private static function spansOf(Node $node, int $attributes, ?StyleToken $token = null): array
+    private static function spansOf(Node $node, int $attributes, ?StyleToken $token = null, ?string $link = null): array
     {
         $spans = [];
 
         foreach ($node->children() as $child) {
             array_push($spans, ...match (true) {
-                $child instanceof Text => [new Span($child->getLiteral(), $attributes !== 0 ? new Style(attributes: $attributes) : null, $token)],
-                $child instanceof Code => [new Span($child->getLiteral(), new Style(attributes: Attr::REVERSE))],
+                $child instanceof Text => [new Span($child->getLiteral(), self::styleOf($attributes, $link), $token)],
+                $child instanceof Code => [new Span($child->getLiteral(), self::styleOf(Attr::REVERSE, $link))],
                 $child instanceof Newline => [new Span(' ')],
                 default => self::spansOf($child, $attributes | match (true) {
                     $child instanceof Strong => Attr::BOLD,
                     $child instanceof Emphasis => Attr::ITALIC,
                     $child instanceof Strikethrough => Attr::STRIKETHROUGH,
                     default => 0,
-                }, $token),
+                }, $token, $child instanceof Link ? $child->getUrl() : $link),
             });
         }
 
         return $spans;
+    }
+
+    private static function styleOf(int $attributes, ?string $link): ?Style
+    {
+        if ($attributes === 0 && $link === null) {
+            return null;
+        }
+
+        $style = new Style(attributes: $attributes);
+
+        return $link === null ? $style : $style->withLink($link);
     }
 }
