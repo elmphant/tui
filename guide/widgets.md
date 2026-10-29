@@ -1,0 +1,245 @@
+# Widgets
+
+[← README](../README.md)
+
+Every widget is an immutable value. Configure it with `withX()` methods, keep the
+interactive ones on your App, and bind them (see [Building an app](apps.md)).
+
+## The list
+
+**Structure**
+
+| Widget | What it is |
+| --- | --- |
+| `Panel` | A scrolling box of widgets, with border and title — see [Scrolling](#scrolling) |
+| `TabBar` | Tabs, switched by keyboard or mouse |
+| `Split` | Two panes with a divider you can drag |
+| `Modal` | A box over the screen that dims what is behind it — see [Modals](#modals) |
+| `Overlay` / `PositionedOverlay` | One widget on top of another |
+| `Card` / `Box` / `Container` | Borders, padding and margins around any widget — see [Layout](layout.md#decoration) |
+
+**Text**
+
+| Widget | What it is |
+| --- | --- |
+| `Text` | One line of text (`Text::new($text)`) |
+| `Paragraph` | Wrapped text, named by what you hand it: `Paragraph::fromText()`, `fromLines()`, `fromMarkdown()`, `fromAnsi()` |
+| `Separator` / `Spacer` | A line, or empty space |
+
+**Input**
+
+| Widget | What it is |
+| --- | --- |
+| `TextInput` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead) |
+| `Button` | A button that sends a message when pressed |
+| `Checkbox` / `CheckboxGroup` | Yes/no choices |
+| `Radio` / `Select` | One choice out of a list |
+| `Dropdown` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))` |
+| `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
+
+**Lists and tables**
+
+| Widget | What it is |
+| --- | --- |
+| `ListView` | A scrolling list. Long items wrap |
+| `Table` | Rows and columns with a cursor, selection, mouse and scrolling. Cells wrap; `withColumnGap(0)` packs columns, `withHeader(false)` hides the header |
+| `StaticTable` | A bordered table that draws every row, with no cursor. For small data |
+| `FilterableList` | A search field over a `ListView`. Typing filters; arrows and Enter pick |
+| `FilterableTable` | A search field over a `Table` |
+| `FilterableStaticTable` | A search field over a `StaticTable` |
+| `TreeView` | A tree whose children load when opened |
+
+**Bars and feedback**
+
+| Widget | What it is |
+| --- | --- |
+| `Header` / `Footer` | Top and bottom bars with left, center and right slots |
+| `FocusHints` | The keys that work right now — see [Keys](keys-and-focus.md#footer-hints) |
+| `StatusBar` | A line of key hints |
+| `Alert` | One coloured row: `warning`, `error`, `success`, `info` |
+| `ProgressBar` | A bar that fills up smoothly |
+| `Spinner` / `ActivityBar` | Loading animations. They animate by themselves, no timer needed |
+| `Scrollbar` | A vertical scroll indicator |
+
+## Filtered lists and tables
+
+The filter widgets tell you what the reader picked in terms of the rows you
+handed in, not the filtered ones: `sourceIndex()`, and on a table `cursorRow()`
+and `selectedRow()`. `withNoMatchText()` and `withNoRowsText()` (`withNoItemsText()`
+on a list) set what shows when nothing is there.
+
+## Lists keep their place
+
+When you hand a list new items, the cursor and the selection stay on the same
+item, found by its **key**. The key is the text shown, unless you give one:
+`new SimpleListItem($title, $description, key: $id)`, `Row::withKey($id)`,
+`new TabPage($label, key: $id)`. Give a key to rows whose text can repeat or
+change. When the cursor's item is gone, the cursor moves to a neighbour.
+
+## Forms
+
+A `Form` is a pane of named fields with a submit button at the bottom. Each
+field is a real widget, so tab and the mouse reach it. The form asks the fields
+for their values; you keep no copy:
+
+```php
+use Elmphant\Tui\Core\{ComponentId, Message};
+use Elmphant\Tui\Widget\Form\{Field, Form, ShowErrors};
+
+final readonly class CreateUser implements Message {}
+
+$form = Form::new('Create backend user')
+    ->withField(Field::text('username', 'Username', 'The login name')->required())
+    ->withField(Field::text('password', 'Password')->secret())
+    ->withField(Field::choice('site', 'Site', ['main' => 'Main website', 'shop' => 'Shop']))
+    ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
+    ->withSubmit('Run', new CreateUser(), foot: '❯ backend:user:create');
+
+$tried = $form->submitted();                          // from now on, problems show under their fields
+$tried->missing();                                    // ['username']
+$tried->stopOf('username', ComponentId::named('form')); // where Cmd::focus() sends the keyboard
+$form->values();                                      // ['username' => '', 'password' => '', 'site' => null, 'admin' => false]
+$form->withErrorsShown(ShowErrors::AfterLeaving);     // or show a field's problem as soon as the reader leaves it
+```
+
+Bind it like any widget and handle the submit message in `onMessage()`.
+
+- Enter moves to the next field, and in the last field presses submit.
+- `withValues(['username' => 'ada'])` fills fields by name, for an edit form.
+- `withIntro()` adds text above the fields. `withFoot()` and
+  `withSubmitDisabled()` say what the button will do, or why it can't.
+- `withCancel($message)` is sent when the reader presses Escape.
+- `Field::choice()` shows a row of options where they fit and a filterable list
+  where they don't. `Field::of()` takes any widget that implements `HoldsAValue`.
+
+`required()` is one check. `withRule()` adds your own: it gets the value and
+returns a problem to show, or `null`. The first problem wins, and an empty field
+is not checked:
+
+```php
+use Elmphant\Tui\Widget\Form\Field;
+
+Field::text('due', 'Due date')
+    ->withRule(static fn (string $date): ?string => strtotime($date) === false ? 'Not a date' : null);
+```
+
+## Modals
+
+While a `Modal` is on screen, everything behind it ignores keys and clicks, and
+the keyboard moves inside it. Always bind it, and keep its content on the App.
+Escape or a click outside sends `ModalDismissed`; closing it is up to you:
+
+```php
+use Elmphant\Tui\Application\{App, Component};
+use Elmphant\Tui\Core\{Message, UpdateResult};
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Widget\Form\{Field, Form};
+use Elmphant\Tui\Widget\Popup\{Modal, ModalDismissed, Overlay};
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class NoteSaved implements Message {}
+
+final readonly class Notes extends App
+{
+    /** @param list<string> $notes */
+    public function __construct(private array $notes = [], private ?Form $editor = null) {}
+
+    public function view(): Widget
+    {
+        $page = Text::new($this->notes === [] ? 'Ctrl+N adds a note' : implode("\n", $this->notes));
+
+        if ($this->editor === null) {
+            return $page;
+        }
+
+        $form = Component::bind('editor', $this->editor, static fn (self $app, Form $editor): self => $app->cloneWith(editor: $editor));
+
+        return Overlay::new($page, Component::bind(
+            'modal',
+            Modal::new('', $form)->withBorder(false)->withSizedToContent(),
+            static fn (self $app): self => $app,
+        ));
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        if ($this->editor !== null || !$message->ctrl || $message->key !== 'n') {
+            return UpdateResult::ignored($this);
+        }
+
+        return new UpdateResult($this->cloneWith(editor: Form::new('New note')
+            ->withField(Field::text('title', 'Title')->required())
+            ->withSubmit('Save', new NoteSaved())));
+    }
+
+    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    {
+        return match (true) {
+            $message instanceof ModalDismissed => new UpdateResult($this->cloneWith(editor: null)),
+            $message instanceof NoteSaved && $this->editor?->problems() === [] => new UpdateResult(
+                $this->cloneWith(notes: [...$this->notes, (string)$this->editor->values()['title']], editor: null),
+            ),
+            $message instanceof NoteSaved => new UpdateResult($this->cloneWith(editor: $this->editor?->submitted())),
+            default => UpdateResult::ignored($this),
+        };
+    }
+}
+```
+
+When the modal closes, the keyboard goes back to where it was.
+`withBorder(false)` drops the frame when the content has its own, and
+`withOutsideClickDismissal(false)` keeps a half-filled form open after a stray
+click.
+
+## Scrolling
+
+A `Panel` scrolls with the wheel, PageUp/PageDown and Home/End, and scrolls a
+field into view when tab reaches it. For a log or a chat,
+`withFollowingTheEnd()` keeps the last row in view as rows arrive, until the
+reader scrolls up. Keep the panel on the App and add to it, so it remembers
+where it is:
+
+```php
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Panel;
+
+$log = Panel::new('Log')->withFollowingTheEnd();
+$log = $log->add(Text::new('build finished'));
+```
+
+## Example: two panels
+
+```php
+use Elmphant\Tui\Widget\Choice\{Radio, Select};
+use Elmphant\Tui\Widget\Feedback\ProgressBar;
+use Elmphant\Tui\Widget\Prose\{Separator, Spacer, Text};
+use Elmphant\Tui\Widget\Structure\Panel;
+
+$left = Panel::new('Preferences')
+    ->add(Text::accent('Appearance'))
+    ->add(Spacer::new())
+    ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Nord'], 'Theme'))
+    ->add(Separator::new())
+    ->add(Text::new('Font'))
+    ->add(Select::new(['JetBrains Mono', 'Fira Code', 'Cascadia']));
+
+$right = Panel::new('System')
+    ->add(Text::new('CPU'))
+    ->add(ProgressBar::new()->withProgress(0.73))
+    ->add(Text::new('Memory'))
+    ->add(ProgressBar::new()->withProgress(0.45));
+```
+
+## Built to be readable
+
+Some defaults exist because the alternative is hard to read. Tests keep them in
+place:
+
+- Every built-in theme has enough contrast (WCAG AA, 4.5:1) for text on filled
+  rows such as the footer and the selected row.
+- A list shows its selected row even when another widget has the keyboard.
+- A text field shows its full width, underlined.
+- A scrollbar uses block characters, so it never looks like a second border.
+- Long list items wrap instead of being cut off, up to a few rows.

@@ -11,10 +11,10 @@ use ReflectionMethod;
 use ReflectionNamedType;
 
 /**
- * The README is the first code a reader runs, so every example in it is run
- * here. A block a reader cannot paste as it stands — a method body, a menu of
- * calls, loose match arms — says so in its fence (```php fragment) and is
- * skipped; everything else must reach the terminal or finish.
+ * The README and the guides are the first code a reader runs, so every example
+ * in them is run here. A block a reader cannot paste as it stands — a method
+ * body, a menu of calls, loose match arms — says so in its fence
+ * (```php fragment) and is skipped; everything else must reach the terminal or finish.
  */
 final class ReadmeTest extends TestCase
 {
@@ -104,21 +104,72 @@ final class ReadmeTest extends TestCase
         self::assertCount(self::FRAGMENT_BLOCKS, $fragments);
     }
 
+    #[Test]
+    public function everyLinkBetweenThePagesLeadsToAPage(): void
+    {
+        $broken = [];
+
+        foreach (self::pages() as $page) {
+            preg_match_all('/\]\((?!https?:)([^)#]+)/', (string)file_get_contents($page), $links, PREG_SET_ORDER);
+
+            foreach ($links as [$link, $target]) {
+                if (!is_file(dirname($page) . '/' . $target)) {
+                    $broken[] = basename($page) . ': ' . $link;
+                }
+            }
+        }
+
+        self::assertSame([], $broken, "Links that lead nowhere:\n" . implode("\n", $broken));
+    }
+
+    #[Test]
+    public function everyLinkToASectionNamesAHeadingOfThatPage(): void
+    {
+        $broken = [];
+
+        foreach (self::pages() as $page) {
+            preg_match_all('/\]\((?!https?:)([^)#]*)#([^)]+)\)/', (string)file_get_contents($page), $links, PREG_SET_ORDER);
+
+            foreach ($links as [$link, $target, $anchor]) {
+                preg_match_all('/^#+ (.+)$/m', (string)file_get_contents($target === '' ? $page : dirname($page) . '/' . $target), $headings);
+                $slugs = array_map(
+                    static fn (string $heading): string => str_replace(' ', '-', (string)preg_replace('/[^a-z0-9 _-]/', '', strtolower($heading))),
+                    $headings[1],
+                );
+
+                if (!in_array($anchor, $slugs, true)) {
+                    $broken[] = basename($page) . ': ' . $link;
+                }
+            }
+        }
+
+        self::assertSame([], $broken, "Links to a section no page has:\n" . implode("\n", $broken));
+    }
+
     /**
      * @return list<array{string, string}> [what the fence says after `php`, the code]
      */
     private static function blocks(): array
     {
-        $readme = file_get_contents(dirname(__DIR__, 2) . '/README.md');
-        self::assertIsString($readme, 'README.md must be readable');
+        $pages = implode("\n", array_map(static fn (string $page): string => (string)file_get_contents($page), self::pages()));
 
-        preg_match_all('/```php([^\n]*)\n(.*?)```/s', $readme, $matches, PREG_SET_ORDER);
+        preg_match_all('/```php([^\n]*)\n(.*?)```/s', $pages, $matches, PREG_SET_ORDER);
         self::assertNotSame([], $matches, 'the README must carry examples');
 
         return array_map(
             static fn (array $match): array => [trim($match[1]), $match[2]],
             $matches,
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function pages(): array
+    {
+        $root = dirname(__DIR__, 2);
+
+        return [$root . '/README.md', ...(glob($root . '/guide/*.md') ?: [])];
     }
 
     private static function blockContaining(string $needle): string
@@ -167,10 +218,9 @@ final class ReadmeTest extends TestCase
      */
     private static function documentedHooks(): array
     {
-        $readme = file_get_contents(dirname(__DIR__, 2) . '/README.md');
-        self::assertIsString($readme, 'README.md must be readable');
+        $pages = implode("\n", array_map(static fn (string $page): string => (string)file_get_contents($page), self::pages()));
 
-        preg_match_all('/protected function (on[A-Za-z]+)\(([^)]*)\)/', $readme, $matches, PREG_SET_ORDER);
+        preg_match_all('/protected function (on[A-Za-z]+)\(([^)]*)\)/', $pages, $matches, PREG_SET_ORDER);
 
         $hooks = [];
 
