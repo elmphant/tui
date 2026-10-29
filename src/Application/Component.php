@@ -153,7 +153,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         return self::wrapping(
             id: $id,
             widget: $child,
-            replace: static fn (Reducer $owner, Interactive $updated): Reducer|UpdateResult => $replace($owner, $container->withChildAt($index, $updated)),
+            replace: static fn (Reducer $owner, Interactive $updated, Message $message): Reducer|UpdateResult => $replace($owner, $container->withChildAt($index, $updated), $message),
             address: $this->address,
         );
     }
@@ -173,8 +173,8 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         return self::wrapping(
             id: $this->id,
             widget: $this->widget,
-            replace: $replace === null ? null : static function (App $app, Interactive $widget) use ($owner, $mount, $replace, $address): UpdateResult {
-                $answered = $replace($owner, $widget);
+            replace: $replace === null ? null : static function (App $app, Interactive $widget, Message $message) use ($owner, $mount, $replace, $address): UpdateResult {
+                $answered = $replace($owner, $widget, $message);
 
                 return $answered instanceof UpdateResult
                     ? new UpdateResult($mount($app, $answered->model), $address($answered->command))
