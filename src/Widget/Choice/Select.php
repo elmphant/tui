@@ -14,6 +14,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\TextWrap;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
@@ -168,7 +169,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
 
             $style = $theme->optionStyle($isCursor, $isSelected, $this->drawsFocused($context));
 
-            $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($this->options[$index], $area->width), $style);
+            $frame->putStyled($area->x, $y, TextWrap::ellipsize($this->options[$index], $area->width), $style);
         }
     }
 }

@@ -16,6 +16,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Widget\Choice\Select;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -24,6 +25,14 @@ use PHPUnit\Framework\TestCase;
 
 final class SelectTest extends TestCase
 {
+    #[Test]
+    public function aLabelTooWideForTheListEndsWithAnEllipsis(): void
+    {
+        $screen = WidgetHarness::for(Select::new(['A very long option label', 'short']), 12, 2)->screen();
+
+        self::assertSame('A very long…', $screen->lineAt(0));
+    }
+
     #[Test]
     public function aPlaceItDoesNotHaveSelectsNothing(): void
     {

@@ -18,6 +18,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
+use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Widget\Choice\Radio;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,6 +28,14 @@ use PHPUnit\Framework\TestCase;
 final class RadioTest extends TestCase
 {
     private const MARK_WIDTH = 4;
+
+    #[Test]
+    public function aLabelTooWideForTheRowEndsWithAnEllipsis(): void
+    {
+        $screen = WidgetHarness::for(Radio::new(['A very long option label', 'short']), 16, 2)->screen();
+
+        self::assertSame('(●) A very long…', $screen->lineAt(0));
+    }
 
     #[Test]
     public function aValueItHasSelectsThatOption(): void
@@ -825,13 +834,13 @@ final class RadioTest extends TestCase
     }
 
     #[Test]
-    public function renderWithOneColumnPastTheMarkShowsOneCharOfOptionText(): void
+    public function renderWithOneColumnPastTheMarkShowsThatTheOptionWasCut(): void
     {
         $radio = Radio::new(['Option']);
         $frame = new Frame(10, 3);
         $radio->render($frame, new Rect(0, 0, self::MARK_WIDTH + 1, 3), new RenderContext(Theme::dark()));
 
-        self::assertSame('O', $frame->characters[self::MARK_WIDTH]);
+        self::assertSame('…', $frame->characters[self::MARK_WIDTH]);
     }
 
     public static function radioKeybindingOverrideProvider(): iterable
