@@ -61,6 +61,22 @@ interactive ones on your App, and bind them (see [Building an app](apps.md)).
 | `Spinner` / `ActivityBar` | Loading animations. They animate by themselves, no timer needed |
 | `Scrollbar` | A vertical scroll indicator |
 
+## Links
+
+A `Span::link()` is text the reader can open with a click (or Cmd/Ctrl+click), in
+terminals that support OSC 8 links: iTerm2, kitty, WezTerm, VS Code, Windows
+Terminal and others. Other terminals show the text alone. A Markdown link in
+`Paragraph::fromMarkdown()` becomes one too.
+
+```php
+use Elmphant\Tui\Rendering\{Line, Span};
+use Elmphant\Tui\Widget\Prose\Paragraph;
+
+$help = Paragraph::fromLines([new Line([new Span('Read '), Span::link('the docs', 'https://example.com/docs')])]);
+```
+
+In a test, `$screen->styleAt($column, $row)->link` says which URL a cell opens.
+
 ## Filtered lists and tables
 
 The filter widgets tell you what the reader picked in terms of the rows you
