@@ -23,6 +23,7 @@ use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Runtime\Trace\Tracer;
 use LogicException;
+use ReflectionFunction;
 use Revolt\EventLoop;
 use SplQueue;
 use Throwable;
@@ -477,12 +478,51 @@ final class EffectRunner
     private function hasAnonymousTicker(float $interval, ?Closure $wrap, ?string $scope): bool
     {
         foreach ($this->tickers as $ticker) {
-            if ($ticker->id === null && $ticker->interval === $interval && $ticker->wrap === $wrap && $ticker->scope === $scope) {
+            if ($ticker->id === null && $ticker->interval === $interval && self::sameWrap($ticker->wrap, $wrap) && $ticker->scope === $scope) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Every ->map() and every mount makes a new closure on each dispatch, so a wrap is the same when it is the same
+     * code over the same captured values.
+     */
+    private static function sameWrap(?Closure $one, ?Closure $other): bool
+    {
+        if ($one === $other) {
+            return true;
+        }
+        if ($one === null || $other === null) {
+            return false;
+        }
+
+        $first = new ReflectionFunction($one);
+        $second = new ReflectionFunction($other);
+        if ($first->getFileName() !== $second->getFileName()
+            || $first->getStartLine() !== $second->getStartLine()
+            || $first->getName() !== $second->getName()
+            || $first->getClosureThis() !== $second->getClosureThis()
+        ) {
+            return false;
+        }
+
+        $firstCaptured = $first->getClosureUsedVariables();
+        $secondCaptured = $second->getClosureUsedVariables();
+        if (array_keys($firstCaptured) !== array_keys($secondCaptured)) {
+            return false;
+        }
+        foreach ($firstCaptured as $name => $value) {
+            $otherValue = $secondCaptured[$name];
+            $same = $value instanceof Closure && $otherValue instanceof Closure ? self::sameWrap($value, $otherValue) : $value === $otherValue;
+            if (!$same) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
