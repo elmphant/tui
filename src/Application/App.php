@@ -826,7 +826,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         // A component derived from a child is not itself in the tree; its widget is.
         foreach ($components as $component) {
             foreach ([$component, $component->widget] as $placed) {
-                if ($rectMap->contains($placed)) {
+                if (isset($rectMap[$placed])) {
                     $result[$component->id->value] = $rectMap[$placed];
 
                     break;
@@ -1025,7 +1025,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         $under = null;
 
         foreach ($this->componentRegistry()->listeningMounts() as $mount) {
-            if ($rects->contains($mount) && $message->inRect($rects[$mount])) {
+            if (isset($rects[$mount]) && $message->inRect($rects[$mount])) {
                 $under = $mount;
             }
         }
