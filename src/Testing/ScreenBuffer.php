@@ -8,6 +8,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\CursorPosition;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Hyperlinks;
 use Elmphant\Tui\Rendering\SgrParser;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Terminal\CursorShape;
@@ -160,7 +161,8 @@ final class ScreenBuffer
         return new Style(
             $foreground === 0 ? null : Color::fromValue($foreground),
             $background === 0 ? null : Color::fromValue($background),
-            $attributes,
+            $attributes & Hyperlinks::SGR_ATTRIBUTES,
+            Hyperlinks::urlIn($attributes),
         );
     }
 

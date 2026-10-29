@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Span;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -54,6 +56,18 @@ final class HyperlinkTest extends TestCase
         $frame->putLine(0, 0, new Line([Span::link('docs', "https://example.com/\e\\\x07docs")]));
 
         self::assertStringContainsString("\e]8;;https://example.com/docs\e\\docs", self::drawn($frame));
+    }
+
+    #[Test]
+    public function aTestCanAskWhichUrlACellLinksTo(): void
+    {
+        $frame = new Frame(10, 1);
+        $frame->putLine(0, 0, new Line([Span::link('docs', 'https://example.com/docs')->bold()]));
+
+        $style = ScreenBuffer::fromFrame($frame)->styleAt(0, 0);
+
+        self::assertSame('https://example.com/docs', $style->link);
+        self::assertSame(Attr::BOLD, $style->attributes);
     }
 
     private static function drawn(Frame $frame): string
