@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Rendering;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Text\TerminalText;
 
 final readonly class Style
 {
@@ -15,7 +16,26 @@ final readonly class Style
         public ?Color $foreground = null,
         public ?Color $background = null,
         public int $attributes = 0,
+        public ?string $link = null,
     ) {
+    }
+
+    /**
+     * The text becomes a link the reader can open, in terminals that support OSC 8; others show the text alone.
+     */
+    public function withLink(string $url): Style
+    {
+        $url = TerminalText::singleLine($url);
+
+        return $this->cloneWith(link: $url === '' ? null : $url);
+    }
+
+    /**
+     * What a cell drawn in this style stores: the attributes, and the link above them.
+     */
+    public function cellAttributes(): int
+    {
+        return $this->link === null ? $this->attributes : $this->attributes | Hyperlinks::bitsFor($this->link);
     }
 
     public function foreground(Color $color): Style
@@ -86,6 +106,7 @@ final readonly class Style
             foreground: $this->foreground ?? $parent->foreground,
             background: $this->background ?? $parent->background,
             attributes: $this->attributes !== 0 ? $this->attributes : $parent->attributes,
+            link: $this->link ?? $parent->link,
         );
     }
 
@@ -98,7 +119,7 @@ final readonly class Style
             $area->height,
             $this->foregroundValue(),
             $this->backgroundValue(),
-            $this->attributes,
+            $this->cellAttributes(),
         );
     }
 

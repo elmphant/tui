@@ -28,6 +28,11 @@ final readonly class Span
         return new self(content: $content, token: $token);
     }
 
+    public static function link(string $content, string $url): self
+    {
+        return new self(content: $content, style: (new Style())->withLink($url));
+    }
+
     public function bold(): self
     {
         return $this->withAttributes(Attr::BOLD);

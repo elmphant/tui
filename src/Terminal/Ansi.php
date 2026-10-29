@@ -13,6 +13,7 @@ final class Ansi
     public const CURSOR_DOWN_ONE = "\x1b[B";
 
     public const RESET_STYLE = "\x1b[0m";
+    public const HYPERLINK_END = "\x1b]8;;\x1b\\";
     public const ERASE_TO_LINE_END = "\x1b[K";
     public const DEFAULT_CURSOR_SHAPE = "\x1b[0 q";
 
@@ -69,6 +70,14 @@ final class Ansi
     public static function sgr(string $params): string
     {
         return "\x1b[{$params}m";
+    }
+
+    /**
+     * OSC 8. The URL must already be one line of plain text: a control byte in it would end the sequence early.
+     */
+    public static function hyperlink(string $url): string
+    {
+        return "\x1b]8;;{$url}\x1b\\";
     }
 
     public static function cursorShape(CursorShape $shape): string

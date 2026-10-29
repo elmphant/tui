@@ -22,6 +22,7 @@ final class Screen
     private int $currentForeground = 0;
     private int $currentBackground = 0;
     private int $currentAttributes = 0;
+    private int $currentLink = 0;
 
     /**
      * @var array<int, int>
@@ -149,6 +150,7 @@ final class Screen
             return '';
         }
 
+        $parts[] = $this->closeLink();
         $this->cursorAsserted = false;
         $this->resetCurrentStyle();
 
@@ -209,7 +211,7 @@ final class Screen
                 }
 
                 if ($cursorX !== $column || $cursorY !== $row) {
-                    $parts[] = self::moveCursor($column, $row, $cursorX, $cursorY);
+                    $parts[] = $this->closeLink() . self::moveCursor($column, $row, $cursorX, $cursorY);
                     $cursorY = $row;
                 }
 
@@ -266,7 +268,7 @@ final class Screen
             if ($row === 0) {
                 $output[] = Ansi::HIDE_CURSOR . Ansi::CURSOR_HOME . Ansi::RESET_STYLE . Ansi::ERASE_TO_LINE_END;
             } else {
-                $output[] = Ansi::cursorToRowStart($row) . Ansi::ERASE_TO_LINE_END;
+                $output[] = $this->closeLink() . Ansi::cursorToRowStart($row) . Ansi::ERASE_TO_LINE_END;
             }
 
             $rowOffset = $row * $width;
@@ -285,7 +287,7 @@ final class Screen
             }
         }
 
-        $output[] = Ansi::RESET_STYLE;
+        $output[] = $this->closeLink() . Ansi::RESET_STYLE;
         $this->resetCurrentStyle();
         $this->shown = false;
         $this->cursorAsserted = false;
@@ -370,6 +372,38 @@ final class Screen
     }
 
     private function styleDelta(int $foreground, int $background, int $attributes): string
+    {
+        return $this->sgrDelta($foreground, $background, $attributes & Hyperlinks::SGR_ATTRIBUTES)
+            . $this->linkDelta($attributes & ~Hyperlinks::SGR_ATTRIBUTES);
+    }
+
+    private function linkDelta(int $link): string
+    {
+        if ($link === $this->currentLink) {
+            return '';
+        }
+
+        $change = $this->closeLink();
+        $this->currentLink = $link;
+
+        return $link === 0 ? $change : $change . Ansi::hyperlink(Hyperlinks::urlIn($link) ?? '');
+    }
+
+    /**
+     * A link left open would carry on to whatever the terminal prints next.
+     */
+    private function closeLink(): string
+    {
+        if ($this->currentLink === 0) {
+            return '';
+        }
+
+        $this->currentLink = 0;
+
+        return Ansi::HYPERLINK_END;
+    }
+
+    private function sgrDelta(int $foreground, int $background, int $attributes): string
     {
         $foreground = $this->downsample($foreground);
         $background = $this->downsample($background);

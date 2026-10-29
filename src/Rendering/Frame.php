@@ -183,7 +183,7 @@ final class Frame
             $text,
             $style->foregroundValue(),
             $style->backgroundValue(),
-            $style->attributes,
+            $style->cellAttributes(),
         );
     }
 
@@ -492,6 +492,7 @@ final class Frame
             foreground: $span->foreground ?? $base->foreground,
             background: $span->background ?? $base->background,
             attributes: $base->attributes | $span->attributes,
+            link: $span->link ?? $base->link,
         );
     }
 
