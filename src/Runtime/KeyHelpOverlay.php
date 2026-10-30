@@ -121,7 +121,7 @@ final class KeyHelpOverlay
             ->render($frame, $area);
 
         $rows = $height - 2;
-        $this->scroll = max(0, min($this->scroll, \count($lines) - $rows));
+        $this->scroll = min($this->scroll, \count($lines) - $rows);
         $this->lastScroll = $this->scroll;
 
         foreach (\array_slice($lines, $this->scroll, $rows) as $row => [$text, $style]) {
