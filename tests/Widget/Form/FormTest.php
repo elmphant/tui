@@ -369,6 +369,67 @@ final class FormTest extends TestCase
         self::assertNotSame('▎', $screen->textAt($password['column'] - 2, $screen->locate('Username')['row'], 1));
     }
 
+    #[Test]
+    public function aSubmittedFormDrawsItsFieldsTheirProblemAndTheButtonUnderARule(): void
+    {
+        $form = Form::new('Sign up')
+            ->withField(Field::text('name', 'Name', 'Your name')->required())
+            ->withField(Field::text('city', 'City', 'where you live'))
+            ->withSubmit('Save', new TestMessage('save'))
+            ->submitted();
+
+        $expected = <<<'SCREEN'
+            ╭ Sign up ─────────────────────────╮
+            │                                  │
+            │ ▎ Name *required  Your name      │
+            │ ▎                                │
+            │   Name is required               │
+            │                                  │
+            │   City  where you live           │
+            │                                  │
+            │                                  │
+            │                                  │
+            │                                  │
+            ├──────── fill in what is required ┤
+            │                         ╭──────╮ │
+            │                         │ Save │ │
+            │                         ╰──────╯ │
+            ╰──────────────────────────────────╯
+            SCREEN;
+
+        self::assertSame($expected, WidgetHarness::for($form, 36, 16)->screen()->plainText());
+    }
+
+    #[Test]
+    public function aFormWithoutAButtonKeepsAPaddedFrameAndAnUnlabelledFieldStartsWithWhatItHas(): void
+    {
+        $form = Form::new('Notes')
+            ->withField(Field::text('title', 'Title'))
+            ->withField(Field::text('note', '', 'unnamed')->required())
+            ->withField(Field::text('memo', '', 'just text'));
+
+        $expected = <<<'SCREEN'
+            ╭ Notes ───────────────────────────╮
+            │                                  │
+            │ ▎ Title                          │
+            │ ▎                                │
+            │                                  │
+            │   *required  unnamed             │
+            │                                  │
+            │                                  │
+            │   just text                      │
+            │                                  │
+            │                                  │
+            │                                  │
+            │                                  │
+            │                                  │
+            │                                  │
+            ╰──────────────────────────────────╯
+            SCREEN;
+
+        self::assertSame($expected, WidgetHarness::for($form, 36, 16)->screen()->plainText());
+    }
+
     private static function tallForm(): Form
     {
         $form = Form::new('Tall')->withSubmit('Run', new TestMessage('run'));
