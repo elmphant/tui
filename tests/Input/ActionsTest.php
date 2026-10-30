@@ -44,6 +44,37 @@ final class ActionsTest extends TestCase
         self::assertSame('delete_word_forward', Actions::DELETE_WORD_FORWARD);
     }
 
+    #[Test]
+    public function eachActionIsDescribedInTheWordsTheKeyHelpShows(): void
+    {
+        $words = [
+            Actions::SELECT => 'choose',
+            Actions::CANCEL => 'back',
+            Actions::HOME => 'top',
+            Actions::END => 'bottom',
+            Actions::CURSOR_UP => 'up',
+            Actions::CURSOR_DOWN => 'down',
+            Actions::CURSOR_LEFT => 'left',
+            Actions::CURSOR_RIGHT => 'right',
+            Actions::FOCUS_CYCLE => 'next pane',
+            Actions::FOCUS_PREVIOUS_CYCLE => 'previous pane',
+            Actions::TAB_NEXT => 'next tab',
+            Actions::TAB_PREVIOUS => 'previous tab',
+            Actions::WORD_LEFT => 'word left',
+            Actions::WORD_RIGHT => 'word right',
+            Actions::DELETE_CHAR_BACKWARD => 'delete back',
+            Actions::DELETE_CHAR_FORWARD => 'delete',
+            Actions::DELETE_WORD_BACKWARD => 'delete word back',
+            Actions::DELETE_WORD_FORWARD => 'delete word',
+            Actions::CLEAR_LINE => 'clear',
+            Actions::HELP => 'keys',
+            Actions::LEAVE_SEARCH => 'back',
+            Actions::PAGE_DOWN => 'page down',
+        ];
+
+        self::assertSame($words, array_map(Actions::description(...), array_combine(array_keys($words), array_keys($words))));
+    }
+
     /**
      * `down` used to be bound to `FOCUS_NEXT`, so rebinding what looked like the tab
      * order rebound every list's arrows instead.
