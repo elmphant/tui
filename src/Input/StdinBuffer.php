@@ -275,7 +275,6 @@ final class StdinBuffer
         if (preg_match(self::REPLY_START[$this->buffer[1]], substr($this->buffer, 2)) === 1) {
             $this->inControlString = true;
             $this->controlStringStalled = false;
-            $this->buffer = substr($this->buffer, 2);
 
             return '';
         }
@@ -301,7 +300,6 @@ final class StdinBuffer
 
         $this->buffer = substr($this->buffer, min($ends));
         $this->inControlString = false;
-        $this->controlStringStalled = false;
 
         return true;
     }

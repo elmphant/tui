@@ -49,6 +49,49 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aReplyCutOffJustAfterTheEscapeOfItsEndIsNotAnEscapeKey(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b]52;c;q\x1b");
+        $buffer->flush();
+
+        $this->assertSame([], $sequences);
+    }
+
+    #[Test]
+    public function aReplyWithAOneDigitNumberIsHeldToo(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b]4;1;rgb:00");
+        $buffer->flush();
+        $buffer->process("\x1bP>|kitty");
+        $buffer->flush();
+
+        $this->assertSame([], $sequences);
+    }
+
+    #[Test]
+    public function aWholeControlStringEndedByAStringTerminatorIsSwallowedWhateverItHolds(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b]x\x1b\\b");
+
+        $this->assertSame(['b'], $sequences);
+    }
+
+    #[Test]
     public function theRestOfAReplyArrivingAfterOneTimeoutIsStillDropped(): void
     {
         $sequences = [];
