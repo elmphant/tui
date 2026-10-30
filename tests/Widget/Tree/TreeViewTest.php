@@ -105,6 +105,25 @@ final class TreeViewTest extends TestCase
     }
 
     #[Test]
+    public function theDetailColumnStartsPastTheWidestLabelCountingItsGuidesAndMarker(): void
+    {
+        $tree = TreeView::new([
+            new SimpleTreeNode('r', 'r', 'dR', [new SimpleTreeNode('c', 'abcdefghijklmnopqrst', 'dC')]),
+        ])->expand(TreePath::root()->child('r'));
+
+        $lines = self::draw($tree, 40, 3);
+
+        self::assertSame('▾ r' . str_repeat(' ', 22) . 'dR', $lines[0]);
+        self::assertSame('└─▪ abcdefghijklmnopqrst dC', $lines[1], 'two cells of guide and two of marker, then twenty of label and a space');
+    }
+
+    #[Test]
+    public function aLabelBrokenAcrossLinesIsDrawnOnOneRowWithOneMarkPerBreak(): void
+    {
+        self::assertSame('▪ two↵lines', self::draw(TreeView::new([new SimpleTreeNode('a', "two\r\nlines")]), 30, 1)[0]);
+    }
+
+    #[Test]
     public function aGrandchildCarriesTheBarOfEveryAncestorStillHavingSiblings(): void
     {
         $tree = TreeView::new([
