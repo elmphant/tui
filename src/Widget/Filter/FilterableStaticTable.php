@@ -165,9 +165,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
             );
         }
 
-        if ($area->height > FilterBar::HEIGHT) {
-            $table->render($frame, FilterBar::bodyArea($area), $context);
-        }
+        $table->render($frame, FilterBar::bodyArea($area), $context);
     }
 
     /**

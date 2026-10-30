@@ -115,10 +115,11 @@ final readonly class StaticTable implements Widget, MeasureHeight
 
     /**
      * What the table drew, which is at most the width it was offered.
+     *
+     * @infection-ignore-all every line is the same width, so which line or window is read only changes the cost
      */
     public function drawnWidth(int $width): int
     {
-        // Only the opening rule is read, and every line is the same width.
         return min($width, CharWidth::stringWidth($this->linesFor($width, 1)[0]));
     }
 
@@ -176,6 +177,8 @@ final readonly class StaticTable implements Widget, MeasureHeight
      * 32k rows: 10ms to measure, 2ms to key, and view() rebuilds per frame.
      * Every field the drawing reads belongs in it: the cache outlives the value,
      * so anything left out lets one table be drawn as another.
+     *
+     * @infection-ignore-all a memo: computing the key again gives the same key
      */
     private function contentKey(): string
     {
@@ -190,6 +193,8 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
+     * @infection-ignore-all a larger window or a missed reuse only draws more; the tests pin a window too small
+     *
      * @return list<string>
      */
     private function linesFor(int $width, ?int $upTo = null): array
@@ -358,12 +363,11 @@ final readonly class StaticTable implements Widget, MeasureHeight
      */
     private static function grown(array $widths, int $width, array $wants): array
     {
-        $spare = self::spaceFor($widths, $width);
-
-        if ($spare <= 0 || $widths === []) {
-            return $widths;
+        if ($widths === []) {
+            return [];
         }
 
+        $spare = self::spaceFor($widths, $width);
         $needs = array_map(static fn (int $has, int $want): int => max(0, $want - $has), $widths, $wants);
         $total = array_sum($needs);
 
@@ -371,8 +375,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
             $widths[$column] += $total === 0 ? 0 : min($need, (int)floor($spare * $need / $total));
         }
 
-        $left = self::spaceFor($widths, $width);
-        $widths[$total === 0 ? count($widths) - 1 : (int)array_search(max($needs), $needs, true)] += max(0, $left);
+        $widths[$total === 0 ? count($widths) - 1 : (int)array_search(max($needs), $needs, true)] += self::spaceFor($widths, $width);
 
         return array_values($widths);
     }
@@ -412,6 +415,8 @@ final readonly class StaticTable implements Widget, MeasureHeight
     /**
      * The width each column would take unwrapped, never below what its header
      * needs.
+     *
+     * @infection-ignore-all a memo over measuring(): measuring again gives the same widths
      *
      * @return list<int>
      */
@@ -481,7 +486,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
      */
     private static function capped(array $floors, int $width): array
     {
-        $share = max(self::MIN_COLUMN, intdiv($width, max(1, count($floors))));
+        $share = max(self::MIN_COLUMN, intdiv($width, count($floors)));
 
         return array_map(static fn (int $floor): int => min($floor, $share), $floors);
     }
@@ -515,7 +520,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
      */
     private function sharedWidths(int $width): array
     {
-        $count = max(1, $this->columnCount());
+        $count = $this->columnCount();
         $floors = $this->columnFloors($count);
         $budget = $width - ($count * self::OVERHEAD_PER_COLUMN + 1);
 
@@ -587,7 +592,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
      */
     private static function words(string $text): array
     {
-        $words = preg_split('/\s+/', trim($text), flags: PREG_SPLIT_NO_EMPTY);
+        $words = preg_split('/\s+/', $text, flags: PREG_SPLIT_NO_EMPTY);
 
         return $words === false ? [] : $words;
     }

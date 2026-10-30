@@ -87,6 +87,99 @@ final class StaticTableTest extends TestCase
         self::assertSame($roomy, $this->drawnRows($this->table(), 60, 8), 'Given room, the columns take what they need and no more');
     }
 
+    #[Test]
+    public function theWidthLeftOverIsSharedByWhatEachColumnStillWantsAndTheRestGoesToTheHungriest(): void
+    {
+        $table = StaticTable::new(['A', 'B', 'C'], [['aaaa bbbb cccc', 'dd ee ff gg hh ii', 'x']]);
+
+        $expected = <<<'TABLE'
+            ┌─────────┬────────────┬──────┐
+            │ A       │ B          │ C    │
+            ├─────────┼────────────┼──────┤
+            │ aaaa    │ dd ee ff   │ x    │
+            │ bbbb    │ gg hh ii   │      │
+            │ cccc    │            │      │
+            └─────────┴────────────┴──────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 31, 9));
+    }
+
+    #[Test]
+    public function aViewportTallerThanTheFirstWindowShowsEveryRowAfterASmallerOneWasDrawn(): void
+    {
+        $table = StaticTable::new(['Name'], array_map(static fn (int $row): array => ["row $row"], range(1, 100)));
+        $this->render($table, 20, 5);
+
+        $lines = explode("\n", $this->drawnRows($table, 20, 110));
+
+        self::assertCount(104, $lines);
+        self::assertSame(['│ row 100 │', '└─────────┘'], array_slice($lines, -2));
+    }
+
+    #[Test]
+    public function aWrappingTableIsAsTallAsAllItsRowsAfterAWindowOfItWasDrawn(): void
+    {
+        $table = StaticTable::new(['Name'], array_fill(0, 100, ['aaaa window bbbb']));
+        $this->render($table, 10, 5);
+
+        self::assertSame(304, $table->measureHeight(10));
+    }
+
+    #[Test]
+    public function aTableWithNoColumnsDrawsAnEmptyFrame(): void
+    {
+        self::assertSame("┌┐\n└┘", $this->drawnRows(StaticTable::new([], []), 10, 4));
+    }
+
+    #[Test]
+    public function aTableHasAColumnForEveryHeaderAndEveryCellAndAnEmptyOneTakesNoWidth(): void
+    {
+        $table = StaticTable::new(['', 'B', ''], [['x'], ['y', 'z']]);
+
+        $expected = <<<'TABLE'
+            ┌───┬───┬──┐
+            │   │ B │  │
+            ├───┼───┼──┤
+            │ x │   │  │
+            │ y │ z │  │
+            └───┴───┴──┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 30, 8));
+    }
+
+    #[Test]
+    public function theRowsATableIsSizedForCanHaveMoreColumnsThanTheRowsItDraws(): void
+    {
+        $table = StaticTable::new([], [['a']])->withWidthsFrom([['a'], ['b', 'cc']]);
+
+        $expected = <<<'TABLE'
+            ┌───┬────┐
+            │ a │    │
+            └───┴────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 30, 8));
+    }
+
+    #[Test]
+    public function anEvenShareGivesTheOddCellToTheLastColumn(): void
+    {
+        $table = StaticTable::new(['A', 'B'], [['abcdefghij', 'abcdefghij']])->withOverflow(Overflow::Wrap);
+
+        $expected = <<<'TABLE'
+            ┌────────┬─────────┐
+            │ A      │ B       │
+            ├────────┼─────────┤
+            │ abcdef │ abcdefg │
+            │ ghij   │ hij     │
+            └────────┴─────────┘
+            TABLE;
+
+        self::assertSame($expected, $this->drawnRows($table, 20, 8));
+    }
+
     /**
      * The filtered case: the columns are sized for every row so they hold still
      * while a query narrows them, and only the matching row is drawn — so the

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -109,6 +110,25 @@ final class FilterableStaticTableTest extends TestCase
             [['ajax_bookmark', 'POST', '/ajax/bookmark']],
             $this->routes()->withMatcher($lastLetter)->withQuery('/ajax/bookmark')->matchingRows(),
         );
+    }
+
+    #[Test]
+    public function aBlankQueryKeepsEveryRowWithoutAskingTheMatcher(): void
+    {
+        $nothing = new class implements Matcher {
+            public function matching(string $query, array $haystack): array
+            {
+                return [];
+            }
+        };
+
+        self::assertSame($this->routes()->matchingRows(), $this->routes()->withMatcher($nothing)->withQuery('  ')->matchingRows());
+    }
+
+    #[Test]
+    public function itAsksForItsBarAndOneRowOfTable(): void
+    {
+        self::assertEquals(Constraint::min(2), $this->routes()->sizing()->rows);
     }
 
     #[Test]
