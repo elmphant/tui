@@ -32,43 +32,34 @@ final class StaticTablePerfTest extends TestCase
         $frame = new Frame(60, 10);
         $area = new Rect(0, 0, 60, 10);
 
-        $smallRows = self::rows(2_000);
-        $largeRows = self::rows(4_000);
-        $table = null;
+        $costOf = static function (array $rows) use ($frame, $area, $context): float {
+            $table = null;
 
-        $smallCost = self::medianMicrosecondsAfterSetup(
-            static function () use (&$table, $smallRows): void {
-                WrapCache::clear();
-                $table = StaticTable::new(['A', 'B', 'C'], $smallRows);
-            },
-            static function () use (&$table, $frame, $area, $context): void {
-                $table?->render($frame, $area, $context);
-            },
-            10,
-        );
-        $largeCost = self::medianMicrosecondsAfterSetup(
-            static function () use (&$table, $largeRows): void {
-                WrapCache::clear();
-                $table = StaticTable::new(['A', 'B', 'C'], $largeRows);
-            },
-            static function () use (&$table, $frame, $area, $context): void {
-                $table?->render($frame, $area, $context);
-            },
-            10,
-        );
-        $ratio = $largeCost / $smallCost;
+            return self::medianMicrosecondsAfterSetup(
+                static function () use (&$table, $rows): void {
+                    WrapCache::clear();
+                    $table = StaticTable::new(['A', 'B', 'C'], $rows);
+                },
+                static function () use (&$table, $frame, $area, $context): void {
+                    $table?->render($frame, $area, $context);
+                },
+                10,
+            );
+        };
 
-        self::assertLessThan(
-            self::MAX_COST_OF_DOUBLING,
-            $ratio,
-            sprintf(
+        self::assertRatioBelow(self::MAX_COST_OF_DOUBLING, static function () use ($costOf): array {
+            $smallCost = $costOf(self::rows(2_000));
+            $largeCost = $costOf(self::rows(4_000));
+            $ratio = $largeCost / $smallCost;
+
+            return [$ratio, sprintf(
                 'Doubling the rows cost %.1fx (%.0fµs vs %.0fµs). Drawing must not '
                 . 'rebuild the lines it has already drawn for every further row.',
                 $ratio,
                 $largeCost,
                 $smallCost,
-            ),
-        );
+            )];
+        });
     }
 
     #[Test]
@@ -80,41 +71,38 @@ final class StaticTablePerfTest extends TestCase
         $rows = self::rows(16_000);
         $headers = ['A', 'B', 'C'];
 
-        $cold = self::medianMicrosecondsAfterSetup(
-            static function (): void {
-                WrapCache::clear();
-            },
-            static function () use ($headers, $rows, $context): void {
-                StaticTable::new($headers, $rows)->render(new Frame(60, 10), new Rect(0, 0, 60, 10), $context);
-            },
-            10,
-        );
+        self::assertRatioBelow(0.6, static function () use ($headers, $rows, $context): array {
+            $cold = self::medianMicrosecondsAfterSetup(
+                static function (): void {
+                    WrapCache::clear();
+                },
+                static function () use ($headers, $rows, $context): void {
+                    StaticTable::new($headers, $rows)->render(new Frame(60, 10), new Rect(0, 0, 60, 10), $context);
+                },
+                10,
+            );
 
-        StaticTable::new($headers, $rows)->render(new Frame(60, 10), new Rect(0, 0, 60, 10), $context);
-        $width = 61;
-        $warm = self::medianMicroseconds(
-            static function () use ($headers, $rows, $context, &$width): void {
-                ++$width;
-                StaticTable::new($headers, $rows)
-                    ->render(new Frame($width, 10), new Rect(0, 0, $width, 10), $context);
-            },
-            10,
-        );
+            StaticTable::new($headers, $rows)->render(new Frame(60, 10), new Rect(0, 0, 60, 10), $context);
+            $width = 61;
+            $warm = self::medianMicroseconds(
+                static function () use ($headers, $rows, $context, &$width): void {
+                    ++$width;
+                    StaticTable::new($headers, $rows)
+                        ->render(new Frame($width, 10), new Rect(0, 0, $width, 10), $context);
+                },
+                10,
+            );
+            $ratio = $warm / $cold;
 
-        $ratio = $warm / $cold;
-
-        self::assertLessThan(
-            0.6,
-            $ratio,
-            sprintf(
+            return [$ratio, sprintf(
                 'Drawing the same rows at a new width cost %.2f of a cold draw (%.0fµs vs '
                 . '%.0fµs). The column widths do not change with the area, so measuring '
                 . 'them must not run again for every frame.',
                 $ratio,
                 $warm,
                 $cold,
-            ),
-        );
+            )];
+        });
     }
 
     #[Test]

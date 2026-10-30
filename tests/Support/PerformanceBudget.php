@@ -59,6 +59,25 @@ trait PerformanceBudget
         return $samples[intdiv($iterations, 2)];
     }
 
+    /**
+     * A busy machine can slow one side of a ratio; a real regression stays over budget on every attempt.
+     *
+     * @param Closure(): array{float, string} $measure the ratio, and what to say if it is over budget
+     */
+    protected static function assertRatioBelow(float $max, Closure $measure): void
+    {
+        for ($attempt = 1; $attempt < 3; ++$attempt) {
+            if ($measure()[0] < $max) {
+                self::assertTrue(true);
+
+                return;
+            }
+        }
+
+        [$ratio, $message] = $measure();
+        self::assertLessThan($max, $ratio, $message);
+    }
+
     protected static function assertWithinBudget(float $maxMicroseconds, float $measured, string $what): void
     {
         self::assertLessThan(

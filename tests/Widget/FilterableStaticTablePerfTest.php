@@ -35,43 +35,40 @@ final class FilterableStaticTablePerfTest extends TestCase
         $area = new Rect(0, 0, 80, 12);
         $rows = self::rows(8_000);
 
-        $table = null;
-        $plain = self::medianMicrosecondsAfterSetup(
-            static function () use (&$table, $rows): void {
-                WrapCache::clear();
-                $table = StaticTable::new(['Name', 'Method', 'Path'], $rows);
-            },
-            static function () use (&$table, $area, $context): void {
-                $table?->render(new Frame(80, 12), $area, $context);
-            },
-            10,
-        );
+        self::assertRatioBelow(self::MAX_COST_OF_THE_BAR, static function () use ($rows, $area, $context): array {
+            $table = null;
+            $plain = self::medianMicrosecondsAfterSetup(
+                static function () use (&$table, $rows): void {
+                    WrapCache::clear();
+                    $table = StaticTable::new(['Name', 'Method', 'Path'], $rows);
+                },
+                static function () use (&$table, $area, $context): void {
+                    $table?->render(new Frame(80, 12), $area, $context);
+                },
+                10,
+            );
 
-        $filterable = null;
-        $wrapped = self::medianMicrosecondsAfterSetup(
-            static function () use (&$filterable, $rows): void {
-                WrapCache::clear();
-                $filterable = FilterableStaticTable::new(['Name', 'Method', 'Path'], $rows);
-            },
-            static function () use (&$filterable, $area, $context): void {
-                $filterable?->render(new Frame(80, 12), $area, $context);
-            },
-            10,
-        );
+            $filterable = null;
+            $wrapped = self::medianMicrosecondsAfterSetup(
+                static function () use (&$filterable, $rows): void {
+                    WrapCache::clear();
+                    $filterable = FilterableStaticTable::new(['Name', 'Method', 'Path'], $rows);
+                },
+                static function () use (&$filterable, $area, $context): void {
+                    $filterable?->render(new Frame(80, 12), $area, $context);
+                },
+                10,
+            );
+            $ratio = $wrapped / $plain;
 
-        $ratio = $wrapped / $plain;
-
-        self::assertLessThan(
-            self::MAX_COST_OF_THE_BAR,
-            $ratio,
-            sprintf(
+            return [$ratio, sprintf(
                 'The bar cost %.1fx the table it wraps (%.0fµs vs %.0fµs). Its own '
                 . 'question about the width must not measure every cell again.',
                 $ratio,
                 $wrapped,
                 $plain,
-            ),
-        );
+            )];
+        });
     }
 
     #[Test]
