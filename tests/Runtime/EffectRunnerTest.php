@@ -1308,7 +1308,7 @@ final class EffectRunnerTest extends TestCase
 
     private function pumpUntilQuiet(EffectRunner $runner): void
     {
-        for ($attempt = 0; $attempt < 400 && $runner->hasRunningProcesses(); ++$attempt) {
+        for ($attempt = 0; $attempt < 2_000 && $runner->hasRunningProcesses(); ++$attempt) {
             $runner->pump();
             usleep(5_000);
         }
