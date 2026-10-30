@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
@@ -179,6 +180,26 @@ final class EffectRunnerTest extends TestCase
         $runner->fire($this->clock->now());
 
         self::assertCount(2, $this->results);
+    }
+
+    #[Test]
+    public function aTickWrappedTheSameWayAgainJoinsTheTickerAlreadyRunning(): void
+    {
+        $this->assertTickersFor(1, self::tagging('child'), self::tagging('child'));
+        $this->assertTickersFor(1, self::around(self::tagging('child')), self::around(self::tagging('child')));
+    }
+
+    #[Test]
+    public function aTickWrappedForSomethingElseRunsBesideIt(): void
+    {
+        $this->assertTickersFor(2, self::tagging('child'), self::tagging('other'));
+        $this->assertTickersFor(2, self::around(self::tagging('child')), self::around(self::tagging('other')));
+        $this->assertTickersFor(
+            2,
+            static fn (Message $message): Message => $message,
+            static fn (Message $message): Message => $message,
+        );
+        $this->assertTickersFor(2, (new WrapOwner())->wrap(), (new WrapOwner())->wrap());
     }
 
     #[Test]
@@ -1109,6 +1130,20 @@ final class EffectRunnerTest extends TestCase
         self::assertEquals([new TestMessage('hello')], iterator_to_array($this->results, false));
     }
 
+    #[Test]
+    public function cancellingAScopeStopsWhatRunsInItAndUnderItButNotInAScopeThatOnlySharesItsName(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::after(0.5, static fn (): Message => new TestMessage('feed')), null, 'feed');
+        $runner->run(Cmd::after(0.5, static fn (): Message => new TestMessage('inner')), null, 'feed/inner');
+        $runner->run(Cmd::after(0.5, static fn (): Message => new TestMessage('feedback')), null, 'feedback');
+
+        $runner->run(new CancelScopeCmd(), null, 'feed');
+        $runner->fire(101.0);
+
+        self::assertEquals([new TestMessage('feedback')], iterator_to_array($this->results, false));
+    }
+
     protected function setUp(): void
     {
         /** @var SplQueue<Message> $results */
@@ -1116,6 +1151,42 @@ final class EffectRunnerTest extends TestCase
         $this->results = $results;
         $this->clock = new TestClock(100.0);
         $this->dispatched = [];
+    }
+
+    /**
+     * @param Closure(Message): Message $first
+     * @param Closure(Message): Message $second
+     */
+    private function assertTickersFor(int $tickers, Closure $first, Closure $second): void
+    {
+        $this->results = new SplQueue();
+        $this->clock = new TestClock(100.0);
+        $runner = $this->runner();
+        $runner->run(Cmd::tick(1.0), $first);
+        $runner->run(Cmd::tick(1.0), $second);
+
+        $this->clock->advance(1.0);
+        $runner->fire($this->clock->now());
+
+        self::assertCount($tickers, $this->results);
+    }
+
+    /**
+     * @return Closure(Message): Message
+     */
+    private static function tagging(string $tag): Closure
+    {
+        return static fn (Message $message): Message => $tag === '' ? new TestMessage($tag) : $message;
+    }
+
+    /**
+     * @param Closure(Message): Message $inner
+     *
+     * @return Closure(Message): Message
+     */
+    private static function around(Closure $inner): Closure
+    {
+        return static fn (Message $message): Message => $inner($message);
     }
 
     private function runnerWithHttp(HttpClientInterface $client): EffectRunner
@@ -1345,5 +1416,16 @@ final readonly class WrappedEffectMessage implements Message
 {
     public function __construct(public Message $inner)
     {
+    }
+}
+
+final readonly class WrapOwner
+{
+    /**
+     * @return Closure(Message): Message
+     */
+    public function wrap(): Closure
+    {
+        return fn (Message $message): Message => $message;
     }
 }
