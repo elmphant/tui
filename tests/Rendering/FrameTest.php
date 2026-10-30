@@ -81,6 +81,17 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function aCellHandedTwoCharactersKeepsTheFirstAndACombinedOneWhole(): void
+    {
+        $frame = new Frame(2, 1);
+
+        $frame->putChar(0, 0, 'ab');
+        $frame->putChar(1, 0, "e\u{0301}");
+
+        self::assertSame(['a', "e\u{0301}"], $frame->characters);
+    }
+
+    #[Test]
     public function putChar(): void
     {
         $frame = new Frame(10, 5);
