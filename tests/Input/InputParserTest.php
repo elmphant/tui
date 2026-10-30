@@ -2265,6 +2265,32 @@ final class InputParserTest extends TestCase
         self::assertEquals(new KeyMsg('[', alt: true), InputParser::parseSequence("\x1b["));
     }
 
+    /**
+     * @return iterable<string, array{int, ?string}>
+     */
+    public static function codepointsAtThePrintableEdges(): iterable
+    {
+        yield 'tilde' => [0x7E, '~'];
+        yield 'first C1 control' => [0x80, null];
+        yield 'last C1 control' => [0x9F, null];
+        yield 'no-break space' => [0xA0, "\u{A0}"];
+        yield 'last before the surrogates' => [0xD7FF, "\u{D7FF}"];
+        yield 'first surrogate' => [0xD800, null];
+        yield 'last surrogate' => [0xDFFF, null];
+        yield 'private use Kitty names no key' => [0xF000, null];
+        yield 'last private use' => [0xF8FF, null];
+        yield 'first after private use' => [0xF900, "\u{F900}"];
+        yield 'last codepoint' => [0x10FFFF, "\u{10FFFF}"];
+        yield 'past the last codepoint' => [0x110000, null];
+    }
+
+    #[Test]
+    #[DataProvider('codepointsAtThePrintableEdges')]
+    public function aKittyKeyIsTextOnlyWhenItsCodepointPrints(int $codepoint, ?string $text): void
+    {
+        self::assertSame($text, InputParser::parseSequence("\x1b[{$codepoint}u")?->key);
+    }
+
     #[Test]
     public function kittyCsiUDeleteCodepoint(): void
     {
