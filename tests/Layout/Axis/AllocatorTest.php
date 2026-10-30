@@ -46,6 +46,74 @@ final class AllocatorTest extends TestCase
     }
 
     #[Test]
+    public function acrossTheWholeAxisASlotCappedFirstFreesRoomThatCapsTheNext(): void
+    {
+        $policies = [new ItemPolicy(max: 2, grow: 1), new ItemPolicy(max: 6, grow: 1), new ItemPolicy(grow: 1)];
+
+        $resolved = Allocator::resolve($policies, 16, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([2, 6, 8], $resolved->sizes, 'A third of 16 caps the first at 2; half of the 14 left caps the second at 6');
+    }
+
+    #[Test]
+    public function acrossTheWholeAxisEachFloorIsAppliedAfterTheShares(): void
+    {
+        $policies = [new ItemPolicy(min: 8, grow: 1), new ItemPolicy(grow: 1)];
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([8, 5], $resolved->sizes);
+    }
+
+    #[Test]
+    public function acrossTheWholeAxisASlotThatDoesNotGrowKeepsItsBasis(): void
+    {
+        $policies = [new ItemPolicy(), new ItemPolicy(grow: 1)];
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([0, 10], $resolved->sizes);
+    }
+
+    #[Test]
+    public function acrossTheWholeAxisAnExactFitIsStillSharedByWeight(): void
+    {
+        $policies = [new ItemPolicy(basis: 2, grow: 1), new ItemPolicy(basis: 8, grow: 1)];
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([5, 8], $resolved->sizes, 'Half each, then the second is raised to its basis');
+    }
+
+    #[Test]
+    public function acrossTheWholeAxisNothingGrowsWhenNoSlotHasAWeight(): void
+    {
+        $policies = [new ItemPolicy(basis: 3), new ItemPolicy(basis: 4)];
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(distribution: Distribution::AcrossTheWholeAxis));
+
+        self::assertSame([3, 4], $resolved->sizes);
+    }
+
+    #[Test]
+    public function sizesTooLargeToAddUpStillReportTheirOverrun(): void
+    {
+        $policies = [new ItemPolicy(basis: PHP_INT_MAX), new ItemPolicy(basis: PHP_INT_MAX)];
+
+        $resolved = Allocator::resolve($policies, 10, new AxisSpecification(overflow: Overflow::Retain));
+
+        self::assertSame(PHP_INT_MAX - 10, $resolved->overflow);
+    }
+
+    #[Test]
+    public function theLastCellShrinkingCannotSplitComesFromTheRearmostSlotWillingToGiveIt(): void
+    {
+        $policies = [new ItemPolicy(basis: 3, shrink: 1), new ItemPolicy(basis: 3, shrink: 1), new ItemPolicy(basis: 5)];
+
+        self::assertSame([3, 2, 5], Allocator::resolve($policies, 10)->sizes, 'Half a cell each rounds to nothing, and the slot after them does not shrink');
+    }
+
+    #[Test]
     public function centringLeavesTheOddCellAfterTheSlots(): void
     {
         $policies = [new ItemPolicy(basis: 3), new ItemPolicy(basis: 3)];

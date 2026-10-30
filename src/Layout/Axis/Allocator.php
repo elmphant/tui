@@ -15,7 +15,7 @@ final class Allocator
     public static function resolve(array $policies, int $available, AxisSpecification $specification = new AxisSpecification()): AxisResult
     {
         $gap = self::gapWithin($specification->gap, count($policies), $available);
-        $forSlots = max(0, $available - max(0, count($policies) - 1) * $gap);
+        $forSlots = max(0, $available - (count($policies) - 1) * $gap);
 
         $wanted = 0;
         foreach ($policies as $policy) {
@@ -244,7 +244,7 @@ final class Allocator
         $placed = 0;
 
         foreach ($sizes as $index => $size) {
-            $share = $held <= 0 ? 0 : (int)floor($size / $held * $forSlots);
+            $share = (int)floor($size / $held * $forSlots);
             $share = min($share, $policies[$index]->max);
             $cut[] = $share;
             $placed += $share;
@@ -272,10 +272,6 @@ final class Allocator
      */
     private static function spread(Justification $justification, int $count, int $unclaimed): array
     {
-        if ($unclaimed === 0 || $count === 0) {
-            return [0, []];
-        }
-
         if ($justification === Justification::SpaceEvenly) {
             $openings = self::shared($unclaimed, $count + 1);
 
@@ -348,7 +344,7 @@ final class Allocator
                     $grant = min($whole, $policy->max - $sizes[$index]);
                     $sizes[$index] += $grant;
                     $handedOut += $grant;
-                    $claims[$index] = $exact - $whole * $weight;
+                    $claims[$index] = $exact;
                 }
             }
 
