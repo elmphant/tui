@@ -66,6 +66,29 @@ final class ChoiceFieldTest extends TestCase
     }
 
     #[Test]
+    public function theArrowsStartAtTheFirstChoiceAndStopAtEitherEnd(): void
+    {
+        $steps = [
+            [['right'], 'main'],
+            [['right', 'left'], 'main'],
+            [['right', 'right', 'right', 'right'], 'shop'],
+            [['right', 'right', 'right', 'right', 'left'], 'intranet'],
+        ];
+
+        foreach ($steps as [$keys, $value]) {
+            self::assertSame($value, WidgetHarness::for(ChoiceField::new(self::SITES), 30, 3)->press(...$keys)->widget()->value(), implode(' ', $keys));
+        }
+    }
+
+    #[Test]
+    public function aCollapsedFieldStepsThroughChoicesNamedByNumbers(): void
+    {
+        $field = ChoiceField::new([10 => 'The first long choice', 20 => 'The second long choice'])->withValue('10');
+
+        self::assertSame('20', WidgetHarness::for($field, 30, 3)->press('right')->widget()->value());
+    }
+
+    #[Test]
     public function aCollapsedFieldIsChosenFromItsFilteredList(): void
     {
         $field = WidgetHarness::for(ChoiceField::new(self::SITES), 30, 8)->press('enter')->type('shop')->press('enter');

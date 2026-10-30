@@ -470,6 +470,35 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function enterOnTheRowItHoldsKeepsItWhenTheListIsNotClearable(): void
+    {
+        $twice = $this->press($this->press($this->commands(), Key::Enter), Key::Enter);
+
+        self::assertSame($this->press($this->commands(), Key::Enter)->selectedItem()?->filterValue(), $twice->selectedItem()?->filterValue());
+        self::assertNotNull($twice->selectedItem());
+    }
+
+    #[Test]
+    public function shiftUpPagesUpLikePageUp(): void
+    {
+        $down = $this->press($this->press($this->commands(), Key::Down), Key::Down);
+
+        self::assertSame(2, $down->sourceIndex());
+        self::assertSame(0, $down->update(new KeyMsg(Key::Up, shift: true), $this->area())->model->sourceIndex());
+    }
+
+    #[Test]
+    public function aClickPutsTheCursorOnTheRowUnderIt(): void
+    {
+        $clicked = $this->commands()->update(
+            new MouseMsg(1, self::FIRST_ITEM_ROW + 2, MouseAction::Press, MouseButton::Left),
+            $this->area(),
+        )->model;
+
+        self::assertSame(1, $clicked->sourceIndex(), 'each item is a title and a description, so the second starts two rows down');
+    }
+
+    #[Test]
     public function aClickLeavesNoMarkerBehindOnceTheCursorMovesOn(): void
     {
         $theme = Theme::dark();
