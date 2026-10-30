@@ -98,6 +98,30 @@ final class PanelHeaderAndFooterTest extends TestCase
     }
 
     #[Test]
+    public function aCaptionRidesOnTheRuleOnlyWhileAtLeastOneDashIsLeft(): void
+    {
+        $fits = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true, caption: str_repeat('c', 15)), 20, 8);
+        $tooLong = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true, caption: str_repeat('c', 16)), 20, 8);
+
+        self::assertSame('├─ ' . str_repeat('c', 15) . ' ┤', $fits->lineAt(5));
+        self::assertSame('├' . str_repeat('─', 18) . '┤', $tooLong->lineAt(5));
+    }
+
+    #[Test]
+    public function theRuleJoinsAProminentBorderInItsStyleAndKeepsItsLineQuiet(): void
+    {
+        $theme = Theme::dark();
+        $emphasized = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true)->withEmphasizedBorder(), 20, 8);
+        $plain = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true), 20, 8);
+
+        self::assertNotEquals($theme->focusedBorderStyle->foreground, $theme->borderStyle->foreground);
+        self::assertEquals($theme->focusedBorderStyle->foreground, $emphasized->styleAt(0, 5)->foreground);
+        self::assertEquals($theme->focusedBorderStyle->foreground, $emphasized->styleAt(19, 5)->foreground);
+        self::assertEquals($theme->borderStyle->foreground, $emphasized->styleAt(1, 5)->foreground);
+        self::assertEquals($theme->borderStyle->foreground, $plain->styleAt(0, 5)->foreground);
+    }
+
+    #[Test]
     public function aGapAboveTheRuleIsKeptWhileTheRowsStillFit(): void
     {
         $panel = self::rows(2)->withFooter(Text::new('RUN'), ruled: true, gap: 1);
