@@ -370,6 +370,14 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aFieldNamedByANumberIsFilledInByThatName(): void
+    {
+        $form = Form::new('People')->withField(Field::text('0', 'Name'))->withValues(['0' => 'Alice']);
+
+        self::assertSame('Alice', $form->values()['0']);
+    }
+
+    #[Test]
     public function aSubmittedFormDrawsItsFieldsTheirProblemAndTheButtonUnderARule(): void
     {
         $form = Form::new('Sign up')

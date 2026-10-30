@@ -131,13 +131,13 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     }
 
     /**
-     * @param array<string, string|bool|list<string>|null> $values
+     * @param array<array-key, string|bool|list<string>|null> $values PHP turns a name such as '0' into an integer key
      */
     public function withValues(array $values): self
     {
         $form = $this;
         foreach ($values as $name => $value) {
-            $field = $this->field($name) ?? throw new LogicException(sprintf('The form has no field named "%s"', $name));
+            $field = $this->field((string)$name) ?? throw new LogicException(sprintf('The form has no field named "%s"', $name));
             $form = $form->withField($field->withWidget($field->widget->withValue($value)));
         }
 
