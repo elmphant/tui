@@ -10,6 +10,7 @@ use Elmphant\Tui\Application\Initializes;
 use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Application\MountedMsg;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
@@ -21,6 +22,7 @@ use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Testing\InMemoryTracer;
+use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -64,6 +66,20 @@ final class MountLeavingTest extends TestCase
         self::assertSame(['start feed', 'stop feed', 'quit'], $journal->entries);
         self::assertFileDoesNotExist($marker);
     }
+
+    #[Test]
+    public function onlyTheMountThatLeftHasItsEffectsStopped(): void
+    {
+        $kept = ModelHarness::for(new HostOfAFeed(new Journal()), 40, 6)->initialize()->dispatch(new Bump());
+        $left = ModelHarness::for(new HostOfAFeed(new Journal()), 40, 6)->initialize()->dispatch(new LeaveNow());
+
+        self::assertSame([], $kept->issued(CancelScopeCmd::class), 'the app changed and the feed is still there');
+        self::assertCount(1, $left->issued(CancelScopeCmd::class));
+    }
+}
+
+final readonly class Bump implements Message
+{
 }
 
 final readonly class UnnamedFeedCmd extends Cmd
@@ -215,7 +231,7 @@ final readonly class HostOfAFeed extends App
 {
     use Cloneable;
 
-    public function __construct(private Journal $journal, public ?FeedModel $feed = new FeedModel())
+    public function __construct(private Journal $journal, public ?FeedModel $feed = new FeedModel(), public int $bumps = 0)
     {
     }
 
@@ -238,6 +254,9 @@ final readonly class HostOfAFeed extends App
     {
         if ($message instanceof LeaveNow) {
             return new UpdateResult($this->cloneWith(feed: null));
+        }
+        if ($message instanceof Bump) {
+            return new UpdateResult($this->cloneWith(bumps: $this->bumps + 1));
         }
         if ($message instanceof QuitNow) {
             $this->journal->entries[] = 'quit';

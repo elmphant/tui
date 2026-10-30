@@ -8,6 +8,7 @@ use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Application\NamesItsKeys;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
@@ -211,6 +212,17 @@ final class KeyHelpTest extends TestCase
         self::assertMatchesRegularExpression('/r\s+refresh/u', $screen);
     }
 
+    #[Test]
+    public function aKeyAMountedModelNamesIsNotListedAgainForTheApp(): void
+    {
+        $harness = ModelHarness::for(new OverlappingKeysApp(), 60, 30)->initialize();
+
+        $help = $harness->model()->keyHelp(new FocusState($harness->focused(), decided: true));
+
+        self::assertSame(['r/x' => 'refresh', '/' => 'search', 7 => 'seven'], $help['Report']);
+        self::assertSame(['e', 's'], \array_slice(array_map(strval(...), array_keys($help['Anywhere'])), 0, 2));
+    }
+
     /**
      * @return list<string> the rows inside the key help's box, trimmed
      */
@@ -257,6 +269,32 @@ final readonly class ReportModel implements Reducer, NamesItsKeys
     public function ownKeys(): array
     {
         return (new Keybindings(['refresh' => ['r']]))->hints(['refresh' => 'refresh']);
+    }
+}
+
+final readonly class OverlappingKeysModel implements Reducer, NamesItsKeys
+{
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return UpdateResult::ignored($this);
+    }
+
+    public function ownKeys(): array
+    {
+        return ['r/x' => 'refresh', '/' => 'search', '7' => 'seven'];
+    }
+}
+
+final readonly class OverlappingKeysApp extends CopyableTestApp
+{
+    public function view(): Widget
+    {
+        return Mount::named('report', new OverlappingKeysModel(), Text::new('report'), static fn (self $app): self => $app);
+    }
+
+    protected function applicationKeybindings(): Keybindings
+    {
+        return new Keybindings(['reload' => ['r'], 'find' => ['/'], 'export' => ['x', 'e'], 'seventh' => ['7', 's']]);
     }
 }
 
