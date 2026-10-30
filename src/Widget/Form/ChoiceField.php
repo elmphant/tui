@@ -124,10 +124,13 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
     public function update(Message $message, Rect $area): UpdateResult
     {
         if ($this->fitsOnOneRow($area->width)) {
+            // A list opened while the field was narrow is not on screen any more; it must not keep the keys.
+            $shown = $this->list->isOpen() ? $this->cloneWith(list: $this->list->withOpen(false)) : $this;
+
             return $this->row->update($message, $area)
-                ->mapModel(fn (RadioRow $row): self => $row === $this->row ? $this : $this->cloneWith(
+                ->mapModel(static fn (RadioRow $row): self => $row === $shown->row ? $shown : $shown->cloneWith(
                     row: $row,
-                    list: self::listChoosing(array_values($this->options), $row->selectedValue(), $this->matcher, $this->clearable),
+                    list: self::listChoosing(array_values($shown->options), $row->selectedValue(), $shown->matcher, $shown->clearable),
                 ));
         }
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget\Form;
 
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Widget\Form\ChoiceField;
@@ -86,6 +89,18 @@ final class ChoiceFieldTest extends TestCase
         $field = ChoiceField::new([10 => 'The first long choice', 20 => 'The second long choice'])->withValue('10');
 
         self::assertSame('20', WidgetHarness::for($field, 30, 3)->press('right')->widget()->value());
+    }
+
+    #[Test]
+    public function aListLeftOpenWhenTheFieldWidensIntoARowNoLongerHoldsTheKeys(): void
+    {
+        $open = ChoiceField::new(self::SITES)->update(new KeyMsg(Key::Enter), new Rect(0, 0, 8, 1))->model;
+        self::assertTrue($open->capturesKeys(), 'the list is open while the field is narrow');
+
+        $widened = $open->update(new KeyMsg(Key::Escape), new Rect(0, 0, 100, 1))->model;
+
+        self::assertFalse($widened->capturesKeys());
+        self::assertFalse($widened->takesText());
     }
 
     #[Test]
