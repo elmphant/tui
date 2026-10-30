@@ -103,6 +103,29 @@ final class CharWidthSegmentationTest extends TestCase
         }
     }
 
+    #[Test]
+    public function truncateAgreesOnRandomlyAssembledStrings(): void
+    {
+        $alphabet = ['a', 'Z', ' ', '·', '使', "\u{0301}", "\u{1F600}", "\u{FE0F}", "\r\n"];
+
+        mt_srand(20261030);
+        for ($case = 0; $case < 1_000; ++$case) {
+            $input = '';
+            $length = mt_rand(0, 10);
+            for ($index = 0; $index < $length; ++$index) {
+                $input .= $alphabet[mt_rand(0, count($alphabet) - 1)];
+            }
+
+            for ($maxWidth = 0; $maxWidth < 15; ++$maxWidth) {
+                self::assertSame(
+                    self::referenceTruncate($input, $maxWidth),
+                    CharWidth::truncateToWidth($input, $maxWidth),
+                    sprintf('input bytes: %s, width %d', bin2hex($input), $maxWidth),
+                );
+            }
+        }
+    }
+
     private static function referenceWidth(string $text): int
     {
         $width = 0;
