@@ -41,6 +41,24 @@ final class TableRowReloadTest extends TestCase
     }
 
     #[Test]
+    public function aCursorWhosePlaceIsNowAHeadingMovesUpToTheRowAboveIt(): void
+    {
+        $table = Table\Table::fromCells($this->columns(), [['a'], ['b'], ['c']])->withCursor(2);
+
+        $reloaded = $table->withRows([Row::new('a'), Row::new('b'), Row::header('later')]);
+
+        self::assertSame(1, $reloaded->cursor(), 'nothing below can be chosen, so the nearest row above is');
+    }
+
+    #[Test]
+    public function aCursorOverRowsThatCannotBeChosenRestsOnTheFirst(): void
+    {
+        $table = Table\Table::fromCells($this->columns(), [['a'], ['b'], ['c']])->withCursor(2);
+
+        self::assertSame(0, $table->withRows([Row::header('one'), Row::header('two'), Row::header('three')])->cursor());
+    }
+
+    #[Test]
     public function theCursorLandsOnTheNeighbourThatTookTheRowsPlaceWhenItsRowIsGone(): void
     {
         $table = Table\Table::fromCells($this->columns(), [['1'], ['42'], ['77'], ['90']])->withCursor(2);
