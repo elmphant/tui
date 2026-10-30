@@ -18,11 +18,19 @@ final class StdinBuffer
     public const MAX_PASTE_SIZE = 1048576;
     public const MAX_SEQUENCE_SIZE = 4096;
     public const PASTE_TIMEOUT = 1.0;
+    private const REPLY_START = [']' => '/^\d+;/', 'P' => '/^[\d>=!]/', '_' => '/^G/'];
+
+    /**
+     * C0 bytes a control string cannot hold: one of them is a key the reader pressed.
+     */
+    private const NOT_IN_A_CONTROL_STRING = '/[\x00-\x06\x0e-\x1a\x1c-\x1f]/';
 
     private string $buffer = '';
     private bool $inPaste = false;
     private bool $pasteStalled = false;
     private string $pasteBuffer = '';
+    private bool $inControlString = false;
+    private bool $controlStringStalled = false;
 
     /**
      * @param Closure(string): void $onSequence
@@ -42,6 +50,13 @@ final class StdinBuffer
         $this->buffer .= $data;
 
         while ($this->buffer !== '') {
+            if ($this->inControlString) {
+                if (!$this->droppedThroughTheControlStringEnd()) {
+                    break;
+                }
+                continue;
+            }
+
             if ($this->inPaste) {
                 $endPos = strpos($this->buffer, self::PASTE_END);
                 if ($endPos === false) {
@@ -108,6 +123,16 @@ final class StdinBuffer
 
     public function flush(): void
     {
+        if ($this->inControlString) {
+            if ($this->controlStringStalled) {
+                $this->inControlString = false;
+                $this->buffer = '';
+            }
+            $this->controlStringStalled = !$this->controlStringStalled;
+
+            return;
+        }
+
         if ($this->inPaste && !$this->pasteStalled) {
             $this->pasteStalled = true;
             if ($this->pasteBuffer !== '' && $this->onPaste !== null) {
@@ -149,6 +174,7 @@ final class StdinBuffer
     {
         return match (true) {
             $this->inPaste => self::PASTE_TIMEOUT,
+            $this->inControlString => $this->remote ? 0.1 : 0.05,
             $this->buffer === '' || $this->buffer[0] !== "\x1b" => null,
             $this->remote => 0.1,
             $this->buffer === "\x1b" => 0.01,
@@ -245,7 +271,39 @@ final class StdinBuffer
             ++$position;
         }
 
+        // Alt+] then typing looks like ESC ] too; only a payload shaped like a reply is held until its end.
+        if (preg_match(self::REPLY_START[$this->buffer[1]], substr($this->buffer, 2)) === 1) {
+            $this->inControlString = true;
+            $this->controlStringStalled = false;
+            $this->buffer = substr($this->buffer, 2);
+
+            return '';
+        }
+
         return null;
+    }
+
+    /**
+     * Drop what a reply sends until its BEL or ESC \, or up to a key it cannot hold; keep a trailing ESC that may start the ESC \.
+     */
+    private function droppedThroughTheControlStringEnd(): bool
+    {
+        $bell = strpos($this->buffer, "\x07");
+        $stringTerminator = strpos($this->buffer, "\x1b\\");
+        $key = preg_match(self::NOT_IN_A_CONTROL_STRING, $this->buffer, $match, PREG_OFFSET_CAPTURE) === 1 ? $match[0][1] : null;
+        $ends = array_filter([$bell === false ? null : $bell + 1, $stringTerminator === false ? null : $stringTerminator + 2, $key], is_int(...));
+
+        if ($ends === []) {
+            $this->buffer = str_ends_with($this->buffer, "\x1b") ? "\x1b" : '';
+
+            return false;
+        }
+
+        $this->buffer = substr($this->buffer, min($ends));
+        $this->inControlString = false;
+        $this->controlStringStalled = false;
+
+        return true;
     }
 
     private function extractSs3Sequence(): ?string

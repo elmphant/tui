@@ -35,6 +35,62 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aTerminalReplyCutOffByTheTimeoutBecomesNoKeys(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b]52;c;q");
+        $buffer->flush();
+
+        $this->assertSame([], $sequences);
+    }
+
+    #[Test]
+    public function theRestOfAReplyArrivingAfterOneTimeoutIsStillDropped(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b]52;c;q");
+        $buffer->flush();
+        $buffer->process("RFU=\x07a");
+
+        $this->assertSame(['a'], $sequences);
+    }
+
+    #[Test]
+    public function aKeyNoReplyCanHoldEndsWhatLookedLikeOne(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b]52;c;q\x03b");
+
+        $this->assertSame(["\x03", 'b'], $sequences);
+    }
+
+    #[Test]
+    public function aReplyEndedByAStringTerminatorSplitAcrossReadsEndsThere(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+
+        $buffer->process("\x1b]11;rgb:0/0/0\x1b");
+        $buffer->process('\\b');
+
+        $this->assertSame(['b'], $sequences);
+    }
+
+    #[Test]
     public function incompleteCsiBufferedUntilComplete(): void
     {
         $sequences = [];
@@ -992,7 +1048,7 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
-    public function unterminatedOscOverMaxSequenceSizeIsDiscarded(): void
+    public function anUnendedReplyOverTheSizeLimitIsDroppedUntilItTimesOutTwice(): void
     {
         $sequences = [];
         $buffer = new StdinBuffer(
@@ -1001,8 +1057,12 @@ final class StdinBufferTest extends TestCase
 
         $buffer->process("\x1b]52;c;" . str_repeat('Z', StdinBuffer::MAX_SEQUENCE_SIZE + 100));
         $buffer->process('f');
+        $buffer->flush();
+        $buffer->process('g');
+        $buffer->flush();
+        $buffer->process('h');
 
-        $this->assertSame(['f'], $sequences);
+        $this->assertSame(['h'], $sequences, 'what follows an unended reply may be the rest of it');
     }
 
     #[Test]
