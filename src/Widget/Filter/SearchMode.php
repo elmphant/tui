@@ -13,12 +13,8 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 
 /**
- * Where a filter's keys go. While nothing binds Actions::SEARCH the field takes
- * them, as always; once something does, the content holds them until that key,
- * and Esc or Enter hands them back with the query kept.
- *
- * A widget with a filter field of its own uses it beside Cloneable and
- * KeybindingsAwareBehavior, and declares `private bool $searching = false`.
+ * With Actions::SEARCH bound, content receives keys until search starts; Esc or Enter returns focus and keeps the query.
+ * Use with Cloneable and KeybindingsAwareBehavior, and declare `private bool $searching = false`.
  *
  * @phpstan-require-implements TakesText
  * @phpstan-require-implements BindsForTheMoment
@@ -31,9 +27,7 @@ trait SearchMode
     }
 
     /**
-     * Esc and Enter hand the keys back while the field holds them, and Enter means
-     * nothing to the content of a filter that does not bind it itself. On the
-     * content the filter answers the search key, whichever binding names it.
+     * Bind Esc and Enter to leave search only while searching; otherwise bind the search action on the content.
      */
     public function momentaryKeybindings(): Keybindings
     {
@@ -55,9 +49,6 @@ trait SearchMode
         return $this->searching && $this->searchIsBound();
     }
 
-    /**
-     * The keys handed between the field and the content, or null for a key that moves neither way.
-     */
     private function searchToggledBy(KeyMsg $message): ?self
     {
         $bindings = $this->effectiveKeybindings();

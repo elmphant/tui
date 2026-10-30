@@ -11,9 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Which line a row starts on, counted in the wrapped lines above it. A
- * scrollbar measuring lines asks this to place its thumb, so the count has to
- * be exact rather than near enough.
+ * Row starts count wrapped lines so the scrollbar tracks actual content height.
  */
 final class TableLayoutLinesTest extends TestCase
 {

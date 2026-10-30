@@ -23,20 +23,13 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
- * Marks where the keyboard is, so every field says it the same way instead of
- * each inventing a colour of its own.
+ * Use one consistent focus marker across fields.
  */
 final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, GraftsItsChildren, WidgetContainer, MeasureHeight, KeybindingsAware
 {
     use Cloneable;
-    /**
-     * Held: wide enough to catch the eye at a glance.
-     */
     public const BAR = '▌';
 
-    /**
-     * Idle: a hairline, so the reserved column reads as a track rather than a gap.
-     */
     public const RAIL = '▏';
 
     private const COLUMNS = 2;
@@ -45,26 +38,19 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
     {
     }
 
-    /**
-     * For a field that answers for itself.
-     */
     public static function around(Focusable $child): self
     {
         return new self($child);
     }
 
     /**
-     * For a block that cannot — a label and its field together, or the row a
-     * container's cursor rests on. Whoever composed it knows, so it says.
+     * Let the host supply focus for a block that cannot report it, such as a label with its field.
      */
     public static function beside(Widget $child, bool $held): self
     {
         return new self($child, $held);
     }
 
-    /**
-     * As tall as what it runs beside; the track itself costs columns, not rows.
-     */
     public function measureHeight(int $width): int
     {
         if (!$this->child instanceof MeasureHeight) {
@@ -86,18 +72,13 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
     }
 
     /**
-     * Only what a host said. A track around a field that answers for itself asks
-     * the tree while drawing instead.
+     * Return only explicit host focus; self-reporting fields read tree focus during rendering.
      */
     public function isHeld(): bool
     {
         return $this->held ?? false;
     }
 
-    /**
-     * What it wraps, and where that lands — so a host walking the tree for one of
-     * its own widgets still finds it behind the track.
-     */
     public function holds(): Widget
     {
         return $this->child;
@@ -134,9 +115,6 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
         return Keybindings::empty();
     }
 
-    /**
-     * The track binds nothing of its own; what a reader can press is the field's.
-     */
     public function effectiveKeybindings(): Keybindings
     {
         return $this->child instanceof KeybindingsAware
@@ -194,8 +172,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
     }
 
     /**
-     * Reserved whether or not the child holds the focus: a track that appeared
-     * only on focus would shift every field sideways as the reader tabs.
+     * Always reserve gutter width so tabbing cannot shift fields sideways.
      */
     private static function contentIn(Rect $area): Rect
     {

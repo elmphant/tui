@@ -22,9 +22,6 @@ final readonly class Alert implements Widget
 
     private const PADDING = 1;
 
-    /**
-     * How far towards the far end of the fade one pulse travels.
-     */
     private const PULSE_DEPTH = 0.3;
 
     private const PULSE_FRAME_SECONDS = 0.05;
@@ -56,9 +53,6 @@ final readonly class Alert implements Widget
         return new self($message, StyleToken::Info);
     }
 
-    /**
-     * Breathes the fill so the row draws the eye without moving the layout.
-     */
     public function withPulsing(float $periodSeconds = 1.2): self
     {
         return $this->cloneWith(pulsePeriod: max(0.1, $periodSeconds));
@@ -96,8 +90,7 @@ final readonly class Alert implements Widget
         $context->requestRepaint(self::PULSE_FRAME_SECONDS);
         $phase = (1.0 - cos(2 * M_PI * $context->now() / $this->pulsePeriod)) / 2;
 
-        // Whatever contrasts with the text is the direction away from it, so the
-        // fade only ever widens the gap the message has to be read across.
+        // Fade away from the text colour so pulsing only increases contrast.
         return $fill->blend($text->contrastingText(), $phase * self::PULSE_DEPTH);
     }
 }

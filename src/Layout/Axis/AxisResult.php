@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout\Axis;
 
 /**
- * Resolved geometry for one axis: how big each slot is, and where it starts.
- *
  * @internal
  */
 final readonly class AxisResult

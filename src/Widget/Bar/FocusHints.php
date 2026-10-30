@@ -11,8 +11,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Widget\Widget;
 
 /**
- * The keys whatever holds the keyboard answers, asked for at render time so no
- * one has to keep a copy of where the keyboard is.
+ * Read active key hints at render time so they cannot become stale.
  */
 final readonly class FocusHints implements Widget
 {
@@ -41,17 +40,12 @@ final readonly class FocusHints implements Widget
         return StatusBar::forHints($this->leading)->sizing();
     }
 
-    /**
-     * The width the hints take while drawing: `sizing()` cannot know who holds the keyboard.
-     */
     public function widthIn(RenderContext $context): int
     {
         return $this->bar($context)->sizing()->columns->intrinsic();
     }
 
     /**
-     * The width with these hints of whatever holds the keyboard, for a host asking outside drawing.
-     *
      * @param array<string, string> $focusedHints
      */
     public function widthWith(array $focusedHints): int

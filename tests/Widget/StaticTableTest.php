@@ -45,8 +45,7 @@ final class StaticTableTest extends TestCase
     }
 
     /**
-     * FilterableStaticTable sizes its columns from every row while drawing only the
-     * matching ones, so the rows it draws must not be the rows it measured.
+     * Measure columns from all rows but draw only the filtered subset.
      */
     #[Test]
     public function sizingRowsGivenAfterADrawWidenTheColumnsForRowsItDoesNotDraw(): void
@@ -58,9 +57,7 @@ final class StaticTableTest extends TestCase
     }
 
     /**
-     * Cell by cell, because every width the table works out — the widest cell, the
-     * padding either side, the dividers, and what is left for the column that has
-     * to wrap — only shows as geometry.
+     * Inspect cell positions to check widths, padding, dividers and wrapping together.
      */
     #[Test]
     public function drawsEveryColumnToTheWidthItWorkedOut(): void
@@ -181,9 +178,7 @@ final class StaticTableTest extends TestCase
     }
 
     /**
-     * The filtered case: the columns are sized for every row so they hold still
-     * while a query narrows them, and only the matching row is drawn — so the
-     * header has to be padded out to widths its own text never asked for.
+     * Size filtered tables from all rows so headers and columns do not move when the query changes.
      */
     #[Test]
     public function headersAreWidenedToColumnsSizedFromRowsThatAreNotDrawn(): void
@@ -370,8 +365,7 @@ final class StaticTableTest extends TestCase
     }
 
     /**
-     * Wrapping keeps every column, but the table still has to end inside the
-     * width it was given: a border drawn past the edge loses its closing side.
+     * Keep wrapped tables within the available width so the closing border remains visible.
      */
     #[Test]
     public function aWrappingTableStillEndsInsideTheWidthItWasGiven(): void
@@ -511,10 +505,7 @@ final class StaticTableTest extends TestCase
     }
 
     /**
-     * A ten-row viewport shows ten rows whatever the table holds, and this table
-     * has no scrolling to reach the rest, so building them is work for nobody.
-     * Measured in bytes rather than time: the lines are kept once built, so what
-     * a render holds on to says how many it built.
+     * Measure retained bytes to verify that rendering a short viewport does not build every off-screen row.
      */
     #[Test]
     public function aSmallViewportOntoAHugeTableKeepsOnlyTheLinesItShows(): void
@@ -538,9 +529,7 @@ final class StaticTableTest extends TestCase
     }
 
     /**
-     * A stack asks how tall the table is before it draws anything, so answering
-     * must not cost drawing it. Where every column is wide enough for its widest
-     * cell nothing wraps, and the count follows from the row count alone.
+     * When nothing wraps, compute height from row count without building rendered lines.
      */
     #[Test]
     public function sayingHowTallItIsDoesNotDrawIt(): void
@@ -753,9 +742,6 @@ final class StaticTableTest extends TestCase
         );
     }
 
-    /**
-     * The drawn rows alone, so a golden table reads as the table it draws.
-     */
     private function drawnRows(StaticTable $table, int $width, int $height): string
     {
         $rows = array_filter(

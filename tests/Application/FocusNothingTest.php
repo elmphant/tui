@@ -19,10 +19,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Putting the keyboard down is an answer, so nothing may pick it back up: not the
- * runtime resolving a ring, and not a widget still carrying a focus flag from before.
- */
 final class FocusNothingTest extends TestCase
 {
     #[Test]

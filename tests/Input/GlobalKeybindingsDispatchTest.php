@@ -48,10 +48,6 @@ final readonly class ExposedGlobalApp extends CopyableTestApp
     }
 }
 
-/**
- * Records whether a 'custom_action' binding fires on messages sent to it.
- * Has no default binding for the action; relies on global to supply one.
- */
 final readonly class GlobalObserverWidget implements Focusable, KeybindingsAware
 {
     use Cloneable;

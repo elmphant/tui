@@ -20,10 +20,6 @@ use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Widget\Widget;
 use RuntimeException;
 
-/**
- * A model whose root pass queues one float, for runtime tests that need a
- * drawn pointer target.
- */
 final class FloatingModel implements Model
 {
     public ?Message $received = null;

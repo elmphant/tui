@@ -40,10 +40,6 @@ final class FocusArrivesAtAComponentTest extends TestCase
         self::assertSame(['ad', 'b'], self::valuesOf($model->left));
     }
 
-    /**
-     * An app rarely returns a focus move on its own — it comes batched with the
-     * effect that prompted it, or wrapped by a mounted child's address.
-     */
     #[Test]
     #[DataProvider('waysToCarryAFocusMove')]
     public function aFocusMoveIsHonouredHoweverTheCommandCarriesIt(string $key): void

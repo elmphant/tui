@@ -52,15 +52,8 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     use Cloneable;
 
     /**
-     * Declare the widget tree for the current state.
-     *
-     * Must be a pure function of this instance: the framework memoizes the
-     * result (and everything derived from it — component registry, layout)
-     * per App value. Reading clocks, randomness, or other external state here
-     * yields silently stale renders — including a readonly property holding a
-     * mutable object, whose later mutations never reach the screen. For
-     * animation, widgets read the frame clock via RenderContext::now() during
-     * render instead.
+     * Keep this a pure function of the immutable App, including objects it holds: the tree and layout are cached per instance.
+     * For animation, read RenderContext::now() during render.
      */
     abstract public function view(): Widget;
 
@@ -133,8 +126,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * A global chord binds only while the focused component or a container around
-     * it answers its action; otherwise its first key is just a key.
+     * Global chords apply only when the focused component or an ancestor handles their action.
      */
     final public function chords(FocusState $focus): Keybindings
     {
@@ -166,8 +158,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * How to label the keys that really leave, for a footer to show rather than
-     * repeat: a hardcoded hint outlives the binding it was copied from.
+     * Derive quit hints from the active bindings so they stay accurate.
      *
      * @return array<string, string>
      */
@@ -179,8 +170,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * How to label the key that opens the key help, for a footer to show: one that
-     * is not text where there is one, since a field takes `?` as text.
+     * Prefer a non-text help key, since text fields consume `?`.
      *
      * @return array<string, string>
      */
@@ -204,8 +194,8 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
 
     final public function keyHelp(FocusState $focus): array
     {
-        // Closest first, and a key is listed once: in the closest group that answers it.
-        // A global key is listed only where something on screen answers its action.
+        // List each key once, under the closest group that handles it.
+        // List global keys only when a visible component handles their action.
         $globals = $this->resolvedGlobalKeybindings();
         $focused = $this->componentRegistry()->focusable($focus->focused());
         $listed = [];
@@ -248,8 +238,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * The theme to draw the next frame in, from what this App holds; null keeps
-     * the one the program started with.
+     * Null keeps the program's initial theme.
      */
     public function theme(): ?Theme
     {
@@ -262,13 +251,8 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * App-level key hook, consulted before the focused component. A key that is
-     * text goes straight to a focused component that takes text (TakesText).
-     *
-     * Returning a changed model or any command consumes the key — it will
-     * NOT reach the focused component. Return UpdateResult::ignored($this) to
-     * pass the key on. Keys matched by applicationKeybindings() never
-     * arrive here; they go to onAction().
+     * Runs before the focused component, except for keys it takes as text; reserved shortcuts go to onAction().
+     * A changed model or any command consumes the key; return UpdateResult::ignored($this) to pass it on.
      *
      * @return UpdateResult<static>
      */
@@ -278,10 +262,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Handle an application action matched by applicationKeybindings().
-     *
-     * Application actions are reserved before focus routing, so they work
-     * consistently while an input, panel, or other component has focus.
+     * Application actions run before focus routing, regardless of which component has focus.
      *
      * @return UpdateResult<static>
      */
@@ -294,12 +275,8 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Reserved application shortcuts, evaluated before focused components,
-     * except a key that is text while the focused component takes text.
-     * Widget action inheritance belongs in globalKeybindings() instead.
-     *
-     * Overriding without a ctrl+c binding lets the app intercept ctrl+c
-     * (e.g. for a confirm-before-quit dialog).
+     * These shortcuts run before focused components, except for keys they take as text; globalKeybindings() supplies inherited widget actions.
+     * Omit ctrl+c to handle it yourself, for example with a quit confirmation.
      */
     protected function applicationKeybindings(): Keybindings
     {
@@ -315,11 +292,8 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * React after bound component widgets were replaced by framework routing.
-     *
-     * Runs on the App instance that already carries the new widgets — use it
-     * to derive dependent state, e.g. re-filter a list when a bound search
-     * input changed. Returned commands are dispatched alongside the child's.
+     * Runs after updated widgets are stored, so the app can update dependent state.
+     * Returned commands run alongside the child's commands.
      *
      * @param list<ComponentId> $ids
      *
@@ -355,8 +329,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * The mounts this App holds but does not draw now, such as hidden tabs, so
-     * they start and hear their answers too. The mounts in the view are added.
+     * Include hidden mounts so they can start and receive results; visible mounts are added automatically.
      *
      * @return list<Mount<*>>
      */
@@ -371,9 +344,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Extra keys that leave, on top of the ctrl chords applicationKeybindings()
-     * already reserves. A letter here is typed instead while the focused
-     * component takes text.
+     * Extra quit keys beyond the reserved application shortcuts; text fields still receive printable keys as text.
      */
     protected function quitBindings(): Keybindings
     {
@@ -386,8 +357,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Binds the property the widget already lives on, so the write-back cannot
-     * name a different one. The id defaults to the property name.
+     * Bind the widget to the property that holds it; the default ID is the property name.
      *
      * @template TBoundWidget of Interactive
      *
@@ -413,23 +383,16 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Which keys move the focus from one bound component to the next. Override
-     * to put focus cycling somewhere else; a form that types tab characters is
-     * the usual reason.
+     * Override the focus-cycle keys, for example when a form needs Tab as text.
      */
     /**
-     * The keys that open the key help: `?`, and Ctrl+K for while a field takes `?`
-     * as text. Return Keybindings::empty() to offer none.
+     * Ctrl+K opens help when a field takes `?` as text; return Keybindings::empty() to disable help.
      */
     protected function keyHelpBindings(): Keybindings
     {
         return new Keybindings([Actions::HELP => ['?', 'ctrl+k']]);
     }
 
-    /**
-     * What an action does, in the words of the key help. Override to name the
-     * actions this app binds itself.
-     */
     protected function actionDescription(string $action): string
     {
         return Actions::description($action);
@@ -549,7 +512,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
             return $this->delegateArrival($message, $screenRect, $holder);
         }
 
-        // Handed to every component, a paste would fill every field of a form at once.
+        // Send paste only to the focused component, or every field would receive it.
         if ($message instanceof PasteMsg) {
             return $this->delegateToFocused($message, $screenRect, $holder);
         }
@@ -558,8 +521,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * The containers above hear where below them the keyboard landed; the
-     * component itself hears the message.
+     * Notify ancestor containers of the focused child, then deliver the message to that child.
      *
      * @return UpdateResult<static>
      */
@@ -628,9 +590,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * What neither layer routes by hand. A tick and a click on a float reach every
-     * component once the app's hook has had it; anything else is the app's alone.
-     * Both layers answer these the same way, so they answer them in one place.
+     * After the app hook, broadcast ticks and float clicks; other messages belong to the app alone.
      *
      * @return UpdateResult<static>
      */
@@ -683,8 +643,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Updates the mounted model and writes it back into the App. What the model
-     * asks for is marked so the answer comes back to it.
+     * Store the updated mounted model and route its effect results back to it.
      *
      * @param Mount<*> $mount
      *
@@ -708,7 +667,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * The area the mount is drawn in, or the whole screen if it is not drawn.
+     * Use the mount's drawn area, or the whole screen for a hidden mount.
      *
      * @param Mount<*> $mount
      */
@@ -778,8 +737,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * A mounted model gets a key before its components do. The key goes to the
-     * mount that holds the keyboard; if no mount holds it, to every mount on screen.
+     * Offer keys to the focused mount before its components, or to all visible mounts if none has focus.
      *
      * @return UpdateResult<static>|null
      */
@@ -797,8 +755,6 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * The innermost mount holding the keyboard, else every mount on screen.
-     *
      * @return list<Mount<*>>
      */
     private function mountsHearingKeys(?ComponentId $holder): array
@@ -875,8 +831,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Input the focused component answered brings it back into view where the
-     * reader had scrolled away from it, so the containers hear the keyboard again.
+     * Bring the focused component back into view after it handles input.
      *
      * @param Component<Interactive> $focused
      *
@@ -888,9 +843,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * A key the focused component leaves alone belongs to whatever it sits inside:
-     * once a field takes the keyboard, the pane around it is no longer where keys
-     * arrive, and nothing could scroll a form while a field is being filled in.
+     * Pass unhandled keys to ancestor containers so a pane can scroll while a field has focus.
      *
      * @param Component<Interactive> $focused
      *
@@ -910,8 +863,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         ));
         $rects = $this->findComponentRects($screenRect, $enclosing);
 
-        // Nearest first: collection is pre-order, so what contains the rest is listed
-        // before it and the innermost is the last match.
+        // Reverse pre-order so the innermost container gets the key first.
         foreach (array_reverse($enclosing) as $candidate) {
             $dispatch = $this->childDispatcher()->dispatchOne(
                 $candidate->widget,
@@ -952,8 +904,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         $appResult = new UpdateResult($pressed->model, self::combineCommands($appResult->command, $pressed->command));
         $current = $this->appModel($appResult);
 
-        // A press goes only to what was on screen when it was made. A popup the press
-        // opened would otherwise read it as a click outside its box and close.
+        // Only widgets visible before this press may handle it; a newly opened popup would otherwise close immediately.
         if ($current !== $this) {
             $before = array_flip(array_map(static fn (Component $component): string => $component->id->value, $components));
             $components = array_values(array_filter(
@@ -964,7 +915,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         $rects = $current->findComponentRects($screenRect, $components);
         $visible = $current->findComponentRects($screenRect, $components, visible: true);
 
-        // A child its pane scrolled away still has a rect under whatever is drawn there now.
+        // Scrolled-out children still have rectangles but must not receive clicks.
         $components = array_values(array_filter(
             $components,
             static fn (Component $component): bool => !isset($rects[$component->id->value])
@@ -979,8 +930,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
             $holder,
         );
 
-        // Never write a flag back to move the keyboard: that runs the closure of a
-        // component the pointer never touched, over what the touched one just changed.
+        // Moving focus must not write back an untouched component and overwrite the clicked component's changes.
         $landedOn = null;
         if ($message->isClick() || $message->isWheel()) {
             foreach ($current->componentRegistry()->focusables() as $component) {
@@ -990,8 +940,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
                     continue;
                 }
 
-                // A wheel is reading, so the keyboard follows it only to what scrolled
-                // with it; a host-driven component cannot be asked and is trusted.
+                // Wheel input moves focus only when scrolling succeeds; host-driven components cannot be checked here.
                 if ($message->isWheel() && $component->writesBack() && !isset($updates[$component->id->value])) {
                     continue;
                 }
@@ -1034,9 +983,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * A press on a plain row of a container whose children are focus stops moves
-     * the keyboard into the container, if it was outside. If it was already
-     * inside, it stays on its field.
+     * Clicking a container's plain row focuses the container only when focus is outside it.
      *
      * @param array<string, Rect> $visible
      */
@@ -1060,8 +1007,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Every component sees the message, whatever the hook returned: hosts with
-     * no components at all would otherwise never see it.
+     * Broadcast regardless of the hook result; hosts without components still need the hook.
      *
      * @param UpdateResult<static> $hookResult
      *
@@ -1120,8 +1066,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         $updates = [];
         $commands = [];
 
-        // One at a time rather than as a batch: a command is addressed by the
-        // component that answered, and a batch has already combined them.
+        // Address each command to the component that produced it before combining commands.
         foreach ($components as $component) {
             if (!$component->writesBack()) {
                 continue;
@@ -1179,9 +1124,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
 
         $widget = $this->componentRegistry()->get($focused)?->widget;
 
-        // The stored widget is the authored one: routing hands the globals over on
-        // the way in and unwraps again, so nothing kept has them. The focus cycle
-        // keys are added here only, so a widget can name them but never answers them.
+        // Stored widgets exclude routing bindings; add focus-cycle keys only to hints, never to widget handling.
         if ($widget instanceof KeybindingsAware) {
             $widget = $widget->withGlobalKeybindings($this->globalKeybindings()->append($this->focusCycleBindings()));
         }
@@ -1211,8 +1154,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * The keys a widget answers, with the global ones it answers too, in the words
-     * of the hints it publishes.
+     * Include local and inherited bindings that the widget handles, using its hint labels.
      *
      * @param array<string, true>   $listed
      * @param array<string, string> $wording
@@ -1235,9 +1177,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * One line per action, naming only the keys no closer group has listed yet. A
-     * hint whose label is the key an action leads with names that action; the
-     * rest are described by actionDescription().
+     * List each key once, in the closest group that handles it; use actionDescription() for actions without hint wording.
      *
      * @param array<string, true>   $listed  the key labels already listed, added to as this lists more
      * @param array<string, string> $wording key label => description, as hints are
@@ -1330,8 +1270,6 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
     }
 
     /**
-     * Apply component replacements, then let the app derive dependent state.
-     *
      * @param static                                                       $app
      * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
      *
@@ -1367,9 +1305,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
         $commands = [];
 
         foreach (ComponentWriteBack::foldedIntoAncestors($updates) as [$original, $widget]) {
-            // A mounted component writes back through the sub-model the tree held
-            // when it was collected, so it is looked up in the app as it stands or a
-            // second write restores the sub-model the first one changed.
+            // Look up the current mounted model before each write, or a second update would undo the first.
             $current = $app->componentRegistry()->get($original->id) ?? $original;
             $replaced = $current->replaceIn($app, $widget, $message);
             ComponentWriteBack::verifyStored($current, $widget, $app, $replaced->model);

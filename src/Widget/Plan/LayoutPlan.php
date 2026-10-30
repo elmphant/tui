@@ -14,13 +14,7 @@ use LogicException;
 use SplObjectStorage;
 
 /**
- * Immutable resolved geometry for one widget tree and terminal area.
- *
- * Besides widget rectangles, the plan retains each container's positioned
- * children. Rendering reuses the plan only when the App instance that routed
- * the message is also the instance being rendered (no-op updates, ticks);
- * a state-changing update produces a new App instance whose render resolves
- * fresh geometry.
+ * Cache resolved geometry and child placements for one immutable App and screen area; state changes need a fresh plan.
  *
  * @internal
  */
@@ -59,10 +53,6 @@ final class LayoutPlan implements PlannedLayout
         return $plan;
     }
 
-    /**
-     * Where $target is placed, found without laying out anything inside it or
-     * after it.
-     */
     public static function rectOf(Widget $root, Rect $area, Widget $target): ?Rect
     {
         if ($root === $target) {
@@ -92,8 +82,6 @@ final class LayoutPlan implements PlannedLayout
     }
 
     /**
-     * Each rect cut to what its panes leave on screen: where the pointer can reach it.
-     *
      * @return SplObjectStorage<Widget, Rect>
      */
     public function visibleRects(): SplObjectStorage

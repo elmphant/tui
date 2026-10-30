@@ -24,16 +24,10 @@ final class FilterBar
 {
     public const HEIGHT = 1;
 
-    /**
-     * Placeholder and count, with a gap between them.
-     */
     public const MIN_WIDTH = 20;
 
     public const PLACEHOLDER = 'Filter…';
 
-    /**
-     * The blank row a list of choices leaves under the field.
-     */
     public const GAP_BELOW = 1;
 
     private const GAP = 3;
@@ -64,9 +58,7 @@ final class FilterBar
     }
 
     /**
-     * The key every filter in the family cancels on. A filter with something in it
-     * clears; an empty one must return itself rather than hand the key to its field,
-     * or a host above never learns the escape went spare.
+     * Escape clears a non-empty query; an empty filter must leave it unhandled so the host can respond.
      */
     public static function keybindings(): Keybindings
     {
@@ -74,8 +66,7 @@ final class FilterBar
     }
 
     /**
-     * The keys that hand the keys back from a search, bound only while the field
-     * holds them, so the content never lists an Enter it has no use for.
+     * Bind search-exit keys only while searching, so content hints do not advertise an unused Enter key.
      */
     public static function backKeybindings(): Keybindings
     {
@@ -100,13 +91,8 @@ final class FilterBar
     }
 
     /**
-     * A query of nothing keeps everything, in the order it was handed in. That
-     * is not a matcher's answer to work out — asking one would cost a pass over
-     * the whole list on every keystroke back to empty.
-     *
-     * Any other answer is kept by content — the matcher, the query and the
-     * entries — because a widget rebuilt by view() asks again on every measure.
-     * A matcher that cannot be serialized is asked every time.
+     * Empty queries keep all entries without calling the matcher; cache other results by matcher, query and entries.
+     * If the matcher cannot be serialized, run it each time.
      *
      * @param list<string> $haystack
      *
@@ -119,8 +105,7 @@ final class FilterBar
         }
 
         $matcher ??= new SubstringMatcher();
-        // A matcher may name the same entry twice — nothing in the port forbids
-        // it — and an index past the entries names nothing at all.
+        // Drop duplicate and out-of-range indices returned by matchers.
         $search = static fn (): array => array_values(array_unique(array_filter(
             $matcher->matching($query, $haystack),
             static fn (int $index): bool => isset($haystack[$index]),

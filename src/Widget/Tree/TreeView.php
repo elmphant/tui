@@ -77,9 +77,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Arrows and enter, and deliberately no letters: which letter means
-     * "expand" is the host's to decide, and a tree beside a text field
-     * must not swallow one.
+     * Leave letter bindings to the host so a tree beside a text field cannot swallow typing.
      */
     public static function defaultKeybindings(): Keybindings
     {
@@ -127,9 +125,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return new UpdateResult($moved->scrolledToCursor($area));
     }
 
-    /**
-     * Bring the cursor back into a viewport it has stepped out of.
-     */
     public function scrolledToCursor(Rect $area): self
     {
         $index = $this->rowIndexOf($this->shownCursor());
@@ -147,9 +142,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * The expanded nodes still missing their children, those already being
-     * fetched included: `pendingSince()` names only the new ones. Derived on
-     * every read, so answering one cannot leave a stale entry behind.
+     * Include all unloaded expansions, even those already being fetched; pendingSince() returns only new ones.
      *
      * @return list<TreePath>
      */
@@ -166,8 +159,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * The expansions that started waiting since $before: what a host fetches
-     * after an update, so a key that leaves a load running does not ask again.
+     * Return newly pending expansions so the host does not request the same load twice.
      *
      * @return list<TreePath>
      */
@@ -219,9 +211,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Replace the nodes, keeping what is open and where the cursor is — which is
-     * how a host answers a pending expansion.
-     *
      * @param list<TreeNode> $roots
      */
     public function withRoots(array $roots): self
@@ -248,9 +237,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Where the keyboard is. A node hidden by a collapse hands the cursor to the
-     * branch that hid it; one whose branch is still loading keeps it, so a
-     * reload does not move the cursor away and back.
+     * A collapsed node moves the cursor to its ancestor; a loading branch preserves it to avoid jumps during reload.
      */
     public function cursor(): TreePath
     {
@@ -274,9 +261,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $this->cursorMovedBy(-1);
     }
 
-    /**
-     * Open what the cursor is on, or — where it was already open — step into it.
-     */
     public function expandOrEnter(): self
     {
         $cursor = $this->shownCursor();
@@ -294,10 +278,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return ($rows[$index]['node']->children() ?? []) !== [] ? $this->withCursor($rows[$index + 1]['path']) : $this;
     }
 
-    /**
-     * Close what the cursor is on, or — where there was nothing to close —
-     * climb to the parent.
-     */
     public function collapseOrLeave(): self
     {
         $cursor = $this->shownCursor();
@@ -313,10 +293,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return Sizing::of(Constraint::flex(), Constraint::flex());
     }
 
-    /**
-     * Every row the open nodes make visible, so a container can size itself to
-     * the tree instead of guessing.
-     */
     public function measureHeight(int $width): int
     {
         return count($this->visibleRows());
@@ -372,8 +348,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * The row a pointer event lands on, or null past the last row.
-     *
      * @return array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}|null
      */
     private function rowAt(MouseMsg $message, Rect $area): ?array
@@ -397,8 +371,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Where the pointer landed decides what the press means: the name is a
-     * handle to open with, the value beside it only somewhere to point at.
+     * Clicking the label toggles expansion; clicking the value only moves the cursor.
      */
     private function afterPointer(MouseMsg $message, Rect $area): self
     {
@@ -430,10 +403,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $onDetail ? $selected : $selected->toggle($row['path']);
     }
 
-    /**
-     * Just past the widest label, so no label is cut while the row has room;
-     * never left of the minimum, and never so far right that a detail is cut.
-     */
     private function detailColumn(int $width): int
     {
         $rows = $this->treeRows();
@@ -464,10 +433,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $this;
     }
 
-    /**
-     * The row the highlight is on: the cursor, else its nearest ancestor on
-     * screen, else the first row.
-     */
     private function shownCursor(): TreePath
     {
         for ($path = $this->cursor; $path !== null && !$path->isRoot(); $path = $path->parent()) {
@@ -498,8 +463,6 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Every row the expanded set makes visible, in drawing order.
-     *
      * @return list<array{node: TreeNode, path: TreePath, selectable: bool, guides: string, marker: string}>
      */
     private function visibleRows(): array
@@ -509,8 +472,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
 
     private function treeRows(): TreeRows
     {
-        // Held across the clones a cursor move makes: the rows depend on the roots,
-        // what is open and the guides only, and walking a big tree costs a frame.
+        // Reuse visible rows across cursor moves; they depend only on roots, expanded nodes and guides.
         return $this->rowsMemo->at('rows', function (): TreeRows {
             $rows = [];
             $this->appendRowsOf($this->roots, TreePath::root(), '', $rows);
@@ -601,8 +563,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
     }
 
     /**
-     * Tabs expand as a Paragraph expands them; a line break, which a row cannot
-     * take, shows as ↵ rather than vanishing.
+     * Expand tabs as Paragraph does; show line breaks as ↵ because a tree row cannot contain them.
      */
     private static function oneRow(string $text, int $column): string
     {

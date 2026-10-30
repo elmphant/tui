@@ -74,9 +74,6 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         return $this->cloneWith(rightSlot: $widget);
     }
 
-    /**
-     * The slot a host routing keys by hand sends them to.
-     */
     public function withMarkedSlot(?Alignment $slot): self
     {
         return $this->cloneWith(markedSlot: $slot);
@@ -186,10 +183,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
             BarSlotRenderer::renderCentered($frame, $this->centerSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
         }
 
-        // The title is the bar's default content rather than a fourth slot: it
-        // centres while the centre is free, and steps left when a centre slot
-        // takes that place. Only an explicit left slot displaces it entirely —
-        // a caller-supplied title vanishing is never the useful answer.
+        // Centre the default title unless a centre slot exists; then move it left unless an explicit left slot replaces it.
         $titleWidth = CharWidth::stringWidth($this->title);
 
         if ($titleWidth > 0 && ($this->centerSlot === null || $this->leftSlot === null)) {

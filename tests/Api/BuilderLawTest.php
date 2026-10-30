@@ -27,23 +27,13 @@ use ReflectionNamedType;
 use UnitEnum;
 
 /**
- * A `withX()` builder that rebuilds its object positionally can drop a later
- * constructor argument, which resets that field to its default. The type still
- * matches, so nothing complains — `StaticTable::withOverflow()` lost `minWidth`
- * this way.
- *
- * Every builder is first applied to move fields off their defaults; a field
- * that falls back to its default afterwards was dropped, not set. Deliberate
- * coupling (a new value moving a cursor) is not a reset, so it does not report.
- *
- * Only scalar fields are compared: collaborators an immutable widget rebuilds on
- * purpose would differ without anything being lost.
+ * Set scalar fields away from defaults before testing builders, so omitted constructor arguments show up as resets.
+ * Exclude intentional field coupling and rebuilt objects from this check.
  */
 final class BuilderLawTest extends TestCase
 {
     /**
-     * Fields a builder sets on purpose, where the intended value is also the
-     * default and so cannot be told from a drop by its value alone.
+     * Builders may intentionally reset these fields to defaults; their values alone cannot distinguish that from a dropped argument.
      *
      * @var array<string, list<string>>
      */

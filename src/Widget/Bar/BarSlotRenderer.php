@@ -65,8 +65,6 @@ final class BarSlotRenderer
     }
 
     /**
-     * Where each slot draws, in the order the bar draws them.
-     *
      * @param array{leftSlot: ?Widget, centerSlot: ?Widget, rightSlot: ?Widget} $slots
      *
      * @return array<string, array{Widget, Rect}> only the slots with a width to draw in
@@ -93,8 +91,6 @@ final class BarSlotRenderer
     }
 
     /**
-     * Route a message to whichever bar slots are interactive.
-     *
      * @param array{leftSlot: ?Widget, centerSlot: ?Widget, rightSlot: ?Widget} $slots   keyed by the constructor property to override
      * @param array<string, ?Rect>                                              $drawnAt where a slot is drawn somewhere other than its own width puts it
      *
@@ -107,8 +103,7 @@ final class BarSlotRenderer
 
         $areas = [];
         foreach ($interactive as $key => $slot) {
-            // A slot with no width of its own is still on the bar and still takes
-            // keys; only a click has nowhere to land.
+            // Zero-width slots can still receive keys, but have no area to click.
             $areas[$key] = (\array_key_exists($key, $drawnAt) ? $drawnAt[$key] : self::rectFor($slot, self::ALIGNMENTS[$key], $contentArea))
                 ?? new Rect($contentArea->x, $contentArea->y, 0, 1);
         }
@@ -123,8 +118,7 @@ final class BarSlotRenderer
     }
 
     /**
-     * Never grown by flex: a stretched slot leaves the centre and right nothing
-     * to align against.
+     * Do not flex slots: stretching them would leave no space for centre and right alignment.
      */
     public static function rectFor(Widget $widget, Alignment $alignment, Rect $contentArea, ?RenderContext $context = null): ?Rect
     {
@@ -160,8 +154,7 @@ final class BarSlotRenderer
     }
 
     /**
-     * Typing has one destination, and a bar cycles nothing, so the slot the host
-     * marked is the answer.
+     * Send text only to the slot the host marked as focused; bars do not cycle focus.
      *
      * @param array<string, Interactive> $slots
      *
@@ -192,9 +185,7 @@ final class BarSlotRenderer
     }
 
     /**
-     * Frame writes carry a background unconditionally, so a slot styled without
-     * one would punch its own text out of the bar's fill. A theme with a canvas
-     * gives every ink the page colour, which punches the same hole.
+     * Use the bar background for slot text so a missing or canvas background cannot overwrite the bar's fill.
      */
     private static function keepBarBackground(Frame $frame, Rect $rect, int $barBackground, int $page): void
     {

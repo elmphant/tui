@@ -42,8 +42,7 @@ final class ScreenBufferTest extends TestCase
     #[Test]
     public function aSkippedCellLeavesTheCharactersAfterItInPlace(): void
     {
-        // Screen skips an unchanged cell with a cursor-forward rather than a
-        // reposition, so a capture that ignored it would shift the rest left.
+        // Handle cursor-forward sequences used by Screen to skip unchanged cells, or later text would shift left.
         $screen = new ScreenBuffer("\x1b[1;1Hab\x1b[Cd\x1b[2Cg", 8, 1);
 
         self::assertSame('ab d  g', $screen->textAt(0, 0, 7));

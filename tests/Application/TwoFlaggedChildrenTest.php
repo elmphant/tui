@@ -26,8 +26,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The defect this plan was written for: an app that flags two bound children
- * drew both focused while only one received keys.
+ * Only the component receiving keys should look focused, even if two widgets carry focus flags.
  */
 final class TwoFlaggedChildrenTest extends TestCase
 {

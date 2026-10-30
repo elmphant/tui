@@ -8,31 +8,18 @@ use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\TextWrap;
 
 /**
- * How a list item occupies rows at a given width.
- *
- * Height and rendering share this one implementation: if they disagreed, the
- * list's scroll offsets and click targets would drift away from what is drawn.
+ * Share measurement and rendering rules so scroll offsets and click targets match the drawn rows.
  */
 final class ListItemLayout
 {
-    /**
-     * Descriptions are indented under their title.
-     */
     public const DESCRIPTION_INDENT = 2;
 
     /**
-     * Rows one item may occupy.
-     *
-     * Wrapping without a cap lets a single item fill a narrow pane, which turns
-     * a list into a paragraph. Past the cap the last row is ellipsized, so the
-     * row stays honest about having more text.
+     * Cap wrapped rows so one item cannot fill a narrow pane; mark omitted text with an ellipsis.
      */
     public const MAX_ROWS = 4;
 
     /**
-     * The visual rows of one item: the wrapped title, then the wrapped
-     * description.
-     *
      * @return list<array{text: string, indent: int, isDescription: bool}>
      */
     public static function rows(ListItem $item, int $width): array

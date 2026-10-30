@@ -39,9 +39,6 @@ final readonly class Spinner implements Widget
         return $this->cloneWith(label: $label);
     }
 
-    /**
-     * Seconds each spinner frame stays visible.
-     */
     public function withInterval(float $seconds): self
     {
         return $this->cloneWith(interval: max(0.01, $seconds));
@@ -71,8 +68,7 @@ final readonly class Spinner implements Widget
     }
 
     /**
-     * The widest frame rather than the current one: a width that changed as it
-     * animated would shift whatever sits beside it every tick.
+     * Size to the widest animation frame so neighbouring content does not move each tick.
      */
     private function inkWidth(): int
     {

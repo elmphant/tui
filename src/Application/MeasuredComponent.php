@@ -8,7 +8,7 @@ use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 
 /**
- * A component around a widget that measures itself, so binding it hides nothing from a container measuring it.
+ * Preserve the wrapped widget's measurement support when binding it.
  *
  * @internal Component::bind() answers it; a host names Component
  *

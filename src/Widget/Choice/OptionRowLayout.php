@@ -7,9 +7,6 @@ namespace Elmphant\Tui\Widget\Choice;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Text\CharWidth;
 
-/**
- * Where the options of a horizontal row land.
- */
 final class OptionRowLayout
 {
     public const GAP = 2;
@@ -41,9 +38,7 @@ final class OptionRowLayout
     }
 
     /**
-     * The room the entries want on one line, gaps included. Laid out unbounded
-     * so the answer comes from placements() rather than a second copy of its
-     * spacing rules.
+     * Reuse placements() without a width limit so measurement and rendering share spacing rules.
      *
      * @param list<string> $entries
      */

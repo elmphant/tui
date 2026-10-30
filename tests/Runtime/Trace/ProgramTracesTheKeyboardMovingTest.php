@@ -18,8 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The keyboard moving is the runtime's own doing, not the model's, so a trace
- * showing only what each update was handed cannot say that it happened.
+ * Record focus moves separately because the runtime applies them outside model updates.
  */
 final class ProgramTracesTheKeyboardMovingTest extends TestCase
 {

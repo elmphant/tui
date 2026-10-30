@@ -22,10 +22,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * The hooks an application overrides are the framework's whole extension API,
- * so each one has to reach the subclass rather than the base implementation.
- */
 final class AppHookDispatchTest extends TestCase
 {
     #[Test]

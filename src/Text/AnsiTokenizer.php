@@ -50,9 +50,6 @@ final class AnsiTokenizer
         }
     }
 
-    /**
-     * An unterminated sequence runs to the end of the input.
-     */
     public static function sequenceEnd(string $input, int $position): int
     {
         $length = strlen($input);

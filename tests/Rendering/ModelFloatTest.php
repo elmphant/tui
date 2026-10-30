@@ -24,8 +24,7 @@ use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop;
 
 /**
- * A popup must not depend on which base class the application chose: a model
- * that paints its own screen can float something over it too.
+ * Models rendering manually must support floats too.
  */
 final class ModelFloatTest extends TestCase
 {
@@ -33,7 +32,6 @@ final class ModelFloatTest extends TestCase
     public function aModelPaintingItsOwnScreenCanStillFloatSomethingOverIt(): void
     {
         $terminal = new VirtualTerminal(30, 6);
-        // After a frame, not before: quitting first leaves nothing painted.
         EventLoop::delay(0.15, static function () use ($terminal): void {
             $terminal->simulateInput('q');
         });

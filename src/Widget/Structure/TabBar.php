@@ -99,8 +99,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     }
 
     /**
-     * Every page, the hidden ones too, so a host can carry a page's widgets into
-     * the next withTabs() with their cursors.
+     * Include hidden pages so hosts can preserve their widget state when replacing tabs.
      *
      * @return list<TabPage>
      */
@@ -134,20 +133,13 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         ));
     }
 
-    /**
-     * The chosen page takes the focus the old one had.
-     */
     public function withSelectedTab(int $selectedTab): self
     {
         return $this->cloneWith(selectedTab: max(0, min($selectedTab, count($this->tabs) - 1)));
     }
 
     /**
-     * The hint drawn at the right of the strip, when it fits.
-     *
-     * It replaces the switch hint the bar derives from its own keybindings,
-     * for applications that drive tab switching from somewhere else. Pass a
-     * short form to keep something readable on a narrow terminal.
+     * Override the binding-derived tab hint; supply a shorter form for narrow terminals.
      */
     public function withHint(?string $hint, ?string $shortHint = null): self
     {
@@ -164,9 +156,6 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return $this->cloneWith(padding: $padding);
     }
 
-    /**
-     * Draw the border the way a focused bar draws it, without taking focus.
-     */
     public function withEmphasizedBorder(bool $emphasized = true): self
     {
         return $this->cloneWith(emphasizedBorder: $emphasized);
@@ -183,8 +172,6 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     }
 
     /**
-     * The keys this bar answers, for a footer to carry when the strip cannot.
-     *
      * @return array<string, string> key label => what it does
      */
     public function hints(): array
@@ -229,9 +216,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     }
 
     /**
-     * The strip is the bar's own; the page under it is a pane that scrolls. Each
-     * child the keyboard can reach is a stop of its own, so nothing routes through
-     * here to reach one.
+     * Children have their own focus stops; the strip belongs to the bar, and the page scrolls separately.
      */
     public function update(Message $message, Rect $area): UpdateResult
     {
@@ -483,8 +468,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
             };
         }
 
-        // An unfocused bar ignores keys, so advertising them would be a lie.
-        // Its hints() are still there for a footer to carry.
+        // Hide inline key hints when unfocused because the bar ignores keys; footer hints remain available.
         if (!$focused || count($this->tabs) < 2) {
             return null;
         }
@@ -554,8 +538,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     }
 
     /**
-     * A tab bar needs room for its strip, its baseline and a row of content
-     * under them; below that it draws nothing, so it takes no input either.
+     * Require room for the strip, baseline and one content row before drawing or accepting input.
      */
     private function fitsIn(Rect $area): bool
     {

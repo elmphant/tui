@@ -55,9 +55,7 @@ final class FrameClockTest extends TestCase
     }
 
     /**
-     * A delay is turned into the moment the next frame is due, and a moment
-     * nothing can compare stops the animation clock for the whole program —
-     * not just for the widget that asked.
+     * Reject invalid repaint times so one widget cannot stop animation for the whole program.
      */
     #[Test]
     public function aDelayThatNamesNoMomentIsIgnored(): void

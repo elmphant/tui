@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout\Axis;
 
 /**
- * Divides one axis among the slots that asked for it.
- *
  * @internal
  */
 final class Allocator
@@ -32,8 +30,7 @@ final class Allocator
             $wanted <= $forSlots => self::grown($policies, $forSlots - $wanted, $specification->remainder),
             $specification->overflow === Overflow::ClipTail => self::clippedTail($asked, $forSlots),
             $specification->overflow === Overflow::Retain => $asked,
-            // Sizes past counting make a deficit meaningless, so only their
-            // proportions can be honoured.
+            // If sizes overflow, divide by proportions because a numeric deficit cannot be computed.
             $wanted === PHP_INT_MAX => self::evenlyWithin($asked, $policies, $forSlots),
             default => self::compressed($policies, $specification->overflow, $wanted - $forSlots, $forSlots),
         };
@@ -111,8 +108,7 @@ final class Allocator
             return array_map(static fn (ItemPolicy $policy): int => $policy->initialSize(), $policies);
         }
 
-        // A slot whose share reaches its ceiling settles there, and the others
-        // share what it could not take by their own weights, until none is capped.
+        // Redistribute space from capped slots among the remaining slots by weight.
         $left = $available;
         do {
             $weight = self::weightOf($open);
@@ -157,8 +153,7 @@ final class Allocator
     }
 
     /**
-     * Declared sizes can reach PHP_INT_MAX, so adding them up has to stop there
-     * rather than tip over into a float.
+     * Saturate at PHP_INT_MAX to avoid converting the sum to a float.
      *
      * @param list<int> $sizes
      */
@@ -172,10 +167,6 @@ final class Allocator
         return $total;
     }
 
-    /**
-     * A gap wider than the axis would place slots outside it, so it gives way
-     * to what is actually there.
-     */
     private static function gapWithin(int $gap, int $count, int $available): int
     {
         if ($count < 2) {
@@ -186,8 +177,7 @@ final class Allocator
     }
 
     /**
-     * The floors themselves have to give way, and a slot that said it was more
-     * willing to shrink still gives up more of them.
+     * When minimum sizes cannot fit, shrink them according to shrink weights.
      *
      * @param list<int>        $sizes
      * @param list<ItemPolicy> $policies
@@ -239,8 +229,7 @@ final class Allocator
     }
 
     /**
-     * Floors are a request, and this is the case where the axis cannot honour
-     * them: every slot is cut in proportion to what it held, so the total fits.
+     * If minimum sizes cannot fit, reduce every slot proportionally to fit the axis.
      *
      * @param list<int>        $sizes
      * @param list<ItemPolicy> $policies
@@ -249,8 +238,7 @@ final class Allocator
      */
     private static function evenlyWithin(array $sizes, array $policies, int $forSlots): array
     {
-        // Float division, because the declared sizes may be large enough that
-        // multiplying them before dividing would overflow.
+        // Divide as floats before multiplying to avoid integer overflow.
         $held = array_sum($sizes);
         $cut = [];
         $placed = 0;
@@ -326,9 +314,7 @@ final class Allocator
     }
 
     /**
-     * The spare cells are shared by growth weight and clamped to each ceiling,
-     * then whatever integer division left over goes to the rearmost slots that
-     * still have room below their ceiling.
+     * Share spare cells by growth weight up to each maximum; give rounding leftovers to the last slots with room.
      *
      * @param list<ItemPolicy> $policies
      *
@@ -460,9 +446,7 @@ final class Allocator
     }
 
     /**
-     * The mirror of grown(): the missing cells are taken by shrink weight and
-     * stopped at each floor, and what floors and rounding leave unpaid is taken
-     * from the rearmost slots that are still above their floor.
+     * Shrink by weight down to each minimum; take rounding leftovers from the last slots still above their minimum.
      *
      * @param list<ItemPolicy> $policies
      *

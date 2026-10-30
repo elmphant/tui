@@ -38,8 +38,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     use DrawsFocus;
     use KeybindingsAwareBehavior;
     /**
-     * Tall enough that no chrome can clamp it away, so the rows it takes can be
-     * read off the difference.
+     * Use a height large enough to measure decoration without clipping it.
      */
     private const CHROME_PROBE_HEIGHT = 1_000;
 
@@ -62,9 +61,6 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         $this->pane = $pane ?? ScrollPane::of();
     }
 
-    /**
-     * The pane does the scrolling and the focus cycling, so it owns the keys.
-     */
     public static function defaultKeybindings(): Keybindings
     {
         return ScrollPane::defaultKeybindings();
@@ -101,12 +97,8 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     }
 
     /**
-     * Rows that stay at the top inside the border while the children scroll below.
-     * Drawn only: not a focus stop, and no message is routed to it.
-     *
-     * A ruled header is set off by a line joined into the border, with the caption
-     * at its right end. The gap is blank rows below it, given up before the
-     * children would lose a row they need.
+     * The pinned header is drawn only: it receives no input or focus.
+     * A ruled header joins the border; its optional gap shrinks before child content does.
      */
     public function withHeader(?Widget $header, bool $ruled = false, ?string $caption = null, int $gap = 0): self
     {
@@ -114,7 +106,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     }
 
     /**
-     * withHeader()'s counterpart at the bottom: the rule and the gap go above it.
+     * Place the footer's rule and gap above it, mirroring the header.
      */
     public function withFooter(?Widget $footer, bool $ruled = false, ?string $caption = null, int $gap = 0): self
     {
@@ -122,10 +114,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     }
 
     /**
-     * Draw the border the way a focused panel draws it, without taking focus.
-     *
-     * The style comes from the theme in use at render time, so it stays
-     * correct when the same panel is rendered with another theme.
+     * Emphasize the border without changing focus, using the current render theme.
      */
     public function withEmphasizedBorder(bool $emphasized = true): self
     {
@@ -267,14 +256,9 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         }
     }
 
-    /**
-     * What its content needs, plus the border and padding drawn around it, so a
-     * parent can give a panel exactly the rows it will fill.
-     */
     public function measureHeight(int $width): int
     {
-        // Measured off a probe rather than assumed: the rows the chrome takes are
-        // not the columns it takes once padding is uneven.
+        // Measure decoration height separately because uneven padding can use different row and column counts.
         $probe = new Rect(0, 0, $width, self::CHROME_PROBE_HEIGHT);
         $inner = $this->inset()->inner($probe);
 
@@ -291,21 +275,13 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     }
 
     /**
-     * Where a child is drawn inside $area, once the border, margin, padding,
-     * header and footer are taken off.
-     *
-     * Public because a caller that keeps a child of its own and feeds it input
-     * has to hand it the rect the panel will draw it in; deriving that rect
-     * again on the outside drifts from this one and breaks scrolling silently.
+     * Hosts routing input manually must use this same child area so hit-testing and rendering agree.
      */
     public function contentArea(Rect $area): Rect
     {
         return $this->regionsIn($area)[1];
     }
 
-    /**
-     * Where the footer is drawn, for a host that answers a press on what it holds.
-     */
     public function footerArea(Rect $area): Rect
     {
         return $this->regionsIn($area)[2];
@@ -365,9 +341,6 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         ];
     }
 
-    /**
-     * What a part takes of the rows still left, never more than is.
-     */
     private function taken(int &$left, int $wanted): int
     {
         $taken = min($wanted, $left);
@@ -377,8 +350,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     }
 
     /**
-     * The line keeps the quiet border style; only where it meets the frame does it
-     * take the frame's, so a focused pane lights its outline and not the divider.
+     * Keep the divider dim except where it joins the focused outer border.
      */
     private function renderRule(Frame $frame, Rect $border, int $row, ?string $caption, RenderContext $context): void
     {

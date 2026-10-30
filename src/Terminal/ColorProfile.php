@@ -12,9 +12,7 @@ enum ColorProfile
     case TrueColor;
 
     /**
-     * Whether stepping a colour by a small amount lands on a different cell
-     * colour here. Sixteen colours quantise a fade back onto the shade it
-     * started from, so an animation over one has nothing to show.
+     * Small colour changes may quantize to the same palette entry, making fades invisible.
      */
     public function blendsSmoothly(): bool
     {
@@ -25,10 +23,7 @@ enum ColorProfile
     }
 
     /**
-     * Whether a contrast ratio worked out here still holds on the screen. The
-     * sixteen palette colours are the terminal's to define, so a colour sent as
-     * one of them arrives as a shade nobody here can measure: a widget that must
-     * stay readable there has to say so with an attribute, not a colour.
+     * The terminal defines its 16-colour palette, so computed contrast is unreliable; use attributes for essential distinctions.
      */
     public function keepsContrast(): bool
     {

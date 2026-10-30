@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Field;
 
 /**
- * How a text field shows its bounds.
- *
- * Underline and Filled are mutually exclusive: combining them reads as a heavy
- * block and collides with selection and bar backgrounds.
+ * Keep underline and fill mutually exclusive to avoid a heavy block that conflicts with selection backgrounds.
  */
 enum InputDecoration
 {

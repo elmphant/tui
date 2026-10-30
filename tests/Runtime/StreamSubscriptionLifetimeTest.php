@@ -37,8 +37,6 @@ final class StreamSubscriptionLifetimeTest extends TestCase
             {
                 return Cmd::batch(
                     Cmd::listen($this->stream, static function (mixed $stream): iterable {
-                        // What a client does when its peer hangs up: read, find
-                        // nothing, tidy up its own handle.
                         if ((string)fread($stream, 64) === '') {
                             fclose($stream);
                         }

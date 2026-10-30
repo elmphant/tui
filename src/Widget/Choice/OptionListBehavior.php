@@ -13,9 +13,6 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 
 /**
- * The cursor-and-selection machinery a Select and a Radio share: a radio is a
- * select drawn with a dot.
- *
  * @internal
  */
 trait OptionListBehavior
@@ -52,12 +49,7 @@ trait OptionListBehavior
     }
 
     /**
-     * For a choice that may also be none: pressing the option already picked puts
-     * it back down rather than picking it again.
-     *
-     * Off by default, because a list that must answer should not be emptiable by a
-     * stray keystroke. Nothing picked is a state these widgets can already hold and
-     * draw — this is how a reader reaches it.
+     * Allow selecting the current option to clear it; disabled by default to prevent accidental empty choices.
      */
     public function withClearable(bool $clearable = true): static
     {
@@ -92,9 +84,6 @@ trait OptionListBehavior
             && ($this->options[$this->cursor] ?? null) !== null;
     }
 
-    /**
-     * A pointer pick lands where a key press lands, clearable list included.
-     */
     public function activated(string $option): static
     {
         $index = array_search($option, $this->options, true);
@@ -136,10 +125,6 @@ trait OptionListBehavior
         return new UpdateResult($updated ?? $this);
     }
 
-    /**
-     * What a press lands on: the option it went to, or nothing at all when that is
-     * the one already picked and this list may be cleared.
-     */
     private function picking(int $index): ?int
     {
         return $this->clearable && $this->selected === $index ? null : $index;

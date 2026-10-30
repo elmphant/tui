@@ -15,8 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class TextInputFocusScopeTest extends TestCase
 {
     /**
-     * The caret follows the tree's focus rather than a flag the field carries,
-     * so it cannot appear in a field the keyboard does not reach.
+     * Draw the caret from tree focus, never from a stale field flag.
      */
     #[Test]
     public function aFieldDrawsItsCaretBecauseTheTreeSaysItHasTheKeyboard(): void

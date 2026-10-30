@@ -10,17 +10,12 @@ use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
 
 /**
- * What a press does to the keyboard, as rules about messages and commands
- * rather than about the app holding them.
- *
  * @internal
  */
 final class PointerFocus
 {
     /**
-     * Whether anything that answered the pointer already said where the keyboard
-     * goes. Where the pointer landed is only the default, so a more specific
-     * answer to the same press must not be raced by it.
+     * Explicit focus commands take priority over the default focus change caused by a click.
      */
     public static function alreadyMoved(?Cmd $command): bool
     {
@@ -46,10 +41,7 @@ final class PointerFocus
     }
 
     /**
-     * Where the keyboard goes once the pointer has landed. Landing on nothing
-     * leaves it where it was: a press on a plain row of a form must not strand
-     * the reader without a field until they press tab. Landing where it already
-     * is leaves it too: an arrival would scroll the panes around it back to it.
+     * Clicking empty space preserves focus; clicking the focused component avoids an arrival that would reset scrolling.
      */
     public static function after(?ComponentId $landedOn, ?ComponentId $holder): ?Cmd
     {

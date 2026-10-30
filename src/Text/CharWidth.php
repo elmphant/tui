@@ -116,9 +116,8 @@ final class CharWidth
     ];
 
     /**
-     * Emoji whose default presentation is text: one cell, two once VS16
-     * (U+FE0F) follows. Unicode 16 `\p{Emoji}` minus `\p{Emoji_Presentation}`,
-     * kept as data because a PCRE older than 10.40 has neither property.
+     * Unicode 16 emoji with text presentation take one cell, or two with VS16.
+     * Store the ranges explicitly because PCRE before 10.40 lacks the required emoji properties.
      */
     private const EMOJI_PRESENTATION_BASE = [
         [0x0023, 0x0023], [0x002A, 0x002A], [0x0030, 0x0039], [0x00A9, 0x00A9], [0x00AE, 0x00AE], [0x203C, 0x203C], [0x2049, 0x2049],
@@ -195,9 +194,7 @@ final class CharWidth
     ];
 
     /**
-     * A CJK-heavy 200x50 screenful holds 90 distinct clusters, and a full memo
-     * costs 285 KB. Overflow drops all of it rather than the oldest entry: one
-     * screenful of re-measuring, at a boundary real text does not reach.
+     * Clear the whole memo on overflow; typical screens stay well below the limit.
      */
     private const GRAPHEME_BUDGET = 4_096;
 
@@ -275,8 +272,7 @@ final class CharWidth
     {
         $length = strlen($str);
 
-        // One scan settles both cases: no match means every byte is printable
-        // ASCII and one cell wide, and a match gives the first boundary free.
+        // Scan once to identify printable ASCII and find the first boundary needing grapheme measurement.
         if (preg_match(self::NON_PLAIN, $str, $match, PREG_OFFSET_CAPTURE) !== 1) {
             return $length;
         }
@@ -286,8 +282,7 @@ final class CharWidth
         $plainEnd = $match[0][1];
 
         while (true) {
-            // Printable ASCII is one cell each, so the run needs no measuring —
-            // except its final byte, which a following combining mark binds to.
+            // Leave the final ASCII byte for grapheme measurement if a combining mark follows it.
             if ($plainEnd > $offset) {
                 $width += $plainEnd - $offset - 1;
                 $offset = $plainEnd - 1;
@@ -407,12 +402,7 @@ final class CharWidth
     }
 
     /**
-     * Bytes from $offset that must be judged as graphemes rather than counted.
-     *
-     * Only a boundary between two printable ASCII characters is safe to cut on:
-     * a cluster can bind backwards (combining mark onto an ASCII base) and
-     * forwards (Prepend onto an ASCII base), so a segment that ends on an
-     * ASCII character with anything non-ASCII after it keeps absorbing.
+     * Split only between printable ASCII characters: combining marks and Prepend characters can join across other boundaries.
      */
     private static function spanToNextPlainRun(string $text, int $offset, int $length): int
     {

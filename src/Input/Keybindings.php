@@ -45,9 +45,6 @@ final readonly class Keybindings
         return $instance ??= new self([]);
     }
 
-    /**
-     * Moving a cursor through rows and choosing one, as a list or a table does.
-     */
     public static function rowNavigation(): self
     {
         return new self([
@@ -104,9 +101,6 @@ final readonly class Keybindings
         return new self(array_intersect_key($this->patterns, array_flip($actions)));
     }
 
-    /**
-     * Only the bindings that take more than one key.
-     */
     public function chords(): self
     {
         return $this->filtered(static fn (KeyPattern $pattern): bool => $pattern->preceding !== []);
@@ -132,9 +126,6 @@ final readonly class Keybindings
         return $continuations;
     }
 
-    /**
-     * Whether a chord begins with $typed and goes on.
-     */
     public function continues(KeyMsg ...$typed): bool
     {
         foreach ($this->patterns as $patterns) {
@@ -149,12 +140,7 @@ final readonly class Keybindings
     }
 
     /**
-     * Build a key-hint map (display label => description) from these bindings,
-     * so footers and status bars stay in sync with what actually matches.
-     *
-     * A description covering several actions gets one label for all of them, from
-     * the key each action leads with. Actions without a binding are skipped,
-     * descriptions left with none are dropped, and the order given is kept.
+     * Derive hints from bindings: merge actions with the same description, skip unbound actions and preserve order.
      *
      * @param array<string, string|list<string>> $descriptions description => the action(s) it covers
      *
@@ -181,8 +167,7 @@ final readonly class Keybindings
     }
 
     /**
-     * The keys of every action named, for prose ("Shift+←/→ to switch"); null
-     * when one of them has no key, since the sentence would promise it.
+     * Return null if any action is unbound, so hints cannot promise a shortcut that does not exist.
      */
     public function label(string ...$actions): ?string
     {
@@ -198,9 +183,6 @@ final readonly class Keybindings
         return $patterns === [] ? null : KeyPattern::joinedLabel(...$patterns);
     }
 
-    /**
-     * Only the modified and special keys: what a widget taking text keeps of them.
-     */
     public function withoutText(): self
     {
         return $this->filtered(static function (KeyPattern $pattern): bool {
@@ -210,9 +192,6 @@ final readonly class Keybindings
         });
     }
 
-    /**
-     * Without the keys $other binds to anything.
-     */
     public function except(self $other): self
     {
         $taken = [];

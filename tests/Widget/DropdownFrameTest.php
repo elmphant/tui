@@ -53,10 +53,6 @@ final class DropdownFrameTest extends TestCase
     }
 }
 
-/**
- * A popup frame a caller could write themselves: it marks its top-left corner so
- * a test can tell it apart from the built-in one.
- */
 final readonly class MarkedFrame implements PopupFrame
 {
     public function __construct(

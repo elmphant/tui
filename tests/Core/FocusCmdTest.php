@@ -13,10 +13,6 @@ use PHPUnit\Framework\TestCase;
 
 final class FocusCmdTest extends TestCase
 {
-    /**
-     * Focus is the tree's to change, not the app's to hold, so an app asks for
-     * it the same way it asks for anything else with a side effect.
-     */
     #[Test]
     public function askingForAComponentMovesTheKeyboardToIt(): void
     {

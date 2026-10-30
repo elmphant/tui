@@ -26,9 +26,6 @@ use PHPUnit\Framework\TestCase;
 
 final class AppFocusScopeTest extends TestCase
 {
-    /**
-     * Neither field carries a focus flag: only the placement decides.
-     */
     #[Test]
     public function theRenderedTreeIsToldWhichComponentTheKeyboardIsIn(): void
     {

@@ -32,17 +32,7 @@ use UnitEnum;
 use WeakMap;
 
 /**
- * The effects a program has started and has not finished with.
- *
- * An effect is a command that leaves something behind: a ticker, a timer, a
- * child process, an HTTP request, a stream being watched. Each carries an
- * EffectId, which is what makes it nameable later — to be cancelled, or
- * replaced by another under the same name. Commands that finish inside their
- * own dispatch carry no id and are none of this class's business.
- *
- * Nothing here knows about the terminal, the screen, or where the keyboard is.
- * What an effect produces goes into the queue it was given, and the program
- * reads it from there.
+ * Track named, ongoing effects for cancellation and replacement; send results to the program's queue.
  *
  * @internal
  */
@@ -146,27 +136,18 @@ final class EffectRunner
         };
     }
 
-    /**
-     * Whatever is due at this moment: a ticker fires again, a timer fires once.
-     */
     public function fire(float $now): void
     {
         $this->fireTickers($now);
         $this->fireTimers($now);
     }
 
-    /**
-     * What the effects still running have to say since last asked.
-     */
     public function pump(): void
     {
         $this->pumpProcesses();
         $this->pumpSubscriptions();
     }
 
-    /**
-     * How long the loop may sleep before something is due, or null when nothing is.
-     */
     public function nextDelay(): ?float
     {
         $now = $this->clock->now();
@@ -181,7 +162,7 @@ final class EffectRunner
     }
 
     /**
-     * A process still running keeps the loop awake, however quiet the input is.
+     * Keep polling while a process runs, even without input.
      */
     public function hasRunningProcesses(): bool
     {
@@ -189,8 +170,7 @@ final class EffectRunner
     }
 
     /**
-     * A callback due in the pass being fired must not run once the program has
-     * been told to stop.
+     * Stop firing due callbacks once the program is told to quit.
      */
     public function forgetTimers(): void
     {
@@ -227,9 +207,7 @@ final class EffectRunner
     }
 
     /**
-     * A command of the application's own: the first handler that claims it runs
-     * it, and whatever it answers with is held under the command's name so a
-     * cancellation, a replacement or a shutdown reaches it like any other effect.
+     * Use the first matching handler and retain its cleanup under the command's effect ID.
      *
      * @param Closure(Message):Message|null $wrap
      */
@@ -268,8 +246,7 @@ final class EffectRunner
     }
 
     /**
-     * What the handler emits before start() returns waits for its stop closure
-     * to be registered, or a cancel answering that message would find nothing.
+     * Buffer synchronous emissions until cleanup is registered, so a resulting cancellation can find the effect.
      *
      * @param Closure(Message):Message|null $wrap
      *
@@ -306,9 +283,6 @@ final class EffectRunner
     }
 
     /**
-     * Hold on to what a starter began, or say why it could not begin. Starting is
-     * the starter's to know; what a failure is worth saying is not.
-     *
      * @param Closure(): RunningProcess     $start
      * @param Closure(Message):Message|null $wrap
      */
@@ -328,10 +302,7 @@ final class EffectRunner
     }
 
     /**
-     * An id is one slot: whatever still holds it goes before the replacement
-     * starts. Two effects answering to the same name would send messages no
-     * host can tell apart, and a ticker re-registered on every config
-     * change would silently multiply.
+     * Cancel an existing effect with this ID before starting its replacement, preventing duplicate messages.
      *
      * @param Closure(Message):Message|null $wrap
      */
@@ -363,8 +334,7 @@ final class EffectRunner
     }
 
     /**
-     * A replacement drops what the old run said that update() has not seen yet, so a stale answer never lands
-     * after the new one; a plain cancel lets what was already said arrive.
+     * Replacement drops queued results from the old run; cancellation alone still delivers results already queued.
      *
      * @param Closure(?EffectId, ?string): bool $matches the effect's name and the scope it was started in
      * @param Closure(Message):Message|null     $wrap
@@ -487,8 +457,7 @@ final class EffectRunner
     }
 
     /**
-     * Every ->map() and every mount makes a new closure on each dispatch, so a wrap is the same when it is the same
-     * code over the same captured values.
+     * Compare closure code and captured values because mapping and mounting create new closures on each dispatch.
      */
     private static function sameWrap(?Closure $one, ?Closure $other): bool
     {

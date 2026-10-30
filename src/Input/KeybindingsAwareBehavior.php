@@ -7,8 +7,7 @@ namespace Elmphant\Tui\Input;
 trait KeybindingsAwareBehavior
 {
     /**
-     * A host's own bindings replace the defaults per action; the globals add to
-     * whatever is left, so overriding one widget never switches them off for it.
+     * Local overrides replace defaults per action; globals add to the remaining bindings.
      */
     public function effectiveKeybindings(): Keybindings
     {
@@ -29,8 +28,7 @@ trait KeybindingsAwareBehavior
             ? $this->globalKeybindings->withoutText()->except($bindings)
             : $this->globalKeybindings;
 
-        // Globals lead: a hint names the key an action leads with, and what the
-        // host bound is what it shows.
+        // Put global bindings first so hints show the host's preferred key.
         return $globals->append($bindings);
     }
 

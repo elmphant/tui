@@ -13,11 +13,7 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
- * One arrangement from a width up, another below it, chosen from the area each
- * time it is drawn, so a resize switches over with nothing stored.
- *
- * Both arrangements must hold the same components: the tree is asked for its
- * components without an area, and is answered from the wide one.
+ * Both layouts must contain the same components: discovery uses the wide layout without knowing the available width.
  */
 final readonly class Breakpoint implements MeasureHeight, Widget, WidgetContainer
 {

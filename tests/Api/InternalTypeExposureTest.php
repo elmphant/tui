@@ -20,12 +20,8 @@ use ReflectionUnionType;
 use SplFileInfo;
 
 /**
- * API.md tells application code never to call or type against an `@internal`
- * declaration. A public signature that hands one back makes that impossible to
- * obey, so the boundary has to hold mechanically rather than by review.
- *
- * Public surface is what carries no `@internal` marker of its own and sits on a
- * class that carries none either.
+ * Public APIs must not expose internal types, or callers could not follow API.md.
+ * Exclude signatures marked @internal, including those on internal classes.
  */
 final class InternalTypeExposureTest extends TestCase
 {

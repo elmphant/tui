@@ -63,8 +63,7 @@ final class FocusComesFromTheTreeTest extends TestCase
     }
 
     /**
-     * Nothing tells the pane that lost the keyboard, so its flag stays true one
-     * message longer than the truth.
+     * Stored focus flags can lag one message behind tree focus.
      */
     #[Test]
     public function aBoundPaneStillFlaggedDoesNotDrawAsFocusedOnceTheKeyboardHasMoved(): void
@@ -107,9 +106,6 @@ final readonly class MixedTreeApp extends App
     }
 }
 
-/**
- * Carries a flag nothing reads, so a test can hand it a stale one.
- */
 final readonly class FlaggedProbe implements Focusable
 {
     public function __construct(private bool $focused = false)

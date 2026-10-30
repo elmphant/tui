@@ -11,8 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A host rebuilds the rows from its data every frame and keeps the pane; where the
- * reader scrolled to and where the keyboard is belong to the pane, not to the rows.
+ * Preserve pane scroll and focus state when the host rebuilds child rows from data.
  */
 final class PanelKeepsItsPaneStateTest extends TestCase
 {

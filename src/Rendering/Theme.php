@@ -12,12 +12,8 @@ final readonly class Theme
     use Cloneable;
 
     /**
-     * Bottom-bar style for Footer and StatusBar.
-     *
-     * Defaults to full-strength body text on the selection background, because
-     * dim text on that background has too little contrast to read. Resolved
-     * once at construction: a theme built by changing base or selectedStyle
-     * afterwards keeps this style, so set it explicitly when recolouring those.
+     * Default to body text on the selection background for readable contrast.
+     * This is resolved at construction; set it explicitly after changing base or selectedStyle.
      */
     public Style $footerStyle;
 
@@ -44,9 +40,7 @@ final readonly class Theme
         public Style $emptyStyle,
         public Style $inputStyle,
         /**
-         * The background this palette was designed against. Nobody paints it —
-         * an app may want the terminal's own colour to show through — but a fill
-         * has nothing to stand out from until a theme says what is behind it.
+         * The palette's assumed background, used for contrast; it does not paint the terminal.
          */
         public ?Color $page = null,
         ?Style $footerStyle = null,
@@ -150,8 +144,7 @@ final readonly class Theme
     }
 
     /**
-     * Paints the page: every ink takes the colour as its background, and the
-     * filled rows (selection, cursor, input, footer) keep their own.
+     * Apply a page background while preserving the backgrounds of filled rows.
      */
     public function withCanvas(Color $canvas): self
     {
@@ -184,9 +177,7 @@ final readonly class Theme
     }
 
     /**
-     * The border a container draws while it stands out — because it holds the
-     * keyboard, or because its host asked for emphasis. Asked of the theme rather
-     * than combined at each container, so two of them cannot drift apart.
+     * Share focused and emphasized border styling across containers.
      */
     public function borderFor(bool $prominent): BorderStyle
     {
@@ -319,8 +310,7 @@ final readonly class Theme
             focusedBorderStyle: new Style(foreground: Color::hex('268BD2'), background: $background, attributes: Attr::BOLD),
             titleStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
-            // base02 is only 1.15:1 against base03, so a bar wearing it does not
-            // read as a bar; this one is lifted to 1.26:1 and its ink with it.
+            // Raise the bar's contrast above base02's 1.15:1 against base03.
             selectedStyle: new Style(foreground: Color::hex('9EABAB'), background: Color::hex('0F3C48')),
             // A lighter blue than the accent: base03 on the accent itself is 4.08:1.
             cursorStyle: new Style(foreground: Color::hex('002B36'), background: Color::hex('3AA0E0')),
@@ -354,8 +344,7 @@ final readonly class Theme
             emptyStyle: new Style(foreground: Color::hex('93A1A1'), background: $background),
             inputStyle: new Style(foreground: Color::hex('073642'), background: Color::hex('DFDAC8')),
             page: $background,
-            // A light bar leaves the accent key hints at 2.6:1, so the bottom bar
-            // goes dark instead, as the other light palette does.
+            // Use a dark bottom bar because accent key hints have only 2.6:1 contrast on a light bar.
             footerStyle: new Style(foreground: Color::hex('FDF6E3'), background: Color::hex('073642')),
         );
     }
@@ -378,8 +367,7 @@ final readonly class Theme
             cursorStyle: new Style(foreground: Color::hex('191724'), background: Color::hex('C4A7E7')),
             fillStyle: new Style(foreground: Color::hex('C4A7E7'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('6E6A86'), background: $background),
-            // Overlay is only 1.07:1 against base, so a field wearing it would
-            // not look like a field at all.
+            // Increase contrast: Overlay is only 1.07:1 against Base.
             inputStyle: new Style(foreground: Color::hex('E0DEF4'), background: Color::hex('2D2B3B')),
             page: $background,
         );
@@ -428,8 +416,7 @@ final readonly class Theme
             emptyStyle: new Style(foreground: Color::hex('928374'), background: $background),
             inputStyle: new Style(foreground: Color::hex('EBDBB2'), background: Color::hex('3C3836')),
             page: $background,
-            // Gruvbox puts its yellow on both accent and title, so warning has
-            // to take the orange or it cannot be told apart from info.
+            // Use orange for warnings because Gruvbox already uses yellow for both accent and title.
             warning: new Style(foreground: Color::hex('FE8019'), background: $background),
         );
     }
@@ -454,8 +441,7 @@ final readonly class Theme
             emptyStyle: new Style(foreground: Color::hex('928374'), background: $background),
             inputStyle: new Style(foreground: Color::hex('3C3836'), background: Color::hex('E4D4AC')),
             page: $background,
-            // The light selection background leaves the accent key hints at
-            // 2.2:1, so this theme uses a dark bar to separate and stay legible.
+            // Use a dark bar because accent key hints have only 2.2:1 contrast on the light selection background.
             footerStyle: new Style(foreground: Color::hex('FBF1C7'), background: Color::hex('3C3836')),
             warning: new Style(foreground: Color::hex('AF3A03'), background: $background),
         );

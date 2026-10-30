@@ -421,8 +421,6 @@ final class VerticalStackTest extends TestCase
         self::assertSame([8, 7], $calls->measuredWidths);
     }
 
-    // --- helpers ---
-
     /**
      * @param list<Widget> $children
      *

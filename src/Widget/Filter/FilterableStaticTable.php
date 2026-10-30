@@ -65,8 +65,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
     }
 
     /**
-     * The field a host is already editing, so the caret sits where the reader put
-     * it instead of being rebuilt at the end of the text on every frame.
+     * Keep the host's existing field so rebuilding does not reset the caret to the end.
      */
     public function withField(TextInput $field): self
     {
@@ -126,9 +125,6 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
         return $this->cloneWith(matcher: $matcher);
     }
 
-    /**
-     * How much of the table the filter kept, so a query narrowing to nothing still reads as a query.
-     */
     public function summary(): string
     {
         return $this->summaryOf($this->matchingRows());
@@ -150,8 +146,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
             return;
         }
 
-        // Filtered once and handed to both halves: the bar reports what the
-        // table shows, so running the query twice could only make them differ.
+        // Share one filtered result so the bar's count always matches the displayed table.
         $matching = $this->matchingRows();
         $table = $this->tableOf($matching);
         $clip = $frame->clip();
@@ -212,7 +207,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
     }
 
     /**
-     * The bar belongs to the table, so it ends where the table does — but never so short that its own controls do not fit.
+     * Match the table width, but leave enough room for the bar's controls.
      */
     private function fieldArea(Rect $area): Rect
     {

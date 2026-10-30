@@ -170,14 +170,12 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
             && function_exists('stream_isatty') && stream_isatty($this->stdin)) {
             try {
                 $output = $this->runStty(['size']);
-                // A pty that cannot say how big it is answers zero. Taken at its word
-                // that is a screen with nothing on it.
+                // Ignore zero dimensions from PTYs that cannot report their size.
                 if (preg_match('/(\d+)\s+(\d+)/', $output, $matches) === 1
                     && (int)$matches[1] > 0 && (int)$matches[2] > 0) {
                     return [(int)$matches[2], (int)$matches[1]];
                 }
             } catch (TerminalException) {
-                // Environment dimensions below are the non-interactive fallback.
             }
         }
         $columns = getenv('COLUMNS');

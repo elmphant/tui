@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Tree;
 
 /**
- * Where a node sits, as the keys leading to it.
- *
- * The cursor and the expanded set are addressed this way rather than by row
- * number, so expanding a node above the cursor cannot move it.
+ * Identify nodes by key paths so expanding earlier nodes cannot move the cursor.
  */
 final readonly class TreePath
 {

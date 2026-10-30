@@ -39,15 +39,10 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     use DrawsFocus;
     use KeybindingsAwareBehavior;
 
-    /**
-     * Scrollbar column plus one blank column between it and the text.
-     */
     private const SCROLLBAR_GUTTER = 2;
 
     /**
-     * Measurements for $items, shared with every clone that keeps them. Passed
-     * through the constructor because cloneWith() reconstructs from properties;
-     * withItems() is the only thing that replaces it.
+     * Share measurements across clones; only replacing items invalidates them.
      */
     private RowIndex $rowIndex;
 
@@ -93,8 +88,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     }
 
     /**
-     * Unchecked where new() checks: a filterable list replaces these per
-     * keystroke, with items it was already handed.
+     * Skip validation for items already checked, since filtering replaces them on each keystroke.
      *
      * @param list<ListItem> $items
      */
@@ -135,9 +129,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     }
 
     /**
-     * Move the cursor and keep it visible on the next render, even when the
-     * cursor is driven from outside the focused-key path (e.g. a search box
-     * holds focus while arrow keys navigate this list).
+     * Keep externally moved cursors visible too, such as when a search field handles navigation.
      */
     public function withCursor(int $cursor): self
     {
@@ -197,10 +189,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     }
 
     /**
-     * The item a click lands on, or null past the last one.
-     *
-     * Items are as tall as their content, so a caller cannot divide by a row
-     * height: it has to ask.
+     * Item heights vary with content, so hit-testing cannot assume a fixed row height.
      */
     public function indexAt(MouseMsg $message, Rect $area): ?int
     {
@@ -224,16 +213,13 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         $theme = $context->theme;
         $displayOffset = $this->displayScrollOffset($area);
 
-        // Reserve the scrollbar column plus a gap, so item text never collides
-        // with the bar. Narrowing the items can only make them taller, so one
-        // pass to decide the gutter and one to measure at that width settles.
+        // Decide whether a scrollbar is needed, then measure at the narrower width; narrowing can only increase height.
         $itemWidth = $this->itemWidth($area);
         $extents = $this->extentsAt($itemWidth);
         $totalRows = $extents->totalHeight();
         $hasScrollbar = Scrollbar::needsScrollbar($totalRows, $area->height);
 
-        // Items are atomic: an offset landing inside one skips past it rather
-        // than clipping it, and the next item sits at the top of the viewport.
+        // Skip a partially visible item so the viewport starts with a whole item.
         $first = $extents->firstRowAtOrAfter($displayOffset);
         $renderY = $area->y;
 
@@ -267,10 +253,6 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         }
     }
 
-    /**
-     * Every row its items need. A caller that sizes a list to its content asks
-     * this; the viewport it is then given may still be shorter.
-     */
     public function measureHeight(int $width): int
     {
         return $width < 1 ? 0 : $this->extentsAt($width)->totalHeight();
@@ -313,10 +295,6 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
             : $full;
     }
 
-    /**
-     * Whether a scrollbar is needed. Its own total is never used — the items
-     * are measured again at the width that leaves room for the bar.
-     */
     private function overflowsAt(int $width, int $height): bool
     {
         $items = $this->items;
@@ -329,10 +307,6 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         return $this->extentsAt($this->itemWidth($area));
     }
 
-    /**
-     * Item heights at $width, measured once and reused by every clone that
-     * keeps the same items.
-     */
     private function extentsAt(int $width): RowExtents
     {
         $items = $this->items;
@@ -341,8 +315,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     }
 
     /**
-     * A highlight background may be light or dark, so a description on it has to
-     * follow the row's own pair rather than any fixed foreground.
+     * Derive description contrast from the highlighted row, whose background may be light or dark.
      */
     private function descriptionStyle(Theme $theme, Style $rowStyle, bool $isCursor): Style
     {
@@ -356,10 +329,6 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         );
     }
 
-    /**
-     * Selection shown while another widget holds focus: accented, bold text on
-     * the selection background, so it never blends into the surrounding rows.
-     */
     private static function unfocusedCursorStyle(Theme $theme): Style
     {
         $selected = $theme->selectedStyle;
@@ -435,16 +404,14 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     private function itemIndexAtY(int $localY, int $displayOffset, int $itemWidth): ?int
     {
         $extents = $this->extentsAt($itemWidth);
-        // Measured from where the first drawn item actually starts, so a click
-        // resolves against the view rather than the raw offset.
+        // Hit-test from the first drawn item's actual start, not the raw scroll offset.
         $first = $extents->firstRowAtOrAfter($displayOffset);
 
         return $extents->rowAtLine($extents->startOf($first) + $localY);
     }
 
     /**
-     * The landing item takes the edge the reader travels towards, so the fold it
-     * came from is a whole viewport behind and the next page moves as far again.
+     * Place the landing item at the destination edge so repeated page moves cover a full viewport.
      */
     private function pagedBy(int $direction, Rect $area): self
     {
@@ -461,8 +428,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     }
 
     /**
-     * Measured from the viewport, not from the cursor, so paging never passes
-     * over the items between the cursor and the fold without drawing them.
+     * Page from the viewport edge so items between the cursor and that edge are not skipped.
      */
     private function itemAPageAway(int $direction, Rect $area): int
     {
@@ -486,9 +452,6 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         return $this->cloneWith(scrollOffset: $this->cursorVisibleOffset($area), followCursor: true);
     }
 
-    /**
-     * The scroll offset actually shown: follows the cursor unless the reader scrolled away.
-     */
     private function displayScrollOffset(Rect $area): int
     {
         return $this->followCursor && $this->items !== []
@@ -496,10 +459,6 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
             : $this->clampedScrollOffset($area);
     }
 
-    /**
-     * An offset past either end would draw blank rows; a caller cannot overshoot
-     * into them.
-     */
     private function clampedScrollOffset(Rect $area): int
     {
         return ScrollWindow::clamped($this->scrollOffset, $this->extents($area)->maxOffset($area->height));

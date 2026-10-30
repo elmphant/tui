@@ -17,9 +17,6 @@ use Symfony\Component\HttpClient\Response\ResponseStream;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-/**
- * Making the request a command asked for, on the terms it asked for.
- */
 final class HttpRequestStarterTest extends TestCase
 {
     #[Test]

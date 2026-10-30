@@ -35,8 +35,7 @@ final class ShutdownRestorer
     }
 
     /**
-     * Test seam: replaces register_shutdown_function so hook registration is observable
-     * without an actual process shutdown.
+     * Inject shutdown registration so tests can observe it without exiting the process.
      *
      * @param Closure(Closure(): void): void|null $hookRegistrar
      */

@@ -13,10 +13,6 @@ use Elmphant\Tui\Widget\Table\Row;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Row is the only way to style a row, so a table that colours anything must use
- * typed rows — and the selection accessors have to work for those too.
- */
 final class TableSelectedRowTest extends TestCase
 {
     #[Test]
@@ -87,9 +83,7 @@ final class TableSelectedRowTest extends TestCase
      * @return list<Column>
      */
     /**
-     * A reader selects a record, not a row number, so a refresh that adds rows above
-     * their choice must not answer with whatever slid into its place. A record that
-     * has gone takes the selection with it.
+     * Preserve selection by record key after refresh; clear it when the record disappears.
      */
     #[Test]
     public function theSelectionStaysOnTheRecordItWasMadeOn(): void

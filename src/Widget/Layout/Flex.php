@@ -23,12 +23,8 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
 
 /**
- * Immutable, terminal-oriented flex layout.
- *
- * Items are packed on the main axis from an explicit basis, grow or shrink
- * within their bounds, and may wrap onto additional lines. Cross-axis lines
- * stretch to consume the supplied Rect so child widgets always remain bounded;
- * an item fills its line unless withCrossAlignment() says otherwise.
+ * Size items on the main axis from their basis and limits; wrap as needed.
+ * Cross-axis lines fill the area, and items fill their line unless cross alignment overrides it.
  */
 final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 {
@@ -261,8 +257,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             $policies[] = $this->policyFor($this->items[$itemIndex], $acrossExtent);
         }
 
-        // Terminal safety is stronger than a no-shrink preference: children must
-        // never receive Rects outside their container.
+        // Keep child rectangles inside the container even when shrinking is disabled.
         $resolved = Allocator::resolve($policies, $mainSize, new AxisSpecification(
             gap: $this->gap,
             justification: $this->justify,
@@ -277,10 +272,6 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         return $placements;
     }
 
-    /**
-     * A slot that declares no basis is asking for its content, so a column
-     * measures the child to find out how much that is.
-     */
     private function policyFor(FlexItem $item, ?int $acrossExtent): ItemPolicy
     {
         $policy = $item->constraint->policy();
@@ -392,7 +383,6 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
             return 0;
         }
         if ($widget instanceof MeasureHeight) {
-            // What the content wants, held to what the widget said it would take.
             $rows = $widget->sizing()->rows;
 
             return min(max($widget->measureHeight($width), $rows->min), $rows->max);

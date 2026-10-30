@@ -13,10 +13,6 @@ use Elmphant\Tui\Rendering\Context\PointerFloating;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 
-/**
- * A float that draws one marker character over a fixed rect, for tests that
- * need a pointer target without a real Dropdown.
- */
 final readonly class TestPopup implements PointerFloating
 {
     private FloatTarget $target;

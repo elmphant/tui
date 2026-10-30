@@ -12,9 +12,6 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Makes the request a command asked for. Throws where it cannot, so what a
- * failure to reach the network is worth saying stays with the caller.
- *
  * @internal
  */
 final class HttpRequestStarter
@@ -30,8 +27,7 @@ final class HttpRequestStarter
     {
         $client = $this->client ??= self::defaultClient();
 
-        // Read as it arrives unless the caller wants the whole body at once: a
-        // buffered response cannot report progress.
+        // Stream responses when progress is needed; buffered responses cannot report it.
         $options = $command->options;
         $options['buffer'] ??= false;
 
@@ -53,9 +49,7 @@ final class HttpRequestStarter
     }
 
     /**
-     * The package requires the client contracts — the interfaces — and not an
-     * implementation, so an application that never makes a request installs no
-     * HTTP client at all.
+     * Require only HTTP client contracts so apps without HTTP effects need no client implementation.
      */
     private static function defaultClient(): HttpClientInterface
     {

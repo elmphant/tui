@@ -11,9 +11,6 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Terminal\ColorProfile;
 
-/**
- * What a widget may ask while it draws.
- */
 final class RenderContext
 {
     public readonly Theme $theme;
@@ -32,9 +29,7 @@ final class RenderContext
     }
 
     /**
-     * A context to draw a tree with nobody at the keyboard — what a test of layout
-     * or wording wants. The plain constructor leaves the question unanswered, which
-     * is fine for one widget on its own but refused for a tree of components.
+     * Use explicitly empty focus for tree tests; the default constructor's undecided focus is only valid for standalone widgets.
      */
     public static function unfocused(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor): self
     {
@@ -50,19 +45,13 @@ final class RenderContext
     }
 
     /**
-     * Monotonic time of the frame being rendered, in seconds.
-     *
-     * Widgets derive animation phase from this instead of carrying
-     * message-driven animation state.
+     * Use the frame's monotonic time in seconds for animation, rather than storing animation state in the model.
      */
     public function now(): float
     {
         return $this->clock->now();
     }
 
-    /**
-     * Ask the runtime to render another frame within $delay seconds.
-     */
     public function requestRepaint(float $delay): void
     {
         $this->clock->requestRepaint($delay);
@@ -74,9 +63,7 @@ final class RenderContext
     }
 
     /**
-     * The keyboard is on this subtree as a whole, nothing within it having a name
-     * of its own. A container drawing under one shows its first focusable, or the
-     * reader is left with nothing lit.
+     * When the whole subtree has focus, show its first focusable child as focused.
      */
     public function keyboardIsLoose(): bool
     {
@@ -84,9 +71,6 @@ final class RenderContext
     }
 
     /**
-     * The keys whatever holds the keyboard answers, readable at any point in the
-     * tree rather than only after the focused widget has drawn.
-     *
      * @return array<string, string>
      */
     public function focusedHints(): array
@@ -95,25 +79,20 @@ final class RenderContext
     }
 
     /**
-     * Whether the app hands text to whatever holds the keyboard, asked with the
-     * app's global bindings; null when no app said, as for a widget drawn on its own.
+     * Whether the app treats keys as text here; null means no app supplied this information.
      */
     public function keyboardTakesText(): ?bool
     {
         return $this->focus->takesText();
     }
 
-    /**
-     * The chord the reader is halfway through, or null.
-     */
     public function pendingChord(): ?PendingChord
     {
         return $this->focus->chord();
     }
 
     /**
-     * Whether the keyboard is in the widget being rendered. A widget asks rather
-     * than remembers, so it cannot disagree with where the keys are routed.
+     * Read focus from the tree while rendering so the display agrees with input routing.
      */
     public function hasFocus(): bool
     {
@@ -132,8 +111,7 @@ final class RenderContext
     }
 
     /**
-     * Draw a container with the keyboard in its child $index: how a model that
-     * draws by hand, rather than through App, focuses a field inside a Panel.
+     * Focus a child when rendering manually, for example a field inside a Panel.
      *
      * @param Closure(): void $render
      */
@@ -143,9 +121,6 @@ final class RenderContext
     }
 
     /**
-     * Draw a part that must not show the focus its container holds — the list
-     * beside the field, the pane that is not the active one.
-     *
      * @param Closure(): void $render
      */
     public function withoutFocus(Closure $render): void
@@ -154,8 +129,6 @@ final class RenderContext
     }
 
     /**
-     * Opened by Component around the subtree it binds.
-     *
      * @param Closure(): void $render
      */
     public function withinComponent(ComponentId $id, Closure $render): void
@@ -164,8 +137,6 @@ final class RenderContext
     }
 
     /**
-     * Draw what a mount holds: its components are known under its name.
-     *
      * @param Closure(): void $render
      */
     public function withinMount(ComponentId $id, Closure $render): void
@@ -174,9 +145,7 @@ final class RenderContext
     }
 
     /**
-     * Draw one child of a container that publishes its children as stops of their
-     * own. The keyboard reaches at most one of them, and what is left of the path
-     * says which.
+     * Use the remaining focus path to draw at most one child as focused.
      *
      * @param Closure(): void $render
      */
@@ -200,9 +169,7 @@ final class RenderContext
     }
 
     /**
-     * Positioned children only when geometry was already resolved; never invokes
-     * the container's own layout, so a large viewport-aware container can skip
-     * positioning off-screen children during a render-only pass.
+     * Reuse resolved placements without laying out the container again, allowing off-screen children to stay unmeasured.
      *
      * @return list<array{object, Rect}>|null
      */

@@ -27,9 +27,7 @@ final class NewMessageTypesTest extends TestCase
     }
 
     /**
-     * A paste is bytes off the wire in whatever encoding the source had. One that
-     * cannot be a character makes every UTF-8-aware call on the whole paste answer
-     * nothing — a field reading it would drop the paste entire, not the byte.
+     * One malformed paste byte must not cause UTF-8 operations to discard the whole paste.
      */
     #[Test]
     public function aPasteKeepsOnlyTheBytesThatFormCharacters(): void

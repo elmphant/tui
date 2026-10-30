@@ -26,9 +26,7 @@ final readonly class TickerRecord
     }
 
     /**
-     * Counted from the deadline, not from when the loop got round to it, or every late
-     * tick would push the next one out and a clock would run slow for ever. A stall
-     * longer than the interval skips the periods nobody saw instead of replaying them.
+     * Schedule from the previous deadline to avoid cumulative drift; skip missed intervals after a stall.
      */
     public function rescheduled(float $now): self
     {

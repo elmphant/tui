@@ -22,9 +22,7 @@ trait Cloneable
     }
 
     /**
-     * get_object_vars() would run in the scope of the class that uses this trait,
-     * hiding properties a subclass declares private; the array cast sees them all,
-     * mangled as "\0Class\0name".
+     * Cast to an array to include subclass-private properties, which get_object_vars() cannot see from the trait's scope.
      *
      * @return array<string, mixed>
      */
@@ -40,9 +38,7 @@ trait Cloneable
     }
 
     /**
-     * `new static` rather than reflection: most consumers keep a private
-     * constructor behind static factories, which only same-scope construction
-     * can reach.
+     * Use new static to reach private constructors from the same class scope.
      *
      * @param array<string, mixed> $fields
      */

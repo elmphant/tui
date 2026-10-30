@@ -26,9 +26,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Two controls may reach the same field — a list and the button that jumps it
- * back to the end. A press on one of them must not have the other's untouched
- * widget written back over what it just did.
+ * Two controls can update the same field; writing back an untouched sibling must not undo the clicked control's change.
  */
 final class ComponentWriteBackTest extends TestCase
 {
@@ -75,9 +73,6 @@ final readonly class SharedTallyApp extends App
     }
 }
 
-/**
- * Holds the tally and answers nothing: whatever it is handed, it keeps its place.
- */
 final readonly class TallyKeeper implements Focusable
 {
     use Cloneable;

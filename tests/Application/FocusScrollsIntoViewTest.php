@@ -17,9 +17,6 @@ use PHPUnit\Framework\TestCase;
 
 final class FocusScrollsIntoViewTest extends TestCase
 {
-    /**
-     * Tabbing to a field below the fold is useless if the reader cannot see it.
-     */
     #[Test]
     public function aFieldTabbedToBelowTheFoldIsScrolledIntoView(): void
     {

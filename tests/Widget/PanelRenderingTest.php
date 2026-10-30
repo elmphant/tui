@@ -178,7 +178,6 @@ final class PanelRenderingTest extends TestCase
 
         $area = new Rect(0, 0, 30, 15);
 
-        // Render focused
         $buffer1 = new Frame(30, 15);
         $panel->render($buffer1, $area, RenderContext::focused(Theme::dark()));
 
@@ -197,7 +196,6 @@ final class PanelRenderingTest extends TestCase
             self::assertSame('│', $buffer1->characters[$row * 30 + 29], "focused: right border at row {$row}");
         }
 
-        // Unfocused uses rounded border
         self::assertSame('╭', $buffer2->characters[0], 'unfocused: top-left corner');
         self::assertSame('╮', $buffer2->characters[29], 'unfocused: top-right corner');
         self::assertSame('╰', $buffer2->characters[14 * 30], 'unfocused: bottom-left corner');

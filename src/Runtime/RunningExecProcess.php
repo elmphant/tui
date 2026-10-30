@@ -60,8 +60,7 @@ final class RunningExecProcess implements RunningProcess
                 return [];
             }
 
-            // isRunning() reads the pipes into Symfony's own buffer, so a flush the
-            // child made between the read above and this check is only visible now.
+            // isRunning() also reads pipes, so it may have buffered output after the read above.
             $this->collectOutput();
         } catch (Throwable $error) {
             $this->finished = true;

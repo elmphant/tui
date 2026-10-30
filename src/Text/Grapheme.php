@@ -10,9 +10,7 @@ namespace Elmphant\Tui\Text;
 final class Grapheme
 {
     /**
-     * Bytes in the UTF-8 sequence a lead byte opens, 1 for anything that opens
-     * none — a single-byte character, a stray continuation byte, or an invalid
-     * lead byte, all of which advance a scanner by one.
+     * Return UTF-8 sequence length from the lead byte, or 1 for ASCII and invalid lead bytes so scanning can advance.
      */
     public static function sequenceLength(int $byte): int
     {
@@ -25,8 +23,7 @@ final class Grapheme
     }
 
     /**
-     * Bytes in the malformed sequence at $offset: the longest start of a
-     * character that never completes, as Unicode counts one U+FFFD.
+     * Consume the malformed prefix that Unicode replaces with one U+FFFD.
      */
     public static function malformedLength(string $string, int $offset): int
     {
@@ -55,10 +52,6 @@ final class Grapheme
         return $expected;
     }
 
-    /**
-     * The leading cluster, for callers that must advance past one without
-     * splitting everything behind it.
-     */
     public static function first(string $string): string
     {
         return self::split($string)[0] ?? '';
@@ -69,10 +62,7 @@ final class Grapheme
      */
     public static function split(string $string): array
     {
-        // \X matches one extended grapheme cluster, so PCRE segments the whole
-        // string in a single call — but /u makes it fail outright on malformed
-        // UTF-8, which is what the walk below is for: it segments each valid run
-        // and keeps every malformed sequence as a cluster of its own.
+        // Use one PCRE call for valid UTF-8; otherwise segment valid runs and keep malformed sequences as separate clusters.
         if (preg_match_all('/\X/u', $string, $matches) !== false) {
             return $matches[0];
         }

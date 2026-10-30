@@ -10,36 +10,24 @@ use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
 
 /**
- * What a Dropdown can hold: focus to receive keys, a caption for the closed row,
- * a size to draw the popup at, and pointer addressing to resolve a click against
- * the frame the reader saw.
- *
- * Committing is not part of this: content without it is multiple choice.
+ * Dropdown content supplies focus, caption, size and click lookup against the drawn frame.
+ * Content without Committing supports multiple choice.
  */
 interface DropdownContent extends Focusable, HoldsAValue
 {
-    /**
-     * What the widget reads as when it is collapsed behind the trigger row.
-     */
     public function caption(): string;
 
-    /**
-     * Whether that caption names something chosen rather than standing in for a
-     * choice not yet made.
-     */
     public function hasChoice(): bool;
 
     /**
-     * How wide the widget would be with nothing constraining it. Not its Sizing:
-     * a stack gives a scrolling widget a share of the room, a float all of it.
+     * Use unconstrained content width for popups, rather than the space-sharing rules in Sizing.
      */
     public function popupWidth(): int;
 
     public function popupHeight(int $width): int;
 
     /**
-     * Asked of the popup as it was drawn; the answer is the option's own name,
-     * never its row, so it still addresses the same option in current state.
+     * Resolve the drawn option to its stable value, so it still identifies the same option after rows move.
      */
     public function optionAt(MouseMsg $message, Rect $area): ?string;
 

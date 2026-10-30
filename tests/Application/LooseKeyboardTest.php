@@ -23,8 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A stop that publishes no children of its own holds the keyboard for everything
- * it draws, so a pane it builds inside itself shows the reader where they are.
+ * A single focus stop owns focus for its whole subtree, including containers it creates during rendering.
  */
 final class LooseKeyboardTest extends TestCase
 {
@@ -53,10 +52,6 @@ final readonly class InlinePaneApp extends App
     }
 }
 
-/**
- * Shaped like a host's own pane: one stop that draws a Panel of its own rather
- * than publishing what it holds.
- */
 final readonly class InlinePane implements Focusable, WidgetContainer
 {
     public function __construct(private TextInput $field, private bool $focused = false)

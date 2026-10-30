@@ -17,8 +17,7 @@ final class Frame
     private readonly Rect $area;
 
     /**
-     * Public for direct array access in the rendering hot loop (Screen, widgets).
-     * Kept public intentionally — PHP method-call overhead per cell is too costly at 60 fps.
+     * Direct array access avoids a method call per cell in rendering loops.
      *
      * @internal
      *
@@ -107,11 +106,7 @@ final class Frame
     }
 
     /**
-     * The area writes can currently land in.
-     *
-     * A widget taller than its viewport reads this to skip the rows that would
-     * be discarded anyway: a 300-line table costs 300 writes per frame to draw
-     * the 20 that show.
+     * Read the clip to skip off-screen rows instead of writing cells that will be discarded.
      */
     public function clip(): Rect
     {
@@ -119,12 +114,7 @@ final class Frame
     }
 
     /**
-     * Narrow the drawable area.
-     *
-     * Intersected with the clip already in force: a nested clip can only ever
-     * shrink what is visible. Without that, a scroll container's child pushing
-     * its own content-sized area would widen the clip back out and undo the
-     * container's clipping.
+     * Intersect with the existing clip so nested children cannot undo their parent's clipping.
      */
     public function pushClip(Rect $clip): void
     {
@@ -151,9 +141,6 @@ final class Frame
         }
     }
 
-    /**
-     * Write plain text. Returns columns consumed.
-     */
     public function putString(int $x, int $y, string $text, int $foreground = 0, int $background = 0, int $attributes = 0): int
     {
         if ($y < 0 || $y >= $this->height) {
@@ -188,10 +175,7 @@ final class Frame
     }
 
     /**
-     * Draw a styled line, each span over $base, and return the width drawn.
-     *
-     * Spans carrying a StyleToken must be resolved first — `Line::withResolvedTokens()`
-     * — because a frame has no theme to resolve them against.
+     * Resolve StyleTokens with Line::withResolvedTokens() first; a Frame has no theme.
      */
     public function putLine(int $x, int $y, Line $line, Style $base = new Style(), ?int $maxWidth = null): int
     {
@@ -459,8 +443,6 @@ final class Frame
     }
 
     /**
-     * Mark a row changed after direct hot-loop array writes.
-     *
      * @internal prefer putChar(), putString(), or fillRect() outside renderers
      */
     public function markRowDirty(int $row): void
@@ -507,10 +489,8 @@ final class Frame
     }
 
     /**
-     * Overwriting cells [startColumn, endColumn) may cut an existing wide character in half:
-     * an orphaned lead renders over the new cells, an orphaned continuation ('') makes
-     * Screen's run collector shift the rest of the row left. Style is kept, only character
-     * and width become blank.
+     * Clear both halves of any wide character cut by the write; preserve their styles.
+     * An orphaned lead would overdraw new cells, and an orphaned continuation would shift the row.
      */
     private function repairOverwriteEdges(int $rowBase, int $startColumn, int $endColumn): void
     {
@@ -558,9 +538,7 @@ final class Frame
     }
 
     /**
-     * Whether the cell took the character. A wide one needs its second column
-     * too: a lead without its continuation makes Screen's diff draw the glyph
-     * past the clip while the buffer still shows the old cell there.
+     * A wide character needs both columns inside the clip, or the terminal and buffer would disagree.
      */
     private function placeGrapheme(int $column, int $y, string $character, int $characterWidth, int $foreground, int $background, int $attributes): bool
     {

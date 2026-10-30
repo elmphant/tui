@@ -10,9 +10,6 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 final class PlacedChildren
 {
     /**
-     * The children where the resolved plan put them, else where the container
-     * lays them out itself.
-     *
      * @return iterable<array{Widget, Rect}>
      */
     public static function of(WidgetContainer $container, Rect $area, RenderContext $context): iterable

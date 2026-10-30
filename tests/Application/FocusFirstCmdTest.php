@@ -18,10 +18,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * An app that has just swapped out what is on the screen has nowhere in
- * particular to put the keyboard, only somewhere: the start of what is there now.
- */
 final class FocusFirstCmdTest extends TestCase
 {
     #[Test]

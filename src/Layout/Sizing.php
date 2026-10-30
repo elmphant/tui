@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
-/**
- * How much room a widget wants, named per axis so no caller has to decide
- * which one it asked about.
- */
 final readonly class Sizing
 {
     private function __construct(

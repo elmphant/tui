@@ -8,17 +8,8 @@ use Closure;
 use Elmphant\Tui\Support\KeyedCache;
 
 /**
- * Row measurements for one collection, kept per layout key.
- *
- * This class is intentionally MUTABLE — it is a derived-value cache, not model
- * state, the same category as a process handle. An immutable widget builds one
- * when its rows change and hands the same instance to every clone that keeps
- * those rows, so moving a cursor or taking focus reuses the measurements
- * instead of recomputing them. Owner-keyed caching cannot do that: under the
- * immutable-widget contract every keystroke produces a new owner.
- *
- * The key is whatever the rows were measured against — a width for a list, the
- * column widths for a table.
+ * Mutable measurements shared by clones with the same rows; a new owner per keystroke would defeat owner-based caching.
+ * Keys describe the measurement layout, such as list width or table column widths.
  *
  * @internal
  */
@@ -59,9 +50,7 @@ final class RowIndex
     }
 
     /**
-     * Whether the rows are taller than $height, stopping at the row that
-     * settles it rather than measuring the whole collection for a total the
-     * caller does not want.
+     * Stop measuring as soon as the rows exceed $height.
      *
      * @param Closure(int): int $heightOf
      */

@@ -37,10 +37,7 @@ final readonly class PasteMsg implements Message
     }
 
     /**
-     * A paste arrives as bytes in whatever encoding its source had, and one byte
-     * that cannot be a character is enough to make every UTF-8-aware call on the
-     * whole paste answer nothing — a field reading it would lose the paste
-     * entire rather than the byte.
+     * Remove malformed bytes so one invalid sequence cannot cause UTF-8 operations to reject the whole paste.
      */
     private static function textOnly(string $content): string
     {

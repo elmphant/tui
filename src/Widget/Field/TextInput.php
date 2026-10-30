@@ -133,32 +133,23 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
     }
 
     /**
-     * Choose the caret: a block by default, since a bar is easy to miss.
+     * Default to a block caret for visibility.
      */
     public function withCursorShape(CursorShape $shape): self
     {
         return $this->cloneWith(cursorShape: $shape);
     }
 
-    /**
-     * Choose how the field shows its bounds: underlined, filled, or unmarked.
-     */
     public function withDecoration(InputDecoration $decoration): self
     {
         return $this->cloneWith(decoration: $decoration);
     }
 
-    /**
-     * Draw the theme's input background across the field instead of underlining it.
-     */
     public function withStyled(bool $styled = true): self
     {
         return $this->cloneWith(decoration: $styled ? InputDecoration::Filled : InputDecoration::None);
     }
 
-    /**
-     * At most this many columns wide, however much room it is given.
-     */
     public function withWidth(?int $columns): self
     {
         return $this->cloneWith(width: $columns);
@@ -196,8 +187,7 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
 
         $showPlaceholder = $textLength === 0 && $this->placeholder !== '';
 
-        // Terminals colour the underline from the text, so the whole field —
-        // empty tail included — has to carry one style.
+        // Use one text style across the field, including its empty tail, to keep the underline uniform.
         $fieldStyle = $this->fieldStyle($context, $showPlaceholder);
         $fieldStyle->apply($frame, new Rect($area->x, $area->y, $availableWidth, 1));
 
@@ -399,8 +389,7 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
 
     private function pasted(string $content): ?self
     {
-        // One line, so a break or a tab from the clipboard becomes a space rather than
-        // a control character drawn as a hole and submitted as part of the answer.
+        // Replace pasted line breaks and tabs with spaces because this is a single-line field.
         $content = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $content) ?? '';
 
         if ($this->charLimit > 0) {

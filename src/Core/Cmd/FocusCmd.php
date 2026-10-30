@@ -9,10 +9,6 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusMove;
 use Elmphant\Tui\Core\FocusState;
 
-/**
- * Moving the keyboard is a change to the tree, not to the model, so it travels
- * as an effect like any other.
- */
 final readonly class FocusCmd extends Cmd
 {
     public function __construct(
@@ -43,9 +39,7 @@ final readonly class FocusCmd extends Cmd
     {
         return match ($this->move) {
             FocusMove::To => $reachable === null || $this->isOnScreen([...$focusables, ...$reachable]) ? $focus->movedTo($this->target) : null,
-            // Undecided rather than the first id outright: a tree that has just
-            // changed may not have grown its components yet, and undecided is
-            // what settles on the first once it has.
+            // Leave focus undecided until the new tree has components to focus.
             FocusMove::First => $focus->movedTo($focusables[0] ?? null),
             FocusMove::Nowhere => FocusState::nowhere(),
             FocusMove::Next => $focus->next($focusables),

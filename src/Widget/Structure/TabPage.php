@@ -27,17 +27,13 @@ final readonly class TabPage
     }
 
     /**
-     * What the selection follows across TabBar::withTabs(), for a label that
-     * changes while the page stays the same: `Work (1)` becoming `Work (2)`.
+     * Use a stable key to preserve the active page when its label changes, such as `Work (1)` to `Work (2)`.
      */
     public function withKey(?string $key): self
     {
         return $this->cloneWith(key: $key);
     }
 
-    /**
-     * The key given, else the label.
-     */
     public function key(): string
     {
         return $this->key ?? $this->label;

@@ -34,9 +34,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A pane whose state its host still drives can take its turn at the keyboard
- * without handing that state over: joining the tree is about identity, not about
- * who writes the widget back.
+ * Named panes participate in tree focus while their host retains state and input handling.
  */
 final class NamedFocusableTest extends TestCase
 {
@@ -53,20 +51,12 @@ final class NamedFocusableTest extends TestCase
         self::assertSame('F', $frame->character(6), 'the named pane is the one the tree focused');
     }
 
-    /**
-     * Naming a pane is what says the keyboard may go there. A pane its host draws and
-     * drives has no flag of its own to report, and needs none.
-     */
     #[Test]
     public function aNamedPaneIsSomewhereTheKeyboardCanGo(): void
     {
         self::assertEquals([ComponentId::named('pane')], (new NamedPlainPaneApp())->focusableIds());
     }
 
-    /**
-     * A pane its host draws has no update() to be handed a key, so the host answers
-     * while it holds the keyboard.
-     */
     #[Test]
     public function theHostAnswersTheKeysWhileAPlainPaneHoldsTheKeyboard(): void
     {
@@ -111,8 +101,7 @@ final class NamedFocusableTest extends TestCase
     }
 
     /**
-     * Tab offers the focused component the press first, in case it walks parts of its
-     * own. A pane its host draws has nothing to offer it to, so the keyboard moves on.
+     * Named host-managed panes have no widget update() to consume Tab, so focus must move on.
      */
     #[Test]
     public function tabOnAPlainPaneMovesTheKeyboardOn(): void

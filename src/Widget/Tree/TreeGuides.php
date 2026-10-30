@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Tree;
 
 /**
- * The characters a tree draws its branches with, chosen the way a border style
- * is: whether a branch is the last of its siblings is the only thing that
- * changes them.
+ * Choose branch glyphs by style and whether the node is its parent's last child.
  */
 enum TreeGuides
 {
@@ -26,9 +24,6 @@ enum TreeGuides
         };
     }
 
-    /**
-     * What a deeper level draws in the columns this branch occupies.
-     */
     public function trunk(bool $isLastChild): string
     {
         return $isLastChild ? '  ' : '│ ';

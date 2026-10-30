@@ -12,9 +12,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A host holds what was chosen, not where it sat. Left to set a choice by number it
- * has to search the options for the value first — the same search the widget already
- * does to keep a choice across a reload.
+ * Select by value so hosts do not have to duplicate the widget's lookup after sorting or reloads.
  */
 final class OptionValueSettersTest extends TestCase
 {

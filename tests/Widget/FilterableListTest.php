@@ -33,9 +33,6 @@ final class FilterableListTest extends TestCase
     private const WIDTH = 40;
     private const HEIGHT = 10;
 
-    /**
-     * The bar, a blank row, then the first item's title.
-     */
     private const FIRST_ITEM_ROW = 2;
 
     #[Test]
@@ -598,8 +595,7 @@ final class FilterableListTest extends TestCase
     }
 
     /**
-     * What a caller reading rows out of JSON or a config file hands in: the
-     * signature says ListItem, the value never was one.
+     * Reject invalid items supplied by loosely typed sources such as JSON or config files.
      *
      * @return list<ListItem>
      */

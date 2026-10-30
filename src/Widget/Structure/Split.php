@@ -35,11 +35,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
 
 /**
- * Children side by side, divided where the host says.
- *
- * The division lives in the SplitState handed in, so a host can save it
- * and hand it back. Children are reached through WidgetContainer, so bound
- * components inside them stay visible to layout and routing.
+ * Keep divider positions in host-owned SplitState; expose children through WidgetContainer for layout and routing.
  */
 final readonly class Split implements Widget, WidgetContainer, Interactive, KeybindingsAware
 {
@@ -69,9 +65,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         }
     }
 
-    /**
-     * The pane a host routing keys by hand sends them to.
-     */
     public function withMarkedPane(?int $pane): self
     {
         return $this->cloneWith(markedPane: $pane);
@@ -92,9 +85,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         return new self($state, array_values($children), Direction::Vertical);
     }
 
-    /**
-     * How far a drag may squeeze each pane.
-     */
     public function withMinimums(int ...$minimums): self
     {
         return $this->cloneWith(minimums: array_values($minimums));
@@ -124,8 +114,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
                     return new UpdateResult($this->with($this->state->withDragging($divider)));
                 }
 
-                // A press is a fresh grip, so whatever was held has been let go of —
-                // the release saying so may have gone to a layer over this one.
+                // A new press clears any previous drag; an overlaid input layer may have consumed its release.
                 $letGo = $this->state->dragging === null
                     ? $this
                     : $this->with($this->state->withDragging(null));
@@ -145,9 +134,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         return $this->toPanes($message, $area);
     }
 
-    /**
-     * The divider under the pointer, or null.
-     */
     public function dividerAt(MouseMsg $message, Rect $area): ?int
     {
         if (!$message->inRect($area)) {
@@ -224,8 +210,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
     }
 
     /**
-     * Typing has one destination. Nothing here cycles focus, so the pane the host
-     * marked is the answer, and none means nobody has said yet.
+     * Send keys only to the host-marked pane; Split does not cycle focus itself.
      *
      * @return UpdateResult<static>
      */
@@ -276,9 +261,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         );
     }
 
-    /**
-     * A drag moves one boundary; every pane outside the pair keeps its share.
-     */
     private function dragged(MouseMsg $message, Rect $area): SplitState
     {
         $divider = $this->state->dragging;
@@ -300,8 +282,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
     }
 
     /**
-     * Floors lifted after the sharing out can overrun the axis, so the overrun is
-     * taken back from whichever panes sit above their floor, foremost first.
+     * If minimum sizes cause overflow, take space back from panes above their minimum, starting at the front.
      *
      * @param list<int> $sizes
      * @param list<int> $floors
@@ -335,9 +316,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         return $minimums;
     }
 
-    /**
-     * The line between two panes, in the accent colour while it is dragged.
-     */
     private function renderDivider(Frame $frame, Rect $area, Rect $pane, int $divider, RenderContext $context): void
     {
         $style = $this->state->dragging === $divider ? $context->theme->accent : $context->theme->borderStyle;

@@ -17,7 +17,7 @@ final readonly class Color
     private const CUBE_LEVELS = [0, 95, 135, 175, 215, 255];
 
     /**
-     * The WCAG luminance where black text stops out-contrasting white.
+     * Luminance threshold where black text has more contrast than white.
      */
     private const CONTRAST_CROSSOVER = 0.179;
 
@@ -33,7 +33,7 @@ final readonly class Color
     private const BRIGHT_OFFSET = 8;
 
     /**
-     * Grey of each colourless entry, in palette order so a tie falls to the lower index.
+     * Keep greys in palette order so ties choose the lower index.
      */
     private const ANSI16_NEUTRALS = [0 => 0, 7 => 229, 8 => 127, 15 => 255];
 
@@ -134,13 +134,12 @@ final readonly class Color
             ColorProfile::Ansi => $this->value >= self::C256
                 ? self::ansi(self::rgbTo16(...$this->channels()))
                 : $this,
-            ColorProfile::Ascii => self::none(), // value 0 also lands here: none() === default, so no guard needed
+            ColorProfile::Ascii => self::none(),
         };
     }
 
     /**
-     * Black or white, whichever reads better on this colour — and the terminal
-     * default on the default, whose luminance is unknowable.
+     * Choose black or white by contrast; preserve terminal-default text when the background colour is unknown.
      */
     public function contrastingText(): self
     {
@@ -152,9 +151,7 @@ final readonly class Color
     }
 
     /**
-     * Mixes towards another colour, where 0 is this one and 1 is the other. The
-     * terminal default has no channels to mix, so a blend involving it is left
-     * alone rather than guessed at.
+     * Mix from this colour (0) to the other (1); leave terminal-default colours unchanged because their channels are unknown.
      */
     public function blend(self $other, float $amount): self
     {
@@ -200,10 +197,7 @@ final readonly class Color
     }
 
     /**
-     * This colour lifted away from a background until it reaches the ratio, and
-     * no further, so it keeps as much of its hue as the background allows. 4.5
-     * is the threshold for body text, 3 for text meant to stay quieter. Where
-     * even black or white falls short, that extreme is what comes back.
+     * Adjust toward black or white until the requested contrast is reached, or return that extreme if it cannot be reached.
      */
     public function readableOn(self $background, float $minimumRatio = 4.5): self
     {
@@ -214,8 +208,7 @@ final readonly class Color
         $extreme = $background->contrastingText();
         $backgroundLuminance = $background->relativeLuminance();
 
-        // Blending toward the extreme moves luminance one way, so contrast falls
-        // and then rises: past the first step that reaches the ratio, every step does.
+        // Contrast increases monotonically after the minimum, so every step beyond the first match also meets the ratio.
         $low = 1;
         $high = self::READABILITY_STEPS;
         while ($low < $high) {
@@ -233,9 +226,7 @@ final readonly class Color
     }
 
     /**
-     * WCAG contrast, 1 for two colours that cannot be told apart through 21 for
-     * black on white. The terminal default has no luminance, so a ratio against
-     * it claims nothing.
+     * WCAG contrast ranges from 1 to 21; the terminal default has unknown luminance.
      */
     public function contrastRatio(self $other): float
     {
@@ -246,10 +237,6 @@ final readonly class Color
         return self::ratioOf($this->relativeLuminance(), $other->relativeLuminance());
     }
 
-    /**
-     * WCAG relative luminance, 0 for black through 1 for white — the basis of
-     * every contrast ratio.
-     */
     public function relativeLuminance(): float
     {
         [$red, $green, $blue] = $this->channels();
@@ -315,9 +302,7 @@ final readonly class Color
     }
 
     /**
-     * Hue first, brightness second, never nearest neighbour: sixteen colours hold
-     * no pastels, so #FF6B6B sits nearer the mid grey (17184) than bright red
-     * (22898). Matching by distance turns every soft colour grey.
+     * Match hue before brightness; nearest RGB distance would turn soft colours grey in a 16-colour palette.
      */
     private static function rgbTo16(int $red, int $green, int $blue): int
     {

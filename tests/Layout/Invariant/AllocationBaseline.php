@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout\Invariant;
 
 /**
- * What each allocator returns for every sweep case at the commit this was
- * generated. Regenerate deliberately, and read the diff: it is the record of
- * what a change to an allocator did.
+ * Recorded allocator results for each sweep case; regenerate deliberately and review any behavior changes.
  */
 final class AllocationBaseline
 {

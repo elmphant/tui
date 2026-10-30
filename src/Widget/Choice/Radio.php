@@ -70,8 +70,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
             return $this;
         }
 
-        // A radio always stands on something, so an option that has gone hands the
-        // choice to the first rather than to none.
+        // Keep a radio selection when its option disappears by selecting the first remaining option.
         return $this->cloneWith(
             options: $options,
             selected: Options::placeOf($this->selectedValue(), $options) ?? 0,
@@ -85,8 +84,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     }
 
     /**
-     * A host holds what was chosen, not where it sat. A radio always stands on
-     * something, so a value it does not have leaves it on the first.
+     * Select by value; an unknown value falls back to the first option.
      */
     public function withSelectedValue(?string $value): self
     {
@@ -136,8 +134,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     }
 
     /**
-     * A radio rests on its first option from the start, so the empty caption
-     * only ever shows for a radio with nothing to offer.
+     * The empty caption appears only when there are no options, since a radio selects the first option by default.
      */
     public function caption(): string
     {
@@ -160,8 +157,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     }
 
     /**
-     * An empty list still binds enter to SELECT, so the binding alone would
-     * close a popup over nothing.
+     * A SELECT binding alone is not a commit: an empty list must not close its popup.
      */
     public function sizing(): Sizing
     {

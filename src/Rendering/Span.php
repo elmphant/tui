@@ -87,7 +87,7 @@ final readonly class Span
     }
 
     /**
-     * This span drawn inside a panel. A token carries no ink, so resolve first.
+     * Resolve style tokens before applying the panel background.
      */
     public function readableOn(Style $panel, float $minimumRatio = 4.5): self
     {

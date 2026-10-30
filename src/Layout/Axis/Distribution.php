@@ -5,19 +5,17 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout\Axis;
 
 /**
- * What the weights divide.
- *
  * @internal
  */
 enum Distribution
 {
     /**
-     * Floors come off the top, weights divide the rest.
+     * Reserve minimums before dividing the remaining space by weight.
      */
     case AfterReservingFloors;
 
     /**
-     * Weights divide everything, floors only raise a slot that came out short.
+     * Divide all space by weight, then raise slots below their minimums.
      */
     case AcrossTheWholeAxis;
 }

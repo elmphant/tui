@@ -17,9 +17,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A widget asks its host for something by sending a message, which the runtime
- * puts back through update. A harness that dropped it would let a test pass on
- * a path the real loop never takes.
+ * Deliver self-messages through update() so the harness follows the same path as the runtime.
  */
 final class HarnessDeliversAMessageAModelSentTest extends TestCase
 {

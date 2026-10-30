@@ -53,8 +53,7 @@ final class ProgramTracingTest extends TestCase
     }
 
     /**
-     * The trace is what answers "that key does nothing", so it has to name every
-     * modifier that was held — a binding is matched on all of them.
+     * Include every modifier so traces can explain why a key did or did not match a binding.
      */
     #[Test]
     public function aTracedKeyIsNamedWithEveryModifierThatWasHeld(): void
@@ -184,9 +183,7 @@ final class ProgramTracingTest extends TestCase
     }
 
     /**
-     * Drives exactly one loop iteration with a message already queued and the
-     * frame budget already elapsed, so update, effect and render all happen
-     * without depending on wall-clock timers firing in the right order.
+     * Force one iteration with a queued message and elapsed frame budget to avoid timing-dependent update and render checks.
      */
     private function tickOnce(InMemoryTracer $tracer): void
     {
@@ -233,10 +230,6 @@ final class ProgramTracingTest extends TestCase
             ->start();
     }
 
-    /**
-     * Changes on every message and asks for an effect, so one iteration leaves
-     * an update, a command and a dirty frame behind.
-     */
     private function tracedModel(): Model
     {
         return new class(0) implements Model {
@@ -261,10 +254,6 @@ final class ProgramTracingTest extends TestCase
         };
     }
 
-    /**
-     * Handles one real message, then quits from a timer so the loop completes an
-     * iteration before stopping.
-     */
     private function quittingOnQ(): Model
     {
         return new class implements Model {

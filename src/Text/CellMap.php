@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Text;
 
 /**
- * A text laid out one byte per terminal cell, so it wraps at any width by
- * looking only where a row can break.
- *
- * Splitting into graphemes and measuring them is the expensive part and does
- * not depend on the width, so a map is kept by content and serves every width.
+ * Cache grapheme measurements by content; wrapping at a new width then only needs to find row breaks.
  *
  * @internal
  */
@@ -71,9 +67,6 @@ final class CellMap
         return $map;
     }
 
-    /**
-     * How many texts were split into graphemes since the last clear.
-     */
     public static function measures(): int
     {
         return self::$measures;
@@ -92,9 +85,8 @@ final class CellMap
     }
 
     /**
-     * Rows no wider than $maxWidth, as byte offset and length, breaking at the
-     * last space that fits and dropping it. A wide grapheme that opens a row
-     * of one cell gets the row to itself.
+     * Return byte offsets and lengths, dropping the space used for each break.
+     * A wide grapheme in a one-cell row occupies that row alone.
      *
      * @return list<array{int, int}>
      */

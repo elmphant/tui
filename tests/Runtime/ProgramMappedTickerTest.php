@@ -29,7 +29,7 @@ final class ProgramMappedTickerTest extends TestCase
         Program::new(new MappedTickingModel())->withTerminal($terminal)->start();
         EventLoop::cancel($typist);
 
-        // One 50 ms ticker beats about ten times in half a second; a ticker added per beat doubles them every beat.
+        // Re-registering a 50 ms ticker must replace it; adding another on every tick would multiply events.
         self::assertLessThan(20, MappedTickingModel::$beats);
     }
 

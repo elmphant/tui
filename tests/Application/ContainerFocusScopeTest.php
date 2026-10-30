@@ -23,10 +23,6 @@ use PHPUnit\Framework\TestCase;
 
 final class ContainerFocusScopeTest extends TestCase
 {
-    /**
-     * A container owns the focus for its whole subtree, but only one part of it
-     * shows a caret — the field, not the list beside it.
-     */
     #[Test]
     public function aContainerCanWithholdFocusFromOneOfItsParts(): void
     {

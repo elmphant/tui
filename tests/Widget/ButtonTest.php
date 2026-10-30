@@ -427,8 +427,7 @@ final class ButtonTest extends TestCase
     }
 
     /**
-     * Disabled between the press and the release, it never sees the release — so it
-     * has to let go, or it fires on the next bare one as though it had been pushed.
+     * Disabling a pressed button must clear its state, since it may never receive the release.
      */
     #[Test]
     public function aReleaseWithNoPressBehindItStartsNothing(): void

@@ -18,11 +18,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Chrome a reader steps into — a filter row, a toolbar — should not be strung
- * between the panes they read in. Inside it, tab walks its own controls; the way
- * out is a key that says so.
- */
 final class FocusScopeRingTest extends TestCase
 {
     #[Test]
@@ -69,9 +64,7 @@ final class FocusScopeRingTest extends TestCase
     }
 
     /**
-     * Taking the scopes off the ring assumes there is content beside the chrome. A
-     * tree that is all scope has none, and an empty ring leaves the keyboard nowhere
-     * to land.
+     * If the whole tree is a focus scope, its stops must remain reachable rather than leaving the tab order empty.
      */
     #[Test]
     public function aTreeThatIsNothingButAScopeStillOffersItsControls(): void

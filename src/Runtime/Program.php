@@ -69,8 +69,7 @@ final class Program
     private const MAX_CONSECUTIVE_ERRORS = 10;
 
     /**
-     * A count alone is not enough: one slow update times a thousand queued
-     * messages freezes the program, with ctrl+c stuck behind it.
+     * Bound elapsed time as well as message count so slow updates cannot leave Ctrl+C stuck in the queue.
      */
     private const MAX_DRAIN_SECONDS = 0.05;
 
@@ -119,8 +118,7 @@ final class Program
     private ?TerminalSession $terminalSession = null;
 
     /**
-     * Built on first use: an effect can only start once something dispatched a
-     * command, and a program that never does keeps none.
+     * Create the effect runner on first dispatch; programs without effects do not need one.
      */
     private ?EffectRunner $effects = null;
 
@@ -251,9 +249,7 @@ final class Program
     }
 
     /**
-     * The colour depth to draw for, where the environment cannot be asked. A
-     * terminal reached over a shell that drops COLORTERM reports far less than
-     * it can show, and every colour is quantised to match what it admitted to.
+     * Override detected colour depth when the environment underreports terminal support, such as missing COLORTERM over SSH.
      *
      * @return self<TModel>
      */
@@ -299,8 +295,7 @@ final class Program
     }
 
     /**
-     * Runs a command of the application's own. Handlers are asked in the order
-     * they were added, and only for a command the runtime has no effect for.
+     * Try handlers in registration order, and only for commands without a built-in handler.
      *
      * @return self<TModel>
      */
@@ -405,8 +400,7 @@ final class Program
         $this->terminalSession->start();
         $this->terminal->queryKittyProtocol();
 
-        // A cursor-position report would race application input, so startup asks
-        // stty and the environment only; SystemTerminal::probeSize() stays explicit.
+        // Probe size through stty and environment at startup; a cursor-position report could consume application input.
         $this->adoptTerminalSize();
 
         $this->registerSignalHandlers();
@@ -415,8 +409,7 @@ final class Program
     private function registerSignalHandlers(): void
     {
         if (!extension_loaded('pcntl')) {
-            // SIGWINCH etc. are pcntl constants; without the extension the app
-            // still runs — resize detection and Ctrl-Z handling are degraded.
+            // Signal constants require pcntl; without it, resize detection and suspension support are limited.
             return;
         }
 
@@ -426,8 +419,7 @@ final class Program
                 EventLoop::defer(fn () => $this->tick());
             }));
 
-            // SIGHUP: closing the terminal window would otherwise kill the process
-            // outright, skipping both the shutdown hook and terminal restore.
+            // Catch SIGHUP so closing the terminal still runs shutdown and restores terminal state.
             foreach ([[EventLoopWatcher::Interrupt, SIGINT], [EventLoopWatcher::Terminate, SIGTERM], [EventLoopWatcher::Hangup, SIGHUP]] as [$watcher, $signal]) {
                 $this->watch($watcher, EventLoop::onSignal($signal, function (): void {
                     $this->messageQueue->enqueue(QuitMsg::Quit);
@@ -446,8 +438,7 @@ final class Program
                 EventLoop::defer(fn () => $this->tick());
             }));
 
-            // Revolt installs the handlers on the loop's first tick; a resize before
-            // that is dropped, so the size is asked once more after it.
+            // Recheck size after the first loop tick, when Revolt installs its signal handlers.
             EventLoop::defer(function (): void {
                 if ($this->state === ProgramState::Running && $this->terminal->size() !== [$this->screenRect->width, $this->screenRect->height]) {
                     $this->resizePending = true;
@@ -455,8 +446,7 @@ final class Program
                 }
             });
         } catch (UnsupportedFeatureException) {
-            // The active EventLoop driver cannot watch signals; keep running
-            // with whatever watchers were registered before the throw.
+            // Keep existing watchers if the loop driver cannot watch signals.
         }
     }
 
@@ -468,10 +458,7 @@ final class Program
 
         if (function_exists('posix_kill') && function_exists('pcntl_signal')) {
             pcntl_signal(SIGTSTP, SIG_DFL);
-            // SIGTSTP can be discarded for an orphaned process group (for
-            // example under a non-interactive supervisor). The terminal has
-            // already been restored, so use the uncatchable stop signal to
-            // guarantee the process actually suspends until SIGCONT.
+            // SIGTSTP may be ignored for orphaned process groups; use SIGSTOP to guarantee suspension after restoring the terminal.
             posix_kill(posix_getpid(), SIGSTOP);
         }
     }
@@ -592,10 +579,7 @@ final class Program
             }));
         }
 
-        // Park on a Suspension instead of EventLoop::run(): this composes with
-        // a host that already drives the Revolt loop (nested run()
-        // is fatal) and quitting resumes only this fiber instead of stopping
-        // the shared driver out from under the host's other watchers.
+        // Suspend this fiber instead of calling run(): a host may already run the shared loop, and quitting must not stop it.
         $this->runSuspension = EventLoop::getSuspension();
         $this->runSuspension->suspend();
     }
@@ -629,8 +613,7 @@ final class Program
     }
 
     /**
-     * Wheeling waits for the next frame and is applied as one total, so notches
-     * the trackpad reports against the gesture cancel instead of moving the view.
+     * Combine wheel events until the next frame so opposite trackpad notches cancel out.
      */
     private function enqueueInputMessage(Message $message): void
     {
@@ -671,11 +654,7 @@ final class Program
     }
 
     /**
-     * Deliver input held back for escape-sequence disambiguation.
-     *
-     * The flush happens on a timer, with the loop otherwise idle, so it has to
-     * tick as well: without that the keystroke waits in the queue until the
-     * next one arrives, and every lone Escape takes effect one keystroke late.
+     * Tick after flushing buffered input; otherwise a lone Escape would wait until the next keystroke.
      */
     private function flushPendingInput(): void
     {
@@ -760,8 +739,7 @@ final class Program
             return;
         }
 
-        // A command handler may emit while init() is still being dispatched, before
-        // loop() has a ticker; loop() refreshes it from this same state when it starts.
+        // Handlers may emit during init(), before the ticker exists; loop() uses this state when it starts.
         $this->refreshTicker();
     }
 
@@ -850,8 +828,7 @@ final class Program
         $consecutiveErrors = 0;
         $screenRect = $this->screenRect;
         $processed = 0;
-        // A resize re-drain inside the same tick continues this deadline rather
-        // than buying a fresh budget, or one tick could spend twice the cap.
+        // Reuse the deadline after a resize re-drain so one tick cannot spend the budget twice.
         $this->drainDeadline ??= $this->clock->now() + self::MAX_DRAIN_SECONDS;
         $deadline = $this->drainDeadline;
 
@@ -900,8 +877,7 @@ final class Program
     }
 
     /**
-     * An answer that only leads to the same failure again would loop forever, so
-     * the messages it queues carry how many answers in a row led to them.
+     * Count consecutive error responses to stop handlers from causing an endless failure loop.
      */
     private function handleError(ErrorMsg $message): bool
     {
@@ -924,9 +900,6 @@ final class Program
         return true;
     }
 
-    /**
-     * False when the message went nowhere yet: routed away, or put back behind a focus announcement.
-     */
     private function deliver(Message $message, Rect $screenRect): bool
     {
         $updateStart = hrtime(true);
@@ -936,8 +909,7 @@ final class Program
         }
         $resolved = $this->resolvedFocus();
 
-        // The waiting message goes back behind the announcement, or the first
-        // key an application ever sees arrives before its pane is seated.
+        // Deliver focus arrival before the queued key so the component is ready to handle it.
         if (!$resolved->sameAs($this->focus) && $resolved->focused() !== null) {
             $this->focus = $resolved;
             $this->messageQueue->unshift($stamped);
@@ -993,8 +965,7 @@ final class Program
     }
 
     /**
-     * An open chord is drawn in the footer, so opening or closing one makes the
-     * screen stale though no model changed.
+     * Opening or closing a chord changes the footer even when the model is unchanged.
      *
      * @param list<KeyMsg> $keys
      */
@@ -1031,8 +1002,7 @@ final class Program
     }
 
     /**
-     * stdout is the screen, so a stray echo or var_dump would land between the
-     * cells Screen wrote and leave the display out of step with its buffer.
+     * Capture stray output so echo or var_dump cannot corrupt the terminal display.
      *
      * @template T
      *
@@ -1154,8 +1124,7 @@ final class Program
     }
 
     /**
-     * An update can take away the component the keyboard was on (a modal opening
-     * over it), and the next message is too late to say so: the frame is drawn now.
+     * Resolve focus before rendering because an update may remove or hide the focused component.
      */
     private function settleFocusBeforeDrawing(): void
     {
@@ -1169,8 +1138,7 @@ final class Program
     }
 
     /**
-     * Where the keyboard is gets drawn, so moving it makes the screen stale even
-     * though the model is untouched.
+     * Focus changes require a redraw even when the model is unchanged.
      */
     private function moveFocus(FocusCmd $command): void
     {
@@ -1197,18 +1165,12 @@ final class Program
             $this->frames->markDirty();
         }
 
-        // Announced even when the move lands back where it started: a ring of one
-        // still means "put the keyboard here". Unshifted, because one read can queue
-        // a whole burst of keystrokes and an arrival behind them seats too late.
+        // Announce even a move to the same component, before any queued keys, so containers handle arrival first.
         if ($moved->focused() !== null) {
             $this->messageQueue->unshift(new FocusMsg($command->move));
         }
     }
 
-    /**
-     * The key as a reader of the trace would name it, modifiers included, so what was
-     * pressed can be matched against what a binding asks for.
-     */
     private static function describeKey(KeyMsg $message): string
     {
         return ($message->ctrl ? 'ctrl+' : '')
@@ -1341,8 +1303,6 @@ final class Program
     }
 
     /**
-     * Compose an inner map with an optional outer map.
-     *
      * @param Closure(Message):Message      $inner
      * @param Closure(Message):Message|null $outer
      *

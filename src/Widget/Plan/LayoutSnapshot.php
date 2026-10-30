@@ -11,11 +11,7 @@ use SplObjectStorage;
 use WeakMap;
 
 /**
- * Memoizes resolved widget rects per owner instance and screen area.
- *
- * Sound only because owners (App models) are immutable and view() is a pure
- * function of the owner — the same instance and area always resolve to the
- * same layout. Entries die with their owner via WeakMap.
+ * Cache by owner and area; this requires immutable owners and a pure view(). WeakMap releases entries with the owner.
  *
  * @internal
  */

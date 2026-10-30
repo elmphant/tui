@@ -18,9 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A sub-model embedded in an App binds its own children: the replacement runs
- * against the sub-model, and the sub-model is put back into the App. Without
- * this a nested widget can only be handed the root, which it cannot rebuild.
+ * Apply child replacements to the mounted sub-model, then store that model back in the App.
  */
 final class NestedComponentOwnershipTest extends TestCase
 {

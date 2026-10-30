@@ -256,10 +256,6 @@ final class CmdMapTest extends TestCase
         (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke($program, $command);
     }
 
-    /**
-     * Whatever the effects have due once the clock has moved on, fired through
-     * the runner rather than by reaching for the records it keeps.
-     */
     private function fireDue(Program $program, float $seconds): void
     {
         $clock = (new ReflectionProperty(Program::class, 'clock'))->getValue($program);

@@ -41,9 +41,7 @@ final class ProgramFocusCapabilityTest extends TestCase
     }
 
     /**
-     * `Cmd::focusNothing()` is how an app keeps the keyboard for itself. Undecided and
-     * decided-nowhere both name no component, so a runtime comparing only the
-     * component read one as the other and settled the keyboard on the first field.
+     * Clearing focus must remain distinct from undecided focus, or the runtime would focus the first field again.
      */
     #[Test]
     public function theKeyboardStaysNowhereWhenAnAppAsksForNoFocus(): void

@@ -142,12 +142,8 @@ final class StdinBuffer
     }
 
     /**
-     * Over ssh the rest of an arrow key can arrive well after its ESC. A buffer
-     * that does not start with ESC holds part of a character, which only more of
-     * that character can follow, so it waits without a timeout. A paste whose end
-     * marker never comes would otherwise swallow every key after it, Ctrl+C too.
-     * A slow link can still send the rest of a paste after the first timeout, so
-     * only the second one gives the keys back.
+     * Allow delayed escape sequences over SSH; incomplete UTF-8 waits without a timeout.
+     * Give a paste two timeouts before releasing input, so a missing end marker cannot swallow keys forever.
      */
     public function flushDelay(): ?float
     {
@@ -161,8 +157,7 @@ final class StdinBuffer
     }
 
     /**
-     * A read can split PASTE_END, so a tail that could still grow into it stays buffered
-     * rather than being swallowed as paste content — otherwise the paste never terminates.
+     * Keep any suffix that could be part of PASTE_END, or a split marker would never end the paste.
      */
     private function trailingPasteEndPrefixLength(): int
     {
@@ -226,8 +221,7 @@ final class StdinBuffer
     }
 
     /**
-     * OSC/DCS/APC terminal replies are consumed without emission ('' = swallowed):
-     * no consumer exists yet, and forwarding them would leak the payload as keystrokes.
+     * Swallow OSC/DCS/APC replies as an empty string so their payload cannot become keystrokes.
      */
     private function extractStringSequence(): ?string
     {

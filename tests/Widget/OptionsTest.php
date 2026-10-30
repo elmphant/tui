@@ -15,10 +15,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A reader chooses an option, not a row number. A host that reloads, sorts or
- * filters what it handed in leaves the number pointing at whatever moved into
- * that place — so the widget answers with a record nobody picked, and nothing
- * on the screen says so.
+ * Preserve selected values across reloads and sorting; an old row index may now name a different record.
  */
 final class OptionsTest extends TestCase
 {

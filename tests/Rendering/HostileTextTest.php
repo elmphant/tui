@@ -11,8 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Text a user can paste into a field. Every one of these has broken a terminal
- * UI somewhere: the pool is TUIOS's, which earned it by finding their bugs.
+ * Reuse TUIOS's corpus of text known to break terminal UIs.
  */
 final class HostileTextTest extends TestCase
 {

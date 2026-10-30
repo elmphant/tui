@@ -39,15 +39,8 @@ use Elmphant\Tui\Widget\Wrap;
 use InvalidArgumentException;
 
 /**
- * A table the reader navigates: cursor, selection, mouse, and a scrolled viewport.
- *
- * Columns are sized by their Constraint to fill the width given, so cells
- * truncate or wrap rather than widening the table. Only the rows in view are
- * drawn, which is what makes it usable for unbounded row counts. For a bordered
- * table that just prints a small data set, see StaticTable.
- *
- * Rows given as plain cell text become Row values on the way in, so there is
- * one key path and one row renderer whichever shape the caller used.
+ * Draw only visible rows with cursor, selection and scrolling; column constraints keep cells within the width.
+ * Normalize plain cell arrays to Row values so both inputs share identity and rendering rules.
  */
 final readonly class Table implements Committing, Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
@@ -56,8 +49,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     use KeybindingsAwareBehavior;
 
     /**
-     * Row heights for the current rows, shared with every clone that keeps
-     * them, so moving the cursor does not re-measure the table.
+     * Share row measurements across clones so cursor moves do not remeasure the table.
      *
      * @var KeyedCache<TableLayout>
      */
@@ -154,9 +146,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
-     * The cursor and the selection stay on the rows they were on, matched by
-     * Row::key().
-     *
      * @param list<Row> $rows
      */
     public function withRows(array $rows): self
@@ -190,9 +179,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
-     * Move the cursor and keep it on screen at the next render, even when it is
-     * driven from outside the focused-key path — a search box may hold focus
-     * while the arrow keys navigate this table.
+     * Keep externally moved cursors visible too, such as when a search field handles navigation.
      */
     public function withCursor(int $cursor): self
     {
@@ -205,8 +192,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
-     * Cell text of the selected row.
-     *
      * @return list<string>|null
      */
     public function selectedRow(): ?array
@@ -297,7 +282,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
-     * Off a row that cannot be chosen, since only a reload can seat the cursor on one.
+     * After reload, move the cursor off rows that cannot be selected.
      *
      * @param list<Row> $rows
      */
@@ -420,10 +405,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return $this->cloneWith(cursor: $row);
     }
 
-    /**
-     * The row a page away from the cursor, stepped back towards the cursor
-     * until it is one the cursor may rest on.
-     */
     private function rowAPageAway(int $direction, int $visibleRows, Rect $area): int
     {
         $layout = $this->layoutFor($this->placementFor($area));
@@ -500,15 +481,12 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         $totalWidth = self::spanWidthOf($placement);
         $renderY = $area->y + $this->headerHeight();
 
-        // A scroll container sizes its child to the child's whole content and
-        // clips the overflow, so the area is not the viewport — the clip is.
-        // Reading rows past it would draw thousands of invisible lines.
+        // Use the clip as the viewport; a scrolling parent may pass the full content area.
         $lastVisibleY = $frame->clip()->bottom();
         $firstRow = $this->displayScrollOffset($area);
         $renderY -= $firstRow === $this->scrollOffset ? $this->lineOffset : 0;
 
-        // The first row may start above the body when it is taller than the
-        // viewport, and the header sits in the same clip as the rows.
+        // A tall row may begin above the body, so keep it from overwriting the header.
         $frame->pushClip(new Rect($area->x, $area->y + $this->headerHeight(), $area->width, $area->height - $this->headerHeight()));
 
         try {
@@ -611,10 +589,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
-     * Whether the rows need a scrollbar, and the columns that leaves. Cells wrap,
-     * so what has to fit is the lines the rows come to and not how many rows
-     * there are; a scrollbar then takes a column, which can only wrap them
-     * further, so needing one at the full width still needs one once narrowed.
+     * Check total wrapped height, not row count; adding a scrollbar only narrows columns and increases wrapping.
      *
      * @return array{bool, AxisResult}
      */
@@ -658,9 +633,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
-     * The offset actually drawn: it follows the cursor unless the view was
-     * scrolled away from it, so a cursor moved from outside update() is still
-     * on screen at the next frame.
+     * Follow the cursor unless the view was explicitly scrolled away, including after external cursor changes.
      */
     private function displayScrollOffset(Rect $area): int
     {
@@ -670,8 +643,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
-     * A row taller than the viewport cannot be read by stepping over it, so the
-     * wheel walks down its lines first and only then moves to the next row.
+     * Scroll through a row taller than the viewport before advancing to the next row.
      */
     private function scrolledDown(int $steps, int $fromRow, Rect $area): self
     {
@@ -724,10 +696,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return $this->cloneWith(scrollOffset: $row, lineOffset: $line, followCursor: false);
     }
 
-    /**
-     * An offset past the end would draw blank rows the reader cannot scroll
-     * back from.
-     */
     private function clampedScrollOffset(Rect $area): int
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());

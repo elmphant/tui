@@ -8,8 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * What a real terminal draws, not what the framework thinks it drew: tmux parses
- * every byte the way a terminal does, so a diff the renderer gets wrong shows here.
+ * Check the bytes as tmux renders them, so renderer mistakes cannot hide behind its own buffer model.
  */
 final class RealTerminalTest extends TestCase
 {

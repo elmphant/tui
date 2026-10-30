@@ -15,8 +15,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
- * `StaticTable::withOverflow()` reset `minWidth` by rebuilding with fewer
- * arguments than the constructor takes, and every type still matched.
+ * Missing constructor arguments can silently reset fields while still passing type checks.
  *
  * @implements Rule<New_>
  */

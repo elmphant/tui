@@ -38,13 +38,7 @@ use Elmphant\Tui\Widget\Wrap;
 use LogicException;
 
 /**
- * Named fields in a pane that scrolls, each a real widget the keyboard stops at,
- * with a submit button pinned to the foot. What the form holds is asked of the
- * fields, so it cannot fall behind what is on screen.
- *
- * Every field takes three children — its label, its widget, the line its problem
- * is told on — and the submit button comes after them, so a field's stop is
- * where its widget sits among them.
+ * Derive values from the fields; each field has label, input and error children, followed by a pinned submit button.
  */
 final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, MeasureHeight, Navigates
 {
@@ -53,9 +47,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     private const CHILDREN_PER_FIELD = 3;
     private const WIDGET_OF_FIELD = 1;
 
-    /**
-     * The bar marking the field the keyboard is in, and the space after it.
-     */
     private const GUTTER = 2;
     private const BAR = '▎';
     private const BLOCKED_CAPTION = 'fill in what is required';
@@ -84,9 +75,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return new self(Panel::new($title));
     }
 
-    /**
-     * A field named like one the form holds takes its place.
-     */
     public function withField(Field $field): self
     {
         $fields = $this->fields;
@@ -96,9 +84,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return $this->cloneWith(fields: array_values($fields));
     }
 
-    /**
-     * What the form is about, above its fields and scrolling with them. Prose only: an input belongs in a Field.
-     */
     public function withIntro(?Widget $intro): self
     {
         if ($intro instanceof Interactive) {
@@ -113,26 +98,16 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return $this->cloneWith(submit: Button::new($label, $message)->withDisabled($this->disabledBecause !== null), foot: $foot);
     }
 
-    /**
-     * The line beside the submit button: what pressing it will do.
-     */
     public function withFoot(string $foot): self
     {
         return $this->cloneWith(foot: $foot);
     }
 
-    /**
-     * A submit that cannot be pressed, and the reason, which the rule above the foot
-     * gives in place of what is missing.
-     */
     public function withSubmitDisabled(?string $because): self
     {
         return $this->cloneWith(submit: $this->submit?->withDisabled($because !== null), disabledBecause: $because);
     }
 
-    /**
-     * Sent for an escape the fields leave alone: a list open in one closes first.
-     */
     public function withCancel(?Message $message): self
     {
         return $this->cloneWith(cancel: $message);
@@ -143,10 +118,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return $this->cloneWith(errorsShown: $shown);
     }
 
-    /**
-     * The form after a submit was tried: from now on every field says what is
-     * wrong with it.
-     */
     public function submitted(): self
     {
         return $this->cloneWith(attempted: true);
@@ -160,8 +131,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     }
 
     /**
-     * The fields filled in by name, as for editing what values() once answered.
-     *
      * @param array<string, string|bool|list<string>|null> $values
      */
     public function withValues(array $values): self
@@ -200,8 +169,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     }
 
     /**
-     * What is wrong with each field, whether or not it is shown yet.
-     *
      * @return array<string, string>
      */
     public function problems(): array
@@ -217,10 +184,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return $problems;
     }
 
-    /**
-     * The stop a field's widget is, inside the component this form is bound as —
-     * where a host sends the keyboard to fix what is missing.
-     */
     public function stopOf(string $name, ComponentId|string $form): ComponentId
     {
         $at = $this->indexOf($name) ?? throw new LogicException(sprintf('The form has no field named "%s"', $name));
@@ -238,9 +201,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return $this->drawn()->measureHeight($width);
     }
 
-    /**
-     * The rows that still show the foot and one row of what scrolls above it.
-     */
     public function leastHeight(int $width): int
     {
         return $this->drawn(gapAboveTheFoot: 0)->withChildren([Text::new(' ')])->measureHeight($width);
@@ -295,8 +255,7 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
     }
 
     /**
-     * Where the keyboard is now; null when it left the form. The field it was in
-     * before counts as left, which is when AfterLeaving starts telling its problem.
+     * Leaving a field enables its AfterLeaving errors; null means focus left the form.
      */
     public function withKeyboardAt(?int $child): static
     {
@@ -351,10 +310,6 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         $this->renderBar($frame, $area, $pane, $context);
     }
 
-    /**
-     * An enter the field leaves alone moves on to the next field, and submits from
-     * the last one.
-     */
     private function enteredIn(string $field): ?Cmd
     {
         $last = $this->fields[\count($this->fields) - 1]->name;

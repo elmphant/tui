@@ -52,9 +52,7 @@ final class FocusedHintsTest extends TestCase
     }
 
     /**
-     * A focus id can outlive the component it named — a view that rebuilt without
-     * it, drawn before the runtime repairs the state. Naming keys is not worth a
-     * crash.
+     * A stale focus ID can outlive its component before runtime repair; resolving hints must still be safe.
      */
     #[Test]
     public function anIdNamingNoComponentNamesNoKeysRatherThanFailing(): void

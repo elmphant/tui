@@ -7,21 +7,10 @@ namespace Elmphant\Tui\Tests\Support;
 use Closure;
 
 /**
- * Measurement for the render-path budgets.
- *
- * Every budget is a median of individual timings, never a mean over one long
- * loop: a mean folds each scheduler preemption and every bit of CPU steal into
- * the number, which inside a container inflates it 4-7x and puts the result
- * over budget on a busy machine. Sampling one call at a time and taking the
- * middle sample holds the spread inside 1.7x, so the budgets below are the real
- * per-call cost and fail only on a genuine regression.
+ * Use the median of individual calls to reduce scheduler noise in container timings.
  */
 trait PerformanceBudget
 {
-    /**
-     * Ratio ceiling for the complexity-class guards, where both sides run in
-     * the same process so machine speed cancels out.
-     */
     protected const MAX_RATIO = 10.0;
 
     protected static function skipUnderXdebug(): void
@@ -49,8 +38,7 @@ trait PerformanceBudget
     }
 
     /**
-     * For operations that only cost anything the first time: the setup runs
-     * untimed before every sample, so each timed call meets the same state.
+     * Run setup outside the timing for each sample so first-use operations start from the same state.
      */
     protected static function medianMicrosecondsAfterSetup(Closure $setup, Closure $operation, int $iterations = 200): float
     {

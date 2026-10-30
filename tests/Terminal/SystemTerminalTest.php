@@ -155,7 +155,6 @@ final class SystemTerminalTest extends TestCase
     #[Test]
     public function colorProfileDefaultsToAsciiWhenNoEnvVars(): void
     {
-        // Clear relevant env vars for this test
         putenv('NO_COLOR');
         putenv('COLORTERM');
         putenv('TERM');
@@ -173,7 +172,7 @@ final class SystemTerminalTest extends TestCase
         $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::TrueColor, $terminal->colorProfile());
 
-        putenv('COLORTERM'); // Cleanup
+        putenv('COLORTERM');
     }
 
     #[Test]
@@ -184,7 +183,7 @@ final class SystemTerminalTest extends TestCase
         $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::Ansi256, $terminal->colorProfile());
 
-        putenv('TERM'); // Cleanup
+        putenv('TERM');
     }
 
     #[Test]
@@ -195,20 +194,20 @@ final class SystemTerminalTest extends TestCase
         $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::Ansi, $terminal->colorProfile());
 
-        putenv('TERM'); // Cleanup
+        putenv('TERM');
     }
 
     #[Test]
     public function colorProfileRespectsNoColor(): void
     {
         putenv('NO_COLOR=1');
-        putenv('COLORTERM=truecolor'); // Should be ignored
+        putenv('COLORTERM=truecolor');
 
         $terminal = new SystemTerminal($this->stdin, $this->stdout);
         self::assertSame(ColorProfile::Ascii, $terminal->colorProfile());
 
         putenv('NO_COLOR');
-        putenv('COLORTERM'); // Cleanup
+        putenv('COLORTERM');
     }
 
     #[Test]
@@ -390,8 +389,7 @@ final class SystemTerminalTest extends TestCase
     }
 
     /**
-     * The probe writes to the same terminal everything else does, so it goes out
-     * the one way that survives a full PTY buffer and is counted with the rest.
+     * Size probes must use the normal output path for partial writes and output statistics.
      */
     #[Test]
     public function theSizeProbeIsWrittenThroughTheTerminalsOwnWrite(): void
@@ -624,8 +622,7 @@ final class SystemTerminalTest extends TestCase
     }
 
     /**
-     * A terminal may close an OSC reply with BEL instead of the string terminator
-     * it was asked with, and answering "no idea" there picks the wrong palette.
+     * Accept BEL-terminated OSC replies as well as the requested string terminator, or palette detection fails.
      */
     #[Test]
     public function aBellEndsAnOscReplyJustAsTheStringTerminatorDoes(): void
@@ -771,9 +768,7 @@ final class SystemTerminalTest extends TestCase
      * @return array{resource, resource}
      */
     /**
-     * A pty that cannot say how big it is reports zero — docker, CI, tmux control
-     * mode. Taken at its word it gives a nought-by-nought screen and the app draws
-     * nothing, where the fallback would have shown something.
+     * Treat zero PTY dimensions as unavailable so environment fallbacks can provide a usable screen.
      */
     #[Test]
     public function zeroColumnsFallBackToTheDefault(): void

@@ -8,15 +8,12 @@ use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Input\Keybindings;
 
 /**
- * A model, or a mounted sub-model, with bindings of more than one key. The
- * runtime holds the keys of a chord back until it completes, then hands the model
- * its last key carrying the rest.
+ * Buffer multi-key chords in the runtime, then deliver the final key with the completed chord.
  */
 interface BindsChords
 {
     /**
-     * The chords that apply while the keyboard is at $focus. A mounted model is
-     * asked with the focus named inside it.
+     * Resolve chords for the current focus; mounted models receive IDs local to their mount.
      */
     public function chords(FocusState $focus): Keybindings;
 }

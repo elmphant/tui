@@ -33,8 +33,7 @@ final readonly class KeyMsg implements Message
     }
 
     /**
-     * A terminal reporting key event types sends one of these for every press,
-     * so acting on it acts on the keystroke twice.
+     * Release events accompany presses; handling both would perform an action twice.
      */
     public function isRelease(): bool
     {

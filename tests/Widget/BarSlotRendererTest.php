@@ -22,8 +22,6 @@ final class BarSlotRendererTest extends TestCase
 {
     private RenderContext $context;
 
-    // --- renderLeft tests ---
-
     #[Test]
     public function renderLeftPlacesWidgetAtContentX(): void
     {
@@ -110,8 +108,6 @@ final class BarSlotRendererTest extends TestCase
         self::assertSame(0, $frame->backgrounds[0]);
     }
 
-    // --- renderRight tests ---
-
     #[Test]
     public function renderRightPlacesWidgetRightAligned(): void
     {
@@ -184,8 +180,6 @@ final class BarSlotRendererTest extends TestCase
         self::assertSame(99, $frame->backgrounds[0]);
         self::assertArrayHasKey(0, $frame->dirtyRows);
     }
-
-    // --- renderCentered tests ---
 
     #[Test]
     public function renderCenteredPlacesWidgetInCenter(): void
@@ -348,7 +342,7 @@ final class BarSlotRendererTest extends TestCase
     #[Test]
     public function aSlotsAttributesReachTheBar(): void
     {
-        $style = new Style(attributes: 4); // ITALIC
+        $style = new Style(attributes: 4);
         $frame = new Frame(10, 1);
         BarSlotRenderer::renderLeft($frame, Text::styled('X', $style), 0, 0, 10, 0, $this->context);
 
@@ -385,7 +379,6 @@ final class BarSlotRendererTest extends TestCase
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void
             {
-                // Intentionally empty -- renders nothing
             }
         };
     }

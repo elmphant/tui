@@ -326,9 +326,7 @@ final class DropdownTest extends TestCase
     }
 
     /**
-     * A list floating over the layout belongs to whatever holds the keyboard. Left
-     * hanging once the keyboard has gone it covers rows the reader is working in, and
-     * nothing they press shuts it.
+     * Hide a popup when tree focus moves away, even if the dropdown's stored open flag remains true.
      */
     #[Test]
     public function anOpenListGoesWhenTheKeyboardMovesToAnotherComponent(): void
@@ -372,9 +370,7 @@ final class DropdownTest extends TestCase
     }
 
     /**
-     * The anchor row (row 0) always redraws the current selection, open or
-     * closed, so it would make a scroll-into-view assertion pass regardless
-     * of what the popup itself shows. Only rows below it prove the popup drew.
+     * Inspect only popup rows; the trigger always shows the selection and could falsely satisfy a visibility assertion.
      */
     private static function popupBody(Frame $frame): string
     {
@@ -412,9 +408,6 @@ final class DropdownTest extends TestCase
         return $frame;
     }
 
-    /**
-     * The marker occupies cell 0 of row 0, and carries the row's style.
-     */
     private static function foregroundOfFirstCell(Frame $frame): int
     {
         return $frame->foreground(0);

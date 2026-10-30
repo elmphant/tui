@@ -11,8 +11,7 @@ use Elmphant\Tui\Rendering\Theme;
 final class Scrollbar
 {
     /**
-     * Block glyphs, not box-drawing ones: a scrollbar sitting beside a pane
-     * border must not read as a second border.
+     * Use block glyphs so a scrollbar beside a border does not look like a second border.
      */
     public const THUMB = '▐';
     public const TRACK = '▕';
@@ -22,11 +21,6 @@ final class Scrollbar
         return $totalContent > $visibleHeight;
     }
 
-    /**
-     * Down the right-hand column of $track, in the one set of colours a
-     * scrollbar is drawn in. What the track can show is its own height, so a
-     * caller cannot state the two inconsistently.
-     */
     public static function renderFor(Frame $frame, Rect $track, int $scrollOffset, int $totalContent, Theme $theme): void
     {
         self::render(

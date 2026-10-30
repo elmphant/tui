@@ -7,9 +7,6 @@ namespace Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 
 /**
- * The builders ExecCmd and ProcessCmd share; each keeps only the output-sizing
- * field that distinguishes it.
- *
  * @internal
  */
 trait ProcessCommandBuilders

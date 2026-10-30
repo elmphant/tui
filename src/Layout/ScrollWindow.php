@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout;
 
 /**
- * The offset a scrolled view is drawn at, in one place so every widget that
- * scrolls works it out the same way.
- *
  * @internal
  */
 final class ScrollWindow
 {
     /**
-     * The last row may be scrolled one line above the floor of the viewport, so
-     * it is clear there is nothing under it.
+     * Allow the last row to sit one line above the viewport bottom to show that the content ends.
      */
     public const BOTTOM_PADDING = 1;
 
@@ -25,18 +21,11 @@ final class ScrollWindow
             : $totalHeight - $viewportHeight + self::BOTTOM_PADDING;
     }
 
-    /**
-     * An offset held between the first row and the last one it can reach.
-     */
     public static function clamped(int $offset, int $maxOffset): int
     {
         return max(0, min($offset, $maxOffset));
     }
 
-    /**
-     * The offset that keeps $height rows from $top on screen, moving as little
-     * as it can.
-     */
     public static function showing(int $offset, int $top, int $height, int $viewportHeight, int $maxOffset): int
     {
         $offset = self::clamped($offset, $maxOffset);

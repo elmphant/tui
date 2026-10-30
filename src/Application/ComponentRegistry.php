@@ -42,8 +42,6 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * Memoize bindings for one immutable App value.
-     *
      * @param Closure(): Widget $view
      */
     public static function for(object $owner, Closure $view): self
@@ -134,11 +132,8 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * The ring the keyboard is walking. A focus scope holding it keeps tab to its
-     * own controls; from anywhere else those controls are off the ring altogether,
-     * so the way in is the command that says so and tab never walks chrome on its
-     * way between the panes a reader works in. A scope nested in the held one is
-     * off its ring by the same rule.
+     * Tab stays within the active focus scope and skips other scopes, including nested ones.
+     * Enter or leave a scope with a focus command.
      *
      * @return list<Component<Interactive>>
      */
@@ -167,9 +162,7 @@ final readonly class ComponentRegistry
             fn (Component $component): bool => !$this->isScoped($component->id->value, $held),
         ));
 
-        // Taking the chrome off the ring assumes there is content beside it. Where a
-        // scope is all there is, an empty ring would leave the keyboard nowhere to
-        // land and every key falling through.
+        // If a scope is the only content, keep its stops reachable so focus has somewhere to land.
         return $beside === [] ? $walkable : $beside;
     }
 
@@ -228,8 +221,7 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * Focus landing on one of these exactly is the reader on its own control — a
-     * tab strip — rather than adrift in everything it draws.
+     * These IDs identify a container's own control, such as a tab strip, rather than its content.
      *
      * @return list<string>
      */
@@ -255,7 +247,7 @@ final readonly class ComponentRegistry
      */
     private function scopeHolding(?ComponentId $focused): ?array
     {
-        // A stop that just left the tree is in no scope; the pane it left is.
+        // If a focus stop left the tree, use the scope of its former pane.
         for ($id = $focused; $id !== null; $id = $id->parent()) {
             foreach ($this->scopes as $scope) {
                 if (\in_array($id->value, $scope, true)) {
@@ -301,15 +293,14 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * The component ids under each focus scope in the tree, innermost first, so a
-     * scope nested in another is the one that answers for a component in both.
+     * List nested scopes first so the innermost scope handles a component shared by several scopes.
      *
      * @return list<list<string>>
      */
     private static function scopesIn(Widget $widget): array
     {
         $scopes = [];
-        // A bound scope publishes its stops through the component, so the component is the scope.
+        // A bound scope exposes its stops through its component, so treat the component as the scope.
         $self = $widget instanceof Component && $widget->widget instanceof FocusScope ? $widget->widget : $widget;
 
         if ($self instanceof WidgetContainer) {
@@ -352,8 +343,7 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * Mounts the same way collectLayer() finds components: once an input layer is
-     * found, the mounts behind it are dropped.
+     * Drop mounts behind an input layer, just as collectLayer() drops components.
      *
      * @return array{list<Mount<*>>, bool}
      */
@@ -386,11 +376,7 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * Components of a widget, and whether they sit in an input layer.
-     *
-     * A layer takes input for itself: once one is found, the components behind
-     * it are dropped, so an open modal cannot be tabbed or clicked past. The
-     * last layer in the tree wins — it is the one drawn on top.
+     * The last input layer wins because it is drawn on top; discard components behind it.
      *
      * @return array{list<Component<Interactive>>, bool}
      */
@@ -427,8 +413,7 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * Components found under a mount belong to what it mounted, not to the App:
-     * the sub-model bound them, so it is the one a replacement has to reach.
+     * Mounted components write back to their sub-model, which created their bindings.
      *
      * @param list<Component<Interactive>> $components
      *
@@ -447,9 +432,7 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * The container stays in the list whatever `navigation()` answers: the pointer,
-     * a broadcast and a key its child leaves alone still reach it; `from()` keeps a
-     * `Never` frame off the ring.
+     * Keep containers available for clicks, broadcasts and unhandled child keys, even when tab navigation skips them.
      *
      * @param Component<Interactive> $component
      *

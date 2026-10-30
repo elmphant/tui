@@ -30,8 +30,7 @@ abstract readonly class Cmd
     }
 
     /**
-     * Writes a line to the program's trace. A TUI's stdout is the screen, so
-     * this is where an update says what it saw instead of echoing it.
+     * Write to the trace because stdout belongs to the terminal display.
      *
      * @param array<string, scalar|null> $context
      */
@@ -41,8 +40,7 @@ abstract readonly class Cmd
     }
 
     /**
-     * Puts the keyboard on a component. The tree owns which one that is, so an
-     * app asks rather than setting a flag on the widget.
+     * Request focus through the tree rather than setting a widget flag.
      */
     public static function focus(ComponentId|string $target): self
     {
@@ -50,8 +48,7 @@ abstract readonly class Cmd
     }
 
     /**
-     * Puts the keyboard where the tree begins, for an app that has just changed
-     * what is on the screen and has somewhere but nowhere in particular to put it.
+     * Focus the first component after changing the view.
      */
     public static function focusFirst(): self
     {
@@ -59,34 +56,25 @@ abstract readonly class Cmd
     }
 
     /**
-     * Puts the keyboard down, so the app answers the keys itself until it hands
-     * them back. The runtime leaves it down rather than settling on a component.
+     * Clear focus until the app explicitly moves it again.
      */
     public static function focusNothing(): self
     {
         return new FocusCmd(move: FocusMove::Nowhere);
     }
 
-    /**
-     * Moves the keyboard one component along, wrapping at the end.
-     */
     public static function focusNext(): self
     {
         return new FocusCmd(move: FocusMove::Next);
     }
 
-    /**
-     * Moves the keyboard one component back, wrapping at the start.
-     */
     public static function focusPrevious(): self
     {
         return new FocusCmd(move: FocusMove::Previous);
     }
 
     /**
-     * Asks the terminal to put the text on the system clipboard. It travels as an
-     * escape sequence, so it crosses a container boundary or an ssh hop that a
-     * clipboard library could not.
+     * OSC 52 reaches the user's clipboard through containers and SSH sessions.
      */
     public static function copy(string $text): self
     {
@@ -112,11 +100,8 @@ abstract readonly class Cmd
     }
 
     /**
-     * Wake on the stream becoming readable and turn what it yields into messages.
-     *
-     * Ends when the stream reaches EOF, or when $id is cancelled. Closing the
-     * stream yourself needs `Cmd::cancel($id)` first, in that order: the driver
-     * cannot select over a closed stream and takes the loop down with it.
+     * Read messages until EOF or cancellation.
+     * Cancel before closing the stream: the event-loop driver cannot watch a closed stream.
      *
      * @param resource                            $stream
      * @param Closure(resource):iterable<Message> $onReadable
@@ -142,9 +127,6 @@ abstract readonly class Cmd
         return new BatchCmd($flattened);
     }
 
-    /**
-     * The one command among these, a batch of several, or nothing at all.
-     */
     public static function combine(?self ...$commands): ?self
     {
         $commands = array_values(array_filter($commands));
@@ -162,11 +144,8 @@ abstract readonly class Cmd
     }
 
     /**
-     * Run a short synchronous side effect.
-     *
-     * The callback may return a message, another command, or null. Blocking
-     * work should use a dedicated asynchronous command such as exec() or
-     * http() instead.
+     * Run a short synchronous callback; use exec() or http() for blocking work.
+     * The callback may return a message, command or null.
      *
      * @param Closure():((Message|Cmd|null)) $callback
      */
@@ -184,8 +163,7 @@ abstract readonly class Cmd
     }
 
     /**
-     * The effects started from here answer to their names within this scope only:
-     * a replacement or a cancel reaches the same name in the same scope and no other.
+     * Effect names are local to this scope, including replacement and cancellation.
      */
     public function scopedTo(string $scope): self
     {

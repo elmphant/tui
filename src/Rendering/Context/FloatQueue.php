@@ -10,8 +10,7 @@ use Elmphant\Tui\Rendering\Frame;
 use LogicException;
 
 /**
- * Popups queued while the tree draws, painted after it and unclipped, and the
- * places they landed so input can route over them.
+ * Queue popups to draw after the tree, without clipping; retain their placements for input routing.
  */
 final class FloatQueue
 {
@@ -34,8 +33,7 @@ final class FloatQueue
     private array $placements = [];
 
     /**
-     * Drops staged placements that were never committed, so a frame without a
-     * root pass cannot publish an old popup again.
+     * Discard uncommitted placements so a frame without a root pass cannot reuse an old popup.
      */
     public function begin(): void
     {
@@ -66,10 +64,7 @@ final class FloatQueue
     }
 
     /**
-     * Draws the tree, then every float it queued on top. A nested pass would paint
-     * before the surrounding tree finishes; a second pass in one frame would draw
-     * its tree over the first pass's popup while that popup's placement still
-     * claims the input.
+     * Allow one root pass per frame: nested or repeated passes would disagree with the popup placements used for input.
      *
      * @param Closure(): void $drawTree
      */
@@ -117,8 +112,7 @@ final class FloatQueue
     }
 
     /**
-     * Called once the frame is on the screen, so input never routes over a frame
-     * the runtime could not show.
+     * Commit placements only after output succeeds, so input matches the visible frame.
      */
     public function commit(): void
     {
@@ -144,8 +138,7 @@ final class FloatQueue
     {
         $recorded = [];
 
-        // A float may queue one of its own; three rounds is deeper than any
-        // sensible chain and stops a cycle from spinning.
+        // Limit nested floats to three rounds to stop cycles.
         for ($iteration = 0; $iteration < 3 && $this->queued !== []; ++$iteration) {
             $pending = $this->queued;
             $this->queued = [];

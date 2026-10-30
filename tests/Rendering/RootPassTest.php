@@ -458,8 +458,7 @@ final class RootPassTest extends TestCase
     }
 
     /**
-     * A pass whose published list already holds one placement, so a later
-     * frame asserting an EMPTY list has something to overwrite.
+     * Publish one placement first so clearing it later cannot pass because the list was already empty.
      */
     private static function passWithOnePublishedFloat(): RenderPass
     {
@@ -982,8 +981,7 @@ final class RootPassTest extends TestCase
     }
 
     /**
-     * A widget that clips itself to two rows, draws inside, and floats a
-     * popup four rows down — outside its own clip.
+     * Queue a popup beyond the widget's clip to verify that floats escape local clipping.
      */
     private static function host(string $text, Rect $clip): Widget
     {

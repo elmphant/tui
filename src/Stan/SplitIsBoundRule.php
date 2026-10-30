@@ -20,8 +20,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
- * A Split keeps its divider in the host, so only a bound one hears a drag:
- * an App that draws one outside every Component::bind() drops it silently.
+ * Bind Split so divider drags can write updated state back to the host.
  *
  * @implements Rule<InClassMethodNode>
  */

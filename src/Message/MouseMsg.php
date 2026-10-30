@@ -52,9 +52,7 @@ final readonly class MouseMsg implements Message
     }
 
     /**
-     * How far to scroll for this event. Always use this instead of the step on
-     * its own: one event can stand for many notches. A notch moves one row
-     * unless a widget scrolls in coarser units and says so.
+     * Include merged wheel notches in the scroll distance; the default step is one row per notch.
      */
     public function wheelSteps(int $step = 1): int
     {

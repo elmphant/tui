@@ -11,11 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Measuring ASCII runs with strlen() is only sound while it agrees with walking
- * the whole string as graphemes. A cluster can straddle the boundary in both
- * directions — an ASCII base followed by a combining mark, and a Prepend
- * character followed by an ASCII base — so these pin the two implementations
- * together against a corpus of the cases that can drift.
+ * Compare the ASCII fast path with full grapheme segmentation, including clusters that cross ASCII boundaries in either direction.
  */
 final class CharWidthSegmentationTest extends TestCase
 {

@@ -8,10 +8,7 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 
 /**
- * Wheel notches that have arrived but not been applied yet, as one total.
- *
- * A trackpad reports a speed the terminal can only send as whole notches, so a
- * slow gesture crosses the threshold both ways and the stream alternates.
+ * Combine wheel notches so trackpad events opposite to the gesture cancel out.
  *
  * @internal
  */
@@ -21,9 +18,6 @@ final class PendingWheel
 
     private ?MouseMsg $last = null;
 
-    /**
-     * A vertical wheel event: anything that is not WheelDown counts as WheelUp.
-     */
     public function add(MouseMsg $message): void
     {
         $this->notches += ($message->action === MouseAction::WheelDown ? 1 : -1) * $message->repeat;
@@ -35,9 +29,6 @@ final class PendingWheel
         return $this->last === null;
     }
 
-    /**
-     * What the notches come to, or null when they cancelled out.
-     */
     public function take(): ?MouseMsg
     {
         $last = $this->last;

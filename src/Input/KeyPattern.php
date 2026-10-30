@@ -31,9 +31,7 @@ final readonly class KeyPattern implements Stringable
     }
 
     /**
-     * What a binding would call this key. One spelling for both directions, so a key
-     * read back from a trace can be compared with the pattern that was meant to match
-     * it.
+     * Use the same spelling in bindings and traces so keys can be compared.
      */
     public static function nameOf(Key|string $key): string
     {
@@ -171,8 +169,7 @@ final readonly class KeyPattern implements Stringable
 
     public function matches(KeyMsg $msg): bool
     {
-        // Repeat events fire while a key is held; they must keep triggering
-        // actions like list navigation.
+        // Handle repeat events so holding a key continues actions such as list navigation.
         if ($msg->isRelease()) {
             return false;
         }
@@ -290,8 +287,7 @@ final readonly class KeyPattern implements Stringable
             throw new InvalidArgumentException("Multi-character key '{$keyToken}' is not a named key in pattern '{$pattern}'");
         }
 
-        // Shifted letter normalization: bare uppercase single letter A-Z in the
-        // ORIGINAL input (no modifier yet set) implies shift.
+        // A bare uppercase ASCII letter implies Shift only before modifiers are parsed.
         $originalKeyToken = trim($rawTokens[$count - 1]);
         if (!$ctrl && !$alt && !$shift
             && strlen($originalKeyToken) === 1

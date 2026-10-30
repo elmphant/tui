@@ -21,9 +21,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * The rules every option row keeps, asked of each one of them.
- */
 final class OptionRowTest extends TestCase
 {
     /**

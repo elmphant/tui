@@ -16,11 +16,7 @@ final class CharWidthPerfTest extends TestCase
     use PerformanceBudget;
 
     /**
-     * A cluster costs a segmentation share plus one memo lookup: 0.10µs idle,
-     * 0.26µs seen under full-suite load. Set for a machine under load rather
-     * than an idle one — a ceiling a busy CI trips is a coin toss, not a gate.
-     * The regression that per-cluster budget was written for is caught by shape
-     * instead, in aClusterCostsTheSameInALongStringAsInAShortOne.
+     * Allow normal CI timing noise; the long-versus-short-string test separately detects complexity regressions.
      */
     private const MAX_MICROSECONDS_PER_CLUSTER = 0.50;
 
@@ -83,9 +79,7 @@ final class CharWidthPerfTest extends TestCase
     }
 
     /**
-     * What a per-cluster budget cannot say on a loaded machine: a cluster costs
-     * the same whatever else is in the string. Segmenting per cluster instead of
-     * in one pass makes this quadratic, and the ratio grows with the length.
+     * Compare per-cluster cost across string lengths to detect quadratic segmentation without relying on absolute timing.
      */
     #[Test]
     public function aClusterCostsTheSameInALongStringAsInAShortOne(): void

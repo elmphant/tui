@@ -14,9 +14,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The title is the bar's default content, not a fourth slot. It centres when
- * the centre is free and moves to the left when a centre slot takes that place,
- * because a caller-supplied title disappearing is never the useful answer.
+ * Centre the title unless a centre slot exists; then move it left instead of hiding it.
  */
 final class HeaderTitleSlotTest extends TestCase
 {

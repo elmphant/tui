@@ -24,8 +24,7 @@ final readonly class AfterCmd extends Cmd implements NamesItsEffect
         public Closure $then,
         public ?EffectId $id = null,
     ) {
-        // NAN fails every comparison, so a timer holding one is never due and
-        // never cancelled by being due; INF names a moment no program reaches.
+        // NaN never becomes due, and infinity is unreachable.
         if (!is_finite($delay) || $delay < 0) {
             throw new InvalidArgumentException('Delay must be a non-negative number of seconds, got ' . var_export($delay, true));
         }

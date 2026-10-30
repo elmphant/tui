@@ -8,8 +8,7 @@ use InvalidArgumentException;
 use Stringable;
 
 /**
- * A name a command's effect answers to. The scope is the part of the app it ran
- * in (`Cmd::scopedTo()`), so two parts can use one name without cancelling each other.
+ * Scope effect names so separate parts of an app can reuse a name without cancelling each other.
  */
 final readonly class EffectId implements Stringable
 {

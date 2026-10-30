@@ -19,9 +19,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Where the keyboard was and what it could have moved to are the two things a
- * key that appears to do nothing turns on, so a trace that cannot say them
- * cannot explain the commonest kind of report.
+ * Include previous focus and reachable stops so traces can explain keys that appear to do nothing.
  */
 final class ProgramFocusTraceTest extends TestCase
 {
@@ -125,9 +123,6 @@ final class ProgramFocusTraceTest extends TestCase
     }
 }
 
-/**
- * Stops on its own after a moment, so the loop has iterations left to draw in.
- */
 final readonly class TwoFieldsLeftRunningApp extends App
 {
     public function __construct(

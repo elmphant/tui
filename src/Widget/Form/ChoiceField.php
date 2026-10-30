@@ -29,9 +29,7 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
- * One of a set of values, shown by label: a row of marks where they fit on one
- * row, a list that opens where they would wrap. Which of the two is asked of the
- * area each time, so a resize switches over and what was chosen stays chosen.
+ * Show choices as a row if they fit, otherwise as a dropdown; resizing preserves the selection.
  */
 final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue, PublishesHints, TakesText, WidgetContainer
 {
@@ -68,8 +66,6 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
     }
 
     /**
-     * What was chosen stays chosen while it is still offered.
-     *
      * @param array<array-key, string> $options value => label
      */
     public function withOptions(array $options): self
@@ -77,17 +73,11 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
         return self::built($options, $this->value(), $this->matcher, $this->clearable);
     }
 
-    /**
-     * How the collapsed list narrows to what the reader types.
-     */
     public function withMatcher(Matcher $matcher): self
     {
         return self::built($this->options, $this->value(), $matcher, $this->clearable);
     }
 
-    /**
-     * Choosing what is already chosen takes it back, for a field that may be left empty.
-     */
     public function withClearable(bool $clearable = true): self
     {
         return self::built($this->options, $this->value(), $this->matcher, $clearable);
@@ -102,7 +92,7 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
     }
 
     /**
-     * As wide as its row of marks: given less, it collapses rather than wraps.
+     * Collapse to a dropdown instead of wrapping the choice row.
      */
     public function sizing(): Sizing
     {

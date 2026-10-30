@@ -7,19 +7,14 @@ namespace Elmphant\Tui\Layout;
 use Closure;
 
 /**
- * Where every row of a scrollable collection sits, as prefix sums.
- *
- * Measuring each row once turns the questions a viewport asks — how tall is
- * everything, which row covers this line, how far must I scroll to show that
- * row — from a walk of the collection into arithmetic and a binary search.
+ * Cache row prefix sums so viewport queries use arithmetic and binary search instead of measuring every row.
  *
  * @internal
  */
 final readonly class RowExtents
 {
     /**
-     * Line each row starts on, plus a final entry holding the total height, so
-     * a row's height is always the gap to its successor.
+     * Include the total height as the last entry so adjacent offsets give each row's height.
      *
      * @param list<int> $starts
      */
@@ -64,10 +59,7 @@ final readonly class RowExtents
     }
 
     /**
-     * The row drawn on $line, or null past the last one.
-     *
-     * A zero-height row occupies no line, so the search settles on the next row
-     * that does — which is the one actually painted there.
+     * Skip zero-height rows because they occupy no visible line.
      */
     public function rowAtLine(int $line): ?int
     {
@@ -91,10 +83,7 @@ final readonly class RowExtents
     }
 
     /**
-     * The first row that begins at or after $line.
-     *
-     * Containers that treat rows as atomic scroll to a row boundary rather than
-     * clipping the row a raw offset lands inside; this is the row they land on.
+     * Scroll to a row boundary instead of clipping through a row.
      */
     public function firstRowAtOrAfter(int $line): int
     {
@@ -118,9 +107,6 @@ final readonly class RowExtents
         return ScrollWindow::lastOffset($this->totalHeight(), $viewportHeight);
     }
 
-    /**
-     * The smallest scroll adjustment that brings $index into view.
-     */
     public function offsetShowing(int $index, int $viewportHeight, int $currentOffset): int
     {
         return ScrollWindow::showing(

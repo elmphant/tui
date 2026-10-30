@@ -12,13 +12,8 @@ use Elmphant\Tui\Widget\Wrap;
 use WeakMap;
 
 /**
- * Row heights and wrapped cell lines, shared by rendering, hit-testing and
- * scrolling so they cannot disagree.
- *
- * Heights are held for every row, because the scrollbar and the scroll clamp
- * need the total. Wrapped lines are produced per row on demand: only the rows
- * in view are ever drawn, and keeping every cell's lines for a large table
- * costs far more memory than the table itself.
+ * Cache all row heights for scrollbar totals, but wrap cell lines on demand to limit memory use.
+ * Share these measurements between rendering, hit-testing and scrolling.
  *
  * @internal
  */
@@ -53,9 +48,6 @@ final readonly class TableLayout
     }
 
     /**
-     * A cell broken at its own line breaks, then between words to fit the column,
-     * or cut with an ellipsis where it does not wrap.
-     *
      * @return list<string>
      */
     public static function cellLines(string $cell, int $width, Wrap $wrap = Wrap::WordWrap): array
@@ -74,8 +66,6 @@ final readonly class TableLayout
     }
 
     /**
-     * Wrapped lines for one row, indexed by column.
-     *
      * @param list<int>  $columnWidths
      * @param list<Wrap> $wraps
      *
@@ -93,9 +83,6 @@ final readonly class TableLayout
     }
 
     /**
-     * A spanning row's label wrapped to the whole table, which is the width it
-     * is drawn across.
-     *
      * @return list<string>
      */
     public static function spanningLines(int $spanWidth, Row $row): array
@@ -108,18 +95,11 @@ final readonly class TableLayout
         return $this->heights[$row] ?? 1;
     }
 
-    /**
-     * The line a row starts on, so a scrollbar counting wrapped lines can say
-     * where among them the reader is.
-     */
     public function lineOf(int $row): int
     {
         return $this->extents->startOf($row);
     }
 
-    /**
-     * Which row covers the given line of the viewport, counting from the first visible row.
-     */
     public function rowAtLine(int $firstRow, int $line): ?int
     {
         return $this->extents->rowAtLine($this->lineOf($firstRow) + $line);
@@ -130,9 +110,6 @@ final readonly class TableLayout
         return $this->extents->firstRowAtOrAfter($line);
     }
 
-    /**
-     * The furthest a table can scroll and still fill its viewport with its last rows.
-     */
     public function maxOffset(int $viewportHeight): int
     {
         $offset = count($this->heights);
@@ -153,10 +130,7 @@ final readonly class TableLayout
     }
 
     /**
-     * A host that rebuilds its table every frame hands back the same Row
-     * objects, and a Row cannot change, so its height at given widths is
-     * remembered. Two layouts are kept per row: the full width and the one
-     * beside a scrollbar.
+     * Cache two layouts per immutable Row: full width and width beside a scrollbar.
      *
      * @param list<int>  $columnWidths
      * @param list<Wrap> $wraps
@@ -205,8 +179,7 @@ final readonly class TableLayout
                 continue;
             }
 
-            // Wrapping is the expensive part and most cells do not need it, so
-            // ask how wide the text is before asking where to break it.
+            // Check width before wrapping because most cells already fit.
             if ($width <= 0 || (!str_contains($text, "\n") && CharWidth::stringWidth($text) <= $width)) {
                 continue;
             }

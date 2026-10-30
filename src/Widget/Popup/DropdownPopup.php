@@ -121,10 +121,7 @@ final readonly class DropdownPopup implements PopupFrame, Widget
     }
 
     /**
-     * Width first, then the height that width implies. Content the cap has to
-     * cut short needs a column for a scrollbar, which is asked for the same way
-     * as any other content column: a popup already wider than its content finds
-     * the column in the slack it has, and only one that does not grows.
+     * Resolve width before height; add a scrollbar column only if content is clipped and existing spare width cannot hold it.
      *
      * @return array{0: int, 1: int}
      */

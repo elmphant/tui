@@ -9,10 +9,7 @@ final class TextWrap
     private const ELLIPSIS = '…';
 
     /**
-     * Break text into lines no wider than $maxWidth, on word boundaries.
-     *
-     * A word wider than the column is split across lines, because leaving it
-     * whole would overflow whatever it is drawn into.
+     * Wrap at word boundaries; split oversized words so they cannot overflow the column.
      *
      * @return list<string> always at least one line
      */
@@ -49,8 +46,7 @@ final class TextWrap
                 foreach (Grapheme::split($word) as $grapheme) {
                     $width = CharWidth::graphemeWidth($grapheme);
 
-                    // A grapheme wider than the whole column fits nowhere. Drawing it
-                    // anyway paints over the neighbour, so it is marked as cut.
+                    // Mark graphemes wider than the column as cut so they cannot draw over a neighbour.
                     if ($width > $maxWidth) {
                         if ($head !== '') {
                             $lines[] = $head;
@@ -88,10 +84,7 @@ final class TextWrap
     }
 
     /**
-     * Truncate to $maxWidth, marking the cut with an ellipsis.
-     *
-     * Text that simply stops at the edge reads as a rendering fault; the marker
-     * says "there is more" — use this wherever content may exceed its column.
+     * Use an ellipsis to distinguish truncated text from a rendering error.
      */
     public static function ellipsize(string $text, int $maxWidth): string
     {

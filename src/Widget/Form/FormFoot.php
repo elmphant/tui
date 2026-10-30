@@ -20,9 +20,6 @@ final readonly class FormFoot implements MeasureHeight, Widget
 {
     public const BUTTON_HEIGHT = 3;
 
-    /**
-     * The text starts on the button's label row, not its top border.
-     */
     private const LABEL_ROW = 1;
     private const GAP_TO_BUTTON = 2;
 

@@ -17,9 +17,7 @@ final readonly class Constraint
         public ?int $basis = null,
         public int $shrink = 1,
         /**
-         * Whether a null basis means "ask the child how big it wants to be" rather
-         * than "start at the floor". Only Constraint::content() asks, so a bare
-         * constraint keeps starting at nothing.
+         * A null basis measures content only for Constraint::content(); otherwise it starts at the minimum.
          */
         public bool $measuresContent = false,
     ) {
@@ -55,8 +53,7 @@ final readonly class Constraint
     }
 
     /**
-     * Grows to fill, but never past `$size`. Carries a weight because a
-     * ceiling with no growth would pin the child at nothing.
+     * Grow up to `$size`; without growth, a maximum alone would leave the size at zero.
      */
     public static function max(int $size): self
     {
@@ -73,9 +70,7 @@ final readonly class Constraint
     }
 
     /**
-     * The size the content wants, before any sharing out. A null basis starts at
-     * the floor unless the constraint came from content(), which asks the child:
-     * rows measure themselves, columns say how wide they want to be.
+     * A null basis starts at the minimum, except content(), which measures child height or declared width.
      */
     public function withBasis(int $basis): self
     {
@@ -83,9 +78,7 @@ final readonly class Constraint
     }
 
     /**
-     * As tall or wide as what the child holds, and no further. Down a column that
-     * is what the child measures, across a row it is the width the child declares;
-     * a child that can answer neither has no content to go by and stays at nothing.
+     * Use measured height or declared width; children that provide neither have zero content size.
      */
     public static function content(): self
     {
@@ -103,9 +96,6 @@ final readonly class Constraint
             : new self(flex: $weight);
     }
 
-    /**
-     * The size the content wants, before anything is shared out.
-     */
     public function intrinsic(): int
     {
         return $this->basis ?? $this->min;
@@ -128,12 +118,8 @@ final readonly class Constraint
     }
 
     /**
-     * Every floor is reserved first, what is left is shared by weight and
-     * clamped to each ceiling, and the cells integer division leaves over go to
-     * the rearmost weighted entries that still have room below their ceiling.
-     *
-     * Declared floors can ask for more than there is, so the sizes can sum to
-     * more than $available; keeping the result inside an area is the caller's.
+     * Reserve minimums, share the remainder by weight up to each maximum, then give leftover cells to the last eligible entries.
+     * Minimums may exceed $available; callers must clip the result.
      *
      * @param list<self> $constraints
      *

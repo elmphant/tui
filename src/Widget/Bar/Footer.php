@@ -90,18 +90,13 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
     }
 
     /**
-     * The right slot gives way first: beside a left slot that grows, the footer
-     * draws the first of these forms, longest to shortest, that leaves the left
-     * slot all it wants, and none of them when even the shortest would not.
+     * Choose the longest right-slot form that leaves room for the left slot; hide it if none fits.
      */
     public function withRight(Widget $widget, Widget ...$shorter): self
     {
         return $this->cloneWith(rightSlot: $widget, shorterRight: array_values($shorter));
     }
 
-    /**
-     * The slot a host routing keys by hand sends them to.
-     */
     public function withMarkedSlot(?Alignment $slot): self
     {
         return $this->cloneWith(markedSlot: $slot);
@@ -164,9 +159,7 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
     }
 
     /**
-     * Where the right slot is drawn, in whichever form fits beside these hints of
-     * whatever holds the keyboard; null where it has given way. For a host that
-     * hit-tests the slot itself.
+     * Return the right slot's actual placement for hit-testing, or null if it was hidden to make room.
      *
      * @param array<string, string> $focusedHints
      */
@@ -259,10 +252,6 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
         ];
     }
 
-    /**
-     * A left slot that grows takes the row up to the right slot, unless a centre
-     * slot needs the middle.
-     */
     private function leftRect(Rect $contentArea, ?Rect $right, ?RenderContext $context = null): ?Rect
     {
         if ($this->leftSlot === null) {

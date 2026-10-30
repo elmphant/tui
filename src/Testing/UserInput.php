@@ -12,15 +12,8 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Text\Grapheme;
 
-/**
- * The messages a reader's keys and pointer produce, for a test that calls
- * update() itself. ModelHarness sends the same ones.
- */
 final class UserInput
 {
-    /**
-     * A key in the spelling Keybindings use: 'tab', 'shift+tab', 'ctrl+r', 'enter'.
-     */
     public static function key(string $pattern): KeyMsg
     {
         $key = KeyPattern::fromString($pattern);
@@ -46,9 +39,6 @@ final class UserInput
         return new MouseMsg($column, $row, MouseAction::Release, MouseButton::Left);
     }
 
-    /**
-     * The pointer moving with the left button held.
-     */
     public static function drag(int $column, int $row): MouseMsg
     {
         return new MouseMsg($column, $row, MouseAction::Motion, MouseButton::Left);
@@ -59,9 +49,6 @@ final class UserInput
         return new PasteMsg($text);
     }
 
-    /**
-     * Notches down, or up where negative.
-     */
     public static function wheel(int $column, int $row, int $notches): MouseMsg
     {
         return new MouseMsg(

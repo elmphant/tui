@@ -19,20 +19,12 @@ use Elmphant\Tui\Widget\Overflow;
 use Elmphant\Tui\Widget\Widget;
 
 /**
- * A bordered table that draws every row, with no cursor and no scrolling.
- *
- * Columns size themselves to their content, so a table sized for someone else's
- * terminal can be redrawn for this one. Renders the whole data set, so keep it
- * for small, known-size data — when the reader needs to navigate rows, or the row
- * count is unbounded, use Table.
+ * Draw all rows without navigation; use Table for scrolling or large datasets.
  */
 final readonly class StaticTable implements Widget, MeasureHeight
 {
     use Cloneable;
 
-    /**
-     * Frame, dividers, and one space either side of every cell.
-     */
     private const OVERHEAD_PER_COLUMN = 3;
 
     private const MIN_COLUMN = 4;
@@ -69,17 +61,13 @@ final readonly class StaticTable implements Widget, MeasureHeight
         return $this->rebuiltWith(border: $border);
     }
 
-    /**
-     * What to do with the columns that do not fit the width given.
-     */
     public function withOverflow(Overflow $overflow): self
     {
         return $this->rebuiltWith(overflow: $overflow);
     }
 
     /**
-     * Size the columns for these rows rather than the ones drawn, so a table
-     * showing a subset keeps the layout of the whole.
+     * Measure against all rows so filtering to a subset does not change column widths.
      *
      * @param list<list<string>> $rows
      */
@@ -88,9 +76,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
         return $this->rebuiltWith(measured: $rows);
     }
 
-    /**
-     * A table of one short column looks like a mistake beside a full-width pane.
-     */
     public function withMinWidth(int $columns): self
     {
         return $this->rebuiltWith(minWidth: $columns);
@@ -114,8 +99,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * What the table drew, which is at most the width it was offered.
-     *
      * @infection-ignore-all every line is the same width, so which line or window is read only changes the cost
      */
     public function drawnWidth(int $width): int
@@ -147,9 +130,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * Every column is grown from the widest cell it holds, so where the table
-     * fits nothing wraps and the lines follow from the row count. Null where the
-     * columns had to be squeezed, since then only drawing knows.
+     * Compute height from row count only when columns fit without wrapping; otherwise return null.
      */
     private function unwrappedLineCount(int $width): ?int
     {
@@ -165,18 +146,13 @@ final readonly class StaticTable implements Widget, MeasureHeight
         return $rules + ($this->headers === [] ? 0 : self::linesOfRow($this->headers)) + $rowLines;
     }
 
-    /**
-     * The memo keys on width alone, so a copy must start without it.
-     */
     private function rebuiltWith(mixed ...$overrides): self
     {
         return $this->cloneWith(...$overrides, memo: new StaticTableMemo());
     }
 
     /**
-     * 32k rows: 10ms to measure, 2ms to key, and view() rebuilds per frame.
-     * Every field the drawing reads belongs in it: the cache outlives the value,
-     * so anything left out lets one table be drawn as another.
+     * Include every rendering field in the cache key; entries outlive table instances.
      *
      * @infection-ignore-all a memo: computing the key again gives the same key
      */
@@ -204,8 +180,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
             $upTo = max(self::SMALLEST_WINDOW, 1 << (int)ceil(log(max(1, $upTo), 2)));
         }
 
-        // A window held from an earlier render answers a smaller one, never a
-        // larger one and never a question about the whole table.
+        // Reuse a cached window only for smaller windows, never for the whole table.
         $memo = $this->memo;
         if ($memo->builtFor === $width
             && (null === $memo->builtUpTo || (null !== $upTo && $memo->builtUpTo >= $upTo))
@@ -227,8 +202,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * The columns are still sized from every row — that is what sizing to their
-     * content means — but only the rows $upTo can reach are drawn.
+     * Size columns from all rows, but draw only as far as $upTo requires.
      *
      * @return list<string>
      */
@@ -263,9 +237,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * The columns kept in the table: as many as fit at their natural width,
-     * cheapest first, with the leading column always among them. Everything else
-     * moves under its row as a labelled line.
+     * Keep the first column and as many narrow columns as fit; move the rest to labelled detail lines.
      *
      * @param list<int> $demands
      *
@@ -324,9 +296,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * One field per line inside a single cell, each cut to the column rather
-     * than wrapped: a wrapped value would push the ones below it out of line
-     * with their labels in the header.
+     * Truncate each field to one line so values stay aligned with their header labels.
      *
      * @param list<string> $values
      */
@@ -353,8 +323,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * The table spans the pane once some of its columns moved out of it: the
-     * detail lines are the ones that need the room.
+     * Fill the pane when overflow creates detail lines that need the extra width.
      *
      * @param list<int> $widths
      * @param list<int> $wants
@@ -381,8 +350,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * Columns left over once every given column has its width.
-     *
      * @param array<int, int> $widths
      */
     private static function spaceFor(array $widths, int $width): int
@@ -413,9 +380,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * The width each column would take unwrapped, never below what its header
-     * needs.
-     *
      * @infection-ignore-all a memo over measuring(): measuring again gives the same widths
      *
      * @return list<int>
@@ -477,8 +441,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * A single outlying value must not decide the layout: past its share of the
-     * table a column stops asking, and that one value breaks mid-word instead.
+     * Cap each column's minimum share so one long value cannot dictate the entire layout.
      *
      * @param list<int> $floors
      *
@@ -492,9 +455,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * The narrowest each column can be without a word of it splitting: what it
-     * gives up first when the table has to shrink.
-     *
      * @return list<int>
      */
     private function wordFloors(): array
@@ -513,9 +473,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * The last resort: not even one column fits at its natural width, so every
-     * column takes an equal share and the content wraps.
-     *
      * @return list<int>
      */
     private function sharedWidths(int $width): array
@@ -524,11 +481,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
         $floors = $this->columnFloors($count);
         $budget = $width - ($count * self::OVERHEAD_PER_COLUMN + 1);
 
-        // Past this point the floors are what a reader would like, not what there
-        // is: handing them back would draw a table wider than the pane, losing the
-        // side of its frame. An even share of what is left keeps it whole — down
-        // to a column apiece, below which there is no table to draw and the area
-        // cuts off whatever is attempted.
+        // If minimums cannot fit, share available space evenly to keep the frame within the pane; clip below one cell per column.
         if ($budget < array_sum($floors)) {
             return $budget < $count ? $floors : self::spread($budget, $count);
         }
@@ -551,9 +504,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * $budget columns over $count columns, the remainder going to the leftmost,
-     * so the sum is exactly the budget.
-     *
      * @return list<int>
      */
     private static function spread(int $budget, int $count): array
@@ -570,9 +520,6 @@ final readonly class StaticTable implements Widget, MeasureHeight
     }
 
     /**
-     * A column never falls below the longest word of its own title: a header may
-     * break where it has a space, but a word cut in half is unreadable.
-     *
      * @return list<int>
      */
     private function columnFloors(int $count): array

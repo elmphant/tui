@@ -9,10 +9,7 @@ use Elmphant\Tui\Widget\Widget;
 use WeakMap;
 
 /**
- * Memoizes the pure view tree for one immutable App value.
- *
- * The same node objects are shared by rendering, layout resolution, component
- * discovery, focus, and message routing. Entries die with their App via WeakMap.
+ * Share one cached tree across rendering, layout, discovery and routing; WeakMap releases it with its App.
  *
  * @internal
  */

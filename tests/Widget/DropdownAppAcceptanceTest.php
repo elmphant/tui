@@ -24,8 +24,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 /**
- * The same C1 damage one layer up: an App broadcasting a click would hand it
- * to the sibling drawn beneath the popup.
+ * A click on a popup must not reach the sibling underneath it.
  */
 final class DropdownAppAcceptanceTest extends TestCase
 {

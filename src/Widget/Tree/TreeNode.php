@@ -14,22 +14,13 @@ interface TreeNode
 
     public function label(): string;
 
-    /**
-     * The second column — a size, a type, a value. Empty where there is none.
-     */
     public function detail(): string;
 
-    /**
-     * Whether a twisty is drawn, asked before the children are known.
-     */
     public function isExpandable(): bool;
 
     /**
-     * The children, or null where they are not loaded yet.
-     *
-     * An empty array means expandable-but-empty. Null makes the widget draw a
-     * pending row and name itself in pendingExpansions(), so a node that has to
-     * go and look answers later.
+     * Null means children are not loaded: show a pending row and include the node in pendingExpansions().
+     * An empty list means loaded but empty.
      *
      * @return list<TreeNode>|null
      */

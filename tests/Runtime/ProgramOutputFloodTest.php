@@ -35,7 +35,7 @@ final class ProgramOutputFloodTest extends TestCase
 
         self::assertNotNull($handledWhenTyped);
         self::assertNotNull(FloodedModel::$handledBeforeTheKey, 'the watchdog ended the run, not the key');
-        // The key waits behind one batch of output at most, 64 messages. A queue that starves input handled thousands first.
+        // Bound queued output so a key waits behind at most one batch of 64 messages.
         self::assertLessThan(1_024, FloodedModel::$handledBeforeTheKey - $handledWhenTyped);
     }
 }

@@ -27,8 +27,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A pointer moves the keyboard the same way a key does, so it asks the runtime rather
- * than editing a flag — a click and a key have to agree on who holds it.
+ * Pointer focus uses runtime commands so clicks and keys agree on the focused component.
  */
 final class PointerFocusTest extends TestCase
 {
@@ -45,9 +44,6 @@ final class PointerFocusTest extends TestCase
         self::assertEquals(Cmd::focus(ComponentId::named('first')), $clicked->command);
     }
 
-    /**
-     * Wheeling through a form is reading, not choosing a field.
-     */
     #[Test]
     public function aWheelOverAFieldThatIgnoresItLeavesTheKeyboardWhereItWas(): void
     {
@@ -84,10 +80,6 @@ final class PointerFocusTest extends TestCase
         self::assertNull($turned->command, 'a click on empty space means "not here"; a wheel there means nothing');
     }
 
-    /**
-     * Which panes the keyboard may reach is the tree's answer, not a question about
-     * what each widget implements. A pane its host draws is one of them.
-     */
     #[Test]
     public function aClickOnAPlainPaneAsksForTheKeyboard(): void
     {

@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget;
 
 /**
- * A widget that names the keys it answers, so a footer can carry them instead of
- * repeating a copy that outlives the binding it came from.
+ * Derive hints from active bindings so footers cannot retain stale key labels.
  */
 interface PublishesHints extends Widget
 {

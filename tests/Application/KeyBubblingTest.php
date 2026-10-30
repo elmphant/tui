@@ -26,10 +26,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A pane that scrolls holds its own children, and once one of them takes the
- * keyboard the pane is no longer where keys arrive. A key the child does not
- * answer is the pane's, or nothing could scroll a form while a field is being
- * filled in.
+ * Bubble unhandled child keys to the pane so a form can scroll while a field has focus.
  */
 final class KeyBubblingTest extends TestCase
 {
@@ -71,8 +68,7 @@ final class KeyBubblingTest extends TestCase
 }
 
 /**
- * Interactive but not Focusable: it writes back, so the keyboard never stops on
- * it, which is exactly the case a scrolling pane of fields is.
+ * Interactive but not Focusable: receives updates without adding a tab stop, like a scrolling pane of fields.
  */
 final readonly class ScrollingPane implements Interactive, WidgetContainer
 {
@@ -133,8 +129,7 @@ final readonly class ScrollingPane implements Interactive, WidgetContainer
 }
 
 /**
- * Beside the pane rather than around it, so a key it ever answers is a key that
- * went somewhere it had no business going.
+ * A sibling must never receive keys that belong to the focused pane.
  */
 final readonly class Bystander implements Interactive
 {

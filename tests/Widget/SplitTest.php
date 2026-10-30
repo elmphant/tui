@@ -157,7 +157,6 @@ final class SplitTest extends TestCase
         $area = Rect::fromSize(21, 10);
         $split = Split::row(SplitState::even(2), Text::new('left'), Text::new('right'));
 
-        // The divider sits at column 10; take hold of it and pull it right.
         $dragged = $this->drag($split, $area, from: 10, to: 14);
 
         self::assertSame([14, 6], $this->paneWidths($dragged, $area));
@@ -180,7 +179,6 @@ final class SplitTest extends TestCase
         $area = Rect::fromSize(32, 10);
         $split = Split::row(SplitState::even(3), Text::new('a'), Text::new('b'), Text::new('c'));
 
-        // Three panes of ten in 32 columns put the second divider at column 21.
         $dragged = $this->drag($split, $area, from: 21, to: 26);
 
         self::assertSame([10, 15, 5], $this->paneWidths($dragged, $area));
@@ -321,9 +319,7 @@ final class SplitTest extends TestCase
     {
         $area = Rect::fromSize(21, 10);
 
-        // Spreading a string-keyed array into a variadic is legal PHP: the keys
-        // arrive as named arguments, and positional indexing needs them dropped
-        // while the order they were written in stays.
+        // Normalize string-keyed variadic arguments to positional indices while preserving order.
         $split = Split::row(SplitState::even(2), ...['b' => Text::new('left'), 'a' => Text::new('right')])
             ->withMinimums(...['left' => 8, 'right' => 6]);
 
@@ -572,8 +568,6 @@ final class SplitTest extends TestCase
         $pressed = $split->update(new MouseMsg(10, 0, MouseAction::Press, MouseButton::Left), $area)->model;
         self::assertInstanceOf(Split::class, $pressed);
 
-        // What an application does between two messages: keep the state, throw
-        // the widget away and build it again on the next view.
         $rebuilt = Split::row($pressed->state(), Text::new('left'), Text::new('right'));
         $moved = $rebuilt->update(new MouseMsg(14, 0, MouseAction::Motion, MouseButton::Left), $area)->model;
         self::assertInstanceOf(Split::class, $moved);
@@ -607,8 +601,7 @@ final class SplitTest extends TestCase
      * @return list<int>
      */
     /**
-     * A press is a fresh grip, so a drag whose release went to a layer above must not
-     * go on resizing on the next unrelated drag.
+     * A new press must clear a stale drag whose release was consumed by another input layer.
      */
     #[Test]
     public function aPressEndsADragWhoseReleaseNeverArrived(): void
@@ -624,10 +617,6 @@ final class SplitTest extends TestCase
         self::assertSame(SplitState::even(2)->shares, $dragged->state()->shares);
     }
 
-    /**
-     * Squeezed, the panes give ground from whatever sits above its floor, so one
-     * already at its floor keeps it.
-     */
     #[Test]
     public function thePaneWithRoomGivesGroundAndTheOneAtItsFloorKeepsIt(): void
     {
@@ -642,8 +631,7 @@ final class SplitTest extends TestCase
     }
 
     /**
-     * Equal shares of an odd number of columns cannot come out even, and whatever is
-     * left over has to land somewhere or a column of the terminal stays blank.
+     * Assign rounding leftovers so equal pane shares still fill an odd-width area.
      */
     #[Test]
     public function theColumnThatWillNotDivideGoesToTheLastPane(): void

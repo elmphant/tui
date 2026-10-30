@@ -8,11 +8,7 @@ use Closure;
 use Elmphant\Tui\Support\Cloneable;
 
 /**
- * Which component the keyboard reaches, or nobody. One field, so two can never
- * claim it.
- *
- * The runtime owns it and hands it to update(); an app moves it with a command
- * rather than writing to it.
+ * The runtime owns focus and passes it to update(); apps request changes with commands.
  */
 final readonly class FocusState
 {
@@ -33,8 +29,7 @@ final readonly class FocusState
     }
 
     /**
-     * Nobody holds the keyboard, and that is an answer rather than a gap the
-     * runtime should fill.
+     * Explicitly unfocused: the runtime must not choose a component.
      */
     public static function nowhere(): self
     {
@@ -47,8 +42,7 @@ final readonly class FocusState
     }
 
     /**
-     * Whether anything has said where the keyboard is yet. `nowhere()` is an
-     * answer; this is the absence of one.
+     * Undecided differs from nowhere(): the runtime still needs to choose focus.
      */
     public function isUndecided(): bool
     {
@@ -56,8 +50,7 @@ final readonly class FocusState
     }
 
     /**
-     * Naming the same component is not the same state: undecided and nowhere both
-     * name none, and settling the one is what stops the runtime filling the other.
+     * Undecided and nowhere both lack an ID, but only undecided allows automatic focus.
      */
     public function sameAs(self $other): bool
     {
@@ -66,16 +59,8 @@ final readonly class FocusState
     }
 
     /**
-     * The keyboard lands somewhere whenever there is anywhere for it to land, so
-     * nothing focused means nothing focusable — never a component that left.
-     *
-     * Whether it may stay is asked of everything it can reach. When it may not, it
-     * goes to the nearest stop around it, else into the nearest container it sat
-     * inside that is still there (a closed tab of mounts: the next tab), else back to
-     * the last stop it held that is still there (a modal closed), else the first place
-     * tab stops — inside it, when it is a strip with stops of its own. A pointer-only
-     * pane is in the first list and not the second, so a press seats the keyboard
-     * there and tab still walks past.
+     * Keep focus if reachable; otherwise try a nearby stop, a surviving ancestor, the previous stop, then the first stop.
+     * Reachable components include pointer-only panes; tab order does not.
      *
      * @param list<ComponentId>                              $order     where tab stops, in tree order
      * @param list<ComponentId>                              $reachable everywhere the keyboard may be; defaults to $order
@@ -200,8 +185,7 @@ final readonly class FocusState
      */
     private function movedBy(int $step, array $order): self
     {
-        // Nowhere to go, so nothing moves. Clearing it would leave the state
-        // undecided, and a frame drawn on that has no answer to give.
+        // Keep the current state when there is nowhere to move; clearing it would make focus undecided.
         if ($order === []) {
             return $this;
         }

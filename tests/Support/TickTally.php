@@ -14,10 +14,6 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Widget\Interactive;
 
-/**
- * Test double: an interactive widget that changes state on every TickMsg,
- * for asserting that containers forward messages to their children.
- */
 final readonly class TickTally implements Interactive
 {
     public function __construct(public int $ticks = 0)

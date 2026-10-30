@@ -28,9 +28,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     private array $children;
 
     /**
-     * How a slot is sized where the parent knows better than the child. Keyed by
-     * position and only ever written by add(), which appends the pair together,
-     * so a constraint cannot come to describe a different child.
+     * Store each override with its child in add() so constraints cannot shift to another child.
      *
      * @var array<int, Constraint>
      */
@@ -50,10 +48,6 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         $this->slotConstraints = $slotConstraints;
     }
 
-    /**
-     * A child, and how much of the axis it should be given — the say a parent has
-     * without reaching into the child to change what it asks for.
-     */
     public function add(Widget $child, ?Constraint $constraint = null): self
     {
         $slots = $this->slotConstraints;
@@ -65,10 +59,6 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         return new self(direction: $this->direction, children: [...$this->children, $child], slotConstraints: $slots, gap: $this->gap);
     }
 
-    /**
-     * Empty cells between neighbouring children; it narrows when the area cannot
-     * hold it, before any child is squeezed.
-     */
     public function withGap(int $gap): self
     {
         if ($gap < 0) {
@@ -107,9 +97,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         foreach ($this->children as $index => $child) {
             $rows = $child->sizing()->rows;
             $childHeight = $child instanceof MeasureHeight
-                // A measurement says what the content wants, not what the child
-                // will be given: the allocator still holds it to its own bounds,
-                // so measuring past them would report rows nothing can occupy.
+                // Clamp measured demand to the child's limits so reported height cannot include unusable rows.
                 ? min(max($child->measureHeight($isVertical ? $width : $columnWidths[$index]), $rows->min), $rows->max)
                 : $this->constraintHeight($rows);
 
@@ -175,12 +163,8 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     }
 
     /**
-     * Declared minimums can ask for more than the area holds, so these sizes can
-     * sum to more than $totalSpace. It is computeChildRects() that cuts the
-     * surplus, so no child is given a rect outside the area.
-     *
-     * $acrossExtent is the other axis; without it a content-sized child cannot
-     * be measured and only its declared minimum counts.
+     * Sizes may exceed $totalSpace; computeChildRects() clips them to the container.
+     * Without $acrossExtent, content-sized children use their minimum because they cannot be measured.
      *
      * @return list<int>
      */

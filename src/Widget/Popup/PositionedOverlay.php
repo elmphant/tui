@@ -15,10 +15,7 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
- * A Widget that renders its content at an absolute (x, y) within the given area.
- *
- * Useful for drag ghosts, tooltips, popovers — anything that should float on top
- * of normal layout at a specific position rather than flow with parent layout.
+ * Draw content at a fixed (x, y) within the area, such as a tooltip or drag preview.
  */
 final readonly class PositionedOverlay implements Widget, WidgetContainer
 {

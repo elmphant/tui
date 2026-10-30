@@ -10,9 +10,6 @@ use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Widget;
 use SplObjectStorage;
 
-/**
- * Where the components of a tree landed, read from the plan that draws it.
- */
 final readonly class Geometry
 {
     private function __construct(
@@ -35,7 +32,7 @@ final readonly class Geometry
     }
 
     /**
-     * A component by its id, or a plain widget by the very instance the tree holds.
+     * Find components by ID and plain widgets by object identity.
      */
     public function rectOf(ComponentId|string|Widget $target): ?Rect
     {
@@ -51,8 +48,7 @@ final readonly class Geometry
     }
 
     /**
-     * The innermost component the pointer can reach at that cell; a pane scrolled
-     * out of view cannot be under it.
+     * Hit-test the innermost visible component; scrolled-out panes cannot receive clicks.
      */
     public function componentAt(int $x, int $y): ?ComponentId
     {
@@ -70,7 +66,7 @@ final readonly class Geometry
     }
 
     /**
-     * A component a pane grafts is not itself in the tree; its widget is.
+     * Grafted components are absent from the tree; look up their widgets instead.
      *
      * @param Component<\Elmphant\Tui\Widget\Interactive> $component
      * @param SplObjectStorage<Widget, Rect>              $rects

@@ -13,10 +13,6 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
 
-/**
- * One named field of a Form: what it is called, what it is for, and the widget
- * the reader fills it in through. What it holds is asked of that widget.
- */
 final readonly class Field
 {
     use Cloneable;
@@ -50,10 +46,6 @@ final readonly class Field
         return new self($name, $label, $description, ChoiceField::new($options));
     }
 
-    /**
-     * On or off. The box carries the label, so the row above it carries only the
-     * description.
-     */
     public static function flag(string $name, string $label, string $description = ''): self
     {
         return new self($name, $label, $description, Checkbox::new($label), labelledByItsWidget: true);
@@ -70,8 +62,7 @@ final readonly class Field
     }
 
     /**
-     * A check on what the field holds, answering the problem told under it or null.
-     * An empty field is left to required().
+     * Return an error message or null; required() handles empty values.
      *
      * @param Closure(string|bool|list<string>):?string $rule
      */
@@ -80,9 +71,6 @@ final readonly class Field
         return $this->cloneWith(rules: [...$this->rules, $rule]);
     }
 
-    /**
-     * Typed in as dots: only a text field has anything to hide.
-     */
     public function secret(): self
     {
         return $this->widget instanceof TextInput

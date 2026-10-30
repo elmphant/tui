@@ -16,8 +16,7 @@ use PHPStan\Type\Type;
 use PHPStan\Type\TypeCombinator;
 
 /**
- * Discovery and focus reach a child through WidgetContainer. A widget that
- * renders one it never exposes leaves anything bound inside it unreachable.
+ * Expose rendered children through WidgetContainer so discovery and focus can reach them.
  *
  * @implements Rule<ClassPropertyNode>
  */

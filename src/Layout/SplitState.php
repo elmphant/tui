@@ -7,9 +7,6 @@ namespace Elmphant\Tui\Layout;
 use Elmphant\Tui\Support\Cloneable;
 use InvalidArgumentException;
 
-/**
- * How a Split divides its area, as permille of the axis.
- */
 final readonly class SplitState
 {
     use Cloneable;
@@ -48,9 +45,6 @@ final readonly class SplitState
         return new self($shares);
     }
 
-    /**
-     * Whatever a host stored, or an even division when it stored nonsense.
-     */
     public static function fromArray(mixed $shares, int $panes): self
     {
         if (!is_array($shares) || count($shares) !== $panes) {
@@ -76,9 +70,6 @@ final readonly class SplitState
         return $this->shares;
     }
 
-    /**
-     * The pair either side of a divider, sharing the space it had in a new ratio.
-     */
     public function withPairDividedAt(int $divider, int $first, int $pairTotal): self
     {
         if ($pairTotal <= 0 || !isset($this->shares[$divider], $this->shares[$divider + 1])) {

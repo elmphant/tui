@@ -13,8 +13,7 @@ use Throwable;
 final class Screen
 {
     /**
-     * Blended and pulsing colours mint fresh values every frame, so the colour
-     * caches have no natural bound: past this many entries they start over.
+     * Animated colours can grow these caches indefinitely, so clear them at this limit.
      */
     private const COLOR_CACHE_LIMIT = 4096;
 
@@ -42,8 +41,7 @@ final class Screen
     private array $attributeSgrCache = [];
 
     /**
-     * Cursor state the terminal was last told about, so an unchanged frame
-     * writes nothing at all. Null until the first frame asserts it.
+     * Track the cursor state last sent to the terminal so unchanged frames produce no output.
      */
     private ?CursorPosition $lastCursor = null;
 
@@ -116,9 +114,7 @@ final class Screen
     }
 
     /**
-     * Nothing when the caret already has this shape. Writing the sequence again
-     * restarts the blink, so a caret beside anything that repaints — a spinner, a
-     * clock, an arriving log line — would sit steady and never blink at all.
+     * Repeating the cursor-shape sequence restarts blinking, so send it only when the shape changes.
      */
     private function shapeChangeTo(CursorShape $shape): string
     {
@@ -158,10 +154,7 @@ final class Screen
     }
 
     /**
-     * The cell arrays are hoisted into locals and compared inline: the diff
-     * touches every cell of a dirty row, and a method call per cell costs more
-     * than the comparison itself. 2.35ms per 200x50 full repaint through calls,
-     * 1.62ms through locals.
+     * Compare local cell arrays inline to avoid a method call for every cell in a dirty row.
      *
      * @return list<string>
      */
@@ -263,8 +256,7 @@ final class Screen
         $output = [];
 
         for ($row = 0; $row < $backBuffer->height; ++$row) {
-            // Every cell is written anyway, but a terminal that reflowed the old screen
-            // on a resize can keep a wide character's remnant under a narrow one (tmux).
+            // Clear remnants of wide characters that terminals such as tmux may leave after resize reflow.
             if ($row === 0) {
                 $output[] = Ansi::HIDE_CURSOR . Ansi::CURSOR_HOME . Ansi::RESET_STYLE . Ansi::ERASE_TO_LINE_END;
             } else {
@@ -322,9 +314,7 @@ final class Screen
     }
 
     /**
-     * A terminal draws a base character narrow and widens it only when U+FE0F
-     * arrives; tmux drops the emoji when the cell it widens into still holds part
-     * of an old wide character. Two spaces first clear both cells.
+     * Clear both cells first: tmux can drop a VS16 emoji if its second cell still holds part of an old wide character.
      */
     private static function cellText(string $character, int $width, int $row, int $column): string
     {
@@ -339,10 +329,7 @@ final class Screen
     }
 
     /**
-     * A wide cluster of several code points, which terminals disagree on: tmux
-     * 3.5a advances four columns for 👩‍👩‍👧‍👦. Placing the cursor after it keeps
-     * the cells behind it in their columns, and the rest of its row is redrawn
-     * over whatever it spilled into.
+     * Terminals disagree on complex emoji width; restore the cursor position and redraw the rest of the row after them.
      */
     private static function isCluster(string $character, int $width): bool
     {

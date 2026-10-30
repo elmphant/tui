@@ -20,9 +20,7 @@ use PHPUnit\Framework\TestCase;
 final class FocusPathTest extends TestCase
 {
     /**
-     * A tree of components drawn with nothing said about the keyboard is a frame no
-     * terminal shows: every field unfocused, and a popup belonging to the focused one
-     * missing. Nowhere is an answer; saying nothing is not.
+     * Component trees require a focus decision; explicitly no focus is valid, but undecided focus is not.
      */
     #[Test]
     public function drawingAComponentNeedsAFocusDecision(): void
@@ -37,9 +35,7 @@ final class FocusPathTest extends TestCase
     }
 
     /**
-     * The runtime hands over what it has. Where the tree offers nothing to focus —
-     * a modal with no field in it, a pane still being built — that is nobody rather
-     * than nothing said, and the frame still has to draw.
+     * Render trees with no focusable components as explicitly unfocused while runtime focus remains undecided.
      */
     #[Test]
     public function aFocusStateStillWaitingForAnAnswerDrawsAsNobody(): void
@@ -54,8 +50,7 @@ final class FocusPathTest extends TestCase
     }
 
     /**
-     * A layout or wording test wants a tree drawn with nobody at the keyboard, and it
-     * has to be sayable in one breath — including across the frame reset.
+     * Layout tests need explicit empty focus that survives frame resets.
      */
     #[Test]
     public function sayingNobodyHoldsTheKeyboardIsEnoughToDrawWith(): void

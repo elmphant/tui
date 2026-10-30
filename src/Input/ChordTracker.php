@@ -7,8 +7,7 @@ namespace Elmphant\Tui\Input;
 use Elmphant\Tui\Message\KeyMsg;
 
 /**
- * The keys of a chord typed so far. Mutable on purpose: it is input state the
- * runtime holds between keystrokes, like a process handle, never part of a model.
+ * Mutable input state owned by the runtime between keystrokes, never by a model.
  *
  * @internal the runtime feeds it; applications bind chords as "g g" in Keybindings
  */
@@ -26,8 +25,7 @@ final class ChordTracker
     }
 
     /**
-     * The keys to handle now, in order: none while a chord is still open, the
-     * completed chord as one key, or the held keys followed by a key that broke them off.
+     * Return no keys while waiting, one completed chord, or the buffered keys followed by the key that broke the chord.
      *
      * @return list<KeyMsg>
      */
@@ -65,8 +63,6 @@ final class ChordTracker
     }
 
     /**
-     * The held keys, once nothing followed them in time; they are handled on their own.
-     *
      * @return list<KeyMsg>
      */
     public function expired(float $now): array

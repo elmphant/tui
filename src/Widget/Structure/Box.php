@@ -74,8 +74,7 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
     }
 
     /**
-     * A box is as tall as what it holds, which only a width can answer — so it
-     * asks to be measured rather than naming a height it cannot know here.
+     * Request measurement because wrapped content height depends on width.
      */
     public function sizing(): Sizing
     {
@@ -120,8 +119,7 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
                 return;
             }
 
-            // Cells and prose wrap, so what a child needs is what it measures at
-            // the width it is given; a row constraint's floor is not that.
+            // Measure at the available width; a row minimum does not account for wrapping.
             $childHeight = $child instanceof MeasureHeight
                 ? max(1, $child->measureHeight($contentArea->width))
                 : max(1, $child->sizing()->rows->min);

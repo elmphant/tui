@@ -28,9 +28,6 @@ final class Options
     }
 
     /**
-     * Null where the value is gone. Options read differently from one another, so
-     * a value that is there names one place and only one.
-     *
      * @param list<string> $options
      */
     public static function placeOf(?string $value, array $options): ?int
@@ -45,8 +42,6 @@ final class Options
     }
 
     /**
-     * Unlike a selection, a cursor always lands inside the list.
-     *
      * @param list<string> $options
      */
     public static function cursorAfter(?string $under, array $options): int

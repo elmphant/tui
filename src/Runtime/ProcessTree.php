@@ -17,7 +17,7 @@ final class ProcessTree
     private const KILL = 9;
 
     /**
-     * Asked while the child still runs: once it is gone, its children belong to init and cannot be found by it.
+     * Find descendants before the process exits; afterwards they are reparented and cannot be found through it.
      *
      * @return list<int>
      */

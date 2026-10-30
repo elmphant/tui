@@ -13,16 +13,12 @@ use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Widget;
 
 /**
- * Resolves vertical child heights for immutable scroll containers.
- *
  * @internal
  */
 final class VerticalStack
 {
     /**
-     * The memo is keyed by the viewport alone, so a caller hands in a new one
-     * whenever the children change. Keying by the children too would cost a walk
-     * of the list on every hit, and a plan asks once per child.
+     * Supply a new cache whenever children change; keys cover only the viewport to avoid walking children on every cache hit.
      *
      * @param KeyedCache<VerticalStackLayout> $memo     one per child list
      * @param list<Widget>                    $children
@@ -82,10 +78,7 @@ final class VerticalStack
             $isFixed = $constraint->min === $constraint->max;
             $hasWidthAwareChildren = $hasWidthAwareChildren || ($child instanceof MeasureHeight && !$isFixed);
 
-            // Measuring before the split, not after it, is what keeps the total
-            // honest: a child grown afterwards spends space the flex siblings
-            // were already given, and the stack reports an overflow it does not
-            // have.
+            // Measure before dividing space, or growing content afterwards would consume space already assigned to flex siblings.
             $bases[] = ContentBasis::of($child, $constraint, Direction::Vertical, $availableWidth);
         }
 
@@ -101,8 +94,7 @@ final class VerticalStack
 
         $heights = Allocator::resolve($policies, $availableHeight)->sizes;
 
-        // A stack that scrolls may overrun its viewport, and a child left at no
-        // rows cannot be scrolled to, so one that wanted to grow keeps a row.
+        // Keep at least one row for growing children so they remain reachable by scrolling.
         foreach ($constraints as $index => $constraint) {
             if ($heights[$index] === 0 && $constraint->flex > 0 && $constraint->max > 0) {
                 $heights[$index] = 1;

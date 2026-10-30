@@ -22,10 +22,6 @@ use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
 
-/**
- * One choice out of several, side by side on a row: the horizontal Radio, as
- * CheckboxRow is the horizontal CheckboxGroup.
- */
 final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
 {
     use Cloneable;
@@ -60,12 +56,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     }
 
     /**
-     * For a choice that may also be none: pressing the option already picked puts
-     * it back down rather than picking it again.
-     *
-     * Off by default, because a row that must answer should not be emptiable by a
-     * stray keystroke. Nothing picked is a state this row can already hold and draw
-     * — this is how a reader reaches it.
+     * Allow selecting the current option to clear it; disabled by default to prevent accidental empty choices.
      */
     public function withClearable(bool $clearable = true): self
     {
@@ -73,10 +64,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     }
 
     /**
-     * A row comes round by default: it is short enough that walking off one end
-     * onto the other is quicker than turning back. Say `wrapping(false)` for a row
-     * whose ends should hold — a form field, where an arrow held down would
-     * otherwise cycle the value forever.
+     * Wrap by default; use wrapping(false) to stop at either end, such as in a form field.
      */
     public function withWrapping(bool $wrapping = true): self
     {
@@ -142,8 +130,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     }
 
     /**
-     * A host holds what was chosen, not where it sat. The cursor goes there too:
-     * the reader is looking at the option that is chosen.
+     * Move the cursor to the selected value too.
      */
     public function withSelectedValue(?string $value): self
     {
@@ -239,11 +226,6 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
         };
     }
 
-    /**
-     * Where an arrow leaves the cursor. It rests at either end, which is what a
-     * row of two or three marks wants: circling back past the last one reads as a
-     * jump rather than a step.
-     */
     private function walked(int $step, int $count): int
     {
         return $this->wrapping
@@ -251,10 +233,6 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
             : max(0, min($count - 1, $this->cursor + $step));
     }
 
-    /**
-     * What a press lands on: the option it went to, or nothing at all when that is
-     * the one already picked and this row may be cleared.
-     */
     private function picking(int $index): ?int
     {
         return $this->clearable && $this->selected === $index ? null : $index;
@@ -275,8 +253,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     }
 
     /**
-     * Every option as it is drawn. Both marks are the same width, so the
-     * columns hold whichever one a redraw puts there.
+     * Keep selected and unselected marks the same width so option columns stay aligned.
      *
      * @return list<string>
      */

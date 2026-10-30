@@ -23,8 +23,7 @@ final class RunningStreamingProcess implements RunningProcess
     use ChildProcessLifecycle;
 
     /**
-     * Symfony reads a pipe for as long as full chunks keep coming, so one read of a flooding child can be megabytes:
-     * a key typed meanwhile would queue behind all of it.
+     * Bound output per pass because Symfony can read megabytes from a flooding child and delay keyboard input.
      */
     private const MESSAGES_PER_TURN = 64;
 
@@ -78,8 +77,7 @@ final class RunningStreamingProcess implements RunningProcess
 
         $this->finished = true;
 
-        // isRunning() reads the pipes into Symfony's own buffer, so a flush the child
-        // made between the drain above and this check is only visible now.
+        // isRunning() also reads pipes, so it may have buffered output after the drain above.
         return [...$messages, ...$this->drainOutput(ending: true), $this->finishedMessage()];
     }
 

@@ -39,9 +39,6 @@ use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
-/**
- * A vertical stack of children in a scrolling viewport.
- */
 final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
 {
     use Cloneable;
@@ -56,8 +53,6 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     private const ALL_THE_WAY = PHP_INT_MAX >> 1;
 
     /**
-     * Reset whenever the children change, kept otherwise.
-     *
      * @var KeyedCache<VerticalStackLayout>
      */
     private KeyedCache $layoutMemo;
@@ -98,9 +93,6 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         return $this->cloneWith(children: $children, layoutMemo: self::newLayoutMemo());
     }
 
-    /**
-     * The rows scrolled past when drawn in $area, a followed child or the end included.
-     */
     public function scrollOffset(Rect $area): int
     {
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $this->children, $area->width, $area->height);
@@ -116,9 +108,6 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         return $this->cloneWith(scrollOffset: max(0, $scrollOffset), scrolledAway: true);
     }
 
-    /**
-     * Keep the given child, or a run of them, in view whatever the offset says.
-     */
     public function withFollowChild(?int $index, int $span = 1): self
     {
         return $this->cloneWith(followChild: $index, followSpan: max(1, $span), scrolledAway: false);
@@ -144,8 +133,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     }
 
     /**
-     * Where the pane holds anything the keyboard can reach, those children are the
-     * stops and the frame around them is not one.
+     * Skip the pane in tab order when its children provide focus stops.
      */
     public function navigation(): Navigation
     {
@@ -172,8 +160,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     }
 
     /**
-     * Scrolling, and nothing else: each child the keyboard can reach is a stop of
-     * its own, so a message meant for one arrives there rather than through here.
+     * Handle scrolling here; input for focusable children reaches their own stops directly.
      */
     public function update(Message $message, Rect $area): UpdateResult
     {
@@ -202,8 +189,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     }
 
     /**
-     * Without the focus marks `children()` applies, so a host can compare what it is
-     * about to hand in against what is already here.
+     * Return original children without focus markers so hosts can compare them before rebuilding.
      *
      * @return list<Widget>
      */
@@ -212,10 +198,6 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         return $this->children;
     }
 
-    /**
-     * Every row its children need, which is more than a viewport may show. A
-     * caller sizing a pane to its content asks this and then decides.
-     */
     public function measureHeight(int $width): int
     {
         if ($width < 1) {
@@ -230,8 +212,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
      */
     public function placedChildren(Rect $area): iterable
     {
-        // Authored, not marked: only drawing knows where the keyboard is, and a
-        // rect held for a marked widget belongs to one the tree may never draw.
+        // Use original child instances for geometry; marked copies may never appear in the rendered tree.
         $children = $this->children;
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $children, $area->width, $area->height);
         $y = $area->y - $this->resolvedOffset($layout, $area->height);
@@ -351,12 +332,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     }
 
     /**
-     * The pane scrolled by the given rows, or null when it is already as far as
-     * it goes.
-     *
-     * It counts from the rows on screen, not from the stored offset: following a
-     * child moves the view without moving that number, so counting from it would
-     * jump away from what the reader is looking at.
+     * Scroll from the visible offset, which may differ from stored state while following a child; return null at the limit.
      */
     private function scrolledBy(int $rows, Rect $area): ?self
     {
@@ -387,10 +363,6 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         return $this->followChild !== null && !$this->scrolledAway;
     }
 
-    /**
-     * The offset actually used: the stored one, unless a followed child would
-     * fall outside the viewport.
-     */
     private function resolvedOffset(VerticalStackLayout $layout, int $viewportHeight): int
     {
         $offset = $layout->clampScrollOffset($this->scrollOffset, $viewportHeight);
@@ -407,7 +379,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         $top = array_sum(array_slice($layout->heights, 0, $first));
         $span = array_sum(array_slice($layout->heights, $first, $this->followSpan));
 
-        // The last child of a span holds the keyboard, so it keeps the rows when the span does not fit.
+        // When a followed span is too tall, prioritize its last child, which holds focus.
         if ($span > $viewportHeight && $this->followSpan > 1) {
             $last = min($first + $this->followSpan, \count($layout->heights)) - 1;
             $top += array_sum(array_slice($layout->heights, $first, $last - $first));
@@ -415,8 +387,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         }
         $child = $this->children[$first] ?? null;
 
-        // A child that knows where its cursor is says so; showing its top would
-        // leave the row the reader is on below the fold whenever it is tall.
+        // Follow the child's cursor rather than its top, or a tall child could leave the cursor off screen.
         if ($this->followSpan === 1 && $child instanceof CursorAware) {
             $top += max(0, min($child->cursorRow(), $span - 1));
             $span = 1;

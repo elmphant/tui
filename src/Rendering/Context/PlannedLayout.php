@@ -6,10 +6,6 @@ namespace Elmphant\Tui\Rendering\Context;
 
 use Elmphant\Tui\Layout\Rect;
 
-/**
- * Geometry resolved before drawing, so a container draws its children where
- * input will find them instead of laying them out a second time.
- */
 interface PlannedLayout
 {
     /**

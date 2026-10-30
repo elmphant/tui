@@ -8,9 +8,6 @@ use Elmphant\Tui\Runtime\Clock;
 use Elmphant\Tui\Runtime\MonotonicClock;
 use RuntimeException;
 
-/**
- * Writes the trace as one JSON object per line, for grepping and totalling.
- */
 final class JsonlTracer implements Tracer
 {
     /**
@@ -34,8 +31,7 @@ final class JsonlTracer implements Tracer
     }
 
     /**
-     * Writes each event as it happens, so `tail -f` follows a running program
-     * and a crash loses nothing — at the cost of a write per event.
+     * Write immediately for live tracing; this costs one write per event.
      */
     public static function live(string $path, Clock $clock = new MonotonicClock()): self
     {
@@ -67,8 +63,7 @@ final class JsonlTracer implements Tracer
     }
 
     /**
-     * A render loop cannot afford a write per event, so the trace is held until
-     * the program stops.
+     * Buffer events until shutdown to avoid a write per event in the render loop.
      */
     public function close(): void
     {

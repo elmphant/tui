@@ -19,9 +19,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 
 /**
- * A sub-model placed inside an App under a name. Its components are known as
- * `name/component`, and answers to what the model or its components ask for come
- * back to the model. So an App can host a model it knows nothing about.
+ * Mount a sub-model under a name: component IDs become `name/component`, and effect results return to that model.
  *
  * @template TModel of Reducer
  */
@@ -54,7 +52,7 @@ final readonly class Mount implements Widget, WidgetContainer
     }
 
     /**
-     * A message a mounted model sends to whatever mounted it, instead of to itself.
+     * Send a message to the parent host instead of back to this mounted model.
      */
     public static function toHost(Message $message): Cmd
     {
@@ -102,9 +100,7 @@ final readonly class Mount implements Widget, WidgetContainer
     }
 
     /**
-     * Marks what the model or its components ask for, so the answer comes back
-     * here. Effect ids and focus targets inside it belong to this mount. An App
-     * that asks for something on the model's behalf marks it the same way.
+     * Scope effect IDs and focus targets to this mount, and route results back to it.
      */
     public function addressed(?Cmd $command): ?Cmd
     {

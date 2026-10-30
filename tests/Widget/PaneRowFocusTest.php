@@ -20,9 +20,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A gutter is deliberately not a focus stop, so a pane cycling its children skips
- * it. It still says which of them the keyboard is on, and the field inside that
- * one has to read the pane's keyboard as its own.
+ * A focus gutter adds no tab stop, but must pass the pane's focus to its wrapped field.
  */
 final class PaneRowFocusTest extends TestCase
 {

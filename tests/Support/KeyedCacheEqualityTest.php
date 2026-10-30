@@ -12,8 +12,7 @@ use stdClass;
 final class KeyedCacheEqualityTest extends TestCase
 {
     /**
-     * What a cache holds must not change what its owner is worth: a widget that
-     * has been measured compares equal to the same widget that has not.
+     * Measuring a widget must not change its equality with an otherwise identical unmeasured widget.
      */
     #[Test]
     public function whatItHoldsDoesNotChangeWhatItIsWorth(): void

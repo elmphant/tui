@@ -7,8 +7,7 @@ namespace Elmphant\Tui\Tests\E2e;
 use RuntimeException;
 
 /**
- * A real terminal for a test: one tmux server of its own, a pane running the
- * app, and what tmux draws read back once it stops changing.
+ * Run an isolated tmux server and read the pane after its output settles.
  */
 final class TmuxScreen
 {
@@ -30,8 +29,7 @@ final class TmuxScreen
     }
 
     /**
-     * The command runs from the project root, and the pane stays open after it
-     * exits so what it left behind can still be read.
+     * Keep the pane open after exit so tests can inspect its final screen.
      */
     public static function running(string $command, int $width = 80, int $height = 24): self
     {
@@ -62,9 +60,6 @@ final class TmuxScreen
         $this->tmux(sprintf('resize-window -t e2e -x %d -y %d', $width, $height));
     }
 
-    /**
-     * What tmux shows once two looks in a row agree, trailing blanks trimmed.
-     */
     public function screen(): string
     {
         $deadline = microtime(true) + self::TIMEOUT_SECONDS;
@@ -97,9 +92,6 @@ final class TmuxScreen
         throw new RuntimeException(sprintf("\"%s\" never appeared:\n%s", $text, $this->capture()));
     }
 
-    /**
-     * A tmux format flag of the pane, such as alternate_on or mouse_any_flag.
-     */
     public function flag(string $name): string
     {
         return trim($this->tmux(sprintf('display -p -t e2e %s', escapeshellarg("#{{$name}}"))));

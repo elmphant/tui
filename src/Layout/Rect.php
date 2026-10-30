@@ -59,10 +59,7 @@ final readonly class Rect
     }
 
     /**
-     * The part of this rect that also lies inside $other.
-     *
-     * Zero width or height where they do not overlap, so callers can treat an
-     * empty result as "nothing to draw" without a separate emptiness test.
+     * Non-overlapping rectangles produce zero width or height.
      */
     public function intersect(self $other): self
     {
@@ -83,8 +80,6 @@ final readonly class Rect
     }
 
     /**
-     * Find the index of the first rect that contains the given point.
-     *
      * @param list<self> $rects
      */
     public static function findContaining(array $rects, int $x, int $y): ?int

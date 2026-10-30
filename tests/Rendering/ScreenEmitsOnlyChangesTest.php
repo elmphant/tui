@@ -11,8 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The whole point of the front buffer, asserted on the bytes rather than on the
- * grid: a frame that says the same thing must cost nothing to say again.
+ * Assert output bytes, since an unchanged grid alone cannot prove that nothing was written.
  */
 final class ScreenEmitsOnlyChangesTest extends TestCase
 {

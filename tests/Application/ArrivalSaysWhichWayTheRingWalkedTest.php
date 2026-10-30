@@ -24,10 +24,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * A component that seats a cursor of its own cannot derive the end it was entered
- * from, so the arrival has to carry it.
- */
 final class ArrivalSaysWhichWayTheRingWalkedTest extends TestCase
 {
     #[Test]

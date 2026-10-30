@@ -47,9 +47,6 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     private const HEADER_AND_A_ROW = 2;
 
-    /**
-     * Actions the table takes; every other key is typing and belongs to the field.
-     */
     private const TABLE_ACTIONS = [
         Actions::CURSOR_UP,
         Actions::CURSOR_DOWN,
@@ -90,8 +87,6 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     }
 
     /**
-     * The cursor and the selection stay on the rows they were on, matched by Row::key().
-     *
      * @param list<Row> $rows
      */
     public function withRows(array $rows): self
@@ -134,9 +129,6 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         return count($this->matchingIndexes()) . ' of ' . count($this->rows);
     }
 
-    /**
-     * The cursor row's index in the rows handed in, not in what the filter kept.
-     */
     public function sourceIndex(): ?int
     {
         return $this->matchingIndexes()[$this->table->cursor()] ?? null;
@@ -179,10 +171,6 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
             && $this->cursorRow()?->selectable === true;
     }
 
-    /**
-     * Only the keys the table navigates with: `space` and Home/End stay with the
-     * field, where they type and move the caret.
-     */
     public static function defaultKeybindings(): Keybindings
     {
         return (new Keybindings([

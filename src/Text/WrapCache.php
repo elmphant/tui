@@ -7,16 +7,14 @@ namespace Elmphant\Tui\Text;
 use Closure;
 
 /**
- * Wrapped text kept by content, so a widget rebuilt each frame does not re-wrap.
- *
- * Measured on a 50 KB line: wrapping 10 ms, keying it 0.02 ms.
+ * Cache wrapped text by content so rebuilding widgets does not repeat wrapping.
  *
  * @internal
  */
 final class WrapCache
 {
     /**
-     * Bounded by rows, not entries: 85 children × 2 widths thrashed a 128-entry budget.
+     * Bound by row count so many short entries at multiple widths do not evict each other too soon.
      */
     private const ROWS = 50_000;
 
@@ -54,9 +52,6 @@ final class WrapCache
         return $wrapped;
     }
 
-    /**
-     * How many wraps ran since the last clear, so a caller can show it never re-wraps.
-     */
     public static function wraps(): int
     {
         return self::$wraps;

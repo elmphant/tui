@@ -48,8 +48,7 @@ final readonly class ProcessCmd extends Cmd implements NamesItsEffect
     }
 
     /**
-     * Each ProcessOutputMsg then holds whole lines, whatever the pipe reads cut; a
-     * last line with no newline arrives when the child ends. Chunk bytes no longer apply.
+     * Emit complete lines, including a final line without a newline when the process ends; chunk size no longer applies.
      */
     public function withLineFraming(bool $framesLines = true): self
     {

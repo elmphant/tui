@@ -11,10 +11,7 @@ use PHPUnit\Framework\TestCase;
 final class TickerRecordTest extends TestCase
 {
     /**
-     * Counting from the moment it happened to fire keeps whatever lateness the loop
-     * had and adds to it every time, so a clock built on it runs slow for ever. A
-     * stall longer than the interval skips the periods nobody saw instead of firing a
-     * burst to catch up.
+     * Schedule from deadlines to avoid cumulative drift, and skip missed periods instead of replaying a burst.
      */
     #[Test]
     public function theNextDeadlineFollowsTheLastOneRatherThanTheClock(): void

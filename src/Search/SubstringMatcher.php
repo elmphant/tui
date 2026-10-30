@@ -10,8 +10,7 @@ final readonly class SubstringMatcher implements Matcher
     {
         $words = self::wordsIn($query);
 
-        // An ASCII word is found byte by byte inside UTF-8 just as well, at a tenth
-        // of the cost; only folds like the Kelvin sign to "k" are lost.
+        // ASCII byte search is faster in UTF-8 text, but misses Unicode case folds such as the Kelvin sign to `k`.
         $ascii = array_filter($words, static fn (string $word): bool => preg_match('/^[\x00-\x7F]*$/', $word) === 1);
         $other = array_diff_key($words, $ascii);
 

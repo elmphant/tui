@@ -13,8 +13,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The diff renderer emits nothing for a screen that did not change, so the
- * cursor must not undo that by re-asserting its state every frame.
+ * Cursor output must not turn an unchanged frame into a terminal write.
  */
 final class ScreenCursorEmissionTest extends TestCase
 {
@@ -58,8 +57,7 @@ final class ScreenCursorEmissionTest extends TestCase
     }
 
     /**
-     * Writing cells walks the terminal's own cursor to the end of the last run,
-     * so a frame that drew anything has to put it back.
+     * Drawing moves the terminal cursor, so restore it after any cell writes.
      */
     #[Test]
     public function aFrameThatDrewSomethingPutsTheCursorBack(): void

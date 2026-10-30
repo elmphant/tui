@@ -46,9 +46,6 @@ final class ProgramFocusTest extends TestCase
         self::assertSame('x', $final->second->value());
     }
 
-    /**
-     * An app that never places the keyboard still has one somewhere to type.
-     */
     #[Test]
     public function theKeyboardStartsOnTheFirstComponentWithoutBeingAsked(): void
     {
@@ -64,9 +61,7 @@ final class ProgramFocusTest extends TestCase
     }
 
     /**
-     * The announcement is unshifted ahead of whatever was already being handled,
-     * so that message has to come back afterwards rather than be dropped or run
-     * twice. At startup the message in hand is the terminal's own size.
+     * Put the interrupted message back after the focus announcement, exactly once; at startup this is the resize message.
      */
     #[Test]
     public function theMessageWaitingOnTheFirstPlacementIsHandledExactlyOnce(): void
@@ -206,9 +201,6 @@ final class ProgramFocusTest extends TestCase
     }
 }
 
-/**
- * Records what reaches it: x takes the first component away, n moves the keyboard on.
- */
 final readonly class FocusLoggingModel implements RoutesFocus
 {
     /**

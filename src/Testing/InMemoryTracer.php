@@ -7,9 +7,6 @@ namespace Elmphant\Tui\Testing;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Runtime\Trace\Tracer;
 
-/**
- * Holds the trace so a test can assert on the flow it expected.
- */
 final class InMemoryTracer implements Tracer
 {
     /**
@@ -50,10 +47,6 @@ final class InMemoryTracer implements Tracer
         return count($this->fieldsOf($event));
     }
 
-    /**
-     * Totals one numeric field across every event of a kind, so a trace can be
-     * read as "how much time went here".
-     */
     public function totalOf(TraceEvent $event, string $field): float
     {
         $total = 0.0;

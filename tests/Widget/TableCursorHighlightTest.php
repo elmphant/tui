@@ -21,9 +21,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A reversed row leaves the two colours to the terminal, so nothing can measure
- * what the reader ends up looking at. The cursor row is drawn in the highlight
- * the theme already had measured for it, the same one a list uses.
+ * Use the theme's measured highlight colours; reverse video leaves contrast to an unknown terminal palette.
  */
 final class TableCursorHighlightTest extends TestCase
 {

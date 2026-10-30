@@ -26,8 +26,7 @@ use ReflectionFunction;
 use UnitEnum;
 
 /**
- * A widget the tree knows by a stable ID: bound to an immutable App replacement,
- * or named for the keyboard's sake while its host drives it.
+ * A widget with a stable ID, either bound to an App replacement or named for host-managed input.
  *
  * @template-covariant TWidget of Widget
  */
@@ -47,9 +46,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
-     * A focusable the tree knows by name, whose state its host still drives. It
-     * takes its turn at the keyboard and draws focused like any other, but input
-     * is the host's to route: nothing here can write the widget back.
+     * A named widget participates in focus and rendering, but its host must route input and store updates.
      *
      * @template TNamedWidget of Widget
      *
@@ -72,13 +69,8 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
-     * The owner is whatever bound it: the root App, or a sub-model that a Mount
-     * joins to one. The replacement may answer with an UpdateResult when writing
-     * the widget back also asks for work, such as loading what it now shows.
-     *
-     * It is handed the message the widget answered, too, so a host can ask a
-     * `Committing` widget whether that message committed: a widget that commits
-     * is written back even when nothing in it changed, as on a second enter.
+     * The replacement receives the owner, updated widget and triggering message; it may return commands through UpdateResult.
+     * Committing widgets are written back even when unchanged, so repeated commits reach the host.
      *
      * @template TBoundOwner of Reducer
      * @template TBoundWidget of Interactive
@@ -133,8 +125,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
-     * What the child answers is grafted back into the container before the host's
-     * replacement sees it, so the host still stores the one widget it bound.
+     * Update the child inside its container before calling the host's replacement.
      *
      * @internal
      *
@@ -195,8 +186,6 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
-     * What this component's own effects say, marked as coming from what mounted it.
-     *
      * @internal
      */
     public function addressed(?Cmd $command): ?Cmd

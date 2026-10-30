@@ -9,11 +9,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseMsg;
 
 /**
- * A pointer event that landed on a float the last frame drew.
- *
- * Composed rather than copying MouseMsg's fields: isClick()/wheelSteps()/inRect()
- * keep their one definition on MouseMsg, and a future MouseMsg field cannot be
- * dropped here by omission.
+ * Wrap MouseMsg instead of copying its fields so mouse helpers stay shared and new fields cannot be lost.
  */
 final readonly class FloatMouseMsg implements Message
 {
@@ -32,8 +28,7 @@ final readonly class FloatMouseMsg implements Message
     }
 
     /**
-     * Where the float was drawn last frame, which is what the reader pointed at;
-     * the content may have moved on since.
+     * Use the last drawn placement for clicks, since the content may have moved since that frame.
      */
     public function drawnIn(): Rect
     {

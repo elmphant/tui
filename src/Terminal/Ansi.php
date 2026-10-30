@@ -23,8 +23,7 @@ final class Ansi
     public const QUERY_KITTY_KEYBOARD = "\x1b[?u";
 
     /**
-     * Flag 1, escape disambiguation, and nothing else: flag 2 would add a
-     * release event for every press, and flag 4 alternates the parser ignores.
+     * Enable only escape disambiguation; release events and alternate keys are not needed by the parser.
      */
     public const ENABLE_KITTY_KEYBOARD = "\x1b[>1u";
     public const DISABLE_KITTY_KEYBOARD = "\x1b[<u";
@@ -86,9 +85,7 @@ final class Ansi
     }
 
     /**
-     * OSC 52. The terminal at the far end of the pipe is what puts this on the
-     * system clipboard, which is how it reaches a desktop from inside a container
-     * or an ssh session, where a clipboard library could not.
+     * OSC 52 sends clipboard text to the user's terminal, including through containers and SSH.
      */
     public static function clipboard(string $text): string
     {

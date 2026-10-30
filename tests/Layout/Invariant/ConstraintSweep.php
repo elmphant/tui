@@ -130,8 +130,7 @@ final class ConstraintSweep
     }
 
     /**
-     * The low bits of this generator repeat after very few steps. Only the
-     * high bits give a usable spread, so the division drops the low ones.
+     * Discard the generator's repeating low bits to get a useful spread from its high bits.
      */
     private static function roll(int $state, int $range): int
     {

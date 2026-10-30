@@ -76,8 +76,6 @@ final class CellMapTest extends TestCase
     }
 
     /**
-     * The rows a walk over every grapheme in turn gives, as Paragraph wrapped before it had a cell map.
-     *
      * @return list<array{int, int}>
      */
     private static function walkedRows(string $text, int $maxWidth): array

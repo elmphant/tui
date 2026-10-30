@@ -31,8 +31,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 /**
- * The popup overlaps its siblings' rows, so every one of these clicks would
- * have reached the widget underneath before input routed over drawn floats.
+ * Verify that popup clicks do not reach covered siblings.
  */
 final class DropdownHostAcceptanceTest extends TestCase
 {
@@ -126,10 +125,6 @@ final class DropdownHostAcceptanceTest extends TestCase
         return self::handed($pane, self::route($pane, $mouse));
     }
 
-    /**
-     * The pane publishes its dropdowns, so a host is what routes to one — the pane
-     * itself only scrolls.
-     */
     private static function handed(ScrollPane $pane, Message $message): ScrollPane
     {
         $updated = (new DropdownPaneApp($pane))->update(
@@ -153,8 +148,6 @@ final class DropdownHostAcceptanceTest extends TestCase
     }
 
     /**
-     * As the runtime draws a bound pane; a bare RenderContext::focused() names no child.
-     *
      * @return array{Frame, RenderPass}
      */
     private static function drawn(ScrollPane $pane): array

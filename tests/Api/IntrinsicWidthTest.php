@@ -78,10 +78,7 @@ use ReflectionClass;
 use SplFileInfo;
 
 /**
- * A bar slot is placed at the width its content declares, so a widget that
- * paints its own ink has to name that width. Panes and fill-only widgets have
- * none to name — they paint whatever they are given — and saying so is the
- * point: the declaration is checked against what the widget actually draws.
+ * Verify declared widths against drawn content; distinguish fixed content, fill-only widgets and blank spacers.
  */
 final class IntrinsicWidthTest extends TestCase
 {
@@ -90,10 +87,7 @@ final class IntrinsicWidthTest extends TestCase
     private const NARROW_WIDTH = 17;
 
     /**
-     * The classification is only worth anything if it is exhaustive: an
-     * unclassified widget reports no width and would silently vanish from a bar
-     * slot. So the lists have to cover every widget in src, and a new one fails
-     * here until somebody decides which kind it is.
+     * Classify every widget so a missing width cannot silently make it disappear from a bar slot.
      */
     #[Test]
     public function everyWidgetIsClassified(): void
@@ -133,10 +127,7 @@ final class IntrinsicWidthTest extends TestCase
     }
 
     /**
-     * A width it would rather have, and decoration that stretches to whatever it
-     * is actually given — a Button's border reaches the edge however wide the
-     * area is. So its ink is not its content, and a slot placing it reads the
-     * declaration instead.
+     * Decorations such as button borders stretch beyond content, so slots must use declared content width.
      */
     #[Test]
     #[DataProvider('widgetsPreferringAWidth')]
@@ -156,9 +147,7 @@ final class IntrinsicWidthTest extends TestCase
     }
 
     /**
-     * A share of the room rather than all of it or a fixed amount of it, so it
-     * grows with the area without ever reaching the edge. A slot cannot place one
-     * by width: there is no width until the area is known.
+     * Relative widths depend on the available area and cannot define a fixed-width bar slot.
      */
     #[Test]
     #[DataProvider('proportionalWidgets')]
@@ -183,11 +172,7 @@ final class IntrinsicWidthTest extends TestCase
     }
 
     /**
-     * A field takes the row it is given and writes into part of it. Sizing one to
-     * its own text is not an option: the caret sits a column past the last
-     * character, so a field exactly as wide as its content scrolls by one and
-     * hides its own first letter. Its ink therefore does not grow with the room,
-     * which is what separates it from a widget that fills.
+     * Fields need a column after the text for the caret; sizing exactly to the text would scroll the first letter away.
      */
     #[Test]
     #[DataProvider('rowTakers')]
@@ -227,10 +212,7 @@ final class IntrinsicWidthTest extends TestCase
     }
 
     /**
-     * A widget with no width of its own paints whatever it is given, so it
-     * declares nothing — and has to prove it fills, or the category becomes a
-     * home for widgets nobody classified. Placed in a bar slot it is not drawn:
-     * a slot is as wide as its content asked to be, and this asked for nothing.
+     * Fill widgets declare no intrinsic width; verify they actually fill their area rather than hiding a missing declaration.
      */
     #[Test]
     #[DataProvider('fillOnlyWidgets')]
@@ -265,10 +247,7 @@ final class IntrinsicWidthTest extends TestCase
     }
 
     /**
-     * The third kind, and the reason the rule is not simply "ink equals width":
-     * a spacer's whole job is to hold columns open without drawing in them, so
-     * it declares a width it never paints. Placed in a bar slot it would reserve
-     * blank room, which is what asking for one means.
+     * Spacers reserve width without painting, so drawn width cannot measure their size.
      */
     #[Test]
     #[DataProvider('spaceReservers')]
@@ -352,10 +331,6 @@ final class IntrinsicWidthTest extends TestCase
         return $columns->basis ?? $columns->min;
     }
 
-    /**
-     * The widest row it actually paints. Rows, not one row: an option list is
-     * as wide as its longest entry, which is not necessarily the first.
-     */
     private static function inkWidth(Widget $widget, int $width): int
     {
         $frame = new Frame($width, self::GENEROUS_HEIGHT);

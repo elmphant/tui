@@ -16,10 +16,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
- * Where the keyboard is belongs to the tree, and a widget's own flag is a message
- * behind by the time a frame is drawn — the tree applies a focus move after
- * update() returns and draws before the next message arrives. So a widget asks
- * the context while drawing, never itself.
+ * Read focus from the render context: stored widget flags may lag behind focus changes applied after update().
  *
  * @implements Rule<InClassMethodNode>
  */

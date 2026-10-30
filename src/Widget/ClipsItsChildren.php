@@ -7,14 +7,12 @@ namespace Elmphant\Tui\Widget;
 use Elmphant\Tui\Layout\Rect;
 
 /**
- * A container that places children outside the part of itself it draws — a
- * pane scrolled past them — so the pointer can find what is actually on screen.
+ * Expose the visible child area for hit-testing when scrolling places children outside the container.
  */
 interface ClipsItsChildren extends WidgetContainer
 {
     /**
-     * The part of $area that $child shows through: a pinned row outside the
-     * scrolling region answers with its own rows, not the region's.
+     * Pinned rows use their own visible area, not the scrolling region.
      */
     public function viewport(Rect $area, Widget $child): Rect;
 }

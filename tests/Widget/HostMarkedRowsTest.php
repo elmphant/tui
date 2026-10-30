@@ -27,8 +27,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A host that marks its own rows has said where the keyboard is; a pane holding
- * the keyboard loosely must not light its first field over that.
+ * Explicit host focus markers must take priority over a pane's default first-child focus.
  */
 final class HostMarkedRowsTest extends TestCase
 {
@@ -54,9 +53,6 @@ final readonly class MarkedRowsApp extends App
     }
 }
 
-/**
- * One stop that draws a Panel of marked rows inside itself rather than publishing them.
- */
 final readonly class MarkedRowsPane implements Focusable, WidgetContainer
 {
     public function sizing(): Sizing

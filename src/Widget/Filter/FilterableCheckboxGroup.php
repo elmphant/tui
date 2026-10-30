@@ -31,10 +31,7 @@ use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
 
 /**
- * Boxes to tick with a free-text filter over them, for a list too long to walk.
- *
- * A tick is held by name rather than by row: the query decides which rows exist,
- * so a row number means something different from one keystroke to the next.
+ * Track checked options by value because filtering changes row indices.
  */
 final readonly class FilterableCheckboxGroup implements DropdownContent, KeybindingsAware, PublishesHints, TakesText, BindsForTheMoment
 {
@@ -42,9 +39,6 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     use KeybindingsAwareBehavior;
     use SearchMode;
 
-    /**
-     * Keys the boxes take; every other one is typing and belongs to the field.
-     */
     private const OWN_ACTIONS = [Actions::CURSOR_UP, Actions::CURSOR_DOWN, Actions::TOGGLE];
 
     /**
@@ -77,10 +71,6 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         ]);
     }
 
-    /**
-     * How a query narrows the boxes. Substring matching by default; supply a
-     * matcher for fuzzy or remote search, as the other filterable widgets take.
-     */
     public function withMatcher(Matcher $matcher): self
     {
         return $this->cloneWith(matcher: $matcher);
@@ -123,8 +113,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     }
 
     /**
-     * A count of the ticks over the whole list. What no tick at all means is the
-     * host's to say, exactly as it is for a plain group of boxes.
+     * Count selections across all rows; the host decides what an empty selection means.
      */
     public function caption(): string
     {
@@ -137,9 +126,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     }
 
     /**
-     * Measured against every option, not against the ones a query happens to be
-     * leaving: a popup as wide as the query is long would move under the reader
-     * with each keystroke.
+     * Measure every option so filtering cannot change popup width on each keystroke.
      */
     public function popupWidth(): int
     {
@@ -152,9 +139,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     }
 
     /**
-     * Answered against the boxes as they are drawn now, so a press lands on the
-     * name the reader was looking at rather than on the one that held that row
-     * before the query moved it.
+     * Resolve clicks against the drawn options, which may differ from the current filtered rows.
      */
     public function optionAt(MouseMsg $message, Rect $area): ?string
     {
@@ -181,8 +166,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     {
         $dispatcher = new ChildDispatcher($this->globalKeybindings);
 
-        // The boxes are the rows drawn, so a press and a wheel land on them — and a
-        // press arrives before the keyboard does, focus or no focus.
+        // Route pointer input to the visible option rows even before they receive focus.
         if ($message instanceof MouseMsg) {
             return $this->dispatchedToTheBoxes($dispatcher, $message, $area);
         }
@@ -257,8 +241,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     }
 
     /**
-     * The boxes the query left, ticked from the names this group is keeping. Built
-     * on demand rather than held, so a query and a tick cannot disagree.
+     * Derive visible boxes from the query and selected values so they cannot disagree.
      */
     private function boxes(): CheckboxGroup
     {
@@ -273,8 +256,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     }
 
     /**
-     * What the boxes made of the ticks they could see, and every tick they could
-     * not: a name the query is hiding is not a name the reader untucked.
+     * Preserve selections hidden by the query when applying visible checkbox changes.
      *
      * @return list<string>
      */

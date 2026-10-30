@@ -68,8 +68,7 @@ final readonly class StatusBar implements Widget
     }
 
     /**
-     * The bar paints its style across the whole row, so its width is the ink:
-     * the last hint's trailing pad separates it from a next one that is not there.
+     * Exclude the last hint's trailing gap from content width; the bar still fills the row.
      */
     private function inkWidth(): int
     {

@@ -5,11 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Text;
 
 /**
- * Converts untrusted application text into inert terminal text.
- *
- * Normal widget text never passes ECMA-48 sequences or control bytes through to
- * terminal output. Applications that intentionally consume SGR styling must use
- * a parser such as Paragraph::fromAnsi(), which converts it to typed Style data.
+ * Remove control bytes and escape sequences from ordinary widget text.
+ * Use an explicit parser such as Paragraph::fromAnsi() to turn supported styling into Style values.
  */
 final class TerminalText
 {

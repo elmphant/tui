@@ -438,11 +438,7 @@ final class DropdownMouseTest extends TestCase
     }
 
     /**
-     * The narrowest popup that draws at all is MIN_SIDE rows, of which the
-     * border takes two — so a drawn popup always has at least one row for its
-     * content, and a shorter one is placed empty and never drawn. The state
-     * this once guarded, chrome with no room for an option, cannot arise now
-     * that the filter row and separator belong to the content.
+     * A popup shorter than MIN_SIDE has an empty placement; any drawn popup has at least one content row.
      */
     #[Test]
     public function aPopupTooShortForEvenOneContentRowIsNeverDrawn(): void
@@ -518,10 +514,7 @@ final class DropdownMouseTest extends TestCase
     }
 
     /**
-     * The window this once guarded against getting stuck is gone: the content
-     * derives its offset from its cursor and the room it is given, every frame,
-     * so opening in a popup too short to show the selection cannot leave a
-     * stale offset behind to catch up later.
+     * Recompute scrolling from cursor and area each frame so opening a short popup cannot reuse a stale offset.
      */
     #[Test]
     public function openingOnAFarSelectionScrollsItIntoViewWithoutRunningPastTheEnd(): void
@@ -569,10 +562,6 @@ final class DropdownMouseTest extends TestCase
         )->model;
     }
 
-    /**
-     * Renders the dropdown exactly as a runtime would, then routes the event
-     * over the floats that render drew.
-     */
     private static function routed(Dropdown $dropdown, MouseMsg $mouse, ?Rect $anchor = null, ?Rect $viewport = null): Message
     {
         $viewport ??= self::viewport();
@@ -599,10 +588,6 @@ final class DropdownMouseTest extends TestCase
         return self::drawnFloat($dropdown)->placement;
     }
 
-    /**
-     * Only the option rows of the drawn popup, so an assertion cannot be
-     * satisfied by the closed row above it.
-     */
     private static function drawnOptionRows(Dropdown $dropdown, Rect $viewport): string
     {
         $frame = new Frame($viewport->width, $viewport->height);

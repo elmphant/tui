@@ -33,10 +33,7 @@ use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 
 /**
- * One row reading as what it holds, and a float to change that from.
- *
- * The row and the float are all this is; the options, their cursor and any
- * filter over them belong to the content, which answers for itself.
+ * The dropdown owns the trigger row and popup; its content owns options, cursor and filtering.
  *
  * @template-covariant TContent of DropdownContent
  */
@@ -62,8 +59,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     }
 
     /**
-     * The chrome drawn around the open list. Without one the list gets a rounded
-     * border; supply a factory to put something else around it.
+     * Customize the popup frame; the default is a rounded border.
      *
      * @param Closure(DropdownContent, FloatTarget):PopupFrame $frame
      *
@@ -107,10 +103,6 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         return $this->cloneWith(content: $this->content->withValue($value));
     }
 
-    /**
-     * What the closed row reads, marker and all, so a host laying a row out can
-     * measure it without knowing how a dropdown draws itself.
-     */
     public function caption(): string
     {
         return self::MARKER . $this->content->caption();
@@ -122,8 +114,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     }
 
     /**
-     * The list draws only while the dropdown holds the keyboard, so a host
-     * opening it from elsewhere sends the keyboard there too.
+     * Opening from the host also requires focus, because an unfocused dropdown does not draw its popup.
      */
     public function withOpen(bool $open = true): static
     {
@@ -158,10 +149,6 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
         );
     }
 
-    /**
-     * Only the two actions about the popup itself. Moving, choosing and typing
-     * are the content's, and reach it because the content is asked first.
-     */
     public static function defaultKeybindings(): Keybindings
     {
         return new Keybindings([
@@ -216,8 +203,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
             return;
         }
 
-        // Accent says a value was chosen, so focus is marked the way every other
-        // row under the cursor is; the caption is what tells the two apart.
+        // Reserve accent for selection; use cursor styling for focus.
         $style = match (true) {
             $this->drawsFocused($context) => $context->theme->cursorStyle,
             $this->content->hasChoice() => $context->theme->base,
@@ -231,18 +217,14 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
             $style,
         );
 
-        // The list belongs to whatever holds the keyboard. A tree that moved the
-        // keyboard on never told this widget, so its own flag can still say open;
-        // drawn anyway, the list would hang over rows the reader has moved to and
-        // no key of theirs would reach it to shut it.
+        // Check tree focus: the stored open flag may outlive focus and would leave a popup that no longer receives keys.
         if ($this->open && $this->drawsFocused($context)) {
             $context->float($frame, $this->popup(), self::anchorIn($area));
         }
     }
 
     /**
-     * The content answers first; only a key it left alone is the popup's own.
-     * Consumption is a changed model or any command, as App defines it.
+     * Offer input to content first; a changed model or command consumes it before popup actions run.
      *
      * @return UpdateResult<static>
      */
@@ -268,8 +250,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     }
 
     /**
-     * The popup the drain drew answers, not the current state: the reader
-     * picked the row they saw, and the content may have moved on since.
+     * Resolve clicks against the popup that was drawn, since its content may have changed since then.
      */
     private function floatMoused(FloatMouseMsg $message): static
     {
@@ -285,9 +266,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     }
 
     /**
-     * Everything the popup captures that is not a pick is the content's own,
-     * answered against the area it was drawn in. Nothing here tells the content
-     * it is floating: a mouse message and an area is what any widget is handed.
+     * Route captured non-selection events to content using its drawn area, as with any other widget.
      */
     private function wheeledInDrawn(MouseMsg $mouse, PopupFrame $popup, Rect $placement): static
     {
@@ -329,9 +308,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     }
 
     /**
-     * Where the content is drawn: the popup's place on the screen, not the
-     * one-row anchor. A paste carries no screen, and the field it lands in
-     * reads only the width.
+     * Give content the popup's area, not the trigger row; pasted text needs only its width.
      */
     private function popupContentArea(Rect $area, ?Rect $screen): Rect
     {

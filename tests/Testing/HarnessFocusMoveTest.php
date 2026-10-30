@@ -20,8 +20,7 @@ use PHPUnit\Framework\TestCase;
 final class HarnessFocusMoveTest extends TestCase
 {
     /**
-     * Focus a command moved has to still be there for the next key, or a test can
-     * never press one key to move it and a second to use it.
+     * Preserve command-driven focus for the next simulated key.
      */
     #[Test]
     public function aKeyAfterFocusNextReachesTheFollowingComponent(): void

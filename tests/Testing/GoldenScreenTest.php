@@ -34,10 +34,8 @@ final class GoldenScreenTest extends TestCase
             try {
                 GoldenScreen::assertMatchesSnapshot('match', $screen, $dir);
             } catch (IncompleteTestError) {
-                // first run creates snapshot
             }
 
-            // Second run: should pass silently
             GoldenScreen::assertMatchesSnapshot('match', $screen, $dir);
             $this->assertTrue(true);
         } finally {
@@ -64,7 +62,6 @@ final class GoldenScreenTest extends TestCase
                 GoldenScreen::assertMatchesSnapshot('test_create', $screen, $dir);
                 $this->fail('Expected first run to throw IncompleteTestError');
             } catch (IncompleteTestError) {
-                // expected on first run
             }
 
             $this->assertFileExists($path);

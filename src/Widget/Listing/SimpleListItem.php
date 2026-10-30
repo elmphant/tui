@@ -28,9 +28,6 @@ final readonly class SimpleListItem implements ListItem
         return $this->title;
     }
 
-    /**
-     * The key given, else the title.
-     */
     public function key(): string
     {
         return $this->key ?? $this->title;

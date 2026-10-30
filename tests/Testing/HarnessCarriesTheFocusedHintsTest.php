@@ -23,10 +23,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * What a footer would carry is what whatever holds the keyboard answers, so a test
- * asks the harness for it rather than for a copy an app keeps.
- */
 final class HarnessCarriesTheFocusedHintsTest extends TestCase
 {
     #[Test]

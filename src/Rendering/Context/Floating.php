@@ -8,8 +8,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 
 /**
- * Queued with RenderContext::float() during render, drawn after the tree, unclipped.
- * Never implemented by the widget doing the queuing — the drain would render it twice.
+ * Queue a separate Floating object; queuing the widget itself would render it twice.
  */
 interface Floating
 {

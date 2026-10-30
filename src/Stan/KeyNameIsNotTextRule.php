@@ -20,8 +20,7 @@ use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\ObjectType;
 
 /**
- * A named key arrives as a Key case, so comparing KeyMsg::$key with 'esc' or
- * 'enter' compiles and never matches.
+ * Named keys are Key enum cases; comparisons with strings such as 'esc' or 'enter' never match.
  *
  * @implements Rule<Expr>
  */

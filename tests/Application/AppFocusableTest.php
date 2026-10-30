@@ -82,10 +82,6 @@ final class AppFocusableTest extends TestCase
         self::assertSame(0, $result->model->clipped->count);
     }
 
-    /**
-     * A clipped component has no rect to dispatch into, so the tab passes it by —
-     * and must pass it by in the direction it was pressed.
-     */
     #[Test]
     #[DataProvider('tabDirections')]
     public function tabMovesOnInItsOwnDirectionWhenTheFocusedComponentIsClippedAway(KeyMsg $key, string $lands): void
@@ -114,9 +110,7 @@ final class AppFocusableTest extends TestCase
     }
 
     /**
-     * The onMouse hook may rebuild the tree, so the click has to be delivered
-     * against the components the changed model publishes, not the ones read
-     * before the hook ran.
+     * Use the tree returned by onMouse(), since the hook may rebuild components before click dispatch.
      */
     #[Test]
     public function aClickReachesTheTreeTheMouseHookLeftBehind(): void
@@ -227,10 +221,6 @@ final class AppFocusableTest extends TestCase
         self::assertInstanceOf(QuitCmd::class, $result->command);
     }
 
-    /**
-     * A broadcast walks every component, and one it has to skip — nothing writes
-     * this one back — must not stop the walk before the rest.
-     */
     #[Test]
     public function aBroadcastCarriesPastAComponentNothingWritesBack(): void
     {
@@ -242,10 +232,6 @@ final class AppFocusableTest extends TestCase
         self::assertSame(1, $result->model->reached->count);
     }
 
-    /**
-     * With nothing to cycle between, tab is not the framework's to take: an app
-     * without components may bind it to whatever it likes.
-     */
     #[Test]
     public function anAppWithNothingFocusableStillSeesTabInItsOwnHook(): void
     {
@@ -258,9 +244,6 @@ final class AppFocusableTest extends TestCase
         self::assertNull($result->command, 'nothing asked the runtime to move a keyboard that has nowhere to go');
     }
 
-    /**
-     * A pane publishes its children, so tab walks them without leaving it.
-     */
     #[Test]
     public function aPanesOwnChildrenAreStopsOfTheirOwn(): void
     {
@@ -729,9 +712,6 @@ final class AppFocusableTest extends TestCase
         );
     }
 
-    /**
-     * Driving update() by hand means saying where the keyboard is, as the runtime does.
-     */
     private static function keyboardOn(string $id): FocusState
     {
         return new FocusState(ComponentId::named($id));
@@ -750,9 +730,6 @@ final class AppFocusableTest extends TestCase
     }
 }
 
-/**
- * The click lands behind a component nothing writes back.
- */
 final readonly class SkippedThenReachedApp extends CopyableTestApp
 {
     public function __construct(

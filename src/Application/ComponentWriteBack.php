@@ -13,23 +13,14 @@ use Elmphant\Tui\Widget\Widget;
 use LogicException;
 
 /**
- * How a batch of component updates reaches the model, and whether the model
- * stored each one where it said it would.
- *
- * A component is bound with a closure that writes the updated widget back onto
- * the model. Nothing makes that closure honest, so the update is applied and
- * then the tree is asked for the component again: what comes back has to be
- * what went in, or the closure put it somewhere the tree cannot see and the
- * next keystroke would act on the widget the reader already changed.
+ * Verify that replacement callbacks store updated widgets where the tree can find them.
  *
  * @internal
  */
 final class ComponentWriteBack
 {
     /**
-     * A container's own answer may let go of a child that answered too (a tab
-     * switched pages); grafting into whatever sits there now would overwrite a
-     * stranger, so the container's answer wins.
+     * If a container update removes a child, discard that child's update instead of overwriting its replacement.
      *
      * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
      *
@@ -64,8 +55,7 @@ final class ComponentWriteBack
     }
 
     /**
-     * A grafted child writes back through its container as it was when the tree
-     * was collected, so beside the container's own answer one of the two is lost.
+     * Merge child updates into the updated container so neither update is lost.
      *
      * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
      *
@@ -114,10 +104,7 @@ final class ComponentWriteBack
             }
 
             /*
-             * A dropped update leaves the widget as it was before the key, so
-             * that is what this checks for. Any other widget means the model kept
-             * the change and derived something else from it too — a title, a
-             * hint — which is allowed.
+             * An unchanged widget means the update was dropped; any other result may include valid derived changes.
              */
             if (self::asAuthored($rebound->widget) == self::asAuthored($original->widget)
                 && self::asAuthored($widget) != self::asAuthored($original->widget)
@@ -128,10 +115,7 @@ final class ComponentWriteBack
     }
 
     /**
-     * The widget without what routing put on it on the way in — focus, where the
-     * keyboard arrived, and the app's global bindings. A model that lets the tree
-     * own those rebuilds the widget without them, and would otherwise never
-     * compare equal.
+     * Remove routing state before comparing: models may rebuild widgets without focus or global bindings.
      */
     private static function asAuthored(Interactive $widget): Interactive
     {

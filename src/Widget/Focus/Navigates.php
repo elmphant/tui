@@ -7,8 +7,7 @@ namespace Elmphant\Tui\Widget\Focus;
 use Elmphant\Tui\Widget\Focusable;
 
 /**
- * A focusable with something to say about how it is reached. Answered on demand,
- * so a pane that fills up becomes reachable without anyone telling it.
+ * Determine reachability from current state, so filling an empty pane can make it focusable.
  */
 interface Navigates extends Focusable
 {

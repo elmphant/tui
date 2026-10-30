@@ -23,8 +23,7 @@ final readonly class UpdateResult
     }
 
     /**
-     * The message meant nothing here: an App offers a key answered this way on to
-     * what encloses the focused component. Never the answer once a child replied.
+     * An ignored key may pass to the focused component's ancestors; do not return this after a child handled it.
      *
      * @template T of Reducer
      *

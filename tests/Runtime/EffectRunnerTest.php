@@ -35,10 +35,6 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-/**
- * What a running effect produces, read off the queue it reports into rather
- * than out of the runner's own state.
- */
 final class EffectRunnerTest extends TestCase
 {
     /**
@@ -657,9 +653,7 @@ final class EffectRunnerTest extends TestCase
     }
 
     /**
-     * Forgetting a process is not stopping it. Emptying the list satisfies
-     * `hasRunningProcesses()` on its own, so the child is asked for directly:
-     * one left behind outlives the program that spawned it.
+     * Check the child process itself; an empty runner list does not prove the process stopped.
      */
     #[Test]
     public function shuttingDownLeavesNoChildBehind(): void
@@ -672,8 +666,7 @@ final class EffectRunnerTest extends TestCase
         self::assertIsString($pidFile);
 
         $runner = $this->runner();
-        // The child reports its own pid, so the test asks the OS about the process
-        // the runner actually spawned rather than searching by name.
+        // Use the reported PID to inspect the exact child spawned by the runner.
         $runner->run(Cmd::process(['sh', '-c', 'echo $$ > ' . escapeshellarg($pidFile) . '; sleep 30']), null);
 
         $pid = self::pidWrittenTo($pidFile);

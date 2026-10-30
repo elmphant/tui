@@ -22,10 +22,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * A mounted sub-model publishes its own components to the App above it, and a
- * replacement travels back down to the sub-model that bound it.
- */
 final class MountedSubModelTest extends TestCase
 {
     #[Test]

@@ -16,10 +16,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * A child that keeps its own name inside a pane is reached by that name; the pane
- * around it still has to behave as it does around a bare child.
- */
 final class BoundChildInsideAPaneTest extends TestCase
 {
     #[Test]
@@ -44,9 +40,6 @@ final class BoundChildInsideAPaneTest extends TestCase
     }
 }
 
-/**
- * Shaped like a host's pane: rows rebuilt from data every frame, the pane kept.
- */
 final readonly class BoundFieldBelowRowsApp extends App
 {
     public function __construct(public TextInput $email, public Panel $form = new Panel('Form'))

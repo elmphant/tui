@@ -30,9 +30,6 @@ final readonly class Style
         return $this->cloneWith(link: $url === '' ? null : $url);
     }
 
-    /**
-     * What a cell drawn in this style stores: the attributes, and the link above them.
-     */
     public function cellAttributes(): int
     {
         return $this->link === null ? $this->attributes : $this->attributes | Hyperlinks::bitsFor($this->link);
@@ -84,9 +81,7 @@ final readonly class Style
     }
 
     /**
-     * This ink drawn inside a panel: it sits on the panel's background, so it
-     * cannot punch a hole in a filled row, and lifts off it far enough to read.
-     * Pass 3 for text that is meant to stay quieter than the body.
+     * Use the panel background and adjust text contrast; pass 3 for quieter secondary text.
      */
     public function readableOn(self $panel, float $minimumRatio = 4.5): Style
     {

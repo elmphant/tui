@@ -19,10 +19,6 @@ use PHPUnit\Framework\TestCase;
 
 final class HarnessFocusCommandTest extends TestCase
 {
-    /**
-     * A harness that settles the keyboard on the first component it finds cannot
-     * show an app putting it down, which is how a real one starts.
-     */
     #[Test]
     public function aKeyboardPutDownAtStartupStaysDown(): void
     {

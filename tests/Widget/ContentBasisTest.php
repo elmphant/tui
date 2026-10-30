@@ -77,9 +77,6 @@ final class ContentBasisTest extends TestCase
         self::assertSame(2, $basis);
     }
 
-    /**
-     * A widget that says how wide it wants to be and cannot measure itself.
-     */
     private function wanting(int $columns): Widget
     {
         return new class($columns) implements Widget {

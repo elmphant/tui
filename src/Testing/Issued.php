@@ -9,10 +9,6 @@ use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
 
-/**
- * What a command asks for, with batches, maps and scopes taken apart: for a test
- * that called update() itself and holds the command it answered with.
- */
 final class Issued
 {
     /**

@@ -78,10 +78,6 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $this->cloneWith(selected: $selected !== null && isset($this->options[$selected]) ? $selected : null);
     }
 
-    /**
-     * A host holds what was chosen, not where it sat — so it says which option
-     * rather than searching the list for its place first.
-     */
     public function withSelectedValue(?string $value): self
     {
         return $this->cloneWith(selected: Options::placeOf($value, $this->options));
@@ -145,8 +141,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
     }
 
     /**
-     * An empty list still binds enter to SELECT, so the binding alone would
-     * close a popup over nothing.
+     * A SELECT binding alone is not a commit: an empty list must not close its popup.
      */
     public function sizing(): Sizing
     {

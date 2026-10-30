@@ -46,9 +46,6 @@ final class GraftedChildRoutingTest extends TestCase
         self::assertGreaterThan(0, $paged->form->scrollOffset(Rect::fromSize(30, 6)));
     }
 
-    /**
-     * Whichever of the two is written back first.
-     */
     #[Test]
     public function aWheelThatMovesBothThePaneAndAChildKeepsBothChanges(): void
     {

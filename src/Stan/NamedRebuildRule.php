@@ -15,8 +15,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
- * A positional rebuild still carries every field today, so no test can fail on
- * it; it fails the day a constructor parameter moves.
+ * Positional rebuilds can break silently when constructor parameters move.
  *
  * @implements Rule<New_>
  */

@@ -8,10 +8,7 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
- * A container whose focusable children are each a stop on the ring in their own
- * right, rather than being reached through it.
- *
- * The index counts children() in the order it yields them.
+ * Expose each focusable child as its own tab stop, indexed in children() order.
  */
 interface GraftsItsChildren extends WidgetContainer
 {

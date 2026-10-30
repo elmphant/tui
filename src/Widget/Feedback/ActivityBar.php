@@ -41,9 +41,6 @@ final readonly class ActivityBar implements Widget
         return $this->cloneWith(label: $label);
     }
 
-    /**
-     * Bar sweeps per second: at 1.0 the highlight travels the full bar each second.
-     */
     public function withSpeed(float $speed): self
     {
         return $this->cloneWith(speed: max(0.01, $speed));
@@ -100,9 +97,6 @@ final readonly class ActivityBar implements Widget
         }
     }
 
-    /**
-     * Triangle wave over sweeps: 0→1 forward, 1→0 back, repeating.
-     */
     private static function bouncePosition(float $sweeps): float
     {
         return 1.0 - abs(1.0 - fmod($sweeps, 2.0));

@@ -14,9 +14,7 @@ use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\ObjectType;
 
 /**
- * A Constraint describes one axis and does not say which, so a widget handing
- * one out asks its caller to guess. Widgets answer with a Sizing; a per-axis
- * value belongs to whatever object owns that axis.
+ * Widgets return Sizing to identify both axes; a single Constraint leaves the axis ambiguous.
  *
  * @implements Rule<InClassMethodNode>
  */

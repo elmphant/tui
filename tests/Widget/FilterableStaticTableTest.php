@@ -327,8 +327,6 @@ final class FilterableStaticTableTest extends TestCase
     public function theCursorStopsAtTheEndOfTheFieldHoweverLongTheQuery(): void
     {
         $frame = new Frame(50, 1);
-        // The bar is 43 wide, the count takes 6 and a gap of 3 sits before it,
-        // so the field spans 34 columns however long the query is.
         $fieldWidth = 34;
 
         $this->routes()->withQuery(str_repeat('x', 40))->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
@@ -490,9 +488,7 @@ final class FilterableStaticTableTest extends TestCase
     }
 
     /**
-     * The query was kept twice — a string of its own and the field it was typed into
-     * — so setting only the string left the bar reading one filter while the rows
-     * were narrowed by another.
+     * Updating the query must update both the field display and filtered rows.
      */
     #[Test]
     public function clearingTheQueryClearsWhatTheFieldShows(): void

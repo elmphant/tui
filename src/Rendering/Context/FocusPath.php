@@ -9,26 +9,20 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use LogicException;
 
-/**
- * Where the keyboard is while a tree is drawn, so each widget can ask instead of
- * remembering.
- */
 final class FocusPath
 {
     private FocusState $focus;
     private int $depth;
 
     /**
-     * Segments of the focused id still to be matched, below the component being
-     * drawn. Empty means the keyboard is on that component itself.
+     * Unmatched segments below the current component; empty means this component itself has focus.
      *
      * @var list<string>
      */
     private array $path = [];
 
     /**
-     * Components whose subtree holds the focused one without naming it in their id:
-     * a bound child inside a pane.
+     * Ancestor components not named in the focused ID, such as a pane around a bound child.
      *
      * @var list<string>
      */
@@ -41,9 +35,6 @@ final class FocusPath
 
     private bool $loose = false;
 
-    /**
-     * The name of the mount being drawn, which qualifies every component id in it.
-     */
     private string $mount = '';
 
     /**
@@ -62,8 +53,7 @@ final class FocusPath
     }
 
     /**
-     * Focus not decided yet: fine for one widget on its own, refused for a tree of
-     * components.
+     * Undecided focus is allowed for a standalone widget, but not for a component tree.
      */
     public static function undecided(): self
     {
@@ -95,9 +85,7 @@ final class FocusPath
 
     public function focusOn(FocusState $focus): void
     {
-        // A tree with nothing to focus leaves the runtime still waiting for an
-        // answer. For this frame that means nobody: saying so is what the guard
-        // in within() asks for, and the tree settles on a component once it has one.
+        // Treat a tree without focusable components as unfocused for this frame; resolve focus when components appear.
         $this->focus = $focus->isUndecided() ? FocusState::nowhere() : $focus;
         $this->depth = 0;
     }

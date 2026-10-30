@@ -19,9 +19,6 @@ use PHPUnit\Framework\TestCase;
 
 final class ProgramFocusPaintTest extends TestCase
 {
-    /**
-     * Nothing has been typed yet, so no widget carries a flag of its own.
-     */
     #[Test]
     public function whereTheRuntimePutsTheKeyboardIsWhereTheHighlightIsDrawn(): void
     {

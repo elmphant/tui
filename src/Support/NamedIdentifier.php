@@ -7,8 +7,7 @@ namespace Elmphant\Tui\Support;
 use InvalidArgumentException;
 
 /**
- * A non-empty named value object. The using class supplies LABEL for the
- * message a caller sees when it hands over an empty name.
+ * The using class supplies LABEL for errors about empty names.
  *
  * @internal
  */

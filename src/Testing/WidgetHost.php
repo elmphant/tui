@@ -42,8 +42,7 @@ final readonly class WidgetHost extends App
     }
 
     /**
-     * What no component is the address of, such as an effect's result, is the
-     * hosted widget's: there is nobody else for it.
+     * Send unaddressed messages, including effect results, to the only hosted widget.
      */
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {

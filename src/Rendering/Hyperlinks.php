@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Rendering;
 
 /**
- * A link travels in a cell's attribute bits above the SGR ones, so every write, fill, diff and run split handles it
- * like a colour. The id must mean the same URL in every frame, or the diff would miss a changed link.
+ * Store link IDs above the SGR attribute bits; IDs must keep the same URL across frames for diffing to work.
  *
  * @internal
  */
@@ -16,7 +15,7 @@ final class Hyperlinks
     private const SHIFT = 8;
 
     /**
-     * ponytail: one entry per distinct URL for the life of the process; fine for links an app shows, not for millions.
+     * One entry per distinct URL remains for the process lifetime; avoid unbounded URL sets.
      *
      * @var array<string, int>
      */

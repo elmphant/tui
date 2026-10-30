@@ -87,9 +87,6 @@ final readonly class ProgressBar implements Interactive
         return $this->cloneWith(display: $display);
     }
 
-    /**
-     * The share of the remaining distance the bar closes every sixtieth of a second.
-     */
     public function withSpringFactor(float $springFactor): self
     {
         return $this->cloneWith(springFactor: $springFactor);
@@ -101,9 +98,7 @@ final readonly class ProgressBar implements Interactive
     }
 
     /**
-     * The fraction actually drawn. Until a tick has animated this bar there is
-     * no animation state, and an unbound bar has no tick loop at all — so it
-     * falls back to the real progress rather than sitting at zero.
+     * Until a tick creates animation state, draw actual progress so an unbound bar does not stay at zero.
      */
     public function displayValue(): float
     {
@@ -188,8 +183,7 @@ final readonly class ProgressBar implements Interactive
      */
     private function handleTick(TickMsg $tick): UpdateResult
     {
-        // Springing from what was last drawn, not from zero, is what keeps the
-        // first tick after a change from jerking the bar backwards.
+        // Start from the last drawn progress so the first tick after a change cannot jump backwards.
         $display = $this->displayValue();
         $difference = $this->progress - $display;
         if (abs($difference) < 0.001) {

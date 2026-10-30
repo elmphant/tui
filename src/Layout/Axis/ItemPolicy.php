@@ -7,8 +7,7 @@ namespace Elmphant\Tui\Layout\Axis;
 use InvalidArgumentException;
 
 /**
- * What one slot along an axis asks for: where it starts, how far it may move in
- * either direction, and how eagerly it takes or gives up space.
+ * A slot's starting size, limits, and growth and shrink weights.
  *
  * @internal
  */
@@ -32,10 +31,6 @@ final readonly class ItemPolicy
         }
     }
 
-    /**
-     * A basis outside the slot's own bounds is a request it cannot have, so the
-     * slot starts at the nearest size it may hold.
-     */
     public function initialSize(): int
     {
         return min($this->max, max($this->min, $this->basis));

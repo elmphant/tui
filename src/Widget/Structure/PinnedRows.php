@@ -8,9 +8,6 @@ use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Widget\Layout\ContentBasis;
 use Elmphant\Tui\Widget\Widget;
 
-/**
- * What a Panel holds at its top or bottom, outside the rows it scrolls.
- */
 final readonly class PinnedRows
 {
     public function __construct(

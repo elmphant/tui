@@ -11,9 +11,6 @@ use Elmphant\Tui\Core\Message;
 use Symfony\Component\Process\Process;
 
 /**
- * Spawns the child process a command asked for. Throws where it cannot, so what
- * a failure to start is worth saying stays with the caller.
- *
  * @internal
  */
 final class ProcessStarter

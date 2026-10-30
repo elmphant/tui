@@ -22,8 +22,7 @@ final class FilterableStaticTablePerfTest extends TestCase
     use PerformanceBudget;
 
     /**
-     * The bar costs a little on top of the table it wraps. Measured against the
-     * table itself rather than a stopwatch, so a loaded machine slows both.
+     * Compare against the wrapped table's cost so machine load affects both sides of the budget.
      */
     private const MAX_COST_OF_THE_BAR = 1.6;
 
@@ -110,7 +109,7 @@ final class FilterableStaticTablePerfTest extends TestCase
 }
 
 /**
- * The tally is static: a count on the instance would change what the matcher serializes to, and so its cache key.
+ * Keep the counter static so counting calls cannot change the matcher's serialized cache key.
  */
 final class TallyingMatcher implements Matcher
 {

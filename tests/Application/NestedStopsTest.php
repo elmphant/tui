@@ -15,9 +15,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Whatever sits between a pane and a field, the field is a stop of its own.
- */
 final class NestedStopsTest extends TestCase
 {
     #[Test]

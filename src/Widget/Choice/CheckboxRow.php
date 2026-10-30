@@ -143,10 +143,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
     }
 
     /**
-     * A row comes round by default: it is short enough that walking off one end
-     * onto the other is quicker than turning back. Say `wrapping(false)` for a row
-     * whose ends should hold — a form field, where an arrow held down would
-     * otherwise cycle the value forever.
+     * Wrap by default; use wrapping(false) to stop at either end, such as in a form field.
      */
     public function withWrapping(bool $wrapping = true): self
     {
@@ -256,10 +253,6 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
         };
     }
 
-    /**
-     * Where an arrow leaves the cursor. It rests at either end, which is what a
-     * row told not to wrap asked for.
-     */
     private function walked(int $step, int $count): int
     {
         return $this->wrapping
@@ -308,8 +301,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
     }
 
     /**
-     * Every option as it is drawn. Both marks are the same width, so the
-     * columns hold whichever one a redraw puts there.
+     * Keep checked and unchecked marks the same width so option columns stay aligned.
      *
      * @return list<string>
      */
@@ -321,9 +313,6 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
         );
     }
 
-    /**
-     * The prefix keeps the columns it was drawn in, so the options start after it.
-     */
     private function optionsArea(Rect $area): Rect
     {
         if ($this->prefix === '') {

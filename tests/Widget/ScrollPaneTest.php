@@ -45,8 +45,7 @@ final class ScrollPaneTest extends TestCase
     }
 
     /**
-     * A child that keeps its own name is still a child the keyboard reaches, so the
-     * frame around it is no more a stop than around a bare field.
+     * Bound children keep their own focus stops; the surrounding pane must not add another.
      */
     #[Test]
     public function aPaneAroundABoundFieldIsNotAStopItself(): void
@@ -175,8 +174,7 @@ final class ScrollPaneTest extends TestCase
     }
 
     /**
-     * A tab strip holds the keyboard without naming a child; the child that would
-     * be lit is not where the keys go.
+     * Focus on a tab strip must not light a child that receives none of its keys.
      */
     #[Test]
     public function aPaneHoldingTheKeyboardItselfLightsNoChild(): void
@@ -700,8 +698,7 @@ final class ScrollPaneTest extends TestCase
     }
 
     /**
-     * Drawn the way the runtime draws a bound pane: the keyboard is on one of the
-     * ids the pane publishes, and the pane reads which from the context.
+     * Render with a published child ID as the runtime does, so the pane can resolve child focus.
      *
      * @return list<string>
      */

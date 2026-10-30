@@ -37,9 +37,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Wrapping a component must not decide whether it is reachable. A container that
- * draws a child it never exposes leaves whatever is bound inside it deaf: the
- * widget renders, takes the keyboard, and answers nothing.
+ * Wrappers must expose rendered children so discovery and input can reach bound components inside them.
  */
 final class ContainerRoutingTest extends TestCase
 {
@@ -84,9 +82,7 @@ final class ContainerRoutingTest extends TestCase
     }
 
     /**
-     * The pointer is the other way in, and it is resolved from drawn geometry
-     * rather than from the ring — a wrapper that moves its child without saying
-     * so lands the click somewhere else, or nowhere.
+     * Hit-testing must use the child's drawn position, including any offset added by its wrapper.
      *
      * @param Closure(Widget): Widget $wrap
      */

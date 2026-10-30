@@ -156,9 +156,6 @@ final class VirtualTerminal implements Terminal
         $this->write("\x1b]0;{$sanitized}\x07");
     }
 
-    /**
-     * What a window manager does to the real one; the program hears of it by SIGWINCH.
-     */
     public function resizeTo(int $width, int $height): void
     {
         $this->width = $width;

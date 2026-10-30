@@ -11,18 +11,12 @@ use ReflectionMethod;
 use ReflectionNamedType;
 
 /**
- * The README and the guides are the first code a reader runs, so every example
- * in them is run here. A block a reader cannot paste as it stands — a method
- * body, a menu of calls, loose match arms — says so in its fence
- * (```php fragment) and is skipped; everything else must reach the terminal or finish.
+ * Run complete PHP examples from README and guides; skip fences explicitly marked `php fragment`.
  */
 final class ReadmeTest extends TestCase
 {
     private const FRAGMENT_BLOCKS = 11;
 
-    /**
-     * What an example names but never builds, standing in as the real thing.
-     */
     private const PLACEHOLDERS = <<<'PHP'
         $sidebar = \Elmphant\Tui\Widget\Prose\Text::new('sidebar');
         $main = \Elmphant\Tui\Widget\Prose\Text::new('main');
@@ -92,9 +86,7 @@ final class ReadmeTest extends TestCase
     }
 
     /**
-     * A fragment is an example nothing runs, so the count is worth noticing: it
-     * should go down as examples are made paste-able, and never quietly up
-     * because a fence was the easy way past a failing example.
+     * Track fragment count so marking a broken example as a fragment cannot silently bypass execution.
      */
     #[Test]
     public function onlyTheExamplesThatCannotBePastedAreFragments(): void
@@ -184,9 +176,7 @@ final class ReadmeTest extends TestCase
     }
 
     /**
-     * A block that starts a program gets as far as the terminal and no further —
-     * this suite has no TTY — so reaching that boundary counts as having run:
-     * everything the example spells out was accepted on the way.
+     * Without a TTY, reaching terminal startup counts as running the example; earlier failures still fail the test.
      *
      * @return array{string, bool}
      */

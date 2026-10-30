@@ -7,8 +7,6 @@ namespace Elmphant\Tui\Widget\Layout;
 use Elmphant\Tui\Layout\ScrollWindow;
 
 /**
- * Resolved height and scrollbar geometry for one vertical stack viewport.
- *
  * @internal
  */
 final readonly class VerticalStackLayout

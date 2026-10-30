@@ -13,10 +13,6 @@ use PHPUnit\Framework\TestCase;
 
 final class FocusCycleCmdTest extends TestCase
 {
-    /**
-     * Tab moves one field, which is a change to the tree and nothing else — no
-     * widget is rebuilt to carry it.
-     */
     #[Test]
     public function cyclingMovesTheKeyboardToTheNextComponentInTreeOrder(): void
     {

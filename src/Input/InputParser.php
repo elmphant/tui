@@ -58,8 +58,7 @@ final class InputParser
     }
 
     /**
-     * The message an escape at $position starts, if any, and where the next
-     * one begins; null while the sequence is still arriving.
+     * Return the parsed message and next byte position, or null while the escape sequence is incomplete.
      *
      * @return array{KeyMsg|MouseMsg|null, int}|null
      */
@@ -79,8 +78,7 @@ final class InputParser
 
             $end = self::csiEnd($raw, $position, $length);
 
-            // Whole, and no key of ours: the terminal answering a question
-            // rather than anything the reader pressed.
+            // Ignore complete terminal replies that do not represent keyboard input.
             return $end === null ? null : [null, $end];
         }
 
@@ -101,8 +99,7 @@ final class InputParser
             return [new KeyMsg($next, alt: true), $position + 2];
         }
 
-        // A control byte after ESC names its alt-combo rather than a lone
-        // escape — legacy alt+Enter arrives as ESC CR.
+        // Legacy Alt+Enter arrives as ESC CR, so a control byte after ESC is an Alt combination.
         if ($altByte >= 0x01 && $altByte <= 0x1A || $altByte === 0x7F) {
             $namedKey = match ($altByte) {
                 0x08, 0x7F => Key::Backspace,
@@ -149,8 +146,7 @@ final class InputParser
     }
 
     /**
-     * Any byte but escape: a control key, a character, or nothing for a byte
-     * no keyboard produces; null while a UTF-8 character is still arriving.
+     * Parse a control key or character; return null while a UTF-8 character is incomplete.
      *
      * @return array{KeyMsg|null, int}|null
      */
@@ -165,9 +161,7 @@ final class InputParser
             }
             $character = substr($raw, $position, $characterLength);
 
-            // A continuation byte on its own, or a sequence that never finished.
-            // Passing it on would put invalid UTF-8 into a model, where mb_/grapheme
-            // calls answer nothing at all.
+            // Drop malformed UTF-8 so invalid bytes cannot break grapheme operations in a model.
             return [mb_check_encoding($character, 'UTF-8') ? new KeyMsg($character) : null, $position + $characterLength];
         }
 
@@ -176,8 +170,7 @@ final class InputParser
             $byte === 0x0D, $byte === 0x0A => new KeyMsg(Key::Enter),
             $byte === 0x08, $byte === 0x7F => new KeyMsg(Key::Backspace),
             $byte >= 0x01 && $byte <= 0x1A => new KeyMsg(chr($byte + 0x60), ctrl: true),
-            // What is left below space: a terminal sends NUL for ctrl+space, and
-            // the four bytes above escape for ctrl with the symbol 0x40 higher.
+            // NUL means Ctrl+Space; bytes 0x1C–0x1F mean Ctrl plus the symbol 0x40 higher.
             $byte <= 0x1F => new KeyMsg($byte === 0x00 ? ' ' : chr($byte + 0x40), ctrl: true),
             default => new KeyMsg($raw[$position]),
         };
@@ -212,14 +205,12 @@ final class InputParser
             return self::parseKittyCsiU("{$modifyOtherKeys[2]};{$modifyOtherKeys[1]}u");
         }
 
-        // `?`, `>` and `=` open a device report. Only `<` belongs to a reader, on a
-        // mouse press.
+        // `?`, `>` and `=` introduce device reports; `<` introduces mouse input.
         if (in_array($body[0] ?? '', ['?', '>', '='], true)) {
             return null;
         }
 
-        // A sequence we do not know is the terminal answering a question, and
-        // reading its bytes as text invents a keystroke.
+        // Skip unknown terminal replies so their bytes cannot become keystrokes.
         return self::parseCsi($sequence, 0, strlen($sequence))[0] ?? null;
     }
 
@@ -293,8 +284,7 @@ final class InputParser
     }
 
     /**
-     * Kitty sends the functional keys it has no legacy code for as private-use codepoints, so an unknown one is a key
-     * this parser cannot name, never text.
+     * Unknown Kitty private-use codepoints represent unnamed functional keys, never text.
      */
     private static function isPrintable(int $codepoint): bool
     {
@@ -323,15 +313,11 @@ final class InputParser
         }
     }
 
-    /**
-     * Where a CSI sequence ends, or null while the rest of it is still in flight.
-     */
     private static function csiEnd(string $raw, int $escapePosition, int $length): ?int
     {
         $position = $escapePosition + 2;
 
-        // Only an X10 mouse report whose three raw bytes are still arriving gets
-        // here, and any of them may look like a final byte itself.
+        // An incomplete X10 report has three raw payload bytes, any of which may look like a final byte.
         if (($raw[$position] ?? '') === 'M') {
             return null;
         }
@@ -380,8 +366,7 @@ final class InputParser
         $finalCharacter = $raw[$position];
         ++$position;
 
-        // A cursor-position report shares this final byte; only an unmodified
-        // F3 arrives without parameters.
+        // F3 has no parameters here; a cursor-position report uses the same final byte.
         if ($finalCharacter === 'R' && str_contains($parameters, ';')) {
             return null;
         }
@@ -453,8 +438,7 @@ final class InputParser
     }
 
     /**
-     * Super, hyper and meta have nowhere to go in a KeyMsg, and ignoring the bit would
-     * deliver cmd+a as a plain "a". Caps and num lock are locks, not modifiers.
+     * Reject unsupported modifiers so Cmd+A cannot become plain `a`; Caps Lock and Num Lock are not modifiers.
      */
     private static function holdsAModifierWeCannotName(string $modifierParam): bool
     {

@@ -17,10 +17,6 @@ use PHPUnit\Framework\TestCase;
 
 final class PanelFocusScopeTest extends TestCase
 {
-    /**
-     * The other children sit in the same subtree, so they have to be told they do
-     * not have it.
-     */
     #[Test]
     public function onlyTheActiveChildOfAFocusedPaneShowsTheCaret(): void
     {

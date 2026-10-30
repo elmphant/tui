@@ -13,7 +13,7 @@ use Elmphant\Tui\Core\EffectId;
 final class HandledEffect
 {
     /**
-     * Stopped or finished: either way, what it emits from now on belongs to nobody.
+     * Ignore emissions after the effect stops or finishes.
      */
     public bool $over = false;
 

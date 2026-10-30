@@ -23,8 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Matches only the last entry, whatever the query, so a test can tell the
- * supplied matcher apart from the built-in substring one.
+ * Always match the last entry so tests can distinguish the custom matcher from substring matching.
  */
 final class LastOptionOnlyMatcher implements Matcher
 {

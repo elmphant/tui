@@ -74,9 +74,6 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
         return $this->cloneWith(disabled: $disabled);
     }
 
-    /**
-     * Held down over the button, where only letting go over it commits.
-     */
     public function withArmed(bool $armed): self
     {
         return $this->cloneWith(armed: $armed);
@@ -97,8 +94,7 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        // Disabled between the press and the release, it never sees the release — so
-        // it lets go here, or fires on the next bare one as though it had been pushed.
+        // Clear the pressed state when disabled, since the release may never arrive.
         if ($this->disabled) {
             return new UpdateResult($this->withArmed(false));
         }
@@ -116,9 +112,6 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
         };
     }
 
-    /**
-     * What pressing it sends; null while it is disabled.
-     */
     public function press(): ?Cmd
     {
         return $this->disabled ? null : Cmd::message($this->message);
@@ -150,9 +143,7 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
             $borderStyle = $borderStyle->bold();
         }
 
-        // The theme keeps its focused border rounded because Unicode has no heavy
-        // rounded corner; a button is small enough that the heavier stroke reads as
-        // pressable rather than as a mismatched box.
+        // Use a heavier border for buttons even though Unicode has no matching heavy rounded corners.
         $block = Block::new()
             ->withBorder($showsFocus ? BorderStyle::Thick : $theme->border)
             ->withBorderStyle($borderStyle)

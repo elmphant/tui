@@ -55,11 +55,8 @@ use Throwable;
 use UnexpectedValueException;
 
 /**
- * Drives a model's pure update and render paths without starting a terminal.
- *
- * Effects are exposed as values and deliberately never carried out. The two a
- * model needs answered to make progress at all are: moving the keyboard, and a
- * message it sent itself, which go back through the loop as the runtime does them.
+ * Run pure model updates and rendering without a terminal.
+ * Expose effects for tests; execute focus changes and self-messages to match runtime routing.
  *
  * @template TModel of \Elmphant\Tui\Runtime\Model
  */
@@ -147,9 +144,7 @@ final class ModelHarness
     }
 
     /**
-     * Stamps the harness area onto key and pointer messages, and wraps a
-     * pointer event that lands on a float the last render drew — exactly what
-     * the runtime does before a message reaches the model.
+     * Apply runtime input routing, including screen geometry and floats from the last render.
      *
      * @return self<TModel>
      */
@@ -178,8 +173,7 @@ final class ModelHarness
     }
 
     /**
-     * Every command the last action led to, the errands it caused included, with
-     * batches, maps and scopes taken apart.
+     * Commands caused by the last action, including follow-up work, with batches, maps and scopes unpacked.
      *
      * @template T of Cmd
      *
@@ -193,8 +187,7 @@ final class ModelHarness
     }
 
     /**
-     * Ends a running Cmd::exec() with its output, delivered as the runtime would:
-     * under the id it ran with, through every map it was handed through.
+     * Complete a simulated exec effect with its original ID and message mappings.
      *
      * @return self<TModel>
      */
@@ -206,8 +199,6 @@ final class ModelHarness
     }
 
     /**
-     * Ends a running Cmd::http() with its response.
-     *
      * @param array<string, list<string>> $headers
      *
      * @return self<TModel>
@@ -220,8 +211,6 @@ final class ModelHarness
     }
 
     /**
-     * Output from a running Cmd::process(), which keeps running.
-     *
      * @return self<TModel>
      */
     public function stream(EffectId|string $effect, string $output, ProcessStream $stream = ProcessStream::Stdout): self
@@ -242,8 +231,6 @@ final class ModelHarness
     }
 
     /**
-     * One beat of a running Cmd::tick(), which keeps running.
-     *
      * @return self<TModel>
      */
     public function tick(EffectId|string $effect, float $at = 0.0): self
@@ -254,9 +241,6 @@ final class ModelHarness
     }
 
     /**
-     * What a running effect produces, as its CommandHandler's $emit would hand
-     * it on. The effect keeps running.
-     *
      * @return self<TModel>
      */
     public function emit(EffectId|string $effect, Message $message): self
@@ -265,8 +249,7 @@ final class ModelHarness
     }
 
     /**
-     * Runs every Cmd::call() issued so far, as the runtime would: what a callback
-     * answers with goes through the maps and the scope the call was issued in.
+     * Run pending call callbacks with their original mappings and scopes.
      *
      * @return self<TModel>
      */
@@ -289,8 +272,6 @@ final class ModelHarness
     }
 
     /**
-     * Ends any running effect with the error it could not get past.
-     *
      * @return self<TModel>
      */
     public function fail(EffectId|string $effect, Throwable|string $error): self
@@ -306,8 +287,6 @@ final class ModelHarness
     }
 
     /**
-     * Keys in the spelling Keybindings use, one after the other.
-     *
      * @return self<TModel>
      */
     public function press(string ...$patterns): self
@@ -332,8 +311,7 @@ final class ModelHarness
     }
 
     /**
-     * Presses and lets go where the text is drawn now, $offset columns to its
-     * right; $nth = 1 is its second place on screen.
+     * Click the current text location plus $offset columns; $nth = 1 selects the second match.
      *
      * @return self<TModel>
      */
@@ -345,8 +323,7 @@ final class ModelHarness
     }
 
     /**
-     * One action: what it led to, as issued() tells it, is what the press and
-     * the release led to together.
+     * Treat press and release as one action when collecting issued commands.
      *
      * @return self<TModel>
      */
@@ -363,8 +340,6 @@ final class ModelHarness
     }
 
     /**
-     * Presses, moves with the button held, and lets go: one action, as clickAt() is.
-     *
      * @return self<TModel>
      */
     public function drag(int $fromColumn, int $fromRow, int $toColumn, int $toRow): self
@@ -390,8 +365,6 @@ final class ModelHarness
     }
 
     /**
-     * Turns the wheel over the text: notches down, or up where negative.
-     *
      * @return self<TModel>
      */
     public function wheel(string $text, int $notches): self
@@ -402,8 +375,7 @@ final class ModelHarness
     }
 
     /**
-     * Resizes the terminal the model believes it is running in: the new area
-     * arrives as a ResizeMsg, exactly as the runtime delivers it.
+     * Deliver the new area as a ResizeMsg, as the runtime does.
      *
      * @return self<TModel>
      */
@@ -429,8 +401,7 @@ final class ModelHarness
     }
 
     /**
-     * Which component the keyboard reaches, or nobody. The runtime owns this, so
-     * a test asks the harness rather than an app that would have to keep a copy.
+     * Read focus from the harness, which owns it just as the runtime does.
      */
     public function focused(): ?ComponentId
     {
@@ -440,8 +411,7 @@ final class ModelHarness
     }
 
     /**
-     * The keys whatever holds the keyboard answers — what a footer would carry.
-     * Resolved by drawing, because that is when the tree names them.
+     * Resolve active key hints while drawing, when the tree identifies their owner.
      *
      * @return array<string, string>
      */
@@ -516,8 +486,7 @@ final class ModelHarness
                 $this->dispatch($sent);
             }
 
-            // What the caller pressed is what it asks about afterwards, so the errands
-            // that press left behind do not take the answer's place.
+            // Keep the original action's result when processing its follow-up commands.
             $this->lastCommand = $result->command;
         } finally {
             --$this->depth;
@@ -527,8 +496,7 @@ final class ModelHarness
     }
 
     /**
-     * Takes a command apart the way Program dispatches it, so an effect is held
-     * under the id and through the wraps the runtime would run it with.
+     * Unpack commands as Program does, preserving each effect's ID and message mappings.
      *
      * @param (Closure(Message): Message)|null $wrap
      */
@@ -686,8 +654,7 @@ final class ModelHarness
     }
 
     /**
-     * The runtime announces its first placement too, and a container that never
-     * hears one cannot bring the arriving child into view.
+     * Announce initial focus too, so containers can scroll the focused child into view.
      */
     private function settleFocus(): void
     {
@@ -709,9 +676,7 @@ final class ModelHarness
     }
 
     /**
-     * The runtime keeps focus itself, and a command is how a model moves it, so
-     * the harness has to honour one or a test can never press one key to move
-     * the keyboard and a second to use it.
+     * Apply focus commands so later simulated input reaches the correct component.
      */
     private function moveFocusFor(?Cmd $command, ?string $scope = null): void
     {

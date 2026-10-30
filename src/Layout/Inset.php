@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout;
 
 /**
- * How much of its own area a frame takes before its child's area begins.
- *
- * The three are taken in the order the terminal draws them: the margin holds
- * space outside the frame, the border occupies one cell on each side it is
- * drawn, and the padding holds space inside it.
+ * Apply margin, border and padding in that order, from outside to inside.
  *
  * @internal
  */
@@ -29,8 +25,7 @@ final readonly class Inset
     }
 
     /**
-     * Chrome that would leave no cell for the content is dropped, padding
-     * first, so a squeezed container still shows what it holds.
+     * Drop padding first when decoration would leave no room for content.
      */
     public function fitting(Rect $area): self
     {

@@ -24,9 +24,6 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
 
-/**
- * Immutable layout and surface decoration around one widget.
- */
 final readonly class Container implements Widget, WidgetContainer, MeasureHeight
 {
     use Cloneable;

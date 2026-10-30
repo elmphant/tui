@@ -41,9 +41,6 @@ use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
 
-/**
- * A scrollable list with a free-text filter over it.
- */
 final readonly class FilterableList implements Focusable, KeybindingsAware, DropdownContent, Committing, PublishesHints, TakesText, BindsForTheMoment
 {
     use Cloneable;
@@ -51,9 +48,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     use KeybindingsAwareBehavior;
     use SearchMode;
 
-    /**
-     * Actions the list takes; every other key is typing and belongs to the field.
-     */
     private const LIST_ACTIONS = [
         Actions::CURSOR_UP,
         Actions::CURSOR_DOWN,
@@ -65,8 +59,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     ];
 
     /**
-     * What the query kept, worked out once. Every read of the highlighted item
-     * asks for it, and matching a long list is far too costly to repeat per read.
+     * Cache matches so repeated reads of the highlighted item do not repeat an expensive search.
      */
     private FilterMatches $matching;
 
@@ -129,8 +122,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * What the list shows where the query kept nothing — not to be confused with
-     * withEmptyCaption(), which is what the caption reads when nothing is chosen.
+     * Shown when no items match; withEmptyCaption() describes an empty selection instead.
      */
     public function withNoMatchText(string $noMatchText): self
     {
@@ -170,10 +162,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(field: $this->field->withValue($query))->reFiltered();
     }
 
-    /**
-     * Highlights the item at $index of the list handed in, ignoring one the
-     * query filtered away.
-     */
     public function withSourceIndex(?int $index): self
     {
         $kept = array_search($index, $this->matchingIndexes(), true);
@@ -181,17 +169,11 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $kept === false ? $this : $this->cloneWith(list: $this->list->withCursor($kept));
     }
 
-    /**
-     * How much of the list the filter kept, so a query narrowing to nothing still reads as a query.
-     */
     public function summary(): string
     {
         return $this->list->itemCount() . ' of ' . count($this->items);
     }
 
-    /**
-     * The highlighted item's index in the list handed in, not in what the filter kept.
-     */
     public function sourceIndex(): ?int
     {
         return $this->matchingIndexes()[$this->list->cursor()] ?? null;
@@ -205,8 +187,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * An item is chosen by its own filter value, so narrowing the list to
-     * nothing cannot erase a choice already made.
+     * Store selections by filter value so a query with no matches cannot erase them.
      */
     public function withSelectedValue(?string $filterValue): self
     {
@@ -284,12 +265,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * For a choice that may also be none: choosing the row already picked puts it
-     * back down rather than picking it again.
-     *
-     * Off by default, because a list that must answer should not be emptiable by a
-     * stray press. Nothing picked is a state this list can already hold and name
-     * through its empty caption — this is how a reader reaches it.
+     * Allow choosing the selected row to clear it; disabled by default to prevent accidental empty choices.
      */
     public function withClearable(bool $clearable = true): self
     {
@@ -317,8 +293,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * A query that matched nothing still binds enter to SELECT, so the binding
-     * alone would close a popup over nothing.
+     * A SELECT binding alone is not a commit: a query with no matches must not close its popup.
      */
     public function commits(Message $message): bool
     {
@@ -337,9 +312,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * Only the keys the list navigates with: `space` and Home/End stay with the
-     * field, where they type and move the caret. Top and bottom are answered
-     * without a key, so a global binding for them (vim's `gg`/`G`) reaches the list.
+     * Keep Space and Home/End for text editing; expose top and bottom actions for global bindings such as `gg` and `G`.
      */
     public static function defaultKeybindings(): Keybindings
     {
@@ -378,10 +351,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return new UpdateResult($this->query() === '' ? $this : $this->withQuery(''));
         }
 
-        // Choosing is the list's own move, but the choice is this widget's to keep:
-        // the rows are whatever the query left, so only a filter value survives it.
-        // The row it was made on rides along, so choosing the second of two that
-        // read the same picks that one and not the first.
+        // Store the selected filter value and original row so duplicate values preserve the chosen item.
         if ($this->effectiveKeybindings()->matches($message, Actions::SELECT)) {
             $cursor = $this->cursorItem();
 
@@ -452,9 +422,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * The same choice, with the row it was made on. The value still decides:
-     * the row is only consulted while it still reads the same, so a list that
-     * moved on behind the choice falls back to finding it by value.
+     * Use the stored row only while its value still matches; otherwise find the selection by value.
      */
     private function selectedAt(?string $filterValue, ?int $index): self
     {
@@ -478,9 +446,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * A click moves the cursor, and nothing else: what this list holds as chosen
-     * is its picked item, so a mark the list makes on its own would outlive the
-     * cursor and read as a second choice.
+     * A click moves only the cursor; an independent list selection would appear as a second chosen item.
      *
      * @return UpdateResult<self>
      */
@@ -496,9 +462,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         );
     }
 
-    /**
-     * A new query has a new best match, so the cursor goes back to the top of it.
-     */
     private function reFiltered(): self
     {
         return $this->cloneWith(

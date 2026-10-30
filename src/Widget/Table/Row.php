@@ -29,9 +29,6 @@ final readonly class Row
         return new self(cells: array_values($cells));
     }
 
-    /**
-     * A group label laid out across the whole table rather than per column.
-     */
     public static function header(string $label): self
     {
         return new self(cells: [$label], selectable: false, spansAllColumns: true);
@@ -56,17 +53,13 @@ final readonly class Row
     }
 
     /**
-     * What the cursor and the selection follow across withRows(), for a row
-     * whose cells change while it stays the same row: a process by its pid.
+     * Use a stable key to preserve cursor and selection when cell contents change.
      */
     public function withKey(?string $key): self
     {
         return $this->cloneWith(key: $key);
     }
 
-    /**
-     * The key given, else the row's cell text.
-     */
     public function key(): string
     {
         return $this->key ?? implode("\x1F", array_map(

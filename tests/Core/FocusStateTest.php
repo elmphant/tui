@@ -36,9 +36,7 @@ final class FocusStateTest extends TestCase
     }
 
     /**
-     * A modal with nothing focusable in it empties the ring while the components
-     * behind it are still drawn. Moving has to leave the keyboard where it is:
-     * clearing it says "nobody said yet", and a frame drawn on that answer throws.
+     * An empty tab order must not turn decided focus into undecided focus, which rendering rejects.
      */
     #[Test]
     public function aMoveWithNowhereToGoLeavesTheKeyboardWhereItWas(): void
@@ -75,10 +73,6 @@ final class FocusStateTest extends TestCase
         self::assertEquals(ComponentId::named('preview'), $moved->focused());
     }
 
-    /**
-     * A focused component can leave the tree between frames — a tab switches, a
-     * modal closes, a row is filtered away. The keyboard cannot stay with it.
-     */
     #[Test]
     public function focusOnAComponentThatLeftTheTreeFallsBackToTheFirstOne(): void
     {
@@ -89,9 +83,6 @@ final class FocusStateTest extends TestCase
         self::assertEquals(ComponentId::named('search'), $resolved->focused());
     }
 
-    /**
-     * A page switch can take the third field away while the bar it was in stays.
-     */
     #[Test]
     public function focusOnAStopThatLeftStaysWithTheContainerItWasIn(): void
     {

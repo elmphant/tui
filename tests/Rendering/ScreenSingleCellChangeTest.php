@@ -13,8 +13,7 @@ use PHPUnit\Framework\TestCase;
 final class ScreenSingleCellChangeTest extends TestCase
 {
     /**
-     * Asserted on the bytes, because the grid cannot tell a minimal write from a
-     * repaint that happens to end up looking the same.
+     * Inspect bytes to distinguish a minimal write from a full repaint with the same final grid.
      */
     #[Test]
     public function changingOneCharacterDoesNotRepaintTheWholeRow(): void

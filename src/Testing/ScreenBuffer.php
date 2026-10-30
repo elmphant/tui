@@ -118,9 +118,8 @@ final class ScreenBuffer
     }
 
     /**
-     * Where the text starts on screen, counted in display columns; $nth = 1 is
-     * the second match, reading row by row. Within an area, a match must start
-     * inside it.
+     * Match positions use display columns and row order; $nth = 1 means the second match.
+     * Within an area, only the start of a match must lie inside it.
      *
      * @return array{row: int, column: int}|null
      */
@@ -140,8 +139,6 @@ final class ScreenBuffer
     }
 
     /**
-     * find() for text a test expects: failing to find it is the failure.
-     *
      * @return array{row: int, column: int}
      */
     public function locate(string $text, int $nth = 0, ?Rect $within = null): array

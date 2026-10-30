@@ -22,8 +22,7 @@ final class StdinBufferFragmentationTest extends TestCase
     }
 
     /**
-     * An escape timeout between reads may change what an escape means, never which
-     * bytes arrive or what a paste holds.
+     * Escape timeouts may change key interpretation, but must not lose bytes or alter paste content.
      *
      * @param list<string> $chunks
      */
@@ -41,9 +40,7 @@ final class StdinBufferFragmentationTest extends TestCase
     }
 
     /**
-     * A terminal reply is swallowed whole, so its bytes are not the reader's. A
-     * timeout inside a paste's start marker turns the paste into keys: `ESC [20`
-     * may still become F9, so nothing can tell the marker apart before it ends.
+     * Swallow terminal replies whole; an incomplete paste marker can still be a key sequence until its final byte arrives.
      *
      * @return iterable<string, array{string, list<string>}>
      */

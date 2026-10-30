@@ -86,9 +86,6 @@ final class AllocatorSweep
      * @return iterable<string, array{list<ItemPolicy>, AxisSpecification, int}>
      */
     /**
-     * A handful of unrelated axes, to be resolved between two runs of the axis
-     * under test.
-     *
      * @return list<array{list<ItemPolicy>, AxisSpecification, int}>
      */
     public static function intervening(): array

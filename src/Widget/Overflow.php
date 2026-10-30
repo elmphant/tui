@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget;
 
-/**
- * What a table does with the columns it has no room for.
- */
 enum Overflow
 {
     /**

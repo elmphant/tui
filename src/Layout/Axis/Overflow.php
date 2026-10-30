@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout\Axis;
 
 /**
- * What an axis does when the slots ask for more than it has.
- *
  * @internal
  */
 enum Overflow
@@ -27,7 +25,7 @@ enum Overflow
     case ClipTail;
 
     /**
-     * The floors give way too.
+     * Allow shrinking below minimum sizes.
      */
     case SqueezeToFloor;
 }

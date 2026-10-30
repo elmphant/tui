@@ -185,20 +185,15 @@ final readonly class Paragraph implements Widget, MeasureHeight
             ? $this->style->inherit($context->theme->base)
             : $context->theme->base;
 
-        // A scroll container sizes its child to the whole document and clips
-        // the overflow, so the visible band is the clip, not the area. Every
-        // source line yields at least one visual line, so slicing that many
-        // source lines is always enough to fill it — and it keeps resolving
-        // and wrapping proportional to the viewport.
+        // Use the clip as the viewport; a scroll container may pass the whole document area.
+        // Each source line takes at least one row, so processing at most the visible row count is enough.
         $visible = $area->intersect($frame->clip());
         if ($visible->height < 1) {
             return;
         }
 
         $skipped = $visible->y - $area->y;
-        // A wrapped source line covers several visual rows, so the first
-        // visible row is not the nth source line. Find which line owns it, and
-        // how many of its rows sit above the band.
+        // Find the source line containing the first visible row; wrapping means source and visual row indices differ.
         [$firstLine, $rowsBefore] = $this->lineAtVisualRow($skipped, $area->width);
         $dropped = $skipped - $rowsBefore;
 
@@ -246,8 +241,6 @@ final readonly class Paragraph implements Widget, MeasureHeight
     }
 
     /**
-     * Which source line owns visual row $target, and how many rows precede it.
-     *
      * @return array{int, int}
      */
     private function lineAtVisualRow(int $target, int $width): array
@@ -279,12 +272,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
     }
 
     /**
-     * Where a line breaks depends on its characters and the width alone, so
-     * measuring and rendering the same text share one cached entry.
-     *
-     * A row is a byte offset and length into the line's text. Rows do not
-     * always tile: a break at a space drops that space, but a space that is
-     * itself too wide for the row starts the next one instead.
+     * Cache by text and width; rows are byte offsets and lengths, with gaps where wrapping drops spaces.
      *
      * @return list<array{int, int}>
      */
@@ -342,8 +330,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
     }
 
     /**
-     * The row cut where the style changes. A cluster belongs to the span it
-     * starts in, so one that straddles a span boundary is drawn whole.
+     * Keep a grapheme whole even across style boundaries, using the style where it starts.
      *
      * @return list<array{string, Style}>
      */

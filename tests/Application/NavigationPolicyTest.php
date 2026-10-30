@@ -28,10 +28,6 @@ use PHPUnit\Framework\TestCase;
 
 final class NavigationPolicyTest extends TestCase
 {
-    /**
-     * An output pane worth clicking into to scroll, but not worth a stop on the way
-     * round: the two lists are already separate, so one answer can name either.
-     */
     #[Test]
     public function aPointerOnlyComponentIsClickableButTabWalksPastIt(): void
     {
@@ -52,8 +48,7 @@ final class NavigationPolicyTest extends TestCase
     }
 
     /**
-     * The command is only the ask. Focus is resolved against the ring afterwards, and
-     * a pane the pointer can reach has to survive that or the click does nothing.
+     * Pointer-only panes must survive focus resolution even though Tab skips them.
      */
     #[Test]
     public function aClickOnAPointerOnlyPaneLeavesTheKeyboardThere(): void
@@ -64,10 +59,6 @@ final class NavigationPolicyTest extends TestCase
         self::assertEquals(ComponentId::named('output'), $harness->focused());
     }
 
-    /**
-     * A pane with nothing in it yet would otherwise be a stop on the way round, and
-     * it answers on demand, so filling up is enough to become reachable.
-     */
     #[Test]
     public function aPaneWithNothingInItIsNotOfferedTheKeyboard(): void
     {

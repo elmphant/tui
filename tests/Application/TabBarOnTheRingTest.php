@@ -20,10 +20,6 @@ use PHPUnit\Framework\TestCase;
 
 final class TabBarOnTheRingTest extends TestCase
 {
-    /**
-     * The keyboard starts in the first field of the page rather than on the strip,
-     * so one walk reaches the second one.
-     */
     #[Test]
     public function aCharacterLandsInTheFieldTheReaderTabbedTo(): void
     {
@@ -38,8 +34,7 @@ final class TabBarOnTheRingTest extends TestCase
     }
 
     /**
-     * The strip is a stop of its own, so a character arriving there belongs to the
-     * strip — routing it on would type into a field nobody is looking at.
+     * Keys received by the tab strip must not leak into its page's fields.
      */
     #[Test]
     public function aCharacterOnTheStripLandsInNoField(): void

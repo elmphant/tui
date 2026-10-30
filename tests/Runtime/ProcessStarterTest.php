@@ -12,10 +12,6 @@ use Elmphant\Tui\Testing\TestClock;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Spawning the child process a command asked for, and saying so by throwing
- * where it cannot.
- */
 final class ProcessStarterTest extends TestCase
 {
     #[Test]

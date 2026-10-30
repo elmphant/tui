@@ -202,10 +202,6 @@ final class ComponentTest extends TestCase
         self::assertSame(7, $result->model->version);
     }
 
-    /**
-     * The property name is only the default id. A host that gives one explicitly
-     * is naming what `Cmd::focus()` and the trace will call this component.
-     */
     #[Test]
     public function bindPropertyTakesAnIdOfItsOwnOverThePropertyName(): void
     {

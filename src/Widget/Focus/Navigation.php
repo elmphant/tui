@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Focus;
 
 /**
- * Where a focusable is willing to be reached from. The keyboard can be somewhere
- * without tab stopping there, which is why this is not a yes or no.
+ * Pointer reachability and tab order differ; a component may support one without the other.
  */
 enum Navigation
 {
@@ -16,8 +15,7 @@ enum Navigation
     case Regular;
 
     /**
-     * A press lands here, tab walks past: an output pane worth clicking into to
-     * scroll, but not worth a stop between the panes a reader works in.
+     * Pointer-only: useful for scrolling output panes without adding a tab stop.
      */
     case Pointer;
 

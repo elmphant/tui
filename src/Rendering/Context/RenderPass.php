@@ -7,10 +7,6 @@ namespace Elmphant\Tui\Rendering\Context;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Terminal\ColorProfile;
 
-/**
- * What a root model draws a frame with. Widgets only ever see the context; the
- * runtime and the root talk to the part that owns each job.
- */
 final readonly class RenderPass
 {
     private function __construct(
@@ -38,9 +34,6 @@ final readonly class RenderPass
         );
     }
 
-    /**
-     * The same pass drawn in another theme: the clock, focus, floats and layout carry over.
-     */
     public function withTheme(Theme $theme): self
     {
         return new self(

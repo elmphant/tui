@@ -510,12 +510,10 @@ final class PanelTest extends TestCase
             ->add($focusableA)
             ->add($focusableB);
 
-        // Tab forward to second (last) focusable child
         $area = new Rect(0, 0, 30, 20);
         $result = $panel->update(new KeyMsg(Key::Tab), $area);
         $panel = $result->model;
 
-        // Tab again — at last child, should return same instance (bubble up)
         $result = $panel->update(new KeyMsg(Key::Tab), $area);
 
         self::assertSame($panel, $result->model);
@@ -531,7 +529,6 @@ final class PanelTest extends TestCase
             ->add($focusableA)
             ->add($focusableB);
 
-        // Focus starts at first child. Shift+Tab should return same instance.
         $area = new Rect(0, 0, 30, 20);
         $result = $panel->update(new KeyMsg(Key::Tab, shift: true), $area);
 
@@ -2095,7 +2092,6 @@ final class PanelTest extends TestCase
         $multiLine = new PanelMultiLineWidget(6);
         $panel = Panel::new('p')->add($multiLine);
 
-        // Scroll past the first 3 rows via the readonly with() helper
         $panel = $panel->withScrollOffset(3);
 
         $frame = new Frame(20, 15);
@@ -2213,9 +2209,7 @@ final class PanelTest extends TestCase
     }
 
     /**
-     * The guard against rebuilding compared the children against what the pane
-     * reports, which is its children with focus applied — so a focused panel never
-     * matched itself and dropped its scroll position and inner cursor every frame.
+     * Compare original children before rebuilding; focus-marked copies would reset scroll and cursor state every frame.
      */
     #[Test]
     public function aFocusedPanelKeepsItsPaneWhenHandedTheSameChildren(): void

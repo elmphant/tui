@@ -28,18 +28,15 @@ final class Actions
     public const TAB_PREVIOUS = 'tab_previous';
 
     /**
-     * Once bound, a filter's list or table holds the keys, and this key hands them to its field.
+     * Move focus from filtered content to its search field.
      */
     public const SEARCH = 'search';
 
     /**
-     * Hands the keys back from a filter's field to its content, bound only while the field holds them.
+     * Return focus to filtered content; active only while searching.
      */
     public const LEAVE_SEARCH = 'leave_search';
 
-    /**
-     * Lists every key that works where the keyboard is.
-     */
     public const HELP = 'help';
 
     public const WORD_LEFT = 'word_left';
@@ -52,9 +49,6 @@ final class Actions
     public const CLEAR_LINE = 'clear_line';
     public const DELETE_WORD_FORWARD = 'delete_word_forward';
 
-    /**
-     * What an action does, in the words of a key hint.
-     */
     public static function description(string $action): string
     {
         return match ($action) {

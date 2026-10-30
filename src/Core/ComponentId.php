@@ -26,7 +26,7 @@ final readonly class ComponentId implements Stringable
     }
 
     /**
-     * Ask only where `isUnder()` holds — that is what makes the answer non-empty.
+     * Call only when isUnder() is true, so the result is non-empty.
      *
      * @return non-empty-list<int>
      */

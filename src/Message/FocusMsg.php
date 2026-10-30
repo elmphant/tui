@@ -8,10 +8,8 @@ use Elmphant\Tui\Core\FocusMove;
 use Elmphant\Tui\Core\Message;
 
 /**
- * Sent only on a move: a widget that already holds the keyboard must never see
- * one, or a pane walks back to its first child between keystrokes.
- *
- * `move` is the end the keyboard came in at, which only the ring walker knows.
+ * Send only when focus moves, or containers may reset their child position between keystrokes.
+ * `move` records the direction of arrival.
  */
 final readonly class FocusMsg implements Message
 {

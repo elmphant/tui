@@ -95,8 +95,6 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     }
 
     /**
-     * A host holds what was ticked, not where the ticks sat.
-     *
      * @param list<string> $values
      */
     public function withCheckedValues(array $values): self
@@ -186,9 +184,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     }
 
     /**
-     * A count of the ticks. What no tick at all means is the host's to say: a
-     * group deciding on its own that none reads as "all" would be inventing a
-     * filter rule it knows nothing about.
+     * Report the count only; the host decides whether an empty selection means "all".
      */
     public function caption(): string
     {
@@ -302,9 +298,6 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         }
     }
 
-    /**
-     * Rows this widget draws above its options — its label and the spacer under it.
-     */
     protected function rowOffset(): int
     {
         return $this->label !== '' ? 2 : 0;

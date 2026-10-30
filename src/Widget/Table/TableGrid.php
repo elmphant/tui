@@ -12,9 +12,6 @@ use Elmphant\Tui\Text\CharWidth;
  */
 final class TableGrid
 {
-    /**
-     * One space either side of every cell.
-     */
     private const PADDING = 2;
 
     /**

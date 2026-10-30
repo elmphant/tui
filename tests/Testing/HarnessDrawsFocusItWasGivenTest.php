@@ -10,10 +10,6 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * A frame has to show the keyboard where the commands put it, not where the tree
- * would have settled it.
- */
 final class HarnessDrawsFocusItWasGivenTest extends TestCase
 {
     #[Test]

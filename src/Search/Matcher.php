@@ -7,8 +7,7 @@ namespace Elmphant\Tui\Search;
 interface Matcher
 {
     /**
-     * Indexes of the haystack entries matching the query, best match first.
-     * The filters keep an answer by its query and haystack, so it must depend on nothing else.
+     * Return matching indices in best-first order; results must depend only on query and haystack because filters cache them.
      *
      * @param list<string> $haystack
      *

@@ -49,9 +49,7 @@ final class RowIndexTest extends TestCase
     }
 
     /**
-     * A scrollable list measures at its full width to decide whether a
-     * scrollbar is needed, then at the narrowed width to lay out beside it.
-     * Both happen in one frame, so both must survive to the next.
+     * Retain both full-width and scrollbar-width measurements across frames.
      */
     #[Test]
     public function retainsTheTwoWidthsOneFrameUses(): void

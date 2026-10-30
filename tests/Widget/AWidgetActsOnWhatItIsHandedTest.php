@@ -29,8 +29,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every container hands a key to one child, so a widget that is handed one is
- * the one the keyboard is on. Asking again is how it disagrees with the router.
+ * Trust input routing: rechecking a widget's stored focus can disagree with the container that sent the key.
  */
 final class AWidgetActsOnWhatItIsHandedTest extends TestCase
 {

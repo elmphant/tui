@@ -13,8 +13,7 @@ use PHPUnit\Framework\TestCase;
 final class SplitStateTest extends TestCase
 {
     /**
-     * A drag reads the pane either side of the divider, so one that lies outside
-     * the panes reaches for array keys that are not there.
+     * An out-of-range divider must be rejected before a drag reads missing adjacent panes.
      */
     #[Test]
     public function aDividerThatLiesOutsideThePanesIsRefused(): void

@@ -13,10 +13,6 @@ use PHPUnit\Framework\TestCase;
 
 final class BatchCmdTest extends TestCase
 {
-    /**
-     * A batch is a list of effects, and one built by adding to another is the same
-     * list. Nesting only makes every reader walk a shape that means nothing.
-     */
     #[Test]
     public function aBatchOfBatchesIsOneList(): void
     {
@@ -31,8 +27,7 @@ final class BatchCmdTest extends TestCase
     }
 
     /**
-     * A wrap belongs to what is inside it, not to whatever it is collected beside.
-     * Lifting its children out would send them off unwrapped.
+     * Keep mapping wrappers around their commands when combining batches.
      */
     #[Test]
     public function aWrappedBatchKeepsItsShape(): void

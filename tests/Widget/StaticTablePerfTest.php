@@ -19,9 +19,7 @@ final class StaticTablePerfTest extends TestCase
     use PerformanceBudget;
 
     /**
-     * Drawing is linear in the rows, so twice the rows costs about twice as
-     * much. The allowance absorbs the container's spread without admitting a
-     * growth class above linear.
+     * Allow timing noise when doubling rows, while rejecting growth above linear cost.
      */
     private const MAX_COST_OF_DOUBLING = 3.0;
 
@@ -38,8 +36,6 @@ final class StaticTablePerfTest extends TestCase
         $largeRows = self::rows(4_000);
         $table = null;
 
-        // The drawn grid is cached by content, so only a cleared cache measures
-        // the drawing itself rather than a lookup.
         $smallCost = self::medianMicrosecondsAfterSetup(
             static function () use (&$table, $smallRows): void {
                 WrapCache::clear();
@@ -94,8 +90,6 @@ final class StaticTablePerfTest extends TestCase
             10,
         );
 
-        // A new width, so the drawing is genuinely new work and only the
-        // measuring can come from the cache.
         StaticTable::new($headers, $rows)->render(new Frame(60, 10), new Rect(0, 0, 60, 10), $context);
         $width = 61;
         $warm = self::medianMicroseconds(

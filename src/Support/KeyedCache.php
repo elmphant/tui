@@ -8,13 +8,7 @@ use Closure;
 use WeakMap;
 
 /**
- * A handful of computed values, kept by the key they were computed for.
- *
- * Intentionally MUTABLE: it is a derived-value cache, not model state. An
- * immutable widget builds one when its content changes and hands the same
- * instance to every clone that keeps that content, so moving a cursor or
- * taking focus reuses the work. Caching keyed on the owner cannot do that —
- * under the immutable-widget contract every keystroke produces a new owner.
+ * A mutable cache shared by clones with unchanged content; caching per owner would miss on every keystroke.
  *
  * @internal
  *
@@ -23,16 +17,12 @@ use WeakMap;
 final class KeyedCache
 {
     /**
-     * A scrollable widget measures at its full width to decide whether a
-     * scrollbar is needed, then at the narrowed width to lay out beside it.
-     * Both are used in one frame, so both must survive into the next.
+     * Keep both full-width and scrollbar-width measurements, since a widget uses both in one frame.
      */
     private const RETAINED = 2;
 
     /**
-     * Held beside the instance rather than on it, so what has been measured
-     * cannot change what its owner compares equal to. Weak, so a cache costs
-     * nothing once the widgets holding it are gone.
+     * Store data in a WeakMap so filling the cache does not change widget equality, and unused caches can be released.
      *
      * @var WeakMap<self<object>, array<int|string, object>>
      */

@@ -105,8 +105,7 @@ final class KittyParserTest extends TestCase
     }
 
     /**
-     * Kitty reports super, hyper and meta, which a KeyMsg cannot carry. Reading only
-     * the three bits we have delivered cmd+a as a plain "a".
+     * Reject unsupported Kitty modifiers so Cmd+A cannot become plain `a`.
      */
     #[Test]
     public function superHeldDownIsNotDeliveredAsAPlainLetter(): void
@@ -123,8 +122,7 @@ final class KittyParserTest extends TestCase
     }
 
     /**
-     * The locks share that field, so dropping an unnameable modifier must not start
-     * dropping letters typed with caps lock on.
+     * Lock flags share the modifier field; rejecting unsupported modifiers must not reject Caps Lock text.
      */
     #[Test]
     public function capsLockLeavesTheLetterAlone(): void

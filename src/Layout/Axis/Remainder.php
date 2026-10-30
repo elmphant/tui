@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Layout\Axis;
 
 /**
- * Who gets the cells that no share divides evenly.
- *
  * @internal
  */
 enum Remainder
@@ -17,7 +15,7 @@ enum Remainder
     case RearmostFirst;
 
     /**
-     * The slots whose claim came closest to another whole cell take one each.
+     * Give leftover cells to slots with the largest fractional shares.
      */
     case StrongestClaim;
 }

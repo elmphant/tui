@@ -54,8 +54,6 @@ final class WrapCacheTest extends TestCase
         WrapCache::remember('first', static fn (): array => $huge);
         WrapCache::remember('second', static fn (): array => $huge);
 
-        // Two of those exceed the budget, so the older one has gone — and what
-        // comes back is still correct, just recomputed.
         $recomputed = 0;
         WrapCache::remember('first', static function () use ($huge, &$recomputed): array {
             ++$recomputed;

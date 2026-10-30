@@ -12,9 +12,7 @@ use Elmphant\Tui\Widget\Interactive;
 use Throwable;
 
 /**
- * One interactive widget, hosted in an app of its own and holding the keyboard,
- * so a widget test needs no app around it: keys, clicks, popups and the results
- * of the effects it started reach it as they would in a real one.
+ * Host one focused widget in an app so tests use normal key, pointer, popup and effect routing.
  *
  * @template TWidget of Interactive
  */
@@ -43,8 +41,6 @@ final class WidgetHarness
     }
 
     /**
-     * The widget as the last update left it.
-     *
      * @return TWidget
      */
     public function widget(): Interactive

@@ -18,10 +18,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * The harness stands in for Program, so an app driven by it has to see the same
- * keyboard it would see running for real.
- */
 final class HarnessFocusTest extends TestCase
 {
     #[Test]

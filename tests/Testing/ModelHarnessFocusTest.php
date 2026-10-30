@@ -18,10 +18,6 @@ use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Where the keyboard is belongs to the runtime, so a test driving one asks the
- * harness rather than an app keeping a copy of the answer.
- */
 final class ModelHarnessFocusTest extends TestCase
 {
     #[Test]

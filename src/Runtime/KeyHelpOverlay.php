@@ -37,8 +37,7 @@ final class KeyHelpOverlay
     }
 
     /**
-     * Whether the overlay took the message: the key that opens it, and while it is
-     * open every key and pointer event, so nothing behind it reacts.
+     * While open, consume all keys and pointer events so widgets behind the help cannot react.
      */
     public function takes(object $message, object $model, FocusState $focus): bool
     {

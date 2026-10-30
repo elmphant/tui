@@ -24,7 +24,6 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
-use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\InputLayer;
@@ -128,21 +127,13 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
     }
 
     /**
-     * Size the modal to its content instead of to a share of the screen.
-     *
-     * The width comes from the content's own column constraint, the height from
-     * MeasureHeight; content that answers neither keeps the percentage sizing for
-     * the dimension it cannot speak for.
+     * Use declared content width and measured height; retain percentage sizing for dimensions the content cannot provide.
      */
     public function withSizedToContent(bool $sizedToContent = true): static
     {
         return $this->cloneWith(sizedToContent: $sizedToContent);
     }
 
-    /**
-     * Off for content that frames itself, such as a Form, so one border and
-     * one title remain.
-     */
     public function withBorder(bool $bordered = true): static
     {
         return $this->cloneWith(bordered: $bordered);
@@ -195,17 +186,13 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
     }
 
     /**
-     * Where a bound component inside holds the keyboard's stops, those are the
-     * stops and the frame around them is not one.
+     * Skip the modal frame in tab order when bound content supplies its own stops.
      */
     public function navigation(): Navigation
     {
         return self::mountsAFocusable([$this->content], false) ? Navigation::Never : Navigation::Regular;
     }
 
-    /**
-     * Asked, never stored, for the reasons {@see Committing} gives.
-     */
     public function dismisses(Message $message, Rect $area): bool
     {
         if ($message instanceof KeyMsg) {

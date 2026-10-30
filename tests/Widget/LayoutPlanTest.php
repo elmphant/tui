@@ -109,7 +109,6 @@ final class LayoutPlanTest extends TestCase
             $pass->layout->during($plan, static fn () => $container->render(new Frame(10, 4), $area, $pass->context));
             self::fail('Precondition: child rendering must fail');
         } catch (RuntimeException) {
-            // Expected: verify the context is usable without the failed plan.
         }
 
         foreach (PlacedChildren::of($container, $area, $pass->context) as $_) {

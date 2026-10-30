@@ -8,18 +8,12 @@ use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
 
 /**
- * Starting, stopping and identifying a child process, for the effects that run
- * one. What they do with its output is their own; this is the part that is the
- * same whether the output arrives all at once or in chunks.
- *
  * @internal
  */
 trait ChildProcessLifecycle
 {
     /**
-     * Symfony's stop() blocks in a usleep loop until the child dies or this timeout
-     * expires, and only then escalates to SIGKILL; its 10s default would freeze the
-     * event loop for a child that ignores SIGTERM.
+     * Symfony's stop() blocks until its timeout before using SIGKILL; the 10-second default would freeze the event loop.
      */
     private const TERMINATION_GRACE_SECONDS = 0.05;
 

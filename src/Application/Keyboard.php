@@ -8,7 +8,7 @@ use Closure;
 use Elmphant\Tui\Core\ComponentId;
 
 /**
- * Where the keyboard is for the message a hook is handed, asked of the app on demand.
+ * Provides the app's current keyboard state to message hooks.
  */
 final readonly class Keyboard
 {
@@ -27,7 +27,7 @@ final readonly class Keyboard
     }
 
     /**
-     * The keys whatever holds the keyboard answers, as `FocusHints` shows them.
+     * Active key hints, as shown by FocusHints.
      *
      * @return array<string, string>
      */

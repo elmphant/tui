@@ -30,10 +30,6 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Every widget that can take the keyboard has to show it from what the tree
- * says, so the highlight cannot contradict where the keys are routed.
- */
 final class DrawsFocusTest extends TestCase
 {
     #[Test]

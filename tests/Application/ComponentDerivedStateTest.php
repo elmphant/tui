@@ -22,8 +22,7 @@ use PHPUnit\Framework\TestCase;
 final class ComponentDerivedStateTest extends TestCase
 {
     /**
-     * A model may keep what the component changed rather than the component, and
-     * build the widget back from it — the same answer, a different instance.
+     * A model may store data and rebuild an equivalent widget instead of keeping the widget instance.
      */
     #[Test]
     public function aComponentRebuiltFromWhatTheModelKeptIsAcceptedBack(): void
@@ -39,9 +38,7 @@ final class ComponentDerivedStateTest extends TestCase
     }
 
     /**
-     * One key can change both the component's own state and something the host
-     * derives from it, such as a title. The model kept the change, so the rebuilt
-     * widget must be accepted — refusing it loses the keystroke.
+     * Accept rebuilt widgets with derived changes, such as a title, as long as the component's update was kept.
      */
     #[Test]
     public function aComponentRebuiltWithDecorationTheSameKeystrokeChangedIsAcceptedBack(): void
@@ -56,9 +53,6 @@ final class ComponentDerivedStateTest extends TestCase
         self::assertSame(1, $scrolled->model->scroll);
     }
 
-    /**
-     * The pane's own cursor is framework state the model has nowhere to keep.
-     */
     #[Test]
     public function aPaneRebuiltFromTheModelsOwnDataSurvivesTabbingInsideIt(): void
     {
@@ -124,9 +118,6 @@ final readonly class DerivedScrollApp extends App
     }
 }
 
-/**
- * Rebuilding the widget from kept data is what view() is documented to do.
- */
 final readonly class RebuiltFieldsApp extends App
 {
     /**

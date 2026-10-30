@@ -10,8 +10,7 @@ namespace Elmphant\Tui\Support;
 final class Places
 {
     /**
-     * Where the key went after a reload. Of several places holding it, the one
-     * nearest where it was; null where it is gone.
+     * Match by key after reload; prefer the nearest duplicate and return null if the key disappeared.
      *
      * @param list<string> $keys
      */
@@ -32,8 +31,7 @@ final class Places
     }
 
     /**
-     * Unlike a selection, a cursor always lands inside the list: on the item that
-     * took its place when its own is gone.
+     * If the cursor's item disappears, keep the cursor on its replacement rather than clearing it.
      *
      * @param list<string> $keys
      */
