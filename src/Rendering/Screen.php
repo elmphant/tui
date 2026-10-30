@@ -450,6 +450,9 @@ final class Screen
         return Ansi::cursorTo($targetY, $targetX);
     }
 
+    /**
+     * @infection-ignore-all a bounded memo over Color::downsampleTo(): a miss or a reset computes the same value again
+     */
     private function downsample(int $color): int
     {
         if ($this->colorProfile === ColorProfile::TrueColor) {
@@ -463,6 +466,9 @@ final class Screen
         return $this->downsampleCache[$color] ??= Color::fromValue($color)->downsampleTo($this->colorProfile)->value;
     }
 
+    /**
+     * @infection-ignore-all a bounded memo over Color::toSgr(): a miss or a reset computes the same value again
+     */
     private function colorToSgr(int $color, bool $background): string
     {
         if ($background) {
