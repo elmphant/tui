@@ -2294,7 +2294,7 @@ final class InputParserTest extends TestCase
     #[Test]
     public function kittyCsiUDeleteCodepoint(): void
     {
-        $result = InputParser::parseSequence("\x1b[57356u");
+        $result = InputParser::parseSequence("\x1b[57426u");
         $this->assertInstanceOf(KeyMsg::class, $result);
         $this->assertSame(Key::Delete, $result->key);
     }
@@ -2304,32 +2304,48 @@ final class InputParserTest extends TestCase
      */
     public static function kittyFunctionalCodepointProvider(): iterable
     {
-        yield 'Escape 57344' => ["\x1b[57344u", Key::Escape];
-        yield 'Enter 57345' => ["\x1b[57345u", Key::Enter];
-        yield 'Tab 57346' => ["\x1b[57346u", Key::Tab];
-        yield 'Backspace 57347' => ["\x1b[57347u", Key::Backspace];
-        yield 'Insert' => ["\x1b[57355u", Key::Insert];
-        yield 'Delete' => ["\x1b[57356u", Key::Delete];
-        yield 'Left' => ["\x1b[57357u", Key::Left];
-        yield 'Right' => ["\x1b[57358u", Key::Right];
-        yield 'Up' => ["\x1b[57359u", Key::Up];
-        yield 'Down' => ["\x1b[57360u", Key::Down];
-        yield 'PageUp' => ["\x1b[57361u", Key::PageUp];
-        yield 'PageDown' => ["\x1b[57362u", Key::PageDown];
-        yield 'Home' => ["\x1b[57363u", Key::Home];
-        yield 'End' => ["\x1b[57364u", Key::End];
-        yield 'F1' => ["\x1b[57376u", Key::F1];
-        yield 'F2' => ["\x1b[57377u", Key::F2];
-        yield 'F3' => ["\x1b[57378u", Key::F3];
-        yield 'F4' => ["\x1b[57379u", Key::F4];
-        yield 'F5' => ["\x1b[57380u", Key::F5];
-        yield 'F6' => ["\x1b[57381u", Key::F6];
-        yield 'F7' => ["\x1b[57382u", Key::F7];
-        yield 'F8' => ["\x1b[57383u", Key::F8];
-        yield 'F9' => ["\x1b[57384u", Key::F9];
-        yield 'F10' => ["\x1b[57385u", Key::F10];
-        yield 'F11' => ["\x1b[57386u", Key::F11];
-        yield 'F12' => ["\x1b[57387u", Key::F12];
+        yield 'Escape' => ["\x1b[27u", Key::Escape];
+        yield 'Enter' => ["\x1b[13u", Key::Enter];
+        yield 'Tab' => ["\x1b[9u", Key::Tab];
+        yield 'Backspace' => ["\x1b[127u", Key::Backspace];
+        yield 'keypad Enter' => ["\x1b[57414u", Key::Enter];
+        yield 'keypad Left' => ["\x1b[57417u", Key::Left];
+        yield 'keypad Right' => ["\x1b[57418u", Key::Right];
+        yield 'keypad Up' => ["\x1b[57419u", Key::Up];
+        yield 'keypad Down' => ["\x1b[57420u", Key::Down];
+        yield 'keypad PageUp' => ["\x1b[57421u", Key::PageUp];
+        yield 'keypad PageDown' => ["\x1b[57422u", Key::PageDown];
+        yield 'keypad Home' => ["\x1b[57423u", Key::Home];
+        yield 'keypad End' => ["\x1b[57424u", Key::End];
+        yield 'keypad Insert' => ["\x1b[57425u", Key::Insert];
+        yield 'keypad Delete' => ["\x1b[57426u", Key::Delete];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function kittyKeysWithNoNameHere(): iterable
+    {
+        yield 'Caps Lock' => ["\x1b[57358u"];
+        yield 'Scroll Lock' => ["\x1b[57359u"];
+        yield 'Num Lock' => ["\x1b[57360u"];
+        yield 'Print Screen' => ["\x1b[57361u"];
+        yield 'Pause' => ["\x1b[57362u"];
+        yield 'Menu' => ["\x1b[57363u"];
+        yield 'F13' => ["\x1b[57376u"];
+        yield 'F24' => ["\x1b[57387u"];
+        yield 'F35' => ["\x1b[57398u"];
+        yield 'keypad separator' => ["\x1b[57416u"];
+        yield 'media play' => ["\x1b[57428u"];
+        yield 'left Shift' => ["\x1b[57441u"];
+        yield 'a code the protocol never sends' => ["\x1b[57344u"];
+    }
+
+    #[DataProvider('kittyKeysWithNoNameHere')]
+    #[Test]
+    public function aKittyKeyWithNoNameHereIsIgnoredRatherThanTakenForAnother(string $sequence): void
+    {
+        self::assertNull(InputParser::parseSequence($sequence));
     }
 
     #[DataProvider('kittyFunctionalCodepointProvider')]
@@ -2361,7 +2377,7 @@ final class InputParserTest extends TestCase
     #[Test]
     public function kittyCsiUWithModifiersAndEventType(): void
     {
-        $result = InputParser::parseSequence("\x1b[57356;5:3u");
+        $result = InputParser::parseSequence("\x1b[57426;5:3u");
         $this->assertInstanceOf(KeyMsg::class, $result);
         $this->assertSame(Key::Delete, $result->key);
         $this->assertTrue($result->ctrl);
