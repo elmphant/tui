@@ -17,7 +17,10 @@ use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Context\RenderPass;
+use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\CommandHandler;
+use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Support\Cloneable;
@@ -68,6 +71,19 @@ final class MountLeavingTest extends TestCase
     }
 
     #[Test]
+    public function anEffectStartedInsideTwoScopesStopsWhenTheOuterOneIsCancelled(): void
+    {
+        $journal = new Journal();
+
+        Program::new(new NestedScopeModel($journal))
+            ->withTerminal(new VirtualTerminal(40, 6))
+            ->withCommandHandler(new FeedHandler($journal))
+            ->start();
+
+        self::assertSame(['start feed', 'stop feed', 'quit'], $journal->entries);
+    }
+
+    #[Test]
     public function onlyTheMountThatLeftHasItsEffectsStopped(): void
     {
         $kept = ModelHarness::for(new HostOfAFeed(new Journal()), 40, 6)->initialize()->dispatch(new Bump());
@@ -80,6 +96,40 @@ final class MountLeavingTest extends TestCase
 
 final readonly class Bump implements Message
 {
+}
+
+final readonly class NestedScopeModel implements Model
+{
+    public function __construct(private Journal $journal)
+    {
+    }
+
+    public function init(): Cmd
+    {
+        return Cmd::batch(
+            (new FeedCmd())->scopedTo('inner')->scopedTo('outer'),
+            Cmd::after(0.02, static fn (): Message => new LeaveNow()),
+            Cmd::after(0.06, static fn (): Message => new QuitNow()),
+        );
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof LeaveNow) {
+            return new UpdateResult($this, (new CancelScopeCmd())->scopedTo('outer'));
+        }
+        if ($message instanceof QuitNow) {
+            $this->journal->entries[] = 'quit';
+
+            return new UpdateResult($this, Cmd::quit());
+        }
+
+        return new UpdateResult($this);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+    }
 }
 
 final readonly class UnnamedFeedCmd extends Cmd

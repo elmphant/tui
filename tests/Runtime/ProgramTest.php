@@ -312,6 +312,59 @@ final class ProgramTest extends TestCase
         $render = $tracer->fieldsOf(TraceEvent::Render)[0] ?? [];
         self::assertEqualsWithDelta(4.0, $render['ms'] ?? null, 0.0001);
         self::assertEqualsWithDelta(4.0, $render['paintMs'] ?? null, 0.0001);
+        self::assertEqualsWithDelta(0.0, $render['diffMs'] ?? null, 0.0001, 'the clock stood still while the frame was compared');
+    }
+
+    #[Test]
+    public function aTerminalThatCountsNothingReportsNoBytesAndNoWait(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput('q'));
+
+        Program::new(new SlowPaintModel(new TestClock(100.0), 0.0))->withTerminal($terminal)->withTracer($tracer)->start();
+
+        $render = $tracer->fieldsOf(TraceEvent::Render)[0] ?? [];
+        self::assertSame(0, $render['bytes'] ?? null);
+        self::assertSame(0.0, $render['blockedMs'] ?? null);
+    }
+
+    #[Test]
+    public function anErrorHandlerThatAnswersEveryErrorWithAnotherIsStoppedAtTheTenthInTheChain(): void
+    {
+        $model = new class implements Model {
+            public function init(): ?Cmd
+            {
+                return Cmd::message(new ErrorMsg(new RuntimeException('first'), ErrorSource::Update));
+            }
+
+            public function update(Message $message, Rect $area): UpdateResult
+            {
+                return new UpdateResult($this);
+            }
+
+            public function render(Frame $frame, RenderPass $pass): void
+            {
+            }
+        };
+        $answered = 0;
+
+        $program = Program::new($model)
+            ->withTerminal(new VirtualTerminal(80, 24))
+            ->onError(static function () use (&$answered): Cmd {
+                ++$answered;
+
+                return Cmd::message(new ErrorMsg(new RuntimeException('again'), ErrorSource::Update));
+            });
+        $thrown = null;
+        try {
+            $program->start();
+        } catch (RuntimeException $error) {
+            $thrown = $error;
+        }
+
+        self::assertSame('again', $thrown?->getMessage());
+        self::assertSame(9, $answered);
     }
 
     #[Test]
