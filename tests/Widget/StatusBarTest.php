@@ -27,6 +27,28 @@ final class StatusBarTest extends TestCase
     }
 
     #[Test]
+    public function hintsThatDoNotAllFitEndInAnEllipsisWhereThereIsRoomForOne(): void
+    {
+        $lines = [
+            27 => ' a  one   b  two   c  three' . str_repeat('.', 13),
+            19 => ' a  one   b  two  …' . str_repeat('.', 21),
+            18 => ' a  one  …' . str_repeat(' ', 8) . str_repeat('.', 22),
+            10 => ' a  one  …' . str_repeat('.', 30),
+            9 => '…' . str_repeat(' ', 8) . str_repeat('.', 31),
+        ];
+
+        foreach ($lines as $width => $line) {
+            self::assertSame($line, $this->hintsDrawnIn($width), "a bar $width wide");
+        }
+    }
+
+    #[Test]
+    public function aBarOfHintsAsksForTheirWidthWithoutTheLastGap(): void
+    {
+        self::assertSame(27, StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->sizing()->columns->basis);
+    }
+
+    #[Test]
     public function plainTextRendersContent(): void
     {
         $bar = StatusBar::new('hello world');
@@ -474,5 +496,14 @@ final class StatusBarTest extends TestCase
         }
 
         return $result;
+    }
+
+    private function hintsDrawnIn(int $width): string
+    {
+        $frame = new Frame(40, 1);
+        $frame->putString(0, 0, str_repeat('.', 40));
+        StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->render($frame, new Rect(0, 0, $width, 1), $this->context);
+
+        return $this->extractText($frame, 0, 40);
     }
 }
