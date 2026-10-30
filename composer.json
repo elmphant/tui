@@ -73,7 +73,7 @@
         "deptrac": "./vendor/bin/deptrac analyse --no-progress",
         "mutation": [
             "@mutation:coverage",
-            "XDEBUG_MODE=off ./vendor/bin/infection --coverage=.infection/coverage --with-uncovered --only-covering-test-cases --threads=max"
+            "XDEBUG_MODE=off ./vendor/bin/infection --coverage=.infection/coverage --with-uncovered --only-covering-test-cases --threads=$(nproc)"
         ],
         "mutation:coverage": [
             "XDEBUG_MODE=coverage ./vendor/bin/phpunit --no-output --coverage-xml=.infection/coverage/coverage-xml",
@@ -81,11 +81,11 @@
         ],
         "mutation:diff": [
             "@mutation:coverage",
-            "XDEBUG_MODE=off ./vendor/bin/infection --coverage=.infection/coverage --with-uncovered --only-covering-test-cases --threads=max --git-diff-lines --git-diff-base=origin/main --logger-github"
+            "XDEBUG_MODE=off ./vendor/bin/infection --coverage=.infection/coverage --with-uncovered --only-covering-test-cases --threads=$(nproc) --git-diff-lines --git-diff-base=origin/main --logger-github"
         ],
         "mutation:dropdown": [
             "@mutation:coverage",
-            "XDEBUG_MODE=off ./vendor/bin/infection --coverage=.infection/coverage --with-uncovered --only-covering-test-cases --threads=max --min-msi=96 --filter=src/Widget/Popup/Dropdown.php,src/Widget/Popup/DropdownPopup.php,src/Runtime/InputRouter.php,src/Rendering/Context/RenderContext.php,src/Rendering/Context/FloatQueue.php,src/Rendering/Context/FloatPlacement.php"
+            "XDEBUG_MODE=off ./vendor/bin/infection --coverage=.infection/coverage --with-uncovered --only-covering-test-cases --threads=$(nproc) --min-msi=96 --filter=src/Widget/Popup/Dropdown.php,src/Widget/Popup/DropdownPopup.php,src/Runtime/InputRouter.php,src/Rendering/Context/RenderContext.php,src/Rendering/Context/FloatQueue.php,src/Rendering/Context/FloatPlacement.php"
         ],
         "qa": [
             "@analyse",
