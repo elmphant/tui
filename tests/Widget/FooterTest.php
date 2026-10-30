@@ -42,6 +42,19 @@ final class FooterTest extends TestCase
     private RenderContext $context;
 
     #[Test]
+    public function aRightSlotBesideAGrowingLeftOneTakesTheLongestFormThatFitsTwoCellsAway(): void
+    {
+        $footer = Footer::new()
+            ->withLeft(StatusBar::new('left side'))
+            ->withRight(Text::new('the long right'), Text::new('short'));
+
+        self::assertSame('left side  the long right', $this->drawnAt($footer, 25));
+        self::assertSame('left side          short', $this->drawnAt($footer, 24));
+        self::assertSame('left side  short', $this->drawnAt($footer, 16));
+        self::assertSame('left side', $this->drawnAt($footer, 15));
+    }
+
+    #[Test]
     public function itsChildrenAreEverySlotFilledInOrder(): void
     {
         $left = Text::new('l');
