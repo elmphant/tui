@@ -473,13 +473,29 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
         $displayText = $this->echoMode->mask($this->value);
         $cursorDisplayWidth = CharWidth::stringWidth(self::graphemeSubstring($displayText, 0, $this->cursor));
 
-        return ScrollWindow::showing(
+        return self::graphemeStartAtOrAfter($displayText, ScrollWindow::showing(
             $this->scrollOffset,
             $cursorDisplayWidth,
             1,
             $availableWidth,
             ScrollWindow::lastOffset(CharWidth::stringWidth($displayText), $availableWidth),
-        );
+        ));
+    }
+
+    /**
+     * Drawing skips a wide character as a whole, so the caret and clicks must count from where it ends too.
+     */
+    private static function graphemeStartAtOrAfter(string $text, int $column): int
+    {
+        $start = 0;
+        foreach (Grapheme::split($text) as $grapheme) {
+            if ($start >= $column) {
+                return $start;
+            }
+            $start += CharWidth::graphemeWidth($grapheme);
+        }
+
+        return $start;
     }
 
     private static function graphemeLength(string $value): int

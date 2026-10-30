@@ -556,6 +556,24 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function scrollingPastAWideCharacterLeavesTheCaretRightAfterTheText(): void
+    {
+        $frame = new Frame(4, 1);
+        TextInput::new('界ab')->render($frame, new Rect(0, 0, 4, 1), RenderContext::focused(Theme::dark()));
+
+        self::assertSame(['a', 'b', ' ', ' '], \array_slice($frame->characters, 0, 4));
+        self::assertSame(2, $frame->cursorPosition?->col);
+    }
+
+    #[Test]
+    public function aClickPastAWideCharacterScrolledAwayLandsOnTheCharacterUnderIt(): void
+    {
+        $clicked = TextInput::new('界ab')->update(new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 4, 1))->model;
+
+        self::assertSame(1, $clicked->cursor(), 'the first column shows the a');
+    }
+
+    #[Test]
     public function rendersTheCursorOverThePlaceholderWhileFocused(): void
     {
         $input = TextInput::new()->withPlaceholder('Type here...');
