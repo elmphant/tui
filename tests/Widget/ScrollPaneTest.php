@@ -118,6 +118,15 @@ final class ScrollPaneTest extends TestCase
     }
 
     #[Test]
+    public function aFollowedSpanTallerThanTheViewportShowsItsLastChild(): void
+    {
+        $pane = ScrollPane::of(...array_map(static fn (int $index): Text => Text::new("line{$index}"), range(0, 9)))
+            ->withFollowChild(5, 4);
+
+        self::assertSame(['line6', 'line7', 'line8'], array_map(static fn (string $row): string => trim(mb_substr($row, 0, 10)), $this->rows($pane, 20, 3)));
+    }
+
+    #[Test]
     public function nothingIsDrawnAboveTheViewport(): void
     {
         $pane = ScrollPane::of(Text::new('first'), Text::new('second'), Text::new('third'));
