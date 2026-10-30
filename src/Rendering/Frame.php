@@ -134,7 +134,7 @@ final class Frame
             return;
         }
 
-        $character = self::wellFormed($character);
+        $character = self::printableGlyph($character);
         $characterWidth = CharWidth::graphemeWidth($character);
         if ($characterWidth > 0 && $this->placeGrapheme($x, $y, $character, $characterWidth, $foreground, $background, $attributes)) {
             $this->markRowDirty($y);
@@ -327,7 +327,7 @@ final class Frame
             $endY = min($endY, $top->bottom());
         }
 
-        $character = self::wellFormed($character);
+        $character = self::printableGlyph($character);
         $characterWidth = CharWidth::graphemeWidth($character);
         if ($characterWidth === 0) {
             return;
@@ -459,9 +459,16 @@ final class Frame
         }
     }
 
-    private static function wellFormed(string $character): string
+    /**
+     * A cell holds one printable grapheme: well-formed UTF-8 can still carry an escape sequence to the terminal.
+     */
+    private static function printableGlyph(string $character): string
     {
-        return mb_check_encoding($character, 'UTF-8') ? $character : TerminalText::plain($character);
+        $printable = preg_match('/[\x00-\x1f\x7f]|\xc2[\x80-\x9f]/', $character) !== 1 && mb_check_encoding($character, 'UTF-8')
+            ? $character
+            : TerminalText::plain($character);
+
+        return mb_strlen($printable, 'UTF-8') > 1 ? Grapheme::first($printable) : $printable;
     }
 
     private static function spanStyleOver(?Style $span, Style $base): Style

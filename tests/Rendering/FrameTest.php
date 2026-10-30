@@ -70,6 +70,17 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function aCellKeepsOnlyThePrintableGlyphOfWhatItIsHanded(): void
+    {
+        $frame = new Frame(4, 1);
+
+        $frame->putChar(0, 0, "x\x1b]52;c;VEVTVA==\x07");
+        $frame->fillRect(1, 0, 2, 1, character: "y\x1b]52;c;VEVTVA==\x07");
+
+        self::assertSame(['x', 'y', 'y', ' '], $frame->characters);
+    }
+
+    #[Test]
     public function putChar(): void
     {
         $frame = new Frame(10, 5);
