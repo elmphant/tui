@@ -13,6 +13,48 @@ use PHPUnit\Framework\TestCase;
 
 final class GraphemeTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function sequencesAtTheirBoundaries(): iterable
+    {
+        yield 'C1 is never a lead byte' => ["\xC1\x80", 1];
+        yield 'C2 leads two bytes' => ["\xC2\x80", 2];
+        yield 'F4 leads four bytes' => ["\xF4\x8F\xBF\xBF", 4];
+        yield 'F5 is never a lead byte' => ["\xF5\x80\x80\x80", 1];
+        yield 'E0 needs A0 or more' => ["\xE0\x9F\x80", 1];
+        yield 'E0 takes A0' => ["\xE0\xA0\x80", 3];
+        yield 'E0 takes BF' => ["\xE0\xBF\x80", 3];
+        yield 'E0 stops at C0' => ["\xE0\xC0\x80", 1];
+        yield 'ED takes 80' => ["\xED\x80\x80", 3];
+        yield 'ED takes 9F' => ["\xED\x9F\x80", 3];
+        yield 'ED stops below 80' => ["\xED\x7F\x80", 1];
+        yield 'ED stops at the surrogates' => ["\xED\xA0\x80", 1];
+        yield 'F0 needs 90 or more' => ["\xF0\x8F\x80\x80", 1];
+        yield 'F0 takes 90' => ["\xF0\x90\x80\x80", 4];
+        yield 'F0 takes BF' => ["\xF0\xBF\x80\x80", 4];
+        yield 'F0 stops at C0' => ["\xF0\xC0\x80\x80", 1];
+        yield 'F4 takes 80' => ["\xF4\x80\x80\x80", 4];
+        yield 'F4 stops below 80' => ["\xF4\x7F\x80\x80", 1];
+        yield 'F4 stops past U+10FFFF' => ["\xF4\x90\x80\x80", 1];
+        yield 'E1 takes 80' => ["\xE1\x80\x80", 3];
+        yield 'E1 takes BF' => ["\xE1\xBF\x80", 3];
+        yield 'E1 stops below 80' => ["\xE1\x7F\x80", 1];
+        yield 'E1 stops at C0' => ["\xE1\xC0\x80", 1];
+        yield 'a later byte takes 80' => ["\xE1\x80\x80", 3];
+        yield 'a later byte takes BF' => ["\xE1\x80\xBF", 3];
+        yield 'a later byte stops below 80' => ["\xE1\x80\x7F", 2];
+        yield 'a later byte stops at C0' => ["\xE1\x80\xC0", 2];
+        yield 'a cut-off sequence is what is there' => ["\xE1\x80", 2];
+    }
+
+    #[Test]
+    #[DataProvider('sequencesAtTheirBoundaries')]
+    public function aMalformedRunIsTheLongestPrefixAWellFormedSequenceCouldStartWith(string $bytes, int $length): void
+    {
+        self::assertSame($length, Grapheme::malformedLength($bytes, 0));
+    }
+
     #[Test]
     public function combiningMarkStaysWithBase(): void
     {
