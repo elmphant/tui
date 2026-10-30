@@ -91,12 +91,16 @@ final class ProgramTest extends TestCase
     {
         $model = new InputLoggingModel();
         $terminal = new VirtualTerminal(20, 5);
-        EventLoop::delay(0.02, static fn () => $terminal->simulateInput("\x1b"));
-        EventLoop::delay(0.024, static fn () => $terminal->simulateInput('['));
-        EventLoop::delay(0.05, static fn () => $terminal->simulateInput('A'));
-        EventLoop::delay(0.15, static fn () => $terminal->simulateInput('q'));
+        $program = Program::new($model)->withTerminal($terminal);
+        EventLoop::defer(static function () use ($terminal, $program): void {
+            foreach (["\x1b", '[', 'A'] as $read) {
+                $terminal->simulateInput($read);
+                $program->tick();
+            }
+            $terminal->simulateInput('q');
+        });
 
-        Program::new($model)->withTerminal($terminal)->start();
+        $program->start();
 
         self::assertSame(['up', 'q'], $model->log);
     }
