@@ -49,6 +49,7 @@ use Elmphant\Tui\Terminal\ReportsOutputStats;
 use Elmphant\Tui\Terminal\SystemTerminal;
 use Elmphant\Tui\Terminal\Terminal;
 use Elmphant\Tui\Terminal\TerminalWriteException;
+use Elmphant\Tui\Text\TerminalText;
 use LogicException;
 use Revolt\EventLoop;
 use Revolt\EventLoop\Suspension;
@@ -388,8 +389,8 @@ final class Program
             $this->unheardErrors,
             $this->unheardErrors === 1 ? 'error' : 'errors',
             $error::class,
-            $error->getMessage(),
-            $error->getFile(),
+            TerminalText::singleLine($error->getMessage()),
+            TerminalText::singleLine($error->getFile()),
             $error->getLine(),
         ));
         $this->terminal->flush();
@@ -445,7 +446,7 @@ final class Program
             return;
         }
 
-        fwrite(STDERR, sprintf("PHP Fatal error:  %s in %s on line %d\n", $error['message'], $error['file'], $error['line']));
+        fwrite(STDERR, sprintf("PHP Fatal error:  %s in %s on line %d\n", TerminalText::singleLine($error['message']), TerminalText::singleLine($error['file']), $error['line']));
     }
 
     private function registerSignalHandlers(): void

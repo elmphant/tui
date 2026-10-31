@@ -60,7 +60,7 @@ final readonly class FailsOnceThenQuitsModel implements Model
     public function update(Message $message, Rect $area): UpdateResult
     {
         if ($message instanceof Retry) {
-            throw new RuntimeException('once');
+            throw new RuntimeException("once\e]0;title\x07");
         }
 
         return new UpdateResult($this, $message instanceof ErrorMsg ? Cmd::quit() : null);
