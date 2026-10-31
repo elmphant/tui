@@ -52,9 +52,6 @@ final class RunningStreamingProcess implements RunningProcess
     public function pump(): array
     {
         if ($this->finished) {
-            return [];
-        }
-        if ($this->heldBack !== []) {
             return $this->nextBatch([]);
         }
 
@@ -63,11 +60,14 @@ final class RunningStreamingProcess implements RunningProcess
         } catch (ProcessTimedOutException $timeout) {
             $this->finished = true;
 
-            return [
+            return $this->nextBatch([
                 ...$this->drainOutput(ending: true),
                 $this->map(new ErrorMsg($timeout, ErrorSource::Process, $this->effectId)),
                 $this->finishedMessage(),
-            ];
+            ]);
+        }
+        if ($this->heldBack !== []) {
+            return $this->nextBatch([]);
         }
         $messages = $this->drainOutput(ending: false);
 
@@ -78,7 +78,12 @@ final class RunningStreamingProcess implements RunningProcess
         $this->finished = true;
 
         // isRunning() also reads pipes, so it may have buffered output after the drain above.
-        return [...$messages, ...$this->drainOutput(ending: true), $this->finishedMessage()];
+        return $this->nextBatch([...$messages, ...$this->drainOutput(ending: true), $this->finishedMessage()]);
+    }
+
+    public function isRunning(): bool
+    {
+        return !$this->finished || $this->heldBack !== [];
     }
 
     /**
@@ -170,7 +175,8 @@ final class RunningStreamingProcess implements RunningProcess
             return [];
         }
 
-        $chunks = $this->framesLines ? [$text] : self::chunksOf($text, max(1, $this->outputChunkBytes));
+        $size = max(1, $this->outputChunkBytes);
+        $chunks = $this->framesLines ? self::lineChunksOf($text, $size) : self::chunksOf($text, $size);
 
         return array_map(
             fn (string $chunk): Message => $this->map(new ProcessOutputMsg($chunk, $stream, $this->effectId)),
@@ -198,6 +204,29 @@ final class RunningStreamingProcess implements RunningProcess
             }
             $chunks[] = substr($text, 0, $cut);
             $text = substr($text, $cut);
+        }
+
+        return $chunks;
+    }
+
+    /**
+     * Whole lines up to the size each; a longer line is cut between characters.
+     *
+     * @return list<string>
+     */
+    private static function lineChunksOf(string $text, int $size): array
+    {
+        $chunks = [];
+        while (\strlen($text) > $size) {
+            $cut = self::wholeLinesLength(substr($text, 0, $size));
+            if ($cut === 0) {
+                $cut = \strlen(self::chunksOf(substr($text, 0, $size + 3), $size)[0]);
+            }
+            $chunks[] = substr($text, 0, $cut);
+            $text = substr($text, $cut);
+        }
+        if ($text !== '') {
+            $chunks[] = $text;
         }
 
         return $chunks;

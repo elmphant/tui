@@ -338,7 +338,7 @@ final class RunningStreamingProcessTest extends TestCase
         $process->method('isRunning')->willReturn(true);
         $running = new RunningStreamingProcess($process, null, outputChunkBytes: 8, framesLines: true);
 
-        self::assertSame(["one\nabcdefghi"], self::outputsOf($running->pump()));
+        self::assertSame(["one\n", 'abcdefgh', 'i'], self::outputsOf($running->pump()));
     }
 
     #[Test]
@@ -404,6 +404,55 @@ final class RunningStreamingProcessTest extends TestCase
 
         self::assertLessThanOrEqual(64, count($first));
         self::assertSame($expected, $received, 'what a batch held back still arrives, in order');
+    }
+
+    #[Test]
+    public function theOutputOfAChildThatAlreadyEndedIsStillHandedOnOneBatchAtATime(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls(str_repeat('x', 100), '');
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(false);
+        $running = new RunningStreamingProcess($process, null, 1);
+
+        $first = $running->pump();
+        $stillRunning = $running->isRunning();
+        $second = $running->pump();
+
+        self::assertSame([64, true, 37, false], [count($first), $stillRunning, count($second), $running->isRunning()]);
+        self::assertInstanceOf(ProcessFinishedMsg::class, $second[36]);
+    }
+
+    #[Test]
+    public function framedLinesArriveInChunksNoLargerThanTheChunkSize(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturn("aaa\nbbb\ncc\nd\n", '');
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(true);
+        $running = new RunningStreamingProcess($process, null, outputChunkBytes: 5, framesLines: true);
+
+        self::assertSame(["aaa\n", "bbb\n", "cc\nd\n"], self::outputsOf($running->pump()));
+    }
+
+    #[Test]
+    public function aChildWithABatchHeldBackStillTimesOut(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls(str_repeat('x', 100), '', '');
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(true);
+        $process->method('isStarted')->willReturn(true);
+        $process->method('getTimeout')->willReturn(1.0);
+        $process->method('getStartTime')->willReturnOnConsecutiveCalls(microtime(true), microtime(true) - 10.0);
+        $running = new RunningStreamingProcess($process, null, 1);
+
+        $running->pump();
+        $process->expects(self::once())->method('stop');
+        $second = $running->pump();
+
+        self::assertInstanceOf(ErrorMsg::class, $second[count($second) - 2]);
+        self::assertInstanceOf(ProcessFinishedMsg::class, $second[count($second) - 1]);
     }
 
     #[Test]
