@@ -207,6 +207,12 @@ final class EffectRunner
 
         foreach ($this->processes as $process) {
             try {
+                $process->askToStop();
+            } catch (Throwable) {
+            }
+        }
+        foreach ($this->processes as $process) {
+            try {
                 $process->stop();
             } catch (Throwable) {
             }
@@ -390,17 +396,24 @@ final class EffectRunner
         $this->subscriptions = $keptSubscriptions;
 
         $remaining = [];
+        $stopping = [];
         foreach ($this->processes as $process) {
-            $effectId = $process->id();
-            if ($matches($effectId, $this->processScopes[$process] ?? null)) {
-                try {
-                    $process->stop();
-                } catch (Throwable $error) {
-                    $this->report(new ErrorMsg($error, ErrorSource::Cancel, $effectId), $wrap);
-                }
+            if (!$matches($process->id(), $this->processScopes[$process] ?? null)) {
+                $remaining[] = $process;
                 continue;
             }
-            $remaining[] = $process;
+            $stopping[] = $process;
+            try {
+                $process->askToStop();
+            } catch (Throwable) {
+            }
+        }
+        foreach ($stopping as $process) {
+            try {
+                $process->stop();
+            } catch (Throwable $error) {
+                $this->report(new ErrorMsg($error, ErrorSource::Cancel, $process->id()), $wrap);
+            }
         }
         $this->processes = $remaining;
 

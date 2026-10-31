@@ -702,6 +702,31 @@ final class EffectRunnerTest extends TestCase
         self::assertFalse($runner->hasRunningProcesses());
     }
 
+    #[Test]
+    public function shuttingDownEightStubbornProcessesWaitsOutOneGracePeriodNotEight(): void
+    {
+        $runner = $this->runner();
+        self::startStubbornProcesses($runner, 8, null);
+
+        $start = hrtime(true);
+        $runner->shutdown();
+
+        self::assertLessThan(0.2, (hrtime(true) - $start) / 1e9);
+    }
+
+    #[Test]
+    public function cancellingAScopeOfEightStubbornProcessesWaitsOutOneGracePeriodNotEight(): void
+    {
+        $runner = $this->runner();
+        self::startStubbornProcesses($runner, 8, 'jobs');
+
+        $start = hrtime(true);
+        $runner->run(new CancelScopeCmd(), null, 'jobs');
+
+        self::assertLessThan(0.2, (hrtime(true) - $start) / 1e9);
+        self::assertFalse($runner->hasRunningProcesses());
+    }
+
     /**
      * Check the child process itself; an empty runner list does not prove the process stopped.
      */
@@ -1180,6 +1205,21 @@ final class EffectRunnerTest extends TestCase
         $this->results = $results;
         $this->clock = new TestClock(100.0);
         $this->dispatched = [];
+    }
+
+    private static function startStubbornProcesses(EffectRunner $runner, int $count, ?string $scope): void
+    {
+        $ready = [];
+        for ($process = 0; $process < $count; ++$process) {
+            $file = tempnam(sys_get_temp_dir(), 'elmphant-stubborn-');
+            self::assertIsString($file);
+            $ready[] = $file;
+            $runner->run(Cmd::process(['sh', '-c', 'trap "" TERM; echo $$ > ' . escapeshellarg($file) . '; sleep 30']), null, $scope);
+        }
+        foreach ($ready as $file) {
+            self::pidWrittenTo($file);
+            unlink($file);
+        }
     }
 
     /**

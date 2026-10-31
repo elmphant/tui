@@ -26,6 +26,11 @@ interface RunningProcess
      */
     public function secondsLeft(): ?float;
 
+    /**
+     * Starts the grace period stop() then waits out, so several processes can share one.
+     */
+    public function askToStop(): void;
+
     public function stop(): void;
 
     public function id(): ?EffectId;

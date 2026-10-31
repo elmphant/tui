@@ -432,7 +432,7 @@ final class RunningStreamingProcessTest extends TestCase
     public function terminationEscalatesToKillAfterAGraceTooShortToStallTheLoop(): void
     {
         $process = $this->createMock(Process::class);
-        $process->expects(self::once())->method('stop')->with(0.05);
+        $process->expects(self::once())->method('stop')->with(self::logicalAnd(self::greaterThan(0.04), self::lessThanOrEqual(0.05)));
 
         (new RunningStreamingProcess($process, null))->stop();
     }

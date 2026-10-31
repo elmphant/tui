@@ -104,6 +104,10 @@ final class RunningHttpRequest implements RunningProcess
         return $this->wrap === null ? $message : ($this->wrap)($message);
     }
 
+    public function askToStop(): void
+    {
+    }
+
     public function stop(): void
     {
         if (!$this->finished) {
