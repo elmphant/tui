@@ -93,6 +93,30 @@ final class JsonlTracerTest extends TestCase
     }
 
     #[Test]
+    public function aMegabyteOfEventsIsWrittenHoweverFewTheyAre(): void
+    {
+        $tracer = JsonlTracer::toFile($this->path);
+
+        $tracer->record(TraceEvent::Error, ['message' => str_repeat('x', 600_000)]);
+        $tracer->record(TraceEvent::Error, ['message' => str_repeat('y', 600_000)]);
+
+        self::assertCount(2, $this->lines());
+    }
+
+    #[Test]
+    public function eventsWaitingASecondAreWrittenWithTheNextOne(): void
+    {
+        $clock = new TestClock();
+        $tracer = JsonlTracer::toFile($this->path, $clock);
+
+        $tracer->record(TraceEvent::Update, []);
+        $clock->advance(1.0);
+        $tracer->record(TraceEvent::Update, []);
+
+        self::assertCount(2, $this->lines());
+    }
+
+    #[Test]
     public function aTraceStillLandsWhenNobodyClosedIt(): void
     {
         $tracer = JsonlTracer::toFile($this->path);
