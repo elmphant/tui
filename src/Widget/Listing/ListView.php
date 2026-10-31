@@ -153,9 +153,11 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
             && $this->effectiveKeybindings()->matches($message, Actions::SELECT);
     }
 
-    public function scrollOffset(): int
+    public function scrollOffset(Rect $area): int
     {
-        return $this->scrollOffset;
+        return $this->followCursor && $this->items !== []
+            ? $this->cursorVisibleOffset($area)
+            : $this->clampedScrollOffset($area);
     }
 
     /**
@@ -199,7 +201,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
 
         return $this->itemIndexAtY(
             $message->y - $area->y,
-            $this->displayScrollOffset($area),
+            $this->scrollOffset($area),
             $this->itemWidth($area),
         );
     }
@@ -211,7 +213,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         }
 
         $theme = $context->theme;
-        $displayOffset = $this->displayScrollOffset($area);
+        $displayOffset = $this->scrollOffset($area);
 
         // Decide whether a scrollbar is needed, then measure at the narrower width; narrowing can only increase height.
         $itemWidth = $this->itemWidth($area);
@@ -371,7 +373,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
      */
     private function handleMouse(MouseMsg $message, Rect $area): UpdateResult
     {
-        $displayOffset = $this->displayScrollOffset($area);
+        $displayOffset = $this->scrollOffset($area);
 
         $itemWidth = $this->itemWidth($area);
 
@@ -434,7 +436,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     {
         $extents = $this->extents($area);
         $last = max(0, $extents->rowCount() - 1);
-        $top = $this->displayScrollOffset($area);
+        $top = $this->scrollOffset($area);
 
         $line = $direction > 0
             ? $top + max(1, $area->height)
@@ -450,13 +452,6 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     private function ensureCursorVisible(Rect $area): self
     {
         return $this->cloneWith(scrollOffset: $this->cursorVisibleOffset($area), followCursor: true);
-    }
-
-    private function displayScrollOffset(Rect $area): int
-    {
-        return $this->followCursor && $this->items !== []
-            ? $this->cursorVisibleOffset($area)
-            : $this->clampedScrollOffset($area);
     }
 
     private function clampedScrollOffset(Rect $area): int

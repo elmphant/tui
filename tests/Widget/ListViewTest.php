@@ -379,7 +379,7 @@ final class ListViewTest extends TestCase
 
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
         $result = $list->update($wheelDown, $area);
-        self::assertGreaterThan(0, $result->model->scrollOffset());
+        self::assertGreaterThan(0, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -395,7 +395,7 @@ final class ListViewTest extends TestCase
 
         $wheelUp = new MouseMsg(5, 2, MouseAction::WheelUp, MouseButton::None);
         $result = $scrolledDown->update($wheelUp, $area);
-        self::assertLessThan($scrolledDown->scrollOffset(), $result->model->scrollOffset());
+        self::assertLessThan($scrolledDown->scrollOffset($area), $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -765,8 +765,18 @@ final class ListViewTest extends TestCase
         }
 
         self::assertSame(5, $current->cursor());
-        self::assertGreaterThan(0, $current->scrollOffset());
-        self::assertSame(3, $current->scrollOffset());
+        self::assertGreaterThan(0, $current->scrollOffset($area));
+        self::assertSame(3, $current->scrollOffset($area));
+    }
+
+    #[Test]
+    public function theScrollOffsetAfterTheListShrinksIsTheOneDrawn(): void
+    {
+        $list = ListView::fromStrings(array_map(fn (int $index) => "Item $index", range(0, 99)))->withScrollOffset(86);
+
+        $shrunk = $list->withItems([new SimpleListItem('a'), new SimpleListItem('b')]);
+
+        self::assertSame(0, $shrunk->scrollOffset(Rect::fromSize(40, 5)));
     }
 
     #[Test]
@@ -779,12 +789,12 @@ final class ListViewTest extends TestCase
         $result = $list->update(new KeyMsg(Key::End), $area);
         $current = $result->model;
         self::assertSame(9, $current->cursor());
-        self::assertSame(7, $current->scrollOffset());
+        self::assertSame(7, $current->scrollOffset($area));
 
         $result = $current->update(new KeyMsg(Key::Home), $area);
         $current = $result->model;
         self::assertSame(0, $current->cursor());
-        self::assertSame(0, $current->scrollOffset());
+        self::assertSame(0, $current->scrollOffset($area));
     }
 
     #[Test]
@@ -795,7 +805,7 @@ final class ListViewTest extends TestCase
         $area = Rect::fromSize(40, 5);
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -806,7 +816,7 @@ final class ListViewTest extends TestCase
         $area = Rect::fromSize(40, 10);
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
-        self::assertSame(0, $result->model->scrollOffset(), 'scrollOffset must stay 0 when cursor moves into an already-visible row');
+        self::assertSame(0, $result->model->scrollOffset($area), 'scrollOffset must stay 0 when cursor moves into an already-visible row');
         self::assertSame(1, $result->model->cursor());
     }
 
@@ -848,7 +858,7 @@ final class ListViewTest extends TestCase
             $result = $result->update($wheelDown, $area)->model;
         }
 
-        self::assertSame(8, $result->scrollOffset(), 'the blank line under the last row says the list ends here');
+        self::assertSame(8, $result->scrollOffset($area), 'the blank line under the last row says the list ends here');
     }
 
     #[Test]
@@ -859,13 +869,13 @@ final class ListViewTest extends TestCase
 
         $wheelDown = new MouseMsg(5, 0, MouseAction::WheelDown, MouseButton::None);
         $result = $list->update($wheelDown, $area);
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(1, $result->model->scrollOffset($area));
 
         $result = $result->model->update($wheelDown, $area);
-        self::assertSame(2, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset($area));
 
         $result = $result->model->update($wheelDown, $area);
-        self::assertSame(2, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -876,7 +886,7 @@ final class ListViewTest extends TestCase
 
         $wheelUp = new MouseMsg(5, 0, MouseAction::WheelUp, MouseButton::None);
         $result = $list->update($wheelUp, $area);
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -967,7 +977,7 @@ final class ListViewTest extends TestCase
         $wheelDown = new MouseMsg(5, 0, MouseAction::WheelDown, MouseButton::None);
         $result = $list->update($wheelDown, $area);
         $scrolled = $result->model;
-        self::assertSame(1, $scrolled->scrollOffset());
+        self::assertSame(1, $scrolled->scrollOffset($area));
 
         $click = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
         $result = $scrolled->update($click, $area);
@@ -1000,11 +1010,11 @@ final class ListViewTest extends TestCase
 
         $result = $list->update(new KeyMsg(Key::Down), $area);
         self::assertSame(1, $result->model->cursor());
-        self::assertGreaterThanOrEqual(0, $result->model->scrollOffset());
+        self::assertGreaterThanOrEqual(0, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
         self::assertSame(2, $result->model->cursor());
-        self::assertGreaterThan(0, $result->model->scrollOffset());
+        self::assertGreaterThan(0, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1025,7 +1035,7 @@ final class ListViewTest extends TestCase
 
         $cursorBottom = 4 * 2;
         $expectedOffset = $cursorBottom - $area->height;
-        self::assertSame($expectedOffset, $model->scrollOffset());
+        self::assertSame($expectedOffset, $model->scrollOffset($area));
     }
 
     // --- Render with area at non-zero origin ---
@@ -1103,15 +1113,15 @@ final class ListViewTest extends TestCase
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
         self::assertSame(2, $result->model->cursor());
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
         self::assertSame(3, $result->model->cursor());
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(1, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
         self::assertSame(4, $result->model->cursor());
-        self::assertSame(2, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1123,19 +1133,19 @@ final class ListViewTest extends TestCase
 
         $result = $list->update(new KeyMsg(Key::End), $area);
         self::assertSame(9, $result->model->cursor());
-        self::assertSame(7, $result->model->scrollOffset());
+        self::assertSame(7, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
         self::assertSame(8, $result->model->cursor());
-        self::assertSame(7, $result->model->scrollOffset());
+        self::assertSame(7, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
         self::assertSame(7, $result->model->cursor());
-        self::assertSame(7, $result->model->scrollOffset());
+        self::assertSame(7, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
         self::assertSame(6, $result->model->cursor());
-        self::assertSame(6, $result->model->scrollOffset());
+        self::assertSame(6, $result->model->scrollOffset($area));
     }
 
     // --- Mouse wheel exact offset values ---
@@ -1149,7 +1159,7 @@ final class ListViewTest extends TestCase
 
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
         $result = $list->update($wheelDown, $area);
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(1, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1162,11 +1172,11 @@ final class ListViewTest extends TestCase
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
         $result = $list->update($wheelDown, $area);
         $result = $result->model->update($wheelDown, $area);
-        self::assertSame(2, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset($area));
 
         $wheelUp = new MouseMsg(5, 2, MouseAction::WheelUp, MouseButton::None);
         $result = $result->model->update($wheelUp, $area);
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(1, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1181,7 +1191,7 @@ final class ListViewTest extends TestCase
             $result = $current->update($wheelDown, $area);
             $current = $result->model;
         }
-        self::assertSame(3, $current->scrollOffset());
+        self::assertSame(3, $current->scrollOffset($area));
     }
 
     // --- itemIndexAtY — edge: click exactly at boundary of multi-height item ---
@@ -1290,7 +1300,7 @@ final class ListViewTest extends TestCase
         $result = $list->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
         self::assertSame(2, $result->model->cursor());
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1304,7 +1314,7 @@ final class ListViewTest extends TestCase
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Down), $area);
         self::assertSame(3, $result->model->cursor());
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(1, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1316,16 +1326,16 @@ final class ListViewTest extends TestCase
 
         $result = $list->update(new KeyMsg(Key::End), $area);
         self::assertSame(5, $result->model->cursor());
-        self::assertSame(3, $result->model->scrollOffset());
+        self::assertSame(3, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
         self::assertSame(3, $result->model->cursor());
-        self::assertSame(3, $result->model->scrollOffset());
+        self::assertSame(3, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
         self::assertSame(2, $result->model->cursor());
-        self::assertSame(2, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset($area));
     }
 
     // --- L160: description rendered at x+2, y+1 exactly ---
@@ -1520,7 +1530,7 @@ final class ListViewTest extends TestCase
         $area = new Rect(0, 0, 20, 3);
         $wheelDown = new MouseMsg(5, 0, MouseAction::WheelDown, MouseButton::None);
         $result = $list->update($wheelDown, $area);
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     /**
@@ -1536,7 +1546,7 @@ final class ListViewTest extends TestCase
         $area = new Rect(0, 0, 20, 5);
         $wheelDown = new MouseMsg(5, 0, MouseAction::WheelDown, MouseButton::None);
         $result = $list->update($wheelDown, $area);
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     /**
@@ -1566,7 +1576,7 @@ final class ListViewTest extends TestCase
             $scrolled = $scrolled->update($wheelDown, $smallArea)->model;
         }
         // maxOffset = 5-2 = 3
-        self::assertSame(3, $scrolled->scrollOffset());
+        self::assertSame(3, $scrolled->scrollOffset($smallArea));
 
         // A and B both start before offset 3, so C is the first item drawn and
         // it sits on the first row of the viewport.
@@ -1597,13 +1607,13 @@ final class ListViewTest extends TestCase
             $current = $current->update(new KeyMsg(Key::Down), $area)->model;
         }
         self::assertSame(5, $current->cursor());
-        self::assertSame(3, $current->scrollOffset());
+        self::assertSame(3, $current->scrollOffset($area));
 
         // Move up to item 3 (top of viewport). scrollOffset should stay at 3.
         $current = $current->update(new KeyMsg(Key::Up), $area)->model;
         $current = $current->update(new KeyMsg(Key::Up), $area)->model;
         self::assertSame(3, $current->cursor());
-        self::assertSame(3, $current->scrollOffset()); // rowsBefore(3) == offset(3), should not change
+        self::assertSame(3, $current->scrollOffset($area)); // rowsBefore(3) == offset(3), should not change
     }
 
     /**
@@ -1633,14 +1643,14 @@ final class ListViewTest extends TestCase
         $current = $current->update(new KeyMsg(Key::Down), $area)->model; // cursor=4, offset=2
         $current = $current->update(new KeyMsg(Key::Down), $area)->model; // cursor=5, offset=3
         self::assertSame(5, $current->cursor());
-        self::assertSame(3, $current->scrollOffset());
+        self::assertSame(3, $current->scrollOffset($area));
 
         // cursorBottom = 5 + 1 = 6, offset + height = 3 + 3 = 6
         // > : 6 > 6 is false => don't scroll. Stays at 3.
         // >= : 6 >= 6 is true => offset = 6 - 3 = 3. Same.
         // The boundary is always the same here because we just scrolled to position the cursor.
         // The mutation is equivalent in all cases I can construct. Let me annotate it.
-        self::assertSame(3, $current->scrollOffset());
+        self::assertSame(3, $current->scrollOffset($area));
     }
 
     #[Test]
@@ -1778,7 +1788,7 @@ final class ListViewTest extends TestCase
 
         $result = $list->update(new KeyMsg(Key::Home), $area)->model;
 
-        self::assertSame(5, $result->scrollOffset(), 'Home with the cursor already at 0 must not touch the wheel-scrolled offset');
+        self::assertSame(5, $result->scrollOffset($area), 'Home with the cursor already at 0 must not touch the wheel-scrolled offset');
     }
 
     #[Test]
@@ -1789,7 +1799,7 @@ final class ListViewTest extends TestCase
 
         $result = $list->update(new KeyMsg(Key::PageUp), $area)->model;
 
-        self::assertSame(5, $result->scrollOffset(), 'PageUp with the cursor already at 0 must not touch the wheel-scrolled offset');
+        self::assertSame(5, $result->scrollOffset($area), 'PageUp with the cursor already at 0 must not touch the wheel-scrolled offset');
     }
 
     #[Test]
@@ -1802,7 +1812,7 @@ final class ListViewTest extends TestCase
 
         $result = $list->update(new KeyMsg(Key::End), $area)->model;
 
-        self::assertSame(0, $result->scrollOffset(), 'End with the cursor already on the last item must not scroll it into view');
+        self::assertSame(0, $result->scrollOffset($area), 'End with the cursor already on the last item must not scroll it into view');
     }
 
     #[Test]
@@ -1815,7 +1825,7 @@ final class ListViewTest extends TestCase
 
         $result = $list->update(new KeyMsg(Key::PageDown), $area)->model;
 
-        self::assertSame(0, $result->scrollOffset(), 'PageDown with the cursor already on the last item must not scroll it into view');
+        self::assertSame(0, $result->scrollOffset($area), 'PageDown with the cursor already on the last item must not scroll it into view');
     }
 
     #[Test]
