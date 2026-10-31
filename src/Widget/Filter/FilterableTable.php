@@ -37,6 +37,7 @@ use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Row;
 use Elmphant\Tui\Widget\Table\Table;
+use WeakMap;
 
 final readonly class FilterableTable implements Focusable, KeybindingsAware, Committing, PublishesHints, TakesText, BindsForTheMoment
 {
@@ -300,7 +301,11 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
      */
     private function matchingIndexes(): array
     {
-        return FilterBar::matching($this->matcher, $this->query(), array_map(
+        static $answers = null;
+        $answers ??= new WeakMap();
+        /** @var WeakMap<self, list<int>> $answers */
+
+        return $answers[$this] ??= FilterBar::matching($this->matcher, $this->query(), array_map(
             static fn (Row $row): string => implode(' ', array_map(
                 static fn (string|Span $cell): string => $cell instanceof Span ? $cell->content : $cell,
                 $row->cells,
