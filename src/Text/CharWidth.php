@@ -194,6 +194,18 @@ final class CharWidth
     ];
 
     /**
+     * Unicode 16 Extended_Pictographic ranges: a code point still unassigned there is an emoji newer than these tables.
+     */
+    private const PICTOGRAPHIC = [
+        [0x1F000, 0x1F0FF], [0x1F10D, 0x1F10F], [0x1F16C, 0x1F16F], [0x1F1AD, 0x1F1E5],
+        [0x1F201, 0x1F20F], [0x1F23C, 0x1F23F], [0x1F249, 0x1F3FA], [0x1F400, 0x1F53D],
+        [0x1F546, 0x1F64F], [0x1F680, 0x1F6FF], [0x1F774, 0x1F77F], [0x1F7D5, 0x1F7FF],
+        [0x1F80C, 0x1F80F], [0x1F848, 0x1F84F], [0x1F85A, 0x1F85F], [0x1F888, 0x1F88F],
+        [0x1F8AE, 0x1F8FF], [0x1F90C, 0x1F93A], [0x1F93C, 0x1F945], [0x1F947, 0x1FAFF],
+        [0x1FC00, 0x1FFFD],
+    ];
+
+    /**
      * Clear the whole memo on overflow; typical screens stay well below the limit.
      */
     private const GRAPHEME_BUDGET = 4_096;
@@ -233,6 +245,9 @@ final class CharWidth
             return 0;
         }
         if (self::inRanges($ord, self::WIDE)) {
+            return 2;
+        }
+        if (self::inRanges($ord, self::PICTOGRAPHIC) && preg_match('/\p{Cn}/u', $char) === 1) {
             return 2;
         }
 
@@ -388,7 +403,7 @@ final class CharWidth
         }
 
         $firstCodepoint = mb_ord($grapheme);
-        if (self::inRanges($firstCodepoint, self::WIDE) || self::inRanges($firstCodepoint, self::REGIONAL_INDICATOR)) {
+        if (self::codepointWidth(mb_chr($firstCodepoint)) === 2 || self::inRanges($firstCodepoint, self::REGIONAL_INDICATOR)) {
             return 2;
         }
 

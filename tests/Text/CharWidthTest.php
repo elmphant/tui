@@ -95,7 +95,8 @@ final class CharWidthTest extends TestCase
         $mismatches = [];
         for ($codepoint = 0x20; $codepoint <= 0x3FFFD; ++$codepoint) {
             $character = mb_chr($codepoint);
-            if ($character === false || CharWidth::codepointWidth($character) === 0 || IntlChar::charAge($codepoint)[0] > 16) {
+            if ($character === false || CharWidth::codepointWidth($character) === 0 || IntlChar::charAge($codepoint)[0] > 16
+                || IntlChar::charType($codepoint) === IntlChar::CHAR_CATEGORY_UNASSIGNED) {
                 continue;
             }
 
@@ -398,6 +399,31 @@ final class CharWidthTest extends TestCase
     {
         // 0x1F600 — grinning face, in [0x1F300, 0x1F64F]
         self::assertSame(2, CharWidth::codepointWidth("\u{1F600}"));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function emojiNewerThanTheTables(): iterable
+    {
+        yield 'trombone' => ["\u{1FA8A}"];
+        yield 'treasure chest' => ["\u{1FA8E}"];
+        yield 'hairy creature' => ["\u{1FAC8}"];
+        yield 'orca' => ["\u{1FACD}"];
+        yield 'distorted face' => ["\u{1FAEA}"];
+        yield 'fight cloud' => ["\u{1FAEF}"];
+        yield 'landslide' => ["\u{1F6D8}"];
+        yield 'one still unassigned' => ["\u{1FA8B}"];
+        yield 'one with a combining mark' => ["\u{1FA8B}\u{0301}"];
+    }
+
+    #[Test]
+    #[DataProvider('emojiNewerThanTheTables')]
+    public function anEmojiNewerThanTheTablesIsWide(string $emoji): void
+    {
+        CharWidth::forgetMeasurements();
+
+        self::assertSame(2, CharWidth::stringWidth($emoji));
     }
 
     // --- inRanges binary search: mid-range hits to exercise all branches ---
