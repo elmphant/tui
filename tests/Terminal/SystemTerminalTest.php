@@ -363,6 +363,21 @@ final class SystemTerminalTest extends TestCase
     }
 
     #[Test]
+    public function rawModeWritesWithoutBlockingToATerminalOpenedApartFromItsInput(): void
+    {
+        if (PHP_OS_FAMILY !== 'Linux' || !is_executable('/usr/bin/script')) {
+            self::markTestSkipped('Needs util-linux script for a TTY');
+        }
+
+        exec(sprintf(
+            'script -qec %s /dev/null',
+            escapeshellarg(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/Fixtures/raw-mode-output-blocking.php')),
+        ), $output);
+
+        self::assertStringContainsString('{"inRawMode":false,"afterwards":true}', implode("\n", $output));
+    }
+
+    #[Test]
     public function rawModeRejectsNonTtyInput(): void
     {
         $terminal = new SystemTerminal($this->stdin, $this->stdout);

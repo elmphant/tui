@@ -16,6 +16,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
     private string $savedTerminalSettings = '';
     private bool $rawModeEnabled = false;
     private ?StreamBlockingState $stdinBlockingState = null;
+    private ?StreamBlockingState $stdoutBlockingState = null;
     private ?ColorProfile $detectedColorProfile = null;
     private string $stdinLeftover = '';
     private int $bytesWritten = 0;
@@ -62,6 +63,10 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
             throw new TerminalException('Unable to make terminal input non-blocking');
         }
 
+        // Output opened apart from the input stays blocking otherwise, and a stalled reader would hold the loop past the write timeout.
+        $this->stdoutBlockingState = StreamBlockingState::capture($this->stdout);
+        $this->stdoutBlockingState->makeNonBlocking();
+
         $this->savedTerminalSettings = $savedSettings;
         $this->stdinBlockingState = $blockingState;
         $this->rawModeEnabled = true;
@@ -81,6 +86,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
             $sttyFailure = $error;
         }
 
+        $this->stdoutBlockingState?->restore();
         $blockingRestored = $this->stdinBlockingState === null || $this->stdinBlockingState->restore();
 
         if ($sttyFailure !== null) {
@@ -93,6 +99,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
         $this->rawModeEnabled = false;
         $this->savedTerminalSettings = '';
         $this->stdinBlockingState = null;
+        $this->stdoutBlockingState = null;
     }
 
     public function enterAltScreen(): void
