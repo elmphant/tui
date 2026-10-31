@@ -20,6 +20,7 @@ Cmd::http('https://example.com')     // an HTTP request
 Cmd::listen($socket, fn($stream) => $messages) // read a stream whenever it has data
 Cmd::log('loaded', ['items' => 3])  // write a line to the trace (stdout is the screen)
 Cmd::copy($text)                    // copy text to the clipboard
+Cmd::toast('Saved')                 // show a note for a few seconds
 
 // Focus
 Cmd::focus('search')                      // move the keyboard to a widget
@@ -36,6 +37,30 @@ Cmd::process(['tail', '-f', 'log']) // get the output while it runs
   or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
 - `Cmd::listen()` stops at the end of the stream or on `Cmd::cancel()`. Cancel
   it before you close the stream yourself.
+
+## Toasts
+
+A toast is a short note drawn over the screen. The runtime shows it and takes
+it away, so your model stores nothing:
+
+```php
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\ToastPosition;
+use Elmphant\Tui\Core\Cmd\ToastSeverity;
+
+$command = Cmd::toast('Saved 3 pages')
+    ->withTitle('Done')
+    ->withSeverity(ToastSeverity::Success)  // Info (default), Success, Warning, Error
+    ->withSeconds(3)                        // 6 by default
+    ->withPosition(ToastPosition::BottomRight) // TopRight by default
+    ->withWidth(30)                         // 40 by default; the height fits the text
+    ->withKey('save');                      // a later toast with this key replaces it
+```
+
+Several toasts in one corner stack, the newest nearest the corner. A click on
+a toast closes it, and the click does not reach your app. The border and title
+take the theme's colour for the severity. `ModelHarness` draws toasts too, but
+its clock never moves, so there a toast stays until it is clicked.
 
 ## Naming and cancelling
 

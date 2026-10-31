@@ -21,6 +21,7 @@ use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
+use Elmphant\Tui\Core\Cmd\ToastCmd;
 
 abstract readonly class Cmd
 {
@@ -71,6 +72,14 @@ abstract readonly class Cmd
     public static function focusPrevious(): self
     {
         return new FocusCmd(move: FocusMove::Previous);
+    }
+
+    /**
+     * The runtime holds the toast, so the model keeps nothing.
+     */
+    public static function toast(string $text): ToastCmd
+    {
+        return new ToastCmd($text);
     }
 
     /**

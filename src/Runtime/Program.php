@@ -15,6 +15,7 @@ use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
+use Elmphant\Tui\Core\Cmd\ToastCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
@@ -105,6 +106,7 @@ final class Program
     private PendingWheel $pendingWheel;
     private ChordTracker $chordTracker;
     private KeyHelpOverlay $keyHelp;
+    private Toasts $toasts;
     /**
      * @var WeakMap<Message, true> keys the chord tracker already let through
      */
@@ -166,6 +168,7 @@ final class Program
         $this->errorChain = new WeakMap();
         $this->chordTracker = new ChordTracker();
         $this->keyHelp = new KeyHelpOverlay();
+        $this->toasts = new Toasts();
         $this->pastTheChords = new WeakMap();
     }
 
@@ -777,6 +780,9 @@ final class Program
         $readsEffectOutput = $this->messageQueue->isEmpty() && $this->inputQueue->isEmpty();
         $now = $this->clock->now();
         $this->effects?->fire($now);
+        if ($this->toasts->expire($now)) {
+            $this->frames->markDirty();
+        }
         $expired = $this->chordTracker->expired($now);
         if ($expired !== []) {
             $this->handleBeforeTheQueue($expired);
@@ -840,9 +846,15 @@ final class Program
 
     private function nextTimerDelay(): ?float
     {
+        $now = $this->clock->now();
         $chordDeadline = $this->chordTracker->deadline();
+        $toastDeadline = $this->toasts->nextDeadline();
         $delays = array_filter(
-            [$this->effects?->nextDelay(), $chordDeadline === null ? null : max(0.0, $chordDeadline - $this->clock->now())],
+            [
+                $this->effects?->nextDelay(),
+                $chordDeadline === null ? null : max(0.0, $chordDeadline - $now),
+                $toastDeadline === null ? null : max(0.0, $toastDeadline - $now),
+            ],
             static fn (?float $delay): bool => $delay !== null,
         );
 
@@ -1041,6 +1053,11 @@ final class Program
         if ($keyHelpWasOpen) {
             $this->frames->markDirty();
         }
+        if ($this->toasts->takes($stamped, $screenRect)) {
+            $this->frames->markDirty();
+
+            return false;
+        }
 
         $model = $this->model;
         $focus = $this->focus;
@@ -1174,6 +1191,7 @@ final class Program
             $model = $this->model;
             $this->capturingOutput('render', static fn () => $model->render($frame, $pass));
             $pass->floats->drainOnto($frame, $pass->context);
+            $this->toasts->drawOver($frame, $pass->context);
             $this->keyHelp->drawOver($frame, $pass->context, $model, $this->focus);
             $this->paintedAt = $this->clock->now();
             $this->screen->flush($frame);
@@ -1345,6 +1363,7 @@ final class Program
             match (true) {
                 $command instanceof QuitCmd => $this->stopRunning(),
                 $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
+                $command instanceof ToastCmd => $this->showToast($command),
                 $command instanceof FocusCmd => $this->moveFocus($command->within($scope)),
                 $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
                 $command instanceof CallCmd => $this->executeCall($command, $wrap, $scope),
@@ -1354,6 +1373,12 @@ final class Program
         } catch (Throwable $error) {
             $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, ErrorSource::Command), $wrap));
         }
+    }
+
+    private function showToast(ToastCmd $toast): void
+    {
+        $this->toasts->show($toast, $this->clock->now());
+        $this->frames->markDirty();
     }
 
     private function isRunning(): bool
