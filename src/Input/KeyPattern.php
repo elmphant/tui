@@ -267,7 +267,7 @@ final readonly class KeyPattern implements Stringable
                 'ctrl' => $ctrl = true,
                 'alt' => $alt = true,
                 'shift' => $shift = true,
-                default => throw new InvalidArgumentException("Unknown modifier '{$token}' in pattern '{$pattern}'"),
+                default => throw new InvalidArgumentException("Unknown modifier '{$token}' in pattern '{$pattern}'" . self::nearest($token, ['ctrl', 'alt', 'shift'])),
             };
         }
 
@@ -282,9 +282,9 @@ final readonly class KeyPattern implements Stringable
         } elseif (strlen($keyToken) === 1) {
             $key = $keyToken;
         } elseif (ctype_alpha($keyToken) && strlen($keyToken) >= 4) {
-            throw new InvalidArgumentException("Unknown key '{$keyToken}' in pattern '{$pattern}'");
+            throw new InvalidArgumentException("Unknown key '{$keyToken}' in pattern '{$pattern}'" . self::nearest($keyToken, array_keys(self::NAMED_KEYS)));
         } else {
-            throw new InvalidArgumentException("Multi-character key '{$keyToken}' is not a named key in pattern '{$pattern}'");
+            throw new InvalidArgumentException("Multi-character key '{$keyToken}' is not a named key in pattern '{$pattern}'" . self::nearest($keyToken, array_keys(self::NAMED_KEYS)));
         }
 
         // A bare uppercase ASCII letter implies Shift only before modifiers are parsed.
@@ -297,6 +297,19 @@ final readonly class KeyPattern implements Stringable
         }
 
         return new self(key: $key, ctrl: $ctrl, alt: $alt, shift: $shift);
+    }
+
+    /**
+     * @param list<string> $names
+     */
+    private static function nearest(string $token, array $names): string
+    {
+        $allowed = strlen($token) >= 6 ? 2 : 1;
+        $distances = array_combine($names, array_map(static fn (string $name): int => levenshtein($token, $name), $names));
+        asort($distances);
+        $name = (string)array_key_first($distances);
+
+        return $distances[$name] <= $allowed ? ". Did you mean '{$name}'?" : '';
     }
 
     /**

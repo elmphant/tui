@@ -253,6 +253,26 @@ final class KeyPatternTest extends TestCase
         KeyPattern::fromString($input);
     }
 
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function nearMisses(): iterable
+    {
+        yield 'a key one letter short' => ['ctrl+entr', "Unknown key 'entr' in pattern 'ctrl+entr'. Did you mean 'enter'?"];
+        yield 'a short key' => ['hom', "Multi-character key 'hom' is not a named key in pattern 'hom'. Did you mean 'home'?"];
+        yield 'a modifier' => ['ctl+s', "Unknown modifier 'ctl' in pattern 'ctl+s'. Did you mean 'ctrl'?"];
+        yield 'nothing close' => ['ctrl+nope', "Unknown key 'nope' in pattern 'ctrl+nope'"];
+    }
+
+    #[DataProvider('nearMisses')]
+    #[Test]
+    public function aMisspeltNameSuggestsTheNearestOne(string $pattern, string $message): void
+    {
+        $this->expectExceptionMessage($message);
+
+        KeyPattern::fromString($pattern);
+    }
+
     #[Test]
     public function matchesReturnsTrueOnFieldEquality(): void
     {
