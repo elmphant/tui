@@ -131,7 +131,7 @@ final class WheelReversalTest extends TestCase
     private function queue(Program $program): SplQueue
     {
         /** @var SplQueue<Message> */
-        return (new ReflectionProperty(Program::class, 'messageQueue'))->getValue($program);
+        return (new ReflectionProperty(Program::class, 'inputQueue'))->getValue($program);
     }
 
     /**

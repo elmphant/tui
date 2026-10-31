@@ -1515,9 +1515,9 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $queueProperty = $reflection->getProperty('messageQueue');
+        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $queue = new SplQueue();
-        $queueProperty->setValue($program, $queue);
+        $reflection->getProperty('inputQueue')->setValue($program, $queue);
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
 
         $reflection->getMethod('setup')->invoke($program);
@@ -1562,9 +1562,9 @@ final class ProgramTest extends TestCase
         $screen = new Screen($terminal);
         $reflection->getProperty('screen')->setValue($program, $screen);
         $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
-        $queueProperty = $reflection->getProperty('messageQueue');
+        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $queue = new SplQueue();
-        $queueProperty->setValue($program, $queue);
+        $reflection->getProperty('inputQueue')->setValue($program, $queue);
         $frame = new Frame(80, 24);
         $screen->flush($frame);
         $terminal->clearOutput();

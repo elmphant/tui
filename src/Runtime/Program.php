@@ -95,6 +95,10 @@ final class Program
      */
     private SplQueue $messageQueue;
     /**
+     * @var SplQueue<Message>
+     */
+    private SplQueue $inputQueue;
+    /**
      * @var WeakMap<Message, int>
      */
     private WeakMap $errorChain;
@@ -158,6 +162,7 @@ final class Program
         $this->clock = new MonotonicClock();
         $this->screenRect = Rect::fromSize(80, 24);
         $this->pendingWheel = new PendingWheel();
+        $this->inputQueue = new SplQueue();
         $this->errorChain = new WeakMap();
         $this->chordTracker = new ChordTracker();
         $this->keyHelp = new KeyHelpOverlay();
@@ -329,12 +334,13 @@ final class Program
             $this->terminal = $this->injectedTerminal ?? new SystemTerminal();
             $this->screen = new Screen($this->terminal, $this->resolveColorProfile());
             $this->messageQueue = new SplQueue();
+            $this->inputQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();
             $this->model = $this->initialModel;
             $this->stdinBuffer = new StdinBuffer(
                 onSequence: $this->handleInputSequence(...),
                 onPaste: function (string $content): void {
-                    $this->messageQueue->enqueue(new PasteMsg($content));
+                    $this->inputQueue->enqueue(new PasteMsg($content));
                 },
                 remote: getenv('SSH_CONNECTION') !== false || getenv('SSH_TTY') !== false,
             );
@@ -537,7 +543,7 @@ final class Program
         $this->screenRect = Rect::fromSize($width, $height);
         $this->terminalSession?->updateHeight($height);
         $this->backBuffer = new Frame($width, $height);
-        $this->messageQueue->enqueue(new ResizeMsg($width, $height));
+        $this->inputQueue->enqueue(new ResizeMsg($width, $height));
         $this->frames->markDirty();
     }
 
@@ -677,7 +683,7 @@ final class Program
             return;
         }
 
-        $this->messageQueue->enqueue($message);
+        $this->inputQueue->enqueue($message);
     }
 
     private function flushWheelWhenDue(float $now): void
@@ -695,7 +701,7 @@ final class Program
         $wheeled = $this->pendingWheel->take();
 
         if ($wheeled !== null) {
-            $this->messageQueue->enqueue($wheeled);
+            $this->inputQueue->enqueue($wheeled);
         }
     }
 
@@ -768,7 +774,7 @@ final class Program
 
         // Leaving a flooding child's output in its pipe blocks the child, and keeps keys from queueing behind it.
         // Asked before the timers fire: a ticker due on every turn would otherwise keep the pipes unread for good.
-        $readsEffectOutput = $this->messageQueue->isEmpty();
+        $readsEffectOutput = $this->messageQueue->isEmpty() && $this->inputQueue->isEmpty();
         $now = $this->clock->now();
         $this->effects?->fire($now);
         $expired = $this->chordTracker->expired($now);
@@ -828,7 +834,7 @@ final class Program
             nextRenderDelay: $this->nextRenderDelay(),
             nextTimerDelay: $this->nextTimerDelay(),
             processesActive: $this->effects?->hasBusyProcesses() ?? false,
-            queuePending: !$this->messageQueue->isEmpty() || !$this->pendingWheel->isEmpty(),
+            queuePending: !$this->messageQueue->isEmpty() || !$this->inputQueue->isEmpty() || !$this->pendingWheel->isEmpty(),
         );
     }
 
@@ -894,6 +900,8 @@ final class Program
         $this->drainDeadline ??= $this->clock->now() + self::MAX_DRAIN_SECONDS;
         $deadline = $this->drainDeadline;
 
+        $this->moveInputAheadOfTheBacklog();
+
         while ($this->isRunning() && $processed < self::MAX_MESSAGES_PER_DRAIN && !$this->messageQueue->isEmpty()) {
             if ($processed > 0 && $this->clock->now() >= $deadline) {
                 return;
@@ -943,6 +951,25 @@ final class Program
                 $consecutiveErrors = 0;
             }
         }
+    }
+
+    /**
+     * The reader acts on a screen the backlog has not changed yet. Input the runtime put back at the front stays first.
+     */
+    private function moveInputAheadOfTheBacklog(): void
+    {
+        $front = 0;
+        while ($front < $this->messageQueue->count() && self::isInput($this->messageQueue[$front])) {
+            ++$front;
+        }
+        while (!$this->inputQueue->isEmpty()) {
+            $this->messageQueue->add($front++, $this->inputQueue->dequeue());
+        }
+    }
+
+    private static function isInput(Message $message): bool
+    {
+        return $message instanceof KeyMsg || $message instanceof MouseMsg || $message instanceof PasteMsg || $message instanceof ResizeMsg || $message instanceof FocusMsg;
     }
 
     private function rememberUnhandled(Throwable $error): void
