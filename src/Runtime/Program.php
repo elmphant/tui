@@ -660,6 +660,7 @@ final class Program
     {
         unset($this->watchers[EventLoopWatcher::EscapeFlush->name]);
         $this->stdinBuffer->flush();
+        $this->armInputFlush();
         $this->tick();
     }
 
@@ -685,6 +686,11 @@ final class Program
         ]);
         $this->cancelWatcher(EventLoopWatcher::EscapeFlush);
         $this->stdinBuffer->process($newInput);
+        $this->armInputFlush();
+    }
+
+    private function armInputFlush(): void
+    {
         $flushDelay = $this->stdinBuffer->flushDelay();
         if ($flushDelay !== null) {
             $this->watch(EventLoopWatcher::EscapeFlush, EventLoop::delay($flushDelay, $this->flushPendingInput(...)));

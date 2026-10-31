@@ -87,6 +87,19 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
+    public function aKeyAfterATerminalReplyThatNeverEndedArrives(): void
+    {
+        $model = new InputLoggingModel();
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.02, static fn () => $terminal->simulateInput("\x1b]11;rgb:0000/0000/0000"));
+        EventLoop::delay(0.4, static fn () => $terminal->simulateInput('q'));
+
+        Program::new($model)->withTerminal($terminal)->start();
+
+        self::assertSame(['q'], $model->log);
+    }
+
+    #[Test]
     public function anEscapeSequenceSplitAcrossReadsIsStillOneKey(): void
     {
         $model = new InputLoggingModel();
