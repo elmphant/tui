@@ -49,7 +49,7 @@ final class EffectRunner
     private array $tickers = [];
 
     /**
-     * @var list<TimerRecord>
+     * @var array<int, TimerRecord> by object id
      */
     private array $timers = [];
 
@@ -374,10 +374,10 @@ final class EffectRunner
             $this->tickers,
             static fn (TickerRecord $ticker): bool => !$matches($ticker->id, $ticker->scope),
         ));
-        $this->timers = array_values(array_filter(
+        $this->timers = array_filter(
             $this->timers,
             static fn (TimerRecord $timer): bool => !$matches($timer->id, $timer->scope),
-        ));
+        );
 
         $keptSubscriptions = [];
         foreach ($this->subscriptions as $subscription) {
@@ -522,7 +522,8 @@ final class EffectRunner
      */
     private function registerTimer(float $delay, Closure $then, ?EffectId $id, ?Closure $wrap, ?string $scope): void
     {
-        $this->timers[] = new TimerRecord($this->clock->now() + $delay, $then, $id, $wrap, $scope);
+        $timer = new TimerRecord($this->clock->now() + $delay, $then, $id, $wrap, $scope);
+        $this->timers[spl_object_id($timer)] = $timer;
     }
 
     /**
@@ -640,10 +641,10 @@ final class EffectRunner
 
         foreach ($due as $timer) {
             // A callback earlier in this pass may have cancelled it.
-            if (!in_array($timer, $this->timers, true)) {
+            if (!isset($this->timers[spl_object_id($timer)])) {
                 continue;
             }
-            $this->forgetTimer($timer);
+            unset($this->timers[spl_object_id($timer)]);
 
             try {
                 $result = ($timer->callback)();
@@ -663,14 +664,6 @@ final class EffectRunner
                 ), $timer->wrap, $timer->id, $timer->scope);
             }
         }
-    }
-
-    private function forgetTimer(TimerRecord $timer): void
-    {
-        $this->timers = array_values(array_filter(
-            $this->timers,
-            static fn (TimerRecord $known): bool => $known !== $timer,
-        ));
     }
 
     /**
