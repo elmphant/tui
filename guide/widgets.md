@@ -30,7 +30,7 @@ interactive ones on your App, and bind them (see [Building an app](apps.md)).
 
 | Widget | What it is |
 | --- | --- |
-| `TextInput` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead) |
+| `TextInput` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead). `withSubmit($message)` sends a message on Enter |
 | `Button` | A button that sends a message when pressed |
 | `Checkbox` / `CheckboxGroup` | Yes/no choices |
 | `Radio` / `Select` | One choice out of a list |

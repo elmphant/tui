@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Closure;
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
@@ -44,6 +46,27 @@ final class TextInputTest extends TestCase
     public function itNamesTheKeyThatEmptiesWhatWasTyped(): void
     {
         self::assertSame(['Ctrl+U' => 'clear'], TextInput::new()->withValue('typed')->hints());
+    }
+
+    #[Test]
+    public function enterSendsTheMessageTheFieldSubmitsWith(): void
+    {
+        $submitted = new FieldSubmitted();
+        $field = TextInput::new('Ada')->withSubmit($submitted);
+
+        $result = $field->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 1));
+
+        self::assertEquals(Cmd::message($submitted), $result->command);
+        self::assertSame(['Enter' => 'submit', 'Ctrl+U' => 'clear'], $field->hints());
+    }
+
+    #[Test]
+    public function enterIsLeftAloneByAFieldThatSubmitsNothing(): void
+    {
+        $result = TextInput::new('Ada')->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 1));
+
+        self::assertNull($result->command);
+        self::assertSame(['Ctrl+U' => 'clear'], TextInput::new('Ada')->hints());
     }
 
     #[Test]
@@ -2350,4 +2373,8 @@ final class TextInputTest extends TestCase
             'a limit typing cannot pass is not one a paste walks through',
         );
     }
+}
+
+final readonly class FieldSubmitted implements Message
+{
 }

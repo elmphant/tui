@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Field;
 
+use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
@@ -31,7 +33,7 @@ use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
 
-final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, TakesText
+final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAValue, KeybindingsAware, PublishesHints, TakesText
 {
     use Cloneable;
     use DrawsFocus;
@@ -49,6 +51,7 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private ?int $width = null,
+        private ?Message $submit = null,
     ) {
     }
 
@@ -74,11 +77,22 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
         return (new self())->withValue($value);
     }
 
+    public function momentaryKeybindings(): Keybindings
+    {
+        return $this->submit === null ? Keybindings::empty() : new Keybindings([Actions::SELECT => ['enter']]);
+    }
+
+    public function withSubmit(Message $message): self
+    {
+        return $this->cloneWith(submit: $message);
+    }
+
     public function hints(): array
     {
-        return $this->effectiveKeybindings()->hints(
-            $this->value === '' ? [] : ['clear' => Actions::CLEAR_LINE],
-        );
+        return $this->effectiveKeybindings()->hints([
+            ...$this->submit === null ? [] : ['submit' => Actions::SELECT],
+            ...$this->value === '' ? [] : ['clear' => Actions::CLEAR_LINE],
+        ]);
     }
 
     public function takesText(): bool
@@ -237,6 +251,9 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
     private function handleKey(KeyMsg $message, Rect $area): UpdateResult
     {
         $bindings = $this->effectiveKeybindings();
+        if ($this->submit !== null && $bindings->matches($message, Actions::SELECT)) {
+            return new UpdateResult($this, Cmd::message($this->submit));
+        }
 
         $updated = match (true) {
             $bindings->matches($message, Actions::CURSOR_LEFT) => $this->moveCursorLeft(),
