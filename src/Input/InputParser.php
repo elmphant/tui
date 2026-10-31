@@ -528,6 +528,10 @@ final class InputParser
         }
 
         $buttonCode = (int)$fields[1];
+        // Buttons 8 to 11 (back, forward and more) set bit 128; nothing here can name them.
+        if (($buttonCode & 128) !== 0) {
+            return null;
+        }
         $shift = ($buttonCode & 4) !== 0;
         $alt = ($buttonCode & 8) !== 0;
         $ctrl = ($buttonCode & 16) !== 0;

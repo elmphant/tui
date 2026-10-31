@@ -363,6 +363,15 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function theBackAndForwardMouseButtonsClickNothing(): void
+    {
+        self::assertSame([[], []], [
+            InputParser::parse("\x1b[<128;10;5M")->messages,
+            InputParser::parse("\x1b[<129;10;5m")->messages,
+        ]);
+    }
+
+    #[Test]
     public function parseSgrMouseRelease(): void
     {
         $messages = InputParser::parse("\x1b[<0;5;3m")->messages;
