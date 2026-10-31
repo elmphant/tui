@@ -59,7 +59,7 @@ final class RunningStreamingProcess implements RunningProcess
         }
 
         try {
-            $this->process->checkTimeout();
+            $this->stopIfTimedOut();
         } catch (ProcessTimedOutException $timeout) {
             $this->finished = true;
 

@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Runtime;
 
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 
 /**
  * @internal
@@ -46,5 +47,20 @@ trait ChildProcessLifecycle
     public function id(): ?EffectId
     {
         return $this->effectId;
+    }
+
+    /**
+     * Symfony's checkTimeout() kills only the parent before it throws, and its children are then out of reach.
+     */
+    private function stopIfTimedOut(): void
+    {
+        $timeout = $this->process->getTimeout();
+        if ($timeout === null || !$this->process->isStarted() || microtime(true) - $this->process->getStartTime() <= $timeout) {
+            return;
+        }
+
+        $this->stop();
+
+        throw new ProcessTimedOutException($this->process, ProcessTimedOutException::TYPE_GENERAL);
     }
 }
