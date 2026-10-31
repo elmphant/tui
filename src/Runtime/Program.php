@@ -110,6 +110,8 @@ final class Program
     private bool $inputClosed = false;
     private int $consecutiveRenderFailures = 0;
     private ?Throwable $fatalError = null;
+    private int $unheardErrors = 0;
+    private ?Throwable $lastUnheardError = null;
     private ?float $drainDeadline = null;
     private bool $resizePending = false;
     private bool $resizeNeedsScreenClear = false;
@@ -355,6 +357,7 @@ final class Program
         if ($this->fatalError !== null) {
             throw $this->fatalError;
         }
+        $this->reportUnheardErrors();
 
         /** @var TModel */
         return $this->model;
@@ -371,6 +374,25 @@ final class Program
         } finally {
             $this->ticking = false;
         }
+    }
+
+    private function reportUnheardErrors(): void
+    {
+        if ($this->lastUnheardError === null) {
+            return;
+        }
+
+        $error = $this->lastUnheardError;
+        $this->terminal->write(sprintf(
+            "%d %s reached no onError() handler. The last one: %s: %s in %s:%d\r\n",
+            $this->unheardErrors,
+            $this->unheardErrors === 1 ? 'error' : 'errors',
+            $error::class,
+            $error->getMessage(),
+            $error->getFile(),
+            $error->getLine(),
+        ));
+        $this->terminal->flush();
     }
 
     /**
@@ -874,6 +896,10 @@ final class Program
 
             if ($message instanceof ErrorMsg) {
                 $this->traceError($message->error, $message->source->value);
+                if ($this->errorHandler === null) {
+                    ++$this->unheardErrors;
+                    $this->lastUnheardError = $message->error;
+                }
             }
 
             $handledByTheErrorHandler = $message instanceof ErrorMsg && $this->errorHandler !== null;

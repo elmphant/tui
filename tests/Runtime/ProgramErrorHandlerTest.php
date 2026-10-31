@@ -31,10 +31,44 @@ final class ProgramErrorHandlerTest extends TestCase
             ->onError(static fn (ErrorMsg $error): Cmd => Cmd::message(new Retry()))
             ->start();
     }
+
+    #[Test]
+    public function anErrorNoHandlerHeardIsReportedOnceTheTerminalIsRestored(): void
+    {
+        $terminal = new VirtualTerminal(20, 3);
+
+        Program::new(new FailsOnceThenQuitsModel())->withTerminal($terminal)->start();
+
+        self::assertMatchesRegularExpression(
+            '/1 error reached no onError\(\) handler\. The last one: RuntimeException: once in ' . preg_quote(__FILE__, '/') . ':\d+\r\n$/',
+            $terminal->output(),
+        );
+    }
 }
 
 final readonly class Retry implements Message
 {
+}
+
+final readonly class FailsOnceThenQuitsModel implements Model
+{
+    public function init(): ?Cmd
+    {
+        return Cmd::message(new Retry());
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof Retry) {
+            throw new RuntimeException('once');
+        }
+
+        return new UpdateResult($this, $message instanceof ErrorMsg ? Cmd::quit() : null);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+    }
 }
 
 final readonly class FailsOnRetryModel implements Model
