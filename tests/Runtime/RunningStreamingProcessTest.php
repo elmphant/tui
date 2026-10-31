@@ -330,6 +330,18 @@ final class RunningStreamingProcessTest extends TestCase
     }
 
     #[Test]
+    public function aFramedLineLongerThanTheChunkSizeArrivesWithoutWaitingForItsEnd(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturn("one\nabcdefghi\xC3", '');
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(true);
+        $running = new RunningStreamingProcess($process, null, outputChunkBytes: 8, framesLines: true);
+
+        self::assertSame(["one\nabcdefghi"], self::outputsOf($running->pump()));
+    }
+
+    #[Test]
     public function aCharacterSplitAcrossTwoReadsArrivesWhole(): void
     {
         $process = $this->createMock(Process::class);

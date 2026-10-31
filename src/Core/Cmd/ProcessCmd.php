@@ -48,7 +48,8 @@ final readonly class ProcessCmd extends Cmd implements NamesItsEffect
     }
 
     /**
-     * Emit complete lines, including a final line without a newline when the process ends; chunk size no longer applies.
+     * Emit complete lines, including a final line without a newline when the process ends.
+     * A line that grows past the chunk size is sent before it ends.
      */
     public function withLineFraming(bool $framesLines = true): self
     {

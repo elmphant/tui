@@ -126,7 +126,10 @@ final class RunningStreamingProcess implements RunningProcess
      */
     private function readyAndPending(string $text): array
     {
-        $ready = $this->framesLines ? self::wholeLinesLength($text) : self::wholeCharactersLength($text);
+        $ready = $this->framesLines ? self::wholeLinesLength($text) : 0;
+        if (!$this->framesLines || \strlen($text) - $ready >= $this->outputChunkBytes) {
+            $ready = self::wholeCharactersLength($text);
+        }
 
         return [substr($text, 0, $ready), substr($text, $ready)];
     }
