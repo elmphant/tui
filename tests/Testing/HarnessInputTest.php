@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Testing;
 
+use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Message;
@@ -20,6 +21,10 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\UserInput;
+use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -119,6 +124,27 @@ final class HarnessInputTest extends TestCase
         self::assertEquals(new MouseMsg(4, 1, MouseAction::Press, MouseButton::Left), UserInput::click(4, 1));
         self::assertEquals(new MouseMsg(9, 2, MouseAction::Motion, MouseButton::Left), UserInput::drag(9, 2));
         self::assertEquals(new PasteMsg('text'), UserInput::paste('text'));
+    }
+
+    #[Test]
+    public function typingIntoAFieldNobodyBoundSaysSo(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Typed "abc", but no component holds the keyboard. The TextInput on screen is not bound, so it never gets keys: wrap it in Component::bind()');
+
+        ModelHarness::for(new ForgetsToBindItsField(TextInput::new()), 20, 2)->type('abc');
+    }
+}
+
+final readonly class ForgetsToBindItsField extends App
+{
+    public function __construct(private TextInput $name)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(Text::new('Name'), $this->name);
     }
 }
 

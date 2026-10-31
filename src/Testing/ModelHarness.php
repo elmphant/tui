@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Testing;
 
 use Closure;
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\CallCmd;
@@ -26,6 +28,7 @@ use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Input\ChordTracker;
+use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
@@ -48,8 +51,11 @@ use Elmphant\Tui\Runtime\InputRouter;
 use Elmphant\Tui\Runtime\KeyHelpOverlay;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\RoutesFocus;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
 use LogicException;
+use ReflectionClass;
 use RuntimeException;
 use Throwable;
 use UnexpectedValueException;
@@ -303,6 +309,7 @@ final class ModelHarness
      */
     public function type(string $text): self
     {
+        $this->refuseTextNoFieldCanTake($text);
         foreach (UserInput::typed($text) as $key) {
             $this->dispatch($key);
         }
@@ -452,6 +459,36 @@ final class ModelHarness
     public function renderScreen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
+    }
+
+    private function refuseTextNoFieldCanTake(string $text): void
+    {
+        if (!$this->model instanceof App || $this->focused() !== null) {
+            return;
+        }
+
+        $field = self::unboundTextField($this->model->view());
+        if ($field !== null) {
+            throw new LogicException(sprintf('Typed "%s", but no component holds the keyboard. The %s on screen is not bound, so it never gets keys: wrap it in Component::bind()', $text, (new ReflectionClass($field))->getShortName()));
+        }
+    }
+
+    private static function unboundTextField(Widget $widget): ?Widget
+    {
+        if ($widget instanceof Component) {
+            return null;
+        }
+        if ($widget instanceof TakesText) {
+            return $widget;
+        }
+        foreach ($widget instanceof WidgetContainer ? $widget->children() : [] as $child) {
+            $field = self::unboundTextField($child);
+            if ($field !== null) {
+                return $field;
+            }
+        }
+
+        return null;
     }
 
     /**

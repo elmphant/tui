@@ -45,7 +45,8 @@ $app->runCalls();                                 // run the Cmd::call()s so far
 ```
 
 Answering a command the app never started throws, so a wrong guess in the test
-shows up at once.
+shows up at once. So does `type()` while no component holds the keyboard and a
+field on screen was never passed to `Component::bind()`.
 
 More: `initialize()` runs `setup()`, `resize()` changes the screen size,
 `model()` returns the app for typed checks, and `renderFrame()` gives the cells
