@@ -27,6 +27,7 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
+use Elmphant\Tui\Text\GraphemeIndex;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
@@ -291,18 +292,9 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         $scrollOffset = $this->computeScrollOffset($area->width);
         $clickDisplayX = $message->x - $area->x + $scrollOffset;
         $displayText = $this->echoMode->mask($this->value);
-        $chars = Grapheme::split($displayText);
-        $displayWidth = 0;
-        $newCursor = self::graphemeLength($displayText);
-
-        foreach ($chars as $index => $char) {
-            $charWidth = CharWidth::graphemeWidth($char);
-            if ($displayWidth + $charWidth > $clickDisplayX) {
-                $newCursor = $index;
-                break;
-            }
-            $displayWidth += $charWidth;
-        }
+        $newCursor = self::isPlain($displayText)
+            ? max(0, min($clickDisplayX, strlen($displayText)))
+            : GraphemeIndex::of($displayText)->lastUpTo($clickDisplayX);
 
         return new UpdateResult($this->cloneWith(cursor: $newCursor));
     }
@@ -313,25 +305,11 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
             return substr($text, $offsetColumns, $maxColumns);
         }
 
-        $chars = Grapheme::split($text);
-        $skipped = 0;
-        $collected = '';
-        $collectedWidth = 0;
+        $index = GraphemeIndex::of($text);
+        $first = $index->firstFrom($offsetColumns);
+        $end = $index->lastUpTo($index->columnOf($first) + $maxColumns);
 
-        foreach ($chars as $char) {
-            $charWidth = CharWidth::graphemeWidth($char);
-            if ($skipped < $offsetColumns) {
-                $skipped += $charWidth;
-                continue;
-            }
-            if ($collectedWidth + $charWidth > $maxColumns) {
-                break;
-            }
-            $collected .= $char;
-            $collectedWidth += $charWidth;
-        }
-
-        return $collected;
+        return substr($text, $index->byteOf($first), $index->byteOf($end) - $index->byteOf($first));
     }
 
     private function moveCursorLeft(): ?self
@@ -512,27 +490,27 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
             return min($column, strlen($text));
         }
 
-        $start = 0;
-        foreach (Grapheme::split($text) as $grapheme) {
-            if ($start >= $column) {
-                return $start;
-            }
-            $start += CharWidth::graphemeWidth($grapheme);
-        }
+        $index = GraphemeIndex::of($text);
 
-        return $start;
+        return $index->columnOf($index->firstFrom($column));
     }
 
     private static function graphemeLength(string $value): int
     {
-        return self::isPlain($value) ? strlen($value) : count(Grapheme::split($value));
+        return self::isPlain($value) ? strlen($value) : GraphemeIndex::of($value)->count;
     }
 
     private static function graphemeSubstring(string $value, int $offset, ?int $length = null): string
     {
-        return self::isPlain($value)
-            ? substr($value, $offset, $length)
-            : implode('', array_slice(Grapheme::split($value), $offset, $length));
+        if (self::isPlain($value)) {
+            return substr($value, $offset, $length);
+        }
+
+        $index = GraphemeIndex::of($value);
+        $first = min($offset, $index->count);
+        $end = $length === null ? $index->count : min($first + $length, $index->count);
+
+        return substr($value, $index->byteOf($first), $index->byteOf($end) - $index->byteOf($first));
     }
 
     /**
@@ -559,13 +537,17 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
 
     private static function displayWidth(string $text): int
     {
-        return self::isPlain($text) ? strlen($text) : CharWidth::stringWidth($text);
+        return self::isPlain($text) ? strlen($text) : GraphemeIndex::of($text)->width();
     }
 
     private static function prefixWidth(string $text, int $graphemes): int
     {
-        return self::isPlain($text)
-            ? min($graphemes, strlen($text))
-            : CharWidth::stringWidth(self::graphemeSubstring($text, 0, $graphemes));
+        if (self::isPlain($text)) {
+            return min($graphemes, strlen($text));
+        }
+
+        $index = GraphemeIndex::of($text);
+
+        return $index->columnOf(min($graphemes, $index->count));
     }
 }
