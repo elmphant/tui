@@ -190,6 +190,24 @@ final class ConstraintTest extends TestCase
     }
 
     #[Test]
+    public function aWeightTooLargeToShareOutIsRefused(): void
+    {
+        $refused = [];
+        foreach ([static fn () => Constraint::flex(1_000_001), static fn () => new Constraint(shrink: PHP_INT_MAX)] as $build) {
+            try {
+                $build();
+            } catch (InvalidArgumentException $error) {
+                $refused[] = $error->getMessage();
+            }
+        }
+
+        self::assertSame([
+            'Constraint weights go up to 1000000, got flex 1000001 and shrink 1',
+            'Constraint weights go up to 1000000, got flex 0 and shrink ' . PHP_INT_MAX,
+        ], $refused);
+    }
+
+    #[Test]
     public function growingOnNoWeightIsRefused(): void
     {
         $this->expectException(InvalidArgumentException::class);

@@ -10,6 +10,11 @@ use InvalidArgumentException;
 
 final readonly class Constraint
 {
+    /**
+     * Larger weights overflow an integer once the allocator multiplies them by the spare cells.
+     */
+    private const MAX_WEIGHT = 1_000_000;
+
     public function __construct(
         public int $min = 0,
         public int $max = PHP_INT_MAX,
@@ -35,6 +40,9 @@ final readonly class Constraint
         }
         if ($flex < 0) {
             throw new InvalidArgumentException(sprintf('Constraint flex weight must be non-negative, got %d', $flex));
+        }
+        if ($flex > self::MAX_WEIGHT || $shrink > self::MAX_WEIGHT) {
+            throw new InvalidArgumentException(sprintf('Constraint weights go up to %d, got flex %d and shrink %d', self::MAX_WEIGHT, $flex, $shrink));
         }
     }
 
