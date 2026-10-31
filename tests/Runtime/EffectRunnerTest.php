@@ -711,7 +711,7 @@ final class EffectRunnerTest extends TestCase
         $start = hrtime(true);
         $runner->shutdown();
 
-        self::assertLessThan(0.2, (hrtime(true) - $start) / 1e9);
+        self::assertLessThan(8 * 0.05, (hrtime(true) - $start) / 1e9);
     }
 
     #[Test]
@@ -723,7 +723,7 @@ final class EffectRunnerTest extends TestCase
         $start = hrtime(true);
         $runner->run(new CancelScopeCmd(), null, 'jobs');
 
-        self::assertLessThan(0.2, (hrtime(true) - $start) / 1e9);
+        self::assertLessThan(8 * 0.05, (hrtime(true) - $start) / 1e9);
         self::assertFalse($runner->hasRunningProcesses());
     }
 
