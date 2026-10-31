@@ -363,6 +363,17 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function aMouseReportOffTheTopLeftLandsOnTheFirstCell(): void
+    {
+        $sgr = InputParser::parseSequence("\x1b[<0;0;0M");
+        $x10 = InputParser::parseSequence("\x1b[M  \x20");
+
+        self::assertInstanceOf(MouseMsg::class, $sgr);
+        self::assertInstanceOf(MouseMsg::class, $x10);
+        self::assertSame([[0, 0], [0, 0]], [[$sgr->x, $sgr->y], [$x10->x, $x10->y]]);
+    }
+
+    #[Test]
     public function theBackAndForwardMouseButtonsClickNothing(): void
     {
         self::assertSame([[], []], [

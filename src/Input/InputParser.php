@@ -469,8 +469,8 @@ final class InputParser
         $shift = ($buttonCode & 4) !== 0;
         $alt = ($buttonCode & 8) !== 0;
         $ctrl = ($buttonCode & 16) !== 0;
-        $column = ord($raw[$position + 1]) - 33;
-        $row = ord($raw[$position + 2]) - 33;
+        $column = max(0, ord($raw[$position + 1]) - 33);
+        $row = max(0, ord($raw[$position + 2]) - 33);
         $position += 3;
 
         if (($buttonCode & 64) !== 0) {
@@ -535,8 +535,8 @@ final class InputParser
         $shift = ($buttonCode & 4) !== 0;
         $alt = ($buttonCode & 8) !== 0;
         $ctrl = ($buttonCode & 16) !== 0;
-        $column = (int)$fields[2] - 1;
-        $row = (int)$fields[3] - 1;
+        $column = max(0, (int)$fields[2] - 1);
+        $row = max(0, (int)$fields[3] - 1);
         $hasMotion = (bool)($buttonCode & 32);
         $buttonBase = $buttonCode & 3;
 
