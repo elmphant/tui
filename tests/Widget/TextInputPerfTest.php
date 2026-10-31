@@ -53,6 +53,32 @@ final class TextInputPerfTest extends TestCase
         self::assertCaretMovesAsQuicklyAsInALine(str_repeat('é', 1 << 19));
     }
 
+    #[Test]
+    public function threeLongAccentedFieldsRedrawAsQuicklyAsOneDrawnThreeTimes(): void
+    {
+        self::skipUnderXdebug();
+
+        $area = Rect::fromSize(80, 1);
+        $context = RenderContext::focused(Theme::dark());
+        $fields = array_map(
+            static fn (string $letter): TextInput => TextInput::new(str_repeat($letter, 50_000)),
+            ['é', 'ü', 'ö'],
+        );
+        $draw = static function (TextInput ...$fields) use ($area, $context): void {
+            foreach ($fields as $field) {
+                $field->render(new Frame(80, 1), $area, $context);
+            }
+        };
+
+        self::assertRatioBelow(self::MAX_RATIO, static function () use ($draw, $fields): array {
+            $one = self::medianMicroseconds(static fn () => $draw($fields[0], $fields[0], $fields[0]), 20);
+            $three = self::medianMicroseconds(static fn () => $draw(...$fields), 20);
+            $ratio = $three / $one;
+
+            return [$ratio, sprintf('Drawing three long fields cost %.0fx drawing one three times (%.0fµs vs %.0fµs)', $ratio, $three, $one)];
+        });
+    }
+
     private static function assertCaretMovesAsQuicklyAsInALine(string $value): void
     {
         self::skipUnderXdebug();

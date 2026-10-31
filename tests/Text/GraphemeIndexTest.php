@@ -44,6 +44,18 @@ final class GraphemeIndexTest extends TestCase
         }
     }
 
+    #[Test]
+    public function manyShortTextsStayWithinTheMemoryBudget(): void
+    {
+        $before = memory_get_usage();
+
+        for ($label = 0; $label < 300_000; ++$label) {
+            GraphemeIndex::of('é' . $label);
+        }
+
+        self::assertLessThan(24 * 1024 * 1024, memory_get_usage() - $before);
+    }
+
     /**
      * @param non-empty-list<int> $columns
      */

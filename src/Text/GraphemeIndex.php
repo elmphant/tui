@@ -11,7 +11,9 @@ namespace Elmphant\Tui\Text;
  */
 final class GraphemeIndex
 {
-    private const KEPT = 2;
+    private const RETAINED_BYTES = 16_000_000;
+    // About 300 bytes measured for the object, its two strings and the cache slot.
+    private const BYTES_PER_ENTRY = 300;
 
     /**
      * @param string $bytes   the byte each grapheme starts at, then the text's length; packed as 32-bit integers
@@ -25,20 +27,29 @@ final class GraphemeIndex
     }
 
     /**
-     * @infection-ignore-all a memo of the last texts: the same without it, only slower
+     * A field holds no index of its own: App compares widgets with ==, and a memo would make equal fields differ.
+     *
+     * @infection-ignore-all a memo of the texts used most recently: the same without it, only slower
      */
     public static function of(string $text): self
     {
-        /** @var list<array{string, self}> $known */
+        /** @var array<array-key, self> $known */
         static $known = [];
-        foreach ($known as [$knownText, $index]) {
-            if ($knownText === $text) {
-                return $index;
-            }
-        }
+        static $retainedBytes = 0;
 
-        $index = self::measure($text);
-        $known = [...array_slice($known, 1 - self::KEPT), [$text, $index]];
+        $index = $known[$text] ?? null;
+        unset($known[$text]);
+        if ($index === null) {
+            $index = self::measure($text);
+            $retainedBytes += $index->bytes();
+        }
+        $known[$text] = $index;
+
+        while ($retainedBytes > self::RETAINED_BYTES && count($known) > 1) {
+            $oldest = array_key_first($known);
+            $retainedBytes -= $known[$oldest]->bytes();
+            unset($known[$oldest]);
+        }
 
         return $index;
     }
@@ -100,6 +111,11 @@ final class GraphemeIndex
         $columns[] = $column;
 
         return new self(pack('V*', ...$bytes), pack('V*', ...$columns), count($bytes) - 1);
+    }
+
+    private function bytes(): int
+    {
+        return $this->byteOf($this->count) + strlen($this->bytes) + strlen($this->columns) + self::BYTES_PER_ENTRY;
     }
 
     private static function at(string $packed, int $index): int
