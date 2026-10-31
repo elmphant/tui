@@ -33,7 +33,7 @@ trait ChildProcessLifecycle
 
         $pid = $this->process->getPid();
         $descendants = $pid === null ? [] : ProcessTree::descendantsOf($pid);
-        ProcessTree::terminate($descendants);
+        // Parent first: a shell whose child dies first runs its next command before its own signal arrives.
         $this->process->stop(self::TERMINATION_GRACE_SECONDS);
         ProcessTree::kill($descendants);
         $this->finished = true;

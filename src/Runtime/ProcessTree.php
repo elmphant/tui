@@ -13,7 +13,6 @@ use Symfony\Component\Process\Process;
  */
 final class ProcessTree
 {
-    private const TERMINATE = 15;
     private const KILL = 9;
 
     /**
@@ -43,14 +42,6 @@ final class ProcessTree
         }
 
         return $descendants;
-    }
-
-    /**
-     * @param list<int> $pids
-     */
-    public static function terminate(array $pids): void
-    {
-        self::signal($pids, self::TERMINATE);
     }
 
     /**

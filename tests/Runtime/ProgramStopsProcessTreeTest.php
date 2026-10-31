@@ -30,6 +30,17 @@ final class ProgramStopsProcessTreeTest extends TestCase
     }
 
     #[Test]
+    public function aShellThatIsStoppedRunsNoFurtherCommand(): void
+    {
+        $marker = sys_get_temp_dir() . '/elmphant-stopped-shell-' . bin2hex(random_bytes(4));
+
+        Program::new(new ShellWithANextCommandModel($marker))->withTerminal(new VirtualTerminal(80, 24))->start();
+        usleep(100_000);
+
+        self::assertFileDoesNotExist($marker);
+    }
+
+    #[Test]
     public function aTimeoutAlsoStopsWhatTheProcessStarted(): void
     {
         $streamed = sprintf('4244.%d', random_int(100000, 999999));
@@ -58,6 +69,31 @@ final class ProgramStopsProcessTreeTest extends TestCase
         exec('pkill -f ' . escapeshellarg('^sleep ' . $marker));
 
         return $pids;
+    }
+}
+
+final readonly class ShellWithANextCommandModel implements Model
+{
+    public function __construct(private string $marker)
+    {
+    }
+
+    public function init(): ?Cmd
+    {
+        return Cmd::batch(
+            Cmd::exec(['sh', '-c', 'sleep 5; touch ' . escapeshellarg($this->marker)])->withId(EffectId::named('shell')),
+            Cmd::after(0.2, static fn () => Cmd::cancel(EffectId::named('shell'))),
+            Cmd::after(0.3, static fn () => Cmd::quit()),
+        );
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return new UpdateResult($this);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
     }
 }
 
