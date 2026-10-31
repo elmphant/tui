@@ -506,6 +506,21 @@ final class EffectRunnerTest extends TestCase
     }
 
     #[Test]
+    public function aProcessThatStaysQuietIsPolledOnlyEveryTenthOfASecond(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::exec(['sleep', '5']), null);
+        $busyAtStart = $runner->hasBusyProcesses();
+
+        for ($pump = 0; $pump < 10; ++$pump) {
+            $runner->pump();
+        }
+
+        self::assertSame([true, false, 0.1], [$busyAtStart, $runner->hasBusyProcesses(), $runner->nextDelay()]);
+        $runner->shutdown();
+    }
+
+    #[Test]
     public function aProcessThatCannotStartBecomesAnErrorMessage(): void
     {
         $runner = $this->runner();

@@ -38,6 +38,11 @@ use WeakMap;
  */
 final class EffectRunner
 {
+    private const QUIET_PUMPS = 10;
+    private const QUIET_POLL_SECONDS = 0.1;
+
+    private int $quietPumps = 0;
+
     /**
      * @var list<TickerRecord>
      */
@@ -157,16 +162,24 @@ final class EffectRunner
             $delay = max(0.0, $scheduled->fireAt - $now);
             $earliest = $earliest === null ? $delay : min($earliest, $delay);
         }
+        if ($this->processes !== []) {
+            $earliest = min($earliest ?? self::QUIET_POLL_SECONDS, self::QUIET_POLL_SECONDS);
+        }
 
         return $earliest;
     }
 
-    /**
-     * Keep polling while a process runs, even without input.
-     */
     public function hasRunningProcesses(): bool
     {
         return $this->processes !== [];
+    }
+
+    /**
+     * A process that wrote nothing for a while is polled at nextDelay(), not on every tick.
+     */
+    public function hasBusyProcesses(): bool
+    {
+        return $this->processes !== [] && $this->quietPumps < self::QUIET_PUMPS;
     }
 
     /**
@@ -296,6 +309,7 @@ final class EffectRunner
             return;
         }
         $this->processes[] = $process;
+        $this->quietPumps = 0;
         if ($scope !== null) {
             $this->processScopes[$process] = $scope;
         }
@@ -519,11 +533,13 @@ final class EffectRunner
     private function pumpProcesses(): void
     {
         $remaining = [];
+        ++$this->quietPumps;
         foreach ($this->processes as $process) {
             $scope = $this->processScopes[$process] ?? null;
             try {
                 foreach ($process->pump() as $message) {
                     $this->queue($message, $process->id(), $scope);
+                    $this->quietPumps = 0;
                 }
             } catch (Throwable $error) {
                 $this->queue($process->map(new ErrorMsg($error, ErrorSource::Process, $process->id())), $process->id(), $scope);

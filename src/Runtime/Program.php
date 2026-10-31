@@ -815,7 +815,7 @@ final class Program
         $this->adaptiveTicker?->refresh(
             nextRenderDelay: $this->nextRenderDelay(),
             nextTimerDelay: $this->nextTimerDelay(),
-            processesActive: $this->effects?->hasRunningProcesses() ?? false,
+            processesActive: $this->effects?->hasBusyProcesses() ?? false,
             queuePending: !$this->messageQueue->isEmpty() || !$this->pendingWheel->isEmpty(),
         );
     }
