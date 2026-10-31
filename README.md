@@ -106,6 +106,7 @@ to test: a test checks which command was asked for, and nothing runs.
 | [Building an app](guide/apps.md) | The `App` class, its hooks, and how interactive widgets keep their state |
 | [Widgets](guide/widgets.md) | Every built-in widget, plus forms, modals, tables and scrolling |
 | [Layout](guide/layout.md) | Placing widgets side by side or stacked, and making them reflow |
+| [Styling](guide/styling.md) | Themes, colours in text, what each widget reads, and styling one part of the screen |
 | [Keys and focus](guide/keys-and-focus.md) | Shortcuts, typing into fields, vim mode, the key help, footer hints, and where the keyboard goes |
 | [Commands and effects](guide/effects.md) | Timers, processes, HTTP, cancelling, and effects of your own |
 | [Testing](guide/testing.md) | Driving an app or one widget from a test, and checking the screen |
