@@ -80,6 +80,19 @@ final class JsonlTracerTest extends TestCase
     }
 
     #[Test]
+    public function aLongSessionWritesEveryThousandEventsSoNeitherMemoryNorAKillLosesThem(): void
+    {
+        $tracer = JsonlTracer::toFile($this->path);
+
+        for ($event = 0; $event < 1_000; ++$event) {
+            $tracer->record(TraceEvent::Render, ['bytes' => $event]);
+        }
+        $tracer->record(TraceEvent::Render, ['bytes' => 1_000]);
+
+        self::assertCount(1_000, $this->lines());
+    }
+
+    #[Test]
     public function aTraceStillLandsWhenNobodyClosedIt(): void
     {
         $tracer = JsonlTracer::toFile($this->path);

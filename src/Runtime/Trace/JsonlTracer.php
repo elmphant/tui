@@ -10,6 +10,8 @@ use RuntimeException;
 
 final class JsonlTracer implements Tracer
 {
+    private const BATCH = 1_000;
+
     /**
      * @var list<string>
      */
@@ -57,13 +59,13 @@ final class JsonlTracer implements Tracer
             JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION,
         );
 
-        if ($this->live) {
+        if ($this->live || count($this->pending) >= self::BATCH) {
             $this->close();
         }
     }
 
     /**
-     * Buffer events until shutdown to avoid a write per event in the render loop.
+     * Buffer events to avoid a write per event in the render loop.
      */
     public function close(): void
     {
