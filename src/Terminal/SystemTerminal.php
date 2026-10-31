@@ -260,7 +260,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
         // A terminal ends an OSC reply with either the string terminator or BEL,
         // whatever it was asked with.
         while (true) {
-            if (preg_match('/\033\]11;rgb:([0-9a-f]{2,4})\/([0-9a-f]{2,4})\/([0-9a-f]{2,4})(?:\x1b\\\\?|\x07)/', $response, $matches, PREG_OFFSET_CAPTURE) === 1) {
+            if (preg_match('/\033\]11;rgb:([0-9a-f]{1,4})\/([0-9a-f]{1,4})\/([0-9a-f]{1,4})(?:\x1b\\\\|\x07)/i', $response, $matches, PREG_OFFSET_CAPTURE) === 1) {
                 break;
             }
             $remaining = (int)(($deadline - microtime(true)) * 1_000_000);
@@ -372,10 +372,8 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
 
     private static function classifyColorScheme(string $redHex, string $greenHex, string $blueHex): ColorScheme
     {
-        $red = hexdec(substr($redHex, 0, 2)) / 255;
-        $green = hexdec(substr($greenHex, 0, 2)) / 255;
-        $blue = hexdec(substr($blueHex, 0, 2)) / 255;
-        $luminance = 0.299 * $red + 0.587 * $green + 0.114 * $blue;
+        $share = static fn (string $hex): float => hexdec($hex) / (16 ** \strlen($hex) - 1);
+        $luminance = 0.299 * $share($redHex) + 0.587 * $share($greenHex) + 0.114 * $share($blueHex);
 
         return $luminance < 0.5 ? ColorScheme::Dark : ColorScheme::Light;
     }

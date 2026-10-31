@@ -10,6 +10,7 @@ use Elmphant\Tui\Terminal\ColorScheme;
 use Elmphant\Tui\Terminal\SystemTerminal;
 use Elmphant\Tui\Terminal\TerminalException;
 use Elmphant\Tui\Terminal\TerminalWriteException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -555,6 +556,28 @@ final class SystemTerminalTest extends TestCase
         self::assertSame(ColorScheme::Dark, $terminal->detectColorScheme());
         rewind($this->stdout);
         self::assertSame("\033]11;?\033\\", stream_get_contents($this->stdout));
+
+        fclose($reader);
+        fclose($writer);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function lightRepliesInOtherSpellings(): iterable
+    {
+        yield 'upper-case digits' => ["\033]11;rgb:FFFF/FFFF/FFFF\033\\"];
+        yield 'one digit a channel' => ["\033]11;rgb:f/f/0\007"];
+    }
+
+    #[Test]
+    #[DataProvider('lightRepliesInOtherSpellings')]
+    public function aColourReplyInAnyHexSpellingIsRead(string $reply): void
+    {
+        [$reader, $writer] = $this->createNonBlockingSocketPair();
+        fwrite($writer, $reply);
+
+        self::assertSame(ColorScheme::Light, (new SystemTerminal($reader, $this->stdout))->detectColorScheme());
 
         fclose($reader);
         fclose($writer);
