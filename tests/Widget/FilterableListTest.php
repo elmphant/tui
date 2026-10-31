@@ -254,6 +254,16 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function reloadedItemsKeepTheCursorOnTheItemItWasOn(): void
+    {
+        $onFlush = $this->press($this->commands(), Key::Down);
+
+        $reloaded = $onFlush->withItems([new SimpleListItem('user:create'), ...$this->commandItems()]);
+
+        self::assertSame(['cache:flush', 'cache:flush'], [$onFlush->cursorItem()?->filterValue(), $reloaded->cursorItem()?->filterValue()]);
+    }
+
+    #[Test]
     public function newItemsHandedInWhileAQueryIsTypedAreFilteredByIt(): void
     {
         $list = $this->commands()->withQuery('user');

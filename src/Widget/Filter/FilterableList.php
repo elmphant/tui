@@ -108,7 +108,9 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     {
         ListItems::assertAll($items, 'FilterableList');
 
-        return $this->cloneWith(items: $items)->reFiltered();
+        $reloaded = $this->cloneWith(items: $items);
+
+        return $reloaded->cloneWith(list: $this->list->withItems($reloaded->matchingItems()));
     }
 
     public function withMatcher(Matcher $matcher): self
