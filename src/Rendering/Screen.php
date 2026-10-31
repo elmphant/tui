@@ -323,9 +323,9 @@ final class Screen
         }
 
         // Back by absolute position: after a space in the last column the cursor waits to wrap, and a relative move would land one short.
-        $text = str_contains($character, "\u{FE0F}") ? '  ' . Ansi::cursorTo($row, $column) . $character : $character;
+        $text = str_contains($character, "\u{FE0F}") ? str_repeat(' ', $width) . Ansi::cursorTo($row, $column) . $character : $character;
 
-        return $text . Ansi::cursorTo($row, $column + 2);
+        return $text . Ansi::cursorTo($row, $column + $width);
     }
 
     /**
@@ -333,7 +333,7 @@ final class Screen
      */
     private static function isCluster(string $character, int $width): bool
     {
-        return $width === 2 && strlen($character) > 4;
+        return $width > 0 && strlen($character) > 4;
     }
 
     private function cellHasStyle(Frame $frame, int $index, int $foreground, int $background, int $attributes): bool

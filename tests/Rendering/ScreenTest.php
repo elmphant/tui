@@ -47,6 +47,19 @@ final class ScreenTest extends TestCase
     }
 
     #[Test]
+    public function aNarrowClusterTerminalsMayDrawWideLeavesTheCursorWhereTheFrameSaysItEnds(): void
+    {
+        $capturedOutput = '';
+        $screen = new Screen($this->createTerminalMock($capturedOutput));
+        $frame = new Frame(10, 1);
+        $frame->putString(0, 0, "\u{1F441}\u{200D}\u{1F5E8}x");
+
+        $screen->flush($frame);
+
+        self::assertStringContainsString("\u{1F441}\u{200D}\u{1F5E8}\x1b[1;2Hx", $capturedOutput);
+    }
+
+    #[Test]
     public function aClusterDrawnAgainRedrawsTheRestOfItsRowThatItMayHaveCovered(): void
     {
         $capturedOutput = '';
