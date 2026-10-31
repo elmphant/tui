@@ -777,6 +777,8 @@ final class Program
         }
         if ($readsEffectOutput) {
             $this->effects?->pump();
+        } else {
+            $this->effects?->expireOverdue();
         }
         $this->flushWheelWhenDue($now);
 

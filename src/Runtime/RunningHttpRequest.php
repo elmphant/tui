@@ -125,9 +125,17 @@ final class RunningHttpRequest implements RunningProcess
         return $this->requestId;
     }
 
+    public function secondsLeft(): ?float
+    {
+        if ($this->timeoutSeconds === null) {
+            return null;
+        }
+
+        return $this->timeoutSeconds - (hrtime(true) / self::NANOSECONDS_PER_SECOND - $this->lastHeardAt);
+    }
+
     private function idleTooLong(): bool
     {
-        return $this->timeoutSeconds !== null
-            && hrtime(true) / self::NANOSECONDS_PER_SECOND - $this->lastHeardAt >= $this->timeoutSeconds;
+        return ($this->secondsLeft() ?? 1.0) <= 0.0;
     }
 }

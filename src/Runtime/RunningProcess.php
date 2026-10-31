@@ -21,6 +21,11 @@ interface RunningProcess
 
     public function isRunning(): bool;
 
+    /**
+     * Until its timeout runs out, negative once it has; null without one.
+     */
+    public function secondsLeft(): ?float;
+
     public function stop(): void;
 
     public function id(): ?EffectId;

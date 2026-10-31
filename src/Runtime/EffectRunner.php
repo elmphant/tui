@@ -149,8 +149,16 @@ final class EffectRunner
 
     public function pump(): void
     {
-        $this->pumpProcesses();
+        $this->pumpProcesses(onlyOverdue: false);
         $this->pumpSubscriptions();
+    }
+
+    /**
+     * Leaves the output of every process in its pipe, but ends the ones whose time ran out.
+     */
+    public function expireOverdue(): void
+    {
+        $this->pumpProcesses(onlyOverdue: true);
     }
 
     public function nextDelay(): ?float
@@ -530,11 +538,17 @@ final class EffectRunner
         $this->subscriptions[] = $subscription;
     }
 
-    private function pumpProcesses(): void
+    private function pumpProcesses(bool $onlyOverdue): void
     {
         $remaining = [];
-        ++$this->quietPumps;
+        if (!$onlyOverdue) {
+            ++$this->quietPumps;
+        }
         foreach ($this->processes as $process) {
+            if ($onlyOverdue && ($process->secondsLeft() ?? 1.0) >= 0.0) {
+                $remaining[] = $process;
+                continue;
+            }
             $scope = $this->processScopes[$process] ?? null;
             try {
                 foreach ($process->pump() as $message) {

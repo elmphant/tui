@@ -49,13 +49,22 @@ trait ChildProcessLifecycle
         return $this->effectId;
     }
 
+    public function secondsLeft(): ?float
+    {
+        $timeout = $this->process->getTimeout();
+        if ($timeout === null || !$this->process->isStarted()) {
+            return null;
+        }
+
+        return $timeout - (microtime(true) - $this->process->getStartTime());
+    }
+
     /**
      * Symfony's checkTimeout() kills only the parent before it throws, and its children are then out of reach.
      */
     private function stopIfTimedOut(): void
     {
-        $timeout = $this->process->getTimeout();
-        if ($timeout === null || !$this->process->isStarted() || microtime(true) - $this->process->getStartTime() <= $timeout) {
+        if (($this->secondsLeft() ?? 0.0) >= 0.0) {
             return;
         }
 

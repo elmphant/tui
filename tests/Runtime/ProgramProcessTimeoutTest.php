@@ -46,6 +46,49 @@ final class ProgramProcessTimeoutTest extends TestCase
 
         self::assertSame([ErrorMsg::class, ProcessFinishedMsg::class], TimingOutModel::$endings);
     }
+
+    #[Test]
+    public function aProcessTimesOutWhileTheQueueNeverEmpties(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $safety = EventLoop::delay(3.0, static fn () => $terminal->closeInput());
+
+        Program::new(new BusyWhileTimingOutModel())->withTerminal($terminal)->start();
+        EventLoop::cancel($safety);
+
+        self::assertTrue(BusyWhileTimingOutModel::$timedOut);
+    }
+}
+
+final readonly class KeepBusy implements Message
+{
+}
+
+final class BusyWhileTimingOutModel implements Model
+{
+    public static bool $timedOut = false;
+
+    public function init(): ?Cmd
+    {
+        self::$timedOut = false;
+
+        return Cmd::batch(Cmd::exec(['sleep', '10'])->withTimeout(0.05), Cmd::message(new KeepBusy()));
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof ErrorMsg) {
+            self::$timedOut = true;
+
+            return new UpdateResult($this, Cmd::quit());
+        }
+
+        return new UpdateResult($this, $message instanceof KeepBusy ? Cmd::message(new KeepBusy()) : null);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+    }
 }
 
 final class TimingOutModel implements Model
