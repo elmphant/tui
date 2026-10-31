@@ -410,7 +410,7 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
-    public function aPasteThatNeverEndsLetsKeysThroughAfterASecondTimeout(): void
+    public function aPasteThatNeverEndsLetsKeysThroughAfterTwoTimeoutsInARow(): void
     {
         $pastes = [];
         $sequences = [];
@@ -423,6 +423,7 @@ final class StdinBufferTest extends TestCase
         self::assertNotNull($buffer->flushDelay());
         $buffer->flush();
         $buffer->process('d');
+        $buffer->flush();
         self::assertNotNull($buffer->flushDelay());
         $buffer->flush();
         $buffer->process('q');
@@ -445,6 +446,25 @@ final class StdinBufferTest extends TestCase
         $buffer->process("rm -rf /tmp/x\r\x1b[201~q");
 
         self::assertSame([['first ', "rm -rf /tmp/x\r"], ['q']], [$pastes, $sequences]);
+    }
+
+    #[Test]
+    public function aPasteThatStallsTwiceWithBytesInBetweenIsStillAPaste(): void
+    {
+        $pastes = [];
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; },
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~line1\r");
+        $buffer->flush();
+        $buffer->process("line2\r");
+        $buffer->flush();
+        $buffer->process("q\r\x1b[201~");
+
+        self::assertSame([["line1\r", "line2\r", "q\r"], []], [$pastes, $sequences]);
     }
 
     #[Test]
@@ -480,6 +500,7 @@ final class StdinBufferTest extends TestCase
         $buffer->flush();
         $buffer->process('bc');
         $buffer->flush();
+        $buffer->flush();
         $buffer->process("\x1b[200~d");
         $buffer->flush();
         $buffer->process("e\x1b[201~");
@@ -513,6 +534,7 @@ final class StdinBufferTest extends TestCase
         $buffer->process("\x1b[200~abc");
         $buffer->flush();
         $buffer->process('d');
+        $buffer->flush();
         $buffer->flush();
         $buffer->process('q');
 

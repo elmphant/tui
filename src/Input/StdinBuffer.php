@@ -48,6 +48,7 @@ final class StdinBuffer
             $data = "\x1b" . chr(ord($data) - 128);
         }
         $this->buffer .= $data;
+        $this->pasteStalled = $this->pasteStalled && $data === '';
 
         while ($this->buffer !== '') {
             if ($this->inControlString) {
@@ -148,7 +149,7 @@ final class StdinBuffer
             $this->buffer = '';
             $this->inPaste = false;
             $this->pasteStalled = false;
-            if ($this->onPaste !== null) {
+            if ($this->pasteBuffer !== '' && $this->onPaste !== null) {
                 ($this->onPaste)(substr($this->pasteBuffer, 0, self::MAX_PASTE_SIZE));
             }
             $this->pasteBuffer = '';
