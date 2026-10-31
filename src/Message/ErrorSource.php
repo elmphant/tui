@@ -15,4 +15,5 @@ enum ErrorSource: string
     case Cancel = 'cancel';
     case Process = 'process';
     case Http = 'http';
+    case Fiber = 'fiber';
 }

@@ -263,7 +263,7 @@ final class EffectRunner
 
     private function handlerFor(Cmd $command): CommandHandler
     {
-        foreach ($this->handlers as $handler) {
+        foreach ([new FiberHandler(), ...$this->handlers] as $handler) {
             if ($handler->handles($command)) {
                 return $handler;
             }

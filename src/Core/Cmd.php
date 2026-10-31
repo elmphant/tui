@@ -11,6 +11,7 @@ use Elmphant\Tui\Core\Cmd\CallCmd;
 use Elmphant\Tui\Core\Cmd\CancelCmd;
 use Elmphant\Tui\Core\Cmd\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
+use Elmphant\Tui\Core\Cmd\FiberCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\ListenCmd;
@@ -161,6 +162,17 @@ abstract readonly class Cmd
     public static function call(Closure $callback): self
     {
         return new CallCmd($callback);
+    }
+
+    /**
+     * Runs in a fiber of its own: while the work waits on I/O that suspends the fiber, the program keeps drawing.
+     * Work that blocks instead (curl, file_get_contents, a long loop) freezes the screen as Cmd::call() does.
+     *
+     * @param Closure(): ?Message $work
+     */
+    public static function fiber(Closure $work, ?EffectId $id = null): self
+    {
+        return new FiberCmd($work, $id);
     }
 
     /**

@@ -26,11 +26,12 @@ composer require elmphant/tui
 You need PHP 8.2+ and `ext-mbstring`. Apps run in POSIX terminals (Linux, macOS,
 WSL). Tests run anywhere.
 
-Two features need an extra package. You only install it if you use the feature:
+Some features need an extra package. You only install it if you use the feature:
 
 ```bash
 composer require symfony/http-client   # Cmd::http()
 composer require league/commonmark     # Paragraph::fromMarkdown()
+composer require amphp/http-client:^5  # HTTP inside Cmd::fiber(), with symfony/http-client
 ```
 
 ## A counter

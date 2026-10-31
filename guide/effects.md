@@ -16,6 +16,7 @@ Cmd::batch($cmd1, $cmd2)            // run several commands
 Cmd::combine($cmd1, null, $cmd2)    // like batch, but skips nulls (and is null if all are)
 Cmd::message($message)              // send a message right away
 Cmd::call(fn() => $message)          // run a short piece of code
+Cmd::fiber(fn() => $message)         // run code that waits, without freezing the screen
 Cmd::http('https://example.com')     // an HTTP request
 Cmd::listen($socket, fn($stream) => $messages) // read a stream whenever it has data
 Cmd::log('loaded', ['items' => 3])  // write a line to the trace (stdout is the screen)
@@ -37,6 +38,36 @@ Cmd::process(['tail', '-f', 'log']) // get the output while it runs
   or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
 - `Cmd::listen()` stops at the end of the stream or on `Cmd::cancel()`. Cancel
   it before you close the stream yourself.
+
+## Fibers
+
+`Cmd::fiber()` runs a closure in a fiber of its own. While the closure waits on
+I/O that suspends the fiber, the program keeps drawing, reading keys and running
+other effects. The closure returns a message or `null`, like a `Cmd::call()`
+that cannot return a command. If it throws, you get an `ErrorMsg` with
+`ErrorSource::Fiber`. Name it with an `EffectId` to cancel or replace it. A
+fiber cannot be stopped from outside, so a cancelled one runs on and its answer
+is dropped.
+
+Only I/O that suspends the fiber keeps the screen alive. Symfony's
+`AmpHttpClient` does, once you install `amphp/http-client:^5` (this package does
+not):
+
+```php fragment
+use Symfony\Component\HttpClient\AmpHttpClient;
+
+$client = new AmpHttpClient();
+
+return $this->then(Cmd::fiber(
+    static fn (): Message => new Loaded($client->request('GET', $url)->getContent()),
+    EffectId::named('load'),
+));
+```
+
+Code that blocks instead (`curl`, `file_get_contents()`, a long loop) freezes
+the screen inside a fiber just as it does in `Cmd::call()`. Never wait on Amp in
+`update()` or in a `Cmd::call()`: the update pauses, and the program skips every
+turn until it resumes.
 
 ## Toasts
 

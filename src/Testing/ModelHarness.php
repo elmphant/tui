@@ -13,6 +13,7 @@ use Elmphant\Tui\Core\Cmd\CallCmd;
 use Elmphant\Tui\Core\Cmd\CancelCmd;
 use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
+use Elmphant\Tui\Core\Cmd\FiberCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
@@ -48,6 +49,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
+use Elmphant\Tui\Runtime\FiberHandler;
 use Elmphant\Tui\Runtime\InputRouter;
 use Elmphant\Tui\Runtime\KeyHelpOverlay;
 use Elmphant\Tui\Runtime\Model;
@@ -93,6 +95,11 @@ final class ModelHarness
      * @var list<array{command: CallCmd, wrap: ?Closure, scope: ?string}> issued and not run yet
      */
     private array $calls = [];
+
+    /**
+     * @var list<array{command: FiberCmd, wrap: ?Closure, id: ?EffectId}> issued and not run yet, by scoped id
+     */
+    private array $fibers = [];
 
     /**
      * @param TModel $model
@@ -282,6 +289,39 @@ final class ModelHarness
     }
 
     /**
+     * Run pending fiber work in turn, outside any fiber; a cancelled or replaced fiber does not run.
+     *
+     * @return self<TModel>
+     */
+    public function runFibers(): self
+    {
+        $fibers = $this->fibers;
+        $this->fibers = [];
+        $this->issued = [];
+        ++$this->depth;
+
+        try {
+            foreach ($fibers as ['command' => $fiber, 'wrap' => $wrap, 'id' => $id]) {
+                if ($id !== null && ($this->running[(string)$id]['command'] ?? null) !== $fiber) {
+                    continue;
+                }
+                if ($id !== null) {
+                    unset($this->running[(string)$id]);
+                }
+
+                $answer = FiberHandler::answerOf($fiber);
+                if ($answer !== null) {
+                    $this->dispatch($wrap === null ? $answer : $wrap($answer));
+                }
+            }
+        } finally {
+            --$this->depth;
+        }
+
+        return $this;
+    }
+
+    /**
      * @return self<TModel>
      */
     public function fail(EffectId|string $effect, Throwable|string $error): self
@@ -290,6 +330,7 @@ final class ModelHarness
         $source = match (true) {
             $running['command'] instanceof HttpCmd => ErrorSource::Http,
             $running['command'] instanceof ExecCmd, $running['command'] instanceof ProcessCmd => ErrorSource::Process,
+            $running['command'] instanceof FiberCmd => ErrorSource::Fiber,
             default => ErrorSource::Command,
         };
 
@@ -570,6 +611,9 @@ final class ModelHarness
         }
 
         $this->issued[] = $command;
+        if ($command instanceof FiberCmd) {
+            $this->fibers[] = ['command' => $command, 'wrap' => $wrap, 'id' => $command->id === null ? null : ($scope === null ? $command->id : $command->id->within($scope))];
+        }
         if ($command instanceof ToastCmd) {
             $this->toasts->show($command, 0.0);
 

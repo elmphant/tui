@@ -30,6 +30,7 @@
     "suggest": {
         "ext-pcntl": "Without it a program runs but cannot see signals: no SIGWINCH resize detection, no graceful quit on SIGINT/SIGTERM, no Ctrl-Z suspend",
         "ext-posix": "Needed alongside ext-pcntl for Ctrl-Z suspend and resume",
+        "amphp/http-client": "^5 for Cmd::fiber() work whose HTTP requests suspend the fiber instead of blocking (through Symfony's AmpHttpClient)",
         "league/commonmark": "^2.9 for Paragraph::fromMarkdown(); earlier 2.x releases carry denial-of-service advisories",
         "phpstan/phpstan": "Required to include rules.neon, which enforces the widget and model invariants in your own app",
         "symfony/http-client": "^7.4 for Cmd::http(); the contracts this package requires are the interfaces alone, so an app that never makes a request installs no client"

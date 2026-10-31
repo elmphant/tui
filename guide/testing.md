@@ -42,6 +42,7 @@ $app->tick('clock', at: 12.5);                    // one beat of a Cmd::tick()
 $app->fail('load', 'timed out');                  // ErrorMsg from that command
 $app->emit('rows', new RowsLoaded([]));           // what your own handler would $emit
 $app->runCalls();                                 // run the Cmd::call()s so far
+$app->runFibers();                                // run the Cmd::fiber()s still waiting
 ```
 
 Answering a command the app never started throws, so a wrong guess in the test

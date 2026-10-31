@@ -15,7 +15,7 @@ use ReflectionNamedType;
  */
 final class ReadmeTest extends TestCase
 {
-    private const FRAGMENT_BLOCKS = 11;
+    private const FRAGMENT_BLOCKS = 12;
 
     private const PLACEHOLDERS = <<<'PHP'
         $sidebar = \Elmphant\Tui\Widget\Prose\Text::new('sidebar');
