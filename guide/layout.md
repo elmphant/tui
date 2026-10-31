@@ -41,6 +41,7 @@ $content = Flex::row()
 ```
 
 - `basis` is the size a widget would like. It decides where the row wraps.
+  Without a constraint, an item starts at the width it asks for and grows.
 - `flex` is how fast it grows; the `shrink` argument is how fast it gives room
   back when the row is too narrow.
 - A `Flex::row()` takes only the rows its content needs; a `Flex::column()`

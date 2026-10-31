@@ -44,7 +44,7 @@ final class FlexTest extends TestCase
         $defaultGrow = Flex::row()
             ->add(Text::new('default'))
             ->add(Text::new('explicit'), new Constraint(flex: 1));
-        self::assertSame([2, 3], $this->mainSizes($defaultGrow, Rect::fromSize(5, 1)));
+        self::assertSame([10, 3], $this->mainSizes($defaultGrow, Rect::fromSize(13, 1)));
 
         $defaultShrink = Flex::row()
             ->add(Text::new('default'), new Constraint(flex: 1, basis: 4))
@@ -216,6 +216,21 @@ final class FlexTest extends TestCase
         $rects = array_map(static fn (array $placed): Rect => $placed[1], $flex->computeChildRects(new Rect(0, 0, 20, 4)));
 
         self::assertSame([[9, 0], [9, 0], [9, 2]], array_map(static fn (Rect $rect): array => [$rect->width, $rect->y], $rects));
+        self::assertSame(2, $flex->measureHeight(20));
+    }
+
+    #[Test]
+    public function childrenAddedWithoutAConstraintWrapAtTheWidthTheyAskFor(): void
+    {
+        $flex = Flex::row()
+            ->withWrap()
+            ->add(Text::new('alpha-one'))
+            ->add(Text::new('bravo-two'))
+            ->add(Text::new('charlie-3'));
+
+        $rects = array_map(static fn (array $placed): Rect => $placed[1], $flex->computeChildRects(new Rect(0, 0, 20, 4)));
+
+        self::assertSame([0, 0, 2], array_map(static fn (Rect $rect): int => $rect->y, $rects));
         self::assertSame(2, $flex->measureHeight(20));
     }
 

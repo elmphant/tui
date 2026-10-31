@@ -79,7 +79,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
 
     public function add(Widget $widget, ?Constraint $constraint = null): self
     {
-        return $this->cloneWith(items: [...$this->items, new FlexItem($widget, $constraint ?? Constraint::flex())]);
+        return $this->cloneWith(items: [...$this->items, new FlexItem($widget, $constraint ?? Constraint::content()->withFlex())]);
     }
 
     public function sizing(): Sizing
