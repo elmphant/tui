@@ -122,7 +122,9 @@ final class CharWidthTest extends TestCase
                 continue;
             }
 
-            $zero = $codepoint !== 0xAD && preg_match('/^[\p{Mn}\p{Me}\p{Cf}\p{Zl}\p{Zp}]$/u', $character) === 1;
+            $ignorable = ($codepoint >= 0x2060 && $codepoint <= 0x206F) || ($codepoint >= 0xFFF0 && $codepoint <= 0xFFF8) || $codepoint >= 0xE0000;
+            $zero = $codepoint !== 0xAD && preg_match('/^[\p{Mn}\p{Me}\p{Cf}\p{Zl}\p{Zp}]$/u', $character) === 1
+                || $ignorable && preg_match('/^\p{Cn}$/u', $character) === 1;
             if ((CharWidth::codepointWidth($character) === 0) !== $zero) {
                 $mismatches[] = sprintf('U+%04X', $codepoint);
             }
@@ -418,6 +420,15 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
+    public function anUnassignedCodepointUnicodeSetsAsideAsIgnorableTakesNoCell(): void
+    {
+        self::assertSame([0, 0, 0, 0], array_map(
+            CharWidth::codepointWidth(...),
+            ["\u{2065}", "\u{FFF0}", "\u{FFF8}", "\u{E0FFF}"],
+        ));
+    }
+
+    #[Test]
     #[DataProvider('emojiNewerThanTheTables')]
     public function anEmojiNewerThanTheTablesIsWide(string $emoji): void
     {
@@ -483,9 +494,7 @@ final class CharWidthTest extends TestCase
     #[Test]
     public function binarySearchMissesAfterAllRanges(): void
     {
-        // 0xE01F0 — above all ZERO_WIDTH ranges
-        // Also not in WIDE, so width=1
-        self::assertSame(1, CharWidth::codepointWidth("\u{E01F0}"));
+        self::assertSame(1, CharWidth::codepointWidth("\u{E1000}"));
     }
 
     #[Test]
