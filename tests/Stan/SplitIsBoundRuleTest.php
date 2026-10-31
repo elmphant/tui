@@ -22,7 +22,15 @@ final class SplitIsBoundRuleTest extends RuleTestCase
             [
                 [
                     'Split::row() in SplitBindingApp::view() is not inside Component::bind(), so a drag on its divider is dropped. Bind it and keep state() in the write-back, or use Layout for panes that never move.',
-                    23,
+                    24,
+                ],
+                [
+                    'Split::column() in SplitBindingApp::boundAndLooseSplitsSideBySide() is not inside Component::bind(), so a drag on its divider is dropped. Bind it and keep state() in the write-back, or use Layout for panes that never move.',
+                    47,
+                ],
+                [
+                    'Split::row() in SplitBindingApp::boundAndLooseSplitsSideBySide() is not inside Component::bind(), so a drag on its divider is dropped. Bind it and keep state() in the write-back, or use Layout for panes that never move.',
+                    53,
                 ],
             ],
         );

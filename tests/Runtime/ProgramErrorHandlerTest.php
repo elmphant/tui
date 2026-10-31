@@ -56,6 +56,21 @@ final class ProgramErrorHandlerTest extends TestCase
     }
 
     #[Test]
+    public function aTracedErrorKeepsTheTopTwelveLinesOfItsStack(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(20, 3);
+        EventLoop::delay(0.1, static fn () => $terminal->closeInput());
+
+        Program::new(new FailsOnceThenQuitsModel(depth: 20))->withTerminal($terminal)->withTracer($tracer)->start();
+
+        $stack = $tracer->fieldsOf(TraceEvent::Error)[0]['trace'] ?? [];
+        self::assertIsArray($stack);
+        self::assertCount(12, $stack);
+        self::assertStringStartsWith('#0 ', (string)$stack[0]);
+    }
+
+    #[Test]
     public function anErrorNoHandlerHeardIsReportedOnceTheTerminalIsRestored(): void
     {
         $terminal = new VirtualTerminal(20, 3);
@@ -75,6 +90,10 @@ final readonly class Retry implements Message
 
 final readonly class FailsOnceThenQuitsModel implements Model
 {
+    public function __construct(private int $depth = 0)
+    {
+    }
+
     public function init(): ?Cmd
     {
         return Cmd::message(new Retry());
@@ -83,7 +102,7 @@ final readonly class FailsOnceThenQuitsModel implements Model
     public function update(Message $message, Rect $area): UpdateResult
     {
         if ($message instanceof Retry) {
-            throw new RuntimeException("once\e]0;title\x07");
+            self::fail($this->depth);
         }
 
         return new UpdateResult($this, $message instanceof ErrorMsg ? Cmd::quit() : null);
@@ -91,6 +110,15 @@ final readonly class FailsOnceThenQuitsModel implements Model
 
     public function render(Frame $frame, RenderPass $pass): void
     {
+    }
+
+    private static function fail(int $depth): never
+    {
+        if ($depth > 0) {
+            self::fail($depth - 1);
+        }
+
+        throw new RuntimeException("once\e]0;title\x07");
     }
 }
 

@@ -132,6 +132,8 @@ final readonly class TableLayout
     /**
      * Cache two layouts per immutable Row: full width and width beside a scrollbar.
      *
+     * @infection-ignore-all a memo: the height is the same without it, only slower
+     *
      * @param list<int>  $columnWidths
      * @param list<Wrap> $wraps
      */

@@ -64,6 +64,22 @@ final class CellMapTest extends TestCase
     }
 
     #[Test]
+    public function keepsTextsUpToItsCellBudgetAndDropsTheOldestBeyondIt(): void
+    {
+        CellMap::clear();
+        $first = str_repeat('é', 1_000_000);
+        CellMap::of($first);
+        CellMap::of(str_repeat('ü', 1_000_000));
+        CellMap::of($first);
+        $keptWithinTheBudget = CellMap::measures();
+
+        CellMap::of('ö');
+        CellMap::of($first);
+
+        self::assertSame([2, 4], [$keptWithinTheBudget, CellMap::measures()]);
+    }
+
+    #[Test]
     public function splitsATextIntoGraphemesOnceForEveryWidth(): void
     {
         $text = str_repeat('Grüße aus 東京 ', 20);
