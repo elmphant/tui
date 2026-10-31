@@ -325,6 +325,12 @@ final class StdinBuffer
         while ($position < $length) {
             $byte = ord($this->buffer[$position]);
 
+            if ($byte < 0x20) {
+                $this->buffer = substr($this->buffer, $position);
+
+                return '';
+            }
+
             if ($byte >= 0x40 && $byte <= 0x7E) {
                 // X10 mouse: "\x1b[M" carries three raw payload bytes after the final byte.
                 if ($byte === 0x4D && $position === 2) {

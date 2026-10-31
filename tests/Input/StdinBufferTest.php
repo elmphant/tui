@@ -449,6 +449,17 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aKeyThatBreaksIntoAnUnfinishedSequenceIsStillAKey(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; });
+
+        $buffer->process("\x1b[12\rx");
+
+        self::assertSame(["\r", 'x'], $sequences);
+    }
+
+    #[Test]
     public function aPasteThatStallsTwiceWithBytesInBetweenIsStillAPaste(): void
     {
         $pastes = [];
