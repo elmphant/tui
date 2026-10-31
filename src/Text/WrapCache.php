@@ -41,11 +41,11 @@ final class WrapCache
         ++self::$wraps;
         $wrapped = $wrap();
         self::$entries[$key] = $wrapped;
-        self::$rows += count($wrapped);
+        self::$rows += self::costOf($wrapped);
 
         while (self::$rows > self::ROWS && count(self::$entries) > 1) {
             $oldest = array_key_first(self::$entries);
-            self::$rows -= count(self::$entries[$oldest]);
+            self::$rows -= self::costOf(self::$entries[$oldest]);
             unset(self::$entries[$oldest]);
         }
 
@@ -62,5 +62,15 @@ final class WrapCache
         self::$entries = [];
         self::$rows = 0;
         self::$wraps = 0;
+    }
+
+    /**
+     * An empty result still takes an entry, so it costs a row like the smallest one.
+     *
+     * @param list<mixed> $entry
+     */
+    private static function costOf(array $entry): int
+    {
+        return max(1, count($entry));
     }
 }

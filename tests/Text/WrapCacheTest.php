@@ -114,6 +114,17 @@ final class WrapCacheTest extends TestCase
         self::assertTrue(self::recomputes('second'), '40 000 + 9 000 + 2 000 rows do not');
     }
 
+    #[Test]
+    public function anEmptyResultStillCountsAgainstTheBudget(): void
+    {
+        WrapCache::remember('first', static fn (): array => []);
+        for ($query = 0; $query < 50_000; ++$query) {
+            WrapCache::remember('miss ' . $query, static fn (): array => []);
+        }
+
+        self::assertTrue(self::recomputes('first'));
+    }
+
     protected function setUp(): void
     {
         WrapCache::clear();
