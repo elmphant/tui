@@ -460,6 +460,34 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
+    public function aSpaceInsideAnEscapeSequenceBelongsToIt(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(function (string $sequence) use (&$sequences): void { $sequences[] = $sequence; });
+
+        $buffer->process("\x1b[2 q");
+
+        self::assertSame(["\x1b[2 q"], $sequences);
+    }
+
+    #[Test]
+    public function aPasteGivenUpOnHandsOnWhatLookedLikeTheStartOfItsEnd(): void
+    {
+        $pastes = [];
+        $buffer = new StdinBuffer(
+            onSequence: static function (string $sequence): void {
+            },
+            onPaste: function (string $content) use (&$pastes): void { $pastes[] = $content; },
+        );
+
+        $buffer->process("\x1b[200~a\x1b[2");
+        $buffer->flush();
+        $buffer->flush();
+
+        self::assertSame(['a', "\x1b[2"], $pastes);
+    }
+
+    #[Test]
     public function aPasteThatStallsTwiceWithBytesInBetweenIsStillAPaste(): void
     {
         $pastes = [];

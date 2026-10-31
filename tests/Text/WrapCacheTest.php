@@ -115,6 +115,17 @@ final class WrapCacheTest extends TestCase
     }
 
     #[Test]
+    public function aOneRowResultCostsOneRow(): void
+    {
+        WrapCache::remember('first', static fn (): array => ['row']);
+        for ($entry = 1; $entry < 50_000; ++$entry) {
+            WrapCache::remember('entry ' . $entry, static fn (): array => ['row']);
+        }
+
+        self::assertFalse(self::recomputes('first'));
+    }
+
+    #[Test]
     public function anEmptyResultStillCountsAgainstTheBudget(): void
     {
         WrapCache::remember('first', static fn (): array => []);

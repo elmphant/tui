@@ -439,6 +439,14 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
+    public function aSkinToneAfterALetterBeyondAsciiAddsItsTwoCells(): void
+    {
+        CharWidth::forgetMeasurements();
+
+        self::assertSame(3, CharWidth::stringWidth("\u{0100}\u{1F3FD}"));
+    }
+
+    #[Test]
     public function anUnassignedCodepointUnicodeSetsAsideAsIgnorableTakesNoCell(): void
     {
         self::assertSame([0, 0, 0, 0], array_map(

@@ -208,6 +208,14 @@ final class ConstraintTest extends TestCase
     }
 
     #[Test]
+    public function aWeightOfExactlyAMillionIsAccepted(): void
+    {
+        $constraint = new Constraint(flex: 1_000_000, shrink: 1_000_000);
+
+        self::assertSame([1_000_000, 1_000_000], [$constraint->flex, $constraint->shrink]);
+    }
+
+    #[Test]
     public function growingOnNoWeightIsRefused(): void
     {
         $this->expectException(InvalidArgumentException::class);

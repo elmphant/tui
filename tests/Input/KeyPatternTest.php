@@ -262,15 +262,21 @@ final class KeyPatternTest extends TestCase
         yield 'a short key' => ['hom', "Multi-character key 'hom' is not a named key in pattern 'hom'. Did you mean 'home'?"];
         yield 'a modifier' => ['ctl+s', "Unknown modifier 'ctl' in pattern 'ctl+s'. Did you mean 'ctrl'?"];
         yield 'nothing close' => ['ctrl+nope', "Unknown key 'nope' in pattern 'ctrl+nope'"];
+        yield 'a six-letter name two letters off' => ['escpae', "Unknown key 'escpae' in pattern 'escpae'. Did you mean 'escape'?"];
+        yield 'a five-letter name two letters off' => ['rihgt', "Unknown key 'rihgt' in pattern 'rihgt'"];
+        yield 'a six-letter name three letters off' => ['escxyz', "Unknown key 'escxyz' in pattern 'escxyz'"];
     }
 
     #[DataProvider('nearMisses')]
     #[Test]
     public function aMisspeltNameSuggestsTheNearestOne(string $pattern, string $message): void
     {
-        $this->expectExceptionMessage($message);
-
-        KeyPattern::fromString($pattern);
+        try {
+            KeyPattern::fromString($pattern);
+            self::fail('the pattern was accepted');
+        } catch (InvalidArgumentException $error) {
+            self::assertSame($message, $error->getMessage());
+        }
     }
 
     #[Test]

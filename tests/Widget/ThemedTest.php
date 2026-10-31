@@ -92,6 +92,27 @@ final class ThemedTest extends TestCase
     }
 
     #[Test]
+    public function itIsAsTallAsTheChildItThemes(): void
+    {
+        $keep = static fn (Theme $theme): Theme => $theme;
+        $fixed = new class implements Widget {
+            public function sizing(): Sizing
+            {
+                return Sizing::of(Constraint::exact(4), Constraint::exact(3));
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+            }
+        };
+
+        self::assertSame(
+            [3, 1],
+            [Themed::around($fixed, $keep)->measureHeight(10), Themed::around(Text::new('one'), $keep)->measureHeight(10)],
+        );
+    }
+
+    #[Test]
     public function aComponentInsideIsStillFoundByTheApp(): void
     {
         $field = Component::bind(ComponentId::named('name'), TextInput::new(), static fn (App $app, TextInput $input): App => $app);

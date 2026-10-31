@@ -584,6 +584,30 @@ final class SystemTerminalTest extends TestCase
     }
 
     /**
+     * One hex digit a channel is a share of 15: 7/8/8 is just light, 7/7/7 just dark.
+     *
+     * @return iterable<string, array{string, ColorScheme}>
+     */
+    public static function oneDigitRepliesNearTheMiddle(): iterable
+    {
+        yield 'just light' => ["\033]11;rgb:7/8/8\007", ColorScheme::Light];
+        yield 'just dark' => ["\033]11;rgb:7/7/7\007", ColorScheme::Dark];
+    }
+
+    #[Test]
+    #[DataProvider('oneDigitRepliesNearTheMiddle')]
+    public function aOneDigitChannelIsReadAsAShareOfFifteen(string $reply, ColorScheme $scheme): void
+    {
+        [$reader, $writer] = $this->createNonBlockingSocketPair();
+        fwrite($writer, $reply);
+
+        self::assertSame($scheme, (new SystemTerminal($reader, $this->stdout))->detectColorScheme());
+
+        fclose($reader);
+        fclose($writer);
+    }
+
+    /**
      * xterm answers with sixteen bits a channel; the high byte is the colour.
      */
     #[Test]

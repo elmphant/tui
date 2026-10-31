@@ -61,6 +61,15 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function aFieldThatSubmitsStillTakesEveryOtherKeyAsText(): void
+    {
+        $result = TextInput::new('Ada')->withSubmit(new FieldSubmitted())->update(new KeyMsg('!'), Rect::fromSize(20, 1));
+
+        self::assertNull($result->command);
+        self::assertSame('Ada!', $result->model->value());
+    }
+
+    #[Test]
     public function enterIsLeftAloneByAFieldThatSubmitsNothing(): void
     {
         $result = TextInput::new('Ada')->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 1));
