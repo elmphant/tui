@@ -170,8 +170,8 @@ final class EffectRunner
             $delay = max(0.0, $scheduled->fireAt - $now);
             $earliest = $earliest === null ? $delay : min($earliest, $delay);
         }
-        if ($this->processes !== []) {
-            $earliest = min($earliest ?? self::QUIET_POLL_SECONDS, self::QUIET_POLL_SECONDS);
+        foreach ($this->processes as $process) {
+            $earliest = min($earliest ?? self::QUIET_POLL_SECONDS, self::QUIET_POLL_SECONDS, max(0.0, $process->secondsLeft() ?? self::QUIET_POLL_SECONDS));
         }
 
         return $earliest;

@@ -521,6 +521,20 @@ final class EffectRunnerTest extends TestCase
     }
 
     #[Test]
+    public function aQuietProcessIsPolledAgainWhenItsTimeoutRunsOut(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::exec(['sleep', '5'])->withTimeout(0.05), null);
+
+        for ($pump = 0; $pump < 10; ++$pump) {
+            $runner->pump();
+        }
+
+        self::assertLessThanOrEqual(0.05, $runner->nextDelay());
+        $runner->shutdown();
+    }
+
+    #[Test]
     public function aProcessThatCannotStartBecomesAnErrorMessage(): void
     {
         $runner = $this->runner();
