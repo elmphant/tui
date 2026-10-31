@@ -59,6 +59,7 @@ use Error;
 use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -84,6 +85,34 @@ final class ProgramTest extends TestCase
         Program::new($model)->withTerminal($terminal)->start();
 
         self::assertSame(['esc', 'q'], $model->log);
+    }
+
+    #[Test]
+    #[RequiresPhpExtension('pcntl')]
+    #[RequiresPhpExtension('posix')]
+    public function aContinueSignalTheProgramDidNotCauseWatchesNoSignalTwice(): void
+    {
+        $signalWatchers = static fn (): int => count(array_filter(
+            EventLoop::getIdentifiers(),
+            static fn (string $id): bool => EventLoop::getType($id) === EventLoop\CallbackType::Signal,
+        ));
+        $counts = [];
+        $terminal = new VirtualTerminal(20, 5);
+        EventLoop::delay(0.05, static function () use (&$counts, $signalWatchers): void {
+            $counts[] = $signalWatchers();
+            posix_kill(posix_getpid(), SIGCONT);
+        });
+        EventLoop::delay(0.15, static function (): void {
+            posix_kill(posix_getpid(), SIGCONT);
+        });
+        EventLoop::delay(0.25, static function () use (&$counts, $signalWatchers, $terminal): void {
+            $counts[] = $signalWatchers();
+            $terminal->simulateInput('q');
+        });
+
+        Program::new(new InputLoggingModel())->withTerminal($terminal)->start();
+
+        self::assertSame($counts[0], $counts[1]);
     }
 
     #[Test]

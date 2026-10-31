@@ -533,6 +533,7 @@ final class Program
 
     private function watch(EventLoopWatcher $watcher, string $id): void
     {
+        $this->cancelWatcher($watcher);
         $this->watchers[$watcher->name] = $id;
     }
 
