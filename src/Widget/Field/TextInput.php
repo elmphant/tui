@@ -212,7 +212,7 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         $frame->putStyled($area->x, $area->y, $content, $fieldStyle);
 
         if ($this->drawsFocused($context)) {
-            $cursorDisplayX = CharWidth::stringWidth(self::graphemeSubstring($displayText, 0, $this->cursor));
+            $cursorDisplayX = self::prefixWidth($displayText, $this->cursor);
             $cursorScreenX = $area->x + $cursorDisplayX - $scrollOffset;
             if ($cursorScreenX >= $area->x && $cursorScreenX < $area->right()) {
                 $frame->setCursorPosition($cursorScreenX, $area->y, $this->cursorShape);
@@ -309,6 +309,10 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
 
     private static function substringByDisplayWidth(string $text, int $offsetColumns, int $maxColumns): string
     {
+        if (self::isPlain($text)) {
+            return substr($text, $offsetColumns, $maxColumns);
+        }
+
         $chars = Grapheme::split($text);
         $skipped = 0;
         $collected = '';
@@ -488,14 +492,14 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         }
 
         $displayText = $this->echoMode->mask($this->value);
-        $cursorDisplayWidth = CharWidth::stringWidth(self::graphemeSubstring($displayText, 0, $this->cursor));
+        $cursorDisplayWidth = self::prefixWidth($displayText, $this->cursor);
 
         return self::graphemeStartAtOrAfter($displayText, ScrollWindow::showing(
             $this->scrollOffset,
             $cursorDisplayWidth,
             1,
             $availableWidth,
-            ScrollWindow::lastOffset(CharWidth::stringWidth($displayText), $availableWidth),
+            ScrollWindow::lastOffset(self::displayWidth($displayText), $availableWidth),
         ));
     }
 
@@ -504,6 +508,10 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
      */
     private static function graphemeStartAtOrAfter(string $text, int $column): int
     {
+        if (self::isPlain($text)) {
+            return min($column, strlen($text));
+        }
+
         $start = 0;
         foreach (Grapheme::split($text) as $grapheme) {
             if ($start >= $column) {
@@ -517,11 +525,40 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
 
     private static function graphemeLength(string $value): int
     {
-        return count(Grapheme::split($value));
+        return self::isPlain($value) ? strlen($value) : count(Grapheme::split($value));
     }
 
     private static function graphemeSubstring(string $value, int $offset, ?int $length = null): string
     {
-        return implode('', array_slice(Grapheme::split($value), $offset, $length));
+        return self::isPlain($value)
+            ? substr($value, $offset, $length)
+            : implode('', array_slice(Grapheme::split($value), $offset, $length));
+    }
+
+    /**
+     * In printable ASCII every byte is one grapheme one column wide, so byte offsets are the answer.
+     */
+    private static function isPlain(string $text): bool
+    {
+        static $last = null;
+        static $answer = false;
+        if ($text !== $last) {
+            $last = $text;
+            $answer = preg_match('/[^\x20-\x7e]/', $text) !== 1;
+        }
+
+        return $answer;
+    }
+
+    private static function displayWidth(string $text): int
+    {
+        return self::isPlain($text) ? strlen($text) : CharWidth::stringWidth($text);
+    }
+
+    private static function prefixWidth(string $text, int $graphemes): int
+    {
+        return self::isPlain($text)
+            ? min($graphemes, strlen($text))
+            : CharWidth::stringWidth(self::graphemeSubstring($text, 0, $graphemes));
     }
 }
