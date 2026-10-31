@@ -13,9 +13,12 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\Trace\TraceEvent;
+use Elmphant\Tui\Testing\InMemoryTracer;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
 use RuntimeException;
 
 final class ProgramErrorHandlerTest extends TestCase
@@ -33,6 +36,26 @@ final class ProgramErrorHandlerTest extends TestCase
     }
 
     #[Test]
+    public function anErrorHandlerThatThrowsIsTracedAndReportedOnceTheTerminalIsRestored(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(20, 3);
+        EventLoop::delay(0.1, static fn () => $terminal->closeInput());
+
+        Program::new(new FailsOnceThenQuitsModel())
+            ->withTerminal($terminal)
+            ->withTracer($tracer)
+            ->onError(static fn (ErrorMsg $error): Cmd => throw new RuntimeException('error handler itself broke'))
+            ->start();
+
+        self::assertSame(
+            ["once\e]0;title\x07", 'error handler itself broke'],
+            array_column($tracer->fieldsOf(TraceEvent::Error), 'message'),
+        );
+        self::assertStringContainsString('1 error went unhandled while the app ran. The last one: RuntimeException: error handler itself broke', $terminal->output());
+    }
+
+    #[Test]
     public function anErrorNoHandlerHeardIsReportedOnceTheTerminalIsRestored(): void
     {
         $terminal = new VirtualTerminal(20, 3);
@@ -40,7 +63,7 @@ final class ProgramErrorHandlerTest extends TestCase
         Program::new(new FailsOnceThenQuitsModel())->withTerminal($terminal)->start();
 
         self::assertMatchesRegularExpression(
-            '/1 error reached no onError\(\) handler\. The last one: RuntimeException: once in ' . preg_quote(__FILE__, '/') . ':\d+\r\n$/',
+            '/1 error went unhandled while the app ran\. The last one: RuntimeException: once in ' . preg_quote(__FILE__, '/') . ':\d+\r\n$/',
             $terminal->output(),
         );
     }

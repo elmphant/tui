@@ -111,8 +111,8 @@ final class Program
     private bool $inputClosed = false;
     private int $consecutiveRenderFailures = 0;
     private ?Throwable $fatalError = null;
-    private int $unheardErrors = 0;
-    private ?Throwable $lastUnheardError = null;
+    private int $unhandledErrors = 0;
+    private ?Throwable $lastUnhandledError = null;
     private ?float $drainDeadline = null;
     private bool $resizePending = false;
     private bool $resizeNeedsScreenClear = false;
@@ -358,7 +358,7 @@ final class Program
         if ($this->fatalError !== null) {
             throw $this->fatalError;
         }
-        $this->reportUnheardErrors();
+        $this->reportUnhandledErrors();
 
         /** @var TModel */
         return $this->model;
@@ -377,17 +377,17 @@ final class Program
         }
     }
 
-    private function reportUnheardErrors(): void
+    private function reportUnhandledErrors(): void
     {
-        if ($this->lastUnheardError === null) {
+        if ($this->lastUnhandledError === null) {
             return;
         }
 
-        $error = $this->lastUnheardError;
+        $error = $this->lastUnhandledError;
         $this->terminal->write(sprintf(
-            "%d %s reached no onError() handler. The last one: %s: %s in %s:%d\r\n",
-            $this->unheardErrors,
-            $this->unheardErrors === 1 ? 'error' : 'errors',
+            "%d %s went unhandled while the app ran. The last one: %s: %s in %s:%d\r\n",
+            $this->unhandledErrors,
+            $this->unhandledErrors === 1 ? 'error' : 'errors',
             $error::class,
             TerminalText::singleLine($error->getMessage()),
             TerminalText::singleLine($error->getFile()),
@@ -899,8 +899,7 @@ final class Program
             if ($message instanceof ErrorMsg) {
                 $this->traceError($message->error, $message->source->value);
                 if ($this->errorHandler === null) {
-                    ++$this->unheardErrors;
-                    $this->lastUnheardError = $message->error;
+                    $this->rememberUnhandled($message->error);
                 }
             }
 
@@ -911,6 +910,10 @@ final class Program
                     ? $this->handleError($message)
                     : $this->deliver($message, $screenRect);
             } catch (Throwable $error) {
+                if ($handledByTheErrorHandler) {
+                    $this->traceError($error, 'onError');
+                    $this->rememberUnhandled($error);
+                }
                 if (++$consecutiveErrors >= self::MAX_CONSECUTIVE_ERRORS) {
                     $this->giveUp($error);
 
@@ -928,6 +931,12 @@ final class Program
                 $consecutiveErrors = 0;
             }
         }
+    }
+
+    private function rememberUnhandled(Throwable $error): void
+    {
+        ++$this->unhandledErrors;
+        $this->lastUnhandledError = $error;
     }
 
     /**

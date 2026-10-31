@@ -34,8 +34,9 @@ Program::new($model)
 
 An exception in `update()`, `view()` or a command reaches `onError()` as an
 `ErrorMsg`, and the program keeps going. Without `onError()`, the model gets the
-`ErrorMsg` instead, and once the terminal is restored the program prints how many
-errors no handler heard, and the last one. After ten failures in a row that
+`ErrorMsg` instead. An exception thrown by `onError()` itself is traced too.
+Once the terminal is restored, the program prints how many errors went
+unhandled, and the last one. After ten failures in a row that
 nothing recovers from, the program stops: it restores the terminal first, then
 `start()` throws the last error.
 
