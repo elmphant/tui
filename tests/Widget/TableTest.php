@@ -213,7 +213,7 @@ final class TableTest extends TestCase
 
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
         $result = $table->update($wheelDown, $area);
-        self::assertGreaterThan(0, $result->model->scrollOffset());
+        self::assertGreaterThan(0, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1709,7 +1709,7 @@ final class TableTest extends TestCase
         }
 
         self::assertSame(5, $table->cursor());
-        self::assertGreaterThan(0, $table->scrollOffset());
+        self::assertGreaterThan(0, $table->scrollOffset($area));
     }
 
     #[Test]
@@ -1743,14 +1743,14 @@ final class TableTest extends TestCase
             $result = $table->update(new KeyMsg(Key::Down), $area);
             $table = $result->model;
         }
-        $scrollBefore = $table->scrollOffset();
+        $scrollBefore = $table->scrollOffset($area);
 
         $result = $table->update(new KeyMsg(Key::Home), $area);
         $table = $result->model;
 
         self::assertSame(0, $table->cursor());
-        self::assertSame(0, $table->scrollOffset());
-        self::assertLessThan($scrollBefore, $table->scrollOffset());
+        self::assertSame(0, $table->scrollOffset($area));
+        self::assertLessThan($scrollBefore, $table->scrollOffset($area));
     }
 
     #[Test]
@@ -1770,7 +1770,7 @@ final class TableTest extends TestCase
 
         $visibleRows = 3;
         $expectedOffset = 9 - $visibleRows + 1;
-        self::assertSame($expectedOffset, $table->scrollOffset());
+        self::assertSame($expectedOffset, $table->scrollOffset($area));
     }
 
     #[Test]
@@ -1780,7 +1780,7 @@ final class TableTest extends TestCase
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1790,7 +1790,7 @@ final class TableTest extends TestCase
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
-        self::assertSame(0, $result->model->scrollOffset(), 'scrollOffset must stay 0 when cursor moves into an already-visible row');
+        self::assertSame(0, $result->model->scrollOffset($area), 'scrollOffset must stay 0 when cursor moves into an already-visible row');
         self::assertSame(1, $result->model->cursor());
     }
 
@@ -1809,7 +1809,7 @@ final class TableTest extends TestCase
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
         $result = $table->update($wheelDown, $area);
         $table = $result->model;
-        self::assertSame(1, $table->scrollOffset());
+        self::assertSame(1, $table->scrollOffset($area));
 
         $click = new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left);
         $result = $table->update($click, $area);
@@ -1866,7 +1866,7 @@ final class TableTest extends TestCase
         }
 
         $maxOffset = max(0, 6 - 3);
-        self::assertSame($maxOffset, $table->scrollOffset());
+        self::assertSame($maxOffset, $table->scrollOffset($area));
     }
 
     #[Test]
@@ -1881,7 +1881,7 @@ final class TableTest extends TestCase
 
         $wheelUp = new MouseMsg(5, 2, MouseAction::WheelUp, MouseButton::None);
         $result = $table->update($wheelUp, $area);
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -1897,11 +1897,11 @@ final class TableTest extends TestCase
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
         $result = $table->update($wheelDown, $area);
         $result = $result->model->update($wheelDown, $area);
-        self::assertSame(2, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset($area));
 
         $wheelUp = new MouseMsg(5, 2, MouseAction::WheelUp, MouseButton::None);
         $result = $result->model->update($wheelUp, $area);
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(1, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -2296,7 +2296,7 @@ final class TableTest extends TestCase
     #[Test]
     public function scrollOffsetStartsAtZero(): void
     {
-        self::assertSame(0, $this->createTable()->scrollOffset());
+        self::assertSame(0, $this->createTable()->scrollOffset(new Rect(0, 0, 20, 5)));
     }
 
     // --- rowCount uses typedRows when available ---
@@ -2419,7 +2419,7 @@ final class TableTest extends TestCase
             $table = $result->model;
         }
 
-        self::assertSame(2, $table->scrollOffset());
+        self::assertSame(2, $table->scrollOffset($area));
     }
 
     // --- Typed rows rendering with scrollOffset ---
@@ -2693,7 +2693,7 @@ final class TableTest extends TestCase
 
         $wheelDown = new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None);
         $result = $table->update($wheelDown, $area);
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     // --- L268: scrollOffset + wheelSteps() (PlusEqual mutation) ---
@@ -2709,10 +2709,10 @@ final class TableTest extends TestCase
         $area = new Rect(0, 0, 20, 5);
 
         $result = $table->update(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None), $area);
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(1, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None), $area);
-        self::assertSame(2, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset($area));
     }
 
     // --- L272: scrollOffset - wheelSteps() (MinusEqual mutation) ---
@@ -2730,10 +2730,10 @@ final class TableTest extends TestCase
         $result = $table->update(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None), $area);
         $result = $result->model->update(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None), $area);
         $result = $result->model->update(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None), $area);
-        self::assertSame(3, $result->model->scrollOffset());
+        self::assertSame(3, $result->model->scrollOffset($area));
 
         $result = $result->model->update(new MouseMsg(5, 2, MouseAction::WheelUp, MouseButton::None), $area);
-        self::assertSame(2, $result->model->scrollOffset());
+        self::assertSame(2, $result->model->scrollOffset($area));
     }
 
     // --- L293-295: exact column condition min === max && min > 0 ---
@@ -3049,7 +3049,7 @@ final class TableTest extends TestCase
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
         self::assertSame(1, $result->model->cursor());
-        self::assertSame(1, $result->model->scrollOffset());
+        self::assertSame(1, $result->model->scrollOffset($area));
     }
 
     #[Test]
@@ -3065,12 +3065,12 @@ final class TableTest extends TestCase
         $result = $table->update(new KeyMsg(Key::End), $area);
         $table = $result->model;
         self::assertSame(9, $table->cursor());
-        self::assertSame(7, $table->scrollOffset());
+        self::assertSame(7, $table->scrollOffset($area));
 
         $result = $table->update(new KeyMsg(Key::Home), $area);
         $table = $result->model;
         self::assertSame(0, $table->cursor());
-        self::assertSame(0, $table->scrollOffset());
+        self::assertSame(0, $table->scrollOffset($area));
     }
 
     // --- L459-461: cursor < offset adjustment ---
@@ -3090,12 +3090,12 @@ final class TableTest extends TestCase
             $table = $result->model;
         }
         self::assertSame(15, $table->cursor());
-        self::assertGreaterThan(0, $table->scrollOffset());
+        self::assertGreaterThan(0, $table->scrollOffset($area));
 
         $result = $table->update(new KeyMsg(Key::Home), $area);
         $table = $result->model;
         self::assertSame(0, $table->cursor());
-        self::assertSame(0, $table->scrollOffset());
+        self::assertSame(0, $table->scrollOffset($area));
     }
 
     // --- L463-465: cursor >= offset + visibleRows adjustment ---
@@ -3112,7 +3112,7 @@ final class TableTest extends TestCase
 
         $result = $table->update(new KeyMsg(Key::End), $area);
         self::assertSame(9, $result->model->cursor());
-        self::assertSame(8, $result->model->scrollOffset());
+        self::assertSame(8, $result->model->scrollOffset($area));
     }
 
     // --- L467-468: offset !== scrollOffset check ---
@@ -3128,7 +3128,7 @@ final class TableTest extends TestCase
 
         $result = $table->update(new KeyMsg(Key::Down), $area);
         self::assertSame(1, $result->model->cursor());
-        self::assertSame(0, $result->model->scrollOffset());
+        self::assertSame(0, $result->model->scrollOffset($area));
     }
 
     // --- L209-210: Down boundary check (cursor < rowCount - 1) ---
@@ -3424,7 +3424,7 @@ final class TableTest extends TestCase
             $result = $atBottom->update(new KeyMsg($key), $area)->model;
             self::assertInstanceOf(Table\Table::class, $result);
             self::assertSame(9, $result->cursor(), "{$key->name} on the last row");
-            self::assertSame(0, $result->scrollOffset(), "{$key->name} left the offset alone");
+            self::assertSame(0, $result->scrollOffset($area), "{$key->name} left the offset alone");
         }
 
         $atTop = Table\Table::fromCells($columns, $rows)->withCursor(0)->withScrollOffset(5);
@@ -3432,7 +3432,7 @@ final class TableTest extends TestCase
             $result = $atTop->update(new KeyMsg($key), $area)->model;
             self::assertInstanceOf(Table\Table::class, $result);
             self::assertSame(0, $result->cursor(), "{$key->name} on the first row");
-            self::assertSame(5, $result->scrollOffset(), "{$key->name} left the offset alone");
+            self::assertSame(5, $result->scrollOffset($area), "{$key->name} left the offset alone");
         }
     }
 
@@ -3447,7 +3447,7 @@ final class TableTest extends TestCase
         }
         $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows);
 
-        self::assertSame(0, $table->scrollOffset());
+        self::assertSame(0, $table->scrollOffset($area));
 
         for ($press = 0; $press < 5; ++$press) {
             $result = $table->update(new KeyMsg(Key::Down), $area);
@@ -3456,7 +3456,7 @@ final class TableTest extends TestCase
         }
 
         self::assertSame(5, $table->cursor());
-        self::assertSame(3, $table->scrollOffset(), 'Three rows fit, so rows 3 to 5 are shown');
+        self::assertSame(3, $table->scrollOffset($area), 'Three rows fit, so rows 3 to 5 are shown');
     }
 
     #[Test]
@@ -3707,6 +3707,17 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function theScrollOffsetAfterTheRowsShrinkIsTheOneDrawn(): void
+    {
+        $rows = array_map(static fn (int $index): array => ["row{$index}"], range(0, 99));
+        $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withScrollOffset(86);
+
+        $shrunk = $table->withRows([Row::new('a'), Row::new('b')]);
+
+        self::assertSame(0, $shrunk->scrollOffset(new Rect(0, 0, 20, 5)));
+    }
+
+    #[Test]
     public function anExplicitScrollOffsetChoosesTheFirstVisibleRow(): void
     {
         $area = new Rect(0, 0, 20, 5);
@@ -3716,7 +3727,7 @@ final class TableTest extends TestCase
         }
         $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows)->withScrollOffset(3);
 
-        self::assertSame(3, $table->scrollOffset());
+        self::assertSame(3, $table->scrollOffset($area));
 
         $screen = $this->screenOfTable($table, $area);
         self::assertStringContainsString('row3', $screen, 'The offset row is the first one shown');
@@ -3748,7 +3759,7 @@ final class TableTest extends TestCase
         }
         $table = Table\Table::fromCells([Column::new('A', Constraint::flex())], $rows);
         $scrolled = $table->update(new KeyMsg(Key::End), $area)->model;
-        self::assertSame(6, $scrolled->scrollOffset());
+        self::assertSame(6, $scrolled->scrollOffset($area));
 
         $screen = $this->screenOfTable($scrolled->withCursor(0), $area);
 
@@ -3808,7 +3819,7 @@ final class TableTest extends TestCase
         }
 
         self::assertInstanceOf(Table\Table::class, $table);
-        self::assertSame(2, $table->scrollOffset());
+        self::assertSame(2, $table->scrollOffset($area));
         self::assertStringContainsString('word40', $this->screenOfTable($table, $area));
     }
 

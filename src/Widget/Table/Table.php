@@ -213,9 +213,14 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
             && $this->effectiveKeybindings()->matches($message, Actions::SELECT);
     }
 
-    public function scrollOffset(): int
+    /**
+     * Follow the cursor unless the view was explicitly scrolled away, including after external cursor changes.
+     */
+    public function scrollOffset(Rect $area): int
     {
-        return $this->scrollOffset;
+        return $this->followCursor
+            ? $this->cursorVisibleOffset($area)
+            : $this->clampedScrollOffset($area);
     }
 
     public function sizing(): Sizing
@@ -253,7 +258,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
 
             if ($showScrollbar) {
                 $layout = $this->layoutFor($placement);
-                $topRow = $this->displayScrollOffset($area);
+                $topRow = $this->scrollOffset($area);
 
                 Scrollbar::renderFor(
                     $frame,
@@ -439,7 +444,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
      */
     private function handleMouse(MouseMsg $message, Rect $area): UpdateResult
     {
-        $displayOffset = $this->displayScrollOffset($area);
+        $displayOffset = $this->scrollOffset($area);
 
         if ($message->isClick() && $message->inRect($area)) {
             $localY = $message->y - $area->y - $this->headerHeight();
@@ -483,7 +488,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
 
         // Use the clip as the viewport; a scrolling parent may pass the full content area.
         $lastVisibleY = $frame->clip()->bottom();
-        $firstRow = $this->displayScrollOffset($area);
+        $firstRow = $this->scrollOffset($area);
         $renderY -= $firstRow === $this->scrollOffset ? $this->lineOffset : 0;
 
         // A tall row may begin above the body, so keep it from overwriting the header.
@@ -630,16 +635,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     private function ensureCursorVisible(Rect $area): self
     {
         return $this->cloneWith(scrollOffset: $this->cursorVisibleOffset($area), lineOffset: 0);
-    }
-
-    /**
-     * Follow the cursor unless the view was explicitly scrolled away, including after external cursor changes.
-     */
-    private function displayScrollOffset(Rect $area): int
-    {
-        return $this->followCursor
-            ? $this->cursorVisibleOffset($area)
-            : $this->clampedScrollOffset($area);
     }
 
     /**
