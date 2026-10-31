@@ -59,9 +59,10 @@ use Elmphant\Tui\Runtime\Trace\JsonlTracer;
 Program::new($model)->withTracer(JsonlTracer::toFile('/tmp/tui.jsonl'))->start();
 ```
 
-`JsonlTracer::toFile()` writes every thousand events and when the program stops,
-which is faster; `JsonlTracer::live()` (what `ELMPHANT_TRACE` uses) writes every
-line at once.
+`JsonlTracer::toFile()` is faster: it writes once a thousand events or a megabyte
+have piled up, at the first event a second or more after its last write, and when
+the program stops. An app that goes quiet keeps its last events until then.
+`JsonlTracer::live()` (what `ELMPHANT_TRACE` uses) writes every line at once.
 
 Each line is one JSON object:
 
