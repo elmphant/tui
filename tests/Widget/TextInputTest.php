@@ -598,6 +598,15 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function aFieldScrolledIntoTheMiddleOfAccentedTextDrawsOnlyWhatFitsItsWidth(): void
+    {
+        $frame = new Frame(10, 1);
+        TextInput::new('àáâãäåæçèéêëìíîï')->withCursor(10)->render($frame, new Rect(0, 0, 4, 1), RenderContext::focused(Theme::dark()));
+
+        self::assertSame(['ç', 'è', 'é', 'ê', ' ', ' '], \array_slice($frame->characters, 0, 6));
+    }
+
+    #[Test]
     public function aClickPastAWideCharacterScrolledAwayLandsOnTheCharacterUnderIt(): void
     {
         $clicked = TextInput::new('界ab')->update(new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 4, 1))->model;

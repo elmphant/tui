@@ -68,15 +68,30 @@ final class CellMapTest extends TestCase
     {
         CellMap::clear();
         $first = str_repeat('é', 1_000_000);
+        $second = str_repeat('ü', 1_000_000);
         CellMap::of($first);
-        CellMap::of(str_repeat('ü', 1_000_000));
+        CellMap::of($second);
         CellMap::of($first);
         $keptWithinTheBudget = CellMap::measures();
 
         CellMap::of(str_repeat('ö', 1_000_000));
+        CellMap::of($second);
         CellMap::of($first);
 
         self::assertSame([2, 4], [$keptWithinTheBudget, CellMap::measures()]);
+    }
+
+    #[Test]
+    public function keepsATextLargerThanTheWholeBudget(): void
+    {
+        CellMap::clear();
+        $huge = str_repeat('é', 3_000_000);
+
+        CellMap::of($huge);
+        CellMap::of($huge);
+
+        self::assertSame(1, CellMap::measures());
+        CellMap::clear();
     }
 
     #[Test]

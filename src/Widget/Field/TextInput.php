@@ -293,7 +293,7 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         $clickDisplayX = $message->x - $area->x + $scrollOffset;
         $displayText = $this->echoMode->mask($this->value);
         $newCursor = self::isPlain($displayText)
-            ? max(0, min($clickDisplayX, strlen($displayText)))
+            ? min($clickDisplayX, strlen($displayText))
             : GraphemeIndex::of($displayText)->lastUpTo($clickDisplayX);
 
         return new UpdateResult($this->cloneWith(cursor: $newCursor));

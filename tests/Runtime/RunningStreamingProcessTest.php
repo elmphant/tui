@@ -436,6 +436,32 @@ final class RunningStreamingProcessTest extends TestCase
     }
 
     #[Test]
+    public function aChildIsNotReadFromAgainUntilTheBatchHeldBackIsHandedOn(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->expects(self::once())->method('getIncrementalOutput')->willReturn(str_repeat('x', 100));
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(true);
+        $running = new RunningStreamingProcess($process, null, 1);
+
+        $running->pump();
+
+        self::assertCount(36, $running->pump());
+    }
+
+    #[Test]
+    public function aFramedLineOneByteWideStillCutsBetweenCharactersOfFourBytes(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturn("😀😀\n");
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(true);
+        $running = new RunningStreamingProcess($process, null, outputChunkBytes: 1, framesLines: true);
+
+        self::assertSame(['😀', '😀', "\n"], self::outputsOf($running->pump()));
+    }
+
+    #[Test]
     public function aChildWithABatchHeldBackStillTimesOut(): void
     {
         $process = $this->createMock(Process::class);

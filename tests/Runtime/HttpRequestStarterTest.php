@@ -41,6 +41,15 @@ final class HttpRequestStarterTest extends TestCase
     }
 
     #[Test]
+    public function anIdleRequestWithoutATimeoutKeepsWaiting(): void
+    {
+        $command = Cmd::http('https://example.test/');
+        $request = (new HttpRequestStarter($this->idleClient()))->start($command, null);
+
+        self::assertSame([[], true], [$request->pump(), $request->isRunning()]);
+    }
+
+    #[Test]
     public function aTimeoutWrittenAsANumericStringCountsAsWell(): void
     {
         $command = Cmd::http('https://example.test/', options: ['timeout' => '0']);
