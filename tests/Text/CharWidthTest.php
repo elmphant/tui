@@ -420,6 +420,25 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
+    public function aSkinToneOnATextDefaultEmojiMakesItWide(): void
+    {
+        CharWidth::forgetMeasurements();
+
+        self::assertSame([2, 2, 2, 2], array_map(
+            CharWidth::stringWidth(...),
+            ["\u{261D}\u{1F3FD}", "\u{270C}\u{1F3FB}", "\u{270D}\u{1F3FF}", "\u{26F9}\u{1F3FD}"],
+        ));
+    }
+
+    #[Test]
+    public function aSkinToneAfterALetterTakesTwoCellsOfItsOwn(): void
+    {
+        CharWidth::forgetMeasurements();
+
+        self::assertSame(3, CharWidth::stringWidth("a\u{1F3FD}"));
+    }
+
+    #[Test]
     public function anUnassignedCodepointUnicodeSetsAsideAsIgnorableTakesNoCell(): void
     {
         self::assertSame([0, 0, 0, 0], array_map(

@@ -18,6 +18,11 @@ final class CharWidth
     private const EMOJI_VARIATION_SELECTOR = "\u{FE0F}";
 
     /**
+     * Terminals draw a skin tone that follows no emoji as a wide swatch of its own.
+     */
+    private const SKIN_TONE = '/[\x{1F3FB}-\x{1F3FF}]/u';
+
+    /**
      * Unicode 16 Mn, Me, Cf, Zl and Zp, except the soft hyphen, which terminals draw,
      * and the unassigned code points Unicode reserves as Default_Ignorable.
      */
@@ -408,13 +413,14 @@ final class CharWidth
             return 2;
         }
 
-        if (str_contains($grapheme, self::EMOJI_VARIATION_SELECTOR)
+        $skinTone = preg_match(self::SKIN_TONE, $grapheme) === 1;
+        if (($skinTone || str_contains($grapheme, self::EMOJI_VARIATION_SELECTOR))
             && self::inRanges($firstCodepoint, self::EMOJI_PRESENTATION_BASE)
         ) {
             return 2;
         }
 
-        return 1;
+        return $skinTone ? self::codepointWidth(mb_chr($firstCodepoint)) + 2 : 1;
     }
 
     /**
