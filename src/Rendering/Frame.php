@@ -13,6 +13,8 @@ use Elmphant\Tui\Text\TerminalText;
 
 final class Frame
 {
+    private const CONTROL_BYTES = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f";
+
     public readonly int $size;
     private readonly Rect $area;
 
@@ -208,7 +210,6 @@ final class Frame
         $column = $x;
         $length = strlen($text);
         $position = 0;
-        $previousIndex = null;
 
         while ($position < $length && $y < $this->height) {
             $byte = ord($text[$position]);
@@ -227,14 +228,12 @@ final class Frame
                 ++$y;
                 $column = 0;
                 ++$position;
-                $previousIndex = null;
                 continue;
             }
 
             if ($byte === 0x0D) {
                 $column = 0;
                 ++$position;
-                $previousIndex = null;
                 continue;
             }
 
@@ -245,7 +244,6 @@ final class Frame
                     ++$column;
                 }
                 ++$position;
-                $previousIndex = null;
                 continue;
             }
 
@@ -254,59 +252,20 @@ final class Frame
                 continue;
             }
 
-            $character = substr($text, $position, Grapheme::sequenceLength($byte));
-            if (mb_check_encoding($character, 'UTF-8')) {
-                $position += strlen($character);
-            } else {
-                $position += Grapheme::malformedLength($text, $position);
-                $character = TerminalText::plain($character[0]);
-            }
+            $run = substr($text, $position, strcspn($text, self::CONTROL_BYTES, $position));
+            $position += strlen($run);
 
-            $characterWidth = CharWidth::codepointWidth($character);
-            if ($characterWidth === 0) {
-                if ($previousIndex !== null && TerminalText::plain($character) !== '') {
-                    $this->characters[$previousIndex] .= $character;
-                }
-                continue;
-            }
-
-            $previousIndex = null;
-            if ($column >= $this->width) {
-                continue;
-            }
-            if ($characterWidth === 2 && $column + $characterWidth > $this->width) {
-                $column += $characterWidth;
-                continue;
-            }
-
-            if ($column >= 0 && $y >= 0 && !$this->clipRejects($column, $y)) {
-                if ($characterWidth === 2 && $this->clipRejects($column + 1, $y)) {
-                    $column += $characterWidth;
+            foreach (Grapheme::split(TerminalText::plain($run)) as $character) {
+                $characterWidth = CharWidth::graphemeWidth($character);
+                if ($characterWidth === 0 || $column >= $this->width) {
                     continue;
                 }
 
-                $rowBase = $y * $this->width;
-                $this->repairOverwriteEdges($rowBase, $column, $column + $characterWidth);
-                $index = $rowBase + $column;
-                $this->characters[$index] = $character;
-                $this->foregrounds[$index] = $parser->foreground;
-                $this->backgrounds[$index] = $parser->background;
-                $this->attributes[$index] = $parser->attributes;
-                $this->widths[$index] = $characterWidth;
-
-                if ($characterWidth === 2) {
-                    $nextIndex = $index + 1;
-                    $this->characters[$nextIndex] = '';
-                    $this->foregrounds[$nextIndex] = $parser->foreground;
-                    $this->backgrounds[$nextIndex] = $parser->background;
-                    $this->attributes[$nextIndex] = $parser->attributes;
-                    $this->widths[$nextIndex] = 0;
+                if ($y >= 0 && $this->placeGrapheme($column, $y, $character, $characterWidth, $parser->foreground, $parser->background, $parser->attributes)) {
+                    $this->markRowDirty($y);
                 }
-
-                $this->markRowDirty($y);
-                $previousIndex = $index;
+                $column += $characterWidth;
             }
-            $column += $characterWidth;
         }
 
         return [$column, $y];

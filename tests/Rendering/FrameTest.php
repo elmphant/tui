@@ -92,6 +92,27 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function textWithEscapesPlacesAnEmojiSequenceAsOneCharacter(): void
+    {
+        $frame = new Frame(12, 1);
+
+        [$column] = $frame->putAnsi(0, 0, "\u{26A0}\u{FE0F}x\e[1m\u{1F44D}\u{1F3FD}y\u{1F468}\u{200D}\u{1F469}z");
+
+        self::assertSame(9, $column);
+        self::assertSame(["\u{26A0}\u{FE0F}", '', 'x', "\u{1F44D}\u{1F3FD}", '', 'y', "\u{1F468}\u{200D}\u{1F469}", '', 'z'], array_slice($frame->characters, 0, 9));
+    }
+
+    #[Test]
+    public function textWithEscapesDropsBidiControlsLikePlainText(): void
+    {
+        $frame = new Frame(4, 1);
+
+        $frame->putAnsi(0, 0, "a\u{202E}bc");
+
+        self::assertSame(['a', 'b', 'c', ' '], $frame->characters);
+    }
+
+    #[Test]
     public function putChar(): void
     {
         $frame = new Frame(10, 5);
