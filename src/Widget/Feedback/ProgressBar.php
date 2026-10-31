@@ -40,7 +40,7 @@ final readonly class ProgressBar implements Interactive
         private float $springFactor = 0.15,
         private ?float $lastTick = null,
     ) {
-        $this->progress = max(0.0, min(1.0, $progress));
+        $this->progress = is_nan($progress) ? 0.0 : max(0.0, min(1.0, $progress));
     }
 
     public static function new(float $progress = 0.0): self
@@ -50,7 +50,7 @@ final readonly class ProgressBar implements Interactive
 
     public function withProgress(float $progress): self
     {
-        return $this->cloneWith(progress: max(0.0, min(1.0, $progress)));
+        return $this->cloneWith(progress: $progress);
     }
 
     public function withLabel(string $label): self

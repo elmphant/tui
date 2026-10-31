@@ -47,6 +47,12 @@ final class ProgressBarTest extends TestCase
     }
 
     #[Test]
+    public function aProgressThatIsNotANumberCountsAsNone(): void
+    {
+        self::assertSame([0.0, 0.0], [ProgressBar::new(NAN)->progress(), ProgressBar::new()->withProgress(NAN)->progress()]);
+    }
+
+    #[Test]
     public function withProgressClampsToZeroOne(): void
     {
         $progressBar = ProgressBar::new();
