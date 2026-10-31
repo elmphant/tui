@@ -46,14 +46,8 @@ final class RunningExecProcess implements RunningProcess
             $this->process->clearOutput();
             $this->process->clearErrorOutput();
 
-            if (strlen($this->stdout) + strlen($this->stderr) > $this->maxOutputBytes) {
-                $this->stop();
-
-                return [$this->map(new ErrorMsg(
-                    new EffectOutputLimitExceeded($this->maxOutputBytes, 'Process'),
-                    ErrorSource::Process,
-                    $this->effectId,
-                ))];
+            if ($this->overLimit()) {
+                return $this->limitExceeded();
             }
 
             if ($this->process->isRunning()) {
@@ -62,6 +56,10 @@ final class RunningExecProcess implements RunningProcess
 
             // isRunning() also reads pipes, so it may have buffered output after the read above.
             $this->collectOutput();
+
+            if ($this->overLimit()) {
+                return $this->limitExceeded();
+            }
         } catch (Throwable $error) {
             $this->finished = true;
 
@@ -83,5 +81,24 @@ final class RunningExecProcess implements RunningProcess
     {
         $this->stdout .= $this->process->getIncrementalOutput();
         $this->stderr .= $this->process->getIncrementalErrorOutput();
+    }
+
+    private function overLimit(): bool
+    {
+        return strlen($this->stdout) + strlen($this->stderr) > $this->maxOutputBytes;
+    }
+
+    /**
+     * @return list<Message>
+     */
+    private function limitExceeded(): array
+    {
+        $this->stop();
+
+        return [$this->map(new ErrorMsg(
+            new EffectOutputLimitExceeded($this->maxOutputBytes, 'Process'),
+            ErrorSource::Process,
+            $this->effectId,
+        ))];
     }
 }

@@ -148,6 +148,23 @@ final class RunningExecProcessTest extends TestCase
     }
 
     #[Test]
+    public function outputReadAfterTheProcessExitsCountsTowardTheLimit(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturnOnConsecutiveCalls('1234', '56789');
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(false);
+        $process->method('getExitCode')->willReturn(0);
+        $process->method('isSuccessful')->willReturn(true);
+
+        $messages = (new RunningExecProcess($process, null, 8))->pump();
+
+        self::assertCount(1, $messages);
+        self::assertInstanceOf(ErrorMsg::class, $messages[0]);
+        self::assertInstanceOf(EffectOutputLimitExceeded::class, $messages[0]->error);
+    }
+
+    #[Test]
     public function pumpAllowsCombinedOutputExactlyAtTheLimit(): void
     {
         $process = $this->createMock(Process::class);
