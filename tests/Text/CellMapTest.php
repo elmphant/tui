@@ -64,7 +64,7 @@ final class CellMapTest extends TestCase
     }
 
     #[Test]
-    public function keepsTextsUpToItsCellBudgetAndDropsTheOldestBeyondIt(): void
+    public function keepsTextsUpToItsMemoryBudgetAndDropsTheOldestBeyondIt(): void
     {
         CellMap::clear();
         $first = str_repeat('é', 1_000_000);
@@ -73,10 +73,24 @@ final class CellMapTest extends TestCase
         CellMap::of($first);
         $keptWithinTheBudget = CellMap::measures();
 
-        CellMap::of('ö');
+        CellMap::of(str_repeat('ö', 1_000_000));
         CellMap::of($first);
 
         self::assertSame([2, 4], [$keptWithinTheBudget, CellMap::measures()]);
+    }
+
+    #[Test]
+    public function manyShortTextsStayWithinTheMemoryBudget(): void
+    {
+        CellMap::clear();
+        $before = memory_get_usage();
+
+        for ($label = 0; $label < 300_000; ++$label) {
+            CellMap::of('é' . $label);
+        }
+
+        self::assertLessThan(16 * 1024 * 1024, memory_get_usage() - $before);
+        CellMap::clear();
     }
 
     #[Test]

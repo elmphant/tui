@@ -15,17 +15,19 @@ final class CellMap
 
     private const SECOND_HALF = "\0";
 
+    private const RETAINED_BYTES = 12_000_000;
+
     /**
-     * About 10 MB: a cell costs one byte here and four in the offsets.
+     * The object, its strings' headers, the key and the hash bucket; measured at about 280 bytes.
      */
-    private const RETAINED_CELLS = 2_000_000;
+    private const BYTES_PER_ENTRY = 300;
 
     /**
      * @var array<string, self>
      */
     private static array $retained = [];
 
-    private static int $retainedCells = 0;
+    private static int $retainedBytes = 0;
 
     private static int $measures = 0;
 
@@ -56,11 +58,11 @@ final class CellMap
         ++self::$measures;
         $map = self::measure($text);
         self::$retained[$key] = $map;
-        self::$retainedCells += $map->width();
+        self::$retainedBytes += $map->bytes();
 
-        while (self::$retainedCells > self::RETAINED_CELLS && count(self::$retained) > 1) {
+        while (self::$retainedBytes > self::RETAINED_BYTES && count(self::$retained) > 1) {
             $oldest = array_key_first(self::$retained);
-            self::$retainedCells -= self::$retained[$oldest]->width();
+            self::$retainedBytes -= self::$retained[$oldest]->bytes();
             unset(self::$retained[$oldest]);
         }
 
@@ -75,7 +77,7 @@ final class CellMap
     public static function clear(): void
     {
         self::$retained = [];
-        self::$retainedCells = 0;
+        self::$retainedBytes = 0;
         self::$measures = 0;
     }
 
@@ -151,6 +153,11 @@ final class CellMap
         }
 
         return new self($cells, pack('V*', ...$offsets), $byte);
+    }
+
+    private function bytes(): int
+    {
+        return strlen($this->cells) + strlen($this->offsets ?? '') + self::BYTES_PER_ENTRY;
     }
 
     private function byteAt(int $cell): int
