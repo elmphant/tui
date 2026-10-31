@@ -18,7 +18,7 @@ final class CellMap
     private const RETAINED_BYTES = 12_000_000;
 
     /**
-     * The object, its strings' headers, the key and the hash bucket; measured at about 280 bytes.
+     * Measured at about 280 bytes per entry.
      */
     private const BYTES_PER_ENTRY = 300;
 

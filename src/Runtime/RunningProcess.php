@@ -22,12 +22,12 @@ interface RunningProcess
     public function isRunning(): bool;
 
     /**
-     * Until its timeout runs out, negative once it has; null without one.
+     * Negative once the timeout has passed; null when there is no timeout.
      */
     public function secondsLeft(): ?float;
 
     /**
-     * Starts the grace period stop() then waits out, so several processes can share one.
+     * Sends the stop signal without waiting, so several processes can share one grace period.
      */
     public function askToStop(): void;
 

@@ -6,7 +6,7 @@
 
 `KeyMsg::$key` is a `Key` case for a named key (`Key::Enter`, `Key::Escape`,
 `Key::Up`) and a string only for text (`'a'`, `'é'`, `' '`). So
-`$message->key === 'esc'` never matches; compare with `Key::Escape`. The shipped
+`$message->key === 'esc'` never matches. Compare with `Key::Escape`. The shipped
 PHPStan rule `KeyNameIsNotTextRule` catches this mistake.
 
 Bindings write keys as text patterns: `'enter'`, `'ctrl+r'`, `'shift+tab'`.
@@ -53,7 +53,7 @@ Return `VimMode::keybindings()` from `globalKeybindings()` to add:
 | Keys | Action |
 |---|---|
 | `j` / `k` | down / up |
-| `h` / `l` | left / right; in a tree: close / open |
+| `h` / `l` | left / right (in a tree: close / open) |
 | `gg` / `G` | top / bottom |
 | `ctrl+d` / `ctrl+u` | page down / up |
 | `L` / `H`, `gt` / `gT` | next / previous tab |
@@ -61,7 +61,7 @@ Return `VimMode::keybindings()` from `globalKeybindings()` to add:
 
 A filter widget (`FilterableList`, `FilterableTable`, …) changes how it behaves
 when `/` is bound. Without vim mode, typing always goes to its search field.
-With vim mode, `j`/`k` move the list; `/` jumps into the search field, and
+With vim mode, `j`/`k` move the list and `/` jumps into the search field.
 Escape or Enter jumps back out and keeps the query. Escape on the list clears
 the query. The footer always says which part has the keys.
 
@@ -129,7 +129,7 @@ $hints = Keybindings::rowNavigation()->hints([
 ```
 
 When the hints don't fit, the footer's right slot gives way first. Give
-`withRight()` shorter versions, longest first; the footer uses the first one
+`withRight()` shorter versions, longest first. The footer uses the first one
 that fits, and drops the slot if none does:
 
 ```php

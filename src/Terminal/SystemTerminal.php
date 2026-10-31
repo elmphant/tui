@@ -63,7 +63,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
             throw new TerminalException('Unable to make terminal input non-blocking');
         }
 
-        // Output opened apart from the input stays blocking otherwise, and a stalled reader would hold the loop past the write timeout.
+        // When stdout is not the same terminal as stdin, it stays blocking, and a slow reader would hold the loop past the write timeout.
         $this->stdoutBlockingState = StreamBlockingState::capture($this->stdout);
         $this->stdoutBlockingState->makeNonBlocking();
 

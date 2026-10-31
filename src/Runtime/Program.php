@@ -954,7 +954,7 @@ final class Program
     }
 
     /**
-     * The reader acts on a screen the backlog has not changed yet. Input the runtime put back at the front stays first.
+     * Input the runtime put back at the front stays first.
      */
     private function moveInputAheadOfTheBacklog(): void
     {

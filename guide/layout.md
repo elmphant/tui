@@ -7,7 +7,7 @@
 `Layout::vertical()` stacks widgets top to bottom, `Layout::horizontal()` puts
 them side by side. `->withGap(1)` leaves one cell between them.
 
-Each widget says how much room it wants. A text line wants one row; a list
+Each widget says how much room it wants. A text line wants one row, and a list
 takes what is left. You can change that with a `Constraint`:
 
 | Constraint | Meaning |
@@ -42,9 +42,9 @@ $content = Flex::row()
 
 - `basis` is the size a widget would like. It decides where the row wraps.
   Without a constraint, an item starts at the width it asks for and grows.
-- `flex` is how fast it grows; the `shrink` argument is how fast it gives room
+- `flex` is how fast it grows. The `shrink` argument is how fast it gives room
   back when the row is too narrow.
-- A `Flex::row()` takes only the rows its content needs; a `Flex::column()`
+- A `Flex::row()` takes only the rows its content needs. A `Flex::column()`
   fills its space.
 - Items stretch to the line's height. `withCrossAlignment(CrossAlignment::Start)`
   (or `Center`, `End`) keeps each at its own size.
@@ -71,7 +71,7 @@ $card = Container::around($content)
 ```
 
 `withContentWidth(30)->withHorizontalAlignment(Alignment::Center)` centres a
-30-column area; `withContentHeight(3)` and `VerticalAlignment` do the same
+30-column area. `withContentHeight(3)` and `VerticalAlignment` do the same
 vertically. Wrapping a widget in a `Container` changes nothing about focus,
 clicks or keys.
 

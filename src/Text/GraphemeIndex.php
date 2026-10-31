@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Text;
 
 /**
- * Where each grapheme of a text starts, so a long field is segmented once rather than on every frame and keystroke.
- *
  * @internal
  */
 final class GraphemeIndex
 {
     private const RETAINED_BYTES = 16_000_000;
-    // About 300 bytes measured for the object, its two strings and the cache slot.
+    // Measured at about 300 bytes per entry.
     private const BYTES_PER_ENTRY = 300;
 
     /**
@@ -27,9 +25,9 @@ final class GraphemeIndex
     }
 
     /**
-     * A field holds no index of its own: App compares widgets with ==, and a memo would make equal fields differ.
+     * Not stored in the field: App compares widgets with ==, and a stored index would make equal fields unequal.
      *
-     * @infection-ignore-all a memo of the texts used most recently: the same without it, only slower
+     * @infection-ignore-all a cache: the results are the same without it, only slower
      */
     public static function of(string $text): self
     {

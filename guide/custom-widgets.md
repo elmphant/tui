@@ -28,7 +28,7 @@ no timer, no binding. `Spinner` works this way.
 ## Drawing cells
 
 A `Frame` is a grid of cells. A widget, or a `Model` that draws by hand, writes
-into it; the framework compares it with the last frame and sends only what
+into it. The framework compares it with the last frame and sends only what
 changed.
 
 ```php fragment

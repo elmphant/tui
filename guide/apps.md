@@ -178,7 +178,7 @@ final readonly class Machine extends App
 
 The last argument writes the changed model back into the App. To send a message
 to the App instead of to the sub-model, return the command
-`Mount::toHost($message)`; it arrives in the App's `onMessage()`.
+`Mount::toHost($message)`. It arrives in the App's `onMessage()`.
 
 An App that shows only some mounts at a time, such as tabs, lists the hidden
 ones in `mounts()` so they still start and get their results. A mount that is

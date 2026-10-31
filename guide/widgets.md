@@ -43,9 +43,9 @@ interactive ones on your App, and bind them (see [Building an app](apps.md)).
 | Widget | What it is |
 | --- | --- |
 | `ListView` | A scrolling list. Long items wrap |
-| `Table` | Rows and columns with a cursor, selection, mouse and scrolling. Cells wrap; `withColumnGap(0)` packs columns, `withHeader(false)` hides the header |
+| `Table` | Rows and columns with a cursor, selection, mouse and scrolling. Cells wrap. `withColumnGap(0)` packs columns, `withHeader(false)` hides the header |
 | `StaticTable` | A bordered table that draws every row, with no cursor. For small data |
-| `FilterableList` | A search field over a `ListView`. Typing filters; arrows and Enter pick |
+| `FilterableList` | A search field over a `ListView`. Typing filters, and arrows and Enter pick |
 | `FilterableTable` | A search field over a `Table` |
 | `FilterableStaticTable` | A search field over a `StaticTable` |
 | `TreeView` | A tree whose children load when opened |
@@ -97,7 +97,7 @@ change. When the cursor's item is gone, the cursor moves to a neighbour.
 
 A `Form` is a pane of named fields with a submit button at the bottom. Each
 field is a real widget, so tab and the mouse reach it. The form asks the fields
-for their values; you keep no copy:
+for their values, so you keep no copy:
 
 ```php
 use Elmphant\Tui\Core\{ComponentId, Message};
@@ -144,7 +144,7 @@ Field::text('due', 'Due date')
 
 While a `Modal` is on screen, everything behind it ignores keys and clicks, and
 the keyboard moves inside it. Always bind it, and keep its content on the App.
-Escape or a click outside sends `ModalDismissed`; closing it is up to you:
+Escape or a click outside sends `ModalDismissed`. Closing it is up to you:
 
 ```php
 use Elmphant\Tui\Application\{App, Component};

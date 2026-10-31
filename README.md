@@ -7,7 +7,7 @@ Rust's [Ratatui](https://github.com/ratatui/ratatui). The name mixes the **PHP
 elephant** and **Elm**.
 
 - **Simple model.** Your app is an immutable value. A key press gives you a new
-  value; the framework draws it.
+  value, and the framework draws it.
 - **Widgets included.** Lists, tables, forms, tabs, trees, modals, dropdowns,
   search fields, progress bars and more, with keyboard and mouse support.
 - **No blocking.** Processes, HTTP requests and timers run in the background and
@@ -33,7 +33,7 @@ composer require symfony/http-client   # Cmd::http()
 composer require league/commonmark     # Paragraph::fromMarkdown()
 ```
 
-## Hello World
+## A counter
 
 ```php
 <?php

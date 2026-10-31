@@ -32,7 +32,7 @@ Cmd::process(['tail', '-f', 'log']) // get the output while it runs
 ```
 
 - `Cmd::tick()` repeats by itself. Ask once, not on every tick.
-- `Cmd::call()` runs on the main loop. Keep it short; use `exec()`, `process()`
+- `Cmd::call()` runs on the main loop. Keep it short, and use `exec()`, `process()`
   or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
 - `Cmd::listen()` stops at the end of the stream or on `Cmd::cancel()`. Cancel
   it before you close the stream yourself.
@@ -52,7 +52,7 @@ Cmd::cancel($download); // also works for tick(), after(), exec(), and process()
 
 The result then answers `$message->isFrom('download')`. Starting a new command
 under the same name replaces the old one, and no late result of the old one
-arrives after that. A cancel stops the command; what it had already sent still
+arrives after that. A cancel stops the command. What it had already sent still
 arrives, but nothing more.
 
 Two parts of an app can use the same name without clashing, when the parent
@@ -88,7 +88,7 @@ $message instanceof ProcessResultMsg
 
 **`Cmd::process()`** sends the output in pieces while the command runs
 (`ProcessOutputMsg`), then a `ProcessFinishedMsg`. A piece can end in the middle
-of a line; call `->withLineFraming()` to get whole lines only. On a timeout you
+of a line. Call `->withLineFraming()` to get whole lines only. On a timeout you
 get the output so far, an `ErrorMsg`, and then the `ProcessFinishedMsg`.
 
 ```php fragment
@@ -231,5 +231,5 @@ Program::new($model)->withCommandHandler(new RowLoader())->start();
   throws, you get an `ErrorMsg`.
 - A handler can never take over the built-in commands.
 
-In a test no handler runs; `ModelHarness::emit('rows', new RowsLoaded($rows))`
+In a test no handler runs. `ModelHarness::emit('rows', new RowsLoaded($rows))`
 delivers what `$emit` would. See [Testing](testing.md).

@@ -47,7 +47,7 @@ trait ChildProcessLifecycle
         try {
             $this->process->signal(self::SIGTERM);
         } catch (LogicException|RuntimeException) {
-            // It ended on its own in the meantime.
+            // The process already ended.
         }
     }
 

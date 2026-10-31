@@ -154,7 +154,7 @@ final class EffectRunner
     }
 
     /**
-     * Leaves the output of every process in its pipe, but ends the ones whose time ran out.
+     * Reads no output; it only ends the processes whose time ran out.
      */
     public function expireOverdue(): void
     {
