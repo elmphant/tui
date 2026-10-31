@@ -2323,6 +2323,16 @@ final class TextInputTest extends TestCase
      * the answer, and the char limit holds for a paste as it does for typing.
      */
     #[Test]
+    public function aPastedEightBitControlBecomesASpaceLikeAnyOther(): void
+    {
+        $field = TextInput::new();
+
+        $pasted = $field->update(new PasteMsg("a\u{9B}31mb"), Rect::fromSize(20, 1))->model;
+
+        self::assertSame('a 31mb', $pasted->value());
+    }
+
+    #[Test]
     public function pastedTextIsInsertedWhereTheCursorIs(): void
     {
         $area = new Rect(0, 0, 40, 1);

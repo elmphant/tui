@@ -390,7 +390,7 @@ final readonly class TextInput implements Focusable, HoldsAValue, KeybindingsAwa
     private function pasted(string $content): ?self
     {
         // Replace pasted line breaks and tabs with spaces because this is a single-line field.
-        $content = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $content) ?? '';
+        $content = preg_replace('/[\x00-\x1F\x7F-\x{9F}]+/u', ' ', $content) ?? '';
 
         if ($this->charLimit > 0) {
             $room = $this->charLimit - self::graphemeLength($this->value);
