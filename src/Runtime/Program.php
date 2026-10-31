@@ -1225,8 +1225,15 @@ final class Program
         }
     }
 
+    /**
+     * A printable key may be part of a password, so the trace says only that text was typed.
+     */
     private static function describeKey(KeyMsg $message): string
     {
+        if (is_string($message->key) && !$message->ctrl && !$message->alt) {
+            return 'text';
+        }
+
         return ($message->ctrl ? 'ctrl+' : '')
             . ($message->alt ? 'alt+' : '')
             . ($message->shift ? 'shift+' : '')

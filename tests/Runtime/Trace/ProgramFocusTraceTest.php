@@ -91,6 +91,23 @@ final class ProgramFocusTraceTest extends TestCase
     }
 
     #[Test]
+    public function typedTextNeverReachesTheTrace(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(40, 6);
+        $terminal->simulateInput("pw\t\x11");
+
+        Program::new(new TwoFieldsThenQuitApp(TextInput::new(), TextInput::new()))
+            ->withTerminal($terminal)
+            ->withTracer($tracer)
+            ->start();
+
+        $keys = array_values(array_filter(array_column($tracer->fieldsOf(TraceEvent::Update), 'key')));
+
+        self::assertSame(['text', 'text', 'tab', 'ctrl+q'], $keys);
+    }
+
+    #[Test]
     public function movingTheKeyboardDrawsTheScreenAgain(): void
     {
         $tracer = new InMemoryTracer();

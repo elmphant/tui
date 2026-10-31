@@ -76,7 +76,8 @@ Each line is one JSON object:
 | `error` | an exception, with class, message, file and line |
 
 "That key does nothing" is usually answered by `update`: look at `key` (was it
-the key you think?) and `focused` (who got it?).
+the key you think?) and `focused` (who got it?). A printable key is written as
+`text`, never as the character, so a trace cannot give away a password.
 
 ## Debugging
 
