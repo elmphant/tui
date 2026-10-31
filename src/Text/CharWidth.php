@@ -18,13 +18,13 @@ final class CharWidth
     private const EMOJI_VARIATION_SELECTOR = "\u{FE0F}";
 
     /**
-     * Terminals draw a skin tone that follows no emoji as a wide swatch of its own.
+     * A skin tone makes the emoji before it wide. After a letter, terminals draw it as two cells of its own.
      */
     private const SKIN_TONE = '/[\x{1F3FB}-\x{1F3FF}]/u';
 
     /**
      * Unicode 16 Mn, Me, Cf, Zl and Zp, except the soft hyphen, which terminals draw,
-     * and the unassigned code points Unicode reserves as Default_Ignorable.
+     * and the unassigned code points Unicode keeps as ignorable.
      */
     private const ZERO_WIDTH = [
         [0x0300, 0x036F], [0x0483, 0x0489], [0x0591, 0x05BD], [0x05BF, 0x05BF],
@@ -200,7 +200,7 @@ final class CharWidth
     ];
 
     /**
-     * Unicode 16 Extended_Pictographic ranges: a code point still unassigned there is an emoji newer than these tables.
+     * Unicode 16 emoji ranges. An unassigned code point here is a newer emoji, so it is wide.
      */
     private const PICTOGRAPHIC = [
         [0x1F000, 0x1F0FF], [0x1F10D, 0x1F10F], [0x1F16C, 0x1F16F], [0x1F1AD, 0x1F1E5],

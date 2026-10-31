@@ -74,7 +74,7 @@ final class Ansi
     }
 
     /**
-     * OSC 8. The URL is made one line of plain text: a control byte in it would end the sequence early.
+     * OSC 8. A control byte in the URL would end the sequence early.
      */
     public static function hyperlink(string $url): string
     {

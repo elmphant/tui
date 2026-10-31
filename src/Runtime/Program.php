@@ -414,7 +414,7 @@ final class Program
     }
 
     /**
-     * PHP prints a fatal error to the screen it is on; leaving the alt screen erases it.
+     * PHP prints a fatal error on the alt screen, and leaving the alt screen erases it.
      */
     private static function reportFatalErrorTheAltScreenHid(): void
     {
