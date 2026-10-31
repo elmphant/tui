@@ -26,4 +26,16 @@ final class ProgramFatalErrorTest extends TestCase
         self::assertStringContainsString('Allowed memory size', implode("\n", $output));
         self::assertSame([], $survivors);
     }
+
+    #[Test]
+    public function aFatalErrorPrintedOnTheAltScreenIsPrintedAgainOnceTheTerminalIsBack(): void
+    {
+        exec(sprintf(
+            '%s -d memory_limit=32M -d display_errors=stdout -d log_errors=0 %s 2>&1 >/dev/null',
+            escapeshellarg(PHP_BINARY),
+            escapeshellarg(__DIR__ . '/Fixtures/fatal-on-the-alt-screen.php'),
+        ), $errorOutput);
+
+        self::assertStringContainsString('PHP Fatal error:  Allowed memory size', implode("\n", $errorOutput));
+    }
 }

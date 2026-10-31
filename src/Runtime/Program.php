@@ -393,7 +393,14 @@ final class Program
         // A fatal error skips the finally in start(), and the processes this program started would outlive it.
         $program = WeakReference::create($this);
         register_shutdown_function(static function () use ($program): void {
-            $program->get()?->teardown();
+            $running = $program->get();
+            if ($running === null || $running->state === ProgramState::Stopped) {
+                return;
+            }
+            $running->teardown();
+            if ($running->useAltScreen) {
+                self::reportFatalErrorTheAltScreenHid();
+            }
         });
 
         $this->terminalSession = new TerminalSession($this->terminal, $this->useAltScreen, $this->useMouseTracking);
@@ -404,6 +411,19 @@ final class Program
         $this->adoptTerminalSize();
 
         $this->registerSignalHandlers();
+    }
+
+    /**
+     * PHP prints a fatal error to the screen it is on; leaving the alt screen erases it.
+     */
+    private static function reportFatalErrorTheAltScreenHid(): void
+    {
+        $error = error_get_last();
+        if ($error === null || ($error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR)) === 0) {
+            return;
+        }
+
+        fwrite(STDERR, sprintf("PHP Fatal error:  %s in %s on line %d\n", $error['message'], $error['file'], $error['line']));
     }
 
     private function registerSignalHandlers(): void
