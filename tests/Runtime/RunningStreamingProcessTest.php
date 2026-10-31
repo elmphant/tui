@@ -318,6 +318,18 @@ final class RunningStreamingProcessTest extends TestCase
     }
 
     #[Test]
+    public function aFramedStreamTakesACarriageReturnAsTheEndOfALine(): void
+    {
+        $process = $this->createMock(Process::class);
+        $process->method('getIncrementalOutput')->willReturn("10%\r20%\r3");
+        $process->method('getIncrementalErrorOutput')->willReturn('');
+        $process->method('isRunning')->willReturn(true);
+        $running = new RunningStreamingProcess($process, null, framesLines: true);
+
+        self::assertSame(["10%\r20%\r"], self::outputsOf($running->pump()));
+    }
+
+    #[Test]
     public function aCharacterSplitAcrossTwoReadsArrivesWhole(): void
     {
         $process = $this->createMock(Process::class);

@@ -133,9 +133,7 @@ final class RunningStreamingProcess implements RunningProcess
 
     private static function wholeLinesLength(string $text): int
     {
-        $lastNewline = strrpos($text, "\n");
-
-        return $lastNewline === false ? 0 : $lastNewline + 1;
+        return \strlen($text) - strcspn(strrev($text), "\r\n");
     }
 
     private static function wholeCharactersLength(string $text): int
