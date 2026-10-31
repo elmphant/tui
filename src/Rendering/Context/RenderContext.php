@@ -45,6 +45,21 @@ final class RenderContext
     }
 
     /**
+     * The same drawing pass with another theme, for one part of the tree.
+     */
+    public function withTheme(Theme $theme): self
+    {
+        return new self(
+            theme: $theme,
+            colorProfile: $this->colorProfile,
+            clock: $this->clock,
+            focus: $this->focus,
+            floats: $this->floats,
+            layout: $this->layout,
+        );
+    }
+
+    /**
      * Use the frame's monotonic time in seconds for animation, rather than storing animation state in the model.
      */
     public function now(): float
@@ -165,7 +180,7 @@ final class RenderContext
 
     public function float(Frame $frame, Floating $popup, Rect $anchor): void
     {
-        $this->floats->float($frame, $popup, $anchor);
+        $this->floats->float($frame, $popup, $anchor, $this->theme);
     }
 
     /**

@@ -63,6 +63,7 @@ use Elmphant\Tui\Widget\Structure\ScrollPane;
 use Elmphant\Tui\Widget\Structure\Split;
 use Elmphant\Tui\Widget\Structure\TabBar;
 use Elmphant\Tui\Widget\Structure\TabPage;
+use Elmphant\Tui\Widget\Structure\Themed;
 use Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\StaticTable;
@@ -286,6 +287,7 @@ final class IntrinsicWidthTest extends TestCase
         yield 'Dropdown' => [Dropdown::new(Select::new(['short', 'a much longer option']))];
         yield 'Dropdown showing a selection' => [Dropdown::new(Select::new(['short', 'a much longer option'])->withSelected(1))];
         yield 'Container' => [Container::around(Text::new('a label'))];
+        yield 'Themed' => [Themed::around(Text::new('a label'), static fn (Theme $theme): Theme => $theme)];
         yield 'StaticTable' => [StaticTable::new(['A', 'B'], [['1', '2']])];
         yield 'ActivityBar' => [ActivityBar::new()];
     }

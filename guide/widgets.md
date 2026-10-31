@@ -17,6 +17,7 @@ interactive ones on your App, and bind them (see [Building an app](apps.md)).
 | `Modal` | A box over the screen that dims what is behind it — see [Modals](#modals) |
 | `Overlay` / `PositionedOverlay` | One widget on top of another |
 | `Card` / `Box` / `Container` | Borders, padding and margins around any widget — see [Layout](layout.md#decoration) |
+| `Themed` | Draws one part of the screen with a changed theme: `Themed::around($list, fn (Theme $theme) => $theme->withSelectedStyle($style))` |
 
 **Text**
 

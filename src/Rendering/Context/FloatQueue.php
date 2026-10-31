@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Rendering\Context;
 use Closure;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Theme;
 use LogicException;
 
 /**
@@ -18,7 +19,7 @@ final class FloatQueue
     private bool $rootPassRan = false;
 
     /**
-     * @var list<array{Floating, Rect}>
+     * @var list<array{Floating, Rect, ?Theme}>
      */
     private array $queued = [];
 
@@ -41,7 +42,10 @@ final class FloatQueue
         $this->rootPassRan = false;
     }
 
-    public function float(Frame $frame, Floating $popup, Rect $anchor): void
+    /**
+     * @param ?Theme $theme the theme in force where the popup was opened, when it differs from the root's
+     */
+    public function float(Frame $frame, Floating $popup, Rect $anchor, ?Theme $theme = null): void
     {
         if ($this->rootFrame !== null && $frame !== $this->rootFrame) {
             return;
@@ -52,7 +56,7 @@ final class FloatQueue
             return;
         }
 
-        $this->queued[] = [$popup, $anchor];
+        $this->queued[] = [$popup, $anchor, $theme];
     }
 
     /**
@@ -60,7 +64,7 @@ final class FloatQueue
      */
     public function queued(): array
     {
-        return $this->queued;
+        return array_map(static fn (array $entry): array => [$entry[0], $entry[1]], $this->queued);
     }
 
     /**
@@ -143,14 +147,14 @@ final class FloatQueue
             $pending = $this->queued;
             $this->queued = [];
 
-            foreach ($pending as [$popup, $anchor]) {
+            foreach ($pending as [$popup, $anchor, $theme]) {
                 $placement = $popup->placement($anchor, $frame->area());
 
                 if ($placement->width < 1 || $placement->height < 1) {
                     continue;
                 }
 
-                $popup->render($frame, $placement, $context);
+                $popup->render($frame, $placement, $theme === null ? $context : $context->withTheme($theme));
 
                 if ($popup instanceof PointerFloating) {
                     $recorded[] = new FloatPlacement($popup, $anchor, $placement);
