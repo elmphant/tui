@@ -415,16 +415,7 @@ final class Program
     {
         // A fatal error skips the finally in start(), and the processes this program started would outlive it.
         $program = WeakReference::create($this);
-        register_shutdown_function(static function () use ($program): void {
-            $running = $program->get();
-            if ($running === null || $running->state === ProgramState::Stopped) {
-                return;
-            }
-            $running->teardown();
-            if ($running->useAltScreen) {
-                self::reportFatalErrorTheAltScreenHid();
-            }
-        });
+        register_shutdown_function(static fn () => self::restoreAfterAFatalError($program));
 
         $this->terminalSession = new TerminalSession($this->terminal, $this->useAltScreen, $this->useMouseTracking);
         $this->terminalSession->start();
@@ -437,7 +428,26 @@ final class Program
     }
 
     /**
+     * @infection-ignore-all runs only after a fatal error, which the tests cause in a child process coverage cannot see
+     *
+     * @param WeakReference<self<TModel>> $program
+     */
+    private static function restoreAfterAFatalError(WeakReference $program): void
+    {
+        $running = $program->get();
+        if ($running === null || $running->state === ProgramState::Stopped) {
+            return;
+        }
+        $running->teardown();
+        if ($running->useAltScreen) {
+            self::reportFatalErrorTheAltScreenHid();
+        }
+    }
+
+    /**
      * PHP prints a fatal error on the alt screen, and leaving the alt screen erases it.
+     *
+     * @infection-ignore-all runs only after a fatal error, which the tests cause in a child process coverage cannot see
      */
     private static function reportFatalErrorTheAltScreenHid(): void
     {

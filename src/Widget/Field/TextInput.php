@@ -537,6 +537,8 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
 
     /**
      * In printable ASCII every byte is one grapheme one column wide, so byte offsets are the answer.
+     *
+     * @infection-ignore-all a memo of the last answer: the same without it, only slower
      */
     private static function isPlain(string $text): bool
     {
@@ -544,10 +546,15 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         static $answer = false;
         if ($text !== $last) {
             $last = $text;
-            $answer = preg_match('/[^\x20-\x7e]/', $text) !== 1;
+            $answer = self::holdsOnlyPrintableAscii($text);
         }
 
         return $answer;
+    }
+
+    private static function holdsOnlyPrintableAscii(string $text): bool
+    {
+        return preg_match('/[^\x20-\x7e]/', $text) !== 1;
     }
 
     private static function displayWidth(string $text): int

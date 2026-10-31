@@ -297,6 +297,8 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     }
 
     /**
+     * @infection-ignore-all a memo: the answer is the same without it, only slower
+     *
      * @return list<int>
      */
     private function matchingIndexes(): array
@@ -305,7 +307,15 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         $answers ??= new WeakMap();
         /** @var WeakMap<self, list<int>> $answers */
 
-        return $answers[$this] ??= FilterBar::matching($this->matcher, $this->query(), array_map(
+        return $answers[$this] ??= $this->matchingIndexesWorkedOut();
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function matchingIndexesWorkedOut(): array
+    {
+        return FilterBar::matching($this->matcher, $this->query(), array_map(
             static fn (Row $row): string => implode(' ', array_map(
                 static fn (string|Span $cell): string => $cell instanceof Span ? $cell->content : $cell,
                 $row->cells,
