@@ -9,6 +9,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Span;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
@@ -54,6 +55,15 @@ final class HyperlinkTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $frame->putLine(0, 0, new Line([Span::link('docs', "https://example.com/\e\\\x07docs")]));
+
+        self::assertStringContainsString("\e]8;;https://example.com/docs\e\\docs", self::drawn($frame));
+    }
+
+    #[Test]
+    public function aUrlHandedToTheStyleDirectlyCannotEndTheSequenceEarly(): void
+    {
+        $frame = new Frame(10, 1);
+        $frame->putStyled(0, 0, 'docs', new Style(link: "https://example.com/\e]0;title\x07\e[2Jdocs"));
 
         self::assertStringContainsString("\e]8;;https://example.com/docs\e\\docs", self::drawn($frame));
     }

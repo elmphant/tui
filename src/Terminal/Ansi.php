@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Terminal;
 
+use Elmphant\Tui\Text\TerminalText;
+
 final class Ansi
 {
     public const HIDE_CURSOR = "\x1b[?25l";
@@ -72,11 +74,11 @@ final class Ansi
     }
 
     /**
-     * OSC 8. The URL must already be one line of plain text: a control byte in it would end the sequence early.
+     * OSC 8. The URL is made one line of plain text: a control byte in it would end the sequence early.
      */
     public static function hyperlink(string $url): string
     {
-        return "\x1b]8;;{$url}\x1b\\";
+        return "\x1b]8;;" . TerminalText::singleLine($url) . "\x1b\\";
     }
 
     public static function cursorShape(CursorShape $shape): string
