@@ -15,6 +15,8 @@ use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\RenderRevisioned;
 use Elmphant\Tui\Tests\Support\GuardedTerminal;
+use Elmphant\Tui\Tests\Support\Ping;
+use Elmphant\Tui\Tests\Support\Stop;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -50,14 +52,6 @@ final class ProgramRedrawTest extends TestCase
 
         return \count($model->frames);
     }
-}
-
-final readonly class Ping implements Message
-{
-}
-
-final readonly class Stop implements Message
-{
 }
 
 final readonly class PingedModel implements Model
