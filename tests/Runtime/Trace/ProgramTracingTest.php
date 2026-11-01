@@ -7,27 +7,21 @@ namespace Elmphant\Tui\Tests\Runtime\Trace;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Input\StdinBuffer;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\Screen;
-use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Runtime\AdaptiveTicker;
-use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Testing\InMemoryTracer;
 use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Testing\VirtualTerminal;
+use Elmphant\Tui\Tests\Support\GuardedTerminal;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use SplQueue;
+use Revolt\EventLoop;
 
 final class ProgramTracingTest extends TestCase
 {
@@ -46,7 +40,7 @@ final class ProgramTracingTest extends TestCase
     {
         $tracer = new InMemoryTracer();
 
-        $this->tickOnce($tracer);
+        $this->runTraced($tracer);
 
         $messages = array_column($tracer->fieldsOf(TraceEvent::Update), 'message');
 
@@ -76,7 +70,7 @@ final class ProgramTracingTest extends TestCase
     {
         $tracer = new InMemoryTracer();
 
-        $this->tickOnce($tracer);
+        $this->runTraced($tracer);
 
         $updates = $tracer->fieldsOf(TraceEvent::Update);
 
@@ -111,7 +105,7 @@ final class ProgramTracingTest extends TestCase
     {
         $tracer = new InMemoryTracer();
 
-        $this->tickOnce($tracer);
+        $this->runTraced($tracer);
 
         $commands = array_column($tracer->fieldsOf(TraceEvent::Command), 'command');
 
@@ -123,7 +117,7 @@ final class ProgramTracingTest extends TestCase
     {
         $tracer = new InMemoryTracer();
 
-        $this->tickOnce($tracer);
+        $this->runTraced($tracer);
 
         $renders = $tracer->fieldsOf(TraceEvent::Render);
 
@@ -139,7 +133,7 @@ final class ProgramTracingTest extends TestCase
     {
         $tracer = new InMemoryTracer();
 
-        $this->tickOnce($tracer);
+        $this->runTraced($tracer);
 
         $renders = $tracer->fieldsOf(TraceEvent::Render);
 
@@ -171,11 +165,8 @@ final class ProgramTracingTest extends TestCase
     public function aFrameHeldBackByTheBudgetSaysHowLongItWasHeld(): void
     {
         $tracer = new InMemoryTracer();
-        $clock = new TestClock(100.0);
 
-        // One frame a second, and the last one landed just now: this frame waits.
-        $program = $this->tickableProgram($tracer, $clock, framesPerSecond: 1.0, lastRender: 100.0);
-        $program->tick();
+        $this->runTraced($tracer, framesPerSecond: 1.0);
 
         $skipped = $tracer->fieldsOf(TraceEvent::FrameSkipped);
 
@@ -183,45 +174,18 @@ final class ProgramTracingTest extends TestCase
         self::assertSame(1000.0, $skipped[0]['waitMs']);
     }
 
-    /**
-     * Force one iteration with a queued message and elapsed frame budget to avoid timing-dependent update and render checks.
-     */
-    private function tickOnce(InMemoryTracer $tracer): void
+    private function runTraced(InMemoryTracer $tracer, float $framesPerSecond = 30.0): void
     {
-        $this->tickableProgram($tracer, new TestClock(100.0))->tick();
-    }
+        $terminal = GuardedTerminal::of(80, 24);
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput('x'));
+        EventLoop::delay(0.15, static fn () => $terminal->closeInput());
 
-    private function tickableProgram(
-        InMemoryTracer $tracer,
-        TestClock $clock,
-        float $framesPerSecond = 30.0,
-        float $lastRender = 0.0,
-    ): Program {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->tracedModel())
+        Program::new($this->tracedModel())
             ->withTerminal($terminal)
             ->withTracer($tracer)
-            ->withClock($clock)
-            ->withFps($framesPerSecond);
-
-        $queue = new SplQueue();
-        $queue->enqueue(new TestMessage('traced'));
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('model')->setValue($program, $this->tracedModel());
-        $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
-        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(static fn (): ?string => null));
-        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
-        $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
-        $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
-        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('frames')->getValue($program)->drawn($lastRender, null);
-        $reflection->getProperty('frames')->getValue($program)->markDirty();
-        $reflection->getProperty('adaptiveTicker')->setValue($program, new AdaptiveTicker(static fn (): ?float => null));
-
-        return $program;
+            ->withClock(new TestClock(100.0))
+            ->withFps($framesPerSecond)
+            ->start();
     }
 
     private function runUntraced(): void
@@ -240,12 +204,12 @@ final class ProgramTracingTest extends TestCase
 
             public function init(): ?Cmd
             {
-                return null;
+                return Cmd::message(new TestMessage('traced'));
             }
 
             public function update(Message $message, Rect $area): UpdateResult
             {
-                return new UpdateResult(new self($this->revision + 1), Cmd::after(60.0, static fn (): Cmd => Cmd::quit()));
+                return new UpdateResult(new self($this->revision + 1));
             }
 
             public function render(Frame $frame, RenderPass $pass): void
