@@ -47,6 +47,11 @@ final class Frame
     private array $contentRows = [];
 
     /**
+     * @var array<int, string> rows a wrapped line goes on from, with what the wrap dropped
+     */
+    private array $continuations = [];
+
+    /**
      * @var list<Rect>
      */
     private array $clipStack = [];
@@ -361,6 +366,22 @@ final class Frame
         $this->markRowDirty($y);
     }
 
+    /**
+     * Says the line drawn on this row goes on in the next one, so copied text can
+     * join the two again with what wrapping dropped between them.
+     */
+    public function markContinued(int $y, string $dropped): void
+    {
+        if ($y >= 0 && $y < $this->height) {
+            $this->continuations[$y] = $dropped;
+        }
+    }
+
+    public function continuation(int $y): ?string
+    {
+        return $this->continuations[$y] ?? null;
+    }
+
     public function character(int $index): string
     {
         return $this->characters[$index];
@@ -408,6 +429,7 @@ final class Frame
         $this->attributes = $this->zeroCells;
         $this->widths = $this->blankWidths;
         $this->contentRows = [];
+        $this->continuations = [];
     }
 
     public function isRowDirty(int $row): bool

@@ -20,8 +20,10 @@ use Elmphant\Tui\Testing\Issued;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\UserInput;
+use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
+use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
 use PHPUnit\Framework\Attributes\Test;
@@ -288,6 +290,43 @@ final class PanelMarksTextTest extends TestCase
         $clicked = self::driven($scrolledUp, UserInput::click(1, 1), UserInput::release(1, 1));
 
         self::assertFalse($clicked->add(Text::new('line20'))->followsTheEnd());
+    }
+
+    #[Test]
+    public function aWrappedLineCopiesAsTheLineItWas(): void
+    {
+        $panel = Panel::new('log')->withChildren([
+            Paragraph::fromText('alpha beta gamma delta epsilon zeta'),
+            Paragraph::fromText('next line'),
+        ]);
+
+        self::assertSame("alpha beta gamma delta epsilon zeta\nnext line", self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(18, 4), UserInput::release(18, 4)));
+    }
+
+    #[Test]
+    public function aLineWrappedOverThreeRowsCopiesAsOne(): void
+    {
+        $text = 'alpha beta gamma delta epsilon zeta eta theta';
+        $panel = Panel::new('log')->withChildren([Paragraph::fromText($text)]);
+
+        self::assertSame($text, self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(18, 3), UserInput::release(18, 3)));
+    }
+
+    #[Test]
+    public function aCentredWrappedLineJoinsWithoutTheIndentOfItsLaterRows(): void
+    {
+        $text = 'alpha beta gamma delta';
+        $panel = Panel::new('log')->withChildren([Paragraph::fromText($text)->withAlignment(Alignment::Center)]);
+
+        self::assertSame($text, ltrim(self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(18, 2), UserInput::release(18, 2)) ?? ''));
+    }
+
+    #[Test]
+    public function aLongWordBrokenAcrossRowsCopiesWhole(): void
+    {
+        $panel = Panel::new('log')->withChildren([Paragraph::fromText('abcdefghijklmnopqrstuvwxyz')]);
+
+        self::assertSame('abcdefghijklmnopqrstuvwxyz', self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(18, 2), UserInput::release(18, 2)));
     }
 
     #[Test]

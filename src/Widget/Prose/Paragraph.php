@@ -204,7 +204,9 @@ final readonly class Paragraph implements Widget, MeasureHeight
             $line = $line->withResolvedTokens($context->theme);
             $text = self::textOf($line);
 
-            foreach ($this->rowsToDraw($line, $text, $area->width) as [$start, $length]) {
+            $rows = $this->rowsToDraw($line, $text, $area->width);
+
+            foreach ($rows as $index => [$start, $length]) {
                 if ($dropped > 0) {
                     --$dropped;
                     continue;
@@ -214,6 +216,12 @@ final readonly class Paragraph implements Widget, MeasureHeight
                 }
 
                 $this->drawRow($frame, $line, $text, $start, $length, $area, $area->y + $row, $baseStyle);
+
+                $next = $rows[$index + 1][0] ?? null;
+                if ($next !== null) {
+                    $frame->markContinued($area->y + $row, substr($text, $start + $length, $next - $start - $length));
+                }
+
                 ++$row;
             }
         }

@@ -234,11 +234,30 @@ let go. The selected cells show reversed, and letting go copies their text with
 `Cmd::copy()`. Dragging past the top or bottom edge scrolls the panel, and rows
 scrolled out of view are copied too. A click without a drag clears the selection.
 
+A panel only hears the mouse when it is bound, so bind every panel a reader
+should copy from, and keep it on the App:
+
+```php
+use Elmphant\Tui\Application\{App, Component};
+use Elmphant\Tui\Widget\Structure\Panel;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Report extends App
+{
+    public function __construct(private Panel $output = new Panel('Output')) {}
+
+    public function view(): Widget
+    {
+        return Component::bind('output', $this->output, static fn (self $app, Panel $output): self => new self($output));
+    }
+}
+```
+
 - A press in the padding or below the last row starts at the nearest text, so
   the reader doesn't have to hit the text exactly.
 - A press on a field in the panel still reaches the field.
-- The copy holds the lines as they are drawn, so a wrapped line copies as several
-  lines.
+- A line a `Paragraph` wrapped copies as one line again. Other widgets copy as
+  they are drawn, a table with its borders.
 - New rows don't move the selection. A press stops "follow the end" until the
   reader scrolls back down.
 - A host that builds the panel anew each time carries the selection over with

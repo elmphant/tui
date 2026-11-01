@@ -420,6 +420,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         }
 
         $lines = [];
+        $dropped = null;
         for ($row = 0; $row < $frame->height; ++$row) {
             [$from, $to] = $marked->columnsOn($first + $row);
             $line = '';
@@ -428,7 +429,15 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
                 $line .= $frame->character($row * $frame->width + $column);
             }
 
-            $lines[] = rtrim($line, ' ');
+            $line = rtrim($line, ' ');
+
+            if ($dropped === null) {
+                $lines[] = $line;
+            } else {
+                $lines[array_key_last($lines)] .= $dropped . ltrim($line, ' ');
+            }
+
+            $dropped = $frame->continuation($row);
         }
 
         return implode("\n", $lines);

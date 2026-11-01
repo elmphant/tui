@@ -1354,6 +1354,31 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function aContinuedRowKeepsWhatTheWrapDropped(): void
+    {
+        $frame = new Frame(5, 3);
+
+        $frame->markContinued(1, ' ');
+        $frame->markContinued(-1, 'x');
+        $frame->markContinued(3, 'x');
+
+        self::assertSame([null, ' ', null], [$frame->continuation(0), $frame->continuation(1), $frame->continuation(2)]);
+        self::assertNull($frame->continuation(-1));
+        self::assertNull($frame->continuation(3));
+    }
+
+    #[Test]
+    public function clearingAFrameForgetsItsContinuedRows(): void
+    {
+        $frame = new Frame(5, 3);
+        $frame->markContinued(1, ' ');
+
+        $frame->clear();
+
+        self::assertNull($frame->continuation(1));
+    }
+
+    #[Test]
     public function aToggledRowIsRedrawn(): void
     {
         $frame = new Frame(5, 3);
