@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Terminal\TerminalWriteException;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -42,6 +43,26 @@ final class VirtualTerminalTest extends TestCase
         $terminal = new VirtualTerminal(80, 24);
         $terminal->simulateInput('abc');
         $this->assertSame('abc', $terminal->readInput());
+    }
+
+    #[Test]
+    public function outputThatStoppedRefusesEveryWriteUntilItResumes(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateStoppedOutput(stalled: true);
+
+        try {
+            $terminal->write('lost');
+            self::fail('A stopped terminal takes no output');
+        } catch (TerminalWriteException $failure) {
+            self::assertTrue($failure->stalled);
+            self::assertSame(0, $failure->bytesWritten);
+        }
+
+        $terminal->resumeOutput();
+        $terminal->write('kept');
+
+        $this->assertSame('kept', $terminal->output());
     }
 
     #[Test]

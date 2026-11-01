@@ -8,6 +8,7 @@ use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Terminal\ColorProfile;
 use Elmphant\Tui\Terminal\ColorScheme;
 use Elmphant\Tui\Terminal\Terminal;
+use Elmphant\Tui\Terminal\TerminalWriteException;
 use RuntimeException;
 
 final class VirtualTerminal implements Terminal
@@ -31,6 +32,9 @@ final class VirtualTerminal implements Terminal
     private bool $bracketedPasteEnabled = false;
 
     private bool $kittyEnabled = false;
+
+    private bool $outputStopped = false;
+    private bool $outputStalled = false;
 
     public function __construct(
         private int $width,
@@ -194,6 +198,10 @@ final class VirtualTerminal implements Terminal
 
     public function write(string $data): void
     {
+        if ($this->outputStopped) {
+            throw new TerminalWriteException(0, \strlen($data), $this->outputStalled);
+        }
+
         $this->output .= $data;
     }
 
@@ -226,5 +234,19 @@ final class VirtualTerminal implements Terminal
     public function simulateInput(string $bytes): void
     {
         fwrite($this->writePipe, $bytes);
+    }
+
+    /**
+     * @param bool $stalled a stall (a slow link) rather than a failed write
+     */
+    public function simulateStoppedOutput(bool $stalled = false): void
+    {
+        $this->outputStopped = true;
+        $this->outputStalled = $stalled;
+    }
+
+    public function resumeOutput(): void
+    {
+        $this->outputStopped = false;
     }
 }
