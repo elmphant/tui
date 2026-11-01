@@ -21,6 +21,8 @@ final class InlineScreen
         Attr::REVERSE => '7',
         Attr::STRIKETHROUGH => '9',
     ];
+    // tmux copies the whole screen into its history when an erase starts at the top left, so it starts one column in.
+    private const ERASE_REGION = "\x1b[1C" . Ansi::ERASE_BELOW . "\r";
 
     /**
      * @var list<int> the cells written on each row
@@ -47,9 +49,7 @@ final class InlineScreen
 
         $taller = $backBuffer->height < $this->rowsTaken($backBuffer->width);
         // The hidden cursor rests at the start of the first row. A terminal that rewraps on a narrower width keeps it there.
-        $painted = "\r" . implode("\r\n", $rows)
-            . ($taller ? "\r\n" . Ansi::ERASE_BELOW . self::up($backBuffer->height) : self::up($backBuffer->height - 1))
-            . "\r";
+        $painted = "\r" . ($taller ? self::ERASE_REGION : '') . implode("\r\n", $rows) . self::up($backBuffer->height - 1) . "\r";
         $this->written = $written;
         $this->width = $backBuffer->width;
         $this->printedLast = false;
@@ -63,7 +63,7 @@ final class InlineScreen
      */
     public function printAbove(array $lines, int $width): void
     {
-        $printed = "\r" . Ansi::ERASE_BELOW;
+        $printed = "\r" . self::ERASE_REGION;
         foreach (explode("\n", implode("\n", $lines)) as $line) {
             $printed .= CharWidth::truncateToWidth(TerminalText::plain($line), $width) . "\r\n";
         }

@@ -42,6 +42,20 @@ final class InlineTerminalTest extends TestCase
     }
 
     #[Test]
+    public function aTerminalShorterThanTheRegionAndTallerAgainLeavesNoCopyOfTheRegion(): void
+    {
+        $screen = $this->started();
+        $before = $screen->withHistory();
+
+        $screen->resize(40, 2);
+        $screen->waitFor('your name');
+        $screen->resize(40, 10);
+        $screen->waitFor('Enter to finish');
+
+        self::assertSame($before, $screen->withHistory());
+    }
+
+    #[Test]
     public function aSuspendedRunLeavesItsRegionToTheShellAndDrawsAgainBelowWhatTheShellPrinted(): void
     {
         $this->screen = TmuxScreen::running("env PS1='$ ' bash --norc --noprofile -i", 40, 20);

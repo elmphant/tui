@@ -86,7 +86,7 @@ final class ProgramInlineTest extends TestCase
         Program::new(new RegionRecordingModel(answer: Cmd::batch(Cmd::println('✓ answered'), Cmd::quit())))
             ->withTerminal($terminal)->withInline()->start();
 
-        self::assertStringContainsString("\x1b[J✓ answered\r\n", $terminal->output());
+        self::assertStringContainsString("\x1b[J\r✓ answered\r\n", $terminal->output());
     }
 
     #[Test]

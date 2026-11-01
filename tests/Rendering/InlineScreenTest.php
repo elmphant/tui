@@ -57,16 +57,16 @@ final class InlineScreenTest extends TestCase
     }
 
     #[Test]
-    public function aShorterFrameErasesTheRowsTheTallerOneLeftBelowIt(): void
+    public function aShorterFrameErasesTheTallerOneBeforePaintingSoItNeverWritesBelowItsLastRow(): void
     {
         $terminal = new VirtualTerminal(10, 24);
         $screen = new InlineScreen($terminal);
         $screen->flush(self::frameOf('one', 'two', 'three'));
         $terminal->clearOutput();
 
-        $screen->flush(self::frameOf('one'));
+        $screen->flush(self::frameOf('one', 'two'));
 
-        self::assertStringContainsString("one\x1b[K\r\n\x1b[J\x1b[1A\r", $terminal->output());
+        self::assertSame(Ansi::SYNC_START . "\r\x1b[1C\x1b[J\rone\x1b[K\r\ntwo\x1b[K\x1b[1A\r" . Ansi::SYNC_END, $terminal->output());
     }
 
     #[Test]
@@ -147,7 +147,7 @@ final class InlineScreenTest extends TestCase
         $narrow->putString(0, 1, 'go');
         $screen->flush($narrow);
 
-        self::assertStringContainsString("go\x1b[K\r\n\x1b[J\x1b[2A\r", $terminal->output());
+        self::assertStringStartsWith(Ansi::SYNC_START . "\r\x1b[1C\x1b[J\rok\x1b[K\r\ngo\x1b[K\x1b[1A\r", $terminal->output());
     }
 
     #[Test]
@@ -163,7 +163,7 @@ final class InlineScreenTest extends TestCase
         $terminal->clearOutput();
         $screen->flush(self::frameOf('next'));
 
-        self::assertSame(Ansi::SYNC_START . "\r\x1b[J✓ done\r\n" . Ansi::SYNC_END, $printed);
+        self::assertSame(Ansi::SYNC_START . "\r\x1b[1C\x1b[J\r✓ done\r\n" . Ansi::SYNC_END, $printed);
         self::assertStringStartsWith(Ansi::SYNC_START . "\rnext", $terminal->output());
     }
 
