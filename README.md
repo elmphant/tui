@@ -89,9 +89,9 @@ Save it as `counter.php` and run `php counter.php`.
 ## How it works
 
 <picture>
-  <source media="(max-width: 700px)" srcset="diagrams/update-cycle-narrow.svg">
-  <img width="720" src="diagrams/update-cycle.svg"
-       alt="A message goes to update, which returns a new immutable model and maybe a command. view draws the widgets of that model, Screen sends only the changed cells to the terminal, and what the reader does next becomes the next message.">
+  <source media="(max-width: 700px)" srcset="diagrams/overview-narrow.svg">
+  <img width="720" src="diagrams/overview.svg"
+       alt="The framework turns keys from the terminal into messages for your update, which returns a new immutable model and a command. view draws that model's widgets, and Screen sends only the changes to the terminal. In the background the framework runs each command as a process or HTTP request and hands its result to update as the next message.">
 </picture>
 
 1. Something happens: a key, a click, a timer, a finished process. It arrives as
