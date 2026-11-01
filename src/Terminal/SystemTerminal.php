@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Terminal;
 
-use Elmphant\Tui\Text\TerminalText;
 use Throwable;
 use ValueError;
 
@@ -159,13 +158,12 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
 
     public function bell(): void
     {
-        $this->write("\x07");
+        $this->write(Ansi::BELL);
     }
 
     public function setTitle(string $title): void
     {
-        $sanitized = TerminalText::singleLine($title);
-        $this->write("\x1b]0;{$sanitized}\x07");
+        $this->write(Ansi::title($title));
     }
 
     /**
@@ -259,7 +257,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
 
     public function detectColorScheme(): ?ColorScheme
     {
-        $this->write("\033]11;?\033\\");
+        $this->write(Ansi::QUERY_BACKGROUND_COLOR);
 
         // Another reply, such as the kitty keyboard protocol's, can arrive first and in a read of its own.
         $response = '';

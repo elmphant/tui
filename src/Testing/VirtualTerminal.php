@@ -8,7 +8,6 @@ use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Terminal\ColorProfile;
 use Elmphant\Tui\Terminal\ColorScheme;
 use Elmphant\Tui\Terminal\Terminal;
-use Elmphant\Tui\Text\TerminalText;
 use RuntimeException;
 
 final class VirtualTerminal implements Terminal
@@ -85,7 +84,7 @@ final class VirtualTerminal implements Terminal
     public function showCursor(): void
     {
         $this->cursorVisible = true;
-        $this->write("\x1b[?25h");
+        $this->write(Ansi::SHOW_CURSOR);
     }
 
     public function isCursorVisible(): bool
@@ -147,13 +146,12 @@ final class VirtualTerminal implements Terminal
 
     public function bell(): void
     {
-        $this->write("\x07");
+        $this->write(Ansi::BELL);
     }
 
     public function setTitle(string $title): void
     {
-        $sanitized = TerminalText::singleLine($title);
-        $this->write("\x1b]0;{$sanitized}\x07");
+        $this->write(Ansi::title($title));
     }
 
     public function resizeTo(int $width, int $height): void

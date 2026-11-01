@@ -12,6 +12,18 @@ use PHPUnit\Framework\TestCase;
 final class AnsiTest extends TestCase
 {
     #[Test]
+    public function cursorUpMovesTheCursorUpByTheCount(): void
+    {
+        self::assertSame("\x1b[3A", Ansi::cursorUp(3));
+    }
+
+    #[Test]
+    public function aTitleIsKeptToOneLineSoItCannotEndTheSequenceEarly(): void
+    {
+        self::assertSame("\x1b]0;ab\x07", Ansi::title("a\nb"));
+    }
+
+    #[Test]
     public function cursorToRowStartProducesCorrectEscapeSequenceForRowZero(): void
     {
         self::assertSame("\x1b[1;1H", Ansi::cursorToRowStart(0));

@@ -17,6 +17,7 @@ final class Ansi
     public const RESET_STYLE = "\x1b[0m";
     public const HYPERLINK_END = "\x1b]8;;\x1b\\";
     public const ERASE_TO_LINE_END = "\x1b[K";
+    public const ERASE_BELOW = "\x1b[J";
     public const DEFAULT_CURSOR_SHAPE = "\x1b[0 q";
 
     public const ENTER_ALT_SCREEN = "\x1b[?1049h";
@@ -45,12 +46,20 @@ final class Ansi
     public const REPORT_CURSOR_POSITION = "\x1b[6n";
     public const CURSOR_TO_BOTTOM_RIGHT = "\x1b[9999;9999H";
 
+    public const QUERY_BACKGROUND_COLOR = "\x1b]11;?\x1b\\";
+    public const BELL = "\x07";
+
     public const SYNC_START = "\x1b[?2026h";
     public const SYNC_END = "\x1b[?2026l";
 
     public static function cursorTo(int $row, int $column): string
     {
         return "\x1b[" . ($row + 1) . ';' . ($column + 1) . 'H';
+    }
+
+    public static function cursorUp(int $count): string
+    {
+        return "\x1b[{$count}A";
     }
 
     public static function cursorDown(int $count): string
@@ -79,6 +88,11 @@ final class Ansi
     public static function hyperlink(string $url): string
     {
         return "\x1b]8;;" . TerminalText::singleLine($url) . "\x1b\\";
+    }
+
+    public static function title(string $title): string
+    {
+        return "\x1b]0;" . TerminalText::singleLine($title) . "\x07";
     }
 
     public static function cursorShape(CursorShape $shape): string
