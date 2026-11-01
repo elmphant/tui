@@ -11,20 +11,14 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\Screen;
-use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use SplQueue;
 
 final class ProgramModelContractTest extends TestCase
 {
@@ -53,19 +47,13 @@ final class ProgramModelContractTest extends TestCase
             {
             }
         };
-        $program = Program::new($model);
-        $reflection = new ReflectionClass($program);
-        /** @var SplQueue<Message> $queue */
-        $queue = new SplQueue();
-        $queue->enqueue(new TickMsg(1.0));
-        $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
-        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
-        $reflection->getMethod('drainMessageQueue')->invoke($program);
+        try {
+            Program::new($model)->withTerminal(new VirtualTerminal(80, 24))->start();
+            self::fail('The program must give up');
+        } catch (LogicException) {
+        }
 
-        self::assertSame(ProgramState::Stopping, $program->state());
         self::assertSame(10, $updates);
     }
 

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Runtime;
 
+use ArrayObject;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\CommandHandler;
@@ -17,8 +19,12 @@ use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Runtime\ShutdownAware;
 use Elmphant\Tui\Testing\VirtualTerminal;
+use Elmphant\Tui\Tests\Support\GuardedTerminal;
+use Elmphant\Tui\Tests\Support\TestMessage;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Revolt\EventLoop;
 
 final class ProgramQuitTest extends TestCase
 {
@@ -59,6 +65,61 @@ final class ProgramQuitTest extends TestCase
             ->start();
 
         self::assertSame(1, $handler->started);
+    }
+
+    #[Test]
+    public function noMessageReachesTheModelOnceItAskedToQuit(): void
+    {
+        $seen = new ArrayObject();
+
+        Program::new(new MessageRecordingModel($seen, quitsOnAnyMessage: true))->withTerminal(GuardedTerminal::of(40, 10))->start();
+
+        self::assertCount(1, $seen);
+    }
+
+    #[Test]
+    #[RequiresFunction('posix_kill')]
+    public function anInterruptStopsTheProgramWithoutTheModelHearingOfIt(): void
+    {
+        $seen = new ArrayObject();
+        EventLoop::delay(0.05, static function (): void {
+            posix_kill(posix_getpid(), SIGINT);
+        });
+
+        $program = Program::new(new MessageRecordingModel($seen, quitsOnAnyMessage: false))->withTerminal(GuardedTerminal::of(40, 10));
+        $started = microtime(true);
+        $program->start();
+
+        self::assertLessThan(1.0, microtime(true) - $started, 'the interrupt, not the guard, ended the program');
+        self::assertNotContains(QuitMsg::Quit, $seen->getArrayCopy());
+    }
+}
+
+final readonly class MessageRecordingModel implements Model
+{
+    /**
+     * @param ArrayObject<int, Message> $seen
+     */
+    public function __construct(
+        private ArrayObject $seen,
+        private bool $quitsOnAnyMessage,
+    ) {
+    }
+
+    public function init(): ?Cmd
+    {
+        return Cmd::batch(Cmd::message(new TestMessage('first')), Cmd::message(new TestMessage('second')));
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        $this->seen->append($message);
+
+        return new UpdateResult($this, $this->quitsOnAnyMessage ? Cmd::quit() : null);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
     }
 }
 

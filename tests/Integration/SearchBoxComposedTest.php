@@ -14,19 +14,15 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\Screen;
-use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Runtime\ProgramState;
-use Elmphant\Tui\Testing\VirtualTerminal;
+use Elmphant\Tui\Tests\Support\GuardedTerminal;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use SplQueue;
+use Revolt\EventLoop;
 
 final class SearchBoxComposedTest extends TestCase
 {
@@ -38,24 +34,14 @@ final class SearchBoxComposedTest extends TestCase
             SearchBox::new(),
             $recorder,
         );
-        $program = Program::new($model);
-        $queue = new SplQueue();
-        $queue->enqueue(new KeyMsg('t'));
-        $queue->enqueue(new KeyMsg('e'));
-        $queue->enqueue(new KeyMsg('a'));
-        $queue->enqueue(new KeyMsg(Key::Enter));
+        $terminal = GuardedTerminal::of(80, 24);
+        $terminal->simulateInput("tui\r");
+        EventLoop::delay(0.1, static fn () => $terminal->closeInput());
 
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('model')->setValue($program, $model);
-        $reflection->getProperty('messageQueue')->setValue($program, $queue);
-        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
-
-        $reflection->getMethod('drainMessageQueue')->invoke($program);
+        Program::new($model)->withTerminal($terminal)->start();
 
         self::assertSame(1, $recorder->submissions);
-        self::assertSame('tea', $recorder->query);
+        self::assertSame('tui', $recorder->query);
         self::assertInstanceOf(FromSearchBox::class, $recorder->received);
         self::assertInstanceOf(SearchSubmitted::class, $recorder->received->inner);
     }

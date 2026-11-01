@@ -123,6 +123,7 @@ final class Program
     private int $unhandledErrors = 0;
     private ?Throwable $lastUnhandledError = null;
     private ?float $drainDeadline = null;
+    private int $drainedThisTick = 0;
     private bool $resizePending = false;
     private bool $resizeNeedsScreenClear = false;
     private Rect $screenRect;
@@ -799,6 +800,7 @@ final class Program
     private function runTick(): void
     {
         $this->drainDeadline = null;
+        $this->drainedThisTick = 0;
         $this->handlePendingResize();
         $this->readInput();
 
@@ -823,11 +825,8 @@ final class Program
 
         $this->drainMessageQueue();
 
-        if ($this->isRunning()) {
-            $this->handlePendingResize();
-            if (!$this->messageQueue->isEmpty()) {
-                $this->drainMessageQueue();
-            }
+        if ($this->isRunning() && $this->handlePendingResize()) {
+            $this->drainMessageQueue();
         }
 
         if ($this->isRunning()) {
@@ -893,14 +892,16 @@ final class Program
         return $this->frames->nextDelay($this->clock->now());
     }
 
-    private function handlePendingResize(): void
+    private function handlePendingResize(): bool
     {
         if (!$this->resizePending) {
-            return;
+            return false;
         }
         $this->resizePending = false;
         $this->resizeNeedsScreenClear = true;
         $this->adoptTerminalSize();
+
+        return true;
     }
 
     private function tracedRenderFrame(): void
@@ -934,19 +935,20 @@ final class Program
     {
         $consecutiveErrors = 0;
         $screenRect = $this->drawnRect();
-        $processed = 0;
-        // Reuse the deadline after a resize re-drain so one tick cannot spend the budget twice.
+        // A resize re-drain continues the tick's budget, so one tick cannot spend it twice.
         $this->drainDeadline ??= $this->clock->now() + self::MAX_DRAIN_SECONDS;
         $deadline = $this->drainDeadline;
 
         $this->moveInputAheadOfTheBacklog();
 
-        while ($this->isRunning() && $processed < self::MAX_MESSAGES_PER_DRAIN && !$this->messageQueue->isEmpty()) {
+        $processed = 0;
+        while ($this->isRunning() && $this->drainedThisTick < self::MAX_MESSAGES_PER_DRAIN && !$this->messageQueue->isEmpty()) {
             if ($processed > 0 && $this->clock->now() >= $deadline) {
                 return;
             }
 
             ++$processed;
+            ++$this->drainedThisTick;
             $message = $this->messageQueue->dequeue();
 
             if ($message === QuitMsg::Quit) {
