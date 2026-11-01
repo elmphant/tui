@@ -16,6 +16,7 @@ enum EventLoopWatcher
     case Hangup;
     case Suspend;
     case Resumed;
+    case SizeRecheck;
     case Input;
     case EscapeFlush;
 }

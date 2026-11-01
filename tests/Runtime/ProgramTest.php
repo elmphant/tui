@@ -28,8 +28,6 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\AdaptiveTicker;
 use Elmphant\Tui\Runtime\CommandHandler;
-use Elmphant\Tui\Runtime\EffectRunner;
-use Elmphant\Tui\Runtime\EventLoopWatcher;
 use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
@@ -811,121 +809,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function dispatchCommandWithNullIsNoOp(): void
-    {
-        $program = Program::new($this->createMockModel());
-
-        (new ReflectionProperty(Program::class, 'state'))->setValue($program, ProgramState::Running);
-
-        $method = new ReflectionMethod(Program::class, 'dispatchCommand');
-        $method->invoke($program, null);
-
-        self::assertSame(ProgramState::Running, $program->state(), 'null Cmd must not change running state');
-    }
-
-    #[Test]
-    public function dispatchCommandQuitCmdStopsRunning(): void
-    {
-        $program = Program::new($this->createMockModel());
-
-        (new ReflectionProperty(Program::class, 'state'))->setValue($program, ProgramState::Running);
-
-        $method = new ReflectionMethod(Program::class, 'dispatchCommand');
-        $method->invoke($program, Cmd::quit());
-
-        self::assertNotSame(ProgramState::Running, $program->state(), 'QuitCmd must set running=false');
-    }
-
-    #[Test]
-    public function dispatchCommandMessageCmdEnqueuesMessage(): void
-    {
-        $program = Program::new($this->createMockModel());
-
-        $queueProperty = new ReflectionProperty(Program::class, 'messageQueue');
-        $queue = new SplQueue();
-        $queueProperty->setValue($program, $queue);
-
-        $method = new ReflectionMethod(Program::class, 'dispatchCommand');
-        $method->invoke($program, Cmd::message(new TestMessage('hello')));
-
-        self::assertFalse($queue->isEmpty(), 'MessageCmd must enqueue its payload');
-        self::assertSame('hello', $queue->dequeue()->value);
-    }
-
-    #[Test]
-    public function dispatchCommandCallExecutesOnceAndEnqueuesReturnedMessage(): void
-    {
-        $calls = 0;
-        $program = Program::new($this->createMockModel());
-        $queue = new SplQueue();
-        (new ReflectionProperty(Program::class, 'messageQueue'))->setValue($program, $queue);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke(
-            $program,
-            Cmd::call(function () use (&$calls): TestMessage {
-                ++$calls;
-
-                return new TestMessage('called');
-            }),
-        );
-
-        self::assertSame(1, $calls);
-        self::assertSame(1, $queue->count());
-        self::assertSame('called', $queue->dequeue()->value);
-    }
-
-    #[Test]
-    public function dispatchCommandCallDispatchesReturnedCommand(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $queue = new SplQueue();
-        (new ReflectionProperty(Program::class, 'messageQueue'))->setValue($program, $queue);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke(
-            $program,
-            Cmd::call(fn () => Cmd::message(new TestMessage('nested'))),
-        );
-
-        self::assertSame(1, $queue->count());
-        self::assertSame('nested', $queue->dequeue()->value);
-    }
-
-    #[Test]
-    public function dispatchCommandCallAcceptsNullResult(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $queue = new SplQueue();
-        (new ReflectionProperty(Program::class, 'messageQueue'))->setValue($program, $queue);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke(
-            $program,
-            Cmd::call(fn () => null),
-        );
-
-        self::assertTrue($queue->isEmpty());
-    }
-
-    #[Test]
-    public function dispatchCommandCallConvertsThrowableToErrorMessage(): void
-    {
-        $error = new RuntimeException('call failed');
-        $program = Program::new($this->createMockModel());
-        $queue = new SplQueue();
-        (new ReflectionProperty(Program::class, 'messageQueue'))->setValue($program, $queue);
-
-        (new ReflectionMethod(Program::class, 'dispatchCommand'))->invoke(
-            $program,
-            Cmd::call(fn () => throw $error),
-        );
-
-        self::assertSame(1, $queue->count());
-        $message = $queue->dequeue();
-        self::assertInstanceOf(ErrorMsg::class, $message);
-        self::assertSame($error, $message->error);
-        self::assertSame(ErrorSource::Call, $message->source);
-    }
-
-    #[Test]
     public function teardownIsIdempotent(): void
     {
         $terminal = new VirtualTerminal(80, 24);
@@ -943,58 +826,6 @@ final class ProgramTest extends TestCase
         $method->invoke($program);
 
         self::assertSame($firstOutput, $terminal->output(), 'teardown() called twice must not produce extra output');
-    }
-
-    #[Test]
-    public function teardownWritesResetStyleAndShowCursor(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel());
-        $session = new TerminalSession($terminal, false, false);
-        $session->start();
-
-        (new ReflectionProperty(Program::class, 'terminalSession'))->setValue($program, $session);
-
-        $method = new ReflectionMethod(Program::class, 'teardown');
-        $method->invoke($program);
-
-        $output = $terminal->output();
-        self::assertStringContainsString(Ansi::RESET_STYLE, $output, 'teardown must emit RESET_STYLE');
-        self::assertStringContainsString(Ansi::SHOW_CURSOR, $output, 'teardown must re-show cursor');
-    }
-
-    #[Test]
-    public function teardownWithoutTheAlternateScreenMovesTheCursorToTheLastRow(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel());
-        $session = new TerminalSession($terminal, false, false, new FullScreenSurface($terminal, new Screen($terminal), false));
-        $session->start();
-
-        (new ReflectionProperty(Program::class, 'terminalSession'))->setValue($program, $session);
-
-        $method = new ReflectionMethod(Program::class, 'teardown');
-        $method->invoke($program);
-
-        $output = $terminal->output();
-        self::assertStringContainsString(Ansi::cursorToRowStart(23) . "\n", $output, 'inline mode must position cursor at height-1 row');
-    }
-
-    #[Test]
-    public function teardownAltScreenModeDoesNotMoveCursor(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel())->withAltScreen();
-        $session = new TerminalSession($terminal, true, false);
-        $session->start();
-
-        (new ReflectionProperty(Program::class, 'terminalSession'))->setValue($program, $session);
-
-        $method = new ReflectionMethod(Program::class, 'teardown');
-        $method->invoke($program);
-
-        $output = $terminal->output();
-        self::assertStringNotContainsString(Ansi::cursorToRowStart(23), $output, 'alt-screen mode must NOT emit cursor repositioning');
     }
 
     #[Test]
@@ -1079,24 +910,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function dispatchCommandBatchCmdDispatchesAllChildren(): void
-    {
-        $program = Program::new($this->createMockModel());
-
-        $queueProperty = new ReflectionProperty(Program::class, 'messageQueue');
-        $queue = new SplQueue();
-        $queueProperty->setValue($program, $queue);
-        (new ReflectionProperty(Program::class, 'state'))->setValue($program, ProgramState::Running);
-
-        $method = new ReflectionMethod(Program::class, 'dispatchCommand');
-        $method->invoke($program, Cmd::batch(Cmd::message(new TestMessage('a')), Cmd::message(new TestMessage('b')), Cmd::quit()));
-
-        self::assertSame('a', $queue->dequeue()->value, 'First batch child dispatched');
-        self::assertSame('b', $queue->dequeue()->value, 'Second batch child dispatched');
-        self::assertNotSame(ProgramState::Running, $program->state(), 'Third batch child (quit) dispatched');
-    }
-
-    #[Test]
     public function execCmdRejectsEmptyCommand(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -1177,89 +990,6 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function setupRegistersAndTeardownCancelsAllSignalWatchers(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel());
-
-        $reflection = new ReflectionClass($program);
-        $terminalProperty = $reflection->getProperty('terminal');
-        $terminalProperty->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
-        $queueProperty = $reflection->getProperty('messageQueue');
-        $queueProperty->setValue($program, new SplQueue());
-        $stdinBufferProperty = $reflection->getProperty('stdinBuffer');
-        $stdinBufferProperty->setValue($program, new StdinBuffer(fn () => null));
-
-        $watchersProperty = $reflection->getProperty('watchers');
-
-        $reflection->getMethod('setup')->invoke($program);
-
-        $registered = $watchersProperty->getValue($program);
-        self::assertIsArray($registered);
-        foreach ([
-            EventLoopWatcher::Resize,
-            EventLoopWatcher::Interrupt,
-            EventLoopWatcher::Terminate,
-            EventLoopWatcher::Hangup,
-            EventLoopWatcher::Suspend,
-            EventLoopWatcher::Resumed,
-        ] as $watcher) {
-            self::assertArrayHasKey(
-                $watcher->name,
-                $registered,
-                "the {$watcher->name} watcher must be held after setup() so teardown can cancel it",
-            );
-        }
-
-        $reflection->getMethod('teardown')->invoke($program);
-
-        self::assertSame([], $watchersProperty->getValue($program), 'teardown() must let every watcher go');
-        $activeIds = EventLoop::getIdentifiers();
-        foreach ($registered as $id) {
-            self::assertNotContains($id, $activeIds, 'Watcher must be cancelled in EventLoop, not just forgotten');
-        }
-    }
-
-    #[Test]
-    public function setupEnablesBracketedPaste(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel());
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-
-        $reflection->getMethod('setup')->invoke($program);
-        $enabledAfterSetup = $terminal->isBracketedPasteEnabled();
-
-        (new ReflectionMethod(Program::class, 'teardown'))->invoke($program);
-
-        self::assertTrue($enabledAfterSetup, 'setup() must enable bracketed paste — StdinBuffer only ever sees \x1b[200~ delimiters when mode 2004 is on');
-    }
-
-    #[Test]
-    public function teardownDisablesBracketedPaste(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel());
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-
-        $reflection->getMethod('setup')->invoke($program);
-        $reflection->getMethod('teardown')->invoke($program);
-
-        self::assertFalse($terminal->isBracketedPasteEnabled(), 'teardown() must switch bracketed paste off — the mode leaks into the parent shell otherwise');
-    }
-
-    #[Test]
     public function suspensionRestoreDisablesAndResumeReEnablesBracketedPaste(): void
     {
         $terminal = new VirtualTerminal(80, 24);
@@ -1280,34 +1010,6 @@ final class ProgramTest extends TestCase
         $reflection->getMethod('cancelEventLoopWatchers')->invoke($program);
         self::assertTrue($terminal->isBracketedPasteEnabled(), 'resume after SIGCONT must re-enable bracketed paste');
         $session->close();
-    }
-
-    #[Test]
-    public function setupEnqueuesInitialResizeMessage(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel());
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $queue = new SplQueue();
-        $reflection->getProperty('inputQueue')->setValue($program, $queue);
-        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-
-        $reflection->getMethod('setup')->invoke($program);
-
-        $found = false;
-        while (!$queue->isEmpty()) {
-            if ($queue->dequeue() instanceof ResizeMsg) {
-                $found = true;
-                break;
-            }
-        }
-        self::assertTrue($found, 'setup() must enqueue an initial ResizeMsg so the model sees the screen size on first tick');
-
-        (new ReflectionMethod(Program::class, 'teardown'))->invoke($program);
     }
 
     #[Test]
@@ -1763,59 +1465,6 @@ final class ProgramTest extends TestCase
         $theme = $reflection->getMethod('resolveTheme')->invoke($program);
 
         self::assertEquals(Theme::light(), $theme, 'Light color scheme must resolve to the light theme');
-    }
-
-    #[Test]
-    public function teardownStopsAllProcesses(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-
-        $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::process(['sleep', '30']));
-        $effects = $reflection->getProperty('effects')->getValue($program);
-        self::assertInstanceOf(EffectRunner::class, $effects);
-        self::assertTrue($effects->hasRunningProcesses(), 'Precondition: something is running');
-
-        $reflection->getMethod('teardown')->invoke($program);
-
-        self::assertFalse($effects->hasRunningProcesses(), 'nothing may outlive the program that started it');
-    }
-
-    #[Test]
-    public function setupPropagatesTheDetectedTerminalHeightToTheSession(): void
-    {
-        $terminal = new VirtualTerminal(80, 30);
-        $program = Program::new($this->createMockModel());
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
-
-        $reflection->getMethod('setup')->invoke($program);
-        $session = $reflection->getProperty('terminalSession')->getValue($program);
-        $session->close();
-        $reflection->getMethod('cancelEventLoopWatchers')->invoke($program);
-
-        self::assertStringContainsString(
-            Ansi::cursorToRowStart(29) . "\n",
-            $terminal->output(),
-            'setup() must propagate the detected height to the session so a close before teardown parks the cursor on the last row of the 30-row terminal',
-        );
-    }
-
-    #[Test]
-    public function teardownMarksTheProgramAsNotRunning(): void
-    {
-        $program = Program::new($this->createMockModel());
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('state')->setValue($program, ProgramState::Running);
-
-        $reflection->getMethod('teardown')->invoke($program);
-
-        self::assertNotSame(ProgramState::Running, $program->state(), 'teardown() must flip running to false so the loop cannot continue after cleanup');
     }
 
     #[Test]

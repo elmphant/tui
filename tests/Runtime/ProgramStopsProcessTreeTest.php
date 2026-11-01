@@ -14,6 +14,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
+use Elmphant\Tui\Tests\Support\ScriptedModel;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -25,6 +26,23 @@ final class ProgramStopsProcessTreeTest extends TestCase
         $marker = sprintf('4243.%d', random_int(100000, 999999));
 
         Program::new(new ShellStartingModel($marker))->withTerminal(new VirtualTerminal(80, 24))->start();
+
+        self::assertSame([], self::sleepersMarked($marker));
+    }
+
+    #[Test]
+    public function aProcessStillRunningWhenTheProgramQuitsIsStopped(): void
+    {
+        $marker = sprintf('4246.%d', random_int(100000, 999999));
+
+        Program::new(new ScriptedModel(
+            render: static function (): void {
+            },
+            atStart: Cmd::batch(
+                Cmd::process(['sleep', $marker]),
+                Cmd::after(0.2, static fn () => Cmd::quit()),
+            ),
+        ))->withTerminal(new VirtualTerminal(80, 24))->start();
 
         self::assertSame([], self::sleepersMarked($marker));
     }

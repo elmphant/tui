@@ -531,12 +531,12 @@ final class Program
             }));
 
             // Recheck size after the first loop tick, when Revolt installs its signal handlers.
-            EventLoop::defer(function (): void {
+            $this->watch(EventLoopWatcher::SizeRecheck, EventLoop::defer(function (): void {
                 if ($this->state === ProgramState::Running && $this->terminal->size() !== [$this->screenRect->width, $this->screenRect->height]) {
                     $this->resizePending = true;
                     $this->tick();
                 }
-            });
+            }));
         } catch (UnsupportedFeatureException) {
             // Keep existing watchers if the loop driver cannot watch signals.
         }
