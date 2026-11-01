@@ -14,9 +14,12 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Screen;
+use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
+use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use LogicException;
@@ -47,6 +50,7 @@ final class SearchBoxComposedTest extends TestCase
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 

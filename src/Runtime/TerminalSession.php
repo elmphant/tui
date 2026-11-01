@@ -23,16 +23,12 @@ final class TerminalSession
     private bool $mouseTrackingActive = false;
     private bool $kittySupported = false;
     private bool $kittyProtocolActive = false;
-    private int $height = 24;
 
     public function __construct(
         private readonly Terminal $terminal,
         private readonly bool $useAltScreen,
         private readonly bool $useMouseTracking,
-        /**
-         * @var (Closure(): string)|null
-         */
-        private readonly ?Closure $parkBelow = null,
+        private readonly ?Surface $surface = null,
     ) {
     }
 
@@ -56,11 +52,6 @@ final class TerminalSession
             $this->close();
             throw $error;
         }
-    }
-
-    public function updateHeight(int $height): void
-    {
-        $this->height = max(1, $height);
     }
 
     public function enableKittyProtocol(): void
@@ -164,8 +155,9 @@ final class TerminalSession
 
         if ($hadActiveModes) {
             $this->attempt(fn () => $this->terminal->write(Ansi::RESET_STYLE . Ansi::DEFAULT_CURSOR_SHAPE));
-            if ($final && !$this->useAltScreen) {
-                $this->attempt(fn () => $this->terminal->write($this->parkBelow !== null ? ($this->parkBelow)() : Ansi::cursorToRowStart($this->height - 1) . "\n"));
+            if ($this->surface !== null) {
+                $surface = $this->surface;
+                $this->attempt(fn () => $this->terminal->write($final ? $surface->leave() : $surface->pause()));
             }
             $this->attempt($this->terminal->flush(...));
         }

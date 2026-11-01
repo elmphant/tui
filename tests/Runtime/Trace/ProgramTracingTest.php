@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\AdaptiveTicker;
+use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
@@ -209,7 +210,7 @@ final class ProgramTracingTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('model')->setValue($program, $this->tracedModel());
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(static fn (): ?string => null));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));

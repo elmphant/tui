@@ -13,6 +13,7 @@ use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Screen;
+use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\TerminalSession;
@@ -366,8 +367,7 @@ final class ProgramKittyTest extends TestCase
 
         $terminalProperty = new ReflectionProperty(Program::class, 'terminal');
         $terminalProperty->setValue($program, $terminal);
-        $screenProperty = new ReflectionProperty(Program::class, 'screen');
-        $screenProperty->setValue($program, new Screen($terminal));
+        (new ReflectionProperty(Program::class, 'surface'))->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $messageQueueProperty = new ReflectionProperty(Program::class, 'messageQueue');
         $messageQueueProperty->setValue($program, new SplQueue());
         (new ReflectionProperty(Program::class, 'terminalSession'))->setValue($program, $session);

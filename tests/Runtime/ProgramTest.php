@@ -35,6 +35,7 @@ use Elmphant\Tui\Runtime\Clock;
 use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\EffectRunner;
 use Elmphant\Tui\Runtime\EventLoopWatcher;
+use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
@@ -967,6 +968,7 @@ final class ProgramTest extends TestCase
             $queue->enqueue(new TickMsg(0.0));
         }
         $queueProperty->setValue($program, $queue);
+        (new ReflectionProperty(Program::class, 'surface'))->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $method = new ReflectionMethod(Program::class, 'drainMessageQueue');
         $method->invoke($program);
@@ -1014,11 +1016,11 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function teardownInlineModeMovesCursorToLastRow(): void
+    public function teardownWithoutTheAlternateScreenMovesTheCursorToTheLastRow(): void
     {
         $terminal = new VirtualTerminal(80, 24);
         $program = Program::new($this->createMockModel());
-        $session = new TerminalSession($terminal, false, false);
+        $session = new TerminalSession($terminal, false, false, new FullScreenSurface($terminal, new Screen($terminal), false));
         $session->start();
 
         (new ReflectionProperty(Program::class, 'terminalSession'))->setValue($program, $session);
@@ -1141,6 +1143,7 @@ final class ProgramTest extends TestCase
         $tickMsg = new TickMsg(0.0);
         $queue->enqueue($tickMsg);
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -1181,6 +1184,7 @@ final class ProgramTest extends TestCase
         $queue->enqueue(new TestMessage('first'));
         $queue->enqueue(new TestMessage('second'));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -1311,6 +1315,7 @@ final class ProgramTest extends TestCase
         $queueProperty = $reflection->getProperty('messageQueue');
         $modelProperty = $reflection->getProperty('model');
         $drainMethod = $reflection->getMethod('drainMessageQueue');
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $queue = new SplQueue();
         $queue->enqueue(new TestMessage('trigger'));
@@ -1408,8 +1413,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $terminalProperty = $reflection->getProperty('terminal');
         $terminalProperty->setValue($program, $terminal);
-        $screenProperty = $reflection->getProperty('screen');
-        $screenProperty->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $queueProperty = $reflection->getProperty('messageQueue');
         $queueProperty->setValue($program, new SplQueue());
         $stdinBufferProperty = $reflection->getProperty('stdinBuffer');
@@ -1453,7 +1457,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
 
@@ -1473,7 +1477,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
 
@@ -1493,7 +1497,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('terminalSession')->setValue($program, $session);
 
@@ -1514,7 +1518,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $queue = new SplQueue();
         $reflection->getProperty('inputQueue')->setValue($program, $queue);
@@ -1560,7 +1564,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $screen = new Screen($terminal);
-        $reflection->getProperty('screen')->setValue($program, $screen);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, $screen, false));
         $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $queue = new SplQueue();
@@ -1619,6 +1623,7 @@ final class ProgramTest extends TestCase
             $queue->enqueue(new TickMsg(0.0));
         }
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -1660,6 +1665,7 @@ final class ProgramTest extends TestCase
             $queue->enqueue(new TickMsg(0.0));
         }
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -1684,6 +1690,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -1728,6 +1735,7 @@ final class ProgramTest extends TestCase
         $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
         $queue->enqueue(new TickMsg(0.0));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -1773,6 +1781,7 @@ final class ProgramTest extends TestCase
         $queue->enqueue(new ErrorMsg(new RuntimeException('original'), ErrorSource::Render));
         $queue->enqueue(new TickMsg(0.0));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -1818,6 +1827,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queue->enqueue(new ErrorMsg(new RuntimeException('test'), ErrorSource::Update));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2064,6 +2074,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queue->enqueue(new TickMsg(0.0));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2109,6 +2120,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queue->enqueue(new TickMsg(0.0));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2143,6 +2155,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queue->enqueue(new TickMsg(0.0));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2188,6 +2201,7 @@ final class ProgramTest extends TestCase
         $queue->enqueue(new TickMsg(1.0));
         $queue->enqueue(new TickMsg(2.0));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2231,6 +2245,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queue->enqueue(new MouseMsg(3, 4, MouseAction::Press, MouseButton::Left));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2272,6 +2287,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queue->enqueue(new KeyMsg('x'));
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2437,6 +2453,7 @@ final class ProgramTest extends TestCase
             $queue->enqueue(new TestMessage((string)$index));
         }
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2483,6 +2500,7 @@ final class ProgramTest extends TestCase
             $queue->enqueue(new TestMessage((string)$index));
         }
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -2513,7 +2531,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($throwingRenderModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingRenderModel);
@@ -2737,7 +2755,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($throwingRenderModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingRenderModel);
@@ -2766,7 +2784,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
@@ -2822,7 +2840,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
@@ -2877,7 +2895,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $model);
@@ -2897,7 +2915,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(100, 24));
         $oldBuffer = new Frame(80, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $oldBuffer);
@@ -2940,7 +2958,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($sequenceModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $sequenceModel);
@@ -2983,7 +3001,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(20, 5));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(20, 5));
         $reflection->getProperty('model')->setValue($program, $model);
@@ -3031,7 +3049,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(20, 5));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(20, 5));
         $reflection->getProperty('model')->setValue($program, $model);
@@ -3070,7 +3088,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($partialThrowingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $partialThrowingModel);
@@ -3089,7 +3107,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(100, 30));
         $oldBuffer = new Frame(80, 24);
         $reflection->getProperty('backBuffer')->setValue($program, $oldBuffer);
@@ -3120,7 +3138,7 @@ final class ProgramTest extends TestCase
 
         $frame = new Frame(80, 24);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, $frame);
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
@@ -3156,7 +3174,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($throwingModel);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $throwingModel);
@@ -3253,7 +3271,7 @@ final class ProgramTest extends TestCase
 
         $program = $this->createRenderablePrgram($errorObservingModel);
         $reflection = new ReflectionClass($program);
-        $reflection->getProperty('screen')->setValue($program, new Screen($stalledOutput));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen($stalledOutput), false));
         $clock = new TestClock(1.0);
         $reflection->getProperty('clock')->setValue($program, $clock);
         $ticker = new AdaptiveTicker(fn () => null);
@@ -3300,7 +3318,7 @@ final class ProgramTest extends TestCase
 
         $program = $this->createRenderablePrgram($model);
         $reflection = new ReflectionClass($program);
-        $reflection->getProperty('screen')->setValue($program, new Screen($stalledOutput));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen($stalledOutput), false));
         $clock = new TestClock(1.0);
         $reflection->getProperty('clock')->setValue($program, $clock);
         $ticker = new AdaptiveTicker(fn () => null);
@@ -3902,8 +3920,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $screen = new Screen($terminal);
-        $reflection->getProperty('screen')->setValue($program, $screen);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
@@ -3931,7 +3948,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, $frame);
         $reflection->getProperty('model')->setValue($program, new class implements Model {
@@ -3985,7 +4002,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
 
@@ -3999,98 +4016,6 @@ final class ProgramTest extends TestCase
             $terminal->output(),
             'setup() must propagate the detected height to the session so a close before teardown parks the cursor on the last row of the 30-row terminal',
         );
-    }
-
-    #[Test]
-    public function resumePropagatesTheReReadTerminalHeightToTheSession(): void
-    {
-        $terminal = new VirtualTerminal(80, 40);
-        $program = Program::new($this->createMockModel());
-        $session = new TerminalSession($terminal, false, false);
-        $session->start();
-        $session->suspend();
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('terminalSession')->setValue($program, $session);
-
-        $reflection->getMethod('resume')->invoke($program);
-        $reflection->getMethod('cancelEventLoopWatchers')->invoke($program);
-        $session->close();
-
-        self::assertStringContainsString(
-            Ansi::cursorToRowStart(39) . "\n",
-            $terminal->output(),
-            'resume() must push the re-read terminal height into the session so the final cursor lands on the last row of the 40-row terminal',
-        );
-    }
-
-    #[Test]
-    public function teardownPushesTheCurrentHeightIntoTheSessionBeforeClosing(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel());
-        $session = new TerminalSession($terminal, false, false);
-        $session->start();
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('terminalSession')->setValue($program, $session);
-        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 40));
-
-        $reflection->getMethod('teardown')->invoke($program);
-
-        self::assertStringContainsString(
-            Ansi::cursorToRowStart(39) . "\n",
-            $terminal->output(),
-            'teardown() must hand the latest height to the session so the shell prompt continues below the UI, not inside it',
-        );
-    }
-
-    #[Test]
-    public function handlePendingResizePushesTheNewHeightIntoTheSession(): void
-    {
-        $terminal = new VirtualTerminal(80, 35);
-        $program = Program::new($this->createMockModel());
-        $session = new TerminalSession($terminal, false, false);
-        $session->start();
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
-        $reflection->getProperty('terminalSession')->setValue($program, $session);
-        $reflection->getProperty('resizePending')->setValue($program, true);
-
-        $reflection->getMethod('handlePendingResize')->invoke($program);
-        $session->close();
-
-        self::assertStringContainsString(
-            Ansi::cursorToRowStart(34) . "\n",
-            $terminal->output(),
-            'A resize must propagate the new height to the session so the final cursor row matches the resized terminal',
-        );
-    }
-
-    #[Test]
-    public function secondTeardownLeavesTheSessionHeightUntouched(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $program = Program::new($this->createMockModel());
-        $session = new TerminalSession($terminal, false, false);
-        $session->start();
-
-        $reflection = new ReflectionClass($program);
-        $reflection->getProperty('terminalSession')->setValue($program, $session);
-
-        $teardown = $reflection->getMethod('teardown');
-        $teardown->invoke($program);
-
-        $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 99));
-        $teardown->invoke($program);
-
-        $sessionHeight = (new ReflectionProperty(TerminalSession::class, 'height'))->getValue($session);
-        self::assertSame(24, $sessionHeight, 'teardown() must return before its finally block once already stopped — a second call must not push a new height into the closed session');
     }
 
     #[Test]
@@ -4161,6 +4086,7 @@ final class ProgramTest extends TestCase
         $queue = new SplQueue();
         $queue->enqueue(QuitMsg::Quit);
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -4197,6 +4123,7 @@ final class ProgramTest extends TestCase
             $queue->enqueue(new TickMsg(0.0));
         }
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
@@ -4243,7 +4170,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
         $reflection->getProperty('renderPass')->setValue($program, RenderPass::new(Theme::dark()));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
@@ -4580,7 +4507,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($model);
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $model);
@@ -4603,7 +4530,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
 
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('screen')->setValue($program, new Screen($terminal));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
         $reflection->getProperty('stdinBuffer')->setValue($program, new StdinBuffer(fn () => null));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));

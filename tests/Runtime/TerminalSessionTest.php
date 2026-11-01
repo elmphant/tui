@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Runtime;
 
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\InlineScreen;
+use Elmphant\Tui\Rendering\Screen;
+use Elmphant\Tui\Runtime\FullScreenSurface;
+use Elmphant\Tui\Runtime\InlineSurface;
 use Elmphant\Tui\Runtime\ShutdownRestorer;
 use Elmphant\Tui\Runtime\TerminalSession;
 use Elmphant\Tui\Runtime\TerminalSessionState;
@@ -164,12 +169,12 @@ final class TerminalSessionTest extends TestCase
     }
 
     #[Test]
-    public function closeIsIdempotentAndInlineCleanupUsesTheCurrentHeight(): void
+    public function closeIsIdempotentAndLeavesTheCursorWhereTheSurfaceSays(): void
     {
-        $terminal = new VirtualTerminal(80, 24);
-        $session = new TerminalSession($terminal, false, false);
+        $terminal = new VirtualTerminal(80, 42);
+        $surface = new FullScreenSurface($terminal, new Screen($terminal), false);
+        $session = new TerminalSession($terminal, false, false, $surface);
         $session->start();
-        $session->updateHeight(42);
 
         $session->close();
         $firstOutput = $terminal->output();
@@ -305,31 +310,35 @@ final class TerminalSessionTest extends TestCase
     }
 
     #[Test]
-    public function updateHeightClampsTheHeightToAtLeastOneRow(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-        $session = new TerminalSession($terminal, false, false);
-        $session->start();
-        $session->updateHeight(0);
-
-        $session->close();
-
-        self::assertStringContainsString(Ansi::cursorToRowStart(0) . "\n", $terminal->output());
-    }
-
-    #[Test]
     public function suspendDoesNotMoveTheCursorToTheBottomOfTheScreen(): void
     {
-        $terminal = new VirtualTerminal(80, 24);
-        $session = new TerminalSession($terminal, false, false);
+        $terminal = new VirtualTerminal(80, 7);
+        $surface = new FullScreenSurface($terminal, new Screen($terminal), false);
+        $session = new TerminalSession($terminal, false, false, $surface);
         $session->start();
-        $session->updateHeight(7);
         $terminal->clearOutput();
 
         $session->suspend();
 
         self::assertStringContainsString(Ansi::RESET_STYLE, $terminal->output());
         self::assertStringNotContainsString(Ansi::cursorToRowStart(6), $terminal->output());
+
+        $session->close();
+    }
+
+    #[Test]
+    public function suspendingAnInlineSessionParksTheCursorBelowTheRegionForTheShell(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $screen = new InlineScreen($terminal);
+        $screen->flush(new Frame(80, 3));
+        $session = new TerminalSession($terminal, false, false, new InlineSurface($screen));
+        $session->start();
+        $terminal->clearOutput();
+
+        $session->suspend();
+
+        self::assertStringContainsString("\x1b[2B\r\n", $terminal->output());
 
         $session->close();
     }

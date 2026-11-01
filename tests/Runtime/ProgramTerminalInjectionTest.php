@@ -103,7 +103,7 @@ final class ProgramTerminalInjectionTest extends TestCase
 
         Program::new($model)->withTerminal($terminal)->start();
 
-        self::assertSame(1, $terminal->sizeCallCount());
+        self::assertStringNotContainsString("\x1b[6n", $terminal->output());
     }
 
     #[Test]

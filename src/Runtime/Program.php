@@ -93,7 +93,7 @@ final class Program
     private array $commandHandlers = [];
 
     private Terminal $terminal;
-    private Screen|InlineScreen $screen;
+    private Surface $surface;
     /**
      * @var SplQueue<Message>
      */
@@ -352,9 +352,9 @@ final class Program
 
         try {
             $this->terminal = $this->injectedTerminal ?? new SystemTerminal();
-            $this->screen = $this->useInline
-                ? new InlineScreen($this->terminal, $this->resolveColorProfile())
-                : new Screen($this->terminal, $this->resolveColorProfile());
+            $this->surface = $this->useInline
+                ? new InlineSurface(new InlineScreen($this->terminal, $this->resolveColorProfile()))
+                : new FullScreenSurface($this->terminal, new Screen($this->terminal, $this->resolveColorProfile()), $this->useAltScreen, $this->tracer);
             $this->messageQueue = new SplQueue();
             $this->inputQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();
@@ -374,8 +374,10 @@ final class Program
             if ($this->isRunning()) {
                 $this->loop();
             }
-            if ($this->screen instanceof InlineScreen && !$this->screen->printedLast() && $this->fatalError === null) {
-                $this->renderFrame();
+            if ($this->fatalError === null) {
+                $this->surface->finish(function (): void {
+                    $this->renderFrame();
+                });
             }
             if ($this->model instanceof ShutdownAware) {
                 $this->model->onShutdown();
@@ -452,7 +454,7 @@ final class Program
             $this->terminal,
             $this->useAltScreen,
             $this->useMouseTracking,
-            $this->screen instanceof InlineScreen ? $this->screen->parkBelow(...) : null,
+            $this->surface,
         );
         $this->terminalSession->start();
         $this->terminal->queryKittyProtocol();
@@ -563,7 +565,7 @@ final class Program
 
         $this->watch(EventLoopWatcher::Suspend, EventLoop::onSignal(SIGTSTP, fn () => $this->suspend()));
 
-        $this->screen->forget();
+        $this->surface->forget();
         $this->adoptTerminalSize();
     }
 
@@ -571,7 +573,6 @@ final class Program
     {
         [$width, $height] = $this->terminal->size();
         $this->screenRect = Rect::fromSize($width, $height);
-        $this->terminalSession?->updateHeight($height);
         $this->backBuffer = new Frame($width, $height);
         $this->inputQueue->enqueue(new ResizeMsg($width, $height));
         $this->frames->markDirty();
@@ -618,7 +619,6 @@ final class Program
 
             $this->effects?->shutdown();
         } finally {
-            $this->terminalSession?->updateHeight($this->screenRect->height);
             $this->terminalSession?->close();
             $this->flushTrace();
         }
@@ -1192,13 +1192,7 @@ final class Program
 
     private function drawnRect(): Rect
     {
-        if (!$this->useInline || !$this->model instanceof SizesItsRegion) {
-            return $this->screenRect;
-        }
-
-        $wanted = $this->model->wantedHeight($this->screenRect->width);
-
-        return Rect::fromSize($this->screenRect->width, max(1, min($wanted, $this->screenRect->height)));
+        return $this->surface->area($this->screenRect, $this->model);
     }
 
     private function renderFrame(): bool
@@ -1216,7 +1210,7 @@ final class Program
 
         if ($this->resizeNeedsScreenClear) {
             $this->resizeNeedsScreenClear = false;
-            $this->screen->forget();
+            $this->surface->forget();
         }
 
         $pass->begin($this->clock->now());
@@ -1233,7 +1227,7 @@ final class Program
             $this->toasts->drawOver($frame, $pass->context);
             $this->keyHelp->drawOver($frame, $pass->context, $model, $this->focus);
             $this->paintedAt = $this->clock->now();
-            $this->screen->flush($frame);
+            $this->surface->flush($frame);
         } catch (Throwable $error) {
             $this->frames->dropped($this->clock->now());
             // A slow ssh link or a laptop waking up stalls output for seconds; that frame is dropped, not fatal.
@@ -1423,13 +1417,7 @@ final class Program
 
     private function printAbove(PrintlnCmd $println): void
     {
-        if (!$this->screen instanceof InlineScreen) {
-            $this->tracer?->record(TraceEvent::Log, ['message' => 'Cmd::println() prints only in an inline program', 'lines' => $println->lines]);
-
-            return;
-        }
-
-        $this->screen->printAbove($println->lines, $this->screenRect->width);
+        $this->surface->printAbove($println->lines, $this->screenRect->width);
         $this->frames->markDirty();
     }
 

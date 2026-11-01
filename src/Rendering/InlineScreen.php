@@ -79,13 +79,6 @@ final class InlineScreen
         return $this->printedLast;
     }
 
-    /**
-     * Each frame repaints the whole region.
-     */
-    public function forget(): void
-    {
-    }
-
     public function parkBelow(): string
     {
         if ($this->written === []) {

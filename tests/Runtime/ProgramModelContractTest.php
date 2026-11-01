@@ -14,6 +14,8 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\TickMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Screen;
+use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
@@ -59,6 +61,7 @@ final class ProgramModelContractTest extends TestCase
         $reflection->getProperty('model')->setValue($program, $model);
         $reflection->getProperty('messageQueue')->setValue($program, $queue);
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface(new VirtualTerminal(80, 24), new Screen(new VirtualTerminal(80, 24)), false));
 
         $reflection->getMethod('drainMessageQueue')->invoke($program);
 
