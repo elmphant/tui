@@ -34,7 +34,17 @@ final class InlineScreenTest extends TestCase
     }
 
     #[Test]
-    public function theNextFrameGoesBackUpToTheFirstRowBeforeItPaints(): void
+    public function aFrameLeavesTheCursorAtTheStartOfItsFirstRowWhereNoRewrappingCanMoveIt(): void
+    {
+        $terminal = new VirtualTerminal(10, 24);
+
+        (new InlineScreen($terminal))->flush(self::frameOf('one', 'two', 'three'));
+
+        self::assertStringEndsWith("three\x1b[K\x1b[2A\r" . Ansi::SYNC_END, $terminal->output());
+    }
+
+    #[Test]
+    public function theNextFrameStartsWhereTheLastLeftTheCursor(): void
     {
         $terminal = new VirtualTerminal(10, 24);
         $screen = new InlineScreen($terminal);
@@ -43,8 +53,7 @@ final class InlineScreenTest extends TestCase
 
         $screen->flush(self::frameOf('one', 'two', 'four'));
 
-        self::assertStringStartsWith(Ansi::SYNC_START . "\x1b[2A\r", $terminal->output());
-        self::assertSame(2, substr_count($terminal->output(), "\r\n"));
+        self::assertStringStartsWith(Ansi::SYNC_START . "\rone", $terminal->output());
     }
 
     #[Test]
@@ -57,7 +66,7 @@ final class InlineScreenTest extends TestCase
 
         $screen->flush(self::frameOf('one'));
 
-        self::assertStringContainsString("one\x1b[K\r\n\x1b[J\x1b[1A", $terminal->output());
+        self::assertStringContainsString("one\x1b[K\r\n\x1b[J\x1b[1A\r", $terminal->output());
     }
 
     #[Test]
@@ -98,37 +107,47 @@ final class InlineScreenTest extends TestCase
     }
 
     #[Test]
-    public function theVisibleCursorIsReachedFromTheLastRowAndTheNextFrameGoesUpFromIt(): void
+    public function theCaretIsDrawnAsAReversedCellAndTheTerminalCursorStaysHidden(): void
     {
         $terminal = new VirtualTerminal(10, 24);
-        $screen = new InlineScreen($terminal);
-        $frame = self::frameOf('one', 'two', 'three');
-        $frame->cursorPosition = new CursorPosition(1, 4, CursorShape::SteadyBar);
+        $frame = self::frameOf('one', 'two');
+        $frame->cursorPosition = new CursorPosition(1, 1, CursorShape::SteadyBar);
 
-        $screen->flush($frame);
-        $placed = $terminal->output();
-        $terminal->clearOutput();
-        $screen->flush(self::frameOf('one', 'two', 'three'));
+        (new InlineScreen($terminal))->flush($frame);
 
-        self::assertStringContainsString("three\x1b[K\x1b[1A\r\x1b[4C" . Ansi::cursorShape(CursorShape::SteadyBar) . Ansi::SHOW_CURSOR, $placed);
-        self::assertStringStartsWith(Ansi::SYNC_START . "\x1b[1A\r", $terminal->output());
+        self::assertStringContainsString("\r\nt\x1b[0;7;39;49mw\x1b[0mo\x1b[K", $terminal->output());
+        self::assertStringNotContainsString(Ansi::SHOW_CURSOR, $terminal->output());
     }
 
     #[Test]
-    public function parkingFromTheSecondRowOfAFiveRowRegionGoesDownThreeRowsToTheLineBelow(): void
+    public function parkingFromAFiveRowRegionGoesDownFourRowsToTheLineBelow(): void
     {
         $screen = new InlineScreen(new VirtualTerminal(10, 24));
-        $frame = self::frameOf('1', '2', '3', '4', '5');
-        $frame->cursorPosition = new CursorPosition(1, 3, CursorShape::SteadyBar);
-        $screen->flush($frame);
+        $screen->flush(self::frameOf('1', '2', '3', '4', '5'));
 
-        self::assertSame("\x1b[3B\r\n", $screen->parkBelow());
+        self::assertSame("\x1b[4B\r\n", $screen->parkBelow());
     }
 
     #[Test]
     public function parkingBeforeAnyFrameIsACarriageReturnAlone(): void
     {
         self::assertSame("\r", (new InlineScreen(new VirtualTerminal(10, 24)))->parkBelow());
+    }
+
+    #[Test]
+    public function afterTheTerminalNarrowsTheRowsItsRewrappingAddedAreErased(): void
+    {
+        $terminal = new VirtualTerminal(10, 24);
+        $screen = new InlineScreen($terminal);
+        $screen->flush(self::frameOf('abcdefgh', 'xy'));
+        $terminal->clearOutput();
+
+        $narrow = new Frame(4, 2);
+        $narrow->putString(0, 0, 'ok');
+        $narrow->putString(0, 1, 'go');
+        $screen->flush($narrow);
+
+        self::assertStringContainsString("go\x1b[K\r\n\x1b[J\x1b[2A\r", $terminal->output());
     }
 
     #[Test]
@@ -144,7 +163,7 @@ final class InlineScreenTest extends TestCase
         $terminal->clearOutput();
         $screen->flush(self::frameOf('next'));
 
-        self::assertSame(Ansi::SYNC_START . "\x1b[1A\r\x1b[J✓ done\r\n" . Ansi::SYNC_END, $printed);
+        self::assertSame(Ansi::SYNC_START . "\r\x1b[J✓ done\r\n" . Ansi::SYNC_END, $printed);
         self::assertStringStartsWith(Ansi::SYNC_START . "\rnext", $terminal->output());
     }
 

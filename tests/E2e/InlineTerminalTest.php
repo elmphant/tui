@@ -27,6 +27,20 @@ final class InlineTerminalTest extends TestCase
         );
     }
 
+    #[Test]
+    public function narrowingTheTerminalAndWideningItAgainLeavesNoCopyOfTheRegion(): void
+    {
+        $screen = $this->started();
+        $before = $screen->withHistory();
+
+        $screen->resize(10, 10);
+        $screen->waitFor("Enter to\nfinish");
+        $screen->resize(40, 10);
+        $screen->waitFor('Enter to finish');
+
+        self::assertSame($before, $screen->withHistory());
+    }
+
     protected function setUp(): void
     {
         if (!TmuxScreen::available()) {
