@@ -74,6 +74,18 @@ final class ChordTest extends TestCase
     }
 
     #[Test]
+    public function aHeldKeyIsHandedOnAloneOnceHalfASecondPasses(): void
+    {
+        $list = ListView::fromStrings(['one', 'two', 'three'])->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['g']]));
+        $harness = ModelHarness::for(new ChordListApp($list), 30, 8)->initialize()->press('g');
+
+        $waiting = $harness->advance(0.4)->model()->list->cursor();
+        $handed = $harness->advance(0.2)->model()->list->cursor();
+
+        self::assertSame([0, 1], [$waiting, $handed]);
+    }
+
+    #[Test]
     public function aKeyThatDoesNotGoOnWithTheChordComesAfterTheHeldKey(): void
     {
         $list = ListView::fromStrings(['one', 'two', 'three'])->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['g']]));

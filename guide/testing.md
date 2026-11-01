@@ -43,6 +43,7 @@ $app->fail('load', 'timed out');                  // ErrorMsg from that command
 $app->emit('rows', new RowsLoaded([]));           // what your own handler would $emit
 $app->runCalls();                                 // run the Cmd::call()s so far
 $app->runFibers();                                // run the Cmd::fiber()s still waiting
+$app->advance(1.5);                               // spinners turn, toasts expire, a held chord key goes on alone
 ```
 
 Answering a command the app never started throws, so a wrong guess in the test

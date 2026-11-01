@@ -80,6 +80,7 @@ final class ModelHarness
     private ChordTracker $chordTracker;
     private KeyHelpOverlay $keyHelp;
     private Toasts $toasts;
+    private float $now = 0.0;
 
     /**
      * @var list<Cmd> what the last action asked for, batches and wraps taken apart
@@ -175,7 +176,7 @@ final class ModelHarness
         $model = $this->model;
         if ($routed instanceof KeyMsg && $model instanceof BindsChords) {
             $this->settleFocus();
-            $keys = $this->chordTracker->feed($routed, $model->chords($this->focus), 0.0);
+            $keys = $this->chordTracker->feed($routed, $model->chords($this->focus), $this->now);
 
             if ($keys !== [$routed]) {
                 foreach ($keys as $key) {
@@ -440,6 +441,30 @@ final class ModelHarness
     }
 
     /**
+     * Moves the clock, so animations turn, toasts expire and a held chord key is
+     * handed on alone. Ticks and timers still wait for the test to answer them.
+     *
+     * @return self<TModel>
+     */
+    public function advance(float $seconds): self
+    {
+        $this->issued = [];
+        $this->now += max(0.0, $seconds);
+        $this->toasts->expire($this->now);
+        ++$this->depth;
+
+        try {
+            foreach ($this->chordTracker->expired($this->now) as $key) {
+                $this->handled($key);
+            }
+        } finally {
+            --$this->depth;
+        }
+
+        return $this;
+    }
+
+    /**
      * @return TModel
      */
     public function model(): Model
@@ -482,7 +507,7 @@ final class ModelHarness
         $frame = new Frame($this->area->width, $this->area->height);
         $frame->clear($this->pass->context->theme->base->backgroundValue());
 
-        $this->pass->begin(0.0);
+        $this->pass->begin($this->now);
         $this->pass->focus->focusOn($this->focus);
         $this->model->render($frame, $this->pass);
         $this->toasts->drawOver($frame, $this->pass->context);
@@ -615,7 +640,7 @@ final class ModelHarness
             $this->fibers[] = ['command' => $command, 'wrap' => $wrap, 'id' => $command->id === null ? null : ($scope === null ? $command->id : $command->id->within($scope))];
         }
         if ($command instanceof ToastCmd) {
-            $this->toasts->show($command, 0.0);
+            $this->toasts->show($command, $this->now);
 
             return;
         }

@@ -34,6 +34,26 @@ use Revolt\EventLoop;
 final class ToastTest extends TestCase
 {
     #[Test]
+    public function aToastInTheHarnessLeavesOnceTheTestLetsItsSecondsPass(): void
+    {
+        $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withSeconds(3)]), 40, 6)->initialize()->press('s');
+
+        $stillThere = $driven->advance(2.9)->renderScreen()->find('Saved');
+        $gone = $driven->advance(0.2)->renderScreen()->find('Saved');
+
+        self::assertNotNull($stillThere);
+        self::assertNull($gone);
+    }
+
+    #[Test]
+    public function theHarnessClockNeverRunsBackwards(): void
+    {
+        $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withSeconds(3)]), 40, 6)->initialize()->press('s');
+
+        self::assertNull($driven->advance(-10)->advance(3.1)->renderScreen()->find('Saved'));
+    }
+
+    #[Test]
     public function aToastIsABoxInTheTopRightCornerWithItsTitleInTheBorder(): void
     {
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved 3 pages')->withTitle('Done')->withWidth(20)]), 40, 6)

@@ -90,8 +90,8 @@ $command = Cmd::toast('Saved 3 pages')
 
 Several toasts in one corner stack, the newest nearest the corner. A click on
 a toast closes it, and the click does not reach your app. The border and title
-take the theme's colour for the severity. `ModelHarness` draws toasts too, but
-its clock never moves, so there a toast stays until it is clicked.
+take the theme's colour for the severity. `ModelHarness` draws toasts too. Its
+clock stands still until a test calls `advance($seconds)`.
 
 ## Naming and cancelling
 
