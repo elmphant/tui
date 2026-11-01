@@ -59,7 +59,15 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     ];
 
     /**
-     * @param list<Row> $rows
+     * @var list<string> the text of each row that a query is matched against
+     */
+    private array $haystack;
+
+    /**
+     * @infection-ignore-all a memo: the answer is the same without it, only slower
+     *
+     * @param list<Row>         $rows
+     * @param list<string>|null $haystack
      */
     private function __construct(
         private array $rows,
@@ -71,7 +79,9 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $searching = false,
+        ?array $haystack = null,
     ) {
+        $this->haystack = $haystack ?? self::haystackOf($rows);
     }
 
     /**
@@ -92,7 +102,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
      */
     public function withRows(array $rows): self
     {
-        return $this->cloneWith(rows: $rows)->reFiltered();
+        return $this->cloneWith(rows: $rows, haystack: null)->reFiltered();
     }
 
     public function withMatcher(Matcher $matcher): self
@@ -315,13 +325,23 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
      */
     private function matchingIndexesWorkedOut(): array
     {
-        return FilterBar::matching($this->matcher, $this->query(), array_map(
+        return FilterBar::matching($this->matcher, $this->query(), $this->haystack);
+    }
+
+    /**
+     * @param list<Row> $rows
+     *
+     * @return list<string>
+     */
+    private static function haystackOf(array $rows): array
+    {
+        return array_map(
             static fn (Row $row): string => implode(' ', array_map(
                 static fn (string|Span $cell): string => $cell instanceof Span ? $cell->content : $cell,
                 $row->cells,
             )),
-            $this->rows,
-        ));
+            $rows,
+        );
     }
 
     private function tableArea(Rect $area): Rect

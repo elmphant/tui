@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Rendering\Context\RenderContext;
-use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Search\SubstringMatcher;
 use Elmphant\Tui\Tests\Support\PerformanceBudget;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
 use Elmphant\Tui\Widget\Table\Column;
@@ -21,26 +18,27 @@ final class FilterableTablePerfTest extends TestCase
 {
     use PerformanceBudget;
 
-    private const MAX_COST_OF_THE_FILTER = 3.0;
-
     #[Test]
-    public function repaintingAnUnchangedFilteredTableCostsAboutWhatTheTableDoes(): void
+    public function aKeystrokeCostsAboutWhatMatchingAndTheNewRowsCost(): void
     {
         self::skipUnderXdebug();
 
-        $context = RenderContext::unfocused(Theme::dark());
-        $area = new Rect(0, 0, 80, 24);
-        $columns = [Column::new('Name', Constraint::flex()), Column::new('Path', Constraint::flex())];
-        $rows = array_map(static fn (int $index): Row => Row::new('row-' . $index, '/path/to/thing/' . $index), range(0, 49_999));
+        $columns = [Column::new('Name', Constraint::exact(14)), Column::new('Description', Constraint::flex())];
+        $rows = [];
+        $texts = [];
+        for ($index = 0; $index < 50_000; ++$index) {
+            $rows[] = Row::new("name {$index}", "description of row {$index}");
+            $texts[] = "name {$index} description of row {$index}";
+        }
+        $filterable = FilterableTable::new($columns, $rows);
         $table = Table::new($columns, $rows);
-        $filterable = FilterableTable::new($columns, $rows)->withQuery('row-4');
+        $matcher = new SubstringMatcher();
+        $kept = array_map(static fn (int $index): Row => $rows[$index], $matcher->matching('9', $texts));
 
-        self::assertRatioBelow(self::MAX_COST_OF_THE_FILTER, static function () use ($table, $filterable, $area, $context): array {
-            $plain = self::medianMicroseconds(static fn () => $table->render(new Frame(80, 24), $area, $context), 20);
-            $filtered = self::medianMicroseconds(static fn () => $filterable->render(new Frame(80, 24), $area, $context), 20);
-            $ratio = $filtered / $plain;
+        $keystroke = self::medianMicroseconds(static fn (): FilterableTable => $filterable->withQuery('9'), 7);
+        $unavoidable = self::medianMicroseconds(static fn (): Table => $table->withRows($kept), 7)
+            + self::medianMicroseconds(static fn (): array => $matcher->matching('9', $texts), 7);
 
-            return [$ratio, sprintf('A repaint of the filtered table cost %.1fx the plain one (%.0fµs vs %.0fµs)', $ratio, $filtered, $plain)];
-        });
+        self::assertLessThan(1.5, $keystroke / $unavoidable, sprintf('%.0fµs against %.0fµs', $keystroke, $unavoidable));
     }
 }

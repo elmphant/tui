@@ -12,6 +12,7 @@ use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Span;
+use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\WidgetHarness;
@@ -204,6 +205,17 @@ final class FilterableTableTest extends TestCase
 
         self::assertInstanceOf(FilterableTable::class, $table);
         self::assertSame(['Office rent', 'Train'], array_map(static fn (Row $row): string|Span => $row->cells[1], $table->matchingRows()));
+    }
+
+    #[Test]
+    public function aQueryFindsTheTextOfAStyledCell(): void
+    {
+        $table = FilterableTable::new(
+            [Column::new('Merchant', Constraint::flex())],
+            [Row::new(Span::token('Office rent', StyleToken::Accent)), Row::new('Train')],
+        );
+
+        self::assertSame('1 of 2', $table->withQuery('rent')->summary());
     }
 
     #[Test]
