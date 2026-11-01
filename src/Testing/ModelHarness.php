@@ -18,6 +18,7 @@ use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
+use Elmphant\Tui\Core\Cmd\PrintlnCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
@@ -101,6 +102,11 @@ final class ModelHarness
      * @var list<array{command: FiberCmd, wrap: ?Closure, id: ?EffectId}> issued and not run yet, by scoped id
      */
     private array $fibers = [];
+
+    /**
+     * @var list<string>
+     */
+    private array $printed = [];
 
     /**
      * @param TModel $model
@@ -478,6 +484,14 @@ final class ModelHarness
     }
 
     /**
+     * @return list<string> what Cmd::println() printed, every line since the start
+     */
+    public function printed(): array
+    {
+        return $this->printed;
+    }
+
+    /**
      * Read focus from the harness, which owns it just as the runtime does.
      */
     public function focused(): ?ComponentId
@@ -641,6 +655,11 @@ final class ModelHarness
         }
         if ($command instanceof ToastCmd) {
             $this->toasts->show($command, $this->now);
+
+            return;
+        }
+        if ($command instanceof PrintlnCmd) {
+            array_push($this->printed, ...$command->lines);
 
             return;
         }

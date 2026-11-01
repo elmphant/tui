@@ -32,6 +32,7 @@ use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\DescribesKeys;
 use Elmphant\Tui\Runtime\RoutesFocus;
+use Elmphant\Tui\Runtime\SizesItsRegion;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
@@ -39,6 +40,7 @@ use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
+use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Plan\LayoutSnapshot;
 use Elmphant\Tui\Widget\PublishesHints;
@@ -47,7 +49,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 use WeakMap;
 
-abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords, DescribesKeys
+abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords, DescribesKeys, SizesItsRegion
 {
     use Cloneable;
 
@@ -56,6 +58,13 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
      * For animation, read RenderContext::now() during render.
      */
     abstract public function view(): Widget;
+
+    final public function wantedHeight(int $width): int
+    {
+        $root = $this->viewWidget();
+
+        return $root instanceof MeasureHeight ? $root->measureHeight($width) : PHP_INT_MAX;
+    }
 
     final public function init(): ?Cmd
     {

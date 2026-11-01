@@ -92,6 +92,13 @@ final class TmuxScreen
         throw new RuntimeException(sprintf("\"%s\" never appeared:\n%s", $text, $this->capture()));
     }
 
+    public function withHistory(): string
+    {
+        $this->screen();
+
+        return rtrim(implode("\n", array_map(rtrim(...), explode("\n", $this->tmux('capture-pane -p -S - -t e2e')))));
+    }
+
     public function flag(string $name): string
     {
         return trim($this->tmux(sprintf('display -p -t e2e %s', escapeshellarg("#{{$name}}"))));

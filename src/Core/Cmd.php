@@ -18,6 +18,7 @@ use Elmphant\Tui\Core\Cmd\ListenCmd;
 use Elmphant\Tui\Core\Cmd\LogCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
+use Elmphant\Tui\Core\Cmd\PrintlnCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
@@ -81,6 +82,14 @@ abstract readonly class Cmd
     public static function toast(string $text): ToastCmd
     {
         return new ToastCmd($text);
+    }
+
+    /**
+     * Lines that stay above an inline region, in the shell's scrollback.
+     */
+    public static function println(string ...$lines): PrintlnCmd
+    {
+        return new PrintlnCmd(array_values($lines));
     }
 
     /**

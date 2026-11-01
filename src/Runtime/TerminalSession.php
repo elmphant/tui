@@ -29,6 +29,10 @@ final class TerminalSession
         private readonly Terminal $terminal,
         private readonly bool $useAltScreen,
         private readonly bool $useMouseTracking,
+        /**
+         * @var (Closure(): string)|null
+         */
+        private readonly ?Closure $parkBelow = null,
     ) {
     }
 
@@ -161,7 +165,7 @@ final class TerminalSession
         if ($hadActiveModes) {
             $this->attempt(fn () => $this->terminal->write(Ansi::RESET_STYLE . Ansi::DEFAULT_CURSOR_SHAPE));
             if ($final && !$this->useAltScreen) {
-                $this->attempt(fn () => $this->terminal->write(Ansi::cursorToRowStart($this->height - 1) . "\n"));
+                $this->attempt(fn () => $this->terminal->write($this->parkBelow !== null ? ($this->parkBelow)() : Ansi::cursorToRowStart($this->height - 1) . "\n"));
             }
             $this->attempt($this->terminal->flush(...));
         }

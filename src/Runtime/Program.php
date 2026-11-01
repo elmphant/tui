@@ -13,6 +13,7 @@ use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\LogCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
+use Elmphant\Tui\Core\Cmd\PrintlnCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\Cmd\ToastCmd;
@@ -38,6 +39,7 @@ use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Context\PendingChord;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\InlineScreen;
 use Elmphant\Tui\Rendering\Screen;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Trace\JsonlTracer;
@@ -77,6 +79,7 @@ final class Program
 
     private bool $useAltScreen = false;
     private bool $useMouseTracking = false;
+    private bool $useInline = false;
     private FrameScheduler $frames;
     /**
      * @var (Closure(ErrorMsg): (Cmd|null))|null
@@ -90,7 +93,7 @@ final class Program
     private array $commandHandlers = [];
 
     private Terminal $terminal;
-    private Screen $screen;
+    private Screen|InlineScreen $screen;
     /**
      * @var SplQueue<Message>
      */
@@ -227,6 +230,17 @@ final class Program
     /**
      * @return self<TModel>
      */
+    public function withInline(bool $enabled = true): self
+    {
+        $program = $this->configured();
+        $program->useInline = $enabled;
+
+        return $program;
+    }
+
+    /**
+     * @return self<TModel>
+     */
     public function withFps(float $framesPerSecond): self
     {
         $program = $this->configured();
@@ -326,6 +340,9 @@ final class Program
         if ($this->state !== ProgramState::New) {
             throw new LogicException(sprintf('Program can only be started once; current state is %s', $this->state->name));
         }
+        if ($this->useInline && ($this->useAltScreen || $this->useMouseTracking)) {
+            throw new LogicException('An inline program cannot use the alternate screen or the mouse');
+        }
         $this->state = ProgramState::Running;
 
         $tracePath = getenv('ELMPHANT_TRACE');
@@ -335,7 +352,9 @@ final class Program
 
         try {
             $this->terminal = $this->injectedTerminal ?? new SystemTerminal();
-            $this->screen = new Screen($this->terminal, $this->resolveColorProfile());
+            $this->screen = $this->useInline
+                ? new InlineScreen($this->terminal, $this->resolveColorProfile())
+                : new Screen($this->terminal, $this->resolveColorProfile());
             $this->messageQueue = new SplQueue();
             $this->inputQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();
@@ -354,6 +373,9 @@ final class Program
             $this->dispatchCommand($this->capturingOutput('init', static fn (): ?Cmd => $model->init()));
             if ($this->isRunning()) {
                 $this->loop();
+            }
+            if ($this->screen instanceof InlineScreen && !$this->screen->printedLast() && $this->fatalError === null) {
+                $this->renderFrame();
             }
             if ($this->model instanceof ShutdownAware) {
                 $this->model->onShutdown();
@@ -426,7 +448,12 @@ final class Program
         $program = WeakReference::create($this);
         register_shutdown_function(static fn () => self::restoreAfterAFatalError($program));
 
-        $this->terminalSession = new TerminalSession($this->terminal, $this->useAltScreen, $this->useMouseTracking);
+        $this->terminalSession = new TerminalSession(
+            $this->terminal,
+            $this->useAltScreen,
+            $this->useMouseTracking,
+            $this->screen instanceof InlineScreen ? $this->screen->parkBelow(...) : null,
+        );
         $this->terminalSession->start();
         $this->terminal->queryKittyProtocol();
 
@@ -906,7 +933,7 @@ final class Program
     private function drainMessageQueue(): void
     {
         $consecutiveErrors = 0;
-        $screenRect = $this->screenRect;
+        $screenRect = $this->drawnRect();
         $processed = 0;
         // Reuse the deadline after a resize re-drain so one tick cannot spend the budget twice.
         $this->drainDeadline ??= $this->clock->now() + self::MAX_DRAIN_SECONDS;
@@ -1163,6 +1190,17 @@ final class Program
         return $model;
     }
 
+    private function drawnRect(): Rect
+    {
+        if (!$this->useInline || !$this->model instanceof SizesItsRegion) {
+            return $this->screenRect;
+        }
+
+        $wanted = $this->model->wantedHeight($this->screenRect->width);
+
+        return Rect::fromSize($this->screenRect->width, max(1, min($wanted, $this->screenRect->height)));
+    }
+
     private function renderFrame(): bool
     {
         $frame = $this->backBuffer;
@@ -1171,8 +1209,9 @@ final class Program
             throw new LogicException('Program renderer is not initialized');
         }
 
-        if ($frame->width !== $this->screenRect->width || $frame->height !== $this->screenRect->height) {
-            $frame = $this->backBuffer = new Frame($this->screenRect->width, $this->screenRect->height);
+        $drawn = $this->drawnRect();
+        if ($frame->width !== $drawn->width || $frame->height !== $drawn->height) {
+            $frame = $this->backBuffer = new Frame($drawn->width, $drawn->height);
         }
 
         if ($this->resizeNeedsScreenClear) {
@@ -1364,6 +1403,7 @@ final class Program
                 $command instanceof QuitCmd => $this->stopRunning(),
                 $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
                 $command instanceof ToastCmd => $this->showToast($command),
+                $command instanceof PrintlnCmd => $this->printAbove($command),
                 $command instanceof FocusCmd => $this->moveFocus($command->within($scope)),
                 $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
                 $command instanceof CallCmd => $this->executeCall($command, $wrap, $scope),
@@ -1378,6 +1418,18 @@ final class Program
     private function showToast(ToastCmd $toast): void
     {
         $this->toasts->show($toast, $this->clock->now());
+        $this->frames->markDirty();
+    }
+
+    private function printAbove(PrintlnCmd $println): void
+    {
+        if (!$this->screen instanceof InlineScreen) {
+            $this->tracer?->record(TraceEvent::Log, ['message' => 'Cmd::println() prints only in an inline program', 'lines' => $println->lines]);
+
+            return;
+        }
+
+        $this->screen->printAbove($println->lines, $this->screenRect->width);
         $this->frames->markDirty();
     }
 
