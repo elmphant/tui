@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -156,6 +157,16 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         return $this->pane->scrollOffset($this->contentArea($area));
     }
 
+    public function marked(): ?MarkedRange
+    {
+        return $this->pane->marked();
+    }
+
+    public function withMarked(?MarkedRange $marked): self
+    {
+        return $this->withPane($this->pane->withMarked($marked));
+    }
+
     public function withFollowChild(?int $index, int $span = 1): self
     {
         return $this->withPane($this->pane->withFollowChild($index, $span));
@@ -204,7 +215,8 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        $result = (new ChildDispatcher())->dispatchOne($this->pane, $message, $this->contentArea($area));
+        $content = $this->contentArea($area);
+        $result = (new ChildDispatcher())->dispatchOne($this->pane, $this->pressedOnTheText($message, $area, $content), $content);
 
         return $result->changed
             ? new UpdateResult($this->withPane($result->child), $result->command)
@@ -290,6 +302,33 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     public function viewport(Rect $area, Widget $child): Rect
     {
         return $this->contentArea($area);
+    }
+
+    /**
+     * A press in the padding or below the last row starts a mark at the nearest
+     * text cell, so the reader need not hit the text exactly.
+     */
+    private function pressedOnTheText(Message $message, Rect $area, Rect $content): Message
+    {
+        $rows = min($content->height, $this->pane->measureHeight($content->width));
+        $inside = (new Inset($this->margin, border: true))->inner($area);
+
+        if (!$message instanceof MouseMsg || !$message->isClick() || !$message->inRect($inside) || $rows < 1) {
+            return $message;
+        }
+
+        return new MouseMsg(
+            max($content->x, min($content->right() - 1, $message->x)),
+            max($content->y, min($content->y + $rows - 1, $message->y)),
+            $message->action,
+            $message->button,
+            $message->repeat,
+            $message->screen,
+            $message->shift,
+            $message->alt,
+            $message->ctrl,
+            $message->keyboardWasHere,
+        );
     }
 
     private function inset(): Inset

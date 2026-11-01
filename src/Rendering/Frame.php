@@ -342,6 +342,25 @@ final class Frame
         }
     }
 
+    /**
+     * Flips the attribute, so a mark over a row that is already reversed still shows.
+     */
+    public function toggleAttribute(int $x, int $y, int $width, int $attribute): void
+    {
+        $clip = $this->clip();
+
+        if ($y < $clip->y || $y >= $clip->bottom()) {
+            return;
+        }
+
+        $base = $y * $this->width;
+        for ($column = max($x, $clip->x); $column < min($x + $width, $clip->right()); ++$column) {
+            $this->attributes[$base + $column] ^= $attribute;
+        }
+
+        $this->markRowDirty($y);
+    }
+
     public function character(int $index): string
     {
         return $this->characters[$index];

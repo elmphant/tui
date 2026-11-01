@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Structure;
 
+use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
@@ -16,9 +17,12 @@ use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
@@ -68,6 +72,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         private int $followSpan = 1,
         private bool $scrolledAway = false,
         private bool $followingTheEnd = false,
+        private ?MarkedRange $marked = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         ?KeyedCache $layoutMemo = null,
@@ -106,6 +111,16 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     public function withScrollOffset(int $scrollOffset): self
     {
         return $this->cloneWith(scrollOffset: max(0, $scrollOffset), scrolledAway: true);
+    }
+
+    public function marked(): ?MarkedRange
+    {
+        return $this->marked;
+    }
+
+    public function withMarked(?MarkedRange $marked): self
+    {
+        return $this->cloneWith(marked: $marked);
     }
 
     public function withFollowChild(?int $index, int $span = 1): self
@@ -166,6 +181,11 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     {
         if ($message instanceof KeyMsg) {
             return new UpdateResult($this->scrolledByKey($message, $area) ?? $this);
+        }
+
+        $marking = $message instanceof MouseMsg ? $this->markedBy($message, $area) : null;
+        if ($marking !== null) {
+            return $marking;
         }
 
         if ($message instanceof MouseMsg && $message->inRect($area)) {
@@ -271,6 +291,8 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
                     break;
                 }
             }
+
+            $this->drawMark($frame, $area, $offset, $layout->childWidth);
         } finally {
             $frame->popClip();
         }
@@ -305,6 +327,125 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         $cache = new KeyedCache();
 
         return $cache;
+    }
+
+    /**
+     * @return ?UpdateResult<self>
+     */
+    private function markedBy(MouseMsg $message, Rect $area): ?UpdateResult
+    {
+        $layout = VerticalStack::layoutUsing($this->layoutMemo, $this->children, $area->width, $area->height);
+        $marked = $this->markedAt($layout->childWidth);
+
+        if ($message->action === MouseAction::Press) {
+            [$row, $column] = $this->cellAt($message, $area, $layout);
+            $marks = $message->button === MouseButton::Left
+                && $message->inRect($area)
+                && $this->resolvedOffset($layout, $area->height) + $message->y - $area->y < $layout->totalHeight;
+
+            if (!$marks) {
+                return $marked === null ? null : new UpdateResult($this->cloneWith(marked: null));
+            }
+
+            return new UpdateResult($this->cloneWith(
+                marked: new MarkedRange($row, $column, $row, $column, $layout->childWidth, $this->scrolledAway),
+                scrollOffset: $this->resolvedOffset($layout, $area->height),
+                scrolledAway: true,
+            ));
+        }
+
+        if ($marked === null || !$marked->dragging) {
+            return null;
+        }
+
+        if ($message->action === MouseAction::Motion) {
+            $edge = match (true) {
+                $message->y < $area->y => -1,
+                $message->y >= $area->bottom() => 1,
+                default => 0,
+            };
+            $scrolled = ($edge === 0 ? null : $this->scrolledBy($edge, $area)) ?? $this;
+            [$row, $column] = $scrolled->cellAt($message, $area, $layout);
+
+            return new UpdateResult($scrolled->cloneWith(marked: $marked->withEnd($row, $column)));
+        }
+
+        [$row, $column] = $this->cellAt($message, $area, $layout);
+
+        return match ($message->action) {
+            MouseAction::Release => $marked->isEmpty()
+                ? new UpdateResult($this->cloneWith(marked: null, scrolledAway: $marked->wasScrolledAway))
+                : new UpdateResult($this->cloneWith(marked: $marked->released()), Cmd::copy($this->textOf($marked, $layout))),
+            default => null,
+        };
+    }
+
+    /**
+     * A mark made at another width covers text that has wrapped differently since.
+     */
+    private function markedAt(int $width): ?MarkedRange
+    {
+        return $this->marked?->width === $width ? $this->marked : null;
+    }
+
+    /**
+     * @return array{int, int} the content row and column under the pointer, held inside the pane
+     */
+    private function cellAt(MouseMsg $message, Rect $area, VerticalStackLayout $layout): array
+    {
+        return [
+            min($layout->totalHeight - 1, $this->resolvedOffset($layout, $area->height) + max(0, min($area->height - 1, $message->y - $area->y))),
+            max(0, min($layout->childWidth - 1, $message->x - $area->x)),
+        ];
+    }
+
+    /**
+     * Drawn again off screen, so rows scrolled out of view copy too.
+     */
+    private function textOf(MarkedRange $marked, VerticalStackLayout $layout): string
+    {
+        $first = $marked->firstRow();
+        $frame = new Frame($layout->childWidth, $marked->lastRow() - $first + 1);
+        $context = RenderContext::unfocused(Theme::dark());
+        $top = 0;
+
+        foreach ($this->children as $index => $child) {
+            $height = $layout->heights[$index];
+
+            if ($top + $height > $first && $top <= $marked->lastRow()) {
+                $child->render($frame, new Rect(0, $top - $first, $layout->childWidth, $height), $context);
+            }
+
+            $top += $height;
+        }
+
+        $lines = [];
+        for ($row = 0; $row < $frame->height; ++$row) {
+            [$from, $to] = $marked->columnsOn($first + $row);
+            $line = '';
+
+            for ($column = $from; $column < $to; ++$column) {
+                $line .= $frame->character($row * $frame->width + $column);
+            }
+
+            $lines[] = rtrim($line, ' ');
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function drawMark(Frame $frame, Rect $area, int $offset, int $width): void
+    {
+        $marked = $this->markedAt($width);
+
+        if ($marked === null) {
+            return;
+        }
+
+        for ($row = $marked->firstRow(); $row <= $marked->lastRow(); ++$row) {
+            [$from, $to] = $marked->columnsOn($row);
+            $frame->toggleAttribute($area->x + $from, $area->y + $row - $offset, $to - $from, Attr::REVERSE);
+        }
     }
 
     private function scrolledByWheel(MouseMsg $message, Rect $area): ?self

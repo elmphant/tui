@@ -1326,6 +1326,45 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function toggledAttributesFlipAndKeepTheOthers(): void
+    {
+        $frame = new Frame(5, 2);
+        $frame->putStyled(0, 0, 'ab', new Style(attributes: Attr::BOLD | Attr::REVERSE));
+        $frame->putStyled(2, 0, 'cd', new Style(attributes: Attr::BOLD));
+
+        $frame->toggleAttribute(0, 0, 4, Attr::REVERSE);
+
+        self::assertSame([Attr::BOLD, Attr::BOLD, Attr::BOLD | Attr::REVERSE, Attr::BOLD | Attr::REVERSE, 0], \array_slice($frame->attributes, 0, 5));
+    }
+
+    #[Test]
+    public function toggledAttributesStayInsideTheClip(): void
+    {
+        $frame = new Frame(5, 4);
+        $frame->pushClip(new Rect(1, 1, 3, 2));
+
+        foreach ([0, 1, 2, 3] as $row) {
+            $frame->toggleAttribute(0, $row, 5, Attr::REVERSE);
+        }
+
+        self::assertSame(
+            ['00000', '01110', '01110', '00000'],
+            array_map(static fn (array $row): string => implode('', array_map(static fn (int $attributes): string => (string)($attributes / Attr::REVERSE), $row)), array_chunk($frame->attributes, 5)),
+        );
+    }
+
+    #[Test]
+    public function aToggledRowIsRedrawn(): void
+    {
+        $frame = new Frame(5, 3);
+        $frame->clearDirty();
+
+        $frame->toggleAttribute(0, 1, 2, Attr::REVERSE);
+
+        self::assertSame([false, true, false], [$frame->isRowDirty(0), $frame->isRowDirty(1), $frame->isRowDirty(2)]);
+    }
+
+    #[Test]
     public function fillRectClipsNegativeCoordinates(): void
     {
         $frame = new Frame(5, 5);

@@ -226,6 +226,29 @@ $log = Panel::new('Log')->withFollowingTheEnd();
 $log = $log->add(Text::new('build finished'));
 ```
 
+## Copying text
+
+While an app reads the mouse, the terminal can't select text itself. So a bound
+`Panel` lets the reader select its text with the mouse instead: press, drag and
+let go. The selected cells show reversed, and letting go copies their text with
+`Cmd::copy()`. Dragging past the top or bottom edge scrolls the panel, and rows
+scrolled out of view are copied too. A click without a drag clears the selection.
+
+- A press in the padding or below the last row starts at the nearest text, so
+  the reader doesn't have to hit the text exactly.
+- A press on a field in the panel still reaches the field.
+- The copy holds the lines as they are drawn, so a wrapped line copies as several
+  lines.
+- New rows don't move the selection. A press stops "follow the end" until the
+  reader scrolls back down.
+- A host that builds the panel anew each time carries the selection over with
+  `marked()` and `withMarked()`, the same way it carries `scrollOffset()`.
+
+`Cmd::copy()` uses OSC 52, so the terminal must allow it: kitty, WezTerm,
+Ghostty and Alacritty do. iTerm2 needs "Applications in terminal may access
+clipboard". GNOME Terminal and macOS Terminal.app don't support it. Inside tmux, add `set -g set-clipboard on`. No terminal says whether
+the copy worked.
+
 ## Example: two panels
 
 ```php

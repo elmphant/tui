@@ -10,6 +10,8 @@ elephant** and **Elm**.
   value, and the framework draws it.
 - **Widgets included.** Lists, tables, forms, tabs, trees, modals, dropdowns,
   search fields, progress bars and more, with keyboard and mouse support.
+- **Text you can copy.** Drag over the text in a panel to copy it, even while
+  the app reads the mouse. See [Copying text](guide/widgets.md#copying-text).
 - **No blocking.** Processes, HTTP requests and timers run in the background and
   report back as messages.
 - **Easy to test.** Press keys and read the screen in a plain PHPUnit test, with
