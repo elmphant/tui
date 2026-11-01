@@ -45,6 +45,17 @@ final class VirtualTerminalTest extends TestCase
     }
 
     #[Test]
+    public function closingTheInputASecondTimeDoesNothing(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->closeInput();
+
+        $terminal->closeInput();
+
+        $this->assertNull($terminal->readInput());
+    }
+
+    #[Test]
     public function readInputDrainsBuffer(): void
     {
         $terminal = new VirtualTerminal(80, 24);

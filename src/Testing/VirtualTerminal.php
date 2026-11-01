@@ -218,7 +218,9 @@ final class VirtualTerminal implements Terminal
 
     public function closeInput(): void
     {
-        fclose($this->writePipe);
+        if (\is_resource($this->writePipe)) {
+            fclose($this->writePipe);
+        }
     }
 
     public function simulateInput(string $bytes): void
