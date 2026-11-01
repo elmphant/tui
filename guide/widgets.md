@@ -253,6 +253,10 @@ final readonly class Report extends App
 }
 ```
 
+A bound panel is a tab stop. For a card that holds nothing to operate, add
+`->withNavigation(Navigation::Never)`: tab and clicks pass it by, and the
+reader can still copy from it.
+
 - A press in the padding or below the last row starts at the nearest text, so
   the reader doesn't have to hit the text exactly.
 - A press on a field in the panel still reaches the field.

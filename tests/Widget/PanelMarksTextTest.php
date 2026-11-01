@@ -23,6 +23,7 @@ use Elmphant\Tui\Testing\UserInput;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
+use Elmphant\Tui\Widget\Focus\Navigation;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
@@ -54,6 +55,16 @@ final class PanelMarksTextTest extends TestCase
             $driven->issued(ClipboardCmd::class),
         ));
         self::assertNotSame(0, $driven->renderScreen()->styleAt(3, 2)->attributes & Attr::REVERSE);
+    }
+
+    #[Test]
+    public function aPanelThatIsNeverAStopStillCopiesWhatIsDraggedOver(): void
+    {
+        $card = Panel::new('card')->withChildren([Text::new('line0')])->withNavigation(Navigation::Never);
+        $driven = ModelHarness::for(new MarkingLogApp($card), 30, 10)->initialize()->drag(1, 1, 9, 1);
+
+        self::assertNull($driven->focused());
+        self::assertSame(['line0'], array_map(static fn (ClipboardCmd $copy): string => $copy->text, $driven->issued(ClipboardCmd::class)));
     }
 
     #[Test]

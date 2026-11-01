@@ -58,6 +58,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         private ?Keybindings $globalKeybindings = null,
         private ?PinnedRows $header = null,
         private ?PinnedRows $footer = null,
+        private ?Navigation $navigation = null,
     ) {
         $this->pane = $pane ?? ScrollPane::of();
     }
@@ -189,7 +190,16 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
 
     public function navigation(): Navigation
     {
-        return $this->pane->navigation();
+        return $this->navigation ?? $this->pane->navigation();
+    }
+
+    /**
+     * A bound panel that is `Never` a stop still hears the mouse, so a reader can
+     * copy from a card that holds nothing to operate.
+     */
+    public function withNavigation(?Navigation $navigation): self
+    {
+        return $this->cloneWith(navigation: $navigation);
     }
 
     public function withKeybindings(?Keybindings $keybindings): static
