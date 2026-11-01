@@ -22,6 +22,7 @@ Cmd::listen($socket, fn($stream) => $messages) // read a stream whenever it has 
 Cmd::log('loaded', ['items' => 3])  // write a line to the trace (stdout is the screen)
 Cmd::copy($text)                    // copy text to the clipboard
 Cmd::toast('Saved')                 // show a note for a few seconds
+Cmd::println('✓ Saved')             // print a line above an inline program
 
 // Focus
 Cmd::focus('search')                      // move the keyboard to a widget
@@ -38,6 +39,8 @@ Cmd::process(['tail', '-f', 'log']) // get the output while it runs
   or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
 - `Cmd::listen()` stops at the end of the stream or on `Cmd::cancel()`. Cancel
   it before you close the stream yourself.
+- `Cmd::println()` prints only in an inline program, and the lines stay in the
+  scrollback. See [Drawing inline](running.md#drawing-inline).
 
 ## Fibers
 

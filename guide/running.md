@@ -21,7 +21,8 @@ Program::new($model)
 ```
 
 - Without `withAltScreen()` the app still uses the whole screen, and its last
-  frame stays after it exits.
+  frame stays after it exits. To draw below the prompt instead, see
+  [Drawing inline](#drawing-inline).
 - Themes: `dark`, `light`, `dracula`, `solarizedDark`, `solarizedLight`,
   `rosePine`, `atomOneDark`, `gruvboxDark`, `gruvboxLight`. To switch while
   running, return one from `App::theme()`.
@@ -29,6 +30,80 @@ Program::new($model)
 - A `Program` runs once. Create a new one to run again.
 - The terminal backend needs a POSIX TTY. It fails clearly on Windows, or when
   stdin is not a terminal.
+
+## Drawing inline
+
+`withInline()` draws the app below the shell prompt instead of over the whole
+screen, the way an installer asks its questions. What the shell printed before
+stays above it. This asks two questions, one program each, and leaves the
+answers in the scrollback:
+
+```php
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Key;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Prose\Paragraph;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Question extends App
+{
+    public TextInput $field;
+
+    public function __construct(public string $question, ?TextInput $field = null)
+    {
+        $this->field = $field ?? TextInput::new();
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Paragraph::fromText($this->question),
+            Component::bind('answer', $this->field, static fn (self $app, TextInput $field): self => new self($app->question, $field)),
+        );
+    }
+
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    {
+        if ($message->key !== Key::Enter) {
+            return UpdateResult::ignored($this);
+        }
+
+        return new UpdateResult($this, Cmd::batch(
+            Cmd::println(sprintf('✓ %s  %s', $this->question, $this->field->value())),
+            Cmd::quit(),
+        ));
+    }
+}
+
+$answers = [];
+foreach (['Project name', 'Database host'] as $question) {
+    $answers[$question] = Program::new(new Question($question))->withInline()->start()->field->value();
+}
+```
+
+- The app takes as many rows as its content needs, never more than the
+  terminal has. An `App` measures its root widget. A `Model` of your own
+  implements `SizesItsRegion` to say how many rows it wants, or gets the whole
+  height.
+- `Cmd::println()` prints lines above the app, into the scrollback. They are
+  plain text: escape sequences are dropped, and a line wider than the terminal
+  is cut. Outside an inline program it only writes to the trace.
+- The last frame stays after the program ends, unless a `Cmd::println()` was
+  the last thing it did. That is why the answers above leave one line each.
+- To keep all the steps in one app, hold the answers in it and print each one
+  with `Cmd::println()` as the reader moves on.
+- The caret is drawn as a reversed cell. The terminal's own cursor stays hidden
+  at the start of the app, where a terminal that rewraps its lines (tmux, iTerm2)
+  cannot lose it.
+- `withInline()` cannot be combined with `withAltScreen()` or
+  `withMouseTracking()`: `start()` throws a `LogicException`.
 
 ## Errors
 

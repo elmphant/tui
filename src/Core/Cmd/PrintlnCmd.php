@@ -6,6 +6,9 @@ namespace Elmphant\Tui\Core\Cmd;
 
 use Elmphant\Tui\Core\Cmd;
 
+/**
+ * @internal
+ */
 final readonly class PrintlnCmd extends Cmd
 {
     /**

@@ -51,8 +51,8 @@ shows up at once. So does `type()` while no component holds the keyboard and a
 field on screen was never passed to `Component::bind()`.
 
 More: `initialize()` runs `setup()`, `resize()` changes the screen size,
-`model()` returns the app for typed checks, and `renderFrame()` gives the cells
-when colours matter.
+`model()` returns the app for typed checks, `renderFrame()` gives the cells
+when colours matter, and `printed()` lists every line `Cmd::println()` printed.
 
 ## Testing one widget
 

@@ -87,7 +87,7 @@ abstract readonly class Cmd
     /**
      * Lines that stay above an inline region, in the shell's scrollback.
      */
-    public static function println(string ...$lines): PrintlnCmd
+    public static function println(string ...$lines): self
     {
         return new PrintlnCmd(array_values($lines));
     }
