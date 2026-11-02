@@ -44,7 +44,8 @@ final class InlineScreen
             $written[] = self::endOf($backBuffer, $row, $caret) - $row * $backBuffer->width;
         }
 
-        $taller = $height < $this->rowsTaken($backBuffer->width);
+        // A wider terminal rejoins wrapped lines above the region and lifts it, leaving its old last rows below.
+        $taller = $height < $this->rowsTaken($backBuffer->width) || ($this->written !== [] && $backBuffer->width > $this->width);
         // The hidden cursor rests at the start of the first row. A terminal that rewraps on a narrower width keeps it there.
         $painted = "\r" . ($taller ? self::ERASE_REGION : '') . implode("\r\n", $rows) . self::up($height - 1) . "\r";
         $this->written = $written;

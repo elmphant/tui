@@ -42,6 +42,22 @@ final class InlineTerminalTest extends TestCase
     }
 
     #[Test]
+    public function narrowingRowsThatFillTheWidthRepaintsThemWhereTheyWere(): void
+    {
+        $this->screen = TmuxScreen::running(sprintf('seq 1 12; %s tests/E2e/Fixtures/inline-ruled-app.php', escapeshellarg(PHP_BINARY)), 40, 20);
+        $this->screen->waitFor('when you are done');
+
+        $this->screen->resize(20, 20);
+        $this->screen->waitFor("when you\nare done");
+
+        $rule = str_repeat('─', 20);
+        self::assertSame(
+            implode("\n", range(1, 12)) . "\nRuled heading\n{$rule}\nRuled lines run the\nfull width\n{$rule}\nPress Enter when you\nare done\n{$rule}",
+            $this->screen->withHistory(),
+        );
+    }
+
+    #[Test]
     public function aTerminalShorterThanTheRegionAndTallerAgainLeavesNoCopyOfTheRegion(): void
     {
         $screen = $this->started();

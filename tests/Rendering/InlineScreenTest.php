@@ -223,6 +223,21 @@ final class InlineScreenTest extends TestCase
     }
 
     #[Test]
+    public function afterTheTerminalWidensWhatIsBelowTheRegionIsErasedBecauseRejoinedLinesAboveCanLiftIt(): void
+    {
+        $terminal = new VirtualTerminal(4, 24);
+        $screen = new InlineScreen($terminal);
+        $narrow = new Frame(4, 1);
+        $narrow->putString(0, 0, 'ok');
+        $screen->flush($narrow);
+        $terminal->clearOutput();
+
+        $screen->flush(self::frameOf('ok'));
+
+        self::assertStringStartsWith(Ansi::SYNC_START . "\r\x1b[1C\x1b[J\rok\x1b[K", $terminal->output());
+    }
+
+    #[Test]
     public function printedLinesReplaceTheRegionAndTheNextFrameStartsBelowThem(): void
     {
         $terminal = new VirtualTerminal(10, 24);
