@@ -70,7 +70,7 @@ final class DropdownPopupRenderTest extends TestCase
         $frame = new Frame(30, 10);
         $context = new RenderContext($theme);
 
-        $context->withFocusHere(static fn () => self::popupOf(['json', 'yaml'])->render($frame, new Rect(0, 0, 20, 10), $context));
+        $context->focusHere(static fn () => self::popupOf(['json', 'yaml'])->render($frame, new Rect(0, 0, 20, 10), $context));
 
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->background(1 * $frame->width + 1));
     }

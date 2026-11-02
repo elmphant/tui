@@ -86,7 +86,7 @@ final class RenderContextTest extends TestCase
     {
         $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
 
-        $pass->context->withFocusHere(static function (): void {
+        $pass->context->focusHere(static function (): void {
         });
 
         self::assertFalse($pass->context->hasFocus());
@@ -107,8 +107,8 @@ final class RenderContextTest extends TestCase
             }
         };
 
-        $survive(static fn () => $pass->context->withFocusHere($throw));
-        self::assertFalse($pass->context->hasFocus(), 'withFocusHere');
+        $survive(static fn () => $pass->context->focusHere($throw));
+        self::assertFalse($pass->context->hasFocus(), 'focusHere');
 
         $survive(static fn () => $pass->context->withinComponent(ComponentId::named('form'), $throw));
         self::assertFalse($pass->context->hasFocus(), 'withinComponent');
@@ -129,7 +129,7 @@ final class RenderContextTest extends TestCase
         $panel = Panel::new()->add(TextInput::new())->add(TextInput::new());
         $caretRow = static function (int $child) use ($context, $panel): ?int {
             $frame = new Frame(20, 6);
-            $context->withFocusOnChild($child, static fn () => $panel->render($frame, new Rect(0, 0, 20, 6), $context));
+            $context->focusOnChild($child, static fn () => $panel->render($frame, new Rect(0, 0, 20, 6), $context));
 
             return $frame->cursorPosition?->row;
         };

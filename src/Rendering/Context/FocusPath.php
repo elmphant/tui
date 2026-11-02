@@ -172,7 +172,7 @@ final class FocusPath
     /**
      * @param Closure(): void $render
      */
-    public function withFocusHere(Closure $render): void
+    public function focusHere(Closure $render): void
     {
         ++$this->depth;
 
@@ -186,13 +186,13 @@ final class FocusPath
     /**
      * @param Closure(): void $render
      */
-    public function withFocusOnChild(int $index, Closure $render): void
+    public function focusOnChild(int $index, Closure $render): void
     {
         $path = $this->path;
         $this->path = [(string)$index];
 
         try {
-            $this->withFocusHere($render);
+            $this->focusHere($render);
         } finally {
             $this->path = $path;
         }

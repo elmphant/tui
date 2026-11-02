@@ -24,7 +24,7 @@ final class TextInputFocusScopeTest extends TestCase
         $context = new RenderContext(Theme::dark());
         $field = TextInput::new()->withValue('abc');
 
-        $context->withFocusHere(function () use ($field, $frame, $context): void {
+        $context->focusHere(function () use ($field, $frame, $context): void {
             $field->render($frame, new Rect(0, 0, 12, 1), $context);
         });
 

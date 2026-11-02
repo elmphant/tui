@@ -120,9 +120,9 @@ final class RenderContext
      *
      * @param Closure(): void $render
      */
-    public function withFocusHere(Closure $render): void
+    public function focusHere(Closure $render): void
     {
-        $this->focus->withFocusHere($render);
+        $this->focus->focusHere($render);
     }
 
     /**
@@ -130,9 +130,9 @@ final class RenderContext
      *
      * @param Closure(): void $render
      */
-    public function withFocusOnChild(int $index, Closure $render): void
+    public function focusOnChild(int $index, Closure $render): void
     {
-        $this->focus->withFocusOnChild($index, $render);
+        $this->focus->focusOnChild($index, $render);
     }
 
     /**

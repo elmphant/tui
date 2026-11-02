@@ -575,7 +575,7 @@ final class DropdownMouseTest extends TestCase
     {
         $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
         $pass->begin(0.0);
-        $pass->context->withFocusHere(static function () use ($pass, $root, $frame, $anchor): void {
+        $pass->context->focusHere(static function () use ($pass, $root, $frame, $anchor): void {
             RootPass::draw($pass, $root, $frame, $anchor);
         });
         $pass->floats->commit();

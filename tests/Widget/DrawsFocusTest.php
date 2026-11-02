@@ -43,7 +43,7 @@ final class DrawsFocusTest extends TestCase
 
         $focused = new Frame(24, 6);
         $context = new RenderContext(Theme::dark());
-        $context->withFocusHere(static function () use ($widget, $focused, $area, $context): void {
+        $context->focusHere(static function () use ($widget, $focused, $area, $context): void {
             $widget->render($focused, $area, $context);
         });
 

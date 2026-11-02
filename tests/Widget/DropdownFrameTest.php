@@ -38,7 +38,7 @@ final class DropdownFrameTest extends TestCase
         $frame = new Frame(30, 12);
         $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
         $pass->begin(0.0);
-        $pass->context->withFocusHere(static function () use ($pass, $dropdown, $frame, $anchor): void {
+        $pass->context->focusHere(static function () use ($pass, $dropdown, $frame, $anchor): void {
             RootPass::draw($pass, $dropdown, $frame, $anchor);
         });
         $pass->floats->commit();

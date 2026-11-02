@@ -239,6 +239,6 @@ interface Model
 
 `$pass->context` is what you hand to widgets you draw. A model that draws by hand
 says where the keyboard is while it draws:
-`$context->withFocusHere(fn () => $field->render(...))` for one widget, or
-`$context->withFocusOnChild(2, fn () => $panel->render(...))` for the third child
+`$context->focusHere(fn () => $field->render(...))` for one widget, or
+`$context->focusOnChild(2, fn () => $panel->render(...))` for the third child
 of a `Panel`. See [Custom widgets](custom-widgets.md) for drawing cells.
