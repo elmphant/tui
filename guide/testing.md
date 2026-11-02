@@ -78,10 +78,11 @@ Popups are drawn too, so an open `Dropdown` shows its list in `screen()`.
 ```php
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Testing\ScreenBuffer;
 
 $frame = new Frame(20, 2);
-$frame->putString(4, 1, 'Run');
+$frame->putStyled(4, 1, 'Run', new Style());
 $screen = ScreenBuffer::fromFrame($frame);
 
 $screen->find('Run');     // ['row' => 1, 'column' => 4], in display columns

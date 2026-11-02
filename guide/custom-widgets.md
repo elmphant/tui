@@ -35,20 +35,23 @@ changed.
 public function render(Frame $frame, RenderPass $pass): void
 {
     // Text with color
-    $frame->putString(0, 0, 'Hello', Color::hex('FF06B7')->value);
+    $frame->putStyled(0, 0, 'Hello', new Style(foreground: Color::hex('FF06B7')));
 
     // With background and attributes
-    $frame->putString(0, 1, 'Bold text', Color::ansi(7)->value, Color::ansi(0)->value, Attr::BOLD);
+    $frame->putStyled(0, 1, 'Bold text', (new Style(Color::ansi(7), Color::ansi(0)))->bold());
 
     // Fill a rectangle
-    $frame->fillRect(0, 3, 40, 1, Color::ansi(7)->value, Color::ansi(4)->value);
+    $frame->fillStyled(new Rect(0, 3, 40, 1), new Style(Color::ansi(7), Color::ansi(4)));
+
+    // A theme style, so the colours follow the theme
+    $frame->putStyled(0, 4, 'Selected', $pass->context->theme->selectedStyle);
 
     // Your own ANSI colour codes work too
     $frame->putAnsi(0, 5, "\e[1;31mred bold\e[0m normal");
 }
 ```
 
-**Safe text.** `putString()` and every widget's text remove terminal control
+**Safe text.** `putStyled()` and every widget's text remove terminal control
 codes. Log lines, process output and user input can't mess up the screen.
 
 `putAnsi()` keeps colour codes, so **only pass text you wrote yourself**. Clean

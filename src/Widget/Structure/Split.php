@@ -134,6 +134,9 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         return $this->toPanes($message, $area);
     }
 
+    /**
+     * @internal
+     */
     public function dividerAt(MouseMsg $message, Rect $area): ?int
     {
         if (!$message->inRect($area)) {

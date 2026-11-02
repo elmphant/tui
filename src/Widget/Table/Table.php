@@ -279,6 +279,8 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
+     * @internal
+     *
      * @return list<int>
      */
     public function columnWidths(int $totalWidth): array

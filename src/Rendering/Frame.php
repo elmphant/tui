@@ -93,6 +93,9 @@ final class Frame
         $this->widths = $this->blankWidths;
     }
 
+    /**
+     * @internal
+     */
     public function width(int $index): int
     {
         return $this->widths[$index];
@@ -143,6 +146,9 @@ final class Frame
         array_pop($this->clipStack);
     }
 
+    /**
+     * @internal draw with putStyled()
+     */
     public function putChar(int $x, int $y, string $character, int $foreground = 0, int $background = 0, int $attributes = 0): void
     {
         if ($y < 0 || $y >= $this->height) {
@@ -156,6 +162,9 @@ final class Frame
         }
     }
 
+    /**
+     * @internal draw with putStyled()
+     */
     public function putString(int $x, int $y, string $text, int $foreground = 0, int $background = 0, int $attributes = 0): int
     {
         if ($y < 0 || $y >= $this->height) {
@@ -284,6 +293,9 @@ final class Frame
         return [$column, $y];
     }
 
+    /**
+     * @internal draw with fillStyled()
+     */
     public function fillRect(int $x, int $y, int $width, int $height, int $foreground = 0, int $background = 0, int $attributes = 0, string $character = ' '): void
     {
         $startX = max(0, $x);
@@ -355,6 +367,20 @@ final class Frame
         }
     }
 
+    public function fillStyled(Rect $area, Style $style, string $character = ' '): void
+    {
+        $this->fillRect(
+            $area->x,
+            $area->y,
+            $area->width,
+            $area->height,
+            $style->foregroundValue(),
+            $style->backgroundValue(),
+            $style->cellAttributes(),
+            $character,
+        );
+    }
+
     /**
      * Flips the attribute, so a mark over a row that is already reversed still shows.
      */
@@ -390,26 +416,41 @@ final class Frame
         return $this->continuations[$y] ?? null;
     }
 
+    /**
+     * @internal
+     */
     public function character(int $index): string
     {
         return $this->characters[$index];
     }
 
+    /**
+     * @internal
+     */
     public function foreground(int $index): int
     {
         return $this->foregrounds[$index];
     }
 
+    /**
+     * @internal
+     */
     public function background(int $index): int
     {
         return $this->backgrounds[$index];
     }
 
+    /**
+     * @internal
+     */
     public function attribute(int $index): int
     {
         return $this->attributes[$index];
     }
 
+    /**
+     * @internal
+     */
     public function snapshotFrom(self $source): void
     {
         $this->characters = $source->characters;
@@ -440,11 +481,17 @@ final class Frame
         $this->continuations = [];
     }
 
+    /**
+     * @internal
+     */
     public function isRowDirty(int $row): bool
     {
         return isset($this->dirtyRows[$row]);
     }
 
+    /**
+     * @internal
+     */
     public function clearDirty(): void
     {
         $this->dirtyRows = [];
@@ -459,6 +506,9 @@ final class Frame
         $this->contentRows[$row] = true;
     }
 
+    /**
+     * @internal
+     */
     public function markAllDirty(): void
     {
         for ($row = 0; $row < $this->height; ++$row) {

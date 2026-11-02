@@ -1281,6 +1281,23 @@ final class FrameTest extends TestCase
     // ── fillRect (L228-246) ──
 
     #[Test]
+    public function fillStyledPaintsTheAreaInTheStyleAndLeavesTheRestAlone(): void
+    {
+        $frame = new Frame(5, 3);
+        $red = Color::ansi(1)->value;
+        $green = Color::ansi(2)->value;
+        $style = new Style(foreground: Color::ansi(1), background: Color::ansi(2), attributes: Attr::BOLD);
+
+        $frame->fillStyled(new Rect(1, 1, 3, 1), $style, '#');
+
+        self::assertSame('     ', implode('', \array_slice($frame->characters, 0, 5)));
+        self::assertSame(' ### ', implode('', \array_slice($frame->characters, 5, 5)));
+        self::assertSame([0, $red, $red, $red, 0], \array_slice($frame->foregrounds, 5, 5));
+        self::assertSame([0, $green, $green, $green, 0], \array_slice($frame->backgrounds, 5, 5));
+        self::assertSame([0, Attr::BOLD, Attr::BOLD, Attr::BOLD, 0], \array_slice($frame->attributes, 5, 5));
+    }
+
+    #[Test]
     public function fillRectWritesCharacterAndStyleToEntireArea(): void
     {
         $frame = new Frame(10, 5);

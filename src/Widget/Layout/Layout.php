@@ -112,6 +112,8 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     }
 
     /**
+     * @internal
+     *
      * @return list<array{Widget, Rect}>
      */
     public function computeChildRects(Rect $area): array

@@ -191,7 +191,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     }
 
     /**
-     * Item heights vary with content, so hit-testing cannot assume a fixed row height.
+     * @internal item heights vary with content, so hit-testing cannot assume a fixed row height
      */
     public function indexAt(MouseMsg $message, Rect $area): ?int
     {
