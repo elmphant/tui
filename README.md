@@ -116,7 +116,7 @@ to test: a test checks which command was asked for, and nothing runs.
 | [Keys and focus](guide/keys-and-focus.md) | Shortcuts, typing into fields, vim mode, the key help, footer hints, and where the keyboard goes |
 | [Commands and effects](guide/effects.md) | Timers, processes, HTTP, cancelling, and effects of your own |
 | [Testing](guide/testing.md) | Driving an app or one widget from a test, and checking the screen |
-| [Running and debugging](guide/running.md) | Program options, drawing inline, errors, tracing, debugging, and the PHPStan rules |
+| [Running and debugging](guide/running.md) | Program options, drawing inline, terminals, errors, tracing, debugging, and the PHPStan rules |
 | [Custom widgets](guide/custom-widgets.md) | Writing your own widget, popups, and drawing cells by hand |
 | [How it works](guide/how-it-works.md) | What the framework does between a key press and the screen, in four diagrams |
 

@@ -109,6 +109,28 @@ foreach (['Project name', 'Database host'] as $question) {
 - `withInline()` cannot be combined with `withAltScreen()` or
   `withMouseTracking()`: `start()` throws a `LogicException`.
 
+## Terminals
+
+The program asks the terminal for features and works without them:
+
+- **Frames** are sent as one update (synchronized output), so a terminal that
+  supports it never shows half a frame. Others ignore the request.
+- **Keys:** where the kitty keyboard protocol is supported, keys that send the
+  same bytes elsewhere, such as Ctrl+I and Tab, can be told apart.
+- **Colours** follow `COLORTERM`, `TERM` and `NO_COLOR`. See
+  [Styling](styling.md).
+- **Links** need OSC 8 and **copying** needs OSC 52. See
+  [Copying text](widgets.md#copying-text).
+
+Run the app in a real terminal. `docker exec` without `-t` has none, so the
+program cannot read the size or the keys. In DDEV, start it from `ddev ssh`.
+
+Inline apps in tmux and in terminals that rewrap: when the window gets narrower, the terminal
+rewraps the app's rows and moves some of them into the scrollback. The screen
+is drawn again correctly, but cut-off copies of the app stay in the scrollback.
+A dropdown or the key help that needs more rows than are left below the app
+scrolls the terminal up.
+
 ## Errors
 
 An exception in `update()`, `view()` or a command reaches `onError()` as an
