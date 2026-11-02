@@ -12,15 +12,6 @@ use Elmphant\Tui\Text\TerminalText;
 
 final class InlineScreen
 {
-    private const ATTRIBUTE_CODES = [
-        Attr::BOLD => '1',
-        Attr::FAINT => '2',
-        Attr::ITALIC => '3',
-        Attr::UNDERLINE => '4',
-        Attr::BLINK => '5',
-        Attr::REVERSE => '7',
-        Attr::STRIKETHROUGH => '9',
-    ];
     // tmux copies the whole screen into its history when an erase starts at the top left, so it starts one column in.
     private const ERASE_REGION = "\x1b[1C" . Ansi::ERASE_BELOW . "\r";
 
@@ -30,11 +21,13 @@ final class InlineScreen
     private array $written = [];
     private int $width = 0;
     private bool $printedLast = false;
+    private readonly Pen $pen;
 
     public function __construct(
         private readonly TerminalOutput $terminal,
-        private readonly ColorProfile $colorProfile = ColorProfile::TrueColor,
+        ColorProfile $colorProfile = ColorProfile::TrueColor,
     ) {
+        $this->pen = new Pen($colorProfile);
     }
 
     public function flush(Frame $backBuffer): void
@@ -103,17 +96,14 @@ final class InlineScreen
         $end = self::endOf($frame, $row, $caret);
 
         $text = '';
-        $style = '';
         for ($index = $offset; $index < $end; ++$index) {
-            $cellStyle = $this->styleOf($frame, $index, $index === $caret);
-            if ($cellStyle !== $style) {
-                $text .= $cellStyle === '' ? Ansi::RESET_STYLE : Ansi::sgr('0;' . $cellStyle);
-                $style = $cellStyle;
-            }
-            $text .= $frame->characters[$index];
+            $column = $index - $offset;
+            $width = $frame->widths[$index];
+            $text .= $this->pen->switchTo($frame->foregrounds[$index], $frame->backgrounds[$index], $frame->attributes[$index] ^ ($index === $caret ? Attr::REVERSE : 0))
+                . Pen::cellText($frame->characters[$index], $width, "\r" . self::right($column), "\r" . self::right($column + $width));
         }
 
-        $text = $style === '' ? $text : $text . Ansi::RESET_STYLE;
+        $text .= $this->pen->lift();
 
         // A row written to its last column leaves the cursor on that column, so an erase would take the last character.
         return $end === $offset + $frame->width ? $text : $text . Ansi::ERASE_TO_LINE_END;
@@ -135,25 +125,9 @@ final class InlineScreen
         return $frame->characters[$index] === ' ' && $frame->backgrounds[$index] === 0 && $frame->attributes[$index] === 0;
     }
 
-    private function styleOf(Frame $frame, int $index, bool $caret): string
+    private static function right(int $columns): string
     {
-        $foreground = $frame->foregrounds[$index];
-        $background = $frame->backgrounds[$index];
-        $attributes = $frame->attributes[$index] ^ ($caret ? Attr::REVERSE : 0);
-        if ($foreground === 0 && $background === 0 && $attributes === 0) {
-            return '';
-        }
-
-        $codes = [];
-        foreach (self::ATTRIBUTE_CODES as $attribute => $code) {
-            if (($attributes & $attribute) !== 0) {
-                $codes[] = $code;
-            }
-        }
-        $codes[] = Color::fromValue($foreground)->downsampleTo($this->colorProfile)->toSgr(false);
-        $codes[] = Color::fromValue($background)->downsampleTo($this->colorProfile)->toSgr(true);
-
-        return implode(';', $codes);
+        return $columns > 0 ? Ansi::cursorRight($columns) : '';
     }
 
     private static function up(int $rows): string

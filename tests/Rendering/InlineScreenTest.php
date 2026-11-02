@@ -9,6 +9,8 @@ use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\CursorPosition;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\InlineScreen;
+use Elmphant\Tui\Rendering\Line;
+use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Testing\VirtualTerminal;
@@ -78,7 +80,7 @@ final class InlineScreenTest extends TestCase
 
         (new InlineScreen($terminal))->flush($frame);
 
-        self::assertStringContainsString("\x1b[0;1;31;49mok\x1b[0m\x1b[K", $terminal->output());
+        self::assertStringContainsString("\x1b[1;31mok\x1b[0m\x1b[K", $terminal->output());
     }
 
     #[Test]
@@ -115,8 +117,78 @@ final class InlineScreenTest extends TestCase
 
         (new InlineScreen($terminal))->flush($frame);
 
-        self::assertStringContainsString("\r\nt\x1b[0;7;39;49mw\x1b[0mo\x1b[K", $terminal->output());
+        self::assertStringContainsString("\r\nt\x1b[7mw\x1b[0mo\x1b[K", $terminal->output());
         self::assertStringNotContainsString(Ansi::SHOW_CURSOR, $terminal->output());
+    }
+
+    #[Test]
+    public function aLinkOpensBeforeItsTextAndClosesBeforeTheRowIsErased(): void
+    {
+        $terminal = new VirtualTerminal(20, 24);
+        $frame = new Frame(20, 2);
+        $frame->putLine(0, 0, new Line([new Span('see '), Span::link('docs', 'https://example.com/docs'), new Span(' now')]));
+        $frame->putLine(0, 1, new Line([Span::link('docs', 'https://example.com/docs')]));
+
+        (new InlineScreen($terminal))->flush($frame);
+
+        self::assertStringContainsString("see \e]8;;https://example.com/docs\e\\docs\e]8;;\e\\ now\x1b[K", $terminal->output());
+        self::assertStringContainsString("\e]8;;https://example.com/docs\e\\docs\e]8;;\e\\\x1b[K", $terminal->output());
+    }
+
+    #[Test]
+    public function anEmojiOfUnsureWidthClearsItsCellsAndTheCursorReturnsToTheCellAfterIt(): void
+    {
+        $terminal = new VirtualTerminal(10, 24);
+
+        (new InlineScreen($terminal))->flush(self::frameOf("a❤\u{FE0F}c"));
+
+        self::assertStringContainsString("a  \r\x1b[1C❤\u{FE0F}\r\x1b[3Cc\x1b[K", $terminal->output());
+    }
+
+    #[Test]
+    public function aLinkFollowedByAnotherIsClosedBeforeTheNextOpens(): void
+    {
+        $terminal = new VirtualTerminal(20, 24);
+        $frame = new Frame(20, 1);
+        $frame->putLine(0, 0, new Line([Span::link('a', 'https://a.example'), Span::link('b', 'https://b.example')]));
+
+        (new InlineScreen($terminal))->flush($frame);
+
+        self::assertStringContainsString("\e]8;;https://a.example\e\\a\e]8;;\e\\\e]8;;https://b.example\e\\b", $terminal->output());
+    }
+
+    #[Test]
+    public function aStyledLinkAtTheEndOfARowIsClosedAndItsStyleReset(): void
+    {
+        $terminal = new VirtualTerminal(20, 24);
+        $frame = new Frame(20, 1);
+        $frame->putLine(0, 0, new Line([Span::link('docs', 'https://example.com/docs')->bold()]));
+
+        (new InlineScreen($terminal))->flush($frame);
+
+        self::assertStringContainsString("docs\e]8;;\e\\\x1b[0m\x1b[K", $terminal->output());
+    }
+
+    #[Test]
+    public function aBoldRowWithoutColourIsResetBeforeTheRowIsErased(): void
+    {
+        $terminal = new VirtualTerminal(10, 24);
+        $frame = new Frame(10, 1);
+        $frame->putString(0, 0, 'ok', 0, 0, Attr::BOLD);
+
+        (new InlineScreen($terminal))->flush($frame);
+
+        self::assertStringContainsString("\x1b[1mok\x1b[0m\x1b[K", $terminal->output());
+    }
+
+    #[Test]
+    public function anEmojiOfUnsureWidthOnALaterRowReturnsToItsOwnColumn(): void
+    {
+        $terminal = new VirtualTerminal(10, 24);
+
+        (new InlineScreen($terminal))->flush(self::frameOf('one', "❤\u{FE0F}c"));
+
+        self::assertStringContainsString("\r\n  \r❤\u{FE0F}\r\x1b[2Cc\x1b[K", $terminal->output());
     }
 
     #[Test]

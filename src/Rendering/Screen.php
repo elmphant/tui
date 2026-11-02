@@ -12,33 +12,8 @@ use Throwable;
 
 final class Screen
 {
-    /**
-     * Animated colours can grow these caches indefinitely, so clear them at this limit.
-     */
-    private const COLOR_CACHE_LIMIT = 4096;
-
     private ?Frame $front = null;
-    private int $currentForeground = 0;
-    private int $currentBackground = 0;
-    private int $currentAttributes = 0;
-    private int $currentLink = 0;
-
-    /**
-     * @var array<int, int>
-     */
-    private array $downsampleCache = [];
-    /**
-     * @var array<int, string>
-     */
-    private array $foregroundSgrCache = [];
-    /**
-     * @var array<int, string>
-     */
-    private array $backgroundSgrCache = [];
-    /**
-     * @var array<int, string>
-     */
-    private array $attributeSgrCache = [];
+    private readonly Pen $pen;
 
     /**
      * Track the cursor state last sent to the terminal so unchanged frames produce no output.
@@ -51,8 +26,9 @@ final class Screen
 
     public function __construct(
         private readonly TerminalOutput $terminal,
-        private readonly ColorProfile $colorProfile = ColorProfile::TrueColor,
+        ColorProfile $colorProfile = ColorProfile::TrueColor,
     ) {
+        $this->pen = new Pen($colorProfile);
     }
 
     public function flush(Frame $backBuffer): void
@@ -146,9 +122,9 @@ final class Screen
             return '';
         }
 
-        $parts[] = $this->closeLink();
+        $parts[] = $this->pen->closeLink();
         $this->cursorAsserted = false;
-        $this->resetCurrentStyle();
+        $this->pen->forgetStyle();
 
         return implode('', $parts) . Ansi::RESET_STYLE;
     }
@@ -204,7 +180,7 @@ final class Screen
                 }
 
                 if ($cursorX !== $column || $cursorY !== $row) {
-                    $parts[] = $this->closeLink() . self::moveCursor($column, $row, $cursorX, $cursorY);
+                    $parts[] = $this->pen->closeLink() . self::moveCursor($column, $row, $cursorX, $cursorY);
                     $cursorY = $row;
                 }
 
@@ -212,10 +188,10 @@ final class Screen
                 $background = $backBackgrounds[$index];
                 $attributes = $backAttributes[$index];
 
-                $parts[] = $this->styleDelta($foreground, $background, $attributes);
+                $parts[] = $this->pen->switchTo($foreground, $background, $attributes);
 
                 $runCharacters = [self::cellText($backCharacters[$index], $backWidths[$index], $row, $column)];
-                $repaintsTheRest = $repaintsTheRest || self::isCluster($backCharacters[$index], $backWidths[$index]);
+                $repaintsTheRest = $repaintsTheRest || Pen::isCluster($backCharacters[$index], $backWidths[$index]);
                 $nextColumn = $column + max(1, $backWidths[$index]);
 
                 while ($nextColumn < $width) {
@@ -237,7 +213,7 @@ final class Screen
 
                     $nextCharacter = $backCharacters[$nextIndex];
                     $runCharacters[] = self::cellText($nextCharacter, $backWidths[$nextIndex], $row, $nextColumn);
-                    $repaintsTheRest = $repaintsTheRest || self::isCluster($nextCharacter, $backWidths[$nextIndex]);
+                    $repaintsTheRest = $repaintsTheRest || Pen::isCluster($nextCharacter, $backWidths[$nextIndex]);
                     $nextColumn += max(1, $backWidths[$nextIndex]);
                 }
 
@@ -260,7 +236,7 @@ final class Screen
             if ($row === 0) {
                 $output[] = Ansi::HIDE_CURSOR . Ansi::CURSOR_HOME . Ansi::RESET_STYLE . Ansi::ERASE_TO_LINE_END;
             } else {
-                $output[] = $this->closeLink() . Ansi::cursorToRowStart($row) . Ansi::ERASE_TO_LINE_END;
+                $output[] = $this->pen->closeLink() . Ansi::cursorToRowStart($row) . Ansi::ERASE_TO_LINE_END;
             }
 
             $rowOffset = $row * $width;
@@ -272,15 +248,15 @@ final class Screen
                 $background = $backBuffer->backgrounds[$index];
                 $attributes = $backBuffer->attributes[$index];
 
-                $output[] = $this->styleDelta($foreground, $background, $attributes);
+                $output[] = $this->pen->switchTo($foreground, $background, $attributes);
                 [$runCharacters, $nextColumn] = $this->collectStyledRun($backBuffer, $rowOffset, $column, $width, $foreground, $background, $attributes);
                 $output[] = $runCharacters;
                 $column = $nextColumn;
             }
         }
 
-        $output[] = $this->closeLink() . Ansi::RESET_STYLE;
-        $this->resetCurrentStyle();
+        $output[] = $this->pen->closeLink() . Ansi::RESET_STYLE;
+        $this->pen->forgetStyle();
         $this->shown = false;
         $this->cursorAsserted = false;
 
@@ -313,27 +289,10 @@ final class Screen
         return [implode('', $parts), $nextColumn];
     }
 
-    /**
-     * Clear both cells first: tmux can drop a VS16 emoji if its second cell still holds part of an old wide character.
-     */
     private static function cellText(string $character, int $width, int $row, int $column): string
     {
-        if (!self::isCluster($character, $width)) {
-            return $character;
-        }
-
         // Back by absolute position: after a space in the last column the cursor waits to wrap, and a relative move would land one short.
-        $text = str_contains($character, "\u{FE0F}") ? str_repeat(' ', $width) . Ansi::cursorTo($row, $column) . $character : $character;
-
-        return $text . Ansi::cursorTo($row, $column + $width);
-    }
-
-    /**
-     * Terminals disagree on complex emoji width; restore the cursor position and redraw the rest of the row after them.
-     */
-    private static function isCluster(string $character, int $width): bool
-    {
-        return $width > 0 && strlen($character) > 4;
+        return Pen::cellText($character, $width, Ansi::cursorTo($row, $column), Ansi::cursorTo($row, $column + $width));
     }
 
     private function cellHasStyle(Frame $frame, int $index, int $foreground, int $background, int $attributes): bool
@@ -343,94 +302,12 @@ final class Screen
             && $frame->attributes[$index] === $attributes;
     }
 
-    private function resetCurrentStyle(): void
-    {
-        $this->currentForeground = 0;
-        $this->currentBackground = 0;
-        $this->currentAttributes = 0;
-    }
-
     private function snapshotFrontBuffer(Frame $source): void
     {
         if ($this->front === null || $this->front->width !== $source->width || $this->front->height !== $source->height) {
             $this->front = new Frame($source->width, $source->height);
         }
         $this->front->snapshotFrom($source);
-    }
-
-    private function styleDelta(int $foreground, int $background, int $attributes): string
-    {
-        return $this->sgrDelta($foreground, $background, $attributes & Hyperlinks::SGR_ATTRIBUTES)
-            . $this->linkDelta($attributes & ~Hyperlinks::SGR_ATTRIBUTES);
-    }
-
-    private function linkDelta(int $link): string
-    {
-        if ($link === $this->currentLink) {
-            return '';
-        }
-
-        $change = $this->closeLink();
-        $this->currentLink = $link;
-
-        return $link === 0 ? $change : $change . Ansi::hyperlink(Hyperlinks::urlIn($link) ?? '');
-    }
-
-    /**
-     * A link left open would carry on to whatever the terminal prints next.
-     */
-    private function closeLink(): string
-    {
-        if ($this->currentLink === 0) {
-            return '';
-        }
-
-        $this->currentLink = 0;
-
-        return Ansi::HYPERLINK_END;
-    }
-
-    private function sgrDelta(int $foreground, int $background, int $attributes): string
-    {
-        $foreground = $this->downsample($foreground);
-        $background = $this->downsample($background);
-
-        if ($foreground === $this->currentForeground && $background === $this->currentBackground && $attributes === $this->currentAttributes) {
-            return '';
-        }
-
-        $removedAttributes = $this->currentAttributes & ~$attributes;
-        $sgrParts = [];
-
-        if ($removedAttributes !== 0) {
-            $sgrParts[] = '0';
-            if ($attributes !== 0) {
-                $sgrParts[] = $this->attributesToSgr($attributes);
-            }
-            if ($foreground !== 0) {
-                $sgrParts[] = $this->colorToSgr($foreground, background: false);
-            }
-            if ($background !== 0) {
-                $sgrParts[] = $this->colorToSgr($background, background: true);
-            }
-        } else {
-            $addedAttributes = $attributes & ~$this->currentAttributes;
-            if ($addedAttributes !== 0) {
-                $sgrParts[] = $this->attributesToSgr($addedAttributes);
-            }
-            if ($foreground !== $this->currentForeground) {
-                $sgrParts[] = $this->colorToSgr($foreground, background: false);
-            }
-            if ($background !== $this->currentBackground) {
-                $sgrParts[] = $this->colorToSgr($background, background: true);
-            }
-        }
-
-        $this->currentForeground = $foreground;
-        $this->currentBackground = $background;
-        $this->currentAttributes = $attributes;
-
-        return $sgrParts !== [] ? Ansi::sgr(implode(';', $sgrParts)) : '';
     }
 
     private static function moveCursor(int $targetX, int $targetY, int $currentX, int $currentY): string
@@ -448,75 +325,5 @@ final class Screen
         }
 
         return Ansi::cursorTo($targetY, $targetX);
-    }
-
-    /**
-     * @infection-ignore-all a bounded memo over Color::downsampleTo(): a miss or a reset computes the same value again
-     */
-    private function downsample(int $color): int
-    {
-        if ($this->colorProfile === ColorProfile::TrueColor) {
-            return $color;
-        }
-
-        if (!isset($this->downsampleCache[$color]) && count($this->downsampleCache) >= self::COLOR_CACHE_LIMIT) {
-            $this->downsampleCache = [];
-        }
-
-        return $this->downsampleCache[$color] ??= Color::fromValue($color)->downsampleTo($this->colorProfile)->value;
-    }
-
-    /**
-     * @infection-ignore-all a bounded memo over Color::toSgr(): a miss or a reset computes the same value again
-     */
-    private function colorToSgr(int $color, bool $background): string
-    {
-        if ($background) {
-            if (!isset($this->backgroundSgrCache[$color]) && count($this->backgroundSgrCache) >= self::COLOR_CACHE_LIMIT) {
-                $this->backgroundSgrCache = [];
-            }
-
-            return $this->backgroundSgrCache[$color]
-                ??= Color::fromValue($color)->toSgr(true);
-        }
-
-        if (!isset($this->foregroundSgrCache[$color]) && count($this->foregroundSgrCache) >= self::COLOR_CACHE_LIMIT) {
-            $this->foregroundSgrCache = [];
-        }
-
-        return $this->foregroundSgrCache[$color]
-            ??= Color::fromValue($color)->toSgr(false);
-    }
-
-    private function attributesToSgr(int $attributes): string
-    {
-        if (isset($this->attributeSgrCache[$attributes])) {
-            return $this->attributeSgrCache[$attributes];
-        }
-
-        $codes = [];
-        if (($attributes & Attr::BOLD) !== 0) {
-            $codes[] = '1';
-        }
-        if (($attributes & Attr::FAINT) !== 0) {
-            $codes[] = '2';
-        }
-        if (($attributes & Attr::ITALIC) !== 0) {
-            $codes[] = '3';
-        }
-        if (($attributes & Attr::UNDERLINE) !== 0) {
-            $codes[] = '4';
-        }
-        if (($attributes & Attr::BLINK) !== 0) {
-            $codes[] = '5';
-        }
-        if (($attributes & Attr::REVERSE) !== 0) {
-            $codes[] = '7';
-        }
-        if (($attributes & Attr::STRIKETHROUGH) !== 0) {
-            $codes[] = '9';
-        }
-
-        return $this->attributeSgrCache[$attributes] = implode(';', $codes);
     }
 }
