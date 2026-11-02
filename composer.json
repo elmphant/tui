@@ -3,12 +3,26 @@
     "description": "The Elm Architecture for terminal UIs (TUI) in PHP",
     "license": "MIT",
     "type": "library",
+    "keywords": [
+        "tui",
+        "terminal",
+        "cli",
+        "console",
+        "elm-architecture",
+        "bubbletea",
+        "ratatui"
+    ],
     "authors": [
         {
             "name": "Wolfgang Klinger",
             "email": "wolfgang@wazum.com"
         }
     ],
+    "homepage": "https://github.com/elmphant/tui",
+    "support": {
+        "issues": "https://github.com/elmphant/tui/issues",
+        "source": "https://github.com/elmphant/tui"
+    },
     "require": {
         "php": "^8.2",
         "ext-ctype": "*",
@@ -45,17 +59,6 @@
         "psr-4": {
             "Elmphant\\Tui\\Tests\\": "tests/"
         }
-    },
-    "archive": {
-        "exclude": [
-            "/*",
-            "!/src",
-            "!/src/**",
-            "!/composer.json",
-            "!/rules.neon",
-            "!/README.md",
-            "!/LICENSE"
-        ]
     },
     "config": {
         "allow-plugins": {
