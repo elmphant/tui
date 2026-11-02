@@ -11,6 +11,7 @@
     ],
     "require": {
         "php": "^8.2",
+        "ext-ctype": "*",
         "ext-mbstring": "*",
         "revolt/event-loop": "^1.0",
         "symfony/http-client-contracts": "^3.5",
