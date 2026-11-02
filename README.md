@@ -28,8 +28,11 @@ PHP 8.2+ · MIT License
 composer require elmphant/tui
 ```
 
-You need PHP 8.2+ and `ext-mbstring`. Apps run in POSIX terminals (Linux, macOS,
-WSL). Tests run anywhere.
+You need PHP 8.2+, `ext-ctype` and `ext-mbstring`. Apps run in POSIX terminals
+(Linux, macOS, WSL). Tests run anywhere.
+
+Until 1.0, a minor version may break the API. Require a minor version, for
+example `^0.1`, and read the [changelog](CHANGELOG.md) before you update.
 
 Some features need an extra package. You only install it if you use the feature:
 
