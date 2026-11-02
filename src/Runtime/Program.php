@@ -1145,13 +1145,8 @@ final class Program
             return;
         }
 
-        $previousRevision = $this->model instanceof RenderRevisioned ? $this->model->renderRevision() : null;
         $this->model = $next;
-        $newRevision = $next instanceof RenderRevisioned ? $next->renderRevision() : null;
-
-        if ($previousRevision === null || $previousRevision !== $newRevision) {
-            $this->frames->markDirty();
-        }
+        $this->frames->markDirty();
     }
 
     private function giveUp(Throwable $error): void

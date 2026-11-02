@@ -40,6 +40,10 @@ abstract readonly class App
   `in_array('search', $ids, true)` is always false. Check `$id->value === 'search'`.
 - `theme()` is asked before every frame. To switch themes, keep a field on the
   App: `return $this->dark ? Theme::dark() : Theme::light();`.
+- To save state when the program ends, implement `Runtime\ShutdownAware`. Its
+  `onShutdown()` runs on the last App, after a quit key, `Cmd::quit()` or a
+  signal, and before the terminal is restored. Do the work right there: no
+  command runs any more.
 
 ## What a hook returns
 

@@ -13,7 +13,6 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Runtime\RenderRevisioned;
 use Elmphant\Tui\Tests\Support\GuardedTerminal;
 use Elmphant\Tui\Tests\Support\Ping;
 use Elmphant\Tui\Tests\Support\Stop;
@@ -34,19 +33,7 @@ final class ProgramRedrawTest extends TestCase
         self::assertSame(2, self::framesDrawn(new PingedModel(new ArrayObject(), PingedModel::CHANGES)));
     }
 
-    #[Test]
-    public function aNewModelWithTheSameRenderRevisionIsNotDrawnAgain(): void
-    {
-        self::assertSame(1, self::framesDrawn(new RevisionedPingedModel(new ArrayObject(), revisionStep: 0)));
-    }
-
-    #[Test]
-    public function aNewRenderRevisionIsDrawnAgain(): void
-    {
-        self::assertSame(2, self::framesDrawn(new RevisionedPingedModel(new ArrayObject(), revisionStep: 1)));
-    }
-
-    private static function framesDrawn(PingedModel|RevisionedPingedModel $model): int
+    private static function framesDrawn(PingedModel $model): int
     {
         Program::new($model)->withTerminal(GuardedTerminal::of(20, 3))->start();
 
@@ -83,46 +70,6 @@ final readonly class PingedModel implements Model
             $message instanceof Stop => new UpdateResult($this, Cmd::quit()),
             default => new UpdateResult($this),
         };
-    }
-
-    public function render(Frame $frame, RenderPass $pass): void
-    {
-        $this->frames->append(true);
-    }
-}
-
-final readonly class RevisionedPingedModel implements Model, RenderRevisioned
-{
-    /**
-     * @param ArrayObject<int, true> $frames
-     */
-    public function __construct(
-        public ArrayObject $frames,
-        private int $revisionStep,
-        private int $revision = 0,
-    ) {
-    }
-
-    public function init(): ?Cmd
-    {
-        return Cmd::after(0.05, static fn (): Message => new Ping());
-    }
-
-    public function update(Message $message, Rect $area): UpdateResult
-    {
-        return match (true) {
-            $message instanceof Ping => new UpdateResult(
-                new self($this->frames, $this->revisionStep, $this->revision + $this->revisionStep),
-                Cmd::after(0.05, static fn (): Message => new Stop()),
-            ),
-            $message instanceof Stop => new UpdateResult($this, Cmd::quit()),
-            default => new UpdateResult($this),
-        };
-    }
-
-    public function renderRevision(): int
-    {
-        return $this->revision;
     }
 
     public function render(Frame $frame, RenderPass $pass): void
