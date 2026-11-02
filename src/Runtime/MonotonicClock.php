@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Runtime;
 
+/**
+ * @internal
+ */
 final class MonotonicClock implements Clock
 {
     public function now(): float

@@ -7,6 +7,9 @@ namespace Elmphant\Tui\Widget\Choice;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Text\CharWidth;
 
+/**
+ * @internal
+ */
 final class OptionRowLayout
 {
     public const GAP = 2;

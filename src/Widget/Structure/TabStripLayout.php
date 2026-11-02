@@ -8,6 +8,9 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\TextWrap;
 
+/**
+ * @internal
+ */
 final readonly class TabStripLayout
 {
     public const HIDDEN_BEFORE = '‹';

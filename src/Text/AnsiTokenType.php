@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Text;
 
+/**
+ * @internal
+ */
 enum AnsiTokenType
 {
     case Text;

@@ -9,6 +9,8 @@ use Generator;
 /**
  * Splits a byte string into text runs and ECMA-48 escape sequences.
  * Unterminated sequences at end of input are yielded as their partial token.
+ *
+ * @internal
  */
 final class AnsiTokenizer
 {

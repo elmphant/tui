@@ -6,6 +6,9 @@ namespace Elmphant\Tui\Terminal;
 
 use Elmphant\Tui\Text\TerminalText;
 
+/**
+ * @internal
+ */
 final class Ansi
 {
     public const HIDE_CURSOR = "\x1b[?25l";

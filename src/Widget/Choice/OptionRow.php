@@ -8,6 +8,9 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 
+/**
+ * @internal
+ */
 interface OptionRow extends Focusable, KeybindingsAware, MeasureHeight
 {
     /**

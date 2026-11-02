@@ -201,6 +201,9 @@ final class Program
         return new self($model);
     }
 
+    /**
+     * @internal
+     */
     public function state(): ProgramState
     {
         return $this->state;

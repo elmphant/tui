@@ -28,6 +28,9 @@ use League\CommonMark\Node\Node;
 use League\CommonMark\Parser\MarkdownParser;
 use RuntimeException;
 
+/**
+ * @internal
+ */
 final class SpanRenderer
 {
     /**

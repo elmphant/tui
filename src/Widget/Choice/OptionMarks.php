@@ -6,6 +6,8 @@ namespace Elmphant\Tui\Widget\Choice;
 
 /**
  * Use parentheses for single choice and brackets for independent toggles; equal widths keep labels aligned.
+ *
+ * @internal
  */
 final class OptionMarks
 {
