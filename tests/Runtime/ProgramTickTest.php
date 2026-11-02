@@ -32,21 +32,26 @@ final class ProgramTickTest extends TestCase
         $terminal = GuardedTerminal::of(20, 3);
         $frames = new ArrayObject();
         $framesAtEachCheck = [];
-        EventLoop::delay(0.05, static function () use ($clock, $terminal): void {
+        $script = static function () use ($clock, $terminal, $frames, &$framesAtEachCheck): void {
             $clock->advance(0.25);
             $terminal->simulateInput('p');
-        });
-        EventLoop::delay(0.15, static function () use ($frames, &$framesAtEachCheck, $clock): void {
-            $framesAtEachCheck[] = \count($frames);
-            $clock->advance(0.25);
-        });
-        EventLoop::delay(0.45, static function () use ($frames, &$framesAtEachCheck, $terminal): void {
-            $framesAtEachCheck[] = \count($frames);
-            $terminal->closeInput();
-        });
+            EventLoop::delay(0.1, static function () use ($frames, &$framesAtEachCheck, $clock, $terminal): void {
+                $framesAtEachCheck[] = \count($frames);
+                $clock->advance(0.25);
+                EventLoop::delay(0.3, static function () use ($frames, &$framesAtEachCheck, $terminal): void {
+                    $framesAtEachCheck[] = \count($frames);
+                    $terminal->closeInput();
+                });
+            });
+        };
 
         Program::new(new ScriptedModel(
-            render: static fn () => $frames->append(true),
+            render: static function () use ($frames, $script): void {
+                $frames->append(true);
+                if (\count($frames) === 1) {
+                    EventLoop::defer($script);
+                }
+            },
             onMessage: static fn (Message $message): ?Cmd => $message instanceof KeyMsg ? Cmd::message(new Ping()) : null,
         ))->withTerminal($terminal)->withClock($clock)->withFps(2.0)->start();
 
