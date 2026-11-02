@@ -121,6 +121,14 @@ final class NamedMountTest extends TestCase
     }
 
     #[Test]
+    public function aMountBehindAModalAnotherMountDrawsHearsNoKey(): void
+    {
+        $harness = ModelHarness::for(new HostOfAQuietMount(behindAMountedModal: true), 40, 12)->initialize()->press('r');
+
+        self::assertSame(0, $harness->model()->quiet->refreshed);
+    }
+
+    #[Test]
     public function aPressReachesTheMountUnderThePointerWithTheAreaItIsDrawnIn(): void
     {
         $harness = ModelHarness::for(new HostOfAQuietMount(besideASidebar: true), 40, 6)->initialize()->clickAt(15, 2);
@@ -150,6 +158,22 @@ final class NamedMountTest extends TestCase
         $harness = ModelHarness::for(new HostOfAMountedApp(), 40, 6)->initialize();
 
         self::assertSame(['started'], $harness->model()->inner->heard);
+    }
+
+    #[Test]
+    public function aMountInsideAMountedAppStartsOnce(): void
+    {
+        $harness = ModelHarness::for(new HostOfANestingApp(), 40, 6)->initialize();
+
+        self::assertSame(['started'], $harness->model()->nesting->starting->heard);
+    }
+
+    #[Test]
+    public function aKeyReachesAModelMountedInsideAMountedApp(): void
+    {
+        $harness = ModelHarness::for(new HostOfANestingApp(), 40, 6)->initialize()->press('r');
+
+        self::assertSame(1, $harness->model()->nesting->quiet->refreshed);
     }
 
     #[Test]
@@ -341,6 +365,39 @@ final readonly class HostOfAMountedApp extends App
     }
 }
 
+final readonly class NestingApp extends App
+{
+    use Cloneable;
+
+    public function __construct(
+        public StartingModel $starting = new StartingModel(),
+        public QuietModel $quiet = new QuietModel(),
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::vertical(
+            Mount::named('starting', $this->starting, Text::new('starting'), static fn (self $app, StartingModel $starting): self => $app->cloneWith(starting: $starting)),
+            Mount::named('quiet', $this->quiet, Text::new('quiet'), static fn (self $app, QuietModel $quiet): self => $app->cloneWith(quiet: $quiet)),
+        );
+    }
+}
+
+final readonly class HostOfANestingApp extends App
+{
+    use Cloneable;
+
+    public function __construct(public NestingApp $nesting = new NestingApp())
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Mount::named('nesting', $this->nesting, $this->nesting->view(), static fn (self $host, NestingApp $nesting): self => $host->cloneWith(nesting: $nesting));
+    }
+}
+
 final readonly class QuietModel implements Reducer
 {
     use Cloneable;
@@ -367,6 +424,7 @@ final readonly class HostOfAQuietMount extends App
         public QuietModel $quiet = new QuietModel(),
         public bool $besideASidebar = false,
         public bool $behindAModal = false,
+        public bool $behindAMountedModal = false,
     ) {
     }
 
@@ -377,6 +435,7 @@ final readonly class HostOfAQuietMount extends App
         return match (true) {
             $this->besideASidebar => Layout::horizontal()->add(Text::new('sidebar'), Constraint::exact(10))->add($mount, Constraint::flex()),
             $this->behindAModal => Overlay::new($mount, Modal::new('Notice', Text::new('read me'))),
+            $this->behindAMountedModal => Overlay::new($mount, Mount::named('notice', new StartingModel(), Modal::new('Notice', Text::new('read me')), static fn (self $host): self => $host)),
             default => $mount,
         };
     }

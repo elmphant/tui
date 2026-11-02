@@ -331,7 +331,11 @@ final readonly class ComponentRegistry
      */
     private static function mountsIn(Widget $widget): array
     {
-        $mounts = $widget instanceof Mount ? [$widget] : [];
+        if ($widget instanceof Mount) {
+            return [$widget];
+        }
+
+        $mounts = [];
 
         if ($widget instanceof WidgetContainer) {
             foreach ($widget->children() as $child) {
@@ -349,8 +353,7 @@ final readonly class ComponentRegistry
      */
     private static function listeningMountsIn(Widget $widget): array
     {
-        $own = $widget instanceof Mount ? [$widget] : [];
-        $mounts = $own;
+        $mounts = [];
         $layer = null;
 
         if ($widget instanceof WidgetContainer) {
@@ -364,7 +367,11 @@ final readonly class ComponentRegistry
             }
         }
 
-        return $layer === null ? [$mounts, $widget instanceof InputLayer] : [[...$own, ...$layer], true];
+        if ($widget instanceof Mount) {
+            return [[$widget], $layer !== null];
+        }
+
+        return $layer === null ? [$mounts, $widget instanceof InputLayer] : [$layer, true];
     }
 
     /**
