@@ -7,6 +7,9 @@ namespace Elmphant\Tui\Rendering\Context;
 use Closure;
 use Elmphant\Tui\Layout\Rect;
 
+/**
+ * @internal
+ */
 final class LayoutInForce
 {
     private ?PlannedLayout $plan = null;

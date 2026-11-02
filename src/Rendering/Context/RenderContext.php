@@ -16,6 +16,9 @@ final class RenderContext
     public readonly Theme $theme;
     private readonly FocusPath $focus;
 
+    /**
+     * @internal a widget test asks for RenderContext::unfocused() or focused()
+     */
     public function __construct(
         Theme $theme,
         public readonly ColorProfile $colorProfile = ColorProfile::TrueColor,

@@ -9,6 +9,9 @@ final class FrameClock
     private float $now = 0.0;
     private ?float $repaintDelay = null;
 
+    /**
+     * @internal
+     */
     public function begin(float $now): void
     {
         $this->now = $now;

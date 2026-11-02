@@ -73,6 +73,9 @@ final class FocusPath
         return new self(FocusState::nowhere(), 1);
     }
 
+    /**
+     * @internal
+     */
     public function begin(): void
     {
         $this->focus = $this->initialFocus;
@@ -83,6 +86,9 @@ final class FocusPath
         $this->takesText = null;
     }
 
+    /**
+     * @internal
+     */
     public function focusOn(FocusState $focus): void
     {
         // Treat a tree without focusable components as unfocused for this frame; resolve focus when components appear.
@@ -108,6 +114,8 @@ final class FocusPath
     }
 
     /**
+     * @internal
+     *
      * @param array<string, string> $hints
      */
     public function provideHints(array $hints): void
@@ -115,17 +123,25 @@ final class FocusPath
         $this->hints = $hints;
     }
 
+    /**
+     * @internal
+     */
     public function provideTakesText(bool $takesText): void
     {
         $this->takesText = $takesText;
     }
 
+    /**
+     * @internal
+     */
     public function provideChord(?PendingChord $chord): void
     {
         $this->chord = $chord;
     }
 
     /**
+     * @internal
+     *
      * @param list<string> $ids
      */
     public function provideEnclosure(array $ids): void
@@ -134,6 +150,8 @@ final class FocusPath
     }
 
     /**
+     * @internal
+     *
      * @param list<string> $ids
      */
     public function provideStopPublishers(array $ids): void

@@ -12,6 +12,8 @@ use LogicException;
 
 /**
  * Queue popups to draw after the tree, without clipping; retain their placements for input routing.
+ *
+ * @internal
  */
 final class FloatQueue
 {

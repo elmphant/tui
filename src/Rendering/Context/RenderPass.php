@@ -13,9 +13,21 @@ final readonly class RenderPass
 {
     private function __construct(
         public RenderContext $context,
+        /**
+         * @internal
+         */
         public FrameClock $clock,
+        /**
+         * @internal
+         */
         public FocusPath $focus,
+        /**
+         * @internal
+         */
         public FloatQueue $floats,
+        /**
+         * @internal
+         */
         public LayoutInForce $layout,
         private ?Rect $area = null,
     ) {
@@ -69,6 +81,9 @@ final readonly class RenderPass
         return $this->area ?? $frame->area();
     }
 
+    /**
+     * @internal
+     */
     public function begin(float $now): void
     {
         $this->clock->begin($now);
