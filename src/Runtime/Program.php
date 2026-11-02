@@ -999,12 +999,24 @@ final class Program
      */
     private function moveInputAheadOfTheBacklog(): void
     {
+        // SplQueue walks the list to reach an index. Do not index it in a loop.
         $front = 0;
-        while ($front < $this->messageQueue->count() && self::isInput($this->messageQueue[$front])) {
+        foreach ($this->messageQueue as $message) {
+            if (!self::isInput($message)) {
+                break;
+            }
             ++$front;
         }
+
+        $backlog = [];
+        while ($this->messageQueue->count() > $front) {
+            $backlog[] = $this->messageQueue->pop();
+        }
         while (!$this->inputQueue->isEmpty()) {
-            $this->messageQueue->add($front++, $this->inputQueue->dequeue());
+            $this->messageQueue->enqueue($this->inputQueue->dequeue());
+        }
+        foreach (array_reverse($backlog) as $message) {
+            $this->messageQueue->enqueue($message);
         }
     }
 

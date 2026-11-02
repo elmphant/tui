@@ -17,6 +17,7 @@ use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop;
+use RuntimeException;
 
 final class ProgramInputFairnessTest extends TestCase
 {
@@ -29,6 +30,48 @@ final class ProgramInputFairnessTest extends TestCase
         Program::new(new SlowBacklogModel())->withTerminal($terminal)->start();
 
         self::assertContains(SlowBacklogModel::$slowBeforeTheKey, range(1, 150));
+    }
+
+    #[Test]
+    public function aFloodOfKeysIsHandledInSeconds(): void
+    {
+        $terminal = new VirtualTerminal(20, 3);
+        $terminal->simulateInput(str_repeat('x', KeyCountingModel::FLOOD));
+        $guard = EventLoop::delay(5, static fn () => throw new RuntimeException('the flood was not handled within 5 s'));
+
+        try {
+            Program::new(new KeyCountingModel())->withTerminal($terminal)->start();
+        } finally {
+            EventLoop::cancel($guard);
+        }
+
+        self::assertSame(KeyCountingModel::FLOOD, KeyCountingModel::$keys);
+    }
+}
+
+final class KeyCountingModel implements Model
+{
+    public const FLOOD = 20_000;
+    public static int $keys = 0;
+
+    public function init(): ?Cmd
+    {
+        self::$keys = 0;
+
+        return null;
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof KeyMsg) {
+            ++self::$keys;
+        }
+
+        return new UpdateResult($this, self::$keys === self::FLOOD ? Cmd::quit() : null);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
     }
 }
 
