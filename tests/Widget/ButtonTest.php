@@ -264,7 +264,7 @@ final class ButtonTest extends TestCase
         $theme = Theme::dark()->withFocusedBorderStyle(new Style(foreground: Color::ansi(4)));
         $button = Button::new('Run', new TestMessage('run'));
 
-        $button->withArmed(true)->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));
+        self::heldDown($button)->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));
         $idle = new Frame(11, 3);
         $button->render($idle, new Rect(0, 0, 11, 3), RenderContext::focused($theme));
 
@@ -328,8 +328,7 @@ final class ButtonTest extends TestCase
         $frame = new Frame(11, 3);
         $theme = Theme::dark();
 
-        Button::new('Run', new TestMessage('run'))
-            ->withArmed(true)
+        self::heldDown(Button::new('Run', new TestMessage('run')))
             ->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));
 
         self::assertSame($theme->focusedBorderStyle->foregroundValue(), $frame->foregrounds[0], 'the press is loud');
@@ -451,5 +450,14 @@ final class ButtonTest extends TestCase
 
         self::assertInstanceOf(MessageCmd::class, $command);
         self::assertSame($expected, $command->message);
+    }
+
+    private static function heldDown(Button $button): Button
+    {
+        $pressed = $button->update(new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 11, 3))->model;
+        self::assertInstanceOf(Button::class, $pressed);
+        self::assertTrue($pressed->isArmed());
+
+        return $pressed;
     }
 }

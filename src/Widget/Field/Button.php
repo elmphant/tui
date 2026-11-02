@@ -74,11 +74,6 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
         return $this->cloneWith(disabled: $disabled);
     }
 
-    public function withArmed(bool $armed): self
-    {
-        return $this->cloneWith(armed: $armed);
-    }
-
     public function isArmed(): bool
     {
         return $this->armed;
@@ -175,5 +170,10 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
             $label,
             $labelStyle,
         );
+    }
+
+    private function withArmed(bool $armed): self
+    {
+        return $this->cloneWith(armed: $armed);
     }
 }
