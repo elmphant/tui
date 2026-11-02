@@ -138,4 +138,5 @@ self::assertSame(0.0, $tracer->totalOf(TraceEvent::Render, 'blockedMs'));
 ```
 
 For ANSI output, raw input bytes or terminal features, use `VirtualTerminal`.
-For larger snapshots, `GoldenScreen`.
+For larger snapshots, `GoldenScreen::assertMatchesSnapshot($name, $harness->renderScreen(), $dir)`
+compares the screen with a file. The first run writes the file.

@@ -19,6 +19,38 @@ A widget never stores whether it has the keyboard. It asks while it draws:
 `sizing()` returns a `Sizing`, one `Constraint` per axis
 (see [Layout](layout.md)).
 
+## Wrapping one widget
+
+A widget that is drawn as one other widget, with something added, uses
+`DecoratesOneChild`. You write `wrapped()`; sizing, drawing and the child list
+come from it:
+
+```php
+use Elmphant\Tui\Widget\DecoratesOneChild;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Panel;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
+
+final readonly class NotesPane implements WidgetContainer
+{
+    use DecoratesOneChild;
+
+    public function __construct(private string $notes)
+    {
+    }
+
+    protected function wrapped(): Widget
+    {
+        return Panel::new('Notes')->add(Text::new($this->notes));
+    }
+}
+```
+
+If the wrapper passes input on to the widget inside a `Panel`, hand it
+`$panel->contentArea($area)`, the area the panel draws it in. Then clicks land
+on the rows the reader sees.
+
 ## Animation
 
 A widget that animates reads the time from `$context->now()` and asks for the

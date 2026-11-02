@@ -52,6 +52,28 @@ $content = Flex::row()
 It is a small part of CSS Flexbox, made for terminals: no percentages, no
 ordering, no reverse directions.
 
+## Two layouts with `Breakpoint`
+
+`Breakpoint` draws one layout from a width on, and another below it:
+
+```php
+use Elmphant\Tui\Widget\Layout\Breakpoint;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Prose\Text;
+
+$list = Text::new('list');
+$details = Text::new('details');
+
+$panes = Breakpoint::at(
+    80,
+    narrow: Layout::vertical($list, $details),
+    wide: Layout::horizontal($list, $details),
+);
+```
+
+Put the same components in both layouts. The keyboard and the pointer find them
+in the wide one, whatever the width.
+
 ## Decoration
 
 `Container` adds padding, margin, colours and a border around any widget:
