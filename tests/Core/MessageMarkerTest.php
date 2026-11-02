@@ -10,7 +10,6 @@ use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\HttpResultMsg;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Message\LoadingMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
@@ -36,7 +35,6 @@ final class MessageMarkerTest extends TestCase
             new ErrorMsg(new RuntimeException(), ErrorSource::Update),
             new HttpResultMsg(200, ''),
             new KeyMsg('a'),
-            LoadingMsg::start(),
             new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left),
             new PasteMsg('text'),
             new ProcessFinishedMsg(0, true),
