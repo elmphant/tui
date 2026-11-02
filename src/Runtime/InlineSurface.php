@@ -28,9 +28,9 @@ final readonly class InlineSurface implements Surface
         return Rect::fromSize($terminal->width, max(1, min($model->wantedHeight($terminal->width), $terminal->height)));
     }
 
-    public function flush(Frame $frame): void
+    public function flush(Frame $frame, Rect $area): void
     {
-        $this->screen->flush($frame);
+        $this->screen->flush($frame, max($area->height, $frame->drawnHeight()));
     }
 
     public function forget(): void

@@ -95,10 +95,10 @@ final class Toasts
         return false;
     }
 
-    public function drawOver(Frame $frame, RenderContext $context): void
+    public function drawOver(Frame $frame, RenderContext $context, Rect $screen): void
     {
         $base = $context->theme->base;
-        foreach ($this->placed(Rect::fromSize($frame->width, $frame->height)) as [$place, $area, $lines]) {
+        foreach ($this->placed($screen) as [$place, $area, $lines]) {
             $toast = $this->showing[$place][0];
             $accent = new Style(foreground: self::tokenOf($toast->severity)->resolve($context->theme)->foreground, background: $base->background);
             $frame->fillRect($area->x, $area->y, $area->width, $area->height, $base->foregroundValue(), $base->backgroundValue());

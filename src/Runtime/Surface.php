@@ -15,7 +15,10 @@ interface Surface
 {
     public function area(Rect $terminal, Model $model): Rect;
 
-    public function flush(Frame $frame): void;
+    /**
+     * @param Rect $area where the model drew; anything below it in the frame is a popup
+     */
+    public function flush(Frame $frame, Rect $area): void;
 
     public function forget(): void;
 

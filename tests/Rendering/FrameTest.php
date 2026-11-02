@@ -21,6 +21,20 @@ final class FrameTest extends TestCase
     use PerformanceBudget;
 
     #[Test]
+    public function theDrawnHeightReachesTheLowestRowWrittenSinceTheLastClear(): void
+    {
+        $frame = new Frame(10, 8);
+        self::assertSame(0, $frame->drawnHeight());
+
+        $frame->putString(0, 4, 'x');
+        $frame->putString(0, 1, 'y');
+        self::assertSame(5, $frame->drawnHeight());
+
+        $frame->clear(Color::ansi(4)->value);
+        self::assertSame(0, $frame->drawnHeight(), 'a background alone is not drawing');
+    }
+
+    #[Test]
     public function ordinaryTextNeverStoresTerminalControlSequencesInCells(): void
     {
         $frame = new Frame(20, 1);

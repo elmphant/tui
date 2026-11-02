@@ -113,6 +113,14 @@ final class Frame
     }
 
     /**
+     * The rows down to the lowest one written since the last clear.
+     */
+    public function drawnHeight(): int
+    {
+        return $this->contentRows === [] ? 0 : max(array_keys($this->contentRows)) + 1;
+    }
+
+    /**
      * Read the clip to skip off-screen rows instead of writing cells that will be discarded.
      */
     public function clip(): Rect

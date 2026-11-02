@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
@@ -49,6 +50,20 @@ final class KeyHelpOverlayTest extends TestCase
     }
 
     #[Test]
+    public function aScreenTooShortForTheHelpGrowsDownwardsByJustTheRowsItNeeds(): void
+    {
+        $frame = new Frame(40, 30);
+
+        $this->opened()->drawOver($frame, new RenderContext(Theme::dark()), self::model(['Here' => ['q' => 'quit']]), FocusState::nowhere(), Rect::fromSize(40, 2));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertStringContainsString('Keys · Esc to close', $screen->lineAt(1));
+        self::assertStringContainsString('q  quit', $screen->lineAt(3));
+        self::assertStringContainsString('╰', $screen->lineAt(4));
+        self::assertSame(5, $frame->drawnHeight());
+    }
+
+    #[Test]
     public function aLineWiderThanTheTitleWidensTheBox(): void
     {
         $screen = $this->drawn(['Here' => ['Enter' => 'open the selected row']], 40, 12);
@@ -60,7 +75,7 @@ final class KeyHelpOverlayTest extends TestCase
     public function aClosedHelpDrawsNothing(): void
     {
         $frame = new Frame(10, 4);
-        (new KeyHelpOverlay())->drawOver($frame, new RenderContext(Theme::dark()), self::model(['Here' => ['q' => 'quit']]), FocusState::nowhere());
+        (new KeyHelpOverlay())->drawOver($frame, new RenderContext(Theme::dark()), self::model(['Here' => ['q' => 'quit']]), FocusState::nowhere(), $frame->area());
 
         self::assertSame('', trim(ScreenBuffer::fromFrame($frame)->plainText()));
     }
@@ -185,10 +200,10 @@ final class KeyHelpOverlayTest extends TestCase
         $frame = new Frame(40, 10);
         $context = new RenderContext(Theme::dark());
 
-        $overlay->drawOver($frame, $context, $model, FocusState::nowhere());
+        $overlay->drawOver($frame, $context, $model, FocusState::nowhere(), $frame->area());
         foreach ($messages as $message) {
             $overlay->takes($message, $model, FocusState::nowhere());
-            $overlay->drawOver($frame, $context, $model, FocusState::nowhere());
+            $overlay->drawOver($frame, $context, $model, FocusState::nowhere(), $frame->area());
         }
 
         return trim(str_replace('│', '', ScreenBuffer::fromFrame($frame)->lineAt(2)));
@@ -204,7 +219,7 @@ final class KeyHelpOverlayTest extends TestCase
             $frame->putString(0, $row, str_repeat('.', $width));
         }
 
-        $this->opened()->drawOver($frame, new RenderContext(Theme::dark()), self::model($groups), FocusState::nowhere());
+        $this->opened()->drawOver($frame, new RenderContext(Theme::dark()), self::model($groups), FocusState::nowhere(), $frame->area());
 
         return ScreenBuffer::fromFrame($frame);
     }

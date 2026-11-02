@@ -92,6 +92,10 @@ foreach (['Project name', 'Database host'] as $question) {
   terminal has. An `App` measures its root widget. A `Model` of your own
   implements `SizesItsRegion` to say how many rows it wants, or gets the whole
   height.
+- A dropdown's options and the key help may need more rows than the app. They
+  open below it and take the rows they need, and the app shrinks back once they
+  close. Toasts stay inside the app's rows. A `Model` that draws by hand draws
+  in `$pass->areaIn($frame)`, not in the whole frame.
 - `Cmd::println()` prints lines above the app, into the scrollback. They are
   plain text: escape sequences are dropped, and a line wider than the terminal
   is cut. Outside an inline program it only writes to the trace.

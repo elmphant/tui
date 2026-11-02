@@ -1206,8 +1206,8 @@ final class Program
         }
 
         $drawn = $this->drawnRect();
-        if ($frame->width !== $drawn->width || $frame->height !== $drawn->height) {
-            $frame = $this->backBuffer = new Frame($drawn->width, $drawn->height);
+        if ($frame->width !== $this->screenRect->width || $frame->height !== $this->screenRect->height) {
+            $frame = $this->backBuffer = new Frame($this->screenRect->width, $this->screenRect->height);
         }
 
         if ($this->resizeNeedsScreenClear) {
@@ -1218,7 +1218,7 @@ final class Program
         $pass->begin($this->clock->now());
 
         try {
-            $pass = $this->inChosenTheme($pass);
+            $pass = $this->inChosenTheme($pass)->withArea($drawn);
             $frame->clear($pass->context->theme->base->backgroundValue());
             $this->settleFocusBeforeDrawing();
             $pass->focus->focusOn($this->focus);
@@ -1226,10 +1226,10 @@ final class Program
             $model = $this->model;
             $this->capturingOutput('render', static fn () => $model->render($frame, $pass));
             $pass->floats->drainOnto($frame, $pass->context);
-            $this->toasts->drawOver($frame, $pass->context);
-            $this->keyHelp->drawOver($frame, $pass->context, $model, $this->focus);
+            $this->toasts->drawOver($frame, $pass->context, $drawn);
+            $this->keyHelp->drawOver($frame, $pass->context, $model, $this->focus, $drawn);
             $this->paintedAt = $this->clock->now();
-            $this->surface->flush($frame);
+            $this->surface->flush($frame, $drawn);
         } catch (Throwable $error) {
             $this->frames->dropped($this->clock->now());
             // A slow ssh link or a laptop waking up stalls output for seconds; that frame is dropped, not fatal.

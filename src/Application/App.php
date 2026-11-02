@@ -76,7 +76,7 @@ abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords
 
     final public function render(Frame $frame, RenderPass $pass): void
     {
-        $area = $frame->area();
+        $area = $pass->areaIn($frame);
         $focused = $pass->focus->focusedComponent();
 
         $pass->focus->provideHints($this->hintsOfFocused($focused));

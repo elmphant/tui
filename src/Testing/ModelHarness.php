@@ -524,8 +524,8 @@ final class ModelHarness
         $this->pass->begin($this->now);
         $this->pass->focus->focusOn($this->focus);
         $this->model->render($frame, $this->pass);
-        $this->toasts->drawOver($frame, $this->pass->context);
-        $this->keyHelp->drawOver($frame, $this->pass->context, $this->model, $this->focus);
+        $this->toasts->drawOver($frame, $this->pass->context, $this->area);
+        $this->keyHelp->drawOver($frame, $this->pass->context, $this->model, $this->focus, $this->area);
         $this->pass->floats->commit();
 
         return $frame;

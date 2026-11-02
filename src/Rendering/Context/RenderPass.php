@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering\Context;
 
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Terminal\ColorProfile;
 
@@ -15,6 +17,7 @@ final readonly class RenderPass
         public FocusPath $focus,
         public FloatQueue $floats,
         public LayoutInForce $layout,
+        private ?Rect $area = null,
     ) {
     }
 
@@ -42,7 +45,28 @@ final readonly class RenderPass
             focus: $this->focus,
             floats: $this->floats,
             layout: $this->layout,
+            area: $this->area,
         );
+    }
+
+    /**
+     * Where the root draws when that is less than the frame: an inline region, with the rows below it left to popups.
+     */
+    public function withArea(Rect $area): self
+    {
+        return new self(
+            context: $this->context,
+            clock: $this->clock,
+            focus: $this->focus,
+            floats: $this->floats,
+            layout: $this->layout,
+            area: $area,
+        );
+    }
+
+    public function areaIn(Frame $frame): Rect
+    {
+        return $this->area ?? $frame->area();
     }
 
     public function begin(float $now): void

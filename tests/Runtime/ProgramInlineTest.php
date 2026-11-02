@@ -17,7 +17,9 @@ use Elmphant\Tui\Runtime\SizesItsRegion;
 use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Application\Support\FieldAboveALineApp;
+use Elmphant\Tui\Tests\Application\Support\OpenDropdownApp;
 use Elmphant\Tui\Tests\Application\Support\QuitOnEnterFieldApp;
+use Elmphant\Tui\Tests\Application\Support\ToastOnStartApp;
 use Elmphant\Tui\Tests\Application\Support\TwoLineApp;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
@@ -100,6 +102,48 @@ final class ProgramInlineTest extends TestCase
 
         $afterThePrint = substr($terminal->output(), (int)strpos($terminal->output(), '✓ answered'));
         self::assertStringNotContainsString(Ansi::SYNC_START, $afterThePrint);
+    }
+
+    #[Test]
+    public function anOpenDropdownGrowsTheRegionToShowItsOptionsBelowIt(): void
+    {
+        $terminal = new VirtualTerminal(20, 10);
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput("\x03"));
+
+        Program::new(new OpenDropdownApp())->withTerminal($terminal)->withInline()->start();
+
+        $frames = explode(Ansi::SYNC_START, $terminal->output());
+        $last = end($frames);
+        self::assertStringContainsString('alpha', $last);
+        self::assertStringContainsString('gamma', $last);
+    }
+
+    #[Test]
+    public function aToastIsDrawnInsideTheRegionRatherThanAtTheBottomOfTheTerminal(): void
+    {
+        $terminal = new VirtualTerminal(30, 12);
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput("\x03"));
+
+        Program::new(new ToastOnStartApp())->withTerminal($terminal)->withInline()->start();
+
+        $frames = explode(Ansi::SYNC_START, $terminal->output());
+        $painted = strstr(end($frames), Ansi::SYNC_END, true);
+        self::assertStringContainsString('saved', (string)$painted);
+        self::assertSame(4, substr_count((string)$painted, "\r\n"), 'five rows, as the content wants');
+    }
+
+    #[Test]
+    public function theKeyHelpGrowsARegionTooSmallToShowIt(): void
+    {
+        $terminal = new VirtualTerminal(40, 60);
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput("\x0b"));
+        EventLoop::delay(0.15, static fn () => $terminal->simulateInput("\x03"));
+
+        Program::new(new FieldAboveALineApp())->withTerminal($terminal)->withInline()->start();
+
+        $frames = explode(Ansi::SYNC_START, $terminal->output());
+        $rows = explode("\r\n", $frames[\count($frames) - 2]);
+        self::assertStringContainsString('Keys · Esc to close', $rows[1], 'the help starts one row in, as it would centred in a region its own height');
     }
 
     #[Test]

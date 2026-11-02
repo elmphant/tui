@@ -30,19 +30,23 @@ final class InlineScreen
         $this->pen = new Pen($colorProfile);
     }
 
-    public function flush(Frame $backBuffer): void
+    /**
+     * @param ?int $height the rows to paint from the top of the frame, all of them when null
+     */
+    public function flush(Frame $backBuffer, ?int $height = null): void
     {
+        $height = min($height ?? $backBuffer->height, $backBuffer->height);
         $caret = $backBuffer->cursorPosition === null ? -1 : $backBuffer->cursorPosition->row * $backBuffer->width + $backBuffer->cursorPosition->col;
         $rows = [];
         $written = [];
-        for ($row = 0; $row < $backBuffer->height; ++$row) {
+        for ($row = 0; $row < $height; ++$row) {
             $rows[] = $this->rowText($backBuffer, $row, $caret);
             $written[] = self::endOf($backBuffer, $row, $caret) - $row * $backBuffer->width;
         }
 
-        $taller = $backBuffer->height < $this->rowsTaken($backBuffer->width);
+        $taller = $height < $this->rowsTaken($backBuffer->width);
         // The hidden cursor rests at the start of the first row. A terminal that rewraps on a narrower width keeps it there.
-        $painted = "\r" . ($taller ? self::ERASE_REGION : '') . implode("\r\n", $rows) . self::up($backBuffer->height - 1) . "\r";
+        $painted = "\r" . ($taller ? self::ERASE_REGION : '') . implode("\r\n", $rows) . self::up($height - 1) . "\r";
         $this->written = $written;
         $this->width = $backBuffer->width;
         $this->printedLast = false;

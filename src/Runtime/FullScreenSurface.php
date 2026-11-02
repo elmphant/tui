@@ -31,7 +31,7 @@ final readonly class FullScreenSurface implements Surface
         return $terminal;
     }
 
-    public function flush(Frame $frame): void
+    public function flush(Frame $frame, Rect $area): void
     {
         $this->screen->flush($frame);
     }

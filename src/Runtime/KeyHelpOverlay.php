@@ -92,7 +92,10 @@ final class KeyHelpOverlay
         return true;
     }
 
-    public function drawOver(Frame $frame, RenderContext $context, object $model, FocusState $focus): void
+    /**
+     * @param Rect $screen where the model drew; the help may grow it downwards as far as the frame goes
+     */
+    public function drawOver(Frame $frame, RenderContext $context, object $model, FocusState $focus, Rect $screen): void
     {
         if (!$this->open || !$model instanceof DescribesKeys) {
             return;
@@ -104,13 +107,14 @@ final class KeyHelpOverlay
             $content = max($content, CharWidth::stringWidth($text));
         }
 
+        $stageHeight = min($frame->height, max($screen->height, \count($lines) + 4));
         $width = min($frame->width - 2, max($content, CharWidth::stringWidth(self::TITLE)) + 4);
-        $height = min($frame->height - 2, \count($lines) + 2);
+        $height = min($stageHeight - 2, \count($lines) + 2);
         if ($width < 3 || $height < 3) {
             return;
         }
 
-        $area = new Rect(intdiv($frame->width - $width, 2), intdiv($frame->height - $height, 2), $width, $height);
+        $area = new Rect(intdiv($frame->width - $width, 2), intdiv($stageHeight - $height, 2), $width, $height);
         $base = $context->theme->base;
         $frame->fillRect($area->x, $area->y, $area->width, $area->height, $base->foregroundValue(), $base->backgroundValue());
         Block::new()
