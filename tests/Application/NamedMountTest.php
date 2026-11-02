@@ -145,6 +145,14 @@ final class NamedMountTest extends TestCase
     }
 
     #[Test]
+    public function aMountedAppStartsWithItsSetup(): void
+    {
+        $harness = ModelHarness::for(new HostOfAMountedApp(), 40, 6)->initialize();
+
+        self::assertSame(['started'], $harness->model()->inner->heard);
+    }
+
+    #[Test]
     public function aMountedModelTellsItsHostAndOnlyItsHost(): void
     {
         $harness = ModelHarness::for(new HostOfATellingMount(), 40, 6)->initialize()->press('t');
@@ -287,6 +295,49 @@ final readonly class HostOfAHiddenMount extends App
     protected function mounts(): array
     {
         return [Mount::named('hidden', $this->hidden, Text::new('hidden'), static fn (self $host, StartingModel $hidden): self => $host->cloneWith(hidden: $hidden))];
+    }
+}
+
+final readonly class StartingApp extends App
+{
+    use Cloneable;
+
+    /**
+     * @param list<string> $heard
+     */
+    public function __construct(public array $heard = [])
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Text::new('inner');
+    }
+
+    protected function setup(): ?Cmd
+    {
+        return Cmd::message(new Heard('started'));
+    }
+
+    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    {
+        return $message instanceof Heard
+            ? new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]))
+            : UpdateResult::ignored($this);
+    }
+}
+
+final readonly class HostOfAMountedApp extends App
+{
+    use Cloneable;
+
+    public function __construct(public StartingApp $inner = new StartingApp())
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Mount::named('inner', $this->inner, $this->inner->view(), static fn (self $host, StartingApp $inner): self => $host->cloneWith(inner: $inner));
     }
 }
 

@@ -49,7 +49,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 use WeakMap;
 
-abstract readonly class App implements RoutesFocus, ChoosesItsTheme, BindsChords, DescribesKeys, SizesItsRegion
+abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme, BindsChords, DescribesKeys, SizesItsRegion
 {
     use Cloneable;
 
