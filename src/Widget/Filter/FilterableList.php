@@ -82,9 +82,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private bool $searching = false,
         private string $noItemsText = '',
     ) {
-        $this->matching = $matching !== null && $matching->isFor($items, $matcher, $field->value())
-            ? $matching
-            : FilterMatches::of($items, $matcher, $field->value());
+        $this->matching = FilterMatches::kept(
+            $matching,
+            $items,
+            static fn (array $items): array => array_map(static fn (ListItem $item): string => $item->filterValue(), $items),
+            $matcher,
+            $field->value(),
+        );
     }
 
     /**

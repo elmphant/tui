@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Filter;
 
+use Closure;
 use Elmphant\Tui\Search\Matcher;
-use Elmphant\Tui\Widget\Listing\ListItem;
 
 /**
  * @internal what a query kept of a list, held with what it was worked out from
@@ -13,11 +13,13 @@ use Elmphant\Tui\Widget\Listing\ListItem;
 final readonly class FilterMatches
 {
     /**
-     * @param list<ListItem> $items
-     * @param list<int>      $indexes
+     * @param list<mixed>  $source
+     * @param list<string> $haystack
+     * @param list<int>    $indexes
      */
     private function __construct(
-        private array $items,
+        private array $source,
+        private array $haystack,
         private ?Matcher $matcher,
         private string $query,
         public array $indexes,
@@ -25,22 +27,30 @@ final readonly class FilterMatches
     }
 
     /**
-     * @param list<ListItem> $items
+     * Keep what still holds: the same matches for the same question, the same search text for the same source.
+     *
+     * @template T
+     *
+     * @param list<T>                        $source
+     * @param Closure(list<T>): list<string> $haystackOf
      */
-    public static function of(array $items, ?Matcher $matcher, string $query): self
+    public static function kept(?self $before, array $source, Closure $haystackOf, ?Matcher $matcher, string $query): self
     {
-        return new self($items, $matcher, $query, FilterBar::matching(
-            $matcher,
-            $query,
-            array_map(static fn (ListItem $item): string => $item->filterValue(), $items),
-        ));
+        if ($before === null || $before->source !== $source) {
+            return self::of($source, $haystackOf($source), $matcher, $query);
+        }
+
+        return $before->matcher === $matcher && $before->query === $query
+            ? $before
+            : self::of($source, $before->haystack, $matcher, $query);
     }
 
     /**
-     * @param list<ListItem> $items
+     * @param list<mixed>  $source
+     * @param list<string> $haystack
      */
-    public function isFor(array $items, ?Matcher $matcher, string $query): bool
+    private static function of(array $source, array $haystack, ?Matcher $matcher, string $query): self
     {
-        return $query === $this->query && $matcher === $this->matcher && $items === $this->items;
+        return new self($source, $haystack, $matcher, $query, FilterBar::matching($matcher, $query, $haystack));
     }
 }

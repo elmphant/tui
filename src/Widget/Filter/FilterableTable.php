@@ -38,7 +38,6 @@ use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Row;
 use Elmphant\Tui\Widget\Table\Table;
-use WeakMap;
 
 final readonly class FilterableTable implements Focusable, KeybindingsAware, Committing, PublishesHints, TakesText, BindsForTheMoment
 {
@@ -59,16 +58,10 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         Actions::SELECT,
     ];
 
-    /**
-     * @var list<string> the text of each row that a query is matched against
-     */
-    private array $haystack;
+    private FilterMatches $matching;
 
     /**
-     * @infection-ignore-all a memo: the answer is the same without it, only slower
-     *
-     * @param list<Row>         $rows
-     * @param list<string>|null $haystack
+     * @param list<Row> $rows
      */
     private function __construct(
         private array $rows,
@@ -80,10 +73,10 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $searching = false,
-        ?array $haystack = null,
+        ?FilterMatches $matching = null,
         private ?int $selectedSource = null,
     ) {
-        $this->haystack = $haystack ?? self::haystackOf($rows);
+        $this->matching = FilterMatches::kept($matching, $rows, self::haystackOf(...), $matcher, $field->value());
     }
 
     /**
@@ -106,7 +99,6 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     {
         return $this->cloneWith(
             rows: $rows,
-            haystack: null,
             selectedSource: Places::placeOf(
                 $this->selectedRow()?->key(),
                 array_map(static fn (Row $row): string => $row->key(), $rows),
@@ -334,25 +326,11 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     }
 
     /**
-     * @infection-ignore-all a memo: the answer is the same without it, only slower
-     *
      * @return list<int>
      */
     private function matchingIndexes(): array
     {
-        static $answers = null;
-        $answers ??= new WeakMap();
-        /** @var WeakMap<self, list<int>> $answers */
-
-        return $answers[$this] ??= $this->matchingIndexesWorkedOut();
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function matchingIndexesWorkedOut(): array
-    {
-        return FilterBar::matching($this->matcher, $this->query(), $this->haystack);
+        return $this->matching->indexes;
     }
 
     /**
