@@ -34,7 +34,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     /**
      * @param list<string> $options
      */
-    public function __construct(
+    private function __construct(
         private array $options = [],
         private ?int $selected = null,
         private int $cursor = 0,

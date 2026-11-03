@@ -52,7 +52,7 @@ final class PanelTest extends TestCase
     #[Test]
     public function itNamesTheKeysItsPaneAnswers(): void
     {
-        self::assertSame(['↑/↓' => 'scroll'], (new Panel())->hints());
+        self::assertSame(['↑/↓' => 'scroll'], Panel::new()->hints());
     }
 
     #[Test]
@@ -1010,10 +1010,7 @@ final class PanelTest extends TestCase
         $customStyle = new Style(
             foreground: Color::hex('FF0000')
         );
-        $panel = new Panel(
-            title: 'Test',
-            borderStyleOverride: $customStyle,
-        );
+        $panel = Panel::new('Test')->withBorderStyle($customStyle);
 
         $frame = new Frame(20, 10);
         $area = new Rect(0, 0, 20, 10);
@@ -1053,10 +1050,7 @@ final class PanelTest extends TestCase
         $customTitleStyle = new Style(
             foreground: Color::hex('00FFFF')
         );
-        $panel = new Panel(
-            title: 'Hello',
-            titleStyleOverride: $customTitleStyle,
-        );
+        $panel = Panel::new('Hello')->withTitleStyle($customTitleStyle);
 
         $frame = new Frame(20, 10);
         $area = new Rect(0, 0, 20, 10);

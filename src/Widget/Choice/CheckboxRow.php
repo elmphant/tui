@@ -38,7 +38,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
      * @param list<string> $options
      * @param list<bool>   $checked
      */
-    public function __construct(
+    private function __construct(
         private array $options = [],
         private array $checked = [],
         private int $cursor = 0,

@@ -34,7 +34,7 @@ final readonly class Checkbox implements Focusable, HoldsAValue, KeybindingsAwar
     public const CHECKED_MARK = OptionMarks::CHECKED;
     public const UNCHECKED_MARK = OptionMarks::UNCHECKED;
 
-    public function __construct(
+    private function __construct(
         private string $label = '',
         private bool $checked = false,
         private ?Keybindings $customKeybindings = null,

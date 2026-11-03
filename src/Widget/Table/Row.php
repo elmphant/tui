@@ -15,7 +15,7 @@ final readonly class Row
     /**
      * @param list<string|Span> $cells
      */
-    public function __construct(
+    private function __construct(
         public array $cells = [],
         public ?Style $style = null,
         public bool $selectable = true,

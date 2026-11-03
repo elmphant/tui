@@ -26,7 +26,7 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
     /**
      * @param list<Widget> $children
      */
-    public function __construct(
+    private function __construct(
         private string $title = '',
         private array $children = [],
         private ?Style $borderStyleOverride = null,

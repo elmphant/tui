@@ -29,7 +29,7 @@ final readonly class ProgressBar implements Interactive
 
     private float $progress;
 
-    public function __construct(
+    private function __construct(
         float $progress = 0.0,
         private ?float $display = null,
         private ?Style $fillStyleOverride = null,

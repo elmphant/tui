@@ -325,7 +325,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     {
         $typedRows = [];
         foreach ($rows as $cells) {
-            $typedRows[] = new Row(cells: $cells);
+            $typedRows[] = Row::new(...$cells);
         }
 
         return $typedRows;

@@ -14,7 +14,7 @@ final readonly class Block
 {
     use Cloneable;
 
-    public function __construct(
+    private function __construct(
         private ?BorderStyle $border = null,
         private ?Spacing $padding = null,
         private ?Spacing $margin = null,

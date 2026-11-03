@@ -32,7 +32,7 @@ final class ProgressBarTest extends TestCase
     {
         $frame = new Frame(14, 1);
 
-        (new ProgressBar(progress: 2.5))->render($frame, new Rect(2, 0, 10, 1), $this->context);
+        ProgressBar::new(2.5)->render($frame, new Rect(2, 0, 10, 1), $this->context);
 
         self::assertSame(' ', $frame->characters[12]);
     }
@@ -390,10 +390,7 @@ final class ProgressBarTest extends TestCase
         // Create a bar where display is exactly 0.001 away from progress
         // progress=0.501, display=0.500 => difference=0.001
         // abs(0.001) < 0.001 is false, so it should NOT snap — should apply springFactor
-        $progressBar = new ProgressBar(
-            progress: 0.501,
-            display: 0.500,
-        );
+        $progressBar = ProgressBar::new(0.501)->withDisplay(0.500);
 
         $area = Rect::fromSize(20, 1);
         $result = $progressBar->update(new TickMsg(0.0), $area);
@@ -413,10 +410,7 @@ final class ProgressBarTest extends TestCase
     public function tickSnapsDisplayToProgressWhenVeryClose(): void
     {
         // difference = 0.0005, abs < 0.001 is true, but display !== progress => snap
-        $progressBar = new ProgressBar(
-            progress: 0.5005,
-            display: 0.5000,
-        );
+        $progressBar = ProgressBar::new(0.5005)->withDisplay(0.5000);
 
         $area = Rect::fromSize(20, 1);
         $result = $progressBar->update(new TickMsg(0.0), $area);
@@ -652,11 +646,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function fractionalProgressRendersFractionalBlock(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.35,
-            display: 0.35,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(0.35)->withDisplay(0.35)->withShowPercent(false);
 
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
@@ -688,11 +678,7 @@ final class ProgressBarTest extends TestCase
     public function exactProgressProducesNoFractionalBlock(): void
     {
         // display=0.5 on width=10: fillFraction=5.0, fullCells=5, remainder=0.0, fractionIndex=0
-        $progressBar = new ProgressBar(
-            progress: 0.5,
-            display: 0.5,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(0.5)->withDisplay(0.5)->withShowPercent(false);
 
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
@@ -717,11 +703,7 @@ final class ProgressBarTest extends TestCase
         // Actually in PHP, round(0.5) = 0 (PHP_ROUND_HALF_EVEN in PHP8.4, but in 8.3 it's 1).
         // Let's use a clear case: display=0.155 => round(15.5) => 16%
         // Or simpler: display=0.339 => round(33.9) = 34
-        $progressBar = new ProgressBar(
-            progress: 0.339,
-            display: 0.339,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.339)->withDisplay(0.339)->withShowPercent(true);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -738,11 +720,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function percentageTextRoundsUpWhenAppropriate(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.346,
-            display: 0.346,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.346)->withDisplay(0.346)->withShowPercent(true);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -761,11 +739,7 @@ final class ProgressBarTest extends TestCase
     public function percentNotRenderedWhenBarTooNarrow(): void
     {
         // percentText = " 50%" (4 chars), bar width = 3 => percentX = 3 - 4 = -1 < barArea->x(0)
-        $progressBar = new ProgressBar(
-            progress: 0.5,
-            display: 0.5,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.5)->withDisplay(0.5)->withShowPercent(true);
 
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 3, 1);
@@ -782,11 +756,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function percentRenderedWhenExactlyFitting(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.5,
-            display: 0.5,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.5)->withDisplay(0.5)->withShowPercent(true);
 
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 4, 1);
@@ -813,11 +783,7 @@ final class ProgressBarTest extends TestCase
         $ansi0Color = Color::ansi(0)->value;
 
         // display = 0.6 (> 0.5) => dark text on fill background
-        $barAboveHalf = new ProgressBar(
-            progress: 0.6,
-            display: 0.6,
-            showPercent: true,
-        );
+        $barAboveHalf = ProgressBar::new(0.6)->withDisplay(0.6)->withShowPercent(true);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -830,11 +796,7 @@ final class ProgressBarTest extends TestCase
         self::assertSame($fillColor, $frame->backgrounds[$percentIndex]);
 
         // display = 0.4 (<= 0.5) => labelColor text on baseBackground
-        $barBelowHalf = new ProgressBar(
-            progress: 0.4,
-            display: 0.4,
-            showPercent: true,
-        );
+        $barBelowHalf = ProgressBar::new(0.4)->withDisplay(0.4)->withShowPercent(true);
 
         $buffer2 = new Frame(20, 1);
         $barBelowHalf->render($buffer2, $area, $this->context);
@@ -855,11 +817,7 @@ final class ProgressBarTest extends TestCase
         $labelColor = $theme->base->foregroundValue();
         $ansi0Color = Color::ansi(0)->value;
 
-        $progressBar = new ProgressBar(
-            progress: 0.5,
-            display: 0.5,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.5)->withDisplay(0.5)->withShowPercent(true);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -990,11 +948,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function lastBarColumnIsRendered(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.0,
-            display: 0.0,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(0.0)->withDisplay(0.0)->withShowPercent(false);
 
         $frame = new Frame(5, 1);
         $area = new Rect(0, 0, 5, 1);
@@ -1010,11 +964,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function percentTextIsBold(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.5,
-            display: 0.5,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.5)->withDisplay(0.5)->withShowPercent(true);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -1052,11 +1002,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function percentageTextAtZeroPercent(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.0,
-            display: 0.0,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.0)->withDisplay(0.0)->withShowPercent(true);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -1072,11 +1018,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function percentageNotRenderedWhenDisabled(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.5,
-            display: 0.5,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(0.5)->withDisplay(0.5)->withShowPercent(false);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -1097,11 +1039,7 @@ final class ProgressBarTest extends TestCase
         // display = 1/8 = 0.125 on width=8: fillFraction=1.0, fullCells=1, remainder=0.0
         // That's exact, no fraction. Let's use display=0.0625 on width=8:
         // fillFraction=0.5, fullCells=0, remainder=0.5, fractionIndex=round(4.0)=4 => BLOCKS[4]='▌'
-        $progressBar = new ProgressBar(
-            progress: 0.0625,
-            display: 0.0625,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(0.0625)->withDisplay(0.0625)->withShowPercent(false);
 
         $frame = new Frame(8, 1);
         $area = new Rect(0, 0, 8, 1);
@@ -1176,11 +1114,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function percentageTextUsesRoundNotCeil(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.334,
-            display: 0.334,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.334)->withDisplay(0.334)->withShowPercent(true);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -1202,11 +1136,7 @@ final class ProgressBarTest extends TestCase
         $fillColor = $theme->fillStyle->foregroundValue();
         $baseBackground = $theme->base->backgroundValue();
 
-        $progressBar = new ProgressBar(
-            progress: 0.5,
-            display: 0.5,
-            showPercent: true,
-        );
+        $progressBar = ProgressBar::new(0.5)->withDisplay(0.5)->withShowPercent(true);
 
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
@@ -1276,11 +1206,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function tickAnimatesWhenDifferenceIsExactlyThreshold(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 0.501,
-            display: 0.500,
-            springFactor: 0.15,
-        );
+        $progressBar = ProgressBar::new(0.501)->withDisplay(0.500)->withSpringFactor(0.15);
         $area = Rect::fromSize(20, 1);
         $result = $progressBar->update(new TickMsg(0.0), $area);
 
@@ -1299,11 +1225,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function renderWithWidthZeroDoesNotModifyBuffer(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 1.0,
-            display: 1.0,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(1.0)->withDisplay(1.0)->withShowPercent(false);
         $frame = new Frame(5, 1);
         $area = new Rect(0, 0, 0, 1);
         $progressBar->render($frame, $area, $this->context);
@@ -1325,11 +1247,7 @@ final class ProgressBarTest extends TestCase
         // display=0.36 on width=10: fillFraction=3.6, fullCells=3, remainder=0.6
         // round(0.6 * 8) = round(4.8) = 5 => BLOCKS[5] = '▋'
         // round(0.6 * 7) = round(4.2) = 4 => BLOCKS[4] = '▌'
-        $progressBar = new ProgressBar(
-            progress: 0.36,
-            display: 0.36,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(0.36)->withDisplay(0.36)->withShowPercent(false);
 
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
@@ -1348,11 +1266,7 @@ final class ProgressBarTest extends TestCase
         // display=0.31 on width=10: fillFraction=3.1, fullCells=3, remainder=0.1
         // round(0.1 * 8) = round(0.8) = 1 => BLOCKS[1] = '▏'
         // floor(0.1 * 8) = floor(0.8) = 0 => BLOCKS[0] = ' ' (or no fractional block)
-        $progressBar = new ProgressBar(
-            progress: 0.31,
-            display: 0.31,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(0.31)->withDisplay(0.31)->withShowPercent(false);
 
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
@@ -1371,11 +1285,7 @@ final class ProgressBarTest extends TestCase
         // display=0.33 on width=10: fillFraction=3.3, fullCells=3, remainder=0.3
         // round(0.3 * 8) = round(2.4) = 2 => BLOCKS[2] = '▎'
         // ceil(0.3 * 8) = ceil(2.4) = 3 => BLOCKS[3] = '▍'
-        $progressBar = new ProgressBar(
-            progress: 0.33,
-            display: 0.33,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(0.33)->withDisplay(0.33)->withShowPercent(false);
 
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
@@ -1391,11 +1301,7 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function barLoopRendersExactlyBarWidthCells(): void
     {
-        $progressBar = new ProgressBar(
-            progress: 1.0,
-            display: 1.0,
-            showPercent: false,
-        );
+        $progressBar = ProgressBar::new(1.0)->withDisplay(1.0)->withShowPercent(false);
 
         $frame = new Frame(8, 1);
         $area = new Rect(0, 0, 5, 1);
