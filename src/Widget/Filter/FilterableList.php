@@ -18,12 +18,8 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
-use Elmphant\Tui\Rendering\Line;
-use Elmphant\Tui\Rendering\Span;
-use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\Places;
@@ -38,7 +34,6 @@ use Elmphant\Tui\Widget\Listing\ListItem;
 use Elmphant\Tui\Widget\Listing\ListItems;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
-use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
 
@@ -46,18 +41,9 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 {
     use Cloneable;
     use DrawsFocus;
+    use FiltersItsContent;
     use KeybindingsAwareBehavior;
     use SearchMode;
-
-    private const LIST_ACTIONS = [
-        Actions::CURSOR_UP,
-        Actions::CURSOR_DOWN,
-        Actions::PAGE_UP,
-        Actions::PAGE_DOWN,
-        Actions::HOME,
-        Actions::END,
-        Actions::SELECT,
-    ];
 
     /**
      * Cache matches so repeated reads of the highlighted item do not repeat an expensive search.
@@ -124,55 +110,17 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $reloaded->cloneWith(list: $this->list->withItems($reloaded->matchingItems()));
     }
 
-    public function withMatcher(Matcher $matcher): self
-    {
-        return $this->cloneWith(matcher: $matcher)->reFiltered();
-    }
-
-    public function withPlaceholder(string $placeholder): self
-    {
-        return $this->cloneWith(field: $this->field->withPlaceholder($placeholder));
-    }
-
-    /**
-     * Shown when no items match; withEmptyCaption() describes an empty selection instead.
-     */
-    public function withNoMatchText(string $noMatchText): self
-    {
-        return $this->cloneWith(noMatchText: $noMatchText);
-    }
-
     public function withNoItemsText(string $noItemsText): self
     {
         return $this->cloneWith(noItemsText: $noItemsText);
     }
 
+    /**
+     * Describes an empty selection, where withNoMatchText() describes an empty list.
+     */
     public function withEmptyCaption(string $caption): self
     {
         return $this->cloneWith(emptyCaption: $caption);
-    }
-
-    public function hints(): array
-    {
-        return $this->searchHints([
-            'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
-            'choose' => Actions::SELECT,
-            ...$this->clearFilterHint($this->query()),
-        ]);
-    }
-
-    public function query(): string
-    {
-        return $this->field->value();
-    }
-
-    public function withQuery(string $query): self
-    {
-        if ($query === $this->query()) {
-            return $this;
-        }
-
-        return $this->cloneWith(field: $this->field->withValue($query))->reFiltered();
     }
 
     public function withSourceIndex(?int $index): self
@@ -185,11 +133,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     public function summary(): string
     {
         return $this->list->itemCount() . ' of ' . count($this->items);
-    }
-
-    public function sourceIndex(): ?int
-    {
-        return $this->matchingIndexes()[$this->list->cursor()] ?? null;
     }
 
     public function cursorItem(): ?ListItem
@@ -245,7 +188,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
     public function optionAt(MouseMsg $message, Rect $area): ?string
     {
-        $index = $this->list->indexAt($message, $this->listArea($area));
+        $index = $this->list->indexAt($message, $this->contentArea($area));
 
         return $index === null ? null : ($this->matchingItems()[$index] ?? null)?->key();
     }
@@ -259,11 +202,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     {
         $place = $this->placeOfKey($option);
 
-        if ($place === null) {
-            return $this;
-        }
-
-        return $this->cloneWith(selectedSource: $this->clearable && $place === $this->selectedSource ? null : $place);
+        return $place === null ? $this : $this->chosen($place);
     }
 
     /**
@@ -313,113 +252,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         );
     }
 
-    /**
-     * Keep Space and Home/End for text editing; expose top and bottom actions for global bindings such as `gg` and `G`.
-     */
-    public static function defaultKeybindings(): Keybindings
-    {
-        return (new Keybindings([
-            Actions::CURSOR_UP => ['up'],
-            Actions::CURSOR_DOWN => ['down'],
-            Actions::PAGE_UP => ['shift+up', 'page_up'],
-            Actions::PAGE_DOWN => ['shift+down', 'page_down'],
-            Actions::HOME => [],
-            Actions::END => [],
-            Actions::SELECT => ['enter'],
-        ]))->merge(FilterBar::keybindings())
-            ->append(TextInput::defaultKeybindings());
-    }
-
-    public function update(Message $message, Rect $area): UpdateResult
-    {
-        if ($message instanceof MouseMsg) {
-            return $this->withMouse($message, $area);
-        }
-
-        if ($message instanceof PasteMsg) {
-            return $this->typedIntoTheField($message, $area);
-        }
-
-        if (!$message instanceof KeyMsg) {
-            return new UpdateResult($this);
-        }
-
-        $toggled = $this->searchToggledBy($message);
-        if ($toggled !== null) {
-            return new UpdateResult($toggled);
-        }
-
-        if ($this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
-            return new UpdateResult($this->query() === '' ? $this : $this->withQuery(''));
-        }
-
-        if ($this->effectiveKeybindings()->matches($message, Actions::SELECT)) {
-            $place = $this->sourceIndex();
-
-            if ($place === null) {
-                return new UpdateResult($this);
-            }
-
-            return new UpdateResult($this->cloneWith(selectedSource: $this->clearable && $place === $this->selectedSource ? null : $place));
-        }
-
-        if ($this->belongsToTheList($message)) {
-            $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->list, $message, $this->listArea($area));
-
-            return new UpdateResult($this->cloneWith(list: $result->child), $result->command);
-        }
-
-        return $this->takesText() ? $this->typedIntoTheField($message, $area) : new UpdateResult($this);
-    }
-
-    public function render(Frame $frame, Rect $area, RenderContext $context): void
-    {
-        if ($area->width < 1 || $area->height < 1) {
-            return;
-        }
-
-        $field = fn () => FilterBar::render($frame, $this->fieldArea($area), $context, $this->fieldDrawnBy($context));
-        $this->fieldHoldsTheKeys($context) ? $field() : $context->withoutFocus($field);
-
-        $body = $this->listArea($area);
-        if ($body->height < 1) {
-            return;
-        }
-
-        if ($this->list->itemCount() === 0) {
-            Paragraph::fromLines([new Line([Span::token($this->items === [] ? $this->noItemsText : $this->noMatchText, StyleToken::Dim)])])
-                ->render($frame, $body, $context);
-
-            return;
-        }
-
-        $chosen = array_search($this->selectedSource, $this->matchingIndexes(), true);
-        $this->list->withSelected($chosen === false ? null : $chosen)->render($frame, $body, $context);
-    }
-
-    /**
-     * @return UpdateResult<static>
-     */
-    private function typedIntoTheField(KeyMsg|PasteMsg $message, Rect $area): UpdateResult
-    {
-        $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->field, $message, $this->fieldArea($area));
-        $field = $result->child;
-
-        return new UpdateResult(
-            $field->value() === $this->field->value()
-                ? $this->cloneWith(field: $field)
-                : $this->cloneWith(field: $field)->reFiltered()->atTheTop(),
-            $result->command,
-        );
-    }
-
-    private function fieldDrawnBy(RenderContext $context): TextInput
-    {
-        return $this->field->withDecoration(
-            $this->drawsFocused($context) ? InputDecoration::Underline : InputDecoration::None,
-        );
-    }
-
     private function placeOfKey(string $key): ?int
     {
         foreach ($this->items as $index => $item) {
@@ -431,36 +263,9 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return null;
     }
 
-    private function belongsToTheList(KeyMsg $message): bool
+    private function chosen(int $place): self
     {
-        $bindings = $this->effectiveKeybindings();
-
-        foreach (self::LIST_ACTIONS as $action) {
-            if ($bindings->matches($message, $action)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Only `selectedSource` holds the choice, so the list view's own selection stays empty.
-     *
-     * @return UpdateResult<self>
-     */
-    private function withMouse(MouseMsg $message, Rect $area): UpdateResult
-    {
-        $option = $message->isClick() ? $this->optionAt($message, $area) : null;
-        $dispatcher = new ChildDispatcher($this->globalKeybindings);
-        $field = $dispatcher->dispatchOne($this->field, $message, $this->fieldArea($area));
-        $list = $dispatcher->dispatchOne($this->list, $message, $this->listArea($area));
-        $answered = $this->cloneWith(field: $field->child, list: $list->child->withSelected(null));
-
-        return new UpdateResult(
-            $option === null ? $answered : $answered->activated($option),
-            Cmd::combine($field->command, $list->command),
-        );
+        return $this->cloneWith(selectedSource: $this->clearable && $place === $this->selectedSource ? null : $place);
     }
 
     private function reFiltered(): self
@@ -477,29 +282,67 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(list: $this->list->withCursor(0));
     }
 
+    private function contentCursor(): int
+    {
+        return $this->list->cursor();
+    }
+
+    /**
+     * @return UpdateResult<self>
+     */
+    private function contentAnswered(KeyMsg $message, Rect $area): UpdateResult
+    {
+        if ($this->effectiveKeybindings()->matches($message, Actions::SELECT)) {
+            $place = $this->sourceIndex();
+
+            return new UpdateResult($place === null ? $this : $this->chosen($place));
+        }
+
+        $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->list, $message, $this->contentArea($area));
+
+        return new UpdateResult($this->cloneWith(list: $result->child), $result->command);
+    }
+
+    /**
+     * Only `selectedSource` holds the choice, so the list view's own selection stays empty.
+     *
+     * @return UpdateResult<self>
+     */
+    private function withMouse(MouseMsg $message, Rect $area): UpdateResult
+    {
+        $option = $message->isClick() ? $this->optionAt($message, $area) : null;
+        $dispatcher = new ChildDispatcher($this->globalKeybindings);
+        $field = $dispatcher->dispatchOne($this->field, $message, FilterBar::barArea($area));
+        $list = $dispatcher->dispatchOne($this->list, $message, $this->contentArea($area));
+        $answered = $this->cloneWith(field: $field->child, list: $list->child->withSelected(null));
+
+        return new UpdateResult(
+            $option === null ? $answered : $answered->activated($option),
+            Cmd::combine($field->command, $list->command),
+        );
+    }
+
+    private function barSummary(): ?string
+    {
+        return null;
+    }
+
+    private function nothingToShow(): string
+    {
+        return $this->items === [] ? $this->noItemsText : $this->noMatchText;
+    }
+
+    private function renderContent(Frame $frame, Rect $body, RenderContext $context): void
+    {
+        $chosen = array_search($this->selectedSource, $this->matchingIndexes(), true);
+        $this->list->withSelected($chosen === false ? null : $chosen)->render($frame, $body, $context);
+    }
+
     /**
      * @return list<ListItem>
      */
     private function matchingItems(): array
     {
         return array_map(fn (int $index): ListItem => $this->items[$index], $this->matchingIndexes());
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function matchingIndexes(): array
-    {
-        return $this->matching->indexes;
-    }
-
-    private function fieldArea(Rect $area): Rect
-    {
-        return FilterBar::barArea($area);
-    }
-
-    private function listArea(Rect $area): Rect
-    {
-        return FilterBar::bodyArea($area, FilterBar::GAP_BELOW);
     }
 }
