@@ -203,7 +203,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         return $this->outsideClickDismisses
             && $message instanceof MouseMsg
             && $message->isClick()
-            && !$message->inRect($this->computeModalRect($area));
+            && !$message->isIn($this->computeModalRect($area));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

@@ -44,7 +44,7 @@ final readonly class InlineSurface implements Surface
 
     public function finish(Closure $drawLastFrame): void
     {
-        if (!$this->screen->printedLast()) {
+        if (!$this->screen->isPrintedLast()) {
             $drawLastFrame();
         }
     }

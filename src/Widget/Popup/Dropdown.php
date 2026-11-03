@@ -319,7 +319,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
             return $this;
         }
 
-        if (!$message->inRect($area)) {
+        if (!$message->isIn($area)) {
             return $this->open ? $this->withOpen(false) : $this;
         }
 

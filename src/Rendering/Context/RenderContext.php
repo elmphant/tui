@@ -83,9 +83,9 @@ final class RenderContext
     /**
      * When the whole subtree has focus, show its first focusable child as focused.
      */
-    public function keyboardIsLoose(): bool
+    public function isKeyboardLoose(): bool
     {
-        return $this->focus->keyboardIsLoose();
+        return $this->focus->isKeyboardLoose();
     }
 
     /**

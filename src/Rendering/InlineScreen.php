@@ -76,7 +76,7 @@ final class InlineScreen
         $this->terminal->flush();
     }
 
-    public function printedLast(): bool
+    public function isPrintedLast(): bool
     {
         return $this->printedLast;
     }

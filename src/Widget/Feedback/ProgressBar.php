@@ -114,7 +114,7 @@ final readonly class ProgressBar implements Interactive
     {
         return match (true) {
             $message instanceof TickMsg => $this->handleTick($message),
-            $message instanceof MouseMsg && $this->clickable && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area),
+            $message instanceof MouseMsg && $this->clickable && $message->isClick() && $message->isIn($area) => $this->handleClick($message, $area),
             default => new UpdateResult($this),
         };
     }
@@ -202,7 +202,7 @@ final readonly class ProgressBar implements Interactive
     private function handleClick(MouseMsg $message, Rect $area): UpdateResult
     {
         $barArea = $this->barRect($area);
-        if ($message->inRect($barArea)) {
+        if ($message->isIn($barArea)) {
             $lastCell = $barArea->width - 1;
 
             return new UpdateResult($this->withProgress($lastCell === 0 ? 1.0 : ($message->x - $barArea->x) / $lastCell));

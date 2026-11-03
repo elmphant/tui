@@ -151,7 +151,7 @@ final readonly class TallyResetter implements Focusable
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($message instanceof MouseMsg && $message->isClick() && $message->inRect($area)) {
+        if ($message instanceof MouseMsg && $message->isClick() && $message->isIn($area)) {
             return new UpdateResult($this->cloneWith(tally: 99));
         }
 

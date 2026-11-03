@@ -23,7 +23,7 @@ final readonly class BatchDispatchResult
     ) {
     }
 
-    public function changed(): bool
+    public function hasChanged(): bool
     {
         return $this->overrides !== [];
     }

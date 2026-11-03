@@ -164,7 +164,7 @@ final class FocusPath
         $this->stopPublishers = $ids;
     }
 
-    public function keyboardIsLoose(): bool
+    public function isKeyboardLoose(): bool
     {
         return $this->loose && $this->hasFocus();
     }

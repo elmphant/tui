@@ -42,8 +42,8 @@ trait OptionListBehavior
 
         return match (true) {
             $message instanceof KeyMsg => $this->handleKey($message, $count),
-            $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area, $count),
-            $message instanceof MouseMsg && $message->inRect($area) => $this->handleWheel($message, $count),
+            $message instanceof MouseMsg && $message->isClick() && $message->isIn($area) => $this->handleClick($message, $area, $count),
+            $message instanceof MouseMsg && $message->isIn($area) => $this->handleWheel($message, $count),
             default => new UpdateResult($this),
         };
     }
@@ -58,7 +58,7 @@ trait OptionListBehavior
 
     public function optionAt(MouseMsg $message, Rect $area): ?string
     {
-        if (!$message->inRect($area)) {
+        if (!$message->isIn($area)) {
             return null;
         }
 

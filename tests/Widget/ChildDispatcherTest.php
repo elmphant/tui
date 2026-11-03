@@ -107,7 +107,7 @@ final class ChildDispatcherTest extends TestCase
         $result = (new ChildDispatcher())->dispatchMap($children, $rects, new TestMessage('message'));
 
         self::assertSame(['changed' => $replacement], $result->overrides);
-        self::assertTrue($result->changed());
+        self::assertTrue($result->hasChanged());
         self::assertInstanceOf(BatchCmd::class, $result->command);
         self::assertSame([$firstCommand, $secondCommand], $result->command->commands);
     }
@@ -129,7 +129,7 @@ final class ChildDispatcherTest extends TestCase
         );
 
         self::assertSame([], $none->overrides);
-        self::assertFalse($none->changed());
+        self::assertFalse($none->hasChanged());
         self::assertNull($none->command);
         self::assertSame($command, $one->command);
     }
@@ -165,7 +165,7 @@ final class ChildDispatcherTest extends TestCase
         );
 
         self::assertSame([5 => $replacement], $result->overrides);
-        self::assertTrue($result->changed());
+        self::assertTrue($result->hasChanged());
         self::assertSame($command, $result->command);
     }
 

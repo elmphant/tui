@@ -133,7 +133,7 @@ final readonly class WheelCounter implements Focusable
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($message instanceof MouseMsg && $message->action === MouseAction::WheelDown && $message->inRect($area)) {
+        if ($message instanceof MouseMsg && $message->action === MouseAction::WheelDown && $message->isIn($area)) {
             return new UpdateResult(new self($this->count + 1, $this->focused));
         }
 

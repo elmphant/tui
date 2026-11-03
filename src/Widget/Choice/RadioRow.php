@@ -178,7 +178,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     {
         return match (true) {
             $message instanceof KeyMsg => $this->handleKey($message),
-            $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area),
+            $message instanceof MouseMsg && $message->isClick() && $message->isIn($area) => $this->handleClick($message, $area),
             default => new UpdateResult($this),
         };
     }

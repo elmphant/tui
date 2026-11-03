@@ -433,7 +433,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     {
         $displayOffset = $this->scrollOffset($area);
 
-        if ($message->isClick() && $message->inRect($area)) {
+        if ($message->isClick() && $message->isIn($area)) {
             $localY = $message->y - $area->y - $this->headerHeight();
             $rowIndex = $localY >= 0
                 ? $this->layoutFor($this->placementFor($area))->rowAtLine($displayOffset, $localY)
@@ -444,7 +444,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
             }
         }
 
-        if ($message->inRect($area)) {
+        if ($message->isIn($area)) {
             if ($message->action === MouseAction::WheelDown) {
                 return new UpdateResult($this->scrolledDown($message->wheelSteps(), $displayOffset, $area));
             }

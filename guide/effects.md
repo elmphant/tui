@@ -230,7 +230,7 @@ $message instanceof HttpResultMsg && $message->effectId?->equals($packages)
 | Message | When |
 |---------|------|
 | `KeyMsg` | A key press: `key`, `ctrl`, `alt`, `shift`, `isText()` |
-| `MouseMsg` | A click, scroll or drag: `isClick()`, `inRect()` |
+| `MouseMsg` | A click, scroll or drag: `isClick()`, `isIn()` |
 | `PasteMsg` | Pasted text: `content` |
 | `TickMsg` | A beat of `Cmd::tick()`: `isFrom('clock')` |
 | `ResizeMsg` | The terminal changed size: `width`, `height` |

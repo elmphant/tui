@@ -14,19 +14,19 @@ use PHPUnit\Framework\TestCase;
 final class MouseMsgTest extends TestCase
 {
     #[Test]
-    public function inRect(): void
+    public function aPointInsideTheRectIsInIt(): void
     {
         $msg = new MouseMsg(5, 5, MouseAction::Press, MouseButton::Left);
         $rect = new Rect(0, 0, 10, 10);
-        self::assertTrue($msg->inRect($rect));
+        self::assertTrue($msg->isIn($rect));
     }
 
     #[Test]
-    public function notInRect(): void
+    public function aPointOutsideTheRectIsNotInIt(): void
     {
         $msg = new MouseMsg(15, 5, MouseAction::Press, MouseButton::Left);
         $rect = new Rect(0, 0, 10, 10);
-        self::assertFalse($msg->inRect($rect));
+        self::assertFalse($msg->isIn($rect));
     }
 
     #[Test]
@@ -54,7 +54,7 @@ final class MouseMsgTest extends TestCase
     {
         $msg = new MouseMsg(5, 5, MouseAction::Press, MouseButton::Left);
         $rect = new Rect(5, 5, 0, 0);
-        self::assertFalse($msg->inRect($rect));
+        self::assertFalse($msg->isIn($rect));
     }
 
     #[Test]

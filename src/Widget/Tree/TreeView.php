@@ -352,7 +352,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     private function rowAt(MouseMsg $message, Rect $area): ?array
     {
-        if (!$message->inRect($area)) {
+        if (!$message->isIn($area)) {
             return null;
         }
 

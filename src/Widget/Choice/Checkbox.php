@@ -108,7 +108,7 @@ final readonly class Checkbox implements Focusable, HoldsAValue, KeybindingsAwar
                 && $this->effectiveKeybindings()->matches($message, Actions::TOGGLE) => new UpdateResult($this->cloneWith(checked: !$this->checked)),
             $message instanceof MouseMsg
                 && $message->isClick()
-                && $message->inRect($area) => new UpdateResult($this->cloneWith(checked: !$this->checked)),
+                && $message->isIn($area) => new UpdateResult($this->cloneWith(checked: !$this->checked)),
             default => new UpdateResult($this),
         };
     }

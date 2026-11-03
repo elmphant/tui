@@ -323,7 +323,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         $rows = min($content->height, $this->pane->measureHeight($content->width));
         $inside = (new Inset($this->margin, border: true))->inner($area);
 
-        if (!$message instanceof MouseMsg || !$message->isClick() || !$message->inRect($inside) || $rows < 1) {
+        if (!$message instanceof MouseMsg || !$message->isClick() || !$message->isIn($inside) || $rows < 1) {
             return $message;
         }
 

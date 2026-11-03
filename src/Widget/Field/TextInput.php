@@ -182,7 +182,7 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         return match (true) {
             $message instanceof KeyMsg => $this->handleKey($message, $area),
             $message instanceof PasteMsg => new UpdateResult($this->pasted($message->content) ?? $this),
-            $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area),
+            $message instanceof MouseMsg && $message->isClick() && $message->isIn($area) => $this->handleClick($message, $area),
             default => new UpdateResult($this),
         };
     }

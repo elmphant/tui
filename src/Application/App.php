@@ -926,8 +926,8 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $components = array_values(array_filter(
             $components,
             static fn (Component $component): bool => !isset($rects[$component->id->value])
-                || !$message->inRect($rects[$component->id->value])
-                || (isset($visible[$component->id->value]) && $message->inRect($visible[$component->id->value])),
+                || !$message->isIn($rects[$component->id->value])
+                || (isset($visible[$component->id->value]) && $message->isIn($visible[$component->id->value])),
         ));
         [$updates, $childCommand] = $current->dispatchComponents(
             $components,
@@ -943,7 +943,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             foreach ($current->componentRegistry()->focusables() as $component) {
                 $rect = $visible[$component->id->value] ?? null;
 
-                if ($rect === null || !$message->inRect($rect)) {
+                if ($rect === null || !$message->isIn($rect)) {
                     continue;
                 }
 
@@ -981,7 +981,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $under = null;
 
         foreach ($this->componentRegistry()->listeningMounts() as $mount) {
-            if (isset($rects[$mount]) && $message->inRect($rects[$mount])) {
+            if (isset($rects[$mount]) && $message->isIn($rects[$mount])) {
                 $under = $mount;
             }
         }
@@ -1003,7 +1003,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $rect = $visible[$component->id->value] ?? null;
             $holdsStops = array_filter($stops, static fn (Component $stop): bool => $stop->id->isUnder($component->id)) !== [];
 
-            if ($rect !== null && $message->inRect($rect) && $holdsStops && ($entered === null || $component->id->isUnder($entered))) {
+            if ($rect !== null && $message->isIn($rect) && $holdsStops && ($entered === null || $component->id->isUnder($entered))) {
                 $entered = $component->id;
             }
         }

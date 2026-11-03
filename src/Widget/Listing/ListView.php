@@ -195,7 +195,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
      */
     public function indexAt(MouseMsg $message, Rect $area): ?int
     {
-        if (!$message->inRect($area)) {
+        if (!$message->isIn($area)) {
             return null;
         }
 
@@ -377,7 +377,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
 
         $itemWidth = $this->itemWidth($area);
 
-        if ($message->isClick() && $message->inRect($area)) {
+        if ($message->isClick() && $message->isIn($area)) {
             $clickedIndex = $this->itemIndexAtY($message->y - $area->y, $displayOffset, $itemWidth);
 
             if ($clickedIndex !== null) {
@@ -385,7 +385,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
             }
         }
 
-        if ($message->inRect($area)) {
+        if ($message->isIn($area)) {
             if ($message->action === MouseAction::WheelDown) {
                 $scrolled = ScrollWindow::clamped(
                     $displayOffset + $message->wheelSteps(),

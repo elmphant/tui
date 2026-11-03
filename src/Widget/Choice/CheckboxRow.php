@@ -202,7 +202,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
     {
         return match (true) {
             $message instanceof KeyMsg => $this->handleKey($message),
-            $message instanceof MouseMsg && $message->isClick() && $message->inRect($area) => $this->handleClick($message, $area),
+            $message instanceof MouseMsg && $message->isClick() && $message->isIn($area) => $this->handleClick($message, $area),
             default => new UpdateResult($this),
         };
     }

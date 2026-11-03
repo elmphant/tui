@@ -96,7 +96,7 @@ final readonly class PressTarget implements Focusable
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if (!$message instanceof MouseMsg || !$message->inRect($area)) {
+        if (!$message instanceof MouseMsg || !$message->isIn($area)) {
             return new UpdateResult($this);
         }
 

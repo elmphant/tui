@@ -59,7 +59,7 @@ final readonly class MouseMsg implements Message
         return $step * max(1, $this->repeat);
     }
 
-    public function inRect(Rect $rect): bool
+    public function isIn(Rect $rect): bool
     {
         return $rect->contains($this->x, $this->y);
     }

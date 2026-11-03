@@ -98,9 +98,9 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
             $message instanceof KeyMsg
                 && $this->effectiveKeybindings()->matches($message, Actions::SELECT) => new UpdateResult($this, $this->press()),
             $message instanceof MouseMsg
-                && $message->action === MouseAction::Press => new UpdateResult($this->withArmed($message->inRect($area))),
+                && $message->action === MouseAction::Press => new UpdateResult($this->withArmed($message->isIn($area))),
             $message instanceof MouseMsg
-                && $message->action === MouseAction::Release => $this->armed && $message->inRect($area)
+                && $message->action === MouseAction::Release => $this->armed && $message->isIn($area)
                     ? new UpdateResult($this->withArmed(false), Cmd::message($this->message))
                     : new UpdateResult($this->withArmed(false)),
             default => new UpdateResult($this),

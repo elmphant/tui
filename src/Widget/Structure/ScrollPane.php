@@ -188,7 +188,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
             return $marking;
         }
 
-        if ($message instanceof MouseMsg && $message->inRect($area)) {
+        if ($message instanceof MouseMsg && $message->isIn($area)) {
             return new UpdateResult($this->scrolledByWheel($message, $area) ?? $this);
         }
 
@@ -261,7 +261,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         $layout = VerticalStack::layoutUsing($this->layoutMemo, $children, $area->width, $area->height);
         $offset = $this->resolvedOffset($layout, $area->height);
 
-        $loose = $context->keyboardIsLoose() && !$this->aRowIsMarked() ? $this->firstFocusableIndex() : null;
+        $loose = $context->isKeyboardLoose() && !$this->aRowIsMarked() ? $this->firstFocusableIndex() : null;
 
         $frame->pushClip(new Rect($area->x, $area->y, $layout->childWidth, $area->height));
 
@@ -340,7 +340,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         if ($message->action === MouseAction::Press) {
             [$row, $column] = $this->cellAt($message, $area, $layout);
             $marks = $message->button === MouseButton::Left
-                && $message->inRect($area)
+                && $message->isIn($area)
                 && $this->resolvedOffset($layout, $area->height) + $message->y - $area->y < $layout->totalHeight;
 
             if (!$marks) {
