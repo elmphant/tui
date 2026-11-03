@@ -76,6 +76,16 @@ final class CheckboxGroupTest extends TestCase
     }
 
     #[Test]
+    public function anIndexPastTheLastOptionIsNeverChecked(): void
+    {
+        $group = CheckboxGroup::new(['A', 'B'])->withChecked([1, 5, -1]);
+
+        self::assertFalse($group->isChecked(5));
+        self::assertFalse($group->isChecked(-1));
+        self::assertSame(['B'], $group->checkedValues());
+    }
+
+    #[Test]
     public function takesTheOptionsFirstAndLeavesTheLabelOptional(): void
     {
         $bare = CheckboxGroup::new(['A', 'B']);

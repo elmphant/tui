@@ -91,7 +91,10 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
      */
     public function withChecked(array $checked): self
     {
-        return $this->cloneWith(checked: $checked);
+        return $this->cloneWith(checked: array_values(array_filter(
+            $checked,
+            fn (int $index): bool => isset($this->options[$index]),
+        )));
     }
 
     /**
