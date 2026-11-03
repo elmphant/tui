@@ -188,7 +188,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
             $mark = $isSelected ? self::SELECTED_MARK : self::UNSELECTED_MARK;
             $markWidth = CharWidth::stringWidth($mark);
 
-            $style = $theme->optionStyle($isCursor, $isSelected, $this->drawsFocused($context));
+            $style = OptionStyle::of($theme, $isCursor, $isSelected, $this->drawsFocused($context));
 
             $frame->putStyled($area->x, $rowY, CharWidth::truncateToWidth($mark, $area->width), $style);
             $frame->putStyled($area->x + $markWidth, $rowY, TextWrap::ellipsize($this->options[$index], max(0, $area->width - $markWidth)), $style);

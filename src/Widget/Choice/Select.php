@@ -159,7 +159,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
             $isCursor = $index === $this->cursor && $this->drawsFocused($context);
             $isSelected = $index === $this->selected;
 
-            $style = $theme->optionStyle($isCursor, $isSelected, $this->drawsFocused($context));
+            $style = OptionStyle::of($theme, $isCursor, $isSelected, $this->drawsFocused($context));
 
             $frame->putStyled($area->x, $y, TextWrap::ellipsize($this->options[$index], $area->width), $style);
         }

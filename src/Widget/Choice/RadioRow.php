@@ -201,7 +201,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
                 $x,
                 $y,
                 ($picked ? self::SELECTED_MARK : self::UNSELECTED_MARK) . $this->options[$index],
-                $context->theme->optionStyle($focused && $index === $this->cursor, $picked, $focused),
+                OptionStyle::of($context->theme, $focused && $index === $this->cursor, $picked, $focused),
             );
         }
     }

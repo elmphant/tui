@@ -224,16 +224,6 @@ final readonly class Theme
         return $prominent ? $this->focusedBorderStyle : $this->borderStyle;
     }
 
-    public function optionStyle(bool $isCursor, bool $isMarked, bool $focused): Style
-    {
-        return match (true) {
-            $isCursor => $this->cursorStyle,
-            $isMarked => $this->accent,
-            $focused => $this->base,
-            default => $this->dim,
-        };
-    }
-
     public static function dark(): self
     {
         return new self(

@@ -231,7 +231,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
                 $x,
                 $y,
                 ($isChecked ? self::CHECKED_MARK : self::UNCHECKED_MARK) . $this->options[$index],
-                $theme->optionStyle($focused && $index === $this->cursor, $isChecked, $focused),
+                OptionStyle::of($theme, $focused && $index === $this->cursor, $isChecked, $focused),
             );
         }
     }
