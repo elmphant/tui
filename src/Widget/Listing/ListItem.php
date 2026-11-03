@@ -20,5 +20,5 @@ interface ListItem
     /**
      * Delegate height measurement to ListItemLayout so wrapping matches rendering.
      */
-    public function height(int $width): int;
+    public function measureHeight(int $width): int;
 }

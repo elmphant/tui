@@ -396,7 +396,7 @@ final class FilterableListTest extends TestCase
     {
         $narrowed = $this->typed($this->commands(), 'cache');
         $firstRow = $this->area()->y + FilterBar::HEIGHT + 1;
-        $itemRows = $this->commandItems()[0]->height(self::WIDTH);
+        $itemRows = $this->commandItems()[0]->measureHeight(self::WIDTH);
 
         self::assertSame(
             'cache:flush',
@@ -413,7 +413,7 @@ final class FilterableListTest extends TestCase
     public function measuresItsWidestTitleAndTheRowsItsMatchesNeed(): void
     {
         $list = $this->commands();
-        $itemRows = $this->commandItems()[0]->height(self::WIDTH);
+        $itemRows = $this->commandItems()[0]->measureHeight(self::WIDTH);
 
         self::assertSame(12, $list->popupWidth(), 'the widest title decides, since that is what the list draws');
         self::assertSame(

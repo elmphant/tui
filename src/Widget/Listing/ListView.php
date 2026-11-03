@@ -301,7 +301,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     {
         $items = $this->items;
 
-        return $this->rowIndex->exceeds($width, $height, static fn (int $index): int => $items[$index]->height($width));
+        return $this->rowIndex->exceeds($width, $height, static fn (int $index): int => $items[$index]->measureHeight($width));
     }
 
     private function extents(Rect $area): RowExtents
@@ -313,7 +313,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     {
         $items = $this->items;
 
-        return $this->rowIndex->at($width, static fn (int $index): int => $items[$index]->height($width));
+        return $this->rowIndex->at($width, static fn (int $index): int => $items[$index]->measureHeight($width));
     }
 
     /**

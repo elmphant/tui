@@ -227,7 +227,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     {
         $rows = 0;
         foreach ($this->matchingItems() as $item) {
-            $rows += $item->height($width);
+            $rows += $item->measureHeight($width);
         }
 
         return FilterBar::HEIGHT + FilterBar::GAP_BELOW + max(1, $rows);

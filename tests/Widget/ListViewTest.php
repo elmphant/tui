@@ -1722,7 +1722,7 @@ final class ListViewTest extends TestCase
     {
         $item = new SimpleListItem('title', str_repeat('word ', 60));
 
-        self::assertSame(ListItemLayout::MAX_ROWS, $item->height(12));
+        self::assertSame(ListItemLayout::MAX_ROWS, $item->measureHeight(12));
     }
 
     #[Test]
@@ -2173,8 +2173,8 @@ final class ListViewTest extends TestCase
     {
         $item = new SimpleListItem('cache:flushtags', 'Flush saved caches with tags');
 
-        self::assertSame(2, $item->height(60), 'Title and description fit one row each');
-        self::assertSame(3, $item->height(20), 'The description needs a second row when narrow');
+        self::assertSame(2, $item->measureHeight(60), 'Title and description fit one row each');
+        self::assertSame(3, $item->measureHeight(20), 'The description needs a second row when narrow');
     }
 
     #[Test]
@@ -2346,7 +2346,7 @@ final readonly class CountingListItem implements ListItem
         return $this->title;
     }
 
-    public function height(int $width): int
+    public function measureHeight(int $width): int
     {
         ++$this->counter->count;
 

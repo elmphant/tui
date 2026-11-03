@@ -33,7 +33,7 @@ final readonly class SimpleListItem implements ListItem
         return $this->key ?? $this->title;
     }
 
-    public function height(int $width): int
+    public function measureHeight(int $width): int
     {
         return ListItemLayout::height($this, $width);
     }

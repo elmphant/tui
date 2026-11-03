@@ -43,12 +43,12 @@ final class ListItemTest extends TestCase
     {
         // Height is width-aware because titles and descriptions wrap.
         $item = new SimpleListItem('Title');
-        self::assertSame(1, $item->height(20));
+        self::assertSame(1, $item->measureHeight(20));
 
         $itemWithDescription = new SimpleListItem('Title', 'Desc');
-        self::assertSame(2, $itemWithDescription->height(20));
+        self::assertSame(2, $itemWithDescription->measureHeight(20));
 
         $wrapping = new SimpleListItem('Title', 'A description that needs two rows');
-        self::assertGreaterThan(2, $wrapping->height(20));
+        self::assertGreaterThan(2, $wrapping->measureHeight(20));
     }
 }
