@@ -10,6 +10,9 @@ use Elmphant\Tui\Widget\Widget;
 
 final readonly class PinnedRows
 {
+    /**
+     * @internal build one with Panel::withHeader() or Panel::withFooter()
+     */
     public function __construct(
         public Widget $widget,
         public bool $ruled = false,
