@@ -91,6 +91,25 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     }
 
     /**
+     * @template T of DropdownContent
+     *
+     * @param T $content
+     *
+     * @return self<T>
+     */
+    public function withContent(DropdownContent $content): self
+    {
+        return new self(
+            content: $content,
+            open: $this->open,
+            customKeybindings: $this->customKeybindings,
+            globalKeybindings: $this->globalKeybindings,
+            floatTarget: $this->floatTarget,
+            frame: $this->frame,
+        );
+    }
+
+    /**
      * @return string|bool|list<string>|null
      */
     public function value(): string|bool|array|null

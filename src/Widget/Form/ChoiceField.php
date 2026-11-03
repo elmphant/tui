@@ -61,7 +61,7 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
     public function withValue(string|bool|array|null $value): static
     {
         return \is_string($value) || $value === null
-            ? self::built($this->options, $value, $this->matcher, $this->clearable)
+            ? self::built($this->options, $value, $this->matcher, $this->clearable, $this->list)
             : throw ValueItCannotHold::given($this, $value);
     }
 
@@ -70,17 +70,17 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
      */
     public function withOptions(array $options): self
     {
-        return self::built($options, $this->value(), $this->matcher, $this->clearable);
+        return self::built($options, $this->value(), $this->matcher, $this->clearable, $this->list);
     }
 
     public function withMatcher(Matcher $matcher): self
     {
-        return self::built($this->options, $this->value(), $matcher, $this->clearable);
+        return self::built($this->options, $this->value(), $matcher, $this->clearable, $this->list);
     }
 
     public function withClearable(bool $clearable = true): self
     {
-        return self::built($this->options, $this->value(), $this->matcher, $clearable);
+        return self::built($this->options, $this->value(), $this->matcher, $clearable, $this->list);
     }
 
     public function value(): ?string
@@ -173,30 +173,33 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
     }
 
     /**
-     * @param array<array-key, string> $options
+     * @param array<array-key, string>      $options
+     * @param Dropdown<FilterableList>|null $before  the list on screen, kept open with its query
      */
-    private static function built(array $options, ?string $value, ?Matcher $matcher, bool $clearable): self
+    private static function built(array $options, ?string $value, ?Matcher $matcher, bool $clearable, ?Dropdown $before = null): self
     {
         $labels = array_values($options);
         $label = $value === null ? null : $options[$value] ?? null;
         $row = RadioRow::new($labels)->withSelectedValue($label)->withClearable($clearable)->withWrapping(false);
 
-        return new self($options, $row, self::listChoosing($labels, $label, $matcher, $clearable), $matcher, $clearable);
+        return new self($options, $row, self::listChoosing($labels, $label, $matcher, $clearable, $before), $matcher, $clearable);
     }
 
     /**
-     * @param list<string> $labels
+     * @param list<string>                  $labels
+     * @param Dropdown<FilterableList>|null $before
      *
      * @return Dropdown<FilterableList>
      */
-    private static function listChoosing(array $labels, ?string $label, ?Matcher $matcher, bool $clearable): Dropdown
+    private static function listChoosing(array $labels, ?string $label, ?Matcher $matcher, bool $clearable, ?Dropdown $before = null): Dropdown
     {
-        $list = FilterableList::new(array_map(
-            static fn (string $label): SimpleListItem => new SimpleListItem($label),
-            $labels,
-        ))->withSelectedValue($label)->withEmptyCaption(self::NOTHING_CHOSEN)->withClearable($clearable);
+        $items = array_map(static fn (string $label): SimpleListItem => new SimpleListItem($label), $labels);
+        $list = ($before?->content()->withItems($items) ?? FilterableList::new($items)->withEmptyCaption(self::NOTHING_CHOSEN))
+            ->withSelectedValue($label)
+            ->withClearable($clearable);
+        $list = $matcher === null ? $list : $list->withMatcher($matcher);
 
-        return Dropdown::new($matcher === null ? $list : $list->withMatcher($matcher));
+        return $before === null ? Dropdown::new($list) : $before->withContent($list);
     }
 
     private function fitsOnOneRow(int $width): bool

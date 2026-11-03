@@ -132,6 +132,22 @@ final class ChoiceFieldTest extends TestCase
     }
 
     #[Test]
+    public function newChoicesLeaveAnOpenListOpenWithItsQuery(): void
+    {
+        $narrow = new Rect(0, 0, 30, 8);
+        $open = ChoiceField::new(self::SITES);
+        foreach ([new KeyMsg(Key::Enter), new KeyMsg('s'), new KeyMsg('h')] as $key) {
+            $open = $open->update($key, $narrow)->model;
+        }
+
+        $reloaded = $open->withOptions([...self::SITES, 'docs' => 'Documentation']);
+        $chosen = $reloaded->update(new KeyMsg(Key::Enter), $narrow)->model;
+
+        self::assertTrue($reloaded->capturesKeys(), 'the list the reader is typing in stays open');
+        self::assertSame('shop', $chosen->value(), 'and Enter chooses from what the query left');
+    }
+
+    #[Test]
     public function aCollapsedFieldFiltersWithTheMatcherItIsGiven(): void
     {
         $initials = new class implements Matcher {

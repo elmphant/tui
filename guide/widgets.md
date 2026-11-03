@@ -35,7 +35,7 @@ interactive ones on your App, and bind them (see [Building an app](apps.md)).
 | `Button` | A button that sends a message when pressed |
 | `Checkbox` / `CheckboxGroup` | Yes/no choices |
 | `Radio` / `Select` | One choice out of a list. A `Radio` always holds an option, unless `withClearable()` lets the reader put it back down |
-| `Dropdown` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))` |
+| `Dropdown` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))`. To load new options, hand it `withContent($dropdown->content()->withItems($items))`, so an open list stays open with its query |
 | `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
 
 **Lists and tables**

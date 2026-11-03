@@ -76,6 +76,17 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
+    public function anOpenDropdownStaysOpenWhenItsContentIsReplaced(): void
+    {
+        $open = Dropdown::new(Select::new(['Inbox', 'Work']))->withOpen();
+
+        $reloaded = $open->withContent(Select::new(['Inbox', 'Work', 'Home']));
+
+        self::assertTrue($reloaded->isOpen());
+        self::assertNotNull(WidgetHarness::for($reloaded, width: 40, height: 12)->screen()->find('Home'));
+    }
+
+    #[Test]
     public function holdsAWidgetAndLetsItAnswerForItself(): void
     {
         $dropdown = Dropdown::new(Select::new(['json', 'yaml'])->withEmptyCaption('choose a format'));
