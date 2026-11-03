@@ -132,7 +132,7 @@ final class KeyHelpOverlay
             $frame->putStyled($area->x + 2, $area->y + 1 + $row, CharWidth::truncateToWidth($text, $width - 4), $style);
         }
 
-        $frame->cursorPosition = null;
+        $frame->clearCursor();
     }
 
     private function scrollBy(int $rows): void

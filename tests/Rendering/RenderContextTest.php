@@ -131,7 +131,7 @@ final class RenderContextTest extends TestCase
             $frame = new Frame(20, 6);
             $context->focusOnChild($child, static fn () => $panel->render($frame, new Rect(0, 0, 20, 6), $context));
 
-            return $frame->cursorPosition?->row;
+            return $frame->cursorPosition()?->row;
         };
 
         self::assertNotNull($caretRow(0));

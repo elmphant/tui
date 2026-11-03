@@ -28,7 +28,7 @@ final class TextInputFocusScopeTest extends TestCase
             $field->render($frame, new Rect(0, 0, 12, 1), $context);
         });
 
-        self::assertNotNull($frame->cursorPosition, 'The field the tree focused must place the caret');
-        self::assertSame(3, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition(), 'The field the tree focused must place the caret');
+        self::assertSame(3, $frame->cursorPosition()->col);
     }
 }

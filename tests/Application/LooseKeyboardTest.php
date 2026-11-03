@@ -34,7 +34,7 @@ final class LooseKeyboardTest extends TestCase
 
         self::assertSame('pane', $harness->focused()?->value);
         self::assertNotNull(
-            $harness->renderFrame()->cursorPosition,
+            $harness->renderFrame()->cursorPosition(),
             'the field inside is the only thing the keyboard can be on',
         );
     }

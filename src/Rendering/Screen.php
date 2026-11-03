@@ -70,7 +70,7 @@ final class Screen
 
     private function cursorChange(Frame $backBuffer): string
     {
-        $position = $backBuffer->cursorPosition;
+        $position = $backBuffer->cursorPosition();
 
         if ($this->cursorAsserted && $this->matchesLastCursor($position)) {
             return '';

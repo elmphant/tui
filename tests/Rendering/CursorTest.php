@@ -26,7 +26,7 @@ final class CursorTest extends TestCase
     {
         $frame = new Frame(80, 24);
         $frame->setCursorPosition(5, 3, CursorShape::BlinkingBar);
-        $pos = $frame->cursorPosition;
+        $pos = $frame->cursorPosition();
         $this->assertInstanceOf(CursorPosition::class, $pos);
         $this->assertSame(3, $pos->row);
         $this->assertSame(5, $pos->col);
@@ -39,6 +39,6 @@ final class CursorTest extends TestCase
         $frame = new Frame(80, 24);
         $frame->setCursorPosition(5, 3, CursorShape::BlinkingBar);
         $frame->clear();
-        $this->assertNull($frame->cursorPosition);
+        $this->assertNull($frame->cursorPosition());
     }
 }

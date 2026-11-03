@@ -27,9 +27,9 @@ final class FilterableTableInVimModeTest extends TestCase
             array_map(static fn (int $index): Row => Row::new("route $index"), range(1, 20)),
         )), 40, 10)->initialize();
 
-        self::assertNull($harness->renderFrame()->cursorPosition);
-        self::assertNotNull($harness->press('/')->renderFrame()->cursorPosition);
-        self::assertNull($harness->press('enter')->renderFrame()->cursorPosition);
+        self::assertNull($harness->renderFrame()->cursorPosition());
+        self::assertNotNull($harness->press('/')->renderFrame()->cursorPosition());
+        self::assertNull($harness->press('enter')->renderFrame()->cursorPosition());
     }
 }
 

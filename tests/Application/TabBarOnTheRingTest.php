@@ -56,7 +56,7 @@ final class TabBarOnTheRingTest extends TestCase
         $harness->press('shift+tab');
 
         self::assertSame('bar', $harness->focused()?->value);
-        self::assertNull($harness->renderFrame()->cursorPosition, 'no field holds the keyboard, so none draws a caret');
+        self::assertNull($harness->renderFrame()->cursorPosition(), 'no field holds the keyboard, so none draws a caret');
     }
 
     #[Test]

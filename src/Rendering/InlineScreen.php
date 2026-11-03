@@ -36,7 +36,8 @@ final class InlineScreen
     public function flush(Frame $backBuffer, ?int $height = null): void
     {
         $height = min($height ?? $backBuffer->height, $backBuffer->height);
-        $caret = $backBuffer->cursorPosition === null ? -1 : $backBuffer->cursorPosition->row * $backBuffer->width + $backBuffer->cursorPosition->col;
+        $cursor = $backBuffer->cursorPosition();
+        $caret = $cursor === null ? -1 : $cursor->row * $backBuffer->width + $cursor->col;
         $rows = [];
         $written = [];
         for ($row = 0; $row < $height; ++$row) {

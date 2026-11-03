@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
-use Elmphant\Tui\Rendering\CursorPosition;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\InlineScreen;
 use Elmphant\Tui\Rendering\Line;
@@ -113,7 +112,7 @@ final class InlineScreenTest extends TestCase
     {
         $terminal = new VirtualTerminal(10, 24);
         $frame = self::frameOf('one', 'two');
-        $frame->cursorPosition = new CursorPosition(1, 1, CursorShape::SteadyBar);
+        $frame->setCursorPosition(1, 1, CursorShape::SteadyBar);
 
         (new InlineScreen($terminal))->flush($frame);
 

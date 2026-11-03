@@ -34,7 +34,7 @@ final class PaneRowFocusTest extends TestCase
 
         (new HeldRowApp())->render($frame, $pass);
 
-        self::assertNotNull($frame->cursorPosition, 'the field the gutter marks is the one being typed in');
+        self::assertNotNull($frame->cursorPosition(), 'the field the gutter marks is the one being typed in');
     }
 }
 

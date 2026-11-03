@@ -74,7 +74,7 @@ final class Frame
     private array $blankBackgrounds;
     private int $blankBackground = 0;
 
-    public ?CursorPosition $cursorPosition = null;
+    private ?CursorPosition $cursorPosition = null;
 
     public function __construct(
         public readonly int $width,
@@ -108,6 +108,16 @@ final class Frame
         }
 
         $this->cursorPosition = new CursorPosition($y, $x, $shape);
+    }
+
+    public function cursorPosition(): ?CursorPosition
+    {
+        return $this->cursorPosition;
+    }
+
+    public function clearCursor(): void
+    {
+        $this->cursorPosition = null;
     }
 
     public function area(): Rect

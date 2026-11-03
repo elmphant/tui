@@ -75,7 +75,7 @@ final class FilterableStaticTableTest extends TestCase
         $frame = new Frame(60, 12);
         $table->render($frame, new Rect(0, 0, 60, 12), new RenderContext(Theme::dark()));
 
-        self::assertNull($frame->cursorPosition, 'Only the pane the reader is typing in may show the caret');
+        self::assertNull($frame->cursorPosition(), 'Only the pane the reader is typing in may show the caret');
     }
 
     #[Test]
@@ -255,7 +255,7 @@ final class FilterableStaticTableTest extends TestCase
 
         $this->routes()->render($frame, Rect::fromSize(60, 12), RenderContext::focused(Theme::dark()));
 
-        self::assertNull($frame->cursorPosition, 'A caret placed outside its pane is drawn on whatever is there');
+        self::assertNull($frame->cursorPosition(), 'A caret placed outside its pane is drawn on whatever is there');
     }
 
     #[Test]
@@ -318,9 +318,9 @@ final class FilterableStaticTableTest extends TestCase
         $frame = new Frame(50, 1);
         $this->routes()->withQuery('ajax')->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(4, $frame->cursorPosition->col, 'One column past the four typed characters');
-        self::assertSame(0, $frame->cursorPosition->row);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(4, $frame->cursorPosition()->col, 'One column past the four typed characters');
+        self::assertSame(0, $frame->cursorPosition()->row);
     }
 
     #[Test]
@@ -331,8 +331,8 @@ final class FilterableStaticTableTest extends TestCase
 
         $this->routes()->withQuery(str_repeat('x', 40))->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame($fieldWidth - 1, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame($fieldWidth - 1, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -342,7 +342,7 @@ final class FilterableStaticTableTest extends TestCase
         $this->routes()->withQuery('ajax')
             ->render($frame, new Rect(0, 0, 50, 1), new RenderContext(Theme::dark()));
 
-        self::assertNull($frame->cursorPosition, 'Nothing is typing into a bar that is not focused');
+        self::assertNull($frame->cursorPosition(), 'Nothing is typing into a bar that is not focused');
         self::assertSame(0, $frame->attributes[0] & Attr::UNDERLINE);
     }
 

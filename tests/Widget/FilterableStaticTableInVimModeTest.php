@@ -102,9 +102,9 @@ final class FilterableStaticTableInVimModeTest extends TestCase
     {
         $harness = self::harness();
 
-        self::assertNull($harness->renderFrame()->cursorPosition);
-        self::assertNotNull($harness->press('/')->renderFrame()->cursorPosition);
-        self::assertNull($harness->press('enter')->renderFrame()->cursorPosition);
+        self::assertNull($harness->renderFrame()->cursorPosition());
+        self::assertNotNull($harness->press('/')->renderFrame()->cursorPosition());
+        self::assertNull($harness->press('enter')->renderFrame()->cursorPosition());
     }
 
     #[Test]
@@ -113,7 +113,7 @@ final class FilterableStaticTableInVimModeTest extends TestCase
         $harness = self::harness(vim: false)->type('route 1j');
 
         self::assertSame('route 1j', $harness->model()->table()->query());
-        self::assertNotNull($harness->renderFrame()->cursorPosition);
+        self::assertNotNull($harness->renderFrame()->cursorPosition());
     }
 
     /**

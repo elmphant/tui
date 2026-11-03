@@ -20,6 +20,6 @@ final class CursorVisibilityTest extends TestCase
 
         $frame->setCursorPosition(5, 2, CursorShape::BlinkingBar);
 
-        self::assertNull($frame->cursorPosition);
+        self::assertNull($frame->cursorPosition());
     }
 }

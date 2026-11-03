@@ -572,8 +572,8 @@ final class TextInputTest extends TestCase
         $frame = new Frame(20, 1);
         $input->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(CursorShape::BlinkingBlock, $frame->cursorPosition->shape, 'A block caret is easier to spot in a form');
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(CursorShape::BlinkingBlock, $frame->cursorPosition()->shape, 'A block caret is easier to spot in a form');
     }
 
     #[Test]
@@ -583,8 +583,8 @@ final class TextInputTest extends TestCase
         $frame = new Frame(20, 1);
         $input->render($frame, new Rect(0, 0, 20, 1), RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(CursorShape::SteadyBar, $frame->cursorPosition->shape);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(CursorShape::SteadyBar, $frame->cursorPosition()->shape);
     }
 
     #[Test]
@@ -594,7 +594,7 @@ final class TextInputTest extends TestCase
         TextInput::new('界ab')->render($frame, new Rect(0, 0, 4, 1), RenderContext::focused(Theme::dark()));
 
         self::assertSame(['a', 'b', ' ', ' '], \array_slice($frame->characters, 0, 4));
-        self::assertSame(2, $frame->cursorPosition?->col);
+        self::assertSame(2, $frame->cursorPosition()?->col);
     }
 
     #[Test]
@@ -622,8 +622,8 @@ final class TextInputTest extends TestCase
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(0, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(0, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -1323,8 +1323,8 @@ final class TextInputTest extends TestCase
         $frame = new Frame(5, 1);
         $current->render($frame, $area, RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(4, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(4, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -1368,8 +1368,8 @@ final class TextInputTest extends TestCase
         self::assertSame(' ', $frame->characters[1]);
         self::assertSame(' ', $frame->characters[5]);
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(0, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(0, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -1393,7 +1393,7 @@ final class TextInputTest extends TestCase
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertNull($frame->cursorPosition);
+        self::assertNull($frame->cursorPosition());
     }
 
     #[Test]
@@ -1693,8 +1693,8 @@ final class TextInputTest extends TestCase
         $frame = new Frame(20, 1);
         $current->render($frame, $area, RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(9, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(9, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -1747,8 +1747,8 @@ final class TextInputTest extends TestCase
         $frame = new Frame(10, 1);
         $current->render($frame, $area, RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(6, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(6, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -1885,8 +1885,8 @@ final class TextInputTest extends TestCase
 
         self::assertSame('H', $frame->characters[0]);
         self::assertSame($theme->inputStyle->backgroundValue(), $frame->backgrounds[5]);
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(0, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(0, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -1952,8 +1952,8 @@ final class TextInputTest extends TestCase
         $context = RenderContext::focused(Theme::dark());
         $input->render($frame, $area, $context);
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(2, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(2, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -1967,7 +1967,7 @@ final class TextInputTest extends TestCase
 
         self::assertSame('E', $frame->characters[0]);
         self::assertSame('n', $frame->characters[1]);
-        self::assertNull($frame->cursorPosition);
+        self::assertNull($frame->cursorPosition());
     }
 
     #[Test]
@@ -2132,8 +2132,8 @@ final class TextInputTest extends TestCase
         $frame = new Frame(10, 1);
         $input->render($frame, Rect::fromSize(10, 1), RenderContext::focused(Theme::dark()));
 
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(4, $frame->cursorPosition->col);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(4, $frame->cursorPosition()->col);
     }
 
     #[Test]
@@ -2213,9 +2213,9 @@ final class TextInputTest extends TestCase
         $input = TextInput::new()->withValue('Hello');
         $frame = new Frame(20, 1);
         $input->render($frame, Rect::fromSize(20, 1), RenderContext::focused(Theme::dark()));
-        self::assertNotNull($frame->cursorPosition);
-        self::assertSame(5, $frame->cursorPosition->col);
-        self::assertSame(0, $frame->cursorPosition->row);
+        self::assertNotNull($frame->cursorPosition());
+        self::assertSame(5, $frame->cursorPosition()->col);
+        self::assertSame(0, $frame->cursorPosition()->row);
     }
 
     #[Test]

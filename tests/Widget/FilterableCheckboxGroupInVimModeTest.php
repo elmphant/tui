@@ -51,9 +51,9 @@ final class FilterableCheckboxGroupInVimModeTest extends TestCase
     {
         $harness = self::harness();
 
-        self::assertNull($harness->renderFrame()->cursorPosition);
-        self::assertNotNull($harness->press('/')->renderFrame()->cursorPosition);
-        self::assertNull($harness->press('esc')->renderFrame()->cursorPosition);
+        self::assertNull($harness->renderFrame()->cursorPosition());
+        self::assertNotNull($harness->press('/')->renderFrame()->cursorPosition());
+        self::assertNull($harness->press('esc')->renderFrame()->cursorPosition());
     }
 
     private static function harness(): ModelHarness

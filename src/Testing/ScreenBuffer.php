@@ -57,7 +57,7 @@ final class ScreenBuffer
             }
         }
 
-        $cursor = $frame->cursorPosition;
+        $cursor = $frame->cursorPosition();
         $screen->cursorVisible = $cursor !== null;
         if ($cursor !== null) {
             $screen->cursorRow = $cursor->row;
