@@ -244,6 +244,20 @@ final class ContainerTest extends TestCase
     }
 
     #[Test]
+    public function aSurfaceStyleStaysInsideTheClip(): void
+    {
+        $background = Color::ansi(4);
+        $container = Container::around(new ContainerProbe())->withStyle(new Style(background: $background));
+        $frame = new Frame(6, 3);
+
+        $frame->clipped(new Rect(0, 0, 6, 1), fn () => $container->render($frame, Rect::fromSize(6, 3), new RenderContext(Theme::dark())));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame($background->value, $screen->styleAt(0, 0)->backgroundValue());
+        self::assertSame(0, $screen->styleAt(0, 1)->backgroundValue());
+    }
+
+    #[Test]
     public function surfaceStyleFillsDefaultsWithoutOverwritingExplicitChildColors(): void
     {
         $foreground = Color::ansi(2);

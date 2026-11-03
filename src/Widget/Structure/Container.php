@@ -164,11 +164,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         $this->block($context)->render($frame, $area);
 
         if ($this->style !== null) {
-            $this->inheritSurfaceStyle(
-                $frame,
-                ($this->margin ?? Spacing::none())->applyTo($area),
-                $this->style,
-            );
+            $frame->underlay(($this->margin ?? Spacing::none())->applyTo($area), $this->style);
         }
     }
 
@@ -235,40 +231,6 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         }
 
         return $block;
-    }
-
-    private function inheritSurfaceStyle(Frame $frame, Rect $area, Style $style): void
-    {
-        $foreground = $style->foregroundValue();
-        $background = $style->backgroundValue();
-        $top = max(0, $area->y);
-        $bottom = min($frame->height, $area->bottom());
-        $left = max(0, $area->x);
-        $right = min($frame->width, $area->right());
-
-        for ($y = $top; $y < $bottom; ++$y) {
-            $row = $y * $frame->width;
-            $changed = false;
-            for ($x = $left; $x < $right; ++$x) {
-                $index = $row + $x;
-                if ($foreground !== 0 && $frame->foregrounds[$index] === 0) {
-                    $frame->foregrounds[$index] = $foreground;
-                    $changed = true;
-                }
-                if ($background !== 0 && $frame->backgrounds[$index] === 0) {
-                    $frame->backgrounds[$index] = $background;
-                    $changed = true;
-                }
-                $attributes = $frame->attributes[$index] | $style->attributes;
-                if ($attributes !== $frame->attributes[$index]) {
-                    $frame->attributes[$index] = $attributes;
-                    $changed = true;
-                }
-            }
-            if ($changed) {
-                $frame->markRowDirty($y);
-            }
-        }
     }
 
     private function horizontalOverhead(): int

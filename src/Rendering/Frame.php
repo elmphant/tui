@@ -399,6 +399,40 @@ final class Frame
     }
 
     /**
+     * Give the style's colours to the cells that have none, and add its attributes.
+     */
+    public function underlay(Rect $area, Style $style): void
+    {
+        $foreground = $style->foregroundValue();
+        $background = $style->backgroundValue();
+        $within = $area->intersect($this->clip());
+
+        for ($y = $within->y; $y < $within->bottom(); ++$y) {
+            $row = $y * $this->width;
+            $changed = false;
+            for ($x = $within->x; $x < $within->right(); ++$x) {
+                $index = $row + $x;
+                if ($foreground !== 0 && $this->foregrounds[$index] === 0) {
+                    $this->foregrounds[$index] = $foreground;
+                    $changed = true;
+                }
+                if ($background !== 0 && $this->backgrounds[$index] === 0) {
+                    $this->backgrounds[$index] = $background;
+                    $changed = true;
+                }
+                $attributes = $this->attributes[$index] | $style->attributes;
+                if ($attributes !== $this->attributes[$index]) {
+                    $this->attributes[$index] = $attributes;
+                    $changed = true;
+                }
+            }
+            if ($changed) {
+                $this->markRowDirty($y);
+            }
+        }
+    }
+
+    /**
      * Flips the attribute, so a mark over a row that is already reversed still shows.
      */
     public function toggleAttribute(int $x, int $y, int $width, int $attribute): void
