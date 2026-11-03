@@ -724,6 +724,10 @@ final class SystemTerminalTest extends TestCase
         );
         self::assertIsResource($replies);
         stream_set_blocking($pipes[1], false);
+        // Starting PHP alone can take longer than the answer timeout on a busy machine.
+        $read = [$pipes[1]];
+        $write = $except = null;
+        self::assertSame(1, stream_select($read, $write, $except, 5));
 
         $terminal = new SystemTerminal($pipes[1], $this->stdout);
 
