@@ -63,19 +63,6 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
         return $this->searchHints($this->clearFilterHint($this->query()));
     }
 
-    /**
-     * Keep the host's existing field so rebuilding does not reset the caret to the end.
-     */
-    public function withField(TextInput $field): self
-    {
-        return $this->cloneWith(field: $field);
-    }
-
-    public function field(): TextInput
-    {
-        return $this->field;
-    }
-
     public function query(): string
     {
         return $this->field->value();
@@ -114,9 +101,9 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
             return new UpdateResult($this);
         }
 
-        $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->field(), $message, $this->fieldArea($area));
+        $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->field, $message, $this->fieldArea($area));
 
-        return new UpdateResult($this->withField($result->child), $result->command);
+        return new UpdateResult($this->cloneWith(field: $result->child), $result->command);
     }
 
     public function withMatcher(Matcher $matcher): self
