@@ -366,7 +366,7 @@ final class DropdownTest extends TestCase
         $content = $paged->content();
 
         self::assertInstanceOf(FilterableList::class, $content);
-        self::assertGreaterThan(1, $content->sourceIndex());
+        self::assertGreaterThan(1, $content->cursorSourceIndex());
     }
 
     #[Test]

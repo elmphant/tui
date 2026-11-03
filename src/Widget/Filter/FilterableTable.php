@@ -105,7 +105,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     public function cursorRow(): ?Row
     {
-        $index = $this->sourceIndex();
+        $index = $this->cursorSourceIndex();
 
         return $index === null ? null : $this->rows[$index];
     }

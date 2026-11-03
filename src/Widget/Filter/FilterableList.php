@@ -123,7 +123,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(emptyCaption: $caption);
     }
 
-    public function withSourceIndex(?int $index): self
+    public function withCursorSourceIndex(?int $index): self
     {
         $kept = array_search($index, $this->matchingIndexes(), true);
 
@@ -137,7 +137,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
     public function cursorItem(): ?ListItem
     {
-        $index = $this->sourceIndex();
+        $index = $this->cursorSourceIndex();
 
         return $index === null ? null : $this->items[$index] ?? null;
     }
@@ -293,7 +293,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     private function contentAnswered(KeyMsg $message, Rect $area): UpdateResult
     {
         if ($this->effectiveKeybindings()->matches($message, Actions::SELECT)) {
-            $place = $this->sourceIndex();
+            $place = $this->cursorSourceIndex();
 
             return new UpdateResult($place === null ? $this : $this->chosen($place));
         }

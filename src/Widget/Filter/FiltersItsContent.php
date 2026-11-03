@@ -86,7 +86,7 @@ trait FiltersItsContent
         return $this->cloneWith(noMatchText: $noMatchText);
     }
 
-    public function sourceIndex(): ?int
+    public function cursorSourceIndex(): ?int
     {
         return $this->matchingIndexes()[$this->contentCursor()] ?? null;
     }

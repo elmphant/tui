@@ -83,10 +83,10 @@ final class FilterableListTest extends TestCase
 
         $atHome = $this->press($list, Key::Home);
 
-        self::assertSame(0, $atHome->sourceIndex(), 'The cursor stayed on the first match');
+        self::assertSame(0, $atHome->cursorSourceIndex(), 'The cursor stayed on the first match');
         self::assertSame('cache', $atHome->query(), 'and the query is untouched');
 
-        self::assertSame(0, $this->press($atHome, Key::End)->sourceIndex());
+        self::assertSame(0, $this->press($atHome, Key::End)->cursorSourceIndex());
     }
 
     #[Test]
@@ -94,10 +94,10 @@ final class FilterableListTest extends TestCase
     {
         $list = FilterableList::new([new SimpleListItem('delta'), new SimpleListItem('alpha'), new SimpleListItem('beta')]);
         $onBeta = $this->press($this->press($list, Key::Down), Key::Down);
-        self::assertSame(2, $onBeta->sourceIndex(), 'precondition: the cursor is on beta');
+        self::assertSame(2, $onBeta->cursorSourceIndex(), 'precondition: the cursor is on beta');
 
-        self::assertSame(2, $onBeta->withQuery('t')->sourceIndex(), 'delta matches first, but beta still matches');
-        self::assertSame(0, $this->typed($onBeta, 't')->sourceIndex(), 'the reader typing goes to the best match');
+        self::assertSame(2, $onBeta->withQuery('t')->cursorSourceIndex(), 'delta matches first, but beta still matches');
+        self::assertSame(0, $this->typed($onBeta, 't')->cursorSourceIndex(), 'the reader typing goes to the best match');
     }
 
     #[Test]
@@ -117,7 +117,7 @@ final class FilterableListTest extends TestCase
     {
         $list = FilterableList::new([new SimpleListItem('delta'), new SimpleListItem('alpha'), new SimpleListItem('beta')]);
 
-        self::assertSame(2, $list->withSourceIndex(2)->withQuery('t')->sourceIndex());
+        self::assertSame(2, $list->withCursorSourceIndex(2)->withQuery('t')->cursorSourceIndex());
     }
 
     #[Test]
@@ -125,9 +125,9 @@ final class FilterableListTest extends TestCase
     {
         $list = $this->press($this->typed($this->commands(), 'cache'), Key::Down);
 
-        self::assertSame(1, $list->sourceIndex(), 'cache:flush is the second source item');
+        self::assertSame(1, $list->cursorSourceIndex(), 'cache:flush is the second source item');
 
-        self::assertSame(0, $this->press($list, Key::Up)->sourceIndex());
+        self::assertSame(0, $this->press($list, Key::Up)->cursorSourceIndex());
     }
 
     #[Test]
@@ -135,7 +135,7 @@ final class FilterableListTest extends TestCase
     {
         $list = $this->typed($this->commands(), 'create');
 
-        self::assertSame(2, $list->sourceIndex(), 'user:create is third in the source list');
+        self::assertSame(2, $list->cursorSourceIndex(), 'user:create is third in the source list');
     }
 
     #[Test]
@@ -143,7 +143,7 @@ final class FilterableListTest extends TestCase
     {
         $list = $this->typed($this->commands(), 'nonsense');
 
-        self::assertNull($list->sourceIndex());
+        self::assertNull($list->cursorSourceIndex());
         self::assertSame('0 of 3', $list->summary());
         self::assertStringContainsString('No matches', $this->render($list));
     }
@@ -168,11 +168,11 @@ final class FilterableListTest extends TestCase
     public function aNewQueryPutsTheCursorBackOnTheBestMatch(): void
     {
         $moved = $this->press($this->typed($this->commands(), 'cache'), Key::Down);
-        self::assertSame(1, $moved->sourceIndex());
+        self::assertSame(1, $moved->cursorSourceIndex());
 
         $narrowed = $this->typed($moved, ' warm');
 
-        self::assertSame(0, $narrowed->sourceIndex(), 'The cursor went back to the top of the new results');
+        self::assertSame(0, $narrowed->cursorSourceIndex(), 'The cursor went back to the top of the new results');
     }
 
     #[Test]
@@ -198,7 +198,7 @@ final class FilterableListTest extends TestCase
         $list = FilterableList::new($this->commandItems());
 
         self::assertSame('3 of 3', $list->summary());
-        self::assertSame(0, $list->sourceIndex());
+        self::assertSame(0, $list->cursorSourceIndex());
     }
 
     #[Test]
@@ -224,12 +224,12 @@ final class FilterableListTest extends TestCase
     {
         $narrowed = $this->press($this->typed($this->commands(), 'cache'), Key::Down);
         self::assertSame('cache', $narrowed->query());
-        self::assertSame(1, $narrowed->sourceIndex());
+        self::assertSame(1, $narrowed->cursorSourceIndex());
 
-        $restored = $this->commands()->withQuery('cache')->withSourceIndex(1);
+        $restored = $this->commands()->withQuery('cache')->withCursorSourceIndex(1);
 
         self::assertSame('cache', $restored->query());
-        self::assertSame(1, $restored->sourceIndex());
+        self::assertSame(1, $restored->cursorSourceIndex());
         self::assertSame('2 of 3', $restored->summary(), 'the query narrowed the list again');
     }
 
@@ -245,7 +245,7 @@ final class FilterableListTest extends TestCase
 
         $list = $this->typed(FilterableList::new($this->commandItems())->withMatcher($ranked), 'anything');
 
-        self::assertSame(2, $list->sourceIndex(), 'user:create was ranked first');
+        self::assertSame(2, $list->cursorSourceIndex(), 'user:create was ranked first');
         self::assertSame('2 of 3', $list->summary());
     }
 
@@ -257,7 +257,7 @@ final class FilterableListTest extends TestCase
         $moved = $dispatcher->dispatchOne($this->commands(), new KeyMsg('n', ctrl: true), $this->area())->child;
         self::assertInstanceOf(FilterableList::class, $moved);
 
-        self::assertSame(1, $moved->sourceIndex(), 'ctrl+n reached the list');
+        self::assertSame(1, $moved->cursorSourceIndex(), 'ctrl+n reached the list');
         self::assertSame('', $moved->query(), 'and was not typed into the field');
     }
 
@@ -266,7 +266,7 @@ final class FilterableListTest extends TestCase
     {
         $paged = $this->send($this->commands(), new KeyMsg(Key::Down, shift: true));
 
-        self::assertGreaterThan(0, $paged->sourceIndex(), 'the key the list pages on reaches it here too');
+        self::assertGreaterThan(0, $paged->cursorSourceIndex(), 'the key the list pages on reaches it here too');
         self::assertSame('', $paged->query(), 'and was not typed into the field');
     }
 
@@ -277,10 +277,10 @@ final class FilterableListTest extends TestCase
         $list = FilterableList::new($this->commandItems())->withMatcher($matcher)->withQuery('cache');
 
         $matcher->calls = 0;
-        $list->sourceIndex();
+        $list->cursorSourceIndex();
         $list->cursorItem();
         $list->summary();
-        $list->sourceIndex();
+        $list->cursorSourceIndex();
 
         self::assertSame(0, $matcher->calls, 'reading what the filter kept costs nothing');
     }
@@ -525,8 +525,8 @@ final class FilterableListTest extends TestCase
     {
         $down = $this->press($this->press($this->commands(), Key::Down), Key::Down);
 
-        self::assertSame(2, $down->sourceIndex());
-        self::assertSame(0, $down->update(new KeyMsg(Key::Up, shift: true), $this->area())->model->sourceIndex());
+        self::assertSame(2, $down->cursorSourceIndex());
+        self::assertSame(0, $down->update(new KeyMsg(Key::Up, shift: true), $this->area())->model->cursorSourceIndex());
     }
 
     #[Test]
@@ -537,7 +537,7 @@ final class FilterableListTest extends TestCase
             $this->area(),
         )->model;
 
-        self::assertSame(1, $clicked->sourceIndex(), 'each item is a title and a description, so the second starts two rows down');
+        self::assertSame(1, $clicked->cursorSourceIndex(), 'each item is a title and a description, so the second starts two rows down');
     }
 
     #[Test]
@@ -611,7 +611,7 @@ final class FilterableListTest extends TestCase
         ]);
 
         $onSecond = $this->press($list, Key::Down);
-        self::assertSame(1, $onSecond->sourceIndex(), 'the cursor is on the second');
+        self::assertSame(1, $onSecond->cursorSourceIndex(), 'the cursor is on the second');
 
         $picked = $this->press($onSecond, Key::Enter);
 

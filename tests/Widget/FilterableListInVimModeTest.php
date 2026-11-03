@@ -28,7 +28,7 @@ final class FilterableListInVimModeTest extends TestCase
     {
         $harness = self::harness()->press('j');
 
-        self::assertSame(1, $harness->model()->list->sourceIndex());
+        self::assertSame(1, $harness->model()->list->cursorSourceIndex());
         self::assertSame('', $harness->model()->list->query());
     }
 
@@ -47,7 +47,7 @@ final class FilterableListInVimModeTest extends TestCase
         $harness = self::harness()->press('/')->type('t')->press('esc', 'j');
 
         self::assertSame('t', $harness->model()->list->query());
-        self::assertSame(2, $harness->model()->list->sourceIndex());
+        self::assertSame(2, $harness->model()->list->cursorSourceIndex());
     }
 
     #[Test]
@@ -76,11 +76,11 @@ final class FilterableListInVimModeTest extends TestCase
     {
         $harness = self::harness()->press('G');
 
-        self::assertSame(3, $harness->model()->list->sourceIndex());
+        self::assertSame(3, $harness->model()->list->cursorSourceIndex());
 
         $harness->press('g', 'g');
 
-        self::assertSame(0, $harness->model()->list->sourceIndex());
+        self::assertSame(0, $harness->model()->list->cursorSourceIndex());
     }
 
     #[Test]

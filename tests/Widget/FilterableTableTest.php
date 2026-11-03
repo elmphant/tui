@@ -34,7 +34,7 @@ final class FilterableTableTest extends TestCase
         $table = $this->harness()->type('coffee')->widget();
 
         self::assertInstanceOf(FilterableTable::class, $table);
-        self::assertSame(1, $table->sourceIndex());
+        self::assertSame(1, $table->cursorSourceIndex());
         self::assertSame('1 of 3', $table->summary());
     }
 
@@ -44,7 +44,7 @@ final class FilterableTableTest extends TestCase
         $table = $this->harness()->press('down', 'down')->widget();
 
         self::assertInstanceOf(FilterableTable::class, $table);
-        self::assertSame(2, $table->sourceIndex());
+        self::assertSame(2, $table->cursorSourceIndex());
         self::assertSame('Train', $table->cursorRow()?->cells[1]);
     }
 
@@ -240,7 +240,7 @@ final class FilterableTableTest extends TestCase
 
         $reloaded = $table->withRows([Row::new('2026-10-03', 'Train'), Row::new('2026-10-04', 'Hotel')]);
 
-        self::assertSame(0, $reloaded->sourceIndex());
+        self::assertSame(0, $reloaded->cursorSourceIndex());
         self::assertSame('2 of 2', $reloaded->summary());
     }
 
