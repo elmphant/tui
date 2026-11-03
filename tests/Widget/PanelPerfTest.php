@@ -25,15 +25,13 @@ final class PanelPerfTest extends TestCase
         $few = self::panelOf(200);
         $many = self::panelOf(1_600);
 
-        $short = self::medianMicroseconds(static fn (): LayoutPlan => LayoutPlan::resolve($few, $area), 5);
-        $long = self::medianMicroseconds(static fn (): LayoutPlan => LayoutPlan::resolve($many, $area), 5);
-        $ratio = $long / $short;
+        self::assertRatioBelow(16.0, static function () use ($few, $many, $area): array {
+            $short = self::medianMicroseconds(static fn (): LayoutPlan => LayoutPlan::resolve($few, $area), 5);
+            $long = self::medianMicroseconds(static fn (): LayoutPlan => LayoutPlan::resolve($many, $area), 5);
+            $ratio = $long / $short;
 
-        self::assertLessThan(
-            16.0,
-            $ratio,
-            sprintf('8x the children made the plan %.1fx slower (%.0fµs vs %.0fµs).', $ratio, $long, $short),
-        );
+            return [$ratio, sprintf('8x the children made the plan %.1fx slower (%.0fµs vs %.0fµs).', $ratio, $long, $short)];
+        });
     }
 
     private static function panelOf(int $count): Panel
