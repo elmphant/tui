@@ -153,7 +153,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->searchHints([
             'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
             'choose' => Actions::SELECT,
-            ...($this->query() === '' ? [] : ['clear filter' => $this->searchIsBound() ? Actions::CANCEL : [Actions::CLEAR_LINE, Actions::CANCEL]]),
+            ...$this->clearFilterHint($this->query()),
         ]);
     }
 

@@ -81,6 +81,14 @@ trait SearchMode
         return $bindings->hints($this->searchIsBound() ? [...$onTheContent, 'search' => Actions::SEARCH] : $onTheContent);
     }
 
+    /**
+     * @return array<string, string|list<string>>
+     */
+    private function clearFilterHint(string $query): array
+    {
+        return $query === '' ? [] : ['clear filter' => $this->searchIsBound() ? Actions::CANCEL : [Actions::CLEAR_LINE, Actions::CANCEL]];
+    }
+
     private function fieldHoldsTheKeys(RenderContext $context): bool
     {
         return $context->keyboardTakesText() ?? $this->takesText();

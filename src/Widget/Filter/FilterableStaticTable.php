@@ -16,6 +16,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -59,9 +60,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
 
     public function hints(): array
     {
-        return $this->searchHints(
-            $this->query() === '' ? [] : ['clear filter' => $this->searchIsBound() ? Actions::CANCEL : [Actions::CLEAR_LINE, Actions::CANCEL]],
-        );
+        return $this->searchHints($this->clearFilterHint($this->query()));
     }
 
     /**
@@ -98,7 +97,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if (!$message instanceof KeyMsg && !$message instanceof PasteMsg) {
+        if (!$message instanceof KeyMsg && !$message instanceof PasteMsg && !$message instanceof MouseMsg) {
             return new UpdateResult($this);
         }
 

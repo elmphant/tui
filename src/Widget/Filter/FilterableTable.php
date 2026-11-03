@@ -180,7 +180,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         return $this->searchHints([
             'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
             'choose' => Actions::SELECT,
-            ...($this->query() === '' ? [] : ['clear filter' => $this->searchIsBound() ? Actions::CANCEL : [Actions::CLEAR_LINE, Actions::CANCEL]]),
+            ...$this->clearFilterHint($this->query()),
         ]);
     }
 

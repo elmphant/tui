@@ -59,7 +59,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 
     public static function defaultKeybindings(): Keybindings
     {
-        return CheckboxGroup::defaultKeybindings()->append(FilterBar::keybindings());
+        return CheckboxGroup::defaultKeybindings()->append(FilterBar::keybindings())->append(TextInput::defaultKeybindings());
     }
 
     public function hints(): array
@@ -67,7 +67,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         return $this->searchHints([
             'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
             'toggle' => Actions::TOGGLE,
-            ...($this->field->value() === '' ? [] : ['clear filter' => Actions::CANCEL]),
+            ...$this->clearFilterHint($this->field->value()),
         ]);
     }
 
@@ -196,7 +196,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 
         $field = $dispatcher->dispatchOne($this->field, $message, $this->fieldArea($area))->child;
 
-        return new UpdateResult($this->cloneWith(field: $field, cursor: 0));
+        return new UpdateResult($this->cloneWith(field: $field, cursor: $field->value() === $this->field->value() ? $this->cursor : 0));
     }
 
     public function sizing(): Sizing

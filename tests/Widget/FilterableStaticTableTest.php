@@ -9,6 +9,9 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\MouseAction;
+use Elmphant\Tui\Message\MouseButton;
+use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -16,6 +19,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Field\InputDecoration;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
@@ -35,6 +39,21 @@ final class FilterableStaticTableTest extends TestCase
             $filtered->hints(),
             'the field is this widget’s own, so the key that empties it is a key this widget answers',
         );
+    }
+
+    #[Test]
+    public function aClickInTheFieldPutsTheCaretWhereItLands(): void
+    {
+        $area = new Rect(0, 0, 40, 10);
+        $table = FilterableStaticTable::new(['Name'], [['alpha']])->withQuery('zzz');
+        $frame = new Frame(40, 10);
+        $table->render($frame, $area, RenderContext::unfocused(Theme::dark()));
+        $start = ScreenBuffer::fromFrame($frame)->locate('zzz');
+
+        $clicked = $table->update(new MouseMsg($start['column'], $start['row'], MouseAction::Press, MouseButton::Left), $area)->model;
+        $typed = $clicked->update(new KeyMsg('x'), $area)->model;
+
+        self::assertSame('xzzz', $typed->query());
     }
 
     #[Test]

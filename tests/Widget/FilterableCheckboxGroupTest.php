@@ -70,9 +70,27 @@ final class FilterableCheckboxGroupTest extends TestCase
         );
 
         self::assertSame(
-            ['↑/↓' => 'move', 'Enter' => 'toggle', 'Esc' => 'clear filter'],
+            ['↑/↓' => 'move', 'Enter' => 'toggle', 'Ctrl+U/Esc' => 'clear filter'],
             $typed->hints(),
         );
+    }
+
+    #[Test]
+    public function ctrlUClearsATypedQueryAsTheHintSays(): void
+    {
+        $cleared = self::pressed(FilterableCheckboxGroup::new(['alpha', 'beta']), new KeyMsg('b'), new KeyMsg('u', ctrl: true));
+
+        self::assertStringContainsString('alpha', self::drawn($cleared));
+    }
+
+    #[Test]
+    public function aKeyThatLeavesTheQueryAloneLeavesTheCursorWhereItIs(): void
+    {
+        $group = FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma']);
+
+        $ticked = self::pressed($group, new KeyMsg(Key::Down), new KeyMsg(Key::Down), new KeyMsg(Key::Left), new KeyMsg(' '));
+
+        self::assertSame(['gamma'], $ticked->checkedValues());
     }
 
     #[Test]
