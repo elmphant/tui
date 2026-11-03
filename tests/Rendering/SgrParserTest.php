@@ -191,6 +191,15 @@ final class SgrParserTest extends TestCase
     }
 
     #[Test]
+    public function codeTwentyOneKeepsBold(): void
+    {
+        $parser = new SgrParser();
+        $parser->parse('1');
+        $parser->parse('21');
+        self::assertSame(Attr::BOLD, $parser->attributes);
+    }
+
+    #[Test]
     public function sgrRemovesItalic(): void
     {
         $parser = new SgrParser();

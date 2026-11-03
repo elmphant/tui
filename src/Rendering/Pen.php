@@ -199,26 +199,10 @@ final class Pen
         }
 
         $codes = [];
-        if (($attributes & Attr::BOLD) !== 0) {
-            $codes[] = '1';
-        }
-        if (($attributes & Attr::FAINT) !== 0) {
-            $codes[] = '2';
-        }
-        if (($attributes & Attr::ITALIC) !== 0) {
-            $codes[] = '3';
-        }
-        if (($attributes & Attr::UNDERLINE) !== 0) {
-            $codes[] = '4';
-        }
-        if (($attributes & Attr::BLINK) !== 0) {
-            $codes[] = '5';
-        }
-        if (($attributes & Attr::REVERSE) !== 0) {
-            $codes[] = '7';
-        }
-        if (($attributes & Attr::STRIKETHROUGH) !== 0) {
-            $codes[] = '9';
+        foreach (Attr::BY_SGR_CODE as $code => $attribute) {
+            if (($attributes & $attribute) !== 0) {
+                $codes[] = $code;
+            }
         }
 
         return $this->attributeSgrCache[$attributes] = implode(';', $codes);
