@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -97,6 +98,18 @@ final class FilterableListTest extends TestCase
 
         self::assertSame(2, $onBeta->withQuery('t')->sourceIndex(), 'delta matches first, but beta still matches');
         self::assertSame(0, $this->typed($onBeta, 't')->sourceIndex(), 'the reader typing goes to the best match');
+    }
+
+    #[Test]
+    public function itSaysWhetherTheReaderIsSearchingOnlyWhileSearchIsBound(): void
+    {
+        $vim = $this->commands()->withGlobalKeybindings(VimMode::keybindings());
+        $searching = $this->send($vim, new KeyMsg('/'));
+
+        self::assertSame(
+            [false, false, true, false],
+            [$this->commands()->isSearching(), $vim->isSearching(), $searching->isSearching(), $this->press($searching, Key::Escape)->isSearching()],
+        );
     }
 
     #[Test]

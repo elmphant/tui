@@ -26,6 +26,11 @@ trait SearchMode
         return $this->searching || !$this->searchIsBound();
     }
 
+    public function isSearching(): bool
+    {
+        return $this->searching && $this->searchIsBound();
+    }
+
     /**
      * Bind Esc and Enter to leave search only while searching; otherwise bind the search action on the content.
      */
@@ -42,11 +47,6 @@ trait SearchMode
     {
         return ($this->customKeybindings?->get(Actions::SEARCH) ?? []) !== []
             || ($this->globalKeybindings?->get(Actions::SEARCH) ?? []) !== [];
-    }
-
-    private function isSearching(): bool
-    {
-        return $this->searching && $this->searchIsBound();
     }
 
     private function searchToggledBy(KeyMsg $message): ?self
