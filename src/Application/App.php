@@ -474,15 +474,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     private function routeWithoutFocus(Message $message, Rect $screenRect, array $components): UpdateResult
     {
         if ($message instanceof KeyMsg) {
-            if ($this->resolvedQuitBindings()->matches($message, 'quit')) {
-                return new UpdateResult($this, Cmd::quit());
-            }
-
-            $appResult = $this->onKey($message, $screenRect);
-
-            return $appResult->model !== $this || $appResult->command !== null
-                ? $appResult
-                : $this->offeredToMounts($message, $screenRect, null) ?? $appResult;
+            return $this->routeKey($message, $screenRect, null);
         }
 
         if ($message instanceof MouseMsg) {
@@ -508,7 +500,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
                 return $this->handleTab($message, $screenRect, $holder, $message->shift);
             }
 
-            return $this->routeKeyByFocus($message, $screenRect, $holder);
+            return $this->routeKey($message, $screenRect, $holder);
         }
 
         if ($message instanceof MouseMsg) {
@@ -553,12 +545,10 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
                 $updates[] = [$focused, $dispatch->child];
             }
 
-            $command = $focused->addressed($dispatch->command);
+            $command = $dispatch->command;
         }
 
-        [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $updates, $message);
-
-        return new UpdateResult($current, self::combineCommands($command, $hookCommand));
+        return $this->writtenBack($focused, $updates, $command, $message);
     }
 
     /**
@@ -710,13 +700,11 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
 
             if ($dispatch->changed || $dispatch->command !== null) {
-                [$current, $hookCommand] = $dispatch->changed
-                    ? $this->applyComponentUpdatesAndNotify($this, $this->focusedUpdate($focused, $dispatch->child), $message)
-                    : [$this, null];
-
-                return new UpdateResult(
-                    $current,
-                    self::combineCommands($focused->addressed($dispatch->command), $hookCommand),
+                return $this->writtenBack(
+                    $focused,
+                    $dispatch->changed ? $this->focusedUpdate($focused, $dispatch->child) : [],
+                    $dispatch->command,
+                    $message,
                 );
             }
         }
@@ -727,7 +715,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     /**
      * @return UpdateResult<static>
      */
-    private function routeKeyByFocus(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
+    private function routeKey(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
         if ($this->resolvedQuitBindings()->matches($message, 'quit')) {
             return new UpdateResult($this, Cmd::quit());
@@ -822,12 +810,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
 
         if ($dispatch->changed || ($widget instanceof Committing && $widget->commits($message))) {
-            [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $this->focusedUpdate($focused, $dispatch->child), $message);
-
-            return new UpdateResult(
-                $current,
-                self::combineCommands($focused->addressed($dispatch->command), $hookCommand),
-            );
+            return $this->writtenBack($focused, $this->focusedUpdate($focused, $dispatch->child), $dispatch->command, $message);
         }
 
         if ($dispatch->command !== null) {
@@ -879,12 +862,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             );
 
             if ($dispatch->changed) {
-                [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, [[$candidate, $dispatch->child]], $message);
-
-                return new UpdateResult(
-                    $current,
-                    self::combineCommands($candidate->addressed($dispatch->command), $hookCommand),
-                );
+                return $this->writtenBack($candidate, [[$candidate, $dispatch->child]], $dispatch->command, $message);
             }
 
             if ($dispatch->command !== null) {
@@ -1274,6 +1252,19 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $model = $result->model;
 
         return $model;
+    }
+
+    /**
+     * @param Component<Interactive>                                       $answering
+     * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
+     *
+     * @return UpdateResult<static>
+     */
+    private function writtenBack(Component $answering, array $updates, ?Cmd $command, Message $message): UpdateResult
+    {
+        [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $updates, $message);
+
+        return new UpdateResult($current, self::combineCommands($answering->addressed($command), $hookCommand));
     }
 
     /**
