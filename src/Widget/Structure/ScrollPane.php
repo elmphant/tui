@@ -423,13 +423,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         $dropped = null;
         for ($row = 0; $row < $frame->height; ++$row) {
             [$from, $to] = $marked->columnsOn($first + $row);
-            $line = '';
-
-            for ($column = $from; $column < $to; ++$column) {
-                $line .= $frame->character($row * $frame->width + $column);
-            }
-
-            $line = rtrim($line, ' ');
+            $line = rtrim($frame->textOf($row, $from, $to), ' ');
 
             if ($dropped === null) {
                 $lines[] = $line;

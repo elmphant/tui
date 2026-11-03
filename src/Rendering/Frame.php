@@ -444,6 +444,14 @@ final class Frame
     /**
      * @internal
      */
+    public function textOf(int $row, int $from, int $to): string
+    {
+        return implode('', array_slice($this->characters, $row * $this->width + $from, $to - $from));
+    }
+
+    /**
+     * @internal
+     */
     public function snapshotFrom(self $source): void
     {
         $this->characters = $source->characters;

@@ -465,6 +465,15 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function aRowAnswersTheTextBetweenTwoColumns(): void
+    {
+        $frame = new Frame(10, 3);
+        $frame->putString(0, 1, 'ab世cd');
+
+        self::assertSame('b世c', $frame->textOf(1, 1, 5));
+    }
+
+    #[Test]
     public function aBlankCellHoldsASpaceAndNoStyle(): void
     {
         $frame = new Frame(10, 5);
