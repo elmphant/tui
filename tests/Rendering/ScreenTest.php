@@ -1123,7 +1123,7 @@ final class ScreenTest extends TestCase
 
     // --- Mutants #54-59: L227-230 emitOutput ---
     #[Test]
-    public function diffOutputContainsSyncStartSyncEndAndResetStyle(): void
+    public function diffOutputIsWrappedInSyncStartAndSyncEnd(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
@@ -1138,7 +1138,6 @@ final class ScreenTest extends TestCase
 
         self::assertStringContainsString(Ansi::SYNC_START, $terminal->output, 'Diff output must contain SYNC_START');
         self::assertStringContainsString(Ansi::SYNC_END, $terminal->output, 'Diff output must contain SYNC_END');
-        self::assertStringContainsString(Ansi::RESET_STYLE, $terminal->output, 'Diff output must end with RESET_STYLE');
 
         $syncStart = strpos($terminal->output, Ansi::SYNC_START);
         $content = strpos($terminal->output, 'X');
@@ -1285,16 +1284,15 @@ final class ScreenTest extends TestCase
         $screen = new Screen($terminal);
 
         $frame = new Frame(5, 1);
-        $frame->putString(0, 0, 'AAAA', 0, 0, Attr::BOLD);
-        $frame->putChar(4, 0, 'B');
+        $frame->putString(0, 0, 'AAAAA');
         $screen->flush($frame);
 
         $terminal->output = '';
-        $frame->clear();
-        $frame->putString(0, 0, 'XXXXX');
+        $frame->putChar(0, 0, 'X', 0, 0, Attr::BOLD);
+        $frame->putChar(1, 0, 'Y');
         $screen->flush($frame);
 
-        self::assertStringContainsString("\x1b[0m", $terminal->output, 'Removing bold must emit SGR reset (0)');
+        self::assertStringContainsString("\x1b[0mY", $terminal->output, 'Removing bold must emit SGR reset (0)');
     }
 
     #[Test]
@@ -1767,7 +1765,7 @@ final class ScreenTest extends TestCase
         $content = $terminal->output;
         $stripped = str_replace([Ansi::SYNC_START, Ansi::SYNC_END], '', $content);
         $sgrCount = preg_match_all('/\x1b\[\d+(?:;\d+)*m/', $stripped);
-        self::assertSame(1, $sgrCount, 'Only the trailing RESET_STYLE should be an SGR sequence when style is default');
+        self::assertSame(0, $sgrCount, 'Text in the default style needs no SGR sequence');
     }
 
     #[Test]
@@ -1823,7 +1821,7 @@ final class ScreenTest extends TestCase
 
     // --- Test: emitOutput wraps with SYNC_START + content + SYNC_END ---
     #[Test]
-    public function emitOutputWrapsContentCorrectly(): void
+    public function aFrameThatEndsStyledResetsTheStyleInsideTheSync(): void
     {
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
@@ -1833,7 +1831,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $frame->putChar(0, 0, 'Z');
+        $frame->putChar(0, 0, 'Z', 0, 0, Attr::BOLD);
         $screen->flush($frame);
 
         $syncStartPos = strpos($terminal->output, Ansi::SYNC_START);
@@ -2812,7 +2810,7 @@ final class ScreenTest extends TestCase
     }
 
     #[Test]
-    public function aChangedRunIsWrittenOnceThenTheStyleIsReset(): void
+    public function aChangedRunInTheDefaultStyleIsWrittenOnceWithNoStyle(): void
     {
         $capturedOutput = '';
         $screen = new Screen($this->createTerminalMock($capturedOutput));
@@ -2824,7 +2822,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         self::assertSame(
-            Ansi::SYNC_START . Ansi::cursorTo(0, 2) . 'ab' . Ansi::RESET_STYLE . Ansi::HIDE_CURSOR . Ansi::SYNC_END,
+            Ansi::SYNC_START . Ansi::cursorTo(0, 2) . 'ab' . Ansi::HIDE_CURSOR . Ansi::SYNC_END,
             $capturedOutput,
         );
     }

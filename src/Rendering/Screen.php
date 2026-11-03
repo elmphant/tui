@@ -119,11 +119,10 @@ final class Screen
             return '';
         }
 
-        $parts[] = $this->pen->closeLink();
+        $parts[] = $this->pen->lift();
         $this->cursorAsserted = false;
-        $this->pen->forgetStyle();
 
-        return implode('', $parts) . Ansi::RESET_STYLE;
+        return implode('', $parts);
     }
 
     /**
@@ -252,8 +251,7 @@ final class Screen
             }
         }
 
-        $output[] = $this->pen->closeLink() . Ansi::RESET_STYLE;
-        $this->pen->forgetStyle();
+        $output[] = $this->pen->lift();
         $this->shown = false;
         $this->cursorAsserted = false;
 
