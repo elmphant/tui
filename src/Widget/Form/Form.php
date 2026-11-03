@@ -8,11 +8,15 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\BindsForTheMoment;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
-use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -40,9 +44,10 @@ use LogicException;
 /**
  * Derive values from the fields; each field has label, input and error children, followed by a pinned submit button.
  */
-final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, MeasureHeight, Navigates
+final readonly class Form implements BindsForTheMoment, ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates
 {
     use Cloneable;
+    use KeybindingsAwareBehavior;
 
     private const CHILDREN_PER_FIELD = 3;
     private const WIDGET_OF_FIELD = 1;
@@ -67,7 +72,25 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         private ?Widget $intro = null,
         private ?string $disabledBecause = null,
         private ?Message $cancel = null,
+        private ?Keybindings $customKeybindings = null,
+        private ?Keybindings $globalKeybindings = null,
     ) {
+    }
+
+    /**
+     * Empty on purpose: momentaryKeybindings() binds a key only while the form uses it.
+     */
+    public static function defaultKeybindings(): Keybindings
+    {
+        return new Keybindings([Actions::CANCEL => [], Actions::NEXT_FIELD => []]);
+    }
+
+    public function momentaryKeybindings(): Keybindings
+    {
+        return new Keybindings([
+            ...($this->cancel === null ? [] : [Actions::CANCEL => ['esc']]),
+            ...($this->keyboardIn === null ? [] : [Actions::NEXT_FIELD => ['enter']]),
+        ]);
     }
 
     public static function new(string $title = ''): self
@@ -213,11 +236,11 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($this->cancel !== null && $message instanceof KeyMsg && $message->key === Key::Escape) {
+        if ($this->cancel !== null && $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
             return new UpdateResult($this, Cmd::message($this->cancel));
         }
 
-        if ($this->keyboardIn !== null && $message instanceof KeyMsg && $message->key === Key::Enter) {
+        if ($this->keyboardIn !== null && $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::NEXT_FIELD)) {
             return new UpdateResult($this, $this->enteredIn($this->keyboardIn));
         }
 

@@ -39,6 +39,11 @@ final class Actions
 
     public const HELP = 'help';
 
+    /**
+     * In a form: go to the next field, or submit from the last one.
+     */
+    public const NEXT_FIELD = 'next_field';
+
     public const WORD_LEFT = 'word_left';
     public const WORD_RIGHT = 'word_right';
     public const LINE_START = 'line_start';

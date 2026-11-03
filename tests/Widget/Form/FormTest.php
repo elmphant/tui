@@ -6,6 +6,8 @@ namespace Elmphant\Tui\Tests\Widget\Form;
 
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\ComponentId;
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Testing\UserInput;
@@ -358,6 +360,40 @@ final class FormTest extends TestCase
         $form = WidgetHarness::for(self::userForm()->withCancel(new TestMessage('cancel')), 70, 24)->press('esc');
 
         self::assertEquals([new MessageCmd(new TestMessage('cancel'))], $form->issued(MessageCmd::class));
+    }
+
+    #[Test]
+    public function aCancelKeyTheAppBindsSendsTheCancelMessage(): void
+    {
+        $form = self::userForm()
+            ->withCancel(new TestMessage('cancel'))
+            ->withKeybindings(new Keybindings([Actions::CANCEL => ['ctrl+g']]));
+
+        $pressed = WidgetHarness::for($form, 70, 24)->press('ctrl+g');
+
+        self::assertEquals([new MessageCmd(new TestMessage('cancel'))], $pressed->issued(MessageCmd::class));
+    }
+
+    #[Test]
+    public function aNextFieldKeyTheAppBindsMovesOn(): void
+    {
+        $form = self::userForm()->withKeybindings(new Keybindings([Actions::NEXT_FIELD => ['ctrl+n']]));
+
+        $moved = WidgetHarness::for($form, 70, 24)->type('ada')->press('ctrl+n')->type('secret');
+
+        self::assertSame('secret', $moved->widget()->values()['password']);
+    }
+
+    #[Test]
+    public function escapeIsBoundOnlyOnceTheFormHasSomethingToSendForIt(): void
+    {
+        self::assertSame(
+            [[], ['escape']],
+            [
+                array_map(strval(...), self::userForm()->effectiveKeybindings()->get(Actions::CANCEL)),
+                array_map(strval(...), self::userForm()->withCancel(new TestMessage('cancel'))->effectiveKeybindings()->get(Actions::CANCEL)),
+            ],
+        );
     }
 
     #[Test]
