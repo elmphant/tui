@@ -235,11 +235,12 @@ final class ContainerTest extends TestCase
 
         self::assertTrue((new Rect(3, 3, 3, 1))->equals($child->renderedArea));
         self::assertSame('x', $frame->character(3 * $frame->width + 3));
-        self::assertSame($background->value, $frame->background(3 * $frame->width + 3));
-        self::assertSame(Attr::BOLD, $frame->attribute(3 * $frame->width + 3));
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame($background->value, $screen->styleAt(3, 3)->backgroundValue());
+        self::assertSame(Attr::BOLD, $screen->styleAt(3, 3)->attributes);
         self::assertSame('┌', $frame->character(1 * $frame->width + 1));
-        self::assertSame($background->value, $frame->background(1 * $frame->width + 1));
-        self::assertSame(0, $frame->background(0));
+        self::assertSame($background->value, $screen->styleAt(1, 1)->backgroundValue());
+        self::assertSame(0, $screen->styleAt(0, 0)->backgroundValue());
     }
 
     #[Test]
@@ -256,12 +257,14 @@ final class ContainerTest extends TestCase
 
         $container->render($frame, Rect::fromSize(4, 2), new RenderContext(Theme::dark()));
 
-        self::assertSame($childForeground->value, $frame->foreground(0));
-        self::assertSame($childBackground->value, $frame->background(0));
-        self::assertSame(Attr::ITALIC | Attr::BOLD, $frame->attribute(0));
-        self::assertSame($foreground->value, $frame->foreground(1));
-        self::assertSame($background->value, $frame->background(1));
-        self::assertSame(Attr::BOLD, $frame->attribute(1));
+        $child = ScreenBuffer::fromFrame($frame)->styleAt(0, 0);
+        $surface = ScreenBuffer::fromFrame($frame)->styleAt(1, 0);
+        self::assertSame($childForeground->value, $child->foregroundValue());
+        self::assertSame($childBackground->value, $child->backgroundValue());
+        self::assertSame(Attr::ITALIC | Attr::BOLD, $child->attributes);
+        self::assertSame($foreground->value, $surface->foregroundValue());
+        self::assertSame($background->value, $surface->backgroundValue());
+        self::assertSame(Attr::BOLD, $surface->attributes);
         self::assertArrayHasKey(0, $frame->dirtyRows);
         self::assertArrayHasKey(1, $frame->dirtyRows);
     }
@@ -305,12 +308,13 @@ final class ContainerTest extends TestCase
         $container->render($frame, new Rect(-1, -1, 3, 3), new RenderContext(Theme::dark()));
 
         self::assertCount(9, $frame->backgrounds);
-        self::assertSame($background->value, $frame->background(0));
-        self::assertSame($background->value, $frame->background(1));
-        self::assertSame($background->value, $frame->background(3));
-        self::assertSame($background->value, $frame->background(4));
-        self::assertSame(0, $frame->background(2));
-        self::assertSame(0, $frame->background(6));
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame($background->value, $screen->styleAt(0, 0)->backgroundValue());
+        self::assertSame($background->value, $screen->styleAt(1, 0)->backgroundValue());
+        self::assertSame($background->value, $screen->styleAt(0, 1)->backgroundValue());
+        self::assertSame($background->value, $screen->styleAt(1, 1)->backgroundValue());
+        self::assertSame(0, $screen->styleAt(2, 0)->backgroundValue());
+        self::assertSame(0, $screen->styleAt(0, 2)->backgroundValue());
     }
 
     #[Test]
@@ -325,7 +329,7 @@ final class ContainerTest extends TestCase
         $container->render($frame, Rect::fromSize(5, 3), new RenderContext(Theme::dark()));
 
         self::assertSame('┌', $frame->character(0));
-        self::assertSame($borderStyle->foregroundValue(), $frame->foreground(0));
+        self::assertSame($borderStyle->foregroundValue(), ScreenBuffer::fromFrame($frame)->styleAt(0, 0)->foregroundValue());
     }
 
     #[Test]

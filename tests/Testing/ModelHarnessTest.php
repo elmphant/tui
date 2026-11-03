@@ -23,6 +23,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Tests\Support\FloatingModel;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Tests\Support\TestPopup;
@@ -62,7 +63,7 @@ final class ModelHarnessTest extends TestCase
         $theme = Theme::light();
         $frame = ModelHarness::for(new ThemeEchoModel(), theme: $theme)->renderFrame();
 
-        self::assertSame($theme->accent->foreground?->value, $frame->foreground(0));
+        self::assertSame($theme->accent->foreground?->value, ScreenBuffer::fromFrame($frame)->styleAt(0, 0)->foregroundValue());
     }
 
     #[Test]
@@ -117,7 +118,7 @@ final class ModelHarnessTest extends TestCase
 
         $frame = ModelHarness::for(new HarnessRecorder(), theme: $theme)->renderFrame();
 
-        self::assertSame($theme->base->backgroundValue(), $frame->background(5));
+        self::assertSame($theme->base->backgroundValue(), ScreenBuffer::fromFrame($frame)->styleAt(5, 0)->backgroundValue());
     }
 
     #[Test]

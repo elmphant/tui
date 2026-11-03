@@ -59,8 +59,9 @@ final class DropdownPopupRenderTest extends TestCase
 
         self::popupOf(['a', 'b'])->render($frame, new Rect(0, 0, 20, 10), new RenderContext($theme));
 
-        self::assertSame($theme->base->backgroundValue(), $frame->background(6 * $frame->width + 5), 'below the options');
-        self::assertSame($theme->base->backgroundValue(), $frame->background(2 * $frame->width + 1), 'and behind an option');
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame($theme->base->backgroundValue(), $screen->styleAt(5, 6)->backgroundValue(), 'below the options');
+        self::assertSame($theme->base->backgroundValue(), $screen->styleAt(1, 2)->backgroundValue(), 'and behind an option');
     }
 
     #[Test]
@@ -72,7 +73,7 @@ final class DropdownPopupRenderTest extends TestCase
 
         $context->focusHere(static fn () => self::popupOf(['json', 'yaml'])->render($frame, new Rect(0, 0, 20, 10), $context));
 
-        self::assertSame($theme->cursorStyle->backgroundValue(), $frame->background(1 * $frame->width + 1));
+        self::assertSame($theme->cursorStyle->backgroundValue(), ScreenBuffer::fromFrame($frame)->styleAt(1, 1)->backgroundValue());
     }
 
     #[Test]

@@ -410,7 +410,7 @@ final class DropdownTest extends TestCase
 
     private static function foregroundOfFirstCell(Frame $frame): int
     {
-        return $frame->foreground(0);
+        return ScreenBuffer::fromFrame($frame)->styleAt(0, 0)->foregroundValue();
     }
 
     private static function screen(Dropdown $dropdown, bool $focused = false): ScreenBuffer

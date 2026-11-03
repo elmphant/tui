@@ -724,7 +724,7 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('X', $terminal->output);
 
         $terminal->output = '';
-        $frame->markAllDirty();
+        $frame->putString(0, 0, 'XAAAA');
         $screen->flush($frame);
         self::assertSame('', $terminal->output);
     }
@@ -1741,7 +1741,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $frame->markAllDirty();
+        $frame->putString(0, 0, 'AAAAA');
         $screen->flush($frame);
 
         self::assertSame('', $terminal->output, 'An unchanged buffer writes nothing');
@@ -2105,7 +2105,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $frame->markAllDirty();
+        $frame->putString(0, 0, 'HELLO');
         $screen->flush($frame);
 
         self::assertSame('', $terminal->output, 'No changes means no output');

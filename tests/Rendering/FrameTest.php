@@ -303,16 +303,6 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function markAllDirty(): void
-    {
-        $frame = new Frame(10, 5);
-        $frame->markAllDirty();
-        for ($row = 0; $row < 5; ++$row) {
-            self::assertTrue($frame->isRowDirty($row));
-        }
-    }
-
-    #[Test]
     public function putAnsiPlainText(): void
     {
         $frame = new Frame(20, 5);
@@ -475,39 +465,13 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
-    public function foregroundAccessor(): void
-    {
-        $frame = new Frame(10, 5);
-        $foreground = Color::ansi(3)->value;
-        $frame->putChar(0, 0, 'A', $foreground);
-        self::assertSame($foreground, $frame->foreground(0));
-    }
-
-    #[Test]
-    public function backgroundAccessor(): void
-    {
-        $frame = new Frame(10, 5);
-        $background = Color::ansi(4)->value;
-        $frame->putChar(1, 0, 'B', 0, $background);
-        self::assertSame($background, $frame->background(1));
-    }
-
-    #[Test]
-    public function attributeAccessor(): void
-    {
-        $frame = new Frame(10, 5);
-        $frame->putChar(2, 0, 'C', 0, 0, 1);
-        self::assertSame(1, $frame->attribute(2));
-    }
-
-    #[Test]
-    public function accessorsReturnDefaultsForBlankCells(): void
+    public function aBlankCellHoldsASpaceAndNoStyle(): void
     {
         $frame = new Frame(10, 5);
         self::assertSame(' ', $frame->character(0));
-        self::assertSame(0, $frame->foreground(0));
-        self::assertSame(0, $frame->background(0));
-        self::assertSame(0, $frame->attribute(0));
+        self::assertSame(0, $frame->foregrounds[0]);
+        self::assertSame(0, $frame->backgrounds[0]);
+        self::assertSame(0, $frame->attributes[0]);
     }
 
     #[Test]
@@ -521,9 +485,9 @@ final class FrameTest extends TestCase
         $destination->snapshotFrom($source);
 
         self::assertSame('A', $destination->character(0));
-        self::assertSame(Color::ansi(1)->value, $destination->foreground(0));
-        self::assertSame(Color::ansi(2)->value, $destination->background(0));
-        self::assertSame(4, $destination->attribute(0));
+        self::assertSame(Color::ansi(1)->value, $destination->foregrounds[0]);
+        self::assertSame(Color::ansi(2)->value, $destination->backgrounds[0]);
+        self::assertSame(4, $destination->attributes[0]);
         self::assertSame('B', $destination->character(2 * 5 + 4));
     }
 
@@ -566,9 +530,9 @@ final class FrameTest extends TestCase
         $frame->clear();
         for ($i = 0; $i < $frame->size; ++$i) {
             self::assertSame(' ', $frame->character($i));
-            self::assertSame(0, $frame->foreground($i));
-            self::assertSame(0, $frame->background($i));
-            self::assertSame(0, $frame->attribute($i));
+            self::assertSame(0, $frame->foregrounds[$i]);
+            self::assertSame(0, $frame->backgrounds[$i]);
+            self::assertSame(0, $frame->attributes[$i]);
         }
     }
 
@@ -1488,20 +1452,6 @@ final class FrameTest extends TestCase
         self::assertTrue($frame->isRowDirty(0));
         self::assertTrue($frame->isRowDirty(1));
         self::assertFalse($frame->isRowDirty(2));
-    }
-
-    // ── markAllDirty (L349-353) ──
-
-    #[Test]
-    public function markAllDirtyMarksEveryRowAndOnlyValidRows(): void
-    {
-        $frame = new Frame(5, 3);
-        $frame->markAllDirty();
-
-        self::assertTrue($frame->isRowDirty(0));
-        self::assertTrue($frame->isRowDirty(1));
-        self::assertTrue($frame->isRowDirty(2));
-        self::assertCount(3, $frame->dirtyRows);
     }
 
     // ── Index calculation (y * width + x) ──
@@ -2647,18 +2597,6 @@ final class FrameTest extends TestCase
         self::assertSame(true, $frame->dirtyRows[1]);
     }
 
-    // ── Mutant-killing: markAllDirty uses true (L352) ──
-
-    #[Test]
-    public function markAllDirtyRowsAreActuallyTrue(): void
-    {
-        $frame = new Frame(5, 3);
-        $frame->markAllDirty();
-        for ($row = 0; $row < 3; ++$row) {
-            self::assertSame(true, $frame->dirtyRows[$row]);
-        }
-    }
-
     // ── Mutant-killing: putChar wide char at last column must not corrupt next row (L59) ──
 
     #[Test]
@@ -2982,7 +2920,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $frame->putString(0, 0, 'A');
-        self::assertSame(1, $frame->width(0));
+        self::assertSame(1, $frame->widths[0]);
     }
 
     #[Test]
@@ -2990,8 +2928,8 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $frame->putString(0, 0, '中');
-        self::assertSame(2, $frame->width(0));
-        self::assertSame(0, $frame->width(1));
+        self::assertSame(2, $frame->widths[0]);
+        self::assertSame(0, $frame->widths[1]);
     }
 
     #[Test]
@@ -3000,8 +2938,8 @@ final class FrameTest extends TestCase
         $frame = new Frame(10, 1);
         $frame->putString(0, 0, '中');
         $frame->clear();
-        self::assertSame(1, $frame->width(0));
-        self::assertSame(1, $frame->width(1));
+        self::assertSame(1, $frame->widths[0]);
+        self::assertSame(1, $frame->widths[1]);
     }
 
     #[Test]
@@ -3300,19 +3238,6 @@ final class FrameTest extends TestCase
         $frame->putString(0, 0, 'abc');
 
         self::assertFalse($frame->isRowDirty(0));
-    }
-
-    #[Test]
-    public function aForcedFullRepaintSurvivesTheNextClear(): void
-    {
-        $frame = new Frame(4, 3);
-
-        $frame->markAllDirty();
-        $frame->clear();
-
-        for ($row = 0; $row < 3; ++$row) {
-            self::assertTrue($frame->isRowDirty($row), "Row {$row} was forced dirty, so clear() must keep it dirty");
-        }
     }
 
     #[Test]

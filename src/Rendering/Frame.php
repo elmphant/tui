@@ -93,14 +93,6 @@ final class Frame
         $this->widths = $this->blankWidths;
     }
 
-    /**
-     * @internal
-     */
-    public function width(int $index): int
-    {
-        return $this->widths[$index];
-    }
-
     public function setCursorPosition(int $x, int $y, CursorShape $shape): void
     {
         if (!$this->clip()->contains($x, $y)) {
@@ -437,30 +429,6 @@ final class Frame
     /**
      * @internal
      */
-    public function foreground(int $index): int
-    {
-        return $this->foregrounds[$index];
-    }
-
-    /**
-     * @internal
-     */
-    public function background(int $index): int
-    {
-        return $this->backgrounds[$index];
-    }
-
-    /**
-     * @internal
-     */
-    public function attribute(int $index): int
-    {
-        return $this->attributes[$index];
-    }
-
-    /**
-     * @internal
-     */
     public function snapshotFrom(self $source): void
     {
         $this->characters = $source->characters;
@@ -514,17 +482,6 @@ final class Frame
     {
         $this->dirtyRows[$row] = true;
         $this->contentRows[$row] = true;
-    }
-
-    /**
-     * @internal
-     */
-    public function markAllDirty(): void
-    {
-        for ($row = 0; $row < $this->height; ++$row) {
-            $this->dirtyRows[$row] = true;
-            $this->contentRows[$row] = true;
-        }
     }
 
     /**
