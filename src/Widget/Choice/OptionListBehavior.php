@@ -77,6 +77,9 @@ trait OptionListBehavior
         return $this->rowOffset() + count($this->options);
     }
 
+    /**
+     * A SELECT binding alone is not a commit: an empty list must not close its popup.
+     */
     public function commits(Message $message): bool
     {
         return $message instanceof KeyMsg

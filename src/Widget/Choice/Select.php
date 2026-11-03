@@ -140,9 +140,6 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $widest;
     }
 
-    /**
-     * A SELECT binding alone is not a commit: an empty list must not close its popup.
-     */
     public function sizing(): Sizing
     {
         return Sizing::of(

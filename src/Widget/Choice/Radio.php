@@ -159,9 +159,6 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         return $widest + CharWidth::stringWidth(self::SELECTED_MARK);
     }
 
-    /**
-     * A SELECT binding alone is not a commit: an empty list must not close its popup.
-     */
     public function sizing(): Sizing
     {
         return Sizing::of(
