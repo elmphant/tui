@@ -15,6 +15,8 @@ final readonly class HttpCmd extends Cmd implements NamesItsEffect
     use Cloneable;
 
     /**
+     * @internal build one with Cmd::http()
+     *
      * @param array<string, string> $headers
      * @param array<string, mixed>  $options
      */

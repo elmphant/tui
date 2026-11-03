@@ -13,6 +13,8 @@ use Elmphant\Tui\Core\ComponentId;
 final readonly class Keyboard
 {
     /**
+     * @internal App::onMouse() hands one over
+     *
      * @param Closure(): array<string, string> $hints
      */
     public function __construct(

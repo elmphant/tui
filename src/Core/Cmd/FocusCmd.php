@@ -11,6 +11,9 @@ use Elmphant\Tui\Core\FocusState;
 
 final readonly class FocusCmd extends Cmd
 {
+    /**
+     * @internal build one with Cmd::focus() and its siblings
+     */
     public function __construct(
         public ?ComponentId $target = null,
         public FocusMove $move = FocusMove::To,

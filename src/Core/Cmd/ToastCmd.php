@@ -11,6 +11,9 @@ final readonly class ToastCmd extends Cmd
 {
     use Cloneable;
 
+    /**
+     * @internal build one with Cmd::toast()
+     */
     public function __construct(
         public string $text,
         public string $title = '',

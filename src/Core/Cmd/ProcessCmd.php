@@ -16,6 +16,8 @@ final readonly class ProcessCmd extends Cmd implements NamesItsEffect
     use ProcessCommandBuilders;
 
     /**
+     * @internal build one with Cmd::process()
+     *
      * @param list<string>          $command
      * @param array<string, string> $env
      */

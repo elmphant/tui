@@ -16,6 +16,8 @@ final readonly class ExecCmd extends Cmd implements NamesItsEffect
     use ProcessCommandBuilders;
 
     /**
+     * @internal build one with Cmd::exec()
+     *
      * @param list<string>          $command
      * @param array<string, string> $env
      */

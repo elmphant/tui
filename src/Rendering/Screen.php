@@ -24,6 +24,9 @@ final class Screen
     private ?CursorShape $lastShape = null;
     private bool $shown = false;
 
+    /**
+     * @internal the runtime draws through it, and a test reads the screen with ScreenBuffer
+     */
     public function __construct(
         private readonly TerminalOutput $terminal,
         ColorProfile $colorProfile = ColorProfile::TrueColor,

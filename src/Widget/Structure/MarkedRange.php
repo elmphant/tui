@@ -15,6 +15,9 @@ final readonly class MarkedRange
 {
     use Cloneable;
 
+    /**
+     * @internal get one from Panel::marked() and hand it back with withMarked()
+     */
     public function __construct(
         public int $anchorRow,
         public int $anchorColumn,

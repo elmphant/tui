@@ -13,6 +13,9 @@ use Elmphant\Tui\Core\Message;
  */
 final readonly class FocusMsg implements Message
 {
+    /**
+     * @internal the runtime sends it
+     */
     public function __construct(
         public FocusMove $move = FocusMove::To,
     ) {
