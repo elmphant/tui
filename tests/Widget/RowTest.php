@@ -31,6 +31,14 @@ final class RowTest extends TestCase
     }
 
     #[Test]
+    public function aRowAnswersTheTextOfEachCellWhetherPlainOrStyled(): void
+    {
+        $row = Row::new('Alice', Span::styled('Active', new Style(foreground: Color::ansi(2))));
+
+        self::assertSame(['Alice', 'Active'], $row->texts());
+    }
+
+    #[Test]
     public function namedCellsAreKeptInTheOrderGiven(): void
     {
         self::assertSame(['1', 'Alice'], Row::new(id: '1', name: 'Alice')->cells);

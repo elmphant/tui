@@ -9,5 +9,5 @@ namespace Elmphant\Tui\Widget;
  */
 interface CursorAware
 {
-    public function cursorRow(): int;
+    public function cursorLine(): int;
 }

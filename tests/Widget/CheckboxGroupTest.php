@@ -81,8 +81,8 @@ final class CheckboxGroupTest extends TestCase
         $bare = CheckboxGroup::new(['A', 'B']);
 
         self::assertSame(['A'], $bare->withChecked([0])->checkedValues(), 'the collection is what leads');
-        self::assertSame(0, $bare->cursorRow(), 'and an omitted label costs no rows');
-        self::assertSame(2, CheckboxGroup::new(['A', 'B'], 'Pick')->cursorRow(), 'a label still follows it, where there is one');
+        self::assertSame(0, $bare->cursorLine(), 'and an omitted label costs no rows');
+        self::assertSame(2, CheckboxGroup::new(['A', 'B'], 'Pick')->cursorLine(), 'a label still follows it, where there is one');
     }
 
     #[Test]
@@ -91,12 +91,12 @@ final class CheckboxGroupTest extends TestCase
         $area = new Rect(0, 0, 20, 8);
         $labelled = CheckboxGroup::new(['Cheese', 'Onion', 'Pepper'], 'Toppings');
 
-        self::assertSame(2, $labelled->cursorRow(), 'A label and its gap sit above the first option');
+        self::assertSame(2, $labelled->cursorLine(), 'A label and its gap sit above the first option');
 
         $moved = $labelled->update(new KeyMsg(Key::Down), $area)->model;
         self::assertInstanceOf(CheckboxGroup::class, $moved);
         self::assertSame(1, $moved->cursor());
-        self::assertSame(3, $moved->cursorRow(), 'Which the cursor row keeps accounting for');
+        self::assertSame(3, $moved->cursorLine(), 'Which the cursor row keeps accounting for');
     }
 
     #[Test]
@@ -105,11 +105,11 @@ final class CheckboxGroupTest extends TestCase
         $area = new Rect(0, 0, 20, 8);
         $unlabelled = CheckboxGroup::new(['Cheese', 'Onion']);
 
-        self::assertSame(0, $unlabelled->cursorRow());
+        self::assertSame(0, $unlabelled->cursorLine());
 
         $moved = $unlabelled->update(new KeyMsg(Key::Down), $area)->model;
         self::assertInstanceOf(CheckboxGroup::class, $moved);
-        self::assertSame(1, $moved->cursorRow());
+        self::assertSame(1, $moved->cursorLine());
     }
 
     #[Test]

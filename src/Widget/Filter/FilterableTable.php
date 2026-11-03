@@ -162,7 +162,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     public function selectedRow(): ?Row
     {
-        return $this->table->selectedTypedRow();
+        return $this->table->selectedRow();
     }
 
     public function hints(): array

@@ -155,7 +155,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return $this->cloneWith(
             rows: $rows,
             cursor: self::selectablePlaceNear(Places::cursorAfter(($this->rows[$this->cursor] ?? null)?->key(), $keys, $this->cursor), $rows),
-            selected: Places::placeOf($this->selectedTypedRow()?->key(), $keys, $this->selected ?? 0),
+            selected: Places::placeOf($this->selectedRow()?->key(), $keys, $this->selected ?? 0),
             layoutMemo: self::newLayoutMemo(),
         );
     }
@@ -191,17 +191,12 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return $this->selected;
     }
 
-    /**
-     * @return list<string>|null
-     */
-    public function selectedRow(): ?array
+    public function cursorRow(): ?Row
     {
-        $row = $this->selectedTypedRow();
-
-        return $row === null ? null : self::textOf($row);
+        return $this->rows[$this->cursor] ?? null;
     }
 
-    public function selectedTypedRow(): ?Row
+    public function selectedRow(): ?Row
     {
         return $this->selected === null ? null : $this->rows[$this->selected] ?? null;
     }
@@ -619,19 +614,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
             $totalWidth,
             new AxisSpecification(gap: $this->columnGap),
         );
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function textOf(Row $row): array
-    {
-        $cells = [];
-        foreach ($row->cells as $cell) {
-            $cells[] = $cell instanceof Span ? $cell->content : $cell;
-        }
-
-        return $cells;
     }
 
     private function ensureCursorVisible(Rect $area): self

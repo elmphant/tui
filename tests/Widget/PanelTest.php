@@ -2362,7 +2362,7 @@ final class PanelTest extends TestCase
                     : new UpdateResult($this);
             }
 
-            public function cursorRow(): int
+            public function cursorLine(): int
             {
                 return $this->cursorRow;
             }

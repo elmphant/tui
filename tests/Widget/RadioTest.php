@@ -915,13 +915,13 @@ final class RadioTest extends TestCase
         // L79 in Radio: cursorRow() = (label !== '' ? 2 : 0) + cursor
         $radio = Radio::new(['A', 'B', 'C']);
 
-        self::assertSame(0, $radio->cursorRow(), 'cursorRow at index 0 with no label must be 0');
+        self::assertSame(0, $radio->cursorLine(), 'cursorRow at index 0 with no label must be 0');
 
         $radio = $radio->update(new KeyMsg(Key::Down), new Rect(0, 0, 10, 5))->model;
-        self::assertSame(1, $radio->cursorRow(), 'cursorRow at index 1 with no label must be 1');
+        self::assertSame(1, $radio->cursorLine(), 'cursorRow at index 1 with no label must be 1');
 
         $radio = $radio->update(new KeyMsg(Key::Down), new Rect(0, 0, 10, 5))->model;
-        self::assertSame(2, $radio->cursorRow(), 'cursorRow at index 2 with no label must be 2');
+        self::assertSame(2, $radio->cursorLine(), 'cursorRow at index 2 with no label must be 2');
     }
 
     #[Test]
@@ -930,10 +930,10 @@ final class RadioTest extends TestCase
         // L79: with label, the cursor row is offset by 2 (for the label + blank line).
         $radio = Radio::new(['A', 'B', 'C'], 'Pick one');
 
-        self::assertSame(2, $radio->cursorRow(), 'cursorRow at index 0 with label must be 2');
+        self::assertSame(2, $radio->cursorLine(), 'cursorRow at index 0 with label must be 2');
 
         $radio = $radio->update(new KeyMsg(Key::Down), new Rect(0, 0, 10, 5))->model;
-        self::assertSame(3, $radio->cursorRow(), 'cursorRow at index 1 with label must be 3');
+        self::assertSame(3, $radio->cursorLine(), 'cursorRow at index 1 with label must be 3');
     }
 
     #[Test]

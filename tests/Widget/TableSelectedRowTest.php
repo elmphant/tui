@@ -16,89 +16,61 @@ use PHPUnit\Framework\TestCase;
 final class TableSelectedRowTest extends TestCase
 {
     #[Test]
-    public function aTypedTableReportsTheSelectedRowsText(): void
-    {
-        $table = Table\Table::new(self::columns(), [
-            Row::new('alpha', 'eu-1a'),
-            Row::new('beta', 'eu-1b'),
-        ])->withSelected(1);
-
-        self::assertSame(['beta', 'eu-1b'], $table->selectedRow());
-    }
-
-    #[Test]
-    public function aTypedTableReportsTheSelectedRowItself(): void
+    public function aTableReportsTheSelectedRowItself(): void
     {
         $second = Row::new('beta', 'eu-1b');
         $table = Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a'), $second])->withSelected(1);
 
-        self::assertSame($second, $table->selectedTypedRow());
+        self::assertSame($second, $table->selectedRow());
     }
 
     #[Test]
-    public function spanCellsAreReportedAsTheirText(): void
+    public function theSelectedRowGivesItsSpanCellsAsText(): void
     {
         $table = Table\Table::new(self::columns(), [
             Row::new(Span::styled('gamma', new Style()), 'eu-1c'),
         ])->withSelected(0);
 
-        self::assertSame(['gamma', 'eu-1c'], $table->selectedRow());
-    }
-
-    #[Test]
-    public function aPlainTableStillReportsItsSelectedRow(): void
-    {
-        $table = Table\Table::fromCells(self::columns(), [['alpha', 'eu-1a'], ['beta', 'eu-1b']])->withSelected(1);
-
-        self::assertSame(['beta', 'eu-1b'], $table->selectedRow());
-    }
-
-    #[Test]
-    public function nothingSelectedReportsNothing(): void
-    {
-        $typed = Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a')]);
-
-        self::assertNull($typed->selectedRow());
-        self::assertNull($typed->selectedTypedRow());
-    }
-
-    #[Test]
-    public function aSelectionPastTheLastRowReportsNothing(): void
-    {
-        $typed = Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a')])->withSelected(9);
-
-        self::assertNull($typed->selectedRow());
-        self::assertNull($typed->selectedTypedRow());
+        self::assertSame(['gamma', 'eu-1c'], $table->selectedRow()?->texts());
     }
 
     #[Test]
     public function aPlainTableReportsTheRowItBuiltFromTheCells(): void
     {
-        $plain = Table\Table::fromCells(self::columns(), [['alpha', 'eu-1a']])->withSelected(0);
+        $plain = Table\Table::fromCells(self::columns(), [['alpha', 'eu-1a'], ['beta', 'eu-1b']])->withSelected(1);
 
-        self::assertSame(['alpha', 'eu-1a'], $plain->selectedTypedRow()?->cells);
+        self::assertSame(['beta', 'eu-1b'], $plain->selectedRow()?->cells);
     }
 
-    /**
-     * @return list<Column>
-     */
-    /**
-     * Preserve selection by record key after refresh; clear it when the record disappears.
-     */
+    #[Test]
+    public function nothingSelectedReportsNothing(): void
+    {
+        self::assertNull(Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a')])->selectedRow());
+    }
+
+    #[Test]
+    public function aSelectionPastTheLastRowReportsNothing(): void
+    {
+        self::assertNull(Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a')])->withSelected(9)->selectedRow());
+    }
+
     #[Test]
     public function theSelectionStaysOnTheRecordItWasMadeOn(): void
     {
         $columns = [Column::new('Name', Constraint::flex()), Column::new('State', Constraint::flex())];
         $chosen = Table\Table::fromCells($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])->withSelected(2);
-        self::assertSame(['gamma', 'on'], $chosen->selectedRow(), 'precondition: gamma was chosen');
+        self::assertSame(['gamma', 'on'], $chosen->selectedRow()?->cells, 'precondition: gamma was chosen');
 
         $refreshed = $chosen->withCells([['zulu', 'off'], ['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']]);
-        self::assertSame(['gamma', 'on'], $refreshed->selectedRow(), 'a row added above moves nothing');
+        self::assertSame(['gamma', 'on'], $refreshed->selectedRow()?->cells, 'a row added above moves nothing');
 
         $withoutGamma = $chosen->withCells([['alpha', 'on'], ['beta', 'off']]);
         self::assertNull($withoutGamma->selectedRow(), 'the record went, so the selection went with it');
     }
 
+    /**
+     * @return list<Column>
+     */
     private static function columns(): array
     {
         return [

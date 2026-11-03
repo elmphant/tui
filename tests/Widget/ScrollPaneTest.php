@@ -558,7 +558,7 @@ final class ScrollPaneTest extends TestCase
                 return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
-            public function cursorRow(): int
+            public function cursorLine(): int
             {
                 return 0;
             }
@@ -584,12 +584,12 @@ final class ScrollPaneTest extends TestCase
         };
     }
 
-    private function cursorList(int $rows, int $cursorRow): Widget
+    private function cursorList(int $rows, int $cursorLine): Widget
     {
-        return new class($rows, $cursorRow) implements Widget, CursorAware {
+        return new class($rows, $cursorLine) implements Widget, CursorAware {
             public function __construct(
                 private readonly int $rows,
-                private readonly int $cursorRow,
+                private readonly int $cursorLine,
             ) {
             }
 
@@ -598,9 +598,9 @@ final class ScrollPaneTest extends TestCase
                 return Sizing::of(Constraint::exact($this->rows), Constraint::exact($this->rows));
             }
 
-            public function cursorRow(): int
+            public function cursorLine(): int
             {
-                return $this->cursorRow;
+                return $this->cursorLine;
             }
 
             public function render(Frame $frame, Rect $area, RenderContext $context): void

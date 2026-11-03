@@ -115,17 +115,33 @@ final class TableTest extends TestCase
     }
 
     #[Test]
-    public function selectedRow(): void
+    public function enterSelectsTheRowUnderTheCursor(): void
     {
         $table = $this->createTable();
         $area = Rect::fromSize(60, 10);
         $result = $table->update(new KeyMsg(Key::Down), $area);
         $result = $result->model->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(['2', 'Bob', 'Inactive'], $result->model->selectedRow());
+        self::assertSame(['2', 'Bob', 'Inactive'], $result->model->selectedRow()?->cells);
     }
 
     #[Test]
-    public function selectedRowWithNoSelection(): void
+    public function theCursorRowIsTheRowTheArrowKeysMovedTo(): void
+    {
+        $moved = $this->createTable()->update(new KeyMsg(Key::Down), Rect::fromSize(60, 10))->model;
+
+        self::assertInstanceOf(Table\Table::class, $moved);
+        self::assertSame(['2', 'Bob', 'Inactive'], $moved->cursorRow()?->cells);
+        self::assertNull($moved->selectedRow(), 'moving the cursor commits to nothing');
+    }
+
+    #[Test]
+    public function aTableWithoutRowsHasNoCursorRow(): void
+    {
+        self::assertNull(Table\Table::new([Column::new('A', Constraint::flex())], [])->cursorRow());
+    }
+
+    #[Test]
+    public function aTableNobodyChoseFromHasNoSelectedRow(): void
     {
         self::assertNull($this->createTable()->selectedRow());
     }
@@ -2370,7 +2386,7 @@ final class TableTest extends TestCase
         $area = Rect::fromSize(60, 10);
 
         $result = $table->update(new KeyMsg(Key::Enter), $area);
-        self::assertSame(['1', 'Alice', 'Active'], $result->model->selectedRow());
+        self::assertSame(['1', 'Alice', 'Active'], $result->model->selectedRow()?->cells);
     }
 
     // --- Mouse: localY and rowIndex computation ---
@@ -3660,7 +3676,7 @@ final class TableTest extends TestCase
 
         self::assertSame(
             ['beta'],
-            $reordered->selectedRow(),
+            $reordered->selectedRow()?->cells,
             'a choice is held by what was chosen, not by the place it sat in',
         );
     }

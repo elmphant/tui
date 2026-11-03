@@ -62,9 +62,14 @@ final readonly class Row
 
     public function key(): string
     {
-        return $this->key ?? implode("\x1F", array_map(
-            static fn (string|Span $cell): string => $cell instanceof Span ? $cell->content : $cell,
-            $this->cells,
-        ));
+        return $this->key ?? implode("\x1F", $this->texts());
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function texts(): array
+    {
+        return array_map(static fn (string|Span $cell): string => $cell instanceof Span ? $cell->content : $cell, $this->cells);
     }
 }
