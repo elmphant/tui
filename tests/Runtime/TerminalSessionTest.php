@@ -389,6 +389,18 @@ final class TerminalSessionTest extends TestCase
     }
 
     #[Test]
+    public function aStartedSessionAsksWhetherTheTerminalSpeaksTheKittyProtocol(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $session = new TerminalSession($terminal, false, false);
+
+        $session->start();
+
+        self::assertStringContainsString(Ansi::QUERY_KITTY_KEYBOARD, $terminal->output());
+        $session->close();
+    }
+
+    #[Test]
     public function closeReleasesTheKittyProtocolRegistration(): void
     {
         $terminal = new VirtualTerminal(80, 24);

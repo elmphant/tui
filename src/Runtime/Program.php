@@ -461,7 +461,6 @@ final class Program
             $this->surface,
         );
         $this->terminalSession->start();
-        $this->terminal->queryKittyProtocol();
 
         // Probe size through stty and environment at startup; a cursor-position report could consume application input.
         $this->adoptTerminalSize();
@@ -694,7 +693,7 @@ final class Program
      */
     private function handleInputSequence(string $sequence): void
     {
-        if (str_starts_with($sequence, "\x1b[?") && str_ends_with($sequence, 'u')) {
+        if (InputParser::isKittyKeyboardReply($sequence)) {
             $this->terminalSession?->enableKittyProtocol();
 
             return;

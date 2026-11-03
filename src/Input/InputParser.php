@@ -33,6 +33,11 @@ final class InputParser
         return $result->messages[0] ?? null;
     }
 
+    public static function isKittyKeyboardReply(string $sequence): bool
+    {
+        return str_starts_with($sequence, "\x1b[?") && str_ends_with($sequence, 'u');
+    }
+
     public static function parse(string $raw, bool $flush = false): InputParseResult
     {
         $messages = [];

@@ -52,6 +52,8 @@ final class TerminalSession
             $this->close();
             throw $error;
         }
+
+        $this->terminal->queryKittyProtocol();
     }
 
     public function enableKittyProtocol(): void

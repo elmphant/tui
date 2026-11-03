@@ -19,6 +19,14 @@ use PHPUnit\Framework\TestCase;
 final class InputParserTest extends TestCase
 {
     #[Test]
+    public function aKittyKeyboardReplyIsToldApartFromAKey(): void
+    {
+        self::assertTrue(InputParser::isKittyKeyboardReply("\x1b[?1u"));
+        self::assertFalse(InputParser::isKittyKeyboardReply("\x1b[97;5u"));
+        self::assertFalse(InputParser::isKittyKeyboardReply("\x1b[?1c"));
+    }
+
+    #[Test]
     public function parseCharacterKey(): void
     {
         $messages = InputParser::parse('q')->messages;
