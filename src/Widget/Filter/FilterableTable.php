@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Field\InputDecoration;
@@ -80,6 +81,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         private ?Keybindings $globalKeybindings = null,
         private bool $searching = false,
         ?array $haystack = null,
+        private ?int $selectedSource = null,
     ) {
         $this->haystack = $haystack ?? self::haystackOf($rows);
     }
@@ -102,7 +104,15 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
      */
     public function withRows(array $rows): self
     {
-        return $this->cloneWith(rows: $rows, haystack: null)->reFiltered();
+        return $this->cloneWith(
+            rows: $rows,
+            haystack: null,
+            selectedSource: Places::placeOf(
+                $this->selectedRow()?->key(),
+                array_map(static fn (Row $row): string => $row->key(), $rows),
+                $this->selectedSource ?? 0,
+            ),
+        )->reFiltered();
     }
 
     public function withMatcher(Matcher $matcher): self
@@ -162,7 +172,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     public function selectedRow(): ?Row
     {
-        return $this->table->selectedRow();
+        return $this->selectedSource === null ? null : $this->rows[$this->selectedSource] ?? null;
     }
 
     public function hints(): array
@@ -230,7 +240,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         if ($this->belongsToTheTable($message)) {
             $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->table, $message, $this->tableArea($area));
 
-            return new UpdateResult($this->cloneWith(table: $result->child), $result->command);
+            return new UpdateResult($this->withTableAnswered($result->child), $result->command);
         }
 
         return $this->takesText() ? $this->typedIntoTheField($message, $area) : new UpdateResult($this);
@@ -276,8 +286,18 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         $table = $dispatcher->dispatchOne($this->table, $message, $this->tableArea($area));
 
         return new UpdateResult(
-            $this->cloneWith(field: $field->child, table: $table->child),
+            $this->cloneWith(field: $field->child)->withTableAnswered($table->child),
             Cmd::combine($field->command, $table->command),
+        );
+    }
+
+    private function withTableAnswered(Table $table): self
+    {
+        $chosen = $table->selectedIndex();
+
+        return $this->cloneWith(
+            table: $table,
+            selectedSource: $chosen === null ? $this->selectedSource : $this->matchingIndexes()[$chosen] ?? $this->selectedSource,
         );
     }
 
@@ -303,7 +323,9 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     private function reFiltered(): self
     {
-        return $this->cloneWith(table: $this->table->withRows($this->matchingRows()));
+        $chosen = array_search($this->selectedSource, $this->matchingIndexes(), true);
+
+        return $this->cloneWith(table: $this->table->withRows($this->matchingRows())->withSelected($chosen === false ? null : $chosen));
     }
 
     /**

@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Search\Matcher;
+use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Widget\Filter\FilterableTable;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -60,6 +61,81 @@ final class FilterableTableTest extends TestCase
 
         self::assertInstanceOf(FilterableTable::class, $chosen);
         self::assertSame('Train', $chosen->selectedRow()?->cells[1]);
+    }
+
+    #[Test]
+    public function aQueryThatHidesTheChosenRowKeepsItChosen(): void
+    {
+        $hidden = $this->harness()->press('down', 'down', 'enter')->type('coffee')->widget();
+
+        self::assertInstanceOf(FilterableTable::class, $hidden);
+        self::assertSame('1 of 3', $hidden->summary(), 'precondition: the query hides the train');
+        self::assertSame('Train', $hidden->selectedRow()?->cells[1]);
+    }
+
+    #[Test]
+    public function clearingTheQueryShowsTheChosenRowChosenAgain(): void
+    {
+        $hidden = $this->harness()->press('down', 'down', 'enter')->type('coffee')->widget();
+        self::assertInstanceOf(FilterableTable::class, $hidden);
+
+        $cleared = $hidden->withQuery('');
+        $frame = new Frame(40, 8);
+        $cleared->render($frame, new Rect(0, 0, 40, 8), RenderContext::unfocused(Theme::dark()));
+        $screen = ScreenBuffer::fromFrame($frame);
+        $train = $screen->locate('Train');
+
+        self::assertSame('Train', $cleared->selectedRow()?->cells[1]);
+        self::assertSame(
+            Theme::dark()->selectedStyle->backgroundValue(),
+            $screen->styleAt($train['column'], $train['row'])->backgroundValue(),
+            'the table draws the train as chosen again',
+        );
+    }
+
+    #[Test]
+    public function ofTwoRowsWithTheSameTextTheOneChosenStaysChosenThroughAQuery(): void
+    {
+        $firstCoffee = Row::new('Coffee');
+        $secondCoffee = Row::new('Coffee');
+        $table = WidgetHarness::for(FilterableTable::new(
+            [Column::new('Merchant', Constraint::flex())],
+            [$firstCoffee, Row::new('Train'), $secondCoffee],
+        ), 40, 8)->press('down', 'down', 'enter')->type('coffee')->widget();
+        self::assertInstanceOf(FilterableTable::class, $table);
+
+        self::assertSame($secondCoffee, $table->selectedRow(), 'while the query shows both');
+        self::assertSame($secondCoffee, $table->withQuery('')->selectedRow(), 'and once it is cleared');
+    }
+
+    #[Test]
+    public function aReloadThatReordersTheRowsKeepsTheChoiceOnItsRow(): void
+    {
+        $chosen = $this->harness()->press('down', 'down', 'enter')->widget();
+        self::assertInstanceOf(FilterableTable::class, $chosen);
+
+        $reordered = $chosen->withRows([
+            Row::new('2026-10-03', 'Train'),
+            Row::new('2026-10-01', 'Office rent'),
+            Row::new('2026-10-02', 'Coffee, Vienna'),
+        ]);
+
+        self::assertSame('Train', $reordered->selectedRow()?->cells[1]);
+    }
+
+    #[Test]
+    public function reloadingWithoutTheChosenRowLetsTheChoiceGo(): void
+    {
+        $chosen = $this->harness()->press('down', 'down', 'enter')->widget();
+        self::assertInstanceOf(FilterableTable::class, $chosen);
+
+        $reloaded = $chosen->withRows([Row::new('2026-10-01', 'Office rent')]);
+
+        self::assertNull($reloaded->selectedRow());
+        self::assertNull(
+            $reloaded->withRows([Row::new('2026-10-01', 'Office rent'), Row::new('2026-10-02', 'Coffee, Vienna'), Row::new('2026-10-03', 'Train')])->selectedRow(),
+            'the choice is gone, not waiting for the row to come back',
+        );
     }
 
     #[Test]
