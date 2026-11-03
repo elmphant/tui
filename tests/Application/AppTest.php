@@ -133,7 +133,7 @@ final class AppTest extends TestCase
     {
         $app = SearchApp::create();
 
-        $result = $app->update(new KeyMsg('a'), Rect::fromSize(80, 24), new FocusState(ComponentId::named('search-input')));
+        $result = $app->update(new KeyMsg('a'), Rect::fromSize(80, 24), FocusState::on(ComponentId::named('search-input')));
 
         self::assertInstanceOf(SearchApp::class, $result->model);
         self::assertSame('a', $result->model->query->value(), 'The focused input received the key');

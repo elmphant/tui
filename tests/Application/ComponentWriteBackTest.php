@@ -36,7 +36,7 @@ final class ComponentWriteBackTest extends TestCase
         $result = (new SharedTallyApp())->update(
             new MouseMsg(0, 1, MouseAction::Press, MouseButton::Left),
             Rect::fromSize(20, 2),
-            new FocusState(ComponentId::named('keeper')),
+            FocusState::on(ComponentId::named('keeper')),
         );
 
         self::assertInstanceOf(SharedTallyApp::class, $result->model);

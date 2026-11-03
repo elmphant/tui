@@ -55,7 +55,7 @@ final class MountedSubModelTest extends TestCase
         $updated = $app->update(
             new KeyMsg('x'),
             Rect::fromSize(40, 10),
-            new FocusState(ComponentId::named('sub/form/0')),
+            FocusState::on(ComponentId::named('sub/form/0')),
         )->model;
 
         self::assertInstanceOf(MountingFormApp::class, $updated);

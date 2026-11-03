@@ -96,19 +96,19 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         );
     }
 
-    final public function update(Message $message, Rect $screenRect, FocusState $focus = new FocusState()): UpdateResult
+    final public function update(Message $message, Rect $screenRect, ?FocusState $focus = null): UpdateResult
     {
-        return $this->stoppingWhatLeft($this->routed($message, $screenRect, $focus));
+        return $this->stoppingWhatLeft($this->routed($message, $screenRect, $focus ?? FocusState::undecided()));
     }
 
     /**
      * @return list<ComponentId>
      */
-    final public function focusableIds(FocusState $focus = new FocusState()): array
+    final public function focusableIds(?FocusState $focus = null): array
     {
         return array_map(
             static fn (Component $component): ComponentId => $component->id,
-            $this->componentRegistry()->ring($focus->focused()),
+            $this->componentRegistry()->ring($focus?->focused()),
         );
     }
 
@@ -159,7 +159,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
                 $inside = $holder !== null && $holder->isUnder($mount->id)
                     ? ComponentId::named(substr($holder->value, \strlen($mount->id->value) + 1))
                     : null;
-                $chords = $chords->append($mount->model->chords(new FocusState($inside, decided: true))->chords());
+                $chords = $chords->append($mount->model->chords($inside === null ? FocusState::nowhere() : FocusState::on($inside))->chords());
             }
         }
 

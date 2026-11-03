@@ -29,7 +29,7 @@ final class FocusRoutingTest extends TestCase
         $typed = $app->update(
             new KeyMsg('x'),
             new Rect(0, 0, 40, 6),
-            new FocusState(ComponentId::named('second')),
+            FocusState::on(ComponentId::named('second')),
         );
 
         self::assertInstanceOf(RoutedFocusApp::class, $typed->model);
@@ -45,7 +45,7 @@ final class FocusRoutingTest extends TestCase
         $typed = $app->update(
             new KeyMsg('x'),
             new Rect(0, 0, 40, 6),
-            new FocusState(ComponentId::named('second')),
+            FocusState::on(ComponentId::named('second')),
         );
 
         self::assertInstanceOf(RoutedFocusApp::class, $typed->model);

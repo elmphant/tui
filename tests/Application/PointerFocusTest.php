@@ -37,7 +37,7 @@ final class PointerFocusTest extends TestCase
         $clicked = (new TwoFieldPointerApp(TextInput::new(), TextInput::new()))->update(
             new MouseMsg(1, 0, MouseAction::Press, MouseButton::Left),
             new Rect(0, 0, 40, 2),
-            new FocusState(ComponentId::named('second')),
+            FocusState::on(ComponentId::named('second')),
         );
 
         self::assertInstanceOf(FocusCmd::class, $clicked->command);
@@ -50,7 +50,7 @@ final class PointerFocusTest extends TestCase
         $turned = (new TwoFieldPointerApp(TextInput::new(), TextInput::new()))->update(
             new MouseMsg(1, 0, MouseAction::WheelDown, MouseButton::None),
             new Rect(0, 0, 40, 2),
-            new FocusState(ComponentId::named('second')),
+            FocusState::on(ComponentId::named('second')),
         );
 
         self::assertNull($turned->command);
@@ -62,7 +62,7 @@ final class PointerFocusTest extends TestCase
         $turned = FieldAboveScrollingPaneApp::seeded()->update(
             new MouseMsg(1, 2, MouseAction::WheelDown, MouseButton::None),
             new Rect(0, 0, 20, 4),
-            new FocusState(ComponentId::named('field')),
+            FocusState::on(ComponentId::named('field')),
         );
 
         self::assertEquals(Cmd::focus(ComponentId::named('pane')), $turned->command);
@@ -74,7 +74,7 @@ final class PointerFocusTest extends TestCase
         $turned = (new TwoFieldPointerApp(TextInput::new(), TextInput::new()))->update(
             new MouseMsg(1, 30, MouseAction::WheelDown, MouseButton::None),
             new Rect(0, 0, 40, 2),
-            new FocusState(ComponentId::named('second')),
+            FocusState::on(ComponentId::named('second')),
         );
 
         self::assertNull($turned->command, 'a click on empty space means "not here"; a wheel there means nothing');

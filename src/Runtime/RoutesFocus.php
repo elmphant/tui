@@ -12,14 +12,14 @@ use Elmphant\Tui\Layout\Rect;
 
 interface RoutesFocus extends Model
 {
-    public function update(Message $message, Rect $area, FocusState $focus = new FocusState()): UpdateResult;
+    public function update(Message $message, Rect $area, ?FocusState $focus = null): UpdateResult;
 
     /**
      * Return tab stops for the current focus scope, in tree order.
      *
      * @return list<ComponentId>
      */
-    public function focusableIds(FocusState $focus = new FocusState()): array;
+    public function focusableIds(?FocusState $focus = null): array;
 
     /**
      * Return all reachable components, including pointer-only panes that Tab skips; focus commands are checked against this list.

@@ -35,7 +35,7 @@ final class ContainerFocusScopeTest extends TestCase
         );
 
         $pass = RenderPass::new(Theme::dark());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('search')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('search')));
 
         Component::bind('search', $searchBox, static fn (object $app, Interactive $w): object => $app)
             ->render(new Frame(10, 2), new Rect(0, 0, 10, 2), $pass->context);

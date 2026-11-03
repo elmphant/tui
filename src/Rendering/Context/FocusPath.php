@@ -57,7 +57,7 @@ final class FocusPath
      */
     public static function undecided(): self
     {
-        return new self(new FocusState(), 0);
+        return new self(FocusState::undecided(), 0);
     }
 
     public static function nowhere(): self

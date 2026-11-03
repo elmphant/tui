@@ -217,7 +217,8 @@ final class KeyHelpTest extends TestCase
     {
         $harness = ModelHarness::for(new OverlappingKeysApp(), 60, 30)->initialize();
 
-        $help = $harness->model()->keyHelp(new FocusState($harness->focused(), decided: true));
+        $focused = $harness->focused();
+        $help = $harness->model()->keyHelp($focused === null ? FocusState::nowhere() : FocusState::on($focused));
 
         self::assertSame(['r/x' => 'refresh', '/' => 'search', 7 => 'seven'], $help['Report']);
         self::assertSame(['e', 's'], \array_slice(array_map(strval(...), array_keys($help['Anywhere'])), 0, 2));

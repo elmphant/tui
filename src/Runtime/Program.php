@@ -163,7 +163,7 @@ final class Program
      */
     private function __construct(private readonly Model $initialModel)
     {
-        $this->focus = new FocusState();
+        $this->focus = FocusState::undecided();
         $this->frames = new FrameScheduler();
         $this->clock = new MonotonicClock();
         $this->screenRect = Rect::fromSize(80, 24);

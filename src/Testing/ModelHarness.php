@@ -118,7 +118,7 @@ final class ModelHarness
         private readonly Theme $theme,
     ) {
         $this->area = Rect::fromSize($width, $height);
-        $this->focus = new FocusState();
+        $this->focus = FocusState::undecided();
         $this->pass = RenderPass::new($theme);
         $this->chordTracker = new ChordTracker();
         $this->keyHelp = new KeyHelpOverlay();

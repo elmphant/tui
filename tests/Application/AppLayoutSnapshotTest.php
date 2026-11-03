@@ -186,7 +186,7 @@ final class AppLayoutSnapshotTest extends TestCase
     {
         $app = new SnapshotCountingApp(Panel::new('Main'));
         $screenRect = Rect::fromSize(80, 24);
-        $onPanel = new FocusState(ComponentId::named('main-panel'));
+        $onPanel = FocusState::on(ComponentId::named('main-panel'));
 
         $app->update(new KeyMsg('x'), $screenRect, $onPanel);
         $app->update(new KeyMsg('y'), $screenRect, $onPanel);
@@ -242,7 +242,7 @@ final class AppLayoutSnapshotTest extends TestCase
         );
         $screen = Rect::fromSize(80, 24);
 
-        $result = $app->update(new KeyMsg('ignored'), $screen, new FocusState(ComponentId::named('counted-panel')));
+        $result = $app->update(new KeyMsg('ignored'), $screen, FocusState::on(ComponentId::named('counted-panel')));
         self::assertSame($app, $result->model);
 
         $frame = new Frame(80, 24);

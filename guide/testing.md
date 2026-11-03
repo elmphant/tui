@@ -123,7 +123,7 @@ $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());   // a layo
 $app->render($frame, $pass);
 
 $pass = RenderPass::new(Theme::dark());                                 // or name the holder
-$pass->focus->focusOn(new FocusState(ComponentId::named('search')));
+$pass->focus->focusOn(FocusState::on(ComponentId::named('search')));
 ```
 
 ## Tracing in a test

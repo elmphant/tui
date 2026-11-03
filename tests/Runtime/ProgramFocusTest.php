@@ -216,10 +216,10 @@ final readonly class FocusLoggingModel implements RoutesFocus
         return null;
     }
 
-    public function update(Message $message, Rect $area, FocusState $focus = new FocusState()): UpdateResult
+    public function update(Message $message, Rect $area, ?FocusState $focus = null): UpdateResult
     {
         if ($message instanceof FocusMsg) {
-            $this->log->append('focus:' . $focus->focused()?->value);
+            $this->log->append('focus:' . $focus?->focused()?->value);
         }
         if ($message instanceof ResizeMsg) {
             $this->log->append('resize');
@@ -237,7 +237,7 @@ final readonly class FocusLoggingModel implements RoutesFocus
         };
     }
 
-    public function focusableIds(FocusState $focus = new FocusState()): array
+    public function focusableIds(?FocusState $focus = null): array
     {
         return array_map(ComponentId::named(...), $this->ids);
     }

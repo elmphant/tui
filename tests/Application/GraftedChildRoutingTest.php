@@ -39,7 +39,7 @@ final class GraftedChildRoutingTest extends TestCase
         $paged = ScrollableFormApp::seeded()->update(
             new KeyMsg(Key::PageDown),
             Rect::fromSize(30, 6),
-            new FocusState(ComponentId::named('form/0')),
+            FocusState::on(ComponentId::named('form/0')),
         )->model;
 
         self::assertInstanceOf(ScrollableFormApp::class, $paged);

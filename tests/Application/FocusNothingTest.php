@@ -30,7 +30,7 @@ final class FocusNothingTest extends TestCase
         self::assertEquals(
             FocusState::nowhere(),
             $command->applyTo(
-                new FocusState(ComponentId::named('search')),
+                FocusState::on(ComponentId::named('search')),
                 [ComponentId::named('search')],
                 [ComponentId::named('search')],
             ),

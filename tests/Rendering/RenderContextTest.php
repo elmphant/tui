@@ -34,7 +34,7 @@ final class RenderContextTest extends TestCase
     public function aWidgetCanAskWhichComponentHoldsTheKeyboard(): void
     {
         $pass = RenderPass::new(Theme::dark());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('filter/0')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('filter/0')));
 
         self::assertEquals(ComponentId::named('filter/0'), $pass->context->focusedComponent());
     }
@@ -43,7 +43,7 @@ final class RenderContextTest extends TestCase
     public function aComponentWhoseIdOnlyBeginsLikeTheFocusedOneDoesNotHoldTheKeyboard(): void
     {
         $pass = RenderPass::new(Theme::dark());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('tabs10')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('tabs10')));
         $held = null;
 
         $pass->context->withinComponent(ComponentId::named('tabs1'), static function () use ($pass, &$held): void {
@@ -57,7 +57,7 @@ final class RenderContextTest extends TestCase
     public function eachChildLevelReadsTheNextSegmentOfTheFocusedId(): void
     {
         $pass = RenderPass::new(Theme::dark());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('form/0/1')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('form/0/1')));
         $indexes = [];
 
         $pass->context->withinComponent(ComponentId::named('form'), static function () use ($pass, &$indexes): void {
@@ -74,7 +74,7 @@ final class RenderContextTest extends TestCase
     public function aNewFrameForgetsWhereTheKeyboardWasInTheLastOne(): void
     {
         $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('field')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('field')));
 
         $pass->begin(1.0);
 
@@ -96,7 +96,7 @@ final class RenderContextTest extends TestCase
     public function aDrawThatThrowsLeavesTheFocusAsItFoundIt(): void
     {
         $pass = RenderPass::new(Theme::dark());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('form/0/1')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('form/0/1')));
         $throw = static function (): void {
             throw new RuntimeException('a widget failed to draw');
         };

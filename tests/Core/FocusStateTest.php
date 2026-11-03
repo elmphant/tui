@@ -12,15 +12,27 @@ use PHPUnit\Framework\TestCase;
 final class FocusStateTest extends TestCase
 {
     #[Test]
-    public function aTreeStartsWithTheKeyboardOnNothing(): void
+    public function aTreeStartsWithTheKeyboardOnNothingAndNotYetDecided(): void
     {
-        self::assertNull((new FocusState())->focused());
+        $undecided = FocusState::undecided();
+
+        self::assertNull($undecided->focused());
+        self::assertTrue($undecided->isUndecided());
+    }
+
+    #[Test]
+    public function aStateOnAComponentHasTheKeyboardThere(): void
+    {
+        $state = FocusState::on(ComponentId::named('output'));
+
+        self::assertEquals(ComponentId::named('output'), $state->focused());
+        self::assertFalse($state->isUndecided());
     }
 
     #[Test]
     public function aPaneOnlyThePointerReachesKeepsTheKeyboardWhenTabHasNoStops(): void
     {
-        $held = new FocusState(ComponentId::named('output'));
+        $held = FocusState::on(ComponentId::named('output'));
 
         $resolved = $held->resolvedAgainst([], self::order('output'));
 
@@ -30,7 +42,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function theFirstMoveFromNothingLandsOnTheFirstComponent(): void
     {
-        $moved = (new FocusState())->next(self::order('search', 'results'));
+        $moved = FocusState::undecided()->next(self::order('search', 'results'));
 
         self::assertEquals(ComponentId::named('search'), $moved->focused());
     }
@@ -41,7 +53,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function aMoveWithNowhereToGoLeavesTheKeyboardWhereItWas(): void
     {
-        $held = new FocusState(ComponentId::named('search'));
+        $held = FocusState::on(ComponentId::named('search'));
 
         $moved = $held->next([]);
 
@@ -52,7 +64,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function aMoveLandsOnTheComponentAfterTheFocusedOne(): void
     {
-        $moved = (new FocusState(ComponentId::named('search')))->next(self::order('search', 'results'));
+        $moved = FocusState::on(ComponentId::named('search'))->next(self::order('search', 'results'));
 
         self::assertEquals(ComponentId::named('results'), $moved->focused());
     }
@@ -60,7 +72,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function aMoveOffTheLastComponentWrapsToTheFirst(): void
     {
-        $moved = (new FocusState(ComponentId::named('results')))->next(self::order('search', 'results'));
+        $moved = FocusState::on(ComponentId::named('results'))->next(self::order('search', 'results'));
 
         self::assertEquals(ComponentId::named('search'), $moved->focused());
     }
@@ -68,7 +80,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function theFirstBackwardMoveFromNothingLandsOnTheLastComponent(): void
     {
-        $moved = (new FocusState())->previous(self::order('search', 'results', 'preview'));
+        $moved = FocusState::undecided()->previous(self::order('search', 'results', 'preview'));
 
         self::assertEquals(ComponentId::named('preview'), $moved->focused());
     }
@@ -76,7 +88,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function focusOnAComponentThatLeftTheTreeFallsBackToTheFirstOne(): void
     {
-        $gone = new FocusState(ComponentId::named('modal-field'));
+        $gone = FocusState::on(ComponentId::named('modal-field'));
 
         $resolved = $gone->resolvedAgainst(self::order('search', 'results'));
 
@@ -86,7 +98,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function focusOnAStopThatLeftStaysWithTheContainerItWasIn(): void
     {
-        $gone = new FocusState(ComponentId::named('tabs/2'));
+        $gone = FocusState::on(ComponentId::named('tabs/2'));
 
         $resolved = $gone->resolvedAgainst(self::order('side/0', 'tabs', 'tabs/0'));
 
@@ -96,7 +108,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function focusOnAStopThatLeftLandsOnTheFirstStopStillUnderItsContainer(): void
     {
-        $gone = new FocusState(ComponentId::named('form/3'));
+        $gone = FocusState::on(ComponentId::named('form/3'));
 
         $resolved = $gone->resolvedAgainst(self::order('side/0', 'form/0', 'form/1'));
 
@@ -106,7 +118,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function focusOnAContainerThatIsNoStopLandsOnTheFirstStopUnderIt(): void
     {
-        $container = new FocusState(ComponentId::named('form'));
+        $container = FocusState::on(ComponentId::named('form'));
 
         $resolved = $container->resolvedAgainst(self::order('side/0', 'form/1', 'form/4'));
 
@@ -116,7 +128,7 @@ final class FocusStateTest extends TestCase
     #[Test]
     public function aTreeWithNothingFocusableKeepsTheKeyboardOnNothing(): void
     {
-        self::assertNull((new FocusState(ComponentId::named('search')))->resolvedAgainst([])->focused());
+        self::assertNull(FocusState::on(ComponentId::named('search'))->resolvedAgainst([])->focused());
     }
 
     /**

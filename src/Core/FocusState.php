@@ -20,12 +20,22 @@ final readonly class FocusState
      * @param list<ComponentId> $visited   where the keyboard was before, most recent last
      * @param list<ComponentId> $enclosure what the focused component sat inside when last seen, outermost first
      */
-    public function __construct(
+    private function __construct(
         private ?ComponentId $focused = null,
         private bool $decided = false,
         private array $visited = [],
         private array $enclosure = [],
     ) {
+    }
+
+    public static function undecided(): self
+    {
+        return new self();
+    }
+
+    public static function on(ComponentId $component): self
+    {
+        return new self($component);
     }
 
     /**

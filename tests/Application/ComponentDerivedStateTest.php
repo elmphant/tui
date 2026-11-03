@@ -30,7 +30,7 @@ final class ComponentDerivedStateTest extends TestCase
         $scrolled = (new DerivedScrollApp())->update(
             new KeyMsg(Key::Down),
             new Rect(0, 0, 20, 5),
-            new FocusState(ComponentId::named('pane')),
+            FocusState::on(ComponentId::named('pane')),
         );
 
         self::assertInstanceOf(DerivedScrollApp::class, $scrolled->model);
@@ -46,7 +46,7 @@ final class ComponentDerivedStateTest extends TestCase
         $scrolled = (new DerivedTitleApp())->update(
             new KeyMsg(Key::Down),
             new Rect(0, 0, 20, 5),
-            new FocusState(ComponentId::named('pane')),
+            FocusState::on(ComponentId::named('pane')),
         );
 
         self::assertInstanceOf(DerivedTitleApp::class, $scrolled->model);

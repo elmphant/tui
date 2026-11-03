@@ -44,7 +44,7 @@ final class FocusedHintsTest extends TestCase
 
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named('second')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('second')));
 
         (new HintingApp($read))->render(new Frame(20, 3), $pass);
 
@@ -62,7 +62,7 @@ final class FocusedHintsTest extends TestCase
 
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named('long-gone')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('long-gone')));
 
         (new HintingApp($read))->render(new Frame(20, 3), $pass);
 

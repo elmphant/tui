@@ -28,8 +28,8 @@ final class MountedChordsTest extends TestCase
     {
         $host = new ChordHost(new ChordedPair());
 
-        self::assertContains('top', $host->chords(new FocusState(ComponentId::named('pair/second'), decided: true))->actions());
-        self::assertNotContains('top', $host->chords(new FocusState(ComponentId::named('pair/first'), decided: true))->actions());
+        self::assertContains('top', $host->chords(FocusState::on(ComponentId::named('pair/second')))->actions());
+        self::assertNotContains('top', $host->chords(FocusState::on(ComponentId::named('pair/first')))->actions());
     }
 
     #[Test]

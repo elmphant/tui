@@ -130,7 +130,7 @@ final class DropdownHostAcceptanceTest extends TestCase
         $updated = (new DropdownPaneApp($pane))->update(
             $message,
             self::area(),
-            new FocusState(ComponentId::named('pane/0')),
+            FocusState::on(ComponentId::named('pane/0')),
         )->model;
 
         if (!$updated instanceof DropdownPaneApp) {
@@ -155,7 +155,7 @@ final class DropdownHostAcceptanceTest extends TestCase
         $frame = new Frame(40, 18);
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named('pane/0')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('pane/0')));
         RootPass::draw($pass, (new DropdownPaneApp($pane))->view(), $frame);
         $pass->floats->commit();
 

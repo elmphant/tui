@@ -195,7 +195,7 @@ final class ComponentTest extends TestCase
     {
         $app = new PropertyBoundApp(TextInput::new(), version: 7);
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('input')));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), FocusState::on(ComponentId::named('input')));
 
         self::assertInstanceOf(PropertyBoundApp::class, $result->model);
         self::assertSame('x', $result->model->input->value());
@@ -218,7 +218,7 @@ final class ComponentTest extends TestCase
     {
         $app = new DisappearingComponentApp(TextInput::new());
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('input')));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), FocusState::on(ComponentId::named('input')));
 
         self::assertInstanceOf(DisappearingComponentApp::class, $result->model);
         self::assertSame('x', $result->model->input->value());
@@ -233,7 +233,7 @@ final class ComponentTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Component "typed" stored its update on another property');
 
-        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('typed')));
+        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), FocusState::on(ComponentId::named('typed')));
     }
 
     #[Test]
@@ -244,7 +244,7 @@ final class ComponentTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Component "typed" had nowhere to store its update: its replacement gave the model back unchanged');
 
-        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('typed')));
+        $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), FocusState::on(ComponentId::named('typed')));
     }
 }
 

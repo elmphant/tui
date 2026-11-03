@@ -41,7 +41,7 @@ final class FocusScopeRingTest extends TestCase
             ['timeline', 'entry'],
             array_map(
                 static fn (ComponentId $id): string => $id->value,
-                $app->focusableIds(new FocusState(ComponentId::named('timeline'))),
+                $app->focusableIds(FocusState::on(ComponentId::named('timeline'))),
             ),
             'a scope is stepped into by a command, so tab never walks it on the way past',
         );
@@ -51,7 +51,7 @@ final class FocusScopeRingTest extends TestCase
     public function aScopeBelowThePanesWalksItsOwnControlsToo(): void
     {
         $app = new RowBelowThePanesApp(TextInput::new(), TextInput::new(), TextInput::new(), TextInput::new());
-        $focus = new FocusState(ComponentId::named('sources'));
+        $focus = FocusState::on(ComponentId::named('sources'));
 
         $command = $app->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 10), $focus)->command;
 
@@ -75,7 +75,7 @@ final class FocusScopeRingTest extends TestCase
     private function tabbedFrom(string $id, bool $backwards = false): ?string
     {
         $app = new RowAboveThePanesApp(TextInput::new(), TextInput::new(), TextInput::new(), TextInput::new());
-        $focus = new FocusState(ComponentId::named($id));
+        $focus = FocusState::on(ComponentId::named($id));
 
         $command = $app->update(
             new KeyMsg(Key::Tab, shift: $backwards),

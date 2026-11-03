@@ -42,7 +42,7 @@ final class FocusPathTest extends TestCase
     {
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState());
+        $pass->focus->focusOn(FocusState::undecided());
 
         RootPass::draw($pass, self::boundField(), new Frame(20, 3), new Rect(0, 0, 20, 3));
 

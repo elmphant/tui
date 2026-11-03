@@ -27,12 +27,12 @@ final class AppFocusCyclingTest extends TestCase
     {
         $app = new RebindableFocusApp(TextInput::new(), TextInput::new());
 
-        $command = $app->update(new KeyMsg('n', ctrl: true), new Rect(0, 0, 40, 6), new FocusState(ComponentId::named('first')))->command;
+        $command = $app->update(new KeyMsg('n', ctrl: true), new Rect(0, 0, 40, 6), FocusState::on(ComponentId::named('first')))->command;
 
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
             ComponentId::named('second'),
-            $command->applyTo(new FocusState(ComponentId::named('first')), $app->focusableIds(), $app->reachableIds())?->focused(),
+            $command->applyTo(FocusState::on(ComponentId::named('first')), $app->focusableIds(), $app->reachableIds())?->focused(),
         );
     }
 
@@ -40,7 +40,7 @@ final class AppFocusCyclingTest extends TestCase
     public function shiftTabWalksTheOtherWayRound(): void
     {
         $app = new PlainlyCyclingApp(TextInput::new(), TextInput::new());
-        $onTheSecond = new FocusState(ComponentId::named('second'));
+        $onTheSecond = FocusState::on(ComponentId::named('second'));
 
         $command = $app->update(
             new KeyMsg(Key::Tab, shift: true),

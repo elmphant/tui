@@ -187,7 +187,7 @@ final class GlobalKeybindingsDispatchTest extends TestCase
     public function appWrapsFocusableBeforeKeyDispatch(): void
     {
         $app = new GlobalCustomApp();
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), new FocusState(ComponentId::named('global-observer')));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(80, 24), FocusState::on(ComponentId::named('global-observer')));
 
         /** @var GlobalCustomApp $updated */
         $updated = $result->model;
@@ -226,7 +226,7 @@ final class GlobalKeybindingsDispatchTest extends TestCase
     {
         $app = new PanelledObserverApp(Panel::new('T')->add(new GlobalObserverWidget()));
 
-        $updated = $app->update(new KeyMsg('x'), Rect::fromSize(20, 5), new FocusState(ComponentId::named('panel/0')))->model;
+        $updated = $app->update(new KeyMsg('x'), Rect::fromSize(20, 5), FocusState::on(ComponentId::named('panel/0')))->model;
 
         self::assertInstanceOf(PanelledObserverApp::class, $updated);
         self::assertSame(1, $updated->observer()->customActionTriggered);
@@ -236,7 +236,7 @@ final class GlobalKeybindingsDispatchTest extends TestCase
     public function vimModeAppliedAsGlobalReachesSelect(): void
     {
         $app = new VimModeApp(Select::new(['a', 'b', 'c']));
-        $onSelect = new FocusState(ComponentId::named('vim-select'));
+        $onSelect = FocusState::on(ComponentId::named('vim-select'));
 
         $result = $app->update(new KeyMsg('j'), Rect::fromSize(40, 10), $onSelect);
         /** @var VimModeApp $updated */

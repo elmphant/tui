@@ -37,7 +37,7 @@ final class HostMarkedRowsTest extends TestCase
         $frame = new Frame(30, 6);
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named('pane')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('pane')));
 
         (new MarkedRowsApp())->render($frame, $pass);
 

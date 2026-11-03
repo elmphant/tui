@@ -33,7 +33,7 @@ final class ProgramFocusPaintTest extends TestCase
         $frame = new Frame(40, 6);
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named($target)));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named($target)));
 
         (new FocusPaintApp(TextInput::new(), TextInput::new()))->render($frame, $pass);
 

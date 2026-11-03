@@ -43,7 +43,7 @@ final class TwoFlaggedChildrenTest extends TestCase
 
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named('second')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('second')));
         $app->render(new Frame(20, 4), $pass);
 
         self::assertSame(['first' => false, 'second' => true], $drawn->getArrayCopy());

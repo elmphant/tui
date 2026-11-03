@@ -47,7 +47,7 @@ final class PressArrivesKnowingTheKeyboardTest extends TestCase
         $updated = (new TwoPressTargetsApp())->update(
             new MouseMsg(0, $row, MouseAction::Press, MouseButton::Left),
             new Rect(0, 0, 20, 2),
-            new FocusState(ComponentId::named('first')),
+            FocusState::on(ComponentId::named('first')),
         )->model;
 
         self::assertInstanceOf(TwoPressTargetsApp::class, $updated);

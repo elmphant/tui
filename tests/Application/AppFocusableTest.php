@@ -49,7 +49,7 @@ final class AppFocusableTest extends TestCase
     {
         $app = new ThreePanelApp();
 
-        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), new FocusState(ComponentId::named('second-panel')));
+        $result = $app->update(new KeyMsg(Key::Tab), Rect::fromSize(80, 24), FocusState::on(ComponentId::named('second-panel')));
 
         self::assertEquals(
             ComponentId::named('third-panel'),
@@ -714,7 +714,7 @@ final class AppFocusableTest extends TestCase
 
     private static function keyboardOn(string $id): FocusState
     {
-        return new FocusState(ComponentId::named($id));
+        return FocusState::on(ComponentId::named($id));
     }
 
     /**
@@ -724,7 +724,7 @@ final class AppFocusableTest extends TestCase
     {
         self::assertInstanceOf(FocusCmd::class, $command);
 
-        $start = new FocusState(null === $from ? null : ComponentId::named($from));
+        $start = null === $from ? FocusState::undecided() : FocusState::on(ComponentId::named($from));
 
         return $command->applyTo($start, $order, $order)?->focused();
     }

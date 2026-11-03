@@ -55,7 +55,7 @@ final class FocusComesFromTheTreeTest extends TestCase
         $frame = new Frame(6, 2);
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named('field')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('field')));
 
         (new MixedTreeApp(TextInput::new()))->render($frame, $pass);
 
@@ -71,7 +71,7 @@ final class FocusComesFromTheTreeTest extends TestCase
         $frame = new Frame(6, 2);
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named('right')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('right')));
 
         (new TwoProbeApp())->render($frame, $pass);
 

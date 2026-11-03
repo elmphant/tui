@@ -25,7 +25,7 @@ final class PanelFocusScopeTest extends TestCase
 
         $frame = new Frame(20, 8);
         $pass = RenderPass::new(Theme::dark());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('form/0')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('form/0')));
         $context = $pass->context;
         $context->withinComponent(ComponentId::named('form'), static function () use ($panel, $frame, $context): void {
             $panel->render($frame, new Rect(0, 0, 20, 8), $context);

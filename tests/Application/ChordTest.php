@@ -121,7 +121,7 @@ final readonly class ChordMountedLog implements Reducer, BindsChords
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return $message instanceof KeyMsg && $this->chords(new FocusState())->matches($message, 'clear')
+        return $message instanceof KeyMsg && $this->chords(FocusState::undecided())->matches($message, 'clear')
             ? new UpdateResult(new self($this->list, true))
             : new UpdateResult($this);
     }

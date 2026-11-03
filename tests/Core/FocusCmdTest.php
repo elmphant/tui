@@ -20,8 +20,8 @@ final class FocusCmdTest extends TestCase
 
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
-            new FocusState(ComponentId::named('search')),
-            $command->applyTo(new FocusState(), [ComponentId::named('search')], [ComponentId::named('search')]),
+            FocusState::on(ComponentId::named('search')),
+            $command->applyTo(FocusState::undecided(), [ComponentId::named('search')], [ComponentId::named('search')]),
         );
     }
 
@@ -37,7 +37,7 @@ final class FocusCmdTest extends TestCase
         $command = Cmd::focus(ComponentId::named('hidden/search'));
 
         self::assertInstanceOf(FocusCmd::class, $command);
-        self::assertNull($command->applyTo(new FocusState(ComponentId::named('list')), [ComponentId::named('list')], [ComponentId::named('list')]));
+        self::assertNull($command->applyTo(FocusState::on(ComponentId::named('list')), [ComponentId::named('list')], [ComponentId::named('list')]));
     }
 
     #[Test]
@@ -47,8 +47,8 @@ final class FocusCmdTest extends TestCase
 
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
-            new FocusState(ComponentId::named('form')),
-            $command->applyTo(new FocusState(), [ComponentId::named('form/0')], []),
+            FocusState::on(ComponentId::named('form')),
+            $command->applyTo(FocusState::undecided(), [ComponentId::named('form/0')], []),
         );
     }
 }

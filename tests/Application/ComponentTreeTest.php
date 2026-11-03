@@ -67,7 +67,7 @@ final class ComponentTreeTest extends TestCase
     {
         $app = new TreeComponentApp(TextInput::new());
 
-        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), new FocusState(ComponentId::named('input')));
+        $result = $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), FocusState::on(ComponentId::named('input')));
 
         self::assertInstanceOf(TreeComponentApp::class, $result->model);
         self::assertSame('x', $result->model->input->value());

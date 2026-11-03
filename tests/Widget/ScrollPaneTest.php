@@ -715,7 +715,7 @@ final class ScrollPaneTest extends TestCase
     {
         $frame = new Frame($width, $height);
         $pass = RenderPass::new(Theme::dark());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('pane/' . $child)));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('pane/' . $child)));
         $context = $pass->context;
         $context->withinComponent(
             ComponentId::named('pane'),

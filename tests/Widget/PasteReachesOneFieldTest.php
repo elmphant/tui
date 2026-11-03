@@ -26,7 +26,7 @@ final class PasteReachesOneFieldTest extends TestCase
         $pasted = $app->update(
             new PasteMsg('hi'),
             Rect::fromSize(40, 10),
-            new FocusState(ComponentId::named('pane/1')),
+            FocusState::on(ComponentId::named('pane/1')),
         )->model;
 
         self::assertInstanceOf(PasteTargetApp::class, $pasted);

@@ -20,7 +20,7 @@ final class FocusCycleCmdTest extends TestCase
         self::assertInstanceOf(FocusCmd::class, $command);
 
         $moved = $command->applyTo(
-            new FocusState(ComponentId::named('search')),
+            FocusState::on(ComponentId::named('search')),
             [ComponentId::named('search'), ComponentId::named('results')],
             [],
         );

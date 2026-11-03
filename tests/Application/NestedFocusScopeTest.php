@@ -25,7 +25,7 @@ final class NestedFocusScopeTest extends TestCase
             ['outer'],
             array_map(
                 static fn (ComponentId $id): string => $id->value,
-                $app->focusableIds(new FocusState(ComponentId::named('outer'))),
+                $app->focusableIds(FocusState::on(ComponentId::named('outer'))),
             ),
         );
     }

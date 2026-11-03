@@ -36,7 +36,7 @@ final class ComponentFocusScopeTest extends TestCase
         );
 
         $pass = RenderPass::new(Theme::dark());
-        $pass->focus->focusOn(new FocusState(ComponentId::named('second')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('second')));
         $tree->render(new Frame(10, 2), new Rect(0, 0, 10, 2), $pass->context);
 
         self::assertSame(['first' => false, 'second' => true], $seen->getArrayCopy());

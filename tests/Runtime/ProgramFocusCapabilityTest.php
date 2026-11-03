@@ -148,17 +148,17 @@ final readonly class FocusRoutingModel implements RoutesFocus
         return Cmd::focus(ComponentId::named('pane'));
     }
 
-    public function update(Message $message, Rect $area, FocusState $focus = new FocusState()): UpdateResult
+    public function update(Message $message, Rect $area, ?FocusState $focus = null): UpdateResult
     {
         return $message instanceof KeyMsg && 'q' === $message->key
-            ? new UpdateResult(new self($focus->focused()), Cmd::quit())
+            ? new UpdateResult(new self($focus?->focused()), Cmd::quit())
             : new UpdateResult($this);
     }
 
     /**
      * @return list<ComponentId>
      */
-    public function focusableIds(FocusState $focus = new FocusState()): array
+    public function focusableIds(?FocusState $focus = null): array
     {
         return [ComponentId::named('pane')];
     }

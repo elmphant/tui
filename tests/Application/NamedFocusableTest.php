@@ -44,7 +44,7 @@ final class NamedFocusableTest extends TestCase
         $frame = new Frame(6, 2);
         $pass = RenderPass::new(Theme::dark());
         $pass->begin(0.0);
-        $pass->focus->focusOn(new FocusState(ComponentId::named('pane')));
+        $pass->focus->focusOn(FocusState::on(ComponentId::named('pane')));
 
         (new NamedPaneApp(TextInput::new()))->render($frame, $pass);
 
@@ -65,7 +65,7 @@ final class NamedFocusableTest extends TestCase
         (new NamedPlainPaneKeyApp($seen))->update(
             new KeyMsg('x'),
             new Rect(0, 0, 20, 2),
-            new FocusState(ComponentId::named('pane')),
+            FocusState::on(ComponentId::named('pane')),
         );
 
         self::assertSame(['x'], $seen->getArrayCopy());
@@ -79,7 +79,7 @@ final class NamedFocusableTest extends TestCase
         $result = (new NamedOnlyApp($seen))->update(
             new KeyMsg('x'),
             new Rect(0, 0, 8, 1),
-            new FocusState(ComponentId::named('pane')),
+            FocusState::on(ComponentId::named('pane')),
         );
 
         self::assertSame([], $seen->getArrayCopy(), 'the pane was not asked to answer it');
@@ -109,7 +109,7 @@ final class NamedFocusableTest extends TestCase
         $result = (new PlainPaneBesideAFieldApp(TextInput::new()))->update(
             new KeyMsg(Key::Tab),
             new Rect(0, 0, 20, 2),
-            new FocusState(ComponentId::named('pane')),
+            FocusState::on(ComponentId::named('pane')),
         );
 
         self::assertEquals(Cmd::focusNext(), $result->command);
@@ -122,7 +122,7 @@ final class NamedFocusableTest extends TestCase
             $result = (new NamedPanelApp())->update(
                 new KeyMsg(Key::Tab),
                 new Rect(0, 0, 20, 6),
-                new FocusState(ComponentId::named('pane')),
+                FocusState::on(ComponentId::named('pane')),
             );
         } catch (LogicException $thrown) {
             self::fail('The press was offered to a pane nothing can write back: ' . $thrown->getMessage());
