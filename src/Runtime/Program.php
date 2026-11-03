@@ -125,7 +125,6 @@ final class Program
     private ?float $drainDeadline = null;
     private int $drainedThisTick = 0;
     private bool $resizePending = false;
-    private bool $resizeNeedsScreenClear = false;
     private Rect $screenRect;
     private ProgramState $state = ProgramState::New;
     private ?TerminalSession $terminalSession = null;
@@ -900,7 +899,7 @@ final class Program
             return false;
         }
         $this->resizePending = false;
-        $this->resizeNeedsScreenClear = true;
+        $this->surface->forget();
         $this->adoptTerminalSize();
 
         return true;
@@ -1217,11 +1216,6 @@ final class Program
         $drawn = $this->drawnRect();
         if ($frame->width !== $this->screenRect->width || $frame->height !== $this->screenRect->height) {
             $frame = $this->backBuffer = new Frame($this->screenRect->width, $this->screenRect->height);
-        }
-
-        if ($this->resizeNeedsScreenClear) {
-            $this->resizeNeedsScreenClear = false;
-            $this->surface->forget();
         }
 
         $pass->begin($this->clock->now());
