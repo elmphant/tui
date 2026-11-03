@@ -544,7 +544,8 @@ final class ProgramTest extends TestCase
         [$read, $write] = self::streamPair();
         $id = EffectId::named('feed');
         $model = $this->closingStreamModel($read, $write, $id);
-        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+        $terminal = new VirtualTerminal(80, 24);
+        $program = Program::new($model)->withTerminal($terminal);
 
         EventLoop::delay(0.02, static function () use ($write): void {
             fwrite($write, 'last word');
@@ -552,7 +553,7 @@ final class ProgramTest extends TestCase
 
         $program->start();
 
-        self::assertSame(ProgramState::Stopped, $program->state());
+        self::assertFalse($terminal->isRawModeEnabled(), 'the program ended and gave the terminal back');
     }
 
     #[Test]
@@ -698,8 +699,7 @@ final class ProgramTest extends TestCase
     {
         $model = $this->createMockModel();
         $program = Program::new($model);
-        self::assertInstanceOf(Program::class, $program);
-        self::assertSame(ProgramState::New, $program->state());
+        self::assertInstanceOf(Program::class, $program->withFps(30.0), 'a program not started yet still takes configuration');
     }
 
     #[Test]
@@ -707,11 +707,16 @@ final class ProgramTest extends TestCase
     {
         $model = new class implements Model {
             public ?Program $program = null;
-            public ?ProgramState $stateDuringInit = null;
+            public ?bool $configurableDuringInit = null;
 
             public function init(): ?Cmd
             {
-                $this->stateDuringInit = $this->program?->state();
+                try {
+                    $this->program?->withFps(30.0);
+                    $this->configurableDuringInit = true;
+                } catch (LogicException) {
+                    $this->configurableDuringInit = false;
+                }
 
                 return Cmd::quit();
             }
@@ -725,12 +730,13 @@ final class ProgramTest extends TestCase
             {
             }
         };
-        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+        $terminal = new VirtualTerminal(80, 24);
+        $program = Program::new($model)->withTerminal($terminal);
         $model->program = $program;
 
         self::assertSame($model, $program->start());
-        self::assertSame(ProgramState::Running, $model->stateDuringInit);
-        self::assertSame(ProgramState::Stopped, $program->state());
+        self::assertFalse($model->configurableDuringInit, 'while it runs, the program refuses configuration');
+        self::assertFalse($terminal->isRawModeEnabled(), 'and once it stopped, the terminal is given back');
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('only be started once');
@@ -791,7 +797,6 @@ final class ProgramTest extends TestCase
             self::assertSame('init failed', $error->getMessage());
         }
 
-        self::assertSame(ProgramState::Stopped, $program->state());
         self::assertFalse($terminal->isRawModeEnabled());
         self::assertTrue($terminal->isCursorVisible());
     }
@@ -1627,7 +1632,6 @@ final class ProgramTest extends TestCase
             self::assertSame('flush failed', $error->getMessage());
         }
 
-        self::assertSame(ProgramState::Stopped, $program->state());
         self::assertFalse($terminal->isRawModeEnabled());
         self::assertTrue($terminal->isCursorVisible());
     }

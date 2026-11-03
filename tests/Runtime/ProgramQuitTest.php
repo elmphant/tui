@@ -16,7 +16,6 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\CommandHandler;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Runtime\ShutdownAware;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Support\GuardedTerminal;
@@ -42,16 +41,15 @@ final class ProgramQuitTest extends TestCase
     }
 
     #[Test]
-    public function aProgramToldToQuitIsStoppingUntilItHasTornDown(): void
+    public function aProgramToldToQuitStillHoldsTheTerminalWhileItsModelShutsDown(): void
     {
-        $model = new StateAtShutdownModel();
-        $program = Program::new($model)->withTerminal(new VirtualTerminal(40, 10));
-        $model->program = $program;
+        $terminal = new VirtualTerminal(40, 10);
+        $model = new StateAtShutdownModel($terminal);
 
-        $program->start();
+        Program::new($model)->withTerminal($terminal)->start();
 
-        self::assertSame(ProgramState::Stopping, $model->stateAtShutdown);
-        self::assertSame(ProgramState::Stopped, $program->state());
+        self::assertTrue($model->rawModeAtShutdown, 'the model shuts down before the terminal is given back');
+        self::assertFalse($terminal->isRawModeEnabled(), 'and afterwards it is');
     }
 
     #[Test]
@@ -129,11 +127,11 @@ final readonly class CountedStart extends Cmd
 
 final class StateAtShutdownModel implements Model, ShutdownAware
 {
-    /**
-     * @var Program<self>|null
-     */
-    public ?Program $program = null;
-    public ?ProgramState $stateAtShutdown = null;
+    public ?bool $rawModeAtShutdown = null;
+
+    public function __construct(private readonly VirtualTerminal $terminal)
+    {
+    }
 
     public function init(): ?Cmd
     {
@@ -151,7 +149,7 @@ final class StateAtShutdownModel implements Model, ShutdownAware
 
     public function onShutdown(): void
     {
-        $this->stateAtShutdown = $this->program?->state();
+        $this->rawModeAtShutdown = $this->terminal->isRawModeEnabled();
     }
 }
 

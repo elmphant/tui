@@ -12,7 +12,6 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Runtime\ProgramState;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -56,7 +55,8 @@ final class StreamSubscriptionLifetimeTest extends TestCase
             {
             }
         };
-        $program = Program::new($model)->withTerminal(new VirtualTerminal(80, 24));
+        $terminal = new VirtualTerminal(80, 24);
+        $program = Program::new($model)->withTerminal($terminal);
 
         EventLoop::delay(0.02, static function () use ($write): void {
             fclose($write);
@@ -64,7 +64,7 @@ final class StreamSubscriptionLifetimeTest extends TestCase
 
         $program->start();
 
-        self::assertSame(ProgramState::Stopped, $program->state());
+        self::assertFalse($terminal->isRawModeEnabled(), 'the program ended and gave the terminal back');
     }
 
     /**
