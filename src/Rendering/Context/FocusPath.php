@@ -65,6 +65,11 @@ final class FocusPath
         return new self(FocusState::nowhere(), 0);
     }
 
+    public static function on(ComponentId $component): self
+    {
+        return new self(FocusState::on($component), 0);
+    }
+
     /**
      * For one widget on its own; inside a tree Component opens the scope.
      */

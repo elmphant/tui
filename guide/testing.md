@@ -115,15 +115,14 @@ The harnesses do this for you. When you draw by hand, say "nobody" or name the
 widget:
 
 ```php
-use Elmphant\Tui\Core\{ComponentId, FocusState};
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Rendering\Context\{FocusPath, RenderPass};
 use Elmphant\Tui\Rendering\Theme;
 
 $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());   // a layout or wording test
 $app->render($frame, $pass);
 
-$pass = RenderPass::new(Theme::dark());                                 // or name the holder
-$pass->focus->focusOn(FocusState::on(ComponentId::named('search')));
+$pass = RenderPass::new(Theme::dark(), focus: FocusPath::on(ComponentId::named('search')));   // or name the holder
 ```
 
 ## Tracing in a test

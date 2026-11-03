@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Context\FocusPath;
@@ -62,6 +63,18 @@ final class FocusPathTest extends TestCase
         RootPass::draw($pass, self::boundField(), $frame, new Rect(0, 0, 20, 3));
 
         self::assertNotSame('', implode('', $frame->characters));
+    }
+
+    #[Test]
+    public function namingTheComponentThatHoldsTheKeyboardDrawsItFocused(): void
+    {
+        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::on(ComponentId::named('field')));
+        $pass->begin(0.0);
+        $frame = new Frame(20, 3);
+
+        RootPass::draw($pass, self::boundField(), $frame, new Rect(0, 0, 20, 3));
+
+        self::assertNotNull($frame->cursorPosition(), 'the field holding the keyboard places its caret');
     }
 
     /**
