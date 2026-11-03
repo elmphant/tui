@@ -70,6 +70,16 @@ final readonly class Row
      */
     public function texts(): array
     {
-        return array_map(static fn (string|Span $cell): string => $cell instanceof Span ? $cell->content : $cell, $this->cells);
+        return array_map(self::textOf(...), $this->cells);
+    }
+
+    public function textAt(int $column): string
+    {
+        return self::textOf($this->cells[$column] ?? '');
+    }
+
+    private static function textOf(string|Span $cell): string
+    {
+        return $cell instanceof Span ? $cell->content : $cell;
     }
 }

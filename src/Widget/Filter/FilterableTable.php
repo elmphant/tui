@@ -363,10 +363,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     private static function haystackOf(array $rows): array
     {
         return array_map(
-            static fn (Row $row): string => implode(' ', array_map(
-                static fn (string|Span $cell): string => $cell instanceof Span ? $cell->content : $cell,
-                $row->cells,
-            )),
+            static fn (Row $row): string => implode(' ', $row->texts()),
             $rows,
         );
     }

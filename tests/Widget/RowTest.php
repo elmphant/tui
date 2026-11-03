@@ -39,6 +39,14 @@ final class RowTest extends TestCase
     }
 
     #[Test]
+    public function aRowAnswersTheTextOfOneCellAndNothingForACellItDoesNotHave(): void
+    {
+        $row = Row::new('Alice', Span::styled('Active', new Style(foreground: Color::ansi(2))));
+
+        self::assertSame(['Alice', 'Active', ''], [$row->textAt(0), $row->textAt(1), $row->textAt(2)]);
+    }
+
+    #[Test]
     public function namedCellsAreKeptInTheOrderGiven(): void
     {
         self::assertSame(['1', 'Alice'], Row::new(id: '1', name: 'Alice')->cells);

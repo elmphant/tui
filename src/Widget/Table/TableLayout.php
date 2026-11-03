@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Widget\Table;
 
 use Elmphant\Tui\Layout\RowExtents;
-use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\TextWrap;
 use Elmphant\Tui\Widget\Wrap;
@@ -76,7 +75,7 @@ final readonly class TableLayout
         $lines = [];
 
         foreach ($columnWidths as $columnIndex => $width) {
-            $lines[] = self::cellLines(self::textOf($row, $columnIndex), $width, $wraps[$columnIndex] ?? Wrap::WordWrap);
+            $lines[] = self::cellLines($row->textAt($columnIndex), $width, $wraps[$columnIndex] ?? Wrap::WordWrap);
         }
 
         return $lines;
@@ -87,7 +86,7 @@ final readonly class TableLayout
      */
     public static function spanningLines(int $spanWidth, Row $row): array
     {
-        return self::cellLines(self::textOf($row, 0), max(1, $spanWidth));
+        return self::cellLines($row->textAt(0), max(1, $spanWidth));
     }
 
     public function heightOf(int $row): int
@@ -174,7 +173,7 @@ final readonly class TableLayout
         $height = 1;
 
         foreach ($columnWidths as $columnIndex => $width) {
-            $text = self::textOf($row, $columnIndex);
+            $text = $row->textAt($columnIndex);
 
             if (($wraps[$columnIndex] ?? Wrap::WordWrap) === Wrap::NoWrap) {
                 $height = max($height, substr_count($text, "\n") + 1);
@@ -190,12 +189,5 @@ final readonly class TableLayout
         }
 
         return $height;
-    }
-
-    private static function textOf(Row $row, int $columnIndex): string
-    {
-        $cell = $row->cells[$columnIndex] ?? '';
-
-        return $cell instanceof Span ? $cell->content : $cell;
     }
 }
