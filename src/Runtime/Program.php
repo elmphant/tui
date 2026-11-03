@@ -17,6 +17,7 @@ use Elmphant\Tui\Core\Cmd\PrintlnCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\Cmd\ToastCmd;
+use Elmphant\Tui\Core\CmdLeaf;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
@@ -1383,21 +1384,9 @@ final class Program
 
         $this->tracer?->record(TraceEvent::Command, ['command' => $command::class]);
 
-        if ($command instanceof MappedCmd) {
-            $this->dispatchCommand($command->inner, self::composeWrap($command->wrap, $wrap), $scope);
-
-            return;
-        }
-
-        if ($command instanceof ScopedCmd) {
-            $this->dispatchCommand($command->inner, $wrap, $scope === null ? $command->scope : $scope . '/' . $command->scope);
-
-            return;
-        }
-
-        if ($command instanceof BatchCmd) {
-            foreach ($command->commands as $child) {
-                $this->dispatchCommand($child, $wrap, $scope);
+        if ($command instanceof MappedCmd || $command instanceof ScopedCmd || $command instanceof BatchCmd) {
+            foreach (CmdLeaf::all($command, $wrap, $scope) as $leaf) {
+                $this->dispatchCommand($leaf->command, $leaf->wrap, $leaf->scope);
             }
 
             return;
@@ -1473,21 +1462,6 @@ final class Program
         } elseif ($answer instanceof Message) {
             $this->messageQueue->enqueue(self::mapMessage($answer, $wrap));
         }
-    }
-
-    /**
-     * @param Closure(Message):Message      $inner
-     * @param Closure(Message):Message|null $outer
-     *
-     * @return Closure(Message):Message
-     */
-    private static function composeWrap(Closure $inner, ?Closure $outer): Closure
-    {
-        if ($outer === null) {
-            return $inner;
-        }
-
-        return static fn (Message $message): Message => $outer($inner($message));
     }
 
     /**

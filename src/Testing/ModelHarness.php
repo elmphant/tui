@@ -8,7 +8,6 @@ use Closure;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\CallCmd;
 use Elmphant\Tui\Core\Cmd\CancelCmd;
 use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
@@ -16,13 +15,12 @@ use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FiberCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
-use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\PrintlnCmd;
 use Elmphant\Tui\Core\Cmd\ProcessCmd;
-use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Cmd\ToastCmd;
+use Elmphant\Tui\Core\CmdLeaf;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\FocusMove;
@@ -624,31 +622,16 @@ final class ModelHarness
      */
     private function record(?Cmd $command, ?Closure $wrap = null, ?string $scope = null): void
     {
-        if ($command instanceof MappedCmd) {
-            $inner = $command->wrap;
-            $this->record($command->inner, $wrap === null ? $inner : static fn (Message $message): Message => $wrap($inner($message)), $scope);
-
-            return;
+        foreach (CmdLeaf::all($command, $wrap, $scope) as $leaf) {
+            $this->recordOne($leaf->command, $leaf->wrap, $leaf->scope);
         }
+    }
 
-        if ($command instanceof ScopedCmd) {
-            $this->record($command->inner, $wrap, $scope === null ? $command->scope : $scope . '/' . $command->scope);
-
-            return;
-        }
-
-        if ($command instanceof BatchCmd) {
-            foreach ($command->commands as $child) {
-                $this->record($child, $wrap, $scope);
-            }
-
-            return;
-        }
-
-        if ($command === null) {
-            return;
-        }
-
+    /**
+     * @param (Closure(Message): Message)|null $wrap
+     */
+    private function recordOne(Cmd $command, ?Closure $wrap, ?string $scope): void
+    {
         $this->issued[] = $command;
         if ($command instanceof FiberCmd) {
             $this->fibers[] = ['command' => $command, 'wrap' => $wrap, 'id' => $command->id === null ? null : ($scope === null ? $command->id : $command->id->within($scope))];
@@ -764,19 +747,14 @@ final class ModelHarness
      */
     private static function messagesIn(?Cmd $command): array
     {
-        if ($command instanceof MappedCmd) {
-            return array_map($command->wrap, self::messagesIn($command->inner));
+        $messages = [];
+        foreach (CmdLeaf::all($command) as $leaf) {
+            if ($leaf->command instanceof MessageCmd) {
+                $messages[] = $leaf->wrap === null ? $leaf->command->message : ($leaf->wrap)($leaf->command->message);
+            }
         }
 
-        if ($command instanceof ScopedCmd) {
-            return self::messagesIn($command->inner);
-        }
-
-        if ($command instanceof BatchCmd) {
-            return array_merge(...array_map(self::messagesIn(...), $command->commands));
-        }
-
-        return $command instanceof MessageCmd ? [$command->message] : [];
+        return $messages;
     }
 
     /**
@@ -806,39 +784,23 @@ final class ModelHarness
      */
     private function moveFocusFor(?Cmd $command, ?string $scope = null): void
     {
-        if ($command instanceof MappedCmd) {
-            $this->moveFocusFor($command->inner, $scope);
-
-            return;
-        }
-
-        if ($command instanceof ScopedCmd) {
-            $this->moveFocusFor($command->inner, $scope === null ? $command->scope : $scope . '/' . $command->scope);
-
-            return;
-        }
-
-        if ($command instanceof BatchCmd) {
-            foreach ($command->commands as $child) {
-                $this->moveFocusFor($child, $scope);
+        foreach (CmdLeaf::all($command, scope: $scope) as $leaf) {
+            if (!$leaf->command instanceof FocusCmd) {
+                continue;
             }
 
-            return;
-        }
-
-        if ($command instanceof FocusCmd) {
-            $moved = $command->within($scope)->applyTo(
+            $moved = $leaf->command->within($leaf->scope)->applyTo(
                 $this->focus,
                 $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
                 $this->model instanceof RoutesFocus ? $this->model->reachableIds() : null,
             );
 
             if ($moved === null) {
-                return;
+                continue;
             }
 
             $this->focus = $moved;
-            $this->announceArrival($command->move);
+            $this->announceArrival($leaf->command->move);
         }
     }
 

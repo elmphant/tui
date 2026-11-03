@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Testing;
 
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Cmd\BatchCmd;
-use Elmphant\Tui\Core\Cmd\MappedCmd;
-use Elmphant\Tui\Core\Cmd\ScopedCmd;
+use Elmphant\Tui\Core\CmdLeaf;
 
 final class Issued
 {
@@ -20,15 +18,13 @@ final class Issued
      */
     public static function in(?Cmd $command, string $type = Cmd::class): array
     {
-        return match (true) {
-            $command === null => [],
-            $command instanceof MappedCmd, $command instanceof ScopedCmd => self::in($command->inner, $type),
-            $command instanceof BatchCmd => array_merge(...array_map(
-                static fn (Cmd $child): array => self::in($child, $type),
-                $command->commands,
-            )),
-            $command instanceof $type => [$command],
-            default => [],
-        };
+        $found = [];
+        foreach (CmdLeaf::all($command) as $leaf) {
+            if ($leaf->command instanceof $type) {
+                $found[] = $leaf->command;
+            }
+        }
+
+        return $found;
     }
 }

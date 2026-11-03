@@ -128,6 +128,17 @@ final class PointerFocusTest extends TestCase
 
         self::assertSame('second', $driven->focused()?->value);
     }
+
+    #[Test]
+    public function anAppThatKeepsTheKeyboardOnAPressOverAnotherFieldIsNotOverruledByThatField(): void
+    {
+        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->initialize()->press('tab');
+        self::assertSame('second', $driven->focused()?->value, 'precondition: the keyboard is on the second field');
+
+        $driven->dispatch(new MouseMsg(0, 1, MouseAction::Press, MouseButton::Left));
+
+        self::assertSame('second', $driven->focused()?->value, 'the press lands on the first field, but the app said second');
+    }
 }
 
 final readonly class ScrolledPaneApp extends App
