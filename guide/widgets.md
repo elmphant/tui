@@ -34,7 +34,7 @@ interactive ones on your App, and bind them (see [Building an app](apps.md)).
 | `TextInput` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead). `withSubmit($message)` sends a message on Enter |
 | `Button` | A button that sends a message when pressed |
 | `Checkbox` / `CheckboxGroup` | Yes/no choices |
-| `Radio` / `Select` | One choice out of a list |
+| `Radio` / `Select` | One choice out of a list. A `Radio` always holds an option, unless `withClearable()` lets the reader put it back down |
 | `Dropdown` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))` |
 | `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
 

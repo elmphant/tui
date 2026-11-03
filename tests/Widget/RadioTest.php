@@ -44,9 +44,65 @@ final class RadioTest extends TestCase
     }
 
     #[Test]
-    public function aPlaceItDoesNotHaveSelectsNothing(): void
+    public function aPlainRadioHoldsTheFirstOptionWhenToldToHoldNothing(): void
     {
-        self::assertNull(Radio::new(['a', 'b'])->withSelected(1)->withSelected(5)->selectedIndex());
+        $radio = Radio::new(['a', 'b', 'c'])->withSelected(1);
+
+        self::assertSame(
+            [0, 0, 0, 0],
+            [
+                $radio->withSelected(null)->selectedIndex(),
+                $radio->withSelected(5)->selectedIndex(),
+                $radio->withSelectedValue(null)->selectedIndex(),
+                $radio->withSelectedValue('nope')->selectedIndex(),
+            ],
+        );
+    }
+
+    #[Test]
+    public function aClearableRadioHoldsNothingWhenToldToHoldNothing(): void
+    {
+        $radio = Radio::new(['a', 'b', 'c'])->withClearable()->withSelected(1);
+
+        self::assertSame(
+            [null, null, null, null],
+            [
+                $radio->withSelected(null)->selectedIndex(),
+                $radio->withSelected(5)->selectedIndex(),
+                $radio->withSelectedValue(null)->selectedIndex(),
+                $radio->withSelectedValue('nope')->selectedIndex(),
+            ],
+        );
+    }
+
+    #[Test]
+    public function aClearableRadioWhoseOptionLeavesHoldsNothing(): void
+    {
+        $radio = Radio::new(['a', 'b', 'c', 'd'])->withClearable()->withSelected(2);
+
+        self::assertNull($radio->withOptions(['a', 'b', 'd'])->selectedIndex());
+    }
+
+    #[Test]
+    public function aClearedRadioStaysClearedWhenItsOptionsReload(): void
+    {
+        $radio = Radio::new(['a', 'b'])->withClearable()->withSelected(null);
+
+        self::assertNull($radio->withOptions(['z', 'a', 'b'])->selectedIndex());
+    }
+
+    #[Test]
+    public function aRadioThatStopsBeingClearableHoldsTheFirstOption(): void
+    {
+        $radio = Radio::new(['a', 'b'])->withClearable()->withSelected(null);
+
+        self::assertSame(0, $radio->withClearable(false)->selectedIndex());
+    }
+
+    #[Test]
+    public function aRadioWithNoOptionsHoldsNothing(): void
+    {
+        self::assertNull(Radio::new([])->selectedIndex());
     }
 
     #[Test]

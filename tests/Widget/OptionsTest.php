@@ -160,13 +160,13 @@ final class OptionsTest extends TestCase
     }
 
     #[Test]
-    public function aRadioWhoseOptionIsGoneStandsOnTheFirst(): void
+    public function aRadioWhoseOptionIsGoneStandsOnTheNeighbour(): void
     {
-        $chosen = Radio::new(['alpha', 'beta', 'gamma'])->withSelected(2);
+        $chosen = Radio::new(['alpha', 'beta', 'gamma', 'delta'])->withSelected(2);
 
-        $narrowed = $chosen->withOptions(['beta', 'gamma-ish']);
+        $narrowed = $chosen->withOptions(['alpha', 'beta', 'delta']);
 
-        self::assertSame('beta', $narrowed->selectedValue(), 'a radio always stands on something');
+        self::assertSame('delta', $narrowed->selectedValue(), 'a radio always stands on something');
     }
 
     #[Test]

@@ -56,7 +56,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     {
         Options::assertDistinct($options, 'Radio');
 
-        return new self(options: $options, label: $label);
+        return (new self(options: $options, label: $label))->settled();
     }
 
     /**
@@ -70,25 +70,28 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
             return $this;
         }
 
-        // Keep a radio selection when its option disappears by selecting the first remaining option.
         return $this->cloneWith(
             options: $options,
-            selected: Options::placeOf($this->selectedValue(), $options) ?? 0,
+            selected: $this->clearable || $this->selected === null
+                ? Options::placeOf($this->selectedValue(), $options)
+                : Options::cursorAfter($this->selectedValue(), $options, $this->selected),
             cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options, $this->cursor),
-        );
+        )->settled();
     }
 
     public function withSelected(?int $selected): self
     {
-        return $this->cloneWith(selected: $selected !== null && isset($this->options[$selected]) ? $selected : null);
+        return $this->cloneWith(selected: $selected)->settled();
     }
 
-    /**
-     * Select by value; an unknown value falls back to the first option.
-     */
     public function withSelectedValue(?string $value): self
     {
-        return $this->cloneWith(selected: Options::placeOf($value, $this->options) ?? 0);
+        return $this->cloneWith(selected: Options::placeOf($value, $this->options))->settled();
+    }
+
+    public function withClearable(bool $clearable = true): static
+    {
+        return $this->cloneWith(clearable: $clearable)->settled();
     }
 
     public function withLabel(string $label): self
@@ -198,5 +201,14 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
     protected function rowOffset(): int
     {
         return $this->label !== '' ? 2 : 0;
+    }
+
+    private function settled(): self
+    {
+        return $this->cloneWith(selected: match (true) {
+            $this->selected !== null && isset($this->options[$this->selected]) => $this->selected,
+            $this->clearable || $this->options === [] => null,
+            default => 0,
+        });
     }
 }
