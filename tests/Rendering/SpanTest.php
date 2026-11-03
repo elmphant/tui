@@ -27,12 +27,24 @@ final class SpanTest extends TestCase
     }
 
     #[Test]
-    public function defaultStyleIsNull(): void
+    public function aBoldTokenSpanKeepsTheThemesColourAndAddsBold(): void
+    {
+        $theme = Theme::dark();
+
+        $resolved = Span::token('Deployed', StyleToken::Success)->bold()->withResolvedToken($theme);
+
+        self::assertSame($theme->success->foreground, $resolved->style?->foreground);
+        self::assertSame(Attr::BOLD, ($resolved->style?->attributes ?? 0) & Attr::BOLD);
+    }
+
+    #[Test]
+    public function aPlainSpanHasNeitherAStyleNorAToken(): void
     {
         $span = new Span('plain');
 
         self::assertSame('plain', $span->content);
         self::assertNull($span->style);
+        self::assertNull($span->token);
     }
 
     #[Test]

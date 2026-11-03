@@ -80,7 +80,7 @@ too. A bound component inside `Themed` works as it does anywhere else.
 
 ## Colours in text
 
-A `Span` carries either a theme token or a literal style, never both:
+A `Span` takes its colour from a theme token or from a literal style:
 
 ```php
 use Elmphant\Tui\Rendering\Color;
@@ -98,7 +98,9 @@ $status = Text::line(
 
 Use a token (`Base`, `Accent`, `Dim`, `Error`, `Success`, `Warning`, `Info`,
 `Title`) for colours that should follow the theme. Use a literal style for a
-brand colour that must stay the same in every theme.
+brand colour that must stay the same in every theme. `bold()`, `italic()` and the
+other modifiers work on both: `Span::token('Deployed', StyleToken::Success)->bold()`
+keeps the theme's colour and adds bold.
 
 ## Readable on a filled row
 
