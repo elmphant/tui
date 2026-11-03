@@ -103,11 +103,14 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
     }
 
     /**
-     * @param list<bool> $checked
+     * @param list<int> $indexes
      */
-    public function withChecked(array $checked): self
+    public function withChecked(array $indexes): self
     {
-        return $this->cloneWith(checked: $checked);
+        return $this->cloneWith(checked: array_map(
+            static fn (int $index): bool => \in_array($index, $indexes, true),
+            array_keys($this->options),
+        ));
     }
 
     public static function defaultKeybindings(): Keybindings
@@ -177,7 +180,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
             throw ValueItCannotHold::given($this, $value);
         }
 
-        return $this->withChecked(array_map(static fn (string $option): bool => \in_array($option, $value ?? [], true), $this->options));
+        return $this->cloneWith(checked: array_map(static fn (string $option): bool => \in_array($option, $value ?? [], true), $this->options));
     }
 
     public function sizing(): Sizing

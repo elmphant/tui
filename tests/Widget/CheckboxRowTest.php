@@ -125,9 +125,29 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
+    public function theCheckedOptionsAreGivenByIndexLikeACheckboxGroups(): void
+    {
+        $row = CheckboxRow::new(['a', 'b', 'c'])->withChecked([0, 2]);
+
+        self::assertTrue($row->isChecked(0));
+        self::assertFalse($row->isChecked(1));
+        self::assertTrue($row->isChecked(2));
+        self::assertSame([0, 2], $row->checkedIndices());
+    }
+
+    #[Test]
+    public function anIndexPastTheLastOptionChecksNothing(): void
+    {
+        $row = CheckboxRow::new(['a', 'b'])->withChecked([1, 5]);
+
+        self::assertSame([1], $row->checkedIndices());
+        self::assertSame(['b'], $row->value());
+    }
+
+    #[Test]
     public function breaksOntoAFurtherRowRatherThanRunningOffTheEdge(): void
     {
-        $row = CheckboxRow::new(['system', 'pages'])->withChecked([true, false]);
+        $row = CheckboxRow::new(['system', 'pages'])->withChecked([0]);
         $frame = new Frame(12, 2);
 
         $row->render($frame, new Rect(0, 0, 12, 2), new RenderContext(Theme::dark()));

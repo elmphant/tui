@@ -96,7 +96,7 @@ final class OptionsTest extends TestCase
     #[Test]
     public function aRowOfBoxesKeepsItsTicksOnTheSameLabels(): void
     {
-        $ticked = CheckboxRow::new(['alpha', 'beta', 'gamma'])->withChecked([true, false, true]);
+        $ticked = CheckboxRow::new(['alpha', 'beta', 'gamma'])->withChecked([0, 2]);
         self::assertSame([0, 2], $ticked->checkedIndices(), 'precondition: alpha and gamma are ticked');
 
         $grown = $ticked->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
