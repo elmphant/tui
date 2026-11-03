@@ -149,9 +149,9 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
-    public function aListWithNoItemsReadsItsNoItemsText(): void
+    public function aListWithNoItemsReadsItsNoDataText(): void
     {
-        $list = FilterableList::new([])->withNoItemsText('No tasks yet');
+        $list = FilterableList::new([])->withNoDataText('No tasks yet');
 
         self::assertStringContainsString('No tasks yet', $this->render($list));
     }

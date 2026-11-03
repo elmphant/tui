@@ -25,7 +25,7 @@ use Elmphant\Tui\Widget\Prose\Paragraph;
 
 /**
  * The field, the keys and the matches of a filter over a list or a table.
- * Use with SearchMode and DrawsFocus, and declare `$field`, `$matcher`, `$matching` and `$noMatchText`.
+ * Use with SearchMode and DrawsFocus, and declare `$field`, `$matcher`, `$matching`, `$noMatchText` and `$noDataText`.
  *
  * @internal
  */
@@ -84,6 +84,14 @@ trait FiltersItsContent
     public function withNoMatchText(string $noMatchText): self
     {
         return $this->cloneWith(noMatchText: $noMatchText);
+    }
+
+    /**
+     * Shown when there is nothing to filter.
+     */
+    public function withNoDataText(string $noDataText): self
+    {
+        return $this->cloneWith(noDataText: $noDataText);
     }
 
     public function cursorSourceIndex(): ?int

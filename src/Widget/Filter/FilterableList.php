@@ -66,7 +66,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
         private bool $searching = false,
-        private string $noItemsText = '',
+        private string $noDataText = '',
     ) {
         $this->matching = FilterMatches::kept(
             $matching,
@@ -108,11 +108,6 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         );
 
         return $reloaded->cloneWith(list: $this->list->withItems($reloaded->matchingItems()));
-    }
-
-    public function withNoItemsText(string $noItemsText): self
-    {
-        return $this->cloneWith(noItemsText: $noItemsText);
     }
 
     /**
@@ -329,7 +324,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
     private function nothingToShow(): string
     {
-        return $this->items === [] ? $this->noItemsText : $this->noMatchText;
+        return $this->items === [] ? $this->noDataText : $this->noMatchText;
     }
 
     private function renderContent(Frame $frame, Rect $body, RenderContext $context): void

@@ -55,7 +55,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         private Table $table,
         private ?Matcher $matcher = null,
         private string $noMatchText = 'No matches',
-        private string $noRowsText = '',
+        private string $noDataText = '',
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $searching = false,
@@ -91,11 +91,6 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
                 $this->selectedSource ?? 0,
             ),
         )->reFiltered();
-    }
-
-    public function withNoRowsText(string $noRowsText): self
-    {
-        return $this->cloneWith(noRowsText: $noRowsText);
     }
 
     public function summary(): string
@@ -211,7 +206,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     private function nothingToShow(): string
     {
-        return $this->rows === [] ? $this->noRowsText : $this->noMatchText;
+        return $this->rows === [] ? $this->noDataText : $this->noMatchText;
     }
 
     private function renderContent(Frame $frame, Rect $body, RenderContext $context): void

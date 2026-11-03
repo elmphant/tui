@@ -82,8 +82,8 @@ In a test, `$screen->styleAt($column, $row)->link` says which URL a cell opens.
 
 The filter widgets tell you what the reader picked in terms of the rows you
 handed in, not the filtered ones: `cursorSourceIndex()`, and on a table `cursorRow()`
-and `selectedRow()`. `withNoMatchText()` and `withNoRowsText()` (`withNoItemsText()`
-on a list) set what shows when nothing is there.
+and `selectedRow()`. `withNoMatchText()` sets what shows when nothing matches the
+query, and `withNoDataText()` what shows when there is nothing to filter.
 
 ## Lists keep their place
 

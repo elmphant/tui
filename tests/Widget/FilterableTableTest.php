@@ -163,7 +163,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function aTableWithNoRowsSaysWhatTheHostAsked(): void
     {
-        $empty = FilterableTable::new([Column::new('Name', Constraint::flex())], [])->withNoRowsText('Nothing loaded yet');
+        $empty = FilterableTable::new([Column::new('Name', Constraint::flex())], [])->withNoDataText('Nothing loaded yet');
 
         self::assertNotNull(WidgetHarness::for($empty, 40, 8)->screen()->find('Nothing loaded yet'));
     }
