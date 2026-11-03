@@ -250,6 +250,17 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aFootSetBeforeTheSubmitButtonStays(): void
+    {
+        $form = Form::new('Notes')
+            ->withField(Field::text('title', 'Title'))
+            ->withFoot('❯ notes:add')
+            ->withSubmit('Add', new TestMessage('add'));
+
+        self::assertStringContainsString('❯ notes:add', WidgetHarness::for($form, 70, 12)->screen()->plainText());
+    }
+
+    #[Test]
     public function aDisabledSubmitSaysWhyAndSendsNothing(): void
     {
         $form = WidgetHarness::for(self::userForm()->withSubmitDisabled('not from here'), 70, 24)->click('Run', offset: 1);
@@ -455,6 +466,7 @@ final class FormTest extends TestCase
             ->withField(Field::text('password', 'Password')->secret())
             ->withField(Field::choice('site', 'Site', ['main' => 'Main', 'intranet' => 'Intranet', 'shop' => 'Shop']))
             ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
-            ->withSubmit('Run', new TestMessage('run'), foot: '❯ backend:user:create');
+            ->withFoot('❯ backend:user:create')
+            ->withSubmit('Run', new TestMessage('run'));
     }
 }

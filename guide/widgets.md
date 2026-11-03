@@ -110,7 +110,8 @@ $form = Form::new('Create backend user')
     ->withField(Field::text('password', 'Password')->secret())
     ->withField(Field::choice('site', 'Site', ['main' => 'Main website', 'shop' => 'Shop']))
     ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
-    ->withSubmit('Run', new CreateUser(), foot: '❯ backend:user:create');
+    ->withFoot('❯ backend:user:create')
+    ->withSubmit('Run', new CreateUser());
 
 $tried = $form->submitted();                          // from now on, problems show under their fields
 $tried->missing();                                    // ['username']

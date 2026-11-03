@@ -93,9 +93,9 @@ final readonly class Form implements ClipsItsChildren, FollowsTheKeyboard, Graft
         return $this->cloneWith(intro: $intro);
     }
 
-    public function withSubmit(string $label, Message $message, string $foot = ''): self
+    public function withSubmit(string $label, Message $message): self
     {
-        return $this->cloneWith(submit: Button::new($label, $message)->withDisabled($this->disabledBecause !== null), foot: $foot);
+        return $this->cloneWith(submit: Button::new($label, $message)->withDisabled($this->disabledBecause !== null));
     }
 
     public function withFoot(string $foot): self
