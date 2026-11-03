@@ -597,6 +597,53 @@ final class FilterableListTest extends TestCase
     /**
      * @return list<SimpleListItem>
      */
+    #[Test]
+    public function aReloadThatReordersTheItemsKeepsTheChoiceOnTheSameItem(): void
+    {
+        [$first, $train, $second] = self::twoCoffeesAndATrain();
+        $chosen = $this->press($this->press($this->press(FilterableList::new([$first, $train, $second]), Key::Down), Key::Down), Key::Enter);
+        self::assertSame($second, $chosen->selectedItem(), 'precondition: the second coffee is chosen');
+
+        self::assertSame($second, $chosen->withItems([$second, $train, $first])->selectedItem());
+    }
+
+    #[Test]
+    public function activatingAnItemByItsKeyChoosesThatItem(): void
+    {
+        [$first, $train, $second] = self::twoCoffeesAndATrain();
+
+        self::assertSame($second, FilterableList::new([$first, $train, $second])->activated('second')->selectedItem());
+    }
+
+    #[Test]
+    public function aClickNamesTheItemUnderItByItsKey(): void
+    {
+        $click = new MouseMsg(1, self::FIRST_ITEM_ROW + 2, MouseAction::Press, MouseButton::Left);
+
+        self::assertSame('second', FilterableList::new(self::twoCoffeesAndATrain())->optionAt($click, $this->area()));
+    }
+
+    #[Test]
+    public function choosingTheOtherOfTwoItemsWithTheSameTextChoosesItRatherThanClearing(): void
+    {
+        [$first, $train, $second] = self::twoCoffeesAndATrain();
+        $list = $this->press(FilterableList::new([$first, $train, $second])->withClearable(), Key::Enter);
+        self::assertSame($first, $list->selectedItem(), 'precondition: the first coffee is chosen');
+
+        $other = $this->press($this->press($this->press($list, Key::Down), Key::Down), Key::Enter);
+
+        self::assertSame($second, $other->selectedItem());
+        self::assertNull($this->press($other, Key::Enter)->selectedItem(), 'choosing the chosen one again still clears it');
+    }
+
+    /**
+     * @return array{SimpleListItem, SimpleListItem, SimpleListItem}
+     */
+    private static function twoCoffeesAndATrain(): array
+    {
+        return [new SimpleListItem('Coffee', key: 'first'), new SimpleListItem('Train'), new SimpleListItem('Coffee', key: 'second')];
+    }
+
     private function commandItems(): array
     {
         return [

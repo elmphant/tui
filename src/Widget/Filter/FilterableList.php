@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
@@ -72,13 +73,12 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         private ListView $list,
         private ?Matcher $matcher = null,
         private string $noMatchText = 'No matches',
-        private ?string $selectedValue = null,
+        private ?int $selectedSource = null,
         private string $emptyCaption = '',
         ?FilterMatches $matching = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $clearable = false,
-        private ?int $selectedSourceIndex = null,
         private bool $searching = false,
         private string $noItemsText = '',
     ) {
@@ -108,7 +108,14 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     {
         ListItems::assertAll($items, 'FilterableList');
 
-        $reloaded = $this->cloneWith(items: $items);
+        $reloaded = $this->cloneWith(
+            items: $items,
+            selectedSource: Places::placeOf(
+                $this->selectedItem()?->key(),
+                array_map(static fn (ListItem $item): string => $item->key(), $items),
+                $this->selectedSource ?? 0,
+            ),
+        );
 
         return $reloaded->cloneWith(list: $this->list->withItems($reloaded->matchingItems()));
     }
@@ -189,11 +196,20 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * Store selections by filter value so a query with no matches cannot erase them.
+     * Choose the first item with this text, as a form field holding text does.
      */
     public function withSelectedValue(?string $filterValue): self
     {
-        return $this->cloneWith(selectedValue: $filterValue, selectedSourceIndex: null);
+        $place = null;
+        foreach ($this->items as $index => $item) {
+            if ($item->filterValue() === $filterValue) {
+                $place = $index;
+
+                break;
+            }
+        }
+
+        return $this->cloneWith(selectedSource: $place);
     }
 
     public function value(): ?string
@@ -210,23 +226,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
     public function selectedItem(): ?ListItem
     {
-        if ($this->selectedValue === null) {
-            return null;
-        }
-
-        $atIndex = $this->selectedSourceIndex === null ? null : ($this->items[$this->selectedSourceIndex] ?? null);
-
-        if ($atIndex !== null && $atIndex->filterValue() === $this->selectedValue) {
-            return $atIndex;
-        }
-
-        foreach ($this->items as $item) {
-            if ($item->filterValue() === $this->selectedValue) {
-                return $item;
-            }
-        }
-
-        return null;
+        return $this->selectedSource === null ? null : $this->items[$this->selectedSource] ?? null;
     }
 
     public function caption(): string
@@ -243,27 +243,23 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     {
         $index = $this->list->indexAt($message, $this->listArea($area));
 
-        return $index === null ? null : ($this->matchingItems()[$index] ?? null)?->filterValue();
+        return $index === null ? null : ($this->matchingItems()[$index] ?? null)?->key();
     }
 
     public function hasOption(string $option): bool
     {
-        foreach ($this->items as $item) {
-            if ($item->filterValue() === $option) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->placeOfKey($option) !== null;
     }
 
     public function activated(string $option): static
     {
-        if (!$this->hasOption($option)) {
+        $place = $this->placeOfKey($option);
+
+        if ($place === null) {
             return $this;
         }
 
-        return $this->withSelectedValue($this->clearable && $this->selectedValue === $option ? null : $option);
+        return $this->cloneWith(selectedSource: $this->clearable && $place === $this->selectedSource ? null : $place);
     }
 
     /**
@@ -353,18 +349,14 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return new UpdateResult($this->query() === '' ? $this : $this->withQuery(''));
         }
 
-        // Store the selected filter value and original row so duplicate values preserve the chosen item.
         if ($this->effectiveKeybindings()->matches($message, Actions::SELECT)) {
-            $cursor = $this->cursorItem();
+            $place = $this->sourceIndex();
 
-            if ($cursor === null) {
+            if ($place === null) {
                 return new UpdateResult($this);
             }
 
-            $value = $cursor->filterValue();
-            $clearing = $this->clearable && $this->selectedValue === $value;
-
-            return new UpdateResult($this->selectedAt($clearing ? null : $value, $this->sourceIndex()));
+            return new UpdateResult($this->cloneWith(selectedSource: $this->clearable && $place === $this->selectedSource ? null : $place));
         }
 
         if ($this->belongsToTheList($message)) {
@@ -423,15 +415,15 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         );
     }
 
-    /**
-     * Use the stored row only while its value still matches; otherwise find the selection by value.
-     */
-    private function selectedAt(?string $filterValue, ?int $index): self
+    private function placeOfKey(string $key): ?int
     {
-        return $this->cloneWith(
-            selectedValue: $filterValue,
-            selectedSourceIndex: $filterValue === null ? null : $index,
-        );
+        foreach ($this->items as $index => $item) {
+            if ($item->key() === $key) {
+                return $index;
+            }
+        }
+
+        return null;
     }
 
     private function belongsToTheList(KeyMsg $message): bool
