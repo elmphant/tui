@@ -66,16 +66,7 @@ final readonly class Block
 
     public function render(Frame $frame, Rect $area): void
     {
-        $borderArea = $area;
-
-        if ($this->margin !== null) {
-            $borderArea = $borderArea->shrink(
-                $this->margin->top,
-                $this->margin->right,
-                $this->margin->bottom,
-                $this->margin->left,
-            );
-        }
+        $borderArea = $this->inset()->margin->applyTo($area);
 
         if ($this->border !== null) {
             $this->renderBorder($frame, $borderArea, $this->border);
@@ -93,46 +84,41 @@ final readonly class Block
 
     private function renderBorder(Frame $frame, Rect $area, BorderStyle $border): void
     {
-        $foreground = $this->borderStyle->foregroundValue();
-        $background = $this->borderStyle->backgroundValue();
-        $attributes = $this->borderStyle->attributes;
+        $style = $this->borderStyle;
         $glyphs = $border->glyphs();
 
         $left = $area->x;
         $right = $area->right() - 1;
         $top = $area->y;
         $bottom = $area->bottom() - 1;
-        $horizontalWidth = $right - $left - 1;
-        $verticalHeight = $bottom - $top - 1;
+        $horizontalWidth = max(0, $right - $left - 1);
+        $verticalHeight = max(0, $bottom - $top - 1);
 
-        $frame->putChar($left, $top, $glyphs->topLeft, $foreground, $background, $attributes);
-        $frame->putChar($right, $top, $glyphs->topRight, $foreground, $background, $attributes);
-        $frame->fillRect($left + 1, $top, $horizontalWidth, 1, $foreground, $background, $attributes, $glyphs->horizontal);
+        $frame->putStyled($left, $top, $glyphs->topLeft, $style);
+        $frame->putStyled($right, $top, $glyphs->topRight, $style);
+        $frame->fillStyled(new Rect($left + 1, $top, $horizontalWidth, 1), $style, $glyphs->horizontal);
 
         if ($bottom !== $top) {
-            $frame->putChar($left, $bottom, $glyphs->bottomLeft, $foreground, $background, $attributes);
-            $frame->putChar($right, $bottom, $glyphs->bottomRight, $foreground, $background, $attributes);
-            $frame->fillRect($left + 1, $bottom, $horizontalWidth, 1, $foreground, $background, $attributes, $glyphs->horizontal);
+            $frame->putStyled($left, $bottom, $glyphs->bottomLeft, $style);
+            $frame->putStyled($right, $bottom, $glyphs->bottomRight, $style);
+            $frame->fillStyled(new Rect($left + 1, $bottom, $horizontalWidth, 1), $style, $glyphs->horizontal);
         }
 
-        $frame->fillRect($left, $top + 1, 1, $verticalHeight, $foreground, $background, $attributes, $glyphs->vertical);
-        $frame->fillRect($right, $top + 1, 1, $verticalHeight, $foreground, $background, $attributes, $glyphs->vertical);
+        $frame->fillStyled(new Rect($left, $top + 1, 1, $verticalHeight), $style, $glyphs->vertical);
+        $frame->fillStyled(new Rect($right, $top + 1, 1, $verticalHeight), $style, $glyphs->vertical);
     }
 
     private function renderTitle(Frame $frame, Rect $area): void
     {
-        $foreground = $this->titleStyle->foregroundValue();
-        $background = $this->titleStyle->backgroundValue();
-        $attributes = $this->titleStyle->attributes;
-
         $maxWidth = $area->width - 4;
         if ($maxWidth <= 0) {
             return;
         }
 
         $title = CharWidth::truncateToWidth($this->title ?? '', $maxWidth);
-        $frame->putChar($area->x + 1, $area->y, ' ', $foreground, $background);
-        $frame->putString($area->x + 2, $area->y, $title, $foreground, $background, $attributes);
-        $frame->putChar($area->x + 2 + CharWidth::stringWidth($title), $area->y, ' ', $foreground, $background);
+        $space = new Style($this->titleStyle->foreground, $this->titleStyle->background);
+        $frame->putStyled($area->x + 1, $area->y, ' ', $space);
+        $frame->putStyled($area->x + 2, $area->y, $title, $this->titleStyle);
+        $frame->putStyled($area->x + 2 + CharWidth::stringWidth($title), $area->y, ' ', $space);
     }
 }

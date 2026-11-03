@@ -904,6 +904,21 @@ final class BlockTest extends TestCase
         self::assertSame('│', $frame->characters[2 * 10 + 5]);
     }
 
+    #[Test]
+    public function aLinkOnTheBorderAndTitleStylesReachesTheirCells(): void
+    {
+        $border = (new Style())->withLink('https://example.com/border');
+        $title = (new Style(attributes: Attr::BOLD))->withLink('https://example.com/title');
+        $frame = new Frame(12, 3);
+
+        Block::new()->withBorder(BorderStyle::Solid)->withBorderStyle($border)->withTitle('Hi')->withTitleStyle($title)
+            ->render($frame, new Rect(0, 0, 12, 3));
+
+        self::assertSame($border->cellAttributes(), $frame->attributes[0]);
+        self::assertSame($border->cellAttributes(), $frame->attributes[12]);
+        self::assertSame($title->cellAttributes(), $frame->attributes[3]);
+    }
+
     private function fillBuffer(Frame $frame, string $char): void
     {
         for ($y = 0; $y < $frame->height; ++$y) {
