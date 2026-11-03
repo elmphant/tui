@@ -570,6 +570,17 @@ final class TableTest extends TestCase
     }
 
     #[Test]
+    public function aCursorSetOnAHeaderRowLandsOnTheNearestRowItCanStandOn(): void
+    {
+        $table = Table\Table::new(
+            [Column::new('Name', Constraint::flex())],
+            [Row::header('Top'), Row::new('Alice'), Row::new('Bob'), Row::header('Bottom')],
+        );
+
+        self::assertSame([1, 2], [$table->withCursor(0)->cursor(), $table->withCursor(3)->cursor()]);
+    }
+
+    #[Test]
     public function homeAndEndOnPlainRowsReachBothEnds(): void
     {
         $area = new Rect(0, 0, 40, 10);

@@ -183,7 +183,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
      */
     public function withCursor(int $cursor): self
     {
-        return $this->cloneWith(cursor: max(0, min($cursor, $this->rowCount() - 1)), followCursor: true);
+        return $this->cloneWith(cursor: self::selectablePlaceNear(max(0, min($cursor, $this->rowCount() - 1)), $this->rows), followCursor: true);
     }
 
     public function selectedIndex(): ?int
