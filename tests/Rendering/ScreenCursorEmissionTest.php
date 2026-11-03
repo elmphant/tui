@@ -146,7 +146,8 @@ final class ScreenCursorEmissionTest extends TestCase
         $this->paintWithCursor('one', 3, 0);
         $this->terminal->clearOutput();
 
-        $this->screen->forceRedraw($this->frame);
+        $this->screen->forget();
+        $this->screen->flush($this->frame);
 
         self::assertStringEndsWith(Ansi::SHOW_CURSOR . Ansi::SYNC_END, $this->terminal->output());
     }

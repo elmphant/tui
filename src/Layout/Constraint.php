@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
-use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use InvalidArgumentException;
 
@@ -123,24 +122,6 @@ final readonly class Constraint
             grow: $this->flex,
             shrink: $this->shrink,
         );
-    }
-
-    /**
-     * Reserve minimums, share the remainder by weight up to each maximum, then give leftover cells to the last eligible entries.
-     * Minimums may exceed $available; callers must clip the result.
-     *
-     * @param list<self> $constraints
-     *
-     * @return list<int>
-     */
-    public static function allocate(array $constraints, int $available): array
-    {
-        $policies = [];
-        foreach ($constraints as $constraint) {
-            $policies[] = $constraint->policy();
-        }
-
-        return Allocator::resolve($policies, $available)->sizes;
     }
 
     private static function exactZero(): self

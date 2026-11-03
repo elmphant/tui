@@ -18,7 +18,6 @@ final class VirtualTerminal implements Terminal
     private bool $altScreenEnabled = false;
     private bool $cursorVisible = true;
     private bool $mouseTrackingEnabled = false;
-    private int $sizeCalls = 0;
 
     /**
      * @var resource
@@ -169,14 +168,7 @@ final class VirtualTerminal implements Terminal
      */
     public function size(): array
     {
-        ++$this->sizeCalls;
-
         return [$this->width, $this->height];
-    }
-
-    public function sizeCallCount(): int
-    {
-        return $this->sizeCalls;
     }
 
     public function colorProfile(): ColorProfile

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Layout;
 
+use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Constraint;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -15,7 +16,7 @@ final class ConstraintTest extends TestCase
     #[Test]
     public function allocationReservesEveryFloorThenSharesTheRestByWeight(): void
     {
-        $sizes = Constraint::allocate([Constraint::min(5), Constraint::flex(), Constraint::flex(3)], 25);
+        $sizes = self::shared([Constraint::min(5), Constraint::flex(), Constraint::flex(3)], 25);
 
         self::assertSame([5, 5, 15], $sizes);
     }
@@ -78,7 +79,7 @@ final class ConstraintTest extends TestCase
     {
         $constraints = [new Constraint(min: 0, basis: 8), Constraint::exact(2)];
 
-        self::assertSame([2, 2], Constraint::allocate($constraints, 4));
+        self::assertSame([2, 2], self::shared($constraints, 4));
     }
 
     #[Test]
@@ -231,5 +232,15 @@ final class ConstraintTest extends TestCase
         $this->expectExceptionMessage('Constraint flex weight must be non-negative');
 
         new Constraint(flex: -1);
+    }
+
+    /**
+     * @param list<Constraint> $constraints
+     *
+     * @return list<int>
+     */
+    private static function shared(array $constraints, int $available): array
+    {
+        return Allocator::resolve(array_map(static fn (Constraint $constraint) => $constraint->policy(), $constraints), $available)->sizes;
     }
 }

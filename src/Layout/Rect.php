@@ -78,18 +78,4 @@ final readonly class Rect
     {
         return $this->shrink($margin, $margin, $margin, $margin);
     }
-
-    /**
-     * @param list<self> $rects
-     */
-    public static function findContaining(array $rects, int $x, int $y): ?int
-    {
-        foreach ($rects as $index => $rect) {
-            if ($rect->contains($x, $y)) {
-                return $index;
-            }
-        }
-
-        return null;
-    }
 }

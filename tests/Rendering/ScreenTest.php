@@ -476,7 +476,7 @@ final class ScreenTest extends TestCase
     }
 
     #[Test]
-    public function forceRedrawReRendersEverything(): void
+    public function aScreenThatForgotWhatItDrewPaintsEveryCellAgain(): void
     {
         $terminal = new class implements TerminalOutput {
             public string $output = '';
@@ -495,7 +495,8 @@ final class ScreenTest extends TestCase
         $frame->putString(0, 0, 'Hello');
         $screen->flush($frame);
         $terminal->output = '';
-        $screen->forceRedraw($frame);
+        $screen->forget();
+        $screen->flush($frame);
         self::assertStringContainsString('Hello', $terminal->output);
     }
 

@@ -142,13 +142,4 @@ final class RectTest extends TestCase
         self::assertSame(0, $inner->width);
         self::assertSame(0, $inner->height);
     }
-
-    #[Test]
-    public function aPointIsFoundInTheFirstRectThatHoldsIt(): void
-    {
-        $rects = [new Rect(0, 0, 5, 1), new Rect(5, 0, 5, 1), new Rect(5, 0, 10, 1)];
-
-        self::assertSame(1, Rect::findContaining($rects, 7, 0));
-        self::assertNull(Rect::findContaining($rects, 20, 0));
-    }
 }

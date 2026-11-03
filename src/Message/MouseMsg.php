@@ -59,11 +59,6 @@ final readonly class MouseMsg implements Message
         return $step * max(1, $this->repeat);
     }
 
-    public function mergedWith(self $next): self
-    {
-        return $next->withRepeat($this->repeat + $next->repeat);
-    }
-
     public function inRect(Rect $rect): bool
     {
         return $rect->contains($this->x, $this->y);

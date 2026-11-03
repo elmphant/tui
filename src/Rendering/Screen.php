@@ -53,12 +53,6 @@ final class Screen
         $backBuffer->clearDirty();
     }
 
-    public function forceRedraw(Frame $backBuffer): void
-    {
-        $this->front = null;
-        $this->flush($backBuffer);
-    }
-
     /**
      * For when something else has written to the terminal: the next flush draws every cell.
      */

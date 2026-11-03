@@ -12,28 +12,12 @@ use Elmphant\Tui\Layout\Axis\Justification;
 use Elmphant\Tui\Layout\Axis\Overflow;
 use Elmphant\Tui\Layout\Axis\Remainder;
 use Elmphant\Tui\Layout\Constraint;
-use Elmphant\Tui\Tests\Layout\Invariant\ConstraintSweep;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class AllocatorTest extends TestCase
 {
-    /**
-     * @param list<Constraint> $constraints
-     */
-    #[Test]
-    #[DataProvider('cases')]
-    public function sizesEverySweptRowTheWayConstraintsAlreadyDo(array $constraints, int $extent): void
-    {
-        $policies = array_map(static fn (Constraint $constraint) => $constraint->policy(), $constraints);
-
-        self::assertSame(
-            Constraint::allocate($constraints, $extent),
-            Allocator::resolve($policies, $extent)->sizes,
-        );
-    }
-
     #[Test]
     public function theCellsNobodyClaimedSitBeforeTheSlotsWhenTheyArePushedToTheEnd(): void
     {
@@ -450,13 +434,5 @@ final class AllocatorTest extends TestCase
 
         self::assertSame([3, 5, 2], $resolved->sizes);
         self::assertSame([0, 3, 8], $resolved->offsets);
-    }
-
-    /**
-     * @return iterable<string, array{list<Constraint>, int}>
-     */
-    public static function cases(): iterable
-    {
-        return ConstraintSweep::cases();
     }
 }
