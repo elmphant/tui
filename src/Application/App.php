@@ -392,9 +392,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     }
 
     /**
-     * Override the focus-cycle keys, for example when a form needs Tab as text.
-     */
-    /**
      * Ctrl+K opens help when a field takes `?` as text; return Keybindings::empty() to disable help.
      */
     protected function keyHelpBindings(): Keybindings
@@ -407,6 +404,9 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return Actions::description($action);
     }
 
+    /**
+     * Override the focus-cycle keys, for example when a form needs Tab as text.
+     */
     protected function focusCycleBindings(): Keybindings
     {
         return new Keybindings([
