@@ -47,35 +47,40 @@ final readonly class Style
 
     public function bold(): Style
     {
-        return $this->withAttributes(Attr::BOLD);
+        return $this->addAttributes(Attr::BOLD);
     }
 
     public function faint(): Style
     {
-        return $this->withAttributes(Attr::FAINT);
+        return $this->addAttributes(Attr::FAINT);
     }
 
     public function italic(): Style
     {
-        return $this->withAttributes(Attr::ITALIC);
+        return $this->addAttributes(Attr::ITALIC);
     }
 
     public function underline(): Style
     {
-        return $this->withAttributes(Attr::UNDERLINE);
+        return $this->addAttributes(Attr::UNDERLINE);
     }
 
     public function reverse(): Style
     {
-        return $this->withAttributes(Attr::REVERSE);
+        return $this->addAttributes(Attr::REVERSE);
     }
 
     public function strikethrough(): Style
     {
-        return $this->withAttributes(Attr::STRIKETHROUGH);
+        return $this->addAttributes(Attr::STRIKETHROUGH);
     }
 
     public function withAttributes(int $attributes): Style
+    {
+        return $this->cloneWith(attributes: $attributes);
+    }
+
+    public function addAttributes(int $attributes): Style
     {
         return $this->cloneWith(attributes: $this->attributes | $attributes);
     }
@@ -86,7 +91,7 @@ final readonly class Style
     public function readableOn(self $panel, float $minimumRatio = 4.5): Style
     {
         if ($panel->background === null) {
-            return $this->withAttributes($panel->attributes & Attr::REVERSE);
+            return $this->addAttributes($panel->attributes & Attr::REVERSE);
         }
 
         return $this->cloneWith(

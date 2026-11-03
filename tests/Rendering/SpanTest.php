@@ -122,6 +122,22 @@ final class SpanTest extends TestCase
     }
 
     #[Test]
+    public function settingASpansAttributesReplacesTheOnesBefore(): void
+    {
+        $span = (new Span('hello'))->bold()->withAttributes(Attr::ITALIC);
+
+        self::assertSame(Attr::ITALIC, $span->style?->attributes);
+    }
+
+    #[Test]
+    public function addingAttributesToASpanKeepsTheOnesBefore(): void
+    {
+        $span = (new Span('hello'))->bold()->addAttributes(Attr::ITALIC);
+
+        self::assertSame(Attr::BOLD | Attr::ITALIC, $span->style?->attributes);
+    }
+
+    #[Test]
     public function anAttributeAddedToAStyledSpanKeepsTheStylesColour(): void
     {
         $red = Color::ansi(1);

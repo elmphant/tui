@@ -78,6 +78,23 @@ final class StyleTest extends TestCase
     }
 
     #[Test]
+    public function settingTheAttributesReplacesTheOnesBefore(): void
+    {
+        $style = (new Style())->bold()->italic()->withAttributes(Attr::UNDERLINE);
+
+        self::assertSame(Attr::UNDERLINE, $style->attributes);
+        self::assertSame(0, $style->withAttributes(0)->attributes);
+    }
+
+    #[Test]
+    public function addingAttributesKeepsTheOnesBefore(): void
+    {
+        $style = (new Style())->bold()->addAttributes(Attr::ITALIC | Attr::UNDERLINE);
+
+        self::assertSame(Attr::BOLD | Attr::ITALIC | Attr::UNDERLINE, $style->attributes);
+    }
+
+    #[Test]
     public function chainedAttributes(): void
     {
         $style = (new Style())->bold()->italic()->underline();

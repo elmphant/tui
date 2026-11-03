@@ -15,6 +15,16 @@ use PHPUnit\Framework\TestCase;
 final class ThemeTest extends TestCase
 {
     #[Test]
+    public function theWarningInkTakesTheTitleColourWithoutItsBold(): void
+    {
+        $theme = Theme::dark();
+
+        self::assertSame(Attr::BOLD, $theme->titleStyle->attributes & Attr::BOLD, 'precondition: the title is bold');
+        self::assertSame($theme->titleStyle->foreground, $theme->warning->foreground);
+        self::assertSame(0, $theme->warning->attributes & Attr::BOLD);
+    }
+
+    #[Test]
     public function darkPresetHasAllTokens(): void
     {
         $theme = Theme::dark();

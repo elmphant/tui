@@ -35,37 +35,42 @@ final readonly class Span
 
     public function bold(): self
     {
-        return $this->withAttributes(Attr::BOLD);
+        return $this->addAttributes(Attr::BOLD);
     }
 
     public function faint(): self
     {
-        return $this->withAttributes(Attr::FAINT);
+        return $this->addAttributes(Attr::FAINT);
     }
 
     public function italic(): self
     {
-        return $this->withAttributes(Attr::ITALIC);
+        return $this->addAttributes(Attr::ITALIC);
     }
 
     public function underline(): self
     {
-        return $this->withAttributes(Attr::UNDERLINE);
+        return $this->addAttributes(Attr::UNDERLINE);
     }
 
     public function reverse(): self
     {
-        return $this->withAttributes(Attr::REVERSE);
+        return $this->addAttributes(Attr::REVERSE);
     }
 
     public function strikethrough(): self
     {
-        return $this->withAttributes(Attr::STRIKETHROUGH);
+        return $this->addAttributes(Attr::STRIKETHROUGH);
     }
 
     public function withAttributes(int $attributes): self
     {
         return $this->cloneWith(style: ($this->style ?? new Style())->withAttributes($attributes));
+    }
+
+    public function addAttributes(int $attributes): self
+    {
+        return $this->cloneWith(style: ($this->style ?? new Style())->addAttributes($attributes));
     }
 
     /**
