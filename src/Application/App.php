@@ -156,9 +156,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $holder = $focus->focused();
         foreach ($this->mountsHearingKeys($holder) as $mount) {
             if ($mount->model instanceof BindsChords) {
-                $inside = $holder !== null && $holder->isUnder($mount->id)
-                    ? ComponentId::named(substr($holder->value, \strlen($mount->id->value) + 1))
-                    : null;
+                $inside = $holder?->below($mount->id);
                 $chords = $chords->append($mount->model->chords($inside === null ? FocusState::nowhere() : FocusState::on($inside))->chords());
             }
         }

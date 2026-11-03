@@ -25,6 +25,11 @@ final readonly class ComponentId implements Stringable
         return $cut === false ? null : new self(substr($this->value, 0, $cut));
     }
 
+    public function below(self $ancestor): ?self
+    {
+        return $this->isUnder($ancestor) ? new self(substr($this->value, strlen($ancestor->value) + 1)) : null;
+    }
+
     /**
      * Call only when isUnder() is true, so the result is non-empty.
      *
@@ -32,6 +37,6 @@ final readonly class ComponentId implements Stringable
      */
     public function pathBelow(self $ancestor): array
     {
-        return array_map(intval(...), explode('/', substr($this->value, strlen($ancestor->value) + 1)));
+        return array_map(intval(...), explode('/', $this->below($ancestor)->value ?? ''));
     }
 }

@@ -260,8 +260,8 @@ final class FocusPath
         }
 
         $focused = $this->focus->focused()->value ?? '';
-        $under = str_starts_with($focused, $id->value . '/');
-        $holdsFocus = $focused === $id->value || $under || in_array($id->value, $this->enclosure, true);
+        $below = $this->focus->focused()?->below($id);
+        $holdsFocus = $focused === $id->value || $below !== null || in_array($id->value, $this->enclosure, true);
         if (!$holdsFocus) {
             $this->withoutFocus($render);
 
@@ -271,9 +271,7 @@ final class FocusPath
         $path = $this->path;
         $loose = $this->loose;
         ++$this->depth;
-        $this->path = $under
-            ? explode('/', substr($focused, strlen($id->value) + 1))
-            : [];
+        $this->path = $below === null ? [] : explode('/', $below->value);
         $this->loose = $focused === $id->value
             && !in_array($id->value, $this->stopPublishers, true);
 
