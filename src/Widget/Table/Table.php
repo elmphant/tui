@@ -274,16 +274,6 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     }
 
     /**
-     * @internal
-     *
-     * @return list<int>
-     */
-    public function columnWidths(int $totalWidth): array
-    {
-        return $this->columnPlacement($totalWidth)->sizes;
-    }
-
-    /**
      * After reload, move the cursor off rows that cannot be selected.
      *
      * @param list<Row> $rows

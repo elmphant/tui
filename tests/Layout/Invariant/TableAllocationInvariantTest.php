@@ -40,25 +40,17 @@ final class TableAllocationInvariantTest extends TestCase
 
     #[Test]
     #[DataProviderExternal(ConstraintSweep::class, 'cases')]
-    public function aTableAllocatesWhatARowOfTheSameConstraintsAllocates(array $constraints, int $extent): void
+    public function aTableDrawsTheColumnsARowOfTheSameConstraintsAllocatesAsFarAsTheAreaReaches(array $constraints, int $extent): void
     {
         $row = Layout::horizontal(...array_map(
             static fn (Constraint $constraint): ConstrainedWidget => new ConstrainedWidget($constraint),
             $constraints,
         ))->withGap(1);
-
-        self::assertSame($row->sizesFor($extent), $this->table($constraints)->columnWidths($extent));
-    }
-
-    #[Test]
-    #[DataProviderExternal(ConstraintSweep::class, 'cases')]
-    public function theDrawnColumnsMatchTheWidthsItAllocatedAsFarAsTheAreaReaches(array $constraints, int $extent): void
-    {
         $remaining = $extent;
         $expected = [];
         $gap = self::gapIn($constraints, $extent);
 
-        foreach ($this->table($constraints)->columnWidths($extent) as $width) {
+        foreach ($row->sizesFor($extent) as $width) {
             $fits = min($width, $remaining);
             $expected[] = $fits;
             $remaining -= $fits + min($gap, $remaining - $fits);
@@ -68,34 +60,9 @@ final class TableAllocationInvariantTest extends TestCase
     }
 
     #[Test]
-    #[DataProviderExternal(ConstraintSweep::class, 'casesWhereEveryFloorFits')]
-    public function eachColumnLandsBetweenItsFloorAndItsCeiling(array $constraints, int $extent): void
-    {
-        $widths = $this->table($constraints)->columnWidths($extent);
-
-        foreach ($constraints as $index => $constraint) {
-            self::assertGreaterThanOrEqual($constraint->min, $widths[$index]);
-            self::assertLessThanOrEqual($constraint->max, $widths[$index]);
-        }
-    }
-
-    #[Test]
-    #[DataProviderExternal(ConstraintSweep::class, 'casesWithAnUncappedWeightedChild')]
-    public function aWeightedColumnWithoutACeilingLeavesNoCellUnused(array $constraints, int $extent): void
-    {
-        $gaps = self::gapIn($constraints, $extent) * (count($constraints) - 1);
-        $floors = array_sum(array_map(static fn (Constraint $constraint): int => $constraint->min, $constraints));
-
-        self::assertSame(max($extent, $floors + $gaps), array_sum($this->table($constraints)->columnWidths($extent)) + $gaps);
-    }
-
-    #[Test]
     #[DataProviderExternal(ConstraintSweep::class, 'cases')]
-    public function theSameTableAllocatesTheSameColumnsTwice(array $constraints, int $extent): void
+    public function theSameTableDrawsTheSameColumnsTwice(array $constraints, int $extent): void
     {
-        $table = $this->table($constraints);
-
-        self::assertSame($table->columnWidths($extent), $table->columnWidths($extent));
         self::assertSame($this->drawnWidths($constraints, $extent), $this->drawnWidths($constraints, $extent));
     }
 
