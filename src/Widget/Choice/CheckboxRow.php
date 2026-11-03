@@ -98,7 +98,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
         return $this->cloneWith(
             options: $options,
             checked: $checked,
-            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
+            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options, $this->cursor),
         );
     }
 

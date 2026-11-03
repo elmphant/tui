@@ -49,6 +49,16 @@ final class OptionsTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('choiceWidgets')]
+    public function aCursorWhoseOptionLeavesLandsOnTheNeighbour(Select|Radio|CheckboxGroup|CheckboxRow|RadioRow $widget): void
+    {
+        $onGamma = $widget->withOptions(['alpha', 'beta', 'gamma', 'delta'])->withCursor(2);
+
+        self::assertSame(2, $onGamma->withOptions(['alpha', 'beta', 'delta'])->cursor());
+        self::assertSame(1, $onGamma->withOptions(['alpha', 'beta'])->cursor());
+    }
+
+    #[Test]
     public function aCursorInAnEmptyListStaysAtTheStart(): void
     {
         self::assertSame(0, Select::new([])->withCursor(4)->cursor());

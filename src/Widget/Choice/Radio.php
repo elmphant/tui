@@ -74,7 +74,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         return $this->cloneWith(
             options: $options,
             selected: Options::placeOf($this->selectedValue(), $options) ?? 0,
-            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
+            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options, $this->cursor),
         );
     }
 

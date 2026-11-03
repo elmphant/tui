@@ -110,7 +110,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
         return $this->cloneWith(
             options: $options,
             selected: Options::placeOf($this->selectedValue(), $options),
-            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
+            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options, $this->cursor),
         );
     }
 

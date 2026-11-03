@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Choice;
 
+use Elmphant\Tui\Support\Places;
 use InvalidArgumentException;
 
 /**
@@ -44,9 +45,9 @@ final class Options
     /**
      * @param list<string> $options
      */
-    public static function cursorAfter(?string $under, array $options): int
+    public static function cursorAfter(?string $under, array $options, int $near): int
     {
-        return self::placeOf($under, $options) ?? 0;
+        return Places::cursorAfter($under, $options, $near);
     }
 
     /**

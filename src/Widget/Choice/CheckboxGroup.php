@@ -82,7 +82,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         return $this->cloneWith(
             options: $options,
             checked: $checked,
-            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options),
+            cursor: Options::cursorAfter($this->options[$this->cursor] ?? null, $options, $this->cursor),
         );
     }
 
