@@ -172,7 +172,7 @@ final readonly class BusyModel implements Reducer, Initializes
 
                 return null;
             }),
-            Cmd::exec(['sh', '-c', 'sleep 0.1; touch ' . escapeshellarg($this->marker)]),
+            Cmd::exec(['sh', '-c', 'sleep 0.4; touch ' . escapeshellarg($this->marker)]),
             new UnnamedFeedCmd(),
         );
     }
@@ -202,7 +202,7 @@ final readonly class HostOfABusyMount extends App
     {
         return Cmd::batch(
             Cmd::after(0.03, static fn (): Message => new LeaveNow()),
-            Cmd::after(0.3, static fn (): Message => new QuitNow()),
+            Cmd::after(0.6, static fn (): Message => new QuitNow()),
         );
     }
 
