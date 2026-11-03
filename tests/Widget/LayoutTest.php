@@ -427,7 +427,7 @@ final class LayoutTest extends TestCase
     public function flexChildIsClampedToItsMaxAndLeftoverFlowsToSiblings(): void
     {
         $layout = Layout::vertical(
-            $this->createWidgetWithConstraint(new Constraint(min: 0, max: 4, flex: 1)),
+            $this->createWidgetWithConstraint(Constraint::max(4)),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
         );
 
@@ -442,7 +442,7 @@ final class LayoutTest extends TestCase
     {
         $layout = Layout::vertical(
             $this->createWidgetWithConstraint(Constraint::flex(1)),
-            $this->createWidgetWithConstraint(new Constraint(min: 0, max: 4, flex: 1)),
+            $this->createWidgetWithConstraint(Constraint::max(4)),
         );
 
         $rects = $layout->computeChildRects(new Rect(0, 0, 20, 10));
@@ -455,7 +455,7 @@ final class LayoutTest extends TestCase
     public function minWithFlexGrowsFromItsMinimum(): void
     {
         $layout = Layout::vertical(
-            $this->createWidgetWithConstraint(new Constraint(min: 4, flex: 1)),
+            $this->createWidgetWithConstraint(Constraint::min(4)->withFlex()),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
         );
 
@@ -472,7 +472,7 @@ final class LayoutTest extends TestCase
             $this->createWidgetWithConstraint(Constraint::flex(1)),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
-            $this->createWidgetWithConstraint(new Constraint(min: 0, max: 5, flex: 0)),
+            $this->createWidgetWithConstraint(Constraint::max(5)->withFlex(0)),
         );
 
         $rects = $layout->computeChildRects(new Rect(0, 0, 20, 10));
@@ -527,7 +527,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function nonFlexChildBetweenFlexChildrenGetsZero(): void
     {
-        $nonExactNonFlex = $this->createWidgetWithConstraint(new Constraint(min: 0, max: 5, flex: 0));
+        $nonExactNonFlex = $this->createWidgetWithConstraint(Constraint::max(5)->withFlex(0));
         $flexA = $this->createWidgetWithConstraint(Constraint::flex(1));
         $flexB = $this->createWidgetWithConstraint(Constraint::flex(1));
 

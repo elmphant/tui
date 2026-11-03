@@ -32,30 +32,30 @@ final class FlexTest extends TestCase
     public function defaultsAreObservableAndZeroValuesAreValid(): void
     {
         $zeroBasis = Flex::row()
-            ->add(Text::new('default'), new Constraint(max: 0, flex: 0))
-            ->add(Text::new('fixed'), new Constraint(max: 1, flex: 0, basis: 1));
+            ->add(Text::new('default'), Constraint::max(0)->withFlex(0))
+            ->add(Text::new('fixed'), Constraint::max(1)->withFlex(0)->withBasis(1));
         self::assertSame([0, 1], $this->mainSizes($zeroBasis, Rect::fromSize(2, 1)));
 
         $defaultBasis = Flex::row()
-            ->add(Text::new('default'), new Constraint(flex: 0))
-            ->add(Text::new('fixed'), new Constraint(max: 1, flex: 0, basis: 1));
+            ->add(Text::new('default'), Constraint::min(0))
+            ->add(Text::new('fixed'), Constraint::max(1)->withFlex(0)->withBasis(1));
         self::assertSame([0, 1], $this->mainSizes($defaultBasis, Rect::fromSize(2, 1)));
 
         $defaultGrow = Flex::row()
             ->add(Text::new('default'))
-            ->add(Text::new('explicit'), new Constraint(flex: 1));
+            ->add(Text::new('explicit'), Constraint::flex());
         self::assertSame([10, 3], $this->mainSizes($defaultGrow, Rect::fromSize(13, 1)));
 
         $defaultShrink = Flex::row()
-            ->add(Text::new('default'), new Constraint(flex: 1, basis: 4))
-            ->add(Text::new('explicit'), new Constraint(flex: 1, basis: 4, shrink: 1));
+            ->add(Text::new('default'), Constraint::flex()->withBasis(4))
+            ->add(Text::new('explicit'), Constraint::flex()->withBasis(4)->withShrink(1));
         self::assertSame([3, 2], $this->mainSizes($defaultShrink, Rect::fromSize(5, 1)));
 
         $zeroGap = Flex::row()->withGap(0);
         self::assertNotSame(Flex::row(), $zeroGap);
         self::assertSame([], $zeroGap->computeChildRects(Rect::fromSize(1, 1)));
 
-        $fixedAtZero = Flex::row()->add(Text::new('zero'), new Constraint(min: 0, max: 0, flex: 0, basis: 0, shrink: 0));
+        $fixedAtZero = Flex::row()->add(Text::new('zero'), Constraint::min(0)->withMax(0)->withBasis(0)->withShrink(0));
         self::assertSame([0], $this->mainSizes($fixedAtZero, Rect::fromSize(1, 1)));
     }
 
@@ -78,7 +78,17 @@ final class FlexTest extends TestCase
     public function everyNegativeConstraintValueIsRejected(array $arguments): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new Constraint(...$arguments);
+
+        $constraint = Constraint::min($arguments['min'] ?? 0);
+        foreach ($arguments as $field => $value) {
+            $constraint = match ($field) {
+                'min' => $constraint,
+                'max' => $constraint->withMax($value),
+                'flex' => $constraint->withFlex($value),
+                'basis' => $constraint->withBasis($value),
+                'shrink' => $constraint->withShrink($value),
+            };
+        }
     }
 
     /**
@@ -96,7 +106,7 @@ final class FlexTest extends TestCase
     #[Test]
     public function negativeGapIsRejectedButEqualItemBoundsAreValid(): void
     {
-        $fixed = Flex::row()->add(Text::new('fixed'), new Constraint(min: 3, max: 3, flex: 1, basis: 3));
+        $fixed = Flex::row()->add(Text::new('fixed'), Constraint::min(3)->withMax(3)->withFlex()->withBasis(3));
         self::assertSame([3], $this->mainSizes($fixed, Rect::fromSize(5, 1)));
 
         $this->expectException(InvalidArgumentException::class);
@@ -110,8 +120,8 @@ final class FlexTest extends TestCase
         $second = Text::new('second');
         $flex = Flex::row()
             ->withGap(2)
-            ->add($first, new Constraint(flex: 1, basis: 20))
-            ->add($second, new Constraint(flex: 1, basis: 20));
+            ->add($first, Constraint::flex()->withBasis(20))
+            ->add($second, Constraint::flex()->withBasis(20));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 100, 10));
 
@@ -184,9 +194,9 @@ final class FlexTest extends TestCase
         $flex = Flex::row()
             ->withWrap()
             ->withGap(2)
-            ->add($first, new Constraint(min: 20, flex: 1, basis: 30))
-            ->add($second, new Constraint(min: 20, flex: 1, basis: 30))
-            ->add($third, new Constraint(min: 20, flex: 1, basis: 30));
+            ->add($first, Constraint::min(20)->withFlex()->withBasis(30))
+            ->add($second, Constraint::min(20)->withFlex()->withBasis(30))
+            ->add($third, Constraint::min(20)->withFlex()->withBasis(30));
 
         $wide = $flex->computeChildRects(new Rect(0, 0, 100, 12));
         self::assertEquals(new Rect(0, 0, 32, 12), $wide[0][1]);
@@ -240,9 +250,9 @@ final class FlexTest extends TestCase
         $flex = Flex::row()
             ->withWrap()
             ->withGap(10)
-            ->add(Text::new('first'), new Constraint(min: 20, flex: 1, basis: 30))
-            ->add(Text::new('second'), new Constraint(min: 20, flex: 1, basis: 30))
-            ->add(Text::new('third'), new Constraint(min: 20, flex: 1, basis: 30));
+            ->add(Text::new('first'), Constraint::min(20)->withFlex()->withBasis(30))
+            ->add(Text::new('second'), Constraint::min(20)->withFlex()->withBasis(30))
+            ->add(Text::new('third'), Constraint::min(20)->withFlex()->withBasis(30));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 35, 12));
 
@@ -261,8 +271,8 @@ final class FlexTest extends TestCase
         $flex = Flex::row()
             ->withWrap()
             ->withGap(2)
-            ->add(Text::new('first'), new Constraint(max: 10, flex: 0, basis: 10))
-            ->add(Text::new('second'), new Constraint(max: 10, flex: 0, basis: 10));
+            ->add(Text::new('first'), Constraint::max(10)->withFlex(0)->withBasis(10))
+            ->add(Text::new('second'), Constraint::max(10)->withFlex(0)->withBasis(10));
 
         $exact = $flex->computeChildRects(Rect::fromSize(22, 5));
         self::assertSame([0, 12], array_column(array_column($exact, 1), 'x'));
@@ -279,9 +289,9 @@ final class FlexTest extends TestCase
         $wrapped = Flex::row()
             ->withWrap()
             ->withGap(5)
-            ->add(Text::new('first'), new Constraint(flex: 1, basis: 2))
-            ->add(Text::new('second'), new Constraint(flex: 1, basis: 2))
-            ->add(Text::new('third'), new Constraint(flex: 1, basis: 2));
+            ->add(Text::new('first'), Constraint::flex()->withBasis(2))
+            ->add(Text::new('second'), Constraint::flex()->withBasis(2))
+            ->add(Text::new('third'), Constraint::flex()->withBasis(2));
         foreach ($wrapped->computeChildRects(Rect::fromSize(1, 1)) as [, $rect]) {
             self::assertGreaterThanOrEqual(0, $rect->height);
             self::assertLessThanOrEqual(1, $rect->bottom());
@@ -293,8 +303,8 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withGap(1)
-            ->add(Text::new('first'), new Constraint(min: 20, flex: 1, basis: 30))
-            ->add(Text::new('second'), new Constraint(min: 20, flex: 1, basis: 30));
+            ->add(Text::new('first'), Constraint::min(20)->withFlex()->withBasis(30))
+            ->add(Text::new('second'), Constraint::min(20)->withFlex()->withBasis(30));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 51, 5));
 
@@ -308,8 +318,8 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withGap(1)
-            ->add(Text::new('first'), new Constraint(min: 15, flex: 1, basis: 30))
-            ->add(Text::new('second'), new Constraint(min: 15, flex: 1, basis: 30));
+            ->add(Text::new('first'), Constraint::min(15)->withFlex()->withBasis(30))
+            ->add(Text::new('second'), Constraint::min(15)->withFlex()->withBasis(30));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 21, 5));
 
@@ -324,8 +334,8 @@ final class FlexTest extends TestCase
         $flex = Flex::row()
             ->withGap(2)
             ->withJustify(Justification::Center)
-            ->add(Text::new('first'), new Constraint(max: 10, flex: 1, basis: 10))
-            ->add(Text::new('second'), new Constraint(max: 10, flex: 1, basis: 10));
+            ->add(Text::new('first'), Constraint::max(10)->withBasis(10))
+            ->add(Text::new('second'), Constraint::max(10)->withBasis(10));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 30, 5));
 
@@ -339,9 +349,9 @@ final class FlexTest extends TestCase
         $flex = Flex::row()
             ->withGap(2)
             ->withJustify(Justification::SpaceBetween)
-            ->add(Text::new('first'), new Constraint(max: 5, flex: 1, basis: 5))
-            ->add(Text::new('second'), new Constraint(max: 5, flex: 1, basis: 5))
-            ->add(Text::new('third'), new Constraint(max: 5, flex: 1, basis: 5));
+            ->add(Text::new('first'), Constraint::max(5)->withBasis(5))
+            ->add(Text::new('second'), Constraint::max(5)->withBasis(5))
+            ->add(Text::new('third'), Constraint::max(5)->withBasis(5));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 25, 3));
 
@@ -356,8 +366,8 @@ final class FlexTest extends TestCase
     {
         $make = static fn (Justification $justify): Flex => Flex::row()
             ->withJustify($justify)
-            ->add(Text::new('first'), new Constraint(max: 2, flex: 0, basis: 2))
-            ->add(Text::new('second'), new Constraint(max: 2, flex: 0, basis: 2));
+            ->add(Text::new('first'), Constraint::max(2)->withFlex(0)->withBasis(2))
+            ->add(Text::new('second'), Constraint::max(2)->withFlex(0)->withBasis(2));
 
         self::assertSame([0, 2], $this->mainOffsets($make(Justification::Start), Rect::fromSize(9, 1)));
         self::assertSame([5, 7], $this->mainOffsets($make(Justification::End), Rect::fromSize(9, 1)));
@@ -368,7 +378,7 @@ final class FlexTest extends TestCase
 
         $single = Flex::row()
             ->withJustify(Justification::SpaceBetween)
-            ->add(Text::new('only'), new Constraint(max: 2, flex: 0, basis: 2));
+            ->add(Text::new('only'), Constraint::max(2)->withFlex(0)->withBasis(2));
         self::assertSame([0], $this->mainOffsets($single, Rect::fromSize(9, 1)));
     }
 
@@ -376,34 +386,34 @@ final class FlexTest extends TestCase
     public function weightedGrowthAndShrinkAreObservable(): void
     {
         $grow = Flex::row()
-            ->add(Text::new('one'), new Constraint(flex: 1, basis: 2))
-            ->add(Text::new('two'), new Constraint(flex: 2, basis: 2));
+            ->add(Text::new('one'), Constraint::flex()->withBasis(2))
+            ->add(Text::new('two'), Constraint::flex(2)->withBasis(2));
         self::assertSame([4, 6], $this->mainSizes($grow, Rect::fromSize(10, 1)));
 
         $shrink = Flex::row()
-            ->add(Text::new('one'), new Constraint(min: 1, flex: 1, basis: 6, shrink: 1))
-            ->add(Text::new('two'), new Constraint(min: 1, flex: 1, basis: 6, shrink: 2));
+            ->add(Text::new('one'), Constraint::min(1)->withFlex()->withBasis(6)->withShrink(1))
+            ->add(Text::new('two'), Constraint::min(1)->withFlex()->withBasis(6)->withShrink(2));
         self::assertSame([5, 3], $this->mainSizes($shrink, Rect::fromSize(8, 1)));
 
         $nonShrinking = Flex::row()
-            ->add(Text::new('fixed'), new Constraint(min: 0, flex: 1, basis: 6, shrink: 0))
-            ->add(Text::new('flexible'), new Constraint(min: 0, flex: 1, basis: 6, shrink: 1));
+            ->add(Text::new('fixed'), Constraint::min(0)->withFlex()->withBasis(6)->withShrink(0))
+            ->add(Text::new('flexible'), Constraint::min(0)->withFlex()->withBasis(6)->withShrink(1));
         self::assertSame([6, 2], $this->mainSizes($nonShrinking, Rect::fromSize(8, 1)));
 
         $minimumPriority = Flex::row()
-            ->add(Text::new('bounded'), new Constraint(min: 7, flex: 1, basis: 8, shrink: 1))
-            ->add(Text::new('flexible'), new Constraint(min: 0, flex: 1, basis: 8, shrink: 1));
+            ->add(Text::new('bounded'), Constraint::min(7)->withFlex()->withBasis(8)->withShrink(1))
+            ->add(Text::new('flexible'), Constraint::min(0)->withFlex()->withBasis(8)->withShrink(1));
         self::assertSame([7, 3], $this->mainSizes($minimumPriority, Rect::fromSize(10, 1)));
 
         $belowMinimumWeights = Flex::row()
-            ->add(Text::new('one'), new Constraint(min: 8, flex: 1, basis: 8, shrink: 1))
-            ->add(Text::new('two'), new Constraint(min: 4, flex: 1, basis: 4, shrink: 10));
+            ->add(Text::new('one'), Constraint::min(8)->withFlex()->withBasis(8)->withShrink(1))
+            ->add(Text::new('two'), Constraint::min(4)->withFlex()->withBasis(4)->withShrink(10));
         self::assertSame([8, 1], $this->mainSizes($belowMinimumWeights, Rect::fromSize(9, 1)));
         self::assertSame([8, 0], $this->mainSizes($belowMinimumWeights, Rect::fromSize(8, 1)));
 
         $smallWeightedShrink = Flex::row()
-            ->add(Text::new('one'), new Constraint(flex: 1, basis: 1, shrink: 1))
-            ->add(Text::new('two'), new Constraint(flex: 1, basis: 2, shrink: 1));
+            ->add(Text::new('one'), Constraint::flex()->withBasis(1)->withShrink(1))
+            ->add(Text::new('two'), Constraint::flex()->withBasis(2)->withShrink(1));
         self::assertSame([1, 0], $this->mainSizes($smallWeightedShrink, Rect::fromSize(1, 1)));
     }
 
@@ -422,7 +432,7 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withJustify(Justification::End)
-            ->add(Text::new('fixed'), new Constraint(max: 10, flex: 0, basis: 2));
+            ->add(Text::new('fixed'), Constraint::max(10)->withFlex(0)->withBasis(2));
 
         self::assertEquals(new Rect(3, 0, 2, 1), $flex->computeChildRects(Rect::fromSize(5, 1))[0][1]);
     }
@@ -443,15 +453,15 @@ final class FlexTest extends TestCase
     public function integerRemaindersStopAfterTheAvailableCellsAreAssigned(): void
     {
         $grow = Flex::row()
-            ->add(Text::new('first'), new Constraint(flex: 1))
-            ->add(Text::new('second'), new Constraint(flex: 1))
-            ->add(Text::new('third'), new Constraint(flex: 1));
+            ->add(Text::new('first'), Constraint::flex())
+            ->add(Text::new('second'), Constraint::flex())
+            ->add(Text::new('third'), Constraint::flex());
         self::assertSame([0, 0, 1], $this->mainSizes($grow, Rect::fromSize(1, 1)));
 
         $shrink = Flex::row()
-            ->add(Text::new('first'), new Constraint(flex: 1, basis: 1))
-            ->add(Text::new('second'), new Constraint(flex: 1, basis: 1))
-            ->add(Text::new('third'), new Constraint(flex: 1, basis: 1));
+            ->add(Text::new('first'), Constraint::flex()->withBasis(1))
+            ->add(Text::new('second'), Constraint::flex()->withBasis(1))
+            ->add(Text::new('third'), Constraint::flex()->withBasis(1));
         self::assertSame([1, 1, 0], $this->mainSizes($shrink, Rect::fromSize(2, 1)));
     }
 
@@ -459,8 +469,8 @@ final class FlexTest extends TestCase
     public function growthSkipsMaxedItemsAndRedistributesSpaceToSiblings(): void
     {
         $flex = Flex::row()
-            ->add(Text::new('bounded'), new Constraint(max: 6, flex: 1, basis: 5))
-            ->add(Text::new('flexible'), new Constraint(flex: 1, basis: 5));
+            ->add(Text::new('bounded'), Constraint::max(6)->withBasis(5))
+            ->add(Text::new('flexible'), Constraint::flex()->withBasis(5));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 20, 3));
 
@@ -474,8 +484,8 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withGap(1)
-            ->add(Text::new('first'), new Constraint(min: 20, flex: 1, basis: 20, shrink: 0))
-            ->add(Text::new('second'), new Constraint(min: 20, flex: 1, basis: 20, shrink: 0));
+            ->add(Text::new('first'), Constraint::min(20)->withFlex()->withBasis(20)->withShrink(0))
+            ->add(Text::new('second'), Constraint::min(20)->withFlex()->withBasis(20)->withShrink(0));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 15, 3));
 
@@ -488,8 +498,8 @@ final class FlexTest extends TestCase
     public function enormousDeclaredSizesAreFittedWithoutIntegerOverflow(): void
     {
         $flex = Flex::row()
-            ->add(Text::new('first'), new Constraint(flex: 1, basis: PHP_INT_MAX))
-            ->add(Text::new('second'), new Constraint(flex: 1, basis: PHP_INT_MAX));
+            ->add(Text::new('first'), Constraint::flex()->withBasis(PHP_INT_MAX))
+            ->add(Text::new('second'), Constraint::flex()->withBasis(PHP_INT_MAX));
 
         $children = $flex->computeChildRects(Rect::fromSize(10, 3));
 
@@ -502,16 +512,16 @@ final class FlexTest extends TestCase
     public function forcedFittingPreservesProportionsAndAssignsRemaindersRearmost(): void
     {
         $flex = Flex::row()
-            ->add(Text::new('first'), new Constraint(min: 6, flex: 1, basis: 6, shrink: 0))
-            ->add(Text::new('second'), new Constraint(min: 3, flex: 1, basis: 3, shrink: 0))
-            ->add(Text::new('third'), new Constraint(min: 1, flex: 1, basis: 1, shrink: 0));
+            ->add(Text::new('first'), Constraint::min(6)->withFlex()->withBasis(6)->withShrink(0))
+            ->add(Text::new('second'), Constraint::min(3)->withFlex()->withBasis(3)->withShrink(0))
+            ->add(Text::new('third'), Constraint::min(1)->withFlex()->withBasis(1)->withShrink(0));
 
         self::assertSame([3, 1, 1], $this->mainSizes($flex, Rect::fromSize(5, 1)));
 
         $differentRemainder = Flex::row()
-            ->add(Text::new('first'), new Constraint(min: 5, flex: 1, basis: 5, shrink: 0))
-            ->add(Text::new('second'), new Constraint(min: 4, flex: 1, basis: 4, shrink: 0))
-            ->add(Text::new('third'), new Constraint(min: 1, flex: 1, basis: 1, shrink: 0));
+            ->add(Text::new('first'), Constraint::min(5)->withFlex()->withBasis(5)->withShrink(0))
+            ->add(Text::new('second'), Constraint::min(4)->withFlex()->withBasis(4)->withShrink(0))
+            ->add(Text::new('third'), Constraint::min(1)->withFlex()->withBasis(1)->withShrink(0));
         self::assertSame([2, 2, 1], $this->mainSizes($differentRemainder, Rect::fromSize(5, 1)));
     }
 
@@ -520,15 +530,15 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withGap(5)
-            ->add(Text::new('first'), new Constraint(flex: 1, basis: 10))
-            ->add(Text::new('second'), new Constraint(flex: 1, basis: 10));
+            ->add(Text::new('first'), Constraint::flex()->withBasis(10))
+            ->add(Text::new('second'), Constraint::flex()->withBasis(10));
 
         $children = $flex->computeChildRects(new Rect(4, 7, 0, 0));
 
         self::assertEquals(new Rect(4, 7, 0, 0), $children[0][1]);
         self::assertEquals(new Rect(4, 7, 0, 0), $children[1][1]);
 
-        $positiveDesiredHeight = Flex::row()->add(Text::new('item'), new Constraint(flex: 1, basis: 2));
+        $positiveDesiredHeight = Flex::row()->add(Text::new('item'), Constraint::flex()->withBasis(2));
         self::assertEquals(
             new Rect(0, 0, 10, 0),
             $positiveDesiredHeight->computeChildRects(Rect::fromSize(10, 0))[0][1],
@@ -540,8 +550,8 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::column()
             ->withGap(1)
-            ->add(Text::new('first'), new Constraint(flex: 1, basis: 3))
-            ->add(Text::new('second'), new Constraint(flex: 1, basis: 3));
+            ->add(Text::new('first'), Constraint::flex()->withBasis(3))
+            ->add(Text::new('second'), Constraint::flex()->withBasis(3));
 
         $children = $flex->computeChildRects(new Rect(0, 0, 20, 11));
 
@@ -555,9 +565,9 @@ final class FlexTest extends TestCase
         $flex = Flex::column()
             ->withWrap()
             ->withGap(1)
-            ->add(Text::new('first'), new Constraint(max: 3, flex: 0, basis: 3))
-            ->add(Text::new('second'), new Constraint(max: 3, flex: 0, basis: 3))
-            ->add(Text::new('third'), new Constraint(max: 3, flex: 0, basis: 3));
+            ->add(Text::new('first'), Constraint::max(3)->withFlex(0)->withBasis(3))
+            ->add(Text::new('second'), Constraint::max(3)->withFlex(0)->withBasis(3))
+            ->add(Text::new('third'), Constraint::max(3)->withFlex(0)->withBasis(3));
 
         $children = $flex->computeChildRects(new Rect(4, 7, 8, 7));
 
@@ -572,8 +582,8 @@ final class FlexTest extends TestCase
         $flex = Flex::column()
             ->withWrap()
             ->withGap(1)
-            ->add($this->measuredWidget(static fn (): int => 20), new Constraint(max: 2, flex: 0, basis: 2))
-            ->add($this->measuredWidget(static fn (): int => 1), new Constraint(max: 2, flex: 0, basis: 2));
+            ->add($this->measuredWidget(static fn (): int => 20), Constraint::max(2)->withFlex(0)->withBasis(2))
+            ->add($this->measuredWidget(static fn (): int => 1), Constraint::max(2)->withFlex(0)->withBasis(2));
 
         $children = $flex->computeChildRects(Rect::fromSize(7, 2));
 
@@ -586,7 +596,7 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::column()
             ->add($this->measuredWidget(static fn (): int => 3), Constraint::content())
-            ->add(Text::new('rest'), new Constraint(flex: 1));
+            ->add(Text::new('rest'), Constraint::flex());
 
         $children = $flex->computeChildRects(Rect::fromSize(20, 10));
 
@@ -600,8 +610,8 @@ final class FlexTest extends TestCase
         $flex = Flex::column()
             ->withWrap()
             ->withGap(1)
-            ->add($this->widthMeasuredWidget(2), new Constraint(max: 2, flex: 0, basis: 2))
-            ->add($this->widthMeasuredWidget(4), new Constraint(max: 2, flex: 0, basis: 2));
+            ->add($this->widthMeasuredWidget(2), Constraint::max(2)->withFlex(0)->withBasis(2))
+            ->add($this->widthMeasuredWidget(4), Constraint::max(2)->withFlex(0)->withBasis(2));
 
         $children = $flex->computeChildRects(Rect::fromSize(7, 2));
 
@@ -615,8 +625,8 @@ final class FlexTest extends TestCase
         $flex = Flex::row()
             ->withWrap()
             ->withGap(1)
-            ->add($this->measuredWidget(static fn (): int => 2), new Constraint(max: 3, flex: 0, basis: 3))
-            ->add($this->measuredWidget(static fn (): int => 4), new Constraint(max: 3, flex: 0, basis: 3));
+            ->add($this->measuredWidget(static fn (): int => 2), Constraint::max(3)->withFlex(0)->withBasis(3))
+            ->add($this->measuredWidget(static fn (): int => 4), Constraint::max(3)->withFlex(0)->withBasis(3));
 
         $children = $flex->computeChildRects(Rect::fromSize(3, 7));
 
@@ -663,13 +673,13 @@ final class FlexTest extends TestCase
     {
         $single = Flex::row()
             ->withGap(5)
-            ->add(Text::new('only'), new Constraint(max: 1, flex: 0, basis: 1));
+            ->add(Text::new('only'), Constraint::max(1)->withFlex(0)->withBasis(1));
         self::assertSame([0], $this->mainOffsets($single, Rect::fromSize(3, 1)));
 
         $pair = Flex::row()
             ->withGap(5)
-            ->add(Text::new('first'), new Constraint(flex: 1, basis: 1))
-            ->add(Text::new('second'), new Constraint(flex: 1, basis: 1));
+            ->add(Text::new('first'), Constraint::flex()->withBasis(1))
+            ->add(Text::new('second'), Constraint::flex()->withBasis(1));
         $children = $pair->computeChildRects(Rect::fromSize(3, 1));
         self::assertSame([0, 3], array_map(static fn (array $child): int => $child[1]->x, $children));
         self::assertSame([0, 0], array_map(static fn (array $child): int => $child[1]->width, $children));
@@ -681,9 +691,9 @@ final class FlexTest extends TestCase
         $flex = Flex::row()
             ->withWrap()
             ->withGap(2)
-            ->add(Text::new('first'), new Constraint(flex: 1, basis: 30))
-            ->add(Text::new('second'), new Constraint(flex: 1, basis: 30))
-            ->add(Text::new('third'), new Constraint(flex: 1, basis: 30));
+            ->add(Text::new('first'), Constraint::flex()->withBasis(30))
+            ->add(Text::new('second'), Constraint::flex()->withBasis(30))
+            ->add(Text::new('third'), Constraint::flex()->withBasis(30));
 
         self::assertSame(1, $flex->measureHeight(100));
         self::assertSame(4, $flex->measureHeight(70));
@@ -697,8 +707,8 @@ final class FlexTest extends TestCase
         $measured = Flex::row()
             ->withWrap()
             ->withGap(1)
-            ->add($this->measuredWidget(static fn (int $width): int => $width), new Constraint(max: 2, flex: 0, basis: 2))
-            ->add($this->measuredWidget(static fn (int $width): int => $width + 1), new Constraint(max: 2, flex: 0, basis: 2));
+            ->add($this->measuredWidget(static fn (int $width): int => $width), Constraint::max(2)->withFlex(0)->withBasis(2))
+            ->add($this->measuredWidget(static fn (int $width): int => $width + 1), Constraint::max(2)->withFlex(0)->withBasis(2));
 
         self::assertSame(0, $measured->measureHeight(0));
         self::assertSame(4, $measured->measureHeight(1));
@@ -707,25 +717,25 @@ final class FlexTest extends TestCase
 
         $column = Flex::column()
             ->withGap(2)
-            ->add(Text::new('first'), new Constraint(min: 4, max: 7, flex: 1, basis: 3))
-            ->add(Text::new('second'), new Constraint(min: 2, max: 6, flex: 1, basis: 9));
+            ->add(Text::new('first'), Constraint::min(4)->withMax(7)->withFlex()->withBasis(3))
+            ->add(Text::new('second'), Constraint::min(2)->withMax(6)->withFlex()->withBasis(9));
         self::assertSame(12, $column->measureHeight(1));
 
         $negativeMeasure = Flex::row()
-            ->add($this->measuredWidget(static fn (): int => -2), new Constraint(max: 1, flex: 0, basis: 1));
+            ->add($this->measuredWidget(static fn (): int => -2), Constraint::max(1)->withFlex(0)->withBasis(1));
         self::assertSame(0, $negativeMeasure->measureHeight(1));
 
         $constraints = Flex::row()
             ->withWrap()
             ->withGap(1)
-            ->add($this->constraintWidget(Constraint::exact(0)), new Constraint(max: 1, flex: 0, basis: 1))
-            ->add($this->constraintWidget(Constraint::flex()), new Constraint(max: 1, flex: 0, basis: 1));
+            ->add($this->constraintWidget(Constraint::exact(0)), Constraint::max(1)->withFlex(0)->withBasis(1))
+            ->add($this->constraintWidget(Constraint::flex()), Constraint::max(1)->withFlex(0)->withBasis(1));
         self::assertSame(2, $constraints->measureHeight(1));
 
         $exactZero = Flex::row()
-            ->add($this->constraintWidget(Constraint::exact(0)), new Constraint(max: 1, flex: 0, basis: 1));
+            ->add($this->constraintWidget(Constraint::exact(0)), Constraint::max(1)->withFlex(0)->withBasis(1));
         $flexibleZero = Flex::row()
-            ->add($this->constraintWidget(Constraint::flex()), new Constraint(max: 1, flex: 0, basis: 1));
+            ->add($this->constraintWidget(Constraint::flex()), Constraint::max(1)->withFlex(0)->withBasis(1));
         self::assertSame(0, $exactZero->measureHeight(1));
         self::assertSame(1, $flexibleZero->measureHeight(1));
     }
@@ -735,8 +745,8 @@ final class FlexTest extends TestCase
     {
         $column = Flex::column()
             ->withGap(1)
-            ->add($this->measuredWidget(static fn (int $width): int => 3), new Constraint(flex: 0))
-            ->add($this->measuredWidget(static fn (int $width): int => $width), new Constraint(flex: 0));
+            ->add($this->measuredWidget(static fn (int $width): int => 3), Constraint::min(0))
+            ->add($this->measuredWidget(static fn (int $width): int => $width), Constraint::min(0));
 
         self::assertSame(7, $column->measureHeight(3));
     }
@@ -750,8 +760,8 @@ final class FlexTest extends TestCase
         $flex = Flex::row()
             ->withWrap()
             ->withGap(1)
-            ->add($first, new Constraint(flex: 1, basis: 20))
-            ->add($second, new Constraint(flex: 1, basis: 20));
+            ->add($first, Constraint::flex()->withBasis(20))
+            ->add($second, Constraint::flex()->withBasis(20));
         $area = new Rect(3, 2, 25, 8);
 
         $frame = new Frame(40, 12);
@@ -769,14 +779,14 @@ final class FlexTest extends TestCase
     public function buildersAreImmutableAndRejectInvalidItemRanges(): void
     {
         $empty = Flex::row();
-        $configured = $empty->withWrap()->withGap(2)->add(Text::new('item'), new Constraint(flex: 1, basis: 10));
+        $configured = $empty->withWrap()->withGap(2)->add(Text::new('item'), Constraint::flex()->withBasis(10));
 
         self::assertNotSame($empty, $configured);
         self::assertCount(0, $empty->computeChildRects(Rect::fromSize(20, 5)));
         self::assertCount(1, $configured->computeChildRects(Rect::fromSize(20, 5)));
 
         $this->expectException(InvalidArgumentException::class);
-        $empty->add(Text::new('invalid'), new Constraint(min: 12, max: 11));
+        $empty->add(Text::new('invalid'), Constraint::min(12)->withMax(11));
     }
 
     /**

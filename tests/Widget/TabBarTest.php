@@ -1565,7 +1565,7 @@ final class TabBarTest extends TestCase
     public function resolveMinZeroFallsToFlexBranch(): void
     {
         $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', new Constraint(min: 0, max: PHP_INT_MAX, flex: 1)))
+            ->add($this->createMarkerWidget('A', Constraint::flex()))
             ->add($this->createMarkerWidget('B', Constraint::exact(1)));
         $frame = new Frame(20, 10);
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());

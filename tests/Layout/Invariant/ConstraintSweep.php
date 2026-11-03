@@ -87,7 +87,7 @@ final class ConstraintSweep
             'max12' => Constraint::max(12),
             'floor2grow1' => Constraint::min(2)->withFlex(),
             'floor4grow3' => Constraint::min(4)->withFlex(3),
-            'between2and6' => new Constraint(2, 6, 1),
+            'between2and6' => Constraint::min(2)->withMax(6)->withFlex(),
         ];
     }
 

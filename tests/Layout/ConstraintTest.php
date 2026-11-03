@@ -68,7 +68,7 @@ final class ConstraintTest extends TestCase
     #[Test]
     public function aStartingSizeAndAGivingWeightReachThePolicy(): void
     {
-        $policy = (new Constraint(min: 2, max: 8, flex: 1, basis: 5, shrink: 3))->policy();
+        $policy = Constraint::min(2)->withMax(8)->withFlex()->withBasis(5)->withShrink(3)->policy();
 
         self::assertSame(5, $policy->basis, 'The declared starting size is where the slot begins');
         self::assertSame(3, $policy->shrink, 'and this is how readily it gives that size back');
@@ -77,7 +77,7 @@ final class ConstraintTest extends TestCase
     #[Test]
     public function aSlotGivesBackTheStartingSizeItCannotKeep(): void
     {
-        $constraints = [new Constraint(min: 0, basis: 8), Constraint::exact(2)];
+        $constraints = [Constraint::min(0)->withBasis(8), Constraint::exact(2)];
 
         self::assertSame([2, 2], self::shared($constraints, 4));
     }
@@ -95,7 +95,7 @@ final class ConstraintTest extends TestCase
     #[Test]
     public function withFlexKeepsTheStartingSizeAndTheGivingWeight(): void
     {
-        $constraint = (new Constraint(min: 2, max: 40, flex: 1, basis: 12, shrink: 0))->withFlex(3);
+        $constraint = Constraint::min(2)->withMax(40)->withFlex()->withBasis(12)->withShrink(0)->withFlex(3);
 
         self::assertSame(12, $constraint->basis);
         self::assertSame(0, $constraint->shrink);
@@ -110,13 +110,43 @@ final class ConstraintTest extends TestCase
     #[Test]
     public function withBasisDeclaresTheStartingSizeAndKeepsTheRest(): void
     {
-        $constraint = (new Constraint(min: 2, max: 40, flex: 3, shrink: 0))->withBasis(12);
+        $constraint = Constraint::min(2)->withMax(40)->withFlex(3)->withShrink(0)->withBasis(12);
 
         self::assertSame(12, $constraint->basis);
         self::assertSame(2, $constraint->min);
         self::assertSame(40, $constraint->max);
         self::assertSame(3, $constraint->flex);
         self::assertSame(0, $constraint->shrink);
+    }
+
+    #[Test]
+    public function withMinRaisesTheFloorAndKeepsTheRest(): void
+    {
+        $constraint = Constraint::flex(3)->withBasis(12)->withMin(4);
+
+        self::assertSame([4, PHP_INT_MAX, 3, 12, 1], self::fieldsOf($constraint));
+    }
+
+    #[Test]
+    public function withMaxSetsTheCeilingAndKeepsTheRest(): void
+    {
+        $constraint = Constraint::min(2)->withFlex(3)->withMax(40);
+
+        self::assertSame([2, 40, 3, null, 1], self::fieldsOf($constraint));
+    }
+
+    #[Test]
+    public function withShrinkSetsTheGivingWeightAndKeepsTheRest(): void
+    {
+        $constraint = Constraint::min(2)->withBasis(12)->withShrink(0);
+
+        self::assertSame([2, PHP_INT_MAX, 0, 12, 0], self::fieldsOf($constraint));
+    }
+
+    #[Test]
+    public function aBuilderKeepsAContentConstraintMeasuringItsContent(): void
+    {
+        self::assertTrue(Constraint::content()->withMin(2)->withMax(9)->withShrink(0)->measuresContent);
     }
 
     #[Test]
@@ -168,7 +198,7 @@ final class ConstraintTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Constraint max must be greater than or equal to min');
 
-        new Constraint(min: 8, max: 2);
+        Constraint::min(8)->withMax(2);
     }
 
     /**
@@ -187,14 +217,14 @@ final class ConstraintTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Constraint bounds must be non-negative');
 
-        new Constraint(min: $min, max: $max);
+        Constraint::min($min)->withMax($max);
     }
 
     #[Test]
     public function aWeightTooLargeToShareOutIsRefused(): void
     {
         $refused = [];
-        foreach ([static fn () => Constraint::flex(1_000_001), static fn () => new Constraint(shrink: PHP_INT_MAX)] as $build) {
+        foreach ([static fn () => Constraint::flex(1_000_001), static fn () => Constraint::min(0)->withShrink(PHP_INT_MAX)] as $build) {
             try {
                 $build();
             } catch (InvalidArgumentException $error) {
@@ -211,7 +241,7 @@ final class ConstraintTest extends TestCase
     #[Test]
     public function aWeightOfExactlyAMillionIsAccepted(): void
     {
-        $constraint = new Constraint(flex: 1_000_000, shrink: 1_000_000);
+        $constraint = Constraint::flex(1_000_000)->withShrink(1_000_000);
 
         self::assertSame([1_000_000, 1_000_000], [$constraint->flex, $constraint->shrink]);
     }
@@ -231,7 +261,7 @@ final class ConstraintTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Constraint flex weight must be non-negative');
 
-        new Constraint(flex: -1);
+        Constraint::min(0)->withFlex(-1);
     }
 
     /**
@@ -242,5 +272,13 @@ final class ConstraintTest extends TestCase
     private static function shared(array $constraints, int $available): array
     {
         return Allocator::resolve(array_map(static fn (Constraint $constraint) => $constraint->policy(), $constraints), $available)->sizes;
+    }
+
+    /**
+     * @return array{int, int, int, ?int, int}
+     */
+    private static function fieldsOf(Constraint $constraint): array
+    {
+        return [$constraint->min, $constraint->max, $constraint->flex, $constraint->basis, $constraint->shrink];
     }
 }

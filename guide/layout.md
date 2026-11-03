@@ -35,9 +35,9 @@ use Elmphant\Tui\Widget\Layout\Flex;
 $content = Flex::row()
     ->withWrap()
     ->withGap(1)
-    ->add($sidebar, new Constraint(min: 22, flex: 1, basis: 28))
-    ->add($main, new Constraint(min: 30, flex: 2, basis: 48))
-    ->add($details, new Constraint(min: 22, flex: 1, basis: 28));
+    ->add($sidebar, Constraint::min(22)->withFlex()->withBasis(28))
+    ->add($main, Constraint::min(30)->withFlex(2)->withBasis(48))
+    ->add($details, Constraint::min(22)->withFlex()->withBasis(28));
 ```
 
 - `basis` is the size a widget would like. It decides where the row wraps.

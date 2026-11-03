@@ -30,7 +30,7 @@ final class AllocatorDivergenceTest extends TestCase
     #[Test]
     public function aStackFillsItsAxisWhenItsLastGrowingChildIsCapped(): void
     {
-        $constraints = [Constraint::min(5), Constraint::min(0), Constraint::flex(2), new Constraint(2, 6, 1)];
+        $constraints = [Constraint::min(5), Constraint::min(0), Constraint::flex(2), Constraint::min(2)->withMax(6)->withFlex()];
 
         $heights = VerticalStack::layoutUsing(new KeyedCache(), self::childrenFor($constraints), 40, 80)->heights;
 

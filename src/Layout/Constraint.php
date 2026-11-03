@@ -14,7 +14,7 @@ final readonly class Constraint
      */
     private const MAX_WEIGHT = 1_000_000;
 
-    public function __construct(
+    private function __construct(
         public int $min = 0,
         public int $max = PHP_INT_MAX,
         public int $flex = 0,
@@ -82,6 +82,21 @@ final readonly class Constraint
     public function withBasis(int $basis): self
     {
         return new self(min: $this->min, max: $this->max, flex: $this->flex, basis: $basis, shrink: $this->shrink, measuresContent: $this->measuresContent);
+    }
+
+    public function withMin(int $min): self
+    {
+        return new self(min: $min, max: $this->max, flex: $this->flex, basis: $this->basis, shrink: $this->shrink, measuresContent: $this->measuresContent);
+    }
+
+    public function withMax(int $max): self
+    {
+        return new self(min: $this->min, max: $max, flex: $this->flex, basis: $this->basis, shrink: $this->shrink, measuresContent: $this->measuresContent);
+    }
+
+    public function withShrink(int $shrink): self
+    {
+        return new self(min: $this->min, max: $this->max, flex: $this->flex, basis: $this->basis, shrink: $shrink, measuresContent: $this->measuresContent);
     }
 
     /**

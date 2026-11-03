@@ -189,13 +189,12 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
 
         $child = $this->child->sizing()->on($direction);
 
-        return new Constraint(
-            min: $child->min + $overhead,
-            max: self::grownBy($child->max, $overhead),
-            flex: $child->flex,
-            basis: $child->basis === null ? null : self::grownBy($child->basis, $overhead),
-            shrink: $child->shrink,
-        );
+        $grown = Constraint::min($child->min + $overhead)
+            ->withMax(self::grownBy($child->max, $overhead))
+            ->withFlex($child->flex)
+            ->withShrink($child->shrink);
+
+        return $child->basis === null ? $grown : $grown->withBasis(self::grownBy($child->basis, $overhead));
     }
 
     private function contentArea(Rect $area): Rect

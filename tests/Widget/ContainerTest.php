@@ -66,7 +66,7 @@ final class ContainerTest extends TestCase
     #[Test]
     public function decorationsAreAddedToTheChildConstraint(): void
     {
-        $container = Container::around(new ContainerProbe(new Constraint(min: 2, max: 5, flex: 3)))
+        $container = Container::around(new ContainerProbe(Constraint::min(2)->withMax(5)->withFlex(3)))
             ->withMargin(Spacing::only(top: 1, bottom: 2))
             ->withPadding(Spacing::vertical(1))
             ->withBorder(BorderStyle::Rounded);
@@ -91,7 +91,7 @@ final class ContainerTest extends TestCase
     #[Test]
     public function anExplicitOuterConstraintWins(): void
     {
-        $expected = new Constraint(min: 4, max: 10, flex: 2);
+        $expected = Constraint::min(4)->withMax(10)->withFlex(2);
 
         $actual = Container::around(new ContainerProbe())
             ->withPadding(Spacing::all(3))
@@ -104,7 +104,7 @@ final class ContainerTest extends TestCase
     #[Test]
     public function noDecorationsPreserveTheChildConstraintExactly(): void
     {
-        $expected = new Constraint(min: 2, max: 8, flex: 3);
+        $expected = Constraint::min(2)->withMax(8)->withFlex(3);
 
         $actual = Container::around(new ContainerProbe($expected))->sizing()->rows;
 
@@ -162,7 +162,7 @@ final class ContainerTest extends TestCase
     #[Test]
     public function theChildsRefusalToShrinkSurvivesTheOverheadAroundIt(): void
     {
-        $container = Container::around(new ContainerProbe(new Constraint(min: 4, max: 40, flex: 1, shrink: 0)));
+        $container = Container::around(new ContainerProbe(Constraint::min(4)->withMax(40)->withFlex()->withShrink(0)));
 
         self::assertSame(0, $container->sizing()->rows->shrink);
     }
@@ -501,8 +501,11 @@ final class ContainerProbe implements Widget
 {
     public ?Rect $renderedArea = null;
 
-    public function __construct(private readonly Constraint $size = new Constraint(min: 1, max: 1))
+    private readonly Constraint $size;
+
+    public function __construct(?Constraint $size = null)
     {
+        $this->size = $size ?? Constraint::min(1)->withMax(1);
     }
 
     public function sizing(): Sizing

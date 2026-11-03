@@ -192,13 +192,11 @@ final class FlexAllocationInvariantTest extends TestCase
         foreach ($items as $item) {
             $flex = $flex->add(
                 new ConstrainedWidget(Constraint::exact(1)),
-                new Constraint(
-                    min: $item['min'],
-                    max: $item['max'],
-                    flex: $item['grow'],
-                    basis: $item['basis'],
-                    shrink: $item['shrink'],
-                ),
+                Constraint::min($item['min'])
+                    ->withMax($item['max'])
+                    ->withFlex($item['grow'])
+                    ->withBasis($item['basis'])
+                    ->withShrink($item['shrink']),
             );
         }
 

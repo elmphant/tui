@@ -2758,7 +2758,7 @@ final class TableTest extends TestCase
     public function flexColumnWithMinEqualsMaxAndMinZeroIsFlex(): void
     {
         $table = Table\Table::fromCells(
-            [Column::new('A', new Constraint(min: 0, max: 0)), Column::new('B', Constraint::flex())],
+            [Column::new('A', Constraint::max(0)->withFlex(0)), Column::new('B', Constraint::flex())],
             [['AAAA', 'BBBB']],
         );
         $frame = new Frame(20, 3);
