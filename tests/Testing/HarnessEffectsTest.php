@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Testing;
 
+use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\EffectId;
@@ -12,6 +13,7 @@ use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\HttpResultMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
@@ -25,6 +27,8 @@ use Elmphant\Tui\Testing\ModelHarness;
 use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use UnexpectedValueException;
 
 final class HarnessEffectsTest extends TestCase
 {
@@ -160,6 +164,25 @@ final class HarnessEffectsTest extends TestCase
     }
 
     #[Test]
+    public function aCallThatAnswersSomethingElseOrThrowsArrivesAsAnErrorFromTheCall(): void
+    {
+        $errors = array_map(
+            static function (string $key): ErrorMsg {
+                $error = ModelHarness::for(new EffectAsker())->press($key)->runCalls()->model()->lastOf(ChildSaid::class)->message;
+                self::assertInstanceOf(ErrorMsg::class, $error);
+
+                return $error;
+            },
+            ['w', 'x'],
+        );
+
+        self::assertSame(
+            [[UnexpectedValueException::class, ErrorSource::Call], [RuntimeException::class, ErrorSource::Call]],
+            array_map(static fn (ErrorMsg $error): array => [$error->error::class, $error->source], $errors),
+        );
+    }
+
+    #[Test]
     public function anEffectTheModelNeverStartedCannotBeAnswered(): void
     {
         $this->expectException(LogicException::class);
@@ -233,6 +256,9 @@ final class EffectAsker implements Model
             return new UpdateResult($this, Cmd::exec(['ls'], EffectId::named('load'))->scopedTo('other'));
         }
 
+        /** @var Closure(): (Message|Cmd|null) $answersANumber */
+        $answersANumber = static fn (): int => 42;
+
         $child = match ($message->key) {
             'l' => Cmd::batch(Cmd::exec(['ls'], EffectId::named('load')), Cmd::log('asked')),
             's' => Cmd::process(['tail', '-f', 'log'], EffectId::named('tail')),
@@ -242,6 +268,8 @@ final class EffectAsker implements Model
             'u' => new FeedCmd(),
             'k' => Cmd::call(static fn (): Message => new Beat(7)),
             'e' => Cmd::call(static fn (): Cmd => Cmd::exec(['ls'], EffectId::named('load'))),
+            'w' => Cmd::call($answersANumber),
+            'x' => Cmd::call(static fn (): never => throw new RuntimeException('boom')),
             default => null,
         };
 

@@ -27,7 +27,6 @@ use ReflectionFunction;
 use Revolt\EventLoop;
 use SplQueue;
 use Throwable;
-use UnexpectedValueException;
 use UnitEnum;
 use WeakMap;
 
@@ -659,22 +658,11 @@ final class EffectRunner
             }
             unset($this->timers[spl_object_id($timer)]);
 
-            try {
-                $result = ($timer->callback)();
-            } catch (Throwable $error) {
-                $this->report(new ErrorMsg($error, ErrorSource::Timer, $timer->id), $timer->wrap, $timer->id, $timer->scope);
-                continue;
-            }
-            if ($result instanceof Cmd) {
-                ($this->dispatch)($result, $timer->wrap, $timer->scope);
-            } elseif ($result instanceof Message) {
-                $this->report($result, $timer->wrap, $timer->id, $timer->scope);
-            } elseif ($result !== null) {
-                $this->report(new ErrorMsg(
-                    new UnexpectedValueException('Cmd::after() callback must return Message, Cmd, or null'),
-                    ErrorSource::Timer,
-                    $timer->id,
-                ), $timer->wrap, $timer->id, $timer->scope);
+            $answer = CallbackAnswer::of($timer->callback, ErrorSource::Timer, 'Cmd::after()', $timer->id);
+            if ($answer instanceof Cmd) {
+                ($this->dispatch)($answer, $timer->wrap, $timer->scope);
+            } elseif ($answer instanceof Message) {
+                $this->report($answer, $timer->wrap, $timer->id, $timer->scope);
             }
         }
     }

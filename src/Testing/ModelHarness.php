@@ -49,6 +49,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\BindsChords;
+use Elmphant\Tui\Runtime\CallbackAnswer;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\FiberHandler;
 use Elmphant\Tui\Runtime\InputRouter;
@@ -63,7 +64,6 @@ use LogicException;
 use ReflectionClass;
 use RuntimeException;
 use Throwable;
-use UnexpectedValueException;
 
 /**
  * Run pure model updates and rendering without a terminal.
@@ -696,22 +696,13 @@ final class ModelHarness
      */
     private function answeredCall(CallCmd $call, ?Closure $wrap, ?string $scope): void
     {
-        try {
-            $result = ($call->callback)();
-        } catch (Throwable $error) {
-            $result = new ErrorMsg($error, ErrorSource::Call);
-        }
-
-        if ($result instanceof Cmd) {
-            $this->record($result, $wrap, $scope);
-            $this->moveFocusFor($result, $scope);
-            $sent = self::messagesIn($result);
+        $answer = CallbackAnswer::of($call->callback, ErrorSource::Call, 'Cmd::call()');
+        if ($answer instanceof Cmd) {
+            $this->record($answer, $wrap, $scope);
+            $this->moveFocusFor($answer, $scope);
+            $sent = self::messagesIn($answer);
         } else {
-            $sent = match (true) {
-                $result instanceof Message => [$result],
-                $result === null => [],
-                default => [new ErrorMsg(new UnexpectedValueException('Cmd::call() callback must return Message, Cmd, or null'), ErrorSource::Call)],
-            };
+            $sent = $answer === null ? [] : [$answer];
         }
 
         foreach ($sent as $message) {

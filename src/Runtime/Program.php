@@ -60,7 +60,6 @@ use Revolt\EventLoop\UnsupportedFeatureException;
 use RuntimeException;
 use SplQueue;
 use Throwable;
-use UnexpectedValueException;
 use WeakMap;
 use WeakReference;
 
@@ -1468,23 +1467,11 @@ final class Program
      */
     private function executeCall(CallCmd $command, ?Closure $wrap, ?string $scope): void
     {
-        try {
-            $result = ($command->callback)();
-        } catch (Throwable $error) {
-            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg($error, ErrorSource::Call), $wrap));
-
-            return;
-        }
-
-        if ($result instanceof Cmd) {
-            $this->dispatchCommand($result, $wrap, $scope);
-        } elseif ($result instanceof Message) {
-            $this->messageQueue->enqueue(self::mapMessage($result, $wrap));
-        } elseif ($result !== null) {
-            $this->messageQueue->enqueue(self::mapMessage(new ErrorMsg(
-                new UnexpectedValueException('Cmd::call() callback must return Message, Cmd, or null'),
-                ErrorSource::Call,
-            ), $wrap));
+        $answer = CallbackAnswer::of($command->callback, ErrorSource::Call, 'Cmd::call()');
+        if ($answer instanceof Cmd) {
+            $this->dispatchCommand($answer, $wrap, $scope);
+        } elseif ($answer instanceof Message) {
+            $this->messageQueue->enqueue(self::mapMessage($answer, $wrap));
         }
     }
 
