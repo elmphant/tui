@@ -36,15 +36,15 @@ final readonly class Geometry
      */
     public function rectOf(ComponentId|string|Widget $target): ?Rect
     {
-        if ($target instanceof Widget) {
-            $rects = $this->plan->rects();
+        return $this->rectIn($this->plan->rects(), $target);
+    }
 
-            return $rects->offsetExists($target) ? $rects[$target] : null;
-        }
-
-        $component = $this->components->get(\is_string($target) ? ComponentId::named($target) : $target);
-
-        return $component === null ? null : $this->placed($component, $this->plan->rects());
+    /**
+     * Only the part a pane has not scrolled away, so a hidden field answers an empty rect.
+     */
+    public function visibleRectOf(ComponentId|string|Widget $target): ?Rect
+    {
+        return $this->rectIn($this->plan->visibleRects(), $target);
     }
 
     /**
@@ -63,6 +63,20 @@ final readonly class Geometry
         }
 
         return $found;
+    }
+
+    /**
+     * @param SplObjectStorage<Widget, Rect> $rects
+     */
+    private function rectIn(SplObjectStorage $rects, ComponentId|string|Widget $target): ?Rect
+    {
+        if ($target instanceof Widget) {
+            return $rects->offsetExists($target) ? $rects[$target] : null;
+        }
+
+        $component = $this->components->get(\is_string($target) ? ComponentId::named($target) : $target);
+
+        return $component === null ? null : $this->placed($component, $rects);
     }
 
     /**

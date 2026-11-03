@@ -57,6 +57,20 @@ final class GeometryTest extends TestCase
     }
 
     #[Test]
+    public function aFieldScrolledOutOfItsPaneIsPlacedButShowsNothing(): void
+    {
+        $fields = array_map(static fn (int $index): TextInput => TextInput::new()->withPlaceholder("field {$index}"), range(1, 10));
+        $geometry = Geometry::of(
+            Component::bind('form', Panel::new('Form')->withChildren($fields), static fn (GeometryAskingApp $app): GeometryAskingApp => $app),
+            Rect::fromSize(20, 5),
+        );
+
+        self::assertSame(1, $geometry->rectOf('form/9')?->height);
+        self::assertSame(0, $geometry->visibleRectOf('form/9')?->height);
+        self::assertSame(1, $geometry->visibleRectOf('form/0')?->height);
+    }
+
+    #[Test]
     public function thePointerFindsTheInnermostComponentUnderIt(): void
     {
         $geometry = Geometry::of(self::form(), Rect::fromSize(20, 10));

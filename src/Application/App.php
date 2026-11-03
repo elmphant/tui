@@ -345,7 +345,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return [];
     }
 
-    protected function geometry(Rect $screen): Geometry
+    final protected function geometry(Rect $screen): Geometry
     {
         return Geometry::from(LayoutSnapshot::planFor($this, $screen, $this->viewWidget(...)), $this->componentRegistry());
     }
@@ -770,18 +770,14 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     private function findComponentRects(Rect $screenRect, array $components, bool $visible = false): array
     {
-        $plan = LayoutSnapshot::planFor($this, $screenRect, $this->viewWidget(...));
-        $rectMap = $visible ? $plan->visibleRects() : $plan->rects();
+        $geometry = $this->geometry($screenRect);
         $result = [];
 
-        // A component derived from a child is not itself in the tree; its widget is.
         foreach ($components as $component) {
-            foreach ([$component, $component->widget] as $placed) {
-                if (isset($rectMap[$placed])) {
-                    $result[$component->id->value] = $rectMap[$placed];
+            $rect = $visible ? $geometry->visibleRectOf($component->id) : $geometry->rectOf($component->id);
 
-                    break;
-                }
+            if ($rect !== null) {
+                $result[$component->id->value] = $rect;
             }
         }
 
@@ -955,11 +951,12 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     private function offeredToTheMountUnder(MouseMsg $message, Rect $screenRect): UpdateResult
     {
-        $rects = LayoutSnapshot::planFor($this, $screenRect, $this->viewWidget(...))->visibleRects();
+        $geometry = $this->geometry($screenRect);
         $under = null;
 
         foreach ($this->componentRegistry()->listeningMounts() as $mount) {
-            if (isset($rects[$mount]) && $message->isIn($rects[$mount])) {
+            $rect = $geometry->visibleRectOf($mount);
+            if ($rect !== null && $message->isIn($rect)) {
                 $under = $mount;
             }
         }
