@@ -166,15 +166,11 @@ final readonly class Card implements Widget, WidgetContainer
             );
         }
 
-        $frame->pushClip($inner);
-
-        try {
+        $frame->clipped($inner, function () use ($frame, $area, $context): void {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
                 $child->render($frame, $childArea, $context);
             }
-        } finally {
-            $frame->popClip();
-        }
+        });
     }
 
     private function insetIn(Rect $area): Inset

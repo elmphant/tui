@@ -245,15 +245,11 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         $contentRect = $this->contentRectIn($modalRect);
 
         if ($contentRect->width > 0 && $contentRect->height > 0) {
-            $frame->pushClip($contentRect);
-
-            try {
+            $frame->clipped($contentRect, function () use ($frame, $area, $context): void {
                 foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
                     $child->render($frame, $childArea, $context);
                 }
-            } finally {
-                $frame->popClip();
-            }
+            });
         }
     }
 

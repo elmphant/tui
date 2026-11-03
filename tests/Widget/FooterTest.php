@@ -36,6 +36,7 @@ use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class FooterTest extends TestCase
 {
@@ -534,6 +535,32 @@ final class FooterTest extends TestCase
 
         self::assertSame($theme->footerStyle->backgroundValue(), $frame->backgrounds[0]);
         self::assertSame($theme->footerStyle->foregroundValue(), $frame->foregrounds[0]);
+    }
+
+    #[Test]
+    public function aSlotWidgetThatThrowsLeavesTheClipAsItFoundIt(): void
+    {
+        $frame = new Frame(20, 1);
+        $before = $frame->clip();
+        $throwing = new class implements Widget {
+            public function sizing(): Sizing
+            {
+                return Sizing::of(Constraint::exact(4), Constraint::exact(1));
+            }
+
+            public function render(Frame $frame, Rect $area, RenderContext $context): void
+            {
+                throw new RuntimeException('boom');
+            }
+        };
+
+        try {
+            Footer::new()->withLeft($throwing)->render($frame, Rect::fromSize(20, 1), new RenderContext(Theme::dark()));
+            self::fail('The slot was supposed to throw');
+        } catch (RuntimeException) {
+        }
+
+        self::assertEquals($before, $frame->clip(), 'the program reuses the frame, so a leftover clip would cut the next one');
     }
 
     #[Test]

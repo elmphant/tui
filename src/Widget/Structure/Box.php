@@ -137,15 +137,11 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
     {
         $inset = $this->insetIn($area);
 
-        $frame->pushClip($inset->inner($area));
-
-        try {
+        $frame->clipped($inset->inner($area), function () use ($frame, $area, $context): void {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
                 $child->render($frame, $childArea, $context);
             }
-        } finally {
-            $frame->popClip();
-        }
+        });
 
         if (!$inset->border) {
             return;

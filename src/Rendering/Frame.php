@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
+use Closure;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Text\AnsiTokenizer;
@@ -146,6 +147,20 @@ final class Frame
     public function popClip(): void
     {
         array_pop($this->clipStack);
+    }
+
+    /**
+     * @param Closure(): void $draw
+     */
+    public function clipped(Rect $clip, Closure $draw): void
+    {
+        $this->pushClip($clip);
+
+        try {
+            $draw();
+        } finally {
+            $this->popClip();
+        }
     }
 
     /**
