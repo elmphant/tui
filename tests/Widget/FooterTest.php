@@ -553,22 +553,10 @@ final class FooterTest extends TestCase
     #[Test]
     public function footerStyleDefaultPairsBodyTextWithTheSelectionBackground(): void
     {
-        $theme = new Theme(
-            base: new Style(foreground: Color::rgb(100, 200, 50)),
-            accent: new Style(),
-            dim: new Style(foreground: Color::rgb(128, 128, 128)),
-            error: new Style(),
-            success: new Style(),
-            borderStyle: new Style(),
-            focusedBorderStyle: new Style(),
-            titleStyle: new Style(),
-            headerStyle: new Style(),
-            selectedStyle: new Style(background: Color::rgb(20, 20, 20)),
-            cursorStyle: new Style(),
-            fillStyle: new Style(),
-            emptyStyle: new Style(),
-            inputStyle: new Style(),
-        );
+        $theme = Theme::dark()
+            ->withBase(new Style(foreground: Color::rgb(100, 200, 50)))
+            ->withDim(new Style(foreground: Color::rgb(128, 128, 128)))
+            ->withSelectedStyle(new Style(background: Color::rgb(20, 20, 20)));
 
         self::assertSame(Color::rgb(100, 200, 50)->value, $theme->footerStyle->foregroundValue(), 'Body text, not dim text');
         self::assertSame(Color::rgb(20, 20, 20)->value, $theme->footerStyle->backgroundValue());
@@ -577,22 +565,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function footerStyleDefaultFallsBackWhenTheThemeDefinesNoColors(): void
     {
-        $theme = new Theme(
-            base: new Style(),
-            accent: new Style(),
-            dim: new Style(),
-            error: new Style(),
-            success: new Style(),
-            borderStyle: new Style(),
-            focusedBorderStyle: new Style(),
-            titleStyle: new Style(),
-            headerStyle: new Style(),
-            selectedStyle: new Style(),
-            cursorStyle: new Style(),
-            fillStyle: new Style(),
-            emptyStyle: new Style(),
-            inputStyle: new Style(),
-        );
+        $theme = Theme::dark()->withBase(new Style())->withSelectedStyle(new Style());
 
         self::assertSame(Color::ansi(7)->value, $theme->footerStyle->foregroundValue());
         self::assertSame(Color::ansi(0)->value, $theme->footerStyle->backgroundValue());
@@ -604,22 +577,7 @@ final class FooterTest extends TestCase
     #[Test]
     public function barBackgroundFallsBackToAnsiZeroWhenAllNull(): void
     {
-        $theme = new Theme(
-            base: new Style(),
-            accent: new Style(),
-            dim: new Style(),
-            error: new Style(),
-            success: new Style(),
-            borderStyle: new Style(),
-            focusedBorderStyle: new Style(),
-            titleStyle: new Style(),
-            headerStyle: new Style(),
-            selectedStyle: new Style(),
-            cursorStyle: new Style(),
-            fillStyle: new Style(),
-            emptyStyle: new Style(),
-            inputStyle: new Style(),
-        );
+        $theme = Theme::dark()->withBase(new Style())->withSelectedStyle(new Style());
         $context = new RenderContext($theme);
 
         $footer = Footer::new();
@@ -873,22 +831,10 @@ final class FooterTest extends TestCase
     {
         $selectedBg = Color::rgb(10, 20, 30);
         $baseFg = Color::rgb(40, 50, 60);
-        $theme = new Theme(
-            base: new Style(foreground: $baseFg),
-            accent: new Style(),
-            dim: new Style(foreground: Color::rgb(128, 128, 128)),
-            error: new Style(),
-            success: new Style(),
-            borderStyle: new Style(),
-            focusedBorderStyle: new Style(),
-            titleStyle: new Style(),
-            headerStyle: new Style(),
-            selectedStyle: new Style(background: $selectedBg),
-            cursorStyle: new Style(),
-            fillStyle: new Style(),
-            emptyStyle: new Style(),
-            inputStyle: new Style(),
-        );
+        $theme = Theme::dark()
+            ->withBase(new Style(foreground: $baseFg))
+            ->withDim(new Style(foreground: Color::rgb(128, 128, 128)))
+            ->withSelectedStyle(new Style(background: $selectedBg));
         $context = new RenderContext($theme);
 
         $footer = Footer::new();

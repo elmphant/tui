@@ -25,6 +25,45 @@ final class ThemeTest extends TestCase
     }
 
     #[Test]
+    public function theDerivedStylesFollowTheStylesTheyAreDerivedFrom(): void
+    {
+        $body = Color::hex('101010');
+        $band = Color::hex('202020');
+        $amber = Color::hex('303030');
+        $blue = Color::hex('404040');
+
+        $theme = Theme::dark()
+            ->withBase(new Style(foreground: $body))
+            ->withSelectedStyle(new Style(background: $band))
+            ->withTitleStyle(new Style(foreground: $amber, attributes: Attr::BOLD))
+            ->withAccent(new Style(foreground: $blue));
+
+        self::assertSame(
+            [$body, $band, $amber, 0, $blue],
+            [$theme->footerStyle->foreground, $theme->footerStyle->background, $theme->warning->foreground, $theme->warning->attributes, $theme->info->foreground],
+        );
+    }
+
+    #[Test]
+    public function aStyleSetOnItsOwnSurvivesAChangeToTheStyleItWouldBeDerivedFrom(): void
+    {
+        $footer = new Style(foreground: Color::hex('101010'), background: Color::hex('202020'));
+        $warning = new Style(foreground: Color::hex('303030'));
+        $info = new Style(foreground: Color::hex('404040'));
+
+        $theme = Theme::dark()
+            ->withFooterStyle($footer)
+            ->withWarning($warning)
+            ->withInfo($info)
+            ->withBase(new Style(foreground: Color::hex('505050')))
+            ->withSelectedStyle(new Style(background: Color::hex('606060')))
+            ->withTitleStyle(new Style(foreground: Color::hex('707070')))
+            ->withAccent(new Style(foreground: Color::hex('808080')));
+
+        self::assertSame([$footer, $warning, $info], [$theme->footerStyle, $theme->warning, $theme->info]);
+    }
+
+    #[Test]
     public function darkPresetHasAllTokens(): void
     {
         $theme = Theme::dark();

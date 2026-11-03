@@ -4,17 +4,10 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
-use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Terminal\ColorProfile;
 
 final readonly class Theme
 {
-    use Cloneable;
-
-    /**
-     * Default to body text on the selection background for readable contrast.
-     * This is resolved at construction; set it explicitly after changing base or selectedStyle.
-     */
     public Style $footerStyle;
 
     /**
@@ -24,7 +17,13 @@ final readonly class Theme
 
     public Style $info;
 
-    public function __construct(
+    private ?Style $footerOverride;
+
+    private ?Style $warningOverride;
+
+    private ?Style $infoOverride;
+
+    private function __construct(
         public Style $base,
         public Style $accent,
         public Style $dim,
@@ -50,6 +49,9 @@ final readonly class Theme
         // Unicode has no heavy rounded corners; focus is carried by colour + bold.
         public BorderStyle $focusedBorder = BorderStyle::Rounded,
     ) {
+        $this->footerOverride = $footerStyle;
+        $this->warningOverride = $warning;
+        $this->infoOverride = $info;
         $this->footerStyle = $footerStyle ?? new Style(
             foreground: $base->foreground ?? Color::ansi(7),
             background: $selectedStyle->background ?? Color::ansi(0),
@@ -60,87 +62,87 @@ final readonly class Theme
 
     public function withBase(Style $base): self
     {
-        return $this->cloneWith(base: $base);
+        return $this->rebuilt(base: $base);
     }
 
     public function withAccent(Style $accent): self
     {
-        return $this->cloneWith(accent: $accent);
+        return $this->rebuilt(accent: $accent);
     }
 
     public function withDim(Style $dim): self
     {
-        return $this->cloneWith(dim: $dim);
+        return $this->rebuilt(dim: $dim);
     }
 
     public function withError(Style $error): self
     {
-        return $this->cloneWith(error: $error);
+        return $this->rebuilt(error: $error);
     }
 
     public function withSuccess(Style $success): self
     {
-        return $this->cloneWith(success: $success);
+        return $this->rebuilt(success: $success);
     }
 
     public function withWarning(Style $warning): self
     {
-        return $this->cloneWith(warning: $warning);
+        return $this->rebuilt(warning: $warning);
     }
 
     public function withInfo(Style $info): self
     {
-        return $this->cloneWith(info: $info);
+        return $this->rebuilt(info: $info);
     }
 
     public function withBorderStyle(Style $style): self
     {
-        return $this->cloneWith(borderStyle: $style);
+        return $this->rebuilt(borderStyle: $style);
     }
 
     public function withFocusedBorderStyle(Style $style): self
     {
-        return $this->cloneWith(focusedBorderStyle: $style);
+        return $this->rebuilt(focusedBorderStyle: $style);
     }
 
     public function withTitleStyle(Style $style): self
     {
-        return $this->cloneWith(titleStyle: $style);
+        return $this->rebuilt(titleStyle: $style);
     }
 
     public function withHeaderStyle(Style $style): self
     {
-        return $this->cloneWith(headerStyle: $style);
+        return $this->rebuilt(headerStyle: $style);
     }
 
     public function withSelectedStyle(Style $style): self
     {
-        return $this->cloneWith(selectedStyle: $style);
+        return $this->rebuilt(selectedStyle: $style);
     }
 
     public function withCursorStyle(Style $style): self
     {
-        return $this->cloneWith(cursorStyle: $style);
+        return $this->rebuilt(cursorStyle: $style);
     }
 
     public function withFillStyle(Style $style): self
     {
-        return $this->cloneWith(fillStyle: $style);
+        return $this->rebuilt(fillStyle: $style);
     }
 
     public function withEmptyStyle(Style $style): self
     {
-        return $this->cloneWith(emptyStyle: $style);
+        return $this->rebuilt(emptyStyle: $style);
     }
 
     public function withInputStyle(Style $style): self
     {
-        return $this->cloneWith(inputStyle: $style);
+        return $this->rebuilt(inputStyle: $style);
     }
 
     public function withFooterStyle(Style $style): self
     {
-        return $this->cloneWith(footerStyle: $style);
+        return $this->rebuilt(footerStyle: $style);
     }
 
     /**
@@ -148,14 +150,14 @@ final readonly class Theme
      */
     public function withCanvas(Color $canvas): self
     {
-        return $this->cloneWith(
+        return $this->rebuilt(
             base: $this->base->background($canvas),
             accent: $this->accent->background($canvas),
             dim: $this->dim->background($canvas),
             error: $this->error->background($canvas),
             success: $this->success->background($canvas),
-            warning: $this->warning->background($canvas),
-            info: $this->info->background($canvas),
+            warning: $this->warningOverride?->background($canvas),
+            info: $this->infoOverride?->background($canvas),
             borderStyle: $this->borderStyle->background($canvas),
             focusedBorderStyle: $this->focusedBorderStyle->background($canvas),
             titleStyle: $this->titleStyle->background($canvas),
@@ -168,12 +170,12 @@ final readonly class Theme
 
     public function withBorder(BorderStyle $border): self
     {
-        return $this->cloneWith(border: $border);
+        return $this->rebuilt(border: $border);
     }
 
     public function withFocusedBorder(BorderStyle $border): self
     {
-        return $this->cloneWith(focusedBorder: $border);
+        return $this->rebuilt(focusedBorder: $border);
     }
 
     /**
@@ -444,6 +446,55 @@ final readonly class Theme
             // Use a dark bar because accent key hints have only 2.2:1 contrast on the light selection background.
             footerStyle: new Style(foreground: Color::hex('FBF1C7'), background: Color::hex('3C3836')),
             warning: new Style(foreground: Color::hex('AF3A03'), background: $background),
+        );
+    }
+
+    /**
+     * Pass on the overrides, never the derived styles, or a derived style stops following its source.
+     */
+    private function rebuilt(
+        ?Style $base = null,
+        ?Style $accent = null,
+        ?Style $dim = null,
+        ?Style $error = null,
+        ?Style $success = null,
+        ?Style $borderStyle = null,
+        ?Style $focusedBorderStyle = null,
+        ?Style $titleStyle = null,
+        ?Style $headerStyle = null,
+        ?Style $selectedStyle = null,
+        ?Style $cursorStyle = null,
+        ?Style $fillStyle = null,
+        ?Style $emptyStyle = null,
+        ?Style $inputStyle = null,
+        ?Color $page = null,
+        ?Style $footerStyle = null,
+        ?Style $warning = null,
+        ?Style $info = null,
+        ?BorderStyle $border = null,
+        ?BorderStyle $focusedBorder = null,
+    ): self {
+        return new self(
+            base: $base ?? $this->base,
+            accent: $accent ?? $this->accent,
+            dim: $dim ?? $this->dim,
+            error: $error ?? $this->error,
+            success: $success ?? $this->success,
+            borderStyle: $borderStyle ?? $this->borderStyle,
+            focusedBorderStyle: $focusedBorderStyle ?? $this->focusedBorderStyle,
+            titleStyle: $titleStyle ?? $this->titleStyle,
+            headerStyle: $headerStyle ?? $this->headerStyle,
+            selectedStyle: $selectedStyle ?? $this->selectedStyle,
+            cursorStyle: $cursorStyle ?? $this->cursorStyle,
+            fillStyle: $fillStyle ?? $this->fillStyle,
+            emptyStyle: $emptyStyle ?? $this->emptyStyle,
+            inputStyle: $inputStyle ?? $this->inputStyle,
+            page: $page ?? $this->page,
+            footerStyle: $footerStyle ?? $this->footerOverride,
+            warning: $warning ?? $this->warningOverride,
+            info: $info ?? $this->infoOverride,
+            border: $border ?? $this->border,
+            focusedBorder: $focusedBorder ?? $this->focusedBorder,
         );
     }
 
