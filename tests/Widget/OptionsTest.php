@@ -11,6 +11,7 @@ use Elmphant\Tui\Widget\Choice\RadioRow;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -19,6 +20,40 @@ use PHPUnit\Framework\TestCase;
  */
 final class OptionsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{Select|Radio|CheckboxGroup|CheckboxRow|RadioRow}>
+     */
+    public static function choiceWidgets(): iterable
+    {
+        $options = ['alpha', 'beta', 'gamma'];
+
+        yield 'select' => [Select::new($options)];
+        yield 'radio' => [Radio::new($options)];
+        yield 'checkbox group' => [CheckboxGroup::new($options)];
+        yield 'checkbox row' => [CheckboxRow::new($options)];
+        yield 'radio row' => [RadioRow::new($options)];
+    }
+
+    #[Test]
+    #[DataProvider('choiceWidgets')]
+    public function aCursorSetPastTheEndLandsOnTheLastOption(Select|Radio|CheckboxGroup|CheckboxRow|RadioRow $widget): void
+    {
+        self::assertSame(2, $widget->withCursor(9)->cursor());
+    }
+
+    #[Test]
+    #[DataProvider('choiceWidgets')]
+    public function aCursorSetBeforeTheStartLandsOnTheFirstOption(Select|Radio|CheckboxGroup|CheckboxRow|RadioRow $widget): void
+    {
+        self::assertSame(0, $widget->withCursor(-3)->cursor());
+    }
+
+    #[Test]
+    public function aCursorInAnEmptyListStaysAtTheStart(): void
+    {
+        self::assertSame(0, Select::new([])->withCursor(4)->cursor());
+    }
+
     #[Test]
     public function anOptionThatMovedIsStillTheChosenOne(): void
     {

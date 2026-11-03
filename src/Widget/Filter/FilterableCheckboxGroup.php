@@ -252,7 +252,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
                 array_keys($matching),
                 fn (int $index): bool => \in_array($matching[$index], $this->checked, true),
             )))
-            ->withCursor(min($this->cursor, max(0, \count($matching) - 1)));
+            ->withCursor($this->cursor);
     }
 
     /**

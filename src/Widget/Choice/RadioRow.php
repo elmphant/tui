@@ -121,7 +121,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
 
     public function withCursor(int $cursor): static
     {
-        return $this->cloneWith(cursor: $cursor);
+        return $this->cloneWith(cursor: Options::cursorWithin($cursor, $this->options));
     }
 
     public function withSelected(?int $selected): self

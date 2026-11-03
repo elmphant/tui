@@ -48,4 +48,12 @@ final class Options
     {
         return self::placeOf($under, $options) ?? 0;
     }
+
+    /**
+     * @param list<string> $options
+     */
+    public static function cursorWithin(int $cursor, array $options): int
+    {
+        return max(0, min($cursor, count($options) - 1));
+    }
 }

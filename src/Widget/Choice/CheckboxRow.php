@@ -142,7 +142,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
 
     public function withCursor(int $cursor): static
     {
-        return $this->cloneWith(cursor: $cursor);
+        return $this->cloneWith(cursor: Options::cursorWithin($cursor, $this->options));
     }
 
     /**
