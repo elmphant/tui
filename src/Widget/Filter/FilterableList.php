@@ -389,7 +389,8 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
             return;
         }
 
-        $this->list->render($frame, $body, $context);
+        $chosen = array_search($this->selectedSource, $this->matchingIndexes(), true);
+        $this->list->withSelected($chosen === false ? null : $chosen)->render($frame, $body, $context);
     }
 
     /**
@@ -403,7 +404,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return new UpdateResult(
             $field->value() === $this->field->value()
                 ? $this->cloneWith(field: $field)
-                : $this->cloneWith(field: $field)->reFiltered(),
+                : $this->cloneWith(field: $field)->reFiltered()->atTheTop(),
             $result->command,
         );
     }
@@ -440,18 +441,20 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     }
 
     /**
-     * A click moves only the cursor; an independent list selection would appear as a second chosen item.
+     * Only `selectedSource` holds the choice, so the list view's own selection stays empty.
      *
      * @return UpdateResult<self>
      */
     private function withMouse(MouseMsg $message, Rect $area): UpdateResult
     {
+        $option = $message->isClick() ? $this->optionAt($message, $area) : null;
         $dispatcher = new ChildDispatcher($this->globalKeybindings);
         $field = $dispatcher->dispatchOne($this->field, $message, $this->fieldArea($area));
         $list = $dispatcher->dispatchOne($this->list, $message, $this->listArea($area));
+        $answered = $this->cloneWith(field: $field->child, list: $list->child->withSelected(null));
 
         return new UpdateResult(
-            $this->cloneWith(field: $field->child, list: $list->child->withSelected(null)),
+            $option === null ? $answered : $answered->activated($option),
             Cmd::combine($field->command, $list->command),
         );
     }
@@ -461,9 +464,13 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(
             list: $this->list
                 ->withItems($this->matchingItems())
-                ->withCursor(0)
                 ->withScrollOffset(0),
         );
+    }
+
+    private function atTheTop(): self
+    {
+        return $this->cloneWith(list: $this->list->withCursor(0));
     }
 
     /**

@@ -89,6 +89,25 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function aHostsQueryLeavesTheCursorOnAnItemThatStillMatchesWhileTypingGoesToTheTop(): void
+    {
+        $list = FilterableList::new([new SimpleListItem('delta'), new SimpleListItem('alpha'), new SimpleListItem('beta')]);
+        $onBeta = $this->press($this->press($list, Key::Down), Key::Down);
+        self::assertSame(2, $onBeta->sourceIndex(), 'precondition: the cursor is on beta');
+
+        self::assertSame(2, $onBeta->withQuery('t')->sourceIndex(), 'delta matches first, but beta still matches');
+        self::assertSame(0, $this->typed($onBeta, 't')->sourceIndex(), 'the reader typing goes to the best match');
+    }
+
+    #[Test]
+    public function aCursorPlacedBeforeTheQueryIsSetKeepsItsItem(): void
+    {
+        $list = FilterableList::new([new SimpleListItem('delta'), new SimpleListItem('alpha'), new SimpleListItem('beta')]);
+
+        self::assertSame(2, $list->withSourceIndex(2)->withQuery('t')->sourceIndex());
+    }
+
+    #[Test]
     public function theArrowsWalkTheFilteredList(): void
     {
         $list = $this->press($this->typed($this->commands(), 'cache'), Key::Down);
@@ -211,7 +230,7 @@ final class FilterableListTest extends TestCase
             }
         };
 
-        $list = FilterableList::new($this->commandItems())->withMatcher($ranked)->withQuery('anything');
+        $list = $this->typed(FilterableList::new($this->commandItems())->withMatcher($ranked), 'anything');
 
         self::assertSame(2, $list->sourceIndex(), 'user:create was ranked first');
         self::assertSame('2 of 3', $list->summary());
@@ -509,25 +528,35 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
-    public function aClickLeavesNoMarkerBehindOnceTheCursorMovesOn(): void
+    public function aClickChoosesTheItemItLandsOn(): void
     {
-        $theme = Theme::dark();
+        $clicked = $this->commands()->update(
+            new MouseMsg(1, self::FIRST_ITEM_ROW + 2, MouseAction::Press, MouseButton::Left),
+            $this->area(),
+        )->model;
+
+        self::assertSame($this->commandItems()[1]->title(), $clicked->selectedItem()?->title());
+    }
+
+    #[Test]
+    public function theChosenItemIsDrawnAsChosenOnceTheCursorMovesOn(): void
+    {
+        $moved = $this->press($this->press($this->commands(), Key::Enter), Key::Down);
+
+        self::assertSame([true, false], [$this->drawnAsChosen($moved, 0), $this->drawnAsChosen($moved, 4)]);
+    }
+
+    #[Test]
+    public function aSecondChoiceTakesTheMarkFromTheFirst(): void
+    {
         $clicked = $this->commands()->update(
             new MouseMsg(1, self::FIRST_ITEM_ROW, MouseAction::Press, MouseButton::Left),
             $this->area(),
         )->model;
 
-        self::assertInstanceOf(FilterableList::class, $clicked);
+        $chosenAgain = $this->press($this->press($this->press($clicked, Key::Down), Key::Enter), Key::Down);
 
-        $moved = $this->press($clicked, Key::Down);
-        $frame = new Frame(self::WIDTH, self::HEIGHT);
-        $moved->render($frame, $this->area(), new RenderContext($theme));
-
-        self::assertNotSame(
-            $theme->accent->foregroundValue(),
-            $frame->foregrounds[self::FIRST_ITEM_ROW * self::WIDTH + 1],
-            'The row a click left behind must not stay marked once the cursor has moved on',
-        );
+        self::assertSame([false, true], [$this->drawnAsChosen($chosenAgain, 0), $this->drawnAsChosen($chosenAgain, 2)]);
     }
 
     #[Test]
@@ -691,6 +720,15 @@ final class FilterableListTest extends TestCase
         $items = [new SimpleListItem('kept'), 'plain'];
 
         return $items;
+    }
+
+    private function drawnAsChosen(FilterableList $list, int $rowsBelowTheFirstItem): bool
+    {
+        $theme = Theme::dark();
+        $frame = new Frame(self::WIDTH, self::HEIGHT);
+        $list->render($frame, $this->area(), new RenderContext($theme));
+
+        return $frame->foregrounds[(self::FIRST_ITEM_ROW + $rowsBelowTheFirstItem) * self::WIDTH + 1] === $theme->accent->foregroundValue();
     }
 
     private function area(): Rect

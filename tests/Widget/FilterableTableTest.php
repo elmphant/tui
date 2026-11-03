@@ -139,13 +139,17 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
-    public function aQueryThatStillKeepsTheCursorRowLeavesTheCursorOnIt(): void
+    public function aHostsQueryLeavesTheCursorOnARowThatStillMatchesWhileTypingGoesToTheTop(): void
     {
-        $table = $this->harness()->press('down', 'down')->type('r')->widget();
+        $onTrain = $this->harness()->press('down', 'down')->widget();
+        self::assertInstanceOf(FilterableTable::class, $onTrain);
 
-        self::assertInstanceOf(FilterableTable::class, $table);
-        self::assertSame('2 of 3', $table->summary());
-        self::assertSame('Train', $table->cursorRow()?->cells[1]);
+        $typed = WidgetHarness::for($onTrain, 40, 8)->type('r')->widget();
+        self::assertInstanceOf(FilterableTable::class, $typed);
+
+        self::assertSame('2 of 3', $onTrain->withQuery('r')->summary());
+        self::assertSame('Train', $onTrain->withQuery('r')->cursorRow()?->cells[1], 'Office rent matches first, but Train still matches');
+        self::assertSame('Office rent', $typed->cursorRow()?->cells[1], 'the reader typing goes to the best match');
     }
 
     #[Test]

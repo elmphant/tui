@@ -273,7 +273,12 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($this->field, $message, FilterBar::barArea($area));
         $typed = $this->cloneWith(field: $result->child);
 
-        return new UpdateResult($result->child->value() === $this->query() ? $typed : $typed->reFiltered(), $result->command);
+        return new UpdateResult($result->child->value() === $this->query() ? $typed : $typed->reFiltered()->atTheTop(), $result->command);
+    }
+
+    private function atTheTop(): self
+    {
+        return $this->cloneWith(table: $this->table->withCursor(0));
     }
 
     /**
