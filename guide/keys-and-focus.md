@@ -88,7 +88,7 @@ changes. `FocusHints` asks whatever has the keyboard which keys it answers:
 public function view(): Widget
 {
     return Layout::vertical(
-        Header::new('My App')->withDivider(),
+        Header::new('My App')->withRule(),
         Component::bind('list', $this->list, static fn (self $app, ListView $list): self => $app->cloneWith(list: $list)),
         Footer::new()
             ->withLeft(StatusBar::forHints($this->quitHints()))

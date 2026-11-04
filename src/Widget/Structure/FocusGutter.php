@@ -79,7 +79,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
         return $this->held ?? false;
     }
 
-    public function holds(): Widget
+    public function content(): Widget
     {
         return $this->child;
     }
@@ -89,7 +89,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
         return $this->cloneWith(child: $child);
     }
 
-    public function contentRectIn(Rect $area): Rect
+    public function contentArea(Rect $area): Rect
     {
         return self::contentIn($area);
     }

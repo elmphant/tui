@@ -26,19 +26,19 @@ final readonly class Card implements Widget, WidgetContainer
 
     private function __construct(
         private string $title = '',
-        private string|Widget $body = '',
+        private string|Widget $content = '',
         private ?Style $borderStyle = null,
         private ?Style $titleStyle = null,
-        private ?Style $bodyStyle = null,
+        private ?Style $contentStyle = null,
         private BorderType $border = BorderType::Rounded,
         private int $height = 4,
         private bool $dimmed = false,
     ) {
     }
 
-    public static function new(string $title = '', string|Widget $body = ''): self
+    public static function new(string $title = '', string|Widget $content = ''): self
     {
-        return new self(title: $title, body: $body);
+        return new self(title: $title, content: $content);
     }
 
     public function withTitle(string $title): self
@@ -46,9 +46,9 @@ final readonly class Card implements Widget, WidgetContainer
         return $this->cloneWith(title: $title);
     }
 
-    public function withBody(string|Widget $body): self
+    public function withContent(string|Widget $content): self
     {
-        return $this->cloneWith(body: $body);
+        return $this->cloneWith(content: $content);
     }
 
     public function withBorderStyle(Style $style): self
@@ -61,9 +61,9 @@ final readonly class Card implements Widget, WidgetContainer
         return $this->cloneWith(titleStyle: $style);
     }
 
-    public function withBodyStyle(Style $style): self
+    public function withContentStyle(Style $style): self
     {
-        return $this->cloneWith(bodyStyle: $style);
+        return $this->cloneWith(contentStyle: $style);
     }
 
     public function withBorderType(BorderType $border): self
@@ -91,7 +91,7 @@ final readonly class Card implements Widget, WidgetContainer
      */
     public function children(): iterable
     {
-        return $this->body instanceof Widget ? [$this->body] : [];
+        return $this->content instanceof Widget ? [$this->content] : [];
     }
 
     /**
@@ -101,11 +101,11 @@ final readonly class Card implements Widget, WidgetContainer
     {
         $inner = $this->insetIn($area)->inner($area);
 
-        if (!$this->body instanceof Widget || $inner->width < 1 || $inner->height < 2) {
+        if (!$this->content instanceof Widget || $inner->width < 1 || $inner->height < 2) {
             return [];
         }
 
-        return [[$this->body, new Rect($inner->x, $inner->y + 1, $inner->width, $inner->height - 1)]];
+        return [[$this->content, new Rect($inner->x, $inner->y + 1, $inner->width, $inner->height - 1)]];
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -119,12 +119,12 @@ final readonly class Card implements Widget, WidgetContainer
         $theme = $context->theme;
         $borderStyle = $this->borderStyle ?? $theme->borderStyle;
         $titleStyle = $this->titleStyle ?? $theme->base->bold();
-        $bodyStyle = $this->bodyStyle ?? $theme->dim;
+        $contentStyle = $this->contentStyle ?? $theme->dim;
 
         if ($this->dimmed) {
             $borderStyle = $borderStyle->faint();
             $titleStyle = $titleStyle->faint();
-            $bodyStyle = $bodyStyle->faint();
+            $contentStyle = $contentStyle->faint();
         }
 
         if ($inset->border) {
@@ -155,14 +155,14 @@ final readonly class Card implements Widget, WidgetContainer
             );
         }
 
-        if (\is_string($this->body) && $this->body !== '' && $inner->height >= 2) {
+        if (\is_string($this->content) && $this->content !== '' && $inner->height >= 2) {
             $frame->putString(
                 $inner->x,
                 $inner->y + 1,
-                CharWidth::truncateToWidth($this->body, $inner->width),
-                $bodyStyle->foregroundValue(),
-                $bodyStyle->backgroundValue(),
-                $bodyStyle->attributes,
+                CharWidth::truncateToWidth($this->content, $inner->width),
+                $contentStyle->foregroundValue(),
+                $contentStyle->backgroundValue(),
+                $contentStyle->attributes,
             );
         }
 

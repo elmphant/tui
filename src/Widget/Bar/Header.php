@@ -38,7 +38,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         private ?Style $style = null,
         private ?Spacing $padding = null,
         private ?Spacing $margin = null,
-        private bool $divider = false,
+        private bool $rule = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -94,20 +94,20 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         return $this->cloneWith(margin: $margin);
     }
 
-    public function withDivider(bool $divider = true): self
+    public function withRule(bool $rule = true): self
     {
-        return $this->cloneWith(divider: $divider);
+        return $this->cloneWith(rule: $rule);
     }
 
     public function sizing(): Sizing
     {
         $padding = $this->padding ?? Spacing::none();
         $margin = $this->margin ?? Spacing::none();
-        $dividerHeight = $this->divider ? 1 : 0;
+        $ruleHeight = $this->rule ? 1 : 0;
 
         return Sizing::of(
             Constraint::flex(),
-            Constraint::exact(1 + $padding->top + $padding->bottom + $margin->top + $margin->bottom + $dividerHeight),
+            Constraint::exact(1 + $padding->top + $padding->bottom + $margin->top + $margin->bottom + $ruleHeight),
         );
     }
 
@@ -217,11 +217,11 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
             BarSlotRenderer::renderRight($frame, $this->rightSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
         }
 
-        if ($this->divider) {
-            $dividerY = $barArea->y + $barArea->height;
-            if ($dividerY < $area->y + $area->height) {
-                $dividerStyle = $context->theme->borderStyle;
-                $frame->putString($barArea->x, $dividerY, str_repeat('─', $barArea->width), $dividerStyle->foregroundValue(), $dividerStyle->backgroundValue());
+        if ($this->rule) {
+            $ruleY = $barArea->y + $barArea->height;
+            if ($ruleY < $area->y + $area->height) {
+                $ruleStyle = $context->theme->borderStyle;
+                $frame->putString($barArea->x, $ruleY, str_repeat('─', $barArea->width), $ruleStyle->foregroundValue(), $ruleStyle->backgroundValue());
             }
         }
     }

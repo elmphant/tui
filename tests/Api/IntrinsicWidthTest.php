@@ -263,7 +263,7 @@ final class IntrinsicWidthTest extends TestCase
      */
     public static function spaceReservers(): iterable
     {
-        yield 'Spacer' => [Spacer::of(4)];
+        yield 'Spacer' => [Spacer::new(4)];
     }
 
     /**

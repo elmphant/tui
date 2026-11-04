@@ -27,7 +27,7 @@ final class CardTest extends TestCase
         $frame = new Frame(20, 4);
         $card = Card::new('Old', 'stale')
             ->withTitle('New')
-            ->withBody('fresh')
+            ->withContent('fresh')
             ->withBorderType(BorderType::Double);
 
         $card->render($frame, new Rect(0, 0, 20, 4), new RenderContext(Theme::dark()));
@@ -230,7 +230,7 @@ final class CardTest extends TestCase
         );
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
-        $card = Card::new('Title', 'body')->withBodyStyle($explicit);
+        $card = Card::new('Title', 'body')->withContentStyle($explicit);
 
         $card->render($frame, new Rect(0, 0, 20, 4), $context);
 

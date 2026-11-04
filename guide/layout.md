@@ -99,3 +99,13 @@ clicks or keys.
 
 Spacing is counted in terminal cells, from 0 to 255. A value outside that range
 throws.
+
+Which one to pick:
+
+- `Container` wraps one widget in padding, a margin, colours and a border.
+- `Card` is a small titled block with one line of text or one widget, such as a
+  number on a dashboard.
+- `Box` stacks several widgets inside a titled border and never scrolls. Use it
+  for a block whose content always fits.
+- `Panel` is the box that scrolls, takes the keyboard and holds focusable
+  children. Use it whenever the content might not fit.

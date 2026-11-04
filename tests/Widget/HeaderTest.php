@@ -215,14 +215,14 @@ final class HeaderTest extends TestCase
     #[Test]
     public function dividerAddsOneRowToConstraint(): void
     {
-        $header = Header::new('Title')->withDivider();
+        $header = Header::new('Title')->withRule();
         self::assertEquals(Constraint::exact(2), $header->sizing()->rows);
     }
 
     #[Test]
     public function aDividerCanBeTakenAwayAgain(): void
     {
-        $header = Header::new('Title')->withDivider()->withDivider(false);
+        $header = Header::new('Title')->withRule()->withRule(false);
         self::assertEquals(Constraint::exact(1), $header->sizing()->rows);
     }
 
@@ -231,7 +231,7 @@ final class HeaderTest extends TestCase
     {
         $header = Header::new('Title')
             ->withPadding(Spacing::vertical(1))
-            ->withDivider();
+            ->withRule();
 
         self::assertEquals(Constraint::exact(4), $header->sizing()->rows);
     }
@@ -239,7 +239,7 @@ final class HeaderTest extends TestCase
     #[Test]
     public function dividerRendersHorizontalLine(): void
     {
-        $header = Header::new('Title')->withDivider();
+        $header = Header::new('Title')->withRule();
         $frame = new Frame(20, 2);
         $header->render($frame, Rect::fromSize(20, 2), $this->context);
 
@@ -254,7 +254,7 @@ final class HeaderTest extends TestCase
     #[Test]
     public function dividerUsesBorderStyleForeground(): void
     {
-        $header = Header::new('Title')->withDivider();
+        $header = Header::new('Title')->withRule();
         $frame = new Frame(20, 2);
         $header->render($frame, Rect::fromSize(20, 2), $this->context);
 
@@ -583,7 +583,7 @@ final class HeaderTest extends TestCase
     #[Test]
     public function dividerNotRenderedWhenNoRoomBelowBar(): void
     {
-        $header = Header::new('Title')->withDivider();
+        $header = Header::new('Title')->withRule();
         $frame = new Frame(20, 1);
         $header->render($frame, Rect::fromSize(20, 1), $this->context);
 
@@ -600,7 +600,7 @@ final class HeaderTest extends TestCase
     #[Test]
     public function dividerRendersExactlyAtLastAvailableRow(): void
     {
-        $header = Header::new('T')->withDivider();
+        $header = Header::new('T')->withRule();
         $frame = new Frame(5, 2);
         $header->render($frame, Rect::fromSize(5, 2), $this->context);
 
@@ -614,7 +614,7 @@ final class HeaderTest extends TestCase
     #[Test]
     public function dividerNotRenderedWhenAreaEqualsBarHeight(): void
     {
-        $header = Header::new('T')->withDivider();
+        $header = Header::new('T')->withRule();
 
         // Render with an area that has y-offset such that dividerY == area.y + area.height
         // barArea height=1 (no padding), dividerY = area.y + 1
@@ -779,7 +779,7 @@ final class HeaderTest extends TestCase
     {
         $header = Header::new('T')
             ->withPadding(Spacing::vertical(1))
-            ->withDivider();
+            ->withRule();
         $frame = new Frame(10, 4);
         $header->render($frame, Rect::fromSize(10, 4), $this->context);
 

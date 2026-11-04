@@ -64,7 +64,7 @@ final class PrimitivesTest extends TestCase
     #[Test]
     public function spacerCustomSize(): void
     {
-        $spacer = Spacer::of(3);
+        $spacer = Spacer::new(3);
         self::assertSame(3, $spacer->sizing()->rows->min);
     }
 

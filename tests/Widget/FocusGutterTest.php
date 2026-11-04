@@ -74,7 +74,7 @@ final class FocusGutterTest extends TestCase
     {
         $field = FocusGutter::around(TextInput::new()->withValue('typed'))
             ->withGlobalKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+k']]))
-            ->holds();
+            ->content();
         self::assertInstanceOf(TextInput::class, $field);
 
         $cleared = $field->update(new KeyMsg('k', ctrl: true), new Rect(0, 0, 20, 1))->model;
@@ -106,7 +106,7 @@ final class FocusGutterTest extends TestCase
     {
         $field = FocusGutter::around(TextInput::new()->withValue('typed'))
             ->withKeybindings(new Keybindings([Actions::CLEAR_LINE => ['ctrl+w']]))
-            ->holds();
+            ->content();
         self::assertInstanceOf(TextInput::class, $field);
 
         $cleared = $field->update(new KeyMsg('w', ctrl: true), new Rect(0, 0, 20, 1))->model;
@@ -122,8 +122,8 @@ final class FocusGutterTest extends TestCase
 
         $gutter = FocusGutter::around($field);
 
-        self::assertSame($field, $gutter->holds(), 'the track does not hide the field behind it');
-        self::assertSame(2, $gutter->contentRectIn(new Rect(0, 0, 20, 1))->x, 'nor where the field was drawn');
+        self::assertSame($field, $gutter->content(), 'the track does not hide the field behind it');
+        self::assertSame(2, $gutter->contentArea(new Rect(0, 0, 20, 1))->x, 'nor where the field was drawn');
     }
 
     #[Test]

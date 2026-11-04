@@ -52,7 +52,7 @@ final readonly class GutteredFormApp extends App
     public function fieldValue(): string
     {
         $gutter = [...$this->form->children()][0];
-        $field = $gutter instanceof FocusGutter ? $gutter->holds() : null;
+        $field = $gutter instanceof FocusGutter ? $gutter->content() : null;
 
         return $field instanceof TextInput ? $field->value() : '?';
     }

@@ -18,12 +18,7 @@ final readonly class Spacer implements Widget
     ) {
     }
 
-    public static function new(): self
-    {
-        return new self(1);
-    }
-
-    public static function of(int $size): self
+    public static function new(int $size = 1): self
     {
         return new self($size);
     }
