@@ -11,13 +11,50 @@ use Elmphant\Tui\Core\FocusState;
 
 final readonly class FocusCmd extends Cmd
 {
+    private function __construct(
+        public ?ComponentId $target,
+        public FocusMove $move,
+    ) {
+    }
+
     /**
      * @internal build one with Cmd::focus() and its siblings
      */
-    public function __construct(
-        public ?ComponentId $target = null,
-        public FocusMove $move = FocusMove::To,
-    ) {
+    public static function to(ComponentId $target): self
+    {
+        return new self($target, FocusMove::To);
+    }
+
+    /**
+     * @internal
+     */
+    public static function first(): self
+    {
+        return new self(null, FocusMove::First);
+    }
+
+    /**
+     * @internal
+     */
+    public static function next(): self
+    {
+        return new self(null, FocusMove::Next);
+    }
+
+    /**
+     * @internal
+     */
+    public static function previous(): self
+    {
+        return new self(null, FocusMove::Previous);
+    }
+
+    /**
+     * @internal
+     */
+    public static function nowhere(): self
+    {
+        return new self(null, FocusMove::Nowhere);
     }
 
     /**
@@ -29,7 +66,7 @@ final readonly class FocusCmd extends Cmd
     {
         return $scope === null || $this->target === null
             ? $this
-            : new self(target: ComponentId::named($scope . '/' . $this->target->value), move: $this->move);
+            : self::to(ComponentId::named($scope . '/' . $this->target->value));
     }
 
     /**

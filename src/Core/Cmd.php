@@ -47,7 +47,7 @@ abstract readonly class Cmd
      */
     public static function focus(ComponentId|string $target): self
     {
-        return new FocusCmd(is_string($target) ? ComponentId::named($target) : $target);
+        return FocusCmd::to(is_string($target) ? ComponentId::named($target) : $target);
     }
 
     /**
@@ -55,7 +55,7 @@ abstract readonly class Cmd
      */
     public static function focusFirst(): self
     {
-        return new FocusCmd(move: FocusMove::First);
+        return FocusCmd::first();
     }
 
     /**
@@ -63,17 +63,17 @@ abstract readonly class Cmd
      */
     public static function focusNothing(): self
     {
-        return new FocusCmd(move: FocusMove::Nowhere);
+        return FocusCmd::nowhere();
     }
 
     public static function focusNext(): self
     {
-        return new FocusCmd(move: FocusMove::Next);
+        return FocusCmd::next();
     }
 
     public static function focusPrevious(): self
     {
-        return new FocusCmd(move: FocusMove::Previous);
+        return FocusCmd::previous();
     }
 
     /**
