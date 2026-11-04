@@ -140,6 +140,26 @@ final class BarSlotRenderer
         return new Rect($offsetX, $contentArea->y, $width, 1);
     }
 
+    /**
+     * Centred on the bar where it fits, else moved or cut into the room the side slots leave.
+     */
+    public static function centreBetween(Widget $widget, Rect $contentArea, ?Rect $left, ?Rect $right, int $gap, RenderContext $context): ?Rect
+    {
+        $centred = self::rectFor($widget, Alignment::Center, $contentArea, $context);
+        if (null === $centred) {
+            return null;
+        }
+
+        $from = null === $left ? $contentArea->x : $left->right() + $gap;
+        $to = null === $right ? $contentArea->right() : $right->x - $gap;
+        $width = min($centred->width, $to - $from);
+        if ($width < 1) {
+            return null;
+        }
+
+        return new Rect(max($from, min($centred->x, $to - $width)), $contentArea->y, $width, 1);
+    }
+
     public static function drawIn(Frame $frame, Widget $widget, ?Rect $rect, int $barBackground, RenderContext $context): void
     {
         if (null === $rect) {

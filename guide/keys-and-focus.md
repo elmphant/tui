@@ -90,15 +90,19 @@ public function view(): Widget
     return Layout::column(
         Header::new('My App')->withRule(),
         Component::bind('list', $this->list, static fn (self $app, ListView $list): self => $app->cloneWith(list: $list)),
-        Footer::new()
-            ->withLeft(StatusBar::forHints($this->quitHints()))
-            ->withCenter(FocusHints::new()),
+        Footer::new()->withLeft(
+            FocusHints::new()->withLeadingKeys($this->applicationKeybindings(), ['quit' => Actions::QUIT]),
+        ),
     );
 }
 ```
 
 With the keyboard on the list, that footer reads `Ctrl+Q quit   ↑/↓ move
 Enter choose`. Rebind a key, or switch on vim mode, and the footer follows.
+`withLeadingKeys()` puts the app's own keys first. A key that a focused field
+would type as text is left out while it does, since it does nothing then.
+Keys given with `Component::bind(…)->withActions()` are named only while that
+component holds the keyboard.
 
 Your own widget names its keys by implementing `PublishesHints`. Ask its
 bindings for the labels, never type them:

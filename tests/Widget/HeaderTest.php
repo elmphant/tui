@@ -86,6 +86,16 @@ final class HeaderTest extends TestCase
     }
 
     #[Test]
+    public function aCenterTooWideForTheMiddleMovesPastTheLeftSlotInsteadOfOverIt(): void
+    {
+        $header = Header::new()->withLeft(Text::new('LEFT-LEFT-LEFT'))->withCenter(Text::new('CENTER'));
+        $frame = new Frame(24, 1);
+        $header->render($frame, Rect::fromSize(24, 1), $this->context);
+
+        self::assertSame('LEFT-LEFT-LEFT  CENTER', $this->extractText($frame, 0, 22));
+    }
+
+    #[Test]
     public function rendersRightSlotRightAligned(): void
     {
         $header = Header::new('Title')

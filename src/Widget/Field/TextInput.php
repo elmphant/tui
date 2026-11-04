@@ -28,13 +28,14 @@ use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
 use Elmphant\Tui\Text\GraphemeIndex;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
 
-final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAValue, KeybindingsAware, PublishesHints, TakesText
+final readonly class TextInput implements BindsForTheMoment, Committing, Focusable, HoldsAValue, KeybindingsAware, PublishesHints, TakesText
 {
     use Cloneable;
     use DrawsFocus;
@@ -52,6 +53,7 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private ?int $width = null,
+        private bool $submits = false,
         private ?Message $submit = null,
     ) {
     }
@@ -80,18 +82,29 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
 
     public function momentaryKeybindings(): Keybindings
     {
-        return $this->submit === null ? Keybindings::empty() : new Keybindings([Actions::SELECT => ['enter']]);
+        return $this->submits ? new Keybindings([Actions::SELECT => ['enter']]) : Keybindings::empty();
     }
 
-    public function withSubmit(Message $message): self
+    /**
+     * Enter submits: the field commits, so a bound host hears it, and sends the message when there is one.
+     * A field left without it hands Enter to what encloses it, as a form moves on with it.
+     */
+    public function withSubmit(?Message $message = null): self
     {
-        return $this->cloneWith(submit: $message);
+        return $this->cloneWith(submits: true, submit: $message);
+    }
+
+    public function commits(Message $message): bool
+    {
+        return $this->submits
+            && $message instanceof KeyMsg
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT);
     }
 
     public function hints(): array
     {
         return $this->effectiveKeybindings()->hints([
-            ...$this->submit === null ? [] : ['submit' => Actions::SELECT],
+            ...$this->submits ? ['submit' => Actions::SELECT] : [],
             ...$this->value === '' ? [] : ['clear' => Actions::CLEAR_LINE],
         ]);
     }
@@ -247,8 +260,8 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
     private function handleKey(KeyMsg $message, Rect $area): UpdateResult
     {
         $bindings = $this->effectiveKeybindings();
-        if ($this->submit !== null && $bindings->matches($message, Actions::SELECT)) {
-            return new UpdateResult($this, Cmd::message($this->submit));
+        if ($this->submits && $bindings->matches($message, Actions::SELECT)) {
+            return new UpdateResult($this, $this->submit === null ? null : Cmd::message($this->submit));
         }
 
         $updated = match (true) {

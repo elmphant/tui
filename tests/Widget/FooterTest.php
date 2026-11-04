@@ -120,6 +120,28 @@ final class FooterTest extends TestCase
     }
 
     #[Test]
+    public function aCenterTooWideForTheMiddleMovesPastTheLeftSlotInsteadOfOverIt(): void
+    {
+        $footer = Footer::new()->withLeft(Text::new('LEFT-LEFT-LEFT'))->withCenter(Text::new('CENTER'));
+        $frame = new Frame(24, 1);
+        $footer->render($frame, Rect::fromSize(24, 1), $this->context);
+
+        self::assertSame('LEFT-LEFT-LEFT  CENTER', $this->extractText($frame, 0, 22));
+    }
+
+    #[Test]
+    public function aCenterWithNoRoomBesideTheSidesIsCutToTheGapBetweenThem(): void
+    {
+        $footer = Footer::new()->withLeft(Text::new('LEFT'))->withCenter(Text::new('CENTER'))->withRight(Text::new('RIGHT'));
+        $frame = new Frame(16, 1);
+        $footer->render($frame, Rect::fromSize(16, 1), $this->context);
+
+        self::assertSame('LEFT', $this->extractText($frame, 0, 4), 'the left slot stays whole');
+        self::assertSame('RIGHT', $this->extractText($frame, 11, 5), 'and so does the right one');
+        self::assertSame('  CEN  ', $this->extractText($frame, 4, 7), 'two cells either side, and the centre gets the three between');
+    }
+
+    #[Test]
     public function rendersRightSlotRightAligned(): void
     {
         $footer = Footer::new()

@@ -204,19 +204,16 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
             return;
         }
 
-        $contentX = $contentArea->x;
-        $contentY = $contentArea->y;
-        $contentWidth = $contentArea->width;
-
         $right = $this->rightDrawn($contentArea, $context);
         $rightRect = $right === null ? null : BarSlotRenderer::rectFor($right, Alignment::Right, $contentArea, $context);
+        $leftRect = $this->leftRect($contentArea, $rightRect, $context);
 
         if ($this->leftSlot !== null) {
-            BarSlotRenderer::drawIn($frame, $this->leftSlot, $this->leftRect($contentArea, $rightRect, $context), $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $this->leftSlot, $leftRect, $barBg, $context);
         }
 
         if ($this->centerSlot !== null) {
-            BarSlotRenderer::renderCentered($frame, $this->centerSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $this->centerSlot, BarSlotRenderer::centreBetween($this->centerSlot, $contentArea, $leftRect, $rightRect, self::SLOT_GAP, $context), $barBg, $context);
         }
 
         if ($right !== null) {

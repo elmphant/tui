@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -42,6 +43,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         public Widget $widget,
         private ?Closure $writeBack,
         private ?Closure $address = null,
+        private ?Keybindings $actions = null,
     ) {
     }
 
@@ -92,6 +94,25 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
             $widget,
             $writeBack,
         );
+    }
+
+    /**
+     * Actions the App answers in onAction() only while the keyboard is on this component or inside it,
+     * before its application keybindings. The footer names them only then.
+     *
+     * @return self<TWidget>
+     */
+    public function withActions(Keybindings $actions): self
+    {
+        return self::wrapping($this->id, $this->widget, $this->writeBack, $this->address, $actions);
+    }
+
+    /**
+     * @internal
+     */
+    public function actions(): Keybindings
+    {
+        return $this->actions ?? Keybindings::empty();
     }
 
     /**
@@ -178,6 +199,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
                     : new UpdateResult($mountWriteBack($app, $answered));
             },
             address: $address,
+            actions: $this->actions,
         );
     }
 
@@ -188,7 +210,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function under(ComponentId $mount): self
     {
-        return self::wrapping(ComponentId::named($mount->value . '/' . $this->id->value), $this->widget, $this->writeBack, $this->address);
+        return self::wrapping(ComponentId::named($mount->value . '/' . $this->id->value), $this->widget, $this->writeBack, $this->address, $this->actions);
     }
 
     /**
@@ -229,11 +251,11 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      *
      * @return self<TWrapped>
      */
-    private static function wrapping(ComponentId $id, Widget $widget, ?Closure $writeBack, ?Closure $address = null): self
+    private static function wrapping(ComponentId $id, Widget $widget, ?Closure $writeBack, ?Closure $address = null, ?Keybindings $actions = null): self
     {
         return $widget instanceof MeasureHeight
-            ? new MeasuredComponent($id, $widget, $writeBack, $address)
-            : new self($id, $widget, $writeBack, $address);
+            ? new MeasuredComponent($id, $widget, $writeBack, $address, $actions)
+            : new self($id, $widget, $writeBack, $address, $actions);
     }
 
     private static function assertSafeReplacement(Closure $writeBack): void

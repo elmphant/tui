@@ -7,60 +7,63 @@ interactive ones on your App, and bind them (see [Building an app](apps.md)).
 
 ## The list
 
+Every widget is in `Elmphant\Tui\Widget\`, in the namespace the second column
+names: `use Elmphant\Tui\Widget\Structure\Panel;`.
+
 **Structure**
 
-| Widget | What it is |
-| --- | --- |
-| `Panel` | A scrolling box of widgets, with border and title — see [Scrolling](#scrolling) |
-| `TabBar` | Tabs, switched by keyboard or mouse |
-| `Split` | Two panes with a divider you can drag |
-| `Modal` | A box over the screen that dims what is behind it — see [Modals](#modals) |
-| `Overlay` / `PositionedOverlay` | One widget on top of another |
-| `Card` / `Box` / `Container` | Borders, padding and margins around any widget — see [Layout](layout.md#decoration) |
-| `Themed` | Draws one part of the screen with a changed theme: `Themed::around($list, fn (Theme $theme) => $theme->withSelectedStyle($style))` |
+| Widget | In | What it is |
+| --- | --- | --- |
+| `Panel` | `Structure` | A scrolling box of widgets, with border and title — see [Scrolling](#scrolling) |
+| `TabBar` | `Structure` | Tabs, switched by keyboard or mouse |
+| `Split` | `Structure` | Two panes with a divider you can drag |
+| `Modal` | `Popup` | A box over the screen that dims what is behind it — see [Modals](#modals) |
+| `Overlay` / `PositionedOverlay` | `Popup` | One widget on top of another |
+| `Card` / `Box` / `Container` | `Structure` | Borders, padding and margins around any widget — see [Layout](layout.md#decoration) |
+| `Themed` | `Structure` | Draws one part of the screen with a changed theme: `Themed::around($list, fn (Theme $theme) => $theme->withSelectedStyle($style))` |
 
 **Text**
 
-| Widget | What it is |
-| --- | --- |
-| `Text` | One line of text (`Text::new($text)`) |
-| `Paragraph` | Wrapped text, named by what you hand it: `Paragraph::fromText()`, `fromLines()`, `fromMarkdown()`, `fromAnsi()` |
-| `Separator` / `Spacer` | A line, or empty space |
+| Widget | In | What it is |
+| --- | --- | --- |
+| `Text` | `Prose` | One line of text (`Text::new($text)`) |
+| `Paragraph` | `Prose` | Wrapped text, named by what you hand it: `Paragraph::fromText()`, `fromLines()`, `fromMarkdown()`, `fromAnsi()` |
+| `Separator` / `Spacer` | `Prose` | A line, or empty space |
 
 **Input**
 
-| Widget | What it is |
-| --- | --- |
-| `TextInput` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead). `withSubmit($message)` sends a message on Enter |
-| `Button` | A button that sends a message when pressed |
-| `Checkbox` / `CheckboxGroup` | Yes/no choices |
-| `Radio` / `Select` | One choice out of a list. Take a `Radio` for a few options that all show, each with a mark, where one is always chosen (a setting with a default), unless `withClearable()` lets the reader put it back down. Take a `Select` for a longer list that scrolls in the rows it gets and starts with nothing chosen. Put either in a `Dropdown` to keep it on one row |
-| `Dropdown` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))`. To load new options, hand it `withContent($dropdown->content()->withItems($items))`, so an open list stays open with its query |
-| `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
+| Widget | In | What it is |
+| --- | --- | --- |
+| `TextInput` | `Field` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead). `withSubmit()` makes Enter commit it, for the bind closure, and `withSubmit($message)` also sends a message |
+| `Button` | `Field` | A button that sends a message when pressed |
+| `Checkbox` / `CheckboxGroup` | `Choice` | Yes/no choices |
+| `Radio` / `Select` | `Choice` | One choice out of a list. Take a `Radio` for a few options that all show, each with a mark, where one is always chosen (a setting with a default), unless `withClearable()` lets the reader put it back down. Take a `Select` for a longer list that scrolls in the rows it gets and starts with nothing chosen. Put either in a `Dropdown` to keep it on one row |
+| `Dropdown` | `Popup` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))`. To load new options, hand it `withContent($dropdown->content()->withItems($items))`, so an open list stays open with its query |
+| `Form` | `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
 
 **Lists and tables**
 
-| Widget | What it is |
-| --- | --- |
-| `ListView` | A scrolling list. Long items wrap |
-| `Table` | Rows and columns with a cursor, selection, mouse and scrolling. Cells wrap. `withColumnGap(0)` packs columns, `withHeader(false)` hides the header |
-| `StaticTable` | A bordered table that draws every row, with no cursor. For small data |
-| `FilterableList` | A search field over a `ListView`. Typing filters, and arrows and Enter pick |
-| `FilterableTable` | A search field over a `Table` |
-| `FilterableStaticTable` | A search field over a `StaticTable` |
-| `TreeView` | A tree whose children load when opened |
+| Widget | In | What it is |
+| --- | --- | --- |
+| `ListView` | `Listing` | A scrolling list. Long items wrap. A record of yours can be the item: implement `ListItem` with `use ListItemBehavior`, then edit the row under the cursor with `withCursorItem()` and `withoutCursorItem()` |
+| `Table` | `Table` | Rows and columns with a cursor, selection, mouse and scrolling. Cells wrap. `withColumnGap(0)` packs columns, `withHeader(false)` hides the header |
+| `StaticTable` | `Table` | A bordered table that draws every row, with no cursor. For small data |
+| `FilterableList` | `Filter` | A search field over a `ListView`. Typing filters, and arrows and Enter pick |
+| `FilterableTable` | `Filter` | A search field over a `Table` |
+| `FilterableStaticTable` | `Filter` | A search field over a `StaticTable` |
+| `TreeView` | `Tree` | A tree whose children load when opened |
 
 **Bars and feedback**
 
-| Widget | What it is |
-| --- | --- |
-| `Header` / `Footer` | Top and bottom bars with left, center and right slots |
-| `FocusHints` | The keys that work right now — see [Keys](keys-and-focus.md#footer-hints) |
-| `StatusBar` | A line of key hints |
-| `Alert` | One coloured row: `warning`, `error`, `success`, `info` |
-| `ProgressBar` | A bar that fills up smoothly |
-| `Spinner` / `ActivityBar` | Loading animations. They animate by themselves, no timer needed |
-| `Scrollbar` | A vertical scroll indicator |
+| Widget | In | What it is |
+| --- | --- | --- |
+| `Header` / `Footer` | `Bar` | Top and bottom bars with left, center and right slots. The centre gives way to the sides |
+| `FocusHints` | `Bar` | The keys that work right now — see [Keys](keys-and-focus.md#footer-hints) |
+| `StatusBar` | `Bar` | A line of key hints |
+| `Scrollbar` | `Bar` | A vertical scroll indicator |
+| `Alert` | `Feedback` | One coloured row: `warning`, `error`, `success`, `info` |
+| `ProgressBar` | `Feedback` | A bar that fills up smoothly |
+| `Spinner` / `ActivityBar` | `Feedback` | Loading animations. They animate by themselves, no timer needed |
 
 ## Links
 

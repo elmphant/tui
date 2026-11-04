@@ -428,7 +428,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         if ($message instanceof KeyMsg) {
-            $action = $this->matchedApplicationAction($message);
+            $action = $this->matchedComponentAction($message, $focus->focused()) ?? $this->matchedApplicationAction($message);
             if ($action !== null) {
                 return $this->onAction($action, $message, $screenRect);
             }
@@ -1072,7 +1072,17 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $widget = $widget->withGlobalKeybindings($this->globalKeybindings()->plus($this->focusCycleKeybindings()));
         }
 
-        return $widget instanceof PublishesHints ? $widget->hints() : [];
+        $actionHints = [];
+        $takesText = $this->takesText($focused);
+        foreach ($this->actionsAround($focused) as $actions) {
+            $shown = $takesText ? $actions->withoutText() : $actions;
+            $actionHints += $shown->hints(array_combine(
+                array_map($this->actionDescription(...), $shown->actions()),
+                $shown->actions(),
+            ));
+        }
+
+        return [...$actionHints, ...$widget instanceof PublishesHints ? $widget->hints() : []];
     }
 
     private function componentRegistry(): ComponentRegistry
@@ -1171,6 +1181,38 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         return $widget instanceof TakesText && $widget->takesText();
+    }
+
+    private function matchedComponentAction(KeyMsg $message, ?ComponentId $focused): ?string
+    {
+        foreach ($this->actionsAround($focused) as $actions) {
+            $action = $actions->actionOf($message);
+            if ($action !== null) {
+                return $action;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The actions of the component holding the keyboard and of each one around it, nearest first.
+     *
+     * @return list<Keybindings>
+     */
+    private function actionsAround(?ComponentId $focused): array
+    {
+        $registry = $this->componentRegistry();
+        $found = [];
+
+        for ($id = $focused; $id !== null; $id = $id->parent()) {
+            $actions = $registry->get($id)?->actions();
+            if ($actions !== null && $actions->actions() !== []) {
+                $found[] = $actions;
+            }
+        }
+
+        return $found;
     }
 
     private function matchedApplicationAction(KeyMsg $message): ?string

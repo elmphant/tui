@@ -28,6 +28,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
     use Cloneable;
     use KeybindingsAwareBehavior;
     private const TITLE_GAP = 1;
+    private const SLOT_GAP = 2;
 
     private function __construct(
         private string $title = '',
@@ -175,12 +176,16 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         $contentY = $contentArea->y;
         $contentWidth = $contentArea->width;
 
+        $leftRect = $this->leftSlot !== null ? BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context) : null;
+        $rightRect = $this->rightSlot !== null ? BarSlotRenderer::rectFor($this->rightSlot, Alignment::Right, $contentArea, $context) : null;
+        $centreRect = $this->centerSlot !== null ? BarSlotRenderer::centreBetween($this->centerSlot, $contentArea, $leftRect, $rightRect, self::SLOT_GAP, $context) : null;
+
         if ($this->leftSlot !== null) {
-            BarSlotRenderer::renderLeft($frame, $this->leftSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $this->leftSlot, $leftRect, $barBg, $context);
         }
 
         if ($this->centerSlot !== null) {
-            BarSlotRenderer::renderCentered($frame, $this->centerSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $this->centerSlot, $centreRect, $barBg, $context);
         }
 
         // Centre the default title unless a centre slot exists; then move it left unless an explicit left slot replaces it.
@@ -189,19 +194,14 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         if ($titleWidth > 0 && ($this->centerSlot === null || $this->leftSlot === null)) {
             $gapEnd = $contentX + $contentWidth;
 
-            $centreRect = $this->centerSlot !== null ? BarSlotRenderer::rectFor($this->centerSlot, Alignment::Center, $contentArea, $context) : null;
-
             if ($centreRect !== null) {
                 $gapEnd = min($gapEnd, $centreRect->x);
             }
-
-            $rightRect = $this->rightSlot !== null ? BarSlotRenderer::rectFor($this->rightSlot, Alignment::Right, $contentArea, $context) : null;
 
             if ($rightRect !== null) {
                 $gapEnd = min($gapEnd, $rightRect->x - self::TITLE_GAP);
             }
 
-            $leftRect = $this->leftSlot !== null ? BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context) : null;
             $leftEdge = $leftRect?->right() ?? $contentX;
             $gapStart = $this->centerSlot === null
                 ? max($leftEdge, min($contentX + intdiv($contentWidth - $titleWidth, 2), $gapEnd - $titleWidth))
@@ -214,7 +214,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         }
 
         if ($this->rightSlot !== null) {
-            BarSlotRenderer::renderRight($frame, $this->rightSlot, $contentX, $contentY, $contentWidth, $barBg, $context);
+            BarSlotRenderer::drawIn($frame, $this->rightSlot, $rightRect, $barBg, $context);
         }
 
         if ($this->rule) {

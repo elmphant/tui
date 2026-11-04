@@ -38,8 +38,10 @@ Program::new($model)
 
 `withScreenMode(ScreenMode::inline())` draws the app below the shell prompt instead of over the whole
 screen, the way an installer asks its questions. What the shell printed before
-stays above it. This asks two questions, one program each, and leaves the
-answers in the scrollback:
+stays above it. Take it for a short tool that asks something and ends, where the
+result should stay in the scrollback. Stay full screen for an app the reader
+keeps open, with panes, a footer on the last row and the mouse. This asks two
+questions, one program each, and leaves the answers in the scrollback:
 
 ```php
 use Elmphant\Tui\Application\App;

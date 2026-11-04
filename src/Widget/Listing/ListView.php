@@ -109,6 +109,43 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         );
     }
 
+    /**
+     * @return list<ListItem>
+     */
+    public function items(): array
+    {
+        return $this->items;
+    }
+
+    public function cursorItem(): ?ListItem
+    {
+        return $this->items[$this->cursor] ?? null;
+    }
+
+    public function withCursorItem(ListItem $item): self
+    {
+        if (!isset($this->items[$this->cursor])) {
+            return $this;
+        }
+
+        $items = $this->items;
+        $items[$this->cursor] = $item;
+
+        return $this->withItems(array_values($items))->withCursor($this->cursor);
+    }
+
+    public function withoutCursorItem(): self
+    {
+        if (!isset($this->items[$this->cursor])) {
+            return $this;
+        }
+
+        $items = $this->items;
+        array_splice($items, $this->cursor, 1);
+
+        return $this->withItems($items);
+    }
+
     public function withSelectedIndex(?int $selected): self
     {
         return $this->cloneWith(selected: $selected !== null && isset($this->items[$selected]) ? $selected : null);

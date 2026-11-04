@@ -34,7 +34,8 @@ abstract readonly class App
 - Ctrl+Q and Ctrl+C quit. They live in `applicationKeybindings()` under
   `Actions::QUIT`, so override it to add a key such as `q` or to drop one. Every
   quit key goes through `onAction()`, so an app can ask before quitting there.
-- `onAction()` gets the actions that `applicationKeybindings()` matched.
+- `onAction()` gets the actions that `applicationKeybindings()` matched, and
+  those of a component's `withActions()` while it holds the keyboard.
 - `onComponentsChanged()` runs after bound widgets changed. Use it to re-filter a
   list when a search field changed. The ids are `ComponentId` objects, so
   `in_array('search', $ids, true)` is always false. Check `$id->value === 'search'`.
@@ -44,6 +45,17 @@ abstract readonly class App
   `onShutdown()` runs on the last App, after a quit key, `Cmd::quit()` or a
   signal, and before the terminal is restored. Do the work right there: no
   command runs any more.
+
+## Which hook for this?
+
+| You want to … | Use |
+|---|---|
+| answer a key wherever the keyboard is | `applicationKeybindings()`, then `onAction()` |
+| answer a key only while one widget holds the keyboard | `Component::bind(…)->withActions($keys)`, then `onAction()` |
+| take what a widget did (typed, moved, chose, submitted) | the bind closure, with `commits($message)` for a choice |
+| take the answer to a command (a process, HTTP, a timer) | `onMessage()`, matched by its `EffectId` |
+| redraw on a clock | `onTick()` after `Cmd::tick()`. An animated widget needs neither |
+| read any key before the widgets do | `onKey()`. Prefer an action, so the key shows in the footer and the help |
 
 ## What a hook returns
 
@@ -67,44 +79,91 @@ cursor, a selection, a scroll position. Keep it in a property of the App. If
 
 Then **bind** it in `view()` with `Component::bind()`. A bound widget gets keys
 and clicks, takes part in tab order, and hands its new state back through the
-closure:
+closure. A whole todo app:
 
 ```php
 use Elmphant\Tui\Application\{App, Component};
+use Elmphant\Tui\Core\{Message, UpdateResult};
+use Elmphant\Tui\Input\{Actions, Keybindings};
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Widget\Bar\{FocusHints, Footer, Header};
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
-use Elmphant\Tui\Widget\Bar\Footer;
-use Elmphant\Tui\Widget\Structure\Panel;
+use Elmphant\Tui\Widget\Listing\{ListItem, ListItemBehavior, ListView};
 use Elmphant\Tui\Widget\Widget;
 
-final readonly class Settings extends App
+final readonly class Todo implements ListItem
 {
-    public function __construct(
-        private Panel $form,
-        private Footer $footer,
-    ) {}
+    use ListItemBehavior; // the rest of ListItem, from title() and key()
+
+    public function __construct(public int $id, public string $name, public bool $done = false) {}
+
+    public function title(): string { return ($this->done ? '[x] ' : '[ ] ') . $this->name; }
+
+    public function key(): string { return (string) $this->id; }
+
+    public function toggled(): self { return new self($this->id, $this->name, !$this->done); }
+}
+
+final readonly class TodoApp extends App
+{
+    public function __construct(private TextInput $field, private ListView $list, private int $nextId = 1) {}
+
+    public static function new(): self
+    {
+        return new self(TextInput::new()->withPlaceholder('What needs doing?')->withSubmit(), ListView::new([]));
+    }
 
     public function view(): Widget
     {
         return Layout::column(
-            Component::bind(
-                'settings-form',
-                $this->form,
-                static fn (self $app, Panel $form): self => $app->withForm($form),
-            ),
-            Component::bind(
-                'status-footer',
-                $this->footer,
-                static fn (self $app, Footer $footer): self => new self($app->form, $footer),
-            ),
+            Header::new('Todo')->withRule(),
+            Component::bind('field', $this->field, static fn (self $app, TextInput $field, Message $message): self => $field->commits($message)
+                ? $app->added($field->value())
+                : $app->cloneWith(field: $field)),
+            $this->bindProperty('list', $this->list)->withActions(new Keybindings(['toggle' => ['space'], 'delete' => ['d']])),
+            Footer::new()->withLeft(FocusHints::new()->withLeadingKeys($this->applicationKeybindings(), ['quit' => Actions::QUIT])),
         );
     }
 
-    private function withForm(Panel $form): self
+    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
-        return new self($form, $this->footer);
+        $todo = $this->list->cursorItem();
+
+        return match (true) {
+            $action === 'toggle' && $todo instanceof Todo => new UpdateResult($this->cloneWith(list: $this->list->withCursorItem($todo->toggled()))),
+            $action === 'delete' => new UpdateResult($this->cloneWith(list: $this->list->withoutCursorItem())),
+            default => parent::onAction($action, $message, $screen),
+        };
+    }
+
+    private function added(string $name): self
+    {
+        return trim($name) === '' ? $this : $this->cloneWith(
+            field: $this->field->withValue(''),
+            list: $this->list->withItems([...$this->list->items(), new Todo($this->nextId, trim($name))]),
+            nextId: $this->nextId + 1,
+        );
     }
 }
+
+// Program::run(TodoApp::new());
 ```
+
+- **Start the App from a static factory.** A widget's constructor is private (it
+  guards what the widget may hold), so `private TextInput $field = new TextInput()`
+  does not compile. `TodoApp::new()` builds the widgets once.
+- **The record is the item.** `Todo` implements `ListItem`, so the App keeps one
+  `ListView` and no second array beside it. `cursorItem()`, `withCursorItem()`
+  and `withoutCursorItem()` edit the row the reader is on, and the cursor stays
+  on it by `key()`.
+- **`withSubmit()` makes Enter commit the field**, so the closure takes the value
+  inline. A field left without it hands Enter on, the way a form moves to the
+  next field.
+- **`withActions()` gives keys to one component.** `onAction()` hears `toggle`
+  only while the list holds the keyboard, and the footer names Space and `d`
+  only then. In the field, Space is text.
 
 Rules for binding:
 

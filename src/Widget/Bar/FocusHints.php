@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Bar;
 
+use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Widget;
 
 /**
@@ -15,11 +17,17 @@ use Elmphant\Tui\Widget\Widget;
  */
 final readonly class FocusHints implements Widget
 {
+    use Cloneable;
+
     /**
-     * @param array<string, string> $leading
+     * @param array<string, string>              $leading
+     * @param array<string, string|list<string>> $keyDescriptions
      */
-    private function __construct(private array $leading = [])
-    {
+    private function __construct(
+        private array $leading = [],
+        private ?Keybindings $leadingKeys = null,
+        private array $keyDescriptions = [],
+    ) {
     }
 
     public static function new(): self
@@ -32,12 +40,23 @@ final readonly class FocusHints implements Widget
      */
     public function withLeadingHints(array $hints): self
     {
-        return new self(leading: $hints);
+        return $this->cloneWith(leading: $hints);
+    }
+
+    /**
+     * Hints for these keys lead the bar, worded like Keybindings::hints(). A key a focused field
+     * would take as text is left out while it does, since it cannot fire then.
+     *
+     * @param array<string, string|list<string>> $descriptions description => the action(s) it covers
+     */
+    public function withLeadingKeys(Keybindings $keys, array $descriptions): self
+    {
+        return $this->cloneWith(leadingKeys: $keys, keyDescriptions: $descriptions);
     }
 
     public function sizing(): Sizing
     {
-        return StatusBar::forHints($this->leading)->sizing();
+        return StatusBar::forHints($this->leadingIn(null))->sizing();
     }
 
     public function widthIn(RenderContext $context): int
@@ -50,7 +69,7 @@ final readonly class FocusHints implements Widget
      */
     public function widthWith(array $focusedHints): int
     {
-        return StatusBar::forHints([...$this->leading, ...$focusedHints])->sizing()->columns->intrinsic();
+        return StatusBar::forHints([...$this->leadingIn(null), ...$focusedHints])->sizing()->columns->intrinsic();
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -63,7 +82,21 @@ final readonly class FocusHints implements Widget
         $chord = $context->pendingChord();
 
         return $chord === null
-            ? StatusBar::forHints([...$this->leading, ...$context->focusedHints()])
+            ? StatusBar::forHints([...$this->leadingIn($context), ...$context->focusedHints()])
             : StatusBar::forHints([$chord->typed . '…' => '', ...$chord->continuations, 'Esc' => 'cancel']);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function leadingIn(?RenderContext $context): array
+    {
+        if ($this->leadingKeys === null) {
+            return $this->leading;
+        }
+
+        $keys = $context?->keyboardTakesText() === true ? $this->leadingKeys->withoutText() : $this->leadingKeys;
+
+        return [...$this->leading, ...$keys->hints($this->keyDescriptions)];
     }
 }

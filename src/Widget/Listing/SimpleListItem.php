@@ -6,6 +6,8 @@ namespace Elmphant\Tui\Widget\Listing;
 
 final readonly class SimpleListItem implements ListItem
 {
+    use ListItemBehavior;
+
     public function __construct(
         private string $title,
         private string $description = '',
@@ -23,18 +25,8 @@ final readonly class SimpleListItem implements ListItem
         return $this->description;
     }
 
-    public function filterValue(): string
-    {
-        return $this->title;
-    }
-
     public function key(): string
     {
         return $this->key ?? $this->title;
-    }
-
-    public function measureHeight(int $width): int
-    {
-        return ListItemLayout::height($this, $width);
     }
 }
