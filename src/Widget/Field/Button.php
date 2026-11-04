@@ -18,6 +18,7 @@ use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\Pressed;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
@@ -26,11 +27,12 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\PublishesHints;
 
-final readonly class Button implements Focusable, KeybindingsAware, PublishesHints
+final readonly class Button implements Focusable, KeybindingsAware, PublishesHints, Committing
 {
     use Cloneable;
     use DrawsFocus;
@@ -38,7 +40,7 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
 
     private function __construct(
         private string $label,
-        private Message $message,
+        private ?Message $message,
         private ButtonTone $tone = ButtonTone::Default,
         private bool $disabled = false,
         private bool $armed = false,
@@ -47,7 +49,10 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
     ) {
     }
 
-    public static function new(string $label, Message $message): self
+    /**
+     * A bound button answers `Pressed`. The message, when given, is sent as well, for a host that hears no outcome.
+     */
+    public static function new(string $label, ?Message $message = null): self
     {
         return new self(label: $label, message: $message);
     }
@@ -101,15 +106,26 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
                 && $message->action === MouseAction::Press => new UpdateResult($this->withArmed($message->isIn($area))),
             $message instanceof MouseMsg
                 && $message->action === MouseAction::Release => $this->armed && $message->isIn($area)
-                    ? new UpdateResult($this->withArmed(false), Cmd::message($this->message))
+                    ? new UpdateResult($this->withArmed(false), $this->press())
                     : new UpdateResult($this->withArmed(false)),
             default => new UpdateResult($this),
         };
     }
 
+    public function outcomeOf(Message $message, Rect $area): ?Message
+    {
+        $pressed = !$this->disabled && match (true) {
+            $message instanceof KeyMsg => $this->effectiveKeybindings()->matches($message, Actions::SELECT),
+            $message instanceof MouseMsg => $message->action === MouseAction::Release && $this->armed && $message->isIn($area),
+            default => false,
+        };
+
+        return $pressed ? new Pressed($message) : null;
+    }
+
     public function press(): ?Cmd
     {
-        return $this->disabled ? null : Cmd::message($this->message);
+        return $this->disabled || $this->message === null ? null : Cmd::message($this->message);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

@@ -18,6 +18,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Pressed;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Line;
@@ -25,6 +26,7 @@ use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\ClipsItsChildren;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
@@ -45,7 +47,7 @@ use LogicException;
 /**
  * Derive values from the fields; each field has label, input and error children, followed by a pinned submit button.
  */
-final readonly class Form implements BindsForTheMoment, ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates
+final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Committing, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -117,7 +119,10 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Follow
         return $this->cloneWith(intro: $intro);
     }
 
-    public function withSubmit(string $label, Message $message): self
+    /**
+     * A bound form answers `Pressed` for its button and for Enter in its last field. The message, when given, is sent as well.
+     */
+    public function withSubmit(string $label, ?Message $message = null): self
     {
         return $this->cloneWith(submit: Button::new($label, $message)->withDisabled($this->disabledBecause !== null));
     }
@@ -249,6 +254,20 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Follow
 
         return $drawn->update($message, $area)
             ->mapModel(fn (Panel $pane): self => $pane === $drawn ? $this : $this->cloneWith(pane: $pane));
+    }
+
+    public function outcomeOf(Message $message, Rect $area): ?Message
+    {
+        $last = $this->fields === [] ? null : $this->fields[\count($this->fields) - 1]->name;
+
+        return $message instanceof KeyMsg
+            && $this->submit !== null
+            && $this->disabledBecause === null
+            && $this->keyboardIn !== null
+            && $this->keyboardIn === $last
+            && $this->effectiveKeybindings()->matches($message, Actions::NEXT_FIELD)
+            ? new Pressed($message)
+            : null;
     }
 
     /**

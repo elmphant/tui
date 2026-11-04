@@ -103,10 +103,8 @@ field is a real widget, so tab and the mouse reach it. The form asks the fields
 for their values, so you keep no copy:
 
 ```php
-use Elmphant\Tui\Core\{ComponentId, Message};
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Widget\Form\{Field, Form, ShowErrors};
-
-final readonly class CreateUser implements Message {}
 
 $form = Form::new('Create backend user')
     ->withField(Field::text('username', 'Username', 'The login name')->withRequired())
@@ -114,7 +112,7 @@ $form = Form::new('Create backend user')
     ->withField(Field::choice('site', 'Site', ['main' => 'Main website', 'shop' => 'Shop']))
     ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
     ->withFoot('❯ backend:user:create')
-    ->withSubmit('Run', new CreateUser());
+    ->withSubmit('Run');
 
 $tried = $form->withSubmitAttempted();                         // from now on, problems show under their fields
 $tried->missing();                                    // ['username']
@@ -123,9 +121,15 @@ $form->values();                                      // ['username' => '', 'pas
 $form->withErrorsShown(ShowErrors::AfterLeaving);     // or show a field's problem as soon as the reader leaves it
 ```
 
-Bind it like any widget and handle the submit message in `onMessage()`.
+Bind it and react to the submit:
+`$this->bind('form')->on(Pressed::class, static fn (self $app): self => $app->created($app->form->values()))`.
+The handler runs with the form already stored, so it reads the values there.
 
-- Enter moves to the next field, and in the last field presses submit.
+- Enter moves to the next field, and in the last field presses submit. Both
+  that and a click on the button answer `Pressed`.
+- `withSubmit('Run', $message)` also sends a message, for a form inside a
+  mounted model that must reach its host through `Mount::toHost()`. A `Button`
+  works the same: `Button::new('Save')` answers `Pressed` when bound.
 - `withValues(['username' => 'ada'])` fills fields by name, for an edit form.
 - `withIntro()` adds text above the fields. `withFoot()` and
   `withSubmitDisabled()` say what the button will do, or why it can't.
