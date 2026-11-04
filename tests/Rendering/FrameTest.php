@@ -602,7 +602,7 @@ final class FrameTest extends TestCase
     public function putLineEndsAtTheFirstSpanCutShortSoALaterSpanNeverFillsTheGap(): void
     {
         $frame = new Frame(20, 1);
-        $line = new Line([new Span('a'), new Span('世'), new Span('b')]);
+        $line = new Line([Span::raw('a'), Span::raw('世'), Span::raw('b')]);
 
         $drawn = $frame->putLine(0, 0, $line, new Style(), maxWidth: 2);
 
@@ -2643,7 +2643,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(8, 5);
         $frame->putString(0, 0, "a\xe2\x82\x07\xac|");
-        $frame->putLine(0, 1, new Line([new Span("a\xe2\x82\x07\xac|")]));
+        $frame->putLine(0, 1, new Line([Span::raw("a\xe2\x82\x07\xac|")]));
         $frame->putAnsi(0, 2, "\x1b[1ma\xe2\x82\x07\xac|");
         $frame->putChar(0, 3, "\xe2\x82");
         $frame->fillRect(0, 4, 2, 1, character: "\xac");
@@ -3240,7 +3240,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(8, 1);
 
-        $drawn = $frame->putLine(2, 0, new Line([new Span('ab'), new Span(''), new Span('cdef')]), maxWidth: 3);
+        $drawn = $frame->putLine(2, 0, new Line([Span::raw('ab'), Span::raw(''), Span::raw('cdef')]), maxWidth: 3);
 
         self::assertSame(3, $drawn);
         self::assertSame('  abc   ', implode('', $frame->characters));
@@ -3251,7 +3251,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(4, 1);
         $line = new Line(
-            [new Span('a'), Span::styled('b', new Style(foreground: Color::hex('0000FF'), background: Color::hex('AAAAAA')))],
+            [Span::raw('a'), Span::styled('b', new Style(foreground: Color::hex('0000FF'), background: Color::hex('AAAAAA')))],
             new Style(foreground: Color::hex('FF0000')),
         );
 

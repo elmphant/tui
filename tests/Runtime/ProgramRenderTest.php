@@ -128,7 +128,7 @@ final class ProgramRenderTest extends TestCase
         $terminal = GuardedTerminal::of(20, 3);
         $errors = new ArrayObject();
         $frames = new ArrayObject();
-        EventLoop::delay(0.05, static fn () => $terminal->simulateStoppedOutput());
+        EventLoop::delay(0.05, static fn () => $terminal->simulateFailedWrites());
 
         Program::new(new ScriptedModel(
             render: static function (Frame $frame) use ($frames): void {
@@ -155,7 +155,7 @@ final class ProgramRenderTest extends TestCase
     {
         $terminal = GuardedTerminal::of(20, 3);
         $frames = new ArrayObject();
-        EventLoop::delay(0.02, static fn () => $terminal->simulateStoppedOutput(stalled: true));
+        EventLoop::delay(0.02, static fn () => $terminal->simulateStalledOutput());
         EventLoop::delay(0.35, static fn () => $terminal->resumeOutput());
 
         Program::new(new ScriptedModel(

@@ -119,7 +119,7 @@ final class SpanRendererTest extends TestCase
         self::assertEquals(
             [
                 new Line([Span::token('Heading', StyleToken::Title)->bold()]),
-                new Line([new Span('Paragraph body')]),
+                new Line([Span::raw('Paragraph body')]),
             ],
             $lines,
         );
@@ -132,9 +132,9 @@ final class SpanRendererTest extends TestCase
 
         self::assertEquals(
             [
-                new Line([new Span('• '), new Span('one')]),
-                new Line([new Span('• '), new Span('two')]),
-                new Line([new Span('  '), new Span('• '), new Span('nested')]),
+                new Line([Span::raw('• '), Span::raw('one')]),
+                new Line([Span::raw('• '), Span::raw('two')]),
+                new Line([Span::raw('  '), Span::raw('• '), Span::raw('nested')]),
             ],
             $lines,
         );
@@ -147,8 +147,8 @@ final class SpanRendererTest extends TestCase
 
         self::assertEquals(
             [
-                new Line([new Span('3. '), new Span('three')]),
-                new Line([new Span('4. '), new Span('four')]),
+                new Line([Span::raw('3. '), Span::raw('three')]),
+                new Line([Span::raw('4. '), Span::raw('four')]),
             ],
             $lines,
         );
@@ -161,9 +161,9 @@ final class SpanRendererTest extends TestCase
 
         self::assertEquals(
             [
-                new Line([new Span('  '), Span::token('if ($x) {', StyleToken::Accent)]),
-                new Line([new Span('  '), Span::token('        return;', StyleToken::Accent)]),
-                new Line([new Span('  '), Span::token('}', StyleToken::Accent)]),
+                new Line([Span::raw('  '), Span::token('if ($x) {', StyleToken::Accent)]),
+                new Line([Span::raw('  '), Span::token('        return;', StyleToken::Accent)]),
+                new Line([Span::raw('  '), Span::token('}', StyleToken::Accent)]),
             ],
             $lines,
         );
@@ -176,8 +176,8 @@ final class SpanRendererTest extends TestCase
 
         self::assertEquals(
             [
-                new Line([Span::token('│ ', StyleToken::Dim), new Span('said')]),
-                new Line([Span::token('│ ', StyleToken::Dim), new Span('• '), new Span('item')]),
+                new Line([Span::token('│ ', StyleToken::Dim), Span::raw('said')]),
+                new Line([Span::token('│ ', StyleToken::Dim), Span::raw('• '), Span::raw('item')]),
             ],
             $lines,
         );
@@ -188,7 +188,7 @@ final class SpanRendererTest extends TestCase
     {
         $lines = SpanRenderer::fromMarkdown('    echo 1;');
 
-        self::assertEquals([new Line([new Span('  '), Span::token('echo 1;', StyleToken::Accent)])], $lines);
+        self::assertEquals([new Line([Span::raw('  '), Span::token('echo 1;', StyleToken::Accent)])], $lines);
     }
 
     #[Test]
@@ -227,9 +227,9 @@ final class SpanRendererTest extends TestCase
 
         self::assertEquals(
             [
-                new Line([new Span('above')]),
+                new Line([Span::raw('above')]),
                 new Line([Span::token('───', StyleToken::Dim)]),
-                new Line([new Span('below')]),
+                new Line([Span::raw('below')]),
             ],
             $lines,
         );
@@ -239,7 +239,7 @@ final class SpanRendererTest extends TestCase
     public function aLinkShowsItsTextInTheSurroundingStyleAndCarriesItsUrl(): void
     {
         self::assertEquals(
-            [new Line([new Span('see '), Span::link('docs', 'https://example.com'), new Span(' here')])],
+            [new Line([Span::raw('see '), Span::link('docs', 'https://example.com'), Span::raw(' here')])],
             SpanRenderer::fromMarkdown('see [docs](https://example.com) here'),
         );
     }

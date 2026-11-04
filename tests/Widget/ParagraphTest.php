@@ -56,8 +56,8 @@ final class ParagraphTest extends TestCase
     public function theLinesCanBeReplacedAfterConstruction(): void
     {
         $frame = new Frame(10, 2);
-        $paragraph = Paragraph::fromLines([new Line([new Span('old')])])
-            ->withLines([new Line([new Span('new')])]);
+        $paragraph = Paragraph::fromLines([new Line([Span::raw('old')])])
+            ->withLines([new Line([Span::raw('new')])]);
 
         $paragraph->render($frame, new Rect(0, 0, 10, 2), new RenderContext(Theme::dark()));
 
@@ -187,7 +187,7 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function anUnwrappedRowEndsAtTheFirstSpanCutShortSoALaterSpanNeverFillsTheGap(): void
     {
-        $paragraph = Paragraph::fromLines([new Line([new Span('a'), new Span('世'), new Span('b')])])
+        $paragraph = Paragraph::fromLines([new Line([Span::raw('a'), Span::raw('世'), Span::raw('b')])])
             ->withWrap(Wrap::NoWrap);
 
         self::assertSame(['a'], $this->rowsOf($paragraph, 2, 1));
@@ -284,7 +284,7 @@ final class ParagraphTest extends TestCase
         $redStyle = new Style(foreground: Color::ansi(AnsiColor::Red));
 
         $paragraph = Paragraph::fromLines([
-            new Line([Span::styled('AB', $redStyle), new Span('CD')]),
+            new Line([Span::styled('AB', $redStyle), Span::raw('CD')]),
         ]);
         $paragraph->render($frame, new Rect(0, 0, 10, 1), $context);
 
@@ -334,7 +334,7 @@ final class ParagraphTest extends TestCase
         $lineStyle = new Style(foreground: Color::ansi(AnsiColor::Green));
 
         $paragraph = Paragraph::fromLines([
-            new Line([new Span('A')], $lineStyle),
+            new Line([Span::raw('A')], $lineStyle),
         ])->withStyle($paragraphStyle);
         $paragraph->render($frame, new Rect(0, 0, 10, 1), $context);
 
@@ -1181,7 +1181,7 @@ final class ParagraphTest extends TestCase
         $spans = [Span::token('hello world', StyleToken::Accent)];
 
         $themed = Paragraph::fromLines([new Line($spans)])->withWrap(Wrap::WordWrap);
-        $plain = Paragraph::fromLines([new Line([new Span('hello world')])])->withWrap(Wrap::WordWrap);
+        $plain = Paragraph::fromLines([new Line([Span::raw('hello world')])])->withWrap(Wrap::WordWrap);
 
         self::assertSame($plain->measureHeight(5), $themed->measureHeight(5));
     }

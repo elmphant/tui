@@ -44,17 +44,25 @@ final class RadioTest extends TestCase
     }
 
     #[Test]
+    public function aValueItDoesNotHaveIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"nope" is not one of the options');
+
+        Radio::new(['a', 'b', 'c'])->withSelectedValue('nope');
+    }
+
+    #[Test]
     public function aPlainRadioHoldsTheFirstOptionWhenToldToHoldNothing(): void
     {
         $radio = Radio::new(['a', 'b', 'c'])->withSelectedIndex(1);
 
         self::assertSame(
-            [0, 0, 0, 0],
+            [0, 0, 0],
             [
                 $radio->withSelectedIndex(null)->selectedIndex(),
                 $radio->withSelectedIndex(5)->selectedIndex(),
                 $radio->withSelectedValue(null)->selectedIndex(),
-                $radio->withSelectedValue('nope')->selectedIndex(),
             ],
         );
     }
@@ -65,12 +73,11 @@ final class RadioTest extends TestCase
         $radio = Radio::new(['a', 'b', 'c'])->withClearable()->withSelectedIndex(1);
 
         self::assertSame(
-            [null, null, null, null],
+            [null, null, null],
             [
                 $radio->withSelectedIndex(null)->selectedIndex(),
                 $radio->withSelectedIndex(5)->selectedIndex(),
                 $radio->withSelectedValue(null)->selectedIndex(),
-                $radio->withSelectedValue('nope')->selectedIndex(),
             ],
         );
     }

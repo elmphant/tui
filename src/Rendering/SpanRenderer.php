@@ -100,7 +100,7 @@ final class SpanRenderer
             $prefix = $marker;
             foreach ($item->children() as $child) {
                 foreach (self::linesOf($child) as $line) {
-                    $lines[] = new Line([new Span($prefix), ...$line->spans]);
+                    $lines[] = new Line([Span::raw($prefix), ...$line->spans]);
                     $prefix = str_repeat(' ', CharWidth::stringWidth($marker));
                 }
             }
@@ -115,7 +115,7 @@ final class SpanRenderer
     private static function codeLines(string $code): array
     {
         return array_map(
-            static fn (string $line): Line => new Line([new Span('  '), Span::token(CharWidth::expandTabs($line, 0), StyleToken::Accent)]),
+            static fn (string $line): Line => new Line([Span::raw('  '), Span::token(CharWidth::expandTabs($line, 0), StyleToken::Accent)]),
             explode("\n", rtrim($code, "\n")),
         );
     }
@@ -145,9 +145,9 @@ final class SpanRenderer
 
         foreach ($node->children() as $child) {
             array_push($spans, ...match (true) {
-                $child instanceof Text => [new Span($child->getLiteral(), self::styleOf($attributes, $link), $token)],
-                $child instanceof Code => [new Span($child->getLiteral(), self::styleOf(Attr::REVERSE, $link))],
-                $child instanceof Newline => [new Span(' ')],
+                $child instanceof Text => [self::marked($token === null ? Span::raw($child->getLiteral()) : Span::token($child->getLiteral(), $token), $attributes, $link)],
+                $child instanceof Code => [self::marked(Span::raw($child->getLiteral()), Attr::REVERSE, $link)],
+                $child instanceof Newline => [Span::raw(' ')],
                 default => self::spansOf($child, $attributes | match (true) {
                     $child instanceof Strong => Attr::BOLD,
                     $child instanceof Emphasis => Attr::ITALIC,
@@ -160,14 +160,10 @@ final class SpanRenderer
         return $spans;
     }
 
-    private static function styleOf(int $attributes, ?string $link): ?Style
+    private static function marked(Span $span, int $attributes, ?string $link): Span
     {
-        if ($attributes === 0 && $link === null) {
-            return null;
-        }
+        $span = $attributes === 0 ? $span : $span->addAttributes($attributes);
 
-        $style = new Style(attributes: $attributes);
-
-        return $link === null ? $style : $style->withLink($link);
+        return $link === null ? $span : $span->withLink($link);
     }
 }

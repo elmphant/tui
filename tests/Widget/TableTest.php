@@ -2183,7 +2183,7 @@ final class TableTest extends TestCase
         $customStyle = new Style(foreground: Color::ansi(AnsiColor::Yellow));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
-            [Row::new(new Span('Alice'))->withStyle($customStyle)],
+            [Row::new(Span::raw('Alice'))->withStyle($customStyle)],
         );
         $frame = new Frame(40, 3);
         $table->render($frame, Rect::fromSize(40, 3), new RenderContext(Theme::dark()));
@@ -2983,7 +2983,7 @@ final class TableTest extends TestCase
         $rowStyle = new Style(foreground: Color::ansi(AnsiColor::Cyan));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
-            [Row::new('First'), Row::new(new Span('Data'))->withStyle($rowStyle)],
+            [Row::new('First'), Row::new(Span::raw('Data'))->withStyle($rowStyle)],
         );
         $frame = new Frame(40, 4);
         $table->render($frame, Rect::fromSize(40, 4), new RenderContext(Theme::dark()));

@@ -406,10 +406,10 @@ final readonly class Paragraph implements Widget, MeasureHeight
     private static function spanFromSgrState(string $text, int $foreground, int $background, int $attributes): Span
     {
         if ($foreground === 0 && $background === 0 && $attributes === 0) {
-            return new Span($text);
+            return Span::raw($text);
         }
 
-        return new Span($text, new Style(
+        return Span::styled($text, new Style(
             foreground: $foreground !== 0 ? Color::fromValue($foreground) : null,
             background: $background !== 0 ? Color::fromValue($background) : null,
             attributes: $attributes,

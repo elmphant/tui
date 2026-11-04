@@ -21,7 +21,7 @@ final readonly class Line
 
     public static function raw(string $content): self
     {
-        return new self([new Span($content)]);
+        return new self([Span::raw($content)]);
     }
 
     public function resolvedIn(Theme $theme): self

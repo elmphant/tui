@@ -22,6 +22,7 @@ use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
+use InvalidArgumentException;
 
 final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, DropdownContent, Committing, PublishesHints
 {
@@ -86,7 +87,13 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
 
     public function withSelectedValue(?string $value): self
     {
-        return $this->cloneWith(selected: Options::placeOf($value, $this->options))->settled();
+        $place = Options::placeOf($value, $this->options);
+
+        if ($value !== null && $place === null) {
+            throw new InvalidArgumentException(sprintf('"%s" is not one of the options', $value));
+        }
+
+        return $this->cloneWith(selected: $place)->settled();
     }
 
     public function withClearable(bool $clearable = true): static

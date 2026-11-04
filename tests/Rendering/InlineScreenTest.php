@@ -126,7 +126,7 @@ final class InlineScreenTest extends TestCase
     {
         $terminal = new VirtualTerminal(20, 24);
         $frame = new Frame(20, 2);
-        $frame->putLine(0, 0, new Line([new Span('see '), Span::link('docs', 'https://example.com/docs'), new Span(' now')]));
+        $frame->putLine(0, 0, new Line([Span::raw('see '), Span::link('docs', 'https://example.com/docs'), Span::raw(' now')]));
         $frame->putLine(0, 1, new Line([Span::link('docs', 'https://example.com/docs')]));
 
         (new InlineScreen($terminal))->flush($frame);

@@ -17,7 +17,7 @@ final class LineTest extends TestCase
     #[Test]
     public function fromSpansCreatesLineWithSpans(): void
     {
-        $line = new Line([new Span('hello'), new Span('world')]);
+        $line = new Line([Span::raw('hello'), Span::raw('world')]);
 
         self::assertCount(2, $line->spans);
         self::assertSame('hello', $line->spans[0]->content);
@@ -36,7 +36,7 @@ final class LineTest extends TestCase
     #[Test]
     public function widthSumsSpanWidths(): void
     {
-        $line = new Line([new Span('AB'), new Span('CD')]);
+        $line = new Line([Span::raw('AB'), Span::raw('CD')]);
 
         self::assertSame(4, $line->width());
     }
@@ -44,7 +44,7 @@ final class LineTest extends TestCase
     #[Test]
     public function widthHandlesWideCharacters(): void
     {
-        $line = new Line([new Span('A'), new Span('你好')]);
+        $line = new Line([Span::raw('A'), Span::raw('你好')]);
 
         self::assertSame(5, $line->width());
     }
@@ -52,7 +52,7 @@ final class LineTest extends TestCase
     #[Test]
     public function styleIsNullByDefault(): void
     {
-        $line = new Line([new Span('test')]);
+        $line = new Line([Span::raw('test')]);
 
         self::assertNull($line->style);
     }
@@ -61,7 +61,7 @@ final class LineTest extends TestCase
     public function styleCanBeSetViaConstructor(): void
     {
         $style = new Style(foreground: Color::ansi(AnsiColor::Red));
-        $line = new Line([new Span('test')], $style);
+        $line = new Line([Span::raw('test')], $style);
 
         self::assertSame($style, $line->style);
     }

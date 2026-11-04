@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
-use Elmphant\Tui\Widget\Choice\Radio;
 use Elmphant\Tui\Widget\Choice\RadioRow;
 use Elmphant\Tui\Widget\Choice\Select;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,13 +38,5 @@ final class OptionValueSettersTest extends TestCase
         $group = CheckboxGroup::new(['alpha', 'beta', 'gamma'])->withCheckedValues(['gamma', 'alpha']);
 
         self::assertSame(['alpha', 'gamma'], $group->checkedValues(), 'in the order the options read, not the order given');
-    }
-
-    #[Test]
-    public function aRadioHandedAValueItDoesNotHaveStandsOnTheFirst(): void
-    {
-        $radio = Radio::new(['alpha', 'beta'])->withSelectedValue('gone');
-
-        self::assertSame('alpha', $radio->selectedValue(), 'a radio always stands on something');
     }
 }

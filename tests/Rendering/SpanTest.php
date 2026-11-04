@@ -39,9 +39,20 @@ final class SpanTest extends TestCase
     }
 
     #[Test]
+    public function aLinkedTokenSpanKeepsTheThemesColourAndTheLink(): void
+    {
+        $theme = Theme::dark();
+
+        $resolved = Span::token('docs', StyleToken::Accent)->withLink('https://example.com')->resolvedIn($theme);
+
+        self::assertSame($theme->accent->foreground, $resolved->style?->foreground);
+        self::assertSame('https://example.com', $resolved->style?->link);
+    }
+
+    #[Test]
     public function aPlainSpanHasNeitherAStyleNorAToken(): void
     {
-        $span = new Span('plain');
+        $span = Span::raw('plain');
 
         self::assertSame('plain', $span->content);
         self::assertNull($span->style);
@@ -115,13 +126,13 @@ final class SpanTest extends TestCase
     #[DataProvider('attributeModifiers')]
     public function eachModifierSetsItsOwnAttributeBit(callable $modifier, int $expected): void
     {
-        self::assertSame($expected, $modifier(new Span('hello'))->style?->attributes);
+        self::assertSame($expected, $modifier(Span::raw('hello'))->style?->attributes);
     }
 
     #[Test]
     public function attributesAccumulateAcrossCalls(): void
     {
-        $span = (new Span('hello'))->bold()->italic()->underline();
+        $span = Span::raw('hello')->bold()->italic()->underline();
 
         self::assertSame(Attr::BOLD | Attr::ITALIC | Attr::UNDERLINE, $span->style?->attributes);
     }
@@ -129,7 +140,7 @@ final class SpanTest extends TestCase
     #[Test]
     public function severalAttributeBitsCanBeSetInOneCall(): void
     {
-        $span = (new Span('hello'))->withAttributes(Attr::BOLD | Attr::STRIKETHROUGH);
+        $span = Span::raw('hello')->withAttributes(Attr::BOLD | Attr::STRIKETHROUGH);
 
         self::assertSame(Attr::BOLD | Attr::STRIKETHROUGH, $span->style?->attributes);
     }
@@ -137,7 +148,7 @@ final class SpanTest extends TestCase
     #[Test]
     public function settingASpansAttributesReplacesTheOnesBefore(): void
     {
-        $span = (new Span('hello'))->bold()->withAttributes(Attr::ITALIC);
+        $span = Span::raw('hello')->bold()->withAttributes(Attr::ITALIC);
 
         self::assertSame(Attr::ITALIC, $span->style?->attributes);
     }
@@ -145,7 +156,7 @@ final class SpanTest extends TestCase
     #[Test]
     public function addingAttributesToASpanKeepsTheOnesBefore(): void
     {
-        $span = (new Span('hello'))->bold()->addAttributes(Attr::ITALIC);
+        $span = Span::raw('hello')->bold()->addAttributes(Attr::ITALIC);
 
         self::assertSame(Attr::BOLD | Attr::ITALIC, $span->style?->attributes);
     }
@@ -172,7 +183,7 @@ final class SpanTest extends TestCase
     #[Test]
     public function aPlainSpanIsUnchangedByResolution(): void
     {
-        $span = new Span('hello');
+        $span = Span::raw('hello');
 
         self::assertSame($span, $span->resolvedIn(Theme::dark()));
     }
@@ -180,35 +191,35 @@ final class SpanTest extends TestCase
     #[Test]
     public function widthReturnsVisualWidth(): void
     {
-        $span = new Span('hello');
+        $span = Span::raw('hello');
         self::assertSame(5, $span->width());
     }
 
     #[Test]
     public function widthHandlesMultibyte(): void
     {
-        $span = new Span('日本語');
+        $span = Span::raw('日本語');
         self::assertSame(6, $span->width());
     }
 
     #[Test]
     public function widthReturnsTwoPerCjkCharacter(): void
     {
-        $span = new Span('漢字');
+        $span = Span::raw('漢字');
         self::assertSame(4, $span->width());
     }
 
     #[Test]
     public function widthReturnsMixedAsciiAndCjk(): void
     {
-        $span = new Span('ab漢');
+        $span = Span::raw('ab漢');
         self::assertSame(4, $span->width());
     }
 
     #[Test]
     public function widthTreatsCombiningMarksAsZeroWidth(): void
     {
-        $span = new Span("e\xCC\x81"); // e + combining acute accent (U+0301)
+        $span = Span::raw("e\xCC\x81"); // e + combining acute accent (U+0301)
         self::assertSame(1, $span->width());
     }
 
@@ -216,7 +227,7 @@ final class SpanTest extends TestCase
     public function aSpanCarryingNoInkOfItsOwnIsPlacedUnchanged(): void
     {
         $panel = new Style(background: Color::hex('3E4451'));
-        $inherited = new Span('plain');
+        $inherited = Span::raw('plain');
         $token = Span::token('accented', StyleToken::Accent);
 
         self::assertNull($inherited->readableOn($panel)->style, 'nothing of its own to lift');

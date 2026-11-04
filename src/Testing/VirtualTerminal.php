@@ -228,13 +228,19 @@ final class VirtualTerminal implements Terminal
         fwrite($this->writePipe, $bytes);
     }
 
-    /**
-     * @param bool $stalled a stall (a slow link) rather than a failed write
-     */
-    public function simulateStoppedOutput(bool $stalled = false): void
+    public function simulateFailedWrites(): void
     {
         $this->outputStopped = true;
-        $this->outputStalled = $stalled;
+        $this->outputStalled = false;
+    }
+
+    /**
+     * A slow link rather than a broken one.
+     */
+    public function simulateStalledOutput(): void
+    {
+        $this->outputStopped = true;
+        $this->outputStalled = true;
     }
 
     public function resumeOutput(): void

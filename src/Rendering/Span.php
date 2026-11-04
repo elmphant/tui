@@ -11,11 +11,19 @@ final readonly class Span
 {
     use Cloneable;
 
-    public function __construct(
+    /**
+     * On a token span the style holds only attributes and a link, so the token's colour cannot be lost.
+     */
+    private function __construct(
         public string $content,
         public ?Style $style = null,
         public ?StyleToken $token = null,
     ) {
+    }
+
+    public static function raw(string $content): self
+    {
+        return new self($content);
     }
 
     public static function styled(string $content, Style $style): self
@@ -30,7 +38,7 @@ final readonly class Span
 
     public static function link(string $content, string $url): self
     {
-        return new self(content: $content, style: (new Style())->withLink($url));
+        return self::raw($content)->withLink($url);
     }
 
     public function bold(): self
@@ -73,6 +81,11 @@ final readonly class Span
         return $this->cloneWith(style: ($this->style ?? new Style())->addAttributes($attributes));
     }
 
+    public function withLink(string $url): self
+    {
+        return $this->cloneWith(style: ($this->style ?? new Style())->withLink($url));
+    }
+
     /**
      * Call this before reading $style, or token spans render unstyled.
      */
@@ -96,7 +109,7 @@ final readonly class Span
      */
     public function readableOn(Style $panel, float $minimumRatio = 4.5): self
     {
-        if ($this->style === null) {
+        if ($this->style === null || $this->token !== null) {
             return $this;
         }
 

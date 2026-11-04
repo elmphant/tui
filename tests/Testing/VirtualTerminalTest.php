@@ -46,10 +46,24 @@ final class VirtualTerminalTest extends TestCase
     }
 
     #[Test]
-    public function outputThatStoppedRefusesEveryWriteUntilItResumes(): void
+    public function writesThatFailAreNotAStall(): void
     {
         $terminal = new VirtualTerminal(80, 24);
-        $terminal->simulateStoppedOutput(stalled: true);
+        $terminal->simulateFailedWrites();
+
+        try {
+            $terminal->write('lost');
+            self::fail('A terminal whose writes fail takes no output');
+        } catch (TerminalWriteException $failure) {
+            self::assertFalse($failure->stalled);
+        }
+    }
+
+    #[Test]
+    public function outputThatStalledRefusesEveryWriteUntilItResumes(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $terminal->simulateStalledOutput();
 
         try {
             $terminal->write('lost');

@@ -73,7 +73,7 @@ Terminal and others. Other terminals show the text alone. A Markdown link in
 use Elmphant\Tui\Rendering\{Line, Span};
 use Elmphant\Tui\Widget\Prose\Paragraph;
 
-$help = Paragraph::fromLines([new Line([new Span('Read '), Span::link('the docs', 'https://example.com/docs')])]);
+$help = Paragraph::fromLines([new Line([Span::raw('Read '), Span::link('the docs', 'https://example.com/docs')])]);
 ```
 
 In a test, `$screen->styleAt($column, $row)->link` says which URL a cell opens.

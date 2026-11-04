@@ -27,7 +27,7 @@ final readonly class Text implements Widget
 
     public static function new(string $content): self
     {
-        return new self([new Span($content)]);
+        return new self([Span::raw($content)]);
     }
 
     public static function styled(string $content, Style $style): self
@@ -46,7 +46,7 @@ final readonly class Text implements Widget
     public static function line(string|Span ...$spans): self
     {
         return new self(array_map(
-            static fn (string|Span $span): Span => $span instanceof Span ? $span : new Span($span),
+            static fn (string|Span $span): Span => $span instanceof Span ? $span : Span::raw($span),
             array_values($spans),
         ));
     }

@@ -21,7 +21,7 @@ final class HyperlinkTest extends TestCase
     public function aLinkOpensBeforeItsTextAndClosesRightAfterIt(): void
     {
         $frame = new Frame(20, 1);
-        $frame->putLine(0, 0, new Line([new Span('see '), Span::link('docs', 'https://example.com/docs'), new Span(' now')]));
+        $frame->putLine(0, 0, new Line([Span::raw('see '), Span::link('docs', 'https://example.com/docs'), Span::raw(' now')]));
 
         self::assertStringContainsString("see \e]8;;https://example.com/docs\e\\docs\e]8;;\e\\ now", self::drawn($frame));
     }
