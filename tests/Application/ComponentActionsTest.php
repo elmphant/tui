@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\ActionMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Bar\FocusHints;
@@ -27,7 +30,15 @@ final class ComponentActionsTest extends TestCase
     {
         $harness = ModelHarness::for(ScopedActionsApp::start(), 60, 8)->press('tab', 'space', 'x');
 
-        self::assertSame(['toggle', 'delete'], self::actionsOf($harness));
+        self::assertSame(['list:toggle', 'list:delete'], self::actionsOf($harness), 'the bind closure of the component hears them');
+    }
+
+    #[Test]
+    public function eachOfTwoAlikeComponentsHearsItsOwnActions(): void
+    {
+        $harness = ModelHarness::for(ScopedActionsApp::start(), 60, 8)->press('tab', 'tab', 'space');
+
+        self::assertSame(['other:toggle'], self::actionsOf($harness));
     }
 
     #[Test]
@@ -59,6 +70,14 @@ final class ComponentActionsTest extends TestCase
     }
 
     #[Test]
+    public function actionsWithOneDescriptionShareOneHint(): void
+    {
+        $harness = ModelHarness::for(ScopedActionsApp::start(), 120, 8)->press('tab');
+
+        self::assertStringContainsString('←/→  column', $harness->screen()->plainText());
+    }
+
+    #[Test]
     public function aLeadingHintWhoseKeyTheFieldTakesAsTextIsLeftOut(): void
     {
         $harness = ModelHarness::for(ScopedActionsApp::start(), 60, 8);
@@ -85,28 +104,41 @@ final readonly class ScopedActionsApp extends App
     /**
      * @param list<string> $actions
      */
-    public function __construct(public TextInput $field, private ListView $list, public array $actions = [])
+    public function __construct(public TextInput $field, private ListView $list, private ListView $other, public array $actions = [])
     {
     }
 
     public static function start(): self
     {
-        return new self(TextInput::new(), ListView::fromStrings(['Buy milk', 'Call Ada']));
+        return new self(TextInput::new(), ListView::fromStrings(['Buy milk', 'Call Ada']), ListView::fromStrings(['Pay rent']));
     }
 
     public function view(): Widget
     {
-        return Layout::column(
+        return Layout::column(...[
             $this->bindProperty('field', $this->field),
-            $this->bindProperty('list', $this->list)->withActions(new Keybindings([
+            ...array_map(fn (string $name): Component => Component::bind(
+                $name,
+                $this->{$name},
+                static fn (self $app, ListView $list, Message $message): self => $message instanceof ActionMsg
+                    ? $app->cloneWith(actions: [...$app->actions, "$name:$message->action"])
+                    : $app->cloneWith(...[$name => $list]),
+            )->withActions(new Keybindings([
                 'toggle' => ['space'],
                 'delete' => ['x', 'ctrl+x'],
-            ])),
+                'left' => ['left'],
+                'right' => ['right'],
+            ])), ['list', 'other']),
             Footer::new()->withLeft(FocusHints::new()->withLeadingKeys($this->applicationKeybindings(), [
                 'archive' => 'archive',
                 'quit' => Actions::QUIT,
             ])),
-        );
+        ]);
+    }
+
+    protected function actionDescription(string $action): string
+    {
+        return \in_array($action, ['left', 'right'], true) ? 'column' : parent::actionDescription($action);
     }
 
     protected function applicationKeybindings(): Keybindings
@@ -116,7 +148,7 @@ final readonly class ScopedActionsApp extends App
 
     protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
-        return \in_array($action, ['toggle', 'delete', 'archive'], true)
+        return $action === 'archive'
             ? new UpdateResult($this->cloneWith(actions: [...$this->actions, $action]))
             : parent::onAction($action, $message, $screen);
     }

@@ -35,6 +35,7 @@ use Elmphant\Tui\Widget\Focus\HoldsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\Navigates;
 use Elmphant\Tui\Widget\Focus\Navigation;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Layout\VerticalStack;
 use Elmphant\Tui\Widget\Layout\VerticalStackLayout;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -331,7 +332,8 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
             [$row, $column] = $this->cellAt($message, $area, $layout);
             $marks = $message->button === MouseButton::Left
                 && $message->isIn($area)
-                && $this->resolvedOffset($layout, $area->height) + $message->y - $area->y < $layout->totalHeight;
+                && $this->resolvedOffset($layout, $area->height) + $message->y - $area->y < $layout->totalHeight
+                && !$this->answersThePointer($this->childAtRow($row, $layout));
 
             if (!$marks) {
                 return $marked === null ? null : new UpdateResult($this->cloneWith(marked: null));
@@ -376,6 +378,27 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     private function markedAt(int $width): ?MarkedRange
     {
         return $this->marked?->width === $width ? $this->marked : null;
+    }
+
+    /**
+     * A press on a child that answers the pointer itself (a list, a field) is the child's, not a mark.
+     */
+    private function childAtRow(int $row, VerticalStackLayout $layout): ?Widget
+    {
+        $top = 0;
+        foreach ($layout->heights as $index => $height) {
+            if ($row < $top + $height) {
+                return $this->children[$index] ?? null;
+            }
+            $top += $height;
+        }
+
+        return null;
+    }
+
+    private function answersThePointer(?Widget $child): bool
+    {
+        return $child instanceof Interactive || $child instanceof SingleMount;
     }
 
     /**

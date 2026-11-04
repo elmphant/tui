@@ -153,7 +153,8 @@ Field::text('due', 'Due date')
 
 While a `Modal` is on screen, everything behind it ignores keys and clicks, and
 the keyboard moves inside it. Always bind it, and keep its content on the App.
-Escape or a click outside sends `ModalDismissed`. Closing it is up to you:
+Escape or a click outside closes it: `isOpen()` turns false, and its bind
+closure drops it, so it leaves the screen:
 
 ```php
 use Elmphant\Tui\Application\{App, Component};
@@ -161,7 +162,7 @@ use Elmphant\Tui\Core\{Message, UpdateResult};
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Widget\Form\{Field, Form};
-use Elmphant\Tui\Widget\Popup\{Modal, ModalDismissed, Overlay};
+use Elmphant\Tui\Widget\Popup\{Modal, Overlay};
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 
@@ -185,7 +186,7 @@ final readonly class Notes extends App
         return Overlay::new($page, Component::bind(
             'modal',
             Modal::new('', $form)->withBorder(false)->withSizedToContent(),
-            static fn (self $app): self => $app,
+            static fn (self $app, Modal $modal): self => $modal->isOpen() ? $app : $app->cloneWith(editor: null),
         ));
     }
 
@@ -203,7 +204,6 @@ final readonly class Notes extends App
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
         return match (true) {
-            $message instanceof ModalDismissed => new UpdateResult($this->cloneWith(editor: null)),
             $message instanceof NoteSaved && $this->editor?->problems() === [] => new UpdateResult(
                 $this->cloneWith(notes: [...$this->notes, (string)$this->editor->values()['title']], editor: null),
             ),
@@ -234,6 +234,10 @@ use Elmphant\Tui\Widget\Structure\Panel;
 $log = Panel::new('Log')->withFollowingTheEnd();
 $log = $log->add(Text::new('build finished'));
 ```
+
+A `Panel` lights its border while the keyboard is inside it, on a bound widget
+in it. The panel itself needs no binding for that, so `Panel::new('To Do')->add($boundList)`
+shows which column is active.
 
 ## Copying text
 

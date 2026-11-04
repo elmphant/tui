@@ -52,6 +52,17 @@ final class ListViewCursorItemTest extends TestCase
     }
 
     #[Test]
+    public function anAddedItemGoesAtTheEndWithTheCursorOnIt(): void
+    {
+        $list = ListView::new([new Chore(1, 'Buy milk'), new Chore(2, 'Call Ada')]);
+
+        $added = $list->withAddedItem(new Chore(3, 'Pay rent'));
+
+        self::assertEquals(new Chore(3, 'Pay rent'), $added->cursorItem());
+        self::assertCount(3, $added->items());
+    }
+
+    #[Test]
     public function anEmptyListIsLeftAsItIs(): void
     {
         $list = ListView::new([]);

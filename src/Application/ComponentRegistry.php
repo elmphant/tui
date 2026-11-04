@@ -371,7 +371,7 @@ final readonly class ComponentRegistry
             return [[$widget], $layer !== null];
         }
 
-        return $layer === null ? [$mounts, $widget instanceof InputLayer] : [$layer, true];
+        return $layer === null ? [$mounts, $widget instanceof InputLayer && $widget->claimsInput()] : [$layer, true];
     }
 
     /**
@@ -412,11 +412,12 @@ final readonly class ComponentRegistry
             return [self::reowned($widget, [...self::ownComponent($widget), ...$layerComponents]), true];
         }
 
-        if ($widget instanceof InputLayer && !$bound && $components !== []) {
+        $claims = $widget instanceof InputLayer && $widget->claimsInput();
+        if ($claims && !$bound && $components !== []) {
             throw new LogicException(sprintf('%s holds the bound component "%s" but is not bound itself, so it never hears the keys and clicks that component leaves alone: wrap it in Component::bind()', get_debug_type($widget), $components[0]->id->value));
         }
 
-        return [self::reowned($widget, $components), $widget instanceof InputLayer];
+        return [self::reowned($widget, $components), $claims];
     }
 
     /**

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Popup;
 
-use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
@@ -62,6 +61,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         private ?Keybindings $globalKeybindings = null,
         private bool $outsideClickDismisses = true,
         private bool $bordered = true,
+        private bool $open = true,
     ) {
     }
 
@@ -165,11 +165,29 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
     }
 
     /**
+     * Escape or a click outside closes it. The host's bind closure then drops it.
+     */
+    public function isOpen(): bool
+    {
+        return $this->open;
+    }
+
+    public function withOpen(bool $open = true): static
+    {
+        return $this->cloneWith(open: $open);
+    }
+
+    public function claimsInput(): bool
+    {
+        return $this->open;
+    }
+
+    /**
      * @return list<Widget>
      */
     public function children(): array
     {
-        return [$this->content];
+        return $this->open ? [$this->content] : [];
     }
 
     /**
@@ -177,7 +195,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
      */
     public function placedChildren(Rect $area): array
     {
-        return [[$this->content, $this->computeContentRect($area)]];
+        return $this->open ? [[$this->content, $this->computeContentRect($area)]] : [];
     }
 
     public function sizing(): Sizing
@@ -190,7 +208,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
      */
     public function navigation(): Navigation
     {
-        return self::mountsAFocusable([$this->content], false) ? Navigation::Never : Navigation::Regular;
+        return !$this->open || self::mountsAFocusable([$this->content], false) ? Navigation::Never : Navigation::Regular;
     }
 
     public function dismisses(Message $message, Rect $area): bool
@@ -209,10 +227,9 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
     public function update(Message $message, Rect $area): UpdateResult
     {
         return match (true) {
-            $this->dismisses($message, $area) => new UpdateResult(
-                $this,
-                Cmd::message(new ModalDismissed()),
-            ),
+            !$this->open => new UpdateResult($this),
+
+            $this->dismisses($message, $area) => new UpdateResult($this->cloneWith(open: false)),
 
             $this->content instanceof Interactive => $this->updateContent($message, $area),
 
@@ -222,6 +239,10 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
+        if (!$this->open) {
+            return;
+        }
+
         $modalRect = $this->computeModalRect($area);
         if ($modalRect->width < $this->smallestSide() || $modalRect->height < $this->smallestSide()) {
             return;

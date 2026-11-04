@@ -134,6 +134,11 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         return $this->withItems(array_values($items))->withCursor($this->cursor);
     }
 
+    public function withAddedItem(ListItem $item): self
+    {
+        return $this->withItems([...$this->items, $item])->withCursor(\count($this->items));
+    }
+
     public function withoutCursorItem(): self
     {
         if (!isset($this->items[$this->cursor])) {

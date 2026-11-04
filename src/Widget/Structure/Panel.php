@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Structure;
 
+use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
@@ -30,6 +31,7 @@ use Elmphant\Tui\Widget\Focus\Navigates;
 use Elmphant\Tui\Widget\Focus\Navigation;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
@@ -399,7 +401,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
      */
     private function renderRule(Frame $frame, Rect $border, int $row, ?string $caption, RenderContext $context): void
     {
-        $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
+        $prominent = $this->isProminent($context);
         $glyphs = $context->theme->borderTypeFor($prominent)->glyphs();
         $quiet = $this->borderStyleOverride ?? $context->theme->borderStyleFor(false);
         $joint = ($prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride) ?? $context->theme->borderStyleFor($prominent);
@@ -416,11 +418,41 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         $frame->putStyled($border->right() - 1, $row, $glyphs->teeLeft, $joint);
     }
 
+    private function isProminent(RenderContext $context): bool
+    {
+        return $this->drawsFocused($context) || $this->emphasizedBorder || self::holdsTheKeyboard($this, $context->focusedComponent());
+    }
+
+    /**
+     * True while a bound component somewhere inside holds the keyboard, so a pane that is not bound
+     * itself still shows where the keyboard is.
+     */
+    private static function holdsTheKeyboard(Widget $widget, ?ComponentId $focused): bool
+    {
+        if ($focused === null || !$widget instanceof WidgetContainer) {
+            return false;
+        }
+
+        foreach ($widget->children() as $child) {
+            if ($child instanceof SingleMount) {
+                $mounted = ComponentId::named($child->mountName());
+                if ($focused->equals($mounted) || $focused->isUnder($mounted)) {
+                    return true;
+                }
+            }
+            if (self::holdsTheKeyboard($child, $focused)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function block(RenderContext $context): Block
     {
         $theme = $context->theme;
 
-        $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
+        $prominent = $this->isProminent($context);
 
         $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
 

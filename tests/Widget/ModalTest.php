@@ -318,13 +318,16 @@ final class ModalTest extends TestCase
     }
 
     #[Test]
-    public function dismissedModalReturnsModalDismissedCommand(): void
+    public function aDismissedModalIsClosedAndAsksForNothing(): void
     {
         $modal = Modal::new('MyModal', Text::new('Content'));
         $area = Rect::fromSize(80, 24);
 
         $result = $modal->update(new KeyMsg(Key::Escape), $area);
-        self::assertNotNull($result->command);
+
+        self::assertInstanceOf(Modal::class, $result->model);
+        self::assertFalse($result->model->isOpen());
+        self::assertNull($result->command);
     }
 
     #[Test]
@@ -1208,7 +1211,8 @@ final class ModalTest extends TestCase
         $result = $modal->update($rebound, Rect::fromSize(80, 24));
 
         self::assertTrue($modal->dismisses($rebound, Rect::fromSize(80, 24)), 'a rebound cancel key dismisses the modal');
-        self::assertNotNull($result->command);
+        self::assertInstanceOf(Modal::class, $result->model);
+        self::assertFalse($result->model->isOpen());
     }
 
     #[Test]

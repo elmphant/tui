@@ -28,14 +28,15 @@ abstract readonly class App
     protected function actionDescription(string $action): string {} // what an action does, in the key help
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
     protected function bindProperty(string $property, Interactive $widget): Component {}
+    protected function componentAt(MouseMsg $message, Rect $screen): ?ComponentId {} // in onMouse(): the bound component under the pointer
 }
 ```
 
 - Ctrl+Q and Ctrl+C quit. They live in `applicationKeybindings()` under
   `Actions::QUIT`, so override it to add a key such as `q` or to drop one. Every
   quit key goes through `onAction()`, so an app can ask before quitting there.
-- `onAction()` gets the actions that `applicationKeybindings()` matched, and
-  those of a component's `withActions()` while it holds the keyboard.
+- `onAction()` gets the actions that `applicationKeybindings()` matched. A
+  component's `withActions()` go to its bind closure instead.
 - `onComponentsChanged()` runs after bound widgets changed. Use it to re-filter a
   list when a search field changed. The ids are `ComponentId` objects, so
   `in_array('search', $ids, true)` is always false. Check `$id->value === 'search'`.
@@ -51,7 +52,7 @@ abstract readonly class App
 | You want to … | Use |
 |---|---|
 | answer a key wherever the keyboard is | `applicationKeybindings()`, then `onAction()` |
-| answer a key only while one widget holds the keyboard | `Component::bind(…)->withActions($keys)`, then `onAction()` |
+| answer a key only while one widget holds the keyboard | `Component::bind(…)->withActions($keys)`, then an `ActionMsg` in its bind closure |
 | take what a widget did (typed, moved, chose, submitted) | the bind closure, with `commits($message)` for a choice |
 | take the answer to a command (a process, HTTP, a timer) | `onMessage()`, matched by its `EffectId` |
 | redraw on a clock | `onTick()` after `Cmd::tick()`. An animated widget needs neither |
@@ -83,10 +84,9 @@ closure. A whole todo app:
 
 ```php
 use Elmphant\Tui\Application\{App, Component};
-use Elmphant\Tui\Core\{Message, UpdateResult};
+use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Input\{Actions, Keybindings};
-use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\ActionMsg;
 use Elmphant\Tui\Widget\Bar\{FocusHints, Footer, Header};
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -122,19 +122,22 @@ final readonly class TodoApp extends App
             Component::bind('field', $this->field, static fn (self $app, TextInput $field, Message $message): self => $field->commits($message)
                 ? $app->added($field->value())
                 : $app->cloneWith(field: $field)),
-            $this->bindProperty('list', $this->list)->withActions(new Keybindings(['toggle' => ['space'], 'delete' => ['d']])),
+            Component::bind('list', $this->list, static fn (self $app, ListView $list, Message $message): self => $message instanceof ActionMsg
+                ? $app->cloneWith(list: $app->edited($list, $message->action))
+                : $app->cloneWith(list: $list))
+                ->withActions(new Keybindings(['toggle' => ['space'], 'delete' => ['d']])),
             Footer::new()->withLeft(FocusHints::new()->withLeadingKeys($this->applicationKeybindings(), ['quit' => Actions::QUIT])),
         );
     }
 
-    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
+    private function edited(ListView $list, string $action): ListView
     {
-        $todo = $this->list->cursorItem();
+        $todo = $list->cursorItem();
 
         return match (true) {
-            $action === 'toggle' && $todo instanceof Todo => new UpdateResult($this->cloneWith(list: $this->list->withCursorItem($todo->toggled()))),
-            $action === 'delete' => new UpdateResult($this->cloneWith(list: $this->list->withoutCursorItem())),
-            default => parent::onAction($action, $message, $screen),
+            $action === 'toggle' && $todo instanceof Todo => $list->withCursorItem($todo->toggled()),
+            $action === 'delete' => $list->withoutCursorItem(),
+            default => $list,
         };
     }
 
@@ -142,7 +145,7 @@ final readonly class TodoApp extends App
     {
         return trim($name) === '' ? $this : $this->cloneWith(
             field: $this->field->withValue(''),
-            list: $this->list->withItems([...$this->list->items(), new Todo($this->nextId, trim($name))]),
+            list: $this->list->withAddedItem(new Todo($this->nextId, trim($name))),
             nextId: $this->nextId + 1,
         );
     }
@@ -161,9 +164,12 @@ final readonly class TodoApp extends App
 - **`withSubmit()` makes Enter commit the field**, so the closure takes the value
   inline. A field left without it hands Enter on, the way a form moves to the
   next field.
-- **`withActions()` gives keys to one component.** `onAction()` hears `toggle`
-  only while the list holds the keyboard, and the footer names Space and `d`
-  only then. In the field, Space is text.
+- **`withActions()` gives keys to one component.** They reach that component's
+  bind closure as an `ActionMsg`, only while it holds the keyboard, and the
+  footer names Space and `d` only then. In the field, Space is text. Several
+  alike components (the columns of a board) each hear their own: the closure may
+  capture a plain value such as the column's index.
+- **`withAddedItem()`** appends a row and puts the cursor on it.
 
 Rules for binding:
 

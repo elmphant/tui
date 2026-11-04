@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
@@ -22,7 +21,6 @@ use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Popup\Dropdown;
 use Elmphant\Tui\Widget\Popup\Modal;
-use Elmphant\Tui\Widget\Popup\ModalDismissed;
 use Elmphant\Tui\Widget\Popup\Overlay;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
@@ -72,7 +70,7 @@ final readonly class E2eApp extends App
 
         return $this->modal === null
             ? $main
-            : Overlay::new($main, Component::bind('modal', $this->modal, static fn (self $app, Modal $modal): self => $app->cloneWith(modal: $modal)));
+            : Overlay::new($main, Component::bind('modal', $this->modal, static fn (self $app, Modal $modal): self => $app->cloneWith(modal: $modal->isOpen() ? $modal : null)));
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -83,13 +81,6 @@ final readonly class E2eApp extends App
             Key::F6 => new UpdateResult($this, Cmd::exec(['sleep', $this->processMarker])),
             default => new UpdateResult($this),
         };
-    }
-
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
-    {
-        return $message instanceof ModalDismissed
-            ? new UpdateResult($this->cloneWith(modal: null))
-            : new UpdateResult($this);
     }
 }
 

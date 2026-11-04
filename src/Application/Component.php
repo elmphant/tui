@@ -97,8 +97,8 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
-     * Actions the App answers in onAction() only while the keyboard is on this component or inside it,
-     * before its application keybindings. The footer names them only then.
+     * Keys that reach this component's bind closure as an ActionMsg, only while the keyboard is on it
+     * or inside it, before the App's own keybindings. The footer names them only then.
      *
      * @return self<TWidget>
      */

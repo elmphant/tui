@@ -18,6 +18,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\ActionMsg;
 use Elmphant\Tui\Message\FocusMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
@@ -38,6 +39,7 @@ use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
+use Elmphant\Tui\Widget\Focus\InputLayer;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -353,6 +355,21 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     }
 
     /**
+     * The innermost component drawn under the pointer, for onMouse(), or null where none is.
+     */
+    protected function componentAt(MouseMsg $message, Rect $screen): ?ComponentId
+    {
+        $under = null;
+        foreach ($this->findComponentRects($screen, $this->componentRegistry()->all(), visible: true) as $id => $rect) {
+            if ($message->isIn($rect)) {
+                $under = $id;
+            }
+        }
+
+        return $under === null ? null : ComponentId::named($under);
+    }
+
+    /**
      * Bind the widget to the property that holds it; the default ID is the property name.
      *
      * @template TBoundWidget of Interactive
@@ -428,7 +445,12 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         if ($message instanceof KeyMsg) {
-            $action = $this->matchedComponentAction($message, $focus->focused()) ?? $this->matchedApplicationAction($message);
+            $answered = $this->answeredByComponentAction($message, $focus->focused());
+            if ($answered !== null) {
+                return $answered;
+            }
+
+            $action = $this->matchedApplicationAction($message);
             if ($action !== null) {
                 return $this->onAction($action, $message, $screenRect);
             }
@@ -1074,15 +1096,29 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         $actionHints = [];
         $takesText = $this->takesText($focused);
-        foreach ($this->actionsAround($focused) as $actions) {
+        foreach ($this->componentsWithActionsAround($focused) as $component) {
+            $actions = $component->actions();
             $shown = $takesText ? $actions->withoutText() : $actions;
-            $actionHints += $shown->hints(array_combine(
-                array_map($this->actionDescription(...), $shown->actions()),
-                $shown->actions(),
-            ));
+            $byDescription = [];
+            foreach ($shown->actions() as $action) {
+                $byDescription[$this->actionDescription($action)][] = $action;
+            }
+            $actionHints += $shown->hints($byDescription);
         }
 
-        return [...$actionHints, ...$widget instanceof PublishesHints ? $widget->hints() : []];
+        $layerHints = [];
+        foreach ($this->componentsAround($focused) as $component) {
+            $layer = $component->widget;
+            if ($component->id->equals($focused) || !$layer instanceof InputLayer || !$layer->claimsInput() || !$layer instanceof PublishesHints) {
+                continue;
+            }
+            if ($layer instanceof KeybindingsAware) {
+                $layer = $layer->withGlobalKeybindings($this->globalKeybindings());
+            }
+            $layerHints += $layer->hints();
+        }
+
+        return [...$actionHints, ...$widget instanceof PublishesHints ? $widget->hints() : [], ...$layerHints];
     }
 
     private function componentRegistry(): ComponentRegistry
@@ -1183,36 +1219,61 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return $widget instanceof TakesText && $widget->takesText();
     }
 
-    private function matchedComponentAction(KeyMsg $message, ?ComponentId $focused): ?string
+    /**
+     * @return UpdateResult<static>|null
+     */
+    private function answeredByComponentAction(KeyMsg $message, ?ComponentId $focused): ?UpdateResult
     {
-        foreach ($this->actionsAround($focused) as $actions) {
-            $action = $actions->actionOf($message);
-            if ($action !== null) {
-                return $action;
+        foreach ($this->componentsWithActionsAround($focused) as $component) {
+            $action = $component->actions()->actionOf($message);
+            if ($action === null || !$component->writesBack() || !$component->widget instanceof Interactive) {
+                continue;
             }
+
+            $answered = $component->replaceIn($this, $component->widget, new ActionMsg($action, $message));
+
+            return new UpdateResult($this->appModel($answered), $component->addressed($answered->command));
         }
 
         return null;
     }
 
     /**
-     * The actions of the component holding the keyboard and of each one around it, nearest first.
-     *
-     * @return list<Keybindings>
+     * @return list<Component<Widget>>
      */
-    private function actionsAround(?ComponentId $focused): array
+    private function componentsWithActionsAround(?ComponentId $focused): array
     {
-        $registry = $this->componentRegistry();
-        $found = [];
+        return array_values(array_filter(
+            $this->componentsAround($focused),
+            static fn (Component $component): bool => $component->actions()->actions() !== [],
+        ));
+    }
 
-        for ($id = $focused; $id !== null; $id = $id->parent()) {
-            $actions = $registry->get($id)?->actions();
-            if ($actions !== null && $actions->actions() !== []) {
-                $found[] = $actions;
-            }
+    /**
+     * The component holding the keyboard and each one around it, nearest first: the ones its id
+     * is under (a grafted child), then the ones that draw it (a bound field inside a bound modal).
+     *
+     * @return list<Component<Widget>>
+     */
+    private function componentsAround(?ComponentId $focused): array
+    {
+        if ($focused === null) {
+            return [];
         }
 
-        return $found;
+        $registry = $this->componentRegistry();
+        $found = [];
+        for ($id = $focused; $id !== null; $id = $id->parent()) {
+            $component = $registry->get($id);
+            if ($component !== null) {
+                $found[$component->id->value] = $component;
+            }
+        }
+        foreach (array_reverse($registry->enclosing($focused)) as $component) {
+            $found[$component->id->value] ??= $component;
+        }
+
+        return array_values($found);
     }
 
     private function matchedApplicationAction(KeyMsg $message): ?string
