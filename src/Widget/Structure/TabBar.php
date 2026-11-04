@@ -255,7 +255,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
         $theme = $context->theme;
         $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
-        $glyphs = $theme->borderFor($prominent)->glyphs();
+        $glyphs = $theme->borderTypeFor($prominent)->glyphs();
         $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
         $borderStyle = $override ?? $theme->borderStyleFor($prominent);
 

@@ -45,9 +45,9 @@ final readonly class Theme
         ?Style $footerStyle = null,
         ?Style $warning = null,
         ?Style $info = null,
-        public BorderStyle $border = BorderStyle::Rounded,
+        public BorderType $borderType = BorderType::Rounded,
         // Unicode has no heavy rounded corners; focus is carried by colour + bold.
-        public BorderStyle $focusedBorder = BorderStyle::Rounded,
+        public BorderType $focusedBorderType = BorderType::Rounded,
     ) {
         $this->footerOverride = $footerStyle;
         $this->warningOverride = $warning;
@@ -168,22 +168,22 @@ final readonly class Theme
         );
     }
 
-    public function withBorder(BorderStyle $border): self
+    public function withBorderType(BorderType $type): self
     {
-        return $this->rebuilt(border: $border);
+        return $this->rebuilt(borderType: $type);
     }
 
-    public function withFocusedBorder(BorderStyle $border): self
+    public function withFocusedBorderType(BorderType $type): self
     {
-        return $this->rebuilt(focusedBorder: $border);
+        return $this->rebuilt(focusedBorderType: $type);
     }
 
     /**
      * Share focused and emphasized border styling across containers.
      */
-    public function borderFor(bool $prominent): BorderStyle
+    public function borderTypeFor(bool $prominent): BorderType
     {
-        return $prominent ? $this->focusedBorder : $this->border;
+        return $prominent ? $this->focusedBorderType : $this->borderType;
     }
 
     /**
@@ -214,8 +214,8 @@ final readonly class Theme
             footerStyle: $this->withoutColour($this->footerStyle),
             warning: $this->withoutColour($this->warning),
             info: $this->withoutColour($this->info),
-            border: $this->border,
-            focusedBorder: $this->focusedBorder,
+            borderType: $this->borderType,
+            focusedBorderType: $this->focusedBorderType,
         );
     }
 
@@ -461,8 +461,8 @@ final readonly class Theme
         ?Style $footerStyle = null,
         ?Style $warning = null,
         ?Style $info = null,
-        ?BorderStyle $border = null,
-        ?BorderStyle $focusedBorder = null,
+        ?BorderType $borderType = null,
+        ?BorderType $focusedBorderType = null,
     ): self {
         return new self(
             base: $base ?? $this->base,
@@ -483,8 +483,8 @@ final readonly class Theme
             footerStyle: $footerStyle ?? $this->footerOverride,
             warning: $warning ?? $this->warningOverride,
             info: $info ?? $this->infoOverride,
-            border: $border ?? $this->border,
-            focusedBorder: $focusedBorder ?? $this->focusedBorder,
+            borderType: $borderType ?? $this->borderType,
+            focusedBorderType: $focusedBorderType ?? $this->focusedBorderType,
         );
     }
 

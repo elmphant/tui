@@ -19,7 +19,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Block;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -140,7 +140,7 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
 
         // Use a heavier border for buttons even though Unicode has no matching heavy rounded corners.
         $block = Block::new()
-            ->withBorder($showsFocus ? BorderStyle::Thick : $theme->border)
+            ->withBorderType($showsFocus ? BorderType::Thick : $theme->borderType)
             ->withBorderStyle($borderStyle)
             ->withPadding(Spacing::horizontal(1));
         $block->render($frame, $area);

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
-enum BorderStyle
+enum BorderType
 {
     case Rounded;
     case Solid;

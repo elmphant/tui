@@ -17,7 +17,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
@@ -425,7 +425,7 @@ final class PanelTest extends TestCase
     public function aFocusedPanelUsesTheThemesFocusedBorder(): void
     {
         $area = new Rect(0, 0, 12, 4);
-        $theme = Theme::dark()->withFocusedBorder(BorderStyle::Double);
+        $theme = Theme::dark()->withFocusedBorderType(BorderType::Double);
         $panel = Panel::new('T');
 
         self::assertStringContainsString('╔', $this->screenWith($panel, $area, $theme, focused: true));

@@ -21,7 +21,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
@@ -178,7 +178,7 @@ final class TabBarTest extends TestCase
     public function aFocusedBarUsesTheThemesFocusedBorder(): void
     {
         $area = new Rect(0, 0, 20, 8);
-        $theme = Theme::dark()->withFocusedBorder(BorderStyle::Double);
+        $theme = Theme::dark()->withFocusedBorderType(BorderType::Double);
         $bar = TabBar::new()->addTab('A');
 
         self::assertStringContainsString('╔', $this->screenWithTheme($bar, $area, $theme, focused: true));
@@ -821,7 +821,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('One')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->topLeft, $frame->characters[0]);
         self::assertSame($glyphs->horizontal, $frame->characters[1]);
         self::assertSame($glyphs->horizontal, $frame->characters[5]);
@@ -833,7 +833,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('One')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[1 * 30 + 0]);
         self::assertSame($glyphs->vertical, $frame->characters[1 * 30 + 6]);
     }
@@ -886,7 +886,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('One')->addTab('Two')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertNotSame($glyphs->topLeft, $frame->characters[0 * 30 + 7]);
         self::assertNotSame($glyphs->vertical, $frame->characters[1 * 30 + 7]);
     }
@@ -898,7 +898,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('One')->addTab('Two')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[2 * 30 + 0]);
         self::assertSame($glyphs->topRight, $frame->characters[2 * 30 + 29]);
         self::assertSame(' ', $frame->characters[2 * 30 + 1]);
@@ -914,7 +914,7 @@ final class TabBarTest extends TestCase
         $tabBar2 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $frame = new Frame(30, 10);
         $tabBar2->render($frame, $area, $this->context());
-        $glyphs = Theme::dark()->focusedBorder->glyphs();
+        $glyphs = Theme::dark()->focusedBorderType->glyphs();
         self::assertSame($glyphs->topLeft, $frame->characters[2 * 30 + 0]);
         self::assertSame($glyphs->bottomRight, $frame->characters[2 * 30 + 7]);
         self::assertSame($glyphs->bottomLeft, $frame->characters[2 * 30 + 13]);
@@ -945,7 +945,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('A')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         for ($x = 5; $x < 29; ++$x) {
             self::assertSame($glyphs->horizontal, $frame->characters[2 * 30 + $x], "Baseline at x=$x");
         }
@@ -956,7 +956,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(40, 20);
         TabBar::new()->addTab('Tab')->render($frame, new Rect(5, 3, 30, 15), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[5 * 40 + 5]);
         self::assertSame($glyphs->topRight, $frame->characters[5 * 40 + 34]);
     }
@@ -968,7 +968,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('One')->add(Text::new('Hi'))->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         for ($y = 3; $y <= 8; ++$y) {
             self::assertSame($glyphs->vertical, $frame->characters[$y * 30 + 0], "Left y=$y");
             self::assertSame($glyphs->vertical, $frame->characters[$y * 30 + 29], "Right y=$y");
@@ -980,7 +980,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('One')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->bottomLeft, $frame->characters[9 * 30 + 0]);
         self::assertSame($glyphs->horizontal, $frame->characters[9 * 30 + 1]);
         self::assertSame($glyphs->bottomRight, $frame->characters[9 * 30 + 29]);
@@ -991,7 +991,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 15);
         TabBar::new()->addTab('One')->render($frame, new Rect(0, 0, 30, 15), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         for ($y = 3; $y <= 13; ++$y) {
             self::assertSame($glyphs->vertical, $frame->characters[$y * 30 + 0], "Left y=$y");
             self::assertSame($glyphs->vertical, $frame->characters[$y * 30 + 29], "Right y=$y");
@@ -1005,7 +1005,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(20, 10);
         TabBar::new()->addTab('Tab')->render($frame, new Rect(0, 0, 20, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         for ($x = 1; $x < 19; ++$x) {
             self::assertSame($glyphs->horizontal, $frame->characters[9 * 20 + $x], "Bottom at x=$x");
         }
@@ -1016,7 +1016,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(15, 8);
         TabBar::new()->addTab('Tab')->render($frame, new Rect(0, 0, 15, 8), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->bottomLeft, $frame->characters[7 * 15 + 0]);
         for ($x = 1; $x < 14; ++$x) {
             self::assertSame($glyphs->horizontal, $frame->characters[7 * 15 + $x]);
@@ -1114,7 +1114,7 @@ final class TabBarTest extends TestCase
             ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine'], 'Theme'));
         $frame = new Frame(30, 9);
         $tabBar->render($frame, new Rect(0, 0, 30, 9), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->horizontal, $frame->characters[8 * 30 + 1]);
     }
 
@@ -1158,7 +1158,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('One')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        self::assertSame(Theme::dark()->focusedBorder->glyphs()->topLeft, $frame->characters[0]);
+        self::assertSame(Theme::dark()->focusedBorderType->glyphs()->topLeft, $frame->characters[0]);
     }
 
     #[Test]
@@ -1166,7 +1166,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('One')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        self::assertSame(Theme::dark()->border->glyphs()->topLeft, $frame->characters[0]);
+        self::assertSame(Theme::dark()->borderType->glyphs()->topLeft, $frame->characters[0]);
     }
 
     #[Test]
@@ -1344,7 +1344,7 @@ final class TabBarTest extends TestCase
         $tabBar2 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $frame = new Frame(50, 10);
         $tabBar2->render($frame, $area, $this->context());
-        $glyphs = Theme::dark()->focusedBorder->glyphs();
+        $glyphs = Theme::dark()->focusedBorderType->glyphs();
         self::assertSame($glyphs->topLeft, $frame->characters[0 * 50 + 7]);
         self::assertSame($glyphs->topRight, $frame->characters[0 * 50 + 13]);
         self::assertSame('T', $frame->characters[1 * 50 + 9]);
@@ -1473,7 +1473,7 @@ final class TabBarTest extends TestCase
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
         self::assertSame('F', $frame->characters[8 * 20 + 1]);
-        self::assertSame(Theme::dark()->border->glyphs()->bottomLeft, $frame->characters[9 * 20 + 0]);
+        self::assertSame(Theme::dark()->borderType->glyphs()->bottomLeft, $frame->characters[9 * 20 + 0]);
     }
 
     #[Test]
@@ -2059,7 +2059,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(40, 10);
         TabBar::new()->addTab('café')->render($frame, new Rect(0, 0, 40, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->topRight, $frame->characters[0 * 40 + 7]);
         self::assertNotSame($glyphs->topRight, $frame->characters[0 * 40 + 8]);
     }
@@ -2069,7 +2069,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(40, 10);
         TabBar::new()->addTab('日本語')->render($frame, new Rect(0, 0, 40, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         // cellWidth = CharWidth::stringWidth("日本語") + 4 = 6 + 4 = 10, topRight at col 9
         self::assertSame($glyphs->topRight, $frame->characters[0 * 40 + 9]);
         self::assertSame(' ', $frame->characters[2 * 40 + 1]);
@@ -2094,7 +2094,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('XY')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->horizontal, $frame->characters[0 * 30 + 4]);
         self::assertSame($glyphs->topRight, $frame->characters[0 * 30 + 5]);
         self::assertNotSame($glyphs->topRight, $frame->characters[0 * 30 + 4]);
@@ -2105,7 +2105,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function baselineLeftGlyphFirstVsNonFirstActiveTab(): void
     {
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         $buffer1 = new Frame(30, 10);
         TabBar::new()->addTab('A')->addTab('B')->render($buffer1, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame($glyphs->vertical, $buffer1->characters[2 * 30 + 0]);
@@ -2114,7 +2114,7 @@ final class TabBarTest extends TestCase
         $tabBar = $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 30, 10))->model;
         $buffer2 = new Frame(30, 10);
         $tabBar->render($buffer2, new Rect(0, 0, 30, 10), $this->context());
-        $fg = Theme::dark()->focusedBorder->glyphs();
+        $fg = Theme::dark()->focusedBorderType->glyphs();
         self::assertSame($fg->topLeft, $buffer2->characters[2 * 30 + 0]);
     }
 
@@ -2125,7 +2125,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(15, 8);
         TabBar::new()->addTab('Z')->render($frame, new Rect(0, 0, 15, 8), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->horizontal, $frame->characters[2 * 15 + 5]);
         self::assertSame($glyphs->horizontal, $frame->characters[2 * 15 + 13]);
         self::assertSame($glyphs->topRight, $frame->characters[2 * 15 + 14]);
@@ -2138,7 +2138,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(40, 10);
         TabBar::new()->addTab('日本語')->render($frame, new Rect(0, 0, 40, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         // cellWidth = 10, gap from col 1 to 8, bottomLeft at col 9, horizontal at col 10
         self::assertSame(' ', $frame->characters[2 * 40 + 1]);
         self::assertSame(' ', $frame->characters[2 * 40 + 8]);
@@ -2154,7 +2154,7 @@ final class TabBarTest extends TestCase
         $frame = new Frame(30, 10);
         $frame->putChar(0, 2, 'X');
         TabBar::new()->addTab('Tab')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[2 * 30 + 0]);
     }
 
@@ -2169,7 +2169,7 @@ final class TabBarTest extends TestCase
         $tabBar = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $frame = new Frame(50, 10);
         $tabBar->render($frame, $area, $this->context());
-        $glyphs = Theme::dark()->focusedBorder->glyphs();
+        $glyphs = Theme::dark()->focusedBorderType->glyphs();
         self::assertSame($glyphs->bottomRight, $frame->characters[2 * 50 + 11]);
         self::assertSame(' ', $frame->characters[2 * 50 + 12]);
         self::assertSame(' ', $frame->characters[2 * 50 + 16]);
@@ -2198,7 +2198,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(25, 10);
         TabBar::new()->addTab('Tab')->render($frame, new Rect(0, 0, 25, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         for ($y = 3; $y < 9; ++$y) {
             self::assertSame($glyphs->vertical, $frame->characters[$y * 25 + 0], "Left at y=$y");
             self::assertSame($glyphs->vertical, $frame->characters[$y * 25 + 24], "Right at y=$y");
@@ -2212,7 +2212,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(20, 9);
         TabBar::new()->addTab('A')->render($frame, new Rect(0, 0, 20, 9), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->bottomLeft, $frame->characters[8 * 20 + 0]);
         self::assertSame($glyphs->horizontal, $frame->characters[8 * 20 + 1]);
         self::assertSame($glyphs->bottomRight, $frame->characters[8 * 20 + 19]);
@@ -2226,7 +2226,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(20, 8);
         TabBar::new()->addTab('A')->render($frame, new Rect(0, 0, 20, 8), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[3 * 20 + 0]);
         self::assertSame($glyphs->vertical, $frame->characters[6 * 20 + 0]);
         self::assertSame($glyphs->bottomLeft, $frame->characters[7 * 20 + 0]);
@@ -2239,7 +2239,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(20, 8);
         TabBar::new()->addTab('A')->render($frame, new Rect(0, 0, 20, 8), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[3 * 20 + 19]);
         self::assertSame($glyphs->vertical, $frame->characters[6 * 20 + 19]);
         self::assertSame($glyphs->bottomRight, $frame->characters[7 * 20 + 19]);
@@ -2403,7 +2403,7 @@ final class TabBarTest extends TestCase
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('日本語')->add(Text::new('test'))
             ->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[5 * 30 + 29]);
         self::assertSame($glyphs->bottomRight, $frame->characters[9 * 30 + 29]);
     }
@@ -2415,7 +2415,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(40, 20);
         TabBar::new()->addTab('T')->render($frame, new Rect(5, 3, 20, 10), $this->context());
-        $glyphs = Theme::dark()->border->glyphs();
+        $glyphs = Theme::dark()->borderType->glyphs();
         for ($y = 6; $y <= 11; ++$y) {
             self::assertSame($glyphs->vertical, $frame->characters[$y * 40 + 5], "Left y=$y");
             self::assertSame($glyphs->vertical, $frame->characters[$y * 40 + 24], "Right y=$y");

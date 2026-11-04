@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Rendering\BorderGlyphs;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +14,7 @@ final class BorderTest extends TestCase
     #[Test]
     public function roundedGlyphs(): void
     {
-        $glyphs = BorderStyle::Rounded->glyphs();
+        $glyphs = BorderType::Rounded->glyphs();
 
         self::assertSame('╭', $glyphs->topLeft);
         self::assertSame('╮', $glyphs->topRight);
@@ -27,7 +27,7 @@ final class BorderTest extends TestCase
     #[Test]
     public function solidGlyphs(): void
     {
-        $glyphs = BorderStyle::Solid->glyphs();
+        $glyphs = BorderType::Solid->glyphs();
 
         self::assertSame('┌', $glyphs->topLeft);
         self::assertSame('┐', $glyphs->topRight);
@@ -40,7 +40,7 @@ final class BorderTest extends TestCase
     #[Test]
     public function thickGlyphs(): void
     {
-        $glyphs = BorderStyle::Thick->glyphs();
+        $glyphs = BorderType::Thick->glyphs();
 
         self::assertSame('┏', $glyphs->topLeft);
         self::assertSame('┓', $glyphs->topRight);
@@ -53,7 +53,7 @@ final class BorderTest extends TestCase
     #[Test]
     public function doubleGlyphs(): void
     {
-        $glyphs = BorderStyle::Double->glyphs();
+        $glyphs = BorderType::Double->glyphs();
 
         self::assertSame('╔', $glyphs->topLeft);
         self::assertSame('╗', $glyphs->topRight);
@@ -66,7 +66,7 @@ final class BorderTest extends TestCase
     #[Test]
     public function dashedGlyphs(): void
     {
-        $glyphs = BorderStyle::Dashed->glyphs();
+        $glyphs = BorderType::Dashed->glyphs();
 
         self::assertSame('┌', $glyphs->topLeft);
         self::assertSame('┐', $glyphs->topRight);
@@ -79,7 +79,7 @@ final class BorderTest extends TestCase
     #[Test]
     public function dottedGlyphs(): void
     {
-        $glyphs = BorderStyle::Dotted->glyphs();
+        $glyphs = BorderType::Dotted->glyphs();
 
         self::assertSame('┌', $glyphs->topLeft);
         self::assertSame('┐', $glyphs->topRight);
@@ -114,7 +114,7 @@ final class BorderTest extends TestCase
     #[Test]
     public function allCasesReturnGlyphs(): void
     {
-        foreach (BorderStyle::cases() as $style) {
+        foreach (BorderType::cases() as $style) {
             $glyphs = $style->glyphs();
             self::assertInstanceOf(BorderGlyphs::class, $glyphs, "Style {$style->name} must return BorderGlyphs");
         }

@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Attr;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -27,7 +27,7 @@ final class CardTest extends TestCase
         $card = Card::new('Old', 'stale')
             ->withTitle('New')
             ->withBody('fresh')
-            ->withBorder(BorderStyle::Double);
+            ->withBorderType(BorderType::Double);
 
         $card->render($frame, new Rect(0, 0, 20, 4), new RenderContext(Theme::dark()));
 

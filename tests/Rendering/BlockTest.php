@@ -8,7 +8,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Block;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
@@ -34,7 +34,7 @@ final class BlockTest extends TestCase
     #[Test]
     public function innerWithBorderShrinksByOne(): void
     {
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
         $area = new Rect(0, 0, 20, 10);
 
         $inner = $block->inner($area);
@@ -49,7 +49,7 @@ final class BlockTest extends TestCase
     public function innerWithBorderAndPadding(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withPadding(Spacing::all(1));
         $area = new Rect(0, 0, 20, 10);
 
@@ -66,7 +66,7 @@ final class BlockTest extends TestCase
     {
         $block = Block::new()
             ->withMargin(Spacing::all(1))
-            ->withBorder(BorderStyle::Solid);
+            ->withBorderType(BorderType::Solid);
         $area = new Rect(0, 0, 20, 10);
 
         $inner = $block->inner($area);
@@ -80,7 +80,7 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderDrawsBorderCharacters(): void
     {
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
         $frame = new Frame(10, 5);
         $area = new Rect(0, 0, 10, 5);
 
@@ -110,7 +110,7 @@ final class BlockTest extends TestCase
             attributes: Attr::BOLD,
         );
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withBorderStyle($style);
         $frame = new Frame(10, 5);
         $area = new Rect(0, 0, 10, 5);
@@ -130,7 +130,7 @@ final class BlockTest extends TestCase
             attributes: Attr::BOLD,
         );
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle('Hello')
             ->withTitleStyle($titleStyle);
         $frame = new Frame(20, 5);
@@ -154,7 +154,7 @@ final class BlockTest extends TestCase
     public function renderTitleTruncatesWhenTooLong(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle('VeryLongTitle');
         $frame = new Frame(10, 5);
         $area = new Rect(0, 0, 10, 5);
@@ -188,7 +188,7 @@ final class BlockTest extends TestCase
     {
         $block = Block::new()
             ->withMargin(Spacing::all(1))
-            ->withBorder(BorderStyle::Solid);
+            ->withBorderType(BorderType::Solid);
         $frame = new Frame(12, 7);
         $area = new Rect(0, 0, 12, 7);
 
@@ -204,7 +204,7 @@ final class BlockTest extends TestCase
     public function titleNotRenderedWhenMaxWidthIsZero(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle('Hello');
         // width=4 means maxWidth = 4-4 = 0, title must not render
         $frame = new Frame(4, 3);
@@ -213,7 +213,7 @@ final class BlockTest extends TestCase
         $block->render($frame, $area);
 
         // Position x=1 should still be border horizontal, not a space from title padding
-        $glyphs = BorderStyle::Solid->glyphs();
+        $glyphs = BorderType::Solid->glyphs();
         self::assertSame($glyphs->horizontal, $frame->characters[0 * 4 + 1]);
         self::assertSame($glyphs->horizontal, $frame->characters[0 * 4 + 2]);
     }
@@ -222,7 +222,7 @@ final class BlockTest extends TestCase
     public function titleRenderedWhenMaxWidthIsOne(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle('Hello');
         // width=5 means maxWidth = 5-4 = 1, title should render (truncated to 1 char)
         $frame = new Frame(5, 3);
@@ -239,7 +239,7 @@ final class BlockTest extends TestCase
     public function titleWithMultibyteCharactersTruncatesCorrectly(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle("\u{00FC}\u{00E4}\u{00F6}"); // uao (3 multibyte chars, 6 bytes)
         // width=8 means maxWidth = 8-4 = 4, all 3 chars fit
         $frame = new Frame(8, 3);
@@ -258,7 +258,7 @@ final class BlockTest extends TestCase
     public function titleTrailingSpacePlacedAtCorrectPositionForMultibyteChars(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle("\u{00FC}\u{00E4}"); // ua (2 multibyte chars, 4 bytes)
         // width=10 means maxWidth = 10-4 = 6, both chars fit
         $frame = new Frame(10, 3);
@@ -274,7 +274,7 @@ final class BlockTest extends TestCase
         self::assertSame("\u{00E4}", $frame->characters[0 * 10 + 3]);
         self::assertSame(' ', $frame->characters[0 * 10 + 4]);
         // Position 5 should still be the border horizontal, not a space
-        $glyphs = BorderStyle::Solid->glyphs();
+        $glyphs = BorderType::Solid->glyphs();
         self::assertSame($glyphs->horizontal, $frame->characters[0 * 10 + 5]);
     }
 
@@ -282,7 +282,7 @@ final class BlockTest extends TestCase
     public function titleWithMultibyteCharactersTruncatesToMaxWidth(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle("\u{00FC}\u{00E4}\u{00F6}"); // 3 multibyte chars
         // width=6 means maxWidth = 6-4 = 2, only first 2 chars should render
         $frame = new Frame(6, 3);
@@ -300,7 +300,7 @@ final class BlockTest extends TestCase
     public function titleWithCjkCharactersTruncatesByDisplayWidth(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle("\u{4F60}\u{597D}\u{4E16}\u{754C}"); // 4 CJK chars = 8 display columns
         // width=10 means maxWidth = 10-4 = 6, only 3 CJK chars fit (3*2=6 columns)
         $frame = new Frame(10, 3);
@@ -322,7 +322,7 @@ final class BlockTest extends TestCase
     public function cjkTitleTrailingSpaceUsesDisplayWidth(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withTitle("\u{4F60}\u{597D}"); // 2 CJK chars = 4 display columns
         // width=12 means maxWidth = 12-4 = 8, both chars fit
         $frame = new Frame(12, 3);
@@ -338,7 +338,7 @@ final class BlockTest extends TestCase
         // Trailing space at x+2+displayWidth = 0+2+4 = 6
         self::assertSame(' ', $frame->characters[0 * 12 + 6]);
         // Position 7 should be border horizontal, not a misplaced trailing space
-        $glyphs = BorderStyle::Solid->glyphs();
+        $glyphs = BorderType::Solid->glyphs();
         self::assertSame($glyphs->horizontal, $frame->characters[0 * 12 + 7]);
     }
 
@@ -346,7 +346,7 @@ final class BlockTest extends TestCase
     public function fluentChaining(): void
     {
         $block = Block::new()
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withPadding(Spacing::all(1))
             ->withMargin(Spacing::all(1))
             ->withTitle('Test')
@@ -368,7 +368,7 @@ final class BlockTest extends TestCase
     public function immutability(): void
     {
         $original = Block::new();
-        $withBorder = $original->withBorder(BorderStyle::Solid);
+        $withBorder = $original->withBorderType(BorderType::Solid);
 
         self::assertNotSame($original, $withBorder);
 
@@ -385,7 +385,7 @@ final class BlockTest extends TestCase
         // L125 LessThan / L156 LessThan / L125 LogicalAnd: bounds checks for top/bottom rows
         $frame = new Frame(10, 5);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area is at y = -10..-6 — entirely above the buffer
         $block->render($frame, new Rect(0, -10, 10, 5));
@@ -402,7 +402,7 @@ final class BlockTest extends TestCase
         // L125 LessThan: top < bufferHeight — top = bufferHeight must be rejected
         $frame = new Frame(10, 5);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 10, 10, 5));
 
@@ -418,7 +418,7 @@ final class BlockTest extends TestCase
         // L127 LogicalAnd: left >= 0 — when left < 0, corner glyphs must be skipped
         $frame = new Frame(10, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area spans x = -2..7 — top-left corner at x = -2 (out of bounds)
         $block->render($frame, new Rect(-2, 0, 10, 3));
@@ -436,7 +436,7 @@ final class BlockTest extends TestCase
         // L135 LogicalAnd: right < bufferWidth — when right >= bufferWidth, right corners skipped
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area spans x = 0..9 — right edge at x = 9, past buffer width 5
         $block->render($frame, new Rect(0, 0, 10, 3));
@@ -459,7 +459,7 @@ final class BlockTest extends TestCase
         // not duplicate the bottom corners over the top.
         $frame = new Frame(5, 2);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area is 1 row high: top = bottom = 0
         $block->render($frame, new Rect(0, 0, 5, 1));
@@ -478,7 +478,7 @@ final class BlockTest extends TestCase
     {
         // L153 TrueValue: $frame->dirtyRows[$top] = true must actually be set
         $frame = new Frame(5, 3);
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 5, 3));
 
@@ -493,7 +493,7 @@ final class BlockTest extends TestCase
         // the horizontal segment must clamp at bufferWidth, not write past it.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 20, 3));
 
@@ -506,7 +506,7 @@ final class BlockTest extends TestCase
         // L125 LessThan: top < bufferHeight — boundary case top == bufferHeight must skip
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 3, 5, 3));
 
@@ -523,7 +523,7 @@ final class BlockTest extends TestCase
         // With `<=` mutation, left=5 writes to topBase+5 which spills into the NEXT row's column 0.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(5, 0, 5, 3));
 
@@ -540,7 +540,7 @@ final class BlockTest extends TestCase
         // L135 / L166 GreaterThanOrEqualTo: right >= 0 — boundary case right == -1 must skip right corners
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area at x=-5, width=5 → right = -1. Right corners at x=-1 should NOT write.
         $block->render($frame, new Rect(-5, 0, 5, 3));
@@ -554,7 +554,7 @@ final class BlockTest extends TestCase
         // L156 LessThan / GreaterThanOrEqualTo: bottom boundary
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area at y=-2, height=5 → top=-2, bottom=2. Top is out-of-bounds (skipped), bottom is in-bounds.
         // Both bounds-check branches matter here.
@@ -571,7 +571,7 @@ final class BlockTest extends TestCase
         // L156 GreaterThanOrEqualTo: bottom >= 0 — boundary case bottom == -1 must skip bottom row entirely
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area at y=-5, height=4 → top=-5, bottom=-2. Both above buffer.
         $block->render($frame, new Rect(0, -5, 5, 4));
@@ -588,7 +588,7 @@ final class BlockTest extends TestCase
         // L127 / L158 GreaterThanOrEqualTo: left >= 0 — boundary case left == -1
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area at x=-1, width=3 → left=-1, right=1.
         $block->render($frame, new Rect(-1, 0, 3, 3));
@@ -604,7 +604,7 @@ final class BlockTest extends TestCase
         // L135 / L166 LessThan: right < bufferWidth — boundary case right == bufferWidth
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area at x=1, width=5 → right = 5 == bufferWidth. Right corners out of range.
         $block->render($frame, new Rect(1, 0, 5, 3));
@@ -619,7 +619,7 @@ final class BlockTest extends TestCase
     {
         // L184 TrueValue: $frame->dirtyRows[$bottom] = true
         $frame = new Frame(5, 3);
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 5, 3));
 
@@ -632,7 +632,7 @@ final class BlockTest extends TestCase
     {
         // L207 TrueValue: middle rows for the vertical sides
         $frame = new Frame(5, 5);
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 5, 5));
 
@@ -648,7 +648,7 @@ final class BlockTest extends TestCase
         // L191/L192 Plus: $rowBase + $left must use addition. With subtraction, left=2 would write to column -2.
         $frame = new Frame(10, 4);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(2, 0, 5, 4));
 
@@ -666,7 +666,7 @@ final class BlockTest extends TestCase
         // L156 GreaterThanOrEqualTo: bottom >= 0 — boundary case bottom == 0 must still render
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area at y=-2, height=3 → top=-2, bottom=0. Only bottom is in-bounds.
         $block->render($frame, new Rect(0, -2, 5, 3));
@@ -682,7 +682,7 @@ final class BlockTest extends TestCase
         // top-right and bottom-right writes overwrite top-left/bottom-left at the same column.
         $frame = new Frame(3, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 1, 3));
 
@@ -701,7 +701,7 @@ final class BlockTest extends TestCase
         // Use a 1-row block (top == bottom) so the bottom section is skipped and no overwrite hides the bug.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 6, 1));
 
@@ -715,7 +715,7 @@ final class BlockTest extends TestCase
         // L199 LessThan: right < bufferWidth (vertical sides) — same boundary case
         $frame = new Frame(5, 5);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // width=6 → right=5 == bufferWidth; height=5 → there are middle rows for vertical sides
         $block->render($frame, new Rect(0, 0, 6, 5));
@@ -737,7 +737,7 @@ final class BlockTest extends TestCase
         // With mutation, vertical-right is skipped → col 0 stays untouched.
         $frame = new Frame(3, 5);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(-2, 0, 3, 5));
 
@@ -753,7 +753,7 @@ final class BlockTest extends TestCase
         // Use a block whose bottom is out of buffer so no bottom-section write overwrites the spill.
         $frame = new Frame(5, 5);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // width=6 → right=5 (== bufferWidth); height=10 → bottom=9 (out of buffer, skipped)
         $block->render($frame, new Rect(0, 0, 6, 10));
@@ -767,7 +767,7 @@ final class BlockTest extends TestCase
         // L156 LessThan: bottom < bufferHeight — when bottom == bufferHeight, mutation writes past buffer
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // height=4 → bottom = 3 == bufferHeight
         $block->render($frame, new Rect(0, 0, 5, 4));
@@ -781,7 +781,7 @@ final class BlockTest extends TestCase
         // L143 / L174 DecrementInteger: max(0, left+1) → max(-1, left+1). Only differs when left+1 < -1.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // left = -3, left+1 = -2. Current startX = max(0, -2) = 0. Mutation = max(-1, -2) = -1.
         // With startX=-1, the loop writes to bottomBase + (-1) which spills into row above the bottom.
@@ -800,7 +800,7 @@ final class BlockTest extends TestCase
         // current startY=0, mutation startY=1. The vertical sides must start at row 0.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // top=-1 (out of bounds), bottom=2. Vertical sides cover rows 0 and 1.
         $block->render($frame, new Rect(0, -1, 5, 4));
@@ -817,7 +817,7 @@ final class BlockTest extends TestCase
         // current startX=0, mutation startX=1. Bottom horizontal must start at col 0.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(-2, 0, 6, 3));
 
@@ -830,7 +830,7 @@ final class BlockTest extends TestCase
     {
         // L133, L141, L151, L164, L197, L205 IncrementInteger: widths[i] = 1 — must remain 1, not 2
         $frame = new Frame(5, 5);
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 5, 5));
 
@@ -854,7 +854,7 @@ final class BlockTest extends TestCase
         // when left == -1 (left + 1 = 0). Test with left = -1 so left+1 = 0 hits the max boundary.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         // Area at (-1, 0, 5, 3) — top-left corner is at x=-1 (out of bounds),
         // but the horizontal segment must still draw at x = 0 (which is left+1).
@@ -869,7 +869,7 @@ final class BlockTest extends TestCase
         $frame = new Frame(10, 6);
         $this->fillBuffer($frame, '.');
         $frame->pushClip(new Rect(0, 2, 5, 2));
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 10, 6));
 
@@ -892,7 +892,7 @@ final class BlockTest extends TestCase
         $frame = new Frame(10, 5);
         $frame->putString(0, 2, "\u{4F60}");
         $frame->putString(4, 2, "\u{597D}");
-        $block = Block::new()->withBorder(BorderStyle::Solid);
+        $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(0, 0, 6, 5));
 
@@ -911,7 +911,7 @@ final class BlockTest extends TestCase
         $title = (new Style(attributes: Attr::BOLD))->withLink('https://example.com/title');
         $frame = new Frame(12, 3);
 
-        Block::new()->withBorder(BorderStyle::Solid)->withBorderStyle($border)->withTitle('Hi')->withTitleStyle($title)
+        Block::new()->withBorderType(BorderType::Solid)->withBorderStyle($border)->withTitle('Hi')->withTitleStyle($title)
             ->render($frame, new Rect(0, 0, 12, 3));
 
         self::assertSame($border->cellAttributes(), $frame->attributes[0]);

@@ -13,7 +13,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Attr;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -41,7 +41,7 @@ final class ContainerTest extends TestCase
     {
         $frame = new Frame(40, 10);
         $container = Container::around(self::widgetDrawingPastItsArea())
-            ->withBorder(BorderStyle::Rounded);
+            ->withBorderType(BorderType::Rounded);
 
         $container->render($frame, new Rect(0, 0, 12, 6), new RenderContext(Theme::dark()));
 
@@ -69,7 +69,7 @@ final class ContainerTest extends TestCase
         $container = Container::around(new ContainerProbe(Constraint::min(2)->withMax(5)->withFlex(3)))
             ->withMargin(Spacing::only(top: 1, bottom: 2))
             ->withPadding(Spacing::vertical(1))
-            ->withBorder(BorderStyle::Rounded);
+            ->withBorderType(BorderType::Rounded);
 
         $constraint = $container->sizing()->rows;
 
@@ -173,7 +173,7 @@ final class ContainerTest extends TestCase
         $child = new ContainerProbe();
         $container = Container::around($child)
             ->withMargin(Spacing::all(1))
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withPadding(Spacing::xy(horizontal: 2, vertical: 1))
             ->withContentSize(width: 6, height: 2)
             ->withHorizontalAlignment(Alignment::Center)
@@ -221,7 +221,7 @@ final class ContainerTest extends TestCase
         $background = Color::ansi(4);
         $container = Container::around($child)
             ->withMargin(Spacing::all(1))
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withPadding(Spacing::all(1))
             ->withStyle(new Style(
                 foreground: Color::ansi(2),
@@ -337,7 +337,7 @@ final class ContainerTest extends TestCase
         $borderStyle = new Style(foreground: Color::ansi(5));
         $frame = new Frame(5, 3);
         $container = Container::around(new EmptyContainerProbe())
-            ->withBorder(BorderStyle::Solid)
+            ->withBorderType(BorderType::Solid)
             ->withBorderStyle($borderStyle);
 
         $container->render($frame, Rect::fromSize(5, 3), new RenderContext(Theme::dark()));
@@ -352,7 +352,7 @@ final class ContainerTest extends TestCase
         $frame = new Frame(5, 3);
 
         Container::around(new EmptyContainerProbe())
-            ->withBorder(BorderStyle::Rounded)
+            ->withBorderType(BorderType::Rounded)
             ->render($frame, Rect::fromSize(5, 3), new RenderContext(Theme::dark()));
 
         self::assertSame('╭', $frame->character(0));
@@ -394,7 +394,7 @@ final class ContainerTest extends TestCase
         $child = Paragraph::fromText('twelve chars');
         $container = Container::around($child)
             ->withMargin(Spacing::horizontal(1))
-            ->withBorder(BorderStyle::Rounded)
+            ->withBorderType(BorderType::Rounded)
             ->withPadding(Spacing::xy(horizontal: 2, vertical: 1));
 
         self::assertSame(
@@ -409,7 +409,7 @@ final class ContainerTest extends TestCase
         $child = new MeasuringContainerProbe();
         $container = Container::around($child)
             ->withMargin(Spacing::horizontal(1))
-            ->withBorder(BorderStyle::Rounded)
+            ->withBorderType(BorderType::Rounded)
             ->withPadding(Spacing::xy(horizontal: 2, vertical: 1));
 
         self::assertSame(7, $container->measureHeight(20));

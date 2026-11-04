@@ -15,7 +15,7 @@ final readonly class Block
     use Cloneable;
 
     private function __construct(
-        private ?BorderStyle $border = null,
+        private ?BorderType $border = null,
         private ?Spacing $padding = null,
         private ?Spacing $margin = null,
         private ?string $title = null,
@@ -29,7 +29,7 @@ final readonly class Block
         return new self();
     }
 
-    public function withBorder(BorderStyle $border): static
+    public function withBorderType(BorderType $border): static
     {
         return $this->cloneWith(border: $border);
     }
@@ -82,7 +82,7 @@ final readonly class Block
         return new Inset($this->margin, $this->border !== null, $this->padding);
     }
 
-    private function renderBorder(Frame $frame, Rect $area, BorderStyle $border): void
+    private function renderBorder(Frame $frame, Rect $area, BorderType $border): void
     {
         $style = $this->borderStyle;
         $glyphs = $border->glyphs();

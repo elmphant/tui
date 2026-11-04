@@ -12,7 +12,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Block;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
@@ -103,7 +103,7 @@ final class Toasts
             $accent = new Style(foreground: self::tokenOf($toast->severity)->resolve($context->theme)->foreground, background: $base->background);
             $frame->fillRect($area->x, $area->y, $area->width, $area->height, $base->foregroundValue(), $base->backgroundValue());
             Block::new()
-                ->withBorder(BorderStyle::Rounded)
+                ->withBorderType(BorderType::Rounded)
                 ->withTitle(TerminalText::plain($toast->title))
                 ->withBorderStyle($accent)
                 ->withTitleStyle($accent->bold())

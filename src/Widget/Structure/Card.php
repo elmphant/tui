@@ -10,7 +10,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Block;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
@@ -30,7 +30,7 @@ final readonly class Card implements Widget, WidgetContainer
         private ?Style $borderStyle = null,
         private ?Style $titleStyle = null,
         private ?Style $bodyStyle = null,
-        private BorderStyle $border = BorderStyle::Rounded,
+        private BorderType $border = BorderType::Rounded,
         private int $height = 4,
         private bool $dimmed = false,
     ) {
@@ -66,7 +66,7 @@ final readonly class Card implements Widget, WidgetContainer
         return $this->cloneWith(bodyStyle: $style);
     }
 
-    public function withBorder(BorderStyle $border): self
+    public function withBorderType(BorderType $border): self
     {
         return $this->cloneWith(border: $border);
     }
@@ -128,7 +128,7 @@ final readonly class Card implements Widget, WidgetContainer
         }
 
         if ($inset->border) {
-            Block::new()->withBorder($this->border)->withBorderStyle($borderStyle)->render($frame, $area);
+            Block::new()->withBorderType($this->border)->withBorderStyle($borderStyle)->render($frame, $area);
         }
 
         // Clear inner area so stale content behind the card (e.g. column borders) doesn't bleed through.

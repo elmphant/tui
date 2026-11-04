@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
@@ -39,7 +39,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     private function __construct(
         private array $headers,
         private array $rows,
-        private BorderStyle $border = BorderStyle::Solid,
+        private BorderType $border = BorderType::Solid,
         private Overflow $overflow = Overflow::Stack,
         private ?array $measured = null,
         private int $minWidth = 0,
@@ -56,7 +56,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
         return new self($headers, $rows);
     }
 
-    public function withBorder(BorderStyle $border): self
+    public function withBorderType(BorderType $border): self
     {
         return $this->rebuiltWith(border: $border);
     }

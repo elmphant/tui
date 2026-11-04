@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
@@ -487,7 +487,7 @@ final class StaticTableTest extends TestCase
     #[Test]
     public function drawsTheBorderStyleItWasGiven(): void
     {
-        $screen = $this->render($this->table()->withBorder(BorderStyle::Double), 40, 8);
+        $screen = $this->render($this->table()->withBorderType(BorderType::Double), 40, 8);
 
         self::assertStringContainsString('╔', $screen);
         self::assertStringContainsString('╬', $screen, 'The header rule crosses every column divider');
@@ -498,7 +498,7 @@ final class StaticTableTest extends TestCase
     #[Test]
     public function roundsItsCornersWhenAskedTo(): void
     {
-        $screen = $this->render($this->table()->withBorder(BorderStyle::Rounded), 40, 8);
+        $screen = $this->render($this->table()->withBorderType(BorderType::Rounded), 40, 8);
 
         self::assertStringContainsString('╭', $screen);
         self::assertStringContainsString('╯', $screen);

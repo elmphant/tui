@@ -11,7 +11,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Rendering\Block;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
@@ -33,7 +33,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         private ?Spacing $padding = null,
         private ?Spacing $margin = null,
         private ?Style $style = null,
-        private ?BorderStyle $border = null,
+        private ?BorderType $border = null,
         private ?Style $borderStyle = null,
         private ?Sizing $sizingOverride = null,
         private ?int $contentWidth = null,
@@ -63,7 +63,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         return $this->cloneWith(style: $style);
     }
 
-    public function withBorder(BorderStyle $border): self
+    public function withBorderType(BorderType $border): self
     {
         return $this->cloneWith(border: $border);
     }
@@ -223,7 +223,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         }
         if ($this->border !== null) {
             $block = $block
-                ->withBorder($this->border)
+                ->withBorderType($this->border)
                 ->withBorderStyle($this->borderStyle ?? $context->theme->borderStyle);
         }
         if ($this->padding !== null) {

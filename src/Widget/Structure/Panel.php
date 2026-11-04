@@ -404,7 +404,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     private function renderRule(Frame $frame, Rect $border, int $row, ?string $caption, RenderContext $context): void
     {
         $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
-        $glyphs = $context->theme->borderFor($prominent)->glyphs();
+        $glyphs = $context->theme->borderTypeFor($prominent)->glyphs();
         $quiet = $this->borderStyleOverride ?? $context->theme->borderStyleFor(false);
         $joint = ($prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride) ?? $context->theme->borderStyleFor($prominent);
 
@@ -429,7 +429,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
 
         $block = Block::new()
-            ->withBorder($theme->borderFor($prominent))
+            ->withBorderType($theme->borderTypeFor($prominent))
             ->withBorderStyle($override ?? $theme->borderStyleFor($prominent))
             ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
             ->withTitle($this->title);

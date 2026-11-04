@@ -149,7 +149,7 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
 
         $theme = $context->theme;
         $block = Block::new()
-            ->withBorder($theme->border)
+            ->withBorderType($theme->borderType)
             ->withBorderStyle($this->borderStyleOverride ?? $theme->borderStyle)
             ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
             ->withTitle($this->title);

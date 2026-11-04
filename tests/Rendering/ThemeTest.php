@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Rendering\Attr;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
@@ -81,8 +81,8 @@ final class ThemeTest extends TestCase
         self::assertInstanceOf(Style::class, $theme->cursorStyle);
         self::assertInstanceOf(Style::class, $theme->fillStyle);
         self::assertInstanceOf(Style::class, $theme->emptyStyle);
-        self::assertInstanceOf(BorderStyle::class, $theme->border);
-        self::assertInstanceOf(BorderStyle::class, $theme->focusedBorder);
+        self::assertInstanceOf(BorderType::class, $theme->borderType);
+        self::assertInstanceOf(BorderType::class, $theme->focusedBorderType);
     }
 
     #[Test]
@@ -138,13 +138,13 @@ final class ThemeTest extends TestCase
     {
         $original = Theme::dark();
 
-        $bordered = $original->withBorder(BorderStyle::Double);
-        self::assertSame(BorderStyle::Double, $bordered->border);
-        self::assertSame($original->focusedBorder, $bordered->focusedBorder, 'The focused set is left alone');
+        $bordered = $original->withBorderType(BorderType::Double);
+        self::assertSame(BorderType::Double, $bordered->borderType);
+        self::assertSame($original->focusedBorderType, $bordered->focusedBorderType, 'The focused set is left alone');
 
-        $focused = $original->withFocusedBorder(BorderStyle::Thick);
-        self::assertSame(BorderStyle::Thick, $focused->focusedBorder);
-        self::assertSame($original->border, $focused->border, 'And the reverse holds');
+        $focused = $original->withFocusedBorderType(BorderType::Thick);
+        self::assertSame(BorderType::Thick, $focused->focusedBorderType);
+        self::assertSame($original->borderType, $focused->borderType, 'And the reverse holds');
     }
 
     #[Test]
@@ -217,7 +217,7 @@ final class ThemeTest extends TestCase
         ];
 
         foreach ($presets as $theme) {
-            self::assertSame(BorderStyle::Rounded, $theme->border);
+            self::assertSame(BorderType::Rounded, $theme->borderType);
         }
     }
 
@@ -239,7 +239,7 @@ final class ThemeTest extends TestCase
         foreach ($presets as $theme) {
             // Unicode has no heavy rounded corners, so focus cannot change the
             // shape without squaring it off. It changes colour and weight.
-            self::assertSame(BorderStyle::Rounded, $theme->focusedBorder);
+            self::assertSame(BorderType::Rounded, $theme->focusedBorderType);
             self::assertSame(Attr::BOLD, $theme->focusedBorderStyle->attributes & Attr::BOLD, 'Focus must read without colour too');
         }
     }

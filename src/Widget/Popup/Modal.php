@@ -18,7 +18,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Block;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
@@ -235,7 +235,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         if ($this->bordered) {
             $theme = $context->theme;
             Block::new()
-                ->withBorder($theme->border)
+                ->withBorderType($theme->borderType)
                 ->withBorderStyle($this->borderStyleOverride ?? $theme->focusedBorderStyle)
                 ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
                 ->withTitle($this->title)
@@ -329,7 +329,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
 
     private function contentRectIn(Rect $modalRect): Rect
     {
-        return $this->bordered ? Block::new()->withBorder(BorderStyle::Rounded)->inner($modalRect) : $modalRect;
+        return $this->bordered ? Block::new()->withBorderType(BorderType::Rounded)->inner($modalRect) : $modalRect;
     }
 
     private function borders(): int

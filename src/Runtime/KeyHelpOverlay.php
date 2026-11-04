@@ -11,7 +11,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Block;
-use Elmphant\Tui\Rendering\BorderStyle;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
@@ -118,7 +118,7 @@ final class KeyHelpOverlay
         $base = $context->theme->base;
         $frame->fillRect($area->x, $area->y, $area->width, $area->height, $base->foregroundValue(), $base->backgroundValue());
         Block::new()
-            ->withBorder(BorderStyle::Rounded)
+            ->withBorderType(BorderType::Rounded)
             ->withTitle(self::TITLE)
             ->withBorderStyle($context->theme->focusedBorderStyle)
             ->withTitleStyle($context->theme->titleStyle)
