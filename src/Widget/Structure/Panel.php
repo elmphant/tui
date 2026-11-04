@@ -98,21 +98,17 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         return $this->withPane($this->pane->add($child));
     }
 
-    /**
-     * The pinned header is drawn only: it receives no input or focus.
-     * A ruled header joins the border; its optional gap shrinks before child content does.
-     */
-    public function withHeader(?Widget $header, bool $ruled = false, ?string $caption = null, int $gap = 0): self
+    public function withHeader(?PinnedRows $header): self
     {
-        return $this->cloneWith(header: $header === null ? null : new PinnedRows($header, $ruled, $caption, max(0, $gap)));
+        return $this->cloneWith(header: $header);
     }
 
     /**
      * Place the footer's rule and gap above it, mirroring the header.
      */
-    public function withFooter(?Widget $footer, bool $ruled = false, ?string $caption = null, int $gap = 0): self
+    public function withFooter(?PinnedRows $footer): self
     {
-        return $this->cloneWith(footer: $footer === null ? null : new PinnedRows($footer, $ruled, $caption, max(0, $gap)));
+        return $this->cloneWith(footer: $footer);
     }
 
     /**

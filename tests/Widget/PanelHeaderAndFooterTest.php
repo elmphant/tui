@@ -16,6 +16,7 @@ use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
+use Elmphant\Tui\Widget\Structure\PinnedRows;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -24,7 +25,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function aFooterStaysAtTheBottomInsideTheBorderWhileTheRowsScrollAboveIt(): void
     {
-        $panel = self::tenRows()->withFooter(Text::new('RUN'));
+        $panel = self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN')));
 
         $screen = self::drawn($panel->withScrollOffset(3), 20, 8);
 
@@ -37,7 +38,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function aHeaderStaysAtTheTopAndTheRowsBeginBelowIt(): void
     {
-        $screen = self::drawn(self::tenRows()->withHeader(Text::new('FILTER')), 20, 8);
+        $screen = self::drawn(self::tenRows()->withHeader(PinnedRows::of(Text::new('FILTER'))), 20, 8);
 
         self::assertStringContainsString('FILTER', $screen->lineAt(1));
         self::assertStringContainsString('row 0', $screen->lineAt(2));
@@ -47,8 +48,8 @@ final class PanelHeaderAndFooterTest extends TestCase
     public function theRowsScrollInWhatTheHeaderAndFooterLeave(): void
     {
         $panel = self::tenRows()
-            ->withHeader(Text::new('FILTER'))
-            ->withFooter(Paragraph::fromText("one\ntwo"));
+            ->withHeader(PinnedRows::of(Text::new('FILTER')))
+            ->withFooter(PinnedRows::of(Paragraph::fromText("one\ntwo")));
 
         self::assertEquals(new Rect(1, 2, 18, 3), $panel->contentArea(Rect::fromSize(20, 8)));
     }
@@ -60,7 +61,7 @@ final class PanelHeaderAndFooterTest extends TestCase
 
         self::assertSame(
             $plain->measureHeight(20) + 3,
-            $plain->withHeader(Text::new('FILTER'))->withFooter(Paragraph::fromText("one\ntwo"))->measureHeight(20),
+            $plain->withHeader(PinnedRows::of(Text::new('FILTER')))->withFooter(PinnedRows::of(Paragraph::fromText("one\ntwo")))->measureHeight(20),
         );
     }
 
@@ -70,7 +71,7 @@ final class PanelHeaderAndFooterTest extends TestCase
         $fields = array_map(static fn (int $row): TextInput => TextInput::new()->withPlaceholder('field ' . $row), range(0, 9));
         $pane = Component::bind(
             'pane',
-            Panel::new('Form')->withChildren($fields)->withFooter(Text::new('RUN')),
+            Panel::new('Form')->withChildren($fields)->withFooter(PinnedRows::of(Text::new('RUN'))),
             static fn (object $host, Panel $panel): object => $host,
         );
 
@@ -83,7 +84,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function aRuledFooterIsSeparatedByALineJoinedIntoTheBorder(): void
     {
-        $screen = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true), 20, 8);
+        $screen = self::drawn(self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN'))->withRule()), 20, 8);
 
         self::assertSame('├' . str_repeat('─', 18) . '┤', $screen->lineAt(5));
         self::assertStringContainsString('RUN', $screen->lineAt(6));
@@ -92,7 +93,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function aCaptionRidesOnTheRuleAtItsRightEnd(): void
     {
-        $screen = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true, caption: 'why'), 20, 8);
+        $screen = self::drawn(self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN'))->withRule('why')), 20, 8);
 
         self::assertSame('├' . str_repeat('─', 13) . ' why ┤', $screen->lineAt(5));
     }
@@ -100,8 +101,8 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function aCaptionRidesOnTheRuleOnlyWhileAtLeastOneDashIsLeft(): void
     {
-        $fits = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true, caption: str_repeat('c', 15)), 20, 8);
-        $tooLong = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true, caption: str_repeat('c', 16)), 20, 8);
+        $fits = self::drawn(self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN'))->withRule(str_repeat('c', 15))), 20, 8);
+        $tooLong = self::drawn(self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN'))->withRule(str_repeat('c', 16))), 20, 8);
 
         self::assertSame('├─ ' . str_repeat('c', 15) . ' ┤', $fits->lineAt(5));
         self::assertSame('├' . str_repeat('─', 18) . '┤', $tooLong->lineAt(5));
@@ -111,8 +112,8 @@ final class PanelHeaderAndFooterTest extends TestCase
     public function theRuleJoinsAProminentBorderInItsStyleAndKeepsItsLineQuiet(): void
     {
         $theme = Theme::dark();
-        $emphasized = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true)->withEmphasizedBorder(), 20, 8);
-        $plain = self::drawn(self::tenRows()->withFooter(Text::new('RUN'), ruled: true), 20, 8);
+        $emphasized = self::drawn(self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN'))->withRule())->withEmphasizedBorder(), 20, 8);
+        $plain = self::drawn(self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN'))->withRule()), 20, 8);
 
         self::assertNotEquals($theme->focusedBorderStyle->foreground, $theme->borderStyle->foreground);
         self::assertEquals($theme->focusedBorderStyle->foreground, $emphasized->styleAt(0, 5)->foreground);
@@ -124,7 +125,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function aGapAboveTheRuleIsKeptWhileTheRowsStillFit(): void
     {
-        $panel = self::rows(2)->withFooter(Text::new('RUN'), ruled: true, gap: 1);
+        $panel = self::rows(2)->withFooter(PinnedRows::of(Text::new('RUN'))->withRule()->withGap(1));
 
         self::assertEquals(new Rect(1, 1, 18, 3), $panel->contentArea(Rect::fromSize(20, 8)));
         self::assertSame(str_repeat(' ', 18), mb_substr(self::drawn($panel, 20, 8)->lineAt(4), 1, 18));
@@ -133,7 +134,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function theGapIsGivenUpBeforeARowOfContentWouldBe(): void
     {
-        $panel = self::tenRows()->withFooter(Text::new('RUN'), ruled: true, gap: 1);
+        $panel = self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN'))->withRule()->withGap(1));
 
         self::assertEquals(new Rect(1, 1, 18, 4), $panel->contentArea(Rect::fromSize(20, 8)));
     }
@@ -143,7 +144,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     {
         $panel = self::tenRows()
             ->withPadding(Spacing::only(top: 1, right: 1, bottom: 0, left: 1))
-            ->withFooter(Paragraph::fromText("one\ntwo"), ruled: true);
+            ->withFooter(PinnedRows::of(Paragraph::fromText("one\ntwo"))->withRule());
 
         self::assertEquals(new Rect(2, 5, 16, 2), $panel->footerArea(Rect::fromSize(20, 8)));
     }
@@ -155,14 +156,14 @@ final class PanelHeaderAndFooterTest extends TestCase
 
         self::assertSame(
             $plain->measureHeight(20) + 3,
-            $plain->withFooter(Text::new('RUN'), ruled: true, gap: 1)->measureHeight(20),
+            $plain->withFooter(PinnedRows::of(Text::new('RUN'))->withRule()->withGap(1))->measureHeight(20),
         );
     }
 
     #[Test]
     public function aRuledHeaderIsSeparatedByALineJoinedIntoTheBorderBelowIt(): void
     {
-        $screen = self::drawn(self::tenRows()->withHeader(Text::new('HEAD'), ruled: true), 20, 8);
+        $screen = self::drawn(self::tenRows()->withHeader(PinnedRows::of(Text::new('HEAD'))->withRule()), 20, 8);
 
         self::assertStringContainsString('HEAD', $screen->lineAt(1));
         self::assertSame('├' . str_repeat('─', 18) . '┤', $screen->lineAt(2));
@@ -172,8 +173,8 @@ final class PanelHeaderAndFooterTest extends TestCase
     #[Test]
     public function aGapBelowTheHeadersRuleIsKeptWhileTheRowsStillFit(): void
     {
-        $fits = self::rows(2)->withHeader(Text::new('HEAD'), ruled: true, gap: 1);
-        $overflows = self::tenRows()->withHeader(Text::new('HEAD'), ruled: true, gap: 1);
+        $fits = self::rows(2)->withHeader(PinnedRows::of(Text::new('HEAD'))->withRule()->withGap(1));
+        $overflows = self::tenRows()->withHeader(PinnedRows::of(Text::new('HEAD'))->withRule()->withGap(1));
 
         self::assertEquals(new Rect(1, 4, 18, 3), $fits->contentArea(Rect::fromSize(20, 8)));
         self::assertEquals(new Rect(1, 3, 18, 4), $overflows->contentArea(Rect::fromSize(20, 8)));

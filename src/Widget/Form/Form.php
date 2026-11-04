@@ -37,6 +37,7 @@ use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
+use Elmphant\Tui\Widget\Structure\PinnedRows;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\Wrap;
 use LogicException;
@@ -348,7 +349,7 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Follow
 
         return $this->submit === null
             ? $pane
-            : $pane->withFooter(new FormFoot($this->foot, $this->buttonWidth()), ruled: true, caption: $this->caption(), gap: $gapAboveTheFoot);
+            : $pane->withFooter(PinnedRows::of(new FormFoot($this->foot, $this->buttonWidth()))->withRule($this->caption())->withGap($gapAboveTheFoot));
     }
 
     /**
