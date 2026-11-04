@@ -73,8 +73,8 @@ final readonly class Counter extends App
         return match ($message->key) {
             'k' => new UpdateResult($this->withCount($this->count + 1)),
             'j' => new UpdateResult($this->withCount($this->count - 1)),
-            'x' => $this->then(Cmd::quit()),
-            default => UpdateResult::ignored($this),
+            'x' => new UpdateResult($this, Cmd::quit()),
+            default => new UpdateResult($this),
         };
     }
 

@@ -764,7 +764,7 @@ final readonly class SwappingOnMouseApp extends CopyableTestApp
 
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
-        return UpdateResult::ignored($this->cloneWith(swapped: true));
+        return new UpdateResult($this->cloneWith(swapped: true));
     }
 }
 
@@ -827,7 +827,7 @@ final readonly class InterceptApp extends CopyableTestApp
     {
         return match ($message->key) {
             ' ' => new UpdateResult($this->cloneWith(toggled: !$this->toggled)),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 }
@@ -924,7 +924,7 @@ final readonly class SimpleCounterApp extends CopyableTestApp
     {
         return match ($message->key) {
             'k', Key::Tab => new UpdateResult($this->cloneWith(count: $this->count + 1)),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 }
@@ -1130,7 +1130,7 @@ final readonly class NoOpUpdateResultApp extends CopyableTestApp
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }
 
@@ -1507,10 +1507,10 @@ final readonly class MouseCommandFocusableApp extends CopyableTestApp
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         if ($message->isClick()) {
-            return $this->then(Cmd::tick(0.1));
+            return new UpdateResult($this, Cmd::tick(0.1));
         }
 
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }
 
@@ -1550,7 +1550,7 @@ final readonly class MouseTrackingFocusableApp extends CopyableTestApp
             return new UpdateResult($this->cloneWith(mouseTracked: true));
         }
 
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }
 
@@ -1668,7 +1668,7 @@ final readonly class MouseSwapApp extends CopyableTestApp
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         if ($this->swapped) {
-            return UpdateResult::ignored($this);
+            return new UpdateResult($this);
         }
 
         return new UpdateResult($this->cloneWith(

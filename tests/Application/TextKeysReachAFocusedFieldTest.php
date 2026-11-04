@@ -124,7 +124,7 @@ final readonly class ShortcutsAroundADropdownApp extends App
     {
         return \is_string($message->key)
             ? new UpdateResult($this->cloneWith(shortcuts: [...$this->shortcuts, $message->key]))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 
@@ -172,6 +172,6 @@ final readonly class ShortcutsAroundAFieldApp extends App
     {
         return \in_array($message->key, ['n', 'd'], true)
             ? new UpdateResult($this->cloneWith(shortcuts: [...$this->shortcuts, $message->key]))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }

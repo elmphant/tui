@@ -330,7 +330,7 @@ final readonly class ResizeCountingApp extends App
 
     protected function onResize(ResizeMsg $message): UpdateResult
     {
-        return UpdateResult::ignored($this->cloneWith(resizes: $this->resizes + 1));
+        return new UpdateResult($this->cloneWith(resizes: $this->resizes + 1));
     }
 }
 
@@ -394,9 +394,9 @@ final readonly class FocusCyclingApp extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->ctrl ? $message->key : null) {
-            'n' => $this->then(Cmd::focusNext()),
-            'p' => $this->then(Cmd::focusPrevious()),
-            default => UpdateResult::ignored($this),
+            'n' => new UpdateResult($this, Cmd::focusNext()),
+            'p' => new UpdateResult($this, Cmd::focusPrevious()),
+            default => new UpdateResult($this),
         };
     }
 }

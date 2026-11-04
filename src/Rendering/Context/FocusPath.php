@@ -60,6 +60,9 @@ final class FocusPath
         return new self(FocusState::undecided(), 0);
     }
 
+    /**
+     * @internal RenderPass::unfocused() and RenderContext::unfocused() say this
+     */
     public static function nowhere(): self
     {
         return new self(FocusState::nowhere(), 0);

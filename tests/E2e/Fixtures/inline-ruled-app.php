@@ -32,7 +32,7 @@ final readonly class InlineRuledE2eApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return $message->key === Key::Enter ? new UpdateResult($this, Cmd::quit()) : UpdateResult::ignored($this);
+        return $message->key === Key::Enter ? new UpdateResult($this, Cmd::quit()) : new UpdateResult($this);
     }
 }
 

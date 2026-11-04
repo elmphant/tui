@@ -104,7 +104,7 @@ final readonly class FocusElsewhereApp extends App
     {
         return $message->ctrl && $message->key === 'g'
             ? new UpdateResult($this, Cmd::focus(ComponentId::named('hidden/composer')))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 

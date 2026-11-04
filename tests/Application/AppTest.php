@@ -467,7 +467,7 @@ final readonly class CounterApp extends CopyableTestApp
         return match ($message->key) {
             'k' => new UpdateResult($this->cloneWith(count: $this->count + 1)),
             'j' => new UpdateResult($this->cloneWith(count: $this->count - 1)),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 }
@@ -614,7 +614,7 @@ final readonly class MouseApp extends CopyableTestApp
     {
         return $message->isClick()
             ? new UpdateResult($this->cloneWith(clicked: true))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 
@@ -673,8 +673,8 @@ final readonly class CmdApp extends CopyableTestApp
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            'r' => $this->cloneWith(requested: true)->then(Cmd::exec(['echo', 'hi'])),
-            default => UpdateResult::ignored($this),
+            'r' => new UpdateResult($this->cloneWith(requested: true), Cmd::exec(['echo', 'hi'])),
+            default => new UpdateResult($this),
         };
     }
 }
@@ -711,7 +711,7 @@ final readonly class FloatHookApp extends CopyableTestApp
     {
         return $message instanceof FloatMouseMsg
             ? new UpdateResult($this->cloneWith(received: $message))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 
@@ -749,7 +749,7 @@ final readonly class FloatRecordingWidget implements Focusable
             return new UpdateResult(new self($this->receivedFloat, $this->plainMouseSeen + 1, $this->focused));
         }
 
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -778,7 +778,7 @@ final readonly class FloatBroadcastApp extends CopyableTestApp
     {
         return $message instanceof FloatMouseMsg
             ? new UpdateResult($this->cloneWith(received: $message))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 

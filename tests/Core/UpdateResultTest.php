@@ -21,7 +21,7 @@ final class UpdateResultTest extends TestCase
     {
         $this->expectException(TypeError::class);
 
-        UpdateResult::ignored('not a model');
+        new UpdateResult('not a model');
     }
 
     #[Test]
@@ -29,18 +29,7 @@ final class UpdateResultTest extends TestCase
     {
         $this->expectException(TypeError::class);
 
-        UpdateResult::ignored(new stdClass());
-    }
-
-    #[Test]
-    public function anIgnoredMessageLeavesTheModelAndAsksForNothing(): void
-    {
-        $model = new UpdateResultProbe();
-
-        $result = UpdateResult::ignored($model);
-
-        self::assertSame($model, $result->model);
-        self::assertNull($result->command);
+        new UpdateResult(new stdClass());
     }
 
     #[Test]
@@ -63,7 +52,7 @@ final class UpdateResultTest extends TestCase
     {
         $model = new UpdateResultProbe();
         $command = Cmd::quit();
-        $result = UpdateResult::ignored($model);
+        $result = new UpdateResult($model);
 
         $withCommand = $result->withCommand($command);
         $withoutCommand = $withCommand->withCommand(null);
@@ -102,7 +91,7 @@ final class UpdateResultTest extends TestCase
     #[Test]
     public function mapModelReturnsSameInstanceWhenTheModelIsUnchanged(): void
     {
-        $result = UpdateResult::ignored(new UpdateResultProbe());
+        $result = new UpdateResult(new UpdateResultProbe());
 
         self::assertSame($result, $result->mapModel(static fn (mixed $model): mixed => $model));
     }
@@ -125,7 +114,7 @@ final class UpdateResultTest extends TestCase
     public function mapCommandElidesTheCallbackAndAllocationWithoutACommand(): void
     {
         $called = false;
-        $result = UpdateResult::ignored(new UpdateResultProbe());
+        $result = new UpdateResult(new UpdateResultProbe());
 
         $mapped = $result->mapCommand(static function (Cmd $command) use (&$called): Cmd {
             $called = true;
@@ -154,6 +143,6 @@ final class UpdateResultProbe implements Reducer
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }

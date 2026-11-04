@@ -72,6 +72,6 @@ final readonly class ViewThatBreaksOnXApp extends App
     {
         return $message->key === 'x'
             ? new UpdateResult(new self(true))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }

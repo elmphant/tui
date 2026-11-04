@@ -73,6 +73,6 @@ final readonly class TabbedAppWithAModal extends App
     {
         return $message->ctrl && $message->key === 'o'
             ? new UpdateResult(new self($this->tabs, $this->name, !$this->open))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }

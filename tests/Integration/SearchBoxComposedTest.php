@@ -88,11 +88,11 @@ final readonly class ComposedSearchModel implements Model
             $this->recorder->query = $message->inner->query;
             $this->recorder->received = $message;
 
-            return UpdateResult::ignored($this);
+            return new UpdateResult($this);
         }
 
         if (!$message instanceof KeyMsg) {
-            return UpdateResult::ignored($this);
+            return new UpdateResult($this);
         }
 
         $childResult = $this->search->update($message, $area);
@@ -102,7 +102,7 @@ final readonly class ComposedSearchModel implements Model
         );
 
         if ($childResult->model === $this->search && $command === null) {
-            return UpdateResult::ignored($this);
+            return new UpdateResult($this);
         }
 
         return new UpdateResult(new self($childResult->model, $this->recorder), $command);
@@ -149,7 +149,7 @@ final readonly class SearchBox implements Focusable
         $result = $this->input->update($message, $area);
         if ($result->model === $this->input) {
             return $result->command === null
-                ? UpdateResult::ignored($this)
+                ? new UpdateResult($this)
                 : new UpdateResult($this, $result->command);
         }
         if (!$result->model instanceof TextInput) {

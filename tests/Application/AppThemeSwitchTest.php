@@ -52,6 +52,6 @@ final readonly class ThemeCyclingApp extends App
     {
         return $message->key === 't'
             ? new UpdateResult(new self(!$this->light))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }

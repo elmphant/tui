@@ -33,6 +33,14 @@ final readonly class RenderPass
     ) {
     }
 
+    /**
+     * For a test that draws a tree and cares about layout or wording, not about where the keyboard is.
+     */
+    public static function unfocused(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor): self
+    {
+        return self::new($theme, $colorProfile, FocusPath::nowhere());
+    }
+
     public static function new(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor, ?FocusPath $focus = null): self
     {
         $clock = new FrameClock();

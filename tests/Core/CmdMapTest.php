@@ -235,7 +235,7 @@ final class CmdMapTest extends TestCase
 
             public function update(Message $message, Rect $area): UpdateResult
             {
-                return UpdateResult::ignored($this);
+                return new UpdateResult($this);
             }
 
             public function render(Frame $frame, RenderPass $pass): void

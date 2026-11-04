@@ -78,6 +78,6 @@ final readonly class SpeaksToItselfApp extends App
     {
         return $message instanceof TheErrand
             ? new UpdateResult($this->cloneWith(seen: [...$this->seen, 'the-errand']))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }

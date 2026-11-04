@@ -118,32 +118,32 @@ final readonly class HookRecordingApp extends App
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::ignored(new self('key', self::size($screen)));
+        return new UpdateResult(new self('key', self::size($screen)));
     }
 
     protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::ignored(new self('action:' . $action));
+        return new UpdateResult(new self('action:' . $action));
     }
 
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
-        return UpdateResult::ignored(new self('mouse'));
+        return new UpdateResult(new self('mouse'));
     }
 
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::ignored(new self('tick', self::size($screen)));
+        return new UpdateResult(new self('tick', self::size($screen)));
     }
 
     protected function onResize(ResizeMsg $message): UpdateResult
     {
-        return UpdateResult::ignored(new self('resize'));
+        return new UpdateResult(new self('resize'));
     }
 
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::ignored(new self('message', self::size($screen)));
+        return new UpdateResult(new self('message', self::size($screen)));
     }
 
     private static function size(Rect $screen): string

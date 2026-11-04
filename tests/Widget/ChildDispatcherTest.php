@@ -215,7 +215,7 @@ final class NonInteractiveReducer implements Reducer
 {
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }
 
@@ -261,7 +261,7 @@ final readonly class BindingAwareDispatchProbe implements Interactive, Keybindin
     {
         $this->state->seenGlobalBindings = $this->globalBindings;
 
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

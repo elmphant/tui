@@ -10,7 +10,6 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Rendering\Context\FloatTarget;
-use Elmphant\Tui\Rendering\Context\FocusPath;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
@@ -36,7 +35,7 @@ final class DropdownFrameTest extends TestCase
             ->update(new KeyMsg(' '), $anchor)->model;
 
         $frame = new Frame(30, 12);
-        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+        $pass = RenderPass::unfocused(Theme::dark());
         $pass->begin(0.0);
         $pass->context->focusHere(static function () use ($pass, $dropdown, $frame, $anchor): void {
             RootPass::draw($pass, $dropdown, $frame, $anchor);

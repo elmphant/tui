@@ -64,11 +64,11 @@ final readonly class PopupOnPressApp extends App
 
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
-        return $this->open || !$message->isClick() ? UpdateResult::ignored($this) : new UpdateResult(new self(true));
+        return $this->open || !$message->isClick() ? new UpdateResult($this) : new UpdateResult(new self(true));
     }
 
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
-        return $message instanceof ModalDismissed ? new UpdateResult(new self(false)) : UpdateResult::ignored($this);
+        return $message instanceof ModalDismissed ? new UpdateResult(new self(false)) : new UpdateResult($this);
     }
 }

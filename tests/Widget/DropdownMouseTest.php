@@ -16,7 +16,6 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Context\FloatMouseMsg;
 use Elmphant\Tui\Rendering\Context\FloatPlacement;
 use Elmphant\Tui\Rendering\Context\FloatTarget;
-use Elmphant\Tui\Rendering\Context\FocusPath;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
@@ -573,7 +572,7 @@ final class DropdownMouseTest extends TestCase
 
     private static function renderFocused(Widget $root, Frame $frame, Rect $anchor): RenderPass
     {
-        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+        $pass = RenderPass::unfocused(Theme::dark());
         $pass->begin(0.0);
         $pass->context->focusHere(static function () use ($pass, $root, $frame, $anchor): void {
             RootPass::draw($pass, $root, $frame, $anchor);

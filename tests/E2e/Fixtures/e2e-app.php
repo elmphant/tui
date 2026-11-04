@@ -81,7 +81,7 @@ final readonly class E2eApp extends App
             Key::F2 => new UpdateResult($this->cloneWith(modal: Modal::new('Modal 漢字', Text::new('Modal body 😀 漢字'))->withWidthPercent(50)->withHeightPercent(40))),
             Key::F5 => new UpdateResult($this->cloneWith(emoji: !$this->emoji)),
             Key::F6 => new UpdateResult($this, Cmd::exec(['sleep', $this->processMarker])),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 
@@ -89,7 +89,7 @@ final readonly class E2eApp extends App
     {
         return $message instanceof ModalDismissed
             ? new UpdateResult($this->cloneWith(modal: null))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 

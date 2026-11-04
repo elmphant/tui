@@ -86,7 +86,7 @@ final readonly class ThreeFieldsAndAModal extends App
     {
         return $message->ctrl && $message->key === 'o'
             ? new UpdateResult($this->cloneWith(open: !$this->open))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 
@@ -128,6 +128,6 @@ final readonly class NestedPanes extends App
     {
         return $message->ctrl && $message->key === 'o'
             ? new UpdateResult($this->cloneWith(zGone: true))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }

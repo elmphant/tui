@@ -8,7 +8,6 @@ use Closure;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Rendering\Context\FocusPath;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
@@ -71,9 +70,22 @@ final class RenderContextTest extends TestCase
     }
 
     #[Test]
+    public function anUnfocusedPassDrawsAComponentWithoutTheKeyboard(): void
+    {
+        $pass = RenderPass::unfocused(Theme::dark());
+        $focused = null;
+
+        $pass->context->withinComponent(ComponentId::named('field'), static function () use ($pass, &$focused): void {
+            $focused = $pass->context->hasFocus();
+        });
+
+        self::assertFalse($focused);
+    }
+
+    #[Test]
     public function aNewFrameForgetsWhereTheKeyboardWasInTheLastOne(): void
     {
-        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+        $pass = RenderPass::unfocused(Theme::dark());
         $pass->focus->focusOn(FocusState::on(ComponentId::named('field')));
 
         $pass->begin(1.0);
@@ -84,7 +96,7 @@ final class RenderContextTest extends TestCase
     #[Test]
     public function focusGivenForOneDrawEndsWithIt(): void
     {
-        $pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+        $pass = RenderPass::unfocused(Theme::dark());
 
         $pass->context->focusHere(static function (): void {
         });

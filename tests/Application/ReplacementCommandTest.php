@@ -62,6 +62,6 @@ final readonly class QueryWritingApp extends App
     {
         return $message instanceof QueryWritten
             ? new UpdateResult($this->cloneWith(searchedFor: [...$this->searchedFor, $message->query]))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }

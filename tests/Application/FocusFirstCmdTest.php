@@ -54,9 +54,9 @@ final readonly class WalkedAwayApp extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($message->key) {
-            'n' => $this->then(Cmd::focusNext()),
-            'b' => $this->then(Cmd::focusFirst()),
-            default => UpdateResult::ignored($this),
+            'n' => new UpdateResult($this, Cmd::focusNext()),
+            'b' => new UpdateResult($this, Cmd::focusFirst()),
+            default => new UpdateResult($this),
         };
     }
 }

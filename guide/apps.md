@@ -13,13 +13,13 @@ abstract readonly class App
     public function theme(): ?Theme { return null; }          // asked every frame; null keeps the start theme
 
     protected function setup(): ?Cmd { return null; }         // commands to run at start
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
+    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
     protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult {}  // Actions::QUIT quits
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult { return UpdateResult::ignored($this); }  // $keyboard: focused(), hints()
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
-    protected function onResize(ResizeMsg $message): UpdateResult { return UpdateResult::ignored($this); }
-    protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
-    protected function onComponentsChanged(array $ids): UpdateResult { return UpdateResult::ignored($this); } // list<ComponentId>, not strings: compare $id->value
+    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult { return new UpdateResult($this); }  // $keyboard: focused(), hints()
+    protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
+    protected function onResize(ResizeMsg $message): UpdateResult { return new UpdateResult($this); }
+    protected function onMessage(Message $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
+    protected function onComponentsChanged(array $ids): UpdateResult { return new UpdateResult($this); } // list<ComponentId>, not strings: compare $id->value
 
     protected function applicationKeybindings(): Keybindings {} // actions for onAction(), checked before any widget, quit keys too
     protected function globalKeybindings(): Keybindings {}      // bindings every widget inherits (VimMode)
@@ -49,10 +49,10 @@ abstract readonly class App
 
 Every hook returns an `UpdateResult`:
 
-- `UpdateResult::ignored($this)` — the message meant nothing here. In `onKey()`,
+- `new UpdateResult($this)` — the message meant nothing here. In `onKey()`,
   the key then goes on to the focused widget.
 - `new UpdateResult($next, $command)` — a new App, and maybe a command.
-- `$this->then($command)` — only a command.
+- `new UpdateResult($this, $command)` — only a command.
 
 The App is immutable. Return a new one instead of changing a property. Write
 small typed `withX()` methods, or call the protected
@@ -160,7 +160,7 @@ final readonly class Uptime implements Reducer, Initializes
     {
         return $message instanceof ProcessResultMsg && $message->isFrom('uptime')
             ? new UpdateResult(new self(trim($message->stdout)))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 
     public function view(): Widget

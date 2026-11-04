@@ -145,7 +145,7 @@ final readonly class NextPaneHint implements Focusable, KeybindingsAware, Publis
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -236,7 +236,7 @@ final readonly class HintingField implements Interactive, PublishesHints
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void

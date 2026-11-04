@@ -490,7 +490,7 @@ final readonly class CommandWithTickApp extends CopyableTestApp
 
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
-        return $this->then(Cmd::tick(0.1));
+        return new UpdateResult($this, Cmd::tick(0.1));
     }
 }
 

@@ -23,20 +23,6 @@ final readonly class UpdateResult
     }
 
     /**
-     * An ignored key may pass to the focused component's ancestors; do not return this after a child handled it.
-     *
-     * @template T of Reducer
-     *
-     * @param T $model
-     *
-     * @return self<T>
-     */
-    public static function ignored(Reducer $model): self
-    {
-        return new self($model);
-    }
-
-    /**
      * @return self<TModel>
      */
     public function withCommand(?Cmd $command): self

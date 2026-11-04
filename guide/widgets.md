@@ -189,7 +189,7 @@ final readonly class Notes extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         if ($this->editor !== null || !$message->ctrl || $message->key !== 'n') {
-            return UpdateResult::ignored($this);
+            return new UpdateResult($this);
         }
 
         return new UpdateResult($this->cloneWith(editor: Form::new('New note')
@@ -205,7 +205,7 @@ final readonly class Notes extends App
                 $this->cloneWith(notes: [...$this->notes, (string)$this->editor->values()['title']], editor: null),
             ),
             $message instanceof NoteSaved => new UpdateResult($this->cloneWith(editor: $this->editor?->withSubmitAttempted())),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 }

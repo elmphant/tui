@@ -60,7 +60,7 @@ use Symfony\Component\HttpClient\AmpHttpClient;
 
 $client = new AmpHttpClient();
 
-return $this->then(Cmd::fiber(
+return new UpdateResult($this, Cmd::fiber(
     static fn (): Message => new Loaded($client->request('GET', $url)->getContent()),
     EffectId::named('load'),
 ));
@@ -214,7 +214,8 @@ $packages = EffectId::named('packages');
 
 // In onKey() or update():
 $message instanceof KeyMsg && $message->key === 'r'
-    => $this->withLoading(true)->then(
+    => new UpdateResult(
+        $this->withLoading(true),
         Cmd::http('https://packagist.org/search.json?q=markdown')
             ->withId($packages)
             ->withMaxBodyBytes(4 * 1024 * 1024)

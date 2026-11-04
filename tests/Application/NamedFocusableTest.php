@@ -170,7 +170,7 @@ final readonly class HostDrivenPane implements Focusable
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -202,7 +202,7 @@ final readonly class NamedPlainPaneKeyApp extends App
     {
         $this->seen[] = $message->key instanceof Key ? $message->key->value : $message->key;
 
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }
 

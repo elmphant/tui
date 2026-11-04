@@ -83,7 +83,7 @@ final class ProgramModelContractTest extends TestCase
                     return new UpdateResult(new NonModelReducer());
                 }
 
-                return UpdateResult::ignored($this);
+                return new UpdateResult($this);
             }
 
             public function render(Frame $frame, RenderPass $pass): void
@@ -108,6 +108,6 @@ final class NonModelReducer implements Reducer
 {
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }

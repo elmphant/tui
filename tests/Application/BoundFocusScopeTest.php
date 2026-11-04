@@ -54,7 +54,7 @@ final readonly class ScopedToolbar implements Interactive, GraftsItsChildren, Fo
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function children(): iterable

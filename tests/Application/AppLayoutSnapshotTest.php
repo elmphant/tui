@@ -13,7 +13,6 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Rendering\Context\FocusPath;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
@@ -282,6 +281,6 @@ final class AppLayoutSnapshotTest extends TestCase
 
     private static function sayingNobodyHoldsTheKeyboard(): RenderPass
     {
-        return RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());
+        return RenderPass::unfocused(Theme::dark());
     }
 }

@@ -67,6 +67,6 @@ final readonly class FieldBehindModalApp extends App
     {
         return $message->key === Key::F2
             ? new UpdateResult($this->cloneWith(modal: Modal::new('M', TextInput::new()->withPlaceholder('inside'))))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }

@@ -20,6 +20,9 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Line;
+use Elmphant\Tui\Rendering\Span;
+use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
@@ -27,6 +30,7 @@ use Elmphant\Tui\Widget\Choice\Options;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Popup\DropdownContent;
+use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\PublishesHints;
 use Elmphant\Tui\Widget\ValueItCannotHold;
 
@@ -54,6 +58,8 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $searching = false,
+        private string $noMatchText = 'No matches',
+        private string $noDataText = '',
     ) {
     }
 
@@ -71,9 +77,65 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         ]);
     }
 
+    public function query(): string
+    {
+        return $this->field->value();
+    }
+
+    public function withQuery(string $query): self
+    {
+        return $query === $this->query() ? $this : $this->cloneWith(field: $this->field->withValue($query), cursor: 0);
+    }
+
     public function withMatcher(Matcher $matcher): self
     {
         return $this->cloneWith(matcher: $matcher);
+    }
+
+    public function withPlaceholder(string $placeholder): self
+    {
+        return $this->cloneWith(field: $this->field->withPlaceholder($placeholder));
+    }
+
+    /**
+     * Shown when nothing matches the query.
+     */
+    public function withNoMatchText(string $noMatchText): self
+    {
+        return $this->cloneWith(noMatchText: $noMatchText);
+    }
+
+    /**
+     * Shown when there is nothing to filter.
+     */
+    public function withNoDataText(string $noDataText): self
+    {
+        return $this->cloneWith(noDataText: $noDataText);
+    }
+
+    /**
+     * Ticks stay on the options that are still there.
+     *
+     * @param list<string> $options
+     */
+    public function withOptions(array $options): self
+    {
+        Options::assertDistinct($options, 'FilterableCheckboxGroup');
+
+        return $this->cloneWith(options: $options, checked: array_values(array_intersect($this->checked, $options)), cursor: 0);
+    }
+
+    /**
+     * @param list<string> $values
+     */
+    public function withCheckedValues(array $values): self
+    {
+        return $this->cloneWith(checked: array_values(array_intersect($this->options, $values)));
+    }
+
+    public function summary(): string
+    {
+        return \count($this->matching()) . ' of ' . \count($this->options);
     }
 
     /**
@@ -97,7 +159,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
     public function withValue(string|bool|array|null $value): static
     {
         return \is_array($value) || $value === null
-            ? $this->cloneWith(checked: array_values(array_intersect($this->options, $value ?? [])))
+            ? $this->withCheckedValues(array_values(array_filter($value ?? [], \is_string(...))))
             : throw ValueItCannotHold::given($this, $value);
     }
 
@@ -214,9 +276,18 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         $this->fieldHoldsTheKeys($context) ? $field() : $context->drawUnfocused($field);
 
         $body = $this->boxesArea($area);
-        if ($body->height > 0) {
-            $this->boxes()->render($frame, $body, $context);
+        if ($body->height < 1) {
+            return;
         }
+
+        if ($this->matching() === []) {
+            $nothing = $this->options === [] ? $this->noDataText : $this->noMatchText;
+            Paragraph::fromLines([new Line([Span::token($nothing, StyleToken::Dim)])])->render($frame, $body, $context);
+
+            return;
+        }
+
+        $this->boxes()->render($frame, $body, $context);
     }
 
     /**

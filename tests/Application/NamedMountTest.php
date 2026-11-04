@@ -202,7 +202,7 @@ final readonly class TellingModel implements Reducer
         return match (true) {
             $message instanceof KeyMsg && $message->key === 't' => new UpdateResult($this, Mount::toHost(new Heard('told'))),
             $message instanceof Heard => new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what])),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 }
@@ -227,7 +227,7 @@ final readonly class HostOfATellingMount extends App
     {
         return $message instanceof Heard
             ? new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 
@@ -256,7 +256,7 @@ final readonly class ScopedModel implements Reducer
 {
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function view(): Widget
@@ -299,7 +299,7 @@ final readonly class StartingModel implements Reducer, Initializes
     {
         return $message instanceof Heard
             ? new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 
@@ -347,7 +347,7 @@ final readonly class StartingApp extends App
     {
         return $message instanceof Heard
             ? new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 }
 
@@ -411,7 +411,7 @@ final readonly class QuietModel implements Reducer
         return match (true) {
             $message instanceof KeyMsg && $message->key === 'r' => new UpdateResult($this->cloneWith(refreshed: $this->refreshed + 1)),
             $message instanceof MouseMsg && $message->isClick() => new UpdateResult($this->cloneWith(pressedIn: $area)),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 }
@@ -459,7 +459,7 @@ final readonly class Lamp implements Focusable
     {
         return $message instanceof KeyMsg && $message->key === Key::Enter
             ? new UpdateResult($this, Cmd::message(new Heard('lamp')))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -489,7 +489,7 @@ final readonly class NotesModel implements Reducer
         return match (true) {
             $message instanceof Heard => new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]), Cmd::focus(ComponentId::named('field'))),
             $message instanceof KeyMsg && $message->ctrl && $message->key === 'x' => new UpdateResult($this->cloneWith(heard: [...$this->heard, 'key:x'])),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 

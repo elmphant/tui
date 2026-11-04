@@ -55,7 +55,7 @@ final readonly class MovingFieldsApp extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return $message->ctrl && $message->key === 'n'
-            ? $this->then(Cmd::focusNext())
-            : UpdateResult::ignored($this);
+            ? new UpdateResult($this, Cmd::focusNext())
+            : new UpdateResult($this);
     }
 }

@@ -65,7 +65,7 @@ final readonly class TallyModel implements Reducer
     {
         return $message instanceof KeyMsg
             ? new UpdateResult(new self($this->tally, $this->presses + 1, $area))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 
     public function view(): Widget

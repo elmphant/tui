@@ -64,7 +64,7 @@ final readonly class ChatRoom implements Reducer
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function view(): Widget
@@ -109,7 +109,7 @@ final readonly class RoomsApp extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         if ($message->key !== Key::F2) {
-            return UpdateResult::ignored($this);
+            return new UpdateResult($this);
         }
         $rooms = $this->rooms;
         unset($rooms[array_key_first($rooms)]);

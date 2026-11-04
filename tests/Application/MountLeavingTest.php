@@ -179,7 +179,7 @@ final readonly class BusyModel implements Reducer, Initializes
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }
 
@@ -217,7 +217,7 @@ final readonly class HostOfABusyMount extends App
             return new UpdateResult($this, Cmd::quit());
         }
 
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }
 
@@ -265,7 +265,7 @@ final readonly class FeedModel implements Reducer, Initializes
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }
 
@@ -314,6 +314,6 @@ final readonly class HostOfAFeed extends App
             return new UpdateResult($this, Cmd::quit());
         }
 
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 }

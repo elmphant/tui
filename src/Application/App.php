@@ -256,13 +256,13 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
     /**
      * Runs before the focused component, except for keys it takes as text; reserved shortcuts go to onAction().
-     * A changed model or any command consumes the key; return UpdateResult::ignored($this) to pass it on.
+     * A changed model or any command consumes the key; return new UpdateResult($this) to pass it on.
      *
      * @return UpdateResult<static>
      */
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     /**
@@ -273,8 +273,8 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($action) {
-            Actions::QUIT => $this->then(Cmd::quit()),
-            default => UpdateResult::ignored($this),
+            Actions::QUIT => new UpdateResult($this, Cmd::quit()),
+            default => new UpdateResult($this),
         };
     }
 
@@ -292,7 +292,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     protected function onResize(ResizeMsg $message): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     /**
@@ -305,7 +305,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     protected function onComponentsChanged(array $ids): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     /**
@@ -313,7 +313,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     /**
@@ -321,7 +321,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     /**
@@ -329,7 +329,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     protected function onMessage(Message $message, Rect $screen): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     /**
@@ -368,14 +368,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $widget,
             static fn (self $app, Interactive $updated): self => $app->cloneWith(...[$property => $updated]),
         );
-    }
-
-    /**
-     * @return UpdateResult<static>
-     */
-    protected function then(Cmd $command): UpdateResult
-    {
-        return new UpdateResult($this, $command);
     }
 
     /**
@@ -586,7 +578,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $mount = $this->mountNamed($message->mount);
 
             return $mount === null
-                ? UpdateResult::ignored($this)
+                ? new UpdateResult($this)
                 : $this->answeredBy($mount, $message->message, $screenRect);
         }
 

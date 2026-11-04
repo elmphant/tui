@@ -119,7 +119,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Rendering\Context\{FocusPath, RenderPass};
 use Elmphant\Tui\Rendering\Theme;
 
-$pass = RenderPass::new(Theme::dark(), focus: FocusPath::nowhere());   // a layout or wording test
+$pass = RenderPass::unfocused(Theme::dark());   // a layout or wording test
 $app->render($frame, $pass);
 
 $pass = RenderPass::new(Theme::dark(), focus: FocusPath::on(ComponentId::named('search')));   // or name the holder

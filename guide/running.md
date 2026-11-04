@@ -76,7 +76,7 @@ final readonly class Question extends App
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         if ($message->key !== Key::Enter) {
-            return UpdateResult::ignored($this);
+            return new UpdateResult($this);
         }
 
         return new UpdateResult($this, Cmd::batch(

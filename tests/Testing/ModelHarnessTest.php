@@ -190,7 +190,7 @@ final class ModelHarnessTest extends TestCase
                 return new UpdateResult(new class implements Reducer {
                     public function update(Message $message, Rect $area): UpdateResult
                     {
-                        return UpdateResult::ignored($this);
+                        return new UpdateResult($this);
                     }
                 });
             }
@@ -290,8 +290,8 @@ final readonly class HarnessCounter extends App
     {
         return match ($message->key) {
             '+' => new UpdateResult(new self($this->count + 1)),
-            'q' => $this->then(Cmd::quit()),
-            default => UpdateResult::ignored($this),
+            'q' => new UpdateResult($this, Cmd::quit()),
+            default => new UpdateResult($this),
         };
     }
 }
@@ -333,7 +333,7 @@ final class RepaintOnceModel implements Model
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, RenderPass $pass): void
@@ -359,7 +359,7 @@ final readonly class ThemeEchoModel implements Model
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, RenderPass $pass): void

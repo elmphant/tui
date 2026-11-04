@@ -237,7 +237,7 @@ final readonly class ClickableChromeApp extends App
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
     {
         return $message->isClick()
-            ? $this->then(Cmd::batch(Cmd::log('pressed'), Cmd::focus(ComponentId::named('second'))))
-            : UpdateResult::ignored($this);
+            ? new UpdateResult($this, Cmd::batch(Cmd::log('pressed'), Cmd::focus(ComponentId::named('second'))))
+            : new UpdateResult($this);
     }
 }

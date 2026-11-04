@@ -63,7 +63,7 @@ final readonly class FieldModel implements Reducer
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function view(): Widget

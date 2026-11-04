@@ -89,7 +89,7 @@ final readonly class ScrollingPane implements Interactive, WidgetContainer
     {
         return $message instanceof KeyMsg && $message->key === Key::Down
             ? new UpdateResult($this->cloneWith(scrolled: $this->scrolled + 1))
-            : UpdateResult::ignored($this);
+            : new UpdateResult($this);
     }
 
     public function withField(TextInput $field): self

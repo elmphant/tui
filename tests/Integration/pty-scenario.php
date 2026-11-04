@@ -75,7 +75,7 @@ $model = new class($scenario, $readyFile, $resultFile) implements Model {
             return new UpdateResult($next);
         }
 
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function render(Frame $frame, RenderPass $pass): void

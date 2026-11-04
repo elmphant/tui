@@ -264,7 +264,7 @@ final readonly class ReportModel implements Reducer, NamesItsKeys
 {
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function ownKeys(): array
@@ -277,7 +277,7 @@ final readonly class OverlappingKeysModel implements Reducer, NamesItsKeys
 {
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return UpdateResult::ignored($this);
+        return new UpdateResult($this);
     }
 
     public function ownKeys(): array

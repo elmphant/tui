@@ -91,7 +91,7 @@ final readonly class Loader implements Focusable
         return match (true) {
             $message instanceof KeyMsg && $message->key === Key::Enter => new UpdateResult($this, Cmd::exec(['load'], EffectId::named('load'))),
             $message instanceof ProcessResultMsg && $message->isFrom('load') => new UpdateResult(new self($message->stdout)),
-            default => UpdateResult::ignored($this),
+            default => new UpdateResult($this),
         };
     }
 
