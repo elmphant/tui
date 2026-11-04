@@ -16,6 +16,7 @@ use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -231,13 +232,19 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     /**
      * A SELECT binding alone is not a commit: a query with no matches must not close its popup.
      */
-    public function outcomeOf(Message $message): ?Message
+    public function outcomeOf(Message $message, Rect $area): ?Message
     {
+        if ($message instanceof MouseMsg) {
+            return $this->list->outcomeOf($message, $this->contentArea($area));
+        }
+
+        $item = $this->cursorItem();
+
         return $message instanceof KeyMsg
+            && $item !== null
             && !$this->isSearching()
             && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            && $this->cursorItem() !== null
-            ? $message
+            ? new Chosen($item, $message)
             : null;
     }
 

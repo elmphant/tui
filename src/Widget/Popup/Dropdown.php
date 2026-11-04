@@ -37,7 +37,7 @@ use Elmphant\Tui\Widget\PublishesHints;
  *
  * @template-covariant TContent of DropdownContent
  */
-final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, CapturesKeys, TakesText
+final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, CapturesKeys, TakesText, Committing
 {
     use Cloneable;
     use DrawsFocus;
@@ -138,6 +138,17 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     public function withOpen(bool $open = true): static
     {
         return $this->cloneWith(open: $open);
+    }
+
+    public function outcomeOf(Message $message, Rect $area): ?Message
+    {
+        if ($message instanceof FloatMouseMsg) {
+            return $this->outcomeOfDrawn($message);
+        }
+
+        return $this->open && $message instanceof KeyMsg && $this->content instanceof Committing
+            ? $this->content->outcomeOf($message, $this->popupContentArea($area, $message->screen))
+            : null;
     }
 
     public function capturesKeys(): bool
@@ -249,7 +260,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
      */
     private function keyedWhileOpen(KeyMsg $message, Rect $area): UpdateResult
     {
-        $commits = $this->content instanceof Committing && $this->content->outcomeOf($message) !== null;
+        $commits = $this->outcomeOf($message, $area) !== null;
         $answered = $this->content->update($message, $this->popupContentArea($area, $message->screen));
         $content = $answered->model;
 
@@ -271,6 +282,18 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     /**
      * Resolve clicks against the popup that was drawn, since its content may have changed since then.
      */
+    private function outcomeOfDrawn(FloatMouseMsg $message): ?Message
+    {
+        $popup = $message->popup();
+        if (!$this->open || !$message->mouse->isClick() || !$popup instanceof PopupFrame || $popup->target() !== $this->floatTarget) {
+            return null;
+        }
+
+        $content = $popup->content();
+
+        return $content instanceof Committing ? $content->outcomeOf($message->mouse, $popup->contentArea($message->drawnIn())) : null;
+    }
+
     private function floatMoused(FloatMouseMsg $message): static
     {
         $popup = $message->popup();

@@ -18,6 +18,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
@@ -201,13 +202,16 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return $this->selected === null ? null : $this->rows[$this->selected] ?? null;
     }
 
-    public function outcomeOf(Message $message): ?Message
+    public function outcomeOf(Message $message, Rect $area): ?Message
     {
-        return $message instanceof KeyMsg
-            && ($this->rows[$this->cursor] ?? null)?->selectable === true
-            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            ? $message
-            : null;
+        $index = match (true) {
+            $message instanceof MouseMsg && $message->isClick() => $this->selectableRowAt($message, $area),
+            $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::SELECT) => $this->cursor,
+            default => null,
+        };
+        $row = $index === null ? null : $this->rows[$index] ?? null;
+
+        return $row?->selectable === true ? new Chosen($row, $message) : null;
     }
 
     /**
@@ -435,15 +439,10 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     {
         $displayOffset = $this->scrollOffset($area);
 
-        if ($message->isClick() && $message->isIn($area)) {
-            $localY = $message->y - $area->y - $this->headerHeight();
-            $rowIndex = $localY >= 0
-                ? $this->layoutFor($this->placementFor($area))->rowAtLine($displayOffset, $localY)
-                : null;
+        $rowIndex = $message->isClick() ? $this->selectableRowAt($message, $area) : null;
 
-            if ($rowIndex !== null && $this->isRowSelectable($rowIndex)) {
-                return new UpdateResult($this->cloneWith(cursor: $rowIndex, selected: $rowIndex, followCursor: true));
-            }
+        if ($rowIndex !== null) {
+            return new UpdateResult($this->cloneWith(cursor: $rowIndex, selected: $rowIndex, followCursor: true));
         }
 
         if ($message->isIn($area)) {
@@ -457,6 +456,18 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         }
 
         return new UpdateResult($this);
+    }
+
+    private function selectableRowAt(MouseMsg $message, Rect $area): ?int
+    {
+        $localY = $message->y - $area->y - $this->headerHeight();
+        if (!$message->isIn($area) || $localY < 0) {
+            return null;
+        }
+
+        $rowIndex = $this->layoutFor($this->placementFor($area))->rowAtLine($this->scrollOffset($area), $localY);
+
+        return $rowIndex !== null && $this->isRowSelectable($rowIndex) ? $rowIndex : null;
     }
 
     private function renderHeader(Frame $frame, Rect $area, AxisResult $placement, Theme $theme): void

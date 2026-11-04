@@ -458,11 +458,11 @@ final class SelectTest extends TestCase
     public function enterOverAnEmptyListFinishesNothing(): void
     {
         self::assertNotNull(
-            Select::new(['json'])->outcomeOf(new KeyMsg(Key::Enter)),
+            Select::new(['json'])->outcomeOf(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 10)),
             'with something under the cursor, enter is what finishes the choice',
         );
         self::assertNull(
-            Select::new([])->outcomeOf(new KeyMsg(Key::Enter)),
+            Select::new([])->outcomeOf(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 10)),
             'the binding matches, but there is nothing to choose, so the popup must not close',
         );
     }

@@ -1037,11 +1037,11 @@ final class RadioTest extends TestCase
     public function enterOverAnEmptyRadioFinishesNothing(): void
     {
         self::assertNotNull(
-            Radio::new(['A'], 'Severity')->outcomeOf(new KeyMsg(Key::Enter)),
+            Radio::new(['A'], 'Severity')->outcomeOf(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 10)),
             'with something under the cursor, enter is what finishes the choice',
         );
         self::assertNull(
-            Radio::new([], 'Severity')->outcomeOf(new KeyMsg(Key::Enter)),
+            Radio::new([], 'Severity')->outcomeOf(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 10)),
             'the binding matches, but there is nothing to choose, so the popup must not close',
         );
     }

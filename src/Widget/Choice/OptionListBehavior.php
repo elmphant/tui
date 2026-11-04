@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 
@@ -80,13 +81,15 @@ trait OptionListBehavior
     /**
      * A SELECT binding alone is not a commit: an empty list must not close its popup.
      */
-    public function outcomeOf(Message $message): ?Message
+    public function outcomeOf(Message $message, Rect $area): ?Message
     {
-        return $message instanceof KeyMsg
-            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            && ($this->options[$this->cursor] ?? null) !== null
-            ? $message
-            : null;
+        $option = match (true) {
+            $message instanceof MouseMsg && $message->isClick() => $this->optionAt($message, $area),
+            $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::SELECT) => $this->options[$this->cursor] ?? null,
+            default => null,
+        };
+
+        return $option === null ? null : new Chosen($option, $message);
     }
 
     public function activated(string $option): static

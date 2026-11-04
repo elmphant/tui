@@ -786,7 +786,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
-        $outcome = $widget instanceof Committing ? $widget->outcomeOf($message) : null;
+        $outcome = $widget instanceof Committing ? $widget->outcomeOf($message, $rect) : null;
 
         if ($dispatch->changed || $outcome !== null) {
             return $this->writtenBack($focused, $this->focusedUpdate($focused, $dispatch->child), $dispatch->command, $outcome ?? $message);
@@ -886,7 +886,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
                 || !$message->isIn($rects[$component->id->value])
                 || (isset($visible[$component->id->value]) && $message->isIn($visible[$component->id->value])),
         ));
-        [$updates, $childCommand] = $current->dispatchComponents(
+        [$updates, $childCommand, $outcome] = $current->dispatchComponents(
             $components,
             $rects,
             $message,
@@ -917,7 +917,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $landedOn = $current->containerEnteredBy($message, $visible, $holder);
         }
 
-        [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates, $message);
+        [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates, $outcome ?? $message);
         $answered = Cmd::batch($appResult->command, $childCommand, $hookCommand);
 
         return new UpdateResult(
@@ -1000,14 +1000,14 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         $current = $this->appModel($appResult);
         $rects = $current->findComponentRects($screenRect, $components);
-        [$updates, $childCommand] = $current->dispatchComponents(
+        [$updates, $childCommand, $outcome] = $current->dispatchComponents(
             $components,
             $rects,
             $message,
             $current->childDispatcher(),
         );
 
-        [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates, $message);
+        [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates, $outcome ?? $message);
 
         return new UpdateResult(
             $next,
@@ -1019,7 +1019,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      * @param list<Component<Interactive>> $components
      * @param array<string, Rect>          $rects
      *
-     * @return array{array<string, array{Component<Interactive>, Interactive}>, ?Cmd}
+     * @return array{array<string, array{Component<Interactive>, Interactive}>, ?Cmd, ?Message} the updates, their commands, and the outcome to hand on in place of the message
      */
     private function dispatchComponents(
         array $components,
@@ -1030,6 +1030,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     ): array {
         $updates = [];
         $commands = [];
+        $outcome = null;
 
         // Address each command to the component that produced it before combining commands.
         foreach ($components as $component) {
@@ -1050,16 +1051,18 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
                 ? $message->withKeyboardHere($holder?->equals($component->id) ?? false)
                 : $message;
 
+            $answer = $widget instanceof Committing ? $widget->outcomeOf($addressed, $rect) : null;
+            $outcome ??= $answer;
             $dispatch = $dispatcher->dispatchOne($widget, $addressed, $rect);
 
-            if ($dispatch->changed) {
+            if ($dispatch->changed || $answer !== null) {
                 $updates[$key] = [$component, $dispatch->child];
             }
 
             $commands[] = $component->addressed($dispatch->command);
         }
 
-        return [$updates, Cmd::batch(...$commands)];
+        return [$updates, Cmd::batch(...$commands), $outcome];
     }
 
     /**

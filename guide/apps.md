@@ -179,13 +179,13 @@ Rules for binding:
   capture plain values (strings, numbers), never objects.
 - **To start work as well**, return `new UpdateResult($app->withList($list), $command)`
   instead of the App.
-- **To react to a choice**, take the message as a third argument. A widget that
-  can choose something (`ListView`, `Table`, `FilterableList`, …) answers
-  `outcomeOf($message)`:
-  `static fn (self $app, ListView $list, Message $message): self => $list->outcomeOf($message) !== null ? $app->opened($list) : $app->withList($list)`.
-  Such a widget is handed back even when nothing in it changed, so choosing the
-  same row twice is seen. A `TextInput` with `withSubmit()` hands a `Submitted`
-  with its value instead of the key.
+- **To react to a choice**, add `->on(Chosen::class, …)`. A widget that can
+  choose something (`ListView`, `Table`, `Select`, `Radio`, `Dropdown`, the
+  filterable ones) hands on a `Chosen` when the reader presses Enter or clicks
+  an item. Its `choice` is the `ListItem`, the `Row` or the option string, and
+  moving the cursor is never a choice. Such a widget is handed back even when
+  nothing in it changed, so choosing the same row twice is seen. A `TextInput`
+  with `withSubmit()` hands a `Submitted` with its value instead of the key.
 - **To close what was bound**, set it to `null` in the App you return (a modal,
   a picker).
 

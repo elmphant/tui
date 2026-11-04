@@ -95,7 +95,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         return $this->cloneWith(submits: true, submit: $message);
     }
 
-    public function outcomeOf(Message $message): ?Message
+    public function outcomeOf(Message $message, Rect $area): ?Message
     {
         return $this->submits
             && $message instanceof KeyMsg

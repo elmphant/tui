@@ -16,6 +16,7 @@ use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -118,13 +119,19 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         return $this->selectedSource === null ? null : $this->rows[$this->selectedSource] ?? null;
     }
 
-    public function outcomeOf(Message $message): ?Message
+    public function outcomeOf(Message $message, Rect $area): ?Message
     {
+        if ($message instanceof MouseMsg) {
+            return $this->table->outcomeOf($message, $this->contentArea($area));
+        }
+
+        $row = $this->cursorRow();
+
         return $message instanceof KeyMsg
+            && $row?->selectable === true
             && !$this->isSearching()
             && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            && $this->cursorRow()?->selectable === true
-            ? $message
+            ? new Chosen($row, $message)
             : null;
     }
 

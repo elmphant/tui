@@ -16,6 +16,7 @@ use Elmphant\Tui\Layout\RowExtents;
 use Elmphant\Tui\Layout\RowIndex;
 use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
@@ -189,13 +190,15 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         return $this->selected === null ? null : $this->items[$this->selected] ?? null;
     }
 
-    public function outcomeOf(Message $message): ?Message
+    public function outcomeOf(Message $message, Rect $area): ?Message
     {
-        return $message instanceof KeyMsg
-            && $this->items !== []
-            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            ? $message
-            : null;
+        $item = match (true) {
+            $message instanceof MouseMsg && $message->isClick() => $this->itemAt($message, $area),
+            $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::SELECT) => $this->cursorItem(),
+            default => null,
+        };
+
+        return $item === null ? null : new Chosen($item, $message);
     }
 
     public function scrollOffset(Rect $area): int
@@ -303,6 +306,13 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     public function measureHeight(int $width): int
     {
         return $width < 1 ? 0 : $this->extentsAt($width)->totalHeight();
+    }
+
+    private function itemAt(MouseMsg $message, Rect $area): ?ListItem
+    {
+        $index = $this->indexAt($message, $area);
+
+        return $index === null ? null : $this->items[$index] ?? null;
     }
 
     private function renderItem(Frame $frame, int $x, int $y, int $width, ListItem $item, bool $isCursor, bool $isSelected, Theme $theme, bool $focused): void
