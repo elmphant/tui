@@ -15,6 +15,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Tests\Support\GuardedTerminal;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,7 +42,7 @@ final class ProgramAreaTest extends TestCase
         $terminal = GuardedTerminal::of(120, 40);
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput("x\x1b[<0;4;5M"));
 
-        Program::new($model)->withTerminal($terminal)->withMouseTracking()->start();
+        Program::new($model)->withTerminal($terminal)->withScreenMode(ScreenMode::main(mouse: true))->start();
 
         self::assertCount(2, $model->input);
         foreach ($model->input as $input) {

@@ -77,9 +77,7 @@ final class Program
      */
     private const MAX_DRAIN_SECONDS = 0.05;
 
-    private bool $useAltScreen = false;
-    private bool $useMouseTracking = false;
-    private bool $useInline = false;
+    private ScreenMode $screenMode;
     private FrameScheduler $frames;
     /**
      * @var (Closure(ErrorMsg): (Cmd|null))|null
@@ -164,6 +162,7 @@ final class Program
     {
         $this->focus = FocusState::undecided();
         $this->frames = new FrameScheduler();
+        $this->screenMode = ScreenMode::main();
         $this->clock = new MonotonicClock();
         $this->screenRect = Rect::fromSize(80, 24);
         $this->pendingWheel = new PendingWheel();
@@ -211,32 +210,10 @@ final class Program
     /**
      * @return self<TModel>
      */
-    public function withAltScreen(bool $enabled = true): self
+    public function withScreenMode(ScreenMode $mode): self
     {
         $program = $this->configured();
-        $program->useAltScreen = $enabled;
-
-        return $program;
-    }
-
-    /**
-     * @return self<TModel>
-     */
-    public function withMouseTracking(bool $enabled = true): self
-    {
-        $program = $this->configured();
-        $program->useMouseTracking = $enabled;
-
-        return $program;
-    }
-
-    /**
-     * @return self<TModel>
-     */
-    public function withInline(bool $enabled = true): self
-    {
-        $program = $this->configured();
-        $program->useInline = $enabled;
+        $program->screenMode = $mode;
 
         return $program;
     }
@@ -343,9 +320,6 @@ final class Program
         if ($this->state !== ProgramState::New) {
             throw new LogicException(sprintf('Program can only be started once; current state is %s', $this->state->name));
         }
-        if ($this->useInline && ($this->useAltScreen || $this->useMouseTracking)) {
-            throw new LogicException('An inline program cannot use the alternate screen or the mouse');
-        }
         $this->state = ProgramState::Running;
 
         $tracePath = getenv('ELMPHANT_TRACE');
@@ -355,9 +329,9 @@ final class Program
 
         try {
             $this->terminal = $this->injectedTerminal ?? new SystemTerminal();
-            $this->surface = $this->useInline
+            $this->surface = $this->screenMode->isInline()
                 ? new InlineSurface(new InlineScreen($this->terminal, $this->resolveColorProfile()))
-                : new FullScreenSurface($this->terminal, new Screen($this->terminal, $this->resolveColorProfile()), $this->useAltScreen, $this->tracer);
+                : new FullScreenSurface($this->terminal, new Screen($this->terminal, $this->resolveColorProfile()), $this->screenMode->isAlternate(), $this->tracer);
             $this->messageQueue = new SplQueue();
             $this->inputQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();
@@ -455,8 +429,8 @@ final class Program
 
         $this->terminalSession = new TerminalSession(
             $this->terminal,
-            $this->useAltScreen,
-            $this->useMouseTracking,
+            $this->screenMode->isAlternate(),
+            $this->screenMode->tracksTheMouse(),
             $this->surface,
         );
         $this->terminalSession->start();
@@ -479,7 +453,7 @@ final class Program
             return;
         }
         $running->teardown();
-        if ($running->useAltScreen) {
+        if ($running->screenMode->isAlternate()) {
             self::reportFatalErrorTheAltScreenHid();
         }
     }

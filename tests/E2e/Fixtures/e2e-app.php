@@ -11,6 +11,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Runtime\Trace\JsonlTracer;
 use Elmphant\Tui\Widget\Bar\Footer;
 use Elmphant\Tui\Widget\Bar\Header;
@@ -92,6 +93,6 @@ final readonly class E2eApp extends App
     }
 }
 
-$program = Program::new(E2eApp::create($argv[1] ?? '600'))->withAltScreen();
+$program = Program::new(E2eApp::create($argv[1] ?? '600'))->withScreenMode(ScreenMode::alternate());
 $trace = getenv('E2E_TRACE');
 ($trace === false ? $program : $program->withTracer(JsonlTracer::toFile($trace)))->start();

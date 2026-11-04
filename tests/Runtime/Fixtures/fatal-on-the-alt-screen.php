@@ -10,6 +10,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Testing\VirtualTerminal;
 
 require dirname(__DIR__, 3) . '/vendor/autoload.php';
@@ -32,4 +33,4 @@ $model = new class implements Model {
     }
 };
 
-Program::new($model)->withTerminal(new VirtualTerminal(80, 24))->withAltScreen()->start();
+Program::new($model)->withTerminal(new VirtualTerminal(80, 24))->withScreenMode(ScreenMode::alternate())->start();

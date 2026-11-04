@@ -13,6 +13,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 
 $model = new class implements Model {
     public function init(): ?Cmd
@@ -30,4 +31,4 @@ $model = new class implements Model {
     }
 };
 
-Program::new($model)->withAltScreen()->withMouseTracking()->start();
+Program::new($model)->withScreenMode(ScreenMode::alternate(mouse: true))->start();

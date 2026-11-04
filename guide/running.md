@@ -10,18 +10,21 @@
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 
 Program::new($model)
-    ->withAltScreen()       // use the alternate screen; the shell comes back on exit
-    ->withMouseTracking()   // clicks, wheel and drags
+    ->withScreenMode(ScreenMode::alternate(mouse: true)) // clicks, wheel and drags too
     ->withFps(30)           // frame rate limit (default: 60)
     ->withTheme(Theme::dracula()) // the theme to start in
     ->onError(fn(ErrorMsg $error) => null) // may return a Cmd to recover
     ->start();
 ```
 
-- Without `withAltScreen()` the app still uses the whole screen, and its last
-  frame stays after it exits. To draw below the prompt instead, see
+- The screen mode is one of three. `ScreenMode::main()`, the default, uses the
+  whole screen, and the app's last frame stays after it exits.
+  `ScreenMode::alternate()` uses the alternate screen, so the shell comes back
+  as it was. Both take `mouse: true` for clicks, the wheel and drags.
+  `ScreenMode::inline()` draws below the prompt, see
   [Drawing inline](#drawing-inline).
 - Themes: `dark`, `light`, `dracula`, `solarizedDark`, `solarizedLight`,
   `rosePine`, `atomOneDark`, `gruvboxDark`, `gruvboxLight`. To switch while
@@ -33,7 +36,7 @@ Program::new($model)
 
 ## Drawing inline
 
-`withInline()` draws the app below the shell prompt instead of over the whole
+`withScreenMode(ScreenMode::inline())` draws the app below the shell prompt instead of over the whole
 screen, the way an installer asks its questions. What the shell printed before
 stays above it. This asks two questions, one program each, and leaves the
 answers in the scrollback:
@@ -47,6 +50,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Prose\Paragraph;
@@ -84,7 +88,7 @@ final readonly class Question extends App
 
 $answers = [];
 foreach (['Project name', 'Database host'] as $question) {
-    $answers[$question] = Program::new(new Question($question))->withInline()->start()->field->value();
+    $answers[$question] = Program::new(new Question($question))->withScreenMode(ScreenMode::inline())->start()->field->value();
 }
 ```
 
@@ -106,8 +110,8 @@ foreach (['Project name', 'Database host'] as $question) {
 - The caret is drawn as a reversed cell. The terminal's own cursor stays hidden
   at the start of the app, where a terminal that rewraps its lines (tmux, iTerm2)
   cannot lose it.
-- `withInline()` cannot be combined with `withAltScreen()` or
-  `withMouseTracking()`: `start()` throws a `LogicException`.
+- An inline program has no mouse, because it does not know which terminal rows
+  it sits on. That is why `inline()` takes no `mouse` argument.
 
 ## Terminals
 

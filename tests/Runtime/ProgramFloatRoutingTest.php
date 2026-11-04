@@ -17,6 +17,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Support\FloatingModel;
 use Elmphant\Tui\Tests\Support\GuardedTerminal;
@@ -60,7 +61,7 @@ final class ProgramFloatRoutingTest extends TestCase
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput('n'));
 
         try {
-            Program::new($model)->withTerminal($terminal)->withMouseTracking()->start();
+            Program::new($model)->withTerminal($terminal)->withScreenMode(ScreenMode::main(mouse: true))->start();
             self::fail('A frame that always fails is given up on');
         } catch (RuntimeException) {
         }
@@ -75,7 +76,7 @@ final class ProgramFloatRoutingTest extends TestCase
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput($input));
         EventLoop::delay(0.15, static fn () => $terminal->closeInput());
 
-        Program::new($model)->withTerminal($terminal)->withMouseTracking()->start();
+        Program::new($model)->withTerminal($terminal)->withScreenMode(ScreenMode::main(mouse: true))->start();
     }
 }
 

@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Support\ScriptedModel;
@@ -56,7 +57,7 @@ final class ProgramTerminalHandBackTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 30);
 
-        Program::new(self::quitting())->withTerminal($terminal)->withAltScreen()->start();
+        Program::new(self::quitting())->withTerminal($terminal)->withScreenMode(ScreenMode::alternate())->start();
 
         self::assertFalse($terminal->isAltScreenEnabled());
         self::assertStringNotContainsString(Ansi::cursorToRowStart(29), $terminal->output());

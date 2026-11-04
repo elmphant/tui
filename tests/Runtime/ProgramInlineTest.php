@@ -13,6 +13,7 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Runtime\SizesItsRegion;
 use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Testing\VirtualTerminal;
@@ -21,7 +22,6 @@ use Elmphant\Tui\Tests\Application\Support\OpenDropdownApp;
 use Elmphant\Tui\Tests\Application\Support\QuitOnEnterFieldApp;
 use Elmphant\Tui\Tests\Application\Support\ToastOnStartApp;
 use Elmphant\Tui\Tests\Application\Support\TwoLineApp;
-use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop;
@@ -34,26 +34,10 @@ final class ProgramInlineTest extends TestCase
         $terminal = new VirtualTerminal(20, 5);
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput("\x03"));
 
-        Program::new(new TwoLineApp())->withTerminal($terminal)->withInline()->start();
+        Program::new(new TwoLineApp())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         self::assertMatchesRegularExpression('/first\e\[0m\e\[K\r\n\e\[[\d;]*msecond\e\[0m\e\[K/', $terminal->output());
         self::assertDoesNotMatchRegularExpression('/\x1b\[[\d;]*H/', $terminal->output());
-    }
-
-    #[Test]
-    public function anInlineRunRefusesTheMouseBecauseItsRowsAreUnknown(): void
-    {
-        $this->expectException(LogicException::class);
-
-        Program::new(new TwoLineApp())->withTerminal(new VirtualTerminal(20, 5))->withInline()->withMouseTracking()->start();
-    }
-
-    #[Test]
-    public function anInlineRunRefusesTheAlternateScreen(): void
-    {
-        $this->expectException(LogicException::class);
-
-        Program::new(new TwoLineApp())->withTerminal(new VirtualTerminal(20, 5))->withInline()->withAltScreen()->start();
     }
 
     #[Test]
@@ -62,7 +46,7 @@ final class ProgramInlineTest extends TestCase
         $terminal = new VirtualTerminal(20, 5);
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput('x'));
 
-        $model = Program::new(new RegionRecordingModel())->withTerminal($terminal)->withInline()->start();
+        $model = Program::new(new RegionRecordingModel())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         self::assertEquals(Rect::fromSize(20, 3), $model->area);
     }
@@ -73,7 +57,7 @@ final class ProgramInlineTest extends TestCase
         $terminal = new VirtualTerminal(20, 5);
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput("ada\r"));
 
-        Program::new(new QuitOnEnterFieldApp())->withTerminal($terminal)->withInline()->start();
+        Program::new(new QuitOnEnterFieldApp())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         $frames = explode(Ansi::SYNC_START, $terminal->output());
         self::assertStringContainsString('ada', end($frames));
@@ -86,7 +70,7 @@ final class ProgramInlineTest extends TestCase
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput('x'));
 
         Program::new(new RegionRecordingModel(answer: Cmd::batch(Cmd::println('✓ answered'), Cmd::quit())))
-            ->withTerminal($terminal)->withInline()->start();
+            ->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         self::assertStringContainsString("\x1b[J\r✓ answered\r\n", $terminal->output());
     }
@@ -98,7 +82,7 @@ final class ProgramInlineTest extends TestCase
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput('x'));
 
         Program::new(new RegionRecordingModel(answer: Cmd::batch(Cmd::println('✓ answered'), Cmd::quit())))
-            ->withTerminal($terminal)->withInline()->start();
+            ->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         $afterThePrint = substr($terminal->output(), (int)strpos($terminal->output(), '✓ answered'));
         self::assertStringNotContainsString(Ansi::SYNC_START, $afterThePrint);
@@ -110,7 +94,7 @@ final class ProgramInlineTest extends TestCase
         $terminal = new VirtualTerminal(20, 10);
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput("\x03"));
 
-        Program::new(new OpenDropdownApp())->withTerminal($terminal)->withInline()->start();
+        Program::new(new OpenDropdownApp())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         $frames = explode(Ansi::SYNC_START, $terminal->output());
         $last = end($frames);
@@ -124,7 +108,7 @@ final class ProgramInlineTest extends TestCase
         $terminal = new VirtualTerminal(30, 12);
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput("\x03"));
 
-        Program::new(new ToastOnStartApp())->withTerminal($terminal)->withInline()->start();
+        Program::new(new ToastOnStartApp())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         $frames = explode(Ansi::SYNC_START, $terminal->output());
         $painted = strstr(end($frames), Ansi::SYNC_END, true);
@@ -139,7 +123,7 @@ final class ProgramInlineTest extends TestCase
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput("\x0b"));
         EventLoop::delay(0.15, static fn () => $terminal->simulateInput("\x03"));
 
-        Program::new(new FieldAboveALineApp())->withTerminal($terminal)->withInline()->start();
+        Program::new(new FieldAboveALineApp())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         $frames = explode(Ansi::SYNC_START, $terminal->output());
         $rows = explode("\r\n", $frames[\count($frames) - 2]);
@@ -152,7 +136,7 @@ final class ProgramInlineTest extends TestCase
         $terminal = new VirtualTerminal(20, 5);
         EventLoop::delay(0.05, static fn () => $terminal->simulateInput("\x03"));
 
-        Program::new(new FieldAboveALineApp())->withTerminal($terminal)->withInline()->start();
+        Program::new(new FieldAboveALineApp())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         self::assertStringEndsWith("\x1b[1B\r\n", $terminal->output());
     }

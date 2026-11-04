@@ -9,6 +9,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Separator;
@@ -37,6 +38,6 @@ final readonly class InlineRuledE2eApp extends App
 
 echo "Ruled heading\n";
 
-Program::new(new InlineRuledE2eApp())->withInline()->start();
+Program::new(new InlineRuledE2eApp())->withScreenMode(ScreenMode::inline())->start();
 
 echo "Ruled done\n";

@@ -14,6 +14,7 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,7 +29,7 @@ final class ProgramConfigurationTest extends TestCase
         $terminal = new VirtualTerminal(40, 10);
         $plain = Program::new(new TerminalModesAtStartModel($terminal))->withTerminal($terminal);
 
-        $configured = $plain->withAltScreen()->withMouseTracking();
+        $configured = $plain->withScreenMode(ScreenMode::alternate(mouse: true));
         $final = $plain->start();
 
         self::assertNotSame($plain, $configured);
@@ -43,8 +44,7 @@ final class ProgramConfigurationTest extends TestCase
 
         $final = Program::new(new TerminalModesAtStartModel($terminal))
             ->withTerminal($terminal)
-            ->withAltScreen()
-            ->withMouseTracking()
+            ->withScreenMode(ScreenMode::alternate(mouse: true))
             ->start();
 
         self::assertTrue($final->altScreen);
@@ -58,10 +58,8 @@ final class ProgramConfigurationTest extends TestCase
 
         $final = Program::new(new TerminalModesAtStartModel($terminal))
             ->withTerminal($terminal)
-            ->withAltScreen()
-            ->withMouseTracking()
-            ->withAltScreen(false)
-            ->withMouseTracking(false)
+            ->withScreenMode(ScreenMode::alternate(mouse: true))
+            ->withScreenMode(ScreenMode::main())
             ->start();
 
         self::assertFalse($final->altScreen);

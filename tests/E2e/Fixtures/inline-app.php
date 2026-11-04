@@ -10,6 +10,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Prose\Paragraph;
@@ -43,6 +44,6 @@ final readonly class InlineE2eApp extends App
 
 echo "Inline heading\n";
 
-$app = Program::new(new InlineE2eApp())->withInline()->start();
+$app = Program::new(new InlineE2eApp())->withScreenMode(ScreenMode::inline())->start();
 
 echo 'Name: ' . $app->field->value() . "\n";

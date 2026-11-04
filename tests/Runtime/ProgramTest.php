@@ -32,6 +32,7 @@ use Elmphant\Tui\Runtime\FullScreenSurface;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ProgramState;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Runtime\ShutdownAware;
 use Elmphant\Tui\Runtime\TerminalSession;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
@@ -805,8 +806,7 @@ final class ProgramTest extends TestCase
     public function builderMethodsChainable(): void
     {
         $program = Program::new($this->createMockModel())
-            ->withAltScreen()
-            ->withMouseTracking()
+            ->withScreenMode(ScreenMode::alternate(mouse: true))
             ->withFps(30)
             ->onError(fn (ErrorMsg $error) => Cmd::quit());
 
@@ -1305,8 +1305,7 @@ final class ProgramTest extends TestCase
      */
     public static function configurationBuilderProvider(): iterable
     {
-        yield 'altScreen' => [fn (Program $program) => $program->withAltScreen()];
-        yield 'mouseTracking' => [fn (Program $program) => $program->withMouseTracking()];
+        yield 'screenMode' => [fn (Program $program) => $program->withScreenMode(ScreenMode::alternate())];
         yield 'fps' => [fn (Program $program) => $program->withFps(30.0)];
         yield 'onError' => [fn (Program $program) => $program->onError(fn () => null)];
         yield 'withTerminal' => [fn (Program $program) => $program->withTerminal(new VirtualTerminal(80, 24))];

@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Program;
+use Elmphant\Tui\Runtime\ScreenMode;
 use Revolt\EventLoop;
 
 $scenario = $argv[1] ?? 'normal';
@@ -84,7 +85,7 @@ $model = new class($scenario, $readyFile, $resultFile) implements Model {
 };
 
 try {
-    Program::new($model)->withAltScreen()->withMouseTracking()->start();
+    Program::new($model)->withScreenMode(ScreenMode::alternate(mouse: true))->start();
 } finally {
     if ($scenario === 'blocking') {
         $metadata = stream_get_meta_data(STDIN);
