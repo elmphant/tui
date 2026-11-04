@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application\Support;
 
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -27,7 +27,7 @@ final readonly class QuitOnEnterFieldApp extends CopyableTestApp
         return Component::bind('field', $this->field, static fn (self $app, TextInput $field): self => new self($field));
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return $message->key === Key::Enter ? new UpdateResult($this, Cmd::quit()) : new UpdateResult($this);
     }

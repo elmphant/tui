@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\AppActions;
-use Elmphant\Tui\Application\Keyboard;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
@@ -116,19 +116,19 @@ final readonly class HookRecordingApp extends App
         return AppActions::new()->with('save', ['ctrl+s'], static fn (): self => new self('action:save'));
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
-        return new UpdateResult(new self('key', self::size($screen)));
+        return new UpdateResult(new self('key', self::size($input->screen())));
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult(new self('mouse'));
     }
 
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
+    protected function onTick(TickMsg $message, InputContext $input): UpdateResult
     {
-        return new UpdateResult(new self('tick', self::size($screen)));
+        return new UpdateResult(new self('tick', self::size($input->screen())));
     }
 
     protected function onResize(ResizeMsg $message): UpdateResult
@@ -136,9 +136,9 @@ final readonly class HookRecordingApp extends App
         return new UpdateResult(new self('resize'));
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
-        return new UpdateResult(new self('message', self::size($screen)));
+        return new UpdateResult(new self('message', self::size($input->screen())));
     }
 
     private static function size(Rect $screen): string

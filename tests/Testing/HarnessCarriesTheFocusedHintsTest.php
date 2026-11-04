@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
@@ -58,7 +59,7 @@ final readonly class TwoHintingPanesApp extends App
         );
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return $message->key === 'n' ? new UpdateResult($this, Cmd::focusNext()) : new UpdateResult($this);
     }

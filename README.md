@@ -52,8 +52,8 @@ declare(strict_types=1);
 require __DIR__ . '/vendor/autoload.php';
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\{Cmd, UpdateResult};
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -68,7 +68,7 @@ final readonly class Counter extends App
         return Text::new("Count: {$this->count}  j/k change, x or Ctrl+Q quit");
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return match ($message->key) {
             'k' => new UpdateResult($this->withCount($this->count + 1)),

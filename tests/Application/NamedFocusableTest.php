@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use ArrayObject;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
@@ -198,7 +199,7 @@ final readonly class NamedPlainPaneKeyApp extends App
         return Component::named('pane', new PlainPane());
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         $this->seen[] = $message->key instanceof Key ? $message->key->value : $message->key;
 

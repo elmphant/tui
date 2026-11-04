@@ -6,10 +6,10 @@ namespace Elmphant\Tui\Testing;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 
@@ -44,9 +44,9 @@ final readonly class WidgetHost extends App
     /**
      * Send unaddressed messages, including effect results, to the only hosted widget.
      */
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
-        return $this->widget->update($message, $screen)
+        return $this->widget->update($message, $input->screen())
             ->mapModel(fn (Interactive $widget): self => $widget === $this->widget ? $this : new self($widget));
     }
 }

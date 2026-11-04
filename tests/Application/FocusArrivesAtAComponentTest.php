@@ -6,11 +6,11 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
@@ -122,7 +122,7 @@ final readonly class WrappedFocusApp extends App
         );
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         $move = Cmd::focus(ComponentId::named('second'));
 

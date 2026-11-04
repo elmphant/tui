@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
@@ -106,7 +107,7 @@ final readonly class RoomsApp extends App
         return Cmd::focus(ComponentId::named(array_key_first($this->rooms) . '/composer'));
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         if ($message->key !== Key::F2) {
             return new UpdateResult($this);

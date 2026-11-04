@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Application\Keyboard;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
@@ -762,7 +762,7 @@ final readonly class SwappingOnMouseApp extends CopyableTestApp
             : $this->bind('before', 'field');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this->cloneWith(swapped: true));
     }
@@ -823,7 +823,7 @@ final readonly class InterceptApp extends CopyableTestApp
         );
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return match ($message->key) {
             ' ' => new UpdateResult($this->cloneWith(toggled: !$this->toggled)),
@@ -914,7 +914,7 @@ final readonly class SimpleCounterApp extends CopyableTestApp
         return parent::actions()->withQuitKeys('ctrl+q', 'ctrl+c', 'q');
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return match ($message->key) {
             'k', Key::Tab => new UpdateResult($this->cloneWith(count: $this->count + 1)),
@@ -1030,7 +1030,7 @@ final readonly class GlobalKeybindingsToggleApp extends CopyableTestApp
         return $this->bind('widget', 'binding-capture');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this->cloneWith(currentBindings: $this->nextBindings));
     }
@@ -1055,7 +1055,7 @@ final readonly class GlobalKeybindingsTickToggleApp extends CopyableTestApp
         return $this->bind('widget', 'binding-capture');
     }
 
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
+    protected function onTick(TickMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this->cloneWith(currentBindings: $this->nextBindings));
     }
@@ -1122,7 +1122,7 @@ final readonly class NoOpUpdateResultApp extends CopyableTestApp
         return $this->bind('counter', 'counting-widget');
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this);
     }
@@ -1141,7 +1141,7 @@ final readonly class ToggleUpdateResultApp extends CopyableTestApp
         return $this->bind('counter', 'counting-widget');
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this->cloneWith(toggled: true));
     }
@@ -1159,7 +1159,7 @@ final readonly class CommandOnlyUpdateResultApp extends CopyableTestApp
         return $this->bind('counter', 'counting-widget');
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this, Cmd::quit());
     }
@@ -1498,7 +1498,7 @@ final readonly class MouseCommandFocusableApp extends CopyableTestApp
         return $this->bind('widget', 'click-command');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         if ($message->isClick()) {
             return new UpdateResult($this, Cmd::tick(0.1));
@@ -1538,7 +1538,7 @@ final readonly class MouseTrackingFocusableApp extends CopyableTestApp
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         if ($message->isClick()) {
             return new UpdateResult($this->cloneWith(mouseTracked: true));
@@ -1659,7 +1659,7 @@ final readonly class MouseSwapApp extends CopyableTestApp
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         if ($this->swapped) {
             return new UpdateResult($this);

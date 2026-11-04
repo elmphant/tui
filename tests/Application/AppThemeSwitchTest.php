@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\StyleToken;
@@ -48,7 +48,7 @@ final readonly class ThemeCyclingApp extends App
         return $this->light ? Theme::light() : null;
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return $message->key === 't'
             ? new UpdateResult(new self(!$this->light))

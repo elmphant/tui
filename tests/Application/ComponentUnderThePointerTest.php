@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
-use Elmphant\Tui\Application\Keyboard;
-use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -69,10 +67,8 @@ final readonly class PointerAskingApp extends App
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): self
     {
-        return $message->isClick()
-            ? new UpdateResult($this->cloneWith(pressedOn: [...$this->pressedOn, $this->componentAt($message, $screen)?->value]))
-            : new UpdateResult($this);
+        return $message->isClick() ? $this->cloneWith(pressedOn: [...$this->pressedOn, $input->componentAt($message)?->value]) : $this;
     }
 }

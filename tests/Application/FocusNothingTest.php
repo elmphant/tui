@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use ArrayObject;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\ComponentId;
@@ -103,7 +104,7 @@ final readonly class SelfAnsweringApp extends App
         );
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         $this->seen[] = $message->key;
 

@@ -6,7 +6,6 @@ use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
@@ -36,7 +35,7 @@ final readonly class InlineE2eApp extends App
         );
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, Elmphant\Tui\Application\InputContext $input): UpdateResult
     {
         return $message->key === Key::Enter ? new UpdateResult($this, Cmd::quit()) : new UpdateResult($this);
     }

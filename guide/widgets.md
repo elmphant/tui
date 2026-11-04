@@ -157,9 +157,8 @@ Escape or a click outside closes it: `isOpen()` turns false, and its bind
 closure drops it, so it leaves the screen:
 
 ```php
-use Elmphant\Tui\Application\{App, Component};
+use Elmphant\Tui\Application\{App, Component, InputContext};
 use Elmphant\Tui\Core\{Message, UpdateResult};
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Widget\Form\{Field, Form};
 use Elmphant\Tui\Widget\Popup\{Modal, Overlay};
@@ -190,7 +189,7 @@ final readonly class Notes extends App
         ));
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         if ($this->editor !== null || !$message->ctrl || $message->key !== 'n') {
             return new UpdateResult($this);
@@ -201,7 +200,7 @@ final readonly class Notes extends App
             ->withSubmit('Save', new NoteSaved())));
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         return match (true) {
             $message instanceof NoteSaved && $this->editor?->problems() === [] => new UpdateResult(

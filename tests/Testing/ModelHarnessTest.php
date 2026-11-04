@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
@@ -286,7 +287,7 @@ final readonly class HarnessCounter extends App
         return Cmd::tick(1.0);
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return match ($message->key) {
             '+' => new UpdateResult(new self($this->count + 1)),

@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Application\Keyboard;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\ComponentId;
@@ -234,7 +234,7 @@ final readonly class ClickableChromeApp extends App
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         return $message->isClick()
             ? new UpdateResult($this, Cmd::batch(Cmd::log('pressed'), Cmd::focus(ComponentId::named('second'))))

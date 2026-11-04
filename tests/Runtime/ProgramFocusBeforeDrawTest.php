@@ -6,8 +6,8 @@ namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Runtime\Program;
@@ -63,7 +63,7 @@ final readonly class FieldBehindModalApp extends App
             : Overlay::new($main, Component::bind('modal', $this->modal, static fn (self $app, Modal $modal): self => $app->cloneWith(modal: $modal)));
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return $message->key === Key::F2
             ? new UpdateResult($this->cloneWith(modal: Modal::new('M', TextInput::new()->withPlaceholder('inside'))))

@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\Initializes;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
@@ -223,7 +224,7 @@ final readonly class HostOfATellingMount extends App
         return Mount::named('teller', $this->teller, Text::new('teller'), static fn (self $host, TellingModel $teller): self => $host->cloneWith(teller: $teller));
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         return $message instanceof Heard
             ? new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]))
@@ -343,7 +344,7 @@ final readonly class StartingApp extends App
         return Cmd::message(new Heard('started'));
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         return $message instanceof Heard
             ? new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]))

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ErrorMsg;
 use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\KeyMsg;
@@ -68,7 +68,7 @@ final readonly class ViewThatBreaksOnXApp extends App
         return Text::new('fine');
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return $message->key === 'x'
             ? new UpdateResult(new self(true))

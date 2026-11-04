@@ -6,10 +6,10 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -58,7 +58,7 @@ final readonly class QueryWritingApp extends App
         );
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         return $message instanceof QueryWritten
             ? new UpdateResult($this->cloneWith(searchedFor: [...$this->searchedFor, $message->query]))

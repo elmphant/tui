@@ -255,13 +255,13 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
     /**
      * Runs before the focused component, except for keys it takes as text; a key actions() declares never reaches it.
-     * A changed model or any command consumes the key; return new UpdateResult($this) to pass it on.
+     * A changed model or any command consumes the key; return $this to pass it on.
      *
-     * @return UpdateResult<static>
+     * @return static|UpdateResult<static>
      */
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): self|UpdateResult
     {
-        return new UpdateResult($this);
+        return $this;
     }
 
     /**
@@ -274,11 +274,11 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     }
 
     /**
-     * @return UpdateResult<static>
+     * @return static|UpdateResult<static>
      */
-    protected function onResize(ResizeMsg $message): UpdateResult
+    protected function onResize(ResizeMsg $message): self|UpdateResult
     {
-        return new UpdateResult($this);
+        return $this;
     }
 
     /**
@@ -287,35 +287,35 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      *
      * @param list<ComponentId> $ids
      *
-     * @return UpdateResult<static>
+     * @return static|UpdateResult<static>
      */
-    protected function onComponentsChanged(array $ids): UpdateResult
+    protected function onComponentsChanged(array $ids): self|UpdateResult
     {
-        return new UpdateResult($this);
+        return $this;
     }
 
     /**
-     * @return UpdateResult<static>
+     * @return static|UpdateResult<static>
      */
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): self|UpdateResult
     {
-        return new UpdateResult($this);
+        return $this;
     }
 
     /**
-     * @return UpdateResult<static>
+     * @return static|UpdateResult<static>
      */
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
+    protected function onTick(TickMsg $message, InputContext $input): self|UpdateResult
     {
-        return new UpdateResult($this);
+        return $this;
     }
 
     /**
-     * @return UpdateResult<static>
+     * @return static|UpdateResult<static>
      */
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): self|UpdateResult
     {
-        return new UpdateResult($this);
+        return $this;
     }
 
     /**
@@ -336,21 +336,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     protected function globalKeybindings(): Keybindings
     {
         return Keybindings::empty();
-    }
-
-    /**
-     * The innermost component drawn under the pointer, for onMouse(), or null where none is.
-     */
-    protected function componentAt(MouseMsg $message, Rect $screen): ?ComponentId
-    {
-        $under = null;
-        foreach ($this->findComponentRects($screen, $this->componentRegistry()->all(), visible: true) as $id => $rect) {
-            if ($message->isIn($rect)) {
-                $under = $id;
-            }
-        }
-
-        return $under === null ? null : ComponentId::named($under);
     }
 
     /**
@@ -418,7 +403,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         if ($message instanceof ResizeMsg) {
-            return $this->onResize($message);
+            return $this->resultOf($this->onResize($message));
         }
 
         $registry = $this->componentRegistry();
@@ -445,7 +430,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             return $this->delegateMouse($message, $screenRect, $components);
         }
 
-        return $this->handleUnrouted($message, $screenRect);
+        return $this->handleUnrouted($message, $screenRect, null);
     }
 
     /**
@@ -480,7 +465,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             return $this->delegateToFocused($message, $screenRect, $holder);
         }
 
-        return $this->handleUnrouted($message, $screenRect);
+        return $this->handleUnrouted($message, $screenRect, $holder);
     }
 
     /**
@@ -555,7 +540,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      *
      * @return UpdateResult<static>
      */
-    private function handleUnrouted(Message $message, Rect $screenRect): UpdateResult
+    private function handleUnrouted(Message $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
         if ($message instanceof MountedMsg) {
             $mount = $this->mountNamed($message->mount);
@@ -566,14 +551,14 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         if ($message instanceof TickMsg) {
-            return $this->broadcastAfter($this->onTick($message, $screenRect), $message, $screenRect);
+            return $this->broadcastAfter($this->resultOf($this->onTick($message, $this->inputContext($screenRect, $holder))), $message, $screenRect);
         }
 
         if ($message instanceof FloatMouseMsg) {
-            return $this->broadcastAfter($this->onMessage($message, $screenRect), $message, $screenRect);
+            return $this->broadcastAfter($this->resultOf($this->onMessage($message, $this->inputContext($screenRect, $holder))), $message, $screenRect);
         }
 
-        return $this->onMessage($message, $screenRect);
+        return $this->resultOf($this->onMessage($message, $this->inputContext($screenRect, $holder)));
     }
 
     /**
@@ -681,7 +666,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     private function routeKey(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
-        $appResult = $this->onKey($message, $screenRect);
+        $appResult = $this->resultOf($this->onKey($message, $this->inputContext($screenRect, $holder)));
 
         if ($appResult->model !== $this || $appResult->command !== null) {
             return $appResult;
@@ -841,7 +826,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         array $components,
         ?ComponentId $holder = null,
     ): UpdateResult {
-        $appResult = $this->onMouse($message, $screenRect, new Keyboard($holder, fn (): array => $this->hintsOfFocused($holder)));
+        $appResult = $this->resultOf($this->onMouse($message, $this->inputContext($screenRect, $holder)));
         $pressed = $this->appModel($appResult)->offeredToTheMountUnder($message, $screenRect);
         $appResult = new UpdateResult($pressed->model, Cmd::batch($appResult->command, $pressed->command));
         $current = $this->appModel($appResult);
@@ -1281,10 +1266,43 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             return null;
         }
 
+        /** @var static|UpdateResult<static> $answered */
         $answered = $handler($this);
-        $result = $answered instanceof UpdateResult ? $answered : new UpdateResult($answered);
+        $result = $this->resultOf($answered);
 
         return new UpdateResult($this->appModel($result), $result->command);
+    }
+
+    private function inputContext(Rect $screen, ?ComponentId $holder): InputContext
+    {
+        return new InputContext(
+            $screen,
+            $holder,
+            fn (): array => $this->hintsOfFocused($holder),
+            fn (MouseMsg $message): ?ComponentId => $this->componentAt($message, $screen),
+        );
+    }
+
+    private function componentAt(MouseMsg $message, Rect $screen): ?ComponentId
+    {
+        $under = null;
+        foreach ($this->findComponentRects($screen, $this->componentRegistry()->all(), visible: true) as $id => $rect) {
+            if ($message->isIn($rect)) {
+                $under = $id;
+            }
+        }
+
+        return $under === null ? null : ComponentId::named($under);
+    }
+
+    /**
+     * @param static|UpdateResult<static> $answered
+     *
+     * @return UpdateResult<static>
+     */
+    private function resultOf(self|UpdateResult $answered): UpdateResult
+    {
+        return $answered instanceof UpdateResult ? $answered : new UpdateResult($answered);
     }
 
     /**
@@ -1337,7 +1355,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $ids[] = $original->id;
         }
 
-        $result = $updated->onComponentsChanged($ids);
+        $result = $this->resultOf($updated->onComponentsChanged($ids));
 
         return [$updated->appModel($result), Cmd::batch($written, $result->command)];
     }

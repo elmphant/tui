@@ -13,12 +13,12 @@ abstract readonly class App
     public function theme(): ?Theme { return null; }          // asked every frame; null keeps the start theme
 
     protected function setup(): ?Cmd { return null; }         // commands to run at start
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult { return new UpdateResult($this); }  // $keyboard: focused(), hints()
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
-    protected function onResize(ResizeMsg $message): UpdateResult { return new UpdateResult($this); }
-    protected function onMessage(Message $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
-    protected function onComponentsChanged(array $ids): UpdateResult { return new UpdateResult($this); } // list<ComponentId>, not strings: compare $id->value
+    protected function onKey(KeyMsg $message, InputContext $input): self|UpdateResult { return $this; }  // $input: screen(), focused(), hints(), componentAt($mouse)
+    protected function onMouse(MouseMsg $message, InputContext $input): self|UpdateResult { return $this; }
+    protected function onTick(TickMsg $message, InputContext $input): self|UpdateResult { return $this; }
+    protected function onResize(ResizeMsg $message): self|UpdateResult { return $this; }
+    protected function onMessage(Message $message, InputContext $input): self|UpdateResult { return $this; }
+    protected function onComponentsChanged(array $ids): self|UpdateResult { return $this; } // list<ComponentId>, not strings: compare $id->value
 
     protected function actions(): AppActions {}                 // keys answered anywhere, before any widget, quit keys too
     protected function globalKeybindings(): Keybindings {}      // bindings every widget inherits (VimMode)
@@ -26,7 +26,6 @@ abstract readonly class App
     protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
     protected function bind(string $property): Component {}           // the widget a property holds, stored by the framework
-    protected function componentAt(MouseMsg $message, Rect $screen): ?ComponentId {} // in onMouse(): the bound component under the pointer
 }
 ```
 
@@ -61,12 +60,14 @@ abstract readonly class App
 
 ## What a hook returns
 
-Every hook returns an `UpdateResult`:
+Every hook, handler and bind closure returns the next App, or an `UpdateResult`
+once it asks for work:
 
-- `new UpdateResult($this)` — the message meant nothing here. In `onKey()`,
-  the key then goes on to the focused widget.
-- `new UpdateResult($next, $command)` — a new App, and maybe a command.
-- `new UpdateResult($this, $command)` — only a command.
+- `$this` — the message meant nothing here. In `onKey()`, the key then goes
+  on to the focused widget.
+- `$next` — a new App.
+- `new UpdateResult($next, $command)` — a new App and a command, or
+  `new UpdateResult($this, $command)` for only a command.
 
 The App is immutable. Return a new one instead of changing a property. Write
 small typed `withX()` methods, or call the protected

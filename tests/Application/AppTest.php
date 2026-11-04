@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Application\Keyboard;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
@@ -451,7 +451,7 @@ final readonly class CounterApp extends CopyableTestApp
         return Text::new("Count: {$this->count}");
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return match ($message->key) {
             'k' => new UpdateResult($this->cloneWith(count: $this->count + 1)),
@@ -582,7 +582,7 @@ final readonly class TickingApp extends CopyableTestApp
         return Cmd::tick(0.05);
     }
 
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
+    protected function onTick(TickMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this->cloneWith(ticks: $this->ticks + 1));
     }
@@ -599,7 +599,7 @@ final readonly class MouseApp extends CopyableTestApp
         return Text::new($this->clicked ? 'clicked' : 'waiting');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         return $message->isClick()
             ? new UpdateResult($this->cloneWith(clicked: true))
@@ -618,9 +618,9 @@ final readonly class MouseRectApp extends CopyableTestApp
         return Text::new('x');
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
-        return new UpdateResult($this->cloneWith(width: $screen->width, height: $screen->height));
+        return new UpdateResult($this->cloneWith(width: $input->screen()->width, height: $input->screen()->height));
     }
 }
 
@@ -642,9 +642,9 @@ final readonly class MouseRectWithFocusablesApp extends CopyableTestApp
         );
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
-        return new UpdateResult($this->cloneWith(width: $screen->width, height: $screen->height));
+        return new UpdateResult($this->cloneWith(width: $input->screen()->width, height: $input->screen()->height));
     }
 }
 
@@ -659,7 +659,7 @@ final readonly class CmdApp extends CopyableTestApp
         return Text::new('cmd');
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return match ($message->key) {
             'r' => new UpdateResult($this->cloneWith(requested: true), Cmd::exec(['echo', 'hi'])),
@@ -679,7 +679,7 @@ final readonly class ResizeTrackingApp extends CopyableTestApp
         return Text::new('resize tracking');
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this->cloneWith(messageReceived: true));
     }
@@ -696,7 +696,7 @@ final readonly class FloatHookApp extends CopyableTestApp
         return Text::new('shell');
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         return $message instanceof FloatMouseMsg
             ? new UpdateResult($this->cloneWith(received: $message))
@@ -763,7 +763,7 @@ final readonly class FloatBroadcastApp extends CopyableTestApp
         );
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         return $message instanceof FloatMouseMsg
             ? new UpdateResult($this->cloneWith(received: $message))

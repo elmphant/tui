@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
@@ -265,7 +266,7 @@ final readonly class NoInteractivesTickApp extends CopyableTestApp
         return Text::new("Ticks: {$this->ticks}");
     }
 
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
+    protected function onTick(TickMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this->cloneWith(ticks: $this->ticks + 1));
     }
@@ -488,7 +489,7 @@ final readonly class CommandWithTickApp extends CopyableTestApp
         );
     }
 
-    protected function onTick(TickMsg $message, Rect $screen): UpdateResult
+    protected function onTick(TickMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this, Cmd::tick(0.1));
     }

@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Application\Keyboard;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Tests\Application\Support\CopyableTestApp;
@@ -47,8 +46,8 @@ final readonly class HintsRecordingApp extends CopyableTestApp
         return Component::bind('list', $this->list, static fn (self $app, ListView $list): self => new self($list, $app->recorded, $app->focused));
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
-        return new UpdateResult(new self($this->list, $keyboard->hints(), $keyboard->focused()));
+        return new UpdateResult(new self($this->list, $input->hints(), $input->focused()));
     }
 }

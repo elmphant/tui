@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Application\App;
-use Elmphant\Tui\Application\Keyboard;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\ToastCmd;
 use Elmphant\Tui\Core\Cmd\ToastPosition;
 use Elmphant\Tui\Core\Cmd\ToastSeverity;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
@@ -424,12 +423,12 @@ final readonly class ToastingApp extends App
         return Paragraph::fromText($this->backdrop);
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this, is_string($message->key) ? $this->toasts[$message->key] ?? null : null);
     }
 
-    protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
+    protected function onMouse(MouseMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this->cloneWith(clicks: [...$this->clicks, $message->action]));
     }

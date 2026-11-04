@@ -6,11 +6,11 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\AppActions;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\Presets\VimMode;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -120,7 +120,7 @@ final readonly class ShortcutsAroundADropdownApp extends App
         return $this->bind('dropdown');
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return \is_string($message->key)
             ? new UpdateResult($this->cloneWith(shortcuts: [...$this->shortcuts, $message->key]))
@@ -160,7 +160,7 @@ final readonly class ShortcutsAroundAFieldApp extends App
             ->with('edit', ['e', 'ctrl+e'], static fn (self $app): self => $app->cloneWith(shortcuts: [...$app->shortcuts, 'edit']));
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return \in_array($message->key, ['n', 'd'], true)
             ? new UpdateResult($this->cloneWith(shortcuts: [...$this->shortcuts, $message->key]))

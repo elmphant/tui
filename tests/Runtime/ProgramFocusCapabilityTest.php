@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
@@ -100,7 +101,7 @@ final readonly class FocusElsewhereApp extends App
         );
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return $message->ctrl && $message->key === 'g'
             ? new UpdateResult($this, Cmd::focus(ComponentId::named('hidden/composer')))
@@ -131,7 +132,7 @@ final readonly class KeyboardStartsWithTheAppApp extends App
         return Cmd::focusNowhere();
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         return new UpdateResult($this, Cmd::quit());
     }

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -64,7 +64,7 @@ final readonly class SpeaksToItselfApp extends App
         return Text::new('nothing to press');
     }
 
-    protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
+    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
     {
         $errand = Cmd::message(new TheErrand());
 
@@ -74,7 +74,7 @@ final readonly class SpeaksToItselfApp extends App
         );
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         return $message instanceof TheErrand
             ? new UpdateResult($this->cloneWith(seen: [...$this->seen, 'the-errand']))

@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use Closure;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Initializes;
+use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Application\MountedMsg;
 use Elmphant\Tui\Core\Cmd;
@@ -206,7 +207,7 @@ final readonly class HostOfABusyMount extends App
         );
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         if ($message instanceof LeaveNow) {
             return new UpdateResult($this->cloneWith(busy: null));
@@ -300,7 +301,7 @@ final readonly class HostOfAFeed extends App
         );
     }
 
-    protected function onMessage(Message $message, Rect $screen): UpdateResult
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
         if ($message instanceof LeaveNow) {
             return new UpdateResult($this->cloneWith(feed: null));
