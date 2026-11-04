@@ -16,6 +16,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
@@ -594,12 +595,12 @@ final class FooterTest extends TestCase
     {
         $theme = Theme::dark()->withBase(new Style())->withSelectedStyle(new Style());
 
-        self::assertSame(Color::ansi(7)->value, $theme->footerStyle->foregroundValue());
-        self::assertSame(Color::ansi(0)->value, $theme->footerStyle->backgroundValue());
+        self::assertSame(Color::ansi(AnsiColor::White)->value, $theme->footerStyle->foregroundValue());
+        self::assertSame(Color::ansi(AnsiColor::Black)->value, $theme->footerStyle->backgroundValue());
     }
 
     /**
-     * Kills L127 Color::ansi(0) fallback when both selectedStyle.background and base.foreground are null.
+     * Kills L127 Color::ansi(AnsiColor::Black) fallback when both selectedStyle.background and base.foreground are null.
      */
     #[Test]
     public function barBackgroundFallsBackToAnsiZeroWhenAllNull(): void
@@ -611,7 +612,7 @@ final class FooterTest extends TestCase
         $frame = new Frame(10, 1);
         $footer->render($frame, Rect::fromSize(10, 1), $context);
 
-        $expectedBg = Color::ansi(0)->value;
+        $expectedBg = Color::ansi(AnsiColor::Black)->value;
         self::assertSame($expectedBg, $frame->backgrounds[0]);
     }
 

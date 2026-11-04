@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderType;
@@ -106,7 +107,7 @@ final class BlockTest extends TestCase
     public function renderDrawsBorderWithStyle(): void
     {
         $style = new Style(
-            foreground: Color::ansi(1),
+            foreground: Color::ansi(AnsiColor::Red),
             attributes: Attr::BOLD,
         );
         $block = Block::new()
@@ -118,7 +119,7 @@ final class BlockTest extends TestCase
         $block->render($frame, $area);
 
         $cornerIndex = 0;
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[$cornerIndex]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[$cornerIndex]);
         self::assertSame(Attr::BOLD, $frame->attributes[$cornerIndex]);
     }
 
@@ -126,7 +127,7 @@ final class BlockTest extends TestCase
     public function renderDrawsTitle(): void
     {
         $titleStyle = new Style(
-            foreground: Color::ansi(3),
+            foreground: Color::ansi(AnsiColor::Yellow),
             attributes: Attr::BOLD,
         );
         $block = Block::new()
@@ -146,7 +147,7 @@ final class BlockTest extends TestCase
         self::assertSame('o', $frame->characters[0 * 20 + 6]);
         self::assertSame(' ', $frame->characters[0 * 20 + 7]);
 
-        self::assertSame(Color::ansi(3)->value, $frame->foregrounds[0 * 20 + 2]);
+        self::assertSame(Color::ansi(AnsiColor::Yellow)->value, $frame->foregrounds[0 * 20 + 2]);
         self::assertSame(Attr::BOLD, $frame->attributes[0 * 20 + 2]);
     }
 

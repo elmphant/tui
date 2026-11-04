@@ -9,6 +9,7 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -776,7 +777,7 @@ final class ProgressBarTest extends TestCase
         $fillColor = $theme->fillStyle->foregroundValue();
         $labelColor = $theme->base->foregroundValue();
         $baseBackground = $theme->base->backgroundValue();
-        $ansi0Color = Color::ansi(0)->value;
+        $ansi0Color = Color::ansi(AnsiColor::Black)->value;
 
         // display = 0.6 (> 0.5) => dark text on fill background
         $barAboveHalf = ProgressBar::new(0.6)->withDisplay(0.6)->withPercentShown(true);
@@ -811,7 +812,7 @@ final class ProgressBarTest extends TestCase
     {
         $theme = Theme::dark();
         $labelColor = $theme->base->foregroundValue();
-        $ansi0Color = Color::ansi(0)->value;
+        $ansi0Color = Color::ansi(AnsiColor::Black)->value;
 
         $progressBar = ProgressBar::new(0.5)->withDisplay(0.5)->withPercentShown(true);
 

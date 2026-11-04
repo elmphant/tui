@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -30,9 +31,9 @@ final class StyleTest extends TestCase
     {
         $panel = new Style(attributes: Attr::REVERSE | Attr::BOLD);
 
-        $ink = (new Style(foreground: Color::ansi(2), attributes: Attr::ITALIC))->readableOn($panel);
+        $ink = (new Style(foreground: Color::ansi(AnsiColor::Green), attributes: Attr::ITALIC))->readableOn($panel);
 
-        self::assertEquals(Color::ansi(2), $ink->foreground);
+        self::assertEquals(Color::ansi(AnsiColor::Green), $ink->foreground);
         self::assertNull($ink->background);
         self::assertSame(Attr::ITALIC | Attr::REVERSE, $ink->attributes);
     }
@@ -51,7 +52,7 @@ final class StyleTest extends TestCase
     public function foregroundReturnsNewInstance(): void
     {
         $original = new Style();
-        $modified = $original->withForeground(Color::named('red'));
+        $modified = $original->withForeground(Color::ansi(AnsiColor::Red));
 
         self::assertNull($original->foreground);
         self::assertNotNull($modified->foreground);
@@ -62,7 +63,7 @@ final class StyleTest extends TestCase
     public function backgroundReturnsNewInstance(): void
     {
         $original = new Style();
-        $modified = $original->withBackground(Color::named('blue'));
+        $modified = $original->withBackground(Color::ansi(AnsiColor::Blue));
 
         self::assertNull($original->background);
         self::assertNotNull($modified->background);
@@ -129,17 +130,17 @@ final class StyleTest extends TestCase
     #[Test]
     public function inheritFillsUnsetFields(): void
     {
-        $child = new Style(foreground: Color::named('red'));
+        $child = new Style(foreground: Color::ansi(AnsiColor::Red));
         $parent = new Style(
-            foreground: Color::named('blue'),
-            background: Color::named('green'),
+            foreground: Color::ansi(AnsiColor::Blue),
+            background: Color::ansi(AnsiColor::Green),
             attributes: Attr::BOLD,
         );
 
         $result = $child->inherit($parent);
 
-        self::assertSame(Color::named('red')->value, $result->foreground->value);
-        self::assertSame(Color::named('green')->value, $result->background->value);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $result->foreground->value);
+        self::assertSame(Color::ansi(AnsiColor::Green)->value, $result->background->value);
         self::assertSame(Attr::BOLD, $result->attributes);
     }
 
@@ -160,9 +161,9 @@ final class StyleTest extends TestCase
         $unset = new Style();
         self::assertSame(0, $unset->foregroundValue());
 
-        $set = new Style(foreground: Color::named('red'));
+        $set = new Style(foreground: Color::ansi(AnsiColor::Red));
         self::assertGreaterThan(0, $set->foregroundValue());
-        self::assertSame(Color::named('red')->value, $set->foregroundValue());
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $set->foregroundValue());
     }
 
     #[Test]
@@ -171,9 +172,9 @@ final class StyleTest extends TestCase
         $unset = new Style();
         self::assertSame(0, $unset->backgroundValue());
 
-        $set = new Style(background: Color::named('cyan'));
+        $set = new Style(background: Color::ansi(AnsiColor::Cyan));
         self::assertGreaterThan(0, $set->backgroundValue());
-        self::assertSame(Color::named('cyan')->value, $set->backgroundValue());
+        self::assertSame(Color::ansi(AnsiColor::Cyan)->value, $set->backgroundValue());
     }
 
     #[Test]
@@ -181,8 +182,8 @@ final class StyleTest extends TestCase
     {
         $frame = new Frame(10, 5);
         $area = new Rect(2, 1, 4, 3);
-        $foregroundColor = Color::named('red');
-        $backgroundColor = Color::named('blue');
+        $foregroundColor = Color::ansi(AnsiColor::Red);
+        $backgroundColor = Color::ansi(AnsiColor::Blue);
         $style = new Style(
             foreground: $foregroundColor,
             background: $backgroundColor,
@@ -219,8 +220,8 @@ final class StyleTest extends TestCase
     #[Test]
     public function inheritPreservesChildBackgroundOverParent(): void
     {
-        $childBackground = Color::named('red');
-        $parentBackground = Color::named('blue');
+        $childBackground = Color::ansi(AnsiColor::Red);
+        $parentBackground = Color::ansi(AnsiColor::Blue);
 
         $child = new Style(background: $childBackground);
         $parent = new Style(background: $parentBackground);
@@ -233,7 +234,7 @@ final class StyleTest extends TestCase
     #[Test]
     public function nullSafeForegroundAccessDoesNotThrowOnNull(): void
     {
-        $style = new Style(foreground: null, background: Color::named('red'));
+        $style = new Style(foreground: null, background: Color::ansi(AnsiColor::Red));
 
         self::assertSame(0, $style->foregroundValue());
         self::assertNotSame(0, $style->backgroundValue());
@@ -242,7 +243,7 @@ final class StyleTest extends TestCase
     #[Test]
     public function nullSafeBackgroundAccessDoesNotThrowOnNull(): void
     {
-        $style = new Style(foreground: Color::named('blue'), background: null);
+        $style = new Style(foreground: Color::ansi(AnsiColor::Blue), background: null);
 
         self::assertNotSame(0, $style->foregroundValue());
         self::assertSame(0, $style->backgroundValue());

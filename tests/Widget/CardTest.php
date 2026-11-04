@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
@@ -183,7 +184,7 @@ final class CardTest extends TestCase
     {
         // L90 Coalesce: $this->borderStyle ?? $theme->borderStyle — explicit must win
         $explicit = new Style(
-            foreground: Color::ansi(2),
+            foreground: Color::ansi(AnsiColor::Green),
         );
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
@@ -193,7 +194,7 @@ final class CardTest extends TestCase
 
         // Top-left corner at index 0
         self::assertSame(
-            Color::ansi(2)->value,
+            Color::ansi(AnsiColor::Green)->value,
             $frame->foregrounds[0],
             'Card must use explicit borderStyle foreground, not theme default',
         );
@@ -204,7 +205,7 @@ final class CardTest extends TestCase
     {
         // L91 Coalesce: $this->titleStyle ?? $theme->base->bold()
         $explicit = new Style(
-            foreground: Color::ansi(3),
+            foreground: Color::ansi(AnsiColor::Yellow),
         );
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
@@ -214,7 +215,7 @@ final class CardTest extends TestCase
 
         $titleIdx = 20 + 2; // row 1 col 2 — 'T'
         self::assertSame(
-            Color::ansi(3)->value,
+            Color::ansi(AnsiColor::Yellow)->value,
             $frame->foregrounds[$titleIdx],
             'Card must use explicit titleStyle foreground',
         );
@@ -225,7 +226,7 @@ final class CardTest extends TestCase
     {
         // L92 Coalesce: $this->bodyStyle ?? $theme->dim
         $explicit = new Style(
-            foreground: Color::ansi(4),
+            foreground: Color::ansi(AnsiColor::Blue),
         );
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
@@ -235,7 +236,7 @@ final class CardTest extends TestCase
 
         $bodyIdx = 40 + 2; // row 2 col 2 — 'b'
         self::assertSame(
-            Color::ansi(4)->value,
+            Color::ansi(AnsiColor::Blue)->value,
             $frame->foregrounds[$bodyIdx],
             'Card must use explicit bodyStyle foreground',
         );

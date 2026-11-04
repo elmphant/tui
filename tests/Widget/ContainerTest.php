@@ -12,6 +12,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
@@ -218,13 +219,13 @@ final class ContainerTest extends TestCase
     public function renderUsesTheResolvedChildAreaAndInheritsSurfaceStyle(): void
     {
         $child = new ContainerProbe();
-        $background = Color::ansi(4);
+        $background = Color::ansi(AnsiColor::Blue);
         $container = Container::around($child)
             ->withMargin(Spacing::all(1))
             ->withBorderType(BorderType::Solid)
             ->withPadding(Spacing::all(1))
             ->withStyle(new Style(
-                foreground: Color::ansi(2),
+                foreground: Color::ansi(AnsiColor::Green),
                 background: $background,
                 attributes: Attr::BOLD,
             ));
@@ -246,7 +247,7 @@ final class ContainerTest extends TestCase
     #[Test]
     public function aSurfaceStyleStaysInsideTheClip(): void
     {
-        $background = Color::ansi(4);
+        $background = Color::ansi(AnsiColor::Blue);
         $container = Container::around(new ContainerProbe())->withStyle(new Style(background: $background));
         $frame = new Frame(6, 3);
 
@@ -260,10 +261,10 @@ final class ContainerTest extends TestCase
     #[Test]
     public function surfaceStyleFillsDefaultsWithoutOverwritingExplicitChildColors(): void
     {
-        $foreground = Color::ansi(2);
-        $background = Color::ansi(4);
-        $childForeground = Color::ansi(6);
-        $childBackground = Color::ansi(3);
+        $foreground = Color::ansi(AnsiColor::Green);
+        $background = Color::ansi(AnsiColor::Blue);
+        $childForeground = Color::ansi(AnsiColor::Cyan);
+        $childBackground = Color::ansi(AnsiColor::Yellow);
         $container = Container::around(new StyledContainerProbe(
             new Style($childForeground, $childBackground, Attr::ITALIC),
         ))->withStyle(new Style($foreground, $background, Attr::BOLD));
@@ -299,8 +300,8 @@ final class ContainerTest extends TestCase
     public function eachSurfaceColorChannelMarksItsRowDirtyIndependently(): void
     {
         foreach ([
-            new Style(foreground: Color::ansi(2)),
-            new Style(background: Color::ansi(4)),
+            new Style(foreground: Color::ansi(AnsiColor::Green)),
+            new Style(background: Color::ansi(AnsiColor::Blue)),
         ] as $style) {
             $frame = new Frame(1, 1);
             Container::around(new EmptyContainerProbe())
@@ -314,7 +315,7 @@ final class ContainerTest extends TestCase
     #[Test]
     public function surfaceStylingIsClippedToTheFrameAndContainerArea(): void
     {
-        $background = Color::ansi(4);
+        $background = Color::ansi(AnsiColor::Blue);
         $frame = new Frame(3, 3);
         $container = Container::around(new EmptyContainerProbe())
             ->withStyle(new Style(background: $background));
@@ -334,7 +335,7 @@ final class ContainerTest extends TestCase
     #[Test]
     public function aCustomBorderStyleOverridesTheThemeBorderStyle(): void
     {
-        $borderStyle = new Style(foreground: Color::ansi(5));
+        $borderStyle = new Style(foreground: Color::ansi(AnsiColor::Magenta));
         $frame = new Frame(5, 3);
         $container = Container::around(new EmptyContainerProbe())
             ->withBorderType(BorderType::Solid)

@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -45,7 +46,7 @@ final class TableCursorHighlightTest extends TestCase
 
         Table\Table::new(
             [Column::new('Name', Constraint::flex())],
-            [Row::new(Span::styled('Alice', new Style(foreground: Color::ansi(2))))],
+            [Row::new(Span::styled('Alice', new Style(foreground: Color::ansi(AnsiColor::Green))))],
         )->render($frame, Rect::fromSize(30, 3), RenderContext::focused($theme));
 
         $ink = Color::fromValue($frame->foregrounds[30]);
@@ -65,7 +66,7 @@ final class TableCursorHighlightTest extends TestCase
 
         Table\Table::new(
             [Column::new('ID', Constraint::exact(4)), Column::new('Name', Constraint::flex())],
-            [Row::new('1', Span::styled('Alice', new Style(foreground: Color::ansi(2)))), Row::new('2', 'Bob')],
+            [Row::new('1', Span::styled('Alice', new Style(foreground: Color::ansi(AnsiColor::Green)))), Row::new('2', 'Bob')],
         )->render($frame, Rect::fromSize(30, 4), RenderContext::focused(Theme::dark(), ColorProfile::Ascii));
 
         $cursorRow = array_slice($frame->attributes, 30, 30);

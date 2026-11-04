@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -71,6 +72,6 @@ final class ProgressBarPerfTest extends TestCase
             ->withProgress(0.5)
             ->withLabel('CPU')
             ->withFillStyle(new Style(foreground: Color::hex('FF6B6B')))
-            ->withEmptyStyle(new Style(foreground: Color::ansi(8)));
+            ->withEmptyStyle(new Style(foreground: Color::ansi(AnsiColor::BrightBlack)));
     }
 }

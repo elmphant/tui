@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -46,7 +47,7 @@ final class PrimitivesTest extends TestCase
     {
         $frame = new Frame(20, 5);
         $context = new RenderContext(Theme::dark());
-        $style = new Style(foreground: Color::ansi(1), attributes: Attr::BOLD);
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red), attributes: Attr::BOLD);
         $text = Text::styled('Hi', $style);
         $text->render($frame, new Rect(0, 0, 20, 1), $context);
         self::assertSame($style->foregroundValue(), $frame->foregrounds[0]);
@@ -107,7 +108,7 @@ final class PrimitivesTest extends TestCase
     {
         $frame = new Frame(20, 1);
         $context = new RenderContext(Theme::dark());
-        $redStyle = new Style(foreground: Color::ansi(1));
+        $redStyle = new Style(foreground: Color::ansi(AnsiColor::Red));
 
         $text = Text::line(Span::styled('AB', $redStyle), 'CD');
         $text->render($frame, new Rect(0, 0, 20, 1), $context);

@@ -70,10 +70,10 @@ public function render(Frame $frame, RenderPass $pass): void
     $frame->putStyled(0, 0, 'Hello', new Style(foreground: Color::hex('FF06B7')));
 
     // With background and attributes
-    $frame->putStyled(0, 1, 'Bold text', (new Style(Color::ansi(7), Color::ansi(0)))->bold());
+    $frame->putStyled(0, 1, 'Bold text', (new Style(Color::ansi(AnsiColor::White), Color::ansi(AnsiColor::Black)))->bold());
 
     // Fill a rectangle
-    $frame->fillStyled(new Rect(0, 3, 40, 1), new Style(Color::ansi(7), Color::ansi(4)));
+    $frame->fillStyled(new Rect(0, 3, 40, 1), new Style(Color::ansi(AnsiColor::White), Color::ansi(AnsiColor::Blue)));
 
     // A theme style, so the colours follow the theme
     $frame->putStyled(0, 4, 'Selected', $pass->context->theme->selectedStyle);

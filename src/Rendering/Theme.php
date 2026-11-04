@@ -53,8 +53,8 @@ final readonly class Theme
         $this->warningOverride = $warning;
         $this->infoOverride = $info;
         $this->footerStyle = $footerStyle ?? new Style(
-            foreground: $base->foreground ?? Color::ansi(7),
-            background: $selectedStyle->background ?? Color::ansi(0),
+            foreground: $base->foreground ?? Color::ansi(AnsiColor::White),
+            background: $selectedStyle->background ?? Color::ansi(AnsiColor::Black),
         );
         $this->warning = $warning ?? $titleStyle->withAttributes($titleStyle->attributes & ~Attr::BOLD);
         $this->info = $info ?? $accent;
@@ -237,7 +237,7 @@ final readonly class Theme
             titleStyle: new Style(foreground: Color::hex('E5C07B'), attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('E5C07B'), attributes: Attr::BOLD),
             selectedStyle: new Style(background: Color::hex('3E4451')),
-            cursorStyle: new Style(foreground: Color::ansi(0), background: Color::hex('61AFEF')),
+            cursorStyle: new Style(foreground: Color::ansi(AnsiColor::Black), background: Color::hex('61AFEF')),
             fillStyle: new Style(foreground: Color::hex('61AFEF')),
             emptyStyle: new Style(foreground: Color::hex('5C6370')),
             inputStyle: new Style(foreground: Color::hex('ABB2BF'), background: Color::hex('3E4451')),

@@ -58,17 +58,11 @@ final readonly class Color
         return new self(0);
     }
 
-    public static function ansi(int $index): self
+    public static function ansi(AnsiColor $color): self
     {
-        if ($index < 0 || $index > 15) {
-            throw new InvalidArgumentException("ANSI color index must be 0-15, got {$index}");
-        }
-
-        if ($index >= 8) {
-            return new self(self::BRIGHT + $index - 8);
-        }
-
-        return new self(self::ANSI + $index);
+        return $color->value >= 8
+            ? new self(self::BRIGHT + $color->value - 8)
+            : new self(self::ANSI + $color->value);
     }
 
     public static function color256(int $index): self
@@ -108,22 +102,6 @@ final readonly class Color
         return self::rgb(($value >> 16) & 0xFF, ($value >> 8) & 0xFF, $value & 0xFF);
     }
 
-    public static function named(string $name): self
-    {
-        return new self(match (strtolower($name)) {
-            'black' => self::ANSI,
-            'red' => self::ANSI + 1,
-            'green' => self::ANSI + 2,
-            'yellow' => self::ANSI + 3,
-            'blue' => self::ANSI + 4,
-            'magenta' => self::ANSI + 5,
-            'cyan' => self::ANSI + 6,
-            'white' => self::ANSI + 7,
-            'gray', 'grey' => self::BRIGHT,
-            default => throw new InvalidArgumentException("Unknown colour name \"{$name}\""),
-        });
-    }
-
     public function downsampleTo(ColorProfile $profile): self
     {
         return match ($profile) {
@@ -132,7 +110,7 @@ final readonly class Color
                 ? self::color256(self::rgbTo256(...$this->channels()))
                 : $this,
             ColorProfile::Ansi => $this->value >= self::C256
-                ? self::ansi(self::rgbTo16(...$this->channels()))
+                ? self::ansi(AnsiColor::from(self::rgbTo16(...$this->channels())))
                 : $this,
             ColorProfile::Ascii => self::none(),
         };
@@ -147,7 +125,7 @@ final readonly class Color
             return self::none();
         }
 
-        return $this->relativeLuminance() > self::CONTRAST_CROSSOVER ? self::ansi(0) : self::ansi(15);
+        return $this->relativeLuminance() > self::CONTRAST_CROSSOVER ? self::ansi(AnsiColor::Black) : self::ansi(AnsiColor::BrightWhite);
     }
 
     /**

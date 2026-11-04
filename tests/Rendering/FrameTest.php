@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Rendering;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -30,7 +31,7 @@ final class FrameTest extends TestCase
         $frame->putString(0, 1, 'y');
         self::assertSame(5, $frame->drawnHeight());
 
-        $frame->clear(Color::ansi(4)->value);
+        $frame->clear(Color::ansi(AnsiColor::Blue)->value);
         self::assertSame(0, $frame->drawnHeight(), 'a background alone is not drawing');
     }
 
@@ -130,7 +131,7 @@ final class FrameTest extends TestCase
     public function putChar(): void
     {
         $frame = new Frame(10, 5);
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->putChar(3, 2, 'X', $foreground);
         $index = 2 * 10 + 3;
         self::assertSame('X', $frame->characters[$index]);
@@ -250,7 +251,7 @@ final class FrameTest extends TestCase
     public function fillRect(): void
     {
         $frame = new Frame(10, 5);
-        $foreground = Color::ansi(2)->value;
+        $foreground = Color::ansi(AnsiColor::Green)->value;
         $frame->fillRect(1, 1, 3, 2, $foreground);
         self::assertSame($foreground, $frame->foregrounds[1 * 10 + 1]);
         self::assertSame($foreground, $frame->foregrounds[1 * 10 + 3]);
@@ -274,7 +275,7 @@ final class FrameTest extends TestCase
     public function clear(): void
     {
         $frame = new Frame(10, 5);
-        $frame->putChar(5, 2, 'X', Color::ansi(1)->value);
+        $frame->putChar(5, 2, 'X', Color::ansi(AnsiColor::Red)->value);
         $frame->clear();
         self::assertSame(' ', $frame->characters[2 * 10 + 5]);
         self::assertSame(0, $frame->foregrounds[2 * 10 + 5]);
@@ -391,9 +392,9 @@ final class FrameTest extends TestCase
     public function clearMarksRowsChangedOnlyByStyleOrWidth(): void
     {
         $frame = new Frame(5, 5);
-        $frame->foregrounds[1 * 5] = Color::ansi(1)->value;
+        $frame->foregrounds[1 * 5] = Color::ansi(AnsiColor::Red)->value;
         $frame->markRowDirty(1);
-        $frame->backgrounds[2 * 5] = Color::ansi(2)->value;
+        $frame->backgrounds[2 * 5] = Color::ansi(AnsiColor::Green)->value;
         $frame->markRowDirty(2);
         $frame->attributes[3 * 5] = Attr::BOLD;
         $frame->markRowDirty(3);
@@ -423,7 +424,7 @@ final class FrameTest extends TestCase
     public function clearWithBackgroundMarksRowsWhereBackgroundDiffersFromTarget(): void
     {
         $frame = new Frame(4, 2);
-        $background = Color::ansi(4)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
 
         $frame->clear($background);
         self::assertSame([0 => true, 1 => true], $frame->dirtyRows);
@@ -445,7 +446,7 @@ final class FrameTest extends TestCase
     public function clearWithSameBackgroundKeepsBlankBufferClean(): void
     {
         $frame = new Frame(4, 2);
-        $background = Color::ansi(4)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $frame->clear($background);
         $frame->dirtyRows = [0 => true, 1 => true];
 
@@ -487,15 +488,15 @@ final class FrameTest extends TestCase
     public function snapshotFrom(): void
     {
         $source = new Frame(5, 3);
-        $source->putChar(0, 0, 'A', Color::ansi(1)->value, Color::ansi(2)->value, 4);
+        $source->putChar(0, 0, 'A', Color::ansi(AnsiColor::Red)->value, Color::ansi(AnsiColor::Green)->value, 4);
         $source->putChar(4, 2, 'B');
 
         $destination = new Frame(5, 3);
         $destination->snapshotFrom($source);
 
         self::assertSame('A', $destination->character(0));
-        self::assertSame(Color::ansi(1)->value, $destination->foregrounds[0]);
-        self::assertSame(Color::ansi(2)->value, $destination->backgrounds[0]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $destination->foregrounds[0]);
+        self::assertSame(Color::ansi(AnsiColor::Green)->value, $destination->backgrounds[0]);
         self::assertSame(4, $destination->attributes[0]);
         self::assertSame('B', $destination->character(2 * 5 + 4));
     }
@@ -701,8 +702,8 @@ final class FrameTest extends TestCase
     public function putCharWideCharacterWritesPlaceholderAtNextColumn(): void
     {
         $frame = new Frame(10, 1);
-        $foreground = Color::ansi(1)->value;
-        $background = Color::ansi(2)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
+        $background = Color::ansi(AnsiColor::Green)->value;
         $frame->putChar(3, 0, "\u{4E16}", $foreground, $background, Attr::BOLD);
 
         self::assertSame("\u{4E16}", $frame->characters[3]);
@@ -908,7 +909,7 @@ final class FrameTest extends TestCase
     public function putStringWideCharacterWritesPlaceholder(): void
     {
         $frame = new Frame(10, 1);
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->putString(0, 0, "\u{4E16}\u{754C}", $foreground);
 
         self::assertSame("\u{4E16}", $frame->characters[0]);
@@ -950,7 +951,7 @@ final class FrameTest extends TestCase
     public function putStyledReturnsColumnsConsumed(): void
     {
         $frame = new Frame(20, 1);
-        $style = new Style(foreground: Color::ansi(1));
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red));
         $consumed = $frame->putStyled(0, 0, 'Hello', $style);
         self::assertSame(5, $consumed);
     }
@@ -959,8 +960,8 @@ final class FrameTest extends TestCase
     public function putStyledPassesAllStyleProperties(): void
     {
         $frame = new Frame(20, 1);
-        $foreground = Color::ansi(1);
-        $background = Color::ansi(2);
+        $foreground = Color::ansi(AnsiColor::Red);
+        $background = Color::ansi(AnsiColor::Green);
         $style = new Style(foreground: $foreground, background: $background, attributes: Attr::BOLD | Attr::ITALIC);
 
         $frame->putStyled(0, 0, 'AB', $style);
@@ -980,12 +981,12 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(20, 1);
         $parser = new SgrParser();
-        $parser->foreground = Color::ansi(1)->value;
+        $parser->foreground = Color::ansi(AnsiColor::Red)->value;
 
         $frame->putAnsi(0, 0, 'AB', $parser);
 
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[0]);
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[1]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[0]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[1]);
     }
 
     #[Test]
@@ -1001,7 +1002,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(20, 1);
         $frame->putAnsi(0, 0, "\e[31mA\e[0mB");
-        $redForeground = Color::ansi(1)->value;
+        $redForeground = Color::ansi(AnsiColor::Red)->value;
         self::assertSame($redForeground, $frame->foregrounds[0]);
         self::assertSame(0, $frame->foregrounds[1]);
     }
@@ -1083,7 +1084,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(20, 1);
         $frame->putAnsi(0, 0, "\e[31m\tA");
-        $redForeground = Color::ansi(1)->value;
+        $redForeground = Color::ansi(AnsiColor::Red)->value;
         self::assertSame($redForeground, $frame->foregrounds[0]);
         self::assertSame($redForeground, $frame->foregrounds[7]);
         self::assertSame($redForeground, $frame->foregrounds[8]);
@@ -1163,7 +1164,7 @@ final class FrameTest extends TestCase
     public function putAnsiWideCharacterWritesPlaceholderAndAdvancesTwoColumns(): void
     {
         $frame = new Frame(10, 1);
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->putAnsi(0, 0, "\e[31m\u{4E16}A");
 
         self::assertSame("\u{4E16}", $frame->characters[0]);
@@ -1257,9 +1258,9 @@ final class FrameTest extends TestCase
     public function fillStyledPaintsTheAreaInTheStyleAndLeavesTheRestAlone(): void
     {
         $frame = new Frame(5, 3);
-        $red = Color::ansi(1)->value;
-        $green = Color::ansi(2)->value;
-        $style = new Style(foreground: Color::ansi(1), background: Color::ansi(2), attributes: Attr::BOLD);
+        $red = Color::ansi(AnsiColor::Red)->value;
+        $green = Color::ansi(AnsiColor::Green)->value;
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red), background: Color::ansi(AnsiColor::Green), attributes: Attr::BOLD);
 
         $frame->fillStyled(new Rect(1, 1, 3, 1), $style, '#');
 
@@ -1274,8 +1275,8 @@ final class FrameTest extends TestCase
     public function fillRectWritesCharacterAndStyleToEntireArea(): void
     {
         $frame = new Frame(10, 5);
-        $foreground = Color::ansi(1)->value;
-        $background = Color::ansi(2)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
+        $background = Color::ansi(AnsiColor::Green)->value;
         $frame->fillRect(1, 1, 3, 2, $foreground, $background, Attr::BOLD, '#');
 
         for ($row = 1; $row <= 2; ++$row) {
@@ -1498,7 +1499,7 @@ final class FrameTest extends TestCase
         $frame = new Frame(20, 1);
         $frame->putAnsi(0, 0, "\e[1;31mABC");
 
-        $redForeground = Color::ansi(1)->value;
+        $redForeground = Color::ansi(AnsiColor::Red)->value;
         for ($i = 0; $i < 3; ++$i) {
             self::assertSame($redForeground, $frame->foregrounds[$i]);
             self::assertSame(Attr::BOLD, $frame->attributes[$i]);
@@ -1522,7 +1523,7 @@ final class FrameTest extends TestCase
         $frame = new Frame(20, 1);
         $frame->putAnsi(0, 0, "\e[1;42mA");
 
-        $greenBackground = Color::ansi(2)->value;
+        $greenBackground = Color::ansi(AnsiColor::Green)->value;
         self::assertSame($greenBackground, $frame->backgrounds[0]);
         self::assertSame(Attr::BOLD, $frame->attributes[0]);
     }
@@ -1533,8 +1534,8 @@ final class FrameTest extends TestCase
     public function putStringWritesCorrectForegroundBackgroundAttributes(): void
     {
         $frame = new Frame(10, 3);
-        $foreground = Color::ansi(5)->value;
-        $background = Color::ansi(6)->value;
+        $foreground = Color::ansi(AnsiColor::Magenta)->value;
+        $background = Color::ansi(AnsiColor::Cyan)->value;
         $frame->putString(2, 1, 'AB', $foreground, $background, Attr::UNDERLINE);
 
         $baseIndex = 1 * 10 + 2;
@@ -1554,7 +1555,7 @@ final class FrameTest extends TestCase
         $frame = new Frame(10, 1);
         $frame->putAnsi(0, 0, "\e[1;31m\u{4E16}");
 
-        $redForeground = Color::ansi(1)->value;
+        $redForeground = Color::ansi(AnsiColor::Red)->value;
         self::assertSame($redForeground, $frame->foregrounds[0]);
         self::assertSame($redForeground, $frame->foregrounds[1]);
         self::assertSame(Attr::BOLD, $frame->attributes[0]);
@@ -1983,7 +1984,7 @@ final class FrameTest extends TestCase
     {
         $buffer1 = new Frame(10, 1);
         $buffer2 = new Frame(10, 1);
-        $style = new Style(foreground: Color::ansi(1), background: Color::ansi(2), attributes: Attr::BOLD);
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red), background: Color::ansi(AnsiColor::Green), attributes: Attr::BOLD);
 
         $consumed1 = $buffer1->putStyled(2, 0, 'ABC', $style);
         $consumed2 = $buffer2->putString(2, 0, 'ABC', $style->foregroundValue(), $style->backgroundValue(), $style->attributes);
@@ -2284,7 +2285,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $frame->putAnsi(0, 0, "\e[31mAB");
-        $redForeground = Color::ansi(1)->value;
+        $redForeground = Color::ansi(AnsiColor::Red)->value;
         self::assertSame('A', $frame->characters[0]);
         self::assertSame('B', $frame->characters[1]);
         self::assertSame($redForeground, $frame->foregrounds[0]);
@@ -2318,7 +2319,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $frame->putAnsi(0, 0, "\e[31mA");
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[0]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[0]);
     }
 
     #[Test]
@@ -2326,8 +2327,8 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $frame->putAnsi(0, 0, "\e[1;31;42mA");
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[0]);
-        self::assertSame(Color::ansi(2)->value, $frame->backgrounds[0]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[0]);
+        self::assertSame(Color::ansi(AnsiColor::Green)->value, $frame->backgrounds[0]);
         self::assertSame(Attr::BOLD, $frame->attributes[0]);
     }
 
@@ -2509,7 +2510,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(5, 1);
         $frame->putAnsi(0, 0, "\e[31mAB\u{4E16}");
-        $red = Color::ansi(1)->value;
+        $red = Color::ansi(AnsiColor::Red)->value;
         self::assertSame('', $frame->characters[3]);
         self::assertSame($red, $frame->foregrounds[3]);
     }
@@ -2655,7 +2656,7 @@ final class FrameTest extends TestCase
         self::assertSame('H', $frame->characters[0]);
         self::assertSame(0, $frame->foregrounds[0]);
         self::assertSame('X', $frame->characters[5]);
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[5]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[5]);
     }
 
     #[Test]

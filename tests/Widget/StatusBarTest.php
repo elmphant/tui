@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -163,7 +164,7 @@ final class StatusBarTest extends TestCase
 
         $theme = $this->context->theme;
         $expectedBackground = $theme->dim->withBackground(
-            $theme->selectedStyle->background ?? $theme->base->foreground ?? Color::ansi(0),
+            $theme->selectedStyle->background ?? $theme->base->foreground ?? Color::ansi(AnsiColor::Black),
         )->backgroundValue();
 
         for ($x = 0; $x < 20; ++$x) {
@@ -221,7 +222,7 @@ final class StatusBarTest extends TestCase
         self::assertNotSame($keyForeground, $afterHintsForeground);
     }
 
-    // --- L60: Coalesce — $barStyle->background ?? Color::ansi(0) ---
+    // --- L60: Coalesce — $barStyle->background ?? Color::ansi(AnsiColor::Black) ---
 
     #[Test]
     public function hintKeyStyleUsesBarBackgroundWhenPresent(): void
@@ -247,7 +248,7 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $context);
 
-        $expectedKeyBackground = $theme->accent->withBackground(Color::ansi(0))->bold()->backgroundValue();
+        $expectedKeyBackground = $theme->accent->withBackground(Color::ansi(AnsiColor::Black))->bold()->backgroundValue();
         self::assertSame($expectedKeyBackground, $frame->backgrounds[1]);
     }
 
@@ -262,8 +263,8 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $context);
 
-        $ansi0Bg = $theme->accent->withBackground(Color::ansi(0))->bold()->backgroundValue();
-        $ansi1Bg = $theme->accent->withBackground(Color::ansi(1))->bold()->backgroundValue();
+        $ansi0Bg = $theme->accent->withBackground(Color::ansi(AnsiColor::Black))->bold()->backgroundValue();
+        $ansi1Bg = $theme->accent->withBackground(Color::ansi(AnsiColor::Red))->bold()->backgroundValue();
         self::assertSame($ansi0Bg, $frame->backgrounds[1]);
         self::assertNotSame($ansi1Bg, $frame->backgrounds[1]);
     }

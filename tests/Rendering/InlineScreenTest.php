@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -75,7 +76,7 @@ final class InlineScreenTest extends TestCase
     {
         $terminal = new VirtualTerminal(10, 24);
         $frame = new Frame(10, 1);
-        $frame->putString(0, 0, 'ok', Color::ansi(1)->value, 0, Attr::BOLD);
+        $frame->putString(0, 0, 'ok', Color::ansi(AnsiColor::Red)->value, 0, Attr::BOLD);
 
         (new InlineScreen($terminal))->flush($frame);
 

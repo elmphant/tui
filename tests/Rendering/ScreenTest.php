@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -275,7 +276,7 @@ final class ScreenTest extends TestCase
         $screen = new Screen($terminal);
 
         $frame = new Frame(20, 5);
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->putString(0, 0, 'AAAA', $foreground);
         $frame->putString(0, 3, 'BBBB');
         $screen->flush($frame);
@@ -285,7 +286,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $capturedOutput = '';
-        $newForeground = Color::ansi(2)->value;
+        $newForeground = Color::ansi(AnsiColor::Green)->value;
         $frame->clear();
         $frame->putString(0, 0, 'AAAA', $newForeground);
         $frame->putString(0, 3, 'CCCC');
@@ -303,7 +304,7 @@ final class ScreenTest extends TestCase
         $screen = new Screen($terminal);
 
         $frame = new Frame(10, 3);
-        $grayColor = Color::ansi(8)->value;
+        $grayColor = Color::ansi(AnsiColor::BrightBlack)->value;
         $pinkColor = Color::hex('FF06B7')->value;
 
         $frame->putChar(0, 0, '+', $grayColor);
@@ -346,8 +347,8 @@ final class ScreenTest extends TestCase
         $screen = new Screen($terminal);
 
         $frame = new Frame(80, 24);
-        $foreground = Color::ansi(7)->value;
-        $background = Color::ansi(0)->value;
+        $foreground = Color::ansi(AnsiColor::White)->value;
+        $background = Color::ansi(AnsiColor::Black)->value;
         $frame->fillRect(0, 23, 80, 1, $foreground, $background);
         $frame->putString(0, 23, ' focus: Settings', $foreground, $background);
         $frame->putString(35, 23, ' Tab:switch  q:quit ', $foreground, $background);
@@ -364,8 +365,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminalMock($capturedOutput);
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(7)->value;
-        $background = Color::ansi(0)->value;
+        $foreground = Color::ansi(AnsiColor::White)->value;
+        $background = Color::ansi(AnsiColor::Black)->value;
 
         $frame = new Frame(80, 24);
         $frame->fillRect(0, 23, 80, 1, $foreground, $background);
@@ -393,8 +394,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminalMock($capturedOutput);
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(7)->value;
-        $background = Color::ansi(0)->value;
+        $foreground = Color::ansi(AnsiColor::White)->value;
+        $background = Color::ansi(AnsiColor::Black)->value;
 
         $frame = new Frame(80, 24);
         $frame->fillRect(0, 23, 80, 1, $foreground, $background);
@@ -652,7 +653,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(6, 1);
         $frame->putString(0, 0, 'ABCDEF');
         $screen->flush($frame);
@@ -754,7 +755,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'AAAAA', $foreground);
         $screen->flush($frame);
@@ -847,7 +848,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(3)->value;
+        $foreground = Color::ansi(AnsiColor::Yellow)->value;
         $frame = new Frame(3, 1);
         $frame->putString(0, 0, 'AAA', $foreground);
         $screen->flush($frame);
@@ -936,7 +937,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->putChar(0, 0, 'X', $foreground);
         $frame->putChar(2, 0, 'Z', $foreground);
         $screen->flush($frame);
@@ -957,8 +958,8 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground1 = Color::ansi(1)->value;
-        $foreground2 = Color::ansi(2)->value;
+        $foreground1 = Color::ansi(AnsiColor::Red)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
         $frame->putChar(0, 0, 'X', $foreground1);
         $frame->putChar(1, 0, 'Y', $foreground2);
         $screen->flush($frame);
@@ -978,7 +979,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'ABCDE', $foreground);
         $screen->flush($frame);
@@ -992,8 +993,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground1 = Color::ansi(1)->value;
-        $foreground2 = Color::ansi(2)->value;
+        $foreground1 = Color::ansi(AnsiColor::Red)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
         $frame = new Frame(6, 1);
         $frame->putString(0, 0, 'ABC', $foreground1);
         $frame->putString(3, 0, 'DEF', $foreground2);
@@ -1014,8 +1015,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
-        $background = Color::ansi(4)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $attributes = Attr::BOLD;
 
         $frame = new Frame(5, 1);
@@ -1045,8 +1046,8 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground1 = Color::ansi(1)->value;
-        $foreground2 = Color::ansi(2)->value;
+        $foreground1 = Color::ansi(AnsiColor::Red)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
         $frame->putChar(0, 0, 'X', $foreground1);
         $frame->putChar(1, 0, 'Y', $foreground2);
         $screen->flush($frame);
@@ -1068,8 +1069,8 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $background1 = Color::ansi(1)->value;
-        $background2 = Color::ansi(2)->value;
+        $background1 = Color::ansi(AnsiColor::Red)->value;
+        $background2 = Color::ansi(AnsiColor::Green)->value;
         $frame->putChar(0, 0, 'X', 0, $background1);
         $frame->putChar(1, 0, 'Y', 0, $background2);
         $screen->flush($frame);
@@ -1106,13 +1107,13 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'ABCDE', $foreground);
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground2 = Color::ansi(2)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
         $frame->putChar(0, 0, 'X', $foreground2);
         $frame->putChar(3, 0, 'Y', $foreground2);
         $screen->flush($frame);
@@ -1187,8 +1188,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
-        $background = Color::ansi(4)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $attributes = Attr::BOLD;
 
         $frame = new Frame(5, 1);
@@ -1260,7 +1261,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'AAAAA', $foreground);
         $screen->flush($frame);
@@ -1321,8 +1322,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
-        $background = Color::ansi(4)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
 
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'AAAA', $foreground, $background, Attr::BOLD);
@@ -1367,7 +1368,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(6, 1);
         $frame->putString(0, 0, 'AAAAAA');
         $screen->flush($frame);
@@ -1392,7 +1393,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->clear();
         $frame->putString(0, 0, 'XXXXX', $foreground);
         $screen->flush($frame);
@@ -1408,7 +1409,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $background = Color::ansi(4)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $frame = new Frame(6, 1);
         $frame->putString(0, 0, 'AAAAAA');
         $screen->flush($frame);
@@ -1433,7 +1434,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $background = Color::ansi(4)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $frame->clear();
         $frame->putString(0, 0, 'XXXXX', 0, $background);
         $screen->flush($frame);
@@ -1694,7 +1695,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->putChar(8, 0, 'X', $foreground);
         $frame->putChar(2, 0, 'Y', $foreground);
         $screen->flush($frame);
@@ -1852,8 +1853,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
-        $background = Color::ansi(4)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
 
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'AA', $foreground, $background, Attr::BOLD | Attr::ITALIC);
@@ -1891,8 +1892,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground1 = Color::ansi(1)->value;
-        $foreground2 = Color::ansi(3)->value;
+        $foreground1 = Color::ansi(AnsiColor::Red)->value;
+        $foreground2 = Color::ansi(AnsiColor::Yellow)->value;
 
         $frame = new Frame(4, 1);
         $frame->putString(0, 0, 'AA', $foreground1);
@@ -1912,8 +1913,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $background1 = Color::ansi(1)->value;
-        $background2 = Color::ansi(3)->value;
+        $background1 = Color::ansi(AnsiColor::Red)->value;
+        $background2 = Color::ansi(AnsiColor::Yellow)->value;
 
         $frame = new Frame(4, 1);
         $frame->putString(0, 0, 'AA', 0, $background1);
@@ -1949,7 +1950,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $background = Color::ansi(4)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $frame = new Frame(4, 1);
         $frame->putString(0, 0, 'AA', 0, $background, Attr::BOLD);
         $frame->putString(2, 0, 'BB', 0, $background);
@@ -1995,8 +1996,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(2)->value;
-        $background = Color::ansi(4)->value;
+        $foreground = Color::ansi(AnsiColor::Green)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'HELLO', $foreground, $background, Attr::BOLD);
         $screen->flush($frame);
@@ -2021,7 +2022,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->foregrounds[0] = $foreground;
         $frame->dirtyRows[0] = true;
         $screen->flush($frame);
@@ -2040,7 +2041,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $background = Color::ansi(4)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $frame->backgrounds[0] = $background;
         $frame->dirtyRows[0] = true;
         $screen->flush($frame);
@@ -2077,8 +2078,8 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground1 = Color::ansi(1)->value;
-        $foreground2 = Color::ansi(2)->value;
+        $foreground1 = Color::ansi(AnsiColor::Red)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
         $frame->putChar(0, 0, 'X', $foreground1);
         $frame->putChar(1, 0, 'Y', $foreground1);
         $frame->putChar(2, 0, 'Z', $foreground2);
@@ -2161,7 +2162,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'AAAAA', $foreground);
         $screen->flush($frame);
@@ -2184,13 +2185,13 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(3, 1);
         $frame->putString(0, 0, 'AAA', $foreground);
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground2 = Color::ansi(2)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
         $frame->putChar(0, 0, 'B', $foreground2);
         $screen->flush($frame);
 
@@ -2233,7 +2234,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(3, 1);
         $frame->putString(0, 0, 'ABC', $foreground);
         $screen->flush($frame);
@@ -2254,7 +2255,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(3, 1);
         $frame->putString(0, 0, 'ABC', $foreground);
         $screen->flush($frame);
@@ -2282,7 +2283,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame->putString(0, 0, 'XYZWV', $foreground);
         $screen->flush($frame);
 
@@ -2299,7 +2300,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(10, 1);
         $frame->putString(0, 0, 'ABCDEFGHIJ', $foreground);
         $screen->flush($frame);
@@ -2338,8 +2339,8 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground1 = Color::ansi(1)->value;
-        $foreground2 = Color::ansi(2)->value;
+        $foreground1 = Color::ansi(AnsiColor::Red)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'AB', $foreground1);
         $frame->putString(2, 0, 'CDE', $foreground2);
@@ -2356,10 +2357,10 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground1 = Color::ansi(1)->value;
-        $foreground2 = Color::ansi(2)->value;
-        $background1 = Color::ansi(3)->value;
-        $background2 = Color::ansi(4)->value;
+        $foreground1 = Color::ansi(AnsiColor::Red)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
+        $background1 = Color::ansi(AnsiColor::Yellow)->value;
+        $background2 = Color::ansi(AnsiColor::Blue)->value;
 
         $frame = new Frame(4, 1);
         $frame->putString(0, 0, 'AAAA');
@@ -2401,7 +2402,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(5, 1);
         $frame->putString(0, 0, 'AAAAA');
         $screen->flush($frame);
@@ -2512,7 +2513,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(4, 1);
         $frame->putString(0, 0, 'AA', $foreground, 0, Attr::BOLD);
         $frame->putString(2, 0, 'BB', $foreground);
@@ -2528,7 +2529,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $background = Color::ansi(4)->value;
+        $background = Color::ansi(AnsiColor::Blue)->value;
         $frame = new Frame(4, 1);
         $frame->putString(0, 0, 'AA', 0, $background, Attr::BOLD);
         $frame->putString(2, 0, 'BB', 0, $background);
@@ -2575,7 +2576,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $foreground = Color::ansi(1)->value;
+        $foreground = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(4, 1);
         $frame->putString(0, 0, 'AA', $foreground, 0, Attr::BOLD);
         $frame->putString(2, 0, 'BB', $foreground);
@@ -2595,7 +2596,7 @@ final class ScreenTest extends TestCase
         $terminal = $this->createTerminal();
         $screen = new Screen($terminal);
 
-        $background = Color::ansi(1)->value;
+        $background = Color::ansi(AnsiColor::Red)->value;
         $frame = new Frame(4, 1);
         $frame->putString(0, 0, 'AA', 0, $background, Attr::BOLD);
         $frame->putString(2, 0, 'BB', 0, $background);
@@ -2656,8 +2657,8 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $terminal->output = '';
-        $foreground1 = Color::ansi(1)->value;
-        $foreground2 = Color::ansi(2)->value;
+        $foreground1 = Color::ansi(AnsiColor::Red)->value;
+        $foreground2 = Color::ansi(AnsiColor::Green)->value;
         $frame->putChar(0, 0, 'X', $foreground1);
         $frame->putChar(1, 0, 'Y', $foreground2);
         $screen->flush($frame);
@@ -2869,8 +2870,8 @@ final class ScreenTest extends TestCase
         $capturedOutput = '';
         $screen = new Screen($this->createTerminalMock($capturedOutput));
         $frame = new Frame(4, 1);
-        $frame->putString(0, 0, 'a', Color::ansi(1)->value);
-        $frame->putString(1, 0, 'b', Color::ansi(4)->value, Color::ansi(3)->value, Attr::BOLD);
+        $frame->putString(0, 0, 'a', Color::ansi(AnsiColor::Red)->value);
+        $frame->putString(1, 0, 'b', Color::ansi(AnsiColor::Blue)->value, Color::ansi(AnsiColor::Yellow)->value, Attr::BOLD);
 
         $screen->flush($frame);
 

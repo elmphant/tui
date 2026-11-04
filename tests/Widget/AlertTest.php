@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Context\RenderPass;
@@ -52,8 +53,8 @@ final class AlertTest extends TestCase
             Theme::dark()->withWarning(new Style(foreground: Color::hex('9D0006'))),
         );
 
-        self::assertSame(Color::ansi(0)->value, $onAmber, 'black on a light fill');
-        self::assertSame(Color::ansi(15)->value, $onDarkRed, 'white on a dark one');
+        self::assertSame(Color::ansi(AnsiColor::Black)->value, $onAmber, 'black on a light fill');
+        self::assertSame(Color::ansi(AnsiColor::BrightWhite)->value, $onDarkRed, 'white on a dark one');
     }
 
     #[Test]

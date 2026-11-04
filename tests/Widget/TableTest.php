@@ -14,6 +14,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -612,7 +613,7 @@ final class TableTest extends TestCase
     #[Test]
     public function rowStyleOverridesDefault(): void
     {
-        $redStyle = new Style(foreground: Color::ansi(1));
+        $redStyle = new Style(foreground: Color::ansi(AnsiColor::Red));
         $frame = new Frame(40, 5);
         $context = new RenderContext(Theme::dark());
         $table = Table\Table::new(
@@ -627,7 +628,7 @@ final class TableTest extends TestCase
     #[Test]
     public function spanCellUsesSpanStyle(): void
     {
-        $greenStyle = new Style(foreground: Color::ansi(2));
+        $greenStyle = new Style(foreground: Color::ansi(AnsiColor::Green));
         $frame = new Frame(40, 5);
         $context = new RenderContext(Theme::dark());
         $table = Table\Table::new(
@@ -2129,7 +2130,7 @@ final class TableTest extends TestCase
     #[Test]
     public function aRowWithItsOwnStyleStillTakesTheHighlightUnderIt(): void
     {
-        $customStyle = new Style(foreground: Color::ansi(3));
+        $customStyle = new Style(foreground: Color::ansi(AnsiColor::Yellow));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice')->withStyle($customStyle)],
@@ -2148,7 +2149,7 @@ final class TableTest extends TestCase
     #[Test]
     public function typedRowNonCursorUsesRowStyle(): void
     {
-        $customStyle = new Style(foreground: Color::ansi(3));
+        $customStyle = new Style(foreground: Color::ansi(AnsiColor::Yellow));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('Alice'), Row::new('Bob')->withStyle($customStyle)],
@@ -2164,7 +2165,7 @@ final class TableTest extends TestCase
     #[Test]
     public function spanCellTruncatedToColumnWidth(): void
     {
-        $greenStyle = new Style(foreground: Color::ansi(2));
+        $greenStyle = new Style(foreground: Color::ansi(AnsiColor::Green));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(3))],
             [Row::new(Span::styled('ABCDEFGH', $greenStyle))],
@@ -2181,7 +2182,7 @@ final class TableTest extends TestCase
     #[Test]
     public function spanWithStyleOnAHighlightedRow(): void
     {
-        $greenStyle = new Style(foreground: Color::ansi(2));
+        $greenStyle = new Style(foreground: Color::ansi(AnsiColor::Green));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(Span::styled('Alice', $greenStyle))],
@@ -2201,7 +2202,7 @@ final class TableTest extends TestCase
     #[Test]
     public function spanWithoutStyleUsesRowStyle(): void
     {
-        $customStyle = new Style(foreground: Color::ansi(3));
+        $customStyle = new Style(foreground: Color::ansi(AnsiColor::Yellow));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new(new Span('Alice'))->withStyle($customStyle)],
@@ -2376,7 +2377,7 @@ final class TableTest extends TestCase
     #[Test]
     public function spanCellTruncationWithMultibyteCharacters(): void
     {
-        $style = new Style(foreground: Color::ansi(1));
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::exact(3))],
             [Row::new(Span::styled("\xC3\xBCbertragen", $style))],
@@ -3051,7 +3052,7 @@ final class TableTest extends TestCase
     #[Test]
     public function spanWithoutStyleOnNonReversedRowUsesRowStyle(): void
     {
-        $rowStyle = new Style(foreground: Color::ansi(6));
+        $rowStyle = new Style(foreground: Color::ansi(AnsiColor::Cyan));
         $table = Table\Table::new(
             [Column::new('Name', Constraint::flex())],
             [Row::new('First'), Row::new(new Span('Data'))->withStyle($rowStyle)],

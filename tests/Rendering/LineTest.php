@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Span;
@@ -59,7 +60,7 @@ final class LineTest extends TestCase
     #[Test]
     public function styleCanBeSetViaConstructor(): void
     {
-        $style = new Style(foreground: Color::ansi(1));
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red));
         $line = new Line([new Span('test')], $style);
 
         self::assertSame($style, $line->style);

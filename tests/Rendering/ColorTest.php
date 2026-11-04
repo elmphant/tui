@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Terminal\ColorProfile;
 use InvalidArgumentException;
@@ -22,18 +23,15 @@ final class ColorTest extends TestCase
     #[Test]
     public function ansiEncodesExactValue(): void
     {
-        self::assertSame(Color::ANSI + 0, Color::ansi(0)->value);
-        self::assertSame(Color::ANSI + 1, Color::ansi(1)->value);
-        self::assertSame(Color::ANSI + 7, Color::ansi(7)->value);
+        self::assertSame(Color::ANSI + 0, Color::ansi(AnsiColor::Black)->value);
+        self::assertSame(Color::ANSI + 1, Color::ansi(AnsiColor::Red)->value);
+        self::assertSame(Color::ANSI + 7, Color::ansi(AnsiColor::White)->value);
     }
 
-    /**
-     * Kills L26 LessThanOrEqualTo: $index <= 15 mutated to $index < 15.
-     */
     #[Test]
     public function ansi15IsTreatedAsBright(): void
     {
-        $color = Color::ansi(15);
+        $color = Color::ansi(AnsiColor::BrightWhite);
         self::assertSame(Color::BRIGHT + 7, $color->value);
         self::assertSame('97', $color->toForegroundSgr());
     }
@@ -90,13 +88,15 @@ final class ColorTest extends TestCase
     #[Test]
     public function anAnsiColourWritesItsForegroundCode(): void
     {
-        self::assertSame('31', Color::ansi(1)->toForegroundSgr());
+        self::assertSame('31', Color::ansi(AnsiColor::Red)->toForegroundSgr());
+        self::assertSame('91', Color::ansi(AnsiColor::BrightRed)->toForegroundSgr());
+        self::assertSame('97', Color::ansi(AnsiColor::BrightWhite)->toForegroundSgr());
     }
 
     #[Test]
     public function anAnsiColourWritesItsBackgroundCode(): void
     {
-        self::assertSame('41', Color::ansi(1)->toBackgroundSgr());
+        self::assertSame('41', Color::ansi(AnsiColor::Red)->toBackgroundSgr());
     }
 
     #[Test]
@@ -185,97 +185,11 @@ final class ColorTest extends TestCase
         self::assertSame('49', Color::none()->toBackgroundSgr());
     }
 
-    /**
-     * Kills L53 MatchArmRemoval for each named color and UnwrapStrToLower.
-     */
-    #[Test]
-    public function namedBlackHasCorrectValue(): void
-    {
-        self::assertSame(Color::ANSI, Color::named('black')->value);
-    }
-
-    #[Test]
-    public function namedRedHasCorrectValue(): void
-    {
-        self::assertSame(Color::ANSI + 1, Color::named('red')->value);
-    }
-
-    /**
-     * Kills L56 DecrementInteger/IncrementInteger/Plus for green (ANSI + 2).
-     */
-    #[Test]
-    public function namedGreenHasCorrectValue(): void
-    {
-        self::assertSame(Color::ANSI + 2, Color::named('green')->value);
-        self::assertSame('32', Color::named('green')->toForegroundSgr());
-    }
-
-    #[Test]
-    public function namedYellowHasCorrectValue(): void
-    {
-        self::assertSame(Color::ANSI + 3, Color::named('yellow')->value);
-    }
-
-    /**
-     * Kills L58 DecrementInteger/IncrementInteger/Plus for blue (ANSI + 4).
-     */
-    #[Test]
-    public function namedBlueHasCorrectValue(): void
-    {
-        self::assertSame(Color::ANSI + 4, Color::named('blue')->value);
-        self::assertSame('34', Color::named('blue')->toForegroundSgr());
-    }
-
-    #[Test]
-    public function namedMagentaHasCorrectValue(): void
-    {
-        self::assertSame(Color::ANSI + 5, Color::named('magenta')->value);
-    }
-
-    #[Test]
-    public function namedCyanHasCorrectValue(): void
-    {
-        self::assertSame(Color::ANSI + 6, Color::named('cyan')->value);
-    }
-
-    #[Test]
-    public function namedWhiteHasCorrectValue(): void
-    {
-        self::assertSame(Color::ANSI + 7, Color::named('white')->value);
-    }
-
-    #[Test]
-    public function namedGrayAndGreyAreBright(): void
-    {
-        self::assertSame(Color::BRIGHT, Color::named('gray')->value);
-        self::assertSame(Color::BRIGHT, Color::named('grey')->value);
-    }
-
-    /**
-     * Kills L53 UnwrapStrToLower.
-     */
-    #[Test]
-    public function namedColorIsCaseInsensitive(): void
-    {
-        self::assertSame(Color::named('red')->value, Color::named('RED')->value);
-        self::assertSame(Color::named('blue')->value, Color::named('Blue')->value);
-        self::assertSame(Color::named('green')->value, Color::named('GREEN')->value);
-    }
-
-    #[Test]
-    public function anUnknownColourNameIsRefusedRatherThanSilentlyDefaulted(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unknown colour name "nonexistent"');
-
-        Color::named('nonexistent');
-    }
-
     #[Test]
     public function brightAnsiSgrOutput(): void
     {
-        self::assertSame('91', Color::ansi(9)->toForegroundSgr());
-        self::assertSame('101', Color::ansi(9)->toBackgroundSgr());
+        self::assertSame('91', Color::ansi(AnsiColor::BrightRed)->toForegroundSgr());
+        self::assertSame('101', Color::ansi(AnsiColor::BrightRed)->toBackgroundSgr());
     }
 
     /**
@@ -284,7 +198,7 @@ final class ColorTest extends TestCase
     #[Test]
     public function ansi8IsBrightBoundary(): void
     {
-        $color = Color::ansi(8);
+        $color = Color::ansi(AnsiColor::BrightBlack);
         self::assertSame(Color::BRIGHT, $color->value);
         self::assertSame('90', $color->toForegroundSgr());
     }
@@ -293,7 +207,7 @@ final class ColorTest extends TestCase
     public function brightAnsiRange(): void
     {
         for ($i = 8; $i <= 15; ++$i) {
-            $color = Color::ansi($i);
+            $color = Color::ansi(AnsiColor::from($i));
             self::assertSame(Color::BRIGHT + ($i - 8), $color->value);
         }
     }
@@ -343,41 +257,27 @@ final class ColorTest extends TestCase
     }
 
     #[Test]
-    public function ansiNegativeIndexThrows(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        Color::ansi(-1);
-    }
-
-    #[Test]
-    public function ansiIndex16Throws(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        Color::ansi(16);
-    }
-
-    #[Test]
     public function ansiIndex0IsValid(): void
     {
-        $color = Color::ansi(0);
+        $color = Color::ansi(AnsiColor::Black);
         self::assertSame(Color::ANSI, $color->value);
     }
 
     #[Test]
     public function ansiIndex15IsValid(): void
     {
-        $color = Color::ansi(15);
+        $color = Color::ansi(AnsiColor::BrightWhite);
         self::assertSame(Color::BRIGHT + 7, $color->value);
     }
 
     #[Test]
     public function fromValueRoundTrip(): void
     {
-        $ansi = Color::ansi(3);
+        $ansi = Color::ansi(AnsiColor::Yellow);
         self::assertSame($ansi->value, Color::fromValue($ansi->value)->value);
         self::assertSame($ansi->toForegroundSgr(), Color::fromValue($ansi->value)->toForegroundSgr());
 
-        $bright = Color::ansi(10);
+        $bright = Color::ansi(AnsiColor::BrightGreen);
         self::assertSame($bright->toBackgroundSgr(), Color::fromValue($bright->value)->toBackgroundSgr());
 
         $c256 = Color::color256(42);
@@ -485,7 +385,7 @@ final class ColorTest extends TestCase
     #[DataProvider('toAnsi16Cases')]
     public function downsampleToAnsiReducesTo16Colors(Color $color, int $expectedAnsiIndex): void
     {
-        self::assertSame(Color::ansi($expectedAnsiIndex)->value, $color->downsampleTo(ColorProfile::Ansi)->value);
+        self::assertSame(Color::ansi(AnsiColor::from($expectedAnsiIndex))->value, $color->downsampleTo(ColorProfile::Ansi)->value);
     }
 
     #[Test]
@@ -493,7 +393,7 @@ final class ColorTest extends TestCase
     {
         self::assertSame(0, Color::rgb(255, 0, 0)->downsampleTo(ColorProfile::Ascii)->value);
         self::assertSame(0, Color::color256(196)->downsampleTo(ColorProfile::Ascii)->value);
-        self::assertSame(0, Color::ansi(9)->downsampleTo(ColorProfile::Ascii)->value);
+        self::assertSame(0, Color::ansi(AnsiColor::BrightRed)->downsampleTo(ColorProfile::Ascii)->value);
         self::assertSame(0, Color::none()->downsampleTo(ColorProfile::Ascii)->value);
     }
 
@@ -506,7 +406,7 @@ final class ColorTest extends TestCase
         $indexed = Color::color256(123);
         self::assertSame($indexed->value, $indexed->downsampleTo(ColorProfile::Ansi256)->value, '256-color values survive an Ansi256 profile');
 
-        $basic = Color::ansi(5);
+        $basic = Color::ansi(AnsiColor::Magenta);
         self::assertSame($basic->value, $basic->downsampleTo(ColorProfile::Ansi)->value, '16-color values survive an Ansi profile');
 
         self::assertSame(0, Color::none()->downsampleTo(ColorProfile::Ansi)->value, 'terminal default stays default');
@@ -522,8 +422,8 @@ final class ColorTest extends TestCase
         yield 'one dark theme amber' => [Color::hex('E5C07B'), 0];
         yield 'one light theme dark red' => [Color::hex('9D0006'), 15];
         yield 'a 256-color index' => [Color::color256(226), 0];
-        yield 'basic blue' => [Color::ansi(4), 15];
-        yield 'the first bright ansi index' => [Color::ansi(8), 0];
+        yield 'basic blue' => [Color::ansi(AnsiColor::Blue), 15];
+        yield 'the first bright ansi index' => [Color::ansi(AnsiColor::BrightBlack), 0];
         yield 'a grey dark enough for the linear part of the curve' => [Color::rgb(10, 10, 10), 15];
         yield 'a mid tone carried by its blue' => [Color::rgb(120, 120, 220), 0];
     }
@@ -532,7 +432,7 @@ final class ColorTest extends TestCase
     #[DataProvider('contrastingTextCases')]
     public function contrastingTextCrossesOverWithBackgroundLuminance(Color $background, int $expectedAnsiIndex): void
     {
-        self::assertSame(Color::ansi($expectedAnsiIndex)->value, $background->contrastingText()->value);
+        self::assertSame(Color::ansi(AnsiColor::from($expectedAnsiIndex))->value, $background->contrastingText()->value);
     }
 
     /**
@@ -586,13 +486,13 @@ final class ColorTest extends TestCase
     #[Test]
     public function blendingAnIndexedColourResolvesItToItsPaletteRgb(): void
     {
-        self::assertSame(Color::rgb(205, 0, 0)->value, Color::ansi(1)->blend(Color::ansi(1), 1.0)->value);
+        self::assertSame(Color::rgb(205, 0, 0)->value, Color::ansi(AnsiColor::Red)->blend(Color::ansi(AnsiColor::Red), 1.0)->value);
     }
 
     #[Test]
     public function blendingABrightIndexReachesTheUpperHalfOfThePalette(): void
     {
-        self::assertSame(Color::rgb(127, 127, 127)->value, Color::ansi(8)->blend(Color::ansi(8), 1.0)->value);
+        self::assertSame(Color::rgb(127, 127, 127)->value, Color::ansi(AnsiColor::BrightBlack)->blend(Color::ansi(AnsiColor::BrightBlack), 1.0)->value);
     }
 
     #[Test]
@@ -665,7 +565,7 @@ final class ColorTest extends TestCase
     public function anInkFarFromReadableStopsAtTheFirstStepThatReads(): void
     {
         $black = Color::rgb(0, 0, 0);
-        $white = Color::ansi(15);
+        $white = Color::ansi(AnsiColor::BrightWhite);
         $lifted = Color::rgb(40, 40, 40)->readableOn($black);
 
         $steps = array_values(array_filter(

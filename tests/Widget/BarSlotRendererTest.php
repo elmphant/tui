@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -332,7 +333,7 @@ final class BarSlotRendererTest extends TestCase
     #[Test]
     public function aSlotsForegroundReachesTheBar(): void
     {
-        $style = new Style(foreground: Color::ansi(1));
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red));
         $frame = new Frame(10, 1);
         BarSlotRenderer::renderLeft($frame, Text::styled('X', $style), 0, 0, 10, 0, $this->context);
 

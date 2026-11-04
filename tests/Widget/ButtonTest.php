@@ -14,6 +14,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -261,7 +262,7 @@ final class ButtonTest extends TestCase
     public function aButtonHeldDownIsBoldEvenWhereTheThemesFocusedBorderIsNot(): void
     {
         $frame = new Frame(11, 3);
-        $theme = Theme::dark()->withFocusedBorderStyle(new Style(foreground: Color::ansi(4)));
+        $theme = Theme::dark()->withFocusedBorderStyle(new Style(foreground: Color::ansi(AnsiColor::Blue)));
         $button = Button::new('Run', new TestMessage('run'));
 
         self::heldDown($button)->render($frame, new Rect(0, 0, 11, 3), new RenderContext($theme));

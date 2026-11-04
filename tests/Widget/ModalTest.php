@@ -17,6 +17,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -585,7 +586,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function borderStyleOverrideIsUsedWhenSet(): void
     {
-        $customStyle = new Style(foreground: Color::ansi(1));
+        $customStyle = new Style(foreground: Color::ansi(AnsiColor::Red));
         $modal = Modal::new('Title', Text::new('Content'))
             ->withBorderStyle($customStyle);
         $frame = new Frame(80, 24);
@@ -631,7 +632,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function titleStyleOverrideIsUsedWhenSet(): void
     {
-        $customStyle = new Style(foreground: Color::ansi(2));
+        $customStyle = new Style(foreground: Color::ansi(AnsiColor::Green));
         $modal = Modal::new('Title', Text::new('Content'))
             ->withTitleStyle($customStyle);
         $frame = new Frame(80, 24);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -49,7 +50,7 @@ final class TextTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $context = new RenderContext(Theme::dark());
-        $style = new Style(foreground: Color::ansi(3), attributes: Attr::ITALIC);
+        $style = new Style(foreground: Color::ansi(AnsiColor::Yellow), attributes: Attr::ITALIC);
 
         Text::styled('AB', $style)->render($frame, new Rect(0, 0, 10, 1), $context);
 
@@ -162,7 +163,7 @@ final class TextTest extends TestCase
         $frame = new Frame(10, 1);
         $theme = Theme::dark();
         $context = new RenderContext($theme);
-        $style = new Style(foreground: Color::ansi(1));
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red));
 
         Text::line(Span::styled('AB', $style))->render($frame, new Rect(0, 0, 10, 1), $context);
 
@@ -192,8 +193,8 @@ final class TextTest extends TestCase
         $frame = new Frame(10, 1);
         $theme = Theme::dark();
         $context = new RenderContext($theme);
-        $redStyle = new Style(foreground: Color::ansi(1));
-        $blueStyle = new Style(foreground: Color::ansi(4));
+        $redStyle = new Style(foreground: Color::ansi(AnsiColor::Red));
+        $blueStyle = new Style(foreground: Color::ansi(AnsiColor::Blue));
 
         Text::line(
             Span::styled('AB', $redStyle),
@@ -214,7 +215,7 @@ final class TextTest extends TestCase
         $frame = new Frame(10, 1);
         $theme = Theme::dark();
         $context = new RenderContext($theme);
-        $accentStyle = new Style(foreground: Color::ansi(2));
+        $accentStyle = new Style(foreground: Color::ansi(AnsiColor::Green));
 
         Text::line(
             'AB',

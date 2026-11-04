@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
@@ -551,7 +552,7 @@ final class ScrollbarTest extends TestCase
     protected function setUp(): void
     {
         $this->thumbColor = Color::hex('FF06B7')->value;
-        $this->trackColor = Color::ansi(8)->value;
+        $this->trackColor = Color::ansi(AnsiColor::BrightBlack)->value;
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Span;
@@ -19,7 +20,7 @@ final class SpanTest extends TestCase
     #[Test]
     public function styledFactoryStoresContentAndStyle(): void
     {
-        $style = new Style(foreground: Color::ansi(1));
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red));
         $span = Span::styled('hello', $style);
 
         self::assertSame('hello', $span->content);
@@ -152,7 +153,7 @@ final class SpanTest extends TestCase
     #[Test]
     public function anAttributeAddedToAStyledSpanKeepsTheStylesColour(): void
     {
-        $red = Color::ansi(1);
+        $red = Color::ansi(AnsiColor::Red);
 
         $span = Span::styled('hello', new Style(foreground: $red))->faint();
 
@@ -163,7 +164,7 @@ final class SpanTest extends TestCase
     #[Test]
     public function aSpanWithoutATokenIsUnchangedByResolution(): void
     {
-        $span = Span::styled('hello', new Style(foreground: Color::ansi(1)));
+        $span = Span::styled('hello', new Style(foreground: Color::ansi(AnsiColor::Red)));
 
         self::assertSame($span, $span->withResolvedToken(Theme::dark()));
     }

@@ -19,6 +19,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
@@ -336,7 +337,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         $selected = $theme->selectedStyle;
 
         return $theme->accent
-            ->withBackground($selected->background ?? Color::ansi(0))
+            ->withBackground($selected->background ?? Color::ansi(AnsiColor::Black))
             ->bold();
     }
 

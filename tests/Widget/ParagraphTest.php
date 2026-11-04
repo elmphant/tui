@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Widget;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -280,7 +281,7 @@ final class ParagraphTest extends TestCase
         $frame = new Frame(10, 1);
         $theme = Theme::dark();
         $context = new RenderContext($theme);
-        $redStyle = new Style(foreground: Color::ansi(1));
+        $redStyle = new Style(foreground: Color::ansi(AnsiColor::Red));
 
         $paragraph = Paragraph::fromLines([
             new Line([Span::styled('AB', $redStyle), new Span('CD')]),
@@ -298,8 +299,8 @@ final class ParagraphTest extends TestCase
     public function aClusterSplitAcrossTwoSpansIsDrawnWholeInTheStyleItStartsIn(): void
     {
         $frame = new Frame(10, 1);
-        $red = new Style(foreground: Color::ansi(1));
-        $blue = new Style(foreground: Color::ansi(4));
+        $red = new Style(foreground: Color::ansi(AnsiColor::Red));
+        $blue = new Style(foreground: Color::ansi(AnsiColor::Blue));
 
         Paragraph::fromLines([new Line([Span::styled('e', $red), Span::styled("\u{0301}x", $blue)])])
             ->render($frame, new Rect(0, 0, 10, 1), new RenderContext(Theme::dark()));
@@ -315,7 +316,7 @@ final class ParagraphTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $context = new RenderContext(Theme::dark());
-        $greenStyle = new Style(foreground: Color::ansi(2));
+        $greenStyle = new Style(foreground: Color::ansi(AnsiColor::Green));
 
         $paragraph = Paragraph::fromText('AB')
             ->withStyle($greenStyle);
@@ -329,8 +330,8 @@ final class ParagraphTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $context = new RenderContext(Theme::dark());
-        $paragraphStyle = new Style(foreground: Color::ansi(1));
-        $lineStyle = new Style(foreground: Color::ansi(2));
+        $paragraphStyle = new Style(foreground: Color::ansi(AnsiColor::Red));
+        $lineStyle = new Style(foreground: Color::ansi(AnsiColor::Green));
 
         $paragraph = Paragraph::fromLines([
             new Line([new Span('A')], $lineStyle),
@@ -345,8 +346,8 @@ final class ParagraphTest extends TestCase
     {
         $frame = new Frame(10, 1);
         $context = new RenderContext(Theme::dark());
-        $lineStyle = new Style(foreground: Color::ansi(1));
-        $spanStyle = new Style(foreground: Color::ansi(3));
+        $lineStyle = new Style(foreground: Color::ansi(AnsiColor::Red));
+        $spanStyle = new Style(foreground: Color::ansi(AnsiColor::Yellow));
 
         $paragraph = Paragraph::fromLines([
             new Line([Span::styled('A', $spanStyle)], $lineStyle),
@@ -430,7 +431,7 @@ final class ParagraphTest extends TestCase
         $paragraph->render($frame, new Rect(0, 0, 10, 1), $context);
 
         self::assertSame('R', $frame->characters[0]);
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[0]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[0]);
         self::assertSame('N', $frame->characters[4]);
     }
 
@@ -546,16 +547,16 @@ final class ParagraphTest extends TestCase
     {
         $frame = new Frame(12, 1);
         $line = new Line([
-            Span::styled('ab', new Style(foreground: Color::ansi(1))),
-            Span::styled('cd', new Style(foreground: Color::ansi(2))),
-            Span::styled('ef', new Style(foreground: Color::ansi(3))),
+            Span::styled('ab', new Style(foreground: Color::ansi(AnsiColor::Red))),
+            Span::styled('cd', new Style(foreground: Color::ansi(AnsiColor::Green))),
+            Span::styled('ef', new Style(foreground: Color::ansi(AnsiColor::Yellow))),
         ]);
 
         Paragraph::fromLines([$line])->render($frame, new Rect(3, 0, 9, 1), $this->context());
 
         self::assertSame('   abcdef', rtrim(implode('', $frame->characters)));
         self::assertSame(
-            [Color::ansi(1)->value, Color::ansi(2)->value, Color::ansi(3)->value],
+            [Color::ansi(AnsiColor::Red)->value, Color::ansi(AnsiColor::Green)->value, Color::ansi(AnsiColor::Yellow)->value],
             [$frame->foregrounds[3], $frame->foregrounds[5], $frame->foregrounds[7]],
         );
     }
@@ -568,7 +569,7 @@ final class ParagraphTest extends TestCase
         Paragraph::fromAnsi("\x1b[31mold\rnew\x1b[0m\tx")->render($frame, new Rect(0, 0, 20, 1), $this->context());
 
         self::assertSame('new     x', rtrim(implode('', array_slice($frame->characters, 0, 20))));
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[0]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[0]);
     }
 
     #[Test]
@@ -601,7 +602,7 @@ final class ParagraphTest extends TestCase
         self::assertSame(Attr::BOLD, $frame->attributes[0] & Attr::BOLD);
         self::assertSame('B', $frame->characters[5]);
         self::assertSame(Attr::BOLD, $frame->attributes[5] & Attr::BOLD);
-        self::assertSame(Color::ansi(1)->value, $frame->foregrounds[5]);
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $frame->foregrounds[5]);
     }
 
     #[Test]
@@ -749,8 +750,8 @@ final class ParagraphTest extends TestCase
         self::assertSame('ab', $line->spans[0]->content);
         self::assertSame('cd', $line->spans[1]->content);
         self::assertSame('ef', $line->spans[2]->content);
-        self::assertSame(Color::ansi(1)->value, $line->spans[1]->style->foregroundValue(), 'cd must be ANSI red (31)');
-        self::assertSame(Color::ansi(2)->value, $line->spans[2]->style->foregroundValue(), 'ef must be ANSI green (32) — substring length math must produce the correct SGR code');
+        self::assertSame(Color::ansi(AnsiColor::Red)->value, $line->spans[1]->style->foregroundValue(), 'cd must be ANSI red (31)');
+        self::assertSame(Color::ansi(AnsiColor::Green)->value, $line->spans[2]->style->foregroundValue(), 'ef must be ANSI green (32) — substring length math must produce the correct SGR code');
     }
 
     #[Test]

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
@@ -33,7 +34,7 @@ final class RowTest extends TestCase
     #[Test]
     public function aRowAnswersTheTextOfEachCellWhetherPlainOrStyled(): void
     {
-        $row = Row::new('Alice', Span::styled('Active', new Style(foreground: Color::ansi(2))));
+        $row = Row::new('Alice', Span::styled('Active', new Style(foreground: Color::ansi(AnsiColor::Green))));
 
         self::assertSame(['Alice', 'Active'], $row->texts());
     }
@@ -41,7 +42,7 @@ final class RowTest extends TestCase
     #[Test]
     public function aRowAnswersTheTextOfOneCellAndNothingForACellItDoesNotHave(): void
     {
-        $row = Row::new('Alice', Span::styled('Active', new Style(foreground: Color::ansi(2))));
+        $row = Row::new('Alice', Span::styled('Active', new Style(foreground: Color::ansi(AnsiColor::Green))));
 
         self::assertSame(['Alice', 'Active', ''], [$row->textAt(0), $row->textAt(1), $row->textAt(2)]);
     }
@@ -72,7 +73,7 @@ final class RowTest extends TestCase
     #[Test]
     public function rowAcceptsSpanCells(): void
     {
-        $style = new Style(foreground: Color::ansi(1));
+        $style = new Style(foreground: Color::ansi(AnsiColor::Red));
         $row = Row::new(
             Span::styled('red', $style),
             'plain',
@@ -85,7 +86,7 @@ final class RowTest extends TestCase
     #[Test]
     public function rowAcceptsStyleOverride(): void
     {
-        $style = new Style(foreground: Color::ansi(2));
+        $style = new Style(foreground: Color::ansi(AnsiColor::Green));
         $row = Row::new('cell')->withStyle($style);
         self::assertSame($style, $row->style);
     }

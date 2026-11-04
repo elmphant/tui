@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
@@ -249,7 +250,7 @@ final class ThemeTest extends TestCase
     {
         $theme = Theme::dark();
 
-        self::assertSame(Color::ansi(0)->value, $theme->cursorStyle->foreground->value);
+        self::assertSame(Color::ansi(AnsiColor::Black)->value, $theme->cursorStyle->foreground->value);
     }
 
     /**
@@ -304,7 +305,7 @@ final class ThemeTest extends TestCase
     {
         // StatusBar draws hint keys in the accent color over the footer bar.
         foreach (self::allPresets() as $name => $theme) {
-            $bar = $theme->footerStyle->background ?? Color::ansi(0);
+            $bar = $theme->footerStyle->background ?? Color::ansi(AnsiColor::Black);
             $ratio = $theme->accent->foreground?->contrastRatio($bar) ?? 1.0;
 
             self::assertGreaterThanOrEqual(

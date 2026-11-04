@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
@@ -89,11 +90,11 @@ final class ScreenBufferQueriesTest extends TestCase
     public function aCellSaysHowItIsStyled(): void
     {
         $frame = new Frame(10, 1);
-        $frame->putStyled(2, 0, 'x', new Style(Color::hex('FF8700'), Color::ansi(0), Attr::BOLD));
+        $frame->putStyled(2, 0, 'x', new Style(Color::hex('FF8700'), Color::ansi(AnsiColor::Black), Attr::BOLD));
 
         $screen = ScreenBuffer::fromFrame($frame);
 
-        self::assertEquals(new Style(Color::hex('FF8700'), Color::ansi(0), Attr::BOLD), $screen->styleAt(2, 0));
+        self::assertEquals(new Style(Color::hex('FF8700'), Color::ansi(AnsiColor::Black), Attr::BOLD), $screen->styleAt(2, 0));
         self::assertEquals(new Style(), $screen->styleAt(0, 0));
     }
 
@@ -101,12 +102,12 @@ final class ScreenBufferQueriesTest extends TestCase
     public function aCellIsAddressedByColumnThenRowAsTheFrameWroteIt(): void
     {
         $frame = new Frame(5, 4);
-        $frame->putStyled(3, 1, 'x', new Style(Color::ansi(2)));
+        $frame->putStyled(3, 1, 'x', new Style(Color::ansi(AnsiColor::Green)));
 
         $screen = ScreenBuffer::fromFrame($frame);
 
         self::assertSame('x', $screen->textAt(3, 1, 1));
-        self::assertEquals(new Style(Color::ansi(2)), $screen->styleAt(3, 1));
+        self::assertEquals(new Style(Color::ansi(AnsiColor::Green)), $screen->styleAt(3, 1));
     }
 
     #[Test]
@@ -114,7 +115,7 @@ final class ScreenBufferQueriesTest extends TestCase
     {
         $screen = new ScreenBuffer("\e[1;31mred\e[0m plain", 20, 1);
 
-        self::assertEquals(new Style(Color::ansi(1), null, Attr::BOLD), $screen->styleAt(0, 0));
+        self::assertEquals(new Style(Color::ansi(AnsiColor::Red), null, Attr::BOLD), $screen->styleAt(0, 0));
         self::assertEquals(new Style(), $screen->styleAt(4, 0));
     }
 }
