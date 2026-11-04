@@ -207,7 +207,7 @@ final class ComponentTest extends TestCase
     {
         $ids = array_map(
             static fn (ComponentId $id): string => $id->value,
-            (new RenamedPropertyApp(TextInput::new()))->focusableIds(),
+            (new RenamedPropertyApp(TextInput::new()))->ringIds(),
         );
 
         self::assertSame(['search-field'], $ids);
@@ -222,7 +222,7 @@ final class ComponentTest extends TestCase
 
         self::assertInstanceOf(DisappearingComponentApp::class, $result->model);
         self::assertSame('x', $result->model->input->value());
-        self::assertSame([], $result->model->focusableIds());
+        self::assertSame([], $result->model->ringIds());
     }
 
     #[Test]

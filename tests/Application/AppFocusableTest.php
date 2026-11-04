@@ -54,7 +54,7 @@ final class AppFocusableTest extends TestCase
 
         self::assertEquals(
             ComponentId::named('third-panel'),
-            self::keyboardLandsOn($result->command, $app->focusableIds(), 'second-panel'),
+            self::keyboardLandsOn($result->command, $app->ringIds(), 'second-panel'),
         );
     }
 
@@ -97,7 +97,7 @@ final class AppFocusableTest extends TestCase
 
         self::assertEquals(
             ComponentId::named($lands),
-            self::keyboardLandsOn($result->command, $app->focusableIds(), 'clipped-last'),
+            self::keyboardLandsOn($result->command, $app->ringIds(), 'clipped-last'),
         );
     }
 
@@ -255,7 +255,7 @@ final class AppFocusableTest extends TestCase
 
         self::assertEquals(
             ComponentId::named('left-panel/1'),
-            self::keyboardLandsOn($result->command, $app->focusableIds(), 'left-panel/0'),
+            self::keyboardLandsOn($result->command, $app->ringIds(), 'left-panel/0'),
         );
     }
 

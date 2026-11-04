@@ -221,13 +221,13 @@ final class CharWidth
      */
     private static array $graphemeWidths = [];
 
-    public static function codepointWidth(string $char): int
+    public static function codepointWidth(string $character): int
     {
-        if ($char === '' || $char === "\0") {
+        if ($character === '' || $character === "\0") {
             return 0;
         }
 
-        $firstByte = ord($char[0]);
+        $firstByte = ord($character[0]);
         if ($firstByte < 0x20) {
             return 0;
         }
@@ -238,11 +238,11 @@ final class CharWidth
             return 0;
         }
 
-        if (!mb_check_encoding($char, 'UTF-8')) {
+        if (!mb_check_encoding($character, 'UTF-8')) {
             return 1;
         }
 
-        $ord = mb_ord($char);
+        $ord = mb_ord($character);
         if ($ord >= 0x80 && $ord <= 0x9F) {
             return 0;
         }
@@ -253,7 +253,7 @@ final class CharWidth
         if (self::inRanges($ord, self::WIDE)) {
             return 2;
         }
-        if (self::inRanges($ord, self::PICTOGRAPHIC) && preg_match('/\p{Cn}/u', $char) === 1) {
+        if (self::inRanges($ord, self::PICTOGRAPHIC) && preg_match('/\p{Cn}/u', $character) === 1) {
             return 2;
         }
 
@@ -289,12 +289,12 @@ final class CharWidth
         return self::$graphemeWidths[$grapheme] = $width;
     }
 
-    public static function stringWidth(string $str): int
+    public static function stringWidth(string $text): int
     {
-        $length = strlen($str);
+        $length = strlen($text);
 
         // Scan once to identify printable ASCII and find the first boundary needing grapheme measurement.
-        if (preg_match(self::NON_PLAIN, $str, $match, PREG_OFFSET_CAPTURE) !== 1) {
+        if (preg_match(self::NON_PLAIN, $text, $match, PREG_OFFSET_CAPTURE) !== 1) {
             return $length;
         }
 
@@ -309,15 +309,15 @@ final class CharWidth
                 $offset = $plainEnd - 1;
             }
 
-            $span = self::spanToNextPlainRun($str, $offset, $length);
-            $width += self::graphemeRunWidth(substr($str, $offset, $span));
+            $span = self::spanToNextPlainRun($text, $offset, $length);
+            $width += self::graphemeRunWidth(substr($text, $offset, $span));
             $offset += $span;
 
             if ($offset >= $length) {
                 return $width;
             }
 
-            $plainEnd = self::nextNonPlain($str, $offset, $length);
+            $plainEnd = self::nextNonPlain($text, $offset, $length);
             if ($plainEnd >= $length) {
                 return $width + ($length - $offset);
             }
@@ -344,9 +344,9 @@ final class CharWidth
         return $expanded;
     }
 
-    public static function ansiAwareWidth(string $str): int
+    public static function ansiAwareWidth(string $text): int
     {
-        return self::stringWidth(TerminalText::stripAnsi($str));
+        return self::stringWidth(TerminalText::stripAnsi($text));
     }
 
     public static function truncateToWidth(string $text, int $maxWidth): string

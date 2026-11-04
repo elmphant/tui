@@ -64,7 +64,7 @@ final readonly class FieldBesideList implements Interactive
     {
         $this->field->render($frame, $area, $context);
 
-        $context->withoutFocus(function () use ($frame, $area, $context): void {
+        $context->drawUnfocused(function () use ($frame, $area, $context): void {
             $this->list->render($frame, $area, $context);
         });
     }

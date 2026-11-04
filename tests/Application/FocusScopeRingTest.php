@@ -41,7 +41,7 @@ final class FocusScopeRingTest extends TestCase
             ['timeline', 'entry'],
             array_map(
                 static fn (ComponentId $id): string => $id->value,
-                $app->focusableIds(FocusState::on(ComponentId::named('timeline'))),
+                $app->ringIds(FocusState::on(ComponentId::named('timeline'))),
             ),
             'a scope is stepped into by a command, so tab never walks it on the way past',
         );
@@ -58,7 +58,7 @@ final class FocusScopeRingTest extends TestCase
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertSame(
             'severity',
-            $command->applyTo($focus, $app->focusableIds($focus), $app->reachableIds())?->focused()?->value,
+            $command->applyTo($focus, $app->ringIds($focus), $app->reachableIds())?->focused()?->value,
             'a scope is a ring wherever it sits, not only when it comes first',
         );
     }
@@ -69,7 +69,7 @@ final class FocusScopeRingTest extends TestCase
     #[Test]
     public function aTreeThatIsNothingButAScopeStillOffersItsControls(): void
     {
-        self::assertNotSame([], (new NothingButAScopeApp(TextInput::new()))->focusableIds());
+        self::assertNotSame([], (new NothingButAScopeApp(TextInput::new()))->ringIds());
     }
 
     private function tabbedFrom(string $id, bool $backwards = false): ?string
@@ -85,7 +85,7 @@ final class FocusScopeRingTest extends TestCase
 
         self::assertInstanceOf(FocusCmd::class, $command);
 
-        return $command->applyTo($focus, $app->focusableIds($focus), $app->reachableIds())?->focused()?->value;
+        return $command->applyTo($focus, $app->ringIds($focus), $app->reachableIds())?->focused()?->value;
     }
 }
 

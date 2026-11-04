@@ -22,7 +22,7 @@ trait OptionCursor
     }
 
     /**
-     * Stop at the ends by default; use wrapping() for short lists where cycling is useful.
+     * Stop at the ends by default; use withWrapping() for short lists where cycling is useful.
      */
     public function withWrapping(bool $wrapping = true): static
     {

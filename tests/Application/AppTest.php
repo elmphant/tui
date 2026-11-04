@@ -573,7 +573,7 @@ final readonly class NotQuitActionApp extends CopyableTestApp
 
     protected function applicationKeybindings(): Keybindings
     {
-        return parent::applicationKeybindings()->merge(new Keybindings(['not_quit' => ['q']]));
+        return parent::applicationKeybindings()->overriddenBy(new Keybindings(['not_quit' => ['q']]));
     }
 }
 

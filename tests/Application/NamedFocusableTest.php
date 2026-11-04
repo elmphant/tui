@@ -54,7 +54,7 @@ final class NamedFocusableTest extends TestCase
     #[Test]
     public function aNamedPaneIsSomewhereTheKeyboardCanGo(): void
     {
-        self::assertEquals([ComponentId::named('pane')], (new NamedPlainPaneApp())->focusableIds());
+        self::assertEquals([ComponentId::named('pane')], (new NamedPlainPaneApp())->ringIds());
     }
 
     #[Test]

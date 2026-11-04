@@ -67,7 +67,7 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         return $this->cloneWith(gap: $gap);
     }
 
-    public function withJustify(Justification $justify): self
+    public function withJustification(Justification $justify): self
     {
         return $this->cloneWith(justify: $justify);
     }
@@ -121,6 +121,8 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
     }
 
     /**
+     * @internal
+     *
      * @return list<array{Widget, Rect}>
      */
     public function computeChildRects(Rect $area): array

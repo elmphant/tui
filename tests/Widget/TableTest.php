@@ -745,16 +745,12 @@ final class TableTest extends TestCase
         self::assertSame(1, $table->cursor());
     }
 
-    // --- L36: DecrementInteger — selected starts at -1 (no selection) ---
-
     #[Test]
     public function selectedStartsAtMinusOne(): void
     {
         $table = $this->createTable();
         self::assertNull($table->selectedIndex());
     }
-
-    // --- L59: DecrementInteger — fromRows initial cursor = 0 when first row is selectable ---
 
     #[Test]
     public function fromRowsInitialCursorIsZeroWhenFirstRowSelectable(): void
@@ -775,8 +771,6 @@ final class TableTest extends TestCase
         );
         self::assertSame(2, $table->cursor());
     }
-
-    // --- L115: GreaterThan — rowCount > 0 guard for key handling ---
 
     #[Test]
     public function focusedEmptyTableIgnoresAllKeys(): void
@@ -803,8 +797,6 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->selectedIndex());
     }
 
-    // --- L123: LessThanOrEqualTo — render guard width <= 0 || height <= 0 ---
-
     #[Test]
     public function renderWithZeroHeightDoesNothing(): void
     {
@@ -825,8 +817,6 @@ final class TableTest extends TestCase
         $table->render($frame, new Rect(0, 0, 1, 3), new RenderContext(Theme::dark()));
         self::assertSame('X', $frame->characters[0]);
     }
-
-    // --- L129-141: visibleRows, showScrollbar, columnWidths, scrollbar position ---
 
     #[Test]
     public function visibleRowsIsHeightMinusOneForHeader(): void
@@ -914,8 +904,6 @@ final class TableTest extends TestCase
         self::assertContains($firstDataScrollbarChar, [Scrollbar::THUMB, '│'], 'Scrollbar should start at y+1');
     }
 
-    // --- L161-176: isRowSelectable, findNextSelectable null-safe, direction logic ---
-
     #[Test]
     public function isRowSelectableReturnsTrueForPlainRows(): void
     {
@@ -970,8 +958,6 @@ final class TableTest extends TestCase
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
         self::assertSame(0, $result->model->cursor());
     }
-
-    // --- L185-219: handleKey scroll math, viewport, match arms ---
 
     #[Test]
     public function spaceSelectsTheRowUnderTheCursor(): void
@@ -1137,8 +1123,6 @@ final class TableTest extends TestCase
         self::assertSame($table, $result->model);
     }
 
-    // --- L185: visibleRows = max(1, area.height - 1) ---
-
     #[Test]
     public function visibleRowsMinimumIsOneForSmallArea(): void
     {
@@ -1241,8 +1225,6 @@ final class TableTest extends TestCase
         self::assertSame($table, $result->model);
     }
 
-    // --- L231-251: handlePageDown/handlePageUp with typed rows ---
-
     #[Test]
     public function typedRowsPageDownSkipsNonSelectable(): void
     {
@@ -1311,8 +1293,6 @@ final class TableTest extends TestCase
         $result = $table->update(new KeyMsg(Key::PageUp), $area);
         self::assertSame($table, $result->model);
     }
-
-    // --- L256-317: computeColumnWidths ---
 
     #[Test]
     public function computeColumnWidthsNoColumns(): void
@@ -1500,8 +1480,6 @@ final class TableTest extends TestCase
         }
         self::assertSame(10, $lastBPosition);
     }
-
-    // --- L331-468: Cell rendering, truncation ---
 
     #[Test]
     public function headerTruncation(): void
@@ -2603,8 +2581,6 @@ final class TableTest extends TestCase
         self::assertSame(1, $result->model->cursor());
     }
 
-    // --- L256: localY = message->y - area->y (Minus mutation) ---
-
     #[Test]
     public function mouseClickLocalYSubtractsAreaY(): void
     {
@@ -2616,8 +2592,6 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->cursor());
         self::assertSame(0, $result->model->selectedIndex());
     }
-
-    // --- L257: rowIndex = localY - 1 + scrollOffset (Minus, Plus mutations) ---
 
     #[Test]
     public function mouseClickRowIndexAccountsForHeaderAndScroll(): void
@@ -2634,8 +2608,6 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->cursor());
         self::assertSame(0, $result->model->selectedIndex());
     }
-
-    // --- L259: localY >= 1 (GreaterThanOrEqualTo mutation) ---
 
     #[Test]
     public function mouseClickAtLocalYZeroIsHeader(): void
@@ -2660,8 +2632,6 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->selectedIndex());
     }
 
-    // --- L259: rowIndex >= 0 check ---
-
     #[Test]
     public function mouseClickRowIndexCannotBeNegative(): void
     {
@@ -2672,8 +2642,6 @@ final class TableTest extends TestCase
         $result = $table->update($click, $area);
         self::assertSame($table, $result->model);
     }
-
-    // --- L259: rowIndex < rowCount check ---
 
     #[Test]
     public function mouseClickRowIndexMustBeLessThanRowCount(): void
@@ -2694,8 +2662,6 @@ final class TableTest extends TestCase
         self::assertSame($table, $result->model);
     }
 
-    // --- L260: cursor and selected are both set ---
-
     #[Test]
     public function mouseClickSetsBothCursorAndSelected(): void
     {
@@ -2707,8 +2673,6 @@ final class TableTest extends TestCase
         self::assertSame(2, $result->model->cursor());
         self::assertSame(2, $result->model->selectedIndex());
     }
-
-    // --- L266: maxOffset = max(0, rowCount - (height - 1)) ---
 
     #[Test]
     public function wheelDownMaxOffsetWithFewRows(): void
@@ -2723,8 +2687,6 @@ final class TableTest extends TestCase
         $result = $table->update($wheelDown, $area);
         self::assertSame(0, $result->model->scrollOffset($area));
     }
-
-    // --- L268: scrollOffset + wheelSteps() (PlusEqual mutation) ---
 
     #[Test]
     public function wheelDownIncrementsByExactlyOne(): void
@@ -2742,8 +2704,6 @@ final class TableTest extends TestCase
         $result = $result->model->update(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None), $area);
         self::assertSame(2, $result->model->scrollOffset($area));
     }
-
-    // --- L272: scrollOffset - wheelSteps() (MinusEqual mutation) ---
 
     #[Test]
     public function wheelUpDecrementsByExactlyOne(): void
@@ -2764,8 +2724,6 @@ final class TableTest extends TestCase
         self::assertSame(2, $result->model->scrollOffset($area));
     }
 
-    // --- L293-295: exact column condition min === max && min > 0 ---
-
     #[Test]
     public function flexColumnWithMinEqualsMaxAndMinZeroIsFlex(): void
     {
@@ -2783,8 +2741,6 @@ final class TableTest extends TestCase
         self::assertStringContainsString('B', $dataRow);
     }
 
-    // --- L301: totalFlex > 0 && remaining > 0 ---
-
     #[Test]
     public function allExactColumnsLeaveNoFlexDistribution(): void
     {
@@ -2799,8 +2755,6 @@ final class TableTest extends TestCase
         self::assertSame('B', $frame->characters[30 + 6]);
         self::assertSame(' ', $frame->characters[30 + 11]);
     }
-
-    // --- L302: lastFlexIndex = -1 ---
 
     #[Test]
     public function lastFlexIndexWithSingleFlexColumn(): void
@@ -2817,8 +2771,6 @@ final class TableTest extends TestCase
         self::assertSame('t', $frame->characters[10 + 2]);
         self::assertSame('a', $frame->characters[10 + 3]);
     }
-
-    // --- L309: floor(remaining * flex / totalFlex) ---
 
     #[Test]
     public function flexDistributionWithDifferentWeights(): void
@@ -2839,8 +2791,6 @@ final class TableTest extends TestCase
         }
         self::assertSame(15, $firstB);
     }
-
-    // --- L316-317: remainder distribution: lastFlexIndex >= 0 && flexUsed < remaining ---
 
     #[Test]
     public function remainderGoesToLastFlexColumn(): void
@@ -2866,8 +2816,6 @@ final class TableTest extends TestCase
         self::assertSame(6, $bCount);
     }
 
-    // --- L327: headerStyle gets underline ---
-
     #[Test]
     public function headerHasUnderlineAttribute(): void
     {
@@ -2881,8 +2829,6 @@ final class TableTest extends TestCase
         self::assertSame(Attr::UNDERLINE, $frame->attributes[0] & Attr::UNDERLINE);
     }
 
-    // --- L331: columnWidths fallback via ?? 0 ---
-
     #[Test]
     public function columnWidthsFallbackToZero(): void
     {
@@ -2894,8 +2840,6 @@ final class TableTest extends TestCase
         $table->render($frame, Rect::fromSize(20, 3), new RenderContext(Theme::dark()));
         self::assertSame('d', $frame->characters[20 + 0]);
     }
-
-    // --- L345: visibleRows in renderRows = area->height - 1 ---
 
     #[Test]
     public function renderRowsVisibleRowsEqualsHeightMinusOne(): void
@@ -2912,8 +2856,6 @@ final class TableTest extends TestCase
         self::assertSame('C', $frame->characters[3 * 20 + 0]);
     }
 
-    // --- L347: useTypedRows = typedRows !== [] ---
-
     #[Test]
     public function useTypedRowsBranch(): void
     {
@@ -2927,8 +2869,6 @@ final class TableTest extends TestCase
         self::assertSame('A', $frame->characters[1 * 20 + 0]);
         self::assertSame('B', $frame->characters[2 * 20 + 0]);
     }
-
-    // --- L348: totalWidth = array_sum(columnWidths) ---
 
     #[Test]
     public function theCursorBandEndsWithTheLastColumn(): void
@@ -2948,8 +2888,6 @@ final class TableTest extends TestCase
         self::assertNotSame($band, $frame->backgrounds[30 + 13], 'and stops there');
     }
 
-    // --- L350-353: visibleIndex loop and break ---
-
     #[Test]
     public function visibleIndexLoopBreaksAtRowCount(): void
     {
@@ -2965,8 +2903,6 @@ final class TableTest extends TestCase
             self::assertSame(' ', $frame->characters[$row * 20 + 0]);
         }
     }
-
-    // --- L356: renderY = area->y + 1 + visibleIndex ---
 
     #[Test]
     public function renderYCalculation(): void
@@ -2984,8 +2920,6 @@ final class TableTest extends TestCase
         self::assertSame('Z', $frame->characters[5 * 20 + 0]);
     }
 
-    // --- L374-376: isCursor, isSelected, reverse conditions ---
-
     #[Test]
     public function cursorWithoutFocusDoesNotReverse(): void
     {
@@ -2995,8 +2929,6 @@ final class TableTest extends TestCase
 
         self::assertSame(0, $frame->attributes[60] & Attr::REVERSE);
     }
-
-    // --- L404: non-selectable typed row returns early ---
 
     #[Test]
     public function nonSelectableTypedRowReturnsEarly(): void
@@ -3014,8 +2946,6 @@ final class TableTest extends TestCase
         self::assertSame($theme->headerStyle->foregroundValue(), $frame->foregrounds[20 + 0]);
     }
 
-    // --- L406: header row truncated to totalWidth, not individual column width ---
-
     #[Test]
     public function headerRowTruncatesToTotalWidthNotColumnWidth(): void
     {
@@ -3032,8 +2962,6 @@ final class TableTest extends TestCase
         }
         self::assertSame('ABCDEFGH  ', $headerContent, 'three and four columns wide, and the gap between them');
     }
-
-    // --- L425: rowStyle fallback for typed row without custom style ---
 
     #[Test]
     public function typedRowWithoutCustomStyleUsesDefault(): void
@@ -3062,8 +2990,6 @@ final class TableTest extends TestCase
 
         self::assertSame($rowStyle->foregroundValue(), $frame->foregrounds[2 * 40]);
     }
-
-    // --- L454-472: ensureCursorVisible edge cases ---
 
     #[Test]
     public function ensureCursorVisibleWithHeightOfOne(): void
@@ -3101,8 +3027,6 @@ final class TableTest extends TestCase
         self::assertSame(0, $table->scrollOffset($area));
     }
 
-    // --- L459-461: cursor < offset adjustment ---
-
     #[Test]
     public function ensureCursorVisibleWhenCursorAboveOffset(): void
     {
@@ -3126,8 +3050,6 @@ final class TableTest extends TestCase
         self::assertSame(0, $table->scrollOffset($area));
     }
 
-    // --- L463-465: cursor >= offset + visibleRows adjustment ---
-
     #[Test]
     public function ensureCursorVisibleWhenCursorBelowViewport(): void
     {
@@ -3143,8 +3065,6 @@ final class TableTest extends TestCase
         self::assertSame(8, $result->model->scrollOffset($area));
     }
 
-    // --- L467-468: offset !== scrollOffset check ---
-
     #[Test]
     public function ensureCursorVisibleReturnsSelfWhenNoChangeNeeded(): void
     {
@@ -3158,8 +3078,6 @@ final class TableTest extends TestCase
         self::assertSame(1, $result->model->cursor());
         self::assertSame(0, $result->model->scrollOffset($area));
     }
-
-    // --- L209-210: Down boundary check (cursor < rowCount - 1) ---
 
     #[Test]
     public function downAtLastRowReturnsSelfPlainRows(): void
@@ -3178,8 +3096,6 @@ final class TableTest extends TestCase
         self::assertSame($endTable, $result->model);
     }
 
-    // --- L211: Home when cursor > 0 ---
-
     #[Test]
     public function homeMovesCursorToZeroFromMiddle(): void
     {
@@ -3194,8 +3110,6 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->cursor());
     }
 
-    // --- L212: End when cursor < rowCount - 1 ---
-
     #[Test]
     public function endMovesCursorToRowCountMinusOne(): void
     {
@@ -3209,8 +3123,6 @@ final class TableTest extends TestCase
         self::assertSame(4, $result->model->cursor());
     }
 
-    // --- L213-214: PageDown clamped with min ---
-
     #[Test]
     public function pageDownClampsWithMin(): void
     {
@@ -3223,8 +3135,6 @@ final class TableTest extends TestCase
         $result = $table->update(new KeyMsg(Key::PageDown), $area);
         self::assertSame(4, $result->model->cursor());
     }
-
-    // --- L216-217: PageUp clamped with max ---
 
     #[Test]
     public function pageUpClampsWithMax(): void
@@ -3240,8 +3150,6 @@ final class TableTest extends TestCase
         self::assertSame(0, $result->model->cursor());
     }
 
-    // --- L155: rowCount returns count(typedRows) when not empty ---
-
     #[Test]
     public function rowCountReturnsTypedRowsCountWhenNonEmpty(): void
     {
@@ -3255,8 +3163,6 @@ final class TableTest extends TestCase
         self::assertSame($table, $result->model);
     }
 
-    // --- L155: rowCount returns count(rows) when typedRows empty ---
-
     #[Test]
     public function rowCountReturnsPlainRowsCount(): void
     {
@@ -3269,8 +3175,6 @@ final class TableTest extends TestCase
         $result = $table->update(new KeyMsg(Key::End), $area);
         self::assertSame(2, $result->model->cursor());
     }
-
-    // --- L160-164: isRowSelectable with empty typedRows ---
 
     #[Test]
     public function allPlainRowsAreSelectable(): void
@@ -3289,8 +3193,6 @@ final class TableTest extends TestCase
         }
     }
 
-    // --- L164: null-safe property call (?->selectable) ---
-
     #[Test]
     public function isRowSelectableWithOutOfBoundsTypedRowDefaultsTrue(): void
     {
@@ -3304,8 +3206,6 @@ final class TableTest extends TestCase
         $result = $table->update($click, $area);
         self::assertSame(0, $result->model->cursor());
     }
-
-    // --- L170: position = from + direction ---
 
     #[Test]
     public function findNextSelectableDirectionTraversal(): void
@@ -3322,8 +3222,6 @@ final class TableTest extends TestCase
         $result = $result->model->update(new KeyMsg(Key::Up), $area);
         self::assertSame(0, $result->model->cursor());
     }
-
-    // --- L172: while position >= 0 && position < rowCount ---
 
     #[Test]
     public function findNextSelectableStopsAtBounds(): void

@@ -64,7 +64,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     }
 
     /**
-     * Wrap by default; use wrapping(false) to stop at either end, such as in a form field.
+     * Wrap by default; use withWrapping(false) to stop at either end, such as in a form field.
      */
     public function withWrapping(bool $wrapping = true): self
     {

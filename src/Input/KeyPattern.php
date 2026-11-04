@@ -152,10 +152,10 @@ final readonly class KeyPattern implements Stringable
         return $modifiers . implode('/', $tails);
     }
 
-    public static function fromKeyMsg(KeyMsg $msg): self
+    public static function fromKeyMsg(KeyMsg $message): self
     {
-        $key = $msg->key;
-        $shift = $msg->shift;
+        $key = $message->key;
+        $shift = $message->shift;
 
         if (is_string($key) && strlen($key) === 1
             && $key >= 'A' && $key <= 'Z'
@@ -164,18 +164,18 @@ final readonly class KeyPattern implements Stringable
             $shift = true;
         }
 
-        return new self(key: $key, ctrl: $msg->ctrl, alt: $msg->alt, shift: $shift, preceding: array_map(self::fromKeyMsg(...), $msg->preceding));
+        return new self(key: $key, ctrl: $message->ctrl, alt: $message->alt, shift: $shift, preceding: array_map(self::fromKeyMsg(...), $message->preceding));
     }
 
-    public function matches(KeyMsg $msg): bool
+    public function matches(KeyMsg $message): bool
     {
         // Handle repeat events so holding a key continues actions such as list navigation.
-        if ($msg->isRelease()) {
+        if ($message->isRelease()) {
             return false;
         }
 
-        $key = $msg->key;
-        $shift = $msg->shift;
+        $key = $message->key;
+        $shift = $message->shift;
 
         if (is_string($key) && strlen($key) === 1
             && $key >= 'A' && $key <= 'Z'
@@ -184,19 +184,19 @@ final readonly class KeyPattern implements Stringable
             $shift = true;
         }
 
-        if (count($this->preceding) !== count($msg->preceding)) {
+        if (count($this->preceding) !== count($message->preceding)) {
             return false;
         }
 
         foreach ($this->preceding as $index => $step) {
-            if (!$step->matches($msg->preceding[$index])) {
+            if (!$step->matches($message->preceding[$index])) {
                 return false;
             }
         }
 
         return $this->key === $key
-            && $this->ctrl === $msg->ctrl
-            && $this->alt === $msg->alt
+            && $this->ctrl === $message->ctrl
+            && $this->alt === $message->alt
             && $this->shift === $shift;
     }
 

@@ -108,7 +108,7 @@ final class NamedMountTest extends TestCase
 
         self::assertSame(
             ['scoped/a', 'scoped/b'],
-            array_map(static fn (ComponentId $id): string => $id->value, $host->focusableIds(FocusState::on(ComponentId::named('scoped/a')))),
+            array_map(static fn (ComponentId $id): string => $id->value, $host->ringIds(FocusState::on(ComponentId::named('scoped/a')))),
         );
     }
 

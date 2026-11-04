@@ -17,9 +17,9 @@ final class SgrParser
         $this->attributes = 0;
     }
 
-    public function parse(string $params): void
+    public function parse(string $parameters): void
     {
-        $parts = explode(';', $params);
+        $parts = explode(';', $parameters);
         $partCount = count($parts);
         $index = 0;
 
@@ -57,7 +57,7 @@ final class SgrParser
         $mode = (int)$parts[$index + 1];
 
         if ($mode === 5 && $index + 2 < $partCount) {
-            $colorValue = Color::C256 + ((int)$parts[$index + 2] & 0xFF);
+            $colorValue = Color::COLOR_256 + ((int)$parts[$index + 2] & 0xFF);
             if ($isBackground) {
                 $this->background = $colorValue;
             } else {
@@ -68,7 +68,7 @@ final class SgrParser
         }
 
         if ($mode === 2 && $index + 4 < $partCount) {
-            $colorValue = Color::TRUE
+            $colorValue = Color::TRUE_COLOR
                 | (((int)$parts[$index + 2] & 0xFF) << 16) | (((int)$parts[$index + 3] & 0xFF) << 8) | ((int)$parts[$index + 4] & 0xFF);
             if ($isBackground) {
                 $this->background = $colorValue;

@@ -80,9 +80,9 @@ final class Ansi
         return "\x1b[" . ($row + 1) . ';1H';
     }
 
-    public static function sgr(string $params): string
+    public static function sgr(string $parameters): string
     {
-        return "\x1b[{$params}m";
+        return "\x1b[{$parameters}m";
     }
 
     /**

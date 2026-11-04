@@ -65,7 +65,7 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
      *
      * @return self<TContent>
      */
-    public function withFrame(Closure $frame): self
+    public function withPopupFrame(Closure $frame): self
     {
         return $this->cloneWith(frame: $frame);
     }

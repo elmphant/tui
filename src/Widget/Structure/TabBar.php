@@ -51,8 +51,8 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     private function __construct(
         private array $tabs = [],
         private int $activeTab = 0,
-        private ?string $hint = null,
-        private ?string $shortHint = null,
+        private ?string $caption = null,
+        private ?string $shortCaption = null,
         private ?Spacing $padding = null,
         private bool $emphasizedBorder = false,
         private ?Style $borderStyleOverride = null,
@@ -72,7 +72,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return (new Keybindings([
             Actions::TAB_NEXT => ['right'],
             Actions::TAB_PREVIOUS => ['left'],
-        ]))->merge(ScrollPane::defaultKeybindings());
+        ]))->overriddenBy(ScrollPane::defaultKeybindings());
     }
 
     public function addTab(string $label, Widget ...$children): self
@@ -126,11 +126,11 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     }
 
     /**
-     * Override the binding-derived tab hint; supply a shorter form for narrow terminals.
+     * Shown after the tabs instead of the key hint the bindings derive. The short form is for narrow terminals.
      */
-    public function withHint(?string $hint, ?string $shortHint = null): self
+    public function withCaption(?string $caption, ?string $shortCaption = null): self
     {
-        return $this->cloneWith(hint: $hint, shortHint: $shortHint);
+        return $this->cloneWith(caption: $caption, shortCaption: $shortCaption);
     }
 
     public function sizing(): Sizing
@@ -447,10 +447,10 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
     private function hintWithin(int $availableWidth, bool $focused): ?string
     {
-        if ($this->hint !== null) {
+        if ($this->caption !== null) {
             return match (true) {
-                self::fits($this->hint, $availableWidth) => $this->hint,
-                $this->shortHint !== null && self::fits($this->shortHint, $availableWidth) => $this->shortHint,
+                self::fits($this->caption, $availableWidth) => $this->caption,
+                $this->shortCaption !== null && self::fits($this->shortCaption, $availableWidth) => $this->shortCaption,
                 default => null,
             };
         }
@@ -480,8 +480,8 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     private function switchKeyLabels(): ?string
     {
         $bindings = $this->effectiveKeybindings();
-        $previous = $bindings->get(Actions::TAB_PREVIOUS)[0] ?? null;
-        $next = $bindings->get(Actions::TAB_NEXT)[0] ?? null;
+        $previous = $bindings->patternsOf(Actions::TAB_PREVIOUS)[0] ?? null;
+        $next = $bindings->patternsOf(Actions::TAB_NEXT)[0] ?? null;
 
         if ($previous === null || $next === null) {
             return null;

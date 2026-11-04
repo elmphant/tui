@@ -194,8 +194,6 @@ final class CharWidthTest extends TestCase
         self::assertSame(7, CharWidth::stringWidth("Hi \u{4E2D}\u{6587}"));
     }
 
-    // --- L53: empty string and null character return 0 ---
-
     #[Test]
     public function emptyStringIsZeroWidth(): void
     {
@@ -214,8 +212,6 @@ final class CharWidthTest extends TestCase
         self::assertSame(0, CharWidth::codepointWidth("\0"));
     }
 
-    // --- L56: invalid multibyte ord returns 1 (fallback) ---
-
     #[Test]
     public function invalidUtf8ByteReturnsFallbackWidth(): void
     {
@@ -229,8 +225,6 @@ final class CharWidthTest extends TestCase
         self::assertSame(0, CharWidth::codepointWidth("\x80"));
         self::assertSame(0, CharWidth::codepointWidth("\x9F"));
     }
-
-    // --- L58: printable ASCII range boundaries (0x20 to 0x7E) ---
 
     #[Test]
     public function spaceCharacterIsOneWidth(): void
@@ -253,8 +247,6 @@ final class CharWidthTest extends TestCase
         self::assertSame(1, CharWidth::codepointWidth('!'));
     }
 
-    // --- L59: control characters below 0x20 return 0 ---
-
     #[Test]
     public function controlCharacterBelowSpaceIsZeroWidth(): void
     {
@@ -276,15 +268,11 @@ final class CharWidthTest extends TestCase
         self::assertSame(0, CharWidth::codepointWidth("\x1B"));
     }
 
-    // --- L60: DEL (0x7F) returns 0 ---
-
     #[Test]
     public function deleteCharacterIsZeroWidth(): void
     {
         self::assertSame(0, CharWidth::codepointWidth("\x7F"));
     }
-
-    // --- L58 boundary: 0x80 is NOT in printable ASCII, falls through to general lookup ---
 
     #[Test]
     public function firstNonAsciiCodepointIsOneWidth(): void
@@ -493,8 +481,6 @@ final class CharWidthTest extends TestCase
         // 0x20000 — CJK Unified Ideograph Extension B start
         self::assertSame(2, CharWidth::codepointWidth("\u{20000}"));
     }
-
-    // --- L92-100: Binary search edge cases ---
 
     #[Test]
     public function binarySearchFindsFirstElement(): void

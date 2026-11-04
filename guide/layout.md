@@ -85,7 +85,7 @@ use Elmphant\Tui\Widget\{Alignment, VerticalAlignment};
 use Elmphant\Tui\Widget\Structure\Container;
 
 $card = Container::around($content)
-    ->withPadding(Spacing::xy(horizontal: 2, vertical: 1))
+    ->withPadding(Spacing::symmetric(horizontal: 2, vertical: 1))
     ->withMargin(Spacing::only(bottom: 1))
     ->withStyle(new Style(background: Color::hex('20242C')))
     ->withBorderType(BorderType::Rounded)

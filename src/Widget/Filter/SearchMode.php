@@ -45,8 +45,8 @@ trait SearchMode
 
     private function searchIsBound(): bool
     {
-        return ($this->customKeybindings?->get(Actions::SEARCH) ?? []) !== []
-            || ($this->globalKeybindings?->get(Actions::SEARCH) ?? []) !== [];
+        return ($this->customKeybindings?->patternsOf(Actions::SEARCH) ?? []) !== []
+            || ($this->globalKeybindings?->patternsOf(Actions::SEARCH) ?? []) !== [];
     }
 
     private function searchToggledBy(KeyMsg $message): ?self
@@ -72,7 +72,7 @@ trait SearchMode
     private function searchHints(array $onTheContent): array
     {
         $bindings = $this->effectiveKeybindings();
-        $back = $bindings->get(Actions::LEAVE_SEARCH);
+        $back = $bindings->patternsOf(Actions::LEAVE_SEARCH);
 
         if ($this->isSearching() && $back !== []) {
             return [KeyPattern::joinedLabel(...$back) => Actions::description(Actions::LEAVE_SEARCH)];

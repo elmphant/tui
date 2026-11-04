@@ -14,10 +14,10 @@ trait KeybindingsAwareBehavior
         $bindings = static::defaultKeybindings();
         if ($this instanceof BindsForTheMoment) {
             // Leading, so a key such as Esc means what it means in this state.
-            $bindings = $this->momentaryKeybindings()->append($bindings);
+            $bindings = $this->momentaryKeybindings()->plus($bindings);
         }
         if ($this->customKeybindings !== null) {
-            $bindings = $bindings->merge($this->customKeybindings);
+            $bindings = $bindings->overriddenBy($this->customKeybindings);
         }
         if ($this->globalKeybindings === null) {
             return $bindings;
@@ -29,7 +29,7 @@ trait KeybindingsAwareBehavior
             : $this->globalKeybindings;
 
         // Put global bindings first so hints show the host's preferred key.
-        return $globals->append($bindings);
+        return $globals->plus($bindings);
     }
 
     public function withKeybindings(?Keybindings $keybindings): static

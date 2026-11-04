@@ -27,13 +27,13 @@ final readonly class Mount implements Widget, WidgetContainer
 {
     /**
      * @param TModel  $model
-     * @param Closure $mount typed by named()
+     * @param Closure $writeBack typed by named()
      */
     private function __construct(
         public ComponentId $id,
         public Reducer $model,
         private Widget $content,
-        private Closure $mount,
+        private Closure $writeBack,
     ) {
     }
 
@@ -42,13 +42,13 @@ final readonly class Mount implements Widget, WidgetContainer
      * @template TBoundModel of Reducer
      *
      * @param TBoundModel                                $model
-     * @param Closure(TBoundApp, TBoundModel): TBoundApp $mount
+     * @param Closure(TBoundApp, TBoundModel): TBoundApp $writeBack
      *
      * @return self<TBoundModel>
      */
-    public static function named(ComponentId|string $id, Reducer $model, Widget $view, Closure $mount): self
+    public static function named(ComponentId|string $id, Reducer $model, Widget $view, Closure $writeBack): self
     {
-        return new self(\is_string($id) ? ComponentId::named($id) : $id, $model, $view, $mount);
+        return new self(\is_string($id) ? ComponentId::named($id) : $id, $model, $view, $writeBack);
     }
 
     /**
@@ -96,11 +96,11 @@ final readonly class Mount implements Widget, WidgetContainer
      */
     public function own(Component $component): Component
     {
-        return $component->nestedIn($this->model, $this->mount, $this->addressed(...))->under($this->id);
+        return $component->nestedIn($this->model, $this->writeBack, $this->addressed(...))->under($this->id);
     }
 
     /**
-     * Scope effect IDs and focus targets to this mount, and route results back to it.
+     * @internal scopes effect IDs and focus targets to this mount and routes results back to it
      */
     public function addressed(?Cmd $command): ?Cmd
     {
@@ -122,7 +122,7 @@ final readonly class Mount implements Widget, WidgetContainer
      */
     public function writtenBack(App $app, Reducer $model): App
     {
-        $updated = ($this->mount)($app, $model);
+        $updated = ($this->writeBack)($app, $model);
 
         return $updated instanceof App
             ? $updated

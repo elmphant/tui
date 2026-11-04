@@ -32,7 +32,7 @@ final class AppFocusCyclingTest extends TestCase
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
             ComponentId::named('second'),
-            $command->applyTo(FocusState::on(ComponentId::named('first')), $app->focusableIds(), $app->reachableIds())?->focused(),
+            $command->applyTo(FocusState::on(ComponentId::named('first')), $app->ringIds(), $app->reachableIds())?->focused(),
         );
     }
 
@@ -51,7 +51,7 @@ final class AppFocusCyclingTest extends TestCase
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(
             ComponentId::named('first'),
-            $command->applyTo($onTheSecond, $app->focusableIds(), $app->reachableIds())?->focused(),
+            $command->applyTo($onTheSecond, $app->ringIds(), $app->reachableIds())?->focused(),
             'shift+tab is the walk backwards, or the keyboard could only ever go one way',
         );
     }

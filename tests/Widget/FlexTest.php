@@ -66,8 +66,8 @@ final class FlexTest extends TestCase
 
         self::assertSame($flex, $flex->withWrap(false));
         self::assertSame($flex, $flex->withGap(0));
-        self::assertSame($flex, $flex->withJustify(Justification::Start));
-        self::assertNotSame($flex, $flex->withJustify(Justification::End));
+        self::assertSame($flex, $flex->withJustification(Justification::Start));
+        self::assertNotSame($flex, $flex->withJustification(Justification::End));
     }
 
     /**
@@ -333,7 +333,7 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withGap(2)
-            ->withJustify(Justification::Center)
+            ->withJustification(Justification::Center)
             ->add(Text::new('first'), Constraint::max(10)->withBasis(10))
             ->add(Text::new('second'), Constraint::max(10)->withBasis(10));
 
@@ -348,7 +348,7 @@ final class FlexTest extends TestCase
     {
         $flex = Flex::row()
             ->withGap(2)
-            ->withJustify(Justification::SpaceBetween)
+            ->withJustification(Justification::SpaceBetween)
             ->add(Text::new('first'), Constraint::max(5)->withBasis(5))
             ->add(Text::new('second'), Constraint::max(5)->withBasis(5))
             ->add(Text::new('third'), Constraint::max(5)->withBasis(5));
@@ -365,7 +365,7 @@ final class FlexTest extends TestCase
     public function everyJustificationModeHasDeterministicIntegerRemainders(): void
     {
         $make = static fn (Justification $justify): Flex => Flex::row()
-            ->withJustify($justify)
+            ->withJustification($justify)
             ->add(Text::new('first'), Constraint::max(2)->withFlex(0)->withBasis(2))
             ->add(Text::new('second'), Constraint::max(2)->withFlex(0)->withBasis(2));
 
@@ -377,7 +377,7 @@ final class FlexTest extends TestCase
         self::assertSame([1, 4], $this->mainOffsets($make(Justification::SpaceEvenly), Rect::fromSize(8, 1)));
 
         $single = Flex::row()
-            ->withJustify(Justification::SpaceBetween)
+            ->withJustification(Justification::SpaceBetween)
             ->add(Text::new('only'), Constraint::max(2)->withFlex(0)->withBasis(2));
         self::assertSame([0], $this->mainOffsets($single, Rect::fromSize(9, 1)));
     }
@@ -431,7 +431,7 @@ final class FlexTest extends TestCase
     public function zeroGrowItemsWithHeadroomLeaveSpaceForJustification(): void
     {
         $flex = Flex::row()
-            ->withJustify(Justification::End)
+            ->withJustification(Justification::End)
             ->add(Text::new('fixed'), Constraint::max(10)->withFlex(0)->withBasis(2));
 
         self::assertEquals(new Rect(3, 0, 2, 1), $flex->computeChildRects(Rect::fromSize(5, 1))[0][1]);

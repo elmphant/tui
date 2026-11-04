@@ -26,7 +26,7 @@ final class NestedStopsTest extends TestCase
 
         self::assertSame(
             ['outer/0/0', 'outer/0/1'],
-            array_map(static fn (ComponentId $id): string => $id->value, $model->focusableIds()),
+            array_map(static fn (ComponentId $id): string => $id->value, $model->ringIds()),
         );
 
         $harness->dispatch(new KeyMsg('x'));

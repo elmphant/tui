@@ -356,7 +356,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertStringContainsString('[x]', $firstRow);
     }
 
-    // L91: MatchArmRemoval — Key::Up/'k' arm must reduce cursor
     #[Test]
     public function upKeyReturnsDifferentModelWhenCursorAboveZero(): void
     {
@@ -371,7 +370,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertNotSame($group, $result->model);
     }
 
-    // L91: MatchArmRemoval — Key::Down/'j' arm must increase cursor
     #[Test]
     public function downKeyReturnsDifferentModelWhenNotAtEnd(): void
     {
@@ -383,7 +381,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame(1, $result->model->cursor());
     }
 
-    // L91: MatchArmRemoval — Enter/' ' arm must toggle
     #[Test]
     public function enterKeyReturnsDifferentModelWithToggle(): void
     {
@@ -395,7 +392,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertTrue($result->model->isChecked(0));
     }
 
-    // L91: MatchArmRemoval — default arm returns self unchanged
     #[Test]
     public function unknownKeyReturnsSameModel(): void
     {
@@ -406,7 +402,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($group, $result->model);
     }
 
-    // L115: Minus — click with non-zero area origin must compute correct local Y
     #[Test]
     public function mouseClickWithOffsetAreaComputesCorrectLocalY(): void
     {
@@ -422,7 +417,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame(1, $result->model->cursor());
     }
 
-    // L118: GreaterThanOrEqualTo — clicking in label area (optionY < 0) does nothing
     #[Test]
     public function mouseClickOnLabelAreaDoesNotToggle(): void
     {
@@ -450,7 +444,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame([], $clicked->value());
     }
 
-    // L118: GreaterThanOrEqualTo — clicking on blank line after label does nothing
     #[Test]
     public function mouseClickOnBlankLineAfterLabelDoesNotToggle(): void
     {
@@ -464,7 +457,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($group, $result->model);
     }
 
-    // L118: LessThan — clicking exactly at the last valid option works
     #[Test]
     public function mouseClickOnLastOptionTogglesIt(): void
     {
@@ -478,7 +470,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertTrue($result->model->isChecked(2));
     }
 
-    // L118: LessThan — clicking one past last option does nothing
     #[Test]
     public function mouseClickBeyondLastOptionDoesNothing(): void
     {
@@ -492,7 +483,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($group, $result->model);
     }
 
-    // L118: LogicalAnd — both conditions must hold
     #[Test]
     public function mouseClickRequiresBothBoundsToBeValid(): void
     {
@@ -515,7 +505,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($group2, $result2->model);
     }
 
-    // L133: Assignment — $y += 2 must offset options below label
     #[Test]
     public function labelOffsetsOptionsRenderingByTwoRows(): void
     {
@@ -547,10 +536,9 @@ final class CheckboxGroupTest extends TestCase
         self::assertStringContainsString('Title', $this->extractRow($frame, 3, 20));
         self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 4, 30));
         self::assertStringContainsString('First', $this->extractRow($frame, 5, 20));
-        self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 2, 30), 'Row 2 must be empty (mutant $y=2 would render option here)');
+        self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 2, 30), 'Row 2 must be empty');
     }
 
-    // L137: GreaterThanOrEqualTo — rendering stops when area is exhausted
     #[Test]
     public function renderingStopsWhenAreaHeightExhausted(): void
     {
@@ -566,7 +554,6 @@ final class CheckboxGroupTest extends TestCase
         // No row 2 exists in buffer — C is not rendered (buffer only has 2 rows)
     }
 
-    // L137: Verify the boundary option is NOT rendered when at exact bottom
     #[Test]
     public function thirdOptionNotRenderedWhenAreaHasOnlyTwoRows(): void
     {
@@ -580,7 +567,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame(str_repeat(' ', 30), $this->extractRow($frame, 2, 30));
     }
 
-    // L141: Identical + LogicalAnd — cursor style only at cursor index when focused
     #[Test]
     public function cursorStyleAppliedOnlyAtCursorIndexWhenFocused(): void
     {
@@ -600,7 +586,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($baseFg, $this->foregroundAt($frame, 0, 1));
     }
 
-    // L141: LogicalAndNegation — unfocused cursor index should NOT get cursor style
     #[Test]
     public function cursorStyleNotAppliedWhenUnfocused(): void
     {
@@ -616,7 +601,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertNotSame($cursorFg, $this->foregroundAt($frame, 0, 0));
     }
 
-    // L141: LogicalAndAllSubExprNegation — non-cursor index when focused uses base not cursor
     #[Test]
     public function nonCursorIndexWhenFocusedUsesBaseStyle(): void
     {
@@ -632,7 +616,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($theme->base->foregroundValue(), $this->foregroundAt($frame, 0, 2));
     }
 
-    // L146: MatchArmRemoval — cursorStyle arm
     #[Test]
     public function styleMatchArmCursorStyleIsDistinct(): void
     {
@@ -646,7 +629,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($theme->cursorStyle->foregroundValue(), $this->foregroundAt($frame, 0, 0));
     }
 
-    // L146: MatchArmRemoval — accent style for checked non-cursor
     #[Test]
     public function checkedNonCursorItemUsesAccentStyle(): void
     {
@@ -667,7 +649,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($theme->cursorStyle->foregroundValue(), $this->foregroundAt($frame, 0, 1));
     }
 
-    // L146: MatchArmRemoval — base style for focused non-cursor unchecked
     #[Test]
     public function focusedNonCursorUncheckedItemUsesBaseStyle(): void
     {
@@ -682,7 +663,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($theme->base->foregroundValue(), $this->foregroundAt($frame, 0, 1));
     }
 
-    // L146: MatchArmRemoval — dim style for unfocused unchecked
     #[Test]
     public function unfocusedUncheckedItemUsesDimStyle(): void
     {
@@ -698,7 +678,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame($theme->dim->foregroundValue(), $this->foregroundAt($frame, 0, 1));
     }
 
-    // L154: DecrementInteger/IncrementInteger — option text starts at x+4
     #[Test]
     public function optionTextRendersAtCorrectXOffset(): void
     {
@@ -717,7 +696,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame('Z', $frame->characters[4]);
     }
 
-    // L154: with non-zero area.x the offset must be area.x + 4
     #[Test]
     public function optionTextRendersAtCorrectXOffsetWithNonZeroAreaX(): void
     {
@@ -735,7 +713,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertSame(' ', $frame->characters[4]);
     }
 
-    // L155: Increment — each option rendered on successive rows
     #[Test]
     public function eachOptionRendersOnSuccessiveRows(): void
     {
@@ -751,7 +728,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertStringContainsString('C', $this->extractRow($frame, 2, 10));
     }
 
-    // L155: Without y++, second option would overwrite first row
     #[Test]
     public function secondOptionDoesNotOverwriteFirstRow(): void
     {
@@ -771,7 +747,6 @@ final class CheckboxGroupTest extends TestCase
         self::assertStringContainsString('Second', $this->extractRow($frame, 1, 15));
     }
 
-    // L116: Minus on localY - 2 for label offset during click handling
     #[Test]
     public function mouseClickWithLabelComputesCorrectOptionIndex(): void
     {

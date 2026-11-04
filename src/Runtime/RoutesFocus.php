@@ -19,7 +19,7 @@ interface RoutesFocus extends Model
      *
      * @return list<ComponentId>
      */
-    public function focusableIds(?FocusState $focus = null): array;
+    public function ringIds(?FocusState $focus = null): array;
 
     /**
      * Return all reachable components, including pointer-only panes that Tab skips; focus commands are checked against this list.

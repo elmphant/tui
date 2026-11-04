@@ -42,7 +42,7 @@ final readonly class Spacing
         return new self(0, $validated, 0, $validated);
     }
 
-    public static function xy(int $horizontal, int $vertical): self
+    public static function symmetric(int $horizontal, int $vertical): self
     {
         $x = self::validate($horizontal);
         $y = self::validate($vertical);

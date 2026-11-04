@@ -443,10 +443,6 @@ final class InputParserTest extends TestCase
         self::assertSame(Key::Insert, $messages[0]->key);
     }
 
-    // ===================================================================
-    // L19: ReturnRemoval — empty string must return exactly empty array
-    // ===================================================================
-
     #[Test]
     public function parserReturnsEmptyArrayForEmptyInput(): void
     {
@@ -454,12 +450,6 @@ final class InputParserTest extends TestCase
         self::assertIsArray($result->messages);
         self::assertCount(0, $result->messages);
     }
-
-    // ===================================================================
-    // L33,60,68,79,85,91,97,116: Continue_ mutations
-    // Each continue ensures the parser advances past the current token
-    // and doesn't fall through to produce duplicate/wrong messages.
-    // ===================================================================
 
     #[Test]
     public function parserRecognizesEscapeAtEndOfInputAsRemainder(): void
@@ -536,10 +526,6 @@ final class InputParserTest extends TestCase
         self::assertCount(1, $messages);
         self::assertSame('ü', $messages[0]->key);
     }
-
-    // ===================================================================
-    // L47-48: UTF-8 byte length detection and SS3 match arms
-    // ===================================================================
 
     #[Test]
     public function parserRecognizesUtf8TwoByteSequence(): void
@@ -619,10 +605,6 @@ final class InputParserTest extends TestCase
         self::assertSame('Z', $messages[1]->key);
     }
 
-    // ===================================================================
-    // L59,67,82,100,108,115: Position tracking (Assignment, IncrementInteger)
-    // ===================================================================
-
     #[Test]
     public function parserAdvancesPositionCorrectlyAfterSsThreeKey(): void
     {
@@ -698,14 +680,10 @@ final class InputParserTest extends TestCase
         self::assertSame('q', $messages[1]->key);
     }
 
-    // ===================================================================
-    // L65,88,106,132,138,140,145,150: Boundary comparisons
-    // ===================================================================
-
     #[Test]
     public function parserRecognizesAltWithSpaceCharacter(): void
     {
-        // L65: altByte >= 0x20 — space is exactly 0x20
+        // altByte >= 0x20 — space is exactly 0x20
         $messages = InputParser::parse("\x1b ")->messages;
         self::assertCount(1, $messages);
         self::assertTrue($messages[0]->alt);
@@ -715,7 +693,7 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserRecognizesAltWithTilde(): void
     {
-        // L65: altByte < 0x7f — tilde is 0x7e, just under boundary
+        // altByte < 0x7f — tilde is 0x7e, just under boundary
         $messages = InputParser::parse("\x1b~")->messages;
         self::assertCount(1, $messages);
         self::assertTrue($messages[0]->alt);
@@ -734,7 +712,6 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserRecognizesCtrlAAtLowerBound(): void
     {
-        // L88: byte >= 0x01
         $messages = InputParser::parse("\x01")->messages;
         self::assertCount(1, $messages);
         self::assertSame('a', $messages[0]->key);
@@ -744,7 +721,6 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserRecognizesCtrlZAtUpperBound(): void
     {
-        // L88: byte <= 0x1a
         $messages = InputParser::parse("\x1a")->messages;
         self::assertCount(1, $messages);
         self::assertSame('z', $messages[0]->key);
@@ -787,7 +763,7 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserCsiParameterCollectionStopsAtFinalByte0x40(): void
     {
-        // L140: byte >= 0x40 — '@' is 0x40, boundary. A byte below it would still
+        // '@' is 0x40, the lowest final byte. A byte below it would still
         // be a parameter, leaving the sequence unfinished and held as a remainder.
         $result = InputParser::parse("\x1b[@");
 
@@ -798,7 +774,6 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserCsiParameterCollectionStopsAtFinalByte0x7e(): void
     {
-        // L140: byte <= 0x7e — '~' is 0x7e, boundary
         $messages = InputParser::parse("\x1b[3~")->messages;
         self::assertCount(1, $messages);
         self::assertSame(Key::Delete, $messages[0]->key);
@@ -807,7 +782,6 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserCsiDetectsMouseSequenceWithLessThan(): void
     {
-        // L132: position < length && raw[position] === '<'
         $messages = InputParser::parse("\x1b[<0;1;1M")->messages;
         self::assertCount(1, $messages);
         self::assertInstanceOf(MouseMsg::class, $messages[0]);
@@ -837,10 +811,6 @@ final class InputParserTest extends TestCase
         self::assertSame("\x1b[", $result->remainder);
     }
 
-    // ===================================================================
-    // L157-159: FalseValue x3 — boolean modifier flags init to false
-    // ===================================================================
-
     #[Test]
     public function parserCsiArrowWithoutModifiersHasAllFlagsFalse(): void
     {
@@ -860,10 +830,6 @@ final class InputParserTest extends TestCase
         self::assertFalse($messages[0]->alt);
         self::assertFalse($messages[0]->ctrl);
     }
-
-    // ===================================================================
-    // L163-167: CastInt, Minus, BitwiseAnd, IncrementInteger — modifier parsing
-    // ===================================================================
 
     #[Test]
     public function parserCsiModifierShiftOnly(): void
@@ -957,17 +923,12 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserCsiModifierExtractsFirstParameterCorrectly(): void
     {
-        // L167: parameters = parameterParts[0] after splitting
         // \x1b[3;5~ = Ctrl-Delete
         $messages = InputParser::parse("\x1b[3;5~")->messages;
         self::assertCount(1, $messages);
         self::assertSame(Key::Delete, $messages[0]->key);
         self::assertTrue($messages[0]->ctrl);
     }
-
-    // ===================================================================
-    // L171,183: MatchArmRemoval — CSI key mapping match arms
-    // ===================================================================
 
     #[Test]
     public function parserCsiArrowUp(): void
@@ -1168,10 +1129,6 @@ final class InputParserTest extends TestCase
         self::assertSame([], InputParser::parse("\x1b[24;80R")->messages, 'a cursor position report');
     }
 
-    // ===================================================================
-    // L205-207: Shift-Tab (BackTab) special case
-    // ===================================================================
-
     #[Test]
     public function parserCsiBackTabAlwaysSetsShift(): void
     {
@@ -1182,10 +1139,6 @@ final class InputParserTest extends TestCase
         self::assertFalse($messages[0]->ctrl);
         self::assertFalse($messages[0]->alt);
     }
-
-    // ===================================================================
-    // L216-256: Mouse parsing mutations
-    // ===================================================================
 
     #[Test]
     public function parserSgrMousePressLeftButton(): void
@@ -1435,10 +1388,6 @@ final class InputParserTest extends TestCase
         self::assertSame("\x1bO", $result->remainder);
     }
 
-    // ===================================================================
-    // Return value from parse() is always an array (L123)
-    // ===================================================================
-
     #[Test]
     public function parserReturnsArrayFromNonEmptyInput(): void
     {
@@ -1545,10 +1494,6 @@ final class InputParserTest extends TestCase
         self::assertSame([], InputParser::parse("\x1b[<0;;5M")->messages);
         self::assertSame([], InputParser::parse("\x1b[<;5;5M")->messages);
     }
-
-    // ===================================================================
-    // CSI continue after successful parse (L43)
-    // ===================================================================
 
     #[Test]
     public function parserCsiContinueDoesNotFallThroughToAlt(): void
@@ -1869,10 +1814,6 @@ final class InputParserTest extends TestCase
         self::assertSame(Key::F5, $messages[0]->key);
     }
 
-    // ===================================================================
-    // Escape at end vs escape-then-something: L30 boundary
-    // ===================================================================
-
     #[Test]
     public function parserEscAtEndOfBufferIsRemainder(): void
     {
@@ -1891,10 +1832,6 @@ final class InputParserTest extends TestCase
         self::assertSame('a', $messages[0]->key);
     }
 
-    // ===================================================================
-    // L72-73: fallthrough to bare escape when ESC + next doesn't match
-    // ===================================================================
-
     #[Test]
     public function parserEscFollowedByHighByteProducesEscape(): void
     {
@@ -1905,10 +1842,6 @@ final class InputParserTest extends TestCase
         self::assertSame(Key::Escape, $messages[0]->key);
     }
 
-    // ===================================================================
-    // L59: SS3 position advance uses += not = (kills Assignment mutant)
-    // ===================================================================
-
     #[Test]
     public function parserSsThreeNotAtStartAdvancesPositionCorrectly(): void
     {
@@ -1917,10 +1850,6 @@ final class InputParserTest extends TestCase
         self::assertSame('q', $messages[0]->key);
         self::assertSame(Key::F1, $messages[1]->key);
     }
-
-    // ===================================================================
-    // L67: Alt key position advance uses += not = (kills Assignment mutant)
-    // ===================================================================
 
     #[Test]
     public function parserAltKeyNotAtStartAdvancesPositionCorrectly(): void
@@ -1932,15 +1861,10 @@ final class InputParserTest extends TestCase
         self::assertSame('a', $messages[1]->key);
     }
 
-    // ===================================================================
-    // L109: UTF-8 3-byte mask 0xf0 vs 241 (kills IncrementInteger mutant)
-    // ===================================================================
-
     #[Test]
     public function parserUtf8ThreeByteWithLeadByteEf(): void
     {
         // U+FFFD = \xef\xbf\xbd — lead byte 0xef
-        // 0xef & 0xf0 = 0xe0 (match), but 0xef & 241 = 0xe1 (no match)
         $character = "\xef\xbf\xbd";
         $messages = InputParser::parse($character . 'q')->messages;
         self::assertCount(2, $messages);
@@ -1948,15 +1872,10 @@ final class InputParserTest extends TestCase
         self::assertSame('q', $messages[1]->key);
     }
 
-    // ===================================================================
-    // L110: UTF-8 4-byte mask 0xf8 vs 247/249 (kills De/IncrementInteger)
-    // ===================================================================
-
     #[Test]
     public function parserUtf8FourByteWithLeadByteF4(): void
     {
         // U+100000 = \xf4\x80\x80\x80 — lead byte 0xf4
-        // 0xf4 & 0xf8 = 0xf0 (match), but 0xf4 & 247 = 0xf4 (no match)
         $character = "\xf4\x80\x80\x80";
         $messages = InputParser::parse($character . 'q')->messages;
         self::assertCount(2, $messages);
@@ -1968,17 +1887,12 @@ final class InputParserTest extends TestCase
     public function parserUtf8FourByteWithLeadByteF1(): void
     {
         // U+40000 = \xf1\x80\x80\x80 — lead byte 0xf1
-        // 0xf1 & 0xf8 = 0xf0 (match), but 0xf1 & 249 = 0xf1 (no match)
         $character = "\xf1\x80\x80\x80";
         $messages = InputParser::parse($character . 'q')->messages;
         self::assertCount(2, $messages);
         self::assertSame($character, $messages[0]->key);
         self::assertSame('q', $messages[1]->key);
     }
-
-    // ===================================================================
-    // L111: UTF-8 default => 1 vs 2 (kills IncrementInteger mutant)
-    // ===================================================================
 
     #[Test]
     public function parserInvalidUtf8ContinuationByteConsumesOnlyOneByte(): void
@@ -1988,10 +1902,6 @@ final class InputParserTest extends TestCase
         self::assertCount(1, $messages);
         self::assertSame('q', $messages[0]->key);
     }
-
-    // ===================================================================
-    // L140: CSI final byte >= 0x40 boundary (kills GreaterThanOrEqualTo)
-    // ===================================================================
 
     #[Test]
     public function parserCsiAtSignAsFinalByteIsDetectedAtExactBoundary(): void

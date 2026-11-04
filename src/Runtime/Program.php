@@ -374,6 +374,9 @@ final class Program
         return $this->model;
     }
 
+    /**
+     * @internal
+     */
     public function tick(): void
     {
         if ($this->ticking) {
@@ -1332,7 +1335,7 @@ final class Program
      */
     private function focusableIds(): array
     {
-        return $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [];
+        return $this->model instanceof RoutesFocus ? $this->model->ringIds($this->focus) : [];
     }
 
     /**

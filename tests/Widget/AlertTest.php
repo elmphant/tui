@@ -290,7 +290,7 @@ final class AlertTest extends TestCase
      */
     private static function channelsOf(int $value): array
     {
-        $rgb = $value - Color::TRUE;
+        $rgb = $value - Color::TRUE_COLOR;
         self::assertGreaterThanOrEqual(0, $rgb, 'The dark theme fills with truecolor');
 
         return [($rgb >> 16) & 0xFF, ($rgb >> 8) & 0xFF, $rgb & 0xFF];

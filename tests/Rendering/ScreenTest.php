@@ -501,7 +501,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('Hello', $terminal->output);
     }
 
-    // --- Mutant #1: L20 LogicalOr — width-only change must trigger full redraw ---
     #[Test]
     public function widthOnlyChangeTriggersFullRedraw(): void
     {
@@ -521,7 +520,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('BBBBBBBBBB', $terminal->output);
     }
 
-    // --- Mutant #2: L22 ReturnRemoval — after renderFull, renderDiff must NOT also run ---
     #[Test]
     public function flushDoesNotRunDiffAfterFullRedraw(): void
     {
@@ -541,7 +539,6 @@ final class ScreenTest extends TestCase
         self::assertSame(1, $outputCount, 'Only one render pass (full redraw) should occur on size change');
     }
 
-    // --- Mutants #3-4: L46-47 cursorX/Y initial value must be -1 ---
     #[Test]
     public function diffFirstChangeAtColumnZeroUsesAbsoluteMove(): void
     {
@@ -560,7 +557,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('X', $terminal->output);
     }
 
-    // --- Mutant #5: L48 needMove init must be true ---
     #[Test]
     public function diffEmitsMoveForFirstChangedCellEvenAtOrigin(): void
     {
@@ -578,7 +574,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[1;1H", $terminal->output, 'needMove=true must cause cursor positioning even at (0,0)');
     }
 
-    // --- Mutants #6-7: L50 row loop starts at 0 and uses < not <= ---
     #[Test]
     public function diffProcessesRowZero(): void
     {
@@ -598,7 +593,6 @@ final class ScreenTest extends TestCase
         self::assertStringNotContainsString('BBB', $terminal->output, 'Unchanged row 1 must not be emitted');
     }
 
-    // --- Mutant #8: L52 needMove after skipping non-dirty row must be true ---
     #[Test]
     public function diffSetsNeedMoveAfterSkippingNonDirtyRow(): void
     {
@@ -624,7 +618,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[3;1H", $terminal->output, 'Must reposition cursor to row 2 after skipping non-dirty row 1');
     }
 
-    // --- Mutant #9: L63 needMove after unchanged cell must be true ---
     #[Test]
     public function diffSetsNeedMoveAfterUnchangedCellGap(): void
     {
@@ -646,7 +639,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[4C", $terminal->output, 'Must emit cursor right for Y after unchanged gap');
     }
 
-    // --- Mutants #10-15: L68-72 needMove/cursor tracking logic ---
     #[Test]
     public function diffTracksXPositionForConsecutiveChangedCells(): void
     {
@@ -690,7 +682,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[2;1H", $terminal->output, 'Must move cursor to row 1 for Y');
     }
 
-    // --- Mutant #16: L86 needMove at end of row must be true ---
     #[Test]
     public function diffSetsNeedMoveAtEndOfRow(): void
     {
@@ -731,7 +722,6 @@ final class ScreenTest extends TestCase
         self::assertSame('', $terminal->output);
     }
 
-    // --- Mutant #18: L94 clearDirty must be called ---
     #[Test]
     public function diffClearsDirtyFlagsAfterRender(): void
     {
@@ -748,7 +738,6 @@ final class ScreenTest extends TestCase
         self::assertEmpty($frame->dirtyRows, 'dirtyRows must be cleared after diff render');
     }
 
-    // --- Mutant #19: L100 resetCurrentStyle in renderFull ---
     #[Test]
     public function fullRedrawResetsStyleState(): void
     {
@@ -769,7 +758,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($sgrForRed, $terminal->output, 'Must re-emit foreground after style reset in full redraw');
     }
 
-    // --- Mutant #20: L101 SYNC_START must be in output ---
     #[Test]
     public function fullRedrawEmitsSyncStart(): void
     {
@@ -801,7 +789,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[3;1H", $terminal->output, 'Row 2 must use cursorToRowStart positioning');
     }
 
-    // --- Mutants #23-29: L105 concatenation in row 0 header ---
     #[Test]
     public function fullRedrawRowZeroContainsAllHeaderSequences(): void
     {
@@ -823,7 +810,6 @@ final class ScreenTest extends TestCase
         self::assertLessThan($headerEnd, $headerStart, 'Header sequences must come before content');
     }
 
-    // --- Mutants #30-32: L133 RESET_STYLE . SYNC_END concatenation ---
     #[Test]
     public function fullRedrawEndsWithResetStyleAndSyncEnd(): void
     {
@@ -841,7 +827,6 @@ final class ScreenTest extends TestCase
         self::assertLessThan($syncEndPos, $resetPos, 'RESET_STYLE must come before SYNC_END at end');
     }
 
-    // --- Mutant #33: L134 resetCurrentStyle in renderFull ---
     #[Test]
     public function fullRedrawResetsCurrentStyleAfterOutput(): void
     {
@@ -861,7 +846,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($sgrForYellow, $terminal->output, 'Diff after full redraw must re-emit style because resetCurrentStyle was called');
     }
 
-    // --- Mutant #34: L136 terminal->flush must be called ---
     #[Test]
     public function fullRedrawCallsTerminalFlush(): void
     {
@@ -892,7 +876,6 @@ final class ScreenTest extends TestCase
         self::assertGreaterThanOrEqual(1, $flushCount, 'Full redraw must call terminal->flush()');
     }
 
-    // --- Mutant #35: L138 clearDirty in renderFull ---
     #[Test]
     public function fullRedrawClearsDirtyFlags(): void
     {
@@ -906,7 +889,6 @@ final class ScreenTest extends TestCase
         self::assertEmpty($frame->dirtyRows, 'dirtyRows must be cleared after full render');
     }
 
-    // --- Mutants #36-38: the diff run loop, its break, and its advance ---
     #[Test]
     public function diffCollectsConsecutiveChangedCellsIntoOneRun(): void
     {
@@ -972,7 +954,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($sgr2, $terminal->output, 'Second style must be emitted');
     }
 
-    // --- Mutants #39-42: L183, 185, 194, 199 — collectStyledRun ---
     #[Test]
     public function fullRedrawCollectsConsecutiveSameStyleCells(): void
     {
@@ -1008,7 +989,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($sgr2, $terminal->output);
     }
 
-    // --- Mutants #43-49: L215-217 cellHasStyle ---
     #[Test]
     public function cellHasStyleMatchesAllThreeComponents(): void
     {
@@ -1100,7 +1080,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('3', $terminal->output, 'Italic SGR must be emitted');
     }
 
-    // --- Mutants #50-53: L222 characterColumns ---
     #[Test]
     public function characterColumnsReturnsOneForEmptyString(): void
     {
@@ -1122,7 +1101,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('Y', $terminal->output);
     }
 
-    // --- Mutants #54-59: L227-230 emitOutput ---
     #[Test]
     public function diffOutputIsWrappedInSyncStartAndSyncEnd(): void
     {
@@ -1181,7 +1159,6 @@ final class ScreenTest extends TestCase
         self::assertGreaterThanOrEqual(1, $flushCount, 'Diff must call terminal->flush()');
     }
 
-    // --- Mutants #60-62: L235-237 resetCurrentStyle ---
     #[Test]
     public function resetCurrentStyleZerosAllTrackedValues(): void
     {
@@ -1207,7 +1184,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('1', $terminal->output, 'Must re-emit bold attribute after reset');
     }
 
-    // --- Mutants #63-65: L242 snapshotFrontBuffer size check ---
     #[Test]
     public function snapshotFrontBufferCreatesNewBufferOnSizeChange(): void
     {
@@ -1254,7 +1230,6 @@ final class ScreenTest extends TestCase
         self::assertSame('', $terminal->output, 'An already-synced change writes nothing');
     }
 
-    // --- Mutants #68-75, 88: L257-258, 292 styleDelta identity check ---
     #[Test]
     public function styleDeltaReturnsEmptyWhenNoChange(): void
     {
@@ -1277,7 +1252,6 @@ final class ScreenTest extends TestCase
         self::assertSame(1, $sgrCount, 'Same style used twice should only emit SGR once');
     }
 
-    // --- Mutants #76-78: L261, 264 removedAttributes bitwise and branch ---
     #[Test]
     public function styleDeltaEmitsResetWhenAttributeRemoved(): void
     {
@@ -1341,7 +1315,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($bgSgr, $terminal->output, 'Must re-emit background after attribute reset');
     }
 
-    // --- Mutants #79-81: L276 addedAttributes ---
     #[Test]
     public function styleDeltaEmitsOnlyAddedAttributes(): void
     {
@@ -1361,7 +1334,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('3', $terminal->output, 'Must emit italic SGR code when added');
     }
 
-    // --- Mutants #82-84: L280-281 foreground change with ternary ---
     #[Test]
     public function styleDeltaEmitsForegroundChangeFromColorToDefault(): void
     {
@@ -1402,7 +1374,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($fgSgr, $terminal->output, 'Must emit foreground SGR when changing from default to color');
     }
 
-    // --- Mutants #85-87: L283-284 background change with ternary ---
     #[Test]
     public function styleDeltaEmitsBackgroundChangeFromColorToDefault(): void
     {
@@ -1443,7 +1414,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($bgSgr, $terminal->output, 'Must emit background SGR when changing from default to color');
     }
 
-    // --- Mutants #89-94: L295-318 moveCursor ---
     #[Test]
     public function moveCursorSameRowDeltaXZeroReturnsEmpty(): void
     {
@@ -1558,7 +1528,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[4;6H", $terminal->output, 'Different row AND column must use cursorTo(row, col)');
     }
 
-    // --- Mutants for attributesToSgr (L321-347) ---
     #[Test]
     public function attributesToSgrEmitsBoldCode(): void
     {
@@ -1663,7 +1632,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[1;4m", $terminal->output, 'Bold+Underline must emit SGR code 1;4');
     }
 
-    // --- Mutant: height-only change triggers full redraw ---
     #[Test]
     public function heightOnlyChangeTriggersFullRedraw(): void
     {
@@ -1682,7 +1650,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString(Ansi::CURSOR_HOME, $terminal->output, 'Height-only change must trigger full redraw');
     }
 
-    // --- Mutant: cursor movement with negative deltaX (cursor left) ---
     #[Test]
     public function moveCursorSameRowNegativeDeltaXUsesCursorLeft(): void
     {
@@ -1729,7 +1696,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[4;8H", $terminal->output, 'Different row and column must use absolute cursor positioning');
     }
 
-    // --- Mutant: no output when nothing changed in diff ---
     #[Test]
     public function diffProducesNoOutputWhenNothingChanged(): void
     {
@@ -1747,7 +1713,6 @@ final class ScreenTest extends TestCase
         self::assertSame('', $terminal->output, 'An unchanged buffer writes nothing');
     }
 
-    // --- Mutant: styleDelta returns empty for same style with sgrParts===[] ---
     #[Test]
     public function styleDeltaDoesNotEmitSgrWhenNothingChanges(): void
     {
@@ -2134,7 +2099,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[3;6H", $terminal->output, 'Different row and column must use absolute cursor positioning');
     }
 
-    // --- Mutant #1 (L22): return removal after renderFull — must not also run renderDiff ---
     #[Test]
     public function flushAfterResizeDoesNotRunBothRenderFullAndRenderDiff(): void
     {
@@ -2178,7 +2142,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($fgSgr, $terminal->output);
     }
 
-    // --- Mutant #20 (L100): resetCurrentStyle at start of renderFull ---
     #[Test]
     public function renderFullResetsStyleBeforeEmittingContent(): void
     {
@@ -2204,7 +2167,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($fgSgr, $terminal->output, 'renderFull must resetCurrentStyle so foreground is re-emitted');
     }
 
-    // --- Mutants #21-24 (L105): header sequence order ---
     #[Test]
     public function fullRedrawRowZeroHeaderSequencesInCorrectOrder(): void
     {
@@ -2227,7 +2189,6 @@ final class ScreenTest extends TestCase
         self::assertLessThan($contentPos, $homePos, 'CURSOR_HOME must come before content');
     }
 
-    // --- Mutant #24 (L105): RESET_STYLE removal from row 0 header ---
     #[Test]
     public function fullRedrawRowZeroHeaderIncludesResetStyle(): void
     {
@@ -2248,7 +2209,6 @@ final class ScreenTest extends TestCase
         self::assertLessThan($fgSgrPos, $firstResetPos, 'RESET_STYLE in header must come before foreground SGR');
     }
 
-    // --- Mutant #25 (L133): RESET_STYLE removal from end of renderFull ---
     #[Test]
     public function fullRedrawEndsWithResetStyleBeforeSyncEnd(): void
     {
@@ -2271,7 +2231,6 @@ final class ScreenTest extends TestCase
         self::assertStringNotContainsString('ABC', $contentBetween, 'No content between final RESET_STYLE and SYNC_END');
     }
 
-    // --- Mutants #26, 29 (L151, 185): While_ to false in collect runs ---
     #[Test]
     public function consecutiveChangesSharingOneStyleEmitAsOneRun(): void
     {
@@ -2312,7 +2271,6 @@ final class ScreenTest extends TestCase
         self::assertSame(1, $fgCount, 'Single-style content should emit foreground SGR only once');
     }
 
-    // --- Mutants #27-28, 30 (L169, 183, 199): max(0,...) instead of max(1,...) ---
     #[Test]
     public function narrowCharactersEachAdvanceOneColumnInADiff(): void
     {
@@ -2350,7 +2308,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('CDE', $terminal->output);
     }
 
-    // --- Mutant #31 (L215): LogicalAndAllSubExprNegation cellHasStyle ---
     #[Test]
     public function cellHasStyleReturnsFalseWhenNothingMatches(): void
     {
@@ -2377,7 +2334,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($sgr2, $terminal->output, 'Second cell foreground must be emitted (style mismatch breaks run)');
     }
 
-    // --- Mutants #32-35 (L222): characterColumns mutations ---
     #[Test]
     public function characterColumnsHandlesWideCharacterInDiff(): void
     {
@@ -2395,7 +2351,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString('XX', $terminal->output);
     }
 
-    // --- Mutant #36 (L228): resetCurrentStyle in emitOutput ---
     #[Test]
     public function emitOutputResetsStyleForNextDiff(): void
     {
@@ -2419,7 +2374,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString($fgSgr, $terminal->output, 'emitOutput must resetCurrentStyle so next diff re-emits foreground');
     }
 
-    // --- Mutant #37 (L242): snapshotFrontBuffer width check reversed ---
     #[Test]
     public function snapshotFrontBufferHandlesWidthChangeCorrectly(): void
     {
@@ -2444,7 +2398,6 @@ final class ScreenTest extends TestCase
         self::assertStringNotContainsString('BBBBB', $terminal->output, 'Unchanged cells should not be re-emitted');
     }
 
-    // --- Mutant #38 (L258): ReturnRemoval in styleDelta ---
     #[Test]
     public function styleDeltaEarlyReturnPreventsSpuriousSgrOutput(): void
     {
@@ -2469,7 +2422,6 @@ final class ScreenTest extends TestCase
         self::assertCount(0, $sgrMatches[0], 'Default-to-default style changes must not emit any SGR (via early return)');
     }
 
-    // --- Mutant #39 (L261): BitwiseNot removed from removedAttributes ---
     #[Test]
     public function styleDeltaBitwiseNotDetectsRemovedAttributes(): void
     {
@@ -2506,7 +2458,6 @@ final class ScreenTest extends TestCase
         self::assertStringContainsString("\x1b[3m", $italicTransition, 'Must emit only the added ITALIC attribute');
     }
 
-    // --- Mutants #40-43 (L269-273): IfNegation and value mutations in removed-attributes branch ---
     #[Test]
     public function styleDeltaInRemovedAttributesBranchEmitsForegroundCorrectly(): void
     {
@@ -2610,7 +2561,6 @@ final class ScreenTest extends TestCase
         }
     }
 
-    // --- Mutants #44-47 (L299-315): moveCursor edge cases ---
     #[Test]
     public function diffHandlesWideCharacterContinuationCellCorrectly(): void
     {

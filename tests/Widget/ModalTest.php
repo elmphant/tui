@@ -168,10 +168,6 @@ final class ModalTest extends TestCase
         self::assertSame(1, $modal->sizing()->rows->flex);
     }
 
-    // ---------------------------------------------------------------
-    // L40-41: Default size is 60% width and 60% height
-    // ---------------------------------------------------------------
-
     #[Test]
     public function defaultWidthPercentIsSixty(): void
     {
@@ -201,10 +197,6 @@ final class ModalTest extends TestCase
         $bottomLeftIndex = 39 * 100 + 20;
         self::assertSame('╰', $frame->characters[$bottomLeftIndex]);
     }
-
-    // ---------------------------------------------------------------
-    // L53: withWidth clamps to [10, 100]
-    // ---------------------------------------------------------------
 
     #[Test]
     public function withWidthClampsAtMinimumTen(): void
@@ -262,10 +254,6 @@ final class ModalTest extends TestCase
         self::assertSame('╭', $frame->characters[$topLeftIndex]);
     }
 
-    // ---------------------------------------------------------------
-    // L58: withHeight clamps to [10, 100]
-    // ---------------------------------------------------------------
-
     #[Test]
     public function withHeightClampsAtMinimumTen(): void
     {
@@ -319,10 +307,6 @@ final class ModalTest extends TestCase
         $topLeftIndex = 0 * 100 + 20;
         self::assertSame('╭', $frame->characters[$topLeftIndex]);
     }
-
-    // ---------------------------------------------------------------
-    // L78: MatchArmRemoval — Escape and click-outside dismiss
-    // ---------------------------------------------------------------
 
     #[Test]
     public function escapeDismissesModal(): void
@@ -392,10 +376,6 @@ final class ModalTest extends TestCase
         self::assertFalse($modal->dismisses($mouseMessage, $area));
     }
 
-    // ---------------------------------------------------------------
-    // L98: Ternary — content unchanged returns same modal instance
-    // ---------------------------------------------------------------
-
     #[Test]
     public function updateReturnsNewModalWhenContentChanges(): void
     {
@@ -417,10 +397,6 @@ final class ModalTest extends TestCase
         $result = $modal->update(new KeyMsg('x'), $area);
         self::assertSame($modal, $result->model);
     }
-
-    // ---------------------------------------------------------------
-    // L105: Render early-return when area < 5x5
-    // ---------------------------------------------------------------
 
     #[Test]
     public function aModalLeftUnborderedLeavesTheFrameToItsContent(): void
@@ -502,22 +478,9 @@ final class ModalTest extends TestCase
         self::assertTrue($hasCorner, 'Rendering should happen when area is exactly 5x5');
     }
 
-    // ---------------------------------------------------------------
-    // L112: Modal rect too small (< 3x3) after percentage calculation
-    // ---------------------------------------------------------------
-
     #[Test]
     public function renderSkipsWhenModalRectWidthBelowThree(): void
     {
-        // With width=10%, area width=20 => modalWidth = max(3, (int)(20*10/100)) = max(3,2) = 3
-        // So we need area even smaller. width=10%, area=19 => max(3, 1) = 3. Still 3.
-        // We need to bypass the max(3,...). Actually max(3,...) prevents < 3.
-        // But if area is so small that 60% < 3, e.g. area width=4: (int)(4*60/100) = 2, but max(3,2) = 3
-        // So modal width is always >= 3. The L112 check fires if COMPUTED modalRect has width < 3.
-        // Wait, computeModalRect uses max(3, ...) so this can't really happen with standard params.
-        // But consider: area width=5, 60% => (int)(5*60/100) = 3, max(3,3) = 3. OK.
-        // With 10% minimum: area width=5, 10% => max(3, 0) = 3. Still 3.
-        // So this guard is for safety. Let's verify rendering proceeds with exactly 3.
         $modal = Modal::new('T', Text::new('X'))->withWidth(10);
         $frame = new Frame(5, 30);
         $area = new Rect(0, 0, 5, 30);
@@ -551,10 +514,6 @@ final class ModalTest extends TestCase
         self::assertTrue($hasCorner, 'Modal with height=3 should still render');
     }
 
-    // ---------------------------------------------------------------
-    // L117: MethodCallRemoval — clearModalArea must be called
-    // ---------------------------------------------------------------
-
     #[Test]
     public function clearModalAreaFillsWithSpaces(): void
     {
@@ -578,10 +537,6 @@ final class ModalTest extends TestCase
         $innerIndex = 7 * 80 + 18;
         self::assertSame(' ', $frame->characters[$innerIndex]);
     }
-
-    // ---------------------------------------------------------------
-    // L122-123: Coalesce — borderStyleOverride and titleStyleOverride
-    // ---------------------------------------------------------------
 
     #[Test]
     public function borderStyleOverrideIsUsedWhenSet(): void
@@ -679,10 +634,6 @@ final class ModalTest extends TestCase
         );
     }
 
-    // ---------------------------------------------------------------
-    // L128: Content only rendered when contentRect > 0x0
-    // ---------------------------------------------------------------
-
     #[Test]
     public function contentIsRenderedWhenContentRectHasPositiveDimensions(): void
     {
@@ -722,10 +673,6 @@ final class ModalTest extends TestCase
         }
         self::assertTrue($hasContent, 'Content should render in valid inner area');
     }
-
-    // ---------------------------------------------------------------
-    // L135-136: computeModalRect — exact width/height calculations
-    // ---------------------------------------------------------------
 
     #[Test]
     public function modalWidthIsPercentageOfAreaWidth(): void
@@ -815,10 +762,6 @@ final class ModalTest extends TestCase
         self::assertSame('╮', $frame->characters[$topRightIndex]);
     }
 
-    // ---------------------------------------------------------------
-    // L137-138: CastInt — centering X and Y offsets
-    // ---------------------------------------------------------------
-
     #[Test]
     public function modalIsCenteredHorizontally(): void
     {
@@ -881,10 +824,6 @@ final class ModalTest extends TestCase
         $topLeftIndex = 10 * 100 + 26;
         self::assertSame('╭', $frame->characters[$topLeftIndex]);
     }
-
-    // ---------------------------------------------------------------
-    // L152-155: dimBackground — loop bounds and index calculation
-    // ---------------------------------------------------------------
 
     #[Test]
     public function dimBackgroundAppliesFaintToAllCellsInArea(): void
@@ -992,10 +931,6 @@ final class ModalTest extends TestCase
         self::assertTrue(true, 'Should not crash with out-of-bounds area');
     }
 
-    // ---------------------------------------------------------------
-    // L171: fillRect call in clearModalArea
-    // ---------------------------------------------------------------
-
     #[Test]
     public function clearModalAreaUsesCorrectDimensionsAndBackground(): void
     {
@@ -1061,10 +996,6 @@ final class ModalTest extends TestCase
         self::assertNotSame('Z', $frame->characters[$modalCornerIndex]);
     }
 
-    // ---------------------------------------------------------------
-    // L41: Default heightPercent is exactly 60 (not 61)
-    // ---------------------------------------------------------------
-
     #[Test]
     public function defaultHeightPercentIsExactlySixtyNotSixtyOne(): void
     {
@@ -1086,10 +1017,6 @@ final class ModalTest extends TestCase
         $wrongTopLeftIndex = 19 * 100 + 20;
         self::assertNotSame('╭', $frame->characters[$wrongTopLeftIndex]);
     }
-
-    // ---------------------------------------------------------------
-    // L53: withWidth boundary: max(10,...) catches 9
-    // ---------------------------------------------------------------
 
     #[Test]
     public function withWidthNineIsClamped(): void
@@ -1123,10 +1050,6 @@ final class ModalTest extends TestCase
         self::assertSame('╮', $frame->characters[$topRightIndex]);
     }
 
-    // ---------------------------------------------------------------
-    // L58: withHeight boundary: max(10,...) catches less than 10
-    // ---------------------------------------------------------------
-
     #[Test]
     public function withHeightNineIsClamped(): void
     {
@@ -1157,10 +1080,6 @@ final class ModalTest extends TestCase
         $bottomLeftIndex = 99 * 100 + 20;
         self::assertSame('╰', $frame->characters[$bottomLeftIndex]);
     }
-
-    // ---------------------------------------------------------------
-    // L135: Division by 100 exactly (not 99)
-    // ---------------------------------------------------------------
 
     #[Test]
     public function widthCalculationDividesByExactlyOneHundred(): void
@@ -1194,10 +1113,6 @@ final class ModalTest extends TestCase
         self::assertSame('╭', $frame->characters[$topLeftIndex]);
         self::assertSame('╰', $frame->characters[$bottomLeftIndex]);
     }
-
-    // ---------------------------------------------------------------
-    // L152-153: Dim loop boundaries are exact (< not <=)
-    // ---------------------------------------------------------------
 
     #[Test]
     public function dimBackgroundDoesNotExceedAreaBottom(): void
@@ -1251,10 +1166,6 @@ final class ModalTest extends TestCase
         self::assertTrue($isDimmedOrModal);
     }
 
-    // ---------------------------------------------------------------
-    // L171: clearModalArea uses foreground=0
-    // ---------------------------------------------------------------
-
     #[Test]
     public function clearModalAreaSetsForegroundToDefault(): void
     {
@@ -1276,14 +1187,6 @@ final class ModalTest extends TestCase
         $interiorIndex = 6 * 80 + 17;
         self::assertSame(0, $frame->foregrounds[$interiorIndex]);
     }
-
-    // ---------------------------------------------------------------
-    // L112: Guard when modalRect < 3 (safety annotation)
-    // ---------------------------------------------------------------
-
-    // ---------------------------------------------------------------
-    // L128: contentRect guard (safety annotation)
-    // ---------------------------------------------------------------
 
     // ---------------------------------------------------------------
     // Delegate to interactive content

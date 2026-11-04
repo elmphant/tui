@@ -54,8 +54,8 @@ trait FiltersItsContent
             Actions::HOME => [],
             Actions::END => [],
             Actions::SELECT => ['enter'],
-        ]))->merge(FilterBar::keybindings())
-            ->append(TextInput::defaultKeybindings());
+        ]))->overriddenBy(FilterBar::keybindings())
+            ->plus(TextInput::defaultKeybindings());
     }
 
     public function query(): string
@@ -145,7 +145,7 @@ trait FiltersItsContent
         }
 
         $field = fn () => FilterBar::render($frame, FilterBar::barArea($area), $context, $this->fieldDrawnBy($context), $this->barSummary());
-        $this->fieldHoldsTheKeys($context) ? $field() : $context->withoutFocus($field);
+        $this->fieldHoldsTheKeys($context) ? $field() : $context->drawUnfocused($field);
 
         $body = $this->contentArea($area);
         if ($body->height < 1) {

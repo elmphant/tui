@@ -383,7 +383,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderWithAreaEntirelyAboveBufferWritesNothing(): void
     {
-        // L125 LessThan / L156 LessThan / L125 LogicalAnd: bounds checks for top/bottom rows
         $frame = new Frame(10, 5);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -400,7 +399,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderWithAreaEntirelyBelowBufferWritesNothing(): void
     {
-        // L125 LessThan: top < bufferHeight — top = bufferHeight must be rejected
         $frame = new Frame(10, 5);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -416,7 +414,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderWithLeftNegativeSkipsCornerGlyphs(): void
     {
-        // L127 LogicalAnd: left >= 0 — when left < 0, corner glyphs must be skipped
         $frame = new Frame(10, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -434,7 +431,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderWithRightPastBufferSkipsRightCornerGlyphs(): void
     {
-        // L135 LogicalAnd: right < bufferWidth — when right >= bufferWidth, right corners skipped
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -456,8 +452,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderSingleRowBlockDoesNotRenderBottomSeparately(): void
     {
-        // L156 LogicalAnd / bottom !== top: a 1-row-high block should render only the top edge,
-        // not duplicate the bottom corners over the top.
         $frame = new Frame(5, 2);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -477,7 +471,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderMarksTopRowDirty(): void
     {
-        // L153 TrueValue: $frame->dirtyRows[$top] = true must actually be set
         $frame = new Frame(5, 3);
         $block = Block::new()->withBorderType(BorderType::Solid);
 
@@ -490,8 +483,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderDoesNotWritePastBufferWhenHorizontalSegmentExtendsBeyondRight(): void
     {
-        // L143 DecrementInteger / L156 LessThan etc. — when the area's right is beyond bufferWidth,
-        // the horizontal segment must clamp at bufferWidth, not write past it.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -504,7 +495,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtTopEqualsBufferHeightWritesNothing(): void
     {
-        // L125 LessThan: top < bufferHeight — boundary case top == bufferHeight must skip
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -520,8 +510,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtLeftEqualsBufferWidthWritesNoLeftCorners(): void
     {
-        // L127 / L158 LessThan: left < bufferWidth — boundary case left == bufferWidth
-        // With `<=` mutation, left=5 writes to topBase+5 which spills into the NEXT row's column 0.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -538,7 +526,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtRightNegativeWritesNoRightCorners(): void
     {
-        // L135 / L166 GreaterThanOrEqualTo: right >= 0 — boundary case right == -1 must skip right corners
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -552,7 +539,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtBottomEqualsBufferHeightWritesNoBottomRow(): void
     {
-        // L156 LessThan / GreaterThanOrEqualTo: bottom boundary
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -569,7 +555,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtBottomNegativeWritesNoBottomRow(): void
     {
-        // L156 GreaterThanOrEqualTo: bottom >= 0 — boundary case bottom == -1 must skip bottom row entirely
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -586,7 +571,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtLeftNegativeDoesNotWriteLeftCorner(): void
     {
-        // L127 / L158 GreaterThanOrEqualTo: left >= 0 — boundary case left == -1
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -602,7 +586,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtRightEqualsBufferWidthDoesNotWriteRightCorner(): void
     {
-        // L135 / L166 LessThan: right < bufferWidth — boundary case right == bufferWidth
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -618,7 +601,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderMarksBottomRowDirty(): void
     {
-        // L184 TrueValue: $frame->dirtyRows[$bottom] = true
         $frame = new Frame(5, 3);
         $block = Block::new()->withBorderType(BorderType::Solid);
 
@@ -631,7 +613,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderMarksMiddleRowDirty(): void
     {
-        // L207 TrueValue: middle rows for the vertical sides
         $frame = new Frame(5, 5);
         $block = Block::new()->withBorderType(BorderType::Solid);
 
@@ -646,7 +627,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtXGreaterThanZeroWritesVerticalSidesAtCorrectColumn(): void
     {
-        // L191/L192 Plus: $rowBase + $left must use addition. With subtraction, left=2 would write to column -2.
         $frame = new Frame(10, 4);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -664,7 +644,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtBottomExactlyAtBufferTopEdgeStillRendersBottomRow(): void
     {
-        // L156 GreaterThanOrEqualTo: bottom >= 0 — boundary case bottom == 0 must still render
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -679,8 +658,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderSingleColumnWritesBothCornersWithRightOverwritingLeft(): void
     {
-        // L135 / L166 GreaterThanOrEqualTo: right >= 0 — when right == 0 (width == 1),
-        // top-right and bottom-right writes overwrite top-left/bottom-left at the same column.
         $frame = new Frame(3, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -697,8 +674,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtRightEqualsBufferWidthDoesNotSpillIntoNextRow(): void
     {
-        // L135 LessThan: right < bufferWidth — when right == bufferWidth, mutation `<=` would
-        // write `┐` at topBase + bufferWidth which falls into the next row's column 0.
         // Use a 1-row block (top == bottom) so the bottom section is skipped and no overwrite hides the bug.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
@@ -713,7 +688,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtRightEqualsBufferWidthDoesNotWriteVerticalRightPastBuffer(): void
     {
-        // L199 LessThan: right < bufferWidth (vertical sides) — same boundary case
         $frame = new Frame(5, 5);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -722,8 +696,6 @@ final class BlockTest extends TestCase
         $block->render($frame, new Rect(0, 0, 6, 5));
 
         // Vertical sides cover rows 1..3. At col 5 (= bufferWidth), no vertical-right may appear.
-        // With mutation `<=`, writes happen at rowBase + 5 which spills into next row col 0.
-        // Specifically, row 1's spill would land at row 2 col 0 → would be '│'.
         // We verify that row 2 col 0 is the left-side vertical at row 2, not a spill.
         for ($y = 1; $y < 4; ++$y) {
             self::assertSame('│', $frame->characters[$y * 5 + 0], "Row {$y} col 0 must be the vertical-left side");
@@ -733,9 +705,7 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderVerticalRightAtColumnZeroWhenLeftIsNegative(): void
     {
-        // L199 GreaterThanOrEqualTo: right >= 0 → > 0 — when right == 0 and left < 0,
-        // the vertical-LEFT is skipped (left < 0), so only vertical-RIGHT writes the side at col 0.
-        // With mutation, vertical-right is skipped → col 0 stays untouched.
+        // When right == 0 and left < 0, the vertical-LEFT is skipped, so only vertical-RIGHT writes the side at col 0.
         $frame = new Frame(3, 5);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -750,7 +720,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderVerticalRightDoesNotSpillPastBufferWidth(): void
     {
-        // L199 LessThan: right < bufferWidth → <=. When right == bufferWidth, mutation writes past.
         // Use a block whose bottom is out of buffer so no bottom-section write overwrites the spill.
         $frame = new Frame(5, 5);
         $this->fillBuffer($frame, '.');
@@ -765,7 +734,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtBottomEqualsBufferHeightDoesNotWriteBelowBuffer(): void
     {
-        // L156 LessThan: bottom < bufferHeight — when bottom == bufferHeight, mutation writes past buffer
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -779,26 +747,19 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtLeftBelowNegativeOneDoesNotWriteNegativeIndices(): void
     {
-        // L143 / L174 DecrementInteger: max(0, left+1) → max(-1, left+1). Only differs when left+1 < -1.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
 
-        // left = -3, left+1 = -2. Current startX = max(0, -2) = 0. Mutation = max(-1, -2) = -1.
-        // With startX=-1, the loop writes to bottomBase + (-1) which spills into row above the bottom.
         $block->render($frame, new Rect(-3, 0, 5, 3));
 
         self::assertCount(15, $frame->characters, 'startX must clamp to 0 even when left+1 < -1');
-        // Specifically: with mutation, characters[9] (row 1, col 4) would be overwritten with '─'
-        // by the bottom-horizontal loop starting at x=-1. Currently it stays '.'.
         self::assertSame('.', $frame->characters[9], 'Cells in rows other than bottom must not be overwritten by bottom horizontal');
     }
 
     #[Test]
     public function renderAtTopNegativeStartsVerticalSidesAtRowZero(): void
     {
-        // L187 IncrementInteger: max(0, top+1) → max(1, ...). With top=-1, top+1=0;
-        // current startY=0, mutation startY=1. The vertical sides must start at row 0.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
@@ -806,7 +767,6 @@ final class BlockTest extends TestCase
         // top=-1 (out of bounds), bottom=2. Vertical sides cover rows 0 and 1.
         $block->render($frame, new Rect(0, -1, 5, 4));
 
-        // Row 0 vertical sides must render (mutation would skip row 0).
         self::assertSame('│', $frame->characters[0 * 5 + 0], 'Vertical-left at row 0 must render when top=-1');
         self::assertSame('│', $frame->characters[0 * 5 + 4], 'Vertical-right at row 0 must render when top=-1');
     }
@@ -814,22 +774,18 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderAtLeftBelowNegativeOneDoesNotSkipBottomHorizontal(): void
     {
-        // L174 IncrementInteger: max(0, left+1) → max(1, ...). With left=-2, left+1=-1;
-        // current startX=0, mutation startX=1. Bottom horizontal must start at col 0.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);
 
         $block->render($frame, new Rect(-2, 0, 6, 3));
 
-        // Bottom horizontal at row 2 col 0 must render — mutation would skip col 0.
         self::assertSame('─', $frame->characters[2 * 5 + 0], 'Bottom horizontal at col 0 must render when left = -2');
     }
 
     #[Test]
     public function renderWritesWidthOneToBorderCells(): void
     {
-        // L133, L141, L151, L164, L197, L205 IncrementInteger: widths[i] = 1 — must remain 1, not 2
         $frame = new Frame(5, 5);
         $block = Block::new()->withBorderType(BorderType::Solid);
 
@@ -851,8 +807,6 @@ final class BlockTest extends TestCase
     #[Test]
     public function renderHorizontalSegmentStartsAfterLeftCorner(): void
     {
-        // L143 IncrementInteger: max(0, $left + 1) → max(1, ...) — would skip column 0
-        // when left == -1 (left + 1 = 0). Test with left = -1 so left+1 = 0 hits the max boundary.
         $frame = new Frame(5, 3);
         $this->fillBuffer($frame, '.');
         $block = Block::new()->withBorderType(BorderType::Solid);

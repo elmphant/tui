@@ -237,14 +237,14 @@ final readonly class FocusLoggingModel implements RoutesFocus
         };
     }
 
-    public function focusableIds(?FocusState $focus = null): array
+    public function ringIds(?FocusState $focus = null): array
     {
         return array_map(ComponentId::named(...), $this->ids);
     }
 
     public function reachableIds(): array
     {
-        return $this->focusableIds();
+        return $this->ringIds();
     }
 
     public function enclosingIds(ComponentId $id): array

@@ -444,8 +444,6 @@ final class KeyPatternTest extends TestCase
     public function fromKeyMsgDigitNotNormalized(): void
     {
         // Digits '0'-'9' are not uppercase letters A-Z.
-        // Kills a LogicalAnd mutation that would spuriously normalize
-        // any printable char between ASCII 48 and 90.
         $pattern = KeyPattern::fromKeyMsg(new KeyMsg('0'));
         self::assertSame('0', $pattern->key);
         self::assertFalse($pattern->shift);

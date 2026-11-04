@@ -141,9 +141,9 @@ final class RenderContext
     /**
      * @param Closure(): void $render
      */
-    public function withoutFocus(Closure $render): void
+    public function drawUnfocused(Closure $render): void
     {
-        $this->focus->withoutFocus($render);
+        $this->focus->drawUnfocused($render);
     }
 
     /**

@@ -583,7 +583,6 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightReturnsZeroForZeroWidth(): void
     {
-        // L43 LessThan: `< 1` → `<= 1`. At width=1, current returns sum/max, mutation returns 0.
         $layout = Layout::vertical(
             $this->createWidgetWithConstraint(Constraint::exact(3)),
             $this->createWidgetWithConstraint(Constraint::exact(2)),
@@ -596,8 +595,6 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightVerticalSumsChildrenHeights(): void
     {
-        // L47 Identical: `=== Vertical` → `!== Vertical` swaps vertical/horizontal accumulation.
-        // L48 `total = 0` → `total = -1`: changes the starting value.
         $layout = Layout::vertical(
             $this->createWidgetWithConstraint(Constraint::exact(3)),
             $this->createWidgetWithConstraint(Constraint::exact(4)),
@@ -610,8 +607,6 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightHorizontalTakesMaxOfChildren(): void
     {
-        // L49 `max = 0` → `max = -1`: changes starting value of max.
-        // L47 Identical inverted: vertical becomes horizontal.
         $layout = Layout::horizontal(
             $this->createWidgetWithConstraint(Constraint::exact(3)),
             $this->createWidgetWithConstraint(Constraint::exact(5)),
@@ -659,7 +654,6 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightHorizontalWithNoChildrenReturnsZero(): void
     {
-        // L49 `max = 0` → `max = -1`: empty horizontal layout. Initial max is returned.
         $layout = Layout::horizontal();
         self::assertSame(0, $layout->measureHeight(20), 'Empty horizontal layout must return 0 (initial max value)');
     }
@@ -667,16 +661,6 @@ final class LayoutTest extends TestCase
     #[Test]
     public function constraintHeightUsesMinWhenMinEqualsMax(): void
     {
-        // L68 Identical: `min === max` branch returns min.
-        // L69 ReturnRemoval: the early return.
-        // For constraint exact(3), min == max == 3 — returns 3.
-        // With ReturnRemoval, falls through to max(1, 3) = 3. Same result, equivalent.
-        // With Identical mutated to !==, takes else branch: max(1, 3) = 3. Same.
-        // → Both look equivalent. But let me try with min=0 to differentiate.
-        // For Constraint::flex() (min=0, max=PHP_INT_MAX), min != max. Else branch: max(1, 0) = 1.
-        // For an unusual case — but typical widgets use exact() or flex().
-        // Hmm — the case where they differ: min === max AND min === 0 (e.g., exact(0)).
-        // Current: return 0. Mutation (ReturnRemoval): max(1, 0) = 1.
         $layout = Layout::vertical(
             $this->createWidgetWithConstraint(Constraint::exact(0)),
             $this->createWidgetWithConstraint(Constraint::exact(3)),
@@ -688,14 +672,11 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightUsesChildConstraintWhenNotMeasureHeight(): void
     {
-        // L57 Assignment: `+=` → `=` would lose the accumulation.
         $layout = Layout::vertical(
             $this->createWidgetWithConstraint(Constraint::exact(3)),
             $this->createWidgetWithConstraint(Constraint::exact(4)),
         );
 
-        // measureHeight must sum: 3 + 4 = 7. With Assignment mutant `total = childHeight`,
-        // the final value would be just the last child's height (4), not the sum.
         self::assertSame(7, $layout->measureHeight(20), 'Vertical must accumulate (+=), not overwrite');
     }
 

@@ -61,7 +61,6 @@ final class PositionedOverlayTest extends TestCase
     #[Test]
     public function explicitSizeIsUsedOverComputedSize(): void
     {
-        // L57/L58 Coalesce: when $this->width/height is set, it must be used (not the computed expression).
         $frame = new Frame(20, 10);
         $context = new RenderContext(Theme::dark());
         $overlay = PositionedOverlay::at(0, 0)
@@ -79,7 +78,6 @@ final class PositionedOverlayTest extends TestCase
     #[Test]
     public function defaultWidthSubtractsXOffsetFromAreaWidth(): void
     {
-        // L57 Minus: area.width - (x - area.x). Mutation `+` would not shrink.
         $frame = new Frame(15, 1);
         for ($i = 0; $i < 15; ++$i) {
             $frame->putChar($i, 0, '.');
@@ -97,7 +95,6 @@ final class PositionedOverlayTest extends TestCase
     #[Test]
     public function defaultWidthUsesOffsetRelativeToAreaX(): void
     {
-        // L57 Minus (second): area.width - (x - area.x) vs area.width - (x + area.x)
         $frame = new Frame(30, 1);
         for ($i = 0; $i < 30; ++$i) {
             $frame->putChar($i, 0, '.');
@@ -114,7 +111,6 @@ final class PositionedOverlayTest extends TestCase
     #[Test]
     public function defaultHeightUsesConstraintWhenExactConstraintSet(): void
     {
-        // L59 ternary / LogicalAnd: when constraint->min === max && min > 0, use constraint.
         $frame = new Frame(20, 10);
         for ($i = 0; $i < 200; ++$i) {
             $frame->putChar($i % 20, intdiv($i, 20), '.');
@@ -131,7 +127,6 @@ final class PositionedOverlayTest extends TestCase
     #[Test]
     public function returnsWithoutRenderingWhenWidthIsZero(): void
     {
-        // L64 LogicalOr/LessThanOrEqualTo: width <= 0 must short-circuit
         $frame = new Frame(5, 5);
         for ($i = 0; $i < 25; ++$i) {
             $frame->putChar($i % 5, intdiv($i, 5), '.');
@@ -149,7 +144,6 @@ final class PositionedOverlayTest extends TestCase
     #[Test]
     public function returnsWithoutRenderingWhenHeightIsZero(): void
     {
-        // L64 LogicalOr: height <= 0 must short-circuit
         $frame = new Frame(5, 5);
         for ($i = 0; $i < 25; ++$i) {
             $frame->putChar($i % 5, intdiv($i, 5), '.');
@@ -167,9 +161,6 @@ final class PositionedOverlayTest extends TestCase
     #[Test]
     public function defaultHeightWithNoConstraintUsesAreaRemainder(): void
     {
-        // L59/L61: when constraint is not exact (min !== max or min == 0), height = max(0, area.height - (y - area.y)).
-        // Use a multi-line widget OR a widget with flex constraint to hit the else branch.
-        // PositionedOverlay's render passes a Rect with the computed height — if widget renders all rows, we can detect.
         $frame = new Frame(5, 10);
         $context = new RenderContext(Theme::dark());
 

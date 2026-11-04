@@ -33,7 +33,7 @@ final class NavigationPolicyTest extends TestCase
     {
         $app = new NavigationPolicyApp();
 
-        self::assertEquals([ComponentId::named('details')], $app->focusableIds(), 'tab has one stop');
+        self::assertEquals([ComponentId::named('details')], $app->ringIds(), 'tab has one stop');
 
         $clicked = $app->update(
             new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left),
@@ -64,10 +64,10 @@ final class NavigationPolicyTest extends TestCase
     {
         $app = new EmptyPaneApp(new EmptyPane(ready: false), new EmptyPane(ready: true));
 
-        self::assertEquals([ComponentId::named('details')], $app->focusableIds());
+        self::assertEquals([ComponentId::named('details')], $app->ringIds());
         self::assertEquals(
             [ComponentId::named('output'), ComponentId::named('details')],
-            (new EmptyPaneApp(new EmptyPane(ready: true), new EmptyPane(ready: true)))->focusableIds(),
+            (new EmptyPaneApp(new EmptyPane(ready: true), new EmptyPane(ready: true)))->ringIds(),
             'and the same pane with something in it is back on the ring',
         );
     }

@@ -127,7 +127,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardDefaultIsNotDimmed(): void
     {
-        // L30 FalseValue: $dimmed default must be false, not true
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
         $card = Card::new('Title', 'body');
@@ -145,7 +144,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardRendersAtMinimumWidthFour(): void
     {
-        // L85 LessThan width: `< 4` → `<= 4`. width = 4 must render.
         $frame = new Frame(4, 3);
         $context = new RenderContext(Theme::dark());
         $card = Card::new('X', 'y');
@@ -158,7 +156,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardRendersAtMinimumHeightThree(): void
     {
-        // L85 LessThan height: `< 3` → `<= 3`. height = 3 must render.
         $frame = new Frame(8, 3);
         $context = new RenderContext(Theme::dark());
         $card = Card::new('X', 'y');
@@ -182,7 +179,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardUsesExplicitBorderStyle(): void
     {
-        // L90 Coalesce: $this->borderStyle ?? $theme->borderStyle — explicit must win
         $explicit = new Style(
             foreground: Color::ansi(AnsiColor::Green),
         );
@@ -203,7 +199,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardUsesExplicitTitleStyle(): void
     {
-        // L91 Coalesce: $this->titleStyle ?? $theme->base->bold()
         $explicit = new Style(
             foreground: Color::ansi(AnsiColor::Yellow),
         );
@@ -224,7 +219,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardUsesExplicitBodyStyle(): void
     {
-        // L92 Coalesce: $this->bodyStyle ?? $theme->dim
         $explicit = new Style(
             foreground: Color::ansi(AnsiColor::Blue),
         );
@@ -245,7 +239,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardClearsInnerAreaForStaleContent(): void
     {
-        // L108 MethodCallRemoval (fillRect) + L109-112 fillRect args:
         // The card must clear cells inside the border so stale content doesn't bleed through.
         // Pre-fill with '#' and ensure inner is overwritten with ' ' before title/body draw.
         $frame = new Frame(20, 4);
@@ -271,7 +264,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardClearRectPositionAndSizeMatchInnerArea(): void
     {
-        // L109-112: fillRect position (x+1, y+1) and size (width-2, height-2) must be exact.
         // The clear area must NOT overlap the border cells.
         $frame = new Frame(20, 6);
         for ($i = 0; $i < 120; ++$i) {
@@ -302,7 +294,6 @@ final class CardTest extends TestCase
         }
 
         // Top and bottom horizontal border segments must remain horizontal glyphs '─' (not ' ').
-        // This catches L112 mutants that would extend the clear height into the border rows.
         for ($col = 1; $col <= 18; ++$col) {
             self::assertSame('─', $frame->characters[0 * 20 + $col], "Top horizontal at col {$col} must be '─', not cleared");
             self::assertSame('─', $frame->characters[5 * 20 + $col], "Bottom horizontal at col {$col} must be '─', not cleared");
@@ -312,7 +303,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardClearRectWritesNoTextAttributes(): void
     {
-        // L115 DecrementInteger/IncrementInteger: attributes parameter for fillRect must be 0
         $frame = new Frame(20, 4);
         $context = new RenderContext(Theme::dark());
         $card = Card::new('', ''); // empty so no title/body attributes to interfere
@@ -329,8 +319,6 @@ final class CardTest extends TestCase
     #[Test]
     public function cardWithOneRowOfInnerSpaceRendersTitleOnly(): void
     {
-        // L119 GreaterThanOrEqualTo: $inner->height >= 1 — when inner height = 1, title must still render.
-        // L130 GreaterThanOrEqualTo: $inner->height >= 2 — when inner height = 1, body must NOT render.
         // Inner height = area.height - 2 (top + bottom border). So area height = 3 gives inner height = 1.
         $frame = new Frame(20, 3);
         for ($i = 0; $i < 60; ++$i) {

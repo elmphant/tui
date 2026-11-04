@@ -256,9 +256,6 @@ final class BoxTest extends TestCase
         self::assertNotInstanceOf(Interactive::class, Box::new());
     }
 
-    /**
-     * Kills L59 DecrementInteger: max(1, $constraint->min) → max(0, ...).
-     */
     #[Test]
     public function aChildThatAsksForNoRowsStillGetsOne(): void
     {
@@ -267,9 +264,6 @@ final class BoxTest extends TestCase
         self::assertSame(3, $box->measureHeight(20), 'a child drawing nothing would otherwise vanish');
     }
 
-    /**
-     * Kills L72 LessThan: width < 3 → width <= 3.
-     */
     #[Test]
     public function rendersWithExactMinimumWidth(): void
     {
@@ -282,9 +276,6 @@ final class BoxTest extends TestCase
         self::assertNotSame(' ', $frame->characters[0], 'Width=3 must render border');
     }
 
-    /**
-     * Kills L72 LogicalOr: || → && (only width too narrow should still skip).
-     */
     #[Test]
     public function skipsRenderWhenOnlyWidthTooNarrow(): void
     {
@@ -297,9 +288,6 @@ final class BoxTest extends TestCase
         self::assertSame(' ', $frame->characters[0], 'Width=2 must skip even when height is sufficient');
     }
 
-    /**
-     * Kills L78 Coalesce: swaps ?? operands on titleStyleOverride.
-     */
     #[Test]
     public function customTitleStyleOverridesTheme(): void
     {
@@ -317,12 +305,9 @@ final class BoxTest extends TestCase
     }
 
     /**
-     * Kills L94 GreaterThanOrEqualTo (>= to >) and L95 Break_ (removes break).
-     *
      * Box height=4, border takes top+bottom rows, leaving 2 content rows.
      * Two children each want 1 row — they exactly fill the content area.
      * A third child should NOT render because childY == bottom().
-     * The mutant (>= to >) would allow one extra iteration; removing break would too.
      */
     #[Test]
     public function childAtExactBoundaryIsNotRendered(): void
@@ -343,9 +328,6 @@ final class BoxTest extends TestCase
         self::assertSame(0, $renderCount, 'Third child must not be rendered when content area is full');
     }
 
-    /**
-     * Kills L99 DecrementInteger: max(1, $childConstraint->min) → max(0, ...) in render.
-     */
     #[Test]
     public function zeroMinChildRendersWithAtLeastOneRowHeight(): void
     {
@@ -360,9 +342,6 @@ final class BoxTest extends TestCase
         self::assertSame('X', $frame->characters[10 + 1], 'Zero-min child must still get 1 row for rendering');
     }
 
-    /**
-     * Kills L100 Minus: bottom() - childY -> bottom() + childY (available space calculation).
-     */
     #[Test]
     public function childReceivesClippedHeightNotInflatedHeight(): void
     {

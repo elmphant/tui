@@ -18,14 +18,16 @@ final class FrameClock
         $this->repaintDelay = null;
     }
 
+    /**
+     * @internal
+     */
     public function now(): float
     {
         return $this->now;
     }
 
     /**
-     * The smallest delay asked for during a frame wins. Without a request the
-     * runtime only repaints on state changes.
+     * @internal RenderContext::requestRepaint() asks this. The smallest delay asked for during a frame wins.
      */
     public function requestRepaint(float $delay): void
     {
@@ -39,6 +41,9 @@ final class FrameClock
             : min($this->repaintDelay, $delay);
     }
 
+    /**
+     * @internal
+     */
     public function repaintDelay(): ?float
     {
         return $this->repaintDelay;

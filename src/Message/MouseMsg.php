@@ -29,9 +29,9 @@ final readonly class MouseMsg implements Message
         public MouseButton $button,
         public int $repeat = 1,
         public ?Rect $screen = null,
-        public bool $shift = false,
-        public bool $alt = false,
         public bool $ctrl = false,
+        public bool $alt = false,
+        public bool $shift = false,
         public bool $keyboardWasHere = false,
     ) {
     }
@@ -41,6 +41,9 @@ final readonly class MouseMsg implements Message
         return $this->cloneWith(screen: $screen);
     }
 
+    /**
+     * @internal
+     */
     public function withKeyboardHere(bool $here): self
     {
         return $this->cloneWith(keyboardWasHere: $here);

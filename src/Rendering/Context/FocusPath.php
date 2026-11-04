@@ -102,8 +102,7 @@ final class FocusPath
     }
 
     /**
-     * While a mount is drawn, the focused component by its name inside that mount,
-     * or null when the keyboard is outside it.
+     * @internal RenderContext::focusedComponent() asks this
      */
     public function focusedComponent(): ?ComponentId
     {
@@ -164,12 +163,17 @@ final class FocusPath
         $this->stopPublishers = $ids;
     }
 
+    /**
+     * @internal
+     */
     public function isKeyboardLoose(): bool
     {
         return $this->loose && $this->hasFocus();
     }
 
     /**
+     * @internal
+     *
      * @return array<string, string>
      */
     public function hints(): array
@@ -177,22 +181,33 @@ final class FocusPath
         return $this->hints;
     }
 
+    /**
+     * @internal
+     */
     public function takesText(): ?bool
     {
         return $this->takesText;
     }
 
+    /**
+     * @internal
+     */
     public function chord(): ?PendingChord
     {
         return $this->chord;
     }
 
+    /**
+     * @internal
+     */
     public function hasFocus(): bool
     {
         return $this->depth > 0;
     }
 
     /**
+     * @internal
+     *
      * @param Closure(): void $render
      */
     public function focusHere(Closure $render): void
@@ -207,6 +222,8 @@ final class FocusPath
     }
 
     /**
+     * @internal
+     *
      * @param Closure(): void $render
      */
     public function focusOnChild(int $index, Closure $render): void
@@ -222,9 +239,11 @@ final class FocusPath
     }
 
     /**
+     * @internal
+     *
      * @param Closure(): void $render
      */
-    public function withoutFocus(Closure $render): void
+    public function drawUnfocused(Closure $render): void
     {
         $held = $this->depth;
         $this->depth = 0;
@@ -237,6 +256,8 @@ final class FocusPath
     }
 
     /**
+     * @internal
+     *
      * @param Closure(): void $render
      */
     public function withinMount(ComponentId $id, Closure $render): void
@@ -251,6 +272,9 @@ final class FocusPath
         }
     }
 
+    /**
+     * @internal
+     */
     public function withinComponent(ComponentId $id, Closure $render): void
     {
         $id = $this->qualified($id);
@@ -263,7 +287,7 @@ final class FocusPath
         $below = $this->focus->focused()?->below($id);
         $holdsFocus = $focused === $id->value || $below !== null || in_array($id->value, $this->enclosure, true);
         if (!$holdsFocus) {
-            $this->withoutFocus($render);
+            $this->drawUnfocused($render);
 
             return;
         }
@@ -285,12 +309,14 @@ final class FocusPath
     }
 
     /**
+     * @internal
+     *
      * @param Closure(): void $render
      */
     public function withinChild(int $index, Closure $render): void
     {
         if ($this->focusedChildIndex() !== $index) {
-            $this->withoutFocus($render);
+            $this->drawUnfocused($render);
 
             return;
         }
@@ -305,6 +331,9 @@ final class FocusPath
         }
     }
 
+    /**
+     * @internal
+     */
     public function focusedChildIndex(): ?int
     {
         $segment = $this->path[0] ?? null;

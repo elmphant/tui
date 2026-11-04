@@ -187,7 +187,7 @@ final class FlexAllocationInvariantTest extends TestCase
      */
     private function rectsFor(array $items, bool $wrap, int $gap, Justification $justify, Rect $area): array
     {
-        $flex = Flex::row()->withWrap($wrap)->withGap($gap)->withJustify($justify);
+        $flex = Flex::row()->withWrap($wrap)->withGap($gap)->withJustification($justify);
 
         foreach ($items as $item) {
             $flex = $flex->add(

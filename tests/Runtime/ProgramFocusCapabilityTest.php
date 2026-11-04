@@ -158,7 +158,7 @@ final readonly class FocusRoutingModel implements RoutesFocus
     /**
      * @return list<ComponentId>
      */
-    public function focusableIds(?FocusState $focus = null): array
+    public function ringIds(?FocusState $focus = null): array
     {
         return [ComponentId::named('pane')];
     }

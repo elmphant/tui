@@ -415,7 +415,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function charLimitPreventsExcessInput(): void
     {
-        $input = TextInput::new()->withCharLimit(3);
+        $input = TextInput::new()->withCharacterLimit(3);
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg('a'), $area);
@@ -428,7 +428,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function charLimitZeroMeansUnlimited(): void
     {
-        $input = TextInput::new()->withCharLimit(0);
+        $input = TextInput::new()->withCharacterLimit(0);
         $area = Rect::fromSize(40, 1);
 
         $text = str_repeat('x', 100);
@@ -856,8 +856,6 @@ final class TextInputTest extends TestCase
         self::assertSame(0, $frame->backgrounds[5]);
     }
 
-    // --- DecrementInteger: L28 (scrollOffset default 0), L31 (charLimit default 0) ---
-
     #[Test]
     public function defaultScrollOffsetIsZero(): void
     {
@@ -885,8 +883,6 @@ final class TextInputTest extends TestCase
         self::assertSame(50, mb_strlen($current->value()));
     }
 
-    // --- MBString mutations: withValue (L61) uses mb_strlen ---
-
     #[Test]
     public function withValueSetsCursorToEndForMultibyteString(): void
     {
@@ -900,8 +896,6 @@ final class TextInputTest extends TestCase
         $input = TextInput::new()->withValue("\u{4F60}\u{597D}");
         self::assertSame(2, $input->cursor());
     }
-
-    // --- Cursor movement with multibyte: moveCursorRight (L213), moveCursorLeft (L208) ---
 
     #[Test]
     public function cursorMovesRightByOneCharacterWithMultibyte(): void
@@ -935,8 +929,6 @@ final class TextInputTest extends TestCase
         $result = $input->update(new KeyMsg(Key::Right), $area);
         self::assertSame($input, $result->model);
     }
-
-    // --- Home/End with multibyte (L170-171) ---
 
     #[Test]
     public function homeKeyWhenAlreadyAtStartDoesNothing(): void
@@ -979,8 +971,6 @@ final class TextInputTest extends TestCase
         self::assertSame($input, $result->model);
     }
 
-    // --- Character insertion with multibyte (L176, L216-225) ---
-
     #[Test]
     public function insertMultibyteCharacterAtBeginning(): void
     {
@@ -1012,7 +1002,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function charLimitCountsMultibyteCharactersNotBytes(): void
     {
-        $input = TextInput::new()->withCharLimit(2);
+        $input = TextInput::new()->withCharacterLimit(2);
         $area = Rect::fromSize(40, 1);
 
         $result = $input->update(new KeyMsg("\u{1F600}"), $area);
@@ -1050,8 +1040,6 @@ final class TextInputTest extends TestCase
         self::assertSame($input, $result->model);
     }
 
-    // --- Backspace with multibyte (L228-237) ---
-
     #[Test]
     public function backspaceDeletesMultibyteCharacter(): void
     {
@@ -1078,8 +1066,6 @@ final class TextInputTest extends TestCase
         self::assertSame("\u{4F60}\u{4E16}", $result->model->value());
         self::assertSame(1, $result->model->cursor());
     }
-
-    // --- Delete forward with multibyte (L240-249) ---
 
     #[Test]
     public function deleteForwardRemovesMultibyteCharacter(): void
@@ -1117,8 +1103,6 @@ final class TextInputTest extends TestCase
         self::assertSame("\u{4F60}\u{4E16}", $result->model->value());
         self::assertSame(1, $result->model->cursor());
     }
-
-    // --- Ctrl+Backspace (deleteWordBackward) with multibyte (L252-266) ---
 
     #[Test]
     public function ctrlBackspaceDeletesWordWithMultibyteCharacters(): void
@@ -1162,8 +1146,6 @@ final class TextInputTest extends TestCase
         self::assertSame('', $result->model->value());
         self::assertSame(0, $result->model->cursor());
     }
-
-    // --- Ctrl+Delete (deleteWordForward) with multibyte (L269-287) ---
 
     #[Test]
     public function ctrlDeleteDeletesWordForwardWithMultibyte(): void
@@ -1211,8 +1193,6 @@ final class TextInputTest extends TestCase
         self::assertSame(0, $result->model->cursor());
     }
 
-    // --- Mouse click with multibyte (L192-203) ---
-
     #[Test]
     public function mouseClickPositionsCursorWithMultibyteText(): void
     {
@@ -1258,8 +1238,6 @@ final class TextInputTest extends TestCase
         $result = $input->update($mouseMessage, $area);
         self::assertSame(3, $result->model->cursor());
     }
-
-    // --- Rendering with multibyte (L116, L130, L138, L143, L146) ---
 
     #[Test]
     public function renderMultibyteTextCorrectly(): void
@@ -1420,8 +1398,6 @@ final class TextInputTest extends TestCase
         self::assertSame($theme->dim->foregroundValue(), $frame->foregrounds[0]);
     }
 
-    // --- Viewport scrolling (L290-307) ---
-
     #[Test]
     public function viewportScrollsLeftWhenCursorMovesBeforeOffset(): void
     {
@@ -1514,8 +1490,6 @@ final class TextInputTest extends TestCase
 
         self::assertSame('a', $frame->characters[0]);
     }
-
-    // --- Tick/blink edge cases (L153-162) ---
 
     #[Test]
     public function tickJustBelowBlinkIntervalDoesNotToggle(): void
@@ -1619,8 +1593,6 @@ final class TextInputTest extends TestCase
         self::assertSame($afterType, $shortTick->model);
     }
 
-    // --- Edge cases for viewport computeScrollOffset (L292-306) ---
-
     #[Test]
     public function scrollOffsetNeverGoesNegative(): void
     {
@@ -1651,8 +1623,6 @@ final class TextInputTest extends TestCase
         self::assertSame('b', $frame->characters[0]);
         self::assertSame('c', $frame->characters[1]);
     }
-
-    // --- Render visible text with viewport offset (L138) ---
 
     #[Test]
     public function renderVisibleTextSlicedByScrollOffset(): void
@@ -2014,12 +1984,6 @@ final class TextInputTest extends TestCase
         self::assertSame('hi  end', $result->model->value());
     }
 
-    /**
-     * L32: DecrementInteger — charLimit defaults to 0 (unlimited).
-     * If mutated to -1, the check charLimit > 0 && mb_strlen >= charLimit would
-     * match -1 > 0 which is false, so it would behave the same... unless we actually set charLimit.
-     * We need to verify that charLimit=0 means unlimited (can type infinite characters).
-     */
     #[Test]
     public function defaultCharLimitIsZeroMeansUnlimited(): void
     {
@@ -2034,17 +1998,13 @@ final class TextInputTest extends TestCase
         self::assertSame(20, mb_strlen($current->value()));
 
         // Now with charLimit = 1, only 1 char allowed
-        $limited = TextInput::new()->withCharLimit(1);
+        $limited = TextInput::new()->withCharacterLimit(1);
         $limited = $limited->update(new KeyMsg('a'), $area)->model;
         self::assertSame('a', $limited->value());
         $limited = $limited->update(new KeyMsg('b'), $area)->model;
         self::assertSame('a', $limited->value()); // blocked by limit
     }
 
-    /**
-     * L135: MBString — mb_substr vs substr for placeholder truncation.
-     * Multibyte placeholder must be properly truncated by character count, not byte count.
-     */
     #[Test]
     public function placeholderTruncatesMultibyteByCharacterCount(): void
     {
@@ -2058,11 +2018,6 @@ final class TextInputTest extends TestCase
         self::assertSame("\u{00F1}", $frame->characters[2]);
     }
 
-    /**
-     * L136: ReturnRemoval — return after placeholder rendering.
-     * Without the return, the text rendering code below would also execute,
-     * potentially overwriting the placeholder with cursor styling.
-     */
     #[Test]
     public function placeholderReturnPreventsSubsequentCodeExecution(): void
     {
@@ -2074,26 +2029,14 @@ final class TextInputTest extends TestCase
 
         // Placeholder renders with dim style
         self::assertSame($theme->dim->foregroundValue(), $frame->foregrounds[0]);
-        // If return is removed, the code below would render '' with base/dim style
-        // and the cursor code wouldn't run (not focused), but the textStyle line
-        // would overwrite foreground. Verify placeholder style is preserved.
         self::assertSame('H', $frame->characters[0]);
         self::assertSame('e', $frame->characters[1]);
     }
 
-    /**
-     * L277: MBString — strlen vs mb_strlen for deleteWordForward boundary check.
-     * With multibyte value, strlen gives byte count, mb_strlen gives char count.
-     * Cursor at char count should return null; with strlen, cursor < strlen would be true
-     * even though we're past the end by character count.
-     */
     #[Test]
     public function deleteWordForwardBoundaryUsesCharacterCount(): void
     {
         // Value "\u{00E9}" (1 character, 2 bytes). cursor=1 (at end by char count).
-        // mb_strlen = 1, strlen = 2.
-        // With mb_strlen: cursor(1) >= textLength(1) => return null (no deletion).
-        // With strlen: cursor(1) >= textLength(2) => false => would try to delete.
         $input = TextInput::new()->withValue("\u{00E9}")->withCursor(1);
         $area = Rect::fromSize(20, 1);
         $result = $input->update(new KeyMsg(Key::Delete, ctrl: true), $area);
@@ -2387,7 +2330,7 @@ final class TextInputTest extends TestCase
         );
         self::assertSame(
             'abX',
-            $field->withCharLimit(3)->update(new PasteMsg('XYZ'), $area)->model->value(),
+            $field->withCharacterLimit(3)->update(new PasteMsg('XYZ'), $area)->model->value(),
             'a limit typing cannot pass is not one a paste walks through',
         );
     }

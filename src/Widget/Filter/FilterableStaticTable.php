@@ -55,7 +55,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
 
     public static function defaultKeybindings(): Keybindings
     {
-        return FilterBar::keybindings()->append(TextInput::defaultKeybindings());
+        return FilterBar::keybindings()->plus(TextInput::defaultKeybindings());
     }
 
     public function hints(): array
@@ -181,7 +181,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
             $summary,
         );
 
-        $this->fieldHoldsTheKeys($context) ? $bar() : $context->withoutFocus($bar);
+        $this->fieldHoldsTheKeys($context) ? $bar() : $context->drawUnfocused($bar);
     }
 
     /**

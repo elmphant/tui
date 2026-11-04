@@ -59,7 +59,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 
     public static function defaultKeybindings(): Keybindings
     {
-        return CheckboxGroup::defaultKeybindings()->append(FilterBar::keybindings())->append(TextInput::defaultKeybindings());
+        return CheckboxGroup::defaultKeybindings()->plus(FilterBar::keybindings())->plus(TextInput::defaultKeybindings());
     }
 
     public function hints(): array
@@ -211,7 +211,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         }
 
         $field = fn () => FilterBar::render($frame, $this->fieldArea($area), $context, $this->field);
-        $this->fieldHoldsTheKeys($context) ? $field() : $context->withoutFocus($field);
+        $this->fieldHoldsTheKeys($context) ? $field() : $context->drawUnfocused($field);
 
         $body = $this->boxesArea($area);
         if ($body->height > 0) {

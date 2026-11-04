@@ -27,7 +27,7 @@ final class FieldBehindAGutterTest extends TestCase
 
         self::assertSame(
             ['form/0/0'],
-            array_map(static fn (ComponentId $id): string => $id->value, $model->focusableIds()),
+            array_map(static fn (ComponentId $id): string => $id->value, $model->ringIds()),
         );
 
         $harness->dispatch(new KeyMsg('x'));

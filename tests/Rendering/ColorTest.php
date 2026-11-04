@@ -36,9 +36,6 @@ final class ColorTest extends TestCase
         self::assertSame('97', $color->toForegroundSgr());
     }
 
-    /**
-     * Kills L45 UnwrapLtrim: ltrim($hex, '#') mutated to $hex.
-     */
     #[Test]
     public function hexColorParsesLeadingHash(): void
     {
@@ -47,9 +44,6 @@ final class ColorTest extends TestCase
         self::assertSame('38;2;255;0;0', $color->toForegroundSgr());
     }
 
-    /**
-     * Kills L46 CastInt: (int) hexdec() unwrapped.
-     */
     #[Test]
     public function hexParsesExactRgbValues(): void
     {
@@ -57,9 +51,6 @@ final class ColorTest extends TestCase
         self::assertSame(Color::rgb(10, 20, 30)->value, $color->value);
     }
 
-    /**
-     * Kills L48 BitwiseAnd and DecrementInteger on the mask operations.
-     */
     #[Test]
     public function hexExtractsRgbChannelsWithBitwiseMask(): void
     {
@@ -192,9 +183,6 @@ final class ColorTest extends TestCase
         self::assertSame('101', Color::ansi(AnsiColor::BrightRed)->toBackgroundSgr());
     }
 
-    /**
-     * Kills L86 GreaterThanOrEqualTo: >= self::BRIGHT mutated to >.
-     */
     #[Test]
     public function ansi8IsBrightBoundary(): void
     {
@@ -212,14 +200,11 @@ final class ColorTest extends TestCase
         }
     }
 
-    /**
-     * Kills L82 GreaterThanOrEqualTo: >= self::C256 mutated to >.
-     */
     #[Test]
     public function color256ZeroBoundary(): void
     {
         $color = Color::color256(0);
-        self::assertSame(Color::C256, $color->value);
+        self::assertSame(Color::COLOR_256, $color->value);
         self::assertSame('38;5;0', $color->toForegroundSgr());
         self::assertSame('48;5;0', $color->toBackgroundSgr());
     }
@@ -229,30 +214,24 @@ final class ColorTest extends TestCase
     {
         for ($i = 0; $i < 256; ++$i) {
             $color = Color::color256($i);
-            self::assertSame(Color::C256 + $i, $color->value);
+            self::assertSame(Color::COLOR_256 + $i, $color->value);
         }
     }
 
-    /**
-     * Kills L76 GreaterThanOrEqualTo: >= self::TRUE mutated to >.
-     */
     #[Test]
     public function rgbBlackBoundaryToSgr(): void
     {
         $black = Color::rgb(0, 0, 0);
-        self::assertSame(Color::TRUE, $black->value);
+        self::assertSame(Color::TRUE_COLOR, $black->value);
         self::assertSame('38;2;0;0;0', $black->toForegroundSgr());
         self::assertSame('48;2;0;0;0', $black->toBackgroundSgr());
     }
 
-    /**
-     * Kills L77 Minus: $this->value - self::TRUE.
-     */
     #[Test]
     public function rgbWhiteToSgr(): void
     {
         $white = Color::rgb(255, 255, 255);
-        self::assertSame(Color::TRUE + 0xFFFFFF, $white->value);
+        self::assertSame(Color::TRUE_COLOR + 0xFFFFFF, $white->value);
         self::assertSame('38;2;255;255;255', $white->toForegroundSgr());
     }
 

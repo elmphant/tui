@@ -396,7 +396,7 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
-    public function leftKeyRemovalMutantKiller(): void
+    public function leftFromTheFirstOptionWrapsToTheLast(): void
     {
         $row = CheckboxRow::new(['A', 'B', 'C']);
         $area = new Rect(0, 0, 40, 1);
@@ -408,16 +408,16 @@ final class CheckboxRowTest extends TestCase
     }
 
     #[Test]
-    public function prefixClickPositionUsesIncrementNotAbsoluteAssignment(): void
+    public function aClickPastThePrefixOfAnOffsetRowChecksTheOption(): void
     {
         $row = CheckboxRow::new(['AB'])->withPrefix('Hi');
         $area = new Rect(5, 0, 40, 1);
 
-        $clickBeyondMutantRange = $row->update(
+        $clicked = $row->update(
             new MouseMsg(12, 0, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertTrue($clickBeyondMutantRange->model->isChecked(0), 'Click at x=12 hits option in range [7,15) but misses mutant range [2,10)');
+        self::assertTrue($clicked->model->isChecked(0), 'The option spans x=7 to x=14 in a row that starts at x=5');
 
         $clickAtPrefixLenOnly = $row->update(
             new MouseMsg(2, 0, MouseAction::Press, MouseButton::Left),

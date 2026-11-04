@@ -69,15 +69,15 @@ final readonly class Keybindings
     /**
      * @return list<KeyPattern>
      */
-    public function get(string $action): array
+    public function patternsOf(string $action): array
     {
         return $this->patterns[$action] ?? [];
     }
 
-    public function matches(KeyMsg $msg, string $action): bool
+    public function matches(KeyMsg $message, string $action): bool
     {
         foreach ($this->patterns[$action] ?? [] as $pattern) {
-            if ($pattern->matches($msg)) {
+            if ($pattern->matches($message)) {
                 return true;
             }
         }
@@ -85,10 +85,10 @@ final readonly class Keybindings
         return false;
     }
 
-    public function actionOf(KeyMsg $msg): ?string
+    public function actionOf(KeyMsg $message): ?string
     {
         foreach ($this->actions() as $action) {
-            if ($this->matches($msg, $action)) {
+            if ($this->matches($message, $action)) {
                 return $action;
             }
         }
@@ -204,7 +204,7 @@ final readonly class Keybindings
         return $this->filtered(static fn (KeyPattern $pattern): bool => !isset($taken[(string)$pattern]));
     }
 
-    public function merge(self $other): self
+    public function overriddenBy(self $other): self
     {
         $copy = $this->patterns;
         foreach ($other->patterns as $action => $patterns) {
@@ -214,7 +214,7 @@ final readonly class Keybindings
         return new self($copy);
     }
 
-    public function append(self $other): self
+    public function plus(self $other): self
     {
         $copy = $this->patterns;
         foreach ($other->patterns as $action => $newPatterns) {

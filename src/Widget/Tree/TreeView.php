@@ -125,6 +125,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return new UpdateResult($moved->scrolledToCursor($area));
     }
 
+    /**
+     * @internal
+     */
     public function scrolledToCursor(Rect $area): self
     {
         $index = $this->rowIndexOf($this->shownCursor());
@@ -176,6 +179,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         ));
     }
 
+    /**
+     * @internal
+     */
     public function toggle(TreePath $path): self
     {
         if ($this->isExpanded($path)) {
@@ -188,6 +194,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $index !== null && $rows[$index]['node']->isExpandable() ? $this->expand($path) : $this;
     }
 
+    /**
+     * @internal
+     */
     public function cursorToFirst(): self
     {
         foreach ($this->visibleRows() as $row) {
@@ -199,6 +208,9 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $this;
     }
 
+    /**
+     * @internal
+     */
     public function cursorToLast(): self
     {
         foreach (array_reverse($this->visibleRows()) as $row) {
@@ -251,11 +263,17 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
         return $this->cloneWith(cursor: $path);
     }
 
+    /**
+     * @internal
+     */
     public function cursorDown(): self
     {
         return $this->cursorMovedBy(1);
     }
 
+    /**
+     * @internal
+     */
     public function cursorUp(): self
     {
         return $this->cursorMovedBy(-1);

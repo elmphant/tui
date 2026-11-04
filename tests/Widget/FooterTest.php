@@ -250,8 +250,6 @@ final class FooterTest extends TestCase
         self::assertNotSame($footer, $result->model);
     }
 
-    // --- Mutation-killing tests ---
-
     #[Test]
     public function updateWithNoCommandsReturnsNull(): void
     {
@@ -272,9 +270,6 @@ final class FooterTest extends TestCase
         self::assertSame($command, $result->command);
     }
 
-    /**
-     * Kills L74 Coalesce: constraint without padding uses Spacing::none() fallback.
-     */
     #[Test]
     public function constraintWithoutPaddingUsesZeroFallback(): void
     {
@@ -282,9 +277,6 @@ final class FooterTest extends TestCase
         self::assertEquals(Constraint::exact(1), $footer->sizing()->rows);
     }
 
-    /**
-     * Kills L76 Plus x2: constraint with padding correctly sums all vertical spacing.
-     */
     #[Test]
     public function constraintWithPaddingAndMarginSumsCorrectly(): void
     {
@@ -296,9 +288,6 @@ final class FooterTest extends TestCase
         self::assertEquals(Constraint::exact(5), $footer->sizing()->rows);
     }
 
-    /**
-     * Kills L86 NotIdentical: update detects model change and applies override.
-     */
     #[Test]
     public function updateDetectsLeftSlotModelChange(): void
     {
@@ -312,9 +301,6 @@ final class FooterTest extends TestCase
         self::assertInstanceOf(Footer::class, $result->model);
     }
 
-    /**
-     * Kills L86 NotIdentical: no override when model is unchanged.
-     */
     #[Test]
     public function updateDoesNotOverrideWhenLeftSlotModelUnchanged(): void
     {
@@ -348,9 +334,6 @@ final class FooterTest extends TestCase
         self::assertCount(2, $result->command->commands);
     }
 
-    /**
-     * Kills L89 AssignCoalesce: leftSlot command is used when only left returns command.
-     */
     #[Test]
     public function updateUsesLeftSlotCommand(): void
     {
@@ -386,9 +369,6 @@ final class FooterTest extends TestCase
         self::assertCount(2, $result->command->commands);
     }
 
-    /**
-     * Kills L105 AssignCoalesce: rightSlot command is used when no prior command exists.
-     */
     #[Test]
     public function updateUsesRightSlotCommandWhenNoPriorCommand(): void
     {
@@ -403,9 +383,6 @@ final class FooterTest extends TestCase
         self::assertSame($rightCommand, $result->command);
     }
 
-    /**
-     * Kills L117 LessThan: area with width=1 must still render.
-     */
     #[Test]
     public function renderWithWidthOneRendersBackground(): void
     {
@@ -416,9 +393,6 @@ final class FooterTest extends TestCase
         self::assertNotSame(0, $frame->backgrounds[0]);
     }
 
-    /**
-     * Kills L117 LessThan: area with height=1 must still render.
-     */
     #[Test]
     public function renderWithHeightOneRendersBackground(): void
     {
@@ -429,9 +403,6 @@ final class FooterTest extends TestCase
         self::assertNotSame(0, $frame->backgrounds[0]);
     }
 
-    /**
-     * Kills L117 LogicalOr: zero height alone triggers early return.
-     */
     #[Test]
     public function renderWithZeroHeightDoesNotRender(): void
     {
@@ -443,9 +414,6 @@ final class FooterTest extends TestCase
         self::assertSame(0, $frame->backgrounds[0]);
     }
 
-    /**
-     * Kills L118 ReturnRemoval: early return prevents buffer modification.
-     */
     #[Test]
     public function renderWithZeroDimensionsLeavesBufferUntouched(): void
     {
@@ -460,9 +428,6 @@ final class FooterTest extends TestCase
         }
     }
 
-    /**
-     * Kills L121 Coalesce: without margin set, render uses Spacing::none() fallback.
-     */
     #[Test]
     public function renderWithoutMarginUsesNoMarginFallback(): void
     {
@@ -474,9 +439,6 @@ final class FooterTest extends TestCase
         self::assertNotSame(0, $frame->backgrounds[9]);
     }
 
-    /**
-     * Kills L122 LessThan: margin leaving exactly width=1 must still render.
-     */
     #[Test]
     public function renderWithMarginLeavingWidthOneRendersBackground(): void
     {
@@ -488,9 +450,6 @@ final class FooterTest extends TestCase
         self::assertNotSame(0, $frame->backgrounds[1]);
     }
 
-    /**
-     * Kills L122 LogicalOr: margin leaving zero width triggers early return.
-     */
     #[Test]
     public function renderWithMarginLeavingZeroWidthDoesNotRender(): void
     {
@@ -503,9 +462,6 @@ final class FooterTest extends TestCase
         self::assertSame(0, $frame->backgrounds[1]);
     }
 
-    /**
-     * Kills L127 Coalesce x2: bar background uses theme selectedStyle.background.
-     */
     #[Test]
     public function barBackgroundUsesThemeSelectedStyleBackground(): void
     {
@@ -599,9 +555,6 @@ final class FooterTest extends TestCase
         self::assertSame(Color::ansi(AnsiColor::Black)->value, $theme->footerStyle->backgroundValue());
     }
 
-    /**
-     * Kills L127 Color::ansi(AnsiColor::Black) fallback when both selectedStyle.background and base.foreground are null.
-     */
     #[Test]
     public function barBackgroundFallsBackToAnsiZeroWhenAllNull(): void
     {
@@ -616,9 +569,6 @@ final class FooterTest extends TestCase
         self::assertSame($expectedBg, $frame->backgrounds[0]);
     }
 
-    /**
-     * Kills L128 Coalesce: custom style overrides default bar style.
-     */
     #[Test]
     public function customStyleOverridesDefaultBarStyle(): void
     {
@@ -631,9 +581,6 @@ final class FooterTest extends TestCase
         self::assertSame($customStyle->foregroundValue(), $frame->foregrounds[0]);
     }
 
-    /**
-     * Kills L134 LessThan: padding leaving exactly width=1 content area must still render slot.
-     */
     #[Test]
     public function renderWithPaddingLeavingWidthOneStillRendersContent(): void
     {
@@ -646,9 +593,6 @@ final class FooterTest extends TestCase
         self::assertSame('X', $frame->characters[1]);
     }
 
-    /**
-     * Kills L134 LogicalOr: padding consuming all width prevents content rendering.
-     */
     #[Test]
     public function renderWithPaddingConsumingAllWidthSkipsSlotRendering(): void
     {
@@ -662,9 +606,6 @@ final class FooterTest extends TestCase
         self::assertSame(' ', $frame->characters[1]);
     }
 
-    /**
-     * Kills L134 LessThan: padding leaving exactly height=1 content area renders.
-     */
     #[Test]
     public function renderWithExactlyOneByOneAreaRendersBackground(): void
     {
@@ -675,9 +616,6 @@ final class FooterTest extends TestCase
         self::assertNotSame(0, $frame->backgrounds[0]);
     }
 
-    /**
-     * Kills L76 Plus x2: constraint includes margin.
-     */
     #[Test]
     public function constraintIncludesMargin(): void
     {
@@ -688,9 +626,6 @@ final class FooterTest extends TestCase
         self::assertEquals(Constraint::exact(3), $footer->sizing()->rows);
     }
 
-    /**
-     * Kills L122 LessThan: margin leaving height=0 prevents rendering.
-     */
     #[Test]
     public function renderWithMarginLeavingZeroHeightDoesNotRender(): void
     {
@@ -782,10 +717,6 @@ final class FooterTest extends TestCase
         self::assertSame('i', $frame->characters[$index + 1]);
     }
 
-    /**
-     * L117/L118: LogicalOr + ReturnRemoval — width=0 but height=1 must still early return.
-     * If mutated to &&, only both-zero triggers return; width=0 alone would proceed.
-     */
     #[Test]
     public function renderWithZeroWidthButPositiveHeightReturnsEarly(): void
     {
@@ -798,9 +729,6 @@ final class FooterTest extends TestCase
         self::assertSame(0, $frame->backgrounds[0]);
     }
 
-    /**
-     * L117/L118: height=0 but width>0 must also early return.
-     */
     #[Test]
     public function renderWithZeroHeightButPositiveWidthReturnsEarly(): void
     {
@@ -812,10 +740,6 @@ final class FooterTest extends TestCase
         self::assertSame(0, $frame->backgrounds[0]);
     }
 
-    /**
-     * L122/L123: barArea with zero width after margin must early return.
-     * Tests the second guard pair.
-     */
     #[Test]
     public function renderWithMarginLeavingZeroWidthButPositiveHeightReturnsEarly(): void
     {
@@ -830,10 +754,6 @@ final class FooterTest extends TestCase
         self::assertSame(0, $frame->backgrounds[0]);
     }
 
-    /**
-     * L134/L135: contentArea with zero width after padding must early return.
-     * But the fillRect for the bar should still have been applied.
-     */
     #[Test]
     public function renderWithPaddingLeavingZeroWidthStillFillsBar(): void
     {
@@ -850,10 +770,6 @@ final class FooterTest extends TestCase
         self::assertSame(' ', $frame->characters[0]);
     }
 
-    /**
-     * L127: Coalesce — verify barBackground uses selectedStyle.background first.
-     * If coalesce order is swapped, base.foreground would be used instead.
-     */
     #[Test]
     public function barBackgroundUsesSelectedStyleBackgroundOverBaseForeground(): void
     {

@@ -330,10 +330,10 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
             $message->button,
             $message->repeat,
             $message->screen,
-            $message->shift,
-            $message->alt,
-            $message->ctrl,
-            $message->keyboardWasHere,
+            ctrl: $message->ctrl,
+            alt: $message->alt,
+            shift: $message->shift,
+            keyboardWasHere: $message->keyboardWasHere,
         );
     }
 

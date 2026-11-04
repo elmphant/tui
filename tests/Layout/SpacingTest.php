@@ -59,7 +59,7 @@ final class SpacingTest extends TestCase
     #[Test]
     public function xyUsesHorizontalAndVerticalValues(): void
     {
-        $spacing = Spacing::xy(horizontal: 4, vertical: 2);
+        $spacing = Spacing::symmetric(horizontal: 4, vertical: 2);
 
         self::assertSame(2, $spacing->top);
         self::assertSame(4, $spacing->right);

@@ -31,7 +31,7 @@ final class BoundFocusScopeTest extends TestCase
     {
         $ring = array_map(
             static fn (ComponentId $id): string => $id->value,
-            (new BoundToolbarApp(new ScopedToolbar([TextInput::new(), TextInput::new()]), TextInput::new()))->focusableIds(FocusState::on(ComponentId::named('pane'))),
+            (new BoundToolbarApp(new ScopedToolbar([TextInput::new(), TextInput::new()]), TextInput::new()))->ringIds(FocusState::on(ComponentId::named('pane'))),
         );
 
         self::assertSame(['pane'], $ring);

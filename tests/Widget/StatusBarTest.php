@@ -96,8 +96,6 @@ final class StatusBarTest extends TestCase
         self::assertEquals(Constraint::exact(1), $bar->sizing()->rows);
     }
 
-    // --- L46: Coalesce x2 — kills mutants that swap ?? operands ---
-
     #[Test]
     public function barUsesTheThemeFooterStyle(): void
     {
@@ -137,8 +135,6 @@ final class StatusBarTest extends TestCase
         self::assertNotSame($theme->dim->foregroundValue(), $frame->foregrounds[0]);
     }
 
-    // --- L48: fillRect height=1 — DecrementInteger (0), IncrementInteger (2) ---
-
     #[Test]
     public function fillRectCoversExactlyOneRow(): void
     {
@@ -152,8 +148,6 @@ final class StatusBarTest extends TestCase
         self::assertSame(0, $frame->backgrounds[0]);
         self::assertSame(0, $frame->backgrounds[2 * 10]);
     }
-
-    // --- L48: MethodCallRemoval — removing fillRect entirely ---
 
     #[Test]
     public function fillRectAppliesBackgroundToEntireBarWidth(): void
@@ -172,8 +166,6 @@ final class StatusBarTest extends TestCase
         }
     }
 
-    // --- L48: area->x and area->y used correctly ---
-
     #[Test]
     public function renderRespectsAreaOffset(): void
     {
@@ -187,8 +179,6 @@ final class StatusBarTest extends TestCase
 
         self::assertSame(' ', $frame->characters[2 * 20 + 2]);
     }
-
-    // --- L52: ReturnRemoval — without early return, content text would also render after hints ---
 
     #[Test]
     public function hintsDoNotRenderContentText(): void
@@ -222,8 +212,6 @@ final class StatusBarTest extends TestCase
         self::assertNotSame($keyForeground, $afterHintsForeground);
     }
 
-    // --- L60: Coalesce — $barStyle->background ?? Color::ansi(AnsiColor::Black) ---
-
     #[Test]
     public function hintKeyStyleUsesBarBackgroundWhenPresent(): void
     {
@@ -252,8 +240,6 @@ final class StatusBarTest extends TestCase
         self::assertSame($expectedKeyBackground, $frame->backgrounds[1]);
     }
 
-    // --- L60: DecrementInteger / IncrementInteger ---
-
     #[Test]
     public function hintKeyAnsi0FallbackProducesCorrectColorValue(): void
     {
@@ -268,8 +254,6 @@ final class StatusBarTest extends TestCase
         self::assertSame($ansi0Bg, $frame->backgrounds[1]);
         self::assertNotSame($ansi1Bg, $frame->backgrounds[1]);
     }
-
-    // --- L64: Concat / ConcatOperandRemoval on ' ' . $key . ' ' ---
 
     #[Test]
     public function hintKeyIsPaddedWithSpaces(): void
@@ -307,8 +291,6 @@ final class StatusBarTest extends TestCase
         self::assertSame('A', $frame->characters[1]);
         self::assertSame(' ', $frame->characters[2]);
     }
-
-    // --- L65: Concat / ConcatOperandRemoval on ' ' . $description . '  ' ---
 
     #[Test]
     public function hintDescriptionIsPaddedCorrectly(): void
@@ -350,8 +332,6 @@ final class StatusBarTest extends TestCase
         self::assertSame(' ', $frame->characters[6]);
     }
 
-    // --- L64-65: Verify hint key and description have their respective styles applied to padding ---
-
     #[Test]
     public function hintKeyPaddingHasKeyStyle(): void
     {
@@ -377,8 +357,6 @@ final class StatusBarTest extends TestCase
         self::assertSame($descCharForeground, $frame->foregrounds[6]);
         self::assertSame($descCharForeground, $frame->foregrounds[7]);
     }
-
-    // --- Multiple hints advance x correctly (validates L64-65 x += behavior) ---
 
     #[Test]
     public function multipleHintsRenderSequentially(): void

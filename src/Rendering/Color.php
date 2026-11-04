@@ -11,8 +11,8 @@ final readonly class Color
 {
     public const ANSI = 0x01;
     public const BRIGHT = 0x10;
-    public const C256 = 0x100;
-    public const TRUE = 0x1000000;
+    public const COLOR_256 = 0x100;
+    public const TRUE_COLOR = 0x1000000;
 
     private const CUBE_LEVELS = [0, 95, 135, 175, 215, 255];
 
@@ -71,7 +71,7 @@ final readonly class Color
             throw new InvalidArgumentException("A 256-colour index must be 0-255, got {$index}");
         }
 
-        return new self(self::C256 + $index);
+        return new self(self::COLOR_256 + $index);
     }
 
     public static function rgb(int $red, int $green, int $blue): self
@@ -82,7 +82,7 @@ final readonly class Color
             }
         }
 
-        return new self(self::TRUE + ($red << 16) + ($green << 8) + $blue);
+        return new self(self::TRUE_COLOR + ($red << 16) + ($green << 8) + $blue);
     }
 
     public static function hex(string $hex): self
@@ -106,10 +106,10 @@ final readonly class Color
     {
         return match ($profile) {
             ColorProfile::TrueColor => $this,
-            ColorProfile::Ansi256 => $this->value >= self::TRUE
+            ColorProfile::Ansi256 => $this->value >= self::TRUE_COLOR
                 ? self::color256(self::rgbTo256(...$this->channels()))
                 : $this,
-            ColorProfile::Ansi => $this->value >= self::C256
+            ColorProfile::Ansi => $this->value >= self::COLOR_256
                 ? self::ansi(AnsiColor::from(self::rgbTo16(...$this->channels())))
                 : $this,
             ColorProfile::Ascii => self::none(),
@@ -215,14 +215,14 @@ final readonly class Color
             return $background ? '49' : '39';
         }
 
-        if ($this->value >= self::TRUE) {
+        if ($this->value >= self::TRUE_COLOR) {
             [$red, $green, $blue] = $this->channels();
 
             return "{$extended};2;{$red};{$green};{$blue}";
         }
 
-        if ($this->value >= self::C256) {
-            return $extended . ';5;' . ($this->value - self::C256);
+        if ($this->value >= self::COLOR_256) {
+            return $extended . ';5;' . ($this->value - self::COLOR_256);
         }
 
         if ($this->value >= self::BRIGHT) {
@@ -249,12 +249,12 @@ final readonly class Color
      */
     private function channels(): array
     {
-        if ($this->value >= self::TRUE) {
+        if ($this->value >= self::TRUE_COLOR) {
             return [($this->value >> 16) & 0xFF, ($this->value >> 8) & 0xFF, $this->value & 0xFF];
         }
 
-        if ($this->value >= self::C256) {
-            return self::index256ToRgb($this->value - self::C256);
+        if ($this->value >= self::COLOR_256) {
+            return self::index256ToRgb($this->value - self::COLOR_256);
         }
 
         if ($this->value >= self::BRIGHT) {

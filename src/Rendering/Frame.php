@@ -534,7 +534,7 @@ final class Frame
     }
 
     /**
-     * @internal prefer putChar(), putString(), or fillRect() outside renderers
+     * @internal prefer putStyled(), putLine() or fillStyled() outside renderers
      */
     public function markRowDirty(int $row): void
     {

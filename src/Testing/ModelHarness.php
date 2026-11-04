@@ -773,7 +773,7 @@ final class ModelHarness
     private function resolvedFocus(): FocusState
     {
         return $this->focus->resolvedAgainst(
-            $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
+            $this->model instanceof RoutesFocus ? $this->model->ringIds($this->focus) : [],
             $this->model instanceof RoutesFocus ? $this->model->reachableIds() : [],
             $this->model instanceof RoutesFocus ? $this->model->enclosingIds(...) : null,
         );
@@ -791,7 +791,7 @@ final class ModelHarness
 
             $moved = $leaf->command->within($leaf->scope)->applyTo(
                 $this->focus,
-                $this->model instanceof RoutesFocus ? $this->model->focusableIds($this->focus) : [],
+                $this->model instanceof RoutesFocus ? $this->model->ringIds($this->focus) : [],
                 $this->model instanceof RoutesFocus ? $this->model->reachableIds() : null,
             );
 

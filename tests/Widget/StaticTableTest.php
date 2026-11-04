@@ -9,7 +9,7 @@ use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
-use Elmphant\Tui\Widget\Overflow;
+use Elmphant\Tui\Widget\Table\Overflow;
 use Elmphant\Tui\Widget\Table\StaticTable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

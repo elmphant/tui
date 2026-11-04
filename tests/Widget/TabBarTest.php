@@ -331,7 +331,7 @@ final class TabBarTest extends TestCase
     public function showsAHintSuppliedByTheApplication(): void
     {
         $tabBar = TabBar::new()->addTab('A')->addTab('B')
-            ->withHint('shift+←/→ to switch');
+            ->withCaption('shift+←/→ to switch');
 
         $screen = $this->screenOfTabBar($tabBar, new Rect(0, 0, 50, 6));
 
@@ -346,7 +346,7 @@ final class TabBarTest extends TestCase
     public function fallsBackToTheShortHintWhenTheFullOneDoesNotFit(): void
     {
         $tabBar = TabBar::new()->addTab('A')->addTab('B')
-            ->withHint('shift+←/→ to switch', 'shift+←/→');
+            ->withCaption('shift+←/→ to switch', 'shift+←/→');
 
         self::assertStringContainsString(
             'shift+←/→ to switch',
@@ -364,7 +364,7 @@ final class TabBarTest extends TestCase
     public function aShortHintThatDoesNotFitEitherIsLeftOut(): void
     {
         $tabBar = TabBar::new()->addTab('A')->addTab('B')
-            ->withHint('shift+←/→ to switch', 'shift+←/→');
+            ->withCaption('shift+←/→ to switch', 'shift+←/→');
 
         self::assertStringNotContainsString('shift', $this->screenOfTabBar($tabBar, new Rect(0, 0, 18, 6)));
     }
@@ -1458,8 +1458,6 @@ final class TabBarTest extends TestCase
         self::assertSame('l', $frame->characters[1 * 40 + 15]);
     }
 
-    // ── L620: contentArea height = area.height - TAB_STRIP_HEIGHT(3) - 1 ──
-
     #[Test]
     public function contentAreaHeightAccountsForTabStripAndBottomBorder(): void
     {
@@ -1488,8 +1486,6 @@ final class TabBarTest extends TestCase
         self::assertSame('A', $frame->characters[3 * 10 + 1]);
         self::assertSame('H', $frame->characters[3 * 10 + 8]);
     }
-
-    // ── L633-634,639,641: exact constraint, fixedTotal accumulation ──
 
     #[Test]
     public function resolveExactConstraintGetsExactHeight(): void
@@ -1521,8 +1517,6 @@ final class TabBarTest extends TestCase
         self::assertSame('C', $frame->characters[8 * 20 + 1]);
     }
 
-    // ── L639: Identical — exact vs min distinguished ──
-
     #[Test]
     public function resolveExactVsMinDistinguished(): void
     {
@@ -1538,8 +1532,6 @@ final class TabBarTest extends TestCase
         self::assertSame('M', $frame->characters[6 * 20 + 1]);
         self::assertSame('F', $frame->characters[9 * 20 + 1]);
     }
-
-    // ── L642-644: min constraint ──
 
     #[Test]
     public function resolveMinConstraintGetsAtLeastMinHeight(): void
@@ -1571,8 +1563,6 @@ final class TabBarTest extends TestCase
         self::assertSame('C', $frame->characters[7 * 20 + 1]);
     }
 
-    // ── L642: GreaterThan — min=0 goes to flex ──
-
     #[Test]
     public function resolveMinZeroFallsToFlexBranch(): void
     {
@@ -1586,8 +1576,6 @@ final class TabBarTest extends TestCase
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
         self::assertSame('B', $frame->characters[8 * 20 + 1]);
     }
-
-    // ── L651: remaining = max(0, availableHeight - fixedTotal) ──
 
     #[Test]
     public function resolveNoRemainingSpaceFlexGetsHeightOne(): void
@@ -1604,8 +1592,6 @@ final class TabBarTest extends TestCase
         self::assertSame('B', $frame->characters[7 * 20 + 1]);
     }
 
-    // ── L653: totalFlex > 0 && remaining > 0 (else branch) ──
-
     #[Test]
     public function resolveMultipleFlexNoRemainingAllGetHeightOne(): void
     {
@@ -1620,8 +1606,6 @@ final class TabBarTest extends TestCase
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
     }
 
-    // ── L659-662: flex weight distribution ──
-
     #[Test]
     public function resolveDistributesFlexWeightProportionally(): void
     {
@@ -1635,8 +1619,6 @@ final class TabBarTest extends TestCase
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
         self::assertSame('B', $frame->characters[11 * 20 + 1]);
     }
-
-    // ── L660-661: floor division and max(1, size) ──
 
     #[Test]
     public function resolveFlexGetsMinimumHeightOne(): void
@@ -1669,8 +1651,6 @@ final class TabBarTest extends TestCase
         self::assertSame('B', $frame->characters[4 * 20 + 1]);
     }
 
-    // ── L667-668: lastFlexIndex remainder distribution ──
-
     #[Test]
     public function resolveFlexRoundingRemainderGoesToLastFlex(): void
     {
@@ -1701,8 +1681,6 @@ final class TabBarTest extends TestCase
         self::assertSame('C', $frame->characters[9 * 20 + 1]);
     }
 
-    // ── L671: foreach else branch ──
-
     #[Test]
     public function resolveOnlyFlexChildrenDistributeEvenly(): void
     {
@@ -1727,8 +1705,6 @@ final class TabBarTest extends TestCase
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('Z', $frame->characters[3 * 20 + 1]);
     }
-
-    // ── L683: clampedScrollOffset ──
 
     #[Test]
     public function clampedScrollOffsetUsesBottomPadding(): void
@@ -1811,8 +1787,6 @@ final class TabBarTest extends TestCase
         self::assertSame('X', $frame->characters[4 * 20 + 2]);
     }
 
-    // ── L197: GreaterThan — exact equality of totalHeight and contentArea->height means no scroll ──
-
     #[Test]
     public function scrollNotPossibleWhenTotalHeightEqualsViewport(): void
     {
@@ -1824,8 +1798,6 @@ final class TabBarTest extends TestCase
         $area = new Rect(0, 0, 40, 20);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), $area)->model);
     }
-
-    // ── L198: Minus, Plus — maxOffset calculation correctness ──
 
     #[Test]
     public function scrollDownMaxOffsetIsExactlyTotalMinusViewportPlusPadding(): void
@@ -1850,8 +1822,6 @@ final class TabBarTest extends TestCase
         self::assertSame(5, $scrollCount);
     }
 
-    // ── L220: ReturnRemoval — mouse on empty tabs returns early ──
-
     #[Test]
     public function mouseWheelOnEmptyTabsReturnsEarly(): void
     {
@@ -1862,8 +1832,6 @@ final class TabBarTest extends TestCase
         );
         self::assertSame($tabBar, $result->model);
     }
-
-    // ── L223: LogicalAnd — tab click y-range boundary conditions ──
 
     #[Test]
     public function clickAtYBelowAreaYDoesNotSwitchTab(): void
@@ -1901,8 +1869,6 @@ final class TabBarTest extends TestCase
         self::assertSame(1, $result->model->activeTab());
     }
 
-    // ── L231: GreaterThan — wheel scroll only when content overflows ──
-
     #[Test]
     public function wheelDownNotPossibleWhenTotalHeightEqualsViewport(): void
     {
@@ -1917,8 +1883,6 @@ final class TabBarTest extends TestCase
             $tabBar->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model,
         );
     }
-
-    // ── L232: DecrementInteger, IncrementInteger, Minus, Plus — wheel scroll maxOffset math ──
 
     #[Test]
     public function wheelScrollMaxOffsetMatchesKeyboardMaxOffset(): void
@@ -1963,8 +1927,6 @@ final class TabBarTest extends TestCase
         }
     }
 
-    // ── L235: Plus — wheel down offset + step ──
-
     #[Test]
     public function wheelDownIncreasesScrollOffsetByOne(): void
     {
@@ -1978,8 +1940,6 @@ final class TabBarTest extends TestCase
         $scrolled2 = $scrolled1->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
         self::assertNotSame($scrolled1, $scrolled2);
     }
-
-    // ── L242: LogicalAnd, L243: DecrementInteger, IncrementInteger, Minus — wheel up conditions and math ──
 
     #[Test]
     public function wheelUpOnlyWorksInsideArea(): void
@@ -2043,8 +2003,6 @@ final class TabBarTest extends TestCase
         self::assertSame($tabBar, $result->model, 'the child under the pointer is a stop of its own, reached by the runtime');
     }
 
-    // ── L264: MBString — mb_strlen in handleTabClick for multi-byte labels ──
-
     #[Test]
     public function clickOnTabWithMultiByteLabel(): void
     {
@@ -2090,8 +2048,6 @@ final class TabBarTest extends TestCase
         self::assertSame('x', $frame->characters[3 * 40 + 1]);
     }
 
-    // ── L443: MBString — mb_strlen in renderTabStrip ──
-
     #[Test]
     public function tabStripCharCountNotByteLength(): void
     {
@@ -2125,8 +2081,6 @@ final class TabBarTest extends TestCase
         self::assertSame('T', $frame->characters[1 * 40 + 12]);
     }
 
-    // ── L450: LessThan — tab strip top border loop bound ──
-
     #[Test]
     public function topBorderLoopDoesNotOverwriteTopRight(): void
     {
@@ -2137,8 +2091,6 @@ final class TabBarTest extends TestCase
         self::assertSame($glyphs->topRight, $frame->characters[0 * 30 + 5]);
         self::assertNotSame($glyphs->topRight, $frame->characters[0 * 30 + 4]);
     }
-
-    // ── L482: DecrementInteger — isFirstActive (activeTab === 0) ──
 
     #[Test]
     public function baselineLeftGlyphFirstVsNonFirstActiveTab(): void
@@ -2156,8 +2108,6 @@ final class TabBarTest extends TestCase
         self::assertSame($fg->topLeft, $buffer2->characters[2 * 30 + 0]);
     }
 
-    // ── L485: baseline loop fills from x+1 to right-2 ──
-
     #[Test]
     public function baselineHorizontalFillExactBounds(): void
     {
@@ -2168,8 +2118,6 @@ final class TabBarTest extends TestCase
         self::assertSame($glyphs->horizontal, $frame->characters[2 * 15 + 13]);
         self::assertSame($glyphs->topRight, $frame->characters[2 * 15 + 14]);
     }
-
-    // ── L492: MBString — mb_strlen in renderBaseline ──
 
     #[Test]
     public function baselineGapMultibyte(): void
@@ -2184,8 +2132,6 @@ final class TabBarTest extends TestCase
         self::assertSame($glyphs->horizontal, $frame->characters[2 * 40 + 10]);
     }
 
-    // ── L496: MethodCallRemoval — putChar for first-active baseline vertical ──
-
     #[Test]
     public function baselineVerticalFirstActiveIsWritten(): void
     {
@@ -2195,8 +2141,6 @@ final class TabBarTest extends TestCase
         $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[2 * 30 + 0]);
     }
-
-    // ── L511: Assignment — tabX += cellWidth in renderBaseline ──
 
     #[Test]
     public function baselineTabXAccumulatesThirdTab(): void
@@ -2215,8 +2159,6 @@ final class TabBarTest extends TestCase
         self::assertSame($glyphs->horizontal, $frame->characters[2 * 50 + 18]);
     }
 
-    // ── L524: renderTabHint rightEdge ──
-
     #[Test]
     public function tabHintNearRightEdge(): void
     {
@@ -2228,8 +2170,6 @@ final class TabBarTest extends TestCase
         self::assertNotFalse($hintPos);
         self::assertGreaterThan(20, $hintPos);
     }
-
-    // ── L528,529: renderContentBox side borders exact positions ──
 
     #[Test]
     public function contentBoxSideBordersExactColumns(): void
@@ -2243,8 +2183,6 @@ final class TabBarTest extends TestCase
         }
     }
 
-    // ── L537: renderContentBox bottom border exact y ──
-
     #[Test]
     public function contentBoxBottomBorderExactY(): void
     {
@@ -2257,8 +2195,6 @@ final class TabBarTest extends TestCase
         self::assertSame($glyphs->vertical, $frame->characters[7 * 20 + 0]);
     }
 
-    // ── L551: left vertical loop bounds ──
-
     #[Test]
     public function contentBoxLeftVerticalLoop(): void
     {
@@ -2270,8 +2206,6 @@ final class TabBarTest extends TestCase
         self::assertSame($glyphs->bottomLeft, $frame->characters[7 * 20 + 0]);
     }
 
-    // ── L558: right vertical loop bounds ──
-
     #[Test]
     public function contentBoxRightVerticalLoop(): void
     {
@@ -2282,8 +2216,6 @@ final class TabBarTest extends TestCase
         self::assertSame($glyphs->vertical, $frame->characters[6 * 20 + 19]);
         self::assertSame($glyphs->bottomRight, $frame->characters[7 * 20 + 19]);
     }
-
-    // ── L567: renderContent overflow check ──
 
     #[Test]
     public function contentRendersAtMinimumDimensions(): void
@@ -2314,8 +2246,6 @@ final class TabBarTest extends TestCase
         self::assertStringNotContainsString('U', implode('', $frame->characters));
     }
 
-    // ── L580: childWidth reduced by scrollbar ──
-
     #[Test]
     public function childWidthReducedWhenScrollbarPresent(): void
     {
@@ -2329,8 +2259,6 @@ final class TabBarTest extends TestCase
         $c = $frame->characters[3 * 30 + 28];
         self::assertTrue($c === Scrollbar::THUMB || $c === Scrollbar::TRACK);
     }
-
-    // ── L582: childY = contentArea->y - scrollOffset ──
 
     #[Test]
     public function scrolledContentShiftsChildY(): void
@@ -2347,8 +2275,6 @@ final class TabBarTest extends TestCase
         self::assertStringContainsString('R1', $this->bufferRow($frame, 3, 30));
         self::assertStringNotContainsString('R0', $this->bufferRow($frame, 3, 30));
     }
-
-    // ── L588: visibility condition ──
 
     #[Test]
     public function childBelowViewportNotRendered(): void
@@ -2384,8 +2310,6 @@ final class TabBarTest extends TestCase
         self::assertStringContainsString('Q5', $allChars);
     }
 
-    // ── L589: scrollbar thumb position changes ──
-
     #[Test]
     public function scrollbarThumbMoves(): void
     {
@@ -2415,8 +2339,6 @@ final class TabBarTest extends TestCase
         }
         self::assertNotSame($t0, $t1);
     }
-
-    // ── L598: scrollbarTotal includes padding ──
 
     #[Test]
     public function scrollbarCoversAllContentRows(): void

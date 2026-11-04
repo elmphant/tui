@@ -624,8 +624,6 @@ final class FrameTest extends TestCase
         self::assertSame(Attr::ITALIC, $frame->attributes[0]);
     }
 
-    // ── putChar bounds checking (L45-48) ──
-
     #[Test]
     public function putCharIgnoresNegativeX(): void
     {
@@ -695,8 +693,6 @@ final class FrameTest extends TestCase
         $frame->putChar(-1, 0, 'X');
         self::assertFalse($frame->isRowDirty(0));
     }
-
-    // ── putChar wide character handling (L56-59) ──
 
     #[Test]
     public function putCharWideCharacterWritesPlaceholderAtNextColumn(): void
@@ -835,8 +831,6 @@ final class FrameTest extends TestCase
         self::assertSame(0, $frame->foregrounds[3]);
     }
 
-    // ── putString (L71-87) ──
-
     #[Test]
     public function putStringIgnoresNegativeY(): void
     {
@@ -945,8 +939,6 @@ final class FrameTest extends TestCase
         self::assertSame(0, $consumed);
     }
 
-    // ── putStyled (L98) ──
-
     #[Test]
     public function putStyledReturnsColumnsConsumed(): void
     {
@@ -973,8 +965,6 @@ final class FrameTest extends TestCase
         self::assertSame($foreground->value, $frame->foregrounds[1]);
         self::assertSame($background->value, $frame->backgrounds[1]);
     }
-
-    // ── putAnsi (L133-225) ──
 
     #[Test]
     public function putAnsiUsesProvidedParser(): void
@@ -1251,8 +1241,6 @@ final class FrameTest extends TestCase
         self::assertSame(3, $finalX);
         self::assertSame(2, $finalY);
     }
-
-    // ── fillRect (L228-246) ──
 
     #[Test]
     public function fillStyledPaintsTheAreaInTheStyleAndLeavesTheRestAlone(): void
@@ -1632,8 +1620,6 @@ final class FrameTest extends TestCase
         self::assertSame([1, 1, 1], $frame->widths);
         self::assertSame([], $frame->dirtyRows);
     }
-
-    // ── Additional mutant-killing tests ──
 
     #[Test]
     public function putCharAtXEqualsWidthMinus1Succeeds(): void
@@ -2076,8 +2062,6 @@ final class FrameTest extends TestCase
         self::assertSame('X', $frame->characters[4]);
     }
 
-    // ── Mutant-killing: putChar bounds (L47) ──
-
     #[Test]
     public function putCharAtXWidthMinus1WritesAtYHeight(): void
     {
@@ -2125,8 +2109,6 @@ final class FrameTest extends TestCase
         }
     }
 
-    // ── Mutant-killing: putChar dirty tracking uses true (L56) ──
-
     #[Test]
     public function putCharDirtyRowIsActuallyTrue(): void
     {
@@ -2135,8 +2117,6 @@ final class FrameTest extends TestCase
         self::assertTrue($frame->isRowDirty(1));
         self::assertSame(true, $frame->dirtyRows[1]);
     }
-
-    // ── Mutant-killing: putChar wide char at second-to-last column (L59) ──
 
     #[Test]
     public function putCharWideCharAtSecondToLastColumnWritesPlaceholder(): void
@@ -2173,8 +2153,6 @@ final class FrameTest extends TestCase
         self::assertSame(1, $frame->foregrounds[3]);
     }
 
-    // ── Mutant-killing: putString default foreground param (L71) ──
-
     #[Test]
     public function putStringDefaultForegroundIsZero(): void
     {
@@ -2182,8 +2160,6 @@ final class FrameTest extends TestCase
         $frame->putString(0, 0, 'A');
         self::assertSame(0, $frame->foregrounds[0]);
     }
-
-    // ── Mutant-killing: putString break vs continue (L83) ──
 
     #[Test]
     public function putStringBreakAtWidthReturnsSameAsVisibleColumns(): void
@@ -2204,8 +2180,6 @@ final class FrameTest extends TestCase
         self::assertSame(4, $consumed);
     }
 
-    // ── Mutant-killing: putString charWidth===0 (L87) ──
-
     #[Test]
     public function putStringCombiningMarksKeptWithBases(): void
     {
@@ -2216,8 +2190,6 @@ final class FrameTest extends TestCase
         self::assertSame('C', $frame->characters[2]);
         self::assertSame(3, $consumed);
     }
-
-    // ── Mutant-killing: putString wide char at second-to-last column (L98) ──
 
     #[Test]
     public function putStringWideCharSecondToLastColumnWritesPlaceholder(): void
@@ -2245,8 +2217,6 @@ final class FrameTest extends TestCase
         self::assertSame(0, $frame->foregrounds[5]);
     }
 
-    // ── Mutant-killing: putString dirty uses true (L110) ──
-
     #[Test]
     public function putStringDirtyRowIsActuallyTrue(): void
     {
@@ -2254,8 +2224,6 @@ final class FrameTest extends TestCase
         $frame->putString(0, 1, 'X');
         self::assertSame(true, $frame->dirtyRows[1]);
     }
-
-    // ── Mutant-killing: putAnsi height boundary (L140) ──
 
     #[Test]
     public function putAnsiYAtExactHeightDoesNotWrite(): void
@@ -2268,8 +2236,6 @@ final class FrameTest extends TestCase
             self::assertSame(' ', $frame->characters[2 * 5 + $i] ?? ' ');
         }
     }
-
-    // ── Mutant-killing: putAnsi escape detection (L143) ──
 
     #[Test]
     public function putAnsiEscapeAtEndOfString(): void
@@ -2301,8 +2267,6 @@ final class FrameTest extends TestCase
         self::assertSame('B', $frame->characters[1]);
     }
 
-    // ── Mutant-killing: putAnsi strpos offset (L144) ──
-
     #[Test]
     public function putAnsiSgrContentStartsAfterBracket(): void
     {
@@ -2311,8 +2275,6 @@ final class FrameTest extends TestCase
         self::assertSame('X', $frame->characters[0]);
         self::assertNotSame(0, $frame->foregrounds[0]);
     }
-
-    // ── Mutant-killing: putAnsi SGR parse length (L146) ──
 
     #[Test]
     public function putAnsiSgrParameterParsedCorrectly(): void
@@ -2341,8 +2303,6 @@ final class FrameTest extends TestCase
         self::assertNotSame(0, $frame->foregrounds[0]);
     }
 
-    // ── Mutant-killing: putAnsi non-SGR scan (L150-154) ──
-
     #[Test]
     public function putAnsiNonSgrSequenceSkippedCorrectly(): void
     {
@@ -2360,8 +2320,6 @@ final class FrameTest extends TestCase
         self::assertSame('A', $frame->characters[0]);
         self::assertSame(1, $finalX);
     }
-
-    // ── Mutant-killing: putAnsi match arm byte length (L186-191) ──
 
     #[Test]
     public function putAnsiAsciiCharacterUsesOneByte(): void
@@ -2401,8 +2359,6 @@ final class FrameTest extends TestCase
         self::assertSame('Z', $frame->characters[2]);
     }
 
-    // ── Mutant-killing: putAnsi zero-width (L197) ──
-
     #[Test]
     public function putAnsiZeroWidthCharacterDoesNotAdvanceColumn(): void
     {
@@ -2412,8 +2368,6 @@ final class FrameTest extends TestCase
         self::assertSame('B', $frame->characters[1]);
         self::assertSame(2, $finalX);
     }
-
-    // ── Mutant-killing: putAnsi continue vs break at width (L201) ──
 
     #[Test]
     public function putAnsiContinueAtWidthSkipsRemainingChars(): void
@@ -2428,8 +2382,6 @@ final class FrameTest extends TestCase
         self::assertSame(2, $finalX);
         self::assertSame(1, $finalY);
     }
-
-    // ── Mutant-killing: putAnsi wide char boundary (L212) ──
 
     #[Test]
     public function putAnsiWideCharSecondToLastColumnWritesPlaceholder(): void
@@ -2515,8 +2467,6 @@ final class FrameTest extends TestCase
         self::assertSame($red, $frame->foregrounds[3]);
     }
 
-    // ── Mutant-killing: putAnsi dirty uses true (L220) ──
-
     #[Test]
     public function putAnsiDirtyRowIsActuallyTrue(): void
     {
@@ -2524,8 +2474,6 @@ final class FrameTest extends TestCase
         $frame->putAnsi(0, 1, 'A');
         self::assertSame(true, $frame->dirtyRows[1]);
     }
-
-    // ── Mutant-killing: fillRect default params (L228) ──
 
     #[Test]
     public function fillRectDefaultForegroundIsZero(): void
@@ -2575,8 +2523,6 @@ final class FrameTest extends TestCase
         self::assertSame(Attr::BOLD, $frame->attributes[0]);
     }
 
-    // ── Mutant-killing: fillRect clipping max(0,x) / max(0,y) (L230-231) ──
-
     #[Test]
     public function fillRectMaxStartXClampsToZero(): void
     {
@@ -2597,8 +2543,6 @@ final class FrameTest extends TestCase
         self::assertSame(' ', $frame->characters[2]);
     }
 
-    // ── Mutant-killing: fillRect dirty uses true (L244) ──
-
     #[Test]
     public function fillRectDirtyRowIsActuallyTrue(): void
     {
@@ -2606,8 +2550,6 @@ final class FrameTest extends TestCase
         $frame->fillRect(0, 1, 1, 1);
         self::assertSame(true, $frame->dirtyRows[1]);
     }
-
-    // ── Mutant-killing: putChar wide char at last column must not corrupt next row (L59) ──
 
     #[Test]
     public function putCharWideCharLastColumnIsSkippedAndDoesNotCorruptNextRow(): void
@@ -2621,8 +2563,6 @@ final class FrameTest extends TestCase
         self::assertSame(0, $frame->attributes[4]);
     }
 
-    // ── Mutant-killing: putString zero-width chars must not be written to cells (L87) ──
-
     #[Test]
     public function putStringZeroWidthCharIsNotWrittenToCell(): void
     {
@@ -2631,8 +2571,6 @@ final class FrameTest extends TestCase
         self::assertSame('X', $frame->characters[0]);
         self::assertSame(' ', $frame->characters[1]);
     }
-
-    // ── Mutant-killing: putString wide char at last column must not corrupt next row (L98) ──
 
     #[Test]
     public function putStringWideCharLastColumnIsSkippedAndDoesNotCorruptNextRow(): void
@@ -2645,8 +2583,6 @@ final class FrameTest extends TestCase
         self::assertSame(0, $frame->backgrounds[4]);
         self::assertSame(0, $frame->attributes[4]);
     }
-
-    // ── Mutant-killing: putAnsi SGR length calculation (L146) ──
 
     #[Test]
     public function putAnsiSgrAfterNonZeroPositionParsedCorrectly(): void
@@ -2669,8 +2605,6 @@ final class FrameTest extends TestCase
         self::assertSame(0, $frame->attributes[3]);
     }
 
-    // ── Mutant-killing: putAnsi non-SGR scan byte boundary (L151) ──
-
     #[Test]
     public function putAnsiNonSgrSequenceWithAtTerminator(): void
     {
@@ -2679,8 +2613,6 @@ final class FrameTest extends TestCase
         self::assertSame('X', $frame->characters[0]);
         self::assertSame(1, $finalX);
     }
-
-    // ── Mutant-killing: putAnsi match arm UTF-8 byte detection (L186-191) ──
 
     #[Test]
     public function putAnsiAsciiByteFollowedByMultibyte(): void
@@ -2727,8 +2659,6 @@ final class FrameTest extends TestCase
         );
     }
 
-    // ── Mutant-killing: putAnsi zero-width char in putAnsi (L197) ──
-
     #[Test]
     public function putAnsiZeroWidthCombiningCharNotWritten(): void
     {
@@ -2736,8 +2666,6 @@ final class FrameTest extends TestCase
         $frame->putAnsi(0, 0, "\u{0300}X");
         self::assertSame('X', $frame->characters[0]);
     }
-
-    // ── Mutant-killing: putAnsi wide char at last column (L212) ──
 
     #[Test]
     public function putAnsiWideCharLastColumnIsSkippedAndDoesNotCorruptNextRow(): void
@@ -2748,8 +2676,6 @@ final class FrameTest extends TestCase
         self::assertSame(' ', $frame->characters[4], 'Index 4 (row 1, col 0) must remain blank');
         self::assertSame(0, $frame->foregrounds[4]);
     }
-
-    // ── Mutant-killing: fillRect max(0,x) vs max(-1,x) (L230) ──
 
     #[Test]
     public function fillRectStartXClampsToZeroNotNegativeOne(): void
@@ -2762,8 +2688,6 @@ final class FrameTest extends TestCase
         self::assertSame(' ', $frame->characters[3]);
     }
 
-    // ── Mutant-killing: fillRect max(0,y) vs max(-1,y) (L231) ──
-
     #[Test]
     public function fillRectStartYClampsToZeroNotNegativeOne(): void
     {
@@ -2774,8 +2698,6 @@ final class FrameTest extends TestCase
         self::assertSame('X', $frame->characters[2]);
         self::assertSame(' ', $frame->characters[3]);
     }
-
-    // ── Mutant-killing: putChar default params (L45) ──
 
     #[Test]
     public function putCharDefaultForegroundIsZero(): void
@@ -2801,8 +2723,6 @@ final class FrameTest extends TestCase
         self::assertSame(0, $frame->attributes[0]);
     }
 
-    // ── Mutant-killing: putString default background and attributes params (L71) ──
-
     #[Test]
     public function putStringDefaultBackgroundIsZero(): void
     {
@@ -2819,8 +2739,6 @@ final class FrameTest extends TestCase
         self::assertSame(0, $frame->attributes[0]);
     }
 
-    // ── Mutant-killing: putAnsi wide char at column width-2 (L212 column+2 vs column+1) ──
-
     #[Test]
     public function putAnsiWideCharAtColumnWidthMinus2WritesPlaceholder(): void
     {
@@ -2830,8 +2748,6 @@ final class FrameTest extends TestCase
         self::assertSame('', $frame->characters[5]);
         self::assertSame(' ', $frame->characters[6], 'Next row must not be corrupted');
     }
-
-    // ── Mutant-killing: putAnsi 3-byte UTF-8 with first byte > 0xE4 (L189 bitmask) ──
 
     #[Test]
     public function putAnsiThreeByteCharWithByteE5(): void
@@ -2851,8 +2767,6 @@ final class FrameTest extends TestCase
         self::assertSame('Z', $frame->characters[0]);
     }
 
-    // ── Mutant-killing: putAnsi 4-byte UTF-8 with first byte 0xF1 (L190 bitmask) ──
-
     #[Test]
     public function putAnsiFourByteCharWithByteF1(): void
     {
@@ -2861,9 +2775,6 @@ final class FrameTest extends TestCase
         $frame->putAnsi(0, 0, $text);
         self::assertSame('Z', $frame->characters[1] !== '' ? $frame->characters[1] : $frame->characters[2]);
     }
-
-    // ── Mutant-killing: fillRect max(0,x) - with x=0, max(0,0)=0 vs max(-1,0)=0 ──
-    // Need test where x is positive but small, so max(0,x) != max(-1,x)
 
     #[Test]
     public function fillRectAtXZeroFillsFromColumnZero(): void
@@ -2884,8 +2795,6 @@ final class FrameTest extends TestCase
         self::assertSame('X', $frame->characters[1]);
         self::assertSame(' ', $frame->characters[2]);
     }
-
-    // ── Mutant-killing: fillRect max(0,-1) must not write to negative indices (L230-231) ──
 
     #[Test]
     public function fillRectNegativeXDoesNotWriteToNegativeIndices(): void
@@ -2955,7 +2864,6 @@ final class FrameTest extends TestCase
     #[Test]
     public function putCharRejectedOutsideClipTopLeft(): void
     {
-        // L93 clipRejects: x < clip.x — cells left of clip rejected
         $frame = new Frame(10, 5);
         $frame->pushClip(new Rect(3, 2, 4, 2));
 
@@ -2969,7 +2877,6 @@ final class FrameTest extends TestCase
     #[Test]
     public function putCharRejectedOutsideClipBottomRight(): void
     {
-        // L93 clipRejects: x >= clip.right() and y >= clip.bottom() — cells right/below rejected
         $frame = new Frame(10, 5);
         $frame->pushClip(new Rect(3, 2, 4, 2)); // covers (3..6, 2..3)
 
@@ -2997,7 +2904,6 @@ final class FrameTest extends TestCase
     #[Test]
     public function putStringRejectsRowOutsideClipYRange(): void
     {
-        // L139/L140: putString must reject and return 0 when y is outside clip's y range.
         $frame = new Frame(10, 5);
         $frame->pushClip(new Rect(0, 2, 10, 2));
 
@@ -3015,7 +2921,6 @@ final class FrameTest extends TestCase
     #[Test]
     public function putStringWritesInsideClipWithNonAscii(): void
     {
-        // L171 LogicalAnd: clipRejects check inside putString slow-path foreach.
         // Use a non-ASCII char to force the slow path (fast path bails on clipStack).
         $frame = new Frame(10, 5);
         $frame->pushClip(new Rect(2, 1, 4, 2)); // (2..5, 1..2)
@@ -3034,7 +2939,6 @@ final class FrameTest extends TestCase
     #[Test]
     public function putStringWithWideCharRejectsWhenContinuationOutsideClip(): void
     {
-        // L179: wide-char (width=2) — the continuation cell (col+1) must also be inside the clip.
         $frame = new Frame(10, 5);
         // Pre-fill clipped cells so we can detect what was written
         for ($i = 0; $i < 50; ++$i) {
@@ -3053,8 +2957,6 @@ final class FrameTest extends TestCase
     #[Test]
     public function putStringWithWideCharWritesContinuationInsideClip(): void
     {
-        // L179 IncrementInteger: `clipRejects(column + 1, y)` → `clipRejects(column + 2, y)`.
-        // When col+1 is the last cell INSIDE the clip and col+2 is OUTSIDE, current writes; mutation skips.
         $frame = new Frame(10, 5);
         for ($i = 0; $i < 50; ++$i) {
             $frame->putChar($i % 10, intdiv($i, 10), '.');
@@ -3071,7 +2973,6 @@ final class FrameTest extends TestCase
     #[Test]
     public function putAnsiWithWideCharWritesContinuationInsideClip(): void
     {
-        // L325 mutants: same as L179 but in putAnsi path.
         $frame = new Frame(10, 5);
         for ($i = 0; $i < 50; ++$i) {
             $frame->putChar($i % 10, intdiv($i, 10), '.');
@@ -3087,7 +2988,6 @@ final class FrameTest extends TestCase
     #[Test]
     public function putAnsiWithWideCharRejectsTheWholeCharWhenContinuationOutsideClip(): void
     {
-        // L325 IncrementInteger: column + 1 → column + 2. With column+2 outside clip, the char writes (wrongly).
         $frame = new Frame(10, 5);
         for ($i = 0; $i < 50; ++$i) {
             $frame->putChar($i % 10, intdiv($i, 10), '.');

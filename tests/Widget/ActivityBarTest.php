@@ -297,10 +297,7 @@ final class ActivityBarTest extends TestCase
         $frame = new Frame(15, 1);
         $context = new RenderContext(Theme::dark());
 
-        // Use area with x offset to distinguish += from =
-        // label "AB" has labelWidth = 2 + 1 = 3
-        // With $x = $area->x (2) then $x += 3 -> x = 5
-        // With mutant $x = 3 (just labelWidth), bar starts at 3 instead of 5
+        // label "AB" has labelWidth = 2 + 1 = 3, so the bar starts at 2 + 3 = 5
         $bar->render($frame, new Rect(2, 0, 13, 1), $context);
 
         self::assertSame('A', $frame->characters[2], 'Label starts at area x offset');

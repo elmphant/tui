@@ -497,16 +497,12 @@ final class ListViewTest extends TestCase
         self::assertSame(' ', $frame->characters[29]);
     }
 
-    // --- L29: DecrementInteger — selected starts at -1, not -2 ---
-
     #[Test]
     public function selectedStartsAtMinusOne(): void
     {
         $list = ListView::fromStrings(['A', 'B']);
         self::assertNull($list->selectedIndex());
     }
-
-    // --- L94: MatchArmRemoval — empty list update returns self unchanged ---
 
     #[Test]
     public function emptyListUpdateWithMouseReturnsUnchanged(): void
@@ -517,8 +513,6 @@ final class ListViewTest extends TestCase
         $result = $list->update($mouse, $area);
         self::assertSame($list, $result->model);
     }
-
-    // --- L104-105: render bounds — zero width, zero height ---
 
     #[Test]
     public function renderDoesNothingWithZeroWidth(): void
@@ -539,8 +533,6 @@ final class ListViewTest extends TestCase
         $list->render($frame, $area, new RenderContext(Theme::dark()));
         self::assertSame(' ', $frame->characters[0]);
     }
-
-    // --- L118-127: renderY >= area->bottom() break, cursor identity, renderY += height ---
 
     #[Test]
     public function renderStopsAtAreaBottom(): void
@@ -582,8 +574,6 @@ final class ListViewTest extends TestCase
         }
         self::assertStringContainsString('Title B', $row2);
     }
-
-    // --- L150-151: MatchArmRemoval — style branches in renderItem ---
 
     #[Test]
     public function selectedItemGetsAccentStyle(): void
@@ -643,8 +633,6 @@ final class ListViewTest extends TestCase
         self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[0]);
         self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[0]);
     }
-
-    // --- L150: LogicalAnd — isCursor && focused ---
 
     #[Test]
     public function cursorWithoutFocusDoesNotGetCursorStyle(): void
@@ -749,8 +737,6 @@ final class ListViewTest extends TestCase
         self::assertSame($list, $result->model);
     }
 
-    // --- L160-178: scroll/ensureCursorVisible math ---
-
     #[Test]
     public function scrollsDownWhenCursorExceedsViewport(): void
     {
@@ -819,8 +805,6 @@ final class ListViewTest extends TestCase
         self::assertSame(0, $result->model->scrollOffset($area), 'scrollOffset must stay 0 when cursor moves into an already-visible row');
         self::assertSame(1, $result->model->cursor());
     }
-
-    // --- L196-211: mouse offset calculations ---
 
     #[Test]
     public function mouseClickWithOffsetArea(): void
@@ -899,8 +883,6 @@ final class ListViewTest extends TestCase
         $result = $list->update($wheelDown, $area);
         self::assertSame($list, $result->model);
     }
-
-    // --- L223-272: rendering with scroll offset ---
 
     #[Test]
     public function renderWithScrollOffsetSkipsItems(): void
@@ -1249,8 +1231,6 @@ final class ListViewTest extends TestCase
         self::assertStringContainsString('Title B', $row1);
     }
 
-    // --- L118: GreaterThanOrEqualTo — renderY exactly equals bottom should NOT render ---
-
     #[Test]
     public function renderDoesNotRenderItemAtExactAreaBottom(): void
     {
@@ -1266,8 +1246,6 @@ final class ListViewTest extends TestCase
         self::assertSame('B', $row1);
         self::assertSame('C', $row2);
     }
-
-    // --- L229: itemIndexAtY boundary — click at exact last row of item ---
 
     #[Test]
     public function mouseClickAtExactLastRowOfMultiHeightItem(): void
@@ -1287,8 +1265,6 @@ final class ListViewTest extends TestCase
         $result = $list->update($clickFirstRowOfB, $area);
         self::assertSame(1, $result->model->cursor());
     }
-
-    // --- L263/267/271: ensureCursorVisible exact boundary ---
 
     #[Test]
     public function ensureCursorVisibleAtExactBottomBoundary(): void
@@ -1338,8 +1314,6 @@ final class ListViewTest extends TestCase
         self::assertSame(2, $result->model->scrollOffset($area));
     }
 
-    // --- L160: description rendered at x+2, y+1 exactly ---
-
     #[Test]
     public function descriptionAtExactXOffset(): void
     {
@@ -1367,8 +1341,6 @@ final class ListViewTest extends TestCase
         self::assertNotSame('D', $frame->characters[2 * 20 + 2]);
     }
 
-    // --- L167: pageSize = max(1, area.height) ---
-
     #[Test]
     public function pageDownWithZeroHeightAreaUsesPageSizeOfOne(): void
     {
@@ -1379,8 +1351,6 @@ final class ListViewTest extends TestCase
         $result = $list->update(new KeyMsg(Key::PageDown), $area);
         self::assertSame(1, $result->model->cursor());
     }
-
-    // --- L113/114: render scroll offset skip with exact rowsConsumed boundary ---
 
     #[Test]
     public function renderScrollOffsetSkipsExactRows(): void
@@ -1405,10 +1375,6 @@ final class ListViewTest extends TestCase
 
     // --- render: foreach skips items before scroll offset ---
 
-    /**
-     * L94: MatchArmRemoval — $count === 0 early return.
-     * Empty list receiving KeyMsg should return same instance, not fall through to handleKey.
-     */
     #[Test]
     public function emptyListDoesNotHandleKeyMessages(): void
     {
@@ -1427,10 +1393,6 @@ final class ListViewTest extends TestCase
         self::assertSame($list, $result->model);
     }
 
-    /**
-     * L119/L120: >= vs > and break vs continue.
-     * Items beyond area.bottom() must NOT be rendered. Verify the cell below the area remains blank.
-     */
     #[Test]
     public function itemsAtExactAreaBottomAreNotRendered(): void
     {
@@ -1444,12 +1406,6 @@ final class ListViewTest extends TestCase
         self::assertSame(0, $frame->foregrounds[3 * 20]);
     }
 
-    /**
-     * L120: break vs continue. If changed to continue, the loop would keep
-     * iterating past bottom and render items below the visible area.
-     * With break, it stops early. We verify by checking that a 5th item
-     * in a 3-row area doesn't render at row 4.
-     */
     #[Test]
     public function breakPreventsRenderingBeyondAreaBottom(): void
     {
@@ -1458,8 +1414,7 @@ final class ListViewTest extends TestCase
         $area = new Rect(0, 0, 20, 3);
         $list->render($frame, $area, new RenderContext(Theme::dark()));
 
-        // With break: only A, B, C render. D and E don't.
-        // With continue: D at row 3 and E at row 4 would still try to render.
+        // Only A, B, C render. D and E don't.
         self::assertSame('A', $frame->characters[0]);
         self::assertSame('B', $frame->characters[20]);
         self::assertSame('C', $frame->characters[40]);
@@ -1467,27 +1422,15 @@ final class ListViewTest extends TestCase
         self::assertNotSame('D', $frame->characters[60]);
     }
 
-    /**
-     * L168: max(1, area.height) vs max(0, area.height).
-     * With height=0, pageSize should be 1 (from max(1,...)), not 0.
-     * If pageSize=0, PageDown would move cursor by 0 (no movement).
-     */
     #[Test]
     public function pageDownWithHeightZeroMovesExactlyOneItem(): void
     {
         $list = ListView::fromStrings(['A', 'B', 'C']);
         $area = new Rect(0, 0, 20, 0);
         $result = $list->update(new KeyMsg(Key::PageDown), $area);
-        // max(1, 0) = 1, so cursor moves by 1
-        // max(0, 0) = 0, so cursor wouldn't move (mutant)
         self::assertSame(1, $result->model->cursor());
     }
 
-    /**
-     * L174: End key guard — $this->cursor < $count - 1 vs $count - 2.
-     * With 3 items, cursor at 1 (second-to-last): $count-1=2, cursor(1)<2 is true => moves.
-     * With mutation $count-2=1, cursor(1)<1 is false => doesn't move. Bug!
-     */
     #[Test]
     public function endKeyFromSecondToLastItemMovesToLastItem(): void
     {
@@ -1501,11 +1444,6 @@ final class ListViewTest extends TestCase
         self::assertSame(2, $result->model->cursor());
     }
 
-    /**
-     * L175: PageDown guard — $this->cursor < $count - 1 vs $count - 2.
-     * With 3 items, cursor at 1 (index 1): $count-1=2, cursor(1)<2 is true => PageDown works.
-     * With mutation $count-2=1, cursor(1)<1 is false => PageDown does nothing. Bug!
-     */
     #[Test]
     public function pageDownFromSecondToLastItemStillMoves(): void
     {
@@ -1517,11 +1455,6 @@ final class ListViewTest extends TestCase
         self::assertSame(2, $result->model->cursor());
     }
 
-    /**
-     * L208: max(0, $maxOffset) vs max(1, $maxOffset).
-     * When totalItemRows == area.height, maxOffset = 0.
-     * Wheel down should NOT scroll (offset stays 0). With max(1,...), it would set offset=1.
-     */
     #[Test]
     public function wheelDownDoesNotScrollWhenItemsFitExactly(): void
     {
@@ -1533,12 +1466,6 @@ final class ListViewTest extends TestCase
         self::assertSame(0, $result->model->scrollOffset($area));
     }
 
-    /**
-     * L208: max(0, $maxOffset) vs max(-1, $maxOffset).
-     * When totalItemRows < area.height, maxOffset is negative.
-     * max(0, negative) = 0, max(-1, negative) could be -1 if maxOffset <= -1.
-     * 2 items in 5-row viewport: maxOffset = 2 - 5 = -3. max(0, -3) = 0, max(-1, -3) = -1.
-     */
     #[Test]
     public function wheelDownDoesNotScrollToNegativeOffset(): void
     {
@@ -1589,11 +1516,6 @@ final class ListViewTest extends TestCase
         self::assertSame(2, $result->model->cursor());
     }
 
-    /**
-     * L264: < vs <= for rowsBefore < offset.
-     * When rowsBefore equals offset, the cursor is at the top of the viewport.
-     * < means don't scroll up; <= would needlessly reset offset.
-     */
     #[Test]
     public function ensureCursorVisibleDoesNotScrollWhenCursorAtTopOfViewport(): void
     {
@@ -1616,11 +1538,6 @@ final class ListViewTest extends TestCase
         self::assertSame(3, $current->scrollOffset($area)); // rowsBefore(3) == offset(3), should not change
     }
 
-    /**
-     * L268: > vs >= for cursorBottom > offset + area.height.
-     * When cursorBottom equals offset + height, cursor is exactly at the bottom edge.
-     * > means don't scroll; >= would scroll one extra row unnecessarily.
-     */
     #[Test]
     public function ensureCursorVisibleDoesNotScrollWhenCursorAtBottomOfViewport(): void
     {
@@ -1633,12 +1550,6 @@ final class ListViewTest extends TestCase
         $current = $current->update(new KeyMsg(Key::Down), $area)->model;
         $current = $current->update(new KeyMsg(Key::Down), $area)->model;
         self::assertSame(2, $current->cursor());
-        // rowsBefore = 2, cursorHeight = 1, cursorBottom = 3
-        // offset + height = 0 + 3 = 3
-        // cursorBottom(3) > 3 is false => don't scroll. Correct.
-        // cursorBottom(3) >= 3 is true => would set offset = 3 - 3 = 0. Same. Hmm.
-        // Need a case where it matters: after scrolling.
-        // Let's go to item 5 then back to 4, which should be at bottom of viewport.
         $current = $current->update(new KeyMsg(Key::Down), $area)->model; // cursor=3, offset=1
         $current = $current->update(new KeyMsg(Key::Down), $area)->model; // cursor=4, offset=2
         $current = $current->update(new KeyMsg(Key::Down), $area)->model; // cursor=5, offset=3
@@ -1646,10 +1557,6 @@ final class ListViewTest extends TestCase
         self::assertSame(3, $current->scrollOffset($area));
 
         // cursorBottom = 5 + 1 = 6, offset + height = 3 + 3 = 6
-        // > : 6 > 6 is false => don't scroll. Stays at 3.
-        // >= : 6 >= 6 is true => offset = 6 - 3 = 3. Same.
-        // The boundary is always the same here because we just scrolled to position the cursor.
-        // The mutation is equivalent in all cases I can construct. Let me annotate it.
         self::assertSame(3, $current->scrollOffset($area));
     }
 

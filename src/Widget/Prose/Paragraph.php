@@ -39,14 +39,22 @@ final readonly class Paragraph implements Widget, MeasureHeight
      * @param list<Line> $lines
      */
     private function __construct(
-        public array $lines = [],
-        public Alignment $alignment = Alignment::Left,
-        public Wrap $wrap = Wrap::WordWrap,
-        public ?Style $style = null,
-        public ?Sizing $sizingOverride = null,
+        private array $lines = [],
+        private Alignment $alignment = Alignment::Left,
+        private Wrap $wrap = Wrap::WordWrap,
+        private ?Style $style = null,
+        private ?Sizing $sizingOverride = null,
         ?RowIndex $rowIndex = null,
     ) {
         $this->rowIndex = $rowIndex ?? RowIndex::of(count($lines));
+    }
+
+    /**
+     * @return list<Line>
+     */
+    public function lines(): array
+    {
+        return $this->lines;
     }
 
     /**

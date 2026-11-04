@@ -104,7 +104,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     /**
      * @return list<ComponentId>
      */
-    final public function focusableIds(?FocusState $focus = null): array
+    final public function ringIds(?FocusState $focus = null): array
     {
         return array_map(
             static fn (Component $component): ComponentId => $component->id,
@@ -144,20 +144,20 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         foreach ($focused === null ? [] : [$focused, ...$this->componentRegistry()->enclosing($focused->id)] as $component) {
             if ($component->widget instanceof KeybindingsAware) {
-                $answering = $answering->append($component->widget->effectiveKeybindings());
+                $answering = $answering->plus($component->widget->effectiveKeybindings());
             }
         }
 
         $chords = $this->applicationKeybindings()
-            ->append($answering)
-            ->append($this->globalKeybindings()->restrictedTo(...$answering->actions()))
+            ->plus($answering)
+            ->plus($this->globalKeybindings()->restrictedTo(...$answering->actions()))
             ->chords();
 
         $holder = $focus->focused();
         foreach ($this->mountsHearingKeys($holder) as $mount) {
             if ($mount->model instanceof BindsChords) {
                 $inside = $holder?->below($mount->id);
-                $chords = $chords->append($mount->model->chords($inside === null ? FocusState::nowhere() : FocusState::on($inside))->chords());
+                $chords = $chords->plus($mount->model->chords($inside === null ? FocusState::nowhere() : FocusState::on($inside))->chords());
             }
         }
 
@@ -182,8 +182,8 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     public function keyHelpHints(string $description = 'keys'): array
     {
         $bindings = $this->keyHelpKeybindings();
-        $everywhere = $bindings->withoutText()->get(Actions::HELP);
-        $labels = array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $everywhere === [] ? $bindings->get(Actions::HELP) : $everywhere);
+        $everywhere = $bindings->withoutText()->patternsOf(Actions::HELP);
+        $labels = array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $everywhere === [] ? $bindings->patternsOf(Actions::HELP) : $everywhere);
 
         return $labels === [] ? [] : [implode('/', $labels) => $description];
     }
@@ -233,8 +233,8 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         $groups['Anywhere'] = $this->described(
             $this->applicationKeybindings()
-                ->append($this->focusCycleKeybindings())
-                ->append($this->keyHelpKeybindings()),
+                ->plus($this->focusCycleKeybindings())
+                ->plus($this->keyHelpKeybindings()),
             $listed,
         );
 
@@ -1077,7 +1077,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         // Stored widgets exclude routing bindings; add focus-cycle keys only to hints, never to widget handling.
         if ($widget instanceof KeybindingsAware) {
-            $widget = $widget->withGlobalKeybindings($this->globalKeybindings()->append($this->focusCycleKeybindings()));
+            $widget = $widget->withGlobalKeybindings($this->globalKeybindings()->plus($this->focusCycleKeybindings()));
         }
 
         return $widget instanceof PublishesHints ? $widget->hints() : [];
@@ -1140,10 +1140,10 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $described = [];
 
         foreach ($bindings->actions() as $action) {
-            $leading = ($bindings->get($action)[0] ?? null)?->label();
+            $leading = ($bindings->patternsOf($action)[0] ?? null)?->label();
             $description = $leading !== null && isset($wording[$leading]) ? $wording[$leading] : $this->actionDescription($action);
             $labels = [];
-            foreach ($bindings->get($action) as $pattern) {
+            foreach ($bindings->patternsOf($action) as $pattern) {
                 $label = $pattern->label();
                 if (!isset($listed[$label])) {
                     $listed[$label] = true;

@@ -399,8 +399,8 @@ final class FormTest extends TestCase
         self::assertSame(
             [[], ['escape']],
             [
-                array_map(strval(...), self::userForm()->effectiveKeybindings()->get(Actions::CANCEL)),
-                array_map(strval(...), self::userForm()->withCancel(new TestMessage('cancel'))->effectiveKeybindings()->get(Actions::CANCEL)),
+                array_map(strval(...), self::userForm()->effectiveKeybindings()->patternsOf(Actions::CANCEL)),
+                array_map(strval(...), self::userForm()->withCancel(new TestMessage('cancel'))->effectiveKeybindings()->patternsOf(Actions::CANCEL)),
             ],
         );
     }

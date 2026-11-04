@@ -611,12 +611,12 @@ final class ParagraphTest extends TestCase
         $ansi = "\x1b[31mred text\nstill red";
         $paragraph = Paragraph::fromAnsi($ansi);
 
-        $line1 = $paragraph->lines[0];
+        $line1 = $paragraph->lines()[0];
         self::assertCount(1, $line1->spans);
         self::assertSame('red text', $line1->spans[0]->content);
         self::assertNotNull($line1->spans[0]->style);
 
-        $line2 = $paragraph->lines[1];
+        $line2 = $paragraph->lines()[1];
         self::assertCount(1, $line2->spans);
         self::assertSame('still red', $line2->spans[0]->content);
         self::assertNotNull($line2->spans[0]->style, 'Line 2 should inherit SGR state from line 1');
@@ -714,8 +714,8 @@ final class ParagraphTest extends TestCase
 
         // No ESC byte — literal "[5m" must be preserved as text, not consumed
         // as an SGR introducer. There's exactly one span: the whole string.
-        self::assertCount(1, $paragraph->lines);
-        $line = $paragraph->lines[0];
+        self::assertCount(1, $paragraph->lines());
+        $line = $paragraph->lines()[0];
         $combined = '';
         foreach ($line->spans as $span) {
             $combined .= $span->content;
@@ -729,7 +729,7 @@ final class ParagraphTest extends TestCase
         $paragraph = Paragraph::fromAnsi("\x1b[mhello");
 
         // The 'm' comes right after '[', so strpos must look from position+2 to find it
-        $line = $paragraph->lines[0];
+        $line = $paragraph->lines()[0];
         $combined = '';
         foreach ($line->spans as $span) {
             $combined .= $span->content;
@@ -740,11 +740,10 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function fromAnsiCorrectlyParsesColorAfterAPrecedingTextSegment(): void
     {
-        // Two SGRs in one line. The second SGR is at position > 0, which catches
-        // mutants that compute substring length using `$end + $position` instead of `$end - $position`.
+        // Two SGRs in one line. The second SGR is at position > 0.
         $paragraph = Paragraph::fromAnsi("ab\x1b[31mcd\x1b[32mef");
 
-        $line = $paragraph->lines[0];
+        $line = $paragraph->lines()[0];
         // Expect ['ab' default, 'cd' red(31), 'ef' green(32)]
         self::assertCount(3, $line->spans);
         self::assertSame('ab', $line->spans[0]->content);
@@ -760,7 +759,7 @@ final class ParagraphTest extends TestCase
         // 256-color code 196 (bright red); needs 3+ chars of SGR params to be parsed correctly
         $paragraph = Paragraph::fromAnsi("\x1b[38;5;196mtext");
 
-        $line = $paragraph->lines[0];
+        $line = $paragraph->lines()[0];
         self::assertCount(1, $line->spans);
         self::assertSame('text', $line->spans[0]->content);
         $expectedValue = Color::color256(196)->value;
@@ -772,7 +771,7 @@ final class ParagraphTest extends TestCase
     {
         $paragraph = Paragraph::fromAnsi('café');
 
-        $line = $paragraph->lines[0];
+        $line = $paragraph->lines()[0];
         $combined = '';
         foreach ($line->spans as $span) {
             $combined .= $span->content;
@@ -786,7 +785,7 @@ final class ParagraphTest extends TestCase
         // € is 0xe2 0x82 0xac (3 bytes)
         $paragraph = Paragraph::fromAnsi('a€b');
 
-        $line = $paragraph->lines[0];
+        $line = $paragraph->lines()[0];
         $combined = '';
         foreach ($line->spans as $span) {
             $combined .= $span->content;
@@ -800,7 +799,7 @@ final class ParagraphTest extends TestCase
         // 🎉 is 0xf0 0x9f 0x8e 0x89 (4 bytes)
         $paragraph = Paragraph::fromAnsi('x🎉y');
 
-        $line = $paragraph->lines[0];
+        $line = $paragraph->lines()[0];
         $combined = '';
         foreach ($line->spans as $span) {
             $combined .= $span->content;
@@ -811,7 +810,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function renderAtWidthOneStillRendersFirstCharacter(): void
     {
-        // L152 boundary: width < 1 returns early; width = 1 must still render.
         $frame = new Frame(3, 1);
         $paragraph = Paragraph::fromText('XY');
 
@@ -835,7 +833,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function renderWithZeroHeightWritesNothing(): void
     {
-        // L152 LogicalOr: && instead of || would let height=0 + width>0 fall through.
         $frame = new Frame(5, 2);
         for ($i = 0; $i < 10; ++$i) {
             $frame->putChar($i % 5, intdiv($i, 5), '.');
@@ -853,7 +850,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function renderWithZeroWidthWritesNothing(): void
     {
-        // L152: width = 0 must also short-circuit.
         $frame = new Frame(5, 2);
         for ($i = 0; $i < 10; ++$i) {
             $frame->putChar($i % 5, intdiv($i, 5), '.');
@@ -870,7 +866,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function renderStopsAtAreaHeightWithoutWritingBelow(): void
     {
-        // L166/L167: row boundary — when height=2 and there are 3 lines, the third must not appear.
         $frame = new Frame(8, 4);
         for ($i = 0; $i < 32; ++$i) {
             $frame->putChar($i % 8, intdiv($i, 8), '.');
@@ -895,7 +890,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function renderStopsAtAreaWidthWithoutWritingToTheRight(): void
     {
-        // L175/L176: character x-boundary — chars past area->right() must not write.
         $frame = new Frame(10, 1);
         for ($i = 0; $i < 10; ++$i) {
             $frame->putChar($i, 0, '.');
@@ -916,7 +910,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function noWrapRendersEveryInputLine(): void
     {
-        // L203 ArrayOneItem: noWrapLines must return every line, not just the first.
         $frame = new Frame(8, 3);
         $paragraph = Paragraph::fromText("AAA\nBBB\nCCC")->withWrap(Wrap::NoWrap);
 
@@ -930,8 +923,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function multiByteCharactersAreGroupedPerGrapheme(): void
     {
-        // L233 MBString: mb_str_split → str_split would split é into two bytes.
-        // Test by checking that the rendered cell contains the full UTF-8 character.
         $frame = new Frame(4, 1);
         $paragraph = Paragraph::fromText('café');
 
@@ -946,7 +937,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function wrapBreaksAtSpaceWhenSpaceExistsInLine(): void
     {
-        // L254/L272/L273: lastSpaceIndex logic — when there's a space, must break there.
         $frame = new Frame(5, 2);
         $paragraph = Paragraph::fromText('hi world');
 
@@ -963,8 +953,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function wrapPreservesWordAfterSpaceAtCorrectWidth(): void
     {
-        // L277 width arithmetic: after wrapping at a space, the remaining word's width
-        // must be carried over correctly to the new line.
         // "abc defg" at width 5 → "abc" wraps, "defg" goes to next line.
         $frame = new Frame(5, 3);
         for ($i = 0; $i < 15; ++$i) {
@@ -974,7 +962,7 @@ final class ParagraphTest extends TestCase
 
         $paragraph->render($frame, new Rect(0, 0, 5, 3), $this->context());
 
-        // Row 0: "abc" only — cells 3 and 4 must remain '.' (kills UnwrapArraySlice at L273)
+        // Row 0: "abc" only — cells 3 and 4 must remain '.'
         self::assertSame('a', $frame->characters[0]);
         self::assertSame('b', $frame->characters[1]);
         self::assertSame('c', $frame->characters[2]);
@@ -991,8 +979,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function centerAlignmentCentersShortLine(): void
     {
-        // L310 IncrementInteger: max(0, ...) → max(1, ...) shifts content right by 1 when (areaWidth-lineWidth)/2 == 0
-        // L310 DecrementInteger: max(0, ...) → max(-1, ...) shifts left by 1 when areaWidth < lineWidth
         $frame = new Frame(11, 1);
         for ($i = 0; $i < 11; ++$i) {
             $frame->putChar($i, 0, '.');
@@ -1012,7 +998,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function centerAlignmentDoesNotUnderflowWhenLineWiderThanArea(): void
     {
-        // L310 DecrementInteger: max(0, ...) → max(-1, ...) — when content is wider than area, offset must clamp to 0
         $frame = new Frame(3, 1);
         for ($i = 0; $i < 3; ++$i) {
             $frame->putChar($i, 0, '.');
@@ -1030,7 +1015,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function rightAlignmentRightAlignsShortLine(): void
     {
-        // L311 IncrementInteger: when areaWidth == lineWidth, offset is 0 — content starts at column 0
         $frame = new Frame(8, 1);
         for ($i = 0; $i < 8; ++$i) {
             $frame->putChar($i, 0, '.');
@@ -1049,7 +1033,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function rightAlignmentDoesNotUnderflowWhenLineWiderThanArea(): void
     {
-        // L311 DecrementInteger: max(0, ...) → max(-1, ...) — when content is wider than area, offset must clamp to 0
         $frame = new Frame(3, 1);
         for ($i = 0; $i < 3; ++$i) {
             $frame->putChar($i, 0, '.');
@@ -1066,11 +1049,9 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function fromAnsiProducesSpanWithNullStyleForPlainText(): void
     {
-        // L317 mutants on spanFromSgrState: if any of the three === 0 checks is mutated,
-        // plain text without SGR escapes would gain a non-null (but trivial) style.
         $paragraph = Paragraph::fromAnsi('hello');
 
-        $span = $paragraph->lines[0]->spans[0];
+        $span = $paragraph->lines()[0]->spans[0];
         self::assertSame('hello', $span->content);
         self::assertNull($span->style, 'Plain text via fromAnsi must produce Span with no Style — not Style(0,0,0)');
     }
@@ -1082,8 +1063,8 @@ final class ParagraphTest extends TestCase
         $paragraph = Paragraph::fromAnsi("\x1b[31mred\x1b[0m plain");
 
         // First span "red" has foreground=red; second span " plain" should have style=null (all defaults).
-        self::assertCount(2, $paragraph->lines[0]->spans);
-        self::assertNull($paragraph->lines[0]->spans[1]->style, 'After SGR 0 reset, subsequent text must produce Span with no Style');
+        self::assertCount(2, $paragraph->lines()[0]->spans);
+        self::assertNull($paragraph->lines()[0]->spans[1]->style, 'After SGR 0 reset, subsequent text must produce Span with no Style');
     }
 
     #[Test]
@@ -1104,10 +1085,9 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function fromAnsiWithOnlyForegroundSetLeavesBackgroundNull(): void
     {
-        // L329/L330: when only foreground SGR is set, background must remain null on the resulting Style.
         $paragraph = Paragraph::fromAnsi("\x1b[31mred");
 
-        $span = $paragraph->lines[0]->spans[0];
+        $span = $paragraph->lines()[0]->spans[0];
         self::assertNotNull($span->style);
         self::assertNotNull($span->style->foreground, 'foreground must be set after SGR 31');
         self::assertNull($span->style->background, 'background must remain null when SGR did not set it');
@@ -1116,10 +1096,9 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function fromAnsiWithOnlyBackgroundSetLeavesForegroundNull(): void
     {
-        // L329/L330 Ternary: ensures the bg-set vs bg-null branch is correct when SGR sets background only.
         $paragraph = Paragraph::fromAnsi("\x1b[41mbg");
 
-        $span = $paragraph->lines[0]->spans[0];
+        $span = $paragraph->lines()[0]->spans[0];
         self::assertNotNull($span->style);
         self::assertNull($span->style->foreground, 'foreground must remain null when SGR did not set it');
         self::assertNotNull($span->style->background, 'background must be set when SGR 41 was applied');
@@ -1128,9 +1107,6 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function wrapHandlesLeadingSpaceAtBreakBoundary(): void
     {
-        // L278 `>= 0` → `> 0`: when lastSpaceIndex is exactly 0 (a leading space),
-        // the wrap-at-space branch must still be taken; the > 0 mutation would skip to the
-        // else (force-break) branch and emit different visual lines.
         $frame = new Frame(3, 3);
         for ($i = 0; $i < 9; ++$i) {
             $frame->putChar($i % 3, intdiv($i, 3), '.');
@@ -1139,10 +1115,7 @@ final class ParagraphTest extends TestCase
 
         $paragraph->render($frame, new Rect(0, 0, 1, 3), $this->context());
 
-        // With current code: " " is preserved as wrap-point-index 0, splitting yields
-        // visual lines ["", "a", "b"]. Cell (0,0) stays '.' (empty visualLine), cell (0,1) = 'a'.
-        // With mutation: the wrap-at-space branch is skipped, so visual lines start with [" "],
-        // making cell (0,0) = ' ' instead of '.'.
+        // " " is wrap point 0, so the visual lines are ["", "a", "b"].
         self::assertSame('.', $frame->characters[0], 'Leading space at the wrap boundary must be consumed, not rendered into cell 0');
         self::assertSame('a', $frame->characters[3], '"a" must appear on the second visual line');
     }

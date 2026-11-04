@@ -154,7 +154,7 @@ final class ContainerTest extends TestCase
     public function theChildsWantedSizeSurvivesTheOverheadAroundIt(): void
     {
         $container = Container::around(new ContainerProbe(Constraint::flex()->withBasis(12)))
-            ->withPadding(Spacing::xy(horizontal: 2, vertical: 1));
+            ->withPadding(Spacing::symmetric(horizontal: 2, vertical: 1));
 
         self::assertSame(16, $container->sizing()->columns->basis);
         self::assertSame(14, $container->sizing()->rows->basis);
@@ -175,7 +175,7 @@ final class ContainerTest extends TestCase
         $container = Container::around($child)
             ->withMargin(Spacing::all(1))
             ->withBorderType(BorderType::Solid)
-            ->withPadding(Spacing::xy(horizontal: 2, vertical: 1))
+            ->withPadding(Spacing::symmetric(horizontal: 2, vertical: 1))
             ->withContentSize(width: 6, height: 2)
             ->withHorizontalAlignment(Alignment::Center)
             ->withVerticalAlignment(VerticalAlignment::Center);
@@ -396,7 +396,7 @@ final class ContainerTest extends TestCase
         $container = Container::around($child)
             ->withMargin(Spacing::horizontal(1))
             ->withBorderType(BorderType::Rounded)
-            ->withPadding(Spacing::xy(horizontal: 2, vertical: 1));
+            ->withPadding(Spacing::symmetric(horizontal: 2, vertical: 1));
 
         self::assertSame(
             $child->sizing()->columns->basis + 2 + 2 + 4,
@@ -411,7 +411,7 @@ final class ContainerTest extends TestCase
         $container = Container::around($child)
             ->withMargin(Spacing::horizontal(1))
             ->withBorderType(BorderType::Rounded)
-            ->withPadding(Spacing::xy(horizontal: 2, vertical: 1));
+            ->withPadding(Spacing::symmetric(horizontal: 2, vertical: 1));
 
         self::assertSame(7, $container->measureHeight(20));
         self::assertSame(12, $child->measuredWidth);

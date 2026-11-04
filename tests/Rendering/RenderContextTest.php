@@ -114,8 +114,8 @@ final class RenderContextTest extends TestCase
         self::assertFalse($pass->context->hasFocus(), 'withinComponent');
 
         $pass->context->withinComponent(ComponentId::named('form'), static function () use ($pass, $survive, $throw): void {
-            $survive(static fn () => $pass->context->withoutFocus($throw));
-            self::assertTrue($pass->context->hasFocus(), 'withoutFocus');
+            $survive(static fn () => $pass->context->drawUnfocused($throw));
+            self::assertTrue($pass->context->hasFocus(), 'drawUnfocused');
 
             $survive(static fn () => $pass->context->withinChild(0, $throw));
             self::assertSame(0, $pass->context->focusedChildIndex(), 'withinChild');

@@ -320,8 +320,6 @@ final class HeaderTest extends TestCase
         self::assertSame($header, $result->model);
     }
 
-    // --- Mutation-killing tests ---
-
     /**
      * Both slot commands are collected into a BatchCmd.
      */
@@ -363,9 +361,6 @@ final class HeaderTest extends TestCase
         self::assertSame($command, $result->command);
     }
 
-    /**
-     * Kills L119 LessThan: area with width=1 must still render.
-     */
     #[Test]
     public function renderWithWidthOneRendersContent(): void
     {
@@ -377,9 +372,6 @@ final class HeaderTest extends TestCase
         self::assertSame($headerStyle->foregroundValue(), $frame->foregrounds[0]);
     }
 
-    /**
-     * Kills L119 LessThan: area with height=1 must still render.
-     */
     #[Test]
     public function renderWithHeightOneRendersContent(): void
     {
@@ -390,9 +382,6 @@ final class HeaderTest extends TestCase
         self::assertSame('A', $frame->characters[2]);
     }
 
-    /**
-     * Kills L119 LogicalOr: zero height alone triggers early return.
-     */
     #[Test]
     public function renderWithZeroHeightDoesNotRender(): void
     {
@@ -404,9 +393,6 @@ final class HeaderTest extends TestCase
         self::assertSame(0, $frame->foregrounds[0]);
     }
 
-    /**
-     * Kills L120 ReturnRemoval: early return prevents buffer modification.
-     */
     #[Test]
     public function renderWithZeroDimensionsLeavesBufferUntouched(): void
     {
@@ -421,9 +407,6 @@ final class HeaderTest extends TestCase
         }
     }
 
-    /**
-     * Kills L123 Coalesce: without margin, rendering must work (uses Spacing::none() fallback).
-     */
     #[Test]
     public function renderWithoutMarginUsesNoMarginFallback(): void
     {
@@ -437,9 +420,6 @@ final class HeaderTest extends TestCase
         self::assertSame('B', $frame->characters[5]);
     }
 
-    /**
-     * Kills L124 LessThan: margin leaving exactly width=1 must still render.
-     */
     #[Test]
     public function renderWithMarginLeavingWidthOneRendersBackground(): void
     {
@@ -452,9 +432,6 @@ final class HeaderTest extends TestCase
         self::assertSame($headerStyle->foregroundValue(), $frame->foregrounds[1]);
     }
 
-    /**
-     * Kills L124 LogicalOr: margin leaving zero width early returns.
-     */
     #[Test]
     public function renderWithMarginLeavingZeroWidthDoesNotRender(): void
     {
@@ -467,9 +444,6 @@ final class HeaderTest extends TestCase
         self::assertSame(0, $frame->foregrounds[1]);
     }
 
-    /**
-     * Kills L128 Coalesce: without padding set, render must work using Spacing::none() fallback.
-     */
     #[Test]
     public function renderWithoutPaddingUsesNoPaddingFallback(): void
     {
@@ -481,9 +455,6 @@ final class HeaderTest extends TestCase
         self::assertSame('i', $frame->characters[5]);
     }
 
-    /**
-     * Kills L129 Plus x2: bar height includes padding top and bottom.
-     */
     #[Test]
     public function barHeightIncludesPaddingTopAndBottom(): void
     {
@@ -499,9 +470,6 @@ final class HeaderTest extends TestCase
         self::assertSame('H', $frame->characters[1 * 10 + 4]);
     }
 
-    /**
-     * Kills L132 Coalesce: custom style overrides theme headerStyle.
-     */
     #[Test]
     public function customStyleOverridesThemeHeaderStyle(): void
     {
@@ -514,9 +482,6 @@ final class HeaderTest extends TestCase
         self::assertSame($customStyle->foregroundValue(), $frame->foregrounds[0]);
     }
 
-    /**
-     * Kills L134 MethodCallRemoval: fillRect must apply background to the entire bar area.
-     */
     #[Test]
     public function fillRectAppliesBackgroundToEntireBarArea(): void
     {
@@ -531,9 +496,6 @@ final class HeaderTest extends TestCase
         }
     }
 
-    /**
-     * Kills L137 LessThan: padding leaving exactly width=1 content area must still render.
-     */
     #[Test]
     public function renderWithPaddingLeavingWidthOneStillRendersTitle(): void
     {
@@ -545,9 +507,6 @@ final class HeaderTest extends TestCase
         self::assertSame('X', $frame->characters[1]);
     }
 
-    /**
-     * Kills L137 LogicalOr: padding consuming all width prevents content rendering but bar is still filled.
-     */
     #[Test]
     public function renderWithPaddingConsumingAllWidthStillFillsBackground(): void
     {
@@ -562,9 +521,6 @@ final class HeaderTest extends TestCase
         self::assertSame(' ', $frame->characters[1]);
     }
 
-    /**
-     * Kills L153 GreaterThan: empty title (width=0) must not render any title text.
-     */
     #[Test]
     public function emptyTitleDoesNotRenderTitleText(): void
     {
@@ -577,9 +533,6 @@ final class HeaderTest extends TestCase
         }
     }
 
-    /**
-     * Kills L166 LessThan: divider is not rendered when there is no room below the bar.
-     */
     #[Test]
     public function dividerNotRenderedWhenNoRoomBelowBar(): void
     {
@@ -594,9 +547,6 @@ final class HeaderTest extends TestCase
         // Buffer is only 1 row tall so we just confirm it didn't crash and title rendered
     }
 
-    /**
-     * Kills L166 LessThan: divider renders only when dividerY is strictly less than area bottom.
-     */
     #[Test]
     public function dividerRendersExactlyAtLastAvailableRow(): void
     {
@@ -608,9 +558,6 @@ final class HeaderTest extends TestCase
         self::assertSame('─', $frame->characters[$dividerIndex]);
     }
 
-    /**
-     * Kills L166 LessThan: divider not rendered when area cuts it off.
-     */
     #[Test]
     public function dividerNotRenderedWhenAreaEqualsBarHeight(): void
     {
@@ -631,9 +578,6 @@ final class HeaderTest extends TestCase
         }
     }
 
-    /**
-     * Kills L119 LogicalOr + LessThan more precisely: width=1, height=1 must render.
-     */
     #[Test]
     public function renderWithExactlyOneByOneAreaRendersBackground(): void
     {
@@ -645,9 +589,6 @@ final class HeaderTest extends TestCase
         self::assertSame($headerStyle->foregroundValue(), $frame->foregrounds[0]);
     }
 
-    /**
-     * Kills L124 LessThan + LogicalOr: margin leaving height=1 must still render.
-     */
     #[Test]
     public function renderWithMarginLeavingHeightOneRendersBackground(): void
     {
@@ -660,9 +601,6 @@ final class HeaderTest extends TestCase
         self::assertSame($headerStyle->foregroundValue(), $frame->foregrounds[0]);
     }
 
-    /**
-     * Kills L137 LessThan: padding leaving exactly height=1 content area renders.
-     */
     #[Test]
     public function renderWithPaddingLeavingHeightOneStillRendersContent(): void
     {
@@ -673,9 +611,6 @@ final class HeaderTest extends TestCase
         self::assertSame('A', $frame->characters[2]);
     }
 
-    /**
-     * Kills L107 AssignCoalesce: rightSlot command is used when no prior command exists.
-     */
     #[Test]
     public function updateUsesRightSlotCommandWhenNoPriorCommand(): void
     {
@@ -818,10 +753,6 @@ final class HeaderTest extends TestCase
         }
     }
 
-    /**
-     * L119: LogicalOr — width=0 but height=1 must early return.
-     * If mutated to &&, only both-zero triggers return.
-     */
     #[Test]
     public function renderWithZeroWidthButPositiveHeightReturnsEarly(): void
     {
@@ -834,9 +765,6 @@ final class HeaderTest extends TestCase
         self::assertSame(0, $frame->foregrounds[0]);
     }
 
-    /**
-     * L119: height=0 but width>0 must also early return.
-     */
     #[Test]
     public function renderWithZeroHeightButPositiveWidthReturnsEarly(): void
     {
@@ -849,10 +777,6 @@ final class HeaderTest extends TestCase
         self::assertSame(0, $frame->foregrounds[0]);
     }
 
-    /**
-     * L124/L125: innerArea with zero width after margin must early return.
-     * If || mutated to &&, or return removed, rendering would proceed with bad dimensions.
-     */
     #[Test]
     public function renderWithMarginLeavingZeroWidthReturnsEarly(): void
     {
@@ -867,9 +791,6 @@ final class HeaderTest extends TestCase
         self::assertSame(0, $frame->foregrounds[0]);
     }
 
-    /**
-     * L124/L125: innerArea with zero height after margin must early return.
-     */
     #[Test]
     public function renderWithMarginLeavingZeroHeightReturnsEarly(): void
     {

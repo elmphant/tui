@@ -12,8 +12,6 @@ use PHPUnit\Framework\TestCase;
 
 final class SgrParserTest extends TestCase
 {
-    // --- Reset behavior (L13-18, L22-25) ---
-
     #[Test]
     public function aColourWithAnEmptyIndexReadsAsTheFirstPaletteEntry(): void
     {
@@ -21,7 +19,7 @@ final class SgrParserTest extends TestCase
 
         $parser->parse('38;5;');
 
-        self::assertSame(Color::C256, $parser->foreground);
+        self::assertSame(Color::COLOR_256, $parser->foreground);
     }
 
     #[Test]
@@ -31,7 +29,7 @@ final class SgrParserTest extends TestCase
 
         $parser->parse('48;2;;;');
 
-        self::assertSame(Color::TRUE, $parser->background);
+        self::assertSame(Color::TRUE_COLOR, $parser->background);
     }
 
     #[Test]
@@ -87,19 +85,11 @@ final class SgrParserTest extends TestCase
     public function parseEarlyReturnAfterResetDoesNotProcessFurtherCodes(): void
     {
         $parser = new SgrParser();
-        // "0" alone triggers early return — if return is removed, the while loop runs
-        // but since "0" is only one param, the loop would still reset. We need a different
-        // approach: verify that parse('0') with no semicolon returns early and doesn't crash.
-        // The ReturnRemoval mutant on L24 would cause the code to fall through to the
-        // explode/while logic, which would process '0' again via match arm — still a reset.
-        // So we need to test that '' (empty) triggers reset and returns.
         $parser->parse('1;31');
         $parser->parse('');
         self::assertSame(0, $parser->attributes);
         self::assertSame(0, $parser->foreground);
     }
-
-    // --- Match arm for SGR 0 inside a compound sequence (L35) ---
 
     #[Test]
     public function sgrResetMidSequenceResetsAllState(): void
@@ -110,8 +100,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(0, $parser->attributes);
         self::assertSame(Color::ANSI + 2, $parser->foreground);
     }
-
-    // --- Individual attribute match arms (L36-42) ---
 
     #[Test]
     public function sgrParsesBoldAttribute(): void
@@ -168,8 +156,6 @@ final class SgrParserTest extends TestCase
         $parser->parse('9');
         self::assertSame(Attr::STRIKETHROUGH, $parser->attributes);
     }
-
-    // --- Attribute removal match arms (L43-48) ---
 
     #[Test]
     public function sgrRemovesBoldAndFaint(): void
@@ -249,8 +235,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(0, $parser->attributes & Attr::STRIKETHROUGH);
     }
 
-    // --- Foreground ANSI colors 30-37 boundary tests (L49) ---
-
     #[Test]
     public function sgrParsesAnsiForegroundBlack(): void
     {
@@ -275,8 +259,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(Color::ANSI + 7, $parser->foreground);
     }
 
-    // --- Default foreground reset (L50) ---
-
     #[Test]
     public function sgrResetsDefaultForeground(): void
     {
@@ -285,8 +267,6 @@ final class SgrParserTest extends TestCase
         $parser->parse('39');
         self::assertSame(0, $parser->foreground);
     }
-
-    // --- Background ANSI colors 40-47 boundary tests (L51) ---
 
     #[Test]
     public function sgrParsesAnsiBackgroundBlack(): void
@@ -312,8 +292,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(Color::ANSI + 7, $parser->background);
     }
 
-    // --- Default background reset (L52) ---
-
     #[Test]
     public function sgrResetsDefaultBackground(): void
     {
@@ -322,8 +300,6 @@ final class SgrParserTest extends TestCase
         $parser->parse('49');
         self::assertSame(0, $parser->background);
     }
-
-    // --- Bright foreground colors 90-97 boundary tests (L53) ---
 
     #[Test]
     public function sgrParsesBrightForegroundBlack(): void
@@ -349,8 +325,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(Color::BRIGHT + 7, $parser->foreground);
     }
 
-    // --- Bright background colors 100-107 boundary tests (L54) ---
-
     #[Test]
     public function sgrParsesBrightBackgroundBlack(): void
     {
@@ -375,14 +349,12 @@ final class SgrParserTest extends TestCase
         self::assertSame(Color::BRIGHT + 7, $parser->background);
     }
 
-    // --- 256-color foreground (L55, L71-78) ---
-
     #[Test]
     public function sgrParsesAnsi256ForegroundColor(): void
     {
         $parser = new SgrParser();
         $parser->parse('38;5;200');
-        self::assertSame(Color::C256 + 200, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 200, $parser->foreground);
     }
 
     #[Test]
@@ -390,7 +362,7 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('38;5;0');
-        self::assertSame(Color::C256 + 0, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 0, $parser->foreground);
     }
 
     #[Test]
@@ -398,17 +370,15 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('38;5;255');
-        self::assertSame(Color::C256 + 255, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 255, $parser->foreground);
     }
-
-    // --- 256-color background (L55, L71-78) ---
 
     #[Test]
     public function sgrParsesAnsi256BackgroundColor(): void
     {
         $parser = new SgrParser();
         $parser->parse('48;5;100');
-        self::assertSame(Color::C256 + 100, $parser->background);
+        self::assertSame(Color::COLOR_256 + 100, $parser->background);
     }
 
     #[Test]
@@ -417,10 +387,8 @@ final class SgrParserTest extends TestCase
         $parser = new SgrParser();
         $parser->parse('48;5;100');
         self::assertSame(0, $parser->foreground);
-        self::assertSame(Color::C256 + 100, $parser->background);
+        self::assertSame(Color::COLOR_256 + 100, $parser->background);
     }
-
-    // --- RGB foreground (L55, L81-91) ---
 
     #[Test]
     public function sgrParsesRgbForegroundColor(): void
@@ -435,7 +403,7 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('38;2;0;0;0');
-        self::assertSame(Color::TRUE, $parser->foreground);
+        self::assertSame(Color::TRUE_COLOR, $parser->foreground);
     }
 
     #[Test]
@@ -451,7 +419,7 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('38;2;128;0;0');
-        self::assertSame(Color::TRUE | (128 << 16), $parser->foreground);
+        self::assertSame(Color::TRUE_COLOR | (128 << 16), $parser->foreground);
     }
 
     #[Test]
@@ -459,7 +427,7 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('38;2;0;128;0');
-        self::assertSame(Color::TRUE | (128 << 8), $parser->foreground);
+        self::assertSame(Color::TRUE_COLOR | (128 << 8), $parser->foreground);
     }
 
     #[Test]
@@ -467,10 +435,8 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('38;2;0;0;128');
-        self::assertSame(Color::TRUE | 128, $parser->foreground);
+        self::assertSame(Color::TRUE_COLOR | 128, $parser->foreground);
     }
-
-    // --- RGB background (L55, L81-91) ---
 
     #[Test]
     public function sgrParsesRgbBackgroundColor(): void
@@ -488,8 +454,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(0, $parser->foreground);
         self::assertSame(Color::rgb(100, 150, 200)->value, $parser->background);
     }
-
-    // --- Incomplete extended color sequences (L65-67, L94) ---
 
     #[Test]
     public function sgrParsesIncompleteExtendedColorSgr38Alone(): void
@@ -527,8 +491,6 @@ final class SgrParserTest extends TestCase
         // Ensure mode byte '3' was NOT interpreted as italic
         self::assertSame(0, $parser->attributes);
     }
-
-    // --- Bitwise operations precision (L36-42, L43-48) ---
 
     #[Test]
     public function sgrBoldDoesNotSetOtherAttributes(): void
@@ -604,11 +566,9 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('38;5;42;3');
-        self::assertSame(Color::C256 + 42, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 42, $parser->foreground);
         self::assertSame(Attr::ITALIC, $parser->attributes);
     }
-
-    // --- Boundary values that should NOT match (off-by-one mutants) ---
 
     #[Test]
     public function sgrCode29DoesNotSetForeground(): void
@@ -674,15 +634,13 @@ final class SgrParserTest extends TestCase
         self::assertSame(0, $parser->background);
     }
 
-    // --- RGB component masking with 0xFF (L83-85) ---
-
     #[Test]
     public function sgrRgbComponentsAreMaskedTo8Bits(): void
     {
         $parser = new SgrParser();
         // 256 should be masked to 0 by & 0xFF
         $parser->parse('38;2;256;257;258');
-        self::assertSame(Color::TRUE | (0 << 16) | (1 << 8) | 2, $parser->foreground);
+        self::assertSame(Color::TRUE_COLOR | (0 << 16) | (1 << 8) | 2, $parser->foreground);
     }
 
     #[Test]
@@ -691,7 +649,7 @@ final class SgrParserTest extends TestCase
         $parser = new SgrParser();
         // 256 should be masked to 0 by & 0xFF
         $parser->parse('38;5;256');
-        self::assertSame(Color::C256 + 0, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 0, $parser->foreground);
     }
 
     // --- Unknown/unhandled SGR codes (default arm) ---
@@ -822,7 +780,7 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('48;5;42;1');
-        self::assertSame(Color::C256 + 42, $parser->background);
+        self::assertSame(Color::COLOR_256 + 42, $parser->background);
         self::assertSame(Attr::BOLD, $parser->attributes);
     }
 
@@ -861,8 +819,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(0, $parser->background);
     }
 
-    // --- Return index correctness in parseExtendedColor (L66, L78, L91, L94) ---
-
     #[Test]
     public function sgr256ColorReturnIndexSkipsConsumedParams(): void
     {
@@ -870,10 +826,8 @@ final class SgrParserTest extends TestCase
         // so after index++ the next param is '3' (italic)
         $parser = new SgrParser();
         $parser->parse('38;5;42;3');
-        self::assertSame(Color::C256 + 42, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 42, $parser->foreground);
         self::assertSame(Attr::ITALIC, $parser->attributes);
-        // If return index+2 is mutated to index+1, '42' would be parsed as
-        // SGR 42 (background green), and '3' as italic
     }
 
     #[Test]
@@ -916,7 +870,7 @@ final class SgrParserTest extends TestCase
     {
         $parser = new SgrParser();
         $parser->parse('38;5;42');
-        self::assertSame(Color::C256 + 42, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 42, $parser->foreground);
         self::assertSame(0, $parser->background);
     }
 
@@ -937,8 +891,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(0, $parser->foreground);
         self::assertSame(Color::rgb(10, 20, 30)->value, $parser->background);
     }
-
-    // --- Verify exact color values to catch arithmetic mutants ---
 
     #[Test]
     public function sgrForeground30ProducesExactAnsiValue(): void
@@ -1012,15 +964,13 @@ final class SgrParserTest extends TestCase
         self::assertSame(0x17, $parser->background);
     }
 
-    // --- Verify RGB bitwise construction (L82-85) ---
-
     #[Test]
     public function sgrRgbColorBitwiseOrConstruction(): void
     {
         $parser = new SgrParser();
         $parser->parse('38;2;1;2;3');
-        // Color::TRUE | (1 << 16) | (2 << 8) | 3 = 0x1000000 | 0x10000 | 0x200 | 0x3
-        $expected = Color::TRUE | (1 << 16) | (2 << 8) | 3;
+        // Color::TRUE_COLOR | (1 << 16) | (2 << 8) | 3 = 0x1000000 | 0x10000 | 0x200 | 0x3
+        $expected = Color::TRUE_COLOR | (1 << 16) | (2 << 8) | 3;
         self::assertSame($expected, $parser->foreground);
     }
 
@@ -1030,13 +980,11 @@ final class SgrParserTest extends TestCase
         // Red-only: verify green and blue are zero
         $parser = new SgrParser();
         $parser->parse('38;2;255;0;0');
-        $value = $parser->foreground - Color::TRUE;
+        $value = $parser->foreground - Color::TRUE_COLOR;
         self::assertSame(255, ($value >> 16) & 0xFF);
         self::assertSame(0, ($value >> 8) & 0xFF);
         self::assertSame(0, $value & 0xFF);
     }
-
-    // --- Verify 256-color uses & 0xFF masking (L72) ---
 
     #[Test]
     public function sgrAnsi256ColorClampsNegativeToMask(): void
@@ -1045,7 +993,7 @@ final class SgrParserTest extends TestCase
         // -1 cast to int then & 0xFF = 255
         $parser->parse('38;5;-1');
         // (int)'-1' = -1, -1 & 0xFF = 255
-        self::assertSame(Color::C256 + 255, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 255, $parser->foreground);
     }
 
     // --- Attribute removal preserves unrelated bits precisely ---
@@ -1084,14 +1032,12 @@ final class SgrParserTest extends TestCase
         self::assertSame($expected, $parser->attributes);
     }
 
-    // --- Verify isBackground flag in parseExtendedColor (L55, L73, L86) ---
-
     #[Test]
     public function sgrExtendedColor38SetsForegroundNot48Background(): void
     {
         $parser = new SgrParser();
         $parser->parse('38;5;100');
-        self::assertSame(Color::C256 + 100, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 100, $parser->foreground);
         self::assertSame(0, $parser->background);
     }
 
@@ -1101,7 +1047,7 @@ final class SgrParserTest extends TestCase
         $parser = new SgrParser();
         $parser->parse('48;5;100');
         self::assertSame(0, $parser->foreground);
-        self::assertSame(Color::C256 + 100, $parser->background);
+        self::assertSame(Color::COLOR_256 + 100, $parser->background);
     }
 
     #[Test]
@@ -1122,18 +1068,14 @@ final class SgrParserTest extends TestCase
         self::assertSame(Color::rgb(50, 60, 70)->value, $parser->background);
     }
 
-    // --- Boundary condition: index + 2 < partCount for 256-color (L71) ---
-
     #[Test]
     public function sgrAnsi256ExactlyEnoughParams(): void
     {
         // '38;5;42' has 3 parts, index=0, need index+2 < 3 → 2 < 3 ✓
         $parser = new SgrParser();
         $parser->parse('38;5;42');
-        self::assertSame(Color::C256 + 42, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 42, $parser->foreground);
     }
-
-    // --- Boundary condition: index + 4 < partCount for RGB (L81) ---
 
     #[Test]
     public function sgrRgbExactlyEnoughParams(): void
@@ -1153,8 +1095,6 @@ final class SgrParserTest extends TestCase
         self::assertSame(0, $parser->foreground);
     }
 
-    // --- CastInt mutations (L32, L69, L72, L83-85) ---
-
     #[Test]
     public function sgrNonNumericParamIsTreatedAsZero(): void
     {
@@ -1165,15 +1105,13 @@ final class SgrParserTest extends TestCase
         self::assertSame(0, $parser->attributes);
     }
 
-    // --- Verify the `$parameter === 48` branch in the match (L55) ---
-
     #[Test]
     public function sgr48Is256BackgroundNotForeground(): void
     {
         $parser = new SgrParser();
         $parser->parse('48;5;200');
-        self::assertSame(Color::C256 + 200, $parser->background);
-        self::assertNotSame(Color::C256 + 200, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 200, $parser->background);
+        self::assertNotSame(Color::COLOR_256 + 200, $parser->foreground);
     }
 
     #[Test]
@@ -1215,7 +1153,7 @@ final class SgrParserTest extends TestCase
         // '38;5;42' has 3 parts. index=0, mode=5, index+2=2 < partCount=3 => processes.
         $parser = new SgrParser();
         $parser->parse('38;5;42');
-        self::assertSame(Color::C256 + 42, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 42, $parser->foreground);
     }
 
     #[Test]
@@ -1252,7 +1190,7 @@ final class SgrParserTest extends TestCase
         // If return were index+3, '1' would be skipped.
         $parser = new SgrParser();
         $parser->parse('38;5;42;1;3');
-        self::assertSame(Color::C256 + 42, $parser->foreground);
+        self::assertSame(Color::COLOR_256 + 42, $parser->foreground);
         self::assertSame(Attr::BOLD | Attr::ITALIC, $parser->attributes);
         self::assertSame(0, $parser->background);
     }

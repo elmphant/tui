@@ -132,7 +132,7 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         return $this->cloneWith(value: $text, cursor: self::graphemeLength($text));
     }
 
-    public function withCharLimit(int $limit): self
+    public function withCharacterLimit(int $limit): self
     {
         return $this->cloneWith(charLimit: $limit);
     }

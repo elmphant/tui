@@ -34,7 +34,7 @@ final class KeybindingsTest extends TestCase
     {
         $bindings = Keybindings::empty();
 
-        self::assertSame([], $bindings->get('unknown'));
+        self::assertSame([], $bindings->patternsOf('unknown'));
     }
 
     #[Test]
@@ -42,7 +42,7 @@ final class KeybindingsTest extends TestCase
     {
         $bindings = new Keybindings(['quit' => ['q', 'ctrl+c']]);
 
-        $patterns = $bindings->get('quit');
+        $patterns = $bindings->patternsOf('quit');
 
         self::assertCount(2, $patterns);
         self::assertEquals(KeyPattern::fromString('q'), $patterns[0]);
@@ -133,7 +133,7 @@ final class KeybindingsTest extends TestCase
 
         $bindings = new Keybindings(['quit' => ['q', $preBuilt]]);
 
-        $patterns = $bindings->get('quit');
+        $patterns = $bindings->patternsOf('quit');
         self::assertCount(2, $patterns);
         self::assertSame($preBuilt, $patterns[1]);
     }
@@ -148,7 +148,7 @@ final class KeybindingsTest extends TestCase
 
         $bindings = new Keybindings(['quit' => [$preBuilt, 'q']]);
 
-        $patterns = $bindings->get('quit');
+        $patterns = $bindings->patternsOf('quit');
         self::assertCount(2, $patterns);
         self::assertSame($preBuilt, $patterns[0]);
         self::assertEquals(KeyPattern::fromString('q'), $patterns[1]);
@@ -165,7 +165,7 @@ final class KeybindingsTest extends TestCase
             'quit' => ['ctrl+q'],
         ]);
 
-        $merged = $defaults->merge($custom);
+        $merged = $defaults->overriddenBy($custom);
 
         // quit replaced entirely by custom
         self::assertTrue($merged->matches(new KeyMsg('q', ctrl: true), 'quit'));
@@ -182,7 +182,7 @@ final class KeybindingsTest extends TestCase
         $defaults = new Keybindings(['quit' => ['q']]);
         $override = new Keybindings(['quit' => []]);
 
-        $merged = $defaults->merge($override);
+        $merged = $defaults->overriddenBy($override);
 
         self::assertFalse($merged->matches(new KeyMsg('q'), 'quit'));
     }
@@ -192,7 +192,7 @@ final class KeybindingsTest extends TestCase
     {
         $defaults = new Keybindings(['quit' => ['q']]);
 
-        $merged = $defaults->merge(Keybindings::empty());
+        $merged = $defaults->overriddenBy(Keybindings::empty());
 
         self::assertTrue($merged->matches(new KeyMsg('q'), 'quit'));
     }
@@ -203,7 +203,7 @@ final class KeybindingsTest extends TestCase
         $defaults = new Keybindings(['quit' => ['q']]);
         $extra = new Keybindings(['submit' => ['enter']]);
 
-        $merged = $defaults->merge($extra);
+        $merged = $defaults->overriddenBy($extra);
 
         self::assertTrue($merged->matches(new KeyMsg('q'), 'quit'));
 
@@ -218,7 +218,7 @@ final class KeybindingsTest extends TestCase
         $defaults = new Keybindings(['cursor_down' => ['down']]);
         $extra = new Keybindings(['cursor_down' => ['j']]);
 
-        $merged = $defaults->append($extra);
+        $merged = $defaults->plus($extra);
 
         self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'cursor_down'));
         self::assertTrue($merged->matches(new KeyMsg('j'), 'cursor_down'));
@@ -230,7 +230,7 @@ final class KeybindingsTest extends TestCase
         $defaults = new Keybindings(['cursor_down' => ['down']]);
         $extra = new Keybindings(['help' => ['?']]);
 
-        $merged = $defaults->append($extra);
+        $merged = $defaults->plus($extra);
 
         self::assertTrue($merged->matches(new KeyMsg('?'), 'help'));
         self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'cursor_down'));
@@ -242,9 +242,9 @@ final class KeybindingsTest extends TestCase
         $defaults = new Keybindings(['cursor_down' => ['j', 'down']]);
         $extra = new Keybindings(['cursor_down' => ['j']]);   // duplicate
 
-        $merged = $defaults->append($extra);
+        $merged = $defaults->plus($extra);
 
-        self::assertCount(2, $merged->get('cursor_down'));
+        self::assertCount(2, $merged->patternsOf('cursor_down'));
     }
 
     #[Test]
@@ -252,7 +252,7 @@ final class KeybindingsTest extends TestCase
     {
         $defaults = new Keybindings(['cursor_down' => ['down', 'j']]);
 
-        $merged = $defaults->append(Keybindings::empty());
+        $merged = $defaults->plus(Keybindings::empty());
 
         self::assertTrue($merged->matches(new KeyMsg('j'), 'cursor_down'));
         self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'cursor_down'));
@@ -264,7 +264,7 @@ final class KeybindingsTest extends TestCase
         $defaults = new Keybindings(['cursor_down' => ['down']]);
         $extra = new Keybindings(['cursor_down' => ['j']]);
 
-        $merged = $defaults->append($extra);
+        $merged = $defaults->plus($extra);
 
         self::assertTrue($merged->matches(new KeyMsg(Key::Down), 'cursor_down'));
         self::assertTrue($merged->matches(new KeyMsg('j'), 'cursor_down'));
@@ -369,8 +369,8 @@ final class KeybindingsTest extends TestCase
     {
         $bindings = (new Keybindings(['top' => ['g g'], 'save' => ['ctrl+x ctrl+s']]))->withoutText();
 
-        self::assertSame([], $bindings->get('top'));
-        self::assertSame('ctrl+x ctrl+s', (string)$bindings->get('save')[0]);
+        self::assertSame([], $bindings->patternsOf('top'));
+        self::assertSame('ctrl+x ctrl+s', (string)$bindings->patternsOf('save')[0]);
     }
 
     #[Test]

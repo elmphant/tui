@@ -311,9 +311,6 @@ final class RadioTest extends TestCase
         self::assertTrue(true);
     }
 
-    /**
-     * L25: DecrementInteger, IncrementInteger — default selected must be exactly 0.
-     */
     #[Test]
     public function defaultSelectedIsZero(): void
     {
@@ -322,9 +319,6 @@ final class RadioTest extends TestCase
         self::assertSame('A', $radio->selectedValue());
     }
 
-    /**
-     * L81: MatchArmRemoval — space key selects current cursor position.
-     */
     #[Test]
     public function spaceSelectsCurrentCursorPosition(): void
     {
@@ -372,9 +366,6 @@ final class RadioTest extends TestCase
         self::assertSame(1, $cleared->cursor(), 'the cursor still rests where the pointer left it');
     }
 
-    /**
-     * L93: Minus — click localY uses area.y offset for correct option mapping.
-     */
     #[Test]
     public function clickAccountsForAreaYOffset(): void
     {
@@ -387,9 +378,6 @@ final class RadioTest extends TestCase
         self::assertSame(1, $result->model->cursor());
     }
 
-    /**
-     * L95: GreaterThanOrEqualTo — click on label row (optionY = -1) does not select.
-     */
     #[Test]
     public function clickOnLabelRowDoesNotSelect(): void
     {
@@ -402,9 +390,6 @@ final class RadioTest extends TestCase
         self::assertSame($radio, $result->model);
     }
 
-    /**
-     * L95: LessThan — click beyond last option does not select.
-     */
     #[Test]
     public function clickBeyondLastOptionDoesNotSelect(): void
     {
@@ -416,9 +401,6 @@ final class RadioTest extends TestCase
         self::assertSame($radio, $result->model);
     }
 
-    /**
-     * L95: GreaterThanOrEqualTo — click at optionY exactly 0 must produce a new model.
-     */
     #[Test]
     public function clickAtFirstOptionBoundaryProducesNewModel(): void
     {
@@ -435,9 +417,6 @@ final class RadioTest extends TestCase
         self::assertSame(0, $result->model->selectedIndex());
     }
 
-    /**
-     * L95: click at optionY exactly count-1 selects last option.
-     */
     #[Test]
     public function clickAtLastOptionBoundarySelectsLastOption(): void
     {
@@ -450,9 +429,6 @@ final class RadioTest extends TestCase
         self::assertSame(2, $result->model->cursor());
     }
 
-    /**
-     * L95: click on spacer row between label and options does not select.
-     */
     #[Test]
     public function clickOnSpacerRowBetweenLabelAndOptionsDoesNotSelect(): void
     {
@@ -464,9 +440,6 @@ final class RadioTest extends TestCase
         self::assertSame($radio, $result->model);
     }
 
-    /**
-     * L109: Assignment/DecrementInteger/IncrementInteger/PlusEqual — label shifts options down by 2 rows.
-     */
     #[Test]
     public function optionsRenderTwoRowsBelowLabelWhenLabelPresent(): void
     {
@@ -501,12 +474,9 @@ final class RadioTest extends TestCase
         self::assertSame('T', $frame->characters[3 * 40]);
         self::assertSame(' ', $frame->characters[4 * 40]);
         self::assertSame(Radio::SELECTED_MARK, $this->markAt($frame, 5 * 40), 'Option must render at area.y(3)+2=5, not at absolute row 2');
-        self::assertSame(' ', $frame->characters[2 * 40], 'Row 2 must be empty (mutant $y=2 would render option here)');
+        self::assertSame(' ', $frame->characters[2 * 40], 'Row 2 must be empty');
     }
 
-    /**
-     * L109: Without label, options start at row 0.
-     */
     #[Test]
     public function optionsRenderAtRow0WhenNoLabel(): void
     {
@@ -522,9 +492,6 @@ final class RadioTest extends TestCase
         self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, $row1Index));
     }
 
-    /**
-     * L112: Foreach_ — all options must render, not just label.
-     */
     #[Test]
     public function allOptionsAreRendered(): void
     {
@@ -543,9 +510,6 @@ final class RadioTest extends TestCase
         self::assertSame('G', $frame->characters[$row2]);
     }
 
-    /**
-     * L113: GreaterThanOrEqualTo, GreaterThanOrEqualToNegotiation — clipping at area boundary.
-     */
     #[Test]
     public function renderClipsOptionsAtAreaBottom(): void
     {
@@ -561,9 +525,6 @@ final class RadioTest extends TestCase
         self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, $row1Index));
     }
 
-    /**
-     * L113: option at exact boundary row should not render.
-     */
     #[Test]
     public function optionAtExactBottomBoundaryDoesNotRender(): void
     {
@@ -579,9 +540,6 @@ final class RadioTest extends TestCase
         self::assertSame(' ', $frame->characters[2 * 40 + self::MARK_WIDTH], 'No option text on row 2');
     }
 
-    /**
-     * L117: cursor style only applies when both index matches cursor AND widget is focused.
-     */
     #[Test]
     public function cursorStyleOnlyAppliesWhenFocused(): void
     {
@@ -600,9 +558,6 @@ final class RadioTest extends TestCase
         self::assertNotSame($theme->cursorStyle->foregroundValue(), $unfocusedBuffer->foregrounds[0]);
     }
 
-    /**
-     * L117: non-cursor option on focused radio uses base style, not cursor style.
-     */
     #[Test]
     public function nonCursorOptionUsesDifferentStyleThanCursor(): void
     {
@@ -618,9 +573,6 @@ final class RadioTest extends TestCase
         self::assertNotSame($cursorRowFg, $nonCursorRowFg);
     }
 
-    /**
-     * L118: selected option shows filled dot, non-selected shows empty dot.
-     */
     #[Test]
     public function selectedOptionShowsFilledDot(): void
     {
@@ -635,9 +587,6 @@ final class RadioTest extends TestCase
         self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, 2 * 40));
     }
 
-    /**
-     * L118: when selected is 1, second option shows filled dot.
-     */
     #[Test]
     public function secondOptionShowsFilledDotWhenSelected(): void
     {
@@ -657,9 +606,6 @@ final class RadioTest extends TestCase
         self::assertSame(Radio::UNSELECTED_MARK, $this->markAt($frame, 2 * 40));
     }
 
-    /**
-     * L120: Ternary — selected uses ● and non-selected uses ○.
-     */
     #[Test]
     public function selectedDotCharacterDiffersFromUnselected(): void
     {
@@ -674,9 +620,6 @@ final class RadioTest extends TestCase
         self::assertNotSame(Radio::SELECTED_MARK, Radio::UNSELECTED_MARK, 'the two states have to look different');
     }
 
-    /**
-     * L122: MatchArmRemoval — selected non-cursor option uses accent style.
-     */
     #[Test]
     public function selectedNonCursorOptionUsesAccentStyle(): void
     {
@@ -693,9 +636,6 @@ final class RadioTest extends TestCase
         self::assertSame($theme->accent->foregroundValue(), $frame->foregrounds[0]);
     }
 
-    /**
-     * L122: MatchArmRemoval — focused non-selected non-cursor option uses base style.
-     */
     #[Test]
     public function focusedNonSelectedNonCursorOptionUsesBaseStyle(): void
     {
@@ -710,9 +650,6 @@ final class RadioTest extends TestCase
         self::assertSame($theme->base->foregroundValue(), $row2Fg);
     }
 
-    /**
-     * L122: MatchArmRemoval — unfocused non-selected option uses dim style.
-     */
     #[Test]
     public function unfocusedNonSelectedOptionUsesDimStyle(): void
     {
@@ -727,9 +664,6 @@ final class RadioTest extends TestCase
         self::assertSame($theme->dim->foregroundValue(), $row1Fg);
     }
 
-    /**
-     * L129: MethodCallRemoval — dot marker must be written to the buffer.
-     */
     #[Test]
     public function dotMarkerIsRenderedInBuffer(): void
     {
@@ -743,9 +677,6 @@ final class RadioTest extends TestCase
         self::assertNotSame(0, $frame->foregrounds[0]);
     }
 
-    /**
-     * L130: option text renders at x offset +2, DecrementInteger/IncrementInteger/Plus/MethodCallRemoval.
-     */
     #[Test]
     public function optionTextRendersRightAfterTheMark(): void
     {
@@ -762,9 +693,6 @@ final class RadioTest extends TestCase
         self::assertSame('o', $frame->characters[self::MARK_WIDTH + 4]);
     }
 
-    /**
-     * L130: option text renders at correct x when area has non-zero x offset.
-     */
     #[Test]
     public function optionTextRendersAtCorrectXWithAreaOffset(): void
     {
@@ -779,9 +707,6 @@ final class RadioTest extends TestCase
         self::assertSame('i', $frame->characters[5 + self::MARK_WIDTH + 1]);
     }
 
-    /**
-     * L130: MethodCallRemoval — option text foreground must match style.
-     */
     #[Test]
     public function optionTextForegroundMatchesStyle(): void
     {
@@ -794,9 +719,6 @@ final class RadioTest extends TestCase
         self::assertSame($theme->cursorStyle->foregroundValue(), $frame->foregrounds[self::MARK_WIDTH]);
     }
 
-    /**
-     * L131: Increment — each option renders on successive rows.
-     */
     #[Test]
     public function eachOptionRendersOnSuccessiveRows(): void
     {
@@ -811,9 +733,6 @@ final class RadioTest extends TestCase
         self::assertSame('C', $frame->characters[2 * 40 + self::MARK_WIDTH]);
     }
 
-    /**
-     * L81: unrecognized key returns same instance.
-     */
     #[Test]
     public function unrecognizedKeyReturnsSameInstance(): void
     {
@@ -824,9 +743,6 @@ final class RadioTest extends TestCase
         self::assertSame($radio, $result->model);
     }
 
-    /**
-     * L95: click on no-label radio at first option works.
-     */
     #[Test]
     public function clickOnNoLabelRadioSelectsFirstOption(): void
     {
@@ -839,9 +755,6 @@ final class RadioTest extends TestCase
         self::assertSame(0, $result->model->cursor());
     }
 
-    /**
-     * L95: click on no-label radio at last option.
-     */
     #[Test]
     public function clickOnNoLabelRadioSelectsLastOption(): void
     {
@@ -968,7 +881,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function cursorRowWithoutLabelReturnsCursorIndex(): void
     {
-        // L79 in Radio: cursorRow() = (label !== '' ? 2 : 0) + cursor
+        // cursorRow() = (label !== '' ? 2 : 0) + cursor
         $radio = Radio::new(['A', 'B', 'C']);
 
         self::assertSame(0, $radio->cursorLine(), 'cursorRow at index 0 with no label must be 0');
@@ -983,7 +896,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function cursorRowWithLabelOffsetsByTwo(): void
     {
-        // L79: with label, the cursor row is offset by 2 (for the label + blank line).
+        // With a label, the cursor row is offset by 2 (for the label + blank line).
         $radio = Radio::new(['A', 'B', 'C'], 'Pick one');
 
         self::assertSame(2, $radio->cursorLine(), 'cursorRow at index 0 with label must be 2');
@@ -995,7 +908,6 @@ final class RadioTest extends TestCase
     #[Test]
     public function renderNoScrollWhenAreaFitsAllRows(): void
     {
-        // L132/L137 in Radio render: scrollOffset must remain 0 when area is large enough.
         $radio = Radio::new(['A', 'B', 'C'], 'Pick');
         $frame = new Frame(10, 10);
         // Need at least: label(2) + 3 options = 5 rows. Area is 10 rows.

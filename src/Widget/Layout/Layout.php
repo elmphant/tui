@@ -165,7 +165,7 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
     }
 
     /**
-     * Sizes may exceed $totalSpace; computeChildRects() clips them to the container.
+     * @internal sizes may exceed $totalSpace, and computeChildRects() clips them to the container.
      * Without $acrossExtent, content-sized children use their minimum because they cannot be measured.
      *
      * @return list<int>

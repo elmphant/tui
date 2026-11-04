@@ -15,7 +15,6 @@ use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\TextWrap;
 use Elmphant\Tui\Text\WrapCache;
 use Elmphant\Tui\Widget\MeasureHeight;
-use Elmphant\Tui\Widget\Overflow;
 use Elmphant\Tui\Widget\Widget;
 
 /**

@@ -345,8 +345,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame(0.0, $result->model->progress());
     }
 
-    // --- Mutant-killing tests below ---
-
     #[Test]
     public function theDefaultBarShowsItsPercent(): void
     {
@@ -377,9 +375,8 @@ final class ProgressBarTest extends TestCase
     }
 
     /**
-     * L98: LessThan — tests behavior when difference is exactly at the 0.001 boundary.
      * When abs(difference) === 0.001, the < check means the spring should still animate,
-     * not snap. If mutated to <=, the snap would happen too early.
+     * not snap.
      */
     #[Test]
     public function tickDoesNotSnapWhenDifferenceIsExactlyThreshold(): void
@@ -393,16 +390,12 @@ final class ProgressBarTest extends TestCase
         $result = $progressBar->update(new TickMsg(0.0), $area);
 
         // With springFactor=0.15, display += 0.001 * 0.15 = 0.50015
-        // If mutated to <=, it would snap to 0.501 instead
         $updated = $result->model;
         self::assertNotSame(0.501, $updated->displayValue());
         self::assertGreaterThan(0.500, $updated->displayValue());
         self::assertLessThan(0.501, $updated->displayValue());
     }
 
-    /**
-     * L98/L100: When difference is tiny but display !== progress, snap display to progress.
-     */
     #[Test]
     public function tickSnapsDisplayToProgressWhenVeryClose(): void
     {
@@ -424,9 +417,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame(0.5, $result->model->progress());
     }
 
-    /**
-     * L112: Minus — verify that without subtraction, position would be wrong.
-     */
     #[Test]
     public function clickAtAreaStartSetsProgressToZero(): void
     {
@@ -438,10 +428,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame(0.0, $result->model->progress());
     }
 
-    /**
-     * L122: LessThanOrEqualTo — $area->width <= 0.
-     * Width=1 must render (not bail out).
-     */
     #[Test]
     public function renderWithWidthOneProducesOutput(): void
     {
@@ -456,10 +442,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('█', $frame->characters[0]);
     }
 
-    /**
-     * L130: LessThanOrEqualTo — $barWidth <= 0.
-     * When label consumes almost all width, barWidth=1 must still render.
-     */
     #[Test]
     public function renderWithLabelLeavingOneColumnForBar(): void
     {
@@ -480,10 +462,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('█', $frame->characters[3]);
     }
 
-    /**
-     * L135: Coalesce — fillStyleOverride ?? theme->fillStyle.
-     * Custom fill style must be used instead of theme default.
-     */
     #[Test]
     public function customFillStyleOverridesTheme(): void
     {
@@ -524,10 +502,6 @@ final class ProgressBarTest extends TestCase
         );
     }
 
-    /**
-     * L136: Coalesce — emptyStyleOverride ?? theme->emptyStyle.
-     * Custom empty style must be used instead of theme default.
-     */
     #[Test]
     public function customEmptyStyleOverridesTheme(): void
     {
@@ -548,10 +522,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame($customColor->value, $frame->foregrounds[0]);
     }
 
-    /**
-     * L144: GreaterThan + LogicalAnd — label rendering condition.
-     * Label must only render when label is non-empty AND area is wider than bar.
-     */
     #[Test]
     public function labelNotRenderedWhenEmpty(): void
     {
@@ -567,11 +537,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('─', $frame->characters[0]);
     }
 
-    /**
-     * L144: LogicalAnd — when label exists, area width must be greater than barWidth.
-     * A label that consumes ALL width means barWidth=0 => label still renders
-     * because area->width > barWidth (which is 0).
-     */
     #[Test]
     public function labelRenderedWhenAreaWiderThanBar(): void
     {
@@ -587,14 +552,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('X', $frame->characters[0]);
     }
 
-    /**
-     * L149: CastInt — (int) $fillFraction.
-     * L151: CastInt, Multiplication, RoundingFamily, DecrementInteger, IncrementInteger.
-     * L153: LessThan, DecrementInteger — loop $column < $barWidth.
-     * L155: LessThanNegotiation — $column < $fullCells.
-     *
-     * At 100% progress on a 10-cell bar, all 10 cells must be full blocks.
-     */
     #[Test]
     public function progressBarFilledWidthMatchesPercentage(): void
     {
@@ -611,9 +568,6 @@ final class ProgressBarTest extends TestCase
         }
     }
 
-    /**
-     * L149/L151/L155: At 0% progress, all cells must be empty dashes.
-     */
     #[Test]
     public function zeroProgressRendersAllEmptyDashes(): void
     {
@@ -631,14 +585,11 @@ final class ProgressBarTest extends TestCase
     }
 
     /**
-     * L151: RoundingFamily — (int)round($remainder * 8).
-     * L157: GreaterThan, Identical, LogicalAnd, LogicalAndAllSubExprNegation, GreaterThanNegotiation.
-     *
      * A fractional progress (e.g., 0.3 on a 10-cell bar) should produce a partial block character.
      * fillFraction = 0.3 * 10 = 3.0, fullCells = 3, remainder = 0.0, fractionIndex = 0.
      * So we need a value that produces a non-zero remainder.
      * Use display=0.35 on width=10: fillFraction=3.5, fullCells=3, remainder=0.5,
-     * fractionIndex=(int)round(0.5*8)=(int)round(4.0)=4 => BLOCKS[4]='▌'
+     * fractionIndex=(int)round(0.5*8)=(int)round(4.0)=4 => BLOCKS[4]='▌'.
      */
     #[Test]
     public function fractionalProgressRendersFractionalBlock(): void
@@ -667,10 +618,6 @@ final class ProgressBarTest extends TestCase
         }
     }
 
-    /**
-     * L157: LogicalAnd — $column === $fullCells && $fractionIndex > 0.
-     * When remainder is 0 (exact progress), no fractional block should appear.
-     */
     #[Test]
     public function exactProgressProducesNoFractionalBlock(): void
     {
@@ -689,10 +636,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('─', $frame->characters[5]);
     }
 
-    /**
-     * L165: RoundingFamily — (int)round($this->display * 100).
-     * Verify that rounding is correct: display=0.005 => 1%, display=0.004 => 0%.
-     */
     #[Test]
     public function percentageTextUsesRounding(): void
     {
@@ -711,7 +654,6 @@ final class ProgressBarTest extends TestCase
     }
 
     /**
-     * L165: RoundingFamily — verify floor vs round distinction.
      * display=0.346 => round(34.6) = 35, not 34 (floor).
      */
     #[Test]
@@ -728,10 +670,6 @@ final class ProgressBarTest extends TestCase
         self::assertStringNotContainsString('34%', $row);
     }
 
-    /**
-     * L167: GreaterThanOrEqualTo — $percentX >= $barArea->x.
-     * On a very narrow bar where percent text won't fit, it should not render.
-     */
     #[Test]
     public function percentNotRenderedWhenBarTooNarrow(): void
     {
@@ -747,7 +685,6 @@ final class ProgressBarTest extends TestCase
     }
 
     /**
-     * L167: GreaterThanOrEqualTo — When percentX equals barArea->x exactly, it should render.
      * Bar width = 4 (same as percent text length " 50%" = 4), percentX = 0 >= 0 => renders.
      */
     #[Test]
@@ -764,8 +701,6 @@ final class ProgressBarTest extends TestCase
     }
 
     /**
-     * L168: GreaterThan, DecrementInteger, IncrementInteger, Ternary — percent foreground color.
-     * L169: GreaterThan, Ternary — percent background color.
      * When display > 0.5, percent sits on the fill and takes the ink that fill
      * contrasts with — ansi(0) for this theme. When display <= 0.5, it uses
      * labelColor foreground and baseBackground.
@@ -804,9 +739,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame($baseBackground, $buffer2->backgrounds[$percentIndex2]);
     }
 
-    /**
-     * L168/L169: Boundary test at exactly display=0.5 — should use labelColor, not ansi(0).
-     */
     #[Test]
     public function percentColorAtExactlyHalfUsesLabelColor(): void
     {
@@ -826,10 +758,6 @@ final class ProgressBarTest extends TestCase
         self::assertNotSame($ansi0Color, $frame->foregrounds[$percentIndex]);
     }
 
-    /**
-     * L178: IncrementInteger — barRect returns area unchanged when label is empty.
-     * The bar should span the full width when there is no label.
-     */
     #[Test]
     public function barRectUsesFullWidthWithoutLabel(): void
     {
@@ -851,9 +779,6 @@ final class ProgressBarTest extends TestCase
     }
 
     /**
-     * L180: MBString, DecrementInteger, IncrementInteger — mb_strlen($this->label) + 1.
-     * L181: DecrementInteger x2, IncrementInteger x2 — offset and width calculations.
-     *
      * Label "Hi" (2 chars) + 1 space = 3 columns reserved.
      * Area width 13 => barWidth = 13 - 3 = 10.
      */
@@ -879,9 +804,6 @@ final class ProgressBarTest extends TestCase
         }
     }
 
-    /**
-     * L180: MBString — mb_strlen vs strlen distinction with multibyte label.
-     */
     #[Test]
     public function multibyteLabelOffsetCalculation(): void
     {
@@ -912,9 +834,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame(10, $fullBlocks);
     }
 
-    /**
-     * L181: Test that bar area x-offset accounts for area.x + labelWidth.
-     */
     #[Test]
     public function labelWithNonZeroAreaOffset(): void
     {
@@ -938,10 +857,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('█', $frame->characters[14]);
     }
 
-    /**
-     * L153: DecrementInteger — loop runs exactly barWidth times.
-     * Verify the last column of the bar area is rendered.
-     */
     #[Test]
     public function lastBarColumnIsRendered(): void
     {
@@ -955,9 +870,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('─', $frame->characters[4]);
     }
 
-    /**
-     * L168/L169: Ternary mutations — ensure the percent BOLD attribute is always set.
-     */
     #[Test]
     public function percentTextIsBold(): void
     {
@@ -973,7 +885,6 @@ final class ProgressBarTest extends TestCase
     }
 
     /**
-     * L113: GreaterThan — $barArea->width > 0 ? localX / barArea->width : 0.0.
      * Click on a bar with label consuming all width (barWidth=0) should not crash.
      */
     #[Test]
@@ -1105,8 +1016,7 @@ final class ProgressBarTest extends TestCase
     }
 
     /**
-     * L165: RoundingFamily — ceil mutant: display=0.339 => ceil(33.9)=34 same as round.
-     * Use display=0.334 => round(33.4)=33, ceil(33.4)=34. Must show "33%".
+     * display=0.334 => round(33.4)=33, ceil(33.4)=34. Must show "33%".
      */
     #[Test]
     public function percentageTextUsesRoundNotCeil(): void
@@ -1122,10 +1032,6 @@ final class ProgressBarTest extends TestCase
         self::assertStringNotContainsString('34%', $row);
     }
 
-    /**
-     * L169: GreaterThan mutant — $this->display > 0.5 changed to >= 0.5 for background.
-     * At display=0.5, background should be baseBackground (not fillColor).
-     */
     #[Test]
     public function percentBackgroundAtExactlyHalfUsesBaseBackground(): void
     {
@@ -1145,16 +1051,10 @@ final class ProgressBarTest extends TestCase
         self::assertNotSame($fillColor, $frame->backgrounds[$percentIndex]);
     }
 
-    /**
-     * L181: DecrementInteger/IncrementInteger — max(0, ...) -> max(1, ...).
-     * When label consumes all width, barWidth should be exactly 0, causing early return.
-     * With max(1,...), barWidth would be 1 and a bar cell would incorrectly render.
-     */
     #[Test]
     public function barWidthIsZeroWhenLabelConsumesAllWidth(): void
     {
         // Label "ABC" => labelWidth = 3 + 1 = 4, area width = 4 => barWidth = max(0, 4-4) = 0
-        // With max(1,...), barWidth = 1 and a bar block would render at column 4
         $progressBar = ProgressBar::new()
             ->withLabel('ABC')
             ->withProgress(1.0)
@@ -1166,8 +1066,6 @@ final class ProgressBarTest extends TestCase
 
         // barWidth=0 triggers early return, nothing renders (not even label)
         self::assertSame(' ', $frame->characters[0]);
-        // If max(0,...) mutated to max(1,...), barWidth=1, early return is skipped,
-        // and a full block would appear at barArea.x = 0+4 = 4
         self::assertNotSame('█', $frame->characters[4]);
     }
 
@@ -1195,11 +1093,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame(9, $fullBlocks);
     }
 
-    /**
-     * L98: LessThan — abs($difference) < 0.001 vs <= 0.001.
-     * At exactly 0.001 difference, < returns false (should animate), <= would return true (would snap).
-     * Verify the spring factor is applied, not snapped.
-     */
     #[Test]
     public function tickAnimatesWhenDifferenceIsExactlyThreshold(): void
     {
@@ -1215,10 +1108,6 @@ final class ProgressBarTest extends TestCase
         self::assertLessThan(0.501, $display);
     }
 
-    /**
-     * L122: LessThanOrEqualTo — width=0 must early return, rendering nothing.
-     * If mutated to < 0, width=0 would proceed to render (and the buffer would be modified).
-     */
     #[Test]
     public function renderWithWidthZeroDoesNotModifyBuffer(): void
     {
@@ -1234,10 +1123,6 @@ final class ProgressBarTest extends TestCase
         }
     }
 
-    /**
-     * L151: DecrementInteger — $remainder * 8 vs $remainder * 7.
-     * With remainder=0.6: round(0.6*8)=round(4.8)=5, round(0.6*7)=round(4.2)=4. Different blocks.
-     */
     #[Test]
     public function fractionIndexUsesMultiplierOf8Not7(): void
     {
@@ -1253,10 +1138,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('▋', $frame->characters[3]);
     }
 
-    /**
-     * L151: RoundingFamily — round vs floor.
-     * remainder=0.1: round(0.8)=1, floor(0.8)=0. Round gives '▏', floor gives ' '.
-     */
     #[Test]
     public function fractionIndexUsesRoundNotFloor(): void
     {
@@ -1272,10 +1153,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('▏', $frame->characters[3]);
     }
 
-    /**
-     * L151: RoundingFamily — round vs ceil.
-     * remainder=0.3: round(2.4)=2, ceil(2.4)=3. Round gives '▎', ceil gives '▍'.
-     */
     #[Test]
     public function fractionIndexUsesRoundNotCeil(): void
     {
@@ -1291,10 +1168,6 @@ final class ProgressBarTest extends TestCase
         self::assertSame('▎', $frame->characters[3]);
     }
 
-    /**
-     * L153: LessThan — for loop runs exactly barWidth times.
-     * If mutated to <=, one extra column would be written past the bar area.
-     */
     #[Test]
     public function barLoopRendersExactlyBarWidthCells(): void
     {
@@ -1315,7 +1188,6 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function fillRectUsesHeightOneNotTwo(): void
     {
-        // L157, L165 IncrementInteger: fillRect height 1 → 2. Second row must remain untouched.
         $frame = new Frame(10, 2);
         for ($i = 0; $i < 20; ++$i) {
             $frame->putChar($i % 10, intdiv($i, 10), '.');
@@ -1333,7 +1205,6 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function fillRectWritesNoTextAttributes(): void
     {
-        // L157 DecrementInteger/IncrementInteger: attributes parameter for fillRect must be 0.
         // Disable percent text so its BOLD attribute doesn't pollute the bar cells.
         $frame = new Frame(10, 1);
         $bar = ProgressBar::new()
@@ -1351,8 +1222,6 @@ final class ProgressBarTest extends TestCase
     #[Test]
     public function emptyFillWidthEqualsBarWidthMinusPartialColumn(): void
     {
-        // L165 Minus → Plus: width parameter must be (barWidth - partialColumn), not (barWidth + partialColumn).
-        // With Plus mutation, the fill extends past the bar's right edge.
         $frame = new Frame(15, 1);
         for ($x = 0; $x < 15; ++$x) {
             $frame->putChar($x, 0, '.');
