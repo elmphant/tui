@@ -53,6 +53,7 @@ use WeakMap;
 
 abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme, BindsChords, DescribesKeys, SizesItsRegion
 {
+    use BindsProperties;
     use Cloneable;
 
     /**
@@ -803,9 +804,10 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         $dispatch = $this->childDispatcher()->dispatchOne($widget, $message, $rect);
+        $outcome = $widget instanceof Committing ? $widget->outcomeOf($message) : null;
 
-        if ($dispatch->changed || ($widget instanceof Committing && $widget->commits($message))) {
-            return $this->writtenBack($focused, $this->focusedUpdate($focused, $dispatch->child), $dispatch->command, $message);
+        if ($dispatch->changed || $outcome !== null) {
+            return $this->writtenBack($focused, $this->focusedUpdate($focused, $dispatch->child), $dispatch->command, $outcome ?? $message);
         }
 
         if ($dispatch->command !== null) {

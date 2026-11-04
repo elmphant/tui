@@ -34,9 +34,10 @@ use UnitEnum;
 readonly class Component implements Widget, WidgetContainer, SingleMount
 {
     /**
-     * @param TWidget                    $widget
-     * @param Closure|null               $writeBack validated by bind(); null when named()
-     * @param (Closure(?Cmd): ?Cmd)|null $address   set by the Mount that owns this, if any
+     * @param TWidget                            $widget
+     * @param Closure|null                       $writeBack validated by bind(); null when named()
+     * @param (Closure(?Cmd): ?Cmd)|null         $address   set by the Mount that owns this, if any
+     * @param list<array{class-string, Closure}> $handlers  validated by on()
      */
     private function __construct(
         public ComponentId $id,
@@ -44,6 +45,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         private ?Closure $writeBack,
         private ?Closure $address = null,
         private ?Keybindings $actions = null,
+        private array $handlers = [],
     ) {
     }
 
@@ -104,7 +106,25 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function withActions(Keybindings $actions): self
     {
-        return self::wrapping($this->id, $this->widget, $this->writeBack, $this->address, $actions);
+        return self::wrapping($this->id, $this->widget, $this->writeBack, $this->address, $actions, $this->handlers);
+    }
+
+    /**
+     * Runs after the widget is stored, on the stored owner, for a message of that class. The first match answers.
+     *
+     * @template TOwner of Reducer
+     * @template TMessage of Message
+     *
+     * @param class-string<TMessage>                                   $messageClass
+     * @param Closure(TOwner, TMessage): (TOwner|UpdateResult<TOwner>) $handler
+     *
+     * @return self<TWidget>
+     */
+    public function on(string $messageClass, Closure $handler): self
+    {
+        self::assertSafeReplacement($handler);
+
+        return self::wrapping($this->id, $this->widget, $this->writeBack, $this->address, $this->actions, [...$this->handlers, [$messageClass, $handler]]);
     }
 
     /**
@@ -161,17 +181,23 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     public function childAt(int $index, Interactive $child): self
     {
         $id = ComponentId::named($this->id->value . '/' . $index);
-        $writeBack = $this->writeBack;
         $container = $this->widget;
 
-        if ($writeBack === null || !$container instanceof GraftsItsChildren) {
+        if ($this->writeBack === null || !$container instanceof GraftsItsChildren) {
             return self::wrapping(id: $id, widget: $child, writeBack: null, address: $this->address);
         }
+
+        $parent = $this;
 
         return self::wrapping(
             id: $id,
             widget: $child,
-            writeBack: static fn (Reducer $owner, Interactive $updated, Message $message): Reducer|UpdateResult => $writeBack($owner, $container->withChildAt($index, $updated), $message),
+            writeBack: static function (Reducer $owner, Interactive $updated, Message $message) use ($parent, $container, $index): UpdateResult {
+                $grafted = $container->withChildAt($index, $updated);
+                assert($grafted instanceof Interactive);
+
+                return $parent->answered($owner, $grafted, $message);
+            },
             address: $this->address,
         );
     }
@@ -186,17 +212,15 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function nestedIn(Reducer $owner, Closure $mountWriteBack, Closure $address): self
     {
-        $writeBack = $this->writeBack;
+        $inner = $this;
 
         return self::wrapping(
             id: $this->id,
             widget: $this->widget,
-            writeBack: $writeBack === null ? null : static function (App $app, Interactive $widget, Message $message) use ($owner, $mountWriteBack, $writeBack, $address): UpdateResult {
-                $answered = $writeBack($owner, $widget, $message);
+            writeBack: $this->writeBack === null ? null : static function (App $app, Interactive $widget, Message $message) use ($owner, $mountWriteBack, $inner, $address): UpdateResult {
+                $answered = $inner->answered($owner, $widget, $message);
 
-                return $answered instanceof UpdateResult
-                    ? new UpdateResult($mountWriteBack($app, $answered->model), $address($answered->command))
-                    : new UpdateResult($mountWriteBack($app, $answered));
+                return new UpdateResult($mountWriteBack($app, $answered->model), $address($answered->command));
             },
             address: $address,
             actions: $this->actions,
@@ -210,7 +234,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function under(ComponentId $mount): self
     {
-        return self::wrapping(ComponentId::named($mount->value . '/' . $this->id->value), $this->widget, $this->writeBack, $this->address, $this->actions);
+        return self::wrapping(ComponentId::named($mount->value . '/' . $this->id->value), $this->widget, $this->writeBack, $this->address, $this->actions, $this->handlers);
     }
 
     /**
@@ -230,32 +254,70 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function replaceIn(App $app, Interactive $widget, Message $message): UpdateResult
     {
-        if ($this->writeBack === null) {
-            throw new LogicException(sprintf('Component "%s" was named, not bound: its host drives it, so nothing can be written back', $this->id->value));
-        }
-
-        $answered = ($this->writeBack)($app, $widget, $message);
-        $result = $answered instanceof UpdateResult ? $answered : new UpdateResult($answered);
+        $result = $this->answered($app, $widget, $message);
 
         if ($result->model::class !== $app::class) {
             throw new LogicException(sprintf('Component "%s" replacement must return %s, got %s', $this->id->value, $app::class, get_debug_type($result->model)));
         }
 
+        /** @var UpdateResult<App> $result */
         return $result;
+    }
+
+    /**
+     * The write-back stores the widget, then the first handler for the message answers on the stored owner.
+     *
+     * @return UpdateResult<Reducer>
+     */
+    private function answered(Reducer $owner, Interactive $widget, Message $message): UpdateResult
+    {
+        if ($this->writeBack === null) {
+            throw new LogicException(sprintf('Component "%s" was named, not bound: its host drives it, so nothing can be written back', $this->id->value));
+        }
+
+        $stored = self::asResult(($this->writeBack)($owner, $widget, $message));
+
+        foreach ($this->handlers as [$messageClass, $handler]) {
+            if (!$message instanceof $messageClass) {
+                continue;
+            }
+
+            $handled = self::asResult($handler($stored->model, $message));
+
+            return new UpdateResult($handled->model, Cmd::batch($stored->command, $handled->command));
+        }
+
+        return $stored;
+    }
+
+    /**
+     * @return UpdateResult<Reducer>
+     */
+    private static function asResult(mixed $answered): UpdateResult
+    {
+        if ($answered instanceof UpdateResult) {
+            return $answered;
+        }
+        if (!$answered instanceof Reducer) {
+            throw new LogicException(sprintf('A bind closure or handler must return the owner or an UpdateResult, got %s', get_debug_type($answered)));
+        }
+
+        return new UpdateResult($answered);
     }
 
     /**
      * @template TWrapped of Widget
      *
-     * @param TWrapped $widget
+     * @param TWrapped                           $widget
+     * @param list<array{class-string, Closure}> $handlers
      *
      * @return self<TWrapped>
      */
-    private static function wrapping(ComponentId $id, Widget $widget, ?Closure $writeBack, ?Closure $address = null, ?Keybindings $actions = null): self
+    private static function wrapping(ComponentId $id, Widget $widget, ?Closure $writeBack, ?Closure $address = null, ?Keybindings $actions = null, array $handlers = []): self
     {
         return $widget instanceof MeasureHeight
-            ? new MeasuredComponent($id, $widget, $writeBack, $address, $actions)
-            : new self($id, $widget, $writeBack, $address, $actions);
+            ? new MeasuredComponent($id, $widget, $writeBack, $address, $actions, $handlers)
+            : new self($id, $widget, $writeBack, $address, $actions, $handlers);
     }
 
     private static function assertSafeReplacement(Closure $writeBack): void

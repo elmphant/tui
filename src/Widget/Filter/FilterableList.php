@@ -231,12 +231,14 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     /**
      * A SELECT binding alone is not a commit: a query with no matches must not close its popup.
      */
-    public function commits(Message $message): bool
+    public function outcomeOf(Message $message): ?Message
     {
         return $message instanceof KeyMsg
             && !$this->isSearching()
             && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            && $this->cursorItem() !== null;
+            && $this->cursorItem() !== null
+            ? $message
+            : null;
     }
 
     public function sizing(): Sizing

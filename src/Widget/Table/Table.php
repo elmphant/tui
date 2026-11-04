@@ -201,11 +201,13 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         return $this->selected === null ? null : $this->rows[$this->selected] ?? null;
     }
 
-    public function commits(Message $message): bool
+    public function outcomeOf(Message $message): ?Message
     {
         return $message instanceof KeyMsg
             && ($this->rows[$this->cursor] ?? null)?->selectable === true
-            && $this->effectiveKeybindings()->matches($message, Actions::SELECT);
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
+            ? $message
+            : null;
     }
 
     /**

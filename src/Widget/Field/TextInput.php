@@ -20,6 +20,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
+use Elmphant\Tui\Message\Submitted;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
@@ -94,11 +95,13 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         return $this->cloneWith(submits: true, submit: $message);
     }
 
-    public function commits(Message $message): bool
+    public function outcomeOf(Message $message): ?Message
     {
         return $this->submits
             && $message instanceof KeyMsg
-            && $this->effectiveKeybindings()->matches($message, Actions::SELECT);
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
+            ? new Submitted($this->value, $message)
+            : null;
     }
 
     public function hints(): array

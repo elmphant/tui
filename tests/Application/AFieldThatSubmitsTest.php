@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Message\Submitted;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Widget;
@@ -56,8 +57,8 @@ final readonly class SubmittingFieldApp extends App
         return Component::bind(
             'field',
             $this->field,
-            static fn (self $app, TextInput $field, Message $message): self => $field->commits($message)
-                ? $app->cloneWith(field: $field->withValue(''), added: [...$app->added, $field->value()])
+            static fn (self $app, TextInput $field, Message $message): self => $message instanceof Submitted
+                ? $app->cloneWith(field: $field->withValue(''), added: [...$app->added, $message->value])
                 : $app->cloneWith(field: $field),
         );
     }

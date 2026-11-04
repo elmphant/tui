@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Support;
 
+use LogicException;
+
 /**
  * @internal framework keyed write-back primitive; expose typed withX() methods instead
  */
@@ -19,6 +21,16 @@ trait Cloneable
         }
 
         return $this;
+    }
+
+    protected function valueOf(string $property): mixed
+    {
+        $fields = $this->cloneableFields();
+        if (!array_key_exists($property, $fields)) {
+            throw new LogicException(sprintf('%s has no property $%s', static::class, $property));
+        }
+
+        return $fields[$property];
     }
 
     /**

@@ -467,12 +467,12 @@ final class FilterableListTest extends TestCase
     #[Test]
     public function enterOverAQueryThatMatchedNothingFinishesNothing(): void
     {
-        self::assertTrue(
-            $this->commands()->commits(new KeyMsg(Key::Enter)),
+        self::assertNotNull(
+            $this->commands()->outcomeOf(new KeyMsg(Key::Enter)),
             'with a match under the cursor, enter is what finishes the choice',
         );
-        self::assertFalse(
-            $this->typed($this->commands(), 'zzz')->commits(new KeyMsg(Key::Enter)),
+        self::assertNull(
+            $this->typed($this->commands(), 'zzz')->outcomeOf(new KeyMsg(Key::Enter)),
             'enter still maps to SELECT, but there is nothing under the cursor to choose',
         );
     }

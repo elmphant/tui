@@ -54,7 +54,7 @@ final class FilterableTableTest extends TestCase
         $table = $this->harness()->type('train')->widget();
 
         self::assertInstanceOf(FilterableTable::class, $table);
-        self::assertTrue($table->commits(new KeyMsg('enter')));
+        self::assertNotNull($table->outcomeOf(new KeyMsg('enter')));
         self::assertNull($table->selectedRow());
 
         $chosen = WidgetHarness::for($table, 40, 8)->press('enter')->widget();
@@ -206,7 +206,7 @@ final class FilterableTableTest extends TestCase
         self::assertInstanceOf(FilterableTable::class, $table);
         $searching = $table->withGlobalKeybindings(VimMode::keybindings())->update(new KeyMsg('/'), Rect::fromSize(40, 8))->model;
 
-        self::assertFalse($searching->commits(new KeyMsg('enter')));
+        self::assertNull($searching->outcomeOf(new KeyMsg('enter')));
     }
 
     #[Test]

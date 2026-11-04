@@ -1036,12 +1036,12 @@ final class RadioTest extends TestCase
     #[Test]
     public function enterOverAnEmptyRadioFinishesNothing(): void
     {
-        self::assertTrue(
-            Radio::new(['A'], 'Severity')->commits(new KeyMsg(Key::Enter)),
+        self::assertNotNull(
+            Radio::new(['A'], 'Severity')->outcomeOf(new KeyMsg(Key::Enter)),
             'with something under the cursor, enter is what finishes the choice',
         );
-        self::assertFalse(
-            Radio::new([], 'Severity')->commits(new KeyMsg(Key::Enter)),
+        self::assertNull(
+            Radio::new([], 'Severity')->outcomeOf(new KeyMsg(Key::Enter)),
             'the binding matches, but there is nothing to choose, so the popup must not close',
         );
     }

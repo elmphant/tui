@@ -80,11 +80,13 @@ trait OptionListBehavior
     /**
      * A SELECT binding alone is not a commit: an empty list must not close its popup.
      */
-    public function commits(Message $message): bool
+    public function outcomeOf(Message $message): ?Message
     {
         return $message instanceof KeyMsg
             && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            && ($this->options[$this->cursor] ?? null) !== null;
+            && ($this->options[$this->cursor] ?? null) !== null
+            ? $message
+            : null;
     }
 
     public function activated(string $option): static

@@ -27,6 +27,7 @@ abstract readonly class App
     protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
     protected function actionDescription(string $action): string {} // what an action does, in the key help
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
+    protected function bind(string $property): Component {}           // the widget a property holds, stored by the framework
     protected function bindProperty(string $property, Interactive $widget): Component {}
     protected function componentAt(MouseMsg $message, Rect $screen): ?ComponentId {} // in onMouse(): the bound component under the pointer
 }
@@ -53,7 +54,7 @@ abstract readonly class App
 |---|---|
 | answer a key wherever the keyboard is | `applicationKeybindings()`, then `onAction()` |
 | answer a key only while one widget holds the keyboard | `Component::bind(…)->withActions($keys)`, then an `ActionMsg` in its bind closure |
-| take what a widget did (typed, moved, chose, submitted) | the bind closure, with `commits($message)` for a choice |
+| take what a widget did (typed, moved, chose, submitted) | `$this->bind('field')->on(Submitted::class, …)`, or the bind closure |
 | take the answer to a command (a process, HTTP, a timer) | `onMessage()`, matched by its `EffectId` |
 | redraw on a clock | `onTick()` after `Cmd::tick()`. An animated widget needs neither |
 | read any key before the widgets do | `onKey()`. Prefer an action, so the key shows in the footer and the help |
@@ -86,7 +87,7 @@ closure. A whole todo app:
 use Elmphant\Tui\Application\{App, Component};
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Input\{Actions, Keybindings};
-use Elmphant\Tui\Message\ActionMsg;
+use Elmphant\Tui\Message\{ActionMsg, Submitted};
 use Elmphant\Tui\Widget\Bar\{FocusHints, Footer, Header};
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -119,9 +120,7 @@ final readonly class TodoApp extends App
     {
         return Layout::column(
             Header::new('Todo')->withRule(),
-            Component::bind('field', $this->field, static fn (self $app, TextInput $field, Message $message): self => $field->commits($message)
-                ? $app->added($field->value())
-                : $app->cloneWith(field: $field)),
+            $this->bind('field')->on(Submitted::class, static fn (self $app, Submitted $submitted): self => $app->added($submitted->value)),
             Component::bind('list', $this->list, static fn (self $app, ListView $list, Message $message): self => $message instanceof ActionMsg
                 ? $app->cloneWith(list: $app->edited($list, $message->action))
                 : $app->cloneWith(list: $list))
@@ -183,15 +182,19 @@ Rules for binding:
   instead of the App.
 - **To react to a choice**, take the message as a third argument. A widget that
   can choose something (`ListView`, `Table`, `FilterableList`, …) answers
-  `commits($message)`:
-  `static fn (self $app, ListView $list, Message $message): self => $list->commits($message) ? $app->opened($list) : $app->withList($list)`.
+  `outcomeOf($message)`:
+  `static fn (self $app, ListView $list, Message $message): self => $list->outcomeOf($message) !== null ? $app->opened($list) : $app->withList($list)`.
   Such a widget is handed back even when nothing in it changed, so choosing the
-  same row twice is seen.
+  same row twice is seen. A `TextInput` with `withSubmit()` hands a `Submitted`
+  with its value instead of the key.
 - **To close what was bound**, set it to `null` in the App you return (a modal,
   a picker).
 
-`bindProperty('list', $this->list)` is a shortcut that writes the widget back to
-the property of that name.
+`$this->bind('list')` binds the widget the property holds and writes it back there.
+`->on(Submitted::class, static fn (self $app, Submitted $submitted): self => …)` runs
+after that store, on the stored app, and its answer wins: ignoring an outcome never
+loses what the widget did. `bindProperty('list', $this->list)` is the same with the
+widget passed by hand.
 
 ## Mounting a sub-model
 

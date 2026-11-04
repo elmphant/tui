@@ -64,7 +64,7 @@ final readonly class OpeningApp extends App
             $this->rows,
             static fn (self $app, Table|ListView $rows, Message $message): self => new self(
                 $rows,
-                $rows->commits($message) ? [...$app->opened, $rows->cursor()] : $app->opened,
+                $rows->outcomeOf($message) !== null ? [...$app->opened, $rows->cursor()] : $app->opened,
             ),
         );
     }

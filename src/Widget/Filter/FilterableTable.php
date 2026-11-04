@@ -118,12 +118,14 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         return $this->selectedSource === null ? null : $this->rows[$this->selectedSource] ?? null;
     }
 
-    public function commits(Message $message): bool
+    public function outcomeOf(Message $message): ?Message
     {
         return $message instanceof KeyMsg
             && !$this->isSearching()
             && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
-            && $this->cursorRow()?->selectable === true;
+            && $this->cursorRow()?->selectable === true
+            ? $message
+            : null;
     }
 
     public function sizing(): Sizing

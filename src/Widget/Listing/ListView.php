@@ -189,11 +189,13 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         return $this->selected === null ? null : $this->items[$this->selected] ?? null;
     }
 
-    public function commits(Message $message): bool
+    public function outcomeOf(Message $message): ?Message
     {
         return $message instanceof KeyMsg
             && $this->items !== []
-            && $this->effectiveKeybindings()->matches($message, Actions::SELECT);
+            && $this->effectiveKeybindings()->matches($message, Actions::SELECT)
+            ? $message
+            : null;
     }
 
     public function scrollOffset(Rect $area): int
