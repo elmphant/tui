@@ -613,8 +613,7 @@ final class EffectRunnerTest extends TestCase
         foreach ($this->results as $message) {
             $finished = $message instanceof ProcessFinishedMsg ? $message : $finished;
         }
-        self::assertNotNull($finished);
-        self::assertSame(100.0, $finished->startedAt);
+        self::assertSame(100.0, $finished?->timing?->startedAt);
     }
 
     #[Test]

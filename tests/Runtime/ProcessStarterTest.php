@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessOutputMsg;
+use Elmphant\Tui\Message\ProcessTiming;
 use Elmphant\Tui\Runtime\ProcessStarter;
 use Elmphant\Tui\Testing\TestClock;
 use PHPUnit\Framework\Attributes\Test;
@@ -78,8 +79,6 @@ final class ProcessStarterTest extends TestCase
             usleep(10_000);
         }
 
-        self::assertNotNull($finished);
-        self::assertSame(100.0, $finished->startedAt);
-        self::assertSame(102.5, $finished->finishedAt);
+        self::assertEquals(new ProcessTiming(startedAt: 100.0, finishedAt: 102.5), $finished?->timing);
     }
 }

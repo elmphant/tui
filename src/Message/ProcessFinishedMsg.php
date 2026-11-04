@@ -12,15 +12,18 @@ final readonly class ProcessFinishedMsg implements Message
     use ComesFromAnEffect;
 
     /**
-     * @param ?float $startedAt  on the program's clock, the one TickMsg timestamps use
-     * @param ?float $finishedAt on the same clock
+     * @param ?int           $exitCode null when the process reported none
+     * @param ?ProcessTiming $timing   null when the process ran without a clock
      */
     public function __construct(
-        public int $exitCode,
-        public bool $successful,
+        public ?int $exitCode,
         public ?EffectId $effectId = null,
-        public ?float $startedAt = null,
-        public ?float $finishedAt = null,
+        public ?ProcessTiming $timing = null,
     ) {
+    }
+
+    public function isSuccessful(): bool
+    {
+        return $this->exitCode === 0;
     }
 }

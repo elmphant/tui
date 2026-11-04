@@ -27,8 +27,8 @@ final class ComesFromAnEffectTest extends TestCase
         yield 'error' => [static fn (?EffectId $id) => new ErrorMsg(new RuntimeException('x'), ErrorSource::Process, $id)];
         yield 'http' => [static fn (?EffectId $id) => new HttpResultMsg(200, 'ok', effectId: $id)];
         yield 'output' => [static fn (?EffectId $id) => new ProcessOutputMsg('line', effectId: $id)];
-        yield 'result' => [static fn (?EffectId $id) => new ProcessResultMsg('', '', 0, true, $id)];
-        yield 'finished' => [static fn (?EffectId $id) => new ProcessFinishedMsg(0, true, $id)];
+        yield 'result' => [static fn (?EffectId $id) => new ProcessResultMsg('', '', 0, $id)];
+        yield 'finished' => [static fn (?EffectId $id) => new ProcessFinishedMsg(0, $id)];
     }
 
     /**

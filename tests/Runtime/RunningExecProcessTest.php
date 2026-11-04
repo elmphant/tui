@@ -47,7 +47,7 @@ final class RunningExecProcessTest extends TestCase
         self::assertInstanceOf(ProcessResultMsg::class, $messages[0]);
         self::assertSame("hello\n", $messages[0]->stdout);
         self::assertSame(0, $messages[0]->exitCode);
-        self::assertTrue($messages[0]->successful);
+        self::assertTrue($messages[0]->isSuccessful());
         self::assertSame('test', $messages[0]->effectId?->value);
         self::assertFalse($running->isRunning());
     }
@@ -86,7 +86,7 @@ final class RunningExecProcessTest extends TestCase
         self::assertInstanceOf(ProcessResultMsg::class, $messages[0]);
         self::assertSame("err\n", $messages[0]->stderr);
         self::assertSame(1, $messages[0]->exitCode);
-        self::assertFalse($messages[0]->successful);
+        self::assertFalse($messages[0]->isSuccessful());
         self::assertNull($messages[0]->effectId);
     }
 
@@ -117,7 +117,6 @@ final class RunningExecProcessTest extends TestCase
         $process->expects(self::exactly(2))->method('clearErrorOutput');
         $process->method('isRunning')->willReturnOnConsecutiveCalls(true, false);
         $process->method('getExitCode')->willReturn(0);
-        $process->method('isSuccessful')->willReturn(true);
 
         $running = new RunningExecProcess($process, null);
 
@@ -155,7 +154,6 @@ final class RunningExecProcessTest extends TestCase
         $process->method('getIncrementalErrorOutput')->willReturn('');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(0);
-        $process->method('isSuccessful')->willReturn(true);
 
         $messages = (new RunningExecProcess($process, null, 8))->pump();
 
@@ -172,7 +170,6 @@ final class RunningExecProcessTest extends TestCase
         $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('34', '');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(0);
-        $process->method('isSuccessful')->willReturn(true);
 
         $running = new RunningExecProcess($process, null, 4);
         $messages = $running->pump();
@@ -191,7 +188,6 @@ final class RunningExecProcessTest extends TestCase
         $atLimit->method('getIncrementalErrorOutput')->willReturn('');
         $atLimit->method('isRunning')->willReturn(false);
         $atLimit->method('getExitCode')->willReturn(0);
-        $atLimit->method('isSuccessful')->willReturn(true);
         $atLimitMessages = (new RunningExecProcess($atLimit, null))->pump();
 
         $overLimit = $this->createMock(Process::class);
@@ -208,21 +204,21 @@ final class RunningExecProcessTest extends TestCase
     }
 
     #[Test]
-    public function pumpReportsExitCodeMinusOneWhenTheExitCodeIsUnknown(): void
+    public function anUnknownExitCodeIsReportedAsNoneAndNoSuccess(): void
     {
         $process = $this->createMock(Process::class);
         $process->method('getIncrementalOutput')->willReturn('');
         $process->method('getIncrementalErrorOutput')->willReturn('');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(null);
-        $process->method('isSuccessful')->willReturn(false);
 
         $running = new RunningExecProcess($process, null);
         $messages = $running->pump();
 
         self::assertCount(1, $messages);
         self::assertInstanceOf(ProcessResultMsg::class, $messages[0]);
-        self::assertSame(-1, $messages[0]->exitCode);
+        self::assertNull($messages[0]->exitCode);
+        self::assertFalse($messages[0]->isSuccessful());
     }
 
     #[Test]
@@ -233,7 +229,6 @@ final class RunningExecProcessTest extends TestCase
         $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('', 'err-tail');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(0);
-        $process->method('isSuccessful')->willReturn(true);
 
         $messages = (new RunningExecProcess($process, null))->pump();
 

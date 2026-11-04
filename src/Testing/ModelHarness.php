@@ -217,7 +217,7 @@ final class ModelHarness
     {
         $running = $this->runningAs($effect, ExecCmd::class);
 
-        return $this->ended($running, new ProcessResultMsg($stdout, $stderr, $exitCode, $exitCode === 0, $running['id']));
+        return $this->ended($running, new ProcessResultMsg($stdout, $stderr, $exitCode, $running['id']));
     }
 
     /**
@@ -249,7 +249,7 @@ final class ModelHarness
     {
         $running = $this->runningAs($effect, ProcessCmd::class);
 
-        return $this->ended($running, new ProcessFinishedMsg($exitCode, $exitCode === 0, $running['id']));
+        return $this->ended($running, new ProcessFinishedMsg($exitCode, $running['id']));
     }
 
     /**

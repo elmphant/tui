@@ -71,8 +71,7 @@ final class RunningExecProcess implements RunningProcess
         return [$this->map(new ProcessResultMsg(
             $this->stdout,
             $this->stderr,
-            $this->process->getExitCode() ?? -1,
-            $this->process->isSuccessful(),
+            $this->process->getExitCode(),
             $this->effectId,
         ))];
     }

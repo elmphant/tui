@@ -12,6 +12,7 @@ use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\ProcessFinishedMsg;
 use Elmphant\Tui\Message\ProcessOutputMsg;
 use Elmphant\Tui\Message\ProcessStream;
+use Elmphant\Tui\Message\ProcessTiming;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 
@@ -102,11 +103,9 @@ final class RunningStreamingProcess implements RunningProcess
     private function finishedMessage(): Message
     {
         return $this->map(new ProcessFinishedMsg(
-            $this->process->getExitCode() ?? -1,
-            $this->process->isSuccessful(),
+            $this->process->getExitCode(),
             $this->effectId,
-            $this->startedAt,
-            $this->clock?->now(),
+            $this->clock === null || $this->startedAt === null ? null : new ProcessTiming($this->startedAt, $this->clock->now()),
         ));
     }
 

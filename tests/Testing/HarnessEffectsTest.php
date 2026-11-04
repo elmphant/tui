@@ -52,7 +52,7 @@ final class HarnessEffectsTest extends TestCase
         $answer = $model->lastOf(ChildSaid::class)->message;
         self::assertInstanceOf(ProcessResultMsg::class, $answer);
         self::assertSame('a b', $answer->stdout);
-        self::assertTrue($answer->successful);
+        self::assertTrue($answer->isSuccessful());
         self::assertTrue($answer->isFrom('load'));
         self::assertEquals(EffectId::named('load')->within('child'), $answer->effectId, 'in the scope it ran in');
     }
@@ -65,7 +65,7 @@ final class HarnessEffectsTest extends TestCase
         $answer = $model->lastOf(ChildSaid::class)->message;
         self::assertInstanceOf(ProcessResultMsg::class, $answer);
         self::assertSame(2, $answer->exitCode);
-        self::assertFalse($answer->successful);
+        self::assertFalse($answer->isSuccessful());
         self::assertSame('boom', $answer->stderr);
     }
 
@@ -81,7 +81,7 @@ final class HarnessEffectsTest extends TestCase
         self::assertInstanceOf(ProcessOutputMsg::class, $output);
         self::assertSame("one\n", $output->output);
         self::assertInstanceOf(ProcessFinishedMsg::class, $finished);
-        self::assertTrue($finished->successful);
+        self::assertTrue($finished->isSuccessful());
     }
 
     #[Test]

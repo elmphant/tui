@@ -29,7 +29,6 @@ final class RunningStreamingProcessTest extends TestCase
         $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('ef', '');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(0);
-        $process->method('isSuccessful')->willReturn(true);
         $wrap = static fn (Message $message): Message => new MessageEnvelope($message);
         $running = new RunningStreamingProcess($process, null, 2, $wrap);
 
@@ -72,7 +71,6 @@ final class RunningStreamingProcessTest extends TestCase
             ->willReturnOnConsecutiveCalls(true, false);
 
         $process->method('getExitCode')->willReturn(0);
-        $process->method('isSuccessful')->willReturn(true);
 
         $running = new RunningStreamingProcess($process, EffectId::named('stream-test'));
 
@@ -121,7 +119,6 @@ final class RunningStreamingProcessTest extends TestCase
         $process->method('getIncrementalOutput')->willReturn('');
         $process->method('getIncrementalErrorOutput')->willReturn('');
         $process->method('getExitCode')->willReturn(123);
-        $process->method('isSuccessful')->willReturn(false);
 
         $running = new RunningStreamingProcess($process, EffectId::named('fin'));
         $messages = $running->pump();
@@ -129,7 +126,7 @@ final class RunningStreamingProcessTest extends TestCase
         self::assertCount(1, $messages);
         self::assertInstanceOf(ProcessFinishedMsg::class, $messages[0]);
         self::assertSame(123, $messages[0]->exitCode);
-        self::assertFalse($messages[0]->successful);
+        self::assertFalse($messages[0]->isSuccessful());
         self::assertSame('fin', $messages[0]->effectId?->value);
         self::assertFalse($running->isRunning());
     }
@@ -258,21 +255,21 @@ final class RunningStreamingProcessTest extends TestCase
     }
 
     #[Test]
-    public function pumpReportsExitCodeMinusOneWhenTheExitCodeIsUnknown(): void
+    public function anUnknownExitCodeIsReportedAsNoneAndNoSuccess(): void
     {
         $process = $this->createMock(Process::class);
         $process->method('getIncrementalOutput')->willReturn('');
         $process->method('getIncrementalErrorOutput')->willReturn('');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(null);
-        $process->method('isSuccessful')->willReturn(false);
 
         $running = new RunningStreamingProcess($process, null);
         $messages = $running->pump();
 
         self::assertCount(1, $messages);
         self::assertInstanceOf(ProcessFinishedMsg::class, $messages[0]);
-        self::assertSame(-1, $messages[0]->exitCode);
+        self::assertNull($messages[0]->exitCode);
+        self::assertFalse($messages[0]->isSuccessful());
     }
 
     #[Test]
@@ -283,7 +280,6 @@ final class RunningStreamingProcessTest extends TestCase
         $process->method('getIncrementalErrorOutput')->willReturnOnConsecutiveCalls('', 'err-tail');
         $process->method('isRunning')->willReturn(false);
         $process->method('getExitCode')->willReturn(0);
-        $process->method('isSuccessful')->willReturn(true);
 
         $messages = (new RunningStreamingProcess($process, null))->pump();
 
@@ -307,7 +303,6 @@ final class RunningStreamingProcessTest extends TestCase
         $process->method('getIncrementalErrorOutput')->willReturn('');
         $process->method('isRunning')->willReturnOnConsecutiveCalls(true, true, false);
         $process->method('getExitCode')->willReturn(0);
-        $process->method('isSuccessful')->willReturn(true);
         $running = new RunningStreamingProcess($process, null, framesLines: true);
 
         self::assertSame(["one\n"], self::outputsOf($running->pump()));
