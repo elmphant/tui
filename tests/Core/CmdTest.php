@@ -92,15 +92,15 @@ final class CmdTest extends TestCase
     }
 
     #[Test]
-    public function combiningLeavesOutTheCommandsThatAreNotThere(): void
+    public function aBatchLeavesOutTheCommandsThatAreNotThere(): void
     {
         $quit = Cmd::quit();
         $tick = Cmd::tick(0.1);
 
-        self::assertNull(Cmd::combine());
-        self::assertNull(Cmd::combine(null, null));
-        self::assertSame($quit, Cmd::combine(null, $quit));
-        self::assertEquals(Cmd::batch($quit, $tick), Cmd::combine($quit, null, $tick));
+        self::assertNull(Cmd::batch());
+        self::assertNull(Cmd::batch(null, null));
+        self::assertSame($quit, Cmd::batch(null, $quit));
+        self::assertEquals(new BatchCmd([$quit, $tick]), Cmd::batch($quit, null, $tick));
     }
 
     #[Test]

@@ -130,30 +130,24 @@ abstract readonly class Cmd
         return new ListenCmd($stream, $onReadable, $id);
     }
 
-    public static function batch(self ...$commands): self
+    /**
+     * Null when no command is there, the command itself when one is.
+     */
+    public static function batch(?self ...$commands): ?self
     {
         $flattened = [];
         foreach ($commands as $command) {
             if ($command instanceof BatchCmd) {
                 array_push($flattened, ...$command->commands);
-
-                continue;
+            } elseif ($command !== null) {
+                $flattened[] = $command;
             }
-
-            $flattened[] = $command;
         }
 
-        return new BatchCmd($flattened);
-    }
-
-    public static function combine(?self ...$commands): ?self
-    {
-        $commands = array_values(array_filter($commands));
-
-        return match (count($commands)) {
+        return match (count($flattened)) {
             0 => null,
-            1 => $commands[0],
-            default => self::batch(...$commands),
+            1 => $flattened[0],
+            default => new BatchCmd($flattened),
         };
     }
 

@@ -70,7 +70,7 @@ final readonly class ChildDispatcher
             $commands[] = $result->command;
         }
 
-        return new BatchDispatchResult($overrides, Cmd::combine(...$commands));
+        return new BatchDispatchResult($overrides, Cmd::batch(...$commands));
     }
 
     /**
@@ -96,7 +96,7 @@ final readonly class ChildDispatcher
             $commands[] = $result->command;
         }
 
-        return new IndexedBatchDispatchResult($overrides, Cmd::combine(...$commands));
+        return new IndexedBatchDispatchResult($overrides, Cmd::batch(...$commands));
     }
 
     private static function requireInteractive(Reducer $model): Interactive

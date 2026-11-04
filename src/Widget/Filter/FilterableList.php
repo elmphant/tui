@@ -313,7 +313,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
 
         return new UpdateResult(
             $option === null ? $answered : $answered->activated($option),
-            Cmd::combine($field->command, $list->command),
+            Cmd::batch($field->command, $list->command),
         );
     }
 

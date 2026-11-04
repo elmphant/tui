@@ -68,7 +68,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
     final public function init(): ?Cmd
     {
-        return Cmd::combine($this->setup(), ...array_map(
+        return Cmd::batch($this->setup(), ...array_map(
             static fn (Mount $mount): ?Cmd => $mount->model instanceof Initializes ? $mount->addressed($mount->model->init()) : null,
             $this->allMounts(),
         ));
@@ -434,7 +434,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         return $left === []
             ? $result
-            : $result->withCommand(Cmd::combine(...[...array_map(static fn (Mount $mount): Cmd => $mount->left(), $left), $result->command]));
+            : $result->withCommand(Cmd::batch(...[...array_map(static fn (Mount $mount): Cmd => $mount->left(), $left), $result->command]));
     }
 
     /**
@@ -882,7 +882,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     ): UpdateResult {
         $appResult = $this->onMouse($message, $screenRect, new Keyboard($holder, fn (): array => $this->hintsOfFocused($holder)));
         $pressed = $this->appModel($appResult)->offeredToTheMountUnder($message, $screenRect);
-        $appResult = new UpdateResult($pressed->model, self::combineCommands($appResult->command, $pressed->command));
+        $appResult = new UpdateResult($pressed->model, Cmd::batch($appResult->command, $pressed->command));
         $current = $this->appModel($appResult);
 
         // Only widgets visible before this press may handle it; a newly opened popup would otherwise close immediately.
@@ -935,11 +935,11 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates, $message);
-        $answered = self::combineCommands($appResult->command, $childCommand, $hookCommand);
+        $answered = Cmd::batch($appResult->command, $childCommand, $hookCommand);
 
         return new UpdateResult(
             $next,
-            self::combineCommands(
+            Cmd::batch(
                 $answered,
                 PointerFocus::alreadyMoved($answered) ? null : PointerFocus::after($landedOn, $holder),
             ),
@@ -1028,7 +1028,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         return new UpdateResult(
             $next,
-            self::combineCommands($appResult->command, $childCommand, $hookCommand),
+            Cmd::batch($appResult->command, $childCommand, $hookCommand),
         );
     }
 
@@ -1076,23 +1076,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $commands[] = $component->addressed($dispatch->command);
         }
 
-        return [$updates, self::combineCommands(...$commands)];
-    }
-
-    private static function combineCommands(?Cmd ...$commands): ?Cmd
-    {
-        $present = [];
-        foreach ($commands as $command) {
-            if ($command !== null) {
-                $present[] = $command;
-            }
-        }
-
-        return match (count($present)) {
-            0 => null,
-            1 => $present[0],
-            default => Cmd::batch(...$present),
-        };
+        return [$updates, Cmd::batch(...$commands)];
     }
 
     /**
@@ -1261,7 +1245,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     {
         [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $updates, $message);
 
-        return new UpdateResult($current, self::combineCommands($answering->addressed($command), $hookCommand));
+        return new UpdateResult($current, Cmd::batch($answering->addressed($command), $hookCommand));
     }
 
     /**
@@ -1286,7 +1270,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         $result = $updated->onComponentsChanged($ids);
 
-        return [$updated->appModel($result), self::combineCommands($written, $result->command)];
+        return [$updated->appModel($result), Cmd::batch($written, $result->command)];
     }
 
     /**
@@ -1311,6 +1295,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         ComponentWriteBack::verify($app->componentRegistry(), $updates);
 
-        return [$app, self::combineCommands(...$commands)];
+        return [$app, Cmd::batch(...$commands)];
     }
 }

@@ -185,7 +185,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
         return new UpdateResult(
             $this->cloneWith(field: $field->child)->withTableAnswered($table->child),
-            Cmd::combine($field->command, $table->command),
+            Cmd::batch($field->command, $table->command),
         );
     }
 

@@ -12,8 +12,7 @@ message.
 Cmd::quit()                         // stop the program
 Cmd::tick(0.05)                     // send a TickMsg every 50 ms
 Cmd::after(2.0, fn() => $msg)       // send one message later
-Cmd::batch($cmd1, $cmd2)            // run several commands
-Cmd::combine($cmd1, null, $cmd2)    // like batch, but skips nulls (and is null if all are)
+Cmd::batch($cmd1, null, $cmd2)      // run several commands, skipping nulls (null if all are)
 Cmd::message($message)              // send a message right away
 Cmd::call(fn() => $message)          // run a short piece of code
 Cmd::fiber(fn() => $message)         // run code that waits, without freezing the screen
