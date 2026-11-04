@@ -160,11 +160,6 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         return $this->cloneWith(decoration: $decoration);
     }
 
-    public function withStyled(bool $styled = true): self
-    {
-        return $this->cloneWith(decoration: $styled ? InputDecoration::Filled : InputDecoration::None);
-    }
-
     public function withWidth(?int $columns): self
     {
         return $this->cloneWith(width: $columns);

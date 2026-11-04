@@ -277,13 +277,14 @@ the copy worked.
 ## Example: two panels
 
 ```php
+use Elmphant\Tui\Rendering\StyleToken;
 use Elmphant\Tui\Widget\Choice\{Radio, Select};
 use Elmphant\Tui\Widget\Feedback\ProgressBar;
 use Elmphant\Tui\Widget\Prose\{Separator, Spacer, Text};
 use Elmphant\Tui\Widget\Structure\Panel;
 
 $left = Panel::new('Preferences')
-    ->add(Text::accent('Appearance'))
+    ->add(Text::token('Appearance', StyleToken::Accent))
     ->add(Spacer::new())
     ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Nord'], 'Theme'))
     ->add(Separator::new())

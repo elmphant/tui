@@ -707,7 +707,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function styledAppliesBackgroundToFullWidth(): void
     {
-        $input = TextInput::new()->withStyled()->withValue('hi');
+        $input = TextInput::new()->withDecoration(InputDecoration::Filled)->withValue('hi');
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -725,7 +725,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function styledAppliesBackgroundToPlaceholder(): void
     {
-        $input = TextInput::new()->withPlaceholder('Type here...')->withStyled();
+        $input = TextInput::new()->withPlaceholder('Type here...')->withDecoration(InputDecoration::Filled);
         $frame = new Frame(20, 1);
         $area = new Rect(0, 0, 20, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -838,7 +838,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function unstyledFieldsAreNotUnderlined(): void
     {
-        $input = TextInput::new()->withValue('hi')->withStyled(false);
+        $input = TextInput::new()->withValue('hi')->withDecoration(InputDecoration::None);
         $frame = new Frame(10, 1);
         $input->render($frame, new Rect(0, 0, 10, 1), new RenderContext(Theme::dark()));
 
@@ -848,7 +848,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function withoutStyledNoBackgroundIsPainted(): void
     {
-        $input = TextInput::new()->withValue('hi')->withStyled(false);
+        $input = TextInput::new()->withValue('hi')->withDecoration(InputDecoration::None);
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $input->render($frame, $area, new RenderContext(Theme::dark()));
@@ -1852,7 +1852,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderTextStyleHasInputBgWhenStyled(): void
     {
-        $input = TextInput::new()->withStyled()->withValue('ab');
+        $input = TextInput::new()->withDecoration(InputDecoration::Filled)->withValue('ab');
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
@@ -1865,7 +1865,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderStyledPlaceholderUsesInputStyleFaint(): void
     {
-        $input = TextInput::new()->withPlaceholder('Hello')->withStyled();
+        $input = TextInput::new()->withPlaceholder('Hello')->withDecoration(InputDecoration::Filled);
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();
@@ -1877,7 +1877,7 @@ final class TextInputTest extends TestCase
     #[Test]
     public function renderStyledPlaceholderKeepsTheInputBackgroundWhileFocused(): void
     {
-        $input = TextInput::new()->withPlaceholder('Hello')->withStyled();
+        $input = TextInput::new()->withPlaceholder('Hello')->withDecoration(InputDecoration::Filled);
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();

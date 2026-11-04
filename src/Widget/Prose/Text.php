@@ -35,34 +35,12 @@ final readonly class Text implements Widget
         return new self([Span::styled($content, $style)]);
     }
 
-    public static function bold(string $content): self
+    /**
+     * Drawn in the theme's style for the token, so a theme switch repaints it.
+     */
+    public static function token(string $content, StyleToken $token): self
     {
-        return new self([(new Span($content))->bold()]);
-    }
-
-    public static function dim(string $content): self
-    {
-        return new self([Span::token($content, StyleToken::Dim)]);
-    }
-
-    public static function accent(string $content): self
-    {
-        return new self([Span::token($content, StyleToken::Accent)]);
-    }
-
-    public static function error(string $content): self
-    {
-        return new self([Span::token($content, StyleToken::Error)]);
-    }
-
-    public static function success(string $content): self
-    {
-        return new self([Span::token($content, StyleToken::Success)]);
-    }
-
-    public static function title(string $content): self
-    {
-        return new self([Span::token($content, StyleToken::Title)]);
+        return new self([Span::token($content, $token)]);
     }
 
     public static function line(string|Span ...$spans): self

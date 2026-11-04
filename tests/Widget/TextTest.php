@@ -60,79 +60,36 @@ final class TextTest extends TestCase
     }
 
     #[Test]
-    public function dimUsesThemeDimForeground(): void
+    public function aTokenTextTakesItsColourFromTheThemeItIsDrawnIn(): void
     {
-        $frame = new Frame(10, 1);
-        $theme = Theme::dark();
-        $context = new RenderContext($theme);
+        foreach ([Theme::dark(), Theme::dracula()] as $theme) {
+            $expected = [
+                [StyleToken::Dim, $theme->dim],
+                [StyleToken::Accent, $theme->accent],
+                [StyleToken::Error, $theme->error],
+                [StyleToken::Success, $theme->success],
+            ];
 
-        Text::dim('x')->render($frame, new Rect(0, 0, 10, 1), $context);
+            foreach ($expected as [$token, $style]) {
+                $frame = new Frame(10, 1);
 
-        self::assertSame('x', $frame->characters[0]);
-        self::assertSame($theme->dim->foregroundValue(), $frame->foregrounds[0]);
+                Text::token('x', $token)->render($frame, new Rect(0, 0, 10, 1), new RenderContext($theme));
+
+                self::assertSame('x', $frame->characters[0]);
+                self::assertSame($style->foregroundValue(), $frame->foregrounds[0], $token->name);
+            }
+        }
     }
 
     #[Test]
-    public function boldRendersWithBoldAttribute(): void
+    public function aBoldStyleDrawsTheTextBold(): void
     {
         $frame = new Frame(10, 1);
-        $context = new RenderContext(Theme::dark());
 
-        Text::bold('x')->render($frame, new Rect(0, 0, 10, 1), $context);
+        Text::styled('x', (new Style())->bold())->render($frame, new Rect(0, 0, 10, 1), new RenderContext(Theme::dark()));
 
         self::assertSame('x', $frame->characters[0]);
         self::assertSame(Attr::BOLD, $frame->attributes[0]);
-    }
-
-    #[Test]
-    public function accentUsesThemeAccentForeground(): void
-    {
-        $frame = new Frame(10, 1);
-        $theme = Theme::dark();
-        $context = new RenderContext($theme);
-
-        Text::accent('x')->render($frame, new Rect(0, 0, 10, 1), $context);
-
-        self::assertSame('x', $frame->characters[0]);
-        self::assertSame($theme->accent->foregroundValue(), $frame->foregrounds[0]);
-    }
-
-    #[Test]
-    public function errorUsesThemeErrorForeground(): void
-    {
-        $frame = new Frame(10, 1);
-        $theme = Theme::dark();
-        $context = new RenderContext($theme);
-
-        Text::error('x')->render($frame, new Rect(0, 0, 10, 1), $context);
-
-        self::assertSame('x', $frame->characters[0]);
-        self::assertSame($theme->error->foregroundValue(), $frame->foregrounds[0]);
-    }
-
-    #[Test]
-    public function successUsesThemeSuccessForeground(): void
-    {
-        $frame = new Frame(10, 1);
-        $theme = Theme::dark();
-        $context = new RenderContext($theme);
-
-        Text::success('x')->render($frame, new Rect(0, 0, 10, 1), $context);
-
-        self::assertSame('x', $frame->characters[0]);
-        self::assertSame($theme->success->foregroundValue(), $frame->foregrounds[0]);
-    }
-
-    #[Test]
-    public function accentResolvesFromDifferentTheme(): void
-    {
-        $frame = new Frame(10, 1);
-        $theme = Theme::dracula();
-        $context = new RenderContext($theme);
-
-        Text::accent('x')->render($frame, new Rect(0, 0, 10, 1), $context);
-
-        self::assertSame($theme->accent->foregroundValue(), $frame->foregrounds[0]);
     }
 
     #[Test]
@@ -246,12 +203,12 @@ final class TextTest extends TestCase
     }
 
     #[Test]
-    public function titleUsesThemeTitleStyle(): void
+    public function aTitleTokenDrawsInTheThemesTitleStyle(): void
     {
         $frame = new Frame(10, 1);
         $theme = Theme::dark();
 
-        Text::title('Ti')->render($frame, new Rect(0, 0, 10, 1), new RenderContext($theme));
+        Text::token('Ti', StyleToken::Title)->render($frame, new Rect(0, 0, 10, 1), new RenderContext($theme));
 
         self::assertSame('T', $frame->characters[0]);
         self::assertSame($theme->titleStyle->foregroundValue(), $frame->foregrounds[0]);
