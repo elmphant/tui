@@ -144,12 +144,12 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         return $this->cloneWith(outsideClickDismisses: $dismisses);
     }
 
-    public function withWidth(int $percent): static
+    public function withWidthPercent(int $percent): static
     {
         return $this->cloneWith(widthPercent: max(10, min(100, $percent)));
     }
 
-    public function withHeight(int $percent): static
+    public function withHeightPercent(int $percent): static
     {
         return $this->cloneWith(heightPercent: max(10, min(100, $percent)));
     }

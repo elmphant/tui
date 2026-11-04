@@ -39,7 +39,7 @@ final class PanelFollowsTheEndTest extends TestCase
         $grown = $panel->add(Text::new('line20'));
 
         self::assertStringContainsString('line20', self::screenOf($grown));
-        self::assertTrue($grown->followsTheEnd());
+        self::assertTrue($grown->isFollowingTheEnd());
     }
 
     #[Test]
@@ -50,7 +50,7 @@ final class PanelFollowsTheEndTest extends TestCase
 
         $grown = $panel->add(Text::new('line20'));
 
-        self::assertFalse($grown->followsTheEnd());
+        self::assertFalse($grown->isFollowingTheEnd());
         self::assertSame($before, self::screenOf($grown));
     }
 
@@ -61,7 +61,7 @@ final class PanelFollowsTheEndTest extends TestCase
 
         $back = self::wheeled($away, MouseAction::WheelDown)->add(Text::new('line20'));
 
-        self::assertTrue($back->followsTheEnd());
+        self::assertTrue($back->isFollowingTheEnd());
         self::assertStringContainsString('line20', self::screenOf($back));
     }
 

@@ -58,7 +58,7 @@ final readonly class PopupOnPressApp extends App
         $base = Text::new('base');
 
         return $this->open
-            ? Overlay::new($base, Component::bind('popup', Modal::new('popup', Text::new('inside'))->withWidth(30)->withHeight(30), static fn (self $app): self => $app))
+            ? Overlay::new($base, Component::bind('popup', Modal::new('popup', Text::new('inside'))->withWidthPercent(30)->withHeightPercent(30), static fn (self $app): self => $app))
             : $base;
     }
 

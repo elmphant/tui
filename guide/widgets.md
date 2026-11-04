@@ -131,7 +131,7 @@ Bind it like any widget and handle the submit message in `onMessage()`.
 - `Field::choice()` shows a row of options where they fit and a filterable list
   where they don't. `Field::of()` takes any widget that implements `HoldsAValue`.
 
-`withRequired()` is one check. `withRule()` adds your own: it gets the value and
+`withRequired()` is one check. `addRule()` adds your own: it gets the value and
 returns a problem to show, or `null`. The first problem wins, and an empty field
 is not checked:
 
@@ -139,7 +139,7 @@ is not checked:
 use Elmphant\Tui\Widget\Form\Field;
 
 Field::text('due', 'Due date')
-    ->withRule(static fn (string $date): ?string => strtotime($date) === false ? 'Not a date' : null);
+    ->addRule(static fn (string $date): ?string => strtotime($date) === false ? 'Not a date' : null);
 ```
 
 ## Modals

@@ -135,7 +135,7 @@ final class FormTest extends TestCase
     public function aFieldTellsWhatItsOwnRuleFindsWrongWithWhatWasTypedIn(): void
     {
         $form = Form::new('Task')
-            ->withField(Field::text('due', 'Due')->withRule(
+            ->withField(Field::text('due', 'Due')->addRule(
                 static fn (mixed $value): ?string => \is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? null : 'Due is not a YYYY-MM-DD date',
             ))
             ->withSubmitAttempted();
@@ -150,8 +150,8 @@ final class FormTest extends TestCase
     public function everyRuleOfAFieldIsAsked(): void
     {
         $form = Form::new('Task')->withField(Field::text('due', 'Due')
-            ->withRule(static fn (mixed $value): ?string => $value === 'never' ? 'Due cannot be never' : null)
-            ->withRule(static fn (mixed $value): ?string => $value === 'soon' ? 'Due needs a date' : null));
+            ->addRule(static fn (mixed $value): ?string => $value === 'never' ? 'Due cannot be never' : null)
+            ->addRule(static fn (mixed $value): ?string => $value === 'soon' ? 'Due needs a date' : null));
 
         self::assertSame(['due' => 'Due cannot be never'], $form->withValues(['due' => 'never'])->problems());
         self::assertSame(['due' => 'Due needs a date'], $form->withValues(['due' => 'soon'])->problems());
@@ -178,7 +178,7 @@ final class FormTest extends TestCase
     public function aRuleLeavesAnEmptyFieldToRequired(): void
     {
         $form = Form::new('Task')
-            ->withField(Field::text('due', 'Due')->withRule(static fn (mixed $value): string => 'never valid'));
+            ->withField(Field::text('due', 'Due')->addRule(static fn (mixed $value): string => 'never valid'));
 
         self::assertSame([], $form->problems());
     }

@@ -137,7 +137,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         return $this->cloneWith(followingTheEnd: $follows, scrolledAway: false);
     }
 
-    public function followsTheEnd(): bool
+    public function isFollowingTheEnd(): bool
     {
         return $this->followingTheEnd && !$this->scrolledAway && !$this->following();
     }
@@ -506,7 +506,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
         }
 
         if (!$this->following()) {
-            return $this->followsTheEnd() ? $layout->maxScrollOffset($viewportHeight) : $offset;
+            return $this->isFollowingTheEnd() ? $layout->maxScrollOffset($viewportHeight) : $offset;
         }
 
         $first = max(0, $this->followChild ?? 0);

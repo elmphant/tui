@@ -202,7 +202,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $clicked = self::driven(self::panelOfLines(20)->withFollowingTheEnd(), UserInput::press(1, 1), UserInput::release(1, 1));
 
-        self::assertTrue($clicked->add(Text::new('line20'))->followsTheEnd());
+        self::assertTrue($clicked->add(Text::new('line20'))->isFollowingTheEnd());
     }
 
     #[Test]
@@ -300,7 +300,7 @@ final class PanelMarksTextTest extends TestCase
 
         $clicked = self::driven($scrolledUp, UserInput::press(1, 1), UserInput::release(1, 1));
 
-        self::assertFalse($clicked->add(Text::new('line20'))->followsTheEnd());
+        self::assertFalse($clicked->add(Text::new('line20'))->isFollowingTheEnd());
     }
 
     #[Test]

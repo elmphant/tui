@@ -174,9 +174,9 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         return $this->withPane($this->pane->withFollowingTheEnd($follows));
     }
 
-    public function followsTheEnd(): bool
+    public function isFollowingTheEnd(): bool
     {
-        return $this->pane->followsTheEnd();
+        return $this->pane->isFollowingTheEnd();
     }
 
     public function withKeyboardAt(?int $child): static

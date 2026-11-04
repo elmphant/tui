@@ -201,7 +201,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withWidthClampsAtMinimumTen(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(5);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(5);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -217,7 +217,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withWidthClampsAtMaximumHundred(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(150);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(150);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -231,7 +231,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withWidthAcceptsValueAtLowerBoundary(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(10);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(10);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -244,7 +244,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withWidthAcceptsValueAtUpperBoundary(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(100);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(100);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -257,7 +257,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withHeightClampsAtMinimumTen(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(5);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(5);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -271,7 +271,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withHeightClampsAtMaximumHundred(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(150);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(150);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -285,7 +285,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withHeightAcceptsValueAtLowerBoundary(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(10);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(10);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -298,7 +298,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withHeightAcceptsValueAtUpperBoundary(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(100);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(100);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -464,7 +464,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function renderProceedsWhenAreaExactlyFiveByFive(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(100)->withHeight(100);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(100)->withHeightPercent(100);
         $frame = new Frame(5, 5);
         $area = new Rect(0, 0, 5, 5);
         $modal->render($frame, $area, $this->context);
@@ -481,7 +481,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function renderSkipsWhenModalRectWidthBelowThree(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(10);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(10);
         $frame = new Frame(5, 30);
         $area = new Rect(0, 0, 5, 30);
         $modal->render($frame, $area, $this->context);
@@ -499,7 +499,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function renderSkipsWhenModalRectHeightBelowThree(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(10);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(10);
         $frame = new Frame(30, 5);
         $area = new Rect(0, 0, 30, 5);
         $modal->render($frame, $area, $this->context);
@@ -657,7 +657,7 @@ final class ModalTest extends TestCase
     {
         // Modal at 100% of a 3x3 area => modal = 3x3, inner = 1x1 (after border)
         // Content should still render with 1x1
-        $modal = Modal::new('T', Text::new('Q'))->withWidth(100)->withHeight(100);
+        $modal = Modal::new('T', Text::new('Q'))->withWidthPercent(100)->withHeightPercent(100);
         $frame = new Frame(5, 5);
         $area = new Rect(0, 0, 5, 5);
         $modal->render($frame, $area, $this->context);
@@ -677,7 +677,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function modalWidthIsPercentageOfAreaWidth(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(50);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(50);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -694,7 +694,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function modalHeightIsPercentageOfAreaHeight(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(50);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(50);
         $frame = new Frame(100, 50);
         $area = Rect::fromSize(100, 50);
         $modal->render($frame, $area, $this->context);
@@ -712,7 +712,7 @@ final class ModalTest extends TestCase
     public function modalWidthHasMinimumOfThree(): void
     {
         // withWidth(10) => 10%. Area width=10 => (int)(10*10/100) = 1, max(3,1) = 3
-        $modal = Modal::new('T', Text::new('X'))->withWidth(10);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(10);
         $frame = new Frame(10, 20);
         $area = Rect::fromSize(10, 20);
         $modal->render($frame, $area, $this->context);
@@ -729,7 +729,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function modalHeightHasMinimumOfThree(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(10);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(10);
         $frame = new Frame(20, 10);
         $area = Rect::fromSize(20, 10);
         $modal->render($frame, $area, $this->context);
@@ -765,7 +765,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function modalIsCenteredHorizontally(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(50);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(50);
         $frame = new Frame(80, 24);
         $area = Rect::fromSize(80, 24);
         $modal->render($frame, $area, $this->context);
@@ -780,7 +780,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function modalIsCenteredVertically(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(50);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(50);
         $frame = new Frame(80, 24);
         $area = Rect::fromSize(80, 24);
         $modal->render($frame, $area, $this->context);
@@ -925,7 +925,7 @@ final class ModalTest extends TestCase
         $frame = new Frame(10, 10);
         $area = new Rect(0, 0, 15, 15); // area larger than buffer
 
-        $modal = Modal::new('T', Text::new('X'))->withWidth(100)->withHeight(100);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(100)->withHeightPercent(100);
         // Should not crash even though area > buffer
         $modal->render($frame, $area, $this->context);
         self::assertTrue(true, 'Should not crash with out-of-bounds area');
@@ -1021,7 +1021,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withWidthNineIsClamped(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(9);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(9);
         $frame = new Frame(100, 100);
         $area = Rect::fromSize(100, 100);
         $modal->render($frame, $area, $this->context);
@@ -1038,7 +1038,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withWidthOneHundredOneIsClamped(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withWidth(101);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(101);
         $frame = new Frame(100, 100);
         $area = Rect::fromSize(100, 100);
         $modal->render($frame, $area, $this->context);
@@ -1053,7 +1053,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withHeightNineIsClamped(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(9);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(9);
         $frame = new Frame(100, 100);
         $area = Rect::fromSize(100, 100);
         $modal->render($frame, $area, $this->context);
@@ -1069,7 +1069,7 @@ final class ModalTest extends TestCase
     #[Test]
     public function withHeightOneHundredOneIsClamped(): void
     {
-        $modal = Modal::new('T', Text::new('X'))->withHeight(101);
+        $modal = Modal::new('T', Text::new('X'))->withHeightPercent(101);
         $frame = new Frame(100, 100);
         $area = Rect::fromSize(100, 100);
         $modal->render($frame, $area, $this->context);
@@ -1126,7 +1126,7 @@ final class ModalTest extends TestCase
             }
         }
 
-        $modal = Modal::new('T', Text::new('X'))->withWidth(100)->withHeight(100);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(100)->withHeightPercent(100);
         $modal->render($frame, $area, $this->context);
 
         // Row at area.bottom() = 10 should NOT be dimmed
@@ -1152,7 +1152,7 @@ final class ModalTest extends TestCase
             }
         }
 
-        $modal = Modal::new('T', Text::new('X'))->withWidth(100)->withHeight(100);
+        $modal = Modal::new('T', Text::new('X'))->withWidthPercent(100)->withHeightPercent(100);
         $modal->render($frame, $area, $this->context);
 
         // Column at area.right() = 20 should NOT be dimmed

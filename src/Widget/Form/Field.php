@@ -71,7 +71,7 @@ final readonly class Field
      *
      * @param Closure(string|bool|list<string>):?string $rule
      */
-    public function withRule(Closure $rule): self
+    public function addRule(Closure $rule): self
     {
         return $this->cloneWith(rules: [...$this->rules, $rule]);
     }
