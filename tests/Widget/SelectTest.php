@@ -36,7 +36,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function aPlaceItDoesNotHaveSelectsNothing(): void
     {
-        self::assertNull(Select::new(['a', 'b'])->withSelected(1)->withSelected(5)->selectedIndex());
+        self::assertNull(Select::new(['a', 'b'])->withSelectedIndex(1)->withSelectedIndex(5)->selectedIndex());
     }
 
     #[Test]
@@ -107,7 +107,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function aClearableSelectLetsThePickedOptionBePutBackDown(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withClearable()->withSelected(0);
+        $select = Select::new(['A', 'B', 'C'])->withClearable()->withSelectedIndex(0);
         $area = Rect::fromSize(40, 10);
 
         $cleared = $select->update(new KeyMsg(Key::Enter), $area)->model;
@@ -119,7 +119,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function aSelectToldNotToBeClearableStaysAnswered(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withClearable(false)->withSelected(0);
+        $select = Select::new(['A', 'B', 'C'])->withClearable(false)->withSelectedIndex(0);
 
         $again = $select->update(new KeyMsg(Key::Enter), Rect::fromSize(40, 10))->model;
 
@@ -129,7 +129,7 @@ final class SelectTest extends TestCase
     #[Test]
     public function activatingThePickedOptionOfAClearableSelectPutsItBackDown(): void
     {
-        $select = Select::new(['A', 'B', 'C'])->withClearable()->withSelected(0);
+        $select = Select::new(['A', 'B', 'C'])->withClearable()->withSelectedIndex(0);
 
         self::assertNull($select->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
     }

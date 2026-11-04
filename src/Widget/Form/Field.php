@@ -56,13 +56,13 @@ final readonly class Field
         return new self($name, $label, $description, $widget);
     }
 
-    public function required(bool $required = true): self
+    public function withRequired(bool $required = true): self
     {
         return $this->cloneWith(required: $required);
     }
 
     /**
-     * Return an error message or null; required() handles empty values.
+     * Return an error message or null. withRequired() handles empty values.
      *
      * @param Closure(string|bool|list<string>):?string $rule
      */
@@ -71,7 +71,7 @@ final readonly class Field
         return $this->cloneWith(rules: [...$this->rules, $rule]);
     }
 
-    public function secret(): self
+    public function withSecret(): self
     {
         return $this->widget instanceof TextInput
             ? $this->withWidget($this->widget->withEchoMode(EchoMode::Password))

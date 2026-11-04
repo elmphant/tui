@@ -33,7 +33,7 @@ final class HoldsAValueTest extends TestCase
         yield 'radio row' => [RadioRow::new(['a', 'b'])->withSelectedValue('b'), 'b'];
         yield 'radio' => [Radio::new(['a', 'b'])->withSelectedValue('a'), 'a'];
         yield 'select' => [Select::new(['a', 'b'])->withSelectedValue('b'), 'b'];
-        yield 'checkbox row' => [CheckboxRow::new(['a', 'b', 'c'])->withChecked([0, 2]), ['a', 'c']];
+        yield 'checkbox row' => [CheckboxRow::new(['a', 'b', 'c'])->withCheckedIndexes([0, 2]), ['a', 'c']];
         yield 'checkbox group' => [CheckboxGroup::new(['a', 'b', 'c'])->withCheckedValues(['b']), ['b']];
         yield 'filterable list' => [FilterableList::new([new SimpleListItem('a'), new SimpleListItem('b')])->withSelectedValue('b'), 'b'];
         yield 'filterable checkbox group' => [FilterableCheckboxGroup::new(['a', 'b'])->activated('a'), ['a']];

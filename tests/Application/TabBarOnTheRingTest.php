@@ -68,7 +68,7 @@ final class TabBarOnTheRingTest extends TestCase
 
         $model = $harness->model();
         self::assertInstanceOf(TabbedFormApp::class, $model);
-        self::assertSame(1, $model->bar()->selectedTab());
+        self::assertSame(1, $model->bar()->activeTab());
     }
 
     #[Test]
@@ -81,7 +81,7 @@ final class TabBarOnTheRingTest extends TestCase
 
         $model = $harness->model();
         self::assertInstanceOf(TabbedFormApp::class, $model);
-        self::assertSame(1, $model->bar()->selectedTab(), 'The strip holds the keyboard, so the arrow walks the tabs');
+        self::assertSame(1, $model->bar()->activeTab(), 'The strip holds the keyboard, so the arrow walks the tabs');
     }
 }
 

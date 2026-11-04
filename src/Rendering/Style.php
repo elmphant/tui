@@ -35,12 +35,12 @@ final readonly class Style
         return $this->link === null ? $this->attributes : $this->attributes | Hyperlinks::bitsFor($this->link);
     }
 
-    public function foreground(Color $color): Style
+    public function withForeground(Color $color): Style
     {
         return $this->cloneWith(foreground: $color);
     }
 
-    public function background(Color $color): Style
+    public function withBackground(Color $color): Style
     {
         return $this->cloneWith(background: $color);
     }

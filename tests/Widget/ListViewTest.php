@@ -40,8 +40,8 @@ final class ListViewTest extends TestCase
     #[Test]
     public function aSelectionPastTheLastItemSelectsNothing(): void
     {
-        self::assertNull(ListView::fromStrings(['a', 'b'])->withSelected(9)->selectedItem());
-        self::assertNull(ListView::fromStrings(['a', 'b'])->withSelected(9)->selectedIndex());
+        self::assertNull(ListView::fromStrings(['a', 'b'])->withSelectedIndex(9)->selectedItem());
+        self::assertNull(ListView::fromStrings(['a', 'b'])->withSelectedIndex(9)->selectedIndex());
     }
 
     #[Test]
@@ -80,7 +80,7 @@ final class ListViewTest extends TestCase
 
         self::assertSame(3, $replaced->itemCount());
         self::assertNull($replaced->selectedIndex(), 'Nothing is selected to begin with');
-        self::assertSame(1, $replaced->withSelected(1)->selectedIndex());
+        self::assertSame(1, $replaced->withSelectedIndex(1)->selectedIndex());
     }
 
     #[Test]
@@ -326,7 +326,7 @@ final class ListViewTest extends TestCase
     {
         $list = ListView::new([new SimpleListItem('Buy milk', key: '1'), new SimpleListItem('Call Bob', key: '2')])
             ->withCursor(1)
-            ->withSelected(1);
+            ->withSelectedIndex(1);
 
         $renamed = $list->withItems([new SimpleListItem('Call Bob back', key: '2'), new SimpleListItem('Buy milk', key: '1')]);
 

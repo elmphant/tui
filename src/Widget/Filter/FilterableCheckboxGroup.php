@@ -248,7 +248,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         $matching = $this->matching();
 
         return CheckboxGroup::new($matching)
-            ->withChecked(array_values(array_filter(
+            ->withCheckedIndexes(array_values(array_filter(
                 array_keys($matching),
                 fn (int $index): bool => \in_array($matching[$index], $this->checked, true),
             )))

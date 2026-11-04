@@ -51,7 +51,7 @@ final class StyleTest extends TestCase
     public function foregroundReturnsNewInstance(): void
     {
         $original = new Style();
-        $modified = $original->foreground(Color::named('red'));
+        $modified = $original->withForeground(Color::named('red'));
 
         self::assertNull($original->foreground);
         self::assertNotNull($modified->foreground);
@@ -62,7 +62,7 @@ final class StyleTest extends TestCase
     public function backgroundReturnsNewInstance(): void
     {
         $original = new Style();
-        $modified = $original->background(Color::named('blue'));
+        $modified = $original->withBackground(Color::named('blue'));
 
         self::assertNull($original->background);
         self::assertNotNull($modified->background);
@@ -206,8 +206,8 @@ final class StyleTest extends TestCase
     public function fluentChaining(): void
     {
         $style = (new Style())
-            ->foreground(Color::hex('FF0000'))
-            ->background(Color::hex('0000FF'))
+            ->withForeground(Color::hex('FF0000'))
+            ->withBackground(Color::hex('0000FF'))
             ->bold()
             ->italic();
 

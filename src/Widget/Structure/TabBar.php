@@ -50,7 +50,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
      */
     private function __construct(
         private array $tabs = [],
-        private int $selectedTab = 0,
+        private int $activeTab = 0,
         private ?string $hint = null,
         private ?string $shortHint = null,
         private ?Spacing $padding = null,
@@ -93,9 +93,9 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return $this->cloneWith(tabs: $tabs);
     }
 
-    public function selectedTab(): int
+    public function activeTab(): int
     {
-        return $this->selectedTab;
+        return $this->activeTab;
     }
 
     /**
@@ -126,16 +126,16 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
             return $this;
         }
 
-        return $this->cloneWith(tabs: $tabs, selectedTab: Places::cursorAfter(
-            ($this->tabs[$this->selectedTab] ?? null)?->key(),
+        return $this->cloneWith(tabs: $tabs, activeTab: Places::cursorAfter(
+            ($this->tabs[$this->activeTab] ?? null)?->key(),
             array_map(static fn (TabPage $tab): string => $tab->key(), $tabs),
-            $this->selectedTab,
+            $this->activeTab,
         ));
     }
 
-    public function withSelectedTab(int $selectedTab): self
+    public function withActiveTab(int $activeTab): self
     {
-        return $this->cloneWith(selectedTab: max(0, min($selectedTab, count($this->tabs) - 1)));
+        return $this->cloneWith(activeTab: max(0, min($activeTab, count($this->tabs) - 1)));
     }
 
     /**
@@ -197,7 +197,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
     public function withKeyboardAt(?int $child): static
     {
-        return isset($this->tabs[$this->selectedTab])
+        return isset($this->tabs[$this->activeTab])
             ? $this->withActivePane($this->activePane()->withKeyboardAt($child))
             : $this;
     }
@@ -227,9 +227,9 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         if ($message instanceof MouseMsg && $message->isClick() && $this->onStrip($message, $area)) {
             $index = $this->tabAt($message, $area);
 
-            return $index === null || $index === $this->selectedTab
+            return $index === null || $index === $this->activeTab
                 ? new UpdateResult($this)
-                : new UpdateResult($this->cloneWith(selectedTab: $index));
+                : new UpdateResult($this->cloneWith(activeTab: $index));
         }
 
         if ($message instanceof KeyMsg) {
@@ -293,13 +293,13 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
     private function activePane(): ScrollPane
     {
-        return $this->tabs[$this->selectedTab]->pane ?? ScrollPane::of();
+        return $this->tabs[$this->activeTab]->pane ?? ScrollPane::of();
     }
 
     private function withActivePane(ScrollPane $pane): self
     {
         $tabs = $this->tabs;
-        $tabs[$this->selectedTab] = $tabs[$this->selectedTab]->withPane($pane);
+        $tabs[$this->activeTab] = $tabs[$this->activeTab]->withPane($pane);
 
         return $this->cloneWith(tabs: $tabs);
     }
@@ -337,9 +337,9 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
             return new UpdateResult($this);
         }
 
-        $newIndex = ($this->selectedTab + $direction + $count) % $count;
+        $newIndex = ($this->activeTab + $direction + $count) % $count;
 
-        return new UpdateResult($this->cloneWith(selectedTab: $newIndex));
+        return new UpdateResult($this->cloneWith(activeTab: $newIndex));
     }
 
     private function onStrip(MouseMsg $message, Rect $area): bool
@@ -352,7 +352,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         return TabStripLayout::across(
             array_map(static fn (TabPage $tab): string => $tab->label, $this->tabs),
             $area,
-            $this->selectedTab,
+            $this->activeTab,
         );
     }
 
@@ -379,7 +379,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
             $labelRow = $cell->y + 1;
 
-            if ($tabIndex === $this->selectedTab) {
+            if ($tabIndex === $this->activeTab) {
                 $tabRight = $cell->right() - 1;
 
                 $frame->putChar($cell->x, $cell->y, $border->topLeft, $borderForeground, $borderBackground, $borderAttributes);
@@ -426,7 +426,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         $frame->fillRect($area->x + 1, $baselineY, $area->width - 2, 1, $foreground, $background, $attributes, $border->horizontal);
         $frame->putChar($area->right() - 1, $baselineY, $border->topRight, $foreground, $background, $attributes);
 
-        $cell = $layout->rectOf($this->selectedTab);
+        $cell = $layout->rectOf($this->activeTab);
         if ($cell === null) {
             return;
         }
@@ -530,7 +530,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
             return;
         }
 
-        if (!isset($this->tabs[$this->selectedTab])) {
+        if (!isset($this->tabs[$this->activeTab])) {
             return;
         }
 

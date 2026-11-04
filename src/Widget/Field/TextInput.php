@@ -240,7 +240,7 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
         return match ($this->decoration) {
             InputDecoration::Underline => $tone->underline(),
             InputDecoration::Filled => $theme->inputStyle->background !== null
-                ? $tone->background($theme->inputStyle->background)
+                ? $tone->withBackground($theme->inputStyle->background)
                 : $tone,
             InputDecoration::None => $tone,
         };

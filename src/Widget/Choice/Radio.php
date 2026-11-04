@@ -79,7 +79,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         )->settled();
     }
 
-    public function withSelected(?int $selected): self
+    public function withSelectedIndex(?int $selected): self
     {
         return $this->cloneWith(selected: $selected)->settled();
     }

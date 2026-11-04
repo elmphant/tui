@@ -38,7 +38,7 @@ final class FormTest extends TestCase
     public function aRequiredFlagShowsItIsRequiredBeforeTheFormIsSubmitted(): void
     {
         $form = Form::new('Sign up')
-            ->withField(Field::flag('terms', 'Accept the terms', 'You must agree to continue')->required());
+            ->withField(Field::flag('terms', 'Accept the terms', 'You must agree to continue')->withRequired());
 
         $screen = WidgetHarness::for($form, 70, 24)->screen();
 
@@ -99,7 +99,7 @@ final class FormTest extends TestCase
         $form = WidgetHarness::for(self::userForm(), 70, 24);
         self::assertStringNotContainsString('Username is required', $form->screen()->plainText());
 
-        $tried = WidgetHarness::for(self::userForm()->submitted(), 70, 24);
+        $tried = WidgetHarness::for(self::userForm()->withSubmitAttempted(), 70, 24);
 
         self::assertStringContainsString('Username is required', $tried->screen()->plainText());
     }
@@ -107,7 +107,7 @@ final class FormTest extends TestCase
     #[Test]
     public function aProblemKeepsABlankLineBeforeTheNextField(): void
     {
-        $screen = WidgetHarness::for(self::userForm()->submitted(), 70, 24)->screen();
+        $screen = WidgetHarness::for(self::userForm()->withSubmitAttempted(), 70, 24)->screen();
 
         $problem = $screen->locate('Username is required')['row'];
         self::assertSame($problem + 2, $screen->locate('Password')['row']);
@@ -116,7 +116,7 @@ final class FormTest extends TestCase
     #[Test]
     public function aMissingFieldStopsSayingSoOnceItIsFilledIn(): void
     {
-        $form = WidgetHarness::for(self::userForm()->submitted(), 70, 24)->type('ada');
+        $form = WidgetHarness::for(self::userForm()->withSubmitAttempted(), 70, 24)->type('ada');
 
         self::assertStringNotContainsString('Username is required', $form->screen()->plainText());
         self::assertSame([], $form->widget()->missing());
@@ -129,7 +129,7 @@ final class FormTest extends TestCase
             ->withField(Field::text('due', 'Due')->withRule(
                 static fn (mixed $value): ?string => \is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? null : 'Due is not a YYYY-MM-DD date',
             ))
-            ->submitted();
+            ->withSubmitAttempted();
 
         $typed = WidgetHarness::for($form, 70, 24)->type('tomorrow');
 
@@ -162,7 +162,7 @@ final class FormTest extends TestCase
     {
         self::assertStringNotContainsString('fill in what is required', WidgetHarness::for(self::userForm(), 70, 24)->screen()->plainText());
 
-        self::assertStringContainsString('fill in what is required', WidgetHarness::for(self::userForm()->submitted(), 70, 24)->screen()->plainText());
+        self::assertStringContainsString('fill in what is required', WidgetHarness::for(self::userForm()->withSubmitAttempted(), 70, 24)->screen()->plainText());
     }
 
     #[Test]
@@ -189,8 +189,8 @@ final class FormTest extends TestCase
     public function aFieldLeftEarlierStillSaysWhatIsWrongAfterTheNextIsLeft(): void
     {
         $form = Form::new('Login')
-            ->withField(Field::text('username', 'Username')->required())
-            ->withField(Field::text('password', 'Password')->required())
+            ->withField(Field::text('username', 'Username')->withRequired())
+            ->withField(Field::text('password', 'Password')->withRequired())
             ->withField(Field::text('site', 'Site'))
             ->withErrorsShown(ShowErrors::AfterLeaving);
 
@@ -428,10 +428,10 @@ final class FormTest extends TestCase
     public function aSubmittedFormDrawsItsFieldsTheirProblemAndTheButtonUnderARule(): void
     {
         $form = Form::new('Sign up')
-            ->withField(Field::text('name', 'Name', 'Your name')->required())
+            ->withField(Field::text('name', 'Name', 'Your name')->withRequired())
             ->withField(Field::text('city', 'City', 'where you live'))
             ->withSubmit('Save', new TestMessage('save'))
-            ->submitted();
+            ->withSubmitAttempted();
 
         $expected = <<<'SCREEN'
             ╭ Sign up ─────────────────────────╮
@@ -460,7 +460,7 @@ final class FormTest extends TestCase
     {
         $form = Form::new('Notes')
             ->withField(Field::text('title', 'Title'))
-            ->withField(Field::text('note', '', 'unnamed')->required())
+            ->withField(Field::text('note', '', 'unnamed')->withRequired())
             ->withField(Field::text('memo', '', 'just text'));
 
         $expected = <<<'SCREEN'
@@ -498,8 +498,8 @@ final class FormTest extends TestCase
     private static function userForm(): Form
     {
         return Form::new('Create user')
-            ->withField(Field::text('username', 'Username', 'The login name')->required())
-            ->withField(Field::text('password', 'Password')->secret())
+            ->withField(Field::text('username', 'Username', 'The login name')->withRequired())
+            ->withField(Field::text('password', 'Password')->withSecret())
             ->withField(Field::choice('site', 'Site', ['main' => 'Main', 'intranet' => 'Intranet', 'shop' => 'Shop']))
             ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
             ->withFoot('❯ backend:user:create')

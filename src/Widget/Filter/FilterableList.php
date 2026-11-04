@@ -309,7 +309,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         $dispatcher = new ChildDispatcher($this->globalKeybindings);
         $field = $dispatcher->dispatchOne($this->field, $message, FilterBar::barArea($area));
         $list = $dispatcher->dispatchOne($this->list, $message, $this->contentArea($area));
-        $answered = $this->cloneWith(field: $field->child, list: $list->child->withSelected(null));
+        $answered = $this->cloneWith(field: $field->child, list: $list->child->withSelectedIndex(null));
 
         return new UpdateResult(
             $option === null ? $answered : $answered->activated($option),
@@ -330,7 +330,7 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
     private function renderContent(Frame $frame, Rect $body, RenderContext $context): void
     {
         $chosen = array_search($this->selectedSource, $this->matchingIndexes(), true);
-        $this->list->withSelected($chosen === false ? null : $chosen)->render($frame, $body, $context);
+        $this->list->withSelectedIndex($chosen === false ? null : $chosen)->render($frame, $body, $context);
     }
 
     /**

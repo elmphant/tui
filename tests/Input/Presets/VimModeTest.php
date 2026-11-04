@@ -104,11 +104,11 @@ final class VimModeTest extends TestCase
     {
         $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('g', 't');
 
-        self::assertSame(1, $harness->model()->bar->selectedTab());
+        self::assertSame(1, $harness->model()->bar->activeTab());
 
         $harness->press('g', 'T');
 
-        self::assertSame(0, $harness->model()->bar->selectedTab());
+        self::assertSame(0, $harness->model()->bar->activeTab());
     }
 
     #[Test]
@@ -116,7 +116,7 @@ final class VimModeTest extends TestCase
     {
         $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L', 'L')->type('ggtG');
 
-        self::assertSame(2, $harness->model()->bar->selectedTab());
+        self::assertSame(2, $harness->model()->bar->activeTab());
         $field = $harness->model()->bar->children()[0];
         self::assertInstanceOf(TextInput::class, $field);
         self::assertSame('ggtG', $field->value());
@@ -187,7 +187,7 @@ final class VimModeTest extends TestCase
     {
         $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('l');
 
-        self::assertSame(0, $harness->model()->bar->selectedTab());
+        self::assertSame(0, $harness->model()->bar->activeTab());
         self::assertTrue($harness->model()->tree()->isExpanded(new TreePath('dir')));
     }
 
@@ -196,7 +196,7 @@ final class VimModeTest extends TestCase
     {
         $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('l', 'j', 'h');
 
-        self::assertSame(0, $harness->model()->bar->selectedTab());
+        self::assertSame(0, $harness->model()->bar->activeTab());
         self::assertEquals(new TreePath('dir'), $harness->model()->tree()->cursor());
     }
 
@@ -205,11 +205,11 @@ final class VimModeTest extends TestCase
     {
         $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L');
 
-        self::assertSame(1, $harness->model()->bar->selectedTab());
+        self::assertSame(1, $harness->model()->bar->activeTab());
 
         $harness->press('H');
 
-        self::assertSame(0, $harness->model()->bar->selectedTab());
+        self::assertSame(0, $harness->model()->bar->activeTab());
     }
 
     #[Test]
@@ -217,7 +217,7 @@ final class VimModeTest extends TestCase
     {
         $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L', 'L')->type('hLl');
 
-        self::assertSame(2, $harness->model()->bar->selectedTab());
+        self::assertSame(2, $harness->model()->bar->activeTab());
         $field = $harness->model()->bar->children()[0];
         self::assertInstanceOf(TextInput::class, $field);
         self::assertSame('hLl', $field->value());
@@ -295,7 +295,7 @@ final readonly class VimTabbedTreeApp extends CopyableTestApp
 
     public function tree(): TreeView
     {
-        $tree = $this->bar->withSelectedTab(0)->children()[0];
+        $tree = $this->bar->withActiveTab(0)->children()[0];
         TestCase::assertInstanceOf(TreeView::class, $tree);
 
         return $tree;

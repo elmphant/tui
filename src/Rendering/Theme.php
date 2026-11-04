@@ -151,19 +151,19 @@ final readonly class Theme
     public function withCanvas(Color $canvas): self
     {
         return $this->rebuilt(
-            base: $this->base->background($canvas),
-            accent: $this->accent->background($canvas),
-            dim: $this->dim->background($canvas),
-            error: $this->error->background($canvas),
-            success: $this->success->background($canvas),
-            warning: $this->warningOverride?->background($canvas),
-            info: $this->infoOverride?->background($canvas),
-            borderStyle: $this->borderStyle->background($canvas),
-            focusedBorderStyle: $this->focusedBorderStyle->background($canvas),
-            titleStyle: $this->titleStyle->background($canvas),
-            headerStyle: $this->headerStyle->background($canvas),
-            fillStyle: $this->fillStyle->background($canvas),
-            emptyStyle: $this->emptyStyle->background($canvas),
+            base: $this->base->withBackground($canvas),
+            accent: $this->accent->withBackground($canvas),
+            dim: $this->dim->withBackground($canvas),
+            error: $this->error->withBackground($canvas),
+            success: $this->success->withBackground($canvas),
+            warning: $this->warningOverride?->withBackground($canvas),
+            info: $this->infoOverride?->withBackground($canvas),
+            borderStyle: $this->borderStyle->withBackground($canvas),
+            focusedBorderStyle: $this->focusedBorderStyle->withBackground($canvas),
+            titleStyle: $this->titleStyle->withBackground($canvas),
+            headerStyle: $this->headerStyle->withBackground($canvas),
+            fillStyle: $this->fillStyle->withBackground($canvas),
+            emptyStyle: $this->emptyStyle->withBackground($canvas),
             page: $canvas,
         );
     }

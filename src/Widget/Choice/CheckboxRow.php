@@ -82,7 +82,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
         }
 
         $ticked = [];
-        foreach ($this->checkedIndices() as $index) {
+        foreach ($this->checkedIndexes() as $index) {
             $place = Options::placeOf($this->options[$index] ?? null, $options);
 
             if ($place !== null) {
@@ -105,7 +105,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
     /**
      * @param list<int> $indexes
      */
-    public function withChecked(array $indexes): self
+    public function withCheckedIndexes(array $indexes): self
     {
         return $this->cloneWith(checked: array_map(
             static fn (int $index): bool => \in_array($index, $indexes, true),
@@ -146,7 +146,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
     }
 
     /**
-     * Wrap by default; use wrapping(false) to stop at either end, such as in a form field.
+     * Wrap by default; use withWrapping(false) to stop at either end, such as in a form field.
      */
     public function withWrapping(bool $wrapping = true): self
     {
@@ -161,7 +161,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
     /**
      * @return list<int>
      */
-    public function checkedIndices(): array
+    public function checkedIndexes(): array
     {
         return array_keys(array_filter($this->checked));
     }
@@ -171,7 +171,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
      */
     public function value(): array
     {
-        return array_map(fn (int $index): string => $this->options[$index], $this->checkedIndices());
+        return array_map(fn (int $index): string => $this->options[$index], $this->checkedIndexes());
     }
 
     public function withValue(string|bool|array|null $value): static

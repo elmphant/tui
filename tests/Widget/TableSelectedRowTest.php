@@ -19,7 +19,7 @@ final class TableSelectedRowTest extends TestCase
     public function aTableReportsTheSelectedRowItself(): void
     {
         $second = Row::new('beta', 'eu-1b');
-        $table = Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a'), $second])->withSelected(1);
+        $table = Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a'), $second])->withSelectedIndex(1);
 
         self::assertSame($second, $table->selectedRow());
     }
@@ -29,7 +29,7 @@ final class TableSelectedRowTest extends TestCase
     {
         $table = Table\Table::new(self::columns(), [
             Row::new(Span::styled('gamma', new Style()), 'eu-1c'),
-        ])->withSelected(0);
+        ])->withSelectedIndex(0);
 
         self::assertSame(['gamma', 'eu-1c'], $table->selectedRow()?->texts());
     }
@@ -37,7 +37,7 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aPlainTableReportsTheRowItBuiltFromTheCells(): void
     {
-        $plain = Table\Table::fromCells(self::columns(), [['alpha', 'eu-1a'], ['beta', 'eu-1b']])->withSelected(1);
+        $plain = Table\Table::fromCells(self::columns(), [['alpha', 'eu-1a'], ['beta', 'eu-1b']])->withSelectedIndex(1);
 
         self::assertSame(['beta', 'eu-1b'], $plain->selectedRow()?->cells);
     }
@@ -51,14 +51,14 @@ final class TableSelectedRowTest extends TestCase
     #[Test]
     public function aSelectionPastTheLastRowReportsNothing(): void
     {
-        self::assertNull(Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a')])->withSelected(9)->selectedRow());
+        self::assertNull(Table\Table::new(self::columns(), [Row::new('alpha', 'eu-1a')])->withSelectedIndex(9)->selectedRow());
     }
 
     #[Test]
     public function theSelectionStaysOnTheRecordItWasMadeOn(): void
     {
         $columns = [Column::new('Name', Constraint::flex()), Column::new('State', Constraint::flex())];
-        $chosen = Table\Table::fromCells($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])->withSelected(2);
+        $chosen = Table\Table::fromCells($columns, [['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']])->withSelectedIndex(2);
         self::assertSame(['gamma', 'on'], $chosen->selectedRow()?->cells, 'precondition: gamma was chosen');
 
         $refreshed = $chosen->withCells([['zulu', 'off'], ['alpha', 'on'], ['beta', 'off'], ['gamma', 'on']]);

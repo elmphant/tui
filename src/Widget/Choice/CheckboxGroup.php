@@ -89,7 +89,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
     /**
      * @param list<int> $checked
      */
-    public function withChecked(array $checked): self
+    public function withCheckedIndexes(array $checked): self
     {
         return $this->cloneWith(checked: array_values(array_filter(
             $checked,

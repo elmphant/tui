@@ -409,7 +409,7 @@ final class TableTest extends TestCase
     {
         $table = Table\Table::new([Column::new('Name', Constraint::flex())], [Row::new('Alice'), Row::new('Bob')]);
 
-        self::assertNull($table->withSelected(9)->selectedIndex());
+        self::assertNull($table->withSelectedIndex(9)->selectedIndex());
     }
 
     #[Test]
@@ -3648,7 +3648,7 @@ final class TableTest extends TestCase
 
         self::assertTrue($this->rowIsReversed($table, 1, focused: true), 'The cursor row while focused');
         self::assertFalse($this->rowIsReversed($table, 1), 'The cursor row of an unfocused table is left plain');
-        self::assertTrue($this->rowIsReversed($table->withSelected(1), 1), 'A selected row stays marked when focus goes');
+        self::assertTrue($this->rowIsReversed($table->withSelectedIndex(1), 1), 'A selected row stays marked when focus goes');
         self::assertFalse($this->rowIsReversed($table, 2, focused: true), 'A row that is neither is left plain');
     }
 
@@ -3662,7 +3662,7 @@ final class TableTest extends TestCase
 
         self::assertTrue($this->rowIsReversed($table, 1, focused: true), 'The cursor row while focused');
         self::assertFalse($this->rowIsReversed($table, 1), 'The cursor row of an unfocused table is left plain');
-        self::assertTrue($this->rowIsReversed($table->withSelected(1), 1), 'A selected row stays marked when focus goes');
+        self::assertTrue($this->rowIsReversed($table->withSelectedIndex(1), 1), 'A selected row stays marked when focus goes');
         self::assertFalse($this->rowIsReversed($table, 2, focused: true), 'A row that is neither is left plain');
     }
 
@@ -3672,7 +3672,7 @@ final class TableTest extends TestCase
         $table = Table\Table::new(
             [Column::new('A', Constraint::flex())],
             [Row::new('one'), Row::header('group'), Row::new('three')],
-        )->withCursor(1)->withSelected(1);
+        )->withCursor(1)->withSelectedIndex(1);
 
         self::assertFalse($this->rowIsReversed($table, 1, focused: true), 'A header row draws as a header whatever the cursor says');
     }
@@ -3681,7 +3681,7 @@ final class TableTest extends TestCase
     public function reloadingTypedRowsKeepsTheRowThatWasChosen(): void
     {
         $columns = [Column::new('A', Constraint::flex())];
-        $table = Table\Table::new($columns, [Row::new('alpha'), Row::new('beta')])->withSelected(1);
+        $table = Table\Table::new($columns, [Row::new('alpha'), Row::new('beta')])->withSelectedIndex(1);
 
         $reordered = $table->withRows([Row::new('beta'), Row::new('alpha')]);
 

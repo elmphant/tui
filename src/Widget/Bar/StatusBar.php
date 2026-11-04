@@ -87,7 +87,7 @@ final readonly class StatusBar implements Widget
 
     private function renderHints(Frame $frame, Rect $area, Style $barStyle, Theme $theme): void
     {
-        $keyStyle = $theme->accent->background($barStyle->background ?? Color::ansi(0))->bold();
+        $keyStyle = $theme->accent->withBackground($barStyle->background ?? Color::ansi(0))->bold();
         $x = $area->x;
         $rightEdge = $area->x + $area->width;
         $last = \count($this->hints) - 1;

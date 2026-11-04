@@ -78,7 +78,7 @@ final class CheckboxGroupTest extends TestCase
     #[Test]
     public function anIndexPastTheLastOptionIsNeverChecked(): void
     {
-        $group = CheckboxGroup::new(['A', 'B'])->withChecked([1, 5, -1]);
+        $group = CheckboxGroup::new(['A', 'B'])->withCheckedIndexes([1, 5, -1]);
 
         self::assertFalse($group->isChecked(5));
         self::assertFalse($group->isChecked(-1));
@@ -90,7 +90,7 @@ final class CheckboxGroupTest extends TestCase
     {
         $bare = CheckboxGroup::new(['A', 'B']);
 
-        self::assertSame(['A'], $bare->withChecked([0])->checkedValues(), 'the collection is what leads');
+        self::assertSame(['A'], $bare->withCheckedIndexes([0])->checkedValues(), 'the collection is what leads');
         self::assertSame(0, $bare->cursorLine(), 'and an omitted label costs no rows');
         self::assertSame(2, CheckboxGroup::new(['A', 'B'], 'Pick')->cursorLine(), 'a label still follows it, where there is one');
     }
@@ -129,7 +129,7 @@ final class CheckboxGroupTest extends TestCase
         $group = CheckboxGroup::new(['Cheese'], 'Toppings')
             ->withOptions(['Olive', 'Caper'])
             ->withLabel('Extras')
-            ->withChecked([1]);
+            ->withCheckedIndexes([1]);
 
         $frame = new Frame(24, 8);
         $group->render($frame, $area, new RenderContext(Theme::dark()));

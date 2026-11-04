@@ -30,7 +30,7 @@ final class TableRowReloadTest extends TestCase
         $table = Table\Table::new($this->columns(), [
             Row::new('1', '0.0')->withKey('1'),
             Row::new('42', '1.0')->withKey('42'),
-        ])->withCursor(1)->withSelected(1);
+        ])->withCursor(1)->withSelectedIndex(1);
 
         $sampled = $table->withRows([
             Row::new('42', '7.5')->withKey('42'),

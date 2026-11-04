@@ -36,8 +36,8 @@ final class TabStripOverflowTest extends TestCase
     {
         $harness = WidgetHarness::for(self::fiveTabs(), width: 30, height: 8)->press('right', 'right', 'right', 'right');
 
-        self::assertSame(3, $harness->click('Delta')->widget()->selectedTab());
-        self::assertSame(2, $harness->click('Charlie')->widget()->selectedTab());
+        self::assertSame(3, $harness->click('Delta')->widget()->activeTab());
+        self::assertSame(2, $harness->click('Charlie')->widget()->activeTab());
     }
 
     #[Test]

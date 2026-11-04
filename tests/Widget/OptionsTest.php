@@ -67,7 +67,7 @@ final class OptionsTest extends TestCase
     #[Test]
     public function anOptionThatMovedIsStillTheChosenOne(): void
     {
-        $chosen = Select::new(['alpha', 'beta', 'gamma'])->withSelected(2);
+        $chosen = Select::new(['alpha', 'beta', 'gamma'])->withSelectedIndex(2);
         self::assertSame('gamma', $chosen->selectedValue(), 'precondition: the reader picked gamma');
 
         $reordered = $chosen->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
@@ -82,7 +82,7 @@ final class OptionsTest extends TestCase
             new SimpleListItem('alpha'),
             new SimpleListItem('beta'),
             new SimpleListItem('gamma'),
-        ])->withSelected(2);
+        ])->withSelectedIndex(2);
         self::assertSame('gamma', $chosen->selectedItem()?->title(), 'precondition: the reader picked gamma');
 
         $reloaded = $chosen->withItems([
@@ -98,7 +98,7 @@ final class OptionsTest extends TestCase
     #[Test]
     public function aRadioKeepsTheOptionItWasOnWhenTheListGrows(): void
     {
-        $chosen = Radio::new(['alpha', 'beta', 'gamma'])->withSelected(2);
+        $chosen = Radio::new(['alpha', 'beta', 'gamma'])->withSelectedIndex(2);
         self::assertSame('gamma', $chosen->selectedValue(), 'precondition: the reader picked gamma');
 
         $grown = $chosen->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
@@ -109,7 +109,7 @@ final class OptionsTest extends TestCase
     #[Test]
     public function tickedBoxesStayOnTheOptionsTheyWereTickedFor(): void
     {
-        $ticked = CheckboxGroup::new(['alpha', 'beta', 'gamma'])->withChecked([0, 2]);
+        $ticked = CheckboxGroup::new(['alpha', 'beta', 'gamma'])->withCheckedIndexes([0, 2]);
         self::assertSame(['alpha', 'gamma'], $ticked->checkedValues(), 'precondition: two boxes are ticked');
 
         $grown = $ticked->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
@@ -120,7 +120,7 @@ final class OptionsTest extends TestCase
     #[Test]
     public function aRowKeepsTheOptionItWasOnWhenTheListGrows(): void
     {
-        $chosen = RadioRow::new(['alpha', 'beta', 'gamma'])->withSelected(2);
+        $chosen = RadioRow::new(['alpha', 'beta', 'gamma'])->withSelectedIndex(2);
         self::assertSame('gamma', $chosen->selectedValue(), 'precondition: the reader picked gamma');
 
         $grown = $chosen->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
@@ -141,18 +141,18 @@ final class OptionsTest extends TestCase
     #[Test]
     public function aRowOfBoxesKeepsItsTicksOnTheSameLabels(): void
     {
-        $ticked = CheckboxRow::new(['alpha', 'beta', 'gamma'])->withChecked([0, 2]);
-        self::assertSame([0, 2], $ticked->checkedIndices(), 'precondition: alpha and gamma are ticked');
+        $ticked = CheckboxRow::new(['alpha', 'beta', 'gamma'])->withCheckedIndexes([0, 2]);
+        self::assertSame([0, 2], $ticked->checkedIndexes(), 'precondition: alpha and gamma are ticked');
 
         $grown = $ticked->withOptions(['zulu', 'alpha', 'beta', 'gamma']);
 
-        self::assertSame([1, 3], $grown->checkedIndices(), 'the ticks are on labels, not on places in a row');
+        self::assertSame([1, 3], $grown->checkedIndexes(), 'the ticks are on labels, not on places in a row');
     }
 
     #[Test]
     public function anOptionThatIsGoneLeavesNothingChosen(): void
     {
-        $chosen = Select::new(['alpha', 'beta', 'gamma'])->withSelected(2);
+        $chosen = Select::new(['alpha', 'beta', 'gamma'])->withSelectedIndex(2);
 
         $narrowed = $chosen->withOptions(['alpha', 'beta']);
 
@@ -162,7 +162,7 @@ final class OptionsTest extends TestCase
     #[Test]
     public function aRadioWhoseOptionIsGoneStandsOnTheNeighbour(): void
     {
-        $chosen = Radio::new(['alpha', 'beta', 'gamma', 'delta'])->withSelected(2);
+        $chosen = Radio::new(['alpha', 'beta', 'gamma', 'delta'])->withSelectedIndex(2);
 
         $narrowed = $chosen->withOptions(['alpha', 'beta', 'delta']);
 
@@ -173,7 +173,7 @@ final class OptionsTest extends TestCase
     public function theOptionsItAlreadyHasChangeNothing(): void
     {
         $options = ['alpha', 'beta'];
-        $select = Select::new($options)->withSelected(1);
+        $select = Select::new($options)->withSelectedIndex(1);
 
         self::assertSame($select, $select->withOptions($options), 'nothing to re-resolve, so nothing is rebuilt');
     }

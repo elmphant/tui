@@ -160,7 +160,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         );
     }
 
-    public function withSelected(?int $selected): self
+    public function withSelectedIndex(?int $selected): self
     {
         return $this->cloneWith(selected: $selected !== null && isset($this->rows[$selected]) ? $selected : null);
     }

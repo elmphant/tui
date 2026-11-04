@@ -108,7 +108,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         );
     }
 
-    public function withSelected(?int $selected): self
+    public function withSelectedIndex(?int $selected): self
     {
         return $this->cloneWith(selected: $selected !== null && isset($this->items[$selected]) ? $selected : null);
     }
@@ -336,7 +336,7 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
         $selected = $theme->selectedStyle;
 
         return $theme->accent
-            ->background($selected->background ?? Color::ansi(0))
+            ->withBackground($selected->background ?? Color::ansi(0))
             ->bold();
     }
 

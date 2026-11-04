@@ -51,7 +51,7 @@ final class RadioRowTest extends TestCase
     #[Test]
     public function marksTheSelectedOptionAlongOneRow(): void
     {
-        $row = RadioRow::new(['system', 'pages', 'all'])->withSelected(1);
+        $row = RadioRow::new(['system', 'pages', 'all'])->withSelectedIndex(1);
 
         self::assertSame(
             RadioRow::UNSELECTED_MARK . 'system  ' . RadioRow::SELECTED_MARK . 'pages  ' . RadioRow::UNSELECTED_MARK . 'all',
@@ -62,7 +62,7 @@ final class RadioRowTest extends TestCase
     #[Test]
     public function breaksOntoAFurtherRowRatherThanRunningOffTheEdge(): void
     {
-        $row = RadioRow::new(['system', 'pages', 'all'])->withSelected(1);
+        $row = RadioRow::new(['system', 'pages', 'all'])->withSelectedIndex(1);
 
         $frame = new Frame(10, 3);
         $row->render($frame, new Rect(0, 0, 10, 3), new RenderContext(Theme::dark()));
@@ -107,7 +107,7 @@ final class RadioRowTest extends TestCase
     public function aClearableRowLetsThePickedOptionBePutBackDown(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelected(0);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelectedIndex(0);
 
         $cleared = $row->update(new KeyMsg(' '), $area)->model;
 
@@ -120,7 +120,7 @@ final class RadioRowTest extends TestCase
     public function aClearableRowStillPicksAnOptionItDoesNotHold(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelected(0);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelectedIndex(0);
 
         $moved = $row->update(new KeyMsg(Key::Right), $area)->model;
         self::assertInstanceOf(RadioRow::class, $moved);
@@ -133,14 +133,14 @@ final class RadioRowTest extends TestCase
     #[Test]
     public function aPlaceTheRowDoesNotHaveSelectsNothing(): void
     {
-        self::assertNull(RadioRow::new(['webp', 'avif'])->withSelected(0)->withSelected(5)->selectedIndex());
+        self::assertNull(RadioRow::new(['webp', 'avif'])->withSelectedIndex(0)->withSelectedIndex(5)->selectedIndex());
     }
 
     #[Test]
     public function clickingTheOptionAClearableRowHoldsPutsItBackDown(): void
     {
         $area = new Rect(0, 0, 40, 1);
-        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelected(0);
+        $row = RadioRow::new(['webp', 'avif', 'jxl'])->withClearable()->withSelectedIndex(0);
 
         $cleared = $row->update(
             new MouseMsg(1, 0, MouseAction::Press, MouseButton::Left),
@@ -157,7 +157,7 @@ final class RadioRowTest extends TestCase
         $row = RadioRow::new(['system', 'pages']);
 
         self::assertNull($row->selectedValue());
-        self::assertSame('pages', $row->withSelected(1)->selectedValue());
+        self::assertSame('pages', $row->withSelectedIndex(1)->selectedValue());
     }
 
     #[Test]

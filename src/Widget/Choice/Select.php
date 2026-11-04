@@ -73,7 +73,7 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         );
     }
 
-    public function withSelected(?int $selected): self
+    public function withSelectedIndex(?int $selected): self
     {
         return $this->cloneWith(selected: $selected !== null && isset($this->options[$selected]) ? $selected : null);
     }

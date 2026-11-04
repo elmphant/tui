@@ -162,7 +162,7 @@ final class StatusBarTest extends TestCase
         $bar->render($frame, Rect::fromSize(20, 1), $this->context);
 
         $theme = $this->context->theme;
-        $expectedBackground = $theme->dim->background(
+        $expectedBackground = $theme->dim->withBackground(
             $theme->selectedStyle->background ?? $theme->base->foreground ?? Color::ansi(0),
         )->backgroundValue();
 
@@ -234,7 +234,7 @@ final class StatusBarTest extends TestCase
 
         $barBackground = $theme->selectedStyle->background;
         self::assertNotNull($barBackground);
-        $expectedKeyBackground = $theme->accent->background($barBackground)->bold()->backgroundValue();
+        $expectedKeyBackground = $theme->accent->withBackground($barBackground)->bold()->backgroundValue();
         self::assertSame($expectedKeyBackground, $frame->backgrounds[1]);
     }
 
@@ -247,7 +247,7 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $context);
 
-        $expectedKeyBackground = $theme->accent->background(Color::ansi(0))->bold()->backgroundValue();
+        $expectedKeyBackground = $theme->accent->withBackground(Color::ansi(0))->bold()->backgroundValue();
         self::assertSame($expectedKeyBackground, $frame->backgrounds[1]);
     }
 
@@ -262,8 +262,8 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $context);
 
-        $ansi0Bg = $theme->accent->background(Color::ansi(0))->bold()->backgroundValue();
-        $ansi1Bg = $theme->accent->background(Color::ansi(1))->bold()->backgroundValue();
+        $ansi0Bg = $theme->accent->withBackground(Color::ansi(0))->bold()->backgroundValue();
+        $ansi1Bg = $theme->accent->withBackground(Color::ansi(1))->bold()->backgroundValue();
         self::assertSame($ansi0Bg, $frame->backgrounds[1]);
         self::assertNotSame($ansi1Bg, $frame->backgrounds[1]);
     }

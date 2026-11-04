@@ -285,7 +285,7 @@ final class IntrinsicWidthTest extends TestCase
         yield 'RadioRow' => [RadioRow::new(['yes', 'no'])];
         yield 'ChoiceField' => [ChoiceField::new(['a' => 'Alpha', 'b' => 'Beta'])];
         yield 'Dropdown' => [Dropdown::new(Select::new(['short', 'a much longer option']))];
-        yield 'Dropdown showing a selection' => [Dropdown::new(Select::new(['short', 'a much longer option'])->withSelected(1))];
+        yield 'Dropdown showing a selection' => [Dropdown::new(Select::new(['short', 'a much longer option'])->withSelectedIndex(1))];
         yield 'Container' => [Container::around(Text::new('a label'))];
         yield 'Themed' => [Themed::around(Text::new('a label'), static fn (Theme $theme): Theme => $theme)];
         yield 'StaticTable' => [StaticTable::new(['A', 'B'], [['1', '2']])];

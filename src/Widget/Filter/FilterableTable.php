@@ -151,7 +151,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
     {
         $chosen = array_search($this->selectedSource, $this->matchingIndexes(), true);
 
-        return $this->cloneWith(table: $this->table->withRows($this->matchingRows())->withSelected($chosen === false ? null : $chosen));
+        return $this->cloneWith(table: $this->table->withRows($this->matchingRows())->withSelectedIndex($chosen === false ? null : $chosen));
     }
 
     private function atTheTop(): self

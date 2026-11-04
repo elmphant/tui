@@ -84,11 +84,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function aTabPastTheLastOneSelectsTheLastAndTakesItsChildren(): void
     {
-        $bar = TabBar::new()->addTab('one')->addTab('two')->add(Text::line('old'))->withSelectedTab(5);
+        $bar = TabBar::new()->addTab('one')->addTab('two')->add(Text::line('old'))->withActiveTab(5);
 
         $grafted = $bar->withChildAt(0, Text::line('new'));
 
-        self::assertSame(1, $grafted->selectedTab());
+        self::assertSame(1, $grafted->activeTab());
         self::assertEquals([Text::line('new')], $grafted->children());
     }
 
@@ -169,7 +169,7 @@ final class TabBarTest extends TestCase
         $bar = TabBar::new()
             ->addTab('A')->add($this->createTrackableFocusable('a'))
             ->addTab('B')->add($this->createTrackableFocusable('b'))
-            ->withSelectedTab(1);
+            ->withActiveTab(1);
 
         self::assertCount(1, $bar->children(), 'The page the app chose is the page that publishes its children');
     }
@@ -305,7 +305,7 @@ final class TabBarTest extends TestCase
         $screen = $this->screenOfTabBar($tabBar, new Rect(0, 0, 40, 6), focused: true);
 
         self::assertStringNotContainsString('to switch', $screen, 'Half a pair is not offered as the switch hint');
-        self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), Rect::fromSize(40, 6))->model->selectedTab());
+        self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), Rect::fromSize(40, 6))->model->activeTab());
     }
 
     #[Test]
@@ -395,9 +395,9 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function selectedTabDefaultsToZero(): void
+    public function theFirstTabStartsActive(): void
     {
-        self::assertSame(0, TabBar::new()->selectedTab());
+        self::assertSame(0, TabBar::new()->activeTab());
     }
 
     #[Test]
@@ -423,7 +423,7 @@ final class TabBarTest extends TestCase
         $switched = $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15))->model;
 
         self::assertInstanceOf(TabBar::class, $switched);
-        self::assertSame(1, $switched->selectedTab());
+        self::assertSame(1, $switched->activeTab());
     }
 
     #[Test]
@@ -439,7 +439,7 @@ final class TabBarTest extends TestCase
     public function rightKeyAdvancesTab(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
-        self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15))->model->selectedTab());
+        self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
     #[Test]
@@ -448,14 +448,14 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 0, 40, 15);
         $at1 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
-        self::assertSame(0, $at1->update(new KeyMsg(Key::Left), $area)->model->selectedTab());
+        self::assertSame(0, $at1->update(new KeyMsg(Key::Left), $area)->model->activeTab());
     }
 
     #[Test]
     public function leftWrapsToLastTab(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two')->addTab('Three');
-        self::assertSame(2, $tabBar->update(new KeyMsg(Key::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
+        self::assertSame(2, $tabBar->update(new KeyMsg(Key::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
     #[Test]
@@ -464,7 +464,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $area = new Rect(0, 0, 40, 15);
         $at1 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
-        self::assertSame(0, $at1->update(new KeyMsg(Key::Right), $area)->model->selectedTab());
+        self::assertSame(0, $at1->update(new KeyMsg(Key::Right), $area)->model->activeTab());
     }
 
     #[Test]
@@ -493,7 +493,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()
             ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
             ->addTab('Two')->add(Text::new('Plain'));
-        self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 20))->model->selectedTab());
+        self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 20))->model->activeTab());
     }
 
     // ── Tab key ──
@@ -588,7 +588,7 @@ final class TabBarTest extends TestCase
     public function clickOnTabSwitchesToIt(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
-        self::assertSame(1, $tabBar->update(new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
+        self::assertSame(1, $tabBar->update(new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
     #[Test]
@@ -612,7 +612,7 @@ final class TabBarTest extends TestCase
 
         self::assertSame(
             1,
-            $tabBar->update(new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left), $area)->model->selectedTab(),
+            $tabBar->update(new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left), $area)->model->activeTab(),
             'The second tab is painted from x=7 onwards',
         );
     }
@@ -632,7 +632,7 @@ final class TabBarTest extends TestCase
 
             self::assertSame(
                 $index,
-                $tabBar->update(new MouseMsg($column, 1, MouseAction::Press, MouseButton::Left), $area)->model->selectedTab(),
+                $tabBar->update(new MouseMsg($column, 1, MouseAction::Press, MouseButton::Left), $area)->model->activeTab(),
                 sprintf('Column %d carries the label of tab %d', $column, $index),
             );
         }
@@ -642,14 +642,14 @@ final class TabBarTest extends TestCase
     public function clickOnTabAtYEqualsAreaY(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
-        self::assertSame(1, $tabBar->update(new MouseMsg(10, 0, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
+        self::assertSame(1, $tabBar->update(new MouseMsg(10, 0, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
     #[Test]
     public function clickOnTabAtYEqualsAreaYPlusTwoIsNotTabStrip(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
-        self::assertSame(0, $tabBar->update(new MouseMsg(10, 2, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
+        self::assertSame(0, $tabBar->update(new MouseMsg(10, 2, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
     #[Test]
@@ -670,14 +670,14 @@ final class TabBarTest extends TestCase
     public function clickAtExactTabBoundaryLeftOfSecondTab(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
-        self::assertSame(1, $tabBar->update(new MouseMsg(8, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
+        self::assertSame(1, $tabBar->update(new MouseMsg(8, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
     #[Test]
     public function clickAtLastCellOfFirstTab(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
-        self::assertSame(0, $tabBar->update(new MouseMsg(6, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->selectedTab());
+        self::assertSame(0, $tabBar->update(new MouseMsg(6, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15))->model->activeTab());
     }
 
     #[Test]
@@ -686,14 +686,14 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
         $tooNarrowForBoth = new Rect(0, 0, 13, 15);
 
-        self::assertSame(0, $tabBar->update(new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left), $tooNarrowForBoth)->model->selectedTab());
+        self::assertSame(0, $tabBar->update(new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left), $tooNarrowForBoth)->model->activeTab());
     }
 
     #[Test]
     public function clickOnTabWithAreaOffset(): void
     {
         $tabBar = TabBar::new()->addTab('One')->addTab('Two');
-        self::assertSame(1, $tabBar->update(new MouseMsg(14, 4, MouseAction::Press, MouseButton::Left), new Rect(5, 3, 40, 15))->model->selectedTab());
+        self::assertSame(1, $tabBar->update(new MouseMsg(14, 4, MouseAction::Press, MouseButton::Left), new Rect(5, 3, 40, 15))->model->activeTab());
     }
 
     // ── Mouse: Wheel scroll ──
@@ -734,7 +734,7 @@ final class TabBarTest extends TestCase
         $result = $tabBar->update(new MouseMsg(5, 5, MouseAction::WheelUp, MouseButton::None), new Rect(0, 0, 30, 10));
         // WheelUp at offset 0 is a no-op — with() elision returns $this
         self::assertSame($tabBar, $result->model);
-        self::assertSame(0, $result->model->selectedTab());
+        self::assertSame(0, $result->model->activeTab());
     }
 
     #[Test]
@@ -1838,7 +1838,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(10, 4, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(0, $result->model->selectedTab());
+        self::assertSame(0, $result->model->activeTab());
     }
 
     #[Test]
@@ -1850,7 +1850,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(10, 8, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(0, $result->model->selectedTab());
+        self::assertSame(0, $result->model->activeTab());
     }
 
     #[Test]
@@ -1862,7 +1862,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(10, 6, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(1, $result->model->selectedTab());
+        self::assertSame(1, $result->model->activeTab());
     }
 
     // ── L231: GreaterThan — wheel scroll only when content overflows ──
@@ -2016,7 +2016,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(8, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(1, $clickOnSecond->model->selectedTab());
+        self::assertSame(1, $clickOnSecond->model->activeTab());
     }
 
     #[Test]
@@ -2030,7 +2030,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(3, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(0, $clickOnFirst->model->selectedTab());
+        self::assertSame(0, $clickOnFirst->model->activeTab());
     }
 
     #[Test]
@@ -2046,7 +2046,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(1, $switched->model->selectedTab());
+        self::assertSame(1, $switched->model->activeTab());
         $frame = new Frame(40, 20);
         $switched->model->render($frame, $area, $this->context());
         self::assertSame('x', $frame->characters[3 * 40 + 1]);
@@ -2451,7 +2451,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left),
             new Rect(0, 0, 40, 15),
         );
-        self::assertSame(1, $result->model->selectedTab());
+        self::assertSame(1, $result->model->activeTab());
     }
 
     // ── switchTab: direction and modular arithmetic ──
@@ -2465,9 +2465,9 @@ final class TabBarTest extends TestCase
             ->addTab('C');
         $area = new Rect(0, 0, 40, 15);
         $forward = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
-        self::assertSame(1, $forward->selectedTab());
+        self::assertSame(1, $forward->activeTab());
         $back = $forward->update(new KeyMsg(Key::Left), $area)->model;
-        self::assertSame(0, $back->selectedTab());
+        self::assertSame(0, $back->activeTab());
     }
 
     #[Test]
@@ -2479,12 +2479,12 @@ final class TabBarTest extends TestCase
             ->addTab('C');
         $area = new Rect(0, 0, 40, 15);
         $wrapLeft = $tabBar->update(new KeyMsg(Key::Left), $area)->model;
-        self::assertSame(2, $wrapLeft->selectedTab());
+        self::assertSame(2, $wrapLeft->activeTab());
         $rightTwice = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $rightTwice = $rightTwice->update(new KeyMsg(Key::Right), $area)->model;
-        self::assertSame(2, $rightTwice->selectedTab());
+        self::assertSame(2, $rightTwice->activeTab());
         $wrapRight = $rightTwice->update(new KeyMsg(Key::Right), $area)->model;
-        self::assertSame(0, $wrapRight->selectedTab());
+        self::assertSame(0, $wrapRight->activeTab());
     }
 
     // ── handleScroll: maxOffset boundary conditions ──
@@ -2527,7 +2527,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(10, 5, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(1, $result->model->selectedTab());
+        self::assertSame(1, $result->model->activeTab());
     }
 
     #[Test]
@@ -2539,7 +2539,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(10, 6, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(1, $result->model->selectedTab());
+        self::assertSame(1, $result->model->activeTab());
     }
 
     #[Test]
@@ -2551,7 +2551,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(10, 1, MouseAction::Motion, MouseButton::None),
             $area,
         );
-        self::assertSame(0, $result->model->selectedTab());
+        self::assertSame(0, $result->model->activeTab());
     }
 
     // ── handleMouse: wheel up/down maxOffset math ──
@@ -2602,12 +2602,12 @@ final class TabBarTest extends TestCase
             new MouseMsg(7, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(1, $clickOnSecond->model->selectedTab());
+        self::assertSame(1, $clickOnSecond->model->activeTab());
         $clickOnFirst = $tabBar->update(
             new MouseMsg(5, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(0, $clickOnFirst->model->selectedTab());
+        self::assertSame(0, $clickOnFirst->model->activeTab());
     }
 
     // ── handleTabClick: tabX advances past inactive tabs ──
@@ -2624,7 +2624,7 @@ final class TabBarTest extends TestCase
             new MouseMsg(13, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(2, $clickOnThird->model->selectedTab());
+        self::assertSame(2, $clickOnThird->model->activeTab());
     }
 
     #[Test]
@@ -2746,12 +2746,12 @@ final class TabBarTest extends TestCase
             new MouseMsg(6, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(1, $clickOnSecond->model->selectedTab());
+        self::assertSame(1, $clickOnSecond->model->activeTab());
         $clickOnThird = $tabBar->update(
             new MouseMsg(12, 1, MouseAction::Press, MouseButton::Left),
             $area,
         );
-        self::assertSame(2, $clickOnThird->model->selectedTab());
+        self::assertSame(2, $clickOnThird->model->activeTab());
     }
 
     // ── handleTabClick: click inside first tab returns self ──
@@ -2862,14 +2862,14 @@ final class TabBarTest extends TestCase
         $widget = TabBar::new()->addTab('One')->addTab('Two');
 
         $afterDefault = $widget->update(new KeyMsg(Key::Right), $area)->model;
-        $activeAfterDefault = $afterDefault->selectedTab();
+        $activeAfterDefault = $afterDefault->activeTab();
         self::assertSame(1, $activeAfterDefault);
 
         $custom = $widget->withKeybindings(new Keybindings([Actions::TAB_NEXT => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Right), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
-        $activeAfterCustom = $afterCustom->selectedTab();
+        $activeAfterCustom = $afterCustom->activeTab();
         self::assertSame(1, $activeAfterCustom);
     }
 
@@ -2878,17 +2878,17 @@ final class TabBarTest extends TestCase
     {
         $area = Rect::fromSize(40, 10);
         $widget = TabBar::new()->addTab('One')->addTab('Two');
-        $widget = $widget->withSelectedTab(1);
+        $widget = $widget->withActiveTab(1);
 
         $afterDefault = $widget->update(new KeyMsg(Key::Left), $area)->model;
-        $activeAfterDefault = $afterDefault->selectedTab();
+        $activeAfterDefault = $afterDefault->activeTab();
         self::assertSame(0, $activeAfterDefault);
 
         $custom = $widget->withKeybindings(new Keybindings([Actions::TAB_PREVIOUS => ['x']]));
         self::assertSame($custom, $custom->update(new KeyMsg(Key::Left), $area)->model);
 
         $afterCustom = $custom->update(new KeyMsg('x'), $area)->model;
-        $activeAfterCustom = $afterCustom->selectedTab();
+        $activeAfterCustom = $afterCustom->activeTab();
         self::assertSame(0, $activeAfterCustom);
     }
 
@@ -3098,7 +3098,7 @@ final class TabBarTest extends TestCase
 
         $result = $tabBar->update(new KeyMsg('x'), $area)->model;
 
-        self::assertSame(3, $this->selectedTabScrollOffset($result, 4), 'A cursor that stays visible must not move the scroll offset');
+        self::assertSame(3, $this->activeTabScrollOffset($result, 4), 'A cursor that stays visible must not move the scroll offset');
     }
 
     #[Test]
@@ -3110,7 +3110,7 @@ final class TabBarTest extends TestCase
 
         $result = $tabBar->update(new KeyMsg('x'), $area)->model;
 
-        self::assertSame(0, $this->selectedTabScrollOffset($result, 0), 'With no visible content rows there is nothing to scroll into view');
+        self::assertSame(0, $this->activeTabScrollOffset($result, 0), 'With no visible content rows there is nothing to scroll into view');
     }
 
     #[Test]
@@ -3120,7 +3120,7 @@ final class TabBarTest extends TestCase
         $tabBar = TabBar::new()->addTab('A')->addTab('B');
 
         self::assertSame('│', mb_substr($this->baselineRow($tabBar, $width), 0, 1), 'The active first tab leaves its left edge open');
-        self::assertSame('╭', mb_substr($this->baselineRow($tabBar->withSelectedTab(1), $width), 0, 1), 'An inactive first tab is closed off');
+        self::assertSame('╭', mb_substr($this->baselineRow($tabBar->withActiveTab(1), $width), 0, 1), 'An inactive first tab is closed off');
         self::assertSame('╮', mb_substr($this->baselineRow($tabBar, $width), $width - 1, 1), 'The baseline turns down at the right');
     }
 
@@ -3148,7 +3148,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function theTabBarKeepsThePageItWasShowing(): void
     {
-        $bar = TabBar::new()->addTab('Alpha')->addTab('Beta')->addTab('Gamma')->withSelectedTab(2);
+        $bar = TabBar::new()->addTab('Alpha')->addTab('Beta')->addTab('Gamma')->withActiveTab(2);
 
         $grown = $bar->withTabs([
             new TabPage('Zulu'),
@@ -3156,17 +3156,17 @@ final class TabBarTest extends TestCase
             new TabPage('Beta'),
             new TabPage('Gamma'),
         ]);
-        self::assertSame(3, $grown->selectedTab(), 'Gamma moved along, and the reader with it');
+        self::assertSame(3, $grown->activeTab(), 'Gamma moved along, and the reader with it');
 
         $shrunk = $bar->withTabs([new TabPage('Alpha'), new TabPage('Beta')]);
-        self::assertSame(1, $shrunk->selectedTab(), 'Gamma is gone, so its neighbour shows');
+        self::assertSame(1, $shrunk->activeTab(), 'Gamma is gone, so its neighbour shows');
     }
 
     #[Test]
     public function aHostReadsAPageThatIsNotShowing(): void
     {
         $list = ListView::fromStrings(['a', 'b', 'c'])->withCursor(2);
-        $bar = TabBar::new()->addTab('Inbox')->add($list)->addTab('Work')->withSelectedTab(1);
+        $bar = TabBar::new()->addTab('Inbox')->add($list)->addTab('Work')->withActiveTab(1);
 
         self::assertSame([$list], [...$bar->tabs()[0]->pane->children()]);
     }
@@ -3174,11 +3174,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function aKeyedTabStaysSelectedWhenItsLabelChanges(): void
     {
-        $bar = TabBar::new()->withTabs([new TabPage('Inbox', key: 'inbox'), new TabPage('Work (1)', key: 'work')])->withSelectedTab(1);
+        $bar = TabBar::new()->withTabs([new TabPage('Inbox', key: 'inbox'), new TabPage('Work (1)', key: 'work')])->withActiveTab(1);
 
         $relabelled = $bar->withTabs([new TabPage('Inbox', key: 'inbox'), new TabPage('Work (2)', key: 'work')]);
 
-        self::assertSame(1, $relabelled->selectedTab());
+        self::assertSame(1, $relabelled->activeTab());
     }
 
     #[Test]
@@ -3480,9 +3480,9 @@ final class TabBarTest extends TestCase
         };
     }
 
-    private function selectedTabScrollOffset(TabBar $tabBar, int $viewportRows): int
+    private function activeTabScrollOffset(TabBar $tabBar, int $viewportRows): int
     {
-        return $tabBar->tabs()[$tabBar->selectedTab()]->pane->scrollOffset(new Rect(0, 0, 38, $viewportRows));
+        return $tabBar->tabs()[$tabBar->activeTab()]->pane->scrollOffset(new Rect(0, 0, 38, $viewportRows));
     }
 }
 

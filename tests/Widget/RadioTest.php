@@ -46,13 +46,13 @@ final class RadioTest extends TestCase
     #[Test]
     public function aPlainRadioHoldsTheFirstOptionWhenToldToHoldNothing(): void
     {
-        $radio = Radio::new(['a', 'b', 'c'])->withSelected(1);
+        $radio = Radio::new(['a', 'b', 'c'])->withSelectedIndex(1);
 
         self::assertSame(
             [0, 0, 0, 0],
             [
-                $radio->withSelected(null)->selectedIndex(),
-                $radio->withSelected(5)->selectedIndex(),
+                $radio->withSelectedIndex(null)->selectedIndex(),
+                $radio->withSelectedIndex(5)->selectedIndex(),
                 $radio->withSelectedValue(null)->selectedIndex(),
                 $radio->withSelectedValue('nope')->selectedIndex(),
             ],
@@ -62,13 +62,13 @@ final class RadioTest extends TestCase
     #[Test]
     public function aClearableRadioHoldsNothingWhenToldToHoldNothing(): void
     {
-        $radio = Radio::new(['a', 'b', 'c'])->withClearable()->withSelected(1);
+        $radio = Radio::new(['a', 'b', 'c'])->withClearable()->withSelectedIndex(1);
 
         self::assertSame(
             [null, null, null, null],
             [
-                $radio->withSelected(null)->selectedIndex(),
-                $radio->withSelected(5)->selectedIndex(),
+                $radio->withSelectedIndex(null)->selectedIndex(),
+                $radio->withSelectedIndex(5)->selectedIndex(),
                 $radio->withSelectedValue(null)->selectedIndex(),
                 $radio->withSelectedValue('nope')->selectedIndex(),
             ],
@@ -78,7 +78,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function aClearableRadioWhoseOptionLeavesHoldsNothing(): void
     {
-        $radio = Radio::new(['a', 'b', 'c', 'd'])->withClearable()->withSelected(2);
+        $radio = Radio::new(['a', 'b', 'c', 'd'])->withClearable()->withSelectedIndex(2);
 
         self::assertNull($radio->withOptions(['a', 'b', 'd'])->selectedIndex());
     }
@@ -86,7 +86,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function aClearedRadioStaysClearedWhenItsOptionsReload(): void
     {
-        $radio = Radio::new(['a', 'b'])->withClearable()->withSelected(null);
+        $radio = Radio::new(['a', 'b'])->withClearable()->withSelectedIndex(null);
 
         self::assertNull($radio->withOptions(['z', 'a', 'b'])->selectedIndex());
     }
@@ -94,7 +94,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function aRadioThatStopsBeingClearableHoldsTheFirstOption(): void
     {
-        $radio = Radio::new(['a', 'b'])->withClearable()->withSelected(null);
+        $radio = Radio::new(['a', 'b'])->withClearable()->withSelectedIndex(null);
 
         self::assertSame(0, $radio->withClearable(false)->selectedIndex());
     }
@@ -146,7 +146,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function activatingThePickedOptionOfAClearableRadioPutsItBackDown(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'])->withClearable()->withSelected(0);
+        $radio = Radio::new(['A', 'B', 'C'])->withClearable()->withSelectedIndex(0);
 
         self::assertNull($radio->activated('A')->selectedIndex(), 'a pointer pick must clear what a key press clears');
     }
@@ -352,7 +352,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function aClearableRadioLetsThePickedOptionBePutBackDown(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withClearable()->withSelected(0);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withClearable()->withSelectedIndex(0);
         $area = Rect::fromSize(40, 10);
 
         $cleared = $radio->update(new KeyMsg(' '), $area)->model;
@@ -363,7 +363,7 @@ final class RadioTest extends TestCase
     #[Test]
     public function clickingTheOptionAClearableRadioHoldsPutsItBackDown(): void
     {
-        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withClearable()->withSelected(1);
+        $radio = Radio::new(['A', 'B', 'C'], 'Label')->withClearable()->withSelectedIndex(1);
         $area = new Rect(0, 5, 40, 8);
 
         $cleared = $radio->update(new MouseMsg(5, 8, MouseAction::Press, MouseButton::Left), $area)->model;

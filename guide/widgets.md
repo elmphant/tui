@@ -106,14 +106,14 @@ use Elmphant\Tui\Widget\Form\{Field, Form, ShowErrors};
 final readonly class CreateUser implements Message {}
 
 $form = Form::new('Create backend user')
-    ->withField(Field::text('username', 'Username', 'The login name')->required())
-    ->withField(Field::text('password', 'Password')->secret())
+    ->withField(Field::text('username', 'Username', 'The login name')->withRequired())
+    ->withField(Field::text('password', 'Password')->withSecret())
     ->withField(Field::choice('site', 'Site', ['main' => 'Main website', 'shop' => 'Shop']))
     ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
     ->withFoot('❯ backend:user:create')
     ->withSubmit('Run', new CreateUser());
 
-$tried = $form->submitted();                          // from now on, problems show under their fields
+$tried = $form->withSubmitAttempted();                         // from now on, problems show under their fields
 $tried->missing();                                    // ['username']
 $tried->stopOf('username', ComponentId::named('form')); // where Cmd::focus() sends the keyboard
 $form->values();                                      // ['username' => '', 'password' => '', 'site' => null, 'admin' => false]
@@ -130,7 +130,7 @@ Bind it like any widget and handle the submit message in `onMessage()`.
 - `Field::choice()` shows a row of options where they fit and a filterable list
   where they don't. `Field::of()` takes any widget that implements `HoldsAValue`.
 
-`required()` is one check. `withRule()` adds your own: it gets the value and
+`withRequired()` is one check. `withRule()` adds your own: it gets the value and
 returns a problem to show, or `null`. The first problem wins, and an empty field
 is not checked:
 
@@ -188,7 +188,7 @@ final readonly class Notes extends App
         }
 
         return new UpdateResult($this->cloneWith(editor: Form::new('New note')
-            ->withField(Field::text('title', 'Title')->required())
+            ->withField(Field::text('title', 'Title')->withRequired())
             ->withSubmit('Save', new NoteSaved())));
     }
 
@@ -199,7 +199,7 @@ final readonly class Notes extends App
             $message instanceof NoteSaved && $this->editor?->problems() === [] => new UpdateResult(
                 $this->cloneWith(notes: [...$this->notes, (string)$this->editor->values()['title']], editor: null),
             ),
-            $message instanceof NoteSaved => new UpdateResult($this->cloneWith(editor: $this->editor?->submitted())),
+            $message instanceof NoteSaved => new UpdateResult($this->cloneWith(editor: $this->editor?->withSubmitAttempted())),
             default => UpdateResult::ignored($this),
         };
     }

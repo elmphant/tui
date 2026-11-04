@@ -141,7 +141,7 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Follow
         return $this->cloneWith(errorsShown: $shown);
     }
 
-    public function submitted(): self
+    public function withSubmitAttempted(): self
     {
         return $this->cloneWith(attempted: true);
     }
