@@ -49,7 +49,7 @@ final class NamedMountTest extends TestCase
     {
         $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->init();
 
-        self::assertStringContainsString('lit', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('lit', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -57,7 +57,7 @@ final class NamedMountTest extends TestCase
     {
         $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(namer: true)), 40, 6)->init();
 
-        self::assertStringContainsString('focused: field', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('focused: field', $harness->screen()->plainText());
     }
 
     #[Test]

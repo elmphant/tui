@@ -16,7 +16,7 @@ $app = ModelHarness::for(new Counter(), width: 40, height: 5)->press('k');
 
 self::assertSame(
     'Count: 1',
-    $app->renderScreen()->textAt(0, 0, 8),
+    $app->screen()->textAt(0, 0, 8),
 );
 self::assertNull($app->lastCommand());
 
@@ -50,7 +50,7 @@ Answering a command the app never started throws, so a wrong guess in the test
 shows up at once. So does `type()` while no component holds the keyboard and a
 field on screen was never passed to `Component::bind()`.
 
-More: `initialize()` runs `setup()`, `resize()` changes the screen size,
+More: `init()` runs `setup()`, `resize()` changes the screen size,
 `model()` returns the app for typed checks, `renderFrame()` gives the cells
 when colours matter, and `printed()` lists every line `Cmd::println()` printed.
 
@@ -88,7 +88,7 @@ $screen = ScreenBuffer::fromFrame($frame);
 $screen->find('Run');     // ['row' => 1, 'column' => 4], in display columns
 $screen->find('Run', 1);  // the second match, or null
 $screen->find('Run', within: new Rect(10, 0, 10, 2));   // only matches starting in that area
-$screen->locate('Run');   // like find(), but throws '"Run" is not on screen'
+$screen->findOrFail('Run');   // like find(), but throws '"Run" is not on screen'
 $screen->rowOf('Run');    // 1
 $screen->lineAt(1);       // one row as text, the full width
 $screen->plainText();     // every row without trailing blanks, joined by newlines
@@ -103,7 +103,7 @@ as one of these: it would replace the helper and call itself forever.
 ## Calling `update()` yourself
 
 `UserInput` builds the messages: `UserInput::key('shift+tab')`,
-`UserInput::typed('ok')`, `UserInput::click($column, $row)`,
+`UserInput::typed('ok')`, `UserInput::press($column, $row)`,
 `UserInput::drag($column, $row)`, `UserInput::release($column, $row)` and
 `UserInput::paste('text')`. `Issued::in($result->command, ExecCmd::class)` takes
 apart the command you got back.
@@ -137,5 +137,5 @@ self::assertSame(0.0, $tracer->totalOf(TraceEvent::Render, 'blockedMs'));
 ```
 
 For ANSI output, raw input bytes or terminal features, use `VirtualTerminal`.
-For larger snapshots, `GoldenScreen::assertMatchesSnapshot($name, $harness->renderScreen(), $dir)`
+For larger snapshots, `GoldenScreen::assertMatchesSnapshot($name, $harness->screen(), $dir)`
 compares the screen with a file. The first run writes the file.

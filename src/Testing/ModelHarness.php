@@ -374,7 +374,7 @@ final class ModelHarness
      */
     public function click(string $text, int $nth = 0, int $offset = 0): self
     {
-        ['row' => $row, 'column' => $column] = $this->renderScreen()->locate($text, $nth);
+        ['row' => $row, 'column' => $column] = $this->screen()->findOrFail($text, $nth);
 
         return $this->clickAt($column + $offset, $row);
     }
@@ -390,7 +390,7 @@ final class ModelHarness
         ++$this->depth;
 
         try {
-            return $this->dispatch(UserInput::click($column, $row))->dispatch(UserInput::release($column, $row));
+            return $this->dispatch(UserInput::press($column, $row))->dispatch(UserInput::release($column, $row));
         } finally {
             --$this->depth;
         }
@@ -405,7 +405,7 @@ final class ModelHarness
         ++$this->depth;
 
         try {
-            return $this->dispatch(UserInput::click($fromColumn, $fromRow))
+            return $this->dispatch(UserInput::press($fromColumn, $fromRow))
                 ->dispatch(UserInput::drag($toColumn, $toRow))
                 ->dispatch(UserInput::release($toColumn, $toRow));
         } finally {
@@ -426,7 +426,7 @@ final class ModelHarness
      */
     public function wheel(string $text, int $notches): self
     {
-        ['row' => $row, 'column' => $column] = $this->renderScreen()->locate($text);
+        ['row' => $row, 'column' => $column] = $this->screen()->findOrFail($text);
 
         return $this->dispatch(UserInput::wheel($column, $row, $notches));
     }
@@ -539,7 +539,7 @@ final class ModelHarness
         return $this->pass->floats->placements();
     }
 
-    public function renderScreen(): ScreenBuffer
+    public function screen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
     }

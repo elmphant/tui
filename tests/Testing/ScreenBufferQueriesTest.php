@@ -79,11 +79,11 @@ final class ScreenBufferQueriesTest extends TestCase
         $frame->putString(4, 1, 'Run');
         $screen = ScreenBuffer::fromFrame($frame);
 
-        self::assertSame(['row' => 1, 'column' => 4], $screen->locate('Run'));
+        self::assertSame(['row' => 1, 'column' => 4], $screen->findOrFail('Run'));
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('"Stop" is not on screen');
-        $screen->locate('Stop');
+        $screen->findOrFail('Stop');
     }
 
     #[Test]

@@ -44,7 +44,7 @@ final class MountedSubModelTest extends TestCase
     {
         $harness = ModelHarness::for(new MountingApp(new MountedPanel(TextInput::new()->withValue('mounted'))), 20, 1);
 
-        self::assertStringContainsString('mounted', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('mounted', $harness->screen()->plainText());
     }
 
     #[Test]

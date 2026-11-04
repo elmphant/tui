@@ -69,11 +69,11 @@ final class GraftedChildRoutingTest extends TestCase
         foreach (range(1, 3) as $ignored) {
             $harness->dispatch(new MouseMsg(5, 2, MouseAction::WheelDown, MouseButton::None));
         }
-        self::assertStringNotContainsString('f0', $harness->renderScreen()->plainText(), 'precondition: the field is off screen');
+        self::assertStringNotContainsString('f0', $harness->screen()->plainText(), 'precondition: the field is off screen');
 
         $harness->dispatch(new KeyMsg('x'));
 
-        self::assertStringContainsString('f0x', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('f0x', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -83,7 +83,7 @@ final class GraftedChildRoutingTest extends TestCase
 
         $harness->dispatch(new TickMsg(0.0));
 
-        self::assertStringContainsString('row10', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('row10', $harness->screen()->plainText());
     }
 }
 

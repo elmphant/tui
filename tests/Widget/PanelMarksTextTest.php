@@ -37,7 +37,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $copied = self::copiedBy(
             self::panelOfLines(20),
-            UserInput::click(1, 1),
+            UserInput::press(1, 1),
             UserInput::drag(3, 2),
             UserInput::release(3, 2),
         );
@@ -54,7 +54,7 @@ final class PanelMarksTextTest extends TestCase
             static fn (ClipboardCmd $copy): string => $copy->text,
             $driven->issued(ClipboardCmd::class),
         ));
-        self::assertNotSame(0, $driven->renderScreen()->styleAt(3, 2)->attributes & Attr::REVERSE);
+        self::assertNotSame(0, $driven->screen()->styleAt(3, 2)->attributes & Attr::REVERSE);
     }
 
     #[Test]
@@ -73,7 +73,7 @@ final class PanelMarksTextTest extends TestCase
         $copied = null;
         $marked = null;
 
-        foreach ([UserInput::click(1, 1), UserInput::drag(5, 2), UserInput::release(5, 2)] as $message) {
+        foreach ([UserInput::press(1, 1), UserInput::drag(5, 2), UserInput::release(5, 2)] as $message) {
             $result = self::panelOfLines(20)->withMarked($marked)->update($message, self::area());
             $marked = $result->model->marked();
             $copied = self::clipboardText($result->command) ?? $copied;
@@ -85,7 +85,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function theMarkedCellsAreDrawnReversed(): void
     {
-        $panel = self::driven(self::panelOfLines(20), UserInput::click(2, 1), UserInput::drag(4, 1));
+        $panel = self::driven(self::panelOfLines(20), UserInput::press(2, 1), UserInput::drag(4, 1));
 
         $screen = self::screenOf($panel);
 
@@ -98,7 +98,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function aClickWithoutADragCopiesNothingAndMarksNothing(): void
     {
-        $messages = [UserInput::click(2, 1), UserInput::release(2, 1)];
+        $messages = [UserInput::press(2, 1), UserInput::release(2, 1)];
 
         self::assertNull(self::copiedBy(self::panelOfLines(20), ...$messages));
         self::assertSame(0, self::screenOf(self::driven(self::panelOfLines(20), ...$messages))->styleAt(2, 1)->attributes & Attr::REVERSE);
@@ -109,7 +109,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $copied = self::copiedBy(
             self::panelOfLines(20),
-            UserInput::click(1, 1),
+            UserInput::press(1, 1),
             UserInput::wheel(3, 3, 10),
             UserInput::drag(7, 1),
             UserInput::release(7, 1),
@@ -123,7 +123,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $copied = self::copiedBy(
             self::panelOfLines(20),
-            UserInput::click(1, 1),
+            UserInput::press(1, 1),
             UserInput::drag(9, 7),
             UserInput::release(9, 7),
         );
@@ -137,7 +137,7 @@ final class PanelMarksTextTest extends TestCase
         $copied = self::copiedBy(
             self::panelOfLines(20),
             UserInput::wheel(3, 3, 5),
-            UserInput::click(5, 6),
+            UserInput::press(5, 6),
             UserInput::drag(1, 0),
             UserInput::release(1, 0),
         );
@@ -150,7 +150,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $panel = Panel::new('log')->withChildren([Text::new('line0'), FilterableStaticTable::new(['Name'], [['a']])]);
 
-        self::assertSame('line0', self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(9, 1), UserInput::release(9, 1)));
+        self::assertSame('line0', self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(9, 1), UserInput::release(9, 1)));
     }
 
     #[Test]
@@ -159,16 +159,16 @@ final class PanelMarksTextTest extends TestCase
         $form = Panel::new('form')->withChildren([Text::new('intro'), TextInput::new()]);
         $driven = ModelHarness::for(new MarkingLogApp($form), 30, 10)->init()->clickAt(3, 2)->type('ab');
 
-        self::assertStringContainsString('ab', $driven->renderScreen()->lineAt(2));
-        self::assertSame(0, $driven->renderScreen()->styleAt(3, 2)->attributes & Attr::REVERSE);
+        self::assertStringContainsString('ab', $driven->screen()->lineAt(2));
+        self::assertSame(0, $driven->screen()->styleAt(3, 2)->attributes & Attr::REVERSE);
     }
 
     #[Test]
     public function aPressOutsideThePaneClearsTheMark(): void
     {
-        $marked = self::driven(self::panelOfLines(20), UserInput::click(1, 1), UserInput::drag(5, 1), UserInput::release(5, 1));
+        $marked = self::driven(self::panelOfLines(20), UserInput::press(1, 1), UserInput::drag(5, 1), UserInput::release(5, 1));
 
-        $elsewhere = self::driven($marked, UserInput::click(30, 3));
+        $elsewhere = self::driven($marked, UserInput::press(30, 3));
 
         self::assertSame(0, self::screenOf($elsewhere)->styleAt(2, 1)->attributes & Attr::REVERSE);
     }
@@ -176,7 +176,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function aMarkIsDroppedOnceThePaneIsDrawnAtAnotherWidth(): void
     {
-        $marked = self::driven(self::panelOfLines(20), UserInput::click(1, 1), UserInput::drag(5, 1), UserInput::release(5, 1));
+        $marked = self::driven(self::panelOfLines(20), UserInput::press(1, 1), UserInput::drag(5, 1), UserInput::release(5, 1));
 
         $frame = new Frame(30, 8);
         $marked->render($frame, new Rect(0, 0, 30, 8), RenderContext::unfocused(Theme::dark()));
@@ -189,7 +189,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $following = self::panelOfLines(20)->withFollowingTheEnd();
         preg_match('/line\d+/', self::screenOf($following)->lineAt(1), $underThePress);
-        $pressed = self::driven($following, UserInput::click(1, 1));
+        $pressed = self::driven($following, UserInput::press(1, 1));
         $grown = $pressed->add(Text::new('line20'))->add(Text::new('line21'));
 
         $copied = self::copiedBy($grown, UserInput::drag(9, 1), UserInput::release(9, 1));
@@ -200,7 +200,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function aClickInAPaneFollowingTheEndKeepsItFollowing(): void
     {
-        $clicked = self::driven(self::panelOfLines(20)->withFollowingTheEnd(), UserInput::click(1, 1), UserInput::release(1, 1));
+        $clicked = self::driven(self::panelOfLines(20)->withFollowingTheEnd(), UserInput::press(1, 1), UserInput::release(1, 1));
 
         self::assertTrue($clicked->add(Text::new('line20'))->followsTheEnd());
     }
@@ -208,14 +208,14 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function draggingUpCopiesTheSameRowsAsDraggingDown(): void
     {
-        self::assertSame("line0\nline1", self::copiedBy(self::panelOfLines(20), UserInput::click(5, 2), UserInput::drag(1, 1), UserInput::release(1, 1)));
+        self::assertSame("line0\nline1", self::copiedBy(self::panelOfLines(20), UserInput::press(5, 2), UserInput::drag(1, 1), UserInput::release(1, 1)));
     }
 
     #[Test]
     public function draggingLeftAlongARowCopiesTheSameCellsAsDraggingRight(): void
     {
-        $left = self::copiedBy(self::panelOfLines(20), UserInput::click(5, 1), UserInput::drag(2, 1), UserInput::release(2, 1));
-        $right = self::copiedBy(self::panelOfLines(20), UserInput::click(2, 1), UserInput::drag(5, 1), UserInput::release(5, 1));
+        $left = self::copiedBy(self::panelOfLines(20), UserInput::press(5, 1), UserInput::drag(2, 1), UserInput::release(2, 1));
+        $right = self::copiedBy(self::panelOfLines(20), UserInput::press(2, 1), UserInput::drag(5, 1), UserInput::release(5, 1));
 
         self::assertSame(['ine0', 'ine0'], [$left, $right]);
     }
@@ -223,7 +223,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function draggingPastTheLeftEdgeStartsAtTheFirstColumn(): void
     {
-        self::assertSame("line0\nline1", self::copiedBy(self::panelOfLines(20), UserInput::click(5, 2), UserInput::drag(0, 1), UserInput::release(0, 1)));
+        self::assertSame("line0\nline1", self::copiedBy(self::panelOfLines(20), UserInput::press(5, 2), UserInput::drag(0, 1), UserInput::release(0, 1)));
     }
 
     #[Test]
@@ -231,8 +231,8 @@ final class PanelMarksTextTest extends TestCase
     {
         $panel = Panel::new('log')->withChildren([Text::new('abcdefghijklmnopqr'), Text::new('stuvwxyz')]);
 
-        self::assertSame("abcdefghijklmnopqr\nstuvwxyz", self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(40, 2), UserInput::release(40, 2)));
-        self::assertSame('abcdefghijklmnopqr', self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(40, 1), UserInput::release(40, 1)));
+        self::assertSame("abcdefghijklmnopqr\nstuvwxyz", self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(40, 2), UserInput::release(40, 2)));
+        self::assertSame('abcdefghijklmnopqr', self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(40, 1), UserInput::release(40, 1)));
     }
 
     #[Test]
@@ -246,7 +246,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function aPressBelowTheTextStartsAtTheEndOfTheLastRow(): void
     {
-        self::assertSame("line0\nline1", self::copiedBy(self::panelOfLines(2), UserInput::click(9, 6), UserInput::drag(1, 1), UserInput::release(1, 1)));
+        self::assertSame("line0\nline1", self::copiedBy(self::panelOfLines(2), UserInput::press(9, 6), UserInput::drag(1, 1), UserInput::release(1, 1)));
     }
 
     #[Test]
@@ -254,7 +254,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $panel = self::panelOfLines(20)->withPadding(Spacing::all(1));
 
-        self::assertSame("line0\nline1", self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(9, 3), UserInput::release(9, 3)));
+        self::assertSame("line0\nline1", self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(9, 3), UserInput::release(9, 3)));
     }
 
     #[Test]
@@ -262,25 +262,25 @@ final class PanelMarksTextTest extends TestCase
     {
         $panel = Panel::new('log')->withChildren([Text::new('abcdefghijklmnop')])->withPadding(Spacing::all(1));
 
-        self::assertSame('abcdefghijklmnop', self::copiedBy($panel, UserInput::click(18, 2), UserInput::drag(2, 2), UserInput::release(2, 2)));
+        self::assertSame('abcdefghijklmnop', self::copiedBy($panel, UserInput::press(18, 2), UserInput::drag(2, 2), UserInput::release(2, 2)));
     }
 
     #[Test]
     public function aPressBelowASingleRowStartsOnThatRow(): void
     {
-        self::assertSame('line0', self::copiedBy(self::panelOfLines(1), UserInput::click(9, 5), UserInput::drag(1, 1), UserInput::release(1, 1)));
+        self::assertSame('line0', self::copiedBy(self::panelOfLines(1), UserInput::press(9, 5), UserInput::drag(1, 1), UserInput::release(1, 1)));
     }
 
     #[Test]
     public function draggingBelowTheTextCopiesNoEmptyLines(): void
     {
-        self::assertSame("line0\nline1", self::copiedBy(self::panelOfLines(2), UserInput::click(1, 1), UserInput::drag(9, 6), UserInput::release(9, 6)));
+        self::assertSame("line0\nline1", self::copiedBy(self::panelOfLines(2), UserInput::press(1, 1), UserInput::drag(9, 6), UserInput::release(9, 6)));
     }
 
     #[Test]
     public function aMarkInAScrolledPaneIsDrawnOnTheRowsItCovers(): void
     {
-        $panel = self::driven(self::panelOfLines(20), UserInput::wheel(3, 3, 5), UserInput::click(2, 2), UserInput::drag(4, 2));
+        $panel = self::driven(self::panelOfLines(20), UserInput::wheel(3, 3, 5), UserInput::press(2, 2), UserInput::drag(4, 2));
 
         self::assertNotSame(0, self::screenOf($panel)->styleAt(3, 2)->attributes & Attr::REVERSE);
     }
@@ -288,7 +288,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function aDragAfterTheReleaseLeavesTheMarkAlone(): void
     {
-        $panel = self::driven(self::panelOfLines(20), UserInput::click(1, 1), UserInput::drag(5, 1), UserInput::release(5, 1), UserInput::drag(5, 3));
+        $panel = self::driven(self::panelOfLines(20), UserInput::press(1, 1), UserInput::drag(5, 1), UserInput::release(5, 1), UserInput::drag(5, 3));
 
         self::assertSame(0, self::screenOf($panel)->styleAt(2, 3)->attributes & Attr::REVERSE);
     }
@@ -298,7 +298,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $scrolledUp = self::driven(self::panelOfLines(20)->withFollowingTheEnd(), UserInput::wheel(3, 3, -2));
 
-        $clicked = self::driven($scrolledUp, UserInput::click(1, 1), UserInput::release(1, 1));
+        $clicked = self::driven($scrolledUp, UserInput::press(1, 1), UserInput::release(1, 1));
 
         self::assertFalse($clicked->add(Text::new('line20'))->followsTheEnd());
     }
@@ -311,7 +311,7 @@ final class PanelMarksTextTest extends TestCase
             Paragraph::fromText('next line'),
         ]);
 
-        self::assertSame("alpha beta gamma delta epsilon zeta\nnext line", self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(18, 4), UserInput::release(18, 4)));
+        self::assertSame("alpha beta gamma delta epsilon zeta\nnext line", self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(18, 4), UserInput::release(18, 4)));
     }
 
     #[Test]
@@ -320,7 +320,7 @@ final class PanelMarksTextTest extends TestCase
         $text = 'alpha beta gamma delta epsilon zeta eta theta';
         $panel = Panel::new('log')->withChildren([Paragraph::fromText($text)]);
 
-        self::assertSame($text, self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(18, 3), UserInput::release(18, 3)));
+        self::assertSame($text, self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(18, 3), UserInput::release(18, 3)));
     }
 
     #[Test]
@@ -329,7 +329,7 @@ final class PanelMarksTextTest extends TestCase
         $text = 'alpha beta gamma delta';
         $panel = Panel::new('log')->withChildren([Paragraph::fromText($text)->withAlignment(Alignment::Center)]);
 
-        self::assertSame($text, ltrim(self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(18, 2), UserInput::release(18, 2)) ?? ''));
+        self::assertSame($text, ltrim(self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(18, 2), UserInput::release(18, 2)) ?? ''));
     }
 
     #[Test]
@@ -337,7 +337,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $panel = Panel::new('log')->withChildren([Paragraph::fromText('abcdefghijklmnopqrstuvwxyz')]);
 
-        self::assertSame('abcdefghijklmnopqrstuvwxyz', self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(18, 2), UserInput::release(18, 2)));
+        self::assertSame('abcdefghijklmnopqrstuvwxyz', self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(18, 2), UserInput::release(18, 2)));
     }
 
     #[Test]
@@ -345,7 +345,7 @@ final class PanelMarksTextTest extends TestCase
     {
         $panel = Panel::new('log')->withChildren([Text::new('日本語 ok')]);
 
-        self::assertSame('日本語 ok', self::copiedBy($panel, UserInput::click(1, 1), UserInput::drag(9, 1), UserInput::release(9, 1)));
+        self::assertSame('日本語 ok', self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(9, 1), UserInput::release(9, 1)));
     }
 
     private static function driven(Panel $panel, Message ...$messages): Panel

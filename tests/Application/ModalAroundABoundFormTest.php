@@ -24,7 +24,7 @@ final class ModalAroundABoundFormTest extends TestCase
     {
         $harness = ModelHarness::for(new BoundFormInModalApp(), width: 80, height: 30)->init();
 
-        self::assertNotNull($harness->renderScreen()->find('Delta'));
+        self::assertNotNull($harness->screen()->find('Delta'));
     }
 
     #[Test]

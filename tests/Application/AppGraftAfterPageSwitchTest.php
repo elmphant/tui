@@ -32,13 +32,13 @@ final class AppGraftAfterPageSwitchTest extends TestCase
         $harness->renderFrame();
         $harness->dispatch(new KeyMsg(Key::Enter));
         $harness->renderFrame();
-        self::assertStringContainsString('│││a', $harness->renderScreen()->plainText());
-        $about = mb_strpos($harness->renderScreen()->lineAt(1), 'About');
+        self::assertStringContainsString('│││a', $harness->screen()->plainText());
+        $about = mb_strpos($harness->screen()->lineAt(1), 'About');
         self::assertNotFalse($about);
 
         $harness->dispatch(new MouseMsg($about, 1, MouseAction::Press, MouseButton::Left));
 
-        self::assertStringContainsString('prose', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('prose', $harness->screen()->plainText());
     }
 }
 

@@ -36,7 +36,7 @@ final class BoundChildInsideAPaneTest extends TestCase
         $harness = ModelHarness::for(BoundFieldBelowRowsApp::seeded(), 30, 6);
 
         self::assertSame('email', $harness->focused()?->value);
-        self::assertStringContainsString('mail', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('mail', $harness->screen()->plainText());
     }
 }
 

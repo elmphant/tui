@@ -23,9 +23,9 @@ final class AppThemeSwitchTest extends TestCase
     public function aKeyThatPicksAnotherThemeRepaintsInIt(): void
     {
         $harness = ModelHarness::for(new ThemeCyclingApp(), 10, 1, Theme::dark());
-        $before = $harness->renderScreen()->styleAt(0, 0)->foregroundValue();
+        $before = $harness->screen()->styleAt(0, 0)->foregroundValue();
 
-        $after = $harness->press('t')->renderScreen()->styleAt(0, 0)->foregroundValue();
+        $after = $harness->press('t')->screen()->styleAt(0, 0)->foregroundValue();
 
         self::assertSame(Theme::dark()->accent->foreground?->value, $before);
         self::assertSame(Theme::light()->accent->foreground?->value, $after);

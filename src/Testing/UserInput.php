@@ -29,7 +29,7 @@ final class UserInput
         return array_map(static fn (string $grapheme): KeyMsg => new KeyMsg($grapheme), Grapheme::split($text));
     }
 
-    public static function click(int $column, int $row): MouseMsg
+    public static function press(int $column, int $row): MouseMsg
     {
         return new MouseMsg($column, $row, MouseAction::Press, MouseButton::Left);
     }

@@ -29,7 +29,7 @@ final class PressThatOpensAPopupTest extends TestCase
         $harness = ModelHarness::for(new PopupOnPressApp(), width: 60, height: 20);
         $harness->init();
 
-        $harness->dispatch(UserInput::click(1, 1));
+        $harness->dispatch(UserInput::press(1, 1));
 
         self::assertTrue($harness->model()->open, 'the press outside the box it opened is not a dismissal');
     }
@@ -40,8 +40,8 @@ final class PressThatOpensAPopupTest extends TestCase
         $harness = ModelHarness::for(new PopupOnPressApp(), width: 60, height: 20);
         $harness->init();
 
-        $harness->dispatch(UserInput::click(1, 1));
-        $harness->dispatch(UserInput::click(1, 1));
+        $harness->dispatch(UserInput::press(1, 1));
+        $harness->dispatch(UserInput::press(1, 1));
 
         self::assertFalse($harness->model()->open);
     }

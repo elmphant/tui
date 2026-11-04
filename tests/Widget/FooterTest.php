@@ -1022,7 +1022,7 @@ final class FooterTest extends TestCase
             ->withRight(Button::new('Support · 0.1.0', new TestMessage('support')), Button::new('Support', new TestMessage('support')));
         $area = Rect::fromSize(45, 1);
 
-        $pressed = $footer->update(UserInput::click(30, 0), $area)->model;
+        $pressed = $footer->update(UserInput::press(30, 0), $area)->model;
         self::assertInstanceOf(Footer::class, $pressed);
 
         self::assertNull($pressed->update(UserInput::release(30, 0), $area)->command);

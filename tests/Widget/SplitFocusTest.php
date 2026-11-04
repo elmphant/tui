@@ -25,9 +25,9 @@ final class SplitFocusTest extends TestCase
         $app->press('tab');
         self::assertSame('right', $app->focused()?->value);
 
-        $screen = $app->renderScreen();
-        $left = $screen->locate('LEFT one');
-        $right = $screen->locate('RIGHT one');
+        $screen = $app->screen();
+        $left = $screen->findOrFail('LEFT one');
+        $right = $screen->findOrFail('RIGHT one');
 
         self::assertNotNull($screen->styleAt($right['column'], $right['row'])->background);
         self::assertNull($screen->styleAt($left['column'], $left['row'])->background);

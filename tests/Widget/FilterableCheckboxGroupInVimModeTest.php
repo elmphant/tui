@@ -29,12 +29,12 @@ final class FilterableCheckboxGroupInVimModeTest extends TestCase
     {
         $harness = self::harness()->press('/')->type('gj');
 
-        self::assertNull($harness->renderScreen()->find('alpha'));
+        self::assertNull($harness->screen()->find('alpha'));
 
         $harness->press('backspace', 'enter', 'space');
 
         self::assertSame(['gamma'], $harness->model()->group->checkedValues());
-        self::assertNull($harness->renderScreen()->find('alpha'));
+        self::assertNull($harness->screen()->find('alpha'));
     }
 
     #[Test]

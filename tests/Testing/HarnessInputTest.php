@@ -121,7 +121,7 @@ final class HarnessInputTest extends TestCase
     {
         self::assertEquals(new KeyMsg(Key::Tab, shift: true), UserInput::key('shift+tab'));
         self::assertEquals([new KeyMsg('o'), new KeyMsg('k')], UserInput::typed('ok'));
-        self::assertEquals(new MouseMsg(4, 1, MouseAction::Press, MouseButton::Left), UserInput::click(4, 1));
+        self::assertEquals(new MouseMsg(4, 1, MouseAction::Press, MouseButton::Left), UserInput::press(4, 1));
         self::assertEquals(new MouseMsg(9, 2, MouseAction::Motion, MouseButton::Left), UserInput::drag(9, 2));
         self::assertEquals(new PasteMsg('text'), UserInput::paste('text'));
     }

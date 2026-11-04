@@ -141,7 +141,7 @@ final class ScreenBuffer
     /**
      * @return array{row: int, column: int}
      */
-    public function locate(string $text, int $nth = 0, ?Rect $within = null): array
+    public function findOrFail(string $text, int $nth = 0, ?Rect $within = null): array
     {
         return $this->find($text, $nth, $within) ?? throw new LogicException(sprintf('"%s" is not on screen', $text));
     }

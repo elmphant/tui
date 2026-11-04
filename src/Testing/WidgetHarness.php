@@ -50,7 +50,7 @@ final class WidgetHarness
 
     public function screen(): ScreenBuffer
     {
-        return $this->harness->renderScreen();
+        return $this->harness->screen();
     }
 
     /**

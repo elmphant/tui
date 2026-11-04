@@ -36,7 +36,7 @@ final class ScrolledOutChildPointerTest extends TestCase
         }
         $harness->renderFrame();
         $before = $harness->model()->tabs;
-        $emptyColumnOfTheStrip = mb_strlen(rtrim($harness->renderScreen()->lineAt(1))) - 20;
+        $emptyColumnOfTheStrip = mb_strlen(rtrim($harness->screen()->lineAt(1))) - 20;
 
         $harness->dispatch(new MouseMsg($emptyColumnOfTheStrip, 1, MouseAction::Press, MouseButton::Left));
 

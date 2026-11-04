@@ -82,8 +82,8 @@ final class FormTest extends TestCase
     {
         $screen = WidgetHarness::for(self::userForm(), 120, 24)->screen();
 
-        $field = $screen->locate('Username')['row'] + 1;
-        $column = $screen->locate('Username')['column'];
+        $field = $screen->findOrFail('Username')['row'] + 1;
+        $column = $screen->findOrFail('Username')['column'];
         self::assertSame(Attr::UNDERLINE, $screen->styleAt($column + Field::TEXT_WIDTH - 1, $field)->attributes & Attr::UNDERLINE);
         self::assertSame(0, $screen->styleAt($column + Field::TEXT_WIDTH, $field)->attributes & Attr::UNDERLINE);
     }
@@ -118,8 +118,8 @@ final class FormTest extends TestCase
     {
         $screen = WidgetHarness::for(self::userForm()->withSubmitAttempted(), 70, 24)->screen();
 
-        $problem = $screen->locate('Username is required')['row'];
-        self::assertSame($problem + 2, $screen->locate('Password')['row']);
+        $problem = $screen->findOrFail('Username is required')['row'];
+        self::assertSame($problem + 2, $screen->findOrFail('Password')['row']);
     }
 
     #[Test]
@@ -287,7 +287,7 @@ final class FormTest extends TestCase
         $screen = WidgetHarness::for($form, 70, $form->leastHeight(70))->screen();
 
         self::assertStringContainsString('Run', $screen->plainText());
-        self::assertStringContainsString('▎', $screen->lineAt($screen->locate('├')['row'] - 1));
+        self::assertStringContainsString('▎', $screen->lineAt($screen->findOrFail('├')['row'] - 1));
     }
 
     #[Test]
@@ -296,7 +296,7 @@ final class FormTest extends TestCase
         $form = Form::new('About')->withIntro(Text::new('Clears every cache'))->withSubmit('Run', new TestMessage('run'));
         $screen = WidgetHarness::for($form, 70, $form->leastHeight(70))->screen();
 
-        self::assertStringContainsString('Clears every cache', $screen->lineAt($screen->locate('├')['row'] - 1));
+        self::assertStringContainsString('Clears every cache', $screen->lineAt($screen->findOrFail('├')['row'] - 1));
     }
 
     #[Test]
@@ -318,7 +318,7 @@ final class FormTest extends TestCase
         $form = WidgetHarness::for($intro, 70, 24)->type('ada');
 
         $screen = $form->screen();
-        self::assertLessThan($screen->locate('Username')['row'], $screen->locate('Creates a user')['row']);
+        self::assertLessThan($screen->findOrFail('Username')['row'], $screen->findOrFail('Creates a user')['row']);
         self::assertSame('ada', $form->widget()->values()['username']);
         self::assertEquals(ComponentId::named('form/5'), $intro->stopOf('password', ComponentId::named('form')));
     }
@@ -420,9 +420,9 @@ final class FormTest extends TestCase
     {
         $screen = WidgetHarness::for(self::userForm(), 70, 24)->press('tab')->screen();
 
-        $password = $screen->locate('Password');
+        $password = $screen->findOrFail('Password');
         self::assertSame('▎', $screen->textAt($password['column'] - 2, $password['row'], 1));
-        self::assertNotSame('▎', $screen->textAt($password['column'] - 2, $screen->locate('Username')['row'], 1));
+        self::assertNotSame('▎', $screen->textAt($password['column'] - 2, $screen->findOrFail('Username')['row'], 1));
     }
 
     #[Test]

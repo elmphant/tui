@@ -38,8 +38,8 @@ final class ToastTest extends TestCase
     {
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withSeconds(3)]), 40, 6)->init()->press('s');
 
-        $stillThere = $driven->advance(2.9)->renderScreen()->find('Saved');
-        $gone = $driven->advance(0.2)->renderScreen()->find('Saved');
+        $stillThere = $driven->advance(2.9)->screen()->find('Saved');
+        $gone = $driven->advance(0.2)->screen()->find('Saved');
 
         self::assertNotNull($stillThere);
         self::assertNull($gone);
@@ -50,7 +50,7 @@ final class ToastTest extends TestCase
     {
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withSeconds(3)]), 40, 6)->init()->press('s');
 
-        self::assertNull($driven->advance(-10)->advance(3.1)->renderScreen()->find('Saved'));
+        self::assertNull($driven->advance(-10)->advance(3.1)->screen()->find('Saved'));
     }
 
     #[Test]
@@ -59,7 +59,7 @@ final class ToastTest extends TestCase
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved 3 pages')->withTitle('Done')->withWidth(20)]), 40, 6)
             ->init()
             ->press('s');
-        $screen = $driven->renderScreen();
+        $screen = $driven->screen();
 
         self::assertSame(
             [
@@ -130,7 +130,7 @@ final class ToastTest extends TestCase
             ->init()
             ->press('a')
             ->press('b')
-            ->renderScreen();
+            ->screen();
 
         self::assertStringContainsString('second', $screen->plainText());
         self::assertStringNotContainsString('first', $screen->plainText());
@@ -146,7 +146,7 @@ final class ToastTest extends TestCase
             ->init()
             ->press('a')
             ->press('b')
-            ->renderScreen();
+            ->screen();
 
         self::assertStringContainsString('fits', $screen->plainText());
     }
@@ -209,7 +209,7 @@ final class ToastTest extends TestCase
         $screen = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('x')->withWidth(10)], backdrop: $backdrop), 30, 5)
             ->init()
             ->press('s')
-            ->renderScreen();
+            ->screen();
 
         self::assertSame(str_repeat('#', 19) . '│ x      │#', $screen->lineAt(2));
     }
@@ -253,7 +253,7 @@ final class ToastTest extends TestCase
             ->press('s')
             ->dispatch(new MouseMsg(25, 2, MouseAction::WheelDown, MouseButton::None));
 
-        self::assertStringContainsString('Saved', $driven->renderScreen()->plainText());
+        self::assertStringContainsString('Saved', $driven->screen()->plainText());
         self::assertSame([MouseAction::WheelDown], $driven->model()->clicks);
     }
 
@@ -267,7 +267,7 @@ final class ToastTest extends TestCase
             ->press('b')
             ->clickAt(22, 5);
 
-        $screen = $driven->renderScreen()->plainText();
+        $screen = $driven->screen()->plainText();
         self::assertSame([false, true], [str_contains($screen, 'first'), str_contains($screen, 'second')]);
     }
 
@@ -279,7 +279,7 @@ final class ToastTest extends TestCase
             ->init()
             ->press('a')
             ->press('b');
-        $screen = $driven->renderScreen();
+        $screen = $driven->screen();
 
         self::assertSame(
             [
@@ -300,7 +300,7 @@ final class ToastTest extends TestCase
         $driven = ModelHarness::for(new ToastingApp(['e' => Cmd::toast('Disk full')->withTitle('Failed')->withSeverity(ToastSeverity::Error)->withWidth(20)]), 40, 6)
             ->init()
             ->press('e');
-        $screen = $driven->renderScreen();
+        $screen = $driven->screen();
         $error = StyleToken::Error->resolve(Theme::dark())->foreground;
 
         self::assertEquals([$error, $error, $error], [
@@ -323,7 +323,7 @@ final class ToastTest extends TestCase
             ->press('a')
             ->press('b')
             ->press('c');
-        $screen = $driven->renderScreen();
+        $screen = $driven->screen();
 
         self::assertSame(
             ['│ Loaded   │', '│ Saved    │'],
@@ -340,7 +340,7 @@ final class ToastTest extends TestCase
             ->press('s')
             ->clickAt(25, 2);
 
-        self::assertStringNotContainsString('Saved', $driven->renderScreen()->plainText());
+        self::assertStringNotContainsString('Saved', $driven->screen()->plainText());
         self::assertSame([], $driven->model()->clicks);
     }
 
@@ -352,7 +352,7 @@ final class ToastTest extends TestCase
             ->press('s')
             ->clickAt(5, 2);
 
-        self::assertStringContainsString('Saved', $driven->renderScreen()->plainText());
+        self::assertStringContainsString('Saved', $driven->screen()->plainText());
         self::assertSame([MouseAction::Press, MouseAction::Release], $driven->model()->clicks);
     }
 
@@ -405,7 +405,7 @@ final class ToastTest extends TestCase
 
     private static function screenAfter(ToastCmd $toast, int $width, int $height): ScreenBuffer
     {
-        return ModelHarness::for(new ToastingApp(['s' => $toast]), $width, $height)->init()->press('s')->renderScreen();
+        return ModelHarness::for(new ToastingApp(['s' => $toast]), $width, $height)->init()->press('s')->screen();
     }
 }
 

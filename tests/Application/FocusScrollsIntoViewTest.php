@@ -27,7 +27,7 @@ final class FocusScrollsIntoViewTest extends TestCase
         }
 
         self::assertSame('form/6', $harness->focused()?->value);
-        self::assertStringContainsString('f6', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('f6', $harness->screen()->plainText());
         self::assertNotNull($harness->renderFrame()->cursorPosition(), 'the caret is on screen with the field');
     }
 }

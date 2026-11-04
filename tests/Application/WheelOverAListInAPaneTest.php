@@ -25,7 +25,7 @@ final class WheelOverAListInAPaneTest extends TestCase
 
         $harness->wheel('item3', 3);
 
-        self::assertStringNotContainsString('item1', $harness->renderScreen()->plainText());
+        self::assertStringNotContainsString('item1', $harness->screen()->plainText());
     }
 }
 

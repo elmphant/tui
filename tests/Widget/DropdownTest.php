@@ -347,13 +347,13 @@ final class DropdownTest extends TestCase
         $driven->dispatch(new KeyMsg(' '));
         self::assertStringContainsString(
             'yaml',
-            $driven->renderScreen()->plainText(),
+            $driven->screen()->plainText(),
             'precondition: the list is open',
         );
 
         $driven->dispatch(new KeyMsg(Key::Tab));
 
-        self::assertStringNotContainsString('yaml', $driven->renderScreen()->plainText());
+        self::assertStringNotContainsString('yaml', $driven->screen()->plainText());
     }
 
     #[Test]

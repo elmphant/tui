@@ -169,11 +169,11 @@ final class VimModeTest extends TestCase
     {
         $harness = ModelHarness::for(new VimCheckboxFilterApp(FilterableCheckboxGroup::new(['alpha', 'beta'])), 40, 8)->init()->press('/')->type('alp');
 
-        self::assertNull($harness->renderScreen()->find('beta'));
+        self::assertNull($harness->screen()->find('beta'));
 
         $harness->press('ctrl+u');
 
-        self::assertNotNull($harness->renderScreen()->find('beta'));
+        self::assertNotNull($harness->screen()->find('beta'));
     }
 
     #[Test]

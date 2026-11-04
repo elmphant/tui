@@ -18,8 +18,8 @@ final class HarnessTimeTest extends TestCase
     {
         $driven = ModelHarness::for(new MarkingLogApp(Panel::new('busy')->withChildren([Spinner::new()])), 20, 4)->init();
 
-        $before = $driven->renderScreen()->lineAt(1);
-        $after = $driven->advance(0.5)->renderScreen()->lineAt(1);
+        $before = $driven->screen()->lineAt(1);
+        $after = $driven->advance(0.5)->screen()->lineAt(1);
 
         self::assertNotSame($before, $after);
     }

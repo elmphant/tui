@@ -45,7 +45,7 @@ final class FilterableStaticTableTest extends TestCase
         $table = FilterableStaticTable::new(['Name'], [['alpha']])->withQuery('zzz');
         $frame = new Frame(40, 10);
         $table->render($frame, $area, RenderContext::unfocused(Theme::dark()));
-        $start = ScreenBuffer::fromFrame($frame)->locate('zzz');
+        $start = ScreenBuffer::fromFrame($frame)->findOrFail('zzz');
 
         $clicked = $table->update(new MouseMsg($start['column'], $start['row'], MouseAction::Press, MouseButton::Left), $area)->model;
         $typed = $clicked->update(new KeyMsg('x'), $area)->model;

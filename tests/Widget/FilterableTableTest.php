@@ -83,7 +83,7 @@ final class FilterableTableTest extends TestCase
         $frame = new Frame(40, 8);
         $cleared->render($frame, new Rect(0, 0, 40, 8), RenderContext::unfocused(Theme::dark()));
         $screen = ScreenBuffer::fromFrame($frame);
-        $train = $screen->locate('Train');
+        $train = $screen->findOrFail('Train');
 
         self::assertSame('Train', $cleared->selectedRow()?->cells[1]);
         self::assertSame(

@@ -47,7 +47,7 @@ final class KeyHelpTest extends TestCase
     public function questionMarkListsTheKeysThatWorkHereAndEscClosesIt(): void
     {
         $harness = self::harness()->press('?');
-        $screen = $harness->renderScreen()->plainText();
+        $screen = $harness->screen()->plainText();
 
         self::assertStringContainsString('Keys', $screen);
         self::assertMatchesRegularExpression('/↓\s+down/u', $screen);
@@ -56,7 +56,7 @@ final class KeyHelpTest extends TestCase
 
         $harness->press('esc');
 
-        self::assertStringNotContainsString('bottom', $harness->renderScreen()->plainText());
+        self::assertStringNotContainsString('bottom', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -64,13 +64,13 @@ final class KeyHelpTest extends TestCase
     {
         $harness = self::harness()->press('?', '?');
 
-        self::assertStringNotContainsString('Keys', $harness->renderScreen()->plainText());
+        self::assertStringNotContainsString('Keys', $harness->screen()->plainText());
     }
 
     #[Test]
     public function inVimModeItNamesTheVimKeysAndChordsTheListAnswersAndNoOthers(): void
     {
-        $screen = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->init()->press('?')->renderScreen()->plainText();
+        $screen = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->init()->press('?')->screen()->plainText();
 
         self::assertMatchesRegularExpression('/j\/↓\s+down/u', $screen);
         self::assertMatchesRegularExpression('/gg\/Home\s+top/u', $screen);
@@ -107,7 +107,7 @@ final class KeyHelpTest extends TestCase
         $harness = self::harness()->press('tab')->type('?');
 
         self::assertSame('?', $harness->model()->field->value());
-        self::assertStringNotContainsString('Keys', $harness->renderScreen()->plainText());
+        self::assertStringNotContainsString('Keys', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -138,7 +138,7 @@ final class KeyHelpTest extends TestCase
         $harness = self::harness()->press('?', 'ctrl+q');
 
         self::assertInstanceOf(QuitCmd::class, $harness->lastCommand());
-        self::assertStringNotContainsString('Esc to close', $harness->renderScreen()->plainText());
+        self::assertStringNotContainsString('Esc to close', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -146,7 +146,7 @@ final class KeyHelpTest extends TestCase
     {
         $harness = self::harness()->press('tab', 'ctrl+k');
 
-        self::assertStringContainsString('Esc to close', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('Esc to close', $harness->screen()->plainText());
         self::assertSame('', $harness->model()->field->value());
     }
 
@@ -161,12 +161,12 @@ final class KeyHelpTest extends TestCase
     {
         $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 10)->init()->press('?');
 
-        self::assertStringContainsString('Here', $harness->renderScreen()->plainText());
+        self::assertStringContainsString('Here', $harness->screen()->plainText());
 
         $harness->press('end');
 
-        self::assertStringNotContainsString('Here', $harness->renderScreen()->plainText());
-        self::assertMatchesRegularExpression('/\?\/Ctrl\+K\s+keys/u', $harness->renderScreen()->plainText());
+        self::assertStringNotContainsString('Here', $harness->screen()->plainText());
+        self::assertMatchesRegularExpression('/\?\/Ctrl\+K\s+keys/u', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -174,7 +174,7 @@ final class KeyHelpTest extends TestCase
     {
         $harness = ModelHarness::for(new NoKeyHelpApp(self::list()), 60, 30)->init()->press('?');
 
-        self::assertStringNotContainsString('Keys', $harness->renderScreen()->plainText());
+        self::assertStringNotContainsString('Keys', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -206,7 +206,7 @@ final class KeyHelpTest extends TestCase
     #[Test]
     public function aMountedModelListsTheKeysItAnswersItself(): void
     {
-        $screen = ModelHarness::for(new ReportMountingApp(new ReportModel()), 60, 30)->init()->press('?')->renderScreen()->plainText();
+        $screen = ModelHarness::for(new ReportMountingApp(new ReportModel()), 60, 30)->init()->press('?')->screen()->plainText();
 
         self::assertStringContainsString('Report', $screen);
         self::assertMatchesRegularExpression('/r\s+refresh/u', $screen);
@@ -232,7 +232,7 @@ final class KeyHelpTest extends TestCase
         $rows = [];
         $left = null;
 
-        foreach (explode("\n", $harness->renderScreen()->plainText()) as $line) {
+        foreach (explode("\n", $harness->screen()->plainText()) as $line) {
             $left ??= mb_strpos($line, '╭ Keys') === false ? null : mb_strpos($line, '╭ Keys');
             if ($left === null || str_contains($line, '╭ Keys')) {
                 continue;
