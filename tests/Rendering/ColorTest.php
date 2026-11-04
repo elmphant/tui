@@ -35,7 +35,7 @@ final class ColorTest extends TestCase
     {
         $color = Color::ansi(15);
         self::assertSame(Color::BRIGHT + 7, $color->value);
-        self::assertSame('97', $color->toSgr(false));
+        self::assertSame('97', $color->toForegroundSgr());
     }
 
     /**
@@ -46,7 +46,7 @@ final class ColorTest extends TestCase
     {
         $color = Color::hex('#FF0000');
         self::assertSame(Color::rgb(255, 0, 0)->value, $color->value);
-        self::assertSame('38;2;255;0;0', $color->toSgr(false));
+        self::assertSame('38;2;255;0;0', $color->toForegroundSgr());
     }
 
     /**
@@ -66,10 +66,10 @@ final class ColorTest extends TestCase
     public function hexExtractsRgbChannelsWithBitwiseMask(): void
     {
         $color = Color::hex('FF8040');
-        self::assertSame('38;2;255;128;64', $color->toSgr(false));
+        self::assertSame('38;2;255;128;64', $color->toForegroundSgr());
 
         $colorOdd = Color::hex('010305');
-        self::assertSame('38;2;1;3;5', $colorOdd->toSgr(false));
+        self::assertSame('38;2;1;3;5', $colorOdd->toForegroundSgr());
     }
 
     #[Test]
@@ -88,27 +88,24 @@ final class ColorTest extends TestCase
     }
 
     #[Test]
-    public function toSgrForeground(): void
+    public function anAnsiColourWritesItsForegroundCode(): void
     {
-        self::assertSame('31', Color::ansi(1)->toSgr(false));
+        self::assertSame('31', Color::ansi(1)->toForegroundSgr());
     }
 
     #[Test]
-    public function toSgrBackground(): void
+    public function anAnsiColourWritesItsBackgroundCode(): void
     {
-        self::assertSame('41', Color::ansi(1)->toSgr(true));
+        self::assertSame('41', Color::ansi(1)->toBackgroundSgr());
     }
 
-    /**
-     * Kills L79 BitwiseAnd, DecrementInteger in toSgr true color path.
-     */
     #[Test]
-    public function toSgrTrueColorExtractsChannels(): void
+    public function aTruecolourWritesEachOfItsChannels(): void
     {
-        self::assertSame('38;2;255;6;183', Color::rgb(255, 6, 183)->toSgr(false));
-        self::assertSame('48;2;255;6;183', Color::rgb(255, 6, 183)->toSgr(true));
-        self::assertSame('38;2;1;1;1', Color::rgb(1, 1, 1)->toSgr(false));
-        self::assertSame('38;2;255;255;255', Color::rgb(255, 255, 255)->toSgr(false));
+        self::assertSame('38;2;255;6;183', Color::rgb(255, 6, 183)->toForegroundSgr());
+        self::assertSame('48;2;255;6;183', Color::rgb(255, 6, 183)->toBackgroundSgr());
+        self::assertSame('38;2;1;1;1', Color::rgb(1, 1, 1)->toForegroundSgr());
+        self::assertSame('38;2;255;255;255', Color::rgb(255, 255, 255)->toForegroundSgr());
     }
 
     /**
@@ -172,23 +169,20 @@ final class ColorTest extends TestCase
         self::assertSame(Color::hex('FFAA00')->value, Color::hex('#FA0')->value);
     }
 
-    /**
-     * Kills L70 DecrementInteger/IncrementInteger: 48→47/49 or 38→37/39.
-     */
     #[Test]
-    public function toSgrExtendedBaseForegroundAndBackground(): void
+    public function anExtendedColourLeadsWith38OrWith48(): void
     {
-        self::assertSame('38;5;200', Color::color256(200)->toSgr(false));
-        self::assertSame('48;5;200', Color::color256(200)->toSgr(true));
-        self::assertSame('38;2;100;50;25', Color::rgb(100, 50, 25)->toSgr(false));
-        self::assertSame('48;2;100;50;25', Color::rgb(100, 50, 25)->toSgr(true));
+        self::assertSame('38;5;200', Color::color256(200)->toForegroundSgr());
+        self::assertSame('48;5;200', Color::color256(200)->toBackgroundSgr());
+        self::assertSame('38;2;100;50;25', Color::rgb(100, 50, 25)->toForegroundSgr());
+        self::assertSame('48;2;100;50;25', Color::rgb(100, 50, 25)->toBackgroundSgr());
     }
 
     #[Test]
     public function noneToSgrReturnsDefault(): void
     {
-        self::assertSame('39', Color::none()->toSgr(false));
-        self::assertSame('49', Color::none()->toSgr(true));
+        self::assertSame('39', Color::none()->toForegroundSgr());
+        self::assertSame('49', Color::none()->toBackgroundSgr());
     }
 
     /**
@@ -213,7 +207,7 @@ final class ColorTest extends TestCase
     public function namedGreenHasCorrectValue(): void
     {
         self::assertSame(Color::ANSI + 2, Color::named('green')->value);
-        self::assertSame('32', Color::named('green')->toSgr(false));
+        self::assertSame('32', Color::named('green')->toForegroundSgr());
     }
 
     #[Test]
@@ -229,7 +223,7 @@ final class ColorTest extends TestCase
     public function namedBlueHasCorrectValue(): void
     {
         self::assertSame(Color::ANSI + 4, Color::named('blue')->value);
-        self::assertSame('34', Color::named('blue')->toSgr(false));
+        self::assertSame('34', Color::named('blue')->toForegroundSgr());
     }
 
     #[Test]
@@ -280,8 +274,8 @@ final class ColorTest extends TestCase
     #[Test]
     public function brightAnsiSgrOutput(): void
     {
-        self::assertSame('91', Color::ansi(9)->toSgr(false));
-        self::assertSame('101', Color::ansi(9)->toSgr(true));
+        self::assertSame('91', Color::ansi(9)->toForegroundSgr());
+        self::assertSame('101', Color::ansi(9)->toBackgroundSgr());
     }
 
     /**
@@ -292,7 +286,7 @@ final class ColorTest extends TestCase
     {
         $color = Color::ansi(8);
         self::assertSame(Color::BRIGHT, $color->value);
-        self::assertSame('90', $color->toSgr(false));
+        self::assertSame('90', $color->toForegroundSgr());
     }
 
     #[Test]
@@ -312,8 +306,8 @@ final class ColorTest extends TestCase
     {
         $color = Color::color256(0);
         self::assertSame(Color::C256, $color->value);
-        self::assertSame('38;5;0', $color->toSgr(false));
-        self::assertSame('48;5;0', $color->toSgr(true));
+        self::assertSame('38;5;0', $color->toForegroundSgr());
+        self::assertSame('48;5;0', $color->toBackgroundSgr());
     }
 
     #[Test]
@@ -333,8 +327,8 @@ final class ColorTest extends TestCase
     {
         $black = Color::rgb(0, 0, 0);
         self::assertSame(Color::TRUE, $black->value);
-        self::assertSame('38;2;0;0;0', $black->toSgr(false));
-        self::assertSame('48;2;0;0;0', $black->toSgr(true));
+        self::assertSame('38;2;0;0;0', $black->toForegroundSgr());
+        self::assertSame('48;2;0;0;0', $black->toBackgroundSgr());
     }
 
     /**
@@ -345,7 +339,7 @@ final class ColorTest extends TestCase
     {
         $white = Color::rgb(255, 255, 255);
         self::assertSame(Color::TRUE + 0xFFFFFF, $white->value);
-        self::assertSame('38;2;255;255;255', $white->toSgr(false));
+        self::assertSame('38;2;255;255;255', $white->toForegroundSgr());
     }
 
     #[Test]
@@ -381,20 +375,20 @@ final class ColorTest extends TestCase
     {
         $ansi = Color::ansi(3);
         self::assertSame($ansi->value, Color::fromValue($ansi->value)->value);
-        self::assertSame($ansi->toSgr(false), Color::fromValue($ansi->value)->toSgr(false));
+        self::assertSame($ansi->toForegroundSgr(), Color::fromValue($ansi->value)->toForegroundSgr());
 
         $bright = Color::ansi(10);
-        self::assertSame($bright->toSgr(true), Color::fromValue($bright->value)->toSgr(true));
+        self::assertSame($bright->toBackgroundSgr(), Color::fromValue($bright->value)->toBackgroundSgr());
 
         $c256 = Color::color256(42);
-        self::assertSame($c256->toSgr(false), Color::fromValue($c256->value)->toSgr(false));
+        self::assertSame($c256->toForegroundSgr(), Color::fromValue($c256->value)->toForegroundSgr());
 
         $trueColor = Color::rgb(255, 128, 0);
-        self::assertSame($trueColor->toSgr(false), Color::fromValue($trueColor->value)->toSgr(false));
+        self::assertSame($trueColor->toForegroundSgr(), Color::fromValue($trueColor->value)->toForegroundSgr());
 
         $none = Color::none();
-        self::assertSame($none->toSgr(false), Color::fromValue($none->value)->toSgr(false));
-        self::assertSame($none->toSgr(true), Color::fromValue($none->value)->toSgr(true));
+        self::assertSame($none->toForegroundSgr(), Color::fromValue($none->value)->toForegroundSgr());
+        self::assertSame($none->toBackgroundSgr(), Color::fromValue($none->value)->toBackgroundSgr());
     }
 
     /**

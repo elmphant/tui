@@ -764,7 +764,7 @@ final class ScreenTest extends TestCase
         $buffer2->putString(0, 0, 'BBBBB', $foreground);
         $screen->flush($buffer2);
 
-        $sgrForRed = Color::fromValue($foreground)->toSgr(false);
+        $sgrForRed = Color::fromValue($foreground)->toForegroundSgr();
         self::assertStringContainsString($sgrForRed, $terminal->output, 'Must re-emit foreground after style reset in full redraw');
     }
 
@@ -856,7 +856,7 @@ final class ScreenTest extends TestCase
         $frame->putChar(0, 0, 'B', $foreground);
         $screen->flush($frame);
 
-        $sgrForYellow = Color::fromValue($foreground)->toSgr(false);
+        $sgrForYellow = Color::fromValue($foreground)->toForegroundSgr();
         self::assertStringContainsString($sgrForYellow, $terminal->output, 'Diff after full redraw must re-emit style because resetCurrentStyle was called');
     }
 
@@ -965,8 +965,8 @@ final class ScreenTest extends TestCase
 
         self::assertStringContainsString('X', $terminal->output);
         self::assertStringContainsString('Y', $terminal->output);
-        $sgr1 = Color::fromValue($foreground1)->toSgr(false);
-        $sgr2 = Color::fromValue($foreground2)->toSgr(false);
+        $sgr1 = Color::fromValue($foreground1)->toForegroundSgr();
+        $sgr2 = Color::fromValue($foreground2)->toForegroundSgr();
         self::assertStringContainsString($sgr1, $terminal->output, 'First style must be emitted');
         self::assertStringContainsString($sgr2, $terminal->output, 'Second style must be emitted');
     }
@@ -1001,8 +1001,8 @@ final class ScreenTest extends TestCase
 
         self::assertStringContainsString('ABC', $terminal->output);
         self::assertStringContainsString('DEF', $terminal->output);
-        $sgr1 = Color::fromValue($foreground1)->toSgr(false);
-        $sgr2 = Color::fromValue($foreground2)->toSgr(false);
+        $sgr1 = Color::fromValue($foreground1)->toForegroundSgr();
+        $sgr2 = Color::fromValue($foreground2)->toForegroundSgr();
         self::assertStringContainsString($sgr1, $terminal->output);
         self::assertStringContainsString($sgr2, $terminal->output);
     }
@@ -1029,7 +1029,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         self::assertStringContainsString('XY', $terminal->output, 'X and Y have same style and should be in one run');
-        $sgrForBackground = Color::fromValue($background)->toSgr(true);
+        $sgrForBackground = Color::fromValue($background)->toBackgroundSgr();
         $sgrCountBg = substr_count($terminal->output, $sgrForBackground);
         self::assertGreaterThanOrEqual(1, $sgrCountBg, 'Background must be emitted');
     }
@@ -1051,8 +1051,8 @@ final class ScreenTest extends TestCase
         $frame->putChar(1, 0, 'Y', $foreground2);
         $screen->flush($frame);
 
-        $sgr1 = Color::fromValue($foreground1)->toSgr(false);
-        $sgr2 = Color::fromValue($foreground2)->toSgr(false);
+        $sgr1 = Color::fromValue($foreground1)->toForegroundSgr();
+        $sgr2 = Color::fromValue($foreground2)->toForegroundSgr();
         self::assertStringContainsString($sgr1, $terminal->output, 'First foreground must be in output');
         self::assertStringContainsString($sgr2, $terminal->output, 'Different foreground must break run');
     }
@@ -1074,8 +1074,8 @@ final class ScreenTest extends TestCase
         $frame->putChar(1, 0, 'Y', 0, $background2);
         $screen->flush($frame);
 
-        $sgr1 = Color::fromValue($background1)->toSgr(true);
-        $sgr2 = Color::fromValue($background2)->toSgr(true);
+        $sgr1 = Color::fromValue($background1)->toBackgroundSgr();
+        $sgr2 = Color::fromValue($background2)->toBackgroundSgr();
         self::assertStringContainsString($sgr1, $terminal->output, 'First background must be in output');
         self::assertStringContainsString($sgr2, $terminal->output, 'Different background must break run');
     }
@@ -1199,8 +1199,8 @@ final class ScreenTest extends TestCase
         $frame->putChar(0, 0, 'X', $foreground, $background, $attributes);
         $screen->flush($frame);
 
-        $fgSgr = Color::fromValue($foreground)->toSgr(false);
-        $bgSgr = Color::fromValue($background)->toSgr(true);
+        $fgSgr = Color::fromValue($foreground)->toForegroundSgr();
+        $bgSgr = Color::fromValue($background)->toBackgroundSgr();
         self::assertStringContainsString($fgSgr, $terminal->output, 'Must re-emit foreground after reset');
         self::assertStringContainsString($bgSgr, $terminal->output, 'Must re-emit background after reset');
         self::assertStringContainsString('1', $terminal->output, 'Must re-emit bold attribute after reset');
@@ -1271,7 +1271,7 @@ final class ScreenTest extends TestCase
         $screen->flush($frame);
 
         $stripped = str_replace([Ansi::SYNC_START, Ansi::SYNC_END, Ansi::RESET_STYLE], '', $terminal->output);
-        $sgrForRed = "\x1b[" . Color::fromValue($foreground)->toSgr(false) . 'm';
+        $sgrForRed = "\x1b[" . Color::fromValue($foreground)->toForegroundSgr() . 'm';
         $sgrCount = substr_count($stripped, $sgrForRed);
         self::assertSame(1, $sgrCount, 'Same style used twice should only emit SGR once');
     }
@@ -1334,8 +1334,8 @@ final class ScreenTest extends TestCase
         $frame->putString(0, 0, 'XXXXX', $foreground, $background);
         $screen->flush($frame);
 
-        $fgSgr = Color::fromValue($foreground)->toSgr(false);
-        $bgSgr = Color::fromValue($background)->toSgr(true);
+        $fgSgr = Color::fromValue($foreground)->toForegroundSgr();
+        $bgSgr = Color::fromValue($background)->toBackgroundSgr();
         self::assertStringContainsString($fgSgr, $terminal->output, 'Must re-emit foreground after attribute reset');
         self::assertStringContainsString($bgSgr, $terminal->output, 'Must re-emit background after attribute reset');
     }
@@ -1397,7 +1397,7 @@ final class ScreenTest extends TestCase
         $frame->putString(0, 0, 'XXXXX', $foreground);
         $screen->flush($frame);
 
-        $fgSgr = Color::fromValue($foreground)->toSgr(false);
+        $fgSgr = Color::fromValue($foreground)->toForegroundSgr();
         self::assertStringContainsString($fgSgr, $terminal->output, 'Must emit foreground SGR when changing from default to color');
     }
 
@@ -1438,7 +1438,7 @@ final class ScreenTest extends TestCase
         $frame->putString(0, 0, 'XXXXX', 0, $background);
         $screen->flush($frame);
 
-        $bgSgr = Color::fromValue($background)->toSgr(true);
+        $bgSgr = Color::fromValue($background)->toBackgroundSgr();
         self::assertStringContainsString($bgSgr, $terminal->output, 'Must emit background SGR when changing from default to color');
     }
 
@@ -1899,8 +1899,8 @@ final class ScreenTest extends TestCase
         $frame->putString(2, 0, 'BB', $foreground2);
         $screen->flush($frame);
 
-        $sgr1 = Color::fromValue($foreground1)->toSgr(false);
-        $sgr2 = Color::fromValue($foreground2)->toSgr(false);
+        $sgr1 = Color::fromValue($foreground1)->toForegroundSgr();
+        $sgr2 = Color::fromValue($foreground2)->toForegroundSgr();
         self::assertStringContainsString($sgr1, $terminal->output, 'First foreground must be emitted');
         self::assertStringContainsString($sgr2, $terminal->output, 'Changed foreground must be emitted');
     }
@@ -1920,8 +1920,8 @@ final class ScreenTest extends TestCase
         $frame->putString(2, 0, 'BB', 0, $background2);
         $screen->flush($frame);
 
-        $sgr1 = Color::fromValue($background1)->toSgr(true);
-        $sgr2 = Color::fromValue($background2)->toSgr(true);
+        $sgr1 = Color::fromValue($background1)->toBackgroundSgr();
+        $sgr2 = Color::fromValue($background2)->toBackgroundSgr();
         self::assertStringContainsString($sgr1, $terminal->output, 'First background must be emitted');
         self::assertStringContainsString($sgr2, $terminal->output, 'Changed background must be emitted');
     }
@@ -1955,7 +1955,7 @@ final class ScreenTest extends TestCase
         $frame->putString(2, 0, 'BB', 0, $background);
         $screen->flush($frame);
 
-        $bgSgr = Color::fromValue($background)->toSgr(true);
+        $bgSgr = Color::fromValue($background)->toBackgroundSgr();
         self::assertStringContainsString($bgSgr, $terminal->output, 'Background must be re-emitted in removed-attributes branch');
     }
 
@@ -2001,8 +2001,8 @@ final class ScreenTest extends TestCase
         $frame->putString(0, 0, 'HELLO', $foreground, $background, Attr::BOLD);
         $screen->flush($frame);
 
-        $fgSgr = Color::fromValue($foreground)->toSgr(false);
-        $bgSgr = Color::fromValue($background)->toSgr(true);
+        $fgSgr = Color::fromValue($foreground)->toForegroundSgr();
+        $bgSgr = Color::fromValue($background)->toBackgroundSgr();
         self::assertStringContainsString($fgSgr, $terminal->output, 'Full render must include foreground SGR');
         self::assertStringContainsString($bgSgr, $terminal->output, 'Full render must include background SGR');
         self::assertStringContainsString('1', $terminal->output, 'Full render must include bold SGR');
@@ -2086,8 +2086,8 @@ final class ScreenTest extends TestCase
 
         self::assertStringContainsString('XY', $terminal->output, 'Same-style adjacent cells must be grouped');
         self::assertStringContainsString('Z', $terminal->output);
-        $sgr1 = Color::fromValue($foreground1)->toSgr(false);
-        $sgr2 = Color::fromValue($foreground2)->toSgr(false);
+        $sgr1 = Color::fromValue($foreground1)->toForegroundSgr();
+        $sgr2 = Color::fromValue($foreground2)->toForegroundSgr();
         self::assertStringContainsString($sgr1, $terminal->output);
         self::assertStringContainsString($sgr2, $terminal->output);
     }
@@ -2173,7 +2173,7 @@ final class ScreenTest extends TestCase
         $buffer2->putString(0, 0, 'BBBBB', $foreground);
         $screen->flush($buffer2);
 
-        $fgSgr = Color::fromValue($foreground)->toSgr(false);
+        $fgSgr = Color::fromValue($foreground)->toForegroundSgr();
         self::assertStringContainsString($fgSgr, $terminal->output);
     }
 
@@ -2199,7 +2199,7 @@ final class ScreenTest extends TestCase
         $buffer2->putString(0, 0, 'CCC', $foreground);
         $screen->flush($buffer2);
 
-        $fgSgr = Color::fromValue($foreground)->toSgr(false);
+        $fgSgr = Color::fromValue($foreground)->toForegroundSgr();
         self::assertStringContainsString($fgSgr, $terminal->output, 'renderFull must resetCurrentStyle so foreground is re-emitted');
     }
 
@@ -2240,7 +2240,7 @@ final class ScreenTest extends TestCase
 
         $syncStartPos = strpos($terminal->output, Ansi::SYNC_START);
         $firstResetPos = strpos($terminal->output, Ansi::RESET_STYLE, $syncStartPos);
-        $fgSgrPos = strpos($terminal->output, Color::fromValue($foreground)->toSgr(false));
+        $fgSgrPos = strpos($terminal->output, Color::fromValue($foreground)->toForegroundSgr());
 
         self::assertNotFalse($firstResetPos, 'RESET_STYLE must be in header');
         self::assertNotFalse($fgSgrPos, 'Foreground SGR must be present');
@@ -2288,7 +2288,7 @@ final class ScreenTest extends TestCase
 
         self::assertStringContainsString('XYZWV', $terminal->output, 'Consecutive same-style changed characters must be emitted as one run');
 
-        $fgSgr = "\x1b[" . Color::fromValue($foreground)->toSgr(false) . 'm';
+        $fgSgr = "\x1b[" . Color::fromValue($foreground)->toForegroundSgr() . 'm';
         $fgCount = substr_count($terminal->output, $fgSgr);
         self::assertSame(1, $fgCount, 'Same-style run should emit foreground SGR only once');
     }
@@ -2306,7 +2306,7 @@ final class ScreenTest extends TestCase
 
         self::assertStringContainsString('ABCDEFGHIJ', $terminal->output, 'collectStyledRun while loop must collect all characters into one run');
 
-        $fgSgr = "\x1b[" . Color::fromValue($foreground)->toSgr(false) . 'm';
+        $fgSgr = "\x1b[" . Color::fromValue($foreground)->toForegroundSgr() . 'm';
         $fgCount = substr_count($terminal->output, $fgSgr);
         self::assertSame(1, $fgCount, 'Single-style content should emit foreground SGR only once');
     }
@@ -2370,8 +2370,8 @@ final class ScreenTest extends TestCase
         $frame->putChar(1, 0, 'Y', $foreground2, $background2, Attr::ITALIC);
         $screen->flush($frame);
 
-        $sgr1 = Color::fromValue($foreground1)->toSgr(false);
-        $sgr2 = Color::fromValue($foreground2)->toSgr(false);
+        $sgr1 = Color::fromValue($foreground1)->toForegroundSgr();
+        $sgr2 = Color::fromValue($foreground2)->toForegroundSgr();
         self::assertStringContainsString($sgr1, $terminal->output, 'First cell foreground must be emitted');
         self::assertStringContainsString($sgr2, $terminal->output, 'Second cell foreground must be emitted (style mismatch breaks run)');
     }
@@ -2414,7 +2414,7 @@ final class ScreenTest extends TestCase
         $frame->putChar(1, 0, 'Y', $foreground);
         $screen->flush($frame);
 
-        $fgSgr = Color::fromValue($foreground)->toSgr(false);
+        $fgSgr = Color::fromValue($foreground)->toForegroundSgr();
         self::assertStringContainsString($fgSgr, $terminal->output, 'emitOutput must resetCurrentStyle so next diff re-emits foreground');
     }
 
@@ -2518,7 +2518,7 @@ final class ScreenTest extends TestCase
         $frame->putString(2, 0, 'BB', $foreground);
         $screen->flush($frame);
 
-        $fgSgr = Color::fromValue($foreground)->toSgr(false);
+        $fgSgr = Color::fromValue($foreground)->toForegroundSgr();
         self::assertStringContainsString($fgSgr, $terminal->output, 'In removed-attributes branch, foreground must be re-emitted');
     }
 
@@ -2534,7 +2534,7 @@ final class ScreenTest extends TestCase
         $frame->putString(2, 0, 'BB', 0, $background);
         $screen->flush($frame);
 
-        $bgSgr = Color::fromValue($background)->toSgr(true);
+        $bgSgr = Color::fromValue($background)->toBackgroundSgr();
         self::assertStringContainsString($bgSgr, $terminal->output, 'In removed-attributes branch, background must be re-emitted');
     }
 
@@ -2581,9 +2581,9 @@ final class ScreenTest extends TestCase
         $frame->putString(2, 0, 'BB', $foreground);
         $screen->flush($frame);
 
-        $fgSgrAsForeground = Color::fromValue($foreground)->toSgr(false);
-        $fgSgrAsBackground = Color::fromValue($foreground)->toSgr(true);
-        self::assertStringContainsString($fgSgrAsForeground, $terminal->output, 'Foreground must use toSgr(false)');
+        $fgSgrAsForeground = Color::fromValue($foreground)->toForegroundSgr();
+        $fgSgrAsBackground = Color::fromValue($foreground)->toBackgroundSgr();
+        self::assertStringContainsString($fgSgrAsForeground, $terminal->output, 'Foreground must use toForegroundSgr()');
         if ($fgSgrAsForeground !== $fgSgrAsBackground) {
             self::assertStringNotContainsString($fgSgrAsBackground, $terminal->output, 'Foreground must NOT use background SGR codes');
         }
@@ -2601,9 +2601,9 @@ final class ScreenTest extends TestCase
         $frame->putString(2, 0, 'BB', 0, $background);
         $screen->flush($frame);
 
-        $bgSgrAsBackground = Color::fromValue($background)->toSgr(true);
-        $bgSgrAsForeground = Color::fromValue($background)->toSgr(false);
-        self::assertStringContainsString($bgSgrAsBackground, $terminal->output, 'Background must use toSgr(true)');
+        $bgSgrAsBackground = Color::fromValue($background)->toBackgroundSgr();
+        $bgSgrAsForeground = Color::fromValue($background)->toForegroundSgr();
+        self::assertStringContainsString($bgSgrAsBackground, $terminal->output, 'Background must use toBackgroundSgr()');
         if ($bgSgrAsForeground !== $bgSgrAsBackground) {
             self::assertStringNotContainsString($bgSgrAsForeground, $terminal->output, 'Background must NOT use foreground SGR codes');
         }

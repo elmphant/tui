@@ -171,7 +171,7 @@ final class Pen
     }
 
     /**
-     * @infection-ignore-all a bounded memo over Color::toSgr(): a miss or a reset computes the same value again
+     * @infection-ignore-all a bounded memo over Color's SGR codes: a miss or a reset computes the same value again
      */
     private function colorToSgr(int $color, bool $background): string
     {
@@ -181,7 +181,7 @@ final class Pen
             }
 
             return $this->backgroundSgrCache[$color]
-                ??= Color::fromValue($color)->toSgr(true);
+                ??= Color::fromValue($color)->toBackgroundSgr();
         }
 
         if (!isset($this->foregroundSgrCache[$color]) && count($this->foregroundSgrCache) >= self::COLOR_CACHE_LIMIT) {
@@ -189,7 +189,7 @@ final class Pen
         }
 
         return $this->foregroundSgrCache[$color]
-            ??= Color::fromValue($color)->toSgr(false);
+            ??= Color::fromValue($color)->toForegroundSgr();
     }
 
     private function attributesToSgr(int $attributes): string

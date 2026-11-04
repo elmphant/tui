@@ -170,30 +170,14 @@ final readonly class Color
         );
     }
 
-    public function toSgr(bool $background): string
+    public function toForegroundSgr(): string
     {
-        $base = $background ? 40 : 30;
-        $extended = $background ? 48 : 38;
+        return $this->sgr(background: false);
+    }
 
-        if ($this->value === 0) {
-            return $background ? '49' : '39';
-        }
-
-        if ($this->value >= self::TRUE) {
-            [$red, $green, $blue] = $this->channels();
-
-            return "{$extended};2;{$red};{$green};{$blue}";
-        }
-
-        if ($this->value >= self::C256) {
-            return $extended . ';5;' . ($this->value - self::C256);
-        }
-
-        if ($this->value >= self::BRIGHT) {
-            return (string)($base + 60 + $this->value - self::BRIGHT);
-        }
-
-        return (string)($base + $this->value - self::ANSI);
+    public function toBackgroundSgr(): string
+    {
+        return $this->sgr(background: true);
     }
 
     /**
@@ -242,6 +226,32 @@ final readonly class Color
         [$red, $green, $blue] = $this->channels();
 
         return 0.2126 * self::linearize($red) + 0.7152 * self::linearize($green) + 0.0722 * self::linearize($blue);
+    }
+
+    private function sgr(bool $background): string
+    {
+        $base = $background ? 40 : 30;
+        $extended = $background ? 48 : 38;
+
+        if ($this->value === 0) {
+            return $background ? '49' : '39';
+        }
+
+        if ($this->value >= self::TRUE) {
+            [$red, $green, $blue] = $this->channels();
+
+            return "{$extended};2;{$red};{$green};{$blue}";
+        }
+
+        if ($this->value >= self::C256) {
+            return $extended . ';5;' . ($this->value - self::C256);
+        }
+
+        if ($this->value >= self::BRIGHT) {
+            return (string)($base + 60 + $this->value - self::BRIGHT);
+        }
+
+        return (string)($base + $this->value - self::ANSI);
     }
 
     private static function ratioOf(float $luminance, float $otherLuminance): float
