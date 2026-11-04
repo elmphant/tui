@@ -35,7 +35,7 @@ final readonly class ProgressBar implements Interactive
         private ?Style $fillStyleOverride = null,
         private ?Style $emptyStyleOverride = null,
         private string $label = '',
-        private bool $showPercent = true,
+        private bool $percentShown = true,
         private bool $clickable = false,
         private float $springFactor = 0.15,
         private ?float $lastTick = null,
@@ -68,9 +68,9 @@ final readonly class ProgressBar implements Interactive
         return $this->cloneWith(emptyStyleOverride: $style);
     }
 
-    public function withShowPercent(bool $showPercent): self
+    public function withPercentShown(bool $shown = true): self
     {
-        return $this->cloneWith(showPercent: $showPercent);
+        return $this->cloneWith(percentShown: $shown);
     }
 
     public function withClickable(bool $clickable = true): self
@@ -165,7 +165,7 @@ final readonly class ProgressBar implements Interactive
             $frame->fillRect($barArea->x + $partialColumn, $rowY, $barWidth - $partialColumn, 1, $emptyColor, $baseBackground, 0, '─');
         }
 
-        if ($this->showPercent) {
+        if ($this->percentShown) {
             $percentText = sprintf('%3d%%', (int)round($display * 100));
             $percentX = $barArea->x + $barWidth - strlen($percentText);
             if ($percentX >= $barArea->x) {
