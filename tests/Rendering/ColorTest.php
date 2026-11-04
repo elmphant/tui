@@ -297,7 +297,7 @@ final class ColorTest extends TestCase
     #[DataProvider('rgbTo256Cases')]
     public function downsampleTruecolorToAnsi256(int $red, int $green, int $blue, int $expectedIndex): void
     {
-        $downsampled = Color::rgb($red, $green, $blue)->downsampleTo(ColorProfile::Ansi256);
+        $downsampled = Color::rgb($red, $green, $blue)->shownIn(ColorProfile::Ansi256);
         self::assertSame(Color::color256($expectedIndex)->value, $downsampled->value);
     }
 
@@ -362,33 +362,33 @@ final class ColorTest extends TestCase
 
     #[Test]
     #[DataProvider('toAnsi16Cases')]
-    public function downsampleToAnsiReducesTo16Colors(Color $color, int $expectedAnsiIndex): void
+    public function aColourShownInSixteenColoursTakesTheNearestOfThem(Color $color, int $expectedAnsiIndex): void
     {
-        self::assertSame(Color::ansi(AnsiColor::from($expectedAnsiIndex))->value, $color->downsampleTo(ColorProfile::Ansi)->value);
+        self::assertSame(Color::ansi(AnsiColor::from($expectedAnsiIndex))->value, $color->shownIn(ColorProfile::Ansi)->value);
     }
 
     #[Test]
-    public function downsampleToAsciiStripsAllColor(): void
+    public function aColourShownWithoutColourIsTheDefault(): void
     {
-        self::assertSame(0, Color::rgb(255, 0, 0)->downsampleTo(ColorProfile::Ascii)->value);
-        self::assertSame(0, Color::color256(196)->downsampleTo(ColorProfile::Ascii)->value);
-        self::assertSame(0, Color::ansi(AnsiColor::BrightRed)->downsampleTo(ColorProfile::Ascii)->value);
-        self::assertSame(0, Color::none()->downsampleTo(ColorProfile::Ascii)->value);
+        self::assertSame(0, Color::rgb(255, 0, 0)->shownIn(ColorProfile::Ascii)->value);
+        self::assertSame(0, Color::color256(196)->shownIn(ColorProfile::Ascii)->value);
+        self::assertSame(0, Color::ansi(AnsiColor::BrightRed)->shownIn(ColorProfile::Ascii)->value);
+        self::assertSame(0, Color::none()->shownIn(ColorProfile::Ascii)->value);
     }
 
     #[Test]
     public function downsampleIdentitiesArePreserved(): void
     {
         $trueColor = Color::rgb(1, 2, 3);
-        self::assertSame($trueColor->value, $trueColor->downsampleTo(ColorProfile::TrueColor)->value, 'TrueColor profile keeps everything');
+        self::assertSame($trueColor->value, $trueColor->shownIn(ColorProfile::TrueColor)->value, 'TrueColor profile keeps everything');
 
         $indexed = Color::color256(123);
-        self::assertSame($indexed->value, $indexed->downsampleTo(ColorProfile::Ansi256)->value, '256-color values survive an Ansi256 profile');
+        self::assertSame($indexed->value, $indexed->shownIn(ColorProfile::Ansi256)->value, '256-color values survive an Ansi256 profile');
 
         $basic = Color::ansi(AnsiColor::Magenta);
-        self::assertSame($basic->value, $basic->downsampleTo(ColorProfile::Ansi)->value, '16-color values survive an Ansi profile');
+        self::assertSame($basic->value, $basic->shownIn(ColorProfile::Ansi)->value, '16-color values survive an Ansi profile');
 
-        self::assertSame(0, Color::none()->downsampleTo(ColorProfile::Ansi)->value, 'terminal default stays default');
+        self::assertSame(0, Color::none()->shownIn(ColorProfile::Ansi)->value, 'terminal default stays default');
     }
 
     /**

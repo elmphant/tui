@@ -31,7 +31,7 @@ final readonly class Theme
         public Style $success,
         public Style $borderStyle,
         public Style $focusedBorderStyle,
-        public Style $titleStyle,
+        public Style $title,
         public Style $headerStyle,
         public Style $selectedStyle,
         public Style $cursorStyle,
@@ -41,7 +41,7 @@ final readonly class Theme
         /**
          * The palette's assumed background, used for contrast; it does not paint the terminal.
          */
-        public ?Color $page = null,
+        public ?Color $canvas = null,
         ?Style $footerStyle = null,
         ?Style $warning = null,
         ?Style $info = null,
@@ -56,7 +56,7 @@ final readonly class Theme
             foreground: $base->foreground ?? Color::ansi(AnsiColor::White),
             background: $selectedStyle->background ?? Color::ansi(AnsiColor::Black),
         );
-        $this->warning = $warning ?? $titleStyle->withAttributes($titleStyle->attributes & ~Attr::BOLD);
+        $this->warning = $warning ?? $title->withAttributes($title->attributes & ~Attr::BOLD);
         $this->info = $info ?? $accent;
     }
 
@@ -105,9 +105,9 @@ final readonly class Theme
         return $this->rebuilt(focusedBorderStyle: $style);
     }
 
-    public function withTitleStyle(Style $style): self
+    public function withTitle(Style $style): self
     {
-        return $this->rebuilt(titleStyle: $style);
+        return $this->rebuilt(title: $style);
     }
 
     public function withHeaderStyle(Style $style): self
@@ -160,11 +160,11 @@ final readonly class Theme
             info: $this->infoOverride?->withBackground($canvas),
             borderStyle: $this->borderStyle->withBackground($canvas),
             focusedBorderStyle: $this->focusedBorderStyle->withBackground($canvas),
-            titleStyle: $this->titleStyle->withBackground($canvas),
+            title: $this->title->withBackground($canvas),
             headerStyle: $this->headerStyle->withBackground($canvas),
             fillStyle: $this->fillStyle->withBackground($canvas),
             emptyStyle: $this->emptyStyle->withBackground($canvas),
-            page: $canvas,
+            canvas: $canvas,
         );
     }
 
@@ -204,7 +204,7 @@ final readonly class Theme
             success: $this->withoutColour($this->success),
             borderStyle: $this->withoutColour($this->borderStyle),
             focusedBorderStyle: $this->withoutColour($this->focusedBorderStyle),
-            titleStyle: $this->withoutColour($this->titleStyle),
+            title: $this->withoutColour($this->title),
             headerStyle: $this->withoutColour($this->headerStyle),
             selectedStyle: $this->withoutColour($this->selectedStyle),
             cursorStyle: $this->withoutColour($this->cursorStyle),
@@ -234,14 +234,14 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('98C379')),
             borderStyle: new Style(foreground: Color::hex('5C6370')),
             focusedBorderStyle: new Style(foreground: Color::hex('61AFEF'), attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('E5C07B'), attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('E5C07B'), attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('E5C07B'), attributes: Attr::BOLD),
             selectedStyle: new Style(background: Color::hex('3E4451')),
             cursorStyle: new Style(foreground: Color::ansi(AnsiColor::Black), background: Color::hex('61AFEF')),
             fillStyle: new Style(foreground: Color::hex('61AFEF')),
             emptyStyle: new Style(foreground: Color::hex('5C6370')),
             inputStyle: new Style(foreground: Color::hex('ABB2BF'), background: Color::hex('3E4451')),
-            page: Color::hex('282C34'),
+            canvas: Color::hex('282C34'),
         );
     }
 
@@ -255,7 +255,7 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('50A14F')),
             borderStyle: new Style(foreground: Color::hex('D3D3D3')),
             focusedBorderStyle: new Style(foreground: Color::hex('4078F2'), attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('986801'), attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('986801'), attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('986801'), attributes: Attr::BOLD),
             selectedStyle: new Style(background: Color::hex('DEDEDF')),
             // A darker blue than the accent: white on the accent itself is 3.88:1.
@@ -263,7 +263,7 @@ final readonly class Theme
             fillStyle: new Style(foreground: Color::hex('4078F2')),
             emptyStyle: new Style(foreground: Color::hex('D3D3D3')),
             inputStyle: new Style(foreground: Color::hex('383A42'), background: Color::hex('DEDEDF')),
-            page: Color::hex('FAFAFA'),
+            canvas: Color::hex('FAFAFA'),
         );
     }
 
@@ -277,14 +277,14 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('50FA7B')),
             borderStyle: new Style(foreground: Color::hex('6272A4')),
             focusedBorderStyle: new Style(foreground: Color::hex('BD93F9'), attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('F1FA8C'), attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('F1FA8C'), attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('F1FA8C'), attributes: Attr::BOLD),
             selectedStyle: new Style(background: Color::hex('44475A')),
             cursorStyle: new Style(foreground: Color::hex('282A36'), background: Color::hex('BD93F9')),
             fillStyle: new Style(foreground: Color::hex('BD93F9')),
             emptyStyle: new Style(foreground: Color::hex('6272A4')),
             inputStyle: new Style(foreground: Color::hex('F8F8F2'), background: Color::hex('44475A')),
-            page: Color::hex('282A36'),
+            canvas: Color::hex('282A36'),
         );
     }
 
@@ -300,7 +300,7 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('859900'), background: $background),
             borderStyle: new Style(foreground: Color::hex('586E75'), background: $background),
             focusedBorderStyle: new Style(foreground: Color::hex('268BD2'), background: $background, attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
             // Raise the bar's contrast above base02's 1.15:1 against base03.
             selectedStyle: new Style(foreground: Color::hex('9EABAB'), background: Color::hex('0F3C48')),
@@ -309,7 +309,7 @@ final readonly class Theme
             fillStyle: new Style(foreground: Color::hex('268BD2'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('586E75'), background: $background),
             inputStyle: new Style(foreground: Color::hex('9EABAB'), background: Color::hex('0F3C48')),
-            page: $background,
+            canvas: $background,
             footerStyle: new Style(foreground: Color::hex('9EABAB'), background: Color::hex('0F3C48')),
         );
     }
@@ -326,7 +326,7 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('859900'), background: $background),
             borderStyle: new Style(foreground: Color::hex('93A1A1'), background: $background),
             focusedBorderStyle: new Style(foreground: Color::hex('268BD2'), background: $background, attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('B58900'), background: $background, attributes: Attr::BOLD),
             // base02 on base2 throughout: base00 on that bar is only 3.64:1.
             selectedStyle: new Style(foreground: Color::hex('073642'), background: Color::hex('DFDAC8')),
@@ -335,7 +335,7 @@ final readonly class Theme
             fillStyle: new Style(foreground: Color::hex('268BD2'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('93A1A1'), background: $background),
             inputStyle: new Style(foreground: Color::hex('073642'), background: Color::hex('DFDAC8')),
-            page: $background,
+            canvas: $background,
             // Use a dark bottom bar because accent key hints have only 2.6:1 contrast on a light bar.
             footerStyle: new Style(foreground: Color::hex('FDF6E3'), background: Color::hex('073642')),
         );
@@ -353,7 +353,7 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('9CCFD8'), background: $background),
             borderStyle: new Style(foreground: Color::hex('6E6A86'), background: $background),
             focusedBorderStyle: new Style(foreground: Color::hex('C4A7E7'), background: $background, attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('F6C177'), background: $background, attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('F6C177'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('F6C177'), background: $background, attributes: Attr::BOLD),
             selectedStyle: new Style(background: Color::hex('403D52')),
             cursorStyle: new Style(foreground: Color::hex('191724'), background: Color::hex('C4A7E7')),
@@ -361,7 +361,7 @@ final readonly class Theme
             emptyStyle: new Style(foreground: Color::hex('6E6A86'), background: $background),
             // Increase contrast: Overlay is only 1.07:1 against Base.
             inputStyle: new Style(foreground: Color::hex('E0DEF4'), background: Color::hex('2D2B3B')),
-            page: $background,
+            canvas: $background,
         );
     }
 
@@ -377,14 +377,14 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('98C379'), background: $background),
             borderStyle: new Style(foreground: Color::hex('5C6370'), background: $background),
             focusedBorderStyle: new Style(foreground: Color::hex('C678DD'), background: $background, attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('E5C07B'), background: $background, attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('E5C07B'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('E5C07B'), background: $background, attributes: Attr::BOLD),
             selectedStyle: new Style(background: Color::hex('3E4451')),
             cursorStyle: new Style(foreground: Color::hex('282C34'), background: Color::hex('C678DD')),
             fillStyle: new Style(foreground: Color::hex('56B6C2'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('5C6370'), background: $background),
             inputStyle: new Style(foreground: Color::hex('ABB2BF'), background: Color::hex('3E4451')),
-            page: $background,
+            canvas: $background,
         );
     }
 
@@ -400,14 +400,14 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('B8BB26'), background: $background),
             borderStyle: new Style(foreground: Color::hex('928374'), background: $background),
             focusedBorderStyle: new Style(foreground: Color::hex('FE8019'), background: $background, attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('FABD2F'), background: $background, attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('FABD2F'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('FABD2F'), background: $background, attributes: Attr::BOLD),
             selectedStyle: new Style(background: Color::hex('504945')),
             cursorStyle: new Style(foreground: Color::hex('282828'), background: Color::hex('FE8019')),
             fillStyle: new Style(foreground: Color::hex('8EC07C'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('928374'), background: $background),
             inputStyle: new Style(foreground: Color::hex('EBDBB2'), background: Color::hex('3C3836')),
-            page: $background,
+            canvas: $background,
             // Use orange for warnings because Gruvbox already uses yellow for both accent and title.
             warning: new Style(foreground: Color::hex('FE8019'), background: $background),
         );
@@ -425,14 +425,14 @@ final readonly class Theme
             success: new Style(foreground: Color::hex('79740E'), background: $background),
             borderStyle: new Style(foreground: Color::hex('928374'), background: $background),
             focusedBorderStyle: new Style(foreground: Color::hex('AF3A03'), background: $background, attributes: Attr::BOLD),
-            titleStyle: new Style(foreground: Color::hex('B57614'), background: $background, attributes: Attr::BOLD),
+            title: new Style(foreground: Color::hex('B57614'), background: $background, attributes: Attr::BOLD),
             headerStyle: new Style(foreground: Color::hex('B57614'), background: $background, attributes: Attr::BOLD),
             selectedStyle: new Style(background: Color::hex('D5C4A1')),
             cursorStyle: new Style(foreground: Color::hex('FBF1C7'), background: Color::hex('AF3A03')),
             fillStyle: new Style(foreground: Color::hex('427B58'), background: $background),
             emptyStyle: new Style(foreground: Color::hex('928374'), background: $background),
             inputStyle: new Style(foreground: Color::hex('3C3836'), background: Color::hex('E4D4AC')),
-            page: $background,
+            canvas: $background,
             // Use a dark bar because accent key hints have only 2.2:1 contrast on the light selection background.
             footerStyle: new Style(foreground: Color::hex('FBF1C7'), background: Color::hex('3C3836')),
             warning: new Style(foreground: Color::hex('AF3A03'), background: $background),
@@ -450,14 +450,14 @@ final readonly class Theme
         ?Style $success = null,
         ?Style $borderStyle = null,
         ?Style $focusedBorderStyle = null,
-        ?Style $titleStyle = null,
+        ?Style $title = null,
         ?Style $headerStyle = null,
         ?Style $selectedStyle = null,
         ?Style $cursorStyle = null,
         ?Style $fillStyle = null,
         ?Style $emptyStyle = null,
         ?Style $inputStyle = null,
-        ?Color $page = null,
+        ?Color $canvas = null,
         ?Style $footerStyle = null,
         ?Style $warning = null,
         ?Style $info = null,
@@ -472,14 +472,14 @@ final readonly class Theme
             success: $success ?? $this->success,
             borderStyle: $borderStyle ?? $this->borderStyle,
             focusedBorderStyle: $focusedBorderStyle ?? $this->focusedBorderStyle,
-            titleStyle: $titleStyle ?? $this->titleStyle,
+            title: $title ?? $this->title,
             headerStyle: $headerStyle ?? $this->headerStyle,
             selectedStyle: $selectedStyle ?? $this->selectedStyle,
             cursorStyle: $cursorStyle ?? $this->cursorStyle,
             fillStyle: $fillStyle ?? $this->fillStyle,
             emptyStyle: $emptyStyle ?? $this->emptyStyle,
             inputStyle: $inputStyle ?? $this->inputStyle,
-            page: $page ?? $this->page,
+            canvas: $canvas ?? $this->canvas,
             footerStyle: $footerStyle ?? $this->footerOverride,
             warning: $warning ?? $this->warningOverride,
             info: $info ?? $this->infoOverride,
@@ -490,7 +490,7 @@ final readonly class Theme
 
     private function withoutColour(Style $style): Style
     {
-        $filled = null !== $style->background && $style->background->value !== $this->page?->value;
+        $filled = null !== $style->background && $style->background->value !== $this->canvas?->value;
 
         return new Style(attributes: $style->attributes | ($filled ? Attr::REVERSE : 0));
     }

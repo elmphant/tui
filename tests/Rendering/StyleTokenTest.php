@@ -25,7 +25,7 @@ final class StyleTokenTest extends TestCase
         yield 'success' => [StyleToken::Success, static fn (Theme $theme): Style => $theme->success];
         yield 'warning' => [StyleToken::Warning, static fn (Theme $theme): Style => $theme->warning];
         yield 'info' => [StyleToken::Info, static fn (Theme $theme): Style => $theme->info];
-        yield 'title' => [StyleToken::Title, static fn (Theme $theme): Style => $theme->titleStyle];
+        yield 'title' => [StyleToken::Title, static fn (Theme $theme): Style => $theme->title];
     }
 
     /**

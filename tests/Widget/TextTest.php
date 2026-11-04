@@ -211,8 +211,8 @@ final class TextTest extends TestCase
         Text::token('Ti', StyleToken::Title)->render($frame, new Rect(0, 0, 10, 1), new RenderContext($theme));
 
         self::assertSame('T', $frame->characters[0]);
-        self::assertSame($theme->titleStyle->foregroundValue(), $frame->foregrounds[0]);
-        self::assertSame($theme->titleStyle->attributes, $frame->attributes[0]);
+        self::assertSame($theme->title->foregroundValue(), $frame->foregrounds[0]);
+        self::assertSame($theme->title->attributes, $frame->attributes[0]);
     }
 
     #[Test]
@@ -254,7 +254,7 @@ final class TextTest extends TestCase
         )->render($frame, new Rect(0, 0, 10, 1), $context);
 
         self::assertSame($brand->foregroundValue(), $frame->foregrounds[0]);
-        self::assertSame($theme->titleStyle->foregroundValue(), $frame->foregrounds[2]);
+        self::assertSame($theme->title->foregroundValue(), $frame->foregrounds[2]);
         self::assertSame(Attr::BOLD, $frame->attributes[2]);
         self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[4]);
     }

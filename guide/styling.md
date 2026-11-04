@@ -52,7 +52,7 @@ rows their own background.
 | `inputStyle` | `TextInput` |
 | `headerStyle` | `Header`, the header row of `Table` |
 | `footerStyle` | `Footer`, `StatusBar` |
-| `titleStyle` | the titles of `Panel`, `Box`, `Modal`, `TabBar`, `Radio`, `CheckboxGroup` |
+| `title` | the titles of `Panel`, `Box`, `Modal`, `TabBar`, `Radio`, `CheckboxGroup` |
 | `borderStyle` / `focusedBorderStyle` | borders, and the border of the part that holds the keyboard |
 | `fillStyle` / `emptyStyle` | the two parts of `ProgressBar` |
 | `base`, `accent`, `dim` | plain text, highlights and quieter text everywhere |

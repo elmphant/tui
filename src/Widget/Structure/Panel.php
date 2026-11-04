@@ -427,7 +427,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
         $block = Block::new()
             ->withBorderType($theme->borderTypeFor($prominent))
             ->withBorderStyle($override ?? $theme->borderStyleFor($prominent))
-            ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
+            ->withTitleStyle($this->titleStyleOverride ?? $theme->title)
             ->withTitle($this->title);
 
         if ($this->margin !== null) {

@@ -20,8 +20,8 @@ final class ThemeTest extends TestCase
     {
         $theme = Theme::dark();
 
-        self::assertSame(Attr::BOLD, $theme->titleStyle->attributes & Attr::BOLD, 'precondition: the title is bold');
-        self::assertSame($theme->titleStyle->foreground, $theme->warning->foreground);
+        self::assertSame(Attr::BOLD, $theme->title->attributes & Attr::BOLD, 'precondition: the title is bold');
+        self::assertSame($theme->title->foreground, $theme->warning->foreground);
         self::assertSame(0, $theme->warning->attributes & Attr::BOLD);
     }
 
@@ -36,7 +36,7 @@ final class ThemeTest extends TestCase
         $theme = Theme::dark()
             ->withBase(new Style(foreground: $body))
             ->withSelectedStyle(new Style(background: $band))
-            ->withTitleStyle(new Style(foreground: $amber, attributes: Attr::BOLD))
+            ->withTitle(new Style(foreground: $amber, attributes: Attr::BOLD))
             ->withAccent(new Style(foreground: $blue));
 
         self::assertSame(
@@ -58,7 +58,7 @@ final class ThemeTest extends TestCase
             ->withInfo($info)
             ->withBase(new Style(foreground: Color::hex('505050')))
             ->withSelectedStyle(new Style(background: Color::hex('606060')))
-            ->withTitleStyle(new Style(foreground: Color::hex('707070')))
+            ->withTitle(new Style(foreground: Color::hex('707070')))
             ->withAccent(new Style(foreground: Color::hex('808080')));
 
         self::assertSame([$footer, $warning, $info], [$theme->footerStyle, $theme->warning, $theme->info]);
@@ -76,7 +76,7 @@ final class ThemeTest extends TestCase
         self::assertInstanceOf(Style::class, $theme->success);
         self::assertInstanceOf(Style::class, $theme->borderStyle);
         self::assertInstanceOf(Style::class, $theme->focusedBorderStyle);
-        self::assertInstanceOf(Style::class, $theme->titleStyle);
+        self::assertInstanceOf(Style::class, $theme->title);
         self::assertInstanceOf(Style::class, $theme->headerStyle);
         self::assertInstanceOf(Style::class, $theme->selectedStyle);
         self::assertInstanceOf(Style::class, $theme->cursorStyle);
@@ -320,7 +320,7 @@ final class ThemeTest extends TestCase
     public function everyPresetSaysWhichPageItWasDesignedAgainst(): void
     {
         foreach (self::allPresets() as $name => $theme) {
-            self::assertNotNull($theme->page, sprintf('%s cannot tell a fill from its surroundings', $name));
+            self::assertNotNull($theme->canvas, sprintf('%s cannot tell a fill from its surroundings', $name));
         }
     }
 
@@ -328,7 +328,7 @@ final class ThemeTest extends TestCase
     public function everyFilledRowInEveryPresetStandsOutFromThePage(): void
     {
         foreach (self::allPresets() as $name => $theme) {
-            $page = $theme->page;
+            $page = $theme->canvas;
             self::assertNotNull($page);
 
             $panels = [
@@ -388,8 +388,8 @@ final class ThemeTest extends TestCase
 
         $theme = $dark->withCanvas($canvas);
 
-        self::assertEquals($canvas, $theme->page);
-        foreach (['base', 'accent', 'dim', 'error', 'success', 'warning', 'info', 'borderStyle', 'focusedBorderStyle', 'titleStyle', 'headerStyle', 'fillStyle', 'emptyStyle'] as $ink) {
+        self::assertEquals($canvas, $theme->canvas);
+        foreach (['base', 'accent', 'dim', 'error', 'success', 'warning', 'info', 'borderStyle', 'focusedBorderStyle', 'title', 'headerStyle', 'fillStyle', 'emptyStyle'] as $ink) {
             self::assertEquals($canvas, $theme->{$ink}->background, $ink);
             self::assertEquals($dark->{$ink}->foreground, $theme->{$ink}->foreground, $ink);
         }

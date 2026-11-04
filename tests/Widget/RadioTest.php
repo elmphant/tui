@@ -252,7 +252,7 @@ final class RadioTest extends TestCase
         self::assertSame('k', $frame->characters[3]);
 
         $theme = Theme::dark();
-        self::assertSame($theme->titleStyle->foregroundValue(), $frame->foregrounds[0]);
+        self::assertSame($theme->title->foregroundValue(), $frame->foregrounds[0]);
         self::assertSame(Attr::BOLD, $frame->attributes[0]);
     }
 

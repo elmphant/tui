@@ -375,7 +375,7 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
 
                 $frame->putChar($cell->x, $labelRow, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
                 $frame->putChar($cell->x + 1, $labelRow, ' ', $borderForeground, $borderBackground);
-                $frame->putStyled($cell->x + 2, $labelRow, $label, $theme->titleStyle);
+                $frame->putStyled($cell->x + 2, $labelRow, $label, $theme->title);
                 $frame->putChar($tabRight - 1, $labelRow, ' ', $borderForeground, $borderBackground);
                 $frame->putChar($tabRight, $labelRow, $border->vertical, $borderForeground, $borderBackground, $borderAttributes);
             } else {

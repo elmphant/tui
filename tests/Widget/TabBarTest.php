@@ -860,7 +860,7 @@ final class TabBarTest extends TestCase
     {
         $frame = new Frame(30, 10);
         TabBar::new()->addTab('Tab')->render($frame, new Rect(0, 0, 30, 10), $this->context());
-        self::assertSame(Theme::dark()->titleStyle->foregroundValue(), $frame->foregrounds[1 * 30 + 2]);
+        self::assertSame(Theme::dark()->title->foregroundValue(), $frame->foregrounds[1 * 30 + 2]);
     }
 
     // ── Rendering: Inactive tab ──

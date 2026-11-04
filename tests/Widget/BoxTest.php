@@ -299,7 +299,7 @@ final class BoxTest extends TestCase
         $box->render($frame, new Rect(0, 0, 20, 3), $context);
 
         $expectedForeground = Color::hex('00FF00')->value;
-        $themeTitleForeground = Theme::dark()->titleStyle->foregroundValue();
+        $themeTitleForeground = Theme::dark()->title->foregroundValue();
         self::assertNotSame($expectedForeground, $themeTitleForeground, 'Precondition: custom differs from theme');
         self::assertSame($expectedForeground, $frame->foregrounds[2], 'Title must use custom style, not theme');
     }

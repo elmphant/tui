@@ -25,7 +25,7 @@ enum StyleToken
             self::Success => $theme->success,
             self::Warning => $theme->warning,
             self::Info => $theme->info,
-            self::Title => $theme->titleStyle,
+            self::Title => $theme->title,
         };
     }
 }

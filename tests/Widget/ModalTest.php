@@ -629,7 +629,7 @@ final class ModalTest extends TestCase
 
         self::assertNotNull($titleForeground);
         self::assertSame(
-            $this->context->theme->titleStyle->foregroundValue(),
+            $this->context->theme->title->foregroundValue(),
             $titleForeground,
         );
     }

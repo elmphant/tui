@@ -237,7 +237,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
             Block::new()
                 ->withBorderType($theme->borderType)
                 ->withBorderStyle($this->borderStyleOverride ?? $theme->focusedBorderStyle)
-                ->withTitleStyle($this->titleStyleOverride ?? $theme->titleStyle)
+                ->withTitleStyle($this->titleStyleOverride ?? $theme->title)
                 ->withTitle($this->title)
                 ->render($frame, $modalRect);
         }

@@ -155,7 +155,7 @@ final class Pen
     }
 
     /**
-     * @infection-ignore-all a bounded memo over Color::downsampleTo(): a miss or a reset computes the same value again
+     * @infection-ignore-all a bounded memo over Color::shownIn(): a miss or a reset computes the same value again
      */
     private function downsample(int $color): int
     {
@@ -167,7 +167,7 @@ final class Pen
             $this->downsampleCache = [];
         }
 
-        return $this->downsampleCache[$color] ??= Color::fromValue($color)->downsampleTo($this->colorProfile)->value;
+        return $this->downsampleCache[$color] ??= Color::fromValue($color)->shownIn($this->colorProfile)->value;
     }
 
     /**

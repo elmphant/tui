@@ -121,7 +121,7 @@ final class KeyHelpOverlay
             ->withBorderType(BorderType::Rounded)
             ->withTitle(self::TITLE)
             ->withBorderStyle($context->theme->focusedBorderStyle)
-            ->withTitleStyle($context->theme->titleStyle)
+            ->withTitleStyle($context->theme->title)
             ->render($frame, $area);
 
         $rows = $height - 2;

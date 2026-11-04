@@ -102,7 +102,7 @@ final readonly class Color
         return self::rgb(($value >> 16) & 0xFF, ($value >> 8) & 0xFF, $value & 0xFF);
     }
 
-    public function downsampleTo(ColorProfile $profile): self
+    public function shownIn(ColorProfile $profile): self
     {
         return match ($profile) {
             ColorProfile::TrueColor => $this,

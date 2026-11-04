@@ -183,7 +183,7 @@ final readonly class Radio implements Focusable, KeybindingsAware, CursorAware, 
         $y = $area->y;
 
         if ($this->label !== '') {
-            $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($this->label, $area->width), $theme->titleStyle);
+            $frame->putStyled($area->x, $y, CharWidth::truncateToWidth($this->label, $area->width), $theme->title);
             $y += 2;
         }
 

@@ -278,7 +278,7 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         $y = $area->y;
 
         if ($this->label !== '') {
-            $frame->putStyled($area->x, $y, $this->label, $theme->titleStyle);
+            $frame->putStyled($area->x, $y, $this->label, $theme->title);
             $y += 2;
         }
 
