@@ -25,7 +25,7 @@ final class FilterableTableInVimModeTest extends TestCase
         $harness = ModelHarness::for(new VimTableApp(FilterableTable::new(
             [Column::new('Route', Constraint::flex())],
             array_map(static fn (int $index): Row => Row::new("route $index"), range(1, 20)),
-        )), 40, 10)->initialize();
+        )), 40, 10)->init();
 
         self::assertNull($harness->renderFrame()->cursorPosition());
         self::assertNotNull($harness->press('/')->renderFrame()->cursorPosition());

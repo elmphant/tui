@@ -29,7 +29,7 @@ final class MountAreaTest extends TestCase
     public function aKeyForAMountLaysOutNothingInsideIt(): void
     {
         $tally = new LayoutTally();
-        $harness = ModelHarness::for(new HostOfATallyMount(new TallyModel($tally)), 40, 6)->initialize();
+        $harness = ModelHarness::for(new HostOfATallyMount(new TallyModel($tally)), 40, 6)->init();
         $before = $tally->placements;
 
         $harness->type('abcdefgh');
@@ -41,7 +41,7 @@ final class MountAreaTest extends TestCase
     #[Test]
     public function aKeyReachesTheMountWithTheAreaItIsDrawnIn(): void
     {
-        $harness = ModelHarness::for(new HostOfATallyMount(new TallyModel(new LayoutTally())), 40, 6)->initialize()->type('a');
+        $harness = ModelHarness::for(new HostOfATallyMount(new TallyModel(new LayoutTally())), 40, 6)->init()->type('a');
 
         self::assertEquals(new Rect(10, 0, 30, 6), $harness->model()->counter->area);
     }

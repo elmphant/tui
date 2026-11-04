@@ -72,7 +72,7 @@ final class FocusedHintsTest extends TestCase
     #[Test]
     public function theKeysNamedIncludeTheOnesTheAppsGlobalBindingsAdded(): void
     {
-        $driven = ModelHarness::for(new VimTabsApp(), 40, 10)->initialize();
+        $driven = ModelHarness::for(new VimTabsApp(), 40, 10)->init();
 
         self::assertSame(
             ['H' => 'previous tab', 'L' => 'next tab'],
@@ -84,7 +84,7 @@ final class FocusedHintsTest extends TestCase
     #[Test]
     public function aWidgetNamesTheKeyThatMovesTheKeyboardOnByItsAction(): void
     {
-        $driven = ModelHarness::for(new FocusCyclingApp(), 40, 10)->initialize();
+        $driven = ModelHarness::for(new FocusCyclingApp(), 40, 10)->init();
 
         self::assertSame(['Tab' => 'next pane'], $driven->focusedHints());
     }
@@ -92,7 +92,7 @@ final class FocusedHintsTest extends TestCase
     #[Test]
     public function theKeyNamedFollowsTheAppsOwnFocusCycleBinding(): void
     {
-        $driven = ModelHarness::for(new FocusCyclingApp(rebound: true), 40, 10)->initialize();
+        $driven = ModelHarness::for(new FocusCyclingApp(rebound: true), 40, 10)->init();
 
         self::assertSame(['Ctrl+N' => 'next pane'], $driven->focusedHints());
     }

@@ -20,7 +20,7 @@ final class HarnessRunsFibersTest extends TestCase
     #[Test]
     public function aFiberWaitsUntilTheTestRunsIt(): void
     {
-        $driven = ModelHarness::for(new FiberLoggingModel(Cmd::fiber(static fn (): Message => new FiberDone('loaded'), EffectId::named('load'))))->initialize();
+        $driven = ModelHarness::for(new FiberLoggingModel(Cmd::fiber(static fn (): Message => new FiberDone('loaded'), EffectId::named('load'))))->init();
 
         self::assertCount(1, $driven->issued(FiberCmd::class));
         self::assertSame([], $driven->model()->log);
@@ -32,7 +32,7 @@ final class HarnessRunsFibersTest extends TestCase
     {
         $driven = ModelHarness::for(new FiberLoggingModel(Cmd::fiber(static fn (): Message => new FiberDone('loaded'))->map(
             static fn (Message $message): Message => new FiberDone('wrapped'),
-        )))->initialize();
+        )))->init();
 
         self::assertSame(['wrapped'], $driven->runFibers()->model()->log);
     }
@@ -43,7 +43,7 @@ final class HarnessRunsFibersTest extends TestCase
         $driven = ModelHarness::for(new FiberLoggingModel(Cmd::batch(
             Cmd::fiber(static fn (): Message => new FiberDone('late'), EffectId::named('load')),
             Cmd::cancel(EffectId::named('load')),
-        )))->initialize();
+        )))->init();
 
         self::assertSame([], $driven->runFibers()->model()->log);
     }
@@ -51,7 +51,7 @@ final class HarnessRunsFibersTest extends TestCase
     #[Test]
     public function aFiberThatThrowsIsAnsweredWithAFiberError(): void
     {
-        $driven = ModelHarness::for(new FiberLoggingModel(Cmd::fiber(static fn (): never => throw new RuntimeException('offline'), EffectId::named('load'))))->initialize();
+        $driven = ModelHarness::for(new FiberLoggingModel(Cmd::fiber(static fn (): never => throw new RuntimeException('offline'), EffectId::named('load'))))->init();
 
         self::assertSame(['error from load: fiber offline'], $driven->runFibers()->model()->log);
     }
@@ -60,7 +60,7 @@ final class HarnessRunsFibersTest extends TestCase
     public function aFailedFiberIsAFiberError(): void
     {
         $driven = ModelHarness::for(new FiberLoggingModel(Cmd::fiber(static fn (): ?Message => null, EffectId::named('load'))))
-            ->initialize()
+            ->init()
             ->fail('load', 'offline');
 
         self::assertSame(['error from load: fiber offline'], $driven->model()->log);

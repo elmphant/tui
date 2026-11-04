@@ -24,7 +24,7 @@ final class HarnessDeliversAMessageAModelSentTest extends TestCase
     #[Test]
     public function aMessageAnUpdateSentComesBackThroughUpdate(): void
     {
-        $driven = ModelHarness::for(new SpeaksToItselfApp(), 20, 2)->initialize();
+        $driven = ModelHarness::for(new SpeaksToItselfApp(), 20, 2)->init();
 
         $driven->dispatch(new KeyMsg('r'));
 
@@ -34,7 +34,7 @@ final class HarnessDeliversAMessageAModelSentTest extends TestCase
     #[Test]
     public function aMessageSentAlongsideOtherEffectsArrivesToo(): void
     {
-        $driven = ModelHarness::for(new SpeaksToItselfApp(), 20, 2)->initialize();
+        $driven = ModelHarness::for(new SpeaksToItselfApp(), 20, 2)->init();
 
         $driven->dispatch(new KeyMsg('b'));
 

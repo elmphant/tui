@@ -39,7 +39,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aComponentInAMountIsKnownUnderTheMountsName(): void
     {
-        $harness = ModelHarness::for(new HostOfOneMount(), 40, 6)->initialize();
+        $harness = ModelHarness::for(new HostOfOneMount(), 40, 6)->init();
 
         self::assertSame('notes/field', $harness->focused()?->value);
     }
@@ -47,7 +47,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aMountedComponentDrawsAsTheOneHoldingTheKeyboard(): void
     {
-        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->initialize();
+        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->init();
 
         self::assertStringContainsString('lit', $harness->renderScreen()->plainText());
     }
@@ -55,7 +55,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function insideAMountTheFocusedComponentGoesByItsLocalName(): void
     {
-        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(namer: true)), 40, 6)->initialize();
+        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(namer: true)), 40, 6)->init();
 
         self::assertStringContainsString('focused: field', $harness->renderScreen()->plainText());
     }
@@ -63,7 +63,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function whatAMountedComponentAsksForComesBackToItsModel(): void
     {
-        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->initialize()->press('enter');
+        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->init()->press('enter');
 
         self::assertSame(['lamp'], $harness->model()->notes->heard);
     }
@@ -71,7 +71,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function whatWritingAMountedComponentBackAsksForComesBackToItsModel(): void
     {
-        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(echoes: true)), 40, 6)->initialize()->type('a');
+        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(echoes: true)), 40, 6)->init()->type('a');
 
         self::assertSame(['typed a'], $harness->model()->notes->heard);
     }
@@ -79,7 +79,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aMountedModelSendsTheKeyboardToItsComponentsByTheirOwnNames(): void
     {
-        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->initialize()->press('enter');
+        $harness = ModelHarness::for(new HostOfOneMount(new NotesModel(lamp: true)), 40, 6)->init()->press('enter');
 
         self::assertSame('notes/field', $harness->focused()?->value);
     }
@@ -87,7 +87,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aKeyReachesTheMountHoldingTheKeyboardBeforeItsComponents(): void
     {
-        $harness = ModelHarness::for(new HostOfOneMount(), 40, 6)->initialize()->type('a')->press('ctrl+x');
+        $harness = ModelHarness::for(new HostOfOneMount(), 40, 6)->init()->type('a')->press('ctrl+x');
 
         self::assertSame(['key:x'], $harness->model()->notes->heard);
         self::assertSame('a', $harness->model()->notes->field?->value());
@@ -96,7 +96,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function withTheKeyboardInNoMountAKeyReachesTheMountsInView(): void
     {
-        $harness = ModelHarness::for(new HostOfAQuietMount(), 40, 6)->initialize()->press('r');
+        $harness = ModelHarness::for(new HostOfAQuietMount(), 40, 6)->init()->press('r');
 
         self::assertSame(1, $harness->model()->quiet->refreshed);
     }
@@ -115,7 +115,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aMountBehindAnOpenModalHearsNoKey(): void
     {
-        $harness = ModelHarness::for(new HostOfAQuietMount(behindAModal: true), 40, 12)->initialize()->press('r');
+        $harness = ModelHarness::for(new HostOfAQuietMount(behindAModal: true), 40, 12)->init()->press('r');
 
         self::assertSame(0, $harness->model()->quiet->refreshed);
     }
@@ -123,7 +123,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aMountBehindAModalAnotherMountDrawsHearsNoKey(): void
     {
-        $harness = ModelHarness::for(new HostOfAQuietMount(behindAMountedModal: true), 40, 12)->initialize()->press('r');
+        $harness = ModelHarness::for(new HostOfAQuietMount(behindAMountedModal: true), 40, 12)->init()->press('r');
 
         self::assertSame(0, $harness->model()->quiet->refreshed);
     }
@@ -131,7 +131,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aPressReachesTheMountUnderThePointerWithTheAreaItIsDrawnIn(): void
     {
-        $harness = ModelHarness::for(new HostOfAQuietMount(besideASidebar: true), 40, 6)->initialize()->clickAt(15, 2);
+        $harness = ModelHarness::for(new HostOfAQuietMount(besideASidebar: true), 40, 6)->init()->clickAt(15, 2);
 
         self::assertEquals(new Rect(10, 0, 30, 6), $harness->model()->quiet->pressedIn);
     }
@@ -139,7 +139,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aMountStartsWithItsInitAndHearsTheAnswerEvenWhileHidden(): void
     {
-        $harness = ModelHarness::for(new HostOfAHiddenMount(), 40, 6)->initialize();
+        $harness = ModelHarness::for(new HostOfAHiddenMount(), 40, 6)->init();
 
         self::assertSame(['started'], $harness->model()->hidden->heard);
     }
@@ -147,7 +147,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aDrawnMountStartsAndHearsItsAnswerBesideTheHiddenOnesAnAppLists(): void
     {
-        $harness = ModelHarness::for(new HostOfAShownAndAHiddenMount(), 40, 6)->initialize();
+        $harness = ModelHarness::for(new HostOfAShownAndAHiddenMount(), 40, 6)->init();
 
         self::assertSame(['started'], $harness->model()->shown->heard);
     }
@@ -155,7 +155,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aMountedAppStartsWithItsSetup(): void
     {
-        $harness = ModelHarness::for(new HostOfAMountedApp(), 40, 6)->initialize();
+        $harness = ModelHarness::for(new HostOfAMountedApp(), 40, 6)->init();
 
         self::assertSame(['started'], $harness->model()->inner->heard);
     }
@@ -163,7 +163,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aMountInsideAMountedAppStartsOnce(): void
     {
-        $harness = ModelHarness::for(new HostOfANestingApp(), 40, 6)->initialize();
+        $harness = ModelHarness::for(new HostOfANestingApp(), 40, 6)->init();
 
         self::assertSame(['started'], $harness->model()->nesting->starting->heard);
     }
@@ -171,7 +171,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aKeyReachesAModelMountedInsideAMountedApp(): void
     {
-        $harness = ModelHarness::for(new HostOfANestingApp(), 40, 6)->initialize()->press('r');
+        $harness = ModelHarness::for(new HostOfANestingApp(), 40, 6)->init()->press('r');
 
         self::assertSame(1, $harness->model()->nesting->quiet->refreshed);
     }
@@ -179,7 +179,7 @@ final class NamedMountTest extends TestCase
     #[Test]
     public function aMountedModelTellsItsHostAndOnlyItsHost(): void
     {
-        $harness = ModelHarness::for(new HostOfATellingMount(), 40, 6)->initialize()->press('t');
+        $harness = ModelHarness::for(new HostOfATellingMount(), 40, 6)->init()->press('t');
 
         self::assertSame(['told'], $harness->model()->heard);
         self::assertSame([], $harness->model()->teller->heard);

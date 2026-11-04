@@ -28,7 +28,7 @@ final class ChordTest extends TestCase
     #[Test]
     public function aTwoKeyChordMovesAListToItsFirstRow(): void
     {
-        $harness = ModelHarness::for(new ChordListApp(), 30, 8)->initialize()->press('down', 'down', 'g', 'g');
+        $harness = ModelHarness::for(new ChordListApp(), 30, 8)->init()->press('down', 'down', 'g', 'g');
 
         self::assertSame(0, $harness->model()->list->cursor());
     }
@@ -39,7 +39,7 @@ final class ChordTest extends TestCase
         $list = ListView::fromStrings(['one', 'two'])->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['t']]));
         $globals = new Keybindings([Actions::HOME => ['g g'], Actions::TAB_NEXT => ['g t']]);
 
-        $harness = ModelHarness::for(new ChordListApp($list, $globals), 30, 8)->initialize()->press('g', 't');
+        $harness = ModelHarness::for(new ChordListApp($list, $globals), 30, 8)->init()->press('g', 't');
 
         self::assertSame(1, $harness->model()->list->cursor());
     }
@@ -48,7 +48,7 @@ final class ChordTest extends TestCase
     public function aMountedModelHearsAChordOfItsOwnWhileTheKeyboardIsInIt(): void
     {
         $harness = ModelHarness::for(new ChordMountingApp(new ChordMountedLog(ListView::fromStrings(['a', 'b']))), 30, 8)
-            ->initialize()
+            ->init()
             ->press('d', 'd');
 
         self::assertSame('log/list', $harness->focused()?->value);
@@ -58,7 +58,7 @@ final class ChordTest extends TestCase
     #[Test]
     public function theKeysOfAChordAreTypedIntoAFocusedField(): void
     {
-        $harness = ModelHarness::for(new ChordFieldApp(), 30, 8)->initialize()->type('gg');
+        $harness = ModelHarness::for(new ChordFieldApp(), 30, 8)->init()->type('gg');
 
         self::assertSame('gg', $harness->model()->field->value());
     }
@@ -68,7 +68,7 @@ final class ChordTest extends TestCase
     {
         $list = ListView::fromStrings(['one', 'two'])->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['g']]));
 
-        $harness = ModelHarness::for(new ChordListApp($list), 30, 8)->initialize()->press('g', 'esc');
+        $harness = ModelHarness::for(new ChordListApp($list), 30, 8)->init()->press('g', 'esc');
 
         self::assertSame(0, $harness->model()->list->cursor());
     }
@@ -77,7 +77,7 @@ final class ChordTest extends TestCase
     public function aHeldKeyIsHandedOnAloneOnceHalfASecondPasses(): void
     {
         $list = ListView::fromStrings(['one', 'two', 'three'])->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['g']]));
-        $harness = ModelHarness::for(new ChordListApp($list), 30, 8)->initialize()->press('g');
+        $harness = ModelHarness::for(new ChordListApp($list), 30, 8)->init()->press('g');
 
         $waiting = $harness->advance(0.4)->model()->list->cursor();
         $handed = $harness->advance(0.2)->model()->list->cursor();
@@ -90,7 +90,7 @@ final class ChordTest extends TestCase
     {
         $list = ListView::fromStrings(['one', 'two', 'three'])->withKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['g']]));
 
-        $harness = ModelHarness::for(new ChordListApp($list), 30, 8)->initialize()->press('g', 'up');
+        $harness = ModelHarness::for(new ChordListApp($list), 30, 8)->init()->press('g', 'up');
 
         self::assertSame(0, $harness->model()->list->cursor());
     }

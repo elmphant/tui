@@ -23,7 +23,7 @@ final class ModelHarnessFocusTest extends TestCase
     #[Test]
     public function theKeyboardStartsOnTheFirstComponent(): void
     {
-        $driven = ModelHarness::for(new TwoNamedFieldApp(TextInput::new(), TextInput::new()), 40, 2)->initialize();
+        $driven = ModelHarness::for(new TwoNamedFieldApp(TextInput::new(), TextInput::new()), 40, 2)->init();
 
         self::assertTrue(
             $driven->focused()?->equals(ComponentId::named('first')),
@@ -34,7 +34,7 @@ final class ModelHarnessFocusTest extends TestCase
     #[Test]
     public function nobodyHoldsTheKeyboardOnceTheAppSendsItNowhere(): void
     {
-        $driven = ModelHarness::for(new TwoNamedFieldApp(TextInput::new(), TextInput::new()), 40, 2)->initialize();
+        $driven = ModelHarness::for(new TwoNamedFieldApp(TextInput::new(), TextInput::new()), 40, 2)->init();
 
         $driven->dispatch(new KeyMsg('x', ctrl: true));
 

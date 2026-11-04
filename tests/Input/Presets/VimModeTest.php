@@ -78,7 +78,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function ggAndCapitalGJumpAListToItsEnds(): void
     {
-        $harness = ModelHarness::for(new ChordListApp(globals: VimMode::keybindings()), 30, 8)->initialize()->press('G');
+        $harness = ModelHarness::for(new ChordListApp(globals: VimMode::keybindings()), 30, 8)->init()->press('G');
 
         self::assertSame(3, $harness->model()->list->cursor());
 
@@ -90,7 +90,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function ggAndCapitalGJumpATableToItsEnds(): void
     {
-        $harness = ModelHarness::for(new VimTableApp(), 40, 10)->initialize()->press('G');
+        $harness = ModelHarness::for(new VimTableApp(), 40, 10)->init()->press('G');
 
         self::assertSame(5, $harness->model()->table->cursor());
 
@@ -102,7 +102,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function gtAndGCapitalTSwitchTabsFromInsideATree(): void
     {
-        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('g', 't');
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->init()->press('g', 't');
 
         self::assertSame(1, $harness->model()->bar->activeTab());
 
@@ -114,7 +114,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function theKeysOfAChordAreTypedIntoAFieldOnATab(): void
     {
-        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L', 'L')->type('ggtG');
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->init()->press('L', 'L')->type('ggtG');
 
         self::assertSame(2, $harness->model()->bar->activeTab());
         $field = $harness->model()->bar->children()[0];
@@ -143,7 +143,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function ctrlUClearsAFocusedField(): void
     {
-        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L', 'L')->type('abc')->press('ctrl+u');
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->init()->press('L', 'L')->type('abc')->press('ctrl+u');
 
         $field = $harness->model()->bar->children()[0];
         self::assertInstanceOf(TextInput::class, $field);
@@ -155,7 +155,7 @@ final class VimModeTest extends TestCase
     {
         $list = FilterableList::new(array_map(static fn (int $index): SimpleListItem => new SimpleListItem("item $index"), range(0, 30)));
 
-        $harness = ModelHarness::for(new VimFilterApp($list), 40, 8)->initialize()->press('/')->type('item');
+        $harness = ModelHarness::for(new VimFilterApp($list), 40, 8)->init()->press('/')->type('item');
 
         self::assertSame('item', $harness->model()->list->query());
 
@@ -167,7 +167,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function ctrlUClearsTheFieldOfAFilterableCheckboxGroup(): void
     {
-        $harness = ModelHarness::for(new VimCheckboxFilterApp(FilterableCheckboxGroup::new(['alpha', 'beta'])), 40, 8)->initialize()->press('/')->type('alp');
+        $harness = ModelHarness::for(new VimCheckboxFilterApp(FilterableCheckboxGroup::new(['alpha', 'beta'])), 40, 8)->init()->press('/')->type('alp');
 
         self::assertNull($harness->renderScreen()->find('beta'));
 
@@ -185,7 +185,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function lExpandsTheFocusedTreeAndKeepsTheTab(): void
     {
-        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('l');
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->init()->press('l');
 
         self::assertSame(0, $harness->model()->bar->activeTab());
         self::assertTrue($harness->model()->tree()->isExpanded(new TreePath('dir')));
@@ -194,7 +194,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function hLeavesTheChildForItsParentInTheFocusedTree(): void
     {
-        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('l', 'j', 'h');
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->init()->press('l', 'j', 'h');
 
         self::assertSame(0, $harness->model()->bar->activeTab());
         self::assertEquals(new TreePath('dir'), $harness->model()->tree()->cursor());
@@ -203,7 +203,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function shiftedLAndHSwitchTabsFromInsideATree(): void
     {
-        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L');
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->init()->press('L');
 
         self::assertSame(1, $harness->model()->bar->activeTab());
 
@@ -215,7 +215,7 @@ final class VimModeTest extends TestCase
     #[Test]
     public function hAndLAreTypedIntoAFieldOnATab(): void
     {
-        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->initialize()->press('L', 'L')->type('hLl');
+        $harness = ModelHarness::for(new VimTabbedTreeApp(), 40, 12)->init()->press('L', 'L')->type('hLl');
 
         self::assertSame(2, $harness->model()->bar->activeTab());
         $field = $harness->model()->bar->children()[0];

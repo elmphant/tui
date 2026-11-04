@@ -23,7 +23,7 @@ final class FocusAfterAModalTest extends TestCase
     #[Test]
     public function theKeyboardStartsInTheActivePageRatherThanOnTheTabStrip(): void
     {
-        $harness = ModelHarness::for(TabbedAppWithAModal::new(), width: 60, height: 12)->initialize();
+        $harness = ModelHarness::for(TabbedAppWithAModal::new(), width: 60, height: 12)->init();
 
         self::assertSame('tabs/0', $harness->focused()?->value);
     }
@@ -31,7 +31,7 @@ final class FocusAfterAModalTest extends TestCase
     #[Test]
     public function closingAModalGivesTheKeyboardBackToWhereItWasBefore(): void
     {
-        $harness = ModelHarness::for(TabbedAppWithAModal::new(), width: 60, height: 12)->initialize();
+        $harness = ModelHarness::for(TabbedAppWithAModal::new(), width: 60, height: 12)->init();
         $harness->press('shift+tab', 'tab');
         self::assertSame('tabs/0', $harness->focused()?->value);
 

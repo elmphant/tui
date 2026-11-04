@@ -26,7 +26,7 @@ final class ScrolledOutChildPointerTest extends TestCase
     #[Test]
     public function aClickOverAChildScrolledOutOfItsPaneLeavesTheChildAlone(): void
     {
-        $harness = ModelHarness::for(LongFormApp::create(), 60, 12)->initialize();
+        $harness = ModelHarness::for(LongFormApp::create(), 60, 12)->init();
         $harness->renderFrame();
         for ($press = 0; $press < 3; ++$press) {
             $harness->dispatch(new KeyMsg(Key::Tab));

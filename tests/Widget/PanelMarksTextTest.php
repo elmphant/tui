@@ -48,7 +48,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function aBoundPaneCopiesWhatIsDraggedOverInAnApp(): void
     {
-        $driven = ModelHarness::for(new MarkingLogApp(), 30, 10)->initialize()->drag(1, 1, 9, 3);
+        $driven = ModelHarness::for(new MarkingLogApp(), 30, 10)->init()->drag(1, 1, 9, 3);
 
         self::assertSame(["line0\nline1\nline2"], array_map(
             static fn (ClipboardCmd $copy): string => $copy->text,
@@ -61,7 +61,7 @@ final class PanelMarksTextTest extends TestCase
     public function aPanelThatIsNeverAStopStillCopiesWhatIsDraggedOver(): void
     {
         $card = Panel::new('card')->withChildren([Text::new('line0')])->withNavigation(Navigation::Never);
-        $driven = ModelHarness::for(new MarkingLogApp($card), 30, 10)->initialize()->drag(1, 1, 9, 1);
+        $driven = ModelHarness::for(new MarkingLogApp($card), 30, 10)->init()->drag(1, 1, 9, 1);
 
         self::assertNull($driven->focused());
         self::assertSame(['line0'], array_map(static fn (ClipboardCmd $copy): string => $copy->text, $driven->issued(ClipboardCmd::class)));
@@ -157,7 +157,7 @@ final class PanelMarksTextTest extends TestCase
     public function aFieldInABoundPaneStillTakesTheClickAndTheTyping(): void
     {
         $form = Panel::new('form')->withChildren([Text::new('intro'), TextInput::new()]);
-        $driven = ModelHarness::for(new MarkingLogApp($form), 30, 10)->initialize()->clickAt(3, 2)->type('ab');
+        $driven = ModelHarness::for(new MarkingLogApp($form), 30, 10)->init()->clickAt(3, 2)->type('ab');
 
         self::assertStringContainsString('ab', $driven->renderScreen()->lineAt(2));
         self::assertSame(0, $driven->renderScreen()->styleAt(3, 2)->attributes & Attr::REVERSE);

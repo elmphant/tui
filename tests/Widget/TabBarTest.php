@@ -248,7 +248,7 @@ final class TabBarTest extends TestCase
     {
         $app = new TwoFieldsInATabApp(TabBar::new()->addTab('A')->addTab('B'));
 
-        $driven = ModelHarness::for($app, 40, 10)->initialize();
+        $driven = ModelHarness::for($app, 40, 10)->init();
 
         self::assertSame(['←' => 'previous tab', '→' => 'next tab'], $driven->focusedHints());
     }

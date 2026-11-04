@@ -25,7 +25,7 @@ final class HarnessFocusCommandTest extends TestCase
         $seen = new ArrayObject();
         $harness = ModelHarness::for(new KeyboardDownApp($seen, TextInput::new()), 40, 4);
 
-        $harness->initialize()->dispatch(new KeyMsg('x'));
+        $harness->init()->dispatch(new KeyMsg('x'));
 
         self::assertSame(['x'], $seen->getArrayCopy(), 'the app answers the key itself');
         self::assertInstanceOf(KeyboardDownApp::class, $harness->model());

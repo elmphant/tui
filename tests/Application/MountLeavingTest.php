@@ -86,8 +86,8 @@ final class MountLeavingTest extends TestCase
     #[Test]
     public function onlyTheMountThatLeftHasItsEffectsStopped(): void
     {
-        $kept = ModelHarness::for(new HostOfAFeed(new Journal()), 40, 6)->initialize()->dispatch(new Bump());
-        $left = ModelHarness::for(new HostOfAFeed(new Journal()), 40, 6)->initialize()->dispatch(new LeaveNow());
+        $kept = ModelHarness::for(new HostOfAFeed(new Journal()), 40, 6)->init()->dispatch(new Bump());
+        $left = ModelHarness::for(new HostOfAFeed(new Journal()), 40, 6)->init()->dispatch(new LeaveNow());
 
         self::assertSame([], $kept->issued(CancelScopeCmd::class), 'the app changed and the feed is still there');
         self::assertCount(1, $left->issued(CancelScopeCmd::class));

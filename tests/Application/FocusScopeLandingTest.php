@@ -25,7 +25,7 @@ final class FocusScopeLandingTest extends TestCase
     #[Test]
     public function aFieldLeavingAScopedPaneLeavesTheKeyboardOnItsSiblingInThatPane(): void
     {
-        $harness = ModelHarness::for(ScopedFiltersApp::seeded(), 40, 12)->initialize();
+        $harness = ModelHarness::for(ScopedFiltersApp::seeded(), 40, 12)->init();
         $harness->dispatch(new KeyMsg('f', ctrl: true));
         self::assertSame('filters/1', $harness->focused()?->value);
 

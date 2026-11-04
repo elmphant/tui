@@ -35,7 +35,7 @@ final class SearchModeTest extends TestCase
     #[Test]
     public function aWidgetWithAFieldOfItsOwnTypesOnlyAfterSlashInVimMode(): void
     {
-        $harness = ModelHarness::for(new OwnFieldApp(OwnFilter::new()), 30, 3)->initialize()->type('jk');
+        $harness = ModelHarness::for(new OwnFieldApp(OwnFilter::new()), 30, 3)->init()->type('jk');
 
         self::assertSame('', $harness->model()->filter->query());
         self::assertSame(['/' => 'search'], $harness->focusedHints());

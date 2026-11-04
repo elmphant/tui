@@ -144,7 +144,7 @@ final class ModelHarness
     /**
      * @return self<TModel>
      */
-    public function initialize(): self
+    public function init(): self
     {
         $this->issued = [];
         ++$this->depth;

@@ -137,7 +137,7 @@ final class FilterableStaticTableInVimModeTest extends TestCase
 
     private static function harness(bool $vim = true): ModelHarness
     {
-        return ModelHarness::for(new VimOutputApp(self::outputPane(), $vim), 40, 10)->initialize();
+        return ModelHarness::for(new VimOutputApp(self::outputPane(), $vim), 40, 10)->init();
     }
 
     private static function outputPane(): Panel

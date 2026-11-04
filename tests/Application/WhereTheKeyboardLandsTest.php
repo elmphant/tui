@@ -27,7 +27,7 @@ final class WhereTheKeyboardLandsTest extends TestCase
     #[Test]
     public function closingAModalLandsOnTheLastStopHeldBeforeItRatherThanAnEarlierOne(): void
     {
-        $harness = ModelHarness::for(ThreeFieldsAndAModal::new(), width: 40, height: 12)->initialize();
+        $harness = ModelHarness::for(ThreeFieldsAndAModal::new(), width: 40, height: 12)->init();
         $harness->press('tab', 'tab');
         self::assertSame('c', $harness->focused()?->value);
 
@@ -41,7 +41,7 @@ final class WhereTheKeyboardLandsTest extends TestCase
     #[Test]
     public function aStopThatLeavesLandsInTheInnermostPaneItSatInRatherThanTheOuterOne(): void
     {
-        $harness = ModelHarness::for(NestedPanes::new(), width: 40, height: 16)->initialize();
+        $harness = ModelHarness::for(NestedPanes::new(), width: 40, height: 16)->init();
         self::assertSame('z', $harness->focused()?->value);
 
         $harness->press('ctrl+o');

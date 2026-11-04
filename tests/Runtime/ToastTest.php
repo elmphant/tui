@@ -36,7 +36,7 @@ final class ToastTest extends TestCase
     #[Test]
     public function aToastInTheHarnessLeavesOnceTheTestLetsItsSecondsPass(): void
     {
-        $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withSeconds(3)]), 40, 6)->initialize()->press('s');
+        $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withSeconds(3)]), 40, 6)->init()->press('s');
 
         $stillThere = $driven->advance(2.9)->renderScreen()->find('Saved');
         $gone = $driven->advance(0.2)->renderScreen()->find('Saved');
@@ -48,7 +48,7 @@ final class ToastTest extends TestCase
     #[Test]
     public function theHarnessClockNeverRunsBackwards(): void
     {
-        $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withSeconds(3)]), 40, 6)->initialize()->press('s');
+        $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withSeconds(3)]), 40, 6)->init()->press('s');
 
         self::assertNull($driven->advance(-10)->advance(3.1)->renderScreen()->find('Saved'));
     }
@@ -57,7 +57,7 @@ final class ToastTest extends TestCase
     public function aToastIsABoxInTheTopRightCornerWithItsTitleInTheBorder(): void
     {
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved 3 pages')->withTitle('Done')->withWidth(20)]), 40, 6)
-            ->initialize()
+            ->init()
             ->press('s');
         $screen = $driven->renderScreen();
 
@@ -127,7 +127,7 @@ final class ToastTest extends TestCase
     {
         $toast = static fn (string $text): ToastCmd => Cmd::toast($text)->withWidth(12);
         $screen = ModelHarness::for(new ToastingApp(['a' => $toast('first'), 'b' => $toast('second')]), 30, 6)
-            ->initialize()
+            ->init()
             ->press('a')
             ->press('b')
             ->renderScreen();
@@ -143,7 +143,7 @@ final class ToastTest extends TestCase
             'a' => Cmd::toast('fits')->withWidth(10)->withPosition(ToastPosition::TopLeft),
             'b' => Cmd::toast('far too long to fit')->withWidth(6),
         ]), 30, 5)
-            ->initialize()
+            ->init()
             ->press('a')
             ->press('b')
             ->renderScreen();
@@ -207,7 +207,7 @@ final class ToastTest extends TestCase
     {
         $backdrop = implode("\n", array_fill(0, 5, str_repeat('#', 30)));
         $screen = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('x')->withWidth(10)], backdrop: $backdrop), 30, 5)
-            ->initialize()
+            ->init()
             ->press('s')
             ->renderScreen();
 
@@ -237,7 +237,7 @@ final class ToastTest extends TestCase
     public function aClickAfterTheOneThatClosedAToastReachesTheApp(): void
     {
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withWidth(20)]), 40, 6)
-            ->initialize()
+            ->init()
             ->press('s')
             ->clickAt(25, 2)
             ->clickAt(5, 2);
@@ -249,7 +249,7 @@ final class ToastTest extends TestCase
     public function theWheelOverAToastReachesTheAppAndLeavesTheToast(): void
     {
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withWidth(20)]), 40, 6)
-            ->initialize()
+            ->init()
             ->press('s')
             ->dispatch(new MouseMsg(25, 2, MouseAction::WheelDown, MouseButton::None));
 
@@ -262,7 +262,7 @@ final class ToastTest extends TestCase
     {
         $toast = static fn (string $text): ToastCmd => Cmd::toast($text)->withWidth(12);
         $driven = ModelHarness::for(new ToastingApp(['a' => $toast('first'), 'b' => $toast('second')]), 30, 8)
-            ->initialize()
+            ->init()
             ->press('a')
             ->press('b')
             ->clickAt(22, 5);
@@ -276,7 +276,7 @@ final class ToastTest extends TestCase
     {
         $toast = static fn (string $text): ToastCmd => Cmd::toast($text)->withWidth(12)->withPosition(ToastPosition::BottomLeft);
         $driven = ModelHarness::for(new ToastingApp(['a' => $toast('first'), 'b' => $toast('second')]), 30, 8)
-            ->initialize()
+            ->init()
             ->press('a')
             ->press('b');
         $screen = $driven->renderScreen();
@@ -298,7 +298,7 @@ final class ToastTest extends TestCase
     public function anErrorToastDrawsItsBorderAndTitleInTheThemesErrorColour(): void
     {
         $driven = ModelHarness::for(new ToastingApp(['e' => Cmd::toast('Disk full')->withTitle('Failed')->withSeverity(ToastSeverity::Error)->withWidth(20)]), 40, 6)
-            ->initialize()
+            ->init()
             ->press('e');
         $screen = $driven->renderScreen();
         $error = StyleToken::Error->resolve(Theme::dark())->foreground;
@@ -319,7 +319,7 @@ final class ToastTest extends TestCase
             'b' => Cmd::toast('Loaded')->withWidth(12),
             'c' => Cmd::toast('Saved')->withKey('save')->withWidth(12),
         ]), 30, 8)
-            ->initialize()
+            ->init()
             ->press('a')
             ->press('b')
             ->press('c');
@@ -336,7 +336,7 @@ final class ToastTest extends TestCase
     public function aClickOnAToastClosesItAndNeverReachesTheApp(): void
     {
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withWidth(20)]), 40, 6)
-            ->initialize()
+            ->init()
             ->press('s')
             ->clickAt(25, 2);
 
@@ -348,7 +348,7 @@ final class ToastTest extends TestCase
     public function aClickBesideAToastReachesTheAppAndLeavesTheToast(): void
     {
         $driven = ModelHarness::for(new ToastingApp(['s' => Cmd::toast('Saved')->withWidth(20)]), 40, 6)
-            ->initialize()
+            ->init()
             ->press('s')
             ->clickAt(5, 2);
 
@@ -405,7 +405,7 @@ final class ToastTest extends TestCase
 
     private static function screenAfter(ToastCmd $toast, int $width, int $height): ScreenBuffer
     {
-        return ModelHarness::for(new ToastingApp(['s' => $toast]), $width, $height)->initialize()->press('s')->renderScreen();
+        return ModelHarness::for(new ToastingApp(['s' => $toast]), $width, $height)->init()->press('s')->renderScreen();
     }
 }
 

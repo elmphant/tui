@@ -70,7 +70,7 @@ final class KeyHelpTest extends TestCase
     #[Test]
     public function inVimModeItNamesTheVimKeysAndChordsTheListAnswersAndNoOthers(): void
     {
-        $screen = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->initialize()->press('?')->renderScreen()->plainText();
+        $screen = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->init()->press('?')->renderScreen()->plainText();
 
         self::assertMatchesRegularExpression('/j\/↓\s+down/u', $screen);
         self::assertMatchesRegularExpression('/gg\/Home\s+top/u', $screen);
@@ -80,7 +80,7 @@ final class KeyHelpTest extends TestCase
     #[Test]
     public function aKeyIsDescribedInTheWordsOfTheHintsItsWidgetPublishes(): void
     {
-        $rows = self::keyHelpRows(ModelHarness::for(new WordedApp(new WordedWidget()), 60, 30)->initialize()->press('?'));
+        $rows = self::keyHelpRows(ModelHarness::for(new WordedApp(new WordedWidget()), 60, 30)->init()->press('?'));
 
         self::assertContains('Enter  fill in', array_map(static fn (string $row): string => preg_replace('/\s{2,}/u', '  ', $row) ?? $row, $rows));
     }
@@ -88,7 +88,7 @@ final class KeyHelpTest extends TestCase
     #[Test]
     public function aKeyIsListedOnceInTheClosestGroupThatAnswersIt(): void
     {
-        $rows = self::keyHelpRows(ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 70, 60)->initialize()->press('?'));
+        $rows = self::keyHelpRows(ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 70, 60)->init()->press('?'));
         $keys = [];
         foreach ($rows as $row) {
             if (preg_match('/^(\S+)\s{2,}\S/u', $row, $match) === 1) {
@@ -159,7 +159,7 @@ final class KeyHelpTest extends TestCase
     #[Test]
     public function aKeyHelpTallerThanTheScreenScrolls(): void
     {
-        $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 10)->initialize()->press('?');
+        $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 10)->init()->press('?');
 
         self::assertStringContainsString('Here', $harness->renderScreen()->plainText());
 
@@ -172,7 +172,7 @@ final class KeyHelpTest extends TestCase
     #[Test]
     public function anAppThatOffersNoKeyHelpLetsTheQuestionMarkThrough(): void
     {
-        $harness = ModelHarness::for(new NoKeyHelpApp(self::list()), 60, 30)->initialize()->press('?');
+        $harness = ModelHarness::for(new NoKeyHelpApp(self::list()), 60, 30)->init()->press('?');
 
         self::assertStringNotContainsString('Keys', $harness->renderScreen()->plainText());
     }
@@ -206,7 +206,7 @@ final class KeyHelpTest extends TestCase
     #[Test]
     public function aMountedModelListsTheKeysItAnswersItself(): void
     {
-        $screen = ModelHarness::for(new ReportMountingApp(new ReportModel()), 60, 30)->initialize()->press('?')->renderScreen()->plainText();
+        $screen = ModelHarness::for(new ReportMountingApp(new ReportModel()), 60, 30)->init()->press('?')->renderScreen()->plainText();
 
         self::assertStringContainsString('Report', $screen);
         self::assertMatchesRegularExpression('/r\s+refresh/u', $screen);
@@ -215,7 +215,7 @@ final class KeyHelpTest extends TestCase
     #[Test]
     public function aKeyAMountedModelNamesIsNotListedAgainForTheApp(): void
     {
-        $harness = ModelHarness::for(new OverlappingKeysApp(), 60, 30)->initialize();
+        $harness = ModelHarness::for(new OverlappingKeysApp(), 60, 30)->init();
 
         $focused = $harness->focused();
         $help = $harness->model()->keyHelp($focused === null ? FocusState::nowhere() : FocusState::on($focused));
@@ -256,7 +256,7 @@ final class KeyHelpTest extends TestCase
 
     private static function harness(): ModelHarness
     {
-        return ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 30)->initialize();
+        return ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 30)->init();
     }
 }
 

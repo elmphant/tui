@@ -28,7 +28,7 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     #[Test]
     public function lettersTypedIntoAFieldAreTextNotShortcuts(): void
     {
-        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->type('need');
+        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->init()->type('need');
 
         self::assertSame('need', $harness->model()->field->value());
         self::assertSame([], $harness->model()->shortcuts);
@@ -38,7 +38,7 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     public function lettersFilterAnOpenDropdownRatherThanReachTheApplication(): void
     {
         $dropdown = Dropdown::new(FilterableList::new([new SimpleListItem('need'), new SimpleListItem('other')]))->withOpen();
-        $harness = ModelHarness::for(new ShortcutsAroundADropdownApp($dropdown))->initialize()->type('ne');
+        $harness = ModelHarness::for(new ShortcutsAroundADropdownApp($dropdown))->init()->type('ne');
 
         $content = $harness->model()->dropdown->content();
         self::assertInstanceOf(FilterableList::class, $content);
@@ -50,7 +50,7 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     public function aGlobalLetterBindingIsTypedIntoAFilterOnceSlashOpensIt(): void
     {
         $finder = FilterableList::new([new SimpleListItem('jekyll'), new SimpleListItem('kafka')]);
-        $harness = ModelHarness::for(new VimFinderApp($finder))->initialize()->press('/')->type('jek');
+        $harness = ModelHarness::for(new VimFinderApp($finder))->init()->press('/')->type('jek');
 
         self::assertSame('jek', $harness->model()->finder->query());
     }
@@ -58,7 +58,7 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     #[Test]
     public function lettersAreShortcutsWhileAListHoldsTheKeyboard(): void
     {
-        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->press('tab')->type('ne');
+        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->init()->press('tab')->type('ne');
 
         self::assertSame(['n', 'edit'], $harness->model()->shortcuts);
     }
@@ -66,7 +66,7 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     #[Test]
     public function aQuitLetterQuitsWhileAListHoldsTheKeyboard(): void
     {
-        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->press('tab', 'q');
+        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->init()->press('tab', 'q');
 
         self::assertInstanceOf(QuitCmd::class, $harness->lastCommand());
     }
@@ -74,7 +74,7 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     #[Test]
     public function aQuitLetterIsTypedWhileAFieldHoldsTheKeyboard(): void
     {
-        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->type('q');
+        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->init()->type('q');
 
         self::assertSame('q', $harness->model()->field->value());
     }
@@ -82,7 +82,7 @@ final class TextKeysReachAFocusedFieldTest extends TestCase
     #[Test]
     public function aModifiedKeyStaysTheApplicationsWhileAFieldHoldsTheKeyboard(): void
     {
-        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->initialize()->press('ctrl+e');
+        $harness = ModelHarness::for(ShortcutsAroundAFieldApp::new())->init()->press('ctrl+e');
 
         self::assertSame(['edit'], $harness->model()->shortcuts);
     }

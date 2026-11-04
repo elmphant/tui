@@ -22,7 +22,7 @@ final class ModalAroundABoundFormTest extends TestCase
     #[Test]
     public function aModalSizedToItsContentFitsEveryFieldOfABoundForm(): void
     {
-        $harness = ModelHarness::for(new BoundFormInModalApp(), width: 80, height: 30)->initialize();
+        $harness = ModelHarness::for(new BoundFormInModalApp(), width: 80, height: 30)->init();
 
         self::assertNotNull($harness->renderScreen()->find('Delta'));
     }
@@ -30,7 +30,7 @@ final class ModalAroundABoundFormTest extends TestCase
     #[Test]
     public function tabWalksTheFieldsOfABoundFormAndNeverTheModalAroundThem(): void
     {
-        $harness = ModelHarness::for(new BoundFormInModalApp(), width: 80, height: 30)->initialize();
+        $harness = ModelHarness::for(new BoundFormInModalApp(), width: 80, height: 30)->init();
         $visited = [];
 
         for ($step = 0; $step < 6; ++$step) {

@@ -23,7 +23,7 @@ final class HarnessMapsMessagesTest extends TestCase
     {
         $model = new RecordingModel(Cmd::message(new TestMessage('ping'))->map(static fn (Message $message): Message => new Addressed('child', $message)));
 
-        $received = ModelHarness::for($model)->initialize()->model()->received;
+        $received = ModelHarness::for($model)->init()->model()->received;
 
         self::assertContainsEquals(new Addressed('child', new TestMessage('ping')), $received);
     }
@@ -34,7 +34,7 @@ final class HarnessMapsMessagesTest extends TestCase
         $inner = Cmd::batch(Cmd::message(new TestMessage('ping')))->map(static fn (Message $message): Message => new Addressed('inner', $message));
         $model = new RecordingModel($inner->map(static fn (Message $message): Message => new Addressed('outer', $message)));
 
-        $received = ModelHarness::for($model)->initialize()->model()->received;
+        $received = ModelHarness::for($model)->init()->model()->received;
 
         self::assertContainsEquals(new Addressed('outer', new Addressed('inner', new TestMessage('ping'))), $received);
     }

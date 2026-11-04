@@ -16,7 +16,7 @@ final class HarnessDrawsFocusItWasGivenTest extends TestCase
     public function noComponentDrawsFocusedWhileTheKeyboardIsDown(): void
     {
         $frame = ModelHarness::for(new TwoFieldsKeyboardDownApp(TextInput::new(), TextInput::new()), 40, 2)
-            ->initialize()
+            ->init()
             ->renderFrame();
 
         self::assertSame(

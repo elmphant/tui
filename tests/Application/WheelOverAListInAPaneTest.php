@@ -20,7 +20,7 @@ final class WheelOverAListInAPaneTest extends TestCase
     {
         $harness = ModelHarness::for(new ListInAPaneApp(ScrollPane::of(
             ListView::fromStrings(array_map(static fn (int $n): string => 'item' . $n, range(1, 30))),
-        )), 20, 6)->initialize();
+        )), 20, 6)->init();
         self::assertSame('pane/0', $harness->focused()?->value);
 
         $harness->wheel('item3', 3);

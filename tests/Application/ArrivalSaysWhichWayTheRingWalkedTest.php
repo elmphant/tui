@@ -44,7 +44,7 @@ final class ArrivalSaysWhichWayTheRingWalkedTest extends TestCase
 
     private function walkedInto(KeyMsg $key): TwoStopApp
     {
-        $driven = ModelHarness::for(new TwoStopApp(), 20, 2)->initialize();
+        $driven = ModelHarness::for(new TwoStopApp(), 20, 2)->init();
         $driven->dispatch($key);
         $model = $driven->model();
 

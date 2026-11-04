@@ -16,7 +16,7 @@ final class HarnessTimeTest extends TestCase
     #[Test]
     public function aSpinnerTurnsAsTheTestLetsTimePass(): void
     {
-        $driven = ModelHarness::for(new MarkingLogApp(Panel::new('busy')->withChildren([Spinner::new()])), 20, 4)->initialize();
+        $driven = ModelHarness::for(new MarkingLogApp(Panel::new('busy')->withChildren([Spinner::new()])), 20, 4)->init();
 
         $before = $driven->renderScreen()->lineAt(1);
         $after = $driven->advance(0.5)->renderScreen()->lineAt(1);

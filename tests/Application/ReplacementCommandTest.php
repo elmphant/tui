@@ -22,7 +22,7 @@ final class ReplacementCommandTest extends TestCase
     #[Test]
     public function writingAComponentBackCanAskForWorkToo(): void
     {
-        $harness = ModelHarness::for(new QueryWritingApp(), 40, 3)->initialize()->type('a');
+        $harness = ModelHarness::for(new QueryWritingApp(), 40, 3)->init()->type('a');
 
         self::assertSame(['a'], $harness->model()->searchedFor);
     }

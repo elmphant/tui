@@ -28,7 +28,7 @@ final class HarnessCarriesTheFocusedHintsTest extends TestCase
     #[Test]
     public function theHintsFollowTheKeyboard(): void
     {
-        $driven = ModelHarness::for(new TwoHintingPanesApp(), 20, 2)->initialize();
+        $driven = ModelHarness::for(new TwoHintingPanesApp(), 20, 2)->init();
 
         self::assertSame(['a' => 'first thing'], $driven->focusedHints());
 

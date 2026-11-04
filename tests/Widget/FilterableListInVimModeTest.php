@@ -98,7 +98,7 @@ final class FilterableListInVimModeTest extends TestCase
     #[Test]
     public function withoutVimModeLettersFilterStraightAway(): void
     {
-        $harness = ModelHarness::for(new VimListApp(self::list(), vim: false), 40, 8)->initialize()->type('tj');
+        $harness = ModelHarness::for(new VimListApp(self::list(), vim: false), 40, 8)->init()->type('tj');
 
         self::assertSame('tj', $harness->model()->list->query());
     }
@@ -117,7 +117,7 @@ final class FilterableListInVimModeTest extends TestCase
     public function enterInTheFieldOfAnOpenDropdownKeepsItOpenAndAPickClosesIt(): void
     {
         $harness = ModelHarness::for(new VimDropdownApp(Dropdown::new(self::list())->withOpen()), 40, 10)
-            ->initialize()
+            ->init()
             ->press('/')
             ->type('th')
             ->press('enter');
@@ -154,7 +154,7 @@ final class FilterableListInVimModeTest extends TestCase
 
     private static function harness(): ModelHarness
     {
-        return ModelHarness::for(new VimListApp(self::list()), 40, 8)->initialize();
+        return ModelHarness::for(new VimListApp(self::list()), 40, 8)->init();
     }
 
     private static function list(): FilterableList

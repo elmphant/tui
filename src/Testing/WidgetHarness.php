@@ -35,7 +35,7 @@ final class WidgetHarness
     public static function for(Interactive $widget, int $width = 80, int $height = 24, ?Theme $theme = null): self
     {
         /** @var ModelHarness<WidgetHost<T>> $harness */
-        $harness = ModelHarness::for(new WidgetHost($widget), $width, $height, $theme)->initialize();
+        $harness = ModelHarness::for(new WidgetHost($widget), $width, $height, $theme)->init();
 
         return new self($harness);
     }

@@ -27,7 +27,7 @@ final class PressThatOpensAPopupTest extends TestCase
     public function thePopupAPressOpenedDoesNotHearThatPress(): void
     {
         $harness = ModelHarness::for(new PopupOnPressApp(), width: 60, height: 20);
-        $harness->initialize();
+        $harness->init();
 
         $harness->dispatch(UserInput::click(1, 1));
 
@@ -38,7 +38,7 @@ final class PressThatOpensAPopupTest extends TestCase
     public function aLaterPressOutsideThePopupStillClosesIt(): void
     {
         $harness = ModelHarness::for(new PopupOnPressApp(), width: 60, height: 20);
-        $harness->initialize();
+        $harness->init();
 
         $harness->dispatch(UserInput::click(1, 1));
         $harness->dispatch(UserInput::click(1, 1));

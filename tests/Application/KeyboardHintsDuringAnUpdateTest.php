@@ -23,7 +23,7 @@ final class KeyboardHintsDuringAnUpdateTest extends TestCase
     #[Test]
     public function aMouseHookIsToldWhoHoldsTheKeyboardAndTheHintsTheFooterShows(): void
     {
-        $harness = ModelHarness::for(new HintsRecordingApp(ListView::new([new SimpleListItem('one')])), 30, 4)->initialize();
+        $harness = ModelHarness::for(new HintsRecordingApp(ListView::new([new SimpleListItem('one')])), 30, 4)->init();
 
         $harness->clickAt(1, 0);
 

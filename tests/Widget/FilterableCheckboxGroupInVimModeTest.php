@@ -58,7 +58,7 @@ final class FilterableCheckboxGroupInVimModeTest extends TestCase
 
     private static function harness(): ModelHarness
     {
-        return ModelHarness::for(new VimBoxesApp(FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma'])), 40, 8)->initialize();
+        return ModelHarness::for(new VimBoxesApp(FilterableCheckboxGroup::new(['alpha', 'beta', 'gamma'])), 40, 8)->init();
     }
 }
 

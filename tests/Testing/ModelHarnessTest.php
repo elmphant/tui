@@ -71,7 +71,7 @@ final class ModelHarnessTest extends TestCase
     {
         $harness = ModelHarness::for(new HarnessCounter());
 
-        self::assertSame($harness, $harness->initialize());
+        self::assertSame($harness, $harness->init());
         self::assertNotNull($harness->lastCommand());
 
         $harness->dispatch(new KeyMsg('q'));
@@ -82,7 +82,7 @@ final class ModelHarnessTest extends TestCase
     public function aMessageInitSentReachesTheModel(): void
     {
         $model = ModelHarness::for(new HarnessRecorder(Cmd::message(new TestMessage('loaded'))))
-            ->initialize()
+            ->init()
             ->model();
 
         self::assertContains(TestMessage::class, $model->seen);
@@ -92,7 +92,7 @@ final class ModelHarnessTest extends TestCase
     public function theTerminalSizeArrivesBeforeWhatInitSent(): void
     {
         $model = ModelHarness::for(new HarnessRecorder(Cmd::message(new TestMessage('loaded'))))
-            ->initialize()
+            ->init()
             ->model();
 
         self::assertSame([ResizeMsg::class, TestMessage::class], $model->seen);
@@ -104,7 +104,7 @@ final class ModelHarnessTest extends TestCase
         $model = ModelHarness::for(new HarnessRecorder(
             Cmd::focus(ComponentId::named('field')),
             Cmd::message(new TestMessage('seated')),
-        ))->initialize()->model();
+        ))->init()->model();
 
         self::assertContains(FocusMsg::class, $model->seen);
         self::assertContains(TestMessage::class, $model->seen);

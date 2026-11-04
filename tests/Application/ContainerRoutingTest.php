@@ -69,7 +69,7 @@ final class ContainerRoutingTest extends TestCase
     {
         $seen = new ArrayObject();
         $harness = ModelHarness::for(new WrappedPaneApp(new RecordingPane($seen), $wrap), width: 40, height: 12);
-        $harness->initialize();
+        $harness->init();
 
         $harness->dispatch(new KeyMsg(Key::Down));
 
@@ -92,7 +92,7 @@ final class ContainerRoutingTest extends TestCase
     {
         $seen = new ArrayObject();
         $harness = ModelHarness::for(new WrappedPaneApp(new RecordingPane($seen), $wrap), width: 40, height: 12);
-        $harness->initialize();
+        $harness->init();
         $harness->renderFrame();
 
         $harness->dispatch(new MouseMsg(20, 6, MouseAction::Press, MouseButton::Left));

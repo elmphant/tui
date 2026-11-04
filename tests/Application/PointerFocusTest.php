@@ -109,7 +109,7 @@ final class PointerFocusTest extends TestCase
     #[Test]
     public function anAppThatMovesTheKeyboardOnAPressIsNotOverruledByTheDefault(): void
     {
-        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->initialize();
+        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->init();
 
         $driven->dispatch(new MouseMsg(0, 0, MouseAction::Press, MouseButton::Left));
 
@@ -122,7 +122,7 @@ final class PointerFocusTest extends TestCase
     #[Test]
     public function anAppThatMovesTheKeyboardOnAPressOverAFieldIsNotOverruledByTheField(): void
     {
-        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->initialize();
+        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->init();
 
         $driven->dispatch(new MouseMsg(0, 1, MouseAction::Press, MouseButton::Left));
 
@@ -132,7 +132,7 @@ final class PointerFocusTest extends TestCase
     #[Test]
     public function anAppThatKeepsTheKeyboardOnAPressOverAnotherFieldIsNotOverruledByThatField(): void
     {
-        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->initialize()->press('tab');
+        $driven = ModelHarness::for(new ClickableChromeApp(TextInput::new(), TextInput::new()), 40, 3)->init()->press('tab');
         self::assertSame('second', $driven->focused()?->value, 'precondition: the keyboard is on the second field');
 
         $driven->dispatch(new MouseMsg(0, 1, MouseAction::Press, MouseButton::Left));
