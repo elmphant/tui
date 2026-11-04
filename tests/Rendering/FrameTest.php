@@ -31,7 +31,7 @@ final class FrameTest extends TestCase
         $frame->putString(0, 1, 'y');
         self::assertSame(5, $frame->drawnHeight());
 
-        $frame->clear(Color::ansi(AnsiColor::Blue)->value);
+        $frame->clear(Color::ansi(AnsiColor::Blue));
         self::assertSame(0, $frame->drawnHeight(), 'a background alone is not drawing');
     }
 
@@ -426,20 +426,20 @@ final class FrameTest extends TestCase
         $frame = new Frame(4, 2);
         $background = Color::ansi(AnsiColor::Blue)->value;
 
-        $frame->clear($background);
+        $frame->clear(Color::ansi(AnsiColor::Blue));
         self::assertSame([0 => true, 1 => true], $frame->dirtyRows);
         self::assertSame(true, $frame->dirtyRows[0], 'Changing the base background is a visual change');
         self::assertSame(true, $frame->dirtyRows[1], 'Changing the base background must dirty every affected row');
         self::assertSame($background, $frame->backgrounds[0]);
-        self::assertSame($background, $frame->backgrounds[$frame->size - 1], 'Base background must cover the final cell');
+        self::assertSame($background, $frame->backgrounds[$frame->cellCount - 1], 'Base background must cover the final cell');
 
         $frame->clearDirty();
-        $frame->clear(0);
+        $frame->clear();
 
         self::assertSame(true, $frame->dirtyRows[0]);
         self::assertSame(true, $frame->dirtyRows[1]);
         self::assertSame(0, $frame->backgrounds[0]);
-        self::assertSame(0, $frame->backgrounds[$frame->size - 1]);
+        self::assertSame(0, $frame->backgrounds[$frame->cellCount - 1]);
     }
 
     #[Test]
@@ -447,10 +447,10 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(4, 2);
         $background = Color::ansi(AnsiColor::Blue)->value;
-        $frame->clear($background);
+        $frame->clear(Color::ansi(AnsiColor::Blue));
         $frame->dirtyRows = [0 => true, 1 => true];
 
-        $frame->clear($background);
+        $frame->clear(Color::ansi(AnsiColor::Blue));
 
         self::assertSame([], $frame->dirtyRows);
         self::assertSame($background, $frame->backgrounds[0]);
@@ -538,7 +538,7 @@ final class FrameTest extends TestCase
         $frame->putString(0, 0, 'Hello');
         $frame->putChar(0, 1, 'X', 1, 2, 1);
         $frame->clear();
-        for ($i = 0; $i < $frame->size; ++$i) {
+        for ($i = 0; $i < $frame->cellCount; ++$i) {
             self::assertSame(' ', $frame->character($i));
             self::assertSame(0, $frame->foregrounds[$i]);
             self::assertSame(0, $frame->backgrounds[$i]);
@@ -658,7 +658,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(5, 5);
         $frame->putChar(0, 5, 'X', 1);
-        for ($i = 0; $i < $frame->size; ++$i) {
+        for ($i = 0; $i < $frame->cellCount; ++$i) {
             self::assertSame(' ', $frame->characters[$i]);
         }
     }
@@ -1427,7 +1427,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(5, 5);
         $frame->fillRect(0, 0, 0, 5, 1, 1, 1, 'X');
-        for ($i = 0; $i < $frame->size; ++$i) {
+        for ($i = 0; $i < $frame->cellCount; ++$i) {
             self::assertSame(' ', $frame->characters[$i]);
         }
     }
@@ -1437,7 +1437,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(5, 5);
         $frame->fillRect(0, 0, 5, 0, 1, 1, 1, 'X');
-        for ($i = 0; $i < $frame->size; ++$i) {
+        for ($i = 0; $i < $frame->cellCount; ++$i) {
             self::assertSame(' ', $frame->characters[$i]);
         }
     }
@@ -1571,7 +1571,7 @@ final class FrameTest extends TestCase
         $frame = new Frame(5, 3);
         $frame->fillRect(0, 0, 5, 3, 1, 2, 3, '#');
 
-        for ($i = 0; $i < $frame->size; ++$i) {
+        for ($i = 0; $i < $frame->cellCount; ++$i) {
             self::assertSame('#', $frame->characters[$i]);
             self::assertSame(1, $frame->foregrounds[$i]);
             self::assertSame(2, $frame->backgrounds[$i]);
@@ -2120,7 +2120,7 @@ final class FrameTest extends TestCase
     {
         $frame = new Frame(5, 3);
         $frame->putChar(-1, 2, 'Z', 1);
-        for ($i = 0; $i < $frame->size; ++$i) {
+        for ($i = 0; $i < $frame->cellCount; ++$i) {
             self::assertSame(' ', $frame->characters[$i]);
         }
     }

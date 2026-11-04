@@ -494,7 +494,7 @@ final class ModalTest extends TestCase
         $modal->render($frame, $area, $this->context);
 
         $hasCorner = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === '╭') {
                 $hasCorner = true;
             }
@@ -525,7 +525,7 @@ final class ModalTest extends TestCase
 
         // modalWidth = max(3, (int)(5*10/100)) = max(3, 0) = 3, OK renders
         $hasCorner = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === '╭') {
                 $hasCorner = true;
             }
@@ -543,7 +543,7 @@ final class ModalTest extends TestCase
 
         // modalHeight = max(3, (int)(5*10/100)) = max(3, 0) = 3, OK renders
         $hasCorner = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === '╭') {
                 $hasCorner = true;
             }
@@ -595,7 +595,7 @@ final class ModalTest extends TestCase
 
         // Find the top-left corner
         $cornerForeground = null;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === '╭') {
                 $cornerForeground = $frame->foregrounds[$index];
                 break;
@@ -615,7 +615,7 @@ final class ModalTest extends TestCase
         $modal->render($frame, $area, $this->context);
 
         $cornerForeground = null;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === '╭') {
                 $cornerForeground = $frame->foregrounds[$index];
                 break;
@@ -641,7 +641,7 @@ final class ModalTest extends TestCase
 
         // Find the 'T' of 'Title' in the buffer and check its foreground
         $titleForeground = null;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === 'T'
                 && isset($frame->characters[$index + 1])
                 && $frame->characters[$index + 1] === 'i') {
@@ -663,7 +663,7 @@ final class ModalTest extends TestCase
         $modal->render($frame, $area, $this->context);
 
         $titleForeground = null;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === 'T'
                 && isset($frame->characters[$index + 1])
                 && $frame->characters[$index + 1] === 'i') {
@@ -692,7 +692,7 @@ final class ModalTest extends TestCase
         $modal->render($frame, $area, $this->context);
 
         $hasContent = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === 'H') {
                 $hasContent = true;
                 break;
@@ -714,7 +714,7 @@ final class ModalTest extends TestCase
         // With 5x5 area at 100%: modal = 5x5, border removes 1 each side => 3x3 inner
         // Content 'Q' should appear
         $hasContent = false;
-        for ($index = 0; $index < $frame->size; ++$index) {
+        for ($index = 0; $index < $frame->cellCount; ++$index) {
             if ($frame->characters[$index] === 'Q') {
                 $hasContent = true;
                 break;

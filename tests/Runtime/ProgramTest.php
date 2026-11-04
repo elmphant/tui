@@ -1438,7 +1438,7 @@ final class ProgramTest extends TestCase
                 return ColorProfile::TrueColor;
             }
 
-            public function detectColorScheme(): ?ColorScheme
+            public function colorScheme(): ?ColorScheme
             {
                 return ColorScheme::Light;
             }

@@ -324,7 +324,7 @@ final class CharWidth
         }
     }
 
-    public static function withTabsExpanded(string $text, int $column): string
+    public static function expandTabs(string $text, int $column): string
     {
         if (!str_contains($text, "\t")) {
             return $text;

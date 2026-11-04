@@ -40,7 +40,7 @@ final class InlineScreen
     {
         $height = min($height ?? $backBuffer->height, $backBuffer->height);
         $cursor = $backBuffer->cursorPosition();
-        $caret = $cursor === null ? -1 : $cursor->row * $backBuffer->width + $cursor->col;
+        $caret = $cursor === null ? -1 : $cursor->y * $backBuffer->width + $cursor->x;
         $rows = [];
         $written = [];
         for ($row = 0; $row < $height; ++$row) {

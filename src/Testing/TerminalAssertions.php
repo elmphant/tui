@@ -21,8 +21,8 @@ trait TerminalAssertions
     public function assertCursorAt(int $column, int $row, ScreenBuffer $screen): void
     {
         $position = $screen->cursorPosition();
-        static::assertSame($column, $position->col, "Cursor column mismatch: expected {$column}, got {$position->col}");
-        static::assertSame($row, $position->row, "Cursor row mismatch: expected {$row}, got {$position->row}");
+        static::assertSame($column, $position->x, "Cursor column mismatch: expected {$column}, got {$position->x}");
+        static::assertSame($row, $position->y, "Cursor row mismatch: expected {$row}, got {$position->y}");
     }
 
     public function assertCursorHidden(ScreenBuffer $screen): void

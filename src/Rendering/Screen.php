@@ -76,7 +76,7 @@ final class Screen
         $change = $position === null
             ? Ansi::HIDE_CURSOR
             : $this->shapeChangeTo($position->shape)
-                . Ansi::cursorTo($position->row, $position->col)
+                . Ansi::cursorTo($position->y, $position->x)
                 . ($this->shown ? '' : Ansi::SHOW_CURSOR);
 
         $this->shown = $position !== null;
@@ -106,8 +106,8 @@ final class Screen
             return $position === $this->lastCursor;
         }
 
-        return $position->row === $this->lastCursor->row
-            && $position->col === $this->lastCursor->col
+        return $position->y === $this->lastCursor->y
+            && $position->x === $this->lastCursor->x
             && $position->shape === $this->lastCursor->shape;
     }
 

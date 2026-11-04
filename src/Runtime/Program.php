@@ -624,7 +624,7 @@ final class Program
             return $this->theme;
         }
 
-        $colorScheme = $this->terminal->detectColorScheme();
+        $colorScheme = $this->terminal->colorScheme();
 
         return match ($colorScheme) {
             ColorScheme::Light => Theme::light(),
@@ -1196,7 +1196,7 @@ final class Program
 
         try {
             $pass = $this->inChosenTheme($pass)->withArea($drawn);
-            $frame->clear($pass->context->theme->base->backgroundValue());
+            $frame->clear($pass->context->theme->base->background);
             $this->settleFocusBeforeDrawing();
             $pass->focus->focusOn($this->focus);
             $pass->focus->provideChord($this->pendingChord());

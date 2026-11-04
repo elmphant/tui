@@ -32,7 +32,7 @@ final class SpanTest extends TestCase
     {
         $theme = Theme::dark();
 
-        $resolved = Span::token('Deployed', StyleToken::Success)->bold()->withResolvedToken($theme);
+        $resolved = Span::token('Deployed', StyleToken::Success)->bold()->resolvedIn($theme);
 
         self::assertSame($theme->success->foreground, $resolved->style?->foreground);
         self::assertSame(Attr::BOLD, ($resolved->style?->attributes ?? 0) & Attr::BOLD);
@@ -62,7 +62,7 @@ final class SpanTest extends TestCase
     {
         $theme = Theme::dark();
 
-        $resolved = Span::token('hello', StyleToken::Accent)->withResolvedToken($theme);
+        $resolved = Span::token('hello', StyleToken::Accent)->resolvedIn($theme);
 
         self::assertSame($theme->accent, $resolved->style);
         self::assertNull($resolved->token);
@@ -76,11 +76,11 @@ final class SpanTest extends TestCase
 
         self::assertEquals(
             Theme::light()->accent,
-            $span->withResolvedToken(Theme::light())->style,
+            $span->resolvedIn(Theme::light())->style,
         );
         self::assertEquals(
             Theme::dark()->accent,
-            $span->withResolvedToken(Theme::dark())->style,
+            $span->resolvedIn(Theme::dark())->style,
         );
     }
 
@@ -89,7 +89,7 @@ final class SpanTest extends TestCase
     {
         $theme = Theme::dark();
 
-        $resolved = Span::token('hello', StyleToken::Accent)->bold()->withResolvedToken($theme);
+        $resolved = Span::token('hello', StyleToken::Accent)->bold()->resolvedIn($theme);
 
         self::assertSame($theme->accent->foreground, $resolved->style?->foreground);
         self::assertSame(Attr::BOLD, $resolved->style?->attributes);
@@ -166,7 +166,7 @@ final class SpanTest extends TestCase
     {
         $span = Span::styled('hello', new Style(foreground: Color::ansi(AnsiColor::Red)));
 
-        self::assertSame($span, $span->withResolvedToken(Theme::dark()));
+        self::assertSame($span, $span->resolvedIn(Theme::dark()));
     }
 
     #[Test]
@@ -174,7 +174,7 @@ final class SpanTest extends TestCase
     {
         $span = new Span('hello');
 
-        self::assertSame($span, $span->withResolvedToken(Theme::dark()));
+        self::assertSame($span, $span->resolvedIn(Theme::dark()));
     }
 
     #[Test]

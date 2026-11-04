@@ -76,7 +76,7 @@ final readonly class Span
     /**
      * Call this before reading $style, or token spans render unstyled.
      */
-    public function withResolvedToken(Theme $theme): self
+    public function resolvedIn(Theme $theme): self
     {
         if ($this->token === null) {
             return $this;

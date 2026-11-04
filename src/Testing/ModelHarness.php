@@ -517,7 +517,7 @@ final class ModelHarness
         $this->pass = $this->pass->withTheme(($this->model instanceof ChoosesItsTheme ? $this->model->theme() : null) ?? $this->theme);
 
         $frame = new Frame($this->area->width, $this->area->height);
-        $frame->clear($this->pass->context->theme->base->backgroundValue());
+        $frame->clear($this->pass->context->theme->base->background);
 
         $this->pass->begin($this->now);
         $this->pass->focus->focusOn($this->focus);

@@ -39,7 +39,7 @@ final class ProgramFocusBeforeDrawTest extends TestCase
             $terminal->simulateInput("\x1bOQ");
             $clock->advance(1);
             $program->tick();
-            $caretRow = (new ScreenBuffer($terminal->output(), 40, 12))->cursorPosition()->row;
+            $caretRow = (new ScreenBuffer($terminal->output(), 40, 12))->cursorPosition()->y;
             $terminal->simulateInput("\x11");
         });
         $program->start();

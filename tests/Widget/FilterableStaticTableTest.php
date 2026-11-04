@@ -335,8 +335,8 @@ final class FilterableStaticTableTest extends TestCase
         $this->routes()->withQuery('ajax')->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition());
-        self::assertSame(4, $frame->cursorPosition()->col, 'One column past the four typed characters');
-        self::assertSame(0, $frame->cursorPosition()->row);
+        self::assertSame(4, $frame->cursorPosition()->x, 'One column past the four typed characters');
+        self::assertSame(0, $frame->cursorPosition()->y);
     }
 
     #[Test]
@@ -348,7 +348,7 @@ final class FilterableStaticTableTest extends TestCase
         $this->routes()->withQuery(str_repeat('x', 40))->render($frame, new Rect(0, 0, 50, 1), RenderContext::focused(Theme::dark()));
 
         self::assertNotNull($frame->cursorPosition());
-        self::assertSame($fieldWidth - 1, $frame->cursorPosition()->col);
+        self::assertSame($fieldWidth - 1, $frame->cursorPosition()->x);
     }
 
     #[Test]

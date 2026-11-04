@@ -24,8 +24,8 @@ final class ScreenBufferTest extends TestCase
 
         self::assertSame('世é', $screen->textAt(0, 0, 3));
         self::assertSame('row two', $screen->textAt(0, 1, 7));
-        self::assertSame(1, $screen->cursorPosition()?->row);
-        self::assertSame(4, $screen->cursorPosition()?->col);
+        self::assertSame(1, $screen->cursorPosition()?->y);
+        self::assertSame(4, $screen->cursorPosition()?->x);
         self::assertSame(CursorShape::SteadyBar, $screen->cursorShape());
         self::assertTrue($screen->isCursorVisible());
     }
@@ -36,7 +36,7 @@ final class ScreenBufferTest extends TestCase
         $screen = new ScreenBuffer("\x1b[1;1H世é", 8, 1);
 
         self::assertSame('世é', $screen->textAt(0, 0, 3));
-        self::assertSame(3, $screen->cursorPosition()?->col);
+        self::assertSame(3, $screen->cursorPosition()?->x);
     }
 
     #[Test]
@@ -78,7 +78,7 @@ final class ScreenBufferTest extends TestCase
         $screen = new ScreenBuffer(" \u{0080}A", 4, 1);
 
         self::assertSame(' A', $screen->textAt(0, 0, 2));
-        self::assertSame(2, $screen->cursorPosition()?->col);
+        self::assertSame(2, $screen->cursorPosition()?->x);
     }
 
     #[Test]
@@ -87,7 +87,7 @@ final class ScreenBufferTest extends TestCase
         $screen = new ScreenBuffer("\u{0300}", 3, 1);
 
         self::assertSame(' ', $screen->textAt(0, 0, 1));
-        self::assertSame(0, $screen->cursorPosition()?->col);
+        self::assertSame(0, $screen->cursorPosition()?->x);
     }
 
     #[Test]
@@ -149,8 +149,8 @@ final class ScreenBufferTest extends TestCase
     {
         $screen = new ScreenBuffer("\x1b[5;10H", 80, 24);
         $pos = $screen->cursorPosition();
-        $this->assertSame(4, $pos->row);
-        $this->assertSame(9, $pos->col);
+        $this->assertSame(4, $pos->y);
+        $this->assertSame(9, $pos->x);
     }
 
     #[Test]
@@ -203,8 +203,8 @@ final class ScreenBufferTest extends TestCase
     {
         $screen = new ScreenBuffer('AB', 80, 24);
         $pos = $screen->cursorPosition();
-        $this->assertSame(0, $pos->row);
-        $this->assertSame(2, $pos->col);
+        $this->assertSame(0, $pos->y);
+        $this->assertSame(2, $pos->x);
     }
 
     #[Test]
@@ -219,8 +219,8 @@ final class ScreenBufferTest extends TestCase
     {
         $screen = new ScreenBuffer("\x1b[99;99H", 10, 5);
         $pos = $screen->cursorPosition();
-        $this->assertSame(4, $pos->row);
-        $this->assertSame(9, $pos->col);
+        $this->assertSame(4, $pos->y);
+        $this->assertSame(9, $pos->x);
     }
 
     #[Test]
@@ -243,8 +243,8 @@ final class ScreenBufferTest extends TestCase
         $screen = new ScreenBuffer("\x1b[3HA", 8, 4);
 
         self::assertSame('A', $screen->textAt(0, 2, 1));
-        self::assertSame(2, $screen->cursorPosition()?->row);
-        self::assertSame(1, $screen->cursorPosition()?->col);
+        self::assertSame(2, $screen->cursorPosition()?->y);
+        self::assertSame(1, $screen->cursorPosition()?->x);
     }
 
     #[Test]

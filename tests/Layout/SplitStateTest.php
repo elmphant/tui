@@ -49,7 +49,7 @@ final class SplitStateTest extends TestCase
     #[Test]
     public function survivesTheTripThroughASessionFile(): void
     {
-        $dragged = SplitState::even(2)->withPairDividedAt(0, 14, 20);
+        $dragged = SplitState::even(2)->dividePairAt(0, 14, 20);
 
         $restored = SplitState::fromArray($dragged->toArray(), 2);
 
@@ -88,14 +88,14 @@ final class SplitStateTest extends TestCase
     #[Test]
     public function aPairWithNoSpaceBetweenThemKeepsItsShares(): void
     {
-        self::assertSame([500, 500], SplitState::even(2)->withPairDividedAt(0, 5, 0)->shares);
+        self::assertSame([500, 500], SplitState::even(2)->dividePairAt(0, 5, 0)->shares);
     }
 
     #[Test]
     public function dividingAPairLeavesEveryOtherPaneAlone(): void
     {
-        self::assertSame([333, 167, 500], SplitState::even(3)->withPairDividedAt(1, 5, 20)->shares);
-        self::assertSame([167, 499, 334], SplitState::even(3)->withPairDividedAt(0, 5, 20)->shares);
+        self::assertSame([333, 167, 500], SplitState::even(3)->dividePairAt(1, 5, 20)->shares);
+        self::assertSame([167, 499, 334], SplitState::even(3)->dividePairAt(0, 5, 20)->shares);
     }
 
     #[Test]
@@ -103,9 +103,9 @@ final class SplitStateTest extends TestCase
     {
         $state = new SplitState([500, 500]);
 
-        self::assertSame([500, 500], $state->withPairDividedAt(1, 5, 20)->shares, 'The last pane has no pane after it');
-        self::assertSame([500, 500], $state->withPairDividedAt(5, 5, 20)->shares, 'Beyond the panes entirely');
-        self::assertSame([500, 500], $state->withPairDividedAt(-1, 5, 20)->shares, 'Before the panes');
+        self::assertSame([500, 500], $state->dividePairAt(1, 5, 20)->shares, 'The last pane has no pane after it');
+        self::assertSame([500, 500], $state->dividePairAt(5, 5, 20)->shares, 'Beyond the panes entirely');
+        self::assertSame([500, 500], $state->dividePairAt(-1, 5, 20)->shares, 'Before the panes');
     }
 
     #[Test]
@@ -113,8 +113,8 @@ final class SplitStateTest extends TestCase
     {
         $state = new SplitState([500, 500]);
 
-        self::assertSame([668, 332], $state->withPairDividedAt(0, 6675, 10000)->shares);
-        self::assertSame([667, 333], $state->withPairDividedAt(0, 6674, 10000)->shares);
+        self::assertSame([668, 332], $state->dividePairAt(0, 6675, 10000)->shares);
+        self::assertSame([667, 333], $state->dividePairAt(0, 6674, 10000)->shares);
     }
 
     /**

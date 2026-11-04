@@ -80,7 +80,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
     public static function fromText(string $text): self
     {
         $lines = array_map(
-            static fn (string $line): Line => Line::raw(CharWidth::withTabsExpanded(self::afterLastCarriageReturn($line), 0)),
+            static fn (string $line): Line => Line::raw(CharWidth::expandTabs(self::afterLastCarriageReturn($line), 0)),
             explode("\n", $text),
         );
 
@@ -124,7 +124,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
                         $column = 0;
                         $text = substr($text, $carriageReturn + 1);
                     }
-                    $text = CharWidth::withTabsExpanded($text, $column);
+                    $text = CharWidth::expandTabs($text, $column);
                     $column += CharWidth::stringWidth($text);
                     $currentText .= $text;
                     continue;
@@ -201,7 +201,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
         $bottom = $skipped + $visible->height;
 
         foreach (array_slice($this->lines, $firstLine, $visible->height) as $line) {
-            $line = $line->withResolvedTokens($context->theme);
+            $line = $line->resolvedIn($context->theme);
             $text = self::textOf($line);
 
             $rows = $this->rowsToDraw($line, $text, $area->width);

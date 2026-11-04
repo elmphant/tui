@@ -24,11 +24,11 @@ final readonly class Line
         return new self([new Span($content)]);
     }
 
-    public function withResolvedTokens(Theme $theme): self
+    public function resolvedIn(Theme $theme): self
     {
         $resolved = [];
         foreach ($this->spans as $span) {
-            $resolved[] = $span->withResolvedToken($theme);
+            $resolved[] = $span->resolvedIn($theme);
         }
 
         return $this->cloneWith(spans: $resolved);

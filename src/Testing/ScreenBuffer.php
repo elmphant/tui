@@ -60,8 +60,8 @@ final class ScreenBuffer
         $cursor = $frame->cursorPosition();
         $screen->cursorVisible = $cursor !== null;
         if ($cursor !== null) {
-            $screen->cursorRow = $cursor->row;
-            $screen->cursorCol = $cursor->col;
+            $screen->cursorRow = $cursor->y;
+            $screen->cursorCol = $cursor->x;
             $screen->cursorShape = $cursor->shape;
         }
 
@@ -81,8 +81,8 @@ final class ScreenBuffer
     public function cursorPosition(): CursorPosition
     {
         return new CursorPosition(
-            $this->cursorRow,
             $this->cursorCol,
+            $this->cursorRow,
             CursorShape::BlinkingBlock,
         );
     }

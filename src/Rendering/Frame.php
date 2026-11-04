@@ -16,7 +16,7 @@ final class Frame
 {
     private const CONTROL_BYTES = "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f";
 
-    public readonly int $size;
+    public readonly int $cellCount;
     private readonly Rect $area;
 
     /**
@@ -81,11 +81,11 @@ final class Frame
         public readonly int $width,
         public readonly int $height,
     ) {
-        $this->size = $width * $height;
+        $this->cellCount = $width * $height;
         $this->area = Rect::fromSize($width, $height);
-        $this->zeroCells = array_fill(0, $this->size, 0);
-        $this->blankCharacters = array_fill(0, $this->size, ' ');
-        $this->blankWidths = array_fill(0, $this->size, 1);
+        $this->zeroCells = array_fill(0, $this->cellCount, 0);
+        $this->blankCharacters = array_fill(0, $this->cellCount, ' ');
+        $this->blankWidths = array_fill(0, $this->cellCount, 1);
         $this->blankBackgrounds = $this->zeroCells;
         $this->characters = $this->blankCharacters;
         $this->foregrounds = $this->zeroCells;
@@ -100,7 +100,7 @@ final class Frame
             return;
         }
 
-        $this->cursorPosition = new CursorPosition($y, $x, $shape);
+        $this->cursorPosition = new CursorPosition($x, $y, $shape);
     }
 
     public function cursorPosition(): ?CursorPosition
@@ -216,7 +216,7 @@ final class Frame
     }
 
     /**
-     * Resolve StyleTokens with Line::withResolvedTokens() first; a Frame has no theme.
+     * Resolve StyleTokens with Line::resolvedIn() first. A Frame has no theme.
      */
     public function putLine(int $x, int $y, Line $line, Style $base = new Style(), ?int $maxWidth = null): int
     {
@@ -498,8 +498,9 @@ final class Frame
         $this->blankBackgrounds = $source->blankBackgrounds;
     }
 
-    public function clear(int $background = 0): void
+    public function clear(?Color $color = null): void
     {
+        $background = $color === null ? 0 : $color->value;
         $backgroundChanged = $this->blankBackground !== $background;
         $blankBackgrounds = $this->blankBackgrounds($background);
         $this->cursorPosition = null;
@@ -714,7 +715,7 @@ final class Frame
     {
         if ($this->blankBackground !== $background) {
             $this->blankBackground = $background;
-            $this->blankBackgrounds = array_fill(0, $this->size, $background);
+            $this->blankBackgrounds = array_fill(0, $this->cellCount, $background);
         }
 
         return $this->blankBackgrounds;

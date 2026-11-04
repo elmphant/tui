@@ -255,7 +255,7 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
         return $this->detectedColorProfile = ColorProfile::Ascii;
     }
 
-    public function detectColorScheme(): ?ColorScheme
+    public function colorScheme(): ?ColorScheme
     {
         $this->write(Ansi::QUERY_BACKGROUND_COLOR);
 

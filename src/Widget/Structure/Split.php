@@ -281,7 +281,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
             min($pairTotal - $minimums[$divider + 1], $this->along($message) - $paneStart),
         );
 
-        return $this->state->withPairDividedAt($divider, $first, $pairTotal);
+        return $this->state->dividePairAt($divider, $first, $pairTotal);
     }
 
     /**

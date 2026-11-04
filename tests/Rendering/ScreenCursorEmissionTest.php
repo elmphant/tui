@@ -176,14 +176,14 @@ final class ScreenCursorEmissionTest extends TestCase
 
     private function paint(string $text): void
     {
-        $this->frame->clear(0);
+        $this->frame->clear();
         $this->frame->putString(0, 0, $text);
         $this->screen->flush($this->frame);
     }
 
     private function paintWithCursor(string $text, int $x, int $y): void
     {
-        $this->frame->clear(0);
+        $this->frame->clear();
         $this->frame->putString(0, 0, $text);
         $this->frame->setCursorPosition($x, $y, CursorShape::BlinkingBar);
         $this->screen->flush($this->frame);

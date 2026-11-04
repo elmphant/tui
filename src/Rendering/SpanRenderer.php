@@ -115,7 +115,7 @@ final class SpanRenderer
     private static function codeLines(string $code): array
     {
         return array_map(
-            static fn (string $line): Line => new Line([new Span('  '), Span::token(CharWidth::withTabsExpanded($line, 0), StyleToken::Accent)]),
+            static fn (string $line): Line => new Line([new Span('  '), Span::token(CharWidth::expandTabs($line, 0), StyleToken::Accent)]),
             explode("\n", rtrim($code, "\n")),
         );
     }

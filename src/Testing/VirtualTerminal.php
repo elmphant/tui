@@ -176,7 +176,7 @@ final class VirtualTerminal implements Terminal
         return $this->simulatedColorProfile;
     }
 
-    public function detectColorScheme(): ?ColorScheme
+    public function colorScheme(): ?ColorScheme
     {
         return ColorScheme::Dark;
     }

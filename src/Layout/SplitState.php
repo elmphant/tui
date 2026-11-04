@@ -69,7 +69,7 @@ final readonly class SplitState
         return $this->shares;
     }
 
-    public function withPairDividedAt(int $divider, int $first, int $pairTotal): self
+    public function dividePairAt(int $divider, int $first, int $pairTotal): self
     {
         if ($pairTotal <= 0 || !isset($this->shares[$divider], $this->shares[$divider + 1])) {
             return $this;

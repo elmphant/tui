@@ -76,7 +76,7 @@ final readonly class Text implements Widget
                 break;
             }
 
-            $resolved = $span->withResolvedToken($context->theme);
+            $resolved = $span->resolvedIn($context->theme);
             $content = CharWidth::truncateToWidth($resolved->content, $rightEdge - $x);
             $x += $frame->putStyled($x, $area->y, $content, $resolved->style ?? $context->theme->base);
             if ($content !== $resolved->content) {

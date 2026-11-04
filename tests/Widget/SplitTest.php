@@ -519,7 +519,7 @@ final class SplitTest extends TestCase
         $split = Split::row(SplitState::even(2), Text::new('left'), Text::new('right'))->withMinimums(1, 5);
 
         self::assertSame(
-            SplitState::even(2)->withPairDividedAt(0, 15, 20)->shares,
+            SplitState::even(2)->dividePairAt(0, 15, 20)->shares,
             $this->drag($split, $area, from: 10, to: 20)->state()->shares,
         );
     }

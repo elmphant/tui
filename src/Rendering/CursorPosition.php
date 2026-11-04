@@ -9,8 +9,8 @@ use Elmphant\Tui\Terminal\CursorShape;
 final readonly class CursorPosition
 {
     public function __construct(
-        public int $row,
-        public int $col,
+        public int $x,
+        public int $y,
         public CursorShape $shape,
     ) {
     }

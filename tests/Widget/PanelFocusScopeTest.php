@@ -34,7 +34,7 @@ final class PanelFocusScopeTest extends TestCase
         self::assertNotNull($frame->cursorPosition());
         self::assertSame(
             1,
-            $frame->cursorPosition()->row,
+            $frame->cursorPosition()->y,
             'The caret belongs to the first child, not to the last one drawn',
         );
     }

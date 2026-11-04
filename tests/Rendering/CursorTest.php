@@ -28,8 +28,8 @@ final class CursorTest extends TestCase
         $frame->setCursorPosition(5, 3, CursorShape::BlinkingBar);
         $pos = $frame->cursorPosition();
         $this->assertInstanceOf(CursorPosition::class, $pos);
-        $this->assertSame(3, $pos->row);
-        $this->assertSame(5, $pos->col);
+        $this->assertSame(3, $pos->y);
+        $this->assertSame(5, $pos->x);
         $this->assertSame(CursorShape::BlinkingBar, $pos->shape);
     }
 

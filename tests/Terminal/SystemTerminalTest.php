@@ -458,13 +458,13 @@ final class SystemTerminalTest extends TestCase
     }
 
     #[Test]
-    public function detectColorSchemePreservesLeftoverBytes(): void
+    public function bytesAfterTheColourAnswerAreKeptForTheInput(): void
     {
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "pre\033]11;rgb:ffff/ffff/ffff\033\\post");
 
         $terminal = new SystemTerminal($reader, $this->stdout);
-        $result = $terminal->detectColorScheme();
+        $result = $terminal->colorScheme();
 
         self::assertNotNull($result);
         self::assertSame('prepost', $terminal->readInput());
@@ -535,7 +535,7 @@ final class SystemTerminalTest extends TestCase
         $terminal->probeSize();
 
         fwrite($writer, "\033]11;rgb:ff/ff/ff\033\\bbb");
-        $terminal->detectColorScheme();
+        $terminal->colorScheme();
 
         self::assertSame('aaabbb', $terminal->readInput());
 
@@ -561,14 +561,14 @@ final class SystemTerminalTest extends TestCase
     }
 
     #[Test]
-    public function detectColorSchemeDarkBackground(): void
+    public function aDarkBackgroundAnswersTheDarkScheme(): void
     {
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "\033]11;rgb:00/00/00\033\\");
 
         $terminal = new SystemTerminal($reader, $this->stdout);
 
-        self::assertSame(ColorScheme::Dark, $terminal->detectColorScheme());
+        self::assertSame(ColorScheme::Dark, $terminal->colorScheme());
         rewind($this->stdout);
         self::assertSame("\033]11;?\033\\", stream_get_contents($this->stdout));
 
@@ -592,7 +592,7 @@ final class SystemTerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, $reply);
 
-        self::assertSame(ColorScheme::Light, (new SystemTerminal($reader, $this->stdout))->detectColorScheme());
+        self::assertSame(ColorScheme::Light, (new SystemTerminal($reader, $this->stdout))->colorScheme());
 
         fclose($reader);
         fclose($writer);
@@ -616,7 +616,7 @@ final class SystemTerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, $reply);
 
-        self::assertSame($scheme, (new SystemTerminal($reader, $this->stdout))->detectColorScheme());
+        self::assertSame($scheme, (new SystemTerminal($reader, $this->stdout))->colorScheme());
 
         fclose($reader);
         fclose($writer);
@@ -631,7 +631,7 @@ final class SystemTerminalTest extends TestCase
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "\033]11;rgb:1e1e/1e1e/1e1e\033\\");
 
-        self::assertSame(ColorScheme::Dark, (new SystemTerminal($reader, $this->stdout))->detectColorScheme());
+        self::assertSame(ColorScheme::Dark, (new SystemTerminal($reader, $this->stdout))->colorScheme());
 
         fclose($reader);
         fclose($writer);
@@ -694,21 +694,21 @@ final class SystemTerminalTest extends TestCase
 
         $terminal = new SystemTerminal($reader, $this->stdout);
 
-        self::assertSame(ColorScheme::Dark, $terminal->detectColorScheme());
+        self::assertSame(ColorScheme::Dark, $terminal->colorScheme());
 
         fclose($reader);
         fclose($writer);
     }
 
     #[Test]
-    public function detectColorSchemeLightBackground(): void
+    public function aLightBackgroundAnswersTheLightScheme(): void
     {
         [$reader, $writer] = $this->createNonBlockingSocketPair();
         fwrite($writer, "\033]11;rgb:ff/ff/ff\033\\");
 
         $terminal = new SystemTerminal($reader, $this->stdout);
 
-        self::assertSame(ColorScheme::Light, $terminal->detectColorScheme());
+        self::assertSame(ColorScheme::Light, $terminal->colorScheme());
 
         fclose($reader);
         fclose($writer);
@@ -731,7 +731,7 @@ final class SystemTerminalTest extends TestCase
 
         $terminal = new SystemTerminal($pipes[1], $this->stdout);
 
-        self::assertSame(ColorScheme::Light, $terminal->detectColorScheme());
+        self::assertSame(ColorScheme::Light, $terminal->colorScheme());
         self::assertSame("\033[?1u", $terminal->readInput(), 'the other reply is input the program still reads');
 
         fclose($pipes[1]);
@@ -739,7 +739,7 @@ final class SystemTerminalTest extends TestCase
     }
 
     #[Test]
-    public function detectColorSchemeUsesEachRgbChannelInItsCorrectPosition(): void
+    public function eachRgbChannelOfTheAnswerIsReadFromItsOwnPlace(): void
     {
         $cases = [
             ['ff', '80', '00', ColorScheme::Light],
@@ -751,7 +751,7 @@ final class SystemTerminalTest extends TestCase
             [$reader, $writer] = $this->createNonBlockingSocketPair();
             fwrite($writer, sprintf("\033]11;rgb:%s/%s/%s\033\\", $red, $green, $blue));
 
-            self::assertSame($expected, (new SystemTerminal($reader, $this->stdout))->detectColorScheme());
+            self::assertSame($expected, (new SystemTerminal($reader, $this->stdout))->colorScheme());
 
             fclose($reader);
             fclose($writer);

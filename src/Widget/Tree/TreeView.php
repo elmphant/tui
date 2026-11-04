@@ -567,7 +567,7 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
      */
     private static function oneRow(string $text, int $column): string
     {
-        return CharWidth::withTabsExpanded(str_replace(["\r\n", "\n", "\r"], '↵', $text), $column);
+        return CharWidth::expandTabs(str_replace(["\r\n", "\n", "\r"], '↵', $text), $column);
     }
 
     /**

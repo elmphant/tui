@@ -535,7 +535,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
             $cellX = $rowArea->x + $placement->offsets[$columnIndex];
             $cell = $row->cells[$columnIndex] ?? '';
             $cellStyle = $cell instanceof Span
-                ? $cell->withResolvedToken($theme)->style
+                ? $cell->resolvedIn($theme)->style
                 : null;
 
             $cellRenderStyle = match (true) {
