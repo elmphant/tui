@@ -30,12 +30,12 @@ final class HarnessCarriesTheFocusedHintsTest extends TestCase
     {
         $driven = ModelHarness::for(new TwoHintingPanesApp(), 20, 2)->init();
 
-        self::assertSame(['a' => 'first thing'], $driven->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'a' => 'first thing'], $driven->focusedHints());
 
         $driven->dispatch(new KeyMsg('n'));
 
         self::assertSame(
-            ['b' => 'second thing'],
+            ['Ctrl+Q' => 'quit', 'b' => 'second thing'],
             $driven->focusedHints(),
             'the keys named are the keys of whatever the keyboard moved to',
         );

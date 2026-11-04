@@ -14,29 +14,30 @@ abstract readonly class App
 
     protected function setup(): ?Cmd { return null; }         // commands to run at start
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
-    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult {}  // Actions::QUIT quits
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult { return new UpdateResult($this); }  // $keyboard: focused(), hints()
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
     protected function onResize(ResizeMsg $message): UpdateResult { return new UpdateResult($this); }
     protected function onMessage(Message $message, Rect $screen): UpdateResult { return new UpdateResult($this); }
     protected function onComponentsChanged(array $ids): UpdateResult { return new UpdateResult($this); } // list<ComponentId>, not strings: compare $id->value
 
-    protected function applicationKeybindings(): Keybindings {} // actions for onAction(), checked before any widget, quit keys too
+    protected function actions(): AppActions {}                 // keys answered anywhere, before any widget, quit keys too
     protected function globalKeybindings(): Keybindings {}      // bindings every widget inherits (VimMode)
     protected function focusCycleKeybindings(): Keybindings {}  // tab / shift+tab
     protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
-    protected function actionDescription(string $action): string {} // what an action does, in the key help
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
     protected function bind(string $property): Component {}           // the widget a property holds, stored by the framework
     protected function componentAt(MouseMsg $message, Rect $screen): ?ComponentId {} // in onMouse(): the bound component under the pointer
 }
 ```
 
-- Ctrl+Q and Ctrl+C quit. They live in `applicationKeybindings()` under
-  `Actions::QUIT`, so override it to add a key such as `q` or to drop one. Every
-  quit key goes through `onAction()`, so an app can ask before quitting there.
-- `onAction()` gets the actions that `applicationKeybindings()` matched. A
-  component's `withAction()` keys run their own handler instead.
+- `actions()` declares the keys that work wherever the keyboard is, each with
+  its handler and label: `parent::actions()->with('archive', ['ctrl+a'], static fn (self $app): self => $app->archived(), 'archive')`.
+  The footer leads with them and the key help lists them. A letter key is left
+  out while a field takes text, since it types then.
+- Ctrl+Q and Ctrl+C quit. `parent::actions()->withQuitKeys('q', 'ctrl+q')`
+  changes the keys. Declare `Actions::QUIT` again with your own handler to ask
+  before quitting.
+- A component's `withAction()` keys work only while it holds the keyboard.
 - `onComponentsChanged()` runs after bound widgets changed. Use it to re-filter a
   list when a search field changed. The ids are `ComponentId` objects, so
   `in_array('search', $ids, true)` is always false. Check `$id->value === 'search'`.
@@ -51,7 +52,7 @@ abstract readonly class App
 
 | You want to … | Use |
 |---|---|
-| answer a key wherever the keyboard is | `applicationKeybindings()`, then `onAction()` |
+| answer a key wherever the keyboard is | `actions()`, `parent::actions()->with('archive', ['ctrl+a'], …)` |
 | answer a key only while one widget holds the keyboard | `$this->bind('list')->withAction('delete', ['d'], …)` |
 | take what a widget did (typed, moved, chose, submitted) | `$this->bind('field')->on(Submitted::class, …)`, or the bind closure |
 | take the answer to a command (a process, HTTP, a timer) | `onMessage()`, matched by its `EffectId` |
@@ -84,7 +85,6 @@ closure. A whole todo app:
 
 ```php
 use Elmphant\Tui\Application\App;
-use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Message\Submitted;
 use Elmphant\Tui\Widget\Bar\{FocusHints, Footer, Header};
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -122,7 +122,7 @@ final readonly class TodoApp extends App
             $this->bind('list')
                 ->withAction('toggle', ['space'], static fn (self $app): self => $app->toggled())
                 ->withAction('delete', ['d'], static fn (self $app): self => $app->cloneWith(list: $app->list->withoutCursorItem())),
-            Footer::new()->withLeft(FocusHints::new()->withLeadingKeys($this->applicationKeybindings(), ['quit' => Actions::QUIT])),
+            Footer::new()->withLeft(FocusHints::new()),
         );
     }
 

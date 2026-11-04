@@ -6,11 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Closure;
 use Elmphant\Tui\Application\App;
-use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Input\Actions;
-use Elmphant\Tui\Input\Keybindings;
-use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Bar\FocusHints;
 use Elmphant\Tui\Widget\Bar\Footer;
@@ -120,23 +116,13 @@ final readonly class ScopedActionsApp extends App
                 ->withAction('delete', ['x', 'ctrl+x'], self::recording("$name:delete"))
                 ->withAction('left', ['left'], self::recording("$name:left"), 'column')
                 ->withAction('right', ['right'], self::recording("$name:right"), 'column'), ['list', 'other']),
-            Footer::new()->withLeft(FocusHints::new()->withLeadingKeys($this->applicationKeybindings(), [
-                'archive' => 'archive',
-                'quit' => Actions::QUIT,
-            ])),
+            Footer::new()->withLeft(FocusHints::new()),
         ]);
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return parent::applicationKeybindings()->plus(new Keybindings(['archive' => ['a']]));
-    }
-
-    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return $action === 'archive'
-            ? new UpdateResult($this->cloneWith(actions: [...$this->actions, $action]))
-            : parent::onAction($action, $message, $screen);
+        return parent::actions()->with('archive', ['a'], self::recording('archive'), 'archive');
     }
 
     private static function recording(string $entry): Closure

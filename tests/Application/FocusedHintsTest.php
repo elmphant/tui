@@ -48,7 +48,7 @@ final class FocusedHintsTest extends TestCase
 
         (new HintingApp($read))->render(new Frame(20, 3), $pass);
 
-        self::assertSame([['space' => 'pick']], $read->getArrayCopy());
+        self::assertSame([['Ctrl+Q' => 'quit', 'space' => 'pick']], $read->getArrayCopy());
     }
 
     /**
@@ -66,7 +66,7 @@ final class FocusedHintsTest extends TestCase
 
         (new HintingApp($read))->render(new Frame(20, 3), $pass);
 
-        self::assertSame([[]], $read->getArrayCopy());
+        self::assertSame([['Ctrl+Q' => 'quit']], $read->getArrayCopy());
     }
 
     #[Test]
@@ -75,7 +75,7 @@ final class FocusedHintsTest extends TestCase
         $driven = ModelHarness::for(new VimTabsApp(), 40, 10)->init();
 
         self::assertSame(
-            ['H' => 'previous tab', 'L' => 'next tab'],
+            ['Ctrl+Q' => 'quit', 'H' => 'previous tab', 'L' => 'next tab'],
             $driven->focusedHints(),
             'a footer names the keys vim mode made active, not the ones it was authored with',
         );
@@ -86,7 +86,7 @@ final class FocusedHintsTest extends TestCase
     {
         $driven = ModelHarness::for(new FocusCyclingApp(), 40, 10)->init();
 
-        self::assertSame(['Tab' => 'next pane'], $driven->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'Tab' => 'next pane'], $driven->focusedHints());
     }
 
     #[Test]
@@ -94,7 +94,7 @@ final class FocusedHintsTest extends TestCase
     {
         $driven = ModelHarness::for(new FocusCyclingApp(rebound: true), 40, 10)->init();
 
-        self::assertSame(['Ctrl+N' => 'next pane'], $driven->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'Ctrl+N' => 'next pane'], $driven->focusedHints());
     }
 }
 

@@ -86,13 +86,13 @@ final class FilterableListInVimModeTest extends TestCase
     #[Test]
     public function theListOffersSlashToSearch(): void
     {
-        self::assertSame(['j/k' => 'move', 'Enter' => 'choose', '/' => 'search'], self::harness()->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'j/k' => 'move', 'Enter' => 'choose', '/' => 'search'], self::harness()->focusedHints());
     }
 
     #[Test]
     public function theFieldOffersEscAndEnterBack(): void
     {
-        self::assertSame(['Esc/Enter' => 'back'], self::harness()->press('/')->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'Esc/Enter' => 'back'], self::harness()->press('/')->focusedHints());
     }
 
     #[Test]

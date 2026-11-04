@@ -277,6 +277,24 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
+     * @internal a closure that runs on a later owner must be static and capture no objects, or it reads a stale one
+     */
+    public static function assertSafeReplacement(Closure $writeBack): void
+    {
+        $reflection = new ReflectionFunction($writeBack);
+
+        if (!$reflection->isStatic()) {
+            throw new InvalidArgumentException('Component replacement closure must be static; use the supplied $app instead of $this');
+        }
+
+        foreach ($reflection->getStaticVariables() as $captured) {
+            if (self::containsObjectState($captured)) {
+                throw new InvalidArgumentException('Component replacement closure must not capture object state; use the supplied $app');
+            }
+        }
+    }
+
+    /**
      * @internal
      *
      * @return UpdateResult<App>
@@ -347,21 +365,6 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         return $widget instanceof MeasureHeight
             ? new MeasuredComponent($id, $widget, $writeBack, $address, $actions, $handlers)
             : new self($id, $widget, $writeBack, $address, $actions, $handlers);
-    }
-
-    private static function assertSafeReplacement(Closure $writeBack): void
-    {
-        $reflection = new ReflectionFunction($writeBack);
-
-        if (!$reflection->isStatic()) {
-            throw new InvalidArgumentException('Component replacement closure must be static; use the supplied $app instead of $this');
-        }
-
-        foreach ($reflection->getStaticVariables() as $captured) {
-            if (self::containsObjectState($captured)) {
-                throw new InvalidArgumentException('Component replacement closure must not capture object state; use the supplied $app');
-            }
-        }
     }
 
     private static function containsObjectState(mixed $value): bool

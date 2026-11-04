@@ -38,12 +38,12 @@ final class SearchModeTest extends TestCase
         $harness = ModelHarness::for(new OwnFieldApp(OwnFilter::new()), 30, 3)->init()->type('jk');
 
         self::assertSame('', $harness->model()->filter->query());
-        self::assertSame(['/' => 'search'], $harness->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', '/' => 'search'], $harness->focusedHints());
 
         $harness->press('/')->type('jk');
 
         self::assertSame('jk', $harness->model()->filter->query());
-        self::assertSame(['Esc/Enter' => 'back'], $harness->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'Esc/Enter' => 'back'], $harness->focusedHints());
     }
 }
 

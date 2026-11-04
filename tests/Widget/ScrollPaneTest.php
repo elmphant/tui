@@ -558,7 +558,7 @@ final class ScrollPaneTest extends TestCase
                 return Sizing::of(Constraint::exact(1), Constraint::exact(1));
             }
 
-            public function cursorLine(): int
+            public function cursorLine(int $width): int
             {
                 return 0;
             }
@@ -598,7 +598,7 @@ final class ScrollPaneTest extends TestCase
                 return Sizing::of(Constraint::exact($this->rows), Constraint::exact($this->rows));
             }
 
-            public function cursorLine(): int
+            public function cursorLine(int $width): int
             {
                 return $this->cursorLine;
             }

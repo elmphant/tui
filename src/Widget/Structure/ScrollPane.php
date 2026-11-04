@@ -546,7 +546,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
 
         // Follow the child's cursor rather than its top, or a tall child could leave the cursor off screen.
         if ($this->followSpan === 1 && $child instanceof CursorAware) {
-            $top += max(0, min($child->cursorLine(), $span - 1));
+            $top += max(0, min($child->cursorLine($layout->childWidth), $span - 1));
             $span = 1;
         }
 

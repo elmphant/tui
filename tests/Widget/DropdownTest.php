@@ -23,6 +23,7 @@ use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\CheckboxGroup;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
 use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
@@ -64,6 +65,39 @@ final class DropdownTest extends TestCase
         self::assertSame(0, $screen->rowOf('▾'));
         self::assertSame(1, $screen->rowOf('╭'));
         self::assertNotNull($screen->find('Work'));
+    }
+
+    #[Test]
+    public function anOpenListMarksTheOptionUnderTheCursor(): void
+    {
+        $screen = WidgetHarness::for(Dropdown::new(Select::new(['Inbox', 'Work', 'Home'])), width: 40, height: 12)
+            ->press('enter', 'down')
+            ->screen();
+        ['row' => $row, 'column' => $column] = $screen->findOrFail('Work');
+
+        self::assertEquals(Theme::dark()->cursorStyle->background, $screen->styleAt($column, $row)->background);
+    }
+
+    #[Test]
+    public function anOpenCheckboxGroupMarksTheOptionUnderTheCursor(): void
+    {
+        $screen = WidgetHarness::for(Dropdown::new(CheckboxGroup::new(['app.log', 'deprecations', 'sys_log'])), width: 40, height: 12)
+            ->press('enter', 'down')
+            ->screen();
+        ['row' => $row, 'column' => $column] = $screen->findOrFail('deprecations');
+
+        self::assertEquals(Theme::dark()->cursorStyle->background, $screen->styleAt($column, $row)->background);
+    }
+
+    #[Test]
+    public function anOpenFilterableCheckboxGroupMarksTheOptionUnderTheCursor(): void
+    {
+        $screen = WidgetHarness::for(Dropdown::new(FilterableCheckboxGroup::new(['Maintenance (ID: 1)'])), width: 40, height: 12)
+            ->press('enter')
+            ->screen();
+        ['row' => $row, 'column' => $column] = $screen->findOrFail('Maintenance');
+
+        self::assertEquals(Theme::dark()->cursorStyle->background, $screen->styleAt($column, $row)->background);
     }
 
     #[Test]

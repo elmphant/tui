@@ -42,8 +42,8 @@ final class FilterableCheckboxGroupInVimModeTest extends TestCase
     {
         $harness = self::harness();
 
-        self::assertSame(['j/k' => 'move', 'Enter' => 'toggle', '/' => 'search'], $harness->focusedHints());
-        self::assertSame(['Esc/Enter' => 'back'], $harness->press('/')->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'j/k' => 'move', 'Enter' => 'toggle', '/' => 'search'], $harness->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'Esc/Enter' => 'back'], $harness->press('/')->focusedHints());
     }
 
     #[Test]

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\Keyboard;
 use Elmphant\Tui\Core\Cmd;
@@ -15,8 +16,6 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Input\Actions;
-use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -74,16 +73,6 @@ final class AppTest extends TestCase
     }
 
     #[Test]
-    public function theQuitHintNamesTheKeyThatActuallyLeaves(): void
-    {
-        self::assertSame(
-            ['Ctrl+Q' => 'quit'],
-            (new CounterApp())->quitHints(),
-            'a footer asks rather than repeating a key that can drift out of step',
-        );
-    }
-
-    #[Test]
     public function aPlainLetterReachesTheAppRatherThanLeavingIt(): void
     {
         $app = new CounterApp();
@@ -102,7 +91,7 @@ final class AppTest extends TestCase
     }
 
     #[Test]
-    public function ctrlCCanBeReboundViaApplicationKeybindings(): void
+    public function ctrlCCanBeReboundThroughTheQuitKeys(): void
     {
         $app = new RebindQuitApp();
 
@@ -155,7 +144,7 @@ final class AppTest extends TestCase
     }
 
     #[Test]
-    public function applicationKeybindingsIsResolvedOncePerAppInstance(): void
+    public function theActionsAreAskedForOncePerAppInstance(): void
     {
         KeybindingsCallCounter::$calls = 0;
         $app = new KeybindingsCountingApp();
@@ -163,7 +152,7 @@ final class AppTest extends TestCase
         $app->update(new KeyMsg('x'), Rect::fromSize(80, 24));
         $app->update(new KeyMsg('y'), Rect::fromSize(80, 24));
 
-        self::assertSame(1, KeybindingsCallCounter::$calls, 'applicationKeybindings() must be memoized per app instance');
+        self::assertSame(1, KeybindingsCallCounter::$calls, 'actions() must be memoized per app instance');
     }
 
     #[Test]
@@ -427,7 +416,7 @@ final class AppTest extends TestCase
     #[Test]
     public function appExtensionHooksRemainProtectedSubclassContracts(): void
     {
-        foreach (['setup', 'onKey', 'onAction', 'onMouse', 'onTick', 'onMessage', 'onResize', 'onComponentsChanged', 'applicationKeybindings'] as $hook) {
+        foreach (['setup', 'onKey', 'onMouse', 'onTick', 'onMessage', 'onResize', 'onComponentsChanged', 'actions'] as $hook) {
             self::assertTrue(
                 (new ReflectionMethod(App::class, $hook))->isProtected(),
                 "$hook must remain overridable by App subclasses",
@@ -518,9 +507,9 @@ final readonly class RebindQuitApp extends CopyableTestApp
         return Text::new('rebound quit');
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings(['quit' => ['ctrl+d']]);
+        return parent::actions()->withQuitKeys('ctrl+d');
     }
 }
 
@@ -554,9 +543,9 @@ final readonly class CustomQuitXApp extends CopyableTestApp
         return Text::new('x quits');
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c', 'x']]);
+        return parent::actions()->withQuitKeys('ctrl+q', 'ctrl+c', 'x');
     }
 }
 
@@ -571,9 +560,9 @@ final readonly class NotQuitActionApp extends CopyableTestApp
         return Text::new('q does not quit');
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return parent::applicationKeybindings()->overriddenBy(new Keybindings(['not_quit' => ['q']]));
+        return parent::actions()->with('not_quit', ['q'], static fn (self $app): self => $app);
     }
 }
 
@@ -860,10 +849,10 @@ final readonly class KeybindingsCountingApp extends CopyableTestApp
         return Text::new('counting');
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
         ++KeybindingsCallCounter::$calls;
 
-        return new Keybindings(['quit' => ['ctrl+q']]);
+        return parent::actions();
     }
 }

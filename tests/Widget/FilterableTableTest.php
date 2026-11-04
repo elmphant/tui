@@ -181,7 +181,7 @@ final class FilterableTableTest extends TestCase
     #[Test]
     public function theHintsNameMovingChoosingAndClearingAFilter(): void
     {
-        self::assertSame(['↑/↓' => 'move', 'Enter' => 'choose', 'Ctrl+U/Esc' => 'clear filter'], $this->harness()->type('t')->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', '↑/↓' => 'move', 'Enter' => 'choose', 'Ctrl+U/Esc' => 'clear filter'], $this->harness()->type('t')->focusedHints());
     }
 
     #[Test]

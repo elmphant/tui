@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Application;
 
+use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\Keyboard;
 use Elmphant\Tui\Core\Cmd;
@@ -16,7 +17,6 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Constraint;
@@ -792,9 +792,9 @@ final readonly class TwoPanelApp extends CopyableTestApp
         );
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c', 'q']]);
+        return parent::actions()->withQuitKeys('ctrl+q', 'ctrl+c', 'q');
     }
 }
 
@@ -850,17 +850,11 @@ final readonly class ApplicationShortcutApp extends CopyableTestApp
         return $this->bind('widget', 'shortcut-widget');
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings([
-            'quit' => ['ctrl+q'],
-            'help' => ['f1'],
-        ]);
-    }
-
-    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return new UpdateResult($this->cloneWith(lastAction: $action));
+        return parent::actions()
+            ->with('quit', ['ctrl+q'], static fn (self $app): self => $app->cloneWith(lastAction: 'quit'))
+            ->with('help', ['f1'], static fn (self $app): self => $app->cloneWith(lastAction: 'help'));
     }
 }
 
@@ -880,9 +874,9 @@ final readonly class UnhandledApplicationShortcutApp extends CopyableTestApp
         return $this->bind('widget', 'unhandled-shortcut-widget');
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings(['help' => ['f1']]);
+        return parent::actions()->with('help', ['f1'], static fn (self $app): self => $app);
     }
 }
 
@@ -915,9 +909,9 @@ final readonly class SimpleCounterApp extends CopyableTestApp
         return Text::new("Count: {$this->count}");
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c', 'q']]);
+        return parent::actions()->withQuitKeys('ctrl+q', 'ctrl+c', 'q');
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult

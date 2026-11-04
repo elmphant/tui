@@ -30,12 +30,13 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Committing;
+use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
 
-final readonly class ListView implements Committing, Focusable, KeybindingsAware, MeasureHeight, PublishesHints
+final readonly class ListView implements Committing, CursorAware, Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -306,6 +307,11 @@ final readonly class ListView implements Committing, Focusable, KeybindingsAware
     public function measureHeight(int $width): int
     {
         return $width < 1 ? 0 : $this->extentsAt($width)->totalHeight();
+    }
+
+    public function cursorLine(int $width): int
+    {
+        return $width < 1 || $this->items === [] ? 0 : $this->extentsAt($width)->startOf($this->cursor);
     }
 
     private function itemAt(MouseMsg $message, Rect $area): ?ListItem

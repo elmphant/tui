@@ -9,5 +9,8 @@ namespace Elmphant\Tui\Widget;
  */
 interface CursorAware
 {
-    public function cursorLine(): int;
+    /**
+     * At the width the widget is drawn, since rows that wrap push the cursor down.
+     */
+    public function cursorLine(int $width): int;
 }

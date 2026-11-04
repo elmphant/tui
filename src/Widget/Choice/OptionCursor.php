@@ -16,7 +16,7 @@ use Elmphant\Tui\Message\MouseMsg;
  */
 trait OptionCursor
 {
-    public function cursorLine(): int
+    public function cursorLine(int $width): int
     {
         return $this->rowOffset() + $this->cursor;
     }

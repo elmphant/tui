@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Application\Keyboard;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
@@ -31,7 +31,7 @@ final class AppHookDispatchTest extends TestCase
     }
 
     #[Test]
-    public function anApplicationActionReachesTheSubclassHook(): void
+    public function aDeclaredActionRunsItsHandler(): void
     {
         self::assertSame('action:save', $this->trailAfter(new KeyMsg('s', ctrl: true)));
     }
@@ -111,19 +111,14 @@ final readonly class HookRecordingApp extends App
         return Cmd::tick(1.0);
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings(['save' => ['ctrl+s']]);
+        return AppActions::new()->with('save', ['ctrl+s'], static fn (): self => new self('action:save'));
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
     {
         return new UpdateResult(new self('key', self::size($screen)));
-    }
-
-    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return new UpdateResult(new self('action:' . $action));
     }
 
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult

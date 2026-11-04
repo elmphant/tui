@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Application;
 
+use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Application\NamesItsKeys;
@@ -221,7 +222,7 @@ final class KeyHelpTest extends TestCase
         $help = $harness->model()->keyHelp($focused === null ? FocusState::nowhere() : FocusState::on($focused));
 
         self::assertSame(['r/x' => 'refresh', '/' => 'search', 7 => 'seven'], $help['Report']);
-        self::assertSame(['e', 's'], \array_slice(array_map(strval(...), array_keys($help['Anywhere'])), 0, 2));
+        self::assertSame(['Ctrl+Q/Ctrl+C', 'e', 's'], \array_slice(array_map(strval(...), array_keys($help['Anywhere'])), 0, 3));
     }
 
     /**
@@ -293,9 +294,15 @@ final readonly class OverlappingKeysApp extends CopyableTestApp
         return Mount::named('report', new OverlappingKeysModel(), Text::new('report'), static fn (self $app): self => $app);
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings(['reload' => ['r'], 'find' => ['/'], 'export' => ['x', 'e'], 'seventh' => ['7', 's']]);
+        $nothing = static fn (self $app): self => $app;
+
+        return parent::actions()
+            ->with('reload', ['r'], $nothing)
+            ->with('find', ['/'], $nothing)
+            ->with('export', ['x', 'e'], $nothing)
+            ->with('seventh', ['7', 's'], $nothing);
     }
 }
 

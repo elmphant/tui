@@ -29,7 +29,7 @@ final class FilterableStaticTableInVimModeTest extends TestCase
         $harness->press('/');
 
         self::assertSame('back', self::keysHere($harness)['Esc/Enter'] ?? null, 'as the footer says');
-        self::assertSame(['Esc/Enter' => 'back'], $harness->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'Esc/Enter' => 'back'], $harness->focusedHints());
     }
 
     #[Test]
@@ -92,9 +92,9 @@ final class FilterableStaticTableInVimModeTest extends TestCase
     {
         $harness = self::harness();
 
-        self::assertSame(['/' => 'search'], $harness->focusedHints());
-        self::assertSame(['Esc/Enter' => 'back'], $harness->press('/')->focusedHints());
-        self::assertSame(['Esc' => 'clear filter', '/' => 'search'], $harness->type('r')->press('enter')->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', '/' => 'search'], $harness->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'Esc/Enter' => 'back'], $harness->press('/')->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', 'Esc' => 'clear filter', '/' => 'search'], $harness->type('r')->press('enter')->focusedHints());
     }
 
     #[Test]

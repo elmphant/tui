@@ -115,9 +115,12 @@ final readonly class DropdownPopup implements PopupFrame, Widget
         $frame->fillStyled($area, $context->theme->base);
         Block::new()->withBorderType(BorderType::Rounded)->withBorderStyle($context->theme->focusedBorderStyle)->render($frame, $area);
 
-        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-            $child->render($frame, $childArea, $context);
-        }
+        // A float draws after the tree has closed the dropdown's focus, and the dropdown queues it only while it holds the keyboard.
+        $context->focusHere(function () use ($frame, $area, $context): void {
+            foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
+                $child->render($frame, $childArea, $context);
+            }
+        });
     }
 
     /**

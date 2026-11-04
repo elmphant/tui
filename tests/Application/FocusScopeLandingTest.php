@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Input\Keybindings;
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -64,17 +63,11 @@ final readonly class ScopedFiltersApp extends App
         );
     }
 
-    protected function applicationKeybindings(): Keybindings
+    protected function actions(): AppActions
     {
-        return new Keybindings(['quit' => ['ctrl+q'], 'into' => ['ctrl+f'], 'drop' => ['ctrl+d']]);
-    }
-
-    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
-    {
-        return match ($action) {
-            'into' => new UpdateResult($this, Cmd::focus(ComponentId::named('filters/1'))),
-            'drop' => new UpdateResult($this->cloneWith(filters: $this->filters->withChildren([TextInput::new()->withValue('a')]))),
-            default => parent::onAction($action, $message, $screen),
-        };
+        return parent::actions()
+            ->withQuitKeys('ctrl+q')
+            ->with('into', ['ctrl+f'], static fn (self $app): UpdateResult => new UpdateResult($app, Cmd::focus(ComponentId::named('filters/1'))))
+            ->with('drop', ['ctrl+d'], static fn (self $app): self => $app->cloneWith(filters: $app->filters->withChildren([TextInput::new()->withValue('a')])));
     }
 }

@@ -151,7 +151,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             }
         }
 
-        $chords = $this->applicationKeybindings()
+        $chords = $this->declaredActions()->keybindings()
             ->plus($answering)
             ->plus($this->globalKeybindings()->restrictedTo(...$answering->actions()))
             ->chords();
@@ -165,16 +165,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         return $this->takesText($focus->focused()) ? $chords->withoutText() : $chords;
-    }
-
-    /**
-     * Derive quit hints from the active bindings so they stay accurate.
-     *
-     * @return array<string, string>
-     */
-    public function quitHints(string $description = 'quit'): array
-    {
-        return $this->applicationKeybindings()->hints([$description => Actions::QUIT]);
     }
 
     /**
@@ -240,10 +230,11 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         $groups['Anywhere'] = $this->described(
-            $this->applicationKeybindings()
+            $this->declaredActions()->keybindings()
                 ->plus($this->focusCycleKeybindings())
                 ->plus($this->keyHelpKeybindings()),
             $listed,
+            $this->appActionHints($this->declaredActions()->keybindings()),
         );
 
         return $groups;
@@ -263,7 +254,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     }
 
     /**
-     * Runs before the focused component, except for keys it takes as text; reserved shortcuts go to onAction().
+     * Runs before the focused component, except for keys it takes as text; a key actions() declares never reaches it.
      * A changed model or any command consumes the key; return new UpdateResult($this) to pass it on.
      *
      * @return UpdateResult<static>
@@ -274,25 +265,12 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     }
 
     /**
-     * Application actions run before focus routing, regardless of which component has focus.
-     *
-     * @return UpdateResult<static>
+     * Keys answered wherever the keyboard is, before the focused component, except a key it takes as text.
+     * The footer leads with them and the key help lists them. Declare `Actions::QUIT` again to quit with `q` too, or to ask first.
      */
-    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
+    protected function actions(): AppActions
     {
-        return match ($action) {
-            Actions::QUIT => new UpdateResult($this, Cmd::quit()),
-            default => new UpdateResult($this),
-        };
-    }
-
-    /**
-     * These shortcuts run before focused components, except for keys they take as text; globalKeybindings() supplies inherited widget actions.
-     * Every quit key goes through onAction(), so an app can confirm before it quits. Add `q` here to quit with it.
-     */
-    protected function applicationKeybindings(): Keybindings
-    {
-        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c']]);
+        return AppActions::new();
     }
 
     /**
@@ -383,11 +361,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return new Keybindings([Actions::HELP => ['?', 'ctrl+k']]);
     }
 
-    protected function actionDescription(string $action): string
-    {
-        return Actions::description($action);
-    }
-
     /**
      * Override the focus-cycle keys, for example when a form needs Tab as text.
      */
@@ -438,9 +411,9 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
                 return $answered;
             }
 
-            $action = $this->matchedApplicationAction($message);
-            if ($action !== null) {
-                return $this->onAction($action, $message, $screenRect);
+            $answered = $this->answeredByAppAction($message);
+            if ($answered !== null) {
+                return $answered;
             }
         }
 
@@ -1075,8 +1048,12 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     private function hintsOfFocused(?ComponentId $focused): array
     {
+        $appKeys = $this->declaredActions()->keybindings();
+        $takesText = $this->takesText($focused);
+        $appHints = $this->appActionHints($takesText ? $appKeys->withoutText() : $appKeys);
+
         if ($focused === null) {
-            return [];
+            return $appHints;
         }
 
         $widget = $this->componentRegistry()->get($focused)?->widget;
@@ -1087,13 +1064,12 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         $actionHints = [];
-        $takesText = $this->takesText($focused);
         foreach ($this->componentsWithActionsAround($focused) as $component) {
             $actions = $component->actions();
             $shown = $takesText ? $actions->withoutText() : $actions;
             $byDescription = [];
             foreach ($shown->actions() as $action) {
-                $byDescription[$component->labelOf($action) ?? $this->actionDescription($action)][] = $action;
+                $byDescription[$component->labelOf($action) ?? Actions::description($action)][] = $action;
             }
             $actionHints += $shown->hints($byDescription);
         }
@@ -1110,7 +1086,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $layerHints += $layer->hints();
         }
 
-        return [...$actionHints, ...$widget instanceof PublishesHints ? $widget->hints() : [], ...$layerHints];
+        return [...$appHints, ...$actionHints, ...$widget instanceof PublishesHints ? $widget->hints() : [], ...$layerHints];
     }
 
     private function componentRegistry(): ComponentRegistry
@@ -1158,7 +1134,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     }
 
     /**
-     * List each key once, in the closest group that handles it; use actionDescription() for actions without hint wording.
+     * List each key once, in the closest group that handles it; use Actions::description() for actions without hint wording.
      *
      * @param array<string, true>   $listed  the key labels already listed, added to as this lists more
      * @param array<string, string> $wording key label => description, as hints are
@@ -1171,7 +1147,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         foreach ($bindings->actions() as $action) {
             $leading = ($bindings->patternsOf($action)[0] ?? null)?->label();
-            $description = $leading !== null && isset($wording[$leading]) ? $wording[$leading] : $this->actionDescription($action);
+            $description = $leading !== null && isset($wording[$leading]) ? $wording[$leading] : Actions::description($action);
             $labels = [];
             foreach ($bindings->patternsOf($action) as $pattern) {
                 $label = $pattern->label();
@@ -1268,15 +1244,47 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return array_values($found);
     }
 
-    private function matchedApplicationAction(KeyMsg $message): ?string
+    private function declaredActions(): AppActions
     {
-        static $bindings = null;
-        $bindings ??= new WeakMap();
+        static $declared = null;
+        $declared ??= new WeakMap();
 
         /**
-         * @var WeakMap<object, Keybindings> $bindings
+         * @var WeakMap<object, AppActions> $declared
          */
-        return ($bindings[$this] ??= $this->applicationKeybindings())->actionOf($message);
+        return $declared[$this] ??= $this->actions();
+    }
+
+    /**
+     * @return array<string, string> key label => the action's label, or its description
+     */
+    private function appActionHints(Keybindings $shown): array
+    {
+        $declared = $this->declaredActions();
+        $byLabel = [];
+        foreach ($shown->actions() as $action) {
+            $byLabel[$declared->labelOf($action) ?? Actions::description($action)][] = $action;
+        }
+
+        return $shown->hints($byLabel);
+    }
+
+    /**
+     * @return UpdateResult<static>|null
+     */
+    private function answeredByAppAction(KeyMsg $message): ?UpdateResult
+    {
+        $declared = $this->declaredActions();
+        $action = $declared->keybindings()->actionOf($message);
+        $handler = $action === null ? null : $declared->handlerOf($action);
+        if ($handler === null) {
+            return null;
+        }
+
+        $answered = $handler($this);
+        $result = $answered instanceof UpdateResult ? $answered : new UpdateResult($answered);
+
+        return new UpdateResult($this->appModel($result), $result->command);
     }
 
     /**

@@ -32,6 +32,7 @@ use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Committing;
+use Elmphant\Tui\Widget\CursorAware;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -43,7 +44,7 @@ use InvalidArgumentException;
  * Draw only visible rows with cursor, selection and scrolling; column constraints keep cells within the width.
  * Normalize plain cell arrays to Row values so both inputs share identity and rendering rules.
  */
-final readonly class Table implements Committing, Focusable, KeybindingsAware, MeasureHeight, PublishesHints
+final readonly class Table implements Committing, CursorAware, Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -277,6 +278,11 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
     public function measureHeight(int $width): int
     {
         return $this->headerHeight() + $this->layoutFor($this->columnPlacement($width))->totalHeight;
+    }
+
+    public function cursorLine(int $width): int
+    {
+        return $this->headerHeight() + $this->layoutFor($this->columnPlacement($width))->lineOf($this->cursor);
     }
 
     /**

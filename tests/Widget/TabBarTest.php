@@ -250,7 +250,7 @@ final class TabBarTest extends TestCase
 
         $driven = ModelHarness::for($app, 40, 10)->init();
 
-        self::assertSame(['←' => 'previous tab', '→' => 'next tab'], $driven->focusedHints());
+        self::assertSame(['Ctrl+Q' => 'quit', '←' => 'previous tab', '→' => 'next tab'], $driven->focusedHints());
     }
 
     #[Test]
@@ -3433,7 +3433,7 @@ final class TabBarTest extends TestCase
                     : new UpdateResult($this);
             }
 
-            public function cursorLine(): int
+            public function cursorLine(int $width): int
             {
                 return $this->row;
             }
