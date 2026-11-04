@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Application;
 
+use Closure;
 use Elmphant\Tui\Application\App;
-use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
-use Elmphant\Tui\Message\ActionMsg;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Bar\FocusHints;
@@ -30,7 +28,7 @@ final class ComponentActionsTest extends TestCase
     {
         $harness = ModelHarness::for(ScopedActionsApp::start(), 60, 8)->press('tab', 'space', 'x');
 
-        self::assertSame(['list:toggle', 'list:delete'], self::actionsOf($harness), 'the bind closure of the component hears them');
+        self::assertSame(['list:toggle', 'list:delete'], self::actionsOf($harness), 'the handlers of the component hear them');
     }
 
     #[Test]
@@ -117,28 +115,16 @@ final readonly class ScopedActionsApp extends App
     {
         return Layout::column(...[
             $this->bind('field'),
-            ...array_map(fn (string $name): Component => Component::bind(
-                $name,
-                $this->{$name},
-                static fn (self $app, ListView $list, Message $message): self => $message instanceof ActionMsg
-                    ? $app->cloneWith(actions: [...$app->actions, "$name:$message->action"])
-                    : $app->cloneWith(...[$name => $list]),
-            )->withActions(new Keybindings([
-                'toggle' => ['space'],
-                'delete' => ['x', 'ctrl+x'],
-                'left' => ['left'],
-                'right' => ['right'],
-            ])), ['list', 'other']),
+            ...array_map(fn (string $name): Widget => $this->bind($name)
+                ->withAction('toggle', ['space'], self::recording("$name:toggle"))
+                ->withAction('delete', ['x', 'ctrl+x'], self::recording("$name:delete"))
+                ->withAction('left', ['left'], self::recording("$name:left"), 'column')
+                ->withAction('right', ['right'], self::recording("$name:right"), 'column'), ['list', 'other']),
             Footer::new()->withLeft(FocusHints::new()->withLeadingKeys($this->applicationKeybindings(), [
                 'archive' => 'archive',
                 'quit' => Actions::QUIT,
             ])),
         ]);
-    }
-
-    protected function actionDescription(string $action): string
-    {
-        return \in_array($action, ['left', 'right'], true) ? 'column' : parent::actionDescription($action);
     }
 
     protected function applicationKeybindings(): Keybindings
@@ -151,5 +137,10 @@ final readonly class ScopedActionsApp extends App
         return $action === 'archive'
             ? new UpdateResult($this->cloneWith(actions: [...$this->actions, $action]))
             : parent::onAction($action, $message, $screen);
+    }
+
+    private static function recording(string $entry): Closure
+    {
+        return static fn (self $app): self => $app->cloneWith(actions: [...$app->actions, $entry]);
     }
 }

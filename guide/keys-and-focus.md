@@ -101,8 +101,8 @@ With the keyboard on the list, that footer reads `Ctrl+Q quit   ↑/↓ move
 Enter choose`. Rebind a key, or switch on vim mode, and the footer follows.
 `withLeadingKeys()` puts the app's own keys first. A key that a focused field
 would type as text is left out while it does, since it does nothing then.
-Keys given with `Component::bind(…)->withActions()` are named only while that
-component holds the keyboard.
+Keys given with `$this->bind('list')->withAction(…)` are named only while that
+component holds the keyboard, by the label given as its fourth argument.
 
 Your own widget names its keys by implementing `PublishesHints`. Ask its
 bindings for the labels, never type them:

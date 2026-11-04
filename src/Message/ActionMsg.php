@@ -7,7 +7,7 @@ namespace Elmphant\Tui\Message;
 use Elmphant\Tui\Core\Message;
 
 /**
- * An action of `Component::withActions()`, handed to that component's bind closure.
+ * A key `Component::withAction()` declared, handed to that component's write-back before its handler runs.
  */
 final readonly class ActionMsg implements Message
 {

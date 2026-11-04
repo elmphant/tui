@@ -36,7 +36,7 @@ abstract readonly class App
   `Actions::QUIT`, so override it to add a key such as `q` or to drop one. Every
   quit key goes through `onAction()`, so an app can ask before quitting there.
 - `onAction()` gets the actions that `applicationKeybindings()` matched. A
-  component's `withActions()` go to its bind closure instead.
+  component's `withAction()` keys run their own handler instead.
 - `onComponentsChanged()` runs after bound widgets changed. Use it to re-filter a
   list when a search field changed. The ids are `ComponentId` objects, so
   `in_array('search', $ids, true)` is always false. Check `$id->value === 'search'`.
@@ -52,7 +52,7 @@ abstract readonly class App
 | You want to … | Use |
 |---|---|
 | answer a key wherever the keyboard is | `applicationKeybindings()`, then `onAction()` |
-| answer a key only while one widget holds the keyboard | `Component::bind(…)->withActions($keys)`, then an `ActionMsg` in its bind closure |
+| answer a key only while one widget holds the keyboard | `$this->bind('list')->withAction('delete', ['d'], …)` |
 | take what a widget did (typed, moved, chose, submitted) | `$this->bind('field')->on(Submitted::class, …)`, or the bind closure |
 | take the answer to a command (a process, HTTP, a timer) | `onMessage()`, matched by its `EffectId` |
 | redraw on a clock | `onTick()` after `Cmd::tick()`. An animated widget needs neither |
@@ -83,10 +83,9 @@ and clicks, takes part in tab order, and hands its new state back through the
 closure. A whole todo app:
 
 ```php
-use Elmphant\Tui\Application\{App, Component};
-use Elmphant\Tui\Core\Message;
-use Elmphant\Tui\Input\{Actions, Keybindings};
-use Elmphant\Tui\Message\{ActionMsg, Submitted};
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Message\Submitted;
 use Elmphant\Tui\Widget\Bar\{FocusHints, Footer, Header};
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -120,23 +119,18 @@ final readonly class TodoApp extends App
         return Layout::column(
             Header::new('Todo')->withRule(),
             $this->bind('field')->on(Submitted::class, static fn (self $app, Submitted $submitted): self => $app->added($submitted->value)),
-            Component::bind('list', $this->list, static fn (self $app, ListView $list, Message $message): self => $message instanceof ActionMsg
-                ? $app->cloneWith(list: $app->edited($list, $message->action))
-                : $app->cloneWith(list: $list))
-                ->withActions(new Keybindings(['toggle' => ['space'], 'delete' => ['d']])),
+            $this->bind('list')
+                ->withAction('toggle', ['space'], static fn (self $app): self => $app->toggled())
+                ->withAction('delete', ['d'], static fn (self $app): self => $app->cloneWith(list: $app->list->withoutCursorItem())),
             Footer::new()->withLeft(FocusHints::new()->withLeadingKeys($this->applicationKeybindings(), ['quit' => Actions::QUIT])),
         );
     }
 
-    private function edited(ListView $list, string $action): ListView
+    private function toggled(): self
     {
-        $todo = $list->cursorItem();
+        $todo = $this->list->cursorItem();
 
-        return match (true) {
-            $action === 'toggle' && $todo instanceof Todo => $list->withCursorItem($todo->toggled()),
-            $action === 'delete' => $list->withoutCursorItem(),
-            default => $list,
-        };
+        return $todo instanceof Todo ? $this->cloneWith(list: $this->list->withCursorItem($todo->toggled())) : $this;
     }
 
     private function added(string $name): self
@@ -162,11 +156,12 @@ final readonly class TodoApp extends App
 - **`withSubmit()` makes Enter commit the field**, so the closure takes the value
   inline. A field left without it hands Enter on, the way a form moves to the
   next field.
-- **`withActions()` gives keys to one component.** They reach that component's
-  bind closure as an `ActionMsg`, only while it holds the keyboard, and the
-  footer names Space and `d` only then. In the field, Space is text. Several
-  alike components (the columns of a board) each hear their own: the closure may
-  capture a plain value such as the column's index.
+- **`withAction()` gives a key to one component.** Its handler runs on the app
+  with the list already stored, only while the list holds the keyboard, and the
+  footer and the key help name Space and `d` only then. A fourth argument
+  words the key (`'remove'`), else the action's name does. In the field, Space
+  is text. Several alike components (the columns of a board) each hear their
+  own: the handler may capture a plain value such as the column's index.
 - **`withAddedItem()`** appends a row and puts the cursor on it.
 
 Rules for binding:

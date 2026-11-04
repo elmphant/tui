@@ -13,6 +13,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\ActionMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
@@ -34,10 +35,10 @@ use UnitEnum;
 readonly class Component implements Widget, WidgetContainer, SingleMount
 {
     /**
-     * @param TWidget                            $widget
-     * @param Closure|null                       $writeBack validated by bind(); null when named()
-     * @param (Closure(?Cmd): ?Cmd)|null         $address   set by the Mount that owns this, if any
-     * @param list<array{class-string, Closure}> $handlers  validated by on()
+     * @param TWidget                                              $widget
+     * @param Closure|null                                         $writeBack validated by bind(); null when named()
+     * @param (Closure(?Cmd): ?Cmd)|null                           $address   set by the Mount that owns this, if any
+     * @param list<array{class-string, Closure, ?string, ?string}> $handlers  validated by on() and withAction(): the message class, the handler, the action it answers and its label
      */
     private function __construct(
         public ComponentId $id,
@@ -99,17 +100,6 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
-     * Keys that reach this component's bind closure as an ActionMsg, only while the keyboard is on it
-     * or inside it, before the App's own keybindings. The footer names them only then.
-     *
-     * @return self<TWidget>
-     */
-    public function withActions(Keybindings $actions): self
-    {
-        return self::wrapping($this->id, $this->widget, $this->writeBack, $this->address, $actions, $this->handlers);
-    }
-
-    /**
      * Runs after the widget is stored, on the stored owner, for a message of that class. The first match answers.
      *
      * @template TOwner of Reducer
@@ -124,7 +114,32 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     {
         self::assertSafeReplacement($handler);
 
-        return self::wrapping($this->id, $this->widget, $this->writeBack, $this->address, $this->actions, [...$this->handlers, [$messageClass, $handler]]);
+        return self::wrapping($this->id, $this->widget, $this->writeBack, $this->address, $this->actions, [...$this->handlers, [$messageClass, $handler, null, null]]);
+    }
+
+    /**
+     * Keys that run the handler on the stored owner while the keyboard is on this component or inside it,
+     * before the App's own keybindings. The footer and the key help name them by the label.
+     *
+     * @template TOwner of Reducer
+     *
+     * @param list<string>                                   $keys
+     * @param Closure(TOwner): (TOwner|UpdateResult<TOwner>) $handler
+     *
+     * @return self<TWidget>
+     */
+    public function withAction(string $name, array $keys, Closure $handler, ?string $label = null): self
+    {
+        self::assertSafeReplacement($handler);
+
+        return self::wrapping(
+            $this->id,
+            $this->widget,
+            $this->writeBack,
+            $this->address,
+            $this->actions()->overriddenBy(new Keybindings([$name => $keys])),
+            [[ActionMsg::class, $handler, $name, $label], ...$this->handlers],
+        );
     }
 
     /**
@@ -133,6 +148,20 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     public function actions(): Keybindings
     {
         return $this->actions ?? Keybindings::empty();
+    }
+
+    /**
+     * @internal
+     */
+    public function labelOf(string $action): ?string
+    {
+        foreach ($this->handlers as [, , $answers, $label]) {
+            if ($answers === $action) {
+                return $label;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -277,8 +306,8 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
 
         $stored = self::asResult(($this->writeBack)($owner, $widget, $message));
 
-        foreach ($this->handlers as [$messageClass, $handler]) {
-            if (!$message instanceof $messageClass) {
+        foreach ($this->handlers as [$messageClass, $handler, $action]) {
+            if (!$message instanceof $messageClass || ($action !== null && (!$message instanceof ActionMsg || $message->action !== $action))) {
                 continue;
             }
 
@@ -308,8 +337,8 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     /**
      * @template TWrapped of Widget
      *
-     * @param TWrapped                           $widget
-     * @param list<array{class-string, Closure}> $handlers
+     * @param TWrapped                                             $widget
+     * @param list<array{class-string, Closure, ?string, ?string}> $handlers
      *
      * @return self<TWrapped>
      */

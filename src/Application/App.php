@@ -210,7 +210,12 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $groups = [];
 
         if ($focused !== null) {
-            $groups['Here'] = $this->keysOf($focused->widget, $globals, $listed, $this->hintsOfFocused($focused->id));
+            $wording = $this->hintsOfFocused($focused->id);
+            $groups['Here'] = [];
+            foreach ($this->componentsWithActionsAround($focused->id) as $component) {
+                $groups['Here'] += $this->described($component->actions(), $listed, $wording);
+            }
+            $groups['Here'] += $this->keysOf($focused->widget, $globals, $listed, $wording);
             $groups['Around it'] = [];
             foreach (array_reverse($this->componentRegistry()->enclosing($focused->id)) as $component) {
                 $widget = $component->widget;
@@ -1088,7 +1093,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $shown = $takesText ? $actions->withoutText() : $actions;
             $byDescription = [];
             foreach ($shown->actions() as $action) {
-                $byDescription[$this->actionDescription($action)][] = $action;
+                $byDescription[$component->labelOf($action) ?? $this->actionDescription($action)][] = $action;
             }
             $actionHints += $shown->hints($byDescription);
         }
