@@ -38,7 +38,7 @@ final class ProcessStarterTest extends TestCase
     #[Test]
     public function itStartsAStreamingProcessTheSameWay(): void
     {
-        $running = (new ProcessStarter())->streaming(Cmd::process(['echo', 'hello']), null);
+        $running = (new ProcessStarter())->streaming(Cmd::stream(['echo', 'hello']), null);
 
         self::assertTrue($running->isRunning());
     }
@@ -47,7 +47,7 @@ final class ProcessStarterTest extends TestCase
     public function aStreamAskedForLinesHandsOverALineWrittenInTwoGoesWhole(): void
     {
         $script = 'echo "on"; flush(); usleep(150000); echo "e\n";';
-        $running = (new ProcessStarter())->streaming(Cmd::process([PHP_BINARY, '-r', $script])->withLineFraming(), null);
+        $running = (new ProcessStarter())->streaming(Cmd::stream([PHP_BINARY, '-r', $script])->withLineFraming(), null);
 
         $outputs = [];
         $deadline = microtime(true) + 5.0;
@@ -67,7 +67,7 @@ final class ProcessStarterTest extends TestCase
     public function aFinishedProcessSaysWhenItStartedAndWhenItEnded(): void
     {
         $clock = new TestClock(100.0);
-        $running = (new ProcessStarter($clock))->streaming(Cmd::process(['true']), null);
+        $running = (new ProcessStarter($clock))->streaming(Cmd::stream(['true']), null);
         $clock->advance(2.5);
 
         $finished = null;

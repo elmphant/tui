@@ -26,11 +26,11 @@ Cmd::println('✓ Saved')             // print a line above an inline program
 // Focus
 Cmd::focus('search')                      // move the keyboard to a widget
 Cmd::focusNext() / Cmd::focusPrevious()   // like tab / shift+tab
-Cmd::focusFirst() / Cmd::focusNothing()   // the first stop, or keep the keyboard for the App
+Cmd::focusFirst() / Cmd::focusNowhere()   // the first stop, or keep the keyboard for the App
 
 // Processes (uses symfony/process)
 Cmd::exec(['git', 'status'])        // run, then get the whole result
-Cmd::process(['tail', '-f', 'log']) // get the output while it runs
+Cmd::stream(['tail', '-f', 'log'])  // get the output while it runs
 ```
 
 - `Cmd::tick()` repeats by itself. Ask once, not on every tick.
@@ -144,7 +144,7 @@ $message instanceof ProcessResultMsg
     => new UpdateResult($this->withOutput($message->stdout)),
 ```
 
-**`Cmd::process()`** sends the output in pieces while the command runs
+**`Cmd::stream()`** sends the output in pieces while the command runs
 (`ProcessOutputMsg`), then a `ProcessFinishedMsg`. A piece can end in the middle
 of a line. Call `->withLineFraming()` to get whole lines only. On a timeout you
 get the output so far, an `ErrorMsg`, and then the `ProcessFinishedMsg`.
@@ -154,7 +154,7 @@ use Elmphant\Tui\Message\{ProcessOutputMsg, ProcessFinishedMsg, ProcessStream};
 
 // In update():
 $message instanceof KeyMsg && $message->key === 's'
-    => new UpdateResult($this, Cmd::process(['npm', 'run', 'build'])),
+    => new UpdateResult($this, Cmd::stream(['npm', 'run', 'build'])),
 
 $message instanceof ProcessOutputMsg && $message->stream === ProcessStream::Stdout
     => new UpdateResult($this->withLog($this->log . $message->output)),
@@ -185,7 +185,7 @@ Cmd::exec(['npm', 'install'])
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 
-Cmd::process(['npm', 'run', 'build'])
+Cmd::stream(['npm', 'run', 'build'])
     ->withId(EffectId::named('npm-build'))
     ->withWorkingDirectory('/app')
     ->withTimeout(120)
@@ -200,9 +200,11 @@ process it started in turn, such as the commands a shell runs. A process gets
 
 ## HTTP requests
 
-`Cmd::http()` needs `composer require symfony/http-client`. The result is an
-`HttpResultMsg` with `statusCode`, `body` and `headers`. A 404 or 500 is a
-result too, not an error.
+`Cmd::http()` needs `composer require symfony/http-client`. It takes the URL, an
+`HttpMethod` (`HttpMethod::Get` unless you say otherwise) and an id. Headers, a
+body and client options such as a `timeout` go through `withHeaders()`,
+`withBody()` and `withOptions()`. The result is an `HttpResultMsg` with
+`statusCode`, `body` and `headers`. A 404 or 500 is a result too, not an error.
 
 ```php fragment
 use Elmphant\Tui\Core\EffectId;
@@ -235,8 +237,8 @@ $message instanceof HttpResultMsg && $message->effectId?->equals($packages)
 | `ResizeMsg` | The terminal changed size: `width`, `height` |
 | `HttpResultMsg` | `Cmd::http()` finished |
 | `ProcessResultMsg` | `Cmd::exec()` finished |
-| `ProcessOutputMsg` | `Cmd::process()` printed something |
-| `ProcessFinishedMsg` | `Cmd::process()` ended |
+| `ProcessOutputMsg` | `Cmd::stream()` printed something |
+| `ProcessFinishedMsg` | `Cmd::stream()` ended |
 | `ErrorMsg` | A command failed |
 
 ## Effects of your own

@@ -108,7 +108,7 @@ final class TimingOutModel implements Model
         self::$lines = [];
         self::$endings = [];
 
-        return Cmd::process([PHP_BINARY, '-r', 'echo "partial"; sleep(10);'])->withLineFraming()->withTimeout(0.5);
+        return Cmd::stream([PHP_BINARY, '-r', 'echo "partial"; sleep(10);'])->withLineFraming()->withTimeout(0.5);
     }
 
     public function update(Message $message, Rect $area): UpdateResult

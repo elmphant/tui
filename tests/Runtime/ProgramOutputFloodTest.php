@@ -51,7 +51,7 @@ final class FloodedModel implements Model
         self::$handledBeforeTheKey = null;
 
         return Cmd::batch(
-            Cmd::process([PHP_BINARY, '-r', '$line = str_repeat("y", 79) . "\n"; while (true) echo $line;'])->withOutputChunkBytes(1024),
+            Cmd::stream([PHP_BINARY, '-r', '$line = str_repeat("y", 79) . "\n"; while (true) echo $line;'])->withOutputChunkBytes(1024),
             Cmd::after(8, static fn () => Cmd::quit()),
         );
     }

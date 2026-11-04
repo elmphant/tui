@@ -22,7 +22,7 @@ final readonly class HttpCmd extends Cmd implements NamesItsEffect
      */
     public function __construct(
         public string $url,
-        public string $method = 'GET',
+        public HttpMethod $method = HttpMethod::Get,
         public array $headers = [],
         public ?string $body = null,
         public ?EffectId $id = null,
@@ -44,7 +44,7 @@ final readonly class HttpCmd extends Cmd implements NamesItsEffect
         return $this->cloneWith(url: $url);
     }
 
-    public function withMethod(string $method): self
+    public function withMethod(HttpMethod $method): self
     {
         return $this->cloneWith(method: $method);
     }
@@ -68,7 +68,7 @@ final readonly class HttpCmd extends Cmd implements NamesItsEffect
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed> $options passed to the HTTP client; past $options['timeout'] seconds without data the effect resolves as an ErrorMsg instead of idling forever, and $options['max_duration'] bounds the whole request
      */
     public function withOptions(array $options): self
     {

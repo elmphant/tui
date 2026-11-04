@@ -52,7 +52,7 @@ final readonly class KeyboardDownApp extends App
 
     protected function setup(): ?Cmd
     {
-        return Cmd::focusNothing();
+        return Cmd::focusNowhere();
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult

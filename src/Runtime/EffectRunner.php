@@ -12,7 +12,7 @@ use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\ListenCmd;
-use Elmphant\Tui\Core\Cmd\ProcessCmd;
+use Elmphant\Tui\Core\Cmd\StreamCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
@@ -128,7 +128,7 @@ final class EffectRunner
                 $wrap,
                 $scope,
             ),
-            $command instanceof ProcessCmd => $this->keep(
+            $command instanceof StreamCmd => $this->keep(
                 fn (): RunningProcess => $this->processStarter->streaming($command->withId($id), $wrap),
                 ErrorSource::Process,
                 $id,

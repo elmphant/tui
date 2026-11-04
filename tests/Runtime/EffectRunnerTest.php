@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Runtime;
 use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
+use Elmphant\Tui\Core\Cmd\HttpMethod;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\NamesItsEffect;
@@ -549,8 +550,8 @@ final class EffectRunnerTest extends TestCase
     public function anEffectIdNamesOneRunningProcess(): void
     {
         $runner = $this->runner();
-        $runner->run(Cmd::process(['sleep', '30'])->withId(EffectId::named('job')), null);
-        $runner->run(Cmd::process(['sleep', '30'])->withId(EffectId::named('job')), null);
+        $runner->run(Cmd::stream(['sleep', '30'])->withId(EffectId::named('job')), null);
+        $runner->run(Cmd::stream(['sleep', '30'])->withId(EffectId::named('job')), null);
 
         $runner->run(Cmd::cancel(EffectId::named('job')), null);
 
@@ -574,7 +575,7 @@ final class EffectRunnerTest extends TestCase
     public function aStreamingProcessThatOutlivesItsTimeoutEndsWithAnErrorUnderItsName(): void
     {
         $runner = $this->runner();
-        $runner->run(Cmd::process(['sleep', '5'])->withTimeout(0.2)->withId(EffectId::named('slow')), null);
+        $runner->run(Cmd::stream(['sleep', '5'])->withTimeout(0.2)->withId(EffectId::named('slow')), null);
 
         $this->pumpUntilQuiet($runner);
 
@@ -591,7 +592,7 @@ final class EffectRunnerTest extends TestCase
         $marker = sys_get_temp_dir() . '/elmphant-still-running-' . uniqid();
         $runner = $this->runner();
         $runner->run(
-            Cmd::process(['sh', '-c', 'echo go; sleep 0.3; touch ' . $marker]),
+            Cmd::stream(['sh', '-c', 'echo go; sleep 0.3; touch ' . $marker]),
             static fn (Message $message): Message => $message instanceof ProcessOutputMsg ? throw new RuntimeException('cannot map') : $message,
         );
 
@@ -605,7 +606,7 @@ final class EffectRunnerTest extends TestCase
     public function aFinishedProcessIsTimedOnTheRunnersClock(): void
     {
         $runner = $this->runner();
-        $runner->run(Cmd::process(['true']), null);
+        $runner->run(Cmd::stream(['true']), null);
 
         $this->pumpUntilQuiet($runner);
 
@@ -667,7 +668,7 @@ final class EffectRunnerTest extends TestCase
     {
         $response = new MockResponse('ok');
         $this->runnerWithHttp(new MockHttpClient($response))->run(
-            Cmd::http('https://example.test/', 'POST')->withHeaders(['X-Test' => 'yes'])->withBody('payload'),
+            Cmd::http('https://example.test/', HttpMethod::Post)->withHeaders(['X-Test' => 'yes'])->withBody('payload'),
             null,
         );
 
@@ -679,8 +680,8 @@ final class EffectRunnerTest extends TestCase
     public function cancellingOneRunningProcessLeavesTheOthersAlone(): void
     {
         $runner = $this->runner();
-        $runner->run(Cmd::process(['sleep', '30'])->withId(EffectId::named('first')), null);
-        $runner->run(Cmd::process(['sleep', '30'])->withId(EffectId::named('second')), null);
+        $runner->run(Cmd::stream(['sleep', '30'])->withId(EffectId::named('first')), null);
+        $runner->run(Cmd::stream(['sleep', '30'])->withId(EffectId::named('second')), null);
 
         $runner->run(Cmd::cancel(EffectId::named('first')), null);
         self::assertTrue($runner->hasRunningProcesses(), 'the second was not asked to stop');
@@ -693,7 +694,7 @@ final class EffectRunnerTest extends TestCase
     public function shuttingDownStopsWhatWasStillRunning(): void
     {
         $runner = $this->runner();
-        $runner->run(Cmd::process(['sleep', '30']), null);
+        $runner->run(Cmd::stream(['sleep', '30']), null);
         self::assertTrue($runner->hasRunningProcesses());
 
         $runner->shutdown();
@@ -741,7 +742,7 @@ final class EffectRunnerTest extends TestCase
 
         $runner = $this->runner();
         // Use the reported PID to inspect the exact child spawned by the runner.
-        $runner->run(Cmd::process(['sh', '-c', 'echo $$ > ' . escapeshellarg($pidFile) . '; sleep 30']), null);
+        $runner->run(Cmd::stream(['sh', '-c', 'echo $$ > ' . escapeshellarg($pidFile) . '; sleep 30']), null);
 
         $pid = self::pidWrittenTo($pidFile);
         self::assertTrue(posix_kill($pid, 0), 'the child must be running before shutdown proves anything');
@@ -940,7 +941,7 @@ final class EffectRunnerTest extends TestCase
         $pidFile = tempnam(sys_get_temp_dir(), 'elmphant-child-');
         self::assertIsString($pidFile);
         $runner = $this->runner();
-        $runner->run(Cmd::process(['sh', '-c', 'echo $$ > ' . escapeshellarg($pidFile) . '; sleep 30'], EffectId::named('job')), null);
+        $runner->run(Cmd::stream(['sh', '-c', 'echo $$ > ' . escapeshellarg($pidFile) . '; sleep 30'], EffectId::named('job')), null);
         $pid = self::pidWrittenTo($pidFile);
 
         $runner->run(Cmd::cancel(EffectId::named('job')), null);
@@ -953,8 +954,8 @@ final class EffectRunnerTest extends TestCase
     public function aProcessThatFailsLeavesTheOnesAfterItRunning(): void
     {
         $runner = $this->runner();
-        $runner->run(Cmd::process(['sleep', '5'])->withTimeout(0.1), null);
-        $runner->run(Cmd::process(['sleep', '30'], EffectId::named('survivor')), null);
+        $runner->run(Cmd::stream(['sleep', '5'])->withTimeout(0.1), null);
+        $runner->run(Cmd::stream(['sleep', '30'], EffectId::named('survivor')), null);
 
         for ($attempt = 0; $attempt < 100 && $this->results->isEmpty(); ++$attempt) {
             usleep(10_000);
@@ -1213,7 +1214,7 @@ final class EffectRunnerTest extends TestCase
             $file = tempnam(sys_get_temp_dir(), 'elmphant-stubborn-');
             self::assertIsString($file);
             $ready[] = $file;
-            $runner->run(Cmd::process(['sh', '-c', 'trap "" TERM; echo $$ > ' . escapeshellarg($file) . '; sleep 30']), null, $scope);
+            $runner->run(Cmd::stream(['sh', '-c', 'trap "" TERM; echo $$ > ' . escapeshellarg($file) . '; sleep 30']), null, $scope);
         }
         foreach ($ready as $file) {
             self::pidWrittenTo($file);

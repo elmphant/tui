@@ -70,7 +70,7 @@ final readonly class SpeaksToItselfApp extends App
 
         return new UpdateResult(
             $this->cloneWith(seen: [...$this->seen, $message->key]),
-            $message->key === 'b' ? Cmd::batch(Cmd::focusNothing(), $errand) : $errand,
+            $message->key === 'b' ? Cmd::batch(Cmd::focusNowhere(), $errand) : $errand,
         );
     }
 

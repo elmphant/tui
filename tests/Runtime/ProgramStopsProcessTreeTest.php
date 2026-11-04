@@ -39,7 +39,7 @@ final class ProgramStopsProcessTreeTest extends TestCase
             render: static function (): void {
             },
             atStart: Cmd::batch(
-                Cmd::process(['sleep', $marker]),
+                Cmd::stream(['sleep', $marker]),
                 Cmd::after(0.2, static fn () => Cmd::quit()),
             ),
         ))->withTerminal(new VirtualTerminal(80, 24))->start();
@@ -124,7 +124,7 @@ final readonly class TimingOutShellModel implements Model
     public function init(): ?Cmd
     {
         return Cmd::batch(
-            Cmd::process(['sh', '-c', 'sleep ' . $this->streamed . ' & wait'])->withTimeout(0.2),
+            Cmd::stream(['sh', '-c', 'sleep ' . $this->streamed . ' & wait'])->withTimeout(0.2),
             Cmd::exec(['sh', '-c', 'sleep ' . $this->collected . ' & wait'])->withTimeout(0.2),
             Cmd::after(0.6, static fn () => Cmd::quit()),
         );
@@ -149,7 +149,7 @@ final readonly class ShellStartingModel implements Model
     public function init(): ?Cmd
     {
         return Cmd::batch(
-            Cmd::process(['sh', '-c', 'sleep ' . $this->marker . ' & wait'])->withId(EffectId::named('shell')),
+            Cmd::stream(['sh', '-c', 'sleep ' . $this->marker . ' & wait'])->withId(EffectId::named('shell')),
             Cmd::after(0.3, static fn () => Cmd::cancel(EffectId::named('shell'))),
             Cmd::after(0.6, static fn () => Cmd::quit()),
         );

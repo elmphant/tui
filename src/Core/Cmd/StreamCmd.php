@@ -10,13 +10,13 @@ use Elmphant\Tui\Core\NamesItsEffect;
 use Elmphant\Tui\Support\Cloneable;
 use InvalidArgumentException;
 
-final readonly class ProcessCmd extends Cmd implements NamesItsEffect
+final readonly class StreamCmd extends Cmd implements NamesItsEffect
 {
     use Cloneable;
     use ProcessCommandBuilders;
 
     /**
-     * @internal build one with Cmd::process()
+     * @internal build one with Cmd::stream()
      *
      * @param list<string>          $command
      * @param array<string, string> $env
@@ -32,10 +32,10 @@ final readonly class ProcessCmd extends Cmd implements NamesItsEffect
         public bool $framesLines = false,
     ) {
         if ($command === []) {
-            throw new InvalidArgumentException('ProcessCmd requires a non-empty command array');
+            throw new InvalidArgumentException('StreamCmd requires a non-empty command array');
         }
         if ($outputChunkBytes < 1) {
-            throw new InvalidArgumentException('ProcessCmd outputChunkBytes must be positive');
+            throw new InvalidArgumentException('StreamCmd outputChunkBytes must be positive');
         }
     }
 

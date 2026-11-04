@@ -24,7 +24,7 @@ final class FocusNothingTest extends TestCase
     #[Test]
     public function askingForNobodyPutsTheKeyboardDown(): void
     {
-        $command = Cmd::focusNothing();
+        $command = Cmd::focusNowhere();
 
         self::assertInstanceOf(FocusCmd::class, $command);
         self::assertEquals(

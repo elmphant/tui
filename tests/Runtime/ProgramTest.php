@@ -922,10 +922,10 @@ final class ProgramTest extends TestCase
     }
 
     #[Test]
-    public function processCmdRejectsEmptyCommand(): void
+    public function aStreamOfNoCommandIsRefused(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        Cmd::process([]);
+        Cmd::stream([]);
     }
 
     #[Test]
@@ -1344,7 +1344,7 @@ final class ProgramTest extends TestCase
         $reflection->getProperty('state')->setValue($program, ProgramState::Running);
         $reflection->getProperty('frames')->getValue($program)->drawn(microtime(true), null);
 
-        $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::process(['sleep', '30']));
+        $reflection->getMethod('dispatchCommand')->invoke($program, Cmd::stream(['sleep', '30']));
 
         $ticker = new AdaptiveTicker(fn () => null);
         $reflection->getProperty('adaptiveTicker')->setValue($program, $ticker);

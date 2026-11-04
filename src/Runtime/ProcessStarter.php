@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Runtime;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
-use Elmphant\Tui\Core\Cmd\ProcessCmd;
+use Elmphant\Tui\Core\Cmd\StreamCmd;
 use Elmphant\Tui\Core\Message;
 use Symfony\Component\Process\Process;
 
@@ -35,7 +35,7 @@ final class ProcessStarter
     /**
      * @param Closure(Message):Message|null $wrap
      */
-    public function streaming(ProcessCmd $command, ?Closure $wrap): RunningProcess
+    public function streaming(StreamCmd $command, ?Closure $wrap): RunningProcess
     {
         return new RunningStreamingProcess(
             $this->started($command->command, $command->workingDirectory, $command->timeout, $command->env, $command->input),

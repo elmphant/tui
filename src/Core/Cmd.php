@@ -14,14 +14,15 @@ use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FiberCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
+use Elmphant\Tui\Core\Cmd\HttpMethod;
 use Elmphant\Tui\Core\Cmd\ListenCmd;
 use Elmphant\Tui\Core\Cmd\LogCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\PrintlnCmd;
-use Elmphant\Tui\Core\Cmd\ProcessCmd;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\ScopedCmd;
+use Elmphant\Tui\Core\Cmd\StreamCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Cmd\ToastCmd;
 
@@ -61,7 +62,7 @@ abstract readonly class Cmd
     /**
      * Clear focus until the app explicitly moves it again.
      */
-    public static function focusNothing(): self
+    public static function focusNowhere(): self
     {
         return FocusCmd::nowhere();
     }
@@ -205,23 +206,16 @@ abstract readonly class Cmd
     /**
      * @param list<string> $command
      */
-    public static function process(array $command, ?EffectId $id = null): ProcessCmd
+    public static function stream(array $command, ?EffectId $id = null): StreamCmd
     {
-        return new ProcessCmd($command, $id);
+        return new StreamCmd($command, $id);
     }
 
     /**
-     * @param array<string, string> $headers
-     * @param array<string, mixed>  $options passed to the HTTP client; past $options['timeout'] seconds without data the effect resolves as an ErrorMsg instead of idling forever, and $options['max_duration'] bounds the whole request
+     * Headers, a body and client options are set with the HttpCmd's withHeaders(), withBody() and withOptions().
      */
-    public static function http(
-        string $url,
-        string $method = 'GET',
-        array $headers = [],
-        ?string $body = null,
-        array $options = [],
-        ?EffectId $id = null,
-    ): HttpCmd {
-        return new HttpCmd($url, $method, $headers, $body, $id, $options);
+    public static function http(string $url, HttpMethod $method = HttpMethod::Get, ?EffectId $id = null): HttpCmd
+    {
+        return new HttpCmd($url, $method, id: $id);
     }
 }

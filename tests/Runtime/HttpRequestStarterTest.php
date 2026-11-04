@@ -33,7 +33,7 @@ final class HttpRequestStarterTest extends TestCase
     #[Test]
     public function aConfiguredTimeoutResolvesAnIdleRequestWithAnError(): void
     {
-        $command = Cmd::http('https://example.test/', options: ['timeout' => 0]);
+        $command = Cmd::http('https://example.test/')->withOptions(['timeout' => 0]);
         $messages = (new HttpRequestStarter($this->idleClient()))->start($command, null)->pump();
 
         self::assertCount(1, $messages);
@@ -52,7 +52,7 @@ final class HttpRequestStarterTest extends TestCase
     #[Test]
     public function aTimeoutWrittenAsANumericStringCountsAsWell(): void
     {
-        $command = Cmd::http('https://example.test/', options: ['timeout' => '0']);
+        $command = Cmd::http('https://example.test/')->withOptions(['timeout' => '0']);
         $messages = (new HttpRequestStarter($this->idleClient()))->start($command, null)->pump();
 
         self::assertInstanceOf(ErrorMsg::class, $messages[0] ?? null);

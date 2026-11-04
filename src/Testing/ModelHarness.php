@@ -17,7 +17,7 @@ use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\PrintlnCmd;
-use Elmphant\Tui\Core\Cmd\ProcessCmd;
+use Elmphant\Tui\Core\Cmd\StreamCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Cmd\ToastCmd;
 use Elmphant\Tui\Core\CmdLeaf;
@@ -237,7 +237,7 @@ final class ModelHarness
      */
     public function stream(EffectId|string $effect, string $output, ProcessStream $stream = ProcessStream::Stdout): self
     {
-        $running = $this->runningAs($effect, ProcessCmd::class);
+        $running = $this->runningAs($effect, StreamCmd::class);
 
         return $this->delivered($running, new ProcessOutputMsg($output, $stream, $running['id']));
     }
@@ -247,7 +247,7 @@ final class ModelHarness
      */
     public function finish(EffectId|string $effect, int $exitCode = 0): self
     {
-        $running = $this->runningAs($effect, ProcessCmd::class);
+        $running = $this->runningAs($effect, StreamCmd::class);
 
         return $this->ended($running, new ProcessFinishedMsg($exitCode, $running['id']));
     }
@@ -334,7 +334,7 @@ final class ModelHarness
         $running = $this->runningAs($effect, Cmd::class);
         $source = match (true) {
             $running['command'] instanceof HttpCmd => ErrorSource::Http,
-            $running['command'] instanceof ExecCmd, $running['command'] instanceof ProcessCmd => ErrorSource::Process,
+            $running['command'] instanceof ExecCmd, $running['command'] instanceof StreamCmd => ErrorSource::Process,
             $running['command'] instanceof FiberCmd => ErrorSource::Fiber,
             default => ErrorSource::Command,
         };

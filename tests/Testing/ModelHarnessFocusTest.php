@@ -62,7 +62,7 @@ final readonly class TwoNamedFieldApp extends App
     {
         return match ($message->ctrl ? $message->key : null) {
             'n' => $this->then(Cmd::focusNext()),
-            'x' => $this->then(Cmd::focusNothing()),
+            'x' => $this->then(Cmd::focusNowhere()),
             default => UpdateResult::ignored($this),
         };
     }

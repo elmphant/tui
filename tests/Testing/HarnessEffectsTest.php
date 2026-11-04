@@ -261,7 +261,7 @@ final class EffectAsker implements Model
 
         $child = match ($message->key) {
             'l' => Cmd::batch(Cmd::exec(['ls'], EffectId::named('load')), Cmd::log('asked')),
-            's' => Cmd::process(['tail', '-f', 'log'], EffectId::named('tail')),
+            's' => Cmd::stream(['tail', '-f', 'log'], EffectId::named('tail')),
             'h' => Cmd::http('https://example.com', id: EffectId::named('page')),
             't' => Cmd::tick(1.0, EffectId::named('clock')),
             'c' => Cmd::cancel(EffectId::named('load')),

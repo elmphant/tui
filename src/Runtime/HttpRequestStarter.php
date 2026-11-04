@@ -40,7 +40,7 @@ final class HttpRequestStarter
 
         return new RunningHttpRequest(
             $client,
-            $client->request($command->method, $command->url, $options),
+            $client->request($command->method->value, $command->url, $options),
             $command->id,
             $command->maxBodyBytes,
             $wrap,

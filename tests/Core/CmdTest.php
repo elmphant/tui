@@ -10,8 +10,9 @@ use Elmphant\Tui\Core\Cmd\CallCmd;
 use Elmphant\Tui\Core\Cmd\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
-use Elmphant\Tui\Core\Cmd\ProcessCmd;
+use Elmphant\Tui\Core\Cmd\HttpMethod;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
+use Elmphant\Tui\Core\Cmd\StreamCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\NamesItsEffect;
@@ -42,7 +43,7 @@ final class CmdTest extends TestCase
             Cmd::after(1.0, static fn (): ?Cmd => null, $id),
             Cmd::listen($readEnd, static fn (): ?Cmd => null, $id),
             Cmd::exec(['true'], $id),
-            Cmd::process(['true'], $id),
+            Cmd::stream(['true'], $id),
             Cmd::http('https://example.test/', id: $id),
         ];
 
@@ -120,7 +121,7 @@ final class CmdTest extends TestCase
         $load = EffectId::named('load');
 
         self::assertSame($load, Cmd::exec(['ls'], id: $load)->id);
-        self::assertSame($load, Cmd::process(['tail', '-f', 'log'], id: $load)->id);
+        self::assertSame($load, Cmd::stream(['tail', '-f', 'log'], id: $load)->id);
         self::assertSame($load, Cmd::http('https://example.test', id: $load)->id);
     }
 
@@ -168,7 +169,7 @@ final class CmdTest extends TestCase
     public function processHasTypedConfigurationBuilders(): void
     {
         $id = EffectId::named('watch');
-        $command = Cmd::process(['npm', 'run', 'watch'])
+        $command = Cmd::stream(['npm', 'run', 'watch'])
             ->withCommand(['npm', 'run', 'dev'])
             ->withId($id)
             ->withWorkingDirectory('/app')
@@ -177,7 +178,7 @@ final class CmdTest extends TestCase
             ->withInput("start\n")
             ->withOutputChunkBytes(2_048);
 
-        self::assertInstanceOf(ProcessCmd::class, $command);
+        self::assertInstanceOf(StreamCmd::class, $command);
         self::assertSame(['npm', 'run', 'dev'], $command->command);
         self::assertSame($id, $command->id);
         self::assertSame('/app', $command->workingDirectory);
@@ -198,7 +199,7 @@ final class CmdTest extends TestCase
     #[Test]
     public function processUsesTheDocumentedDefaultChunkSizeAndAcceptsOneByte(): void
     {
-        $command = Cmd::process(['true']);
+        $command = Cmd::stream(['true']);
 
         self::assertSame(65_536, $command->outputChunkBytes);
         self::assertSame(1, $command->withOutputChunkBytes(1)->outputChunkBytes);
@@ -210,7 +211,7 @@ final class CmdTest extends TestCase
         $id = EffectId::named('download');
         $command = Cmd::http('https://example.com')
             ->withUrl('https://example.com/archive')
-            ->withMethod('POST')
+            ->withMethod(HttpMethod::Post)
             ->withHeaders(['Content-Type' => 'application/json'])
             ->withBody('{"ok":true}')
             ->withId($id)
@@ -219,7 +220,8 @@ final class CmdTest extends TestCase
 
         self::assertInstanceOf(HttpCmd::class, $command);
         self::assertSame('https://example.com/archive', $command->url);
-        self::assertSame('POST', $command->method);
+        self::assertSame(HttpMethod::Post, $command->method);
+        self::assertSame(HttpMethod::Delete, Cmd::http('https://example.com', HttpMethod::Delete)->method);
         self::assertSame(['Content-Type' => 'application/json'], $command->headers);
         self::assertSame('{"ok":true}', $command->body);
         self::assertSame($id, $command->id);

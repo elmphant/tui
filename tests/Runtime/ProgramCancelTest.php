@@ -46,7 +46,7 @@ final class CancellingModel implements Model
     {
         self::$heard = [];
 
-        return Cmd::process([PHP_BINARY, '-r', 'echo "aaaabbbbcccc"; sleep(10);'])
+        return Cmd::stream([PHP_BINARY, '-r', 'echo "aaaabbbbcccc"; sleep(10);'])
             ->withOutputChunkBytes(4)
             ->withId(EffectId::named('run'));
     }

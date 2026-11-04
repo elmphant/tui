@@ -35,7 +35,7 @@ $app->drag(30, 5, 40, 5);    // press at one cell, move, release at another
 // Answer the commands the app asked for:
 $app->issued(ExecCmd::class);                     // which commands were asked for
 $app->answer('load', stdout: '{"items": []}');    // ProcessResultMsg for Cmd::exec()
-$app->stream('tail', "a line\n");                 // ProcessOutputMsg for Cmd::process()
+$app->stream('tail', "a line\n");                 // ProcessOutputMsg for Cmd::stream()
 $app->finish('tail', exitCode: 0);                // ProcessFinishedMsg
 $app->respond('page', 200, '<html>');             // HttpResultMsg for Cmd::http()
 $app->tick('clock', at: 12.5);                    // one beat of a Cmd::tick()

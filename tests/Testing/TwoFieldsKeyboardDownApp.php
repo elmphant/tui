@@ -29,6 +29,6 @@ final readonly class TwoFieldsKeyboardDownApp extends App
 
     protected function setup(): ?Cmd
     {
-        return Cmd::focusNothing();
+        return Cmd::focusNowhere();
     }
 }
