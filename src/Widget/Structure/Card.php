@@ -132,7 +132,7 @@ final readonly class Card implements Widget, WidgetContainer
         }
 
         // Clear inner area so stale content behind the card (e.g. column borders) doesn't bleed through.
-        $cleared = $inset->border ? $area->inner() : $area;
+        $cleared = $inset->border ? $area->inset(Spacing::all(1)) : $area;
         $frame->fillRect(
             $cleared->x,
             $cleared->y,

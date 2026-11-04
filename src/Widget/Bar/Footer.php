@@ -307,14 +307,14 @@ final readonly class Footer implements Interactive, WidgetContainer, Keybindings
      */
     private function geometry(Rect $area): ?array
     {
-        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
+        $innerArea = $area->inset($this->margin ?? Spacing::none());
 
         if ($innerArea->width < 1 || $innerArea->height < 1) {
             return null;
         }
 
         $padding = $this->padding ?? Spacing::none();
-        $contentArea = $padding->applyTo($innerArea);
+        $contentArea = $innerArea->inset($padding);
 
         return [
             'bar' => $innerArea,

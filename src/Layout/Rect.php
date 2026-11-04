@@ -48,13 +48,13 @@ final readonly class Rect
             && $this->height === $other->height;
     }
 
-    public function shrink(int $top, int $right, int $bottom, int $left): self
+    public function inset(Spacing $spacing): self
     {
         return new self(
-            $this->x + $left,
-            $this->y + $top,
-            max(0, $this->width - $left - $right),
-            max(0, $this->height - $top - $bottom),
+            $this->x + $spacing->left,
+            $this->y + $spacing->top,
+            max(0, $this->width - $spacing->left - $spacing->right),
+            max(0, $this->height - $spacing->top - $spacing->bottom),
         );
     }
 
@@ -72,10 +72,5 @@ final readonly class Rect
             max(0, min($this->right(), $other->right()) - $x),
             max(0, min($this->bottom(), $other->bottom()) - $y),
         );
-    }
-
-    public function inner(int $margin = 1): self
-    {
-        return $this->shrink($margin, $margin, $margin, $margin);
     }
 }

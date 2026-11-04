@@ -41,12 +41,12 @@ final readonly class Inset
 
     public function inner(Rect $area): Rect
     {
-        $inner = $this->margin->applyTo($area);
+        $inner = $area->inset($this->margin);
 
         if ($this->border) {
-            $inner = $inner->inner();
+            $inner = $inner->inset(Spacing::all(1));
         }
 
-        return $this->padding->applyTo($inner);
+        return $inner->inset($this->padding);
     }
 }

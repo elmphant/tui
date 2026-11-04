@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Layout;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Spacing;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -78,10 +79,10 @@ final class RectTest extends TestCase
     }
 
     #[Test]
-    public function shrink(): void
+    public function anInsetTakesEachSideItsOwnSpacing(): void
     {
         $rect = new Rect(0, 0, 20, 10);
-        $inner = $rect->shrink(1, 2, 1, 2);
+        $inner = $rect->inset(Spacing::only(top: 1, right: 2, bottom: 1, left: 2));
         self::assertSame(2, $inner->x);
         self::assertSame(1, $inner->y);
         self::assertSame(16, $inner->width);
@@ -89,10 +90,10 @@ final class RectTest extends TestCase
     }
 
     #[Test]
-    public function inner(): void
+    public function anInsetByOneOnEverySideLosesTwoInEachDirection(): void
     {
         $rect = new Rect(0, 0, 20, 10);
-        $inner = $rect->inner(1);
+        $inner = $rect->inset(Spacing::all(1));
         self::assertSame(1, $inner->x);
         self::assertSame(1, $inner->y);
         self::assertSame(18, $inner->width);
@@ -100,10 +101,10 @@ final class RectTest extends TestCase
     }
 
     #[Test]
-    public function shrinkBeyondDimensionsCollapsesToZero(): void
+    public function anInsetBeyondTheSizeCollapsesToZero(): void
     {
         $rect = Rect::fromSize(10, 10);
-        $collapsed = $rect->shrink(20, 20, 20, 20);
+        $collapsed = $rect->inset(Spacing::all(20));
         self::assertSame(0, $collapsed->width);
         self::assertSame(0, $collapsed->height);
     }
@@ -135,10 +136,10 @@ final class RectTest extends TestCase
     }
 
     #[Test]
-    public function innerOnSmallRect(): void
+    public function anInsetOfASmallRectLeavesNothing(): void
     {
         $rect = new Rect(0, 0, 2, 2);
-        $inner = $rect->inner();
+        $inner = $rect->inset(Spacing::all(1));
         self::assertSame(0, $inner->width);
         self::assertSame(0, $inner->height);
     }

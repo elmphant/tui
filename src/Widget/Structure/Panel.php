@@ -269,7 +269,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
 
         foreach ([[$this->header, $headerRule], [$this->footer, $footerRule]] as [$pinned, $row]) {
             if ($pinned !== null && $row !== null) {
-                $this->renderRule($frame, $inset->margin->applyTo($area), $row, $pinned->caption, $context);
+                $this->renderRule($frame, $area->inset($inset->margin), $row, $pinned->caption, $context);
             }
         }
     }

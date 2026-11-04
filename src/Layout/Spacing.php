@@ -64,11 +64,6 @@ final readonly class Spacing
         );
     }
 
-    public function applyTo(Rect $rect): Rect
-    {
-        return $rect->shrink($this->top, $this->right, $this->bottom, $this->left);
-    }
-
     private static function validate(int $value): int
     {
         if ($value < 0 || $value > 255) {

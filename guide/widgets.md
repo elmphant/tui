@@ -34,7 +34,7 @@ interactive ones on your App, and bind them (see [Building an app](apps.md)).
 | `TextInput` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead). `withSubmit($message)` sends a message on Enter |
 | `Button` | A button that sends a message when pressed |
 | `Checkbox` / `CheckboxGroup` | Yes/no choices |
-| `Radio` / `Select` | One choice out of a list. A `Radio` always holds an option, unless `withClearable()` lets the reader put it back down |
+| `Radio` / `Select` | One choice out of a list. Take a `Radio` for a few options that all show, each with a mark, where one is always chosen (a setting with a default), unless `withClearable()` lets the reader put it back down. Take a `Select` for a longer list that scrolls in the rows it gets and starts with nothing chosen. Put either in a `Dropdown` to keep it on one row |
 | `Dropdown` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))`. To load new options, hand it `withContent($dropdown->content()->withItems($items))`, so an open list stays open with its query |
 | `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
 
@@ -130,6 +130,10 @@ Bind it like any widget and handle the submit message in `onMessage()`.
 - `Field::secret()` is a text field that hides what is typed.
 - `Field::choice()` shows a row of options where they fit and a filterable list
   where they don't. `Field::of()` takes any widget that implements `HoldsAValue`.
+  `value()` is the one question a form asks every field. The choice widgets also
+  answer it in their own words, `selectedValue()`, `checkedValues()` and
+  `isChecked()`, and the two always agree. Use those in your own code, where
+  the type says more.
 
 `withRequired()` is one check. `addRule()` adds your own: it gets the value and
 returns a problem to show, or `null`. The first problem wins, and an empty field

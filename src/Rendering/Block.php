@@ -66,7 +66,7 @@ final readonly class Block
 
     public function render(Frame $frame, Rect $area): void
     {
-        $borderArea = $this->inset()->margin->applyTo($area);
+        $borderArea = $area->inset($this->inset()->margin);
 
         if ($this->border !== null) {
             $this->renderBorder($frame, $borderArea, $this->border);

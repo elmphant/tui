@@ -248,7 +248,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
      */
     private function geometry(Rect $area): ?array
     {
-        $innerArea = ($this->margin ?? Spacing::none())->applyTo($area);
+        $innerArea = $area->inset($this->margin ?? Spacing::none());
 
         if ($innerArea->width < 1 || $innerArea->height < 1) {
             return null;
@@ -257,7 +257,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         $padding = $this->padding ?? Spacing::none();
         $barHeight = 1 + $padding->top + $padding->bottom;
         $barArea = new Rect($innerArea->x, $innerArea->y, $innerArea->width, min($barHeight, $innerArea->height));
-        $contentArea = $padding->applyTo($barArea);
+        $contentArea = $barArea->inset($padding);
 
         return [
             'bar' => $barArea,

@@ -164,7 +164,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
         $this->block($context)->render($frame, $area);
 
         if ($this->style !== null) {
-            $frame->underlay(($this->margin ?? Spacing::none())->applyTo($area), $this->style);
+            $frame->underlay($area->inset($this->margin ?? Spacing::none()), $this->style);
         }
     }
 

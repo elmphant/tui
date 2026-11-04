@@ -114,12 +114,12 @@ final class SpacingTest extends TestCase
     }
 
     #[Test]
-    public function applyToShrinksRect(): void
+    public function spacingOnEverySideInsetsARectOnEverySide(): void
     {
         $spacing = Spacing::all(1);
         $rect = new Rect(0, 0, 20, 10);
 
-        $result = $spacing->applyTo($rect);
+        $result = $rect->inset($spacing);
 
         self::assertSame(1, $result->x);
         self::assertSame(1, $result->y);
@@ -128,12 +128,12 @@ final class SpacingTest extends TestCase
     }
 
     #[Test]
-    public function applyToWithVerticalSpacing(): void
+    public function verticalSpacingInsetsOnlyTopAndBottom(): void
     {
         $spacing = Spacing::vertical(1);
         $rect = new Rect(0, 0, 20, 10);
 
-        $result = $spacing->applyTo($rect);
+        $result = $rect->inset($spacing);
 
         self::assertSame(0, $result->x);
         self::assertSame(1, $result->y);
@@ -142,12 +142,12 @@ final class SpacingTest extends TestCase
     }
 
     #[Test]
-    public function applyToWithHorizontalSpacing(): void
+    public function horizontalSpacingInsetsOnlyLeftAndRight(): void
     {
         $spacing = Spacing::horizontal(1);
         $rect = new Rect(0, 0, 20, 10);
 
-        $result = $spacing->applyTo($rect);
+        $result = $rect->inset($spacing);
 
         self::assertSame(1, $result->x);
         self::assertSame(0, $result->y);
@@ -156,12 +156,12 @@ final class SpacingTest extends TestCase
     }
 
     #[Test]
-    public function noneApplyToReturnsIdenticalRect(): void
+    public function noSpacingLeavesTheRectAsItIs(): void
     {
         $spacing = Spacing::none();
         $rect = new Rect(5, 3, 20, 10);
 
-        $result = $spacing->applyTo($rect);
+        $result = $rect->inset($spacing);
 
         self::assertSame(5, $result->x);
         self::assertSame(3, $result->y);
