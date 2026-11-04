@@ -35,7 +35,7 @@ final class AllocatorDivergenceTest extends TestCase
         $heights = VerticalStack::layoutUsing(new KeyedCache(), self::childrenFor($constraints), 40, 80)->heights;
 
         self::assertSame(80, array_sum($heights), 'The share the capped child could not take is offered to the others');
-        self::assertSame(80, array_sum(Layout::vertical(...self::childrenFor($constraints))->sizesFor(80)), 'A layout column fills it the same way');
+        self::assertSame(80, array_sum(Layout::column(...self::childrenFor($constraints))->sizesFor(80)), 'A layout column fills it the same way');
     }
 
     #[Test]
@@ -52,7 +52,7 @@ final class AllocatorDivergenceTest extends TestCase
     #[Test]
     public function aLayoutColumnLeavesAChildThatHasNeitherWeightNorFloorEmpty(): void
     {
-        $column = Layout::vertical(
+        $column = Layout::column(
             new ConstrainedWidget(Constraint::min(0)),
             new ConstrainedWidget(Constraint::exact(2)),
         );
@@ -87,7 +87,7 @@ final class AllocatorDivergenceTest extends TestCase
     public function aColumnGivesItsChildrenTheHeightItSaidTheyNeeded(): void
     {
         $children = [self::paragraphOf(3), self::paragraphOf(7)];
-        $column = Layout::vertical(...$children);
+        $column = Layout::column(...$children);
 
         $heights = self::extentsAlong(
             self::rectsOf($column->computeChildRects(new Rect(0, 0, 40, 10))),
@@ -101,7 +101,7 @@ final class AllocatorDivergenceTest extends TestCase
     #[Test]
     public function aContentSizedChildTakesItsLinesAndLeavesTheRestToItsSibling(): void
     {
-        $column = Layout::vertical(
+        $column = Layout::column(
             self::paragraphOf(3),
             self::paragraphOf(7)->withSizing(Sizing::of(Constraint::flex(), Constraint::flex())),
         );
@@ -120,7 +120,7 @@ final class AllocatorDivergenceTest extends TestCase
         $children = [self::paragraphOf(3), self::paragraphOf(3)];
 
         $heights = self::extentsAlong(
-            self::rectsOf(Layout::vertical(...$children)->computeChildRects(new Rect(0, 0, 40, 4))),
+            self::rectsOf(Layout::column(...$children)->computeChildRects(new Rect(0, 0, 40, 4))),
             Direction::Vertical,
         );
 
@@ -131,7 +131,7 @@ final class AllocatorDivergenceTest extends TestCase
     #[Test]
     public function aChildTallerThanTheColumnStillLeavesAFixedSiblingItsRows(): void
     {
-        $column = Layout::vertical(self::paragraphOf(30), Text::new('footer'));
+        $column = Layout::column(self::paragraphOf(30), Text::new('footer'));
 
         $heights = self::extentsAlong(
             self::rectsOf($column->computeChildRects(new Rect(0, 0, 40, 10))),

@@ -65,7 +65,7 @@ final readonly class ThreeFieldsAndAModal extends App
 
     public function view(): Widget
     {
-        $main = Layout::vertical(
+        $main = Layout::column(
             Component::bind('a', $this->a, static fn (self $app, TextInput $a): self => $app->cloneWith(a: $a)),
             Component::bind('b', $this->b, static fn (self $app, TextInput $b): self => $app->cloneWith(b: $b)),
             Component::bind('c', $this->c, static fn (self $app, TextInput $c): self => $app->cloneWith(c: $c)),

@@ -15,7 +15,7 @@ final readonly class ToastOnStartApp extends App
 {
     public function view(): Widget
     {
-        return Layout::vertical(...array_map(static fn (int $line): Paragraph => Paragraph::fromText("line {$line}"), range(1, 5)));
+        return Layout::column(...array_map(static fn (int $line): Paragraph => Paragraph::fromText("line {$line}"), range(1, 5)));
     }
 
     protected function setup(): ?Cmd

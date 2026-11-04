@@ -2994,13 +2994,13 @@ final class TabBarTest extends TestCase
     #[Test]
     public function tabBarScrollsWhenContentIsLayoutWithTallParagraph(): void
     {
-        // A Paragraph nested inside Layout::vertical, placed inside a TabBar.
+        // A Paragraph nested inside Layout::column, placed inside a TabBar.
         // The TabBar must consult Layout's measureHeight (which sums children).
         $lines = [];
         for ($i = 0; $i < 30; ++$i) {
             $lines[] = Line::raw("nested-line-{$i}");
         }
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             Paragraph::fromLines($lines),
         );
 

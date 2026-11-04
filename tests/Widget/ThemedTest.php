@@ -36,7 +36,7 @@ final class ThemedTest extends TestCase
     public function onlyTheWidgetInsideDrawsWithTheAdjustedTheme(): void
     {
         $red = Color::hex('#ff0000');
-        $view = Layout::vertical(
+        $view = Layout::column(
             Themed::around(Text::line(Span::token('in', StyleToken::Accent)), static fn (Theme $theme): Theme => $theme->withAccent(new Style(foreground: $red))),
             Text::line(Span::token('out', StyleToken::Accent)),
         );

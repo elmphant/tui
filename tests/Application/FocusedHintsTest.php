@@ -187,7 +187,7 @@ final readonly class HintingApp extends App
     {
         $read = $this->read;
 
-        return Layout::vertical(
+        return Layout::column(
             new HintReader($read),
             Component::bind('first', new HintingField(['enter' => 'go']), static fn (self $app, Interactive $w): self => $app),
             Component::bind('second', new HintingField(['space' => 'pick']), static fn (self $app, Interactive $w): self => $app),

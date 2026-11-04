@@ -34,7 +34,7 @@ final class LayoutPlanTest extends TestCase
     {
         $counter = new LayoutPlanCounter();
         $container = new LayoutPlanContainer(Text::new('child'), $counter);
-        $root = Layout::horizontal($container, $container);
+        $root = Layout::row($container, $container);
         $area = Rect::fromSize(10, 4);
 
         $plan = LayoutPlan::resolve($root, $area);

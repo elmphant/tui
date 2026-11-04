@@ -63,7 +63,7 @@ final readonly class E2eApp extends App
 
     public function view(): Widget
     {
-        $main = Layout::vertical(
+        $main = Layout::column(
             Header::new('E2E app'),
             Component::bind('tabs', $this->tabs, static fn (self $app, TabBar $tabs): self => $app->cloneWith(tabs: $tabs)),
             Text::new($this->emoji ? str_repeat('❤️', 20) : 'x' . str_repeat('漢', 20)),

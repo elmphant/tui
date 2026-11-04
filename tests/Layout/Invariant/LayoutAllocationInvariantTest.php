@@ -103,7 +103,7 @@ final class LayoutAllocationInvariantTest extends TestCase
         $allocated = [];
 
         foreach (ConstraintSweep::cases() as $name => [$constraints, $extent]) {
-            $allocated[$name] = Layout::horizontal(...self::widgetsFor($constraints))->sizesFor($extent);
+            $allocated[$name] = Layout::row(...self::widgetsFor($constraints))->sizesFor($extent);
         }
 
         self::assertSame(AllocationBaseline::layoutRows(), $allocated);
@@ -116,7 +116,7 @@ final class LayoutAllocationInvariantTest extends TestCase
      */
     private function rowRects(array $constraints, Rect $area): array
     {
-        return self::rectsOf(Layout::horizontal(...self::widgetsFor($constraints))->computeChildRects($area));
+        return self::rectsOf(Layout::row(...self::widgetsFor($constraints))->computeChildRects($area));
     }
 
     /**
@@ -126,7 +126,7 @@ final class LayoutAllocationInvariantTest extends TestCase
      */
     private function columnRects(array $constraints, Rect $area): array
     {
-        return self::rectsOf(Layout::vertical(...self::widgetsFor($constraints))->computeChildRects($area));
+        return self::rectsOf(Layout::column(...self::widgetsFor($constraints))->computeChildRects($area));
     }
 
     /**

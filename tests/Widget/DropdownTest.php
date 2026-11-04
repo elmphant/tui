@@ -453,7 +453,7 @@ final readonly class PickerBesideAFieldApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 'picker',
                 $this->picker ?? Dropdown::new(Select::new(['json', 'yaml'])),

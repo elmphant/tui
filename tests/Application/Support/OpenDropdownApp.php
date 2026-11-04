@@ -22,7 +22,7 @@ final readonly class OpenDropdownApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('choice', $this->dropdown, static fn (self $app, Dropdown $dropdown): self => new self($dropdown)),
         );
     }

@@ -315,7 +315,7 @@ final class FilterableTableTest extends TestCase
         $table = $this->harness()->widget();
         self::assertInstanceOf(FilterableTable::class, $table);
 
-        self::assertSame(4, Layout::vertical($table)->measureHeight(40), 'it scrolls its own rows, so it must not ask a layout for all of them');
+        self::assertSame(4, Layout::column($table)->measureHeight(40), 'it scrolls its own rows, so it must not ask a layout for all of them');
     }
 
     private function harness(): WidgetHarness

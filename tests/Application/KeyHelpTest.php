@@ -382,7 +382,7 @@ final readonly class KeyHelpApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('list', $this->list, static fn (self $app, ListView $list): self => new self($list, $app->field, $app->vim)),
             Component::bind('field', $this->field, static fn (self $app, TextInput $field): self => new self($app->list, $field, $app->vim)),
         );

@@ -4,8 +4,8 @@
 
 ## Stacking
 
-`Layout::vertical()` stacks widgets top to bottom, `Layout::horizontal()` puts
-them side by side. `->withGap(1)` leaves one cell between them.
+`Layout::column()` stacks widgets top to bottom, `Layout::row()` puts
+them side by side, the same words `Flex` and `Split` use. `->withGap(1)` leaves one cell between them.
 
 Each widget says how much room it wants. A text line wants one row, and a list
 takes what is left. You can change that with a `Constraint`:
@@ -66,8 +66,8 @@ $details = Text::new('details');
 
 $panes = Breakpoint::at(
     80,
-    narrow: Layout::vertical($list, $details),
-    wide: Layout::horizontal($list, $details),
+    narrow: Layout::column($list, $details),
+    wide: Layout::row($list, $details),
 );
 ```
 

@@ -85,7 +85,7 @@ final readonly class Settings extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 'settings-form',
                 $this->form,

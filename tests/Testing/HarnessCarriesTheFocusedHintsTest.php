@@ -52,7 +52,7 @@ final readonly class TwoHintingPanesApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('first', $this->first, static fn (self $app, HintingPane $pane): self => $app->cloneWith(first: $pane)),
             Component::bind('second', $this->second, static fn (self $app, HintingPane $pane): self => $app->cloneWith(second: $pane)),
         );

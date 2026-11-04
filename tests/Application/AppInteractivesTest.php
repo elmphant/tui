@@ -43,7 +43,7 @@ final readonly class FooterOnlyApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Text::new('content'),
             Component::bind(
                 ComponentId::named('status-footer'),
@@ -69,7 +69,7 @@ final readonly class PanelAndFooterApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 ComponentId::named('primary-panel'),
                 $this->panel,
@@ -335,7 +335,7 @@ final readonly class PressCountingBesidePanelApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 ComponentId::named('panel'),
                 $this->panel,
@@ -458,7 +458,7 @@ final readonly class CommandInteractiveApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Text::new('content'),
             Component::bind(
                 ComponentId::named('command-source'),
@@ -478,7 +478,7 @@ final readonly class CommandWithTickApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Text::new('content'),
             Component::bind(
                 ComponentId::named('command-source'),
@@ -504,7 +504,7 @@ final readonly class DualCommandInteractiveApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 ComponentId::named('command-source-a'),
                 $this->widgetA,

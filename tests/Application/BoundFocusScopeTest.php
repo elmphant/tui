@@ -90,7 +90,7 @@ final readonly class BoundToolbarApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('toolbar', $this->toolbar, static fn (self $app, ScopedToolbar $toolbar): self => $app->cloneWith(toolbar: $toolbar)),
             Component::bind('pane', $this->pane, static fn (self $app, TextInput $field): self => $app->cloneWith(pane: $field)),
         );

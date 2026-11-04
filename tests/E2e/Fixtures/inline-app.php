@@ -29,7 +29,7 @@ final readonly class InlineE2eApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Paragraph::fromText('Who are you?'),
             Component::bind('name', $this->field, static fn (self $app, TextInput $field): self => new self($field)),
             Paragraph::fromText('Enter to finish'),

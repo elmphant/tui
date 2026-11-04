@@ -56,7 +56,7 @@ final readonly class FieldBehindModalApp extends App
 
     public function view(): Widget
     {
-        $main = Layout::vertical(Component::bind('field', $this->field, static fn (self $app, TextInput $field): self => $app->cloneWith(field: $field)));
+        $main = Layout::column(Component::bind('field', $this->field, static fn (self $app, TextInput $field): self => $app->cloneWith(field: $field)));
 
         return $this->modal === null
             ? $main

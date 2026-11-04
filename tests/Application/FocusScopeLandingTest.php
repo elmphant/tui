@@ -50,7 +50,7 @@ final readonly class ScopedFiltersApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             new FilterRowScope(Component::bind(
                 'filters',
                 $this->filters,

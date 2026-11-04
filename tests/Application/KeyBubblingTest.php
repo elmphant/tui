@@ -171,7 +171,7 @@ final readonly class FieldInsideAPaneApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 'pane',
                 $this->pane,

@@ -69,7 +69,7 @@ final readonly class ChatRoom implements Reducer
 
     public function view(): Widget
     {
-        return Layout::vertical(Component::bind('composer', $this->composer, static fn (self $room, TextInput $composer): self => $room->cloneWith(composer: $composer)));
+        return Layout::column(Component::bind('composer', $this->composer, static fn (self $room, TextInput $composer): self => $room->cloneWith(composer: $composer)));
     }
 }
 
@@ -96,7 +96,7 @@ final readonly class RoomsApp extends App
             $pages[] = new TabPage($name, ScrollPane::of(Mount::named($name, $room, $room->view(), static fn (self $app, ChatRoom $room): self => $app->cloneWith(rooms: [...$app->rooms, $name => $room]))));
         }
 
-        return Layout::vertical()
+        return Layout::column()
             ->add(Component::bind('switcher', $this->switcher, static fn (self $app, TextInput $switcher): self => $app->cloneWith(switcher: $switcher)), Constraint::exact(1))
             ->add(Component::bind('tabs', TabBar::new()->withTabs($pages), static fn (self $app): self => $app), Constraint::flex());
     }

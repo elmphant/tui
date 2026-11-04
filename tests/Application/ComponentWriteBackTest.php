@@ -58,7 +58,7 @@ final readonly class SharedTallyApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 'keeper',
                 TallyKeeper::of($this->tally)->withFocus(true),

@@ -263,7 +263,7 @@ final readonly class ScopedModel implements Reducer
     {
         $field = static fn (string $id): Component => Component::bind($id, TextInput::new(), static fn (self $model, TextInput $field): self => $model);
 
-        return Layout::vertical(new FilterRowScope(Layout::horizontal($field('a'), $field('b'))), $field('pane'));
+        return Layout::column(new FilterRowScope(Layout::row($field('a'), $field('b'))), $field('pane'));
     }
 }
 
@@ -377,7 +377,7 @@ final readonly class NestingApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Mount::named('starting', $this->starting, Text::new('starting'), static fn (self $app, StartingModel $starting): self => $app->cloneWith(starting: $starting)),
             Mount::named('quiet', $this->quiet, Text::new('quiet'), static fn (self $app, QuietModel $quiet): self => $app->cloneWith(quiet: $quiet)),
         );
@@ -433,7 +433,7 @@ final readonly class HostOfAQuietMount extends App
         $mount = Mount::named('quiet', $this->quiet, Text::new('nothing to focus'), static fn (self $host, QuietModel $quiet): self => $host->cloneWith(quiet: $quiet));
 
         return match (true) {
-            $this->besideASidebar => Layout::horizontal()->add(Text::new('sidebar'), Constraint::exact(10))->add($mount, Constraint::flex()),
+            $this->besideASidebar => Layout::row()->add(Text::new('sidebar'), Constraint::exact(10))->add($mount, Constraint::flex()),
             $this->behindAModal => Overlay::new($mount, Modal::new('Notice', Text::new('read me'))),
             $this->behindAMountedModal => Overlay::new($mount, Mount::named('notice', new StartingModel(), Modal::new('Notice', Text::new('read me')), static fn (self $host): self => $host)),
             default => $mount,
@@ -504,9 +504,9 @@ final readonly class NotesModel implements Reducer
         );
 
         return match (true) {
-            $this->lamp => Layout::vertical(Component::bind('lamp', new Lamp(), static fn (self $model, Lamp $lamp): self => $model), $field),
-            $this->namer => Layout::vertical($field, new FocusNamer()),
-            default => Layout::vertical($field),
+            $this->lamp => Layout::column(Component::bind('lamp', new Lamp(), static fn (self $model, Lamp $lamp): self => $model), $field),
+            $this->namer => Layout::column($field, new FocusNamer()),
+            default => Layout::column($field),
         };
     }
 }

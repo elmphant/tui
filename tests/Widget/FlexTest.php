@@ -640,7 +640,7 @@ final class FlexTest extends TestCase
         $cards = Flex::row()
             ->add(Box::new()->add(Text::new('one')))
             ->add(Box::new()->add(Text::new('two')));
-        $layout = Layout::vertical($cards, Text::new('below'), Spacer::new());
+        $layout = Layout::column($cards, Text::new('below'), Spacer::new());
 
         $placed = $layout->placedChildren(Rect::fromSize(40, 20));
 

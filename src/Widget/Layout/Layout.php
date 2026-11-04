@@ -68,12 +68,12 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         return new self(direction: $this->direction, children: $this->children, slotConstraints: $this->slotConstraints, gap: $gap);
     }
 
-    public static function vertical(Widget ...$children): self
+    public static function column(Widget ...$children): self
     {
         return new self(Direction::Vertical, $children);
     }
 
-    public static function horizontal(Widget ...$children): self
+    public static function row(Widget ...$children): self
     {
         return new self(Direction::Horizontal, $children);
     }

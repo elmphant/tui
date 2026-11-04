@@ -110,45 +110,55 @@ final class ActivityBarTest extends TestCase
     }
 
     #[Test]
-    public function speedScalesTheAnimation(): void
+    public function aLongerSweepSlowsTheAnimation(): void
     {
-        $bar = self::makeBar(speed: 0.1);
+        $bar = self::makeBar(sweepSeconds: 10.0);
         $frame = new Frame(20, 1);
 
-        // 16 seconds at 0.1 sweeps/s = 1.6 sweeps → bounced back to 0.4.
+        // 16 seconds at 10 seconds a sweep = 1.6 sweeps → bounced back to 0.4.
         $bar->render($frame, Rect::fromSize(20, 1), self::contextAt(16.0));
 
         self::assertSame('█', $frame->characters[8], 'round(0.4 * 19) = 8');
     }
 
     #[Test]
-    public function renderRequestsARepaintBeforeTheNextColumnStep(): void
+    public function aBarSweepsOnceIn1point25SecondsUntilToldOtherwise(): void
     {
-        $bar = self::makeBar(speed: 1.0, barWidth: 20);
         $frame = new Frame(20, 1);
-        $pass = self::passAt(0.0);
 
-        $bar->render($frame, Rect::fromSize(20, 1), $pass->context);
+        ActivityBar::new()->withBarWidth(20)->render($frame, Rect::fromSize(20, 1), self::contextAt(1.25));
 
-        self::assertSame(1.0 / 19.0, $pass->clock->repaintDelay(), 'One column step at speed 1.0 with 19 steps');
+        self::assertSame('█', $frame->characters[19], 'one sweep ends on the last column');
     }
 
     #[Test]
-    public function repaintRequestReflectsSpeed(): void
+    public function renderRequestsARepaintBeforeTheNextColumnStep(): void
     {
-        $bar = self::makeBar(speed: 0.5, barWidth: 20);
+        $bar = self::makeBar(sweepSeconds: 1.0, barWidth: 20);
         $frame = new Frame(20, 1);
         $pass = self::passAt(0.0);
 
         $bar->render($frame, Rect::fromSize(20, 1), $pass->context);
 
-        self::assertSame(1.0 / (0.5 * 19.0), $pass->clock->repaintDelay());
+        self::assertSame(1.0 / 19.0, $pass->clock->repaintDelay(), 'One column step of a one-second sweep over 19 steps');
+    }
+
+    #[Test]
+    public function repaintRequestReflectsTheSweepDuration(): void
+    {
+        $bar = self::makeBar(sweepSeconds: 2.0, barWidth: 20);
+        $frame = new Frame(20, 1);
+        $pass = self::passAt(0.0);
+
+        $bar->render($frame, Rect::fromSize(20, 1), $pass->context);
+
+        self::assertSame(2.0 / 19.0, $pass->clock->repaintDelay());
     }
 
     #[Test]
     public function repaintRequestWithBarWidthOneUsesAFullSweep(): void
     {
-        $bar = self::makeBar(speed: 1.0, barWidth: 1);
+        $bar = self::makeBar(sweepSeconds: 1.0, barWidth: 1);
         $frame = new Frame(5, 1);
         $pass = self::passAt(0.0);
 
@@ -158,15 +168,15 @@ final class ActivityBarTest extends TestCase
     }
 
     #[Test]
-    public function withSpeedClampsToAPositiveMinimum(): void
+    public function aSweepOfNoTimeClampsToAPositiveMinimum(): void
     {
-        $bar = self::makeBar(speed: 0.0, barWidth: 20);
+        $bar = self::makeBar(sweepSeconds: 0.0, barWidth: 20);
         $frame = new Frame(20, 1);
         $pass = self::passAt(0.0);
 
         $bar->render($frame, Rect::fromSize(20, 1), $pass->context);
 
-        self::assertSame(1.0 / (0.01 * 19.0), $pass->clock->repaintDelay(), 'Zero speed clamps to 0.01 sweeps/s');
+        self::assertSame(0.01 / 19.0, $pass->clock->repaintDelay(), 'a sweep takes at least 0.01 seconds');
     }
 
     #[Test]
@@ -557,16 +567,16 @@ final class ActivityBarTest extends TestCase
     }
 
     /**
-     * With speed 1.0 the highlight position equals the frame time during the
+     * With a one-second sweep the highlight position equals the frame time during the
      * first sweep (0.0 → 1.0), which keeps the test math readable.
      */
     private static function makeBar(
         string $label = '',
-        float $speed = 1.0,
+        float $sweepSeconds = 1.0,
         int $barWidth = 20,
     ): ActivityBar {
         return ActivityBar::new($label)
-            ->withSpeed($speed)
+            ->withSweepDuration($sweepSeconds)
             ->withBarWidth($barWidth);
     }
 

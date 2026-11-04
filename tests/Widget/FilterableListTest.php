@@ -502,7 +502,7 @@ final class FilterableListTest extends TestCase
     #[Test]
     public function inALayoutItAsksForNoMoreRoomThanItsConstraintClaims(): void
     {
-        $stack = Layout::vertical($this->commands());
+        $stack = Layout::column($this->commands());
 
         self::assertSame(
             FilterBar::HEIGHT + 1 + 1,

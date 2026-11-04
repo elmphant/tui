@@ -120,7 +120,7 @@ final class ContainerTest extends TestCase
         $child = new ContainerProbe(Constraint::exact(2));
         $container = Container::around($child)
             ->withPadding(Spacing::only(top: 1, right: 2, left: 3));
-        $layout = Layout::horizontal($container);
+        $layout = Layout::row($container);
 
         [$containerArea, $childArea] = WidgetTree::findRects(
             $layout,

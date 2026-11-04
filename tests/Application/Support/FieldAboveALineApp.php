@@ -21,7 +21,7 @@ final readonly class FieldAboveALineApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('field', $this->field, static fn (self $app, TextInput $field): self => new self($field)),
             Paragraph::fromText('below'),
         );

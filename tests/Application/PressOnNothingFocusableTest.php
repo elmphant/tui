@@ -63,7 +63,7 @@ final readonly class SearchBesideAForm extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('search', $this->search ?? TextInput::new(), static fn (self $app, TextInput $search): self => new self($search, $app->form)),
             Component::bind(
                 'form',

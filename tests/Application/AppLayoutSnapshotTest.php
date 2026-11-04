@@ -62,7 +62,7 @@ final readonly class SnapshotCountingApp extends CopyableTestApp
         ++ViewCallCounter::$count;
         ++ComponentsCallCounter::$count;
 
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 ComponentId::named('main-panel'),
                 $this->panel,

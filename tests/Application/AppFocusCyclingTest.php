@@ -67,7 +67,7 @@ final readonly class PlainlyCyclingApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 'first',
                 $this->first,
@@ -92,7 +92,7 @@ final readonly class RebindableFocusApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 'first',
                 $this->first,

@@ -140,7 +140,7 @@ final readonly class NamedPaneApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('field', $this->field, static fn (self $app, TextInput $w): self => $app->cloneWith(field: $w)),
             Component::named('pane', new HostDrivenPane()),
         );
@@ -214,7 +214,7 @@ final readonly class PlainPaneBesideAFieldApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::named('pane', new PlainPane()),
             Component::bind('field', $this->field, static fn (self $app, TextInput $w): self => $app->cloneWith(field: $w)),
         );

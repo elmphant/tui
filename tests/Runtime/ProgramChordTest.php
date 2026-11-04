@@ -132,7 +132,7 @@ final readonly class ChordFooterApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('list', $this->list, static fn (self $app, ListView $list): self => $app->cloneWith(list: $list)),
             Footer::new()->withLeft(FocusHints::new()),
         );

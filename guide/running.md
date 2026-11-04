@@ -67,7 +67,7 @@ final readonly class Question extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Paragraph::fromText($this->question),
             Component::bind('answer', $this->field, static fn (self $app, TextInput $field): self => new self($app->question, $field)),
         );

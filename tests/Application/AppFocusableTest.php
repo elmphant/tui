@@ -786,7 +786,7 @@ final readonly class TwoPanelApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('left', $this->left, 'left-panel'),
             $this->bindProperty('right', $this->right, 'right-panel'),
         );
@@ -817,7 +817,7 @@ final readonly class InterceptApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('left', $this->left, 'left-panel'),
             $this->bindProperty('right', $this->right, 'right-panel'),
         );
@@ -940,7 +940,7 @@ final readonly class ThreePanelApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('first', $this->first, 'first-panel'),
             $this->bindProperty('second', $this->second, 'second-panel'),
             $this->bindProperty('third', $this->third, 'third-panel'),
@@ -1307,7 +1307,7 @@ final readonly class TwoRectCapturingApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('left', $this->left, 'left-capture'),
             $this->bindProperty('right', $this->right, 'right-capture'),
         );
@@ -1324,7 +1324,7 @@ final readonly class TwoCountingFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('left', $this->left, 'left-counter'),
             $this->bindProperty('right', $this->right, 'right-counter'),
         );
@@ -1378,7 +1378,7 @@ final readonly class ClickTrackingFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('widget', $this->widget, 'click-tracker'),
             $this->bindProperty('other', $this->other, 'other-widget'),
         );
@@ -1395,7 +1395,7 @@ final readonly class TwoUnchangedFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('left', $this->left, 'left-widget'),
             $this->bindProperty('right', $this->right, 'right-widget'),
         );
@@ -1449,7 +1449,7 @@ final readonly class TabConsumingApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('widget', $this->widget, 'tab-consumer'),
             $this->bindProperty('other', $this->other, 'other-widget'),
         );
@@ -1538,7 +1538,7 @@ final readonly class MouseTrackingFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('widget', $this->widget, 'click-tracker'),
             $this->bindProperty('other', $this->other, 'other-widget'),
         );
@@ -1600,7 +1600,7 @@ final readonly class TabCommandOnlyApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('widget', $this->widget, 'tab-command'),
             $this->bindProperty('other', $this->other, 'other-widget'),
         );
@@ -1659,7 +1659,7 @@ final readonly class MouseSwapApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return Layout::horizontal(
+        return Layout::row(
             $this->bindProperty('left', $this->left, 'left-marker'),
             $this->bindProperty('right', $this->right, 'right-marker'),
         );

@@ -116,7 +116,7 @@ final readonly class WrappedFocusApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('first', $this->first, static fn (self $app, TextInput $f): self => $app->cloneWith(first: $f)),
             Component::bind('second', $this->second, static fn (self $app, TextInput $f): self => $app->cloneWith(second: $f)),
         );
@@ -197,7 +197,7 @@ final readonly class TwoPaneForm extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('left', $this->left, static fn (self $app, Panel $pane): self => $app->cloneWith(left: $pane)),
             Component::bind('right', $this->right, static fn (self $app, Panel $pane): self => $app->cloneWith(right: $pane)),
         );

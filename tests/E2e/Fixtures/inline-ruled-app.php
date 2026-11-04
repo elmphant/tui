@@ -21,7 +21,7 @@ final readonly class InlineRuledE2eApp extends App
 {
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Separator::new(),
             Paragraph::fromText('Ruled lines run the full width'),
             Separator::new(),

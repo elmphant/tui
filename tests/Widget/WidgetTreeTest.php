@@ -39,7 +39,7 @@ final class WidgetTreeTest extends TestCase
     {
         $a = Text::new('A');
         $b = $this->createFlexWidget();
-        $layout = Layout::vertical($a, $b);
+        $layout = Layout::column($a, $b);
 
         $map = WidgetTree::resolveRects($layout, new Rect(0, 0, 20, 10));
 
@@ -56,8 +56,8 @@ final class WidgetTreeTest extends TestCase
     public function resolveRectsNestedLayouts(): void
     {
         $deep = $this->createFlexWidget();
-        $inner = Layout::horizontal($this->createFlexWidget(), $deep);
-        $outer = Layout::vertical(Text::new('Top'), $inner);
+        $inner = Layout::row($this->createFlexWidget(), $deep);
+        $outer = Layout::column(Text::new('Top'), $inner);
 
         $map = WidgetTree::resolveRects($outer, new Rect(0, 0, 20, 10));
 
@@ -71,8 +71,8 @@ final class WidgetTreeTest extends TestCase
     #[Test]
     public function resolveRectsIncludesLayoutNodes(): void
     {
-        $inner = Layout::horizontal($this->createFlexWidget());
-        $outer = Layout::vertical(Text::new('Top'), $inner);
+        $inner = Layout::row($this->createFlexWidget());
+        $outer = Layout::column(Text::new('Top'), $inner);
 
         $map = WidgetTree::resolveRects($outer, new Rect(0, 0, 20, 10));
 
@@ -88,7 +88,7 @@ final class WidgetTreeTest extends TestCase
     {
         $a = Text::new('A');
         $b = $this->createFlexWidget();
-        $layout = Layout::vertical($a, $b);
+        $layout = Layout::column($a, $b);
 
         $rects = WidgetTree::findRects($layout, new Rect(0, 0, 20, 10), [$b, $a]);
 
@@ -102,7 +102,7 @@ final class WidgetTreeTest extends TestCase
     #[Test]
     public function findRectsReturnsNullForMissingWidgets(): void
     {
-        $layout = Layout::vertical(Text::new('A'));
+        $layout = Layout::column(Text::new('A'));
         $missing = Text::new('Not in tree');
 
         $rects = WidgetTree::findRects($layout, new Rect(0, 0, 20, 10), [$missing]);
@@ -116,7 +116,7 @@ final class WidgetTreeTest extends TestCase
     {
         $checkbox = Checkbox::new('Accept');
         $panel = Panel::new('Test')->add($checkbox);
-        $layout = Layout::vertical($panel);
+        $layout = Layout::column($panel);
 
         $map = WidgetTree::resolveRects($layout, new Rect(0, 0, 40, 20));
 
@@ -144,7 +144,7 @@ final class WidgetTreeTest extends TestCase
     {
         $checkbox = Checkbox::new('Accept');
         $tabBar = TabBar::new()->addTab('Tab1', $checkbox);
-        $layout = Layout::vertical($tabBar);
+        $layout = Layout::column($tabBar);
 
         $map = WidgetTree::resolveRects($layout, new Rect(0, 0, 40, 20));
 
@@ -172,7 +172,7 @@ final class WidgetTreeTest extends TestCase
     {
         $inner = Text::new('Hello');
         $modal = Modal::new('Title', $inner);
-        $layout = Layout::vertical($modal);
+        $layout = Layout::column($modal);
 
         $map = WidgetTree::resolveRects($layout, new Rect(0, 0, 40, 20));
 

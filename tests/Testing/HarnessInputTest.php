@@ -144,7 +144,7 @@ final readonly class ForgetsToBindItsField extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(Text::new('Name'), $this->name);
+        return Layout::column(Text::new('Name'), $this->name);
     }
 }
 

@@ -83,7 +83,7 @@ final readonly class NavigationPolicyApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('output', $this->output, static fn (self $app, NavigationPane $pane): self => $app->cloneWith(output: $pane)),
             Component::bind('details', $this->details, static fn (self $app, NavigationPane $pane): self => $app->cloneWith(details: $pane)),
         );
@@ -100,7 +100,7 @@ final readonly class EmptyPaneApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('output', $this->output, static fn (self $app, EmptyPane $pane): self => $app->cloneWith(output: $pane)),
             Component::bind('details', $this->details, static fn (self $app, EmptyPane $pane): self => $app->cloneWith(details: $pane)),
         );

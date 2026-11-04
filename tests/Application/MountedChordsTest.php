@@ -45,7 +45,7 @@ final readonly class ChordedPair implements Reducer, BindsChords
 {
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('first', TextInput::new(), static fn (self $pair): self => $pair),
             Component::bind('second', TextInput::new(), static fn (self $pair): self => $pair),
         );

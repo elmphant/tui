@@ -42,7 +42,7 @@ final class ComponentTreeTest extends TestCase
             static fn (App $current, ComponentRenderProbe $probe): App => $current,
         );
         $input = $app->inputNode();
-        $root = Layout::vertical($probe, Layout::horizontal($input));
+        $root = Layout::column($probe, Layout::row($input));
 
         $registry = ComponentRegistry::fromWidget($root);
 
@@ -59,7 +59,7 @@ final class ComponentTreeTest extends TestCase
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Duplicate component ID "input"');
 
-        ComponentRegistry::fromWidget(Layout::vertical($input, $input));
+        ComponentRegistry::fromWidget(Layout::column($input, $input));
     }
 
     #[Test]
@@ -125,7 +125,7 @@ final class ComponentTreeTest extends TestCase
         );
         $input = (new TreeComponentApp(TextInput::new()))->inputNode();
 
-        $registry = ComponentRegistry::fromWidget(Layout::vertical($spinner, $status, $input));
+        $registry = ComponentRegistry::fromWidget(Layout::column($spinner, $status, $input));
 
         self::assertSame([$spinner, $status, $input], $registry->all());
     }

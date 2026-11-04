@@ -111,7 +111,7 @@ final readonly class HostOfATallyMount extends App
 
     public function view(): Widget
     {
-        return Layout::horizontal()
+        return Layout::row()
             ->add(Text::new('sidebar'), Constraint::exact(10))
             ->add(Mount::named('tally', $this->counter, $this->counter->view(), static fn (self $app, TallyModel $counter): self => new self($counter)), Constraint::flex());
     }

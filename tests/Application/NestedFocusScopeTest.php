@@ -43,10 +43,10 @@ final readonly class NestedScopesApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
-            new FilterRowScope(Layout::horizontal(
+        return Layout::column(
+            new FilterRowScope(Layout::row(
                 Component::bind('outer', $this->outer, static fn (self $app, TextInput $field): self => $app->cloneWith(outer: $field)),
-                new FilterRowScope(Layout::horizontal(
+                new FilterRowScope(Layout::row(
                     Component::bind('innerA', $this->innerA, static fn (self $app, TextInput $field): self => $app->cloneWith(innerA: $field)),
                     Component::bind('innerB', $this->innerB, static fn (self $app, TextInput $field): self => $app->cloneWith(innerB: $field)),
                 )),

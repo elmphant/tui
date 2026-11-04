@@ -125,7 +125,7 @@ final class ParagraphTest extends TestCase
     #[Test]
     public function aParagraphInARoomyStackTakesTheRowsItsTextNeeds(): void
     {
-        $placed = Layout::vertical(Paragraph::fromText("a\nb\nc"), Paragraph::fromText("d\ne"))
+        $placed = Layout::column(Paragraph::fromText("a\nb\nc"), Paragraph::fromText("d\ne"))
             ->computeChildRects(new Rect(0, 0, 80, 20));
 
         self::assertSame([3, 2], array_map(static fn (array $pair): int => $pair[1]->height, $placed));

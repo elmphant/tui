@@ -46,7 +46,7 @@ final readonly class SplitBindingApp extends App
         $kept = Split::row($this->state, Text::new('a'));
         $loose = Split::column($this->state, Text::new('b'));
 
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('kept', $kept, static fn (self $app, Split $split): self => new self($split->state())),
             Component::bind('pane', Panel::new('pane'), static fn (self $app): self => $app),
             $loose,

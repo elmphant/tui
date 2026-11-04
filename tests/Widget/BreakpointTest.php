@@ -37,8 +37,8 @@ final class BreakpointTest extends TestCase
         $details = Component::named('details', Text::new('details'));
         $breakpoint = Breakpoint::at(
             40,
-            narrow: Layout::vertical()->add($list, Constraint::flex())->add($details, Constraint::flex()),
-            wide: Layout::horizontal()->add($list, Constraint::flex())->add($details, Constraint::flex()),
+            narrow: Layout::column()->add($list, Constraint::flex())->add($details, Constraint::flex()),
+            wide: Layout::row()->add($list, Constraint::flex())->add($details, Constraint::flex()),
         );
 
         self::assertEquals(new Rect(20, 0, 20, 10), Geometry::of($breakpoint, Rect::fromSize(40, 10))->rectOf('details'));

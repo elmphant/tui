@@ -24,7 +24,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function aGapLeavesEmptyCellsBetweenChildren(): void
     {
-        $placed = Layout::vertical(Text::new('a'), Text::new('b'), Text::new('c'))
+        $placed = Layout::column(Text::new('a'), Text::new('b'), Text::new('c'))
             ->withGap(2)
             ->computeChildRects(new Rect(0, 0, 10, 10));
 
@@ -37,13 +37,13 @@ final class LayoutTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Layout gap must be non-negative, got -1');
 
-        Layout::vertical()->withGap(-1);
+        Layout::column()->withGap(-1);
     }
 
     #[Test]
     public function noGapIsAGapLikeAnyOther(): void
     {
-        $placed = Layout::vertical(Text::new('a'), Text::new('b'))->withGap(0)->computeChildRects(new Rect(0, 0, 10, 10));
+        $placed = Layout::column(Text::new('a'), Text::new('b'))->withGap(0)->computeChildRects(new Rect(0, 0, 10, 10));
 
         self::assertSame([0, 1], array_map(static fn (array $pair): int => $pair[1]->y, $placed));
     }
@@ -51,7 +51,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function anEmptyColumnNeedsNoRowsWhateverItsGap(): void
     {
-        self::assertSame(0, Layout::vertical()->withGap(2)->measureHeight(10));
+        self::assertSame(0, Layout::column()->withGap(2)->measureHeight(10));
     }
 
     #[Test]
@@ -60,13 +60,13 @@ final class LayoutTest extends TestCase
         $first = Text::new('a');
         $second = Text::new('b');
 
-        self::assertSame([$first, $second], Layout::vertical(...['top' => $first, 'bottom' => $second])->children());
+        self::assertSame([$first, $second], Layout::column(...['top' => $first, 'bottom' => $second])->children());
     }
 
     #[Test]
     public function aRowOfChildrenThatOnlyFlexIsOneRowTall(): void
     {
-        $layout = Layout::horizontal($this->createWidgetWithConstraint(Constraint::flex()));
+        $layout = Layout::row($this->createWidgetWithConstraint(Constraint::flex()));
 
         self::assertSame(1, $layout->measureHeight(10));
     }
@@ -74,13 +74,13 @@ final class LayoutTest extends TestCase
     #[Test]
     public function aColumnCountsItsGapsInTheRowsItNeeds(): void
     {
-        self::assertSame(7, Layout::vertical(Text::new('a'), Text::new('b'), Text::new('c'))->withGap(2)->measureHeight(10));
+        self::assertSame(7, Layout::column(Text::new('a'), Text::new('b'), Text::new('c'))->withGap(2)->measureHeight(10));
     }
 
     #[Test]
     public function verticalWithExactConstraints(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             Text::new('Line 1'),
             Text::new('Line 2'),
             Text::new('Line 3'),
@@ -100,7 +100,7 @@ final class LayoutTest extends TestCase
         $widgetA = $this->createFlexWidget('A');
         $widgetB = $this->createFlexWidget('B');
 
-        $layout = Layout::vertical($widgetA, $widgetB);
+        $layout = Layout::column($widgetA, $widgetB);
         $frame = new Frame(20, 10);
         $layout->render($frame, $frame->area(), new RenderContext(Theme::dark()));
 
@@ -114,7 +114,7 @@ final class LayoutTest extends TestCase
         $header = Text::new('Header');
         $body = $this->createFlexWidget('B');
 
-        $layout = Layout::vertical($header, $body);
+        $layout = Layout::column($header, $body);
         $frame = new Frame(20, 10);
         $layout->render($frame, $frame->area(), new RenderContext(Theme::dark()));
 
@@ -128,7 +128,7 @@ final class LayoutTest extends TestCase
         $left = $this->createFlexWidget('L');
         $right = $this->createFlexWidget('R');
 
-        $layout = Layout::horizontal($left, $right);
+        $layout = Layout::row($left, $right);
         $frame = new Frame(20, 5);
         $layout->render($frame, $frame->area(), new RenderContext(Theme::dark()));
 
@@ -139,7 +139,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function aTextLaidOutSidewaysIsAsWideAsItsText(): void
     {
-        $placements = Layout::horizontal(Text::new('left text'), Text::new('right'))
+        $placements = Layout::row(Text::new('left text'), Text::new('right'))
             ->computeChildRects(new Rect(0, 0, 40, 1));
 
         self::assertSame(9, $placements[0][1]->width);
@@ -149,7 +149,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function aSlotCanBeSizedWhereItIsAddedRatherThanInsideTheChild(): void
     {
-        $column = Layout::vertical()
+        $column = Layout::column()
             ->add($this->createFlexWidget('a'), Constraint::exact(2))
             ->add($this->createFlexWidget('b'));
 
@@ -175,7 +175,7 @@ final class LayoutTest extends TestCase
             }
         };
 
-        $column = Layout::vertical($pinned, $this->createExactWidget(3));
+        $column = Layout::column($pinned, $this->createExactWidget(3));
 
         self::assertSame(
             array_sum($column->sizesFor(20, 40)),
@@ -203,7 +203,7 @@ final class LayoutTest extends TestCase
             }
         };
 
-        self::assertSame([10, 10], Layout::horizontal($tall, $this->createFlexWidget('x'))->sizesFor(20, 10));
+        self::assertSame([10, 10], Layout::row($tall, $this->createFlexWidget('x'))->sizesFor(20, 10));
     }
 
     #[Test]
@@ -220,20 +220,20 @@ final class LayoutTest extends TestCase
             }
         };
 
-        $horizontal = Layout::horizontal($widget)->computeChildRects(Rect::fromSize(20, 10));
-        $vertical = Layout::vertical($widget)->computeChildRects(Rect::fromSize(20, 10));
+        $horizontal = Layout::row($widget)->computeChildRects(Rect::fromSize(20, 10));
+        $vertical = Layout::column($widget)->computeChildRects(Rect::fromSize(20, 10));
 
         self::assertSame(7, $horizontal[0][1]->width);
         self::assertSame(3, $vertical[0][1]->height);
-        self::assertSame(3, Layout::horizontal($widget)->measureHeight(20));
+        self::assertSame(3, Layout::row($widget)->measureHeight(20));
     }
 
     #[Test]
     public function nestedLayouts(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             Text::new('Top'),
-            Layout::horizontal(
+            Layout::row(
                 $this->createFlexWidget('L'),
                 $this->createFlexWidget('R'),
             ),
@@ -250,14 +250,14 @@ final class LayoutTest extends TestCase
     #[Test]
     public function layoutIsWidget(): void
     {
-        $layout = Layout::vertical(Text::new('test'));
+        $layout = Layout::column(Text::new('test'));
         self::assertInstanceOf(Widget::class, $layout);
     }
 
     #[Test]
     public function layoutConstraintIsFlex(): void
     {
-        $layout = Layout::vertical(Text::new('test'));
+        $layout = Layout::column(Text::new('test'));
         self::assertSame(1, $layout->sizing()->rows->flex);
     }
 
@@ -283,7 +283,7 @@ final class LayoutTest extends TestCase
             };
         };
 
-        $layout = Layout::vertical($makeSpy(), $makeSpy(), $makeSpy());
+        $layout = Layout::column($makeSpy(), $makeSpy(), $makeSpy());
         $frame = new Frame(20, 10);
         $layout->render($frame, new Rect(0, 0, 20, 10), new RenderContext(Theme::dark()));
 
@@ -318,7 +318,7 @@ final class LayoutTest extends TestCase
             };
         };
 
-        $layout = Layout::horizontal($makeSpy(), $makeSpy(), $makeSpy());
+        $layout = Layout::row($makeSpy(), $makeSpy(), $makeSpy());
         $frame = new Frame(10, 5);
         $layout->render($frame, new Rect(0, 0, 10, 5), new RenderContext(Theme::dark()));
 
@@ -335,7 +335,7 @@ final class LayoutTest extends TestCase
     public function verticalWithZeroHeight(): void
     {
         $frame = new Frame(10, 1);
-        $layout = Layout::vertical(Layout::vertical());
+        $layout = Layout::column(Layout::column());
         $layout->render($frame, new Rect(0, 0, 10, 0), new RenderContext(Theme::dark()));
         self::assertTrue(true);
     }
@@ -344,7 +344,7 @@ final class LayoutTest extends TestCase
     public function horizontalWithZeroWidth(): void
     {
         $frame = new Frame(1, 10);
-        $layout = Layout::horizontal(Layout::horizontal());
+        $layout = Layout::row(Layout::row());
         $layout->render($frame, new Rect(0, 0, 0, 10), new RenderContext(Theme::dark()));
         self::assertTrue(true);
     }
@@ -354,7 +354,7 @@ final class LayoutTest extends TestCase
     {
         $a = Text::new('A');
         $b = $this->createFlexWidget('B');
-        $layout = Layout::vertical($a, $b);
+        $layout = Layout::column($a, $b);
 
         $rects = $layout->computeChildRects(new Rect(0, 0, 20, 10));
 
@@ -372,7 +372,7 @@ final class LayoutTest extends TestCase
     {
         $l = $this->createFlexWidget('L');
         $r = $this->createFlexWidget('R');
-        $layout = Layout::horizontal($l, $r);
+        $layout = Layout::row($l, $r);
 
         $rects = $layout->computeChildRects(new Rect(0, 0, 20, 10));
 
@@ -388,7 +388,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function computeChildRectsEmpty(): void
     {
-        $layout = Layout::vertical();
+        $layout = Layout::column();
         $rects = $layout->computeChildRects(new Rect(0, 0, 20, 10));
         self::assertCount(0, $rects);
     }
@@ -396,7 +396,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function multipleExactChildrenReservesCumulatively(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createExactWidget(3),
             $this->createExactWidget(4),
             $this->createFlexWidget('F'),
@@ -412,7 +412,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function minConstraintWithoutFlexReservesItsMinimum(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::min(3)),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
         );
@@ -426,7 +426,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function flexChildIsClampedToItsMaxAndLeftoverFlowsToSiblings(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::max(4)),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
         );
@@ -440,7 +440,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function leftoverSkipsFlexChildrenAlreadyAtTheirMax(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::flex(1)),
             $this->createWidgetWithConstraint(Constraint::max(4)),
         );
@@ -454,7 +454,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function minWithFlexGrowsFromItsMinimum(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::min(4)->withFlex()),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
         );
@@ -468,7 +468,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function nonFlexChildAfterFlexDoesNotStealRemainder(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::flex(1)),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
             $this->createWidgetWithConstraint(Constraint::flex(1)),
@@ -484,7 +484,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function reservedExceedsTotalSpaceClampedToZero(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createExactWidget(8),
             $this->createExactWidget(5),
             $this->createFlexWidget('F'),
@@ -498,7 +498,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function anOverflowingChildStopsAtTheEdgeOfTheArea(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createExactWidget(8),
             $this->createExactWidget(5),
         );
@@ -513,7 +513,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function reservedEqualsExactlyTotalSpaceLeavesZeroForFlex(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createExactWidget(5),
             $this->createExactWidget(5),
             $this->createFlexWidget('F'),
@@ -531,7 +531,7 @@ final class LayoutTest extends TestCase
         $flexA = $this->createWidgetWithConstraint(Constraint::flex(1));
         $flexB = $this->createWidgetWithConstraint(Constraint::flex(1));
 
-        $layout = Layout::vertical($flexA, $nonExactNonFlex, $flexB);
+        $layout = Layout::column($flexA, $nonExactNonFlex, $flexB);
         $rects = $layout->computeChildRects(new Rect(0, 0, 20, 10));
 
         self::assertSame(5, $rects[0][1]->height);
@@ -545,7 +545,7 @@ final class LayoutTest extends TestCase
         $heavy = $this->createWidgetWithConstraint(Constraint::flex(2));
         $light = $this->createWidgetWithConstraint(Constraint::flex(1));
 
-        $layout = Layout::vertical($heavy, $light);
+        $layout = Layout::column($heavy, $light);
         $rects = $layout->computeChildRects(new Rect(0, 0, 20, 9));
 
         self::assertSame(6, $rects[0][1]->height, 'Weight 2 of 3 gets 6 out of 9');
@@ -555,7 +555,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function singleFlexChildAtIndexZeroGetsAllRemainingSpace(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::flex(1)),
             $this->createExactWidget(3),
         );
@@ -569,7 +569,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function onlyExactChildrenNoRemainderDistribution(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createExactWidget(3),
             $this->createExactWidget(4),
         );
@@ -583,7 +583,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightReturnsZeroForZeroWidth(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::exact(3)),
             $this->createWidgetWithConstraint(Constraint::exact(2)),
         );
@@ -595,7 +595,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightVerticalSumsChildrenHeights(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::exact(3)),
             $this->createWidgetWithConstraint(Constraint::exact(4)),
             $this->createWidgetWithConstraint(Constraint::exact(2)),
@@ -607,7 +607,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightHorizontalTakesMaxOfChildren(): void
     {
-        $layout = Layout::horizontal(
+        $layout = Layout::row(
             $this->createWidgetWithConstraint(Constraint::exact(3)),
             $this->createWidgetWithConstraint(Constraint::exact(5)),
             $this->createWidgetWithConstraint(Constraint::exact(2)),
@@ -624,7 +624,7 @@ final class LayoutTest extends TestCase
         // column its sibling reserves.
         $paragraph = Paragraph::fromText('abcdefghij');
 
-        $layout = Layout::horizontal(
+        $layout = Layout::row(
             $paragraph,
             $this->createWidgetWithConstraint(Constraint::exact(1)),
         );
@@ -642,7 +642,7 @@ final class LayoutTest extends TestCase
         $fixed = $this->createDirectionalWidget(horizontalSize: 30, verticalSize: 1);
         $paragraph = Paragraph::fromText('abcdefghijklmnopqrst');
 
-        $layout = Layout::horizontal($fixed, $paragraph);
+        $layout = Layout::row($fixed, $paragraph);
 
         self::assertSame(
             2,
@@ -654,14 +654,14 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightHorizontalWithNoChildrenReturnsZero(): void
     {
-        $layout = Layout::horizontal();
+        $layout = Layout::row();
         self::assertSame(0, $layout->measureHeight(20), 'Empty horizontal layout must return 0 (initial max value)');
     }
 
     #[Test]
     public function constraintHeightUsesMinWhenMinEqualsMax(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::exact(0)),
             $this->createWidgetWithConstraint(Constraint::exact(3)),
         );
@@ -672,7 +672,7 @@ final class LayoutTest extends TestCase
     #[Test]
     public function measureHeightUsesChildConstraintWhenNotMeasureHeight(): void
     {
-        $layout = Layout::vertical(
+        $layout = Layout::column(
             $this->createWidgetWithConstraint(Constraint::exact(3)),
             $this->createWidgetWithConstraint(Constraint::exact(4)),
         );
@@ -687,7 +687,7 @@ final class LayoutTest extends TestCase
         $rest = $this->createFlexWidget('R');
 
         $frame = new Frame(20, 20);
-        Layout::vertical($capped, $rest)->render($frame, $frame->area(), new RenderContext(Theme::dark()));
+        Layout::column($capped, $rest)->render($frame, $frame->area(), new RenderContext(Theme::dark()));
 
         self::assertSame('C', $frame->characters[0]);
         self::assertSame('R', $frame->characters[3 * 20], 'The capped child gives up everything past its ceiling');

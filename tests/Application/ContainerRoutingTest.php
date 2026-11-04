@@ -50,14 +50,14 @@ final class ContainerRoutingTest extends TestCase
         yield 'Container' => [static fn (Widget $child): Widget => Container::around($child)->withPadding(Spacing::all(1))];
         yield 'Box' => [static fn (Widget $child): Widget => Box::new('box')->add($child)];
         yield 'Panel' => [static fn (Widget $child): Widget => Panel::new('panel')->add($child)];
-        yield 'Layout' => [static fn (Widget $child): Widget => Layout::vertical($child)];
+        yield 'Layout' => [static fn (Widget $child): Widget => Layout::column($child)];
         yield 'Flex' => [static fn (Widget $child): Widget => Flex::column()->add($child, Constraint::flex())];
         yield 'Split' => [static fn (Widget $child): Widget => Split::row(new SplitState([500, 500]), $child, Text::new('other'))];
         yield 'TabBar' => [static fn (Widget $child): Widget => TabBar::new()->withTabs([(new TabPage('one'))->add($child)])];
         yield 'Modal' => [static fn (Widget $child): Widget => Component::bind('modal', Modal::new('modal', $child), static fn (App $app, Modal $modal): App => $app)];
         yield 'Overlay' => [static fn (Widget $child): Widget => Overlay::new(Text::new('base'), $child)];
         yield 'PositionedOverlay' => [static fn (Widget $child): Widget => PositionedOverlay::at(0, 0)->withContent($child)];
-        yield 'nested' => [static fn (Widget $child): Widget => Container::around(Panel::new('outer')->add(Layout::vertical($child)))];
+        yield 'nested' => [static fn (Widget $child): Widget => Container::around(Panel::new('outer')->add(Layout::column($child)))];
     }
 
     /**

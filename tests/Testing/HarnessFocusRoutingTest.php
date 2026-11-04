@@ -35,7 +35,7 @@ final readonly class TypedFieldsApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('left', $this->left, static fn (self $app, TextInput $field): self => $app->cloneWith(left: $field)),
             Component::bind('right', $this->right, static fn (self $app, TextInput $field): self => $app->cloneWith(right: $field)),
         );

@@ -42,7 +42,7 @@ final class TableAllocationInvariantTest extends TestCase
     #[DataProviderExternal(ConstraintSweep::class, 'cases')]
     public function aTableDrawsTheColumnsARowOfTheSameConstraintsAllocatesAsFarAsTheAreaReaches(array $constraints, int $extent): void
     {
-        $row = Layout::horizontal(...array_map(
+        $row = Layout::row(...array_map(
             static fn (Constraint $constraint): ConstrainedWidget => new ConstrainedWidget($constraint),
             $constraints,
         ))->withGap(1);

@@ -124,7 +124,7 @@ final readonly class TwoDropdownApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 ComponentId::named('first'),
                 $this->first,

@@ -195,7 +195,7 @@ final readonly class HostOfABusyMount extends App
     {
         return $this->busy === null
             ? Text::new('gone')
-            : Layout::vertical(Mount::named('busy', $this->busy, Text::new('busy'), static fn (self $host, BusyModel $busy): self => $host->cloneWith(busy: $busy)));
+            : Layout::column(Mount::named('busy', $this->busy, Text::new('busy'), static fn (self $host, BusyModel $busy): self => $host->cloneWith(busy: $busy)));
     }
 
     protected function setup(): Cmd
@@ -289,7 +289,7 @@ final readonly class HostOfAFeed extends App
     {
         return $this->feed === null
             ? Text::new('gone')
-            : Layout::vertical(Mount::named('feed', $this->feed, Text::new('feed'), static fn (self $host, FeedModel $feed): self => $host->cloneWith(feed: $feed)));
+            : Layout::column(Mount::named('feed', $this->feed, Text::new('feed'), static fn (self $host, FeedModel $feed): self => $host->cloneWith(feed: $feed)));
     }
 
     protected function setup(): Cmd

@@ -21,7 +21,7 @@ final readonly class ActivityBar implements Widget
 
     private function __construct(
         private string $label = '',
-        private float $speed = 0.8,
+        private float $sweepSeconds = 1.25,
         private int $barWidth = 20,
     ) {
     }
@@ -41,9 +41,12 @@ final readonly class ActivityBar implements Widget
         return $this->cloneWith(label: $label);
     }
 
-    public function withSpeed(float $speed): self
+    /**
+     * The seconds the highlight takes from one end to the other.
+     */
+    public function withSweepDuration(float $seconds): self
     {
-        return $this->cloneWith(speed: max(0.01, $speed));
+        return $this->cloneWith(sweepSeconds: max(0.01, $seconds));
     }
 
     public function sizing(): Sizing
@@ -76,8 +79,8 @@ final readonly class ActivityBar implements Widget
         }
 
         $lastIndex = $barWidth - 1;
-        $position = self::bouncePosition($context->now() * $this->speed);
-        $context->requestRepaint(1.0 / ($this->speed * max(1, $lastIndex)));
+        $position = self::bouncePosition($context->now() / $this->sweepSeconds);
+        $context->requestRepaint($this->sweepSeconds / max(1, $lastIndex));
 
         $centerColumn = round($position * $lastIndex);
         $accentForeground = $theme->accent->foregroundValue();

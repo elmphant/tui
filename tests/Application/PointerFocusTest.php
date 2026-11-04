@@ -170,7 +170,7 @@ final readonly class TwoFieldPointerApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('first', $this->first, static fn (self $app, TextInput $w): self => $app->cloneWith(first: $w)),
             Component::bind('second', $this->second, static fn (self $app, TextInput $w): self => $app->cloneWith(second: $w)),
         );
@@ -195,7 +195,7 @@ final readonly class FieldAboveScrollingPaneApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('field', $this->field, static fn (self $app, TextInput $field): self => $app->cloneWith(field: $field)),
             Component::bind('pane', $this->pane, static fn (self $app, ScrollPane $pane): self => $app->cloneWith(pane: $pane)),
         );
@@ -210,7 +210,7 @@ final readonly class FieldAbovePlainPaneApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('field', $this->field, static fn (self $app, TextInput $w): self => $app->cloneWith(field: $w)),
             Component::named('pane', new PlainPane()),
         );
@@ -227,7 +227,7 @@ final readonly class ClickableChromeApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Spacer::new(),
             Component::bind('first', $this->first, static fn (self $app, TextInput $field): self => $app->cloneWith(first: $field)),
             Component::bind('second', $this->second, static fn (self $app, TextInput $field): self => $app->cloneWith(second: $field)),

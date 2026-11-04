@@ -31,7 +31,7 @@ final class GeometryTest extends TestCase
     public function aPlainWidgetIsFoundByTheInstanceTheTreeHolds(): void
     {
         $body = Text::new('body');
-        $root = Layout::vertical()->add(Text::new('head'), Constraint::exact(2))->add($body, Constraint::flex());
+        $root = Layout::column()->add(Text::new('head'), Constraint::exact(2))->add($body, Constraint::flex());
 
         self::assertEquals(new Rect(0, 2, 20, 8), Geometry::of($root, Rect::fromSize(20, 10))->rectOf($body));
         self::assertNull(Geometry::of($root, Rect::fromSize(20, 10))->rectOf(Text::new('body')), 'an equal widget is not the one drawn');
@@ -97,7 +97,7 @@ final class GeometryTest extends TestCase
 
     private static function headerAndList(): Widget
     {
-        return Layout::vertical()
+        return Layout::column()
             ->add(Text::new('head'), Constraint::exact(2))
             ->add(Component::named('list', Text::new('rows')), Constraint::flex());
     }

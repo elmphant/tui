@@ -74,7 +74,7 @@ final readonly class MountedTickerPair implements Reducer
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('first', $this->first, static fn (self $pair, MountedTicker $first): self => new self($first, $pair->second)),
             Component::bind('second', $this->second, static fn (self $pair, MountedTicker $second): self => new self($pair->first, $second)),
         );

@@ -48,7 +48,7 @@ final readonly class RenamedFieldsApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('alpha', $this->alpha, static fn (self $app, TextInput $field): self => $app->cloneWith(alpha: $field)),
             Component::bind('beta', $this->beta, static fn (self $app, TextInput $field): self => $app->cloneWith(beta: $field)),
         );

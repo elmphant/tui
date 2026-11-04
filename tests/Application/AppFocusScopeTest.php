@@ -56,7 +56,7 @@ final readonly class ScopedFocusApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('first', $this->first, static fn (self $app, RecordingField $w): self => $app->cloneWith(first: $w)),
             Component::bind('second', $this->second, static fn (self $app, RecordingField $w): self => $app->cloneWith(second: $w)),
         );

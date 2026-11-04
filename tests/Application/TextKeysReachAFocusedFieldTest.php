@@ -147,7 +147,7 @@ final readonly class ShortcutsAroundAFieldApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             $this->bindProperty('field', $this->field),
             $this->bindProperty('list', $this->list),
         );

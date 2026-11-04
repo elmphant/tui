@@ -84,7 +84,7 @@ final readonly class TwoProbeApp extends App
 {
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('left', new FlaggedProbe(true), static fn (self $app, FlaggedProbe $w): self => $app),
             Component::bind('right', new FlaggedProbe(false), static fn (self $app, FlaggedProbe $w): self => $app),
         );
@@ -99,7 +99,7 @@ final readonly class MixedTreeApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('field', $this->field, static fn (self $app, TextInput $w): self => $app->cloneWith(field: $w)),
             new FocusProbe(),
         );

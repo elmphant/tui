@@ -101,8 +101,8 @@ final readonly class RowAboveThePanesApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
-            new FilterRowScope(Layout::horizontal(
+        return Layout::column(
+            new FilterRowScope(Layout::row(
                 Component::bind(
                     'severity',
                     $this->severity,
@@ -140,7 +140,7 @@ final readonly class RowBelowThePanesApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind(
                 'timeline',
                 $this->timeline,
@@ -151,7 +151,7 @@ final readonly class RowBelowThePanesApp extends App
                 $this->entry,
                 static fn (self $app, TextInput $field): self => $app->cloneWith(entry: $field),
             ),
-            new FilterRowScope(Layout::horizontal(
+            new FilterRowScope(Layout::row(
                 Component::bind(
                     'severity',
                     $this->severity,

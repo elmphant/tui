@@ -30,7 +30,7 @@ final class ComponentFocusScopeTest extends TestCase
         /** @var ArrayObject<string, bool> $seen */
         $seen = new ArrayObject();
 
-        $tree = Layout::vertical(
+        $tree = Layout::column(
             Component::bind('first', new FocusProbe('first', $seen), static fn (object $app, Interactive $w): object => $app),
             Component::bind('second', new FocusProbe('second', $seen), static fn (object $app, Interactive $w): object => $app),
         );

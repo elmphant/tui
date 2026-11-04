@@ -66,7 +66,7 @@ final readonly class TwoPressTargetsApp extends App
 
     public function view(): Widget
     {
-        return Layout::vertical(
+        return Layout::column(
             Component::bind('first', $this->first, static fn (self $app, PressTarget $target): self => $app->cloneWith(first: $target)),
             Component::bind('second', $this->second, static fn (self $app, PressTarget $target): self => $app->cloneWith(second: $target)),
         );
