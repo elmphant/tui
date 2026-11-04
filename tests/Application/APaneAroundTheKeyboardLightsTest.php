@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd\ClipboardCmd;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
@@ -46,8 +47,8 @@ final readonly class UnboundPanesApp extends App
     public function view(): Widget
     {
         return Layout::row(
-            Panel::new('A')->add($this->bindProperty('a', $this->a)),
-            Panel::new('B')->add($this->bindProperty('b', $this->b)),
+            Panel::new('A')->add($this->bind('a')),
+            Panel::new('B')->add($this->bind('b')),
         );
     }
 }
@@ -61,8 +62,8 @@ final readonly class KeptPanesApp extends App
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('paneA', $this->paneA->withChildren([$this->bindProperty('a', $this->a)])),
-            $this->bindProperty('paneB', $this->paneB->withChildren([$this->bindProperty('b', $this->b)])),
+            Component::bind('paneA', $this->paneA->withChildren([$this->bind('a')]), static fn (self $app, Panel $pane): self => $app->cloneWith(paneA: $pane)),
+            Component::bind('paneB', $this->paneB->withChildren([$this->bind('b')]), static fn (self $app, Panel $pane): self => $app->cloneWith(paneB: $pane)),
         );
     }
 }

@@ -203,7 +203,7 @@ final class ComponentTest extends TestCase
     }
 
     #[Test]
-    public function bindPropertyTakesAnIdOfItsOwnOverThePropertyName(): void
+    public function anIdOfItsOwnWinsOverThePropertyName(): void
     {
         $ids = array_map(
             static fn (ComponentId $id): string => $id->value,
@@ -306,7 +306,7 @@ final readonly class PropertyBoundApp extends App
 
     public function view(): Widget
     {
-        return $this->bindProperty('input', $this->input);
+        return $this->bind('input');
     }
 }
 
@@ -318,7 +318,7 @@ final readonly class RenamedPropertyApp extends App
 
     public function view(): Widget
     {
-        return $this->bindProperty('input', $this->input, 'search-field');
+        return $this->bind('input', 'search-field');
     }
 }
 

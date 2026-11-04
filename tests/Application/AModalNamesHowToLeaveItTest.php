@@ -40,7 +40,7 @@ final readonly class ModalWithAFieldApp extends App
 
     public function view(): Widget
     {
-        $field = $this->bindProperty('title', $this->title);
+        $field = $this->bind('title');
 
         return Overlay::new(
             Layout::column(Text::new('Board'), Footer::new()->withLeft(FocusHints::new())),

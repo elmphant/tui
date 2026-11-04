@@ -65,7 +65,7 @@ final readonly class PointerAskingApp extends App
     {
         return Layout::column(
             Text::new('Board'),
-            Layout::row($this->bindProperty('todo', $this->todo), $this->bindProperty('done', $this->done)),
+            Layout::row($this->bind('todo'), $this->bind('done')),
         );
     }
 

@@ -371,24 +371,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     }
 
     /**
-     * Bind the widget to the property that holds it; the default ID is the property name.
-     *
-     * @template TBoundWidget of Interactive
-     *
-     * @param TBoundWidget $widget
-     *
-     * @return Component<TBoundWidget>
-     */
-    protected function bindProperty(string $property, Interactive $widget, ComponentId|string|null $id = null): Component
-    {
-        return Component::bind(
-            $id ?? $property,
-            $widget,
-            static fn (self $app, Interactive $updated): self => $app->cloneWith(...[$property => $updated]),
-        );
-    }
-
-    /**
      * Ctrl+K opens help when a field takes `?` as text; return Keybindings::empty() to disable help.
      */
     protected function keyHelpKeybindings(): Keybindings

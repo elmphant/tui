@@ -116,7 +116,7 @@ final readonly class ScopedActionsApp extends App
     public function view(): Widget
     {
         return Layout::column(...[
-            $this->bindProperty('field', $this->field),
+            $this->bind('field'),
             ...array_map(fn (string $name): Component => Component::bind(
                 $name,
                 $this->{$name},

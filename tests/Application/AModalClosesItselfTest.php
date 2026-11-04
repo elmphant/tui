@@ -61,7 +61,7 @@ final readonly class ClosingModalApp extends App
 
     public function view(): Widget
     {
-        $page = Layout::column($this->bindProperty('list', $this->list));
+        $page = Layout::column($this->bind('list'));
 
         return $this->modal === null ? $page : Overlay::new($page, Component::bind(
             'modal',

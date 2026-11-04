@@ -742,7 +742,7 @@ final readonly class SkippedThenReachedApp extends CopyableTestApp
     {
         return Box::new('Rows')
             ->add(Component::named('read-only', Text::new('chrome')))
-            ->add($this->bindProperty('reached', $this->reached, 'reached'));
+            ->add($this->bind('reached', 'reached'));
     }
 }
 
@@ -758,8 +758,8 @@ final readonly class SwappingOnMouseApp extends CopyableTestApp
     public function view(): Widget
     {
         return $this->swapped
-            ? $this->bindProperty('after', $this->after, 'field')
-            : $this->bindProperty('before', $this->before, 'field');
+            ? $this->bind('after', 'field')
+            : $this->bind('before', 'field');
     }
 
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
@@ -787,8 +787,8 @@ final readonly class TwoPanelApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('left', $this->left, 'left-panel'),
-            $this->bindProperty('right', $this->right, 'right-panel'),
+            $this->bind('left', 'left-panel'),
+            $this->bind('right', 'right-panel'),
         );
     }
 
@@ -818,8 +818,8 @@ final readonly class InterceptApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('left', $this->left, 'left-panel'),
-            $this->bindProperty('right', $this->right, 'right-panel'),
+            $this->bind('left', 'left-panel'),
+            $this->bind('right', 'right-panel'),
         );
     }
 
@@ -847,7 +847,7 @@ final readonly class ApplicationShortcutApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('widget', $this->widget, 'shortcut-widget');
+        return $this->bind('widget', 'shortcut-widget');
     }
 
     protected function applicationKeybindings(): Keybindings
@@ -877,7 +877,7 @@ final readonly class UnhandledApplicationShortcutApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('widget', $this->widget, 'unhandled-shortcut-widget');
+        return $this->bind('widget', 'unhandled-shortcut-widget');
     }
 
     protected function applicationKeybindings(): Keybindings
@@ -898,9 +898,9 @@ final readonly class ClippedFocusApp extends CopyableTestApp
     public function view(): Widget
     {
         return Box::new('Clipped')
-            ->add($this->bindProperty('visible', $this->visible, 'clipped-visible'))
-            ->add($this->bindProperty('middle', $this->middle, 'clipped-middle'))
-            ->add($this->bindProperty('clipped', $this->clipped, 'clipped-last'));
+            ->add($this->bind('visible', 'clipped-visible'))
+            ->add($this->bind('middle', 'clipped-middle'))
+            ->add($this->bind('clipped', 'clipped-last'));
     }
 }
 
@@ -941,9 +941,9 @@ final readonly class ThreePanelApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('first', $this->first, 'first-panel'),
-            $this->bindProperty('second', $this->second, 'second-panel'),
-            $this->bindProperty('third', $this->third, 'third-panel'),
+            $this->bind('first', 'first-panel'),
+            $this->bind('second', 'second-panel'),
+            $this->bind('third', 'third-panel'),
         );
     }
 }
@@ -1033,7 +1033,7 @@ final readonly class GlobalKeybindingsToggleApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('widget', $this->widget, 'binding-capture');
+        return $this->bind('widget', 'binding-capture');
     }
 
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
@@ -1058,7 +1058,7 @@ final readonly class GlobalKeybindingsTickToggleApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('widget', $this->widget, 'binding-capture');
+        return $this->bind('widget', 'binding-capture');
     }
 
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult
@@ -1125,7 +1125,7 @@ final readonly class NoOpUpdateResultApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('counter', $this->counter, 'counting-widget');
+        return $this->bind('counter', 'counting-widget');
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -1144,7 +1144,7 @@ final readonly class ToggleUpdateResultApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('counter', $this->counter, 'counting-widget');
+        return $this->bind('counter', 'counting-widget');
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -1162,7 +1162,7 @@ final readonly class CommandOnlyUpdateResultApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('counter', $this->counter, 'counting-widget');
+        return $this->bind('counter', 'counting-widget');
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -1180,7 +1180,7 @@ final readonly class CountingFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('counter', $this->counter, 'counting-widget');
+        return $this->bind('counter', 'counting-widget');
     }
 }
 
@@ -1280,7 +1280,7 @@ final readonly class UnchangedFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('widget', $this->widget, 'unchanged-widget');
+        return $this->bind('widget', 'unchanged-widget');
     }
 }
 
@@ -1293,7 +1293,7 @@ final readonly class RectCapturingFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('widget', $this->widget, 'rect-capture');
+        return $this->bind('widget', 'rect-capture');
     }
 }
 
@@ -1308,8 +1308,8 @@ final readonly class TwoRectCapturingApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('left', $this->left, 'left-capture'),
-            $this->bindProperty('right', $this->right, 'right-capture'),
+            $this->bind('left', 'left-capture'),
+            $this->bind('right', 'right-capture'),
         );
     }
 }
@@ -1325,8 +1325,8 @@ final readonly class TwoCountingFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('left', $this->left, 'left-counter'),
-            $this->bindProperty('right', $this->right, 'right-counter'),
+            $this->bind('left', 'left-counter'),
+            $this->bind('right', 'right-counter'),
         );
     }
 }
@@ -1379,8 +1379,8 @@ final readonly class ClickTrackingFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('widget', $this->widget, 'click-tracker'),
-            $this->bindProperty('other', $this->other, 'other-widget'),
+            $this->bind('widget', 'click-tracker'),
+            $this->bind('other', 'other-widget'),
         );
     }
 }
@@ -1396,8 +1396,8 @@ final readonly class TwoUnchangedFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('left', $this->left, 'left-widget'),
-            $this->bindProperty('right', $this->right, 'right-widget'),
+            $this->bind('left', 'left-widget'),
+            $this->bind('right', 'right-widget'),
         );
     }
 }
@@ -1450,8 +1450,8 @@ final readonly class TabConsumingApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('widget', $this->widget, 'tab-consumer'),
-            $this->bindProperty('other', $this->other, 'other-widget'),
+            $this->bind('widget', 'tab-consumer'),
+            $this->bind('other', 'other-widget'),
         );
     }
 }
@@ -1501,7 +1501,7 @@ final readonly class MouseCommandFocusableApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('widget', $this->widget, 'click-command');
+        return $this->bind('widget', 'click-command');
     }
 
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult
@@ -1523,7 +1523,7 @@ final readonly class SingleCommandOnClickApp extends CopyableTestApp
 
     public function view(): Widget
     {
-        return $this->bindProperty('widget', $this->widget, 'click-command');
+        return $this->bind('widget', 'click-command');
     }
 }
 
@@ -1539,8 +1539,8 @@ final readonly class MouseTrackingFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('widget', $this->widget, 'click-tracker'),
-            $this->bindProperty('other', $this->other, 'other-widget'),
+            $this->bind('widget', 'click-tracker'),
+            $this->bind('other', 'other-widget'),
         );
     }
 
@@ -1601,8 +1601,8 @@ final readonly class TabCommandOnlyApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('widget', $this->widget, 'tab-command'),
-            $this->bindProperty('other', $this->other, 'other-widget'),
+            $this->bind('widget', 'tab-command'),
+            $this->bind('other', 'other-widget'),
         );
     }
 }
@@ -1660,8 +1660,8 @@ final readonly class MouseSwapApp extends CopyableTestApp
     public function view(): Widget
     {
         return Layout::row(
-            $this->bindProperty('left', $this->left, 'left-marker'),
-            $this->bindProperty('right', $this->right, 'right-marker'),
+            $this->bind('left', 'left-marker'),
+            $this->bind('right', 'right-marker'),
         );
     }
 

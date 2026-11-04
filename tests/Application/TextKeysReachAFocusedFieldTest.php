@@ -96,7 +96,7 @@ final readonly class VimFinderApp extends App
 
     public function view(): Widget
     {
-        return $this->bindProperty('finder', $this->finder);
+        return $this->bind('finder');
     }
 
     protected function globalKeybindings(): Keybindings
@@ -117,7 +117,7 @@ final readonly class ShortcutsAroundADropdownApp extends App
 
     public function view(): Widget
     {
-        return $this->bindProperty('dropdown', $this->dropdown);
+        return $this->bind('dropdown');
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -148,8 +148,8 @@ final readonly class ShortcutsAroundAFieldApp extends App
     public function view(): Widget
     {
         return Layout::column(
-            $this->bindProperty('field', $this->field),
-            $this->bindProperty('list', $this->list),
+            $this->bind('field'),
+            $this->bind('list'),
         );
     }
 

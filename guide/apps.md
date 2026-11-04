@@ -28,7 +28,6 @@ abstract readonly class App
     protected function actionDescription(string $action): string {} // what an action does, in the key help
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
     protected function bind(string $property): Component {}           // the widget a property holds, stored by the framework
-    protected function bindProperty(string $property, Interactive $widget): Component {}
     protected function componentAt(MouseMsg $message, Rect $screen): ?ComponentId {} // in onMouse(): the bound component under the pointer
 }
 ```
@@ -193,8 +192,7 @@ Rules for binding:
 `$this->bind('list')` binds the widget the property holds and writes it back there.
 `->on(Submitted::class, static fn (self $app, Submitted $submitted): self => …)` runs
 after that store, on the stored app, and its answer wins: ignoring an outcome never
-loses what the widget did. `bindProperty('list', $this->list)` is the same with the
-widget passed by hand.
+loses what the widget did.
 
 ## Mounting a sub-model
 
