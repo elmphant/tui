@@ -107,7 +107,7 @@ final readonly class CreateUser implements Message {}
 
 $form = Form::new('Create backend user')
     ->withField(Field::text('username', 'Username', 'The login name')->withRequired())
-    ->withField(Field::text('password', 'Password')->withSecret())
+    ->withField(Field::secret('password', 'Password'))
     ->withField(Field::choice('site', 'Site', ['main' => 'Main website', 'shop' => 'Shop']))
     ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
     ->withFoot('❯ backend:user:create')
@@ -127,6 +127,7 @@ Bind it like any widget and handle the submit message in `onMessage()`.
 - `withIntro()` adds text above the fields. `withFoot()` and
   `withSubmitDisabled()` say what the button will do, or why it can't.
 - `withCancel($message)` is sent when the reader presses Escape.
+- `Field::secret()` is a text field that hides what is typed.
 - `Field::choice()` shows a row of options where they fit and a filterable list
   where they don't. `Field::of()` takes any widget that implements `HoldsAValue`.
 

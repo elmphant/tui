@@ -35,7 +35,12 @@ final readonly class Field
 
     public static function text(string $name, string $label, string $description = ''): self
     {
-        return new self($name, $label, $description, TextInput::new()->withDecoration(InputDecoration::Underline)->withWidth(self::TEXT_WIDTH));
+        return new self($name, $label, $description, self::textInput());
+    }
+
+    public static function secret(string $name, string $label, string $description = ''): self
+    {
+        return new self($name, $label, $description, self::textInput()->withEchoMode(EchoMode::Password));
     }
 
     /**
@@ -71,13 +76,6 @@ final readonly class Field
         return $this->cloneWith(rules: [...$this->rules, $rule]);
     }
 
-    public function withSecret(): self
-    {
-        return $this->widget instanceof TextInput
-            ? $this->withWidget($this->widget->withEchoMode(EchoMode::Password))
-            : $this;
-    }
-
     public function withWidget(Focusable&HoldsAValue $widget): self
     {
         return $this->cloneWith(widget: $widget);
@@ -105,6 +103,11 @@ final readonly class Field
         }
 
         return null;
+    }
+
+    private static function textInput(): TextInput
+    {
+        return TextInput::new()->withDecoration(InputDecoration::Underline)->withWidth(self::TEXT_WIDTH);
     }
 
     /**

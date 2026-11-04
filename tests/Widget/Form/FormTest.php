@@ -56,6 +56,15 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aSecretFieldKeepsWhatIsTypedOffTheScreen(): void
+    {
+        $form = WidgetHarness::for(Form::new('Login')->withField(Field::secret('password', 'Password')), 70, 12)->type('hunter2');
+
+        self::assertSame('hunter2', $form->widget()->values()['password']);
+        self::assertStringNotContainsString('hunter2', $form->screen()->plainText());
+    }
+
+    #[Test]
     public function aFormSaysWhatEachFieldHolds(): void
     {
         $form = WidgetHarness::for(self::userForm(), 70, 24)
@@ -499,7 +508,7 @@ final class FormTest extends TestCase
     {
         return Form::new('Create user')
             ->withField(Field::text('username', 'Username', 'The login name')->withRequired())
-            ->withField(Field::text('password', 'Password')->withSecret())
+            ->withField(Field::secret('password', 'Password'))
             ->withField(Field::choice('site', 'Site', ['main' => 'Main', 'intranet' => 'Intranet', 'shop' => 'Shop']))
             ->withField(Field::flag('admin', 'Admin', 'Create the user with admin rights'))
             ->withFoot('❯ backend:user:create')
