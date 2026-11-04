@@ -13,6 +13,7 @@ use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Dismissed;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Attr;
@@ -23,8 +24,10 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focus\InputLayer;
 use Elmphant\Tui\Widget\Focus\Navigates;
 use Elmphant\Tui\Widget\Focus\Navigation;
@@ -40,7 +43,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 /**
  * @template-covariant TContent of Widget
  */
-final readonly class Modal implements Interactive, WidgetContainer, Navigates, InputLayer, KeybindingsAware, PublishesHints
+final readonly class Modal implements Interactive, GraftsItsChildren, Committing, Navigates, InputLayer, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -198,6 +201,16 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
         return $this->open ? [[$this->content, $this->computeContentRect($area)]] : [];
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return $index === 0 ? $this->cloneWith(content: $child) : $this;
+    }
+
+    public function outcomeOf(Message $message, Rect $area): ?Message
+    {
+        return $this->open && $this->dismisses($message, $area) ? new Dismissed($message) : null;
+    }
+
     public function sizing(): Sizing
     {
         return Sizing::of(Constraint::flex(), Constraint::flex());
@@ -208,7 +221,7 @@ final readonly class Modal implements Interactive, WidgetContainer, Navigates, I
      */
     public function navigation(): Navigation
     {
-        return !$this->open || self::mountsAFocusable([$this->content], false) ? Navigation::Never : Navigation::Regular;
+        return !$this->open || self::mountsAFocusable([$this->content], true) ? Navigation::Never : Navigation::Regular;
     }
 
     public function dismisses(Message $message, Rect $area): bool

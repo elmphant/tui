@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\AppActions;
+use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Bar\FocusHints;
 use Elmphant\Tui\Widget\Bar\Footer;
@@ -39,6 +40,17 @@ final class AppActionsTest extends TestCase
     }
 
     #[Test]
+    public function anActionKeptOutOfTheFooterIsStillInTheKeyHelp(): void
+    {
+        $harness = ModelHarness::for(new ArchivingApp(ListView::fromStrings(['alpha']), quiet: true), 80, 6)->init();
+        $focused = $harness->focused();
+        self::assertNotNull($focused);
+
+        self::assertStringNotContainsString('archive all', $harness->screen()->lineAt(5));
+        self::assertSame('archive all', $harness->model()->keyHelp(FocusState::on($focused))['Anywhere']['a'] ?? null);
+    }
+
+    #[Test]
     public function theFooterLeavesOutAnActionKeyAFocusedFieldTakesAsText(): void
     {
         $screen = ModelHarness::for(new ArchivingApp(ListView::fromStrings(['alpha']), field: TextInput::new()), 80, 6)->screen();
@@ -50,7 +62,7 @@ final class AppActionsTest extends TestCase
 
 final readonly class ArchivingApp extends App
 {
-    public function __construct(public ListView $list, public int $archived = 0, public ?TextInput $field = null)
+    public function __construct(public ListView $list, public int $archived = 0, public ?TextInput $field = null, public bool $quiet = false)
     {
     }
 
@@ -65,6 +77,6 @@ final readonly class ArchivingApp extends App
 
     protected function actions(): AppActions
     {
-        return parent::actions()->with('archive', ['a'], static fn (self $app): self => new self($app->list, $app->archived + 1, $app->field), 'archive all');
+        return parent::actions()->with('archive', ['a'], static fn (self $app): self => new self($app->list, $app->archived + 1, $app->field, $app->quiet), 'archive all', inFooter: !$this->quiet);
     }
 }

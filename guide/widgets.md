@@ -152,66 +152,44 @@ Field::text('due', 'Due date')
 ## Modals
 
 While a `Modal` is on screen, everything behind it ignores keys and clicks, and
-the keyboard moves inside it. Always bind it, and keep its content on the App.
-Escape or a click outside closes it: `isOpen()` turns false, and its bind
-closure drops it, so it leaves the screen:
+the keyboard moves into what it holds. Keep the modal on the App and bind it once:
+what its content does reaches the modal's handlers, and so does the modal's own
+`Dismissed` on Escape or a click outside:
 
 ```php
-use Elmphant\Tui\Application\{App, Component, InputContext};
-use Elmphant\Tui\Core\{Message, UpdateResult};
-use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Widget\Form\{Field, Form};
+use Elmphant\Tui\Application\{App, AppActions};
+use Elmphant\Tui\Message\{Dismissed, Submitted};
+use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Popup\{Modal, Overlay};
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
 
-final readonly class NoteSaved implements Message {}
-
 final readonly class Notes extends App
 {
     /** @param list<string> $notes */
-    public function __construct(private array $notes = [], private ?Form $editor = null) {}
+    public function __construct(private array $notes = [], private ?Modal $dialog = null) {}
 
     public function view(): Widget
     {
         $page = Text::new($this->notes === [] ? 'Ctrl+N adds a note' : implode("\n", $this->notes));
 
-        if ($this->editor === null) {
-            return $page;
-        }
-
-        $form = Component::bind('editor', $this->editor, static fn (self $app, Form $editor): self => $app->cloneWith(editor: $editor));
-
-        return Overlay::new($page, Component::bind(
-            'modal',
-            Modal::new('', $form)->withBorder(false)->withSizedToContent(),
-            static fn (self $app, Modal $modal): self => $modal->isOpen() ? $app : $app->cloneWith(editor: null),
-        ));
+        return $this->dialog === null ? $page : Overlay::new($page, $this->bind('dialog')
+            ->on(Submitted::class, static fn (self $app, Submitted $submitted): self => new self([...$app->notes, $submitted->value]))
+            ->on(Dismissed::class, static fn (self $app): self => new self($app->notes)));
     }
 
-    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
+    protected function actions(): AppActions
     {
-        if ($this->editor !== null || !$message->ctrl || $message->key !== 'n') {
-            return new UpdateResult($this);
-        }
-
-        return new UpdateResult($this->cloneWith(editor: Form::new('New note')
-            ->withField(Field::text('title', 'Title')->withRequired())
-            ->withSubmit('Save', new NoteSaved())));
-    }
-
-    protected function onMessage(Message $message, InputContext $input): UpdateResult
-    {
-        return match (true) {
-            $message instanceof NoteSaved && $this->editor?->problems() === [] => new UpdateResult(
-                $this->cloneWith(notes: [...$this->notes, (string)$this->editor->values()['title']], editor: null),
-            ),
-            $message instanceof NoteSaved => new UpdateResult($this->cloneWith(editor: $this->editor?->withSubmitAttempted())),
-            default => new UpdateResult($this),
-        };
+        return parent::actions()->with('new', ['ctrl+n'], static fn (self $app): self => new self(
+            $app->notes,
+            Modal::new('New note', TextInput::new()->withSubmit())->withSizedToContent(),
+        ), 'new note');
     }
 }
 ```
+
+A `Form` inside a modal works the same way: its fields become stops of their own
+inside the dialog.
 
 When the modal closes, the keyboard goes back to where it was.
 `withBorder(false)` drops the frame when the content has its own, and

@@ -25,14 +25,15 @@ abstract readonly class App
     protected function focusCycleKeybindings(): Keybindings {}  // tab / shift+tab
     protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
-    protected function bind(string $property): Component {}           // the widget a property holds, stored by the framework
+    protected function bind(string $property, ?string $id = null, int|string|null $at = null): Component {} // the widget a property holds (at: a key of an array), stored by the framework
 }
 ```
 
 - `actions()` declares the keys that work wherever the keyboard is, each with
   its handler and label: `parent::actions()->with('archive', ['ctrl+a'], static fn (self $app): self => $app->archived(), 'archive')`.
   The footer leads with them and the key help lists them. A letter key is left
-  out while a field takes text, since it types then.
+  out while a field takes text, since it types then. `inFooter: false` keeps a
+  shortcut out of the footer and in the key help only.
 - Ctrl+Q and Ctrl+C quit. `parent::actions()->withQuitKeys('q', 'ctrl+q')`
   changes the keys. Declare `Actions::QUIT` again with your own handler to ask
   before quitting.
@@ -190,6 +191,11 @@ Rules for binding:
 after that store, on the stored app, and its answer wins: ignoring an outcome never
 loses what the widget did.
 
+A property may hold several widgets, keyed: `$this->bind('columns', at: $key)` binds
+`$this->columns[$key]`, writes it back under that key, and names it `columns.$key`
+for `Cmd::focus()`. Reordering or removing entries keeps each widget, and the
+keyboard, with its key. String keys survive a reorder best.
+
 ## Mounting a sub-model
 
 A larger part of an app, such as a tab or a module, can have its own model,
@@ -202,7 +208,7 @@ widgets and commands. Mount it under a name:
 - If it implements `Initializes`, it starts with the App.
 
 ```php
-use Elmphant\Tui\Application\{App, Initializes, Mount};
+use Elmphant\Tui\Application\{App, Initializes};
 use Elmphant\Tui\Core\{Cmd, EffectId, Message, Reducer, UpdateResult};
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ProcessResultMsg;
@@ -237,14 +243,18 @@ final readonly class Machine extends App
 
     public function view(): Widget
     {
-        return Mount::named('uptime', $this->uptime, $this->uptime->view(), static fn (self $app, Uptime $uptime): self => new self($uptime));
+        return $this->mount('uptime', $this->uptime->view());
     }
 }
 ```
 
-The last argument writes the changed model back into the App. To send a message
-to the App instead of to the sub-model, return the command
-`Mount::toHost($message)`. It arrives in the App's `onMessage()`.
+`$this->mount('uptime', $view)` mounts the sub-model the property holds under its
+name and stores the changed model back there. With several, keyed in an array,
+`$this->mount('modules', $view, at: $key)` mounts the one under that key as
+`modules.$key`. `Mount::named($name, $model, $view, $writeBack)` is the long form
+for a model kept anywhere else. To send a message to the App instead of to the
+sub-model, return the command `Mount::toHost($message)`. It arrives in the App's
+`onMessage()`.
 
 An App that shows only some mounts at a time, such as tabs, lists the hidden
 ones in `mounts()` so they still start and get their results. A mount that is

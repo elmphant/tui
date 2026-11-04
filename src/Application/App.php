@@ -797,14 +797,12 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         // Reverse pre-order so the innermost container gets the key first.
         foreach (array_reverse($enclosing) as $candidate) {
-            $dispatch = $this->childDispatcher()->dispatchOne(
-                $candidate->widget,
-                $message,
-                $rects[$candidate->id->value] ?? $screenRect,
-            );
+            $rect = $rects[$candidate->id->value] ?? $screenRect;
+            $outcome = $candidate->widget instanceof Committing ? $candidate->widget->outcomeOf($message, $rect) : null;
+            $dispatch = $this->childDispatcher()->dispatchOne($candidate->widget, $message, $rect);
 
-            if ($dispatch->changed) {
-                return $this->writtenBack($candidate, [[$candidate, $dispatch->child]], $dispatch->command, $message);
+            if ($dispatch->changed || $outcome !== null) {
+                return $this->writtenBack($candidate, [[$candidate, $dispatch->child]], $dispatch->command, $outcome ?? $message);
             }
 
             if ($dispatch->command !== null) {
@@ -1033,7 +1031,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     private function hintsOfFocused(?ComponentId $focused): array
     {
-        $appKeys = $this->declaredActions()->keybindings();
+        $appKeys = $this->declaredActions()->footerKeybindings();
         $takesText = $this->takesText($focused);
         $appHints = $this->appActionHints($takesText ? $appKeys->withoutText() : $appKeys);
 

@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
+use WeakMap;
 
 /**
  * The keys an App answers wherever the keyboard is: each one's keys, handler and label in one declaration.
@@ -16,7 +17,7 @@ use Elmphant\Tui\Input\Keybindings;
 final readonly class AppActions
 {
     /**
-     * @param array<string, array{list<string>, Closure, ?string}> $declared
+     * @param array<string, array{list<string>, Closure, ?string, bool}> $declared
      */
     private function __construct(private array $declared)
     {
@@ -32,17 +33,18 @@ final readonly class AppActions
 
     /**
      * The handler runs on the App that heard the key. A name declared again replaces the earlier declaration.
+     * `inFooter: false` keeps it out of the footer, for a shortcut the key help alone should teach.
      *
      * @template TApp of App
      *
      * @param list<string>                             $keys
      * @param Closure(TApp): (TApp|UpdateResult<TApp>) $handler
      */
-    public function with(string $name, array $keys, Closure $handler, ?string $label = null): self
+    public function with(string $name, array $keys, Closure $handler, ?string $label = null, bool $inFooter = true): self
     {
         Component::assertSafeReplacement($handler);
 
-        return new self(declared: [...$this->declared, $name => [$keys, $handler, $label]]);
+        return new self(declared: [...$this->declared, $name => [$keys, $handler, $label, $inFooter]]);
     }
 
     /**
@@ -51,9 +53,9 @@ final readonly class AppActions
     public function withQuitKeys(string ...$keys): self
     {
         $quit = self::new()->declared[Actions::QUIT];
-        [, $handler, $label] = $this->declared[Actions::QUIT] ?? $quit;
+        [, $handler, $label, $inFooter] = $this->declared[Actions::QUIT] ?? $quit;
 
-        return new self(declared: [...$this->declared, Actions::QUIT => [array_values($keys), $handler, $label]]);
+        return new self(declared: [...$this->declared, Actions::QUIT => [array_values($keys), $handler, $label, $inFooter]]);
     }
 
     /**
@@ -61,7 +63,24 @@ final readonly class AppActions
      */
     public function keybindings(): Keybindings
     {
-        return new Keybindings(array_map(static fn (array $declared): array => $declared[0], $this->declared));
+        static $built = null;
+        $built ??= new WeakMap();
+
+        /** @var WeakMap<self, Keybindings> $built */
+        return $built[$this] ??= new Keybindings(array_map(static fn (array $declared): array => $declared[0], $this->declared));
+    }
+
+    /**
+     * @internal
+     */
+    public function footerKeybindings(): Keybindings
+    {
+        static $built = null;
+        $built ??= new WeakMap();
+        $shown = static fn (array $declared): bool => $declared[3];
+
+        /** @var WeakMap<self, Keybindings> $built */
+        return $built[$this] ??= new Keybindings(array_map(static fn (array $declared): array => $declared[0], array_filter($this->declared, $shown)));
     }
 
     /**

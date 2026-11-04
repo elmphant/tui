@@ -514,7 +514,13 @@ final readonly class ComponentRegistry
      */
     private static function ownComponent(Widget $widget): array
     {
+        if (!$widget instanceof Component) {
+            return [];
+        }
+
+        $layer = $widget->widget;
+
         /** @var list<Component<Interactive>> */
-        return $widget instanceof Component ? [$widget] : [];
+        return $layer instanceof InputLayer && $layer->claimsInput() ? self::published($widget) : [$widget];
     }
 }
