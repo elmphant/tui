@@ -88,7 +88,7 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
      */
     public function withChildren(array $children): self
     {
-        return $children === $this->pane->authoredChildren()
+        return $children === $this->pane->children()
             ? $this
             : $this->withPane($this->pane->withChildren($children));
     }

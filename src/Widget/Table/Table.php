@@ -521,7 +521,7 @@ final readonly class Table implements Committing, Focusable, KeybindingsAware, M
         };
 
         if ($filled) {
-            $defaultStyle->apply($frame, $rowArea);
+            $frame->fillStyled($rowArea, $defaultStyle);
         }
 
         $rowStyle = $row->style ?? $defaultStyle;

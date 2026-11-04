@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Rendering;
 
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
-use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -175,32 +173,6 @@ final class StyleTest extends TestCase
         $set = new Style(background: Color::ansi(AnsiColor::Cyan));
         self::assertGreaterThan(0, $set->backgroundValue());
         self::assertSame(Color::ansi(AnsiColor::Cyan)->value, $set->backgroundValue());
-    }
-
-    #[Test]
-    public function applyFillsBufferArea(): void
-    {
-        $frame = new Frame(10, 5);
-        $area = new Rect(2, 1, 4, 3);
-        $foregroundColor = Color::ansi(AnsiColor::Red);
-        $backgroundColor = Color::ansi(AnsiColor::Blue);
-        $style = new Style(
-            foreground: $foregroundColor,
-            background: $backgroundColor,
-            attributes: Attr::BOLD,
-        );
-
-        $style->apply($frame, $area);
-
-        $index = 1 * 10 + 2;
-        self::assertSame($foregroundColor->value, $frame->foregrounds[$index]);
-        self::assertSame($backgroundColor->value, $frame->backgrounds[$index]);
-        self::assertSame(Attr::BOLD, $frame->attributes[$index]);
-
-        $outsideIndex = 0 * 10 + 0;
-        self::assertSame(0, $frame->foregrounds[$outsideIndex]);
-        self::assertSame(0, $frame->backgrounds[$outsideIndex]);
-        self::assertSame(0, $frame->attributes[$outsideIndex]);
     }
 
     #[Test]

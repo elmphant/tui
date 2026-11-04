@@ -923,11 +923,11 @@ final class FooterTest extends TestCase
     }
 
     #[Test]
-    public function rightHintsRendersAgainstTheRightEdge(): void
+    public function hintsOnTheRightEndAtTheRightEdge(): void
     {
         $frame = new Frame(40, 1);
 
-        Footer::forRightHints(['q' => 'quit'])
+        Footer::new()->withRight(StatusBar::forHints(['q' => 'quit']))
             ->render($frame, new Rect(0, 0, 40, 1), $this->context);
 
         $line = '';
@@ -940,14 +940,13 @@ final class FooterTest extends TestCase
     }
 
     #[Test]
-    public function leftHintsRendersFromColumnZero(): void
+    public function hintsOnTheLeftStartAtColumnZero(): void
     {
         $frame = new Frame(40, 1);
 
-        Footer::forLeftHints(['q' => 'quit'])
+        Footer::new()->withLeft(StatusBar::forHints(['q' => 'quit']))
             ->render($frame, new Rect(0, 0, 40, 1), $this->context);
 
-        // Left-aligned hint: " q " should start at col 0
         self::assertSame(' ', $frame->characters[0]);
         self::assertSame('q', $frame->characters[1]);
         self::assertSame(' ', $frame->characters[2]);

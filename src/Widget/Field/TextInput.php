@@ -199,7 +199,7 @@ final readonly class TextInput implements BindsForTheMoment, Focusable, HoldsAVa
 
         // Use one text style across the field, including its empty tail, to keep the underline uniform.
         $fieldStyle = $this->fieldStyle($context, $showPlaceholder);
-        $fieldStyle->apply($frame, new Rect($area->x, $area->y, $availableWidth, 1));
+        $frame->fillStyled(new Rect($area->x, $area->y, $availableWidth, 1), $fieldStyle);
 
         $content = $showPlaceholder
             ? CharWidth::truncateToWidth($this->placeholder, $availableWidth)

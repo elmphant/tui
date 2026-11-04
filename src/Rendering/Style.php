@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Rendering;
 
-use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\TerminalText;
 
@@ -107,19 +106,6 @@ final readonly class Style
             background: $this->background ?? $parent->background,
             attributes: $this->attributes !== 0 ? $this->attributes : $parent->attributes,
             link: $this->link ?? $parent->link,
-        );
-    }
-
-    public function apply(Frame $frame, Rect $area): void
-    {
-        $frame->fillRect(
-            $area->x,
-            $area->y,
-            $area->width,
-            $area->height,
-            $this->foregroundValue(),
-            $this->backgroundValue(),
-            $this->cellAttributes(),
         );
     }
 

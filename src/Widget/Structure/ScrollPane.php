@@ -203,17 +203,7 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     /**
      * @return list<Widget>
      */
-    public function children(): iterable
-    {
-        return $this->children;
-    }
-
-    /**
-     * Return original children without focus markers so hosts can compare them before rebuilding.
-     *
-     * @return list<Widget>
-     */
-    public function authoredChildren(): array
+    public function children(): array
     {
         return $this->children;
     }

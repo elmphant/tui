@@ -152,7 +152,7 @@ final readonly class SeededPaneForm extends App
     {
         $values = [];
 
-        foreach ($this->pane->authoredChildren() as $child) {
+        foreach ($this->pane->children() as $child) {
             if ($child instanceof TextInput) {
                 $values[] = $child->value();
             }

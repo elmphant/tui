@@ -22,6 +22,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Alignment;
 use Elmphant\Tui\Widget\Bar\Footer;
+use Elmphant\Tui\Widget\Bar\StatusBar;
 use Elmphant\Tui\Widget\Feedback\ProgressBar;
 use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Interactive;
@@ -69,7 +70,7 @@ final class BarSlotPlacementTest extends TestCase
     #[Test]
     public function aFullRowPainterIsPlacedByItsInkAlone(): void
     {
-        $frame = $this->paint(Footer::forRightHints(['q' => 'quit']));
+        $frame = $this->paint(Footer::new()->withRight(StatusBar::forHints(['q' => 'quit'])));
 
         self::assertSame(str_repeat(' ', 16) . ' q  quit', $this->padded($frame));
     }

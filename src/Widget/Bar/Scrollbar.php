@@ -37,6 +37,11 @@ final class Scrollbar
         );
     }
 
+    /**
+     * Draws from raw cell values. A widget calls renderFor() with its theme.
+     *
+     * @internal
+     */
     public static function render(
         Frame $frame,
         int $x,

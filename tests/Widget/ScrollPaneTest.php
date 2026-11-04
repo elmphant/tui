@@ -70,7 +70,7 @@ final class ScrollPaneTest extends TestCase
         }
 
         self::assertSame(
-            $pane->authoredChildren(),
+            $pane->children(),
             $placed,
             'a mark from the pane’s own flag would hold rects for widgets the tree may never draw',
         );
