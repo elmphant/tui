@@ -75,22 +75,9 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
         ]))->merge(ScrollPane::defaultKeybindings());
     }
 
-    public function addTab(string $label): self
+    public function addTab(string $label, Widget ...$children): self
     {
-        return $this->cloneWith(tabs: [...$this->tabs, new TabPage($label)]);
-    }
-
-    public function add(Widget $child): self
-    {
-        if ($this->tabs === []) {
-            throw new LogicException('TabBar::add() puts a child on the last tab, and there is none yet: call addTab() first');
-        }
-
-        $tabs = $this->tabs;
-        $lastIndex = count($tabs) - 1;
-        $tabs[$lastIndex] = $tabs[$lastIndex]->add($child);
-
-        return $this->cloneWith(tabs: $tabs);
+        return $this->cloneWith(tabs: [...$this->tabs, new TabPage($label, ScrollPane::of(...$children))]);
     }
 
     public function activeTab(): int

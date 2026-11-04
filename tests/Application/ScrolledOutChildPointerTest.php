@@ -57,7 +57,7 @@ final readonly class LongFormApp extends App
             $form = $form->add(Text::new("Field $field"))->add(Radio::new(['alpha', 'beta', 'gamma', 'delta'], "radio $field"));
         }
 
-        return new self(TabBar::new()->addTab('Form')->add($form)->addTab('About')->add(Paragraph::fromText('prose')));
+        return new self(TabBar::new()->addTab('Form', $form)->addTab('About', Paragraph::fromText('prose')));
     }
 
     public function view(): Widget

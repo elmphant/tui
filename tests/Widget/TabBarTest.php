@@ -46,7 +46,6 @@ use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\TabBar;
 use Elmphant\Tui\Widget\Structure\TabPage;
 use Elmphant\Tui\Widget\Widget;
-use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -55,22 +54,23 @@ final class TabBarTest extends TestCase
     // ── Basic construction & interface ──
 
     #[Test]
-    public function aChildAddedBeforeAnyTabIsRefusedRatherThanLost(): void
+    public function aTabHoldsTheChildrenItIsAddedWith(): void
     {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('addTab()');
+        $bar = TabBar::new()->addTab('one', Text::line('first'), Text::line('second'))->addTab('two');
 
-        TabBar::new()->add(Text::line('orphan'));
+        self::assertCount(2, $bar->tabs()[0]->pane->children());
+        self::assertSame([], $bar->tabs()[1]->pane->children());
     }
 
     #[Test]
     public function aPreResolvedLayoutPlanDrawsExactlyWhatDirectLayoutDraws(): void
     {
         $area = new Rect(0, 0, 24, 9);
-        $tabBar = TabBar::new()->addTab('A');
+        $rows = [];
         for ($index = 0; $index < 8; ++$index) {
-            $tabBar = $tabBar->add(Text::new("row{$index}"));
+            $rows[] = Text::new("row{$index}");
         }
+        $tabBar = TabBar::new()->addTab('A', ...$rows);
 
         $planned = new Frame(24, 9);
         RootPass::draw(RenderPass::new(Theme::dark()), $tabBar, $planned, $area, LayoutPlan::resolve($tabBar, $area));
@@ -84,7 +84,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function aTabPastTheLastOneSelectsTheLastAndTakesItsChildren(): void
     {
-        $bar = TabBar::new()->addTab('one')->addTab('two')->add(Text::line('old'))->withActiveTab(5);
+        $bar = TabBar::new()->addTab('one')->addTab('two', Text::line('old'))->withActiveTab(5);
 
         $grafted = $bar->withChildAt(0, Text::line('new'));
 
@@ -96,11 +96,12 @@ final class TabBarTest extends TestCase
     public function theWheelStopsAtTheBottomOfATabsContent(): void
     {
         $area = new Rect(0, 0, 24, 9);
-        $tabBar = TabBar::new()->addTab('A');
+        $rows = [];
 
         for ($index = 0; $index < 8; ++$index) {
-            $tabBar = $tabBar->add(Text::new("row{$index}"));
+            $rows[] = Text::new("row{$index}");
         }
+        $tabBar = TabBar::new()->addTab('A', ...$rows);
 
         $wheel = new MouseMsg(2, 6, MouseAction::WheelDown, MouseButton::Left);
         for ($turn = 0; $turn < 30; ++$turn) {
@@ -122,12 +123,12 @@ final class TabBarTest extends TestCase
     public function aScrolledTabDrawsOnlyTheChildrenStillInsideItsContentArea(): void
     {
         $area = new Rect(0, 0, 24, 9);
-        // add() appends to the last tab, so the children belong to the active one.
-        $tabBar = TabBar::new()->addTab('A');
+        $rows = [];
 
         for ($index = 0; $index < 8; ++$index) {
-            $tabBar = $tabBar->add(Text::new("row{$index}"));
+            $rows[] = Text::new("row{$index}");
         }
+        $tabBar = TabBar::new()->addTab('A', ...$rows);
 
         $scrolled = $tabBar;
         for ($turn = 0; $turn < 3; ++$turn) {
@@ -167,8 +168,8 @@ final class TabBarTest extends TestCase
     public function selectingATabProgrammaticallyShowsItsOwnChildren(): void
     {
         $bar = TabBar::new()
-            ->addTab('A')->add($this->createTrackableFocusable('a'))
-            ->addTab('B')->add($this->createTrackableFocusable('b'))
+            ->addTab('A', $this->createTrackableFocusable('a'))
+            ->addTab('B', $this->createTrackableFocusable('b'))
             ->withActiveTab(1);
 
         self::assertCount(1, $bar->children(), 'The page the app chose is the page that publishes its children');
@@ -388,13 +389,6 @@ final class TabBarTest extends TestCase
     }
 
     #[Test]
-    public function addAppendsChildToLastTab(): void
-    {
-        $tabBar = TabBar::new()->addTab('A')->addTab('B')->add(Text::new('Hello'));
-        self::assertNotSame($tabBar, $tabBar->add(Text::new('World')));
-    }
-
-    #[Test]
     public function theFirstTabStartsActive(): void
     {
         self::assertSame(0, TabBar::new()->activeTab());
@@ -480,7 +474,7 @@ final class TabBarTest extends TestCase
     public function updateLeavesPanesAloneInAnAreaTooSmallToDrawThem(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'));
+            ->addTab('One', Radio::new(['A', 'B'], 'R1'));
 
         $result = $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 40, 3));
 
@@ -491,8 +485,8 @@ final class TabBarTest extends TestCase
     public function switchTabWithNoFocusableChildrenInNewTab(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Radio::new(['A', 'B'], 'R1'))
-            ->addTab('Two')->add(Text::new('Plain'));
+            ->addTab('One', Radio::new(['A', 'B'], 'R1'))
+            ->addTab('Two', Text::new('Plain'));
         self::assertSame(1, $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 20))->model->activeTab());
     }
 
@@ -502,8 +496,7 @@ final class TabBarTest extends TestCase
     public function aTabKeyIsLeftForTheRingAbove(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')
-            ->add(Radio::new(['A', 'B'], 'R'));
+            ->addTab('One', Radio::new(['A', 'B'], 'R'));
 
         $result = $tabBar->update(new KeyMsg(Key::Tab), new Rect(0, 0, 40, 20));
 
@@ -552,10 +545,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollDownClampsToMaxOffset(): void
     {
-        $tabBar = TabBar::new()->addTab('One');
+        $rows = [];
         for ($i = 0; $i < 10; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('One', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         $current = $tabBar;
         for ($i = 0; $i < 20; ++$i) {
@@ -571,14 +565,14 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollWithNoOverflowReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->add(Text::new('Short'));
+        $tabBar = TabBar::new()->addTab('One', Text::new('Short'));
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), new Rect(0, 0, 30, 10))->model);
     }
 
     #[Test]
     public function unknownKeyInScrollReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->add(Text::new('x'));
+        $tabBar = TabBar::new()->addTab('One', Text::new('x'));
         self::assertSame($tabBar, $tabBar->update(new KeyMsg('z'), new Rect(0, 0, 30, 10))->model);
     }
 
@@ -723,7 +717,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function mouseWheelOnShortContentIgnored(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->add(Text::new('Short'));
+        $tabBar = TabBar::new()->addTab('One', Text::new('Short'));
         self::assertSame($tabBar, $tabBar->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), new Rect(0, 0, 30, 10))->model);
     }
 
@@ -740,10 +734,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function mouseWheelDownClampsAtBottom(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 10; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         // WheelDown always creates new model when hasOverflow, so we just verify
         // the tab bar doesn't crash and renders correctly after many scrolls
@@ -761,14 +756,14 @@ final class TabBarTest extends TestCase
     #[Test]
     public function aMouseReleaseOverTheContentLeavesTheBarAlone(): void
     {
-        $tabBar = TabBar::new()->addTab('One')->add(Text::new('Content'));
+        $tabBar = TabBar::new()->addTab('One', Text::new('Content'));
         self::assertSame($tabBar, $tabBar->update(new MouseMsg(5, 5, MouseAction::Release, MouseButton::Left), new Rect(0, 0, 30, 20))->model);
     }
 
     #[Test]
     public function aMouseMotionOverTheContentLeavesTheBarAlone(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab')->add(Text::new('Hi'));
+        $tabBar = TabBar::new()->addTab('Tab', Text::new('Hi'));
         self::assertSame($tabBar, $tabBar->update(new MouseMsg(5, 5, MouseAction::Motion, MouseButton::None), new Rect(0, 0, 30, 10))->model);
     }
 
@@ -967,7 +962,7 @@ final class TabBarTest extends TestCase
     public function rendersContentBoxSideBorders(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('One')->add(Text::new('Hi'))->render($frame, new Rect(0, 0, 30, 10), $this->context());
+        TabBar::new()->addTab('One', Text::new('Hi'))->render($frame, new Rect(0, 0, 30, 10), $this->context());
         $glyphs = Theme::dark()->borderType->glyphs();
         for ($y = 3; $y <= 8; ++$y) {
             self::assertSame($glyphs->vertical, $frame->characters[$y * 30 + 0], "Left y=$y");
@@ -1030,7 +1025,7 @@ final class TabBarTest extends TestCase
     public function rendersChildWidgetInContentArea(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('One')->add(Text::new('Hello'))->render($frame, new Rect(0, 0, 30, 10), $this->context());
+        TabBar::new()->addTab('One', Text::new('Hello'))->render($frame, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame('H', $frame->characters[3 * 30 + 1]);
         self::assertSame('e', $frame->characters[3 * 30 + 2]);
         self::assertSame('l', $frame->characters[3 * 30 + 3]);
@@ -1042,8 +1037,8 @@ final class TabBarTest extends TestCase
     public function rendersOnlyActiveTabContent(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('One')->add(Text::new('First'))
-            ->addTab('Two')->add(Text::new('Second'));
+            ->addTab('One', Text::new('First'))
+            ->addTab('Two', Text::new('Second'));
         $frame = new Frame(30, 10);
         $tabBar->render($frame, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame('F', $frame->characters[3 * 30 + 1]);
@@ -1054,7 +1049,7 @@ final class TabBarTest extends TestCase
     public function rendersContentWithAreaOffset(): void
     {
         $frame = new Frame(40, 15);
-        TabBar::new()->addTab('One')->add(Text::new('Hi'))->render($frame, new Rect(5, 3, 30, 10), $this->context());
+        TabBar::new()->addTab('One', Text::new('Hi'))->render($frame, new Rect(5, 3, 30, 10), $this->context());
         self::assertSame('H', $frame->characters[6 * 40 + 6]);
         self::assertSame('i', $frame->characters[6 * 40 + 7]);
     }
@@ -1063,7 +1058,7 @@ final class TabBarTest extends TestCase
     public function rendersMultipleChildrenVertically(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('Tab')->add(Text::new('AAA'))->add(Text::new('BBB'))
+        TabBar::new()->addTab('Tab', Text::new('AAA'), Text::new('BBB'))
             ->render($frame, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame('A', $frame->characters[3 * 30 + 1]);
         self::assertSame('B', $frame->characters[4 * 30 + 1]);
@@ -1073,7 +1068,7 @@ final class TabBarTest extends TestCase
     public function contentAreaAccountsForTabStripAndBorders(): void
     {
         $frame = new Frame(20, 10);
-        TabBar::new()->addTab('Test')->add(Text::new('X'))->render($frame, new Rect(0, 0, 20, 10), $this->context());
+        TabBar::new()->addTab('Test', Text::new('X'))->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('X', $frame->characters[3 * 20 + 1]);
         self::assertNotSame('X', $frame->characters[2 * 20 + 1]);
     }
@@ -1081,10 +1076,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function childrenAtBottomBoundaryStillRender(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 6; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Row$i"));
+            $rows[] = Text::new("Row$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $frame = new Frame(30, 10);
         $tabBar->render($frame, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame('R', $frame->characters[8 * 30 + 1]);
@@ -1093,10 +1089,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function childrenScrolledAboveViewportNotRendered(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 20; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Line$i"));
+            $rows[] = Text::new("Line$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         for ($i = 0; $i < 3; ++$i) {
             $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -1110,8 +1107,7 @@ final class TabBarTest extends TestCase
     public function contentDoesNotOverflowBelowBottomBorder(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('Theme')
-            ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine'], 'Theme'));
+            ->addTab('Theme', Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine'], 'Theme'));
         $frame = new Frame(30, 9);
         $tabBar->render($frame, new Rect(0, 0, 30, 9), $this->context());
         $glyphs = Theme::dark()->borderType->glyphs();
@@ -1121,10 +1117,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function overflowingChildHeightIsClampedToContentArea(): void
     {
-        $tabBar = TabBar::new()->addTab('Test');
+        $rows = [];
         for ($i = 0; $i < 8; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Line$i"));
+            $rows[] = Text::new("Line$i");
         }
+        $tabBar = TabBar::new()->addTab('Test', ...$rows);
         $frame = new Frame(30, 9);
         $tabBar->render($frame, new Rect(0, 0, 30, 9), $this->context());
         $allChars = implode('', $frame->characters);
@@ -1137,8 +1134,7 @@ final class TabBarTest extends TestCase
     public function contentDoesNotLeakBelowTabBarArea(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('Theme')
-            ->add(Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine'], 'Theme'));
+            ->addTab('Theme', Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rose Pine'], 'Theme'));
 
         $width = 30;
         $areaHeight = 9;
@@ -1266,7 +1262,7 @@ final class TabBarTest extends TestCase
     public function horizontalPaddingShiftsContentRight(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('One')->add(Text::new('Hello'))->withPadding(Spacing::horizontal(1))
+        TabBar::new()->addTab('One', Text::new('Hello'))->withPadding(Spacing::horizontal(1))
             ->render($frame, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame('H', $frame->characters[3 * 30 + 2]);
     }
@@ -1275,7 +1271,7 @@ final class TabBarTest extends TestCase
     public function verticalPaddingShiftsContentDown(): void
     {
         $frame = new Frame(30, 12);
-        TabBar::new()->addTab('One')->add(Text::new('Hello'))->withPadding(Spacing::vertical(1))
+        TabBar::new()->addTab('One', Text::new('Hello'))->withPadding(Spacing::vertical(1))
             ->render($frame, new Rect(0, 0, 30, 12), $this->context());
         self::assertSame('H', $frame->characters[4 * 30 + 1]);
     }
@@ -1284,7 +1280,7 @@ final class TabBarTest extends TestCase
     public function allPaddingShiftsContentBoth(): void
     {
         $frame = new Frame(30, 12);
-        TabBar::new()->addTab('Tab')->add(Text::new('Padded'))->withPadding(Spacing::all(1))
+        TabBar::new()->addTab('Tab', Text::new('Padded'))->withPadding(Spacing::all(1))
             ->render($frame, new Rect(0, 0, 30, 12), $this->context());
         self::assertSame('P', $frame->characters[4 * 30 + 2]);
     }
@@ -1294,10 +1290,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function rendersScrollbarWhenContentOverflows(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Line $i"));
+            $rows[] = Text::new("Line $i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $frame = new Frame(30, 10);
         $tabBar->render($frame, new Rect(0, 0, 30, 10), $this->context());
         $hasScrollChar = false;
@@ -1315,7 +1312,7 @@ final class TabBarTest extends TestCase
     public function noScrollbarWhenContentFits(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('Tab')->add(Text::new('Short'))->render($frame, new Rect(0, 0, 30, 10), $this->context());
+        TabBar::new()->addTab('Tab', Text::new('Short'))->render($frame, new Rect(0, 0, 30, 10), $this->context());
         for ($y = 3; $y <= 8; ++$y) {
             self::assertNotSame("\u{2503}", $frame->characters[$y * 30 + 28], "No thumb at y=$y");
         }
@@ -1324,10 +1321,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollbarReducesContentWidth(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new(str_repeat('X', 28)));
+            $rows[] = Text::new(str_repeat('X', 28));
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $frame = new Frame(30, 10);
         $tabBar->render($frame, new Rect(0, 0, 30, 10), $this->context());
         $char = $frame->characters[3 * 30 + 28];
@@ -1355,7 +1353,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('One')->addTab('Two')
-            ->addTab('Three')->add(Text::new('Content3'));
+            ->addTab('Three', Text::new('Content3'));
         $area = new Rect(0, 0, 50, 10);
         $tab3 = $tabBar->update(new KeyMsg(Key::Right), $area)->model;
         $tab3 = $tab3->update(new KeyMsg(Key::Right), $area)->model;
@@ -1405,10 +1403,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clampedScrollOffsetPreventsOverscrollOnRender(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 10; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         $current = $tabBar;
         for ($i = 0; $i < 20; ++$i) {
@@ -1428,10 +1427,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function flexChildrenShareRemainingHeight(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab')
-            ->add(Text::new('Fixed'))
-            ->add($this->createFlexWidget(2))
-            ->add($this->createFlexWidget(1));
+        $tabBar = TabBar::new()->addTab(
+            'Tab',
+            Text::new('Fixed'),
+            $this->createFlexWidget(2),
+            $this->createFlexWidget(1),
+        );
         $frame = new Frame(30, 16);
         $tabBar->render($frame, new Rect(0, 0, 30, 16), $this->context());
         self::assertTrue(true);
@@ -1440,7 +1441,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function minConstraintChildUsesMinHeight(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab')->add($this->createMinConstraintWidget(3));
+        $tabBar = TabBar::new()->addTab('Tab', $this->createMinConstraintWidget(3));
         $frame = new Frame(30, 12);
         $tabBar->render($frame, new Rect(0, 0, 30, 12), $this->context());
         self::assertTrue(true);
@@ -1462,13 +1463,15 @@ final class TabBarTest extends TestCase
     #[Test]
     public function contentAreaHeightAccountsForTabStripAndBottomBorder(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::exact(1)))
-            ->add($this->createMarkerWidget('B', Constraint::exact(1)))
-            ->add($this->createMarkerWidget('C', Constraint::exact(1)))
-            ->add($this->createMarkerWidget('D', Constraint::exact(1)))
-            ->add($this->createMarkerWidget('E', Constraint::exact(1)))
-            ->add($this->createMarkerWidget('F', Constraint::exact(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::exact(1)),
+            $this->createMarkerWidget('B', Constraint::exact(1)),
+            $this->createMarkerWidget('C', Constraint::exact(1)),
+            $this->createMarkerWidget('D', Constraint::exact(1)),
+            $this->createMarkerWidget('E', Constraint::exact(1)),
+            $this->createMarkerWidget('F', Constraint::exact(1)),
+        );
         $frame = new Frame(20, 10);
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1479,8 +1482,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function contentAreaWidthAccountsForSideBorders(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('ABCDEFGH', Constraint::exact(1)));
+        $tabBar = TabBar::new()->addTab('T', $this->createMarkerWidget('ABCDEFGH', Constraint::exact(1)));
         $frame = new Frame(10, 8);
         $tabBar->render($frame, new Rect(0, 0, 10, 8), $this->context());
         self::assertSame('A', $frame->characters[3 * 10 + 1]);
@@ -1492,9 +1494,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveExactConstraintGetsExactHeight(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::exact(2)))
-            ->add($this->createMarkerWidget('B', Constraint::exact(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::exact(2)),
+            $this->createMarkerWidget('B', Constraint::exact(1)),
+        );
         $frame = new Frame(20, 10);
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1504,10 +1508,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveMultipleExactCumulativeOffset(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::exact(3)))
-            ->add($this->createMarkerWidget('B', Constraint::exact(2)))
-            ->add($this->createMarkerWidget('C', Constraint::exact(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::exact(3)),
+            $this->createMarkerWidget('B', Constraint::exact(2)),
+            $this->createMarkerWidget('C', Constraint::exact(1)),
+        );
         $frame = new Frame(20, 13);
         $tabBar->render($frame, new Rect(0, 0, 20, 13), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1520,10 +1526,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveExactVsMinDistinguished(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('E', Constraint::exact(3)))
-            ->add($this->createMarkerWidget('M', Constraint::min(3)))
-            ->add($this->createMarkerWidget('F', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('E', Constraint::exact(3)),
+            $this->createMarkerWidget('M', Constraint::min(3)),
+            $this->createMarkerWidget('F', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 14);
         $tabBar->render($frame, new Rect(0, 0, 20, 14), $this->context());
         self::assertSame('E', $frame->characters[3 * 20 + 1]);
@@ -1536,9 +1544,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveMinConstraintGetsAtLeastMinHeight(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::min(3)))
-            ->add($this->createMarkerWidget('B', Constraint::exact(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::min(3)),
+            $this->createMarkerWidget('B', Constraint::exact(1)),
+        );
         $frame = new Frame(20, 12);
         $tabBar->render($frame, new Rect(0, 0, 20, 12), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1548,10 +1558,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveMinConstraintAccumulatesInFixedTotal(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::min(2)))
-            ->add($this->createMarkerWidget('B', Constraint::exact(2)))
-            ->add($this->createMarkerWidget('C', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::min(2)),
+            $this->createMarkerWidget('B', Constraint::exact(2)),
+            $this->createMarkerWidget('C', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 16);
         $tabBar->render($frame, new Rect(0, 0, 20, 16), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1564,9 +1576,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveMinZeroFallsToFlexBranch(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::flex()))
-            ->add($this->createMarkerWidget('B', Constraint::exact(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::flex()),
+            $this->createMarkerWidget('B', Constraint::exact(1)),
+        );
         $frame = new Frame(20, 10);
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1578,10 +1592,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveNoRemainingSpaceFlexGetsHeightOne(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::exact(4)))
-            ->add($this->createMarkerWidget('B', Constraint::exact(4)))
-            ->add($this->createMarkerWidget('C', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::exact(4)),
+            $this->createMarkerWidget('B', Constraint::exact(4)),
+            $this->createMarkerWidget('C', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 10);
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1593,10 +1609,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveMultipleFlexNoRemainingAllGetHeightOne(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::exact(6)))
-            ->add($this->createMarkerWidget('B', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('C', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::exact(6)),
+            $this->createMarkerWidget('B', Constraint::flex(1)),
+            $this->createMarkerWidget('C', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 10);
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1607,9 +1625,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveDistributesFlexWeightProportionally(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::flex(2)))
-            ->add($this->createMarkerWidget('B', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::flex(2)),
+            $this->createMarkerWidget('B', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 16);
         $tabBar->render($frame, new Rect(0, 0, 20, 16), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1621,11 +1641,13 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveFlexGetsMinimumHeightOne(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('X', Constraint::exact(3)))
-            ->add($this->createMarkerWidget('A', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('B', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('C', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('X', Constraint::exact(3)),
+            $this->createMarkerWidget('A', Constraint::flex(1)),
+            $this->createMarkerWidget('B', Constraint::flex(1)),
+            $this->createMarkerWidget('C', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 9);
         $tabBar->render($frame, new Rect(0, 0, 20, 9), $this->context());
         self::assertSame('X', $frame->characters[3 * 20 + 1]);
@@ -1636,9 +1658,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveFloorDivisionTruncatesCorrectly(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('B', Constraint::flex(3)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::flex(1)),
+            $this->createMarkerWidget('B', Constraint::flex(3)),
+        );
         $frame = new Frame(20, 11);
         $tabBar->render($frame, new Rect(0, 0, 20, 11), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1650,9 +1674,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveFlexRoundingRemainderGoesToLastFlex(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('B', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::flex(1)),
+            $this->createMarkerWidget('B', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 11);
         $tabBar->render($frame, new Rect(0, 0, 20, 11), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1662,10 +1688,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveThreeFlexRoundingRemainderGoesToLast(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('B', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('C', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::flex(1)),
+            $this->createMarkerWidget('B', Constraint::flex(1)),
+            $this->createMarkerWidget('C', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 14);
         $tabBar->render($frame, new Rect(0, 0, 20, 14), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1678,10 +1706,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveOnlyFlexChildrenDistributeEvenly(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('A', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('B', Constraint::flex(1)))
-            ->add($this->createMarkerWidget('C', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('A', Constraint::flex(1)),
+            $this->createMarkerWidget('B', Constraint::flex(1)),
+            $this->createMarkerWidget('C', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 13);
         $tabBar->render($frame, new Rect(0, 0, 20, 13), $this->context());
         self::assertSame('A', $frame->characters[3 * 20 + 1]);
@@ -1692,8 +1722,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveSingleFlexGetsAllRemaining(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('Z', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab('T', $this->createMarkerWidget('Z', Constraint::flex(1)));
         $frame = new Frame(20, 10);
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('Z', $frame->characters[3 * 20 + 1]);
@@ -1704,10 +1733,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clampedScrollOffsetUsesBottomPadding(): void
     {
-        $tabBar = TabBar::new()->addTab('T');
+        $rows = [];
         for ($i = 0; $i < 10; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('T', ...$rows);
         $area = new Rect(0, 0, 20, 10);
         $current = $tabBar;
         $scrollCount = 0;
@@ -1725,10 +1755,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollOffsetAppliedToChildRendering(): void
     {
-        $tabBar = TabBar::new()->addTab('T');
+        $rows = [];
         for ($i = 0; $i < 10; ++$i) {
-            $tabBar = $tabBar->add($this->createMarkerWidget("$i", Constraint::exact(1)));
+            $rows[] = $this->createMarkerWidget("$i", Constraint::exact(1));
         }
+        $tabBar = TabBar::new()->addTab('T', ...$rows);
         $area = new Rect(0, 0, 20, 10);
         $scrolled = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
         $frame = new Frame(20, 10);
@@ -1741,10 +1772,12 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveMixedExactMinFlexCorrectPositions(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('E', Constraint::exact(2)))
-            ->add($this->createMarkerWidget('M', Constraint::min(2)))
-            ->add($this->createMarkerWidget('F', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('E', Constraint::exact(2)),
+            $this->createMarkerWidget('M', Constraint::min(2)),
+            $this->createMarkerWidget('F', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 12);
         $tabBar->render($frame, new Rect(0, 0, 20, 12), $this->context());
         self::assertSame('E', $frame->characters[3 * 20 + 1]);
@@ -1755,9 +1788,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function resolveExactPlusFlexCorrectRemaining(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('X', Constraint::exact(2)))
-            ->add($this->createMarkerWidget('Y', Constraint::flex(1)));
+        $tabBar = TabBar::new()->addTab(
+            'T',
+            $this->createMarkerWidget('X', Constraint::exact(2)),
+            $this->createMarkerWidget('Y', Constraint::flex(1)),
+        );
         $frame = new Frame(20, 10);
         $tabBar->render($frame, new Rect(0, 0, 20, 10), $this->context());
         self::assertSame('X', $frame->characters[3 * 20 + 1]);
@@ -1769,8 +1804,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function contentAreaWithPaddingReducesAvailableSpace(): void
     {
-        $tabBar = TabBar::new()->addTab('T')
-            ->add($this->createMarkerWidget('X', Constraint::exact(1)))
+        $tabBar = TabBar::new()->addTab('T', $this->createMarkerWidget('X', Constraint::exact(1)))
             ->withPadding(Spacing::all(1));
         $frame = new Frame(20, 12);
         $tabBar->render($frame, new Rect(0, 0, 20, 12), $this->context());
@@ -1782,10 +1816,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollNotPossibleWhenTotalHeightEqualsViewport(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 16; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 40, 20);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), $area)->model);
     }
@@ -1795,10 +1830,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollDownMaxOffsetIsExactlyTotalMinusViewportPlusPadding(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 20; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 40, 20);
 
         $current = $tabBar;
@@ -1870,10 +1906,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelDownNotPossibleWhenTotalHeightEqualsViewport(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 16; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 40, 20);
         self::assertSame(
             $tabBar,
@@ -1888,10 +1925,11 @@ final class TabBarTest extends TestCase
     {
         $area = new Rect(0, 0, 40, 20);
 
-        $base = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 20; ++$i) {
-            $base = $base->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $base = TabBar::new()->addTab('Tab', ...$rows);
 
         $keyTabBar = $base;
         $keyCurrent = $keyTabBar;
@@ -1930,10 +1968,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelDownIncreasesScrollOffsetByOne(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 40, 20);
         $scrolled1 = $tabBar->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
         $scrolled2 = $scrolled1->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
@@ -1946,10 +1985,11 @@ final class TabBarTest extends TestCase
     public function wheelUpOnlyWorksInsideArea(): void
     {
         $area = new Rect(5, 5, 30, 10);
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $scrolled = $tabBar->update(new MouseMsg(10, 10, MouseAction::WheelDown, MouseButton::None), $area)->model;
         $outsideResult = $scrolled->update(
             new MouseMsg(40, 10, MouseAction::WheelUp, MouseButton::None),
@@ -1962,10 +2002,11 @@ final class TabBarTest extends TestCase
     public function wheelUpDecreasesScrollOffset(): void
     {
         $area = new Rect(0, 0, 40, 20);
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $scrolled1 = $tabBar->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
         $scrolled2 = $scrolled1->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
         $backUp = $scrolled2->update(new MouseMsg(5, 5, MouseAction::WheelUp, MouseButton::None), $area)->model;
@@ -1976,10 +2017,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelUpWithNoOverflowDoesNotScroll(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 16; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 40, 20);
         self::assertSame(
             $tabBar,
@@ -1993,9 +2035,7 @@ final class TabBarTest extends TestCase
     public function aClickBelowTheStripIsNotTheStripsToAnswer(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createTrackableFocusable('A'))
-            ->add($this->createTrackableFocusable('B'));
+            ->addTab('Tab', $this->createTrackableFocusable('A'), $this->createTrackableFocusable('B'));
         $area = new Rect(0, 0, 40, 20);
 
         $result = $tabBar->update(new MouseMsg(5, 5, MouseAction::Press, MouseButton::Left), $area);
@@ -2038,9 +2078,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('One')
-            ->addTab('Two')
-            ->add($this->createTrackableFocusable('X'))
-            ->add($this->createTrackableFocusable('Y'));
+            ->addTab('Two', $this->createTrackableFocusable('X'), $this->createTrackableFocusable('Y'));
         $area = new Rect(0, 0, 40, 20);
         $switched = $tabBar->update(
             new MouseMsg(10, 1, MouseAction::Press, MouseButton::Left),
@@ -2251,7 +2289,7 @@ final class TabBarTest extends TestCase
     public function contentRendersAtMinimumDimensions(): void
     {
         $frame = new Frame(10, 10);
-        TabBar::new()->addTab('A')->add(Text::new('W'))
+        TabBar::new()->addTab('A', Text::new('W'))
             ->render($frame, new Rect(0, 0, 5, 5), $this->context());
         self::assertStringContainsString('W', implode('', $frame->characters));
     }
@@ -2260,7 +2298,7 @@ final class TabBarTest extends TestCase
     public function contentRendersWithMinPaddingStillHasWidth(): void
     {
         $frame = new Frame(10, 10);
-        TabBar::new()->addTab('A')->add(Text::new('V'))
+        TabBar::new()->addTab('A', Text::new('V'))
             ->withPadding(Spacing::horizontal(1))
             ->render($frame, new Rect(0, 0, 5, 5), $this->context());
         self::assertStringContainsString('V', implode('', $frame->characters));
@@ -2270,7 +2308,7 @@ final class TabBarTest extends TestCase
     public function contentSkippedWhenHeightZero(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('A')->add(Text::new('U'))
+        TabBar::new()->addTab('A', Text::new('U'))
             ->withPadding(Spacing::vertical(2))
             ->render($frame, new Rect(0, 0, 30, 5), $this->context());
         self::assertStringNotContainsString('U', implode('', $frame->characters));
@@ -2281,10 +2319,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function childWidthReducedWhenScrollbarPresent(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new(str_repeat('Q', 50)));
+            $rows[] = Text::new(str_repeat('Q', 50));
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $frame = new Frame(30, 10);
         $tabBar->render($frame, new Rect(0, 0, 30, 10), $this->context());
         $c = $frame->characters[3 * 30 + 28];
@@ -2296,10 +2335,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrolledContentShiftsChildY(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 20; ++$i) {
-            $tabBar = $tabBar->add(Text::new("R$i"));
+            $rows[] = Text::new("R$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
         $frame = new Frame(30, 10);
@@ -2313,10 +2353,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function childBelowViewportNotRendered(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 20; ++$i) {
-            $tabBar = $tabBar->add(Text::new("P$i"));
+            $rows[] = Text::new("P$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $frame = new Frame(30, 10);
         $tabBar->render($frame, new Rect(0, 0, 30, 10), $this->context());
         $allChars = implode('', $frame->characters);
@@ -2327,10 +2368,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function childAboveViewportNotRendered(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 20; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Q$i"));
+            $rows[] = Text::new("Q$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         for ($i = 0; $i < 5; ++$i) {
             $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -2347,10 +2389,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollbarThumbMoves(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Line $i"));
+            $rows[] = Text::new("Line $i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         $buffer0 = new Frame(30, 10);
         $tabBar->render($buffer0, $area, $this->context());
@@ -2378,10 +2421,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollbarCoversAllContentRows(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Line $i"));
+            $rows[] = Text::new("Line $i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $frame = new Frame(30, 10);
         $tabBar->render($frame, new Rect(0, 0, 30, 10), $this->context());
         $sx = 28;
@@ -2401,7 +2445,7 @@ final class TabBarTest extends TestCase
     public function contentBoxBordersWithMultibyte(): void
     {
         $frame = new Frame(30, 10);
-        TabBar::new()->addTab('日本語')->add(Text::new('test'))
+        TabBar::new()->addTab('日本語', Text::new('test'))
             ->render($frame, new Rect(0, 0, 30, 10), $this->context());
         $glyphs = Theme::dark()->borderType->glyphs();
         self::assertSame($glyphs->vertical, $frame->characters[5 * 30 + 29]);
@@ -2431,8 +2475,7 @@ final class TabBarTest extends TestCase
     {
         $tabBar = TabBar::new()
             ->addTab('First')
-            ->addTab('Second')
-            ->add(Text::new('InSecond'));
+            ->addTab('Second', Text::new('InSecond'));
         $area = new Rect(0, 0, 40, 20);
         $focused = $tabBar;
         $switched = $focused->update(new KeyMsg(Key::Right), $area)->model;
@@ -2510,7 +2553,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function scrollNewOffsetEqualsOldReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab')->add(Text::new('Short'));
+        $tabBar = TabBar::new()->addTab('Tab', Text::new('Short'));
         $area = new Rect(0, 0, 30, 10);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Up), $area)->model);
         self::assertSame($tabBar, $tabBar->update(new KeyMsg(Key::Down), $area)->model);
@@ -2559,10 +2602,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelDownClampsToMaxOffset(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 10; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         $current = $tabBar;
         for ($i = 0; $i < 100; ++$i) {
@@ -2576,10 +2620,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelUpClampsToZero(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(0, 0, 30, 10);
         $scrolled = $tabBar->update(new MouseMsg(5, 5, MouseAction::WheelDown, MouseButton::None), $area)->model;
         $current = $scrolled;
@@ -2631,8 +2676,7 @@ final class TabBarTest extends TestCase
     public function aChildThatAnswersWithItselfLeavesTheBarAlone(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createInteractiveWidget());
+            ->addTab('Tab', $this->createInteractiveWidget());
         $result = $tabBar->update(new TestMessage('no-change'), new Rect(0, 0, 40, 20));
         self::assertSame($tabBar, $result->model);
     }
@@ -2655,7 +2699,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelDownWithoutOverflowReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab')->add(Text::new('Short'));
+        $tabBar = TabBar::new()->addTab('Tab', Text::new('Short'));
         $area = new Rect(0, 0, 40, 20);
         self::assertSame(
             $tabBar,
@@ -2666,7 +2710,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelUpWithoutOverflowReturnsSelf(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab')->add(Text::new('Short'));
+        $tabBar = TabBar::new()->addTab('Tab', Text::new('Short'));
         $area = new Rect(0, 0, 40, 20);
         self::assertSame(
             $tabBar,
@@ -2679,10 +2723,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelDownOutsideAreaIgnored(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(5, 5, 20, 10);
         self::assertSame(
             $tabBar,
@@ -2693,10 +2738,11 @@ final class TabBarTest extends TestCase
     #[Test]
     public function wheelUpOutsideAreaIgnored(): void
     {
-        $tabBar = TabBar::new()->addTab('Tab');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("L$i"));
+            $rows[] = Text::new("L$i");
         }
+        $tabBar = TabBar::new()->addTab('Tab', ...$rows);
         $area = new Rect(5, 5, 20, 10);
         $scrolled = $tabBar->update(new MouseMsg(10, 10, MouseAction::WheelDown, MouseButton::None), $area)->model;
         self::assertSame(
@@ -2711,8 +2757,7 @@ final class TabBarTest extends TestCase
     public function aClickOutsideTheBarLeavesItAlone(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createInteractiveWidget());
+            ->addTab('Tab', $this->createInteractiveWidget());
         $area = new Rect(0, 0, 40, 20);
         $result = $tabBar->update(
             new MouseMsg(50, 10, MouseAction::Press, MouseButton::Left),
@@ -2726,7 +2771,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function addToSingleTabUsesIndexZero(): void
     {
-        $tabBar = TabBar::new()->addTab('Only')->add(Text::new('Child'));
+        $tabBar = TabBar::new()->addTab('Only', Text::new('Child'));
         $frame = new Frame(30, 10);
         $tabBar->render($frame, new Rect(0, 0, 30, 10), $this->context());
         self::assertSame('C', $frame->characters[3 * 30 + 1]);
@@ -2793,8 +2838,7 @@ final class TabBarTest extends TestCase
     public function aKeyTheStripDoesNotAnswerReachesTheActivePaneOnly(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createKeyReactiveInteractive());
+            ->addTab('Tab', $this->createKeyReactiveInteractive());
 
         $result = $tabBar->update(new KeyMsg(Key::Enter), new Rect(0, 0, 40, 20));
 
@@ -2820,8 +2864,7 @@ final class TabBarTest extends TestCase
     public function anIdleChildProducesNoCommand(): void
     {
         $tabBar = TabBar::new()
-            ->addTab('Tab')
-            ->add($this->createInteractiveWidget());
+            ->addTab('Tab', $this->createInteractiveWidget());
 
         $result = $tabBar->update(new TestMessage('no-change'), new Rect(0, 0, 40, 20));
 
@@ -2902,7 +2945,7 @@ final class TabBarTest extends TestCase
         // ABOVE the TabBar's own area where the tab strip doesn't cover.
         $multiLine = new MultiLineTestWidget(6);
         $tabBar = TabBar::new()
-            ->addTab('T1')->add($multiLine);
+            ->addTab('T1', $multiLine);
 
         $tabs = $tabBar->tabs();
         $tabBar = $tabBar->withTabs([$tabs[0]->withPane($tabs[0]->pane->withScrollOffset(3))]);
@@ -2932,10 +2975,10 @@ final class TabBarTest extends TestCase
         // Without clipping, the overflowing tabs and the active-tab box paint
         // into columns 20..79 — corrupting whatever lives there.
         $tabBar = TabBar::new()
-            ->addTab('About')->add(Text::new('a'))
-            ->addTab('Theme')->add(Text::new('b'))
-            ->addTab('Alerts')->add(Text::new('c'))
-            ->addTab('Resources')->add(Text::new('d'));
+            ->addTab('About', Text::new('a'))
+            ->addTab('Theme', Text::new('b'))
+            ->addTab('Alerts', Text::new('c'))
+            ->addTab('Resources', Text::new('d'));
 
         $frame = new Frame(80, 10);
         $area = new Rect(0, 0, 20, 10);
@@ -2967,8 +3010,7 @@ final class TabBarTest extends TestCase
         // so the cursor stays in view.
         $radio = Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rosé Pine'], 'Theme');
         $tabBar = TabBar::new()
-            ->addTab('Theme')
-            ->add($radio);
+            ->addTab('Theme', $radio);
 
         $area = new Rect(0, 0, 40, 8); // tabStrip 3 + content 4 + bottom border 1
         // Move cursor 4 times down (j or arrow); active option becomes Rosé Pine.
@@ -3002,8 +3044,7 @@ final class TabBarTest extends TestCase
         }
 
         $tabBar = TabBar::new()
-            ->addTab('About')
-            ->add(Paragraph::fromLines($lines));
+            ->addTab('About', Paragraph::fromLines($lines));
 
         $area = new Rect(0, 0, 40, 8);
         $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -3042,8 +3083,7 @@ final class TabBarTest extends TestCase
         );
 
         $tabBar = TabBar::new()
-            ->addTab('About')
-            ->add($layout);
+            ->addTab('About', $layout);
 
         $area = new Rect(0, 0, 40, 8);
         $tabBar = $tabBar->update(new KeyMsg(Key::Down), $area)->model;
@@ -3067,8 +3107,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function switchingTabOnASingleTabBarIsIdentity(): void
     {
-        $tabBar = TabBar::new()->addTab('One')
-            ->add(Radio::new(['a', 'b']));
+        $tabBar = TabBar::new()->addTab('One', Radio::new(['a', 'b']));
 
         $result = $tabBar->update(new KeyMsg(Key::Right), new Rect(0, 0, 40, 15));
 
@@ -3078,8 +3117,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function clickingTheActiveTabHeaderIsIdentity(): void
     {
-        $tabBar = TabBar::new()->addTab('One')
-            ->add(Radio::new(['a', 'b']));
+        $tabBar = TabBar::new()->addTab('One', Radio::new(['a', 'b']));
 
         $result = $tabBar->update(new MouseMsg(3, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 40, 15));
 
@@ -3089,8 +3127,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function cursorVisibleInsideTheViewportKeepsTheScrollOffset(): void
     {
-        $tabBar = TabBar::new()->addTab('One')
-            ->add($this->cursorJumpChild(4, 5));
+        $tabBar = TabBar::new()->addTab('One', $this->cursorJumpChild(4, 5));
         $tabs = $tabBar->tabs();
         // Six rows of content in a four-row viewport, so three is as far as it scrolls.
         $tabBar = $tabBar->withTabs([$tabs[0]->withPane($tabs[0]->pane->withScrollOffset(3))]);
@@ -3104,8 +3141,7 @@ final class TabBarTest extends TestCase
     #[Test]
     public function zeroHeightViewportNeverAdjustsTheScrollOffset(): void
     {
-        $tabBar = TabBar::new()->addTab('One')
-            ->add($this->cursorJumpChild(0, 4));
+        $tabBar = TabBar::new()->addTab('One', $this->cursorJumpChild(0, 4));
         $area = new Rect(0, 0, 40, 4); // content height = 4 - 3 - 1 = 0
 
         $result = $tabBar->update(new KeyMsg('x'), $area)->model;
@@ -3166,7 +3202,7 @@ final class TabBarTest extends TestCase
     public function aHostReadsAPageThatIsNotShowing(): void
     {
         $list = ListView::fromStrings(['a', 'b', 'c'])->withCursor(2);
-        $bar = TabBar::new()->addTab('Inbox')->add($list)->addTab('Work')->withActiveTab(1);
+        $bar = TabBar::new()->addTab('Inbox', $list)->addTab('Work')->withActiveTab(1);
 
         self::assertSame([$list], [...$bar->tabs()[0]->pane->children()]);
     }
@@ -3205,12 +3241,13 @@ final class TabBarTest extends TestCase
 
     private function tallPage(): TabBar
     {
-        $bar = TabBar::new()->addTab('Page');
+        $rows = [];
         foreach (range(0, 5) as $index) {
-            $bar = $bar->add(Text::new('row' . $index));
+            $rows[] = Text::new('row' . $index);
         }
+        $rows[] = TextInput::new()->withValue('field');
 
-        return $bar->add(TextInput::new()->withValue('field'));
+        return TabBar::new()->addTab('Page', ...$rows);
     }
 
     private function screenWithTheme(TabBar $bar, Rect $area, Theme $theme, bool $focused = false): string
@@ -3298,10 +3335,11 @@ final class TabBarTest extends TestCase
 
     private function createOverflowingTabBar(): TabBar
     {
-        $tabBar = TabBar::new()->addTab('One');
+        $rows = [];
         for ($i = 0; $i < 30; ++$i) {
-            $tabBar = $tabBar->add(Text::new("Line $i"));
+            $rows[] = Text::new("Line $i");
         }
+        $tabBar = TabBar::new()->addTab('One', ...$rows);
 
         return $tabBar;
     }
@@ -3563,7 +3601,7 @@ final readonly class TwoFieldsInATabApp extends App
 
     public function bar(): TabBar
     {
-        return $this->bar ?? TabBar::new()->addTab('Form')->add(TextInput::new())->add(TextInput::new());
+        return $this->bar ?? TabBar::new()->addTab('Form', TextInput::new(), TextInput::new());
     }
 
     public function view(): Widget

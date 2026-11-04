@@ -27,8 +27,8 @@ final class AppGraftAfterPageSwitchTest extends TestCase
     public function aClickOnAnotherTabWhileADropdownIsOpenSwitchesTabs(): void
     {
         $harness = ModelHarness::for(new PageSwitchingApp(TabBar::new()
-            ->addTab('Form')->add(Panel::new('Form')->add(Dropdown::new(Select::new(['a', 'b', 'c']))))
-            ->addTab('About')->add(Paragraph::fromText('prose'))), 60, 12)->initialize();
+            ->addTab('Form', Panel::new('Form')->add(Dropdown::new(Select::new(['a', 'b', 'c']))))
+            ->addTab('About', Paragraph::fromText('prose'))), 60, 12)->initialize();
         $harness->renderFrame();
         $harness->dispatch(new KeyMsg(Key::Enter));
         $harness->renderFrame();
