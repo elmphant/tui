@@ -33,6 +33,14 @@ final class SplitStateTest extends TestCase
     }
 
     #[Test]
+    public function aStateBuiltWithADividerOutsideThePanesIsRefusedToo(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new SplitState([500, 500], dragging: 7);
+    }
+
+    #[Test]
     public function theLastDividerLiesBeforeTheLastPane(): void
     {
         self::assertSame(1, SplitState::even(3)->withDragging(1)->dragging);

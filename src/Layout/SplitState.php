@@ -24,14 +24,13 @@ final readonly class SplitState
         if ($shares === [] || min($shares) < 0 || array_sum($shares) < 1) {
             throw new InvalidArgumentException(sprintf('SplitState shares must be non-negative with at least one above zero, got [%s]', implode(', ', $shares)));
         }
+        if (null !== $dragging && ($dragging < 0 || $dragging > count($shares) - 2)) {
+            throw new InvalidArgumentException(sprintf('A divider lies between two panes, so it must be 0-%d, got %d', count($shares) - 2, $dragging));
+        }
     }
 
     public function withDragging(?int $divider): self
     {
-        if (null !== $divider && ($divider < 0 || $divider > count($this->shares) - 2)) {
-            throw new InvalidArgumentException(sprintf('A divider lies between two panes, so it must be 0-%d, got %d', count($this->shares) - 2, $divider));
-        }
-
         return $this->cloneWith(dragging: $divider);
     }
 
