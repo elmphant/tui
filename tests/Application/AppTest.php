@@ -15,6 +15,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -96,22 +97,6 @@ final class AppTest extends TestCase
     public function quitOnCtrlC(): void
     {
         $app = new CounterApp();
-        $result = $app->update(new KeyMsg('c', ctrl: true), Rect::fromSize(80, 24));
-        self::assertInstanceOf(QuitCmd::class, $result->command);
-    }
-
-    #[Test]
-    public function customQuitBindingsOverride(): void
-    {
-        $app = new NoQuitApp();
-        $result = $app->update(new KeyMsg('q'), Rect::fromSize(80, 24));
-        self::assertNull($result->command);
-    }
-
-    #[Test]
-    public function ctrlCAlwaysQuitsEvenWithEmptyQuitBindings(): void
-    {
-        $app = new NoQuitApp();
         $result = $app->update(new KeyMsg('c', ctrl: true), Rect::fromSize(80, 24));
         self::assertInstanceOf(QuitCmd::class, $result->command);
     }
@@ -385,7 +370,7 @@ final class AppTest extends TestCase
     }
 
     #[Test]
-    public function quitBindingAcceptsCustomPattern(): void
+    public function aLetterAddedToTheQuitActionQuits(): void
     {
         $app = new CustomQuitXApp();
 
@@ -395,9 +380,9 @@ final class AppTest extends TestCase
     }
 
     #[Test]
-    public function quitBindingAcceptsPatternWithModifiers(): void
+    public function ctrlQQuitsByDefault(): void
     {
-        $app = new CtrlQQuitApp();
+        $app = new CounterApp();
 
         $result = $app->update(new KeyMsg('q', ctrl: true), Rect::fromSize(80, 24));
 
@@ -418,7 +403,7 @@ final class AppTest extends TestCase
     }
 
     #[Test]
-    public function unknownActionInQuitBindingsDoesNotMatchQuit(): void
+    public function aKeyBoundToAnotherActionDoesNotQuit(): void
     {
         $app = new NotQuitActionApp();
 
@@ -442,7 +427,7 @@ final class AppTest extends TestCase
     #[Test]
     public function appExtensionHooksRemainProtectedSubclassContracts(): void
     {
-        foreach (['setup', 'onKey', 'onAction', 'onMouse', 'onTick', 'onMessage', 'onResize', 'onComponentsChanged', 'applicationKeybindings', 'quitBindings'] as $hook) {
+        foreach (['setup', 'onKey', 'onAction', 'onMouse', 'onTick', 'onMessage', 'onResize', 'onComponentsChanged', 'applicationKeybindings'] as $hook) {
             self::assertTrue(
                 (new ReflectionMethod(App::class, $hook))->isProtected(),
                 "$hook must remain overridable by App subclasses",
@@ -558,23 +543,6 @@ final readonly class ResizeAwareApp extends CopyableTestApp
     }
 }
 
-final readonly class NoQuitApp extends CopyableTestApp
-{
-    public function __construct()
-    {
-    }
-
-    public function view(): Widget
-    {
-        return Text::new('no quit');
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
-}
-
 final readonly class CustomQuitXApp extends CopyableTestApp
 {
     public function __construct()
@@ -586,26 +554,9 @@ final readonly class CustomQuitXApp extends CopyableTestApp
         return Text::new('x quits');
     }
 
-    protected function quitBindings(): Keybindings
+    protected function applicationKeybindings(): Keybindings
     {
-        return new Keybindings(['quit' => ['x']]);
-    }
-}
-
-final readonly class CtrlQQuitApp extends CopyableTestApp
-{
-    public function __construct()
-    {
-    }
-
-    public function view(): Widget
-    {
-        return Text::new('ctrl+q quits');
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => ['ctrl+q']]);
+        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c', 'x']]);
     }
 }
 
@@ -620,9 +571,9 @@ final readonly class NotQuitActionApp extends CopyableTestApp
         return Text::new('q does not quit');
     }
 
-    protected function quitBindings(): Keybindings
+    protected function applicationKeybindings(): Keybindings
     {
-        return new Keybindings(['not_quit' => ['q']]);
+        return parent::applicationKeybindings()->merge(new Keybindings(['not_quit' => ['q']]));
     }
 }
 

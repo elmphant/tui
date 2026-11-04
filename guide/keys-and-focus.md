@@ -73,7 +73,7 @@ panes around it, and the app's own. It is read from the real bindings, so it
 is always correct. It closes with `?`, Ctrl+K or Escape, and scrolls when long.
 
 - Override `actionDescription()` to describe the actions your app binds.
-- Override `keyHelpBindings()` to use other keys, or return
+- Override `keyHelpKeybindings()` to use other keys, or return
   `Keybindings::empty()` to turn it off.
 - Put `$this->keyHelpHints()` in the footer to show `Ctrl+K  keys`.
 - A mounted sub-model that answers its own keys implements `NamesItsKeys`, so

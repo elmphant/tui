@@ -368,7 +368,7 @@ final readonly class NoKeyHelpApp extends CopyableTestApp
         return Component::bind('list', $this->list, static fn (self $app, ListView $list): self => new self($list));
     }
 
-    protected function keyHelpBindings(): Keybindings
+    protected function keyHelpKeybindings(): Keybindings
     {
         return Keybindings::empty();
     }

@@ -109,11 +109,11 @@ final readonly class FocusCyclingApp extends App
         return Component::bind('pane', new NextPaneHint(), static fn (self $app): self => $app);
     }
 
-    protected function focusCycleBindings(): Keybindings
+    protected function focusCycleKeybindings(): Keybindings
     {
         return $this->rebound
             ? new Keybindings([Actions::FOCUS_CYCLE => ['ctrl+n'], Actions::FOCUS_PREVIOUS_CYCLE => ['ctrl+p']])
-            : parent::focusCycleBindings();
+            : parent::focusCycleKeybindings();
     }
 }
 

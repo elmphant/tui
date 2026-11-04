@@ -96,9 +96,9 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         );
     }
 
-    final public function update(Message $message, Rect $screenRect, ?FocusState $focus = null): UpdateResult
+    final public function update(Message $message, Rect $area, ?FocusState $focus = null): UpdateResult
     {
-        return $this->stoppingWhatLeft($this->routed($message, $screenRect, $focus ?? FocusState::undecided()));
+        return $this->stoppingWhatLeft($this->routed($message, $area, $focus ?? FocusState::undecided()));
     }
 
     /**
@@ -171,9 +171,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     public function quitHints(string $description = 'quit'): array
     {
-        return $this->applicationKeybindings()
-            ->append($this->resolvedQuitBindings())
-            ->hints([$description => 'quit']);
+        return $this->applicationKeybindings()->hints([$description => Actions::QUIT]);
     }
 
     /**
@@ -183,7 +181,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     public function keyHelpHints(string $description = 'keys'): array
     {
-        $bindings = $this->keyHelpBindings();
+        $bindings = $this->keyHelpKeybindings();
         $everywhere = $bindings->withoutText()->get(Actions::HELP);
         $labels = array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $everywhere === [] ? $bindings->get(Actions::HELP) : $everywhere);
 
@@ -196,7 +194,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             return false;
         }
 
-        return $this->keyHelpBindings()->matches($key, Actions::HELP);
+        return $this->keyHelpKeybindings()->matches($key, Actions::HELP);
     }
 
     final public function keyHelp(FocusState $focus): array
@@ -235,9 +233,8 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         $groups['Anywhere'] = $this->described(
             $this->applicationKeybindings()
-                ->append($this->resolvedQuitBindings())
-                ->append($this->focusCycleBindings())
-                ->append($this->keyHelpBindings()),
+                ->append($this->focusCycleKeybindings())
+                ->append($this->keyHelpKeybindings()),
             $listed,
         );
 
@@ -273,21 +270,21 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      *
      * @return UpdateResult<static>
      */
-    protected function onAction(string $action, KeyMsg $message): UpdateResult
+    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($action) {
-            'quit' => $this->then(Cmd::quit()),
+            Actions::QUIT => $this->then(Cmd::quit()),
             default => UpdateResult::ignored($this),
         };
     }
 
     /**
      * These shortcuts run before focused components, except for keys they take as text; globalKeybindings() supplies inherited widget actions.
-     * Omit ctrl+c to handle it yourself, for example with a quit confirmation.
+     * Every quit key goes through onAction(), so an app can confirm before it quits. Add `q` here to quit with it.
      */
     protected function applicationKeybindings(): Keybindings
     {
-        return new Keybindings(['quit' => ['ctrl+q', 'ctrl+c']]);
+        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c']]);
     }
 
     /**
@@ -350,14 +347,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return Geometry::from(LayoutSnapshot::planFor($this, $screen, $this->viewWidget(...)), $this->componentRegistry());
     }
 
-    /**
-     * Extra quit keys beyond the reserved application shortcuts; text fields still receive printable keys as text.
-     */
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings([]);
-    }
-
     protected function globalKeybindings(): Keybindings
     {
         return Keybindings::empty();
@@ -392,7 +381,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     /**
      * Ctrl+K opens help when a field takes `?` as text; return Keybindings::empty() to disable help.
      */
-    protected function keyHelpBindings(): Keybindings
+    protected function keyHelpKeybindings(): Keybindings
     {
         return new Keybindings([Actions::HELP => ['?', 'ctrl+k']]);
     }
@@ -405,7 +394,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     /**
      * Override the focus-cycle keys, for example when a form needs Tab as text.
      */
-    protected function focusCycleBindings(): Keybindings
+    protected function focusCycleKeybindings(): Keybindings
     {
         return new Keybindings([
             Actions::FOCUS_CYCLE => ['tab'],
@@ -449,7 +438,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         if ($message instanceof KeyMsg) {
             $action = $this->matchedApplicationAction($message);
             if ($action !== null) {
-                return $this->onAction($action, $message);
+                return $this->onAction($action, $message, $screenRect);
             }
         }
 
@@ -490,7 +479,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     private function routeByFocus(Message $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
         if ($message instanceof KeyMsg) {
-            $bindings = $this->focusCycleBindings();
+            $bindings = $this->focusCycleKeybindings();
 
             if ($bindings->matches($message, Actions::FOCUS_PREVIOUS_CYCLE)) {
                 return $this->handleTab($message, $screenRect, $holder, true);
@@ -717,10 +706,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      */
     private function routeKey(KeyMsg $message, Rect $screenRect, ?ComponentId $holder): UpdateResult
     {
-        if ($this->resolvedQuitBindings()->matches($message, 'quit')) {
-            return new UpdateResult($this, Cmd::quit());
-        }
-
         $appResult = $this->onKey($message, $screenRect);
 
         if ($appResult->model !== $this || $appResult->command !== null) {
@@ -1092,7 +1077,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         // Stored widgets exclude routing bindings; add focus-cycle keys only to hints, never to widget handling.
         if ($widget instanceof KeybindingsAware) {
-            $widget = $widget->withGlobalKeybindings($this->globalKeybindings()->append($this->focusCycleBindings()));
+            $widget = $widget->withGlobalKeybindings($this->globalKeybindings()->append($this->focusCycleKeybindings()));
         }
 
         return $widget instanceof PublishesHints ? $widget->hints() : [];
@@ -1194,17 +1179,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         return $widget instanceof TakesText && $widget->takesText();
-    }
-
-    private function resolvedQuitBindings(): Keybindings
-    {
-        static $bindings = null;
-        $bindings ??= new WeakMap();
-
-        /**
-         * @var WeakMap<object, Keybindings> $bindings
-         */
-        return $bindings[$this] ??= $this->quitBindings();
     }
 
     private function matchedApplicationAction(KeyMsg $message): ?string

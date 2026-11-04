@@ -121,7 +121,7 @@ final readonly class HookRecordingApp extends App
         return UpdateResult::ignored(new self('key', self::size($screen)));
     }
 
-    protected function onAction(string $action, KeyMsg $message): UpdateResult
+    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
         return UpdateResult::ignored(new self('action:' . $action));
     }

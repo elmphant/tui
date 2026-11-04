@@ -82,11 +82,6 @@ final readonly class PanelAndFooterApp extends CopyableTestApp
             ),
         );
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final class AppInteractivesTest extends TestCase

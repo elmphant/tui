@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Input;
 
 final class Actions
 {
+    public const QUIT = 'quit';
     public const SELECT = 'select';
     public const CANCEL = 'cancel';
     public const TOGGLE = 'toggle';

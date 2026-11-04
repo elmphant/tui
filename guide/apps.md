@@ -14,26 +14,26 @@ abstract readonly class App
 
     protected function setup(): ?Cmd { return null; }         // commands to run at start
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
-    protected function onAction(string $action, KeyMsg $message): UpdateResult {}  // 'quit' quits
+    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult {}  // Actions::QUIT quits
     protected function onMouse(MouseMsg $message, Rect $screen, Keyboard $keyboard): UpdateResult { return UpdateResult::ignored($this); }  // $keyboard: focused(), hints()
     protected function onTick(TickMsg $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
     protected function onResize(ResizeMsg $message): UpdateResult { return UpdateResult::ignored($this); }
     protected function onMessage(Message $message, Rect $screen): UpdateResult { return UpdateResult::ignored($this); }
     protected function onComponentsChanged(array $ids): UpdateResult { return UpdateResult::ignored($this); } // list<ComponentId>, not strings: compare $id->value
 
-    protected function applicationKeybindings(): Keybindings {} // actions for onAction(), checked before any widget
-    protected function quitBindings(): Keybindings {}           // extra keys that quit
+    protected function applicationKeybindings(): Keybindings {} // actions for onAction(), checked before any widget, quit keys too
     protected function globalKeybindings(): Keybindings {}      // bindings every widget inherits (VimMode)
-    protected function focusCycleBindings(): Keybindings {}     // tab / shift+tab
-    protected function keyHelpBindings(): Keybindings {}        // ? opens the key help; empty turns it off
+    protected function focusCycleKeybindings(): Keybindings {}  // tab / shift+tab
+    protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
     protected function actionDescription(string $action): string {} // what an action does, in the key help
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
     protected function bindProperty(string $property, Interactive $widget): Component {}
 }
 ```
 
-- Ctrl+Q and Ctrl+C quit. They live in `applicationKeybindings()`, so override it
-  to change them, for example to ask before quitting.
+- Ctrl+Q and Ctrl+C quit. They live in `applicationKeybindings()` under
+  `Actions::QUIT`, so override it to add a key such as `q` or to drop one. Every
+  quit key goes through `onAction()`, so an app can ask before quitting there.
 - `onAction()` gets the actions that `applicationKeybindings()` matched.
 - `onComponentsChanged()` runs after bound widgets changed. Use it to re-filter a
   list when a search field changed. The ids are `ComponentId` objects, so

@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Rect;
@@ -154,19 +155,17 @@ final readonly class ShortcutsAroundAFieldApp extends App
 
     protected function applicationKeybindings(): Keybindings
     {
-        return parent::applicationKeybindings()->merge(new Keybindings(['edit' => ['e', 'ctrl+e']]));
+        return new Keybindings([
+            Actions::QUIT => ['ctrl+q', 'ctrl+c', 'q'],
+            'edit' => ['e', 'ctrl+e'],
+        ]);
     }
 
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => ['q']]);
-    }
-
-    protected function onAction(string $action, KeyMsg $message): UpdateResult
+    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
         return $action === 'edit'
             ? new UpdateResult($this->cloneWith(shortcuts: [...$this->shortcuts, 'edit']))
-            : parent::onAction($action, $message);
+            : parent::onAction($action, $message, $screen);
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult

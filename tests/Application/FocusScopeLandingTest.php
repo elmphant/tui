@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -68,12 +69,12 @@ final readonly class ScopedFiltersApp extends App
         return new Keybindings(['quit' => ['ctrl+q'], 'into' => ['ctrl+f'], 'drop' => ['ctrl+d']]);
     }
 
-    protected function onAction(string $action, KeyMsg $message): UpdateResult
+    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
         return match ($action) {
             'into' => new UpdateResult($this, Cmd::focus(ComponentId::named('filters/1'))),
             'drop' => UpdateResult::ignored($this->cloneWith(filters: $this->filters->withChildren([TextInput::new()->withValue('a')]))),
-            default => parent::onAction($action, $message),
+            default => parent::onAction($action, $message, $screen),
         };
     }
 }

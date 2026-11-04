@@ -16,6 +16,7 @@ use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Constraint;
@@ -791,9 +792,9 @@ final readonly class TwoPanelApp extends CopyableTestApp
         );
     }
 
-    protected function quitBindings(): Keybindings
+    protected function applicationKeybindings(): Keybindings
     {
-        return new Keybindings(['quit' => ['q']]);
+        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c', 'q']]);
     }
 }
 
@@ -857,7 +858,7 @@ final readonly class ApplicationShortcutApp extends CopyableTestApp
         ]);
     }
 
-    protected function onAction(string $action, KeyMsg $message): UpdateResult
+    protected function onAction(string $action, KeyMsg $message, Rect $screen): UpdateResult
     {
         return new UpdateResult($this->cloneWith(lastAction: $action));
     }
@@ -914,9 +915,9 @@ final readonly class SimpleCounterApp extends CopyableTestApp
         return Text::new("Count: {$this->count}");
     }
 
-    protected function quitBindings(): Keybindings
+    protected function applicationKeybindings(): Keybindings
     {
-        return new Keybindings(['quit' => ['q']]);
+        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c', 'q']]);
     }
 
     protected function onKey(KeyMsg $message, Rect $screen): UpdateResult
@@ -1044,11 +1045,6 @@ final readonly class GlobalKeybindingsToggleApp extends CopyableTestApp
     {
         return $this->currentBindings;
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class GlobalKeybindingsTickToggleApp extends CopyableTestApp
@@ -1073,11 +1069,6 @@ final readonly class GlobalKeybindingsTickToggleApp extends CopyableTestApp
     protected function globalKeybindings(): Keybindings
     {
         return $this->currentBindings;
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1141,11 +1132,6 @@ final readonly class NoOpUpdateResultApp extends CopyableTestApp
     {
         return UpdateResult::ignored($this);
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class ToggleUpdateResultApp extends CopyableTestApp
@@ -1165,11 +1151,6 @@ final readonly class ToggleUpdateResultApp extends CopyableTestApp
     {
         return new UpdateResult($this->cloneWith(toggled: true));
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class CommandOnlyUpdateResultApp extends CopyableTestApp
@@ -1188,11 +1169,6 @@ final readonly class CommandOnlyUpdateResultApp extends CopyableTestApp
     {
         return new UpdateResult($this, Cmd::quit());
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class CountingFocusableApp extends CopyableTestApp
@@ -1205,11 +1181,6 @@ final readonly class CountingFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return $this->bindProperty('counter', $this->counter, 'counting-widget');
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1266,11 +1237,6 @@ final readonly class DetachedRectCapturingApp extends CopyableTestApp
     {
         return Text::new('detached');
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class UnchangedFocusable implements Focusable
@@ -1316,11 +1282,6 @@ final readonly class UnchangedFocusableApp extends CopyableTestApp
     {
         return $this->bindProperty('widget', $this->widget, 'unchanged-widget');
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class RectCapturingFocusableApp extends CopyableTestApp
@@ -1333,11 +1294,6 @@ final readonly class RectCapturingFocusableApp extends CopyableTestApp
     public function view(): Widget
     {
         return $this->bindProperty('widget', $this->widget, 'rect-capture');
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1356,11 +1312,6 @@ final readonly class TwoRectCapturingApp extends CopyableTestApp
             $this->bindProperty('right', $this->right, 'right-capture'),
         );
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class TwoCountingFocusableApp extends CopyableTestApp
@@ -1377,11 +1328,6 @@ final readonly class TwoCountingFocusableApp extends CopyableTestApp
             $this->bindProperty('left', $this->left, 'left-counter'),
             $this->bindProperty('right', $this->right, 'right-counter'),
         );
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1437,11 +1383,6 @@ final readonly class ClickTrackingFocusableApp extends CopyableTestApp
             $this->bindProperty('other', $this->other, 'other-widget'),
         );
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class TwoUnchangedFocusableApp extends CopyableTestApp
@@ -1458,11 +1399,6 @@ final readonly class TwoUnchangedFocusableApp extends CopyableTestApp
             $this->bindProperty('left', $this->left, 'left-widget'),
             $this->bindProperty('right', $this->right, 'right-widget'),
         );
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1517,11 +1453,6 @@ final readonly class TabConsumingApp extends CopyableTestApp
             $this->bindProperty('widget', $this->widget, 'tab-consumer'),
             $this->bindProperty('other', $this->other, 'other-widget'),
         );
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1581,11 +1512,6 @@ final readonly class MouseCommandFocusableApp extends CopyableTestApp
 
         return UpdateResult::ignored($this);
     }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
-    }
 }
 
 final readonly class SingleCommandOnClickApp extends CopyableTestApp
@@ -1598,11 +1524,6 @@ final readonly class SingleCommandOnClickApp extends CopyableTestApp
     public function view(): Widget
     {
         return $this->bindProperty('widget', $this->widget, 'click-command');
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1630,11 +1551,6 @@ final readonly class MouseTrackingFocusableApp extends CopyableTestApp
         }
 
         return UpdateResult::ignored($this);
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1688,11 +1604,6 @@ final readonly class TabCommandOnlyApp extends CopyableTestApp
             $this->bindProperty('widget', $this->widget, 'tab-command'),
             $this->bindProperty('other', $this->other, 'other-widget'),
         );
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }
 
@@ -1764,10 +1675,5 @@ final readonly class MouseSwapApp extends CopyableTestApp
             right: new MarkerFocusable(marker: 'replaced-right'),
             swapped: true,
         ));
-    }
-
-    protected function quitBindings(): Keybindings
-    {
-        return new Keybindings(['quit' => []]);
     }
 }

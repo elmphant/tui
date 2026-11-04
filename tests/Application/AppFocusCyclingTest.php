@@ -106,7 +106,7 @@ final readonly class RebindableFocusApp extends App
         );
     }
 
-    protected function focusCycleBindings(): Keybindings
+    protected function focusCycleKeybindings(): Keybindings
     {
         return new Keybindings([Actions::FOCUS_CYCLE => ['ctrl+n']]);
     }

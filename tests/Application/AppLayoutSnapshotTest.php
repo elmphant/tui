@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
@@ -79,18 +80,18 @@ final readonly class SnapshotCountingApp extends CopyableTestApp
     }
 }
 
-final readonly class QuitBindingsCountingApp extends CopyableTestApp
+final readonly class ApplicationKeybindingsCountingApp extends CopyableTestApp
 {
     public function view(): Widget
     {
         return Text::new('static');
     }
 
-    protected function quitBindings(): Keybindings
+    protected function applicationKeybindings(): Keybindings
     {
         ++BindingsCallCounter::$count;
 
-        return new Keybindings(['quit' => ['q']]);
+        return new Keybindings([Actions::QUIT => ['ctrl+q', 'ctrl+c', 'q']]);
     }
 }
 
@@ -195,9 +196,9 @@ final class AppLayoutSnapshotTest extends TestCase
     }
 
     #[Test]
-    public function repeatedKeysReuseParsedQuitBindings(): void
+    public function repeatedKeysReuseParsedApplicationKeybindings(): void
     {
-        $app = new QuitBindingsCountingApp();
+        $app = new ApplicationKeybindingsCountingApp();
         $screenRect = Rect::fromSize(80, 24);
 
         $app->update(new KeyMsg('x'), $screenRect);
