@@ -340,8 +340,9 @@ click.
 
 ## Scrolling
 
-A `Panel` scrolls with the wheel, PageUp/PageDown and Home/End, and scrolls a
-field into view when tab reaches it. For a log or a chat,
+A `Panel` scrolls with the wheel, PageUp/PageDown and Home/End, scrolls a
+field into view when tab reaches it, and keeps the cursor row of a list or table
+inside it in view. For a log or a chat,
 `withFollowingTheEnd()` keeps the last row in view as rows arrive, until the
 reader scrolls up. Keep the panel on the App and add to it, so it remembers
 where it is:

@@ -516,7 +516,23 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
 
     private function following(): bool
     {
-        return $this->followChild !== null && !$this->scrolledAway;
+        return $this->followedChild() !== null;
+    }
+
+    /**
+     * A pane rebuilt in view() is never told where the keyboard is, so a lone child with a cursor is followed untold.
+     */
+    private function followedChild(): ?int
+    {
+        if ($this->scrolledAway) {
+            return null;
+        }
+
+        if ($this->followChild !== null) {
+            return $this->followChild;
+        }
+
+        return !$this->followingTheEnd && \count($this->children) === 1 && self::cursorOf($this->children[0]) !== null ? 0 : null;
     }
 
     private function resolvedOffset(VerticalStackLayout $layout, int $viewportHeight): int
@@ -531,7 +547,7 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
             return $this->isFollowingTheEnd() ? $layout->maxScrollOffset($viewportHeight) : $offset;
         }
 
-        $first = max(0, $this->followChild ?? 0);
+        $first = max(0, $this->followedChild() ?? 0);
         $top = array_sum(array_slice($layout->heights, 0, $first));
         $span = array_sum(array_slice($layout->heights, $first, $this->followSpan));
 
@@ -541,11 +557,11 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
             $top += array_sum(array_slice($layout->heights, $first, $last - $first));
             $span = $layout->heights[$last] ?? 0;
         }
-        $child = $this->children[$first] ?? null;
+        $cursor = self::cursorOf($this->children[$first] ?? null);
 
         // Follow the child's cursor rather than its top, or a tall child could leave the cursor off screen.
-        if ($this->followSpan === 1 && $child instanceof CursorAware) {
-            $top += max(0, min($child->cursorLine($layout->childWidth), $span - 1));
+        if ($this->followSpan === 1 && $cursor !== null) {
+            $top += max(0, min($cursor->cursorLine($layout->childWidth), $span - 1));
             $span = 1;
         }
 
@@ -556,6 +572,20 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
             $viewportHeight,
             $layout->maxScrollOffset($viewportHeight),
         );
+    }
+
+    /**
+     * A bound widget sits inside its mount, which has no cursor of its own.
+     */
+    private static function cursorOf(?Widget $child): ?CursorAware
+    {
+        if ($child instanceof SingleMount && $child instanceof WidgetContainer) {
+            foreach ($child->children() as $mounted) {
+                return self::cursorOf($mounted);
+            }
+        }
+
+        return $child instanceof CursorAware ? $child : null;
     }
 
     /**
