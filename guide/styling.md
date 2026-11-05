@@ -19,7 +19,8 @@ $program = Program::new($app)->withTheme(Theme::gruvboxDark());
 ```
 
 To switch while the app runs, return a theme from `App::theme()`. It is asked
-every frame.
+every frame. `ModelHarness` asks it too, but never sees `withTheme()`, so an app
+with tests is better off returning its theme from `App::theme()`.
 
 Every preset is tested: the text on a filled row (the selection, the cursor
 row, a field, the footer) reaches a contrast of 4.5:1. A palette of your own
