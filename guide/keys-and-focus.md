@@ -163,6 +163,9 @@ Footer::new()
     ->withRight(Text::new('Support · 1.2.0'), Text::new('Support'));
 ```
 
+A `Header` does the same: its right slot gives way to the left one, and
+`Header::withRight()` takes shorter versions too.
+
 A bar gives each slot only the width the slot asks for. A widget that just fills
 whatever it gets (`ProgressBar`, `Separator`) needs a width:
 

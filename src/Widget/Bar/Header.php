@@ -30,6 +30,9 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
     private const TITLE_GAP = 1;
     private const SLOT_GAP = 2;
 
+    /**
+     * @param list<Widget> $shorterRight
+     */
     private function __construct(
         private string $title = '',
         private ?Widget $leftSlot = null,
@@ -42,6 +45,7 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         private bool $rule = false,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
+        private array $shorterRight = [],
     ) {
     }
 
@@ -70,9 +74,12 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         return $this->cloneWith(centerSlot: $widget);
     }
 
-    public function withRight(Widget $widget): self
+    /**
+     * Choose the longest right-slot form that leaves room for the left slot; hide it if none fits.
+     */
+    public function withRight(Widget $widget, Widget ...$shorter): self
     {
-        return $this->cloneWith(rightSlot: $widget);
+        return $this->cloneWith(rightSlot: $widget, shorterRight: array_values($shorter));
     }
 
     public function withMarkedSlot(?Alignment $slot): self
@@ -131,7 +138,13 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
             return [];
         }
 
-        return array_values(BarSlotRenderer::placements($this->slots(), $contentArea));
+        $right = $this->rightRectIn($contentArea);
+        $placed = BarSlotRenderer::placements([...$this->slots(), 'rightSlot' => null], $contentArea);
+
+        return [
+            ...array_values($placed),
+            ...($this->rightSlot === null || $right === null ? [] : [[$this->rightSlot, $right]]),
+        ];
     }
 
     public function update(Message $message, Rect $area): UpdateResult
@@ -142,7 +155,14 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
             return new UpdateResult($this);
         }
 
-        [$overrides, $command] = BarSlotRenderer::updateSlots($this->slots(), $message, $contentArea, $this->markedSlot, $this->globalKeybindings);
+        [$overrides, $command] = BarSlotRenderer::updateSlots(
+            $this->slots(),
+            $message,
+            $contentArea,
+            $this->markedSlot,
+            $this->globalKeybindings,
+            drawnAt: ['rightSlot' => $this->rightRectIn($contentArea)],
+        );
 
         if ($overrides !== []) {
             return new UpdateResult($this->cloneWith(...$overrides), $command);
@@ -177,7 +197,8 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
         $contentWidth = $contentArea->width;
 
         $leftRect = $this->leftSlot !== null ? BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, $contentArea, $context) : null;
-        $rightRect = $this->rightSlot !== null ? BarSlotRenderer::rectFor($this->rightSlot, Alignment::Right, $contentArea, $context) : null;
+        $right = $this->rightDrawn($contentArea, $context);
+        $rightRect = $right !== null ? BarSlotRenderer::rectFor($right, Alignment::Right, $contentArea, $context) : null;
         $centreRect = $this->centerSlot !== null ? BarSlotRenderer::centreBetween($this->centerSlot, $contentArea, $leftRect, $rightRect, self::SLOT_GAP, $context) : null;
 
         if ($this->leftSlot !== null) {
@@ -213,8 +234,8 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
             }
         }
 
-        if ($this->rightSlot !== null) {
-            BarSlotRenderer::drawIn($frame, $this->rightSlot, $rightRect, $barBg, $context);
+        if ($right !== null) {
+            BarSlotRenderer::drawIn($frame, $right, $rightRect, $barBg, $context);
         }
 
         if ($this->rule) {
@@ -236,6 +257,31 @@ final readonly class Header implements Interactive, WidgetContainer, Keybindings
             'centerSlot' => $this->centerSlot,
             'rightSlot' => $this->rightSlot,
         ];
+    }
+
+    private function rightRectIn(Rect $contentArea): ?Rect
+    {
+        $right = $this->rightDrawn($contentArea);
+
+        return $right === null ? null : BarSlotRenderer::rectFor($right, Alignment::Right, $contentArea);
+    }
+
+    private function rightDrawn(Rect $contentArea, ?RenderContext $context = null): ?Widget
+    {
+        if ($this->rightSlot === null || $this->leftSlot === null) {
+            return $this->rightSlot;
+        }
+
+        $left = BarSlotRenderer::rectFor($this->leftSlot, Alignment::Left, new Rect($contentArea->x, $contentArea->y, \PHP_INT_MAX, 1), $context);
+        $room = $contentArea->width - ($left === null ? 0 : $left->width + self::SLOT_GAP);
+
+        foreach ([$this->rightSlot, ...$this->shorterRight] as $form) {
+            if ($form->sizing()->columns->intrinsic() <= $room) {
+                return $form;
+            }
+        }
+
+        return null;
     }
 
     private function contentArea(Rect $area): ?Rect

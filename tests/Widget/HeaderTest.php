@@ -108,6 +108,30 @@ final class HeaderTest extends TestCase
     }
 
     #[Test]
+    public function aRightSlotTooWideBesideTheLeftOneFallsBackToAShorterForm(): void
+    {
+        $header = Header::new()
+            ->withLeft(Text::new('project-name'))
+            ->withRight(Text::new('PHP 8.2.32 composer 2.8'), Text::new('PHP 8.2'));
+        $frame = new Frame(30, 1);
+        $header->render($frame, Rect::fromSize(30, 1), $this->context);
+
+        self::assertSame('project-name           PHP 8.2', $this->extractText($frame, 0, 30));
+    }
+
+    #[Test]
+    public function aRightSlotWithNoFormThatFitsBesideTheLeftOneIsLeftOut(): void
+    {
+        $header = Header::new()
+            ->withLeft(Text::new('project-name'))
+            ->withRight(Text::new('PHP 8.2.32 composer 2.8'));
+        $frame = new Frame(30, 1);
+        $header->render($frame, Rect::fromSize(30, 1), $this->context);
+
+        self::assertSame('project-name', trim($this->extractText($frame, 0, 30)));
+    }
+
+    #[Test]
     public function rendersAllThreeSlots(): void
     {
         $header = Header::new('Center')
