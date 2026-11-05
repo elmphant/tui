@@ -51,6 +51,9 @@ jobs:
       - uses: ramsey/composer-install@v3
         with:
           dependency-versions: ${{ matrix.dependencies }}
+      - name: Fail when pcntl is missing, or the fork tests would be skipped
+        run: |
+          php -r 'exit(extension_loaded("pcntl") && extension_loaded("posix") ? 0 : 1);'
       - run: composer test -- --no-output
       - name: Verify terminal restoration in a PTY
         if: matrix.php == '8.2' && matrix.dependencies == 'highest'
