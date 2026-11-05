@@ -29,7 +29,7 @@
         "ext-mbstring": "*",
         "revolt/event-loop": "^1.0",
         "symfony/http-client-contracts": "^3.5",
-        "symfony/process": "^7.4"
+        "symfony/process": "^6.4 || ^7.0"
     },
     "require-dev": {
         "deptrac/deptrac": "^4.7",
@@ -40,7 +40,7 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.0",
-        "symfony/http-client": "^7.4"
+        "symfony/http-client": "^6.4 || ^7.0"
     },
     "suggest": {
         "ext-pcntl": "Without it a program runs but cannot see signals: no SIGWINCH resize detection, no graceful quit on SIGINT/SIGTERM, no Ctrl-Z suspend",
@@ -48,7 +48,7 @@
         "amphp/http-client": "^5 for Cmd::fiber() work whose HTTP requests suspend the fiber instead of blocking (through Symfony's AmpHttpClient)",
         "league/commonmark": "^2.9 for Paragraph::fromMarkdown(); earlier 2.x releases carry denial-of-service advisories",
         "phpstan/phpstan": "Required to include rules.neon, which enforces the widget and model invariants in your own app",
-        "symfony/http-client": "^7.4 for Cmd::http(); the contracts this package requires are the interfaces alone, so an app that never makes a request installs no client"
+        "symfony/http-client": "^6.4 || ^7.0 for Cmd::http(); the contracts this package requires are the interfaces alone, so an app that never makes a request installs no client"
     },
     "autoload": {
         "psr-4": {
