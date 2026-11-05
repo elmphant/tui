@@ -14,6 +14,7 @@ use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FiberCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
+use Elmphant\Tui\Core\Cmd\ForkCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\PrintlnCmd;
@@ -50,6 +51,7 @@ use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Runtime\CallbackAnswer;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\FiberHandler;
+use Elmphant\Tui\Runtime\ForkHandler;
 use Elmphant\Tui\Runtime\InputRouter;
 use Elmphant\Tui\Runtime\KeyHelpOverlay;
 use Elmphant\Tui\Runtime\Model;
@@ -101,6 +103,11 @@ final class ModelHarness
      * @var list<array{command: FiberCmd, wrap: ?Closure, id: ?EffectId}> issued and not run yet, by scoped id
      */
     private array $fibers = [];
+
+    /**
+     * @var list<array{command: ForkCmd, wrap: ?Closure, id: ?EffectId}> issued and not run yet, by scoped id
+     */
+    private array $forks = [];
 
     /**
      * @var list<string>
@@ -334,6 +341,43 @@ final class ModelHarness
     }
 
     /**
+     * Run pending forks in turn, in the test's own process: what $work sends arrives first, then what it returns.
+     *
+     * @return self<TModel>
+     */
+    public function runForks(): self
+    {
+        $this->startedLikeTheProgram();
+        $forks = $this->forks;
+        $this->forks = [];
+        $this->issued = [];
+        ++$this->depth;
+
+        try {
+            foreach ($forks as ['command' => $fork, 'wrap' => $wrap, 'id' => $id]) {
+                if ($id !== null && ($this->running[(string)$id]['command'] ?? null) !== $fork) {
+                    continue;
+                }
+                if ($id !== null) {
+                    unset($this->running[(string)$id]);
+                }
+
+                $send = function (Message $message) use ($wrap): void {
+                    $this->dispatch($wrap === null ? $message : $wrap($message));
+                };
+                $answer = ForkHandler::answerOf($fork, $send);
+                if ($answer !== null) {
+                    $send($answer);
+                }
+            }
+        } finally {
+            --$this->depth;
+        }
+
+        return $this;
+    }
+
+    /**
      * @return self<TModel>
      */
     public function fail(EffectId|string $effect, Throwable|string $error): self
@@ -343,6 +387,7 @@ final class ModelHarness
             $running['command'] instanceof HttpCmd => ErrorSource::Http,
             $running['command'] instanceof ExecCmd, $running['command'] instanceof StreamCmd => ErrorSource::Process,
             $running['command'] instanceof FiberCmd => ErrorSource::Fiber,
+            $running['command'] instanceof ForkCmd => ErrorSource::Fork,
             default => ErrorSource::Command,
         };
 
@@ -653,6 +698,9 @@ final class ModelHarness
         $this->issued[] = $command;
         if ($command instanceof FiberCmd) {
             $this->fibers[] = ['command' => $command, 'wrap' => $wrap, 'id' => $command->id === null ? null : ($scope === null ? $command->id : $command->id->within($scope))];
+        }
+        if ($command instanceof ForkCmd) {
+            $this->forks[] = ['command' => $command, 'wrap' => $wrap, 'id' => $command->id === null ? null : ($scope === null ? $command->id : $command->id->within($scope))];
         }
         if ($command instanceof ToastCmd) {
             $this->toasts->show($command, $this->now);
