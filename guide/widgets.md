@@ -26,7 +26,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 
 | Widget | In | What it is |
 | --- | --- | --- |
-| `Text` | `Prose` | One line of text (`Text::new($text)`) |
+| `Text` | `Prose` | One line of text (`Text::new($text)`). What does not fit is cut off, so take a `Paragraph` for text that may be long |
 | `Paragraph` | `Prose` | Wrapped text, named by what you hand it: `Paragraph::fromText()`, `fromLines()`, `fromMarkdown()`, `fromAnsi()` |
 | `Separator` / `Spacer` | `Prose` | A line, or empty space |
 
