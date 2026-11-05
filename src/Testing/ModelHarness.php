@@ -76,6 +76,7 @@ final class ModelHarness
     private FocusState $focus;
     private RenderPass $pass;
     private int $depth = 0;
+    private bool $started = false;
     private ChordTracker $chordTracker;
     private KeyHelpOverlay $keyHelp;
     private Toasts $toasts;
@@ -146,6 +147,7 @@ final class ModelHarness
      */
     public function init(): self
     {
+        $this->started = true;
         $this->issued = [];
         ++$this->depth;
 
@@ -172,6 +174,7 @@ final class ModelHarness
      */
     public function dispatch(Message $message): self
     {
+        $this->startedLikeTheProgram();
         $routed = InputRouter::route($message, $this->area, $this->pass->floats->placements());
         if ($routed === null) {
             return $this;
@@ -513,6 +516,7 @@ final class ModelHarness
 
     public function renderFrame(): Frame
     {
+        $this->startedLikeTheProgram();
         $this->settleFocus();
         $this->pass = $this->pass->withTheme(($this->model instanceof ChoosesItsTheme ? $this->model->theme() : null) ?? $this->theme);
 
@@ -542,6 +546,16 @@ final class ModelHarness
     public function screen(): ScreenBuffer
     {
         return ScreenBuffer::fromFrame($this->renderFrame());
+    }
+
+    /**
+     * The program runs init() before the first frame or key, so a test that skips it still sees what setup() asked for.
+     */
+    private function startedLikeTheProgram(): void
+    {
+        if (!$this->started) {
+            $this->init();
+        }
     }
 
     private function refuseTextNoFieldCanTake(string $text): void

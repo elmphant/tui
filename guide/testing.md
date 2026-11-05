@@ -52,7 +52,9 @@ Answering a command the app never started throws, so a wrong guess in the test
 shows up at once. So does `type()` while no component holds the keyboard and a
 field on screen was never passed to `Component::bind()`.
 
-More: `init()` runs `setup()`, `resize()` changes the screen size,
+More: the harness runs `setup()` before the first key or frame, as the program
+does, and `init()` runs it at once so a test can check what it asked for with
+`issued()`. `resize()` changes the screen size,
 `model()` returns the app for typed checks, `renderFrame()` gives the cells
 when colours matter, and `printed()` lists every line `Cmd::println()` printed.
 
