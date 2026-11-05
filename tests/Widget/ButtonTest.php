@@ -180,6 +180,36 @@ final class ButtonTest extends TestCase
     }
 
     #[Test]
+    public function aButtonGivenOneRowDrawsItsLabelInBrackets(): void
+    {
+        $frame = new Frame(9, 1);
+
+        Button::new('Run', new TestMessage('run'))->render($frame, new Rect(0, 0, 9, 1), new RenderContext(Theme::dark()));
+
+        self::assertSame(' [ Run ] ', implode('', $frame->characters));
+    }
+
+    #[Test]
+    public function aFocusedButtonOnOneRowFillsItsLabel(): void
+    {
+        $frame = new Frame(7, 1);
+        $theme = Theme::dark();
+
+        Button::new('Run', new TestMessage('run'))->render($frame, new Rect(0, 0, 7, 1), RenderContext::focused($theme));
+
+        self::assertSame($theme->cursorStyle->backgroundValue(), $frame->backgrounds[3]);
+    }
+
+    #[Test]
+    public function aButtonWithoutABorderAsksForOneRow(): void
+    {
+        $button = Button::new('Run')->withBorder(false);
+
+        self::assertSame(1, $button->sizing()->rows->max);
+        self::assertSame(7, $button->sizing()->columns->intrinsic());
+    }
+
+    #[Test]
     public function aBorderSurroundsTheLabel(): void
     {
         $frame = new Frame(11, 3);

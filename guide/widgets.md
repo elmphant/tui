@@ -35,7 +35,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | Widget | In | What it is |
 | --- | --- | --- |
 | `TextInput` | `Field` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead). `withSubmit()` makes Enter commit it, for the bind closure, and `withSubmit($message)` also sends a message |
-| `Button` | `Field` | A button that sends a message when pressed |
+| `Button` | `Field` | A button, three rows with a border. `withBorder(false)` makes it one row, `[ Save ]`, and so does a slot of fewer rows |
 | `Checkbox` / `CheckboxGroup` | `Choice` | Yes/no choices |
 | `Radio` / `Select` | `Choice` | One choice out of a list. Take a `Radio` for a few options that all show, each with a mark, where one is always chosen (a setting with a default), unless `withClearable()` lets the reader put it back down. Take a `Select` for a longer list that scrolls in the rows it gets and starts with nothing chosen. Put either in a `Dropdown` to keep it on one row |
 | `Dropdown` | `Popup` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))`. To load new options, hand it `withContent($dropdown->content()->withItems($items))`, so an open list stays open with its query |
