@@ -106,11 +106,11 @@ A widget that did something the reader meant hands on an outcome, and
 | `Submitted` | a `TextInput` with `withSubmit()`, on Enter | `$value` |
 | `Chosen` | `ListView`, `Table`, `Select`, `Radio`, `Dropdown`, the filterable ones, on Enter or a click on an item | `$choice`: the `ListItem`, `Row` or option |
 | `Pressed` | a `Button`, and a `Form` for its button or Enter in its last field | nothing: read the form's values on the stored App |
-| `Dismissed` | a `Modal`, on Escape or a click outside | nothing |
+| `Dismissed` | a `Modal`, on Escape or a click outside, and a `Form` given `withCancel()`, on Escape | nothing |
 
-Moving a cursor is never an outcome. A widget is stored even when nothing in it
-changed, so choosing the same row twice is heard twice. Each outcome carries the
-key or click that caused it as `$trigger`.
+All four live in `Elmphant\Tui\Message`. Moving a cursor is never an outcome. A
+widget is stored even when nothing in it changed, so choosing the same row twice
+is heard twice. Each outcome carries the key or click that caused it as `$trigger`.
 
 Rules for binding:
 
@@ -241,7 +241,8 @@ final readonly class Machine extends App
 `$this->mount('uptime', $view)` mounts the sub-model the property holds under its
 name and stores the changed model back there. With several, keyed in an array,
 `$this->mount('modules', $view, at: $key)` mounts the one under that key as
-`modules.$key`. `Mount::named($name, $model, $view, $writeBack)` is the long form
+`modules.$key`. Give `id:` to name it yourself, as `bind()` takes one.
+`Mount::named($name, $model, $view, $writeBack)` is the long form
 for a model kept anywhere else. To send a message to the App instead of to the
 sub-model, return the command `Mount::toHost($message)`. It arrives in the App's
 `onMessage()`.
@@ -311,9 +312,13 @@ abstract readonly class App
     protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
     protected function bind(string $property, ?string $id = null, int|string|null $at = null): Component {} // the widget a property holds (at: a key of an array), stored by the framework
-    protected function mount(string $property, Widget $view, int|string|null $at = null): Mount {} // the sub-model a property holds, stored by the framework
+    protected function mount(string $property, Widget $view, ?string $id = null, int|string|null $at = null): Mount {} // the sub-model a property holds, stored by the framework
 }
 ```
+
+`App`, `AppActions` and `InputContext` live in `Elmphant\Tui\Application`,
+`Cmd`, `Message` and `UpdateResult` in `Elmphant\Tui\Core`, and the messages
+(`KeyMsg`, `ProcessResultMsg`, the outcomes) in `Elmphant\Tui\Message`.
 
 - `onComponentsChanged()` runs after bound widgets changed. Use it to re-filter a
   list when a search field changed. The ids are `ComponentId` objects, so

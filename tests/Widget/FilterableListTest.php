@@ -37,6 +37,14 @@ final class FilterableListTest extends TestCase
     private const FIRST_ITEM_ROW = 2;
 
     #[Test]
+    public function itAnswersEveryItemHandedInWhateverTheQuery(): void
+    {
+        $items = [new SimpleListItem('apple'), new SimpleListItem('banana')];
+
+        self::assertSame($items, FilterableList::new([])->withItems($items)->withQuery('ban')->items());
+    }
+
+    #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
         self::assertSame(

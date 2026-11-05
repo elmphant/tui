@@ -133,15 +133,30 @@ A [mounted sub-model](apps.md#mounting-a-sub-model) is scoped for you.
 with `stdout`, `stderr` and `exitCode`. Output is capped at 8 MiB. A program
 that does not exist is not an error: it ends with exit code 127.
 
+An action starts it, and the result arrives in `onMessage()`. Check the exit
+code: a failing command answers too, with its reason in `stderr`.
+
 ```php fragment
+use Elmphant\Tui\Application\{AppActions, InputContext};
+use Elmphant\Tui\Core\{Cmd, EffectId, Message, UpdateResult};
 use Elmphant\Tui\Message\ProcessResultMsg;
 
-// In update():
-$message instanceof KeyMsg && $message->key === 'r'
-    => new UpdateResult($this, Cmd::exec(['git', 'log', '--oneline', '-10'])),
+protected function actions(): AppActions
+{
+    return parent::actions()->with('log', ['ctrl+r'], static fn (self $app): UpdateResult => new UpdateResult(
+        $app,
+        Cmd::exec(['git', 'log', '--oneline', '-10'], id: EffectId::named('log')),
+    ), 'reload');
+}
 
-$message instanceof ProcessResultMsg
-    => new UpdateResult($this->withOutput($message->stdout)),
+protected function onMessage(Message $message, InputContext $input): self|UpdateResult
+{
+    if (!$message instanceof ProcessResultMsg || !$message->isFrom('log')) {
+        return $this;
+    }
+
+    return $message->exitCode === 0 ? $this->withOutput($message->stdout) : $this->withError($message->stderr);
+}
 ```
 
 **`Cmd::stream()`** sends the output in pieces while the command runs
@@ -152,10 +167,8 @@ get the output so far, an `ErrorMsg`, and then the `ProcessFinishedMsg`.
 ```php fragment
 use Elmphant\Tui\Message\{ProcessOutputMsg, ProcessFinishedMsg, ProcessStream};
 
-// In update():
-$message instanceof KeyMsg && $message->key === 's'
-    => new UpdateResult($this, Cmd::stream(['npm', 'run', 'build'])),
-
+// Started by an action: new UpdateResult($app, Cmd::stream(['npm', 'run', 'build']))
+// In onMessage(), inside a match (true):
 $message instanceof ProcessOutputMsg && $message->stream === ProcessStream::Stdout
     => new UpdateResult($this->withLog($this->log . $message->output)),
 
@@ -212,15 +225,15 @@ use Elmphant\Tui\Message\HttpResultMsg;
 
 $packages = EffectId::named('packages');
 
-// In onKey() or update():
-$message instanceof KeyMsg && $message->key === 'r'
-    => new UpdateResult(
-        $this->withLoading(true),
-        Cmd::http('https://packagist.org/search.json?q=markdown')
-            ->withId($packages)
-            ->withMaxBodyBytes(4 * 1024 * 1024)
-    ),
+// Started by an action:
+new UpdateResult(
+    $app->withLoading(true),
+    Cmd::http('https://packagist.org/search.json?q=markdown')
+        ->withId($packages)
+        ->withMaxBodyBytes(4 * 1024 * 1024)
+);
 
+// In onMessage(), inside a match (true):
 $message instanceof HttpResultMsg && $message->effectId?->equals($packages)
     => $this->withPackages(
         json_decode($message->body, true)['results'] ?? [],

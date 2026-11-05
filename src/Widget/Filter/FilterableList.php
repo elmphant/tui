@@ -126,6 +126,16 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $kept === false ? $this : $this->cloneWith(list: $this->list->withCursor($kept));
     }
 
+    /**
+     * Every item handed in, matching the query or not.
+     *
+     * @return list<ListItem>
+     */
+    public function items(): array
+    {
+        return $this->items;
+    }
+
     public function summary(): string
     {
         return $this->list->itemCount() . ' of ' . count($this->items);

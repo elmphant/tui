@@ -61,9 +61,9 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `FocusHints` | `Bar` | The keys that work right now — see [Keys](keys-and-focus.md#footer-hints) |
 | `StatusBar` | `Bar` | A line of key hints |
 | `Scrollbar` | `Bar` | A vertical scroll indicator |
-| `Alert` | `Feedback` | One coloured row: `warning`, `error`, `success`, `info` |
-| `ProgressBar` | `Feedback` | A bar that fills up smoothly |
-| `Spinner` / `ActivityBar` | `Feedback` | Loading animations. They animate by themselves, no timer needed |
+| `Alert` | `Feedback` | One coloured row: `Alert::warning($text)`, `error()`, `success()`, `info()` |
+| `ProgressBar` | `Feedback` | A bar that fills up smoothly: `ProgressBar::new(0.4)` |
+| `Spinner` / `ActivityBar` | `Feedback` | Loading animations with a label: `Spinner::new('loading…')`. They animate by themselves, no timer needed |
 
 ## Links
 
@@ -83,9 +83,15 @@ In a test, `$screen->styleAt($column, $row)->link` says which URL a cell opens.
 
 ## Filtered lists and tables
 
+A `FilterableList` matches the query against each item's `filterValue()`, which
+`ListItemBehavior` answers with `title()`. Return more from it to make other
+fields searchable, an author's name beside the subject. `items()` answers every
+item you handed in, matching or not.
+
 The filter widgets tell you what the reader picked in terms of the rows you
 handed in, not the filtered ones: `cursorSourceIndex()`, and on a table `cursorRow()`
-and `selectedRow()`. `withNoMatchText()` sets what shows when nothing matches the
+and `selectedRow()`. Bound, a click or Enter answers `Chosen`, carrying the item
+or the row. `withNoMatchText()` sets what shows when nothing matches the
 query, and `withNoDataText()` what shows when there is nothing to filter.
 
 ## Lists keep their place
@@ -133,7 +139,8 @@ The handler runs with the form already stored, so it reads the values there.
 - `withValues(['username' => 'ada'])` fills fields by name, for an edit form.
 - `withIntro()` adds text above the fields. `withFoot()` and
   `withSubmitDisabled()` say what the button will do, or why it can't.
-- `withCancel($message)` is sent when the reader presses Escape.
+- `withCancel()` makes Escape answer `Dismissed`, unless a field uses the key
+  itself. `withCancel($message)` also sends a message.
 - `Field::secret()` is a text field that hides what is typed.
 - `Field::choice()` shows a row of options where they fit and a filterable list
   where they don't. `Field::of()` takes any widget that implements `HoldsAValue`.
