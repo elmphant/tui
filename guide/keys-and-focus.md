@@ -14,11 +14,13 @@ Bindings write keys as text patterns: `'enter'`, `'ctrl+r'`, `'shift+tab'`.
 ## Typing beats shortcuts
 
 While a text field has the keyboard, a plain letter is **typed**. Your `onKey()`,
-your bindings and global letter shortcuts never see it. Ctrl and Alt chords and
-named keys (Enter, arrows) still work as shortcuts.
+the letter keys of `actions()` and `withAction()`, and global letter shortcuts
+never see it. Ctrl and Alt chords and named keys (Enter, arrows) still work as
+shortcuts.
 
-So give app-wide commands a Ctrl chord (`ctrl+n`, not `n`). App bindings are
-checked before the field's, so a chord you bind is taken from the field. A
+So give app-wide commands a Ctrl chord (`ctrl+n`, not `n`). Keys `actions()`
+declares are checked before the field's, so a chord you declare is taken from
+the field. A
 `TextInput` already uses `ctrl+u` (clear), `ctrl+backspace`/`ctrl+delete`
 (delete a word) and `ctrl+left`/`ctrl+right` or `alt+b`/`alt+f` (move by a word).
 
@@ -48,7 +50,10 @@ A widget's keys come from three places, the later ones winning:
 
 ### Vim mode
 
-Return `VimMode::keybindings()` from `globalKeybindings()` to add:
+Return `VimMode::keybindings()` from `globalKeybindings()` to add the keys below.
+To let the reader switch it, keep a flag on the App, return the vim keys only
+while it is set, and declare the switch as an action:
+`parent::actions()->with('vim', ['ctrl+v'], static fn (self $app): self => $app->cloneWith(vim: !$app->vim), 'vim mode')`.
 
 | Keys | Action |
 |---|---|

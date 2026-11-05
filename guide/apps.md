@@ -2,88 +2,11 @@
 
 [← README](../README.md)
 
-Most apps extend `App`. You write `view()`, and you override the hooks you need.
+Most apps extend `App`. You describe the screen in `view()`, keep the widgets on
+the App, and say what should happen when the reader uses them. The framework
+stores what the widgets did, routes keys and clicks, and names the keys.
 
-## The hooks
-
-```php
-abstract readonly class App
-{
-    abstract public function view(): Widget;                  // what the screen shows now
-    public function theme(): ?Theme { return null; }          // asked every frame; null keeps the start theme
-
-    protected function setup(): ?Cmd { return null; }         // commands to run at start
-    protected function onKey(KeyMsg $message, InputContext $input): self|UpdateResult { return $this; }  // $input: screen(), focused(), hints(), componentAt($mouse)
-    protected function onMouse(MouseMsg $message, InputContext $input): self|UpdateResult { return $this; }
-    protected function onTick(TickMsg $message, InputContext $input): self|UpdateResult { return $this; }
-    protected function onResize(ResizeMsg $message): self|UpdateResult { return $this; }
-    protected function onMessage(Message $message, InputContext $input): self|UpdateResult { return $this; }
-    protected function onComponentsChanged(array $ids): self|UpdateResult { return $this; } // list<ComponentId>, not strings: compare $id->value
-
-    protected function actions(): AppActions {}                 // keys answered anywhere, before any widget, quit keys too
-    protected function globalKeybindings(): Keybindings {}      // bindings every widget inherits (VimMode)
-    protected function focusCycleKeybindings(): Keybindings {}  // tab / shift+tab
-    protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
-    protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
-    protected function bind(string $property, ?string $id = null, int|string|null $at = null): Component {} // the widget a property holds (at: a key of an array), stored by the framework
-}
-```
-
-- `actions()` declares the keys that work wherever the keyboard is, each with
-  its handler and label: `parent::actions()->with('archive', ['ctrl+a'], static fn (self $app): self => $app->archived(), 'archive')`.
-  The footer leads with them and the key help lists them. A letter key is left
-  out while a field takes text, since it types then. `inFooter: false` keeps a
-  shortcut out of the footer and in the key help only.
-- Ctrl+Q and Ctrl+C quit. `parent::actions()->withQuitKeys('q', 'ctrl+q')`
-  changes the keys. Declare `Actions::QUIT` again with your own handler to ask
-  before quitting.
-- A component's `withAction()` keys work only while it holds the keyboard.
-- `onComponentsChanged()` runs after bound widgets changed. Use it to re-filter a
-  list when a search field changed. The ids are `ComponentId` objects, so
-  `in_array('search', $ids, true)` is always false. Check `$id->value === 'search'`.
-- `theme()` is asked before every frame. To switch themes, keep a field on the
-  App: `return $this->dark ? Theme::dark() : Theme::light();`.
-- To save state when the program ends, implement `Runtime\ShutdownAware`. Its
-  `onShutdown()` runs on the last App, after a quit key, `Cmd::quit()` or a
-  signal, and before the terminal is restored. Do the work right there: no
-  command runs any more.
-
-## Which hook for this?
-
-| You want to … | Use |
-|---|---|
-| answer a key wherever the keyboard is | `actions()`, `parent::actions()->with('archive', ['ctrl+a'], …)` |
-| answer a key only while one widget holds the keyboard | `$this->bind('list')->withAction('delete', ['d'], …)` |
-| take what a widget did (typed, moved, chose, submitted) | `$this->bind('field')->on(Submitted::class, …)`, or the bind closure |
-| take the answer to a command (a process, HTTP, a timer) | `onMessage()`, matched by its `EffectId` |
-| redraw on a clock | `onTick()` after `Cmd::tick()`. An animated widget needs neither |
-| read any key before the widgets do | `onKey()`. Prefer an action, so the key shows in the footer and the help |
-
-## What a hook returns
-
-Every hook, handler and bind closure returns the next App, or an `UpdateResult`
-once it asks for work:
-
-- `$this` — the message meant nothing here. In `onKey()`, the key then goes
-  on to the focused widget.
-- `$next` — a new App.
-- `new UpdateResult($next, $command)` — a new App and a command, or
-  `new UpdateResult($this, $command)` for only a command.
-
-The App is immutable. Return a new one instead of changing a property. Write
-small typed `withX()` methods, or call the protected
-`$this->cloneWith(list: $list)`, which returns `$this` when nothing changed.
-Never redeclare `cloneWith()` in your App.
-
-## Keep interactive widgets on the App
-
-A widget such as `TextInput`, `Panel`, `Select` or `Table` holds state: a
-cursor, a selection, a scroll position. Keep it in a property of the App. If
-`view()` creates it fresh each time, that state is lost on every frame.
-
-Then **bind** it in `view()` with `Component::bind()`. A bound widget gets keys
-and clicks, takes part in tab order, and hands its new state back through the
-closure. A whole todo app:
+## A first app
 
 ```php
 use Elmphant\Tui\Application\App;
@@ -148,53 +71,120 @@ final readonly class TodoApp extends App
 // Program::run(TodoApp::new());
 ```
 
-- **Start the App from a static factory.** A widget's constructor is private (it
-  guards what the widget may hold), so `private TextInput $field = new TextInput()`
-  does not compile. `TodoApp::new()` builds the widgets once.
+Type a todo and press Enter. Tab moves to the list, Space ticks a row, `d`
+deletes it, Ctrl+Q quits. The footer names the keys that work where the keyboard
+is, and `?` lists them all.
+
+- **The widgets live on the App.** A `TextInput` or a `ListView` holds state: a
+  cursor, a selection, what is typed. Kept in a property, that state survives
+  every frame. Built fresh in `view()`, it would be lost each time.
+- **`$this->bind('list')` makes a widget react.** It gets keys and clicks, takes
+  part in tab order, and the framework stores what it did back in the property.
+  A widget that is not bound only draws.
+- **`->on(Submitted::class, …)` reacts to what a widget did.** It runs after the
+  widget is stored, on the stored App, and returns the next App.
+- **`withAction()` gives a key to one widget.** It works only while that widget
+  holds the keyboard. In the field, Space is text.
+- **Start the App from a static factory.** A widget's constructor is private, so
+  `private TextInput $field = new TextInput()` does not compile.
 - **The record is the item.** `Todo` implements `ListItem`, so the App keeps one
-  `ListView` and no second array beside it. `cursorItem()`, `withCursorItem()`
-  and `withoutCursorItem()` edit the row the reader is on, and the cursor stays
-  on it by `key()`.
-- **`withSubmit()` makes Enter commit the field**, so the closure takes the value
-  inline. A field left without it hands Enter on, the way a form moves to the
-  next field.
-- **`withAction()` gives a key to one component.** Its handler runs on the app
-  with the list already stored, only while the list holds the keyboard, and the
-  footer and the key help name Space and `d` only then. A fourth argument
-  words the key (`'remove'`), else the action's name does. In the field, Space
-  is text. Several alike components (the columns of a board) each hear their
-  own: the handler may capture a plain value such as the column's index.
-- **`withAddedItem()`** appends a row and puts the cursor on it.
+  `ListView` and no second array. `cursorItem()`, `withCursorItem()`,
+  `withoutCursorItem()` and `withAddedItem()` edit it, and the cursor stays on
+  its row by `key()`.
+
+The App is immutable. Return a new one instead of changing a property: small
+typed `withX()` methods, or the protected `$this->cloneWith(list: $list)`, which
+returns `$this` when nothing changed. Never redeclare `cloneWith()`.
+
+## What a widget tells you
+
+A widget that did something the reader meant hands on an outcome, and
+`->on(Outcome::class, …)` hears it:
+
+| Outcome | From | Carries |
+|---|---|---|
+| `Submitted` | a `TextInput` with `withSubmit()`, on Enter | `$value` |
+| `Chosen` | `ListView`, `Table`, `Select`, `Radio`, `Dropdown`, the filterable ones, on Enter or a click on an item | `$choice`: the `ListItem`, `Row` or option |
+| `Pressed` | a `Button`, and a `Form` for its button or Enter in its last field | nothing: read the form's values on the stored App |
+| `Dismissed` | a `Modal`, on Escape or a click outside | nothing |
+
+Moving a cursor is never an outcome. A widget is stored even when nothing in it
+changed, so choosing the same row twice is heard twice. Each outcome carries the
+key or click that caused it as `$trigger`.
 
 Rules for binding:
 
-- **Ids are unique** in the tree. Use a readable string. `Cmd::focus('settings-form')`
+- **Ids are unique** in the tree. `bind('list')` is named `list`, and
+  `bind('list', 'todo-list')` names it yourself. `Cmd::focus('todo-list')`
   moves the keyboard there.
-- **A widget that is not bound does not react.** It only draws.
-- **The closure must be `static`.** Update the `$app` it is given, not `$this`:
-  `$this` may be an older App by the time the closure runs. The closure may
-  capture plain values (strings, numbers), never objects.
-- **To start work as well**, return `new UpdateResult($app->withList($list), $command)`
-  instead of the App.
-- **To react to a choice**, add `->on(Chosen::class, …)`. A widget that can
-  choose something (`ListView`, `Table`, `Select`, `Radio`, `Dropdown`, the
-  filterable ones) hands on a `Chosen` when the reader presses Enter or clicks
-  an item. Its `choice` is the `ListItem`, the `Row` or the option string, and
-  moving the cursor is never a choice. Such a widget is handed back even when
-  nothing in it changed, so choosing the same row twice is seen. A `TextInput`
-  with `withSubmit()` hands a `Submitted` with its value instead of the key.
+- **Handlers must be `static`.** Use the `$app` they are given, not `$this`,
+  which may be an older App by then. They may capture plain values (strings,
+  numbers), never objects.
 - **To close what was bound**, set it to `null` in the App you return (a modal,
   a picker).
+- **A property may hold several widgets, keyed.** `$this->bind('columns', at: $key)`
+  binds `$this->columns[$key]`, stores it back under that key, and names it
+  `columns.$key`. Reordering or removing entries keeps each widget, and the
+  keyboard, with its key.
+- **A widget built in `view()` instead of kept on the App** is bound with
+  `Component::bind($id, $widget, static fn (self $app, Widget $updated): self => …)`,
+  where the closure stores it wherever it belongs.
 
-`$this->bind('list')` binds the widget the property holds and writes it back there.
-`->on(Submitted::class, static fn (self $app, Submitted $submitted): self => …)` runs
-after that store, on the stored app, and its answer wins: ignoring an outcome never
-loses what the widget did.
+## Keys
 
-A property may hold several widgets, keyed: `$this->bind('columns', at: $key)` binds
-`$this->columns[$key]`, writes it back under that key, and names it `columns.$key`
-for `Cmd::focus()`. Reordering or removing entries keeps each widget, and the
-keyboard, with its key. String keys survive a reorder best.
+`actions()` declares the keys that work wherever the keyboard is, each with its
+handler and its label:
+
+```php
+use Elmphant\Tui\Application\{App, AppActions};
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Inbox extends App
+{
+    public function __construct(private int $archived = 0) {}
+
+    public function view(): Widget
+    {
+        return Text::new("{$this->archived} archived");
+    }
+
+    protected function actions(): AppActions
+    {
+        return parent::actions()
+            ->with('archive', ['ctrl+a'], static fn (self $app): self => new self($app->archived + 1), 'archive')
+            ->withQuitKeys('q', 'ctrl+q');
+    }
+}
+```
+
+- The footer leads with them and the key help lists them, in the declared words.
+  A letter key is left out while a field takes text, since it types then.
+  `inFooter: false` leaves a shortcut to the key help alone.
+- Ctrl+Q and Ctrl+C quit. `withQuitKeys()` changes the keys. Declare
+  `Actions::QUIT` again with your own handler to ask before quitting.
+- A widget's `withAction()` keys come first while it holds the keyboard, so
+  alike widgets (the columns of a board) each hear their own.
+- `onKey()` reads any key before the widgets do. Prefer an action, so the key
+  shows in the footer and the help.
+
+More in [Keys and focus](keys-and-focus.md).
+
+## Effects
+
+Every hook, handler and bind closure returns the next App, or an `UpdateResult`
+once it asks for work:
+
+- `$this` — the message meant nothing here. In `onKey()`, the key then goes on
+  to the focused widget.
+- `$next` — a new App.
+- `new UpdateResult($next, $command)` — a new App and a command, or
+  `new UpdateResult($this, $command)` for only a command.
+
+A command runs outside the App: a process, an HTTP request, a timer. Its answer
+arrives in `onMessage()`, matched by the command's `EffectId`. `onTick()` runs on
+the clock `Cmd::tick()` starts, and an animated widget needs neither. See
+[Effects](effects.md).
 
 ## Mounting a sub-model
 
@@ -298,6 +288,42 @@ final readonly class SearchSubmitted implements Message
 
 Send one with `Cmd::message(new SearchSubmitted('php'))`, and handle it in
 `onMessage()`.
+
+## Every hook
+
+```php
+abstract readonly class App
+{
+    abstract public function view(): Widget;                  // what the screen shows now
+    public function theme(): ?Theme { return null; }          // asked every frame; null keeps the start theme
+
+    protected function setup(): ?Cmd { return null; }         // commands to run at start
+    protected function onKey(KeyMsg $message, InputContext $input): self|UpdateResult { return $this; }  // $input: screen(), focused(), hints(), componentAt($mouse)
+    protected function onMouse(MouseMsg $message, InputContext $input): self|UpdateResult { return $this; }
+    protected function onTick(TickMsg $message, InputContext $input): self|UpdateResult { return $this; }
+    protected function onResize(ResizeMsg $message): self|UpdateResult { return $this; }
+    protected function onMessage(Message $message, InputContext $input): self|UpdateResult { return $this; }
+    protected function onComponentsChanged(array $ids): self|UpdateResult { return $this; } // list<ComponentId>, not strings: compare $id->value
+
+    protected function actions(): AppActions {}                 // keys answered anywhere, before any widget, quit keys too
+    protected function globalKeybindings(): Keybindings {}      // bindings every widget inherits (VimMode)
+    protected function focusCycleKeybindings(): Keybindings {}  // tab / shift+tab
+    protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
+    protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
+    protected function bind(string $property, ?string $id = null, int|string|null $at = null): Component {} // the widget a property holds (at: a key of an array), stored by the framework
+    protected function mount(string $property, Widget $view, int|string|null $at = null): Mount {} // the sub-model a property holds, stored by the framework
+}
+```
+
+- `onComponentsChanged()` runs after bound widgets changed. Use it to re-filter a
+  list when a search field changed. The ids are `ComponentId` objects, so
+  `in_array('search', $ids, true)` is always false. Check `$id->value === 'search'`.
+- `theme()` is asked before every frame. To switch themes, keep a field on the
+  App: `return $this->dark ? Theme::dark() : Theme::light();`.
+- To save state when the program ends, implement `Runtime\ShutdownAware`. Its
+  `onShutdown()` runs on the last App, after a quit key, `Cmd::quit()` or a
+  signal, and before the terminal is restored. Do the work right there: no
+  command runs any more.
 
 ## Without `App`: the `Model` interface
 

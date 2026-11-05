@@ -51,10 +51,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/vendor/autoload.php';
 
-use Elmphant\Tui\Application\App;
-use Elmphant\Tui\Application\InputContext;
-use Elmphant\Tui\Core\{Cmd, UpdateResult};
-use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Application\{App, AppActions};
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
@@ -65,29 +62,24 @@ final readonly class Counter extends App
 
     public function view(): Widget
     {
-        return Text::new("Count: {$this->count}  j/k change, x or Ctrl+Q quit");
+        return Text::new("Count: {$this->count}  (? lists the keys)");
     }
 
-    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
+    protected function actions(): AppActions
     {
-        return match ($message->key) {
-            'k' => new UpdateResult($this->withCount($this->count + 1)),
-            'j' => new UpdateResult($this->withCount($this->count - 1)),
-            'x' => new UpdateResult($this, Cmd::quit()),
-            default => new UpdateResult($this),
-        };
-    }
-
-    private function withCount(int $count): self
-    {
-        return $count === $this->count ? $this : new self($count);
+        return parent::actions()
+            ->with('up', ['k', 'up'], static fn (self $app): self => new self($app->count + 1), 'count up')
+            ->with('down', ['j', 'down'], static fn (self $app): self => new self($app->count - 1), 'count down')
+            ->withQuitKeys('x', 'ctrl+q');
     }
 }
 
 Program::run(new Counter());
 ```
 
-Save it as `counter.php` and run `php counter.php`.
+Save it as `counter.php` and run `php counter.php`. Each key is declared once,
+with what it does and what it is called. `?` opens a list of every key that
+works right now, read from those declarations.
 
 ## How it works
 
