@@ -231,7 +231,7 @@ final class ComponentTest extends TestCase
         $app = new MisdirectedComponentApp(TextInput::new(), TextInput::new());
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Component "typed" stored its update on another property');
+        $this->expectExceptionMessage('Component "typed" changed, but view() still draws it as before. Store the widget where view() reads it. If view() builds it fresh each time, keep that state in the app, or answer an outcome from Committing::outcomeOf() and handle it with on()');
 
         $app->update(new KeyMsg('x'), Rect::fromSize(20, 1), FocusState::on(ComponentId::named('typed')));
     }

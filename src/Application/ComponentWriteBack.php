@@ -109,7 +109,7 @@ final class ComponentWriteBack
             if (self::asAuthored($rebound->widget) == self::asAuthored($original->widget)
                 && self::asAuthored($widget) != self::asAuthored($original->widget)
             ) {
-                throw new LogicException(sprintf('Component "%s" stored its update on another property', $original->id->value));
+                throw new LogicException(sprintf('Component "%s" changed, but view() still draws it as before. Store the widget where view() reads it. If view() builds it fresh each time, keep that state in the app, or answer an outcome from Committing::outcomeOf() and handle it with on()', $original->id->value));
             }
         }
     }
