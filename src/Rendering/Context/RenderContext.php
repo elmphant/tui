@@ -97,6 +97,16 @@ final class RenderContext
     }
 
     /**
+     * The key that opens the key help right now, with its label. Empty when the app has none.
+     *
+     * @return array<string, string>
+     */
+    public function keyHelpHint(): array
+    {
+        return $this->focus->keyHelpHint();
+    }
+
+    /**
      * Whether the app treats keys as text here; null means no app supplied this information.
      */
     public function keyboardTakesText(): ?bool

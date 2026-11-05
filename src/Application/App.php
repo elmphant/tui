@@ -15,7 +15,6 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
-use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ActionMsg;
@@ -83,6 +82,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $focused = $pass->focus->focusedComponent();
 
         $pass->focus->provideHints($this->hintsOfFocused($focused));
+        $pass->focus->provideKeyHelpHint($this->keyHelpHint($focused));
         $pass->focus->provideTakesText($this->takesText($focused));
         $pass->focus->provideStopPublishers($this->componentRegistry()->stopPublishers());
         $pass->focus->provideEnclosure($focused === null ? [] : array_map(
@@ -165,20 +165,6 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         return $this->takesText($focus->focused()) ? $chords->withoutText() : $chords;
-    }
-
-    /**
-     * Prefer a non-text help key, since text fields consume `?`.
-     *
-     * @return array<string, string>
-     */
-    public function keyHelpHints(string $description = 'keys'): array
-    {
-        $bindings = $this->keyHelpKeybindings();
-        $everywhere = $bindings->withoutText()->patternsOf(Actions::HELP);
-        $labels = array_map(static fn (KeyPattern $pattern): string => $pattern->label(), $everywhere === [] ? $bindings->patternsOf(Actions::HELP) : $everywhere);
-
-        return $labels === [] ? [] : [implode('/', $labels) => $description];
     }
 
     final public function opensKeyHelp(KeyMsg $key, FocusState $focus): bool
@@ -1072,6 +1058,18 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return [...$appHints, ...$actionHints, ...$widget instanceof PublishesHints ? $widget->hints() : [], ...$layerHints];
     }
 
+    /**
+     * @return array<string, string>
+     */
+    private function keyHelpHint(?ComponentId $focused): array
+    {
+        $bindings = $this->keyHelpKeybindings();
+        $working = $this->takesText($focused) ? $bindings->withoutText() : $bindings;
+        $patterns = $working->patternsOf(Actions::HELP);
+
+        return $patterns === [] ? [] : [$patterns[0]->label() => 'keys'];
+    }
+
     private function componentRegistry(): ComponentRegistry
     {
         return ComponentRegistry::for($this, $this->viewWidget(...));
@@ -1276,7 +1274,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return new InputContext(
             $screen,
             $holder,
-            fn (): array => $this->hintsOfFocused($holder),
+            fn (): array => [...$this->hintsOfFocused($holder), ...$this->keyHelpHint($holder)],
             fn (MouseMsg $message): ?ComponentId => $this->componentAt($message, $screen),
         );
     }

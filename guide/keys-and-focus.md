@@ -81,7 +81,9 @@ is always correct. It closes with `?`, Ctrl+K or Escape, and scrolls when long.
   `withAction()`. The footer uses the same words.
 - Override `keyHelpKeybindings()` to use other keys, or return
   `Keybindings::empty()` to turn it off.
-- Put `$this->keyHelpHints()` in the footer to show `Ctrl+K  keys`.
+- `FocusHints` ends with the key that opens it: `?  keys`, or `Ctrl+K  keys`
+  while a field takes `?` as text. When the footer is too narrow, the other
+  hints give way and this one stays.
 - A mounted sub-model that answers its own keys implements `NamesItsKeys`, so
   they appear too.
 
@@ -102,7 +104,7 @@ public function view(): Widget
 ```
 
 With the keyboard on the list, that footer reads `Ctrl+Q quit   ↑/↓ move
-Enter choose`. Rebind a key, or switch on vim mode, and the footer follows.
+Enter choose   ? keys`. Rebind a key, or switch on vim mode, and the footer follows.
 The app's own `actions()` come first. A key that a focused field would type as
 text is left out while it does, since it does nothing then.
 Keys given with `$this->bind('list')->withAction(…)` are named only while that

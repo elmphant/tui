@@ -42,6 +42,11 @@ final class FocusPath
      */
     private array $hints = [];
 
+    /**
+     * @var array<string, string>
+     */
+    private array $keyHelpHint = [];
+
     private ?PendingChord $chord = null;
 
     private ?bool $takesText = null;
@@ -91,6 +96,7 @@ final class FocusPath
         $this->enclosure = [];
         $this->stopPublishers = [];
         $this->hints = [];
+        $this->keyHelpHint = [];
         $this->takesText = null;
     }
 
@@ -128,6 +134,16 @@ final class FocusPath
     public function provideHints(array $hints): void
     {
         $this->hints = $hints;
+    }
+
+    /**
+     * @internal
+     *
+     * @param array<string, string> $hint
+     */
+    public function provideKeyHelpHint(array $hint): void
+    {
+        $this->keyHelpHint = $hint;
     }
 
     /**
@@ -182,6 +198,16 @@ final class FocusPath
     public function hints(): array
     {
         return $this->hints;
+    }
+
+    /**
+     * @internal
+     *
+     * @return array<string, string>
+     */
+    public function keyHelpHint(): array
+    {
+        return $this->keyHelpHint;
     }
 
     /**

@@ -23,10 +23,12 @@ final readonly class StatusBar implements Widget
 
     /**
      * @param list<array{string, string}> $hints
+     * @param list<array{string, string}> $pinned
      */
     private function __construct(
         private string $content,
         private array $hints,
+        private array $pinned = [],
     ) {
     }
 
@@ -40,12 +42,17 @@ final readonly class StatusBar implements Widget
      */
     public static function forHints(array $hints): self
     {
-        $pairs = [];
-        foreach ($hints as $key => $description) {
-            $pairs[] = [$key, $description];
-        }
+        return new self('', self::pairsOf($hints));
+    }
 
-        return new self('', $pairs);
+    /**
+     * Hints drawn after the others, kept when the others are cut.
+     *
+     * @param array<string, string> $hints
+     */
+    public function withPinned(array $hints): self
+    {
+        return new self(content: $this->content, hints: $this->hints, pinned: self::pairsOf($hints));
     }
 
     public function sizing(): Sizing
@@ -59,7 +66,7 @@ final readonly class StatusBar implements Widget
         $barStyle = $theme->footerStyle;
         $frame->fillRect($area->x, $area->y, $area->width, 1, $barStyle->foregroundValue(), $barStyle->backgroundValue(), $barStyle->attributes);
 
-        if ($this->hints !== []) {
+        if ($this->hints !== [] || $this->pinned !== []) {
             $this->renderHints($frame, $area, $barStyle, $theme);
 
             return;
@@ -71,19 +78,44 @@ final readonly class StatusBar implements Widget
     /**
      * Exclude the last hint's trailing gap from content width; the bar still fills the row.
      */
+    /**
+     * @param array<string, string> $hints
+     *
+     * @return list<array{string, string}>
+     */
+    private static function pairsOf(array $hints): array
+    {
+        $pairs = [];
+        foreach ($hints as $key => $description) {
+            $pairs[] = [$key, $description];
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * Exclude the last hint's trailing gap from content width; the bar still fills the row.
+     */
     private function inkWidth(): int
     {
-        if ($this->hints === []) {
+        if ($this->hints === [] && $this->pinned === []) {
             return CharWidth::stringWidth($this->content);
         }
 
-        $width = 0;
+        return self::widthOf([...$this->hints, ...$this->pinned]) - self::HINT_GAP;
+    }
 
-        foreach ($this->hints as [$key, $description]) {
+    /**
+     * @param list<array{string, string}> $hints
+     */
+    private static function widthOf(array $hints): int
+    {
+        $width = 0;
+        foreach ($hints as [$key, $description]) {
             $width += CharWidth::stringWidth(' ' . $key . '  ' . $description . '  ');
         }
 
-        return $width - 2;
+        return $width;
     }
 
     private function renderHints(Frame $frame, Rect $area, Style $barStyle, Theme $theme): void
@@ -92,25 +124,35 @@ final readonly class StatusBar implements Widget
         $x = $area->x;
         $rightEdge = $area->x + $area->width;
         $last = \count($this->hints) - 1;
+        $ellipsis = CharWidth::stringWidth(self::ELLIPSIS);
+        $reserved = $this->pinned === [] ? 0 : self::widthOf($this->pinned);
 
         foreach ($this->hints as $index => [$key, $description]) {
-            $keyText = ' ' . $key . ' ';
-            $descText = ' ' . $description . '  ';
-            $width = CharWidth::stringWidth($keyText . $descText);
+            $width = self::widthOf([[$key, $description]]);
             $fits = $index === $last
-                ? $x + $width - self::HINT_GAP <= $rightEdge
-                : $x + $width + CharWidth::stringWidth(self::ELLIPSIS) <= $rightEdge;
+                ? $x + $width - self::HINT_GAP + $reserved <= $rightEdge
+                : $x + $width + $ellipsis + $reserved <= $rightEdge;
 
             if (!$fits) {
-                if ($x + CharWidth::stringWidth(self::ELLIPSIS) <= $rightEdge) {
-                    $frame->putStyled($x, $area->y, self::ELLIPSIS, $barStyle);
+                if ($x + $ellipsis + $reserved <= $rightEdge) {
+                    $x += $frame->putStyled($x, $area->y, self::ELLIPSIS, $barStyle) + ($this->pinned === [] ? 0 : self::HINT_GAP);
                 }
 
-                return;
+                break;
             }
 
-            $x += $frame->putStyled($x, $area->y, $keyText, $keyStyle);
-            $x += $frame->putStyled($x, $area->y, CharWidth::truncateToWidth($descText, max(0, $rightEdge - $x)), $barStyle);
+            $x = $this->drawHint($frame, $x, $area->y, $rightEdge, $key, $description, $keyStyle, $barStyle);
         }
+
+        foreach ($this->pinned as [$key, $description]) {
+            $x = $this->drawHint($frame, $x, $area->y, $rightEdge, $key, $description, $keyStyle, $barStyle);
+        }
+    }
+
+    private function drawHint(Frame $frame, int $x, int $y, int $rightEdge, string $key, string $description, Style $keyStyle, Style $barStyle): int
+    {
+        $x += $frame->putStyled($x, $y, ' ' . $key . ' ', $keyStyle);
+
+        return $x + $frame->putStyled($x, $y, CharWidth::truncateToWidth(' ' . $description . '  ', max(0, $rightEdge - $x)), $barStyle);
     }
 }

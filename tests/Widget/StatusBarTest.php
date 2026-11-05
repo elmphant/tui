@@ -44,6 +44,26 @@ final class StatusBarTest extends TestCase
     }
 
     #[Test]
+    public function aPinnedHintStaysWhenTheOthersAreCut(): void
+    {
+        $lines = [
+            37 => ' a  one   b  two   c  three   ?  keys' . str_repeat('.', 3),
+            29 => ' a  one   b  two  …   ?  keys' . str_repeat('.', 11),
+            8 => ' ?  keys' . str_repeat('.', 32),
+        ];
+
+        foreach ($lines as $width => $line) {
+            self::assertSame($line, $this->hintsDrawnIn($width, ['?' => 'keys']), "a bar $width wide");
+        }
+    }
+
+    #[Test]
+    public function aPinnedHintCountsInTheWidthTheBarAsksFor(): void
+    {
+        self::assertSame(37, StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->withPinned(['?' => 'keys'])->sizing()->columns->basis);
+    }
+
+    #[Test]
     public function aBarOfHintsAsksForTheirWidthWithoutTheLastGap(): void
     {
         self::assertSame(27, StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->sizing()->columns->basis);
@@ -477,11 +497,14 @@ final class StatusBarTest extends TestCase
         return $result;
     }
 
-    private function hintsDrawnIn(int $width): string
+    /**
+     * @param array<string, string> $pinned
+     */
+    private function hintsDrawnIn(int $width, array $pinned = []): string
     {
         $frame = new Frame(40, 1);
         $frame->putString(0, 0, str_repeat('.', 40));
-        StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->render($frame, new Rect(0, 0, $width, 1), $this->context);
+        StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->withPinned($pinned)->render($frame, new Rect(0, 0, $width, 1), $this->context);
 
         return $this->extractText($frame, 0, 40);
     }

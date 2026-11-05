@@ -66,7 +66,7 @@ final readonly class FocusHints implements Widget
         $chord = $context->pendingChord();
 
         return $chord === null
-            ? StatusBar::forHints([...$this->leading, ...$context->focusedHints()])
+            ? StatusBar::forHints([...$this->leading, ...$context->focusedHints()])->withPinned($context->keyHelpHint())
             : StatusBar::forHints([$chord->typed . '…' => '', ...$chord->continuations, 'Esc' => 'cancel']);
     }
 }

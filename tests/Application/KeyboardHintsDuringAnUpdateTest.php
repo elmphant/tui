@@ -27,7 +27,7 @@ final class KeyboardHintsDuringAnUpdateTest extends TestCase
         $harness->clickAt(1, 0);
 
         self::assertEquals(ComponentId::named('list'), $harness->model()->focused);
-        self::assertSame($harness->focusedHints(), $harness->model()->recorded);
+        self::assertSame([...$harness->focusedHints(), '?' => 'keys'], $harness->model()->recorded);
         self::assertNotSame([], $harness->model()->recorded);
     }
 }

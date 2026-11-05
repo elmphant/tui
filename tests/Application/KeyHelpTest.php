@@ -152,12 +152,6 @@ final class KeyHelpTest extends TestCase
     }
 
     #[Test]
-    public function theFooterHintNamesTheKeyThatWorksEverywhere(): void
-    {
-        self::assertSame(['Ctrl+K' => 'keys'], self::harness()->model()->keyHelpHints());
-    }
-
-    #[Test]
     public function aKeyHelpTallerThanTheScreenScrolls(): void
     {
         $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 10)->init()->press('?');
