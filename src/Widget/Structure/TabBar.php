@@ -58,6 +58,7 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
         private bool $emphasizedBorder = false,
         private ?Style $borderStyleOverride = null,
         private ?Style $focusedBorderStyleOverride = null,
+        private bool $bordered = true,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
     ) {
@@ -147,6 +148,14 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
     public function withPadding(Spacing $padding): static
     {
         return $this->cloneWith(padding: $padding);
+    }
+
+    /**
+     * Without a border the tabs take one row and the page starts right below them.
+     */
+    public function withBorder(bool $bordered = true): self
+    {
+        return $this->cloneWith(bordered: $bordered);
     }
 
     public function withEmphasizedBorder(bool $emphasized = true): self
@@ -247,6 +256,14 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
         }
 
         $theme = $context->theme;
+
+        if (!$this->bordered) {
+            $this->renderContent($frame, $area, $context);
+            $this->renderOneRowStrip($frame, $area, $theme, $this->drawsFocused($context));
+
+            return;
+        }
+
         $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
         $glyphs = $theme->borderTypeFor($prominent)->glyphs();
         $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
@@ -337,7 +354,7 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
 
     private function onStrip(MouseMsg $message, Rect $area): bool
     {
-        return $message->y >= $area->y && $message->y <= $area->y + 1;
+        return $message->y >= $area->y && $message->y <= $area->y + ($this->bordered ? 1 : 0);
     }
 
     private function tabStripLayout(Rect $area): TabStripLayout
@@ -399,8 +416,39 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
             $frame->putStyled($hiddenAfter, $area->y + 1, TabStripLayout::HIDDEN_AFTER, $theme->dim);
         }
 
-        $this->renderTabHint($frame, $area, $layout->columnAfterLastTab(), $theme, $focused);
+        $this->renderTabHint($frame, $area, $area->y + 1, $layout->columnAfterLastTab(), $theme, $focused);
         $this->renderBaseline($frame, $area, $layout, $border, $borderStyle);
+    }
+
+    private function renderOneRowStrip(Frame $frame, Rect $area, Theme $theme, bool $focused): void
+    {
+        $layout = $this->tabStripLayout($area);
+
+        foreach (array_keys($this->tabs) as $tabIndex) {
+            $cell = $layout->rectOf($tabIndex);
+            $label = $layout->labelOf($tabIndex);
+            if ($cell === null || $label === null) {
+                continue;
+            }
+
+            if ($tabIndex === $this->activeTab) {
+                $frame->putStyled($cell->x + 1, $area->y, " {$label} ", $focused ? $theme->cursorStyle : $theme->selectedStyle);
+            } else {
+                $frame->putStyled($cell->x + 2, $area->y, $label, $theme->dim);
+            }
+        }
+
+        $hiddenBefore = $layout->hiddenBeforeColumn();
+        if ($hiddenBefore !== null) {
+            $frame->putStyled($hiddenBefore, $area->y, TabStripLayout::HIDDEN_BEFORE, $theme->dim);
+        }
+
+        $hiddenAfter = $layout->hiddenAfterColumn();
+        if ($hiddenAfter !== null) {
+            $frame->putStyled($hiddenAfter, $area->y, TabStripLayout::HIDDEN_AFTER, $theme->dim);
+        }
+
+        $this->renderTabHint($frame, $area, $area->y, $layout->columnAfterLastTab(), $theme, $focused);
     }
 
     private function renderBaseline(
@@ -439,7 +487,7 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
         $frame->fillRect($cell->x + 1, $baselineY, $tabRight - $cell->x - 1, 1, 0, $background);
     }
 
-    private function renderTabHint(Frame $frame, Rect $area, int $afterTabsX, Theme $theme, bool $focused): void
+    private function renderTabHint(Frame $frame, Rect $area, int $row, int $afterTabsX, Theme $theme, bool $focused): void
     {
         $rightEdge = $area->right() - 1;
         $text = $this->hintWithin($rightEdge - $afterTabsX, $focused);
@@ -448,7 +496,7 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
             return;
         }
 
-        $frame->putStyled($rightEdge - CharWidth::stringWidth($text) - 1, $area->y + 1, $text, $theme->dim);
+        $frame->putStyled($rightEdge - CharWidth::stringWidth($text) - 1, $row, $text, $theme->dim);
     }
 
     private function hintWithin(int $availableWidth, bool $focused): ?string
@@ -535,14 +583,14 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
      */
     private function fitsIn(Rect $area): bool
     {
-        return $this->tabs !== [] && $area->width >= 5 && $area->height >= 5;
+        return $this->tabs !== [] && ($this->bordered ? $area->width >= 5 && $area->height >= 5 : $area->width >= 1 && $area->height >= 1);
     }
 
     private function contentArea(Rect $area): Rect
     {
         return (new Inset(
-            margin: Spacing::only(top: self::TAB_STRIP_HEIGHT - 1),
-            border: true,
+            margin: Spacing::only(top: $this->bordered ? self::TAB_STRIP_HEIGHT - 1 : 1),
+            border: $this->bordered,
             padding: $this->padding,
         ))->inner($area);
     }

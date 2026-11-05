@@ -15,7 +15,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | Widget | In | What it is |
 | --- | --- | --- |
 | `Panel` | `Structure` | A scrolling box of widgets, with border and title — see [Scrolling](#scrolling) |
-| `TabBar` | `Structure` | Tabs, switched by keyboard or mouse |
+| `TabBar` | `Structure` | Tabs, switched by keyboard or mouse. `withBorder(false)` puts the tabs on one row with the page right below |
 | `Split` | `Structure` | Two panes with a divider you can drag |
 | `Modal` | `Popup` | A box over the screen that dims what is behind it — see [Modals](#modals) |
 | `Overlay` / `PositionedOverlay` | `Popup` | One widget on top of another |

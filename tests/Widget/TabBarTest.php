@@ -30,6 +30,7 @@ use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Testing\WidgetHarness;
 use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
@@ -162,6 +163,26 @@ final class TabBarTest extends TestCase
         }
 
         self::assertSame('╰' . str_repeat('─', $width - 2) . '╯', $bottom);
+    }
+
+    #[Test]
+    public function aBarWithoutABorderDrawsItsTabsOnOneRowAndThePageRightBelow(): void
+    {
+        $screen = WidgetHarness::for(TabBar::new()->addTab('One', Text::new('first page'))->addTab('Two')->withBorder(false), width: 30, height: 4)->screen();
+
+        self::assertSame(0, $screen->rowOf('One'));
+        self::assertSame(0, $screen->rowOf('Two'));
+        self::assertSame(1, $screen->rowOf('first page'));
+    }
+
+    #[Test]
+    public function aClickOnATabOfAOneRowStripSwitchesToIt(): void
+    {
+        $harness = WidgetHarness::for(TabBar::new()->addTab('One')->addTab('Two', Text::new('second page'))->withBorder(false), width: 30, height: 4);
+
+        $harness->click('Two');
+
+        self::assertSame(1, $harness->screen()->rowOf('second page'));
     }
 
     #[Test]
