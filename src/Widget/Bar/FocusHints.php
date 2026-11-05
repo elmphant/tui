@@ -53,7 +53,7 @@ final readonly class FocusHints implements Widget
      */
     public function widthWith(array $focusedHints): int
     {
-        return StatusBar::forHints([...$this->leading, ...$focusedHints])->sizing()->columns->intrinsic();
+        return StatusBar::forHints(array_replace($this->leading, $focusedHints))->sizing()->columns->intrinsic();
     }
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
@@ -66,7 +66,7 @@ final readonly class FocusHints implements Widget
         $chord = $context->pendingChord();
 
         return $chord === null
-            ? StatusBar::forHints([...$this->leading, ...$context->focusedHints()])->withPinned($context->keyHelpHint())
+            ? StatusBar::forHints(array_replace($this->leading, $context->focusedHints()))->withPinned($context->keyHelpHint())
             : StatusBar::forHints([$chord->typed . '…' => '', ...$chord->continuations, 'Esc' => 'cancel']);
     }
 }

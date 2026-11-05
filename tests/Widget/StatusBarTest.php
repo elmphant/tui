@@ -58,6 +58,15 @@ final class StatusBarTest extends TestCase
     }
 
     #[Test]
+    public function aDigitKeyIsDrawnLikeAnyOther(): void
+    {
+        $frame = new Frame(30, 1);
+        StatusBar::forHints(['1' => 'errors'])->withPinned(['2' => 'warnings'])->render($frame, Rect::fromSize(30, 1), $this->context);
+
+        self::assertSame(' 1  errors   2  warnings', $this->extractText($frame, 0, 24));
+    }
+
+    #[Test]
     public function aPinnedHintCountsInTheWidthTheBarAsksFor(): void
     {
         self::assertSame(37, StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->withPinned(['?' => 'keys'])->sizing()->columns->basis);

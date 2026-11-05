@@ -79,7 +79,9 @@ final readonly class StatusBar implements Widget
      * Exclude the last hint's trailing gap from content width; the bar still fills the row.
      */
     /**
-     * @param array<string, string> $hints
+     * PHP turns a label like "1" into an int key, so it is cast back here.
+     *
+     * @param array<array-key, string> $hints
      *
      * @return list<array{string, string}>
      */
@@ -87,7 +89,7 @@ final readonly class StatusBar implements Widget
     {
         $pairs = [];
         foreach ($hints as $key => $description) {
-            $pairs[] = [$key, $description];
+            $pairs[] = [(string)$key, $description];
         }
 
         return $pairs;

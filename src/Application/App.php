@@ -1055,7 +1055,8 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $layerHints += $layer->hints();
         }
 
-        return [...$appHints, ...$actionHints, ...$widget instanceof PublishesHints ? $widget->hints() : [], ...$layerHints];
+        // `+` keeps the first label for a key, in the order keys are handled, and keeps a digit label a key.
+        return $appHints + $actionHints + ($widget instanceof PublishesHints ? $widget->hints() : []) + $layerHints;
     }
 
     /**
@@ -1274,7 +1275,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return new InputContext(
             $screen,
             $holder,
-            fn (): array => [...$this->hintsOfFocused($holder), ...$this->keyHelpHint($holder)],
+            fn (): array => $this->hintsOfFocused($holder) + $this->keyHelpHint($holder),
             fn (MouseMsg $message): ?ComponentId => $this->componentAt($message, $screen),
         );
     }
