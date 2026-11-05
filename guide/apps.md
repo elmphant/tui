@@ -80,7 +80,10 @@ is, and `?` lists them all.
   every frame. Built fresh in `view()`, it would be lost each time.
 - **`$this->bind('list')` makes a widget react.** It gets keys and clicks, takes
   part in tab order, and the framework stores what it did back in the property.
-  A widget that is not bound only draws.
+  A widget that is not bound only draws. Clicks arrive only once the program
+  tracks the mouse: `Program::new($app)->withScreenMode(ScreenMode::alternate(mouse: true))->start()`.
+  `ModelHarness` clicks either way, so a test can't catch a program that left
+  the mouse off.
 - **`->on(Submitted::class, …)` reacts to what a widget did.** It runs after the
   widget is stored, on the stored App, and returns the next App.
 - **`withAction()` gives a key to one widget.** It works only while that widget
