@@ -185,7 +185,9 @@ once it asks for work:
 
 A command runs outside the App: a process, an HTTP request, a timer. Its answer
 arrives in `onMessage()`, matched by the command's `EffectId`. `setup()` returns
-the commands to start with, such as the first load. `onTick()` runs on
+the commands to start with, such as the first load. It only starts commands and
+cannot change the App, so build the starting state in the constructor or a
+static factory. `onTick()` runs on
 the clock `Cmd::tick()` starts, and an animated widget needs neither. See
 [Effects](effects.md).
 
@@ -301,7 +303,7 @@ abstract readonly class App
     abstract public function view(): Widget;                  // what the screen shows now
     public function theme(): ?Theme { return null; }          // asked every frame; null keeps the start theme
 
-    protected function setup(): ?Cmd { return null; }         // commands to run at start
+    protected function setup(): ?Cmd { return null; }         // commands to run at start; the starting state comes from the constructor
     protected function onKey(KeyMsg $message, InputContext $input): self|UpdateResult { return $this; }  // $input: screen(), focused(), hints(), componentAt($mouse)
     protected function onMouse(MouseMsg $message, InputContext $input): self|UpdateResult { return $this; }
     protected function onTick(TickMsg $message, InputContext $input): self|UpdateResult { return $this; }

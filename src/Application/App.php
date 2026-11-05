@@ -234,6 +234,9 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         return null;
     }
 
+    /**
+     * Starts commands only. The starting state comes from the constructor or a factory.
+     */
     protected function setup(): ?Cmd
     {
         return null;
