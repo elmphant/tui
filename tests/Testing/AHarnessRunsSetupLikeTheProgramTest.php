@@ -64,6 +64,15 @@ final class AHarnessRunsSetupLikeTheProgramTest extends TestCase
     }
 
     #[Test]
+    public function anIssuedCommandEqualsTheOneCmdExecBuilds(): void
+    {
+        self::assertEquals(
+            [Cmd::exec(['ls'], EffectId::named('list'))],
+            ModelHarness::for(new LoadsOnSetup())->issued(ExecCmd::class),
+        );
+    }
+
+    #[Test]
     public function anExplicitInitRunsSetupOnce(): void
     {
         $harness = ModelHarness::for(new SecondFieldFirst(TextInput::new(), TextInput::new()), width: 30, height: 3)->init();

@@ -10,7 +10,9 @@ for and answers it.
 `ModelHarness` drives your app like a reader would:
 
 ```php fragment
+use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
+use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Testing\ModelHarness;
 
 $app = ModelHarness::for(new Counter(), width: 40, height: 5)->press('k');
@@ -35,6 +37,7 @@ $app->drag(30, 5, 40, 5);    // press at one cell, move, release at another
 
 // Answer the commands the app asked for:
 $app->issued(ExecCmd::class);                     // the commands the last press() or typed letter asked for
+self::assertEquals([Cmd::exec(['ls'], EffectId::named('list'))], $app->issued(ExecCmd::class)); // build the expected one the way the app does
 $app->answer('load', stdout: '{"items": []}');    // ProcessResultMsg for Cmd::exec()
 $app->answer('load', stderr: 'fatal: not a git repository', exitCode: 128);  // one that failed
 $app->stream('tail', "a line\n");                 // ProcessOutputMsg for Cmd::stream()
