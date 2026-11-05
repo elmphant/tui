@@ -86,7 +86,9 @@ In a test, `$screen->styleAt($column, $row)->link` says which URL a cell opens.
 A `FilterableList` matches the query against each item's `filterValue()`, which
 `ListItemBehavior` answers with `title()`. Return more from it to make other
 fields searchable, an author's name beside the subject. `items()` answers every
-item you handed in, matching or not.
+item you handed in, matching or not. A `FilterableTable` searches the text of a
+row's cells, and `Row::withFilterValue($text)` searches other text instead, such
+as a description the table does not show.
 
 The filter widgets tell you what the reader picked in terms of the rows you
 handed in, not the filtered ones: `cursorSourceIndex()`, and on a table `cursorRow()`

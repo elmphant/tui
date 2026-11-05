@@ -39,6 +39,18 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
+    public function aRowIsFoundByTextItCarriesButDoesNotDraw(): void
+    {
+        $table = FilterableTable::new(
+            [Column::new('Name', Constraint::flex())],
+            [Row::new('symfony/config')->withFilterValue('symfony/config loads configuration'), Row::new('symfony/finder')],
+        )->withQuery('loads');
+
+        self::assertSame('1 of 2', $table->summary());
+        self::assertSame('symfony/config', $table->cursorRow()?->textAt(0));
+    }
+
+    #[Test]
     public function theArrowsMoveTheTableCursor(): void
     {
         $table = $this->harness()->press('down', 'down')->widget();

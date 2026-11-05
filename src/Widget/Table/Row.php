@@ -21,6 +21,7 @@ final readonly class Row
         public bool $selectable = true,
         public bool $spansAllColumns = false,
         private ?string $key = null,
+        private ?string $filterValue = null,
     ) {
     }
 
@@ -63,6 +64,19 @@ final readonly class Row
     public function key(): string
     {
         return $this->key ?? implode("\x1F", $this->texts());
+    }
+
+    /**
+     * What a filter searches, for text the row does not draw, such as a description.
+     */
+    public function withFilterValue(?string $filterValue): self
+    {
+        return $this->cloneWith(filterValue: $filterValue);
+    }
+
+    public function filterValue(): string
+    {
+        return $this->filterValue ?? implode(' ', $this->texts());
     }
 
     /**
