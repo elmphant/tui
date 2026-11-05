@@ -42,6 +42,11 @@ final class ForkLoggingModel implements Model
 
             return new UpdateResult($this, $message->last ? Cmd::quit() : null);
         }
+        if ($message instanceof ForkReport) {
+            $this->heard[] = $message;
+
+            return new UpdateResult($this, Cmd::quit());
+        }
         if ($message instanceof ErrorMsg) {
             $from = $message->effectId === null ? '' : ' from ' . $message->effectId;
             $this->log[] = 'error' . $from . ': ' . $message->source->value . ' ' . $message->error->getMessage();
