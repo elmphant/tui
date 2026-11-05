@@ -134,6 +134,121 @@ Popups are drawn after the whole screen, so they are always on top.
 - **If you route messages yourself**, pass `FloatMouseMsg` on wherever you pass
   `MouseMsg`. Otherwise clicks in popups get lost.
 
+## A widget the reader uses
+
+A row of choices that answers `Chosen` for Enter or a click, the way a list
+does. Bound with `$this->bind('sizes')->on(Chosen::class, …)`, it needs no
+code in the app beyond the handler:
+
+```php
+use Elmphant\Tui\Core\Message;
+use Elmphant\Tui\Core\UpdateResult;
+use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Chosen;
+use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\Context\RenderContext;
+use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Widget\Committing;
+use Elmphant\Tui\Widget\Focus\Navigates;
+use Elmphant\Tui\Widget\Focus\Navigation;
+use Elmphant\Tui\Widget\PublishesHints;
+
+final readonly class Chips implements Navigates, Committing, PublishesHints
+{
+    /**
+     * @param list<string> $labels
+     */
+    public function __construct(private array $labels, private int $cursor = 0)
+    {
+    }
+
+    public function outcomeOf(Message $message, Rect $area): ?Message
+    {
+        $chosen = match (true) {
+            $message instanceof KeyMsg && self::keys()->matches($message, 'choose') => $this->cursor,
+            $message instanceof MouseMsg && $message->isClick() => $this->indexAt($message->x - $area->x),
+            default => null,
+        };
+
+        return $chosen === null ? null : new Chosen($this->labels[$chosen], $message);
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        $cursor = match (true) {
+            $message instanceof KeyMsg && self::keys()->matches($message, 'left') => max(0, $this->cursor - 1),
+            $message instanceof KeyMsg && self::keys()->matches($message, 'right') => min(count($this->labels) - 1, $this->cursor + 1),
+            $message instanceof MouseMsg && $message->isClick() => $this->indexAt($message->x - $area->x) ?? $this->cursor,
+            default => $this->cursor,
+        };
+
+        return new UpdateResult(new self($this->labels, $cursor));
+    }
+
+    public function navigation(): Navigation
+    {
+        return Navigation::Regular;
+    }
+
+    public function hints(): array
+    {
+        return self::keys()->hints(['move' => ['left', 'right'], 'choose' => 'choose']);
+    }
+
+    public function sizing(): Sizing
+    {
+        return Sizing::of(Constraint::flex(), Constraint::exact(1));
+    }
+
+    public function render(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        $x = $area->x;
+        foreach ($this->labels as $index => $label) {
+            $style = $index === $this->cursor && $context->hasFocus() ? $context->theme->cursorStyle : $context->theme->base;
+            $x += $frame->putStyled($x, $area->y, " {$label} ", $style);
+        }
+    }
+
+    private static function keys(): Keybindings
+    {
+        return new Keybindings(['left' => ['left'], 'right' => ['right'], 'choose' => ['enter']]);
+    }
+
+    private function indexAt(int $column): ?int
+    {
+        foreach ($this->labels as $index => $label) {
+            $column -= mb_strlen($label) + 2;
+            if ($column < 0) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+}
+```
+
+What each piece does:
+
+- **`Committing::outcomeOf()`** says what the reader did. The app hears it with
+  `on()`, and the widget is written back even when it did not change. Keep the
+  outcome out of the widget's state: a stored "clicked" flag would be gone the
+  next time `view()` builds the widget.
+- **`update()`** keeps the cursor, the state only the widget needs.
+- **`Navigates`** says how the keyboard reaches it: `Regular` (tab stops on
+  it), `Pointer` (a click lands on it, tab walks past, as for a tab strip) or
+  `Never`.
+- **`PublishesHints`** names its keys in the footer and the key help. Derive
+  the labels from the bindings with `Keybindings::hints()`.
+- **`TakesText`**, for a field: while `takesText()` answers true, plain letters
+  reach the widget before any shortcut, and the key help opens with Ctrl+K
+  instead of `?`.
+- The mouse arrives only inside the widget's area (see [The mouse](#the-mouse)).
+
 ## Where the keyboard can go
 
 - `InputLayer`: while on screen, everything behind it ignores keys and clicks.

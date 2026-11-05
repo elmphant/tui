@@ -127,17 +127,26 @@ $app->render($frame, $pass);
 $pass = RenderPass::new(Theme::dark(), focus: FocusPath::on(ComponentId::named('search')));   // or name the holder
 ```
 
-## Tracing in a test
+## Running the real loop in a test
 
-`InMemoryTracer` records what the program did, for checks on the whole flow:
+The harnesses skip the event loop. To run the real one, with real commands and
+timers, give `Program` a `VirtualTerminal` and type bytes into it. The program
+runs until the app quits. `InMemoryTracer` records what it did:
 
 ```php fragment
+$terminal = new VirtualTerminal(80, 24);
+$terminal->simulateInput('hello');                                       // typed text
+EventLoop::delay(0.2, fn () => $terminal->simulateInput("\x11"));         // Ctrl+Q a little later
 $tracer = new InMemoryTracer();
-Program::new($app)->withTracer($tracer)->start();
 
+Program::new($app)->withTerminal($terminal)->withTracer($tracer)->start();
+
+$terminal->output();                                          // the ANSI it wrote
+$tracer->fieldsOf(TraceEvent::Render);                        // one entry per frame: 'ms', 'bytes', …
 self::assertSame(0.0, $tracer->totalOf(TraceEvent::Render, 'blockedMs'));
 ```
 
-For ANSI output, raw input bytes or terminal features, use `VirtualTerminal`.
+Type the quit key later, as above: typed in the same read as the text, it ends
+the program before the first frame. `EventLoop` is `Revolt\EventLoop`.
 For larger snapshots, `GoldenScreen::assertMatchesSnapshot($name, $harness->screen(), $dir)`
 compares the screen with a file. The first run writes the file.
