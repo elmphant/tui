@@ -16,4 +16,5 @@ enum ErrorSource: string
     case Process = 'process';
     case Http = 'http';
     case Fiber = 'fiber';
+    case Fork = 'fork';
 }

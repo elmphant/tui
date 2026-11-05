@@ -13,6 +13,7 @@ use Elmphant\Tui\Core\Cmd\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FiberCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
+use Elmphant\Tui\Core\Cmd\ForkCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\HttpMethod;
 use Elmphant\Tui\Core\Cmd\ListenCmd;
@@ -177,6 +178,17 @@ abstract readonly class Cmd
     public static function fiber(Closure $work, ?EffectId $id = null): self
     {
         return new FiberCmd($work, $id);
+    }
+
+    /**
+     * Runs blocking work (network calls, database queries, a long computation) and answers with what it returns.
+     * $work gets a $send that hands a message on at once, and returns its last message or null.
+     *
+     * @param Closure(Closure(Message): void): ?Message $work
+     */
+    public static function fork(Closure $work, ?EffectId $id = null): self
+    {
+        return new ForkCmd($work, $id);
     }
 
     /**
