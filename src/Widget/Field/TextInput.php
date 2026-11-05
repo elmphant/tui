@@ -28,7 +28,6 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Terminal\CursorShape;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\Grapheme;
-use Elmphant\Tui\Text\GraphemeIndex;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
@@ -129,7 +128,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
 
     public function withCursor(int $cursor): self
     {
-        return $this->cloneWith(cursor: max(0, min($cursor, self::graphemeLength($this->value))));
+        return $this->cloneWith(cursor: max(0, min($cursor, LineText::length($this->value))));
     }
 
     public function echoMode(): EchoMode
@@ -145,7 +144,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
             default => throw ValueItCannotHold::given($this, $value),
         };
 
-        return $this->cloneWith(value: $text, cursor: self::graphemeLength($text));
+        return $this->cloneWith(value: $text, cursor: LineText::length($text));
     }
 
     public function withCharacterLimit(int $limit): self
@@ -206,7 +205,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         }
 
         $displayText = $this->echoMode->mask($this->value);
-        $textLength = self::graphemeLength($displayText);
+        $textLength = LineText::length($displayText);
         $availableWidth = $area->width;
 
         $scrollOffset = $this->computeScrollOffset($availableWidth);
@@ -219,12 +218,12 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
 
         $content = $showPlaceholder
             ? CharWidth::truncateToWidth($this->placeholder, $availableWidth)
-            : self::substringByDisplayWidth($displayText, $scrollOffset, $availableWidth);
+            : LineText::slice($displayText, $scrollOffset, $availableWidth);
 
         $frame->putStyled($area->x, $area->y, $content, $fieldStyle);
 
         if ($this->drawsFocused($context)) {
-            $cursorDisplayX = self::prefixWidth($displayText, $this->cursor);
+            $cursorDisplayX = LineText::prefixWidth($displayText, $this->cursor);
             $cursorScreenX = $area->x + $cursorDisplayX - $scrollOffset;
             if ($cursorScreenX >= $area->x && $cursorScreenX < $area->right()) {
                 $frame->setCursorPosition($cursorScreenX, $area->y, $this->cursorShape);
@@ -270,16 +269,16 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         $updated = match (true) {
             $bindings->matches($message, Actions::CURSOR_LEFT) => $this->moveCursorLeft(),
             $bindings->matches($message, Actions::CURSOR_RIGHT) => $this->moveCursorRight(),
-            $bindings->matches($message, Actions::WORD_LEFT) => $this->moveCursorTo(self::wordStartBefore(Grapheme::split($this->value), $this->cursor)),
-            $bindings->matches($message, Actions::WORD_RIGHT) => $this->moveCursorTo(self::wordEndAfter(Grapheme::split($this->value), $this->cursor)),
+            $bindings->matches($message, Actions::WORD_LEFT) => $this->moveCursorTo(LineText::wordStartBefore(Grapheme::split($this->value), $this->cursor)),
+            $bindings->matches($message, Actions::WORD_RIGHT) => $this->moveCursorTo(LineText::wordEndAfter(Grapheme::split($this->value), $this->cursor)),
             $bindings->matches($message, Actions::LINE_START) => $this->cursor > 0 ? $this->cloneWith(cursor: 0) : null,
-            $bindings->matches($message, Actions::LINE_END) => $this->cursor < self::graphemeLength($this->value) ? $this->cloneWith(cursor: self::graphemeLength($this->value)) : null,
+            $bindings->matches($message, Actions::LINE_END) => $this->cursor < LineText::length($this->value) ? $this->cloneWith(cursor: LineText::length($this->value)) : null,
             $bindings->matches($message, Actions::CLEAR_LINE) => $this->value === '' ? null : $this->cloneWith(value: '', cursor: 0),
             $bindings->matches($message, Actions::DELETE_WORD_BACKWARD) => $this->deleteWordBackward(),
             $bindings->matches($message, Actions::DELETE_CHAR_BACKWARD) => $this->deleteCharBackward(),
             $bindings->matches($message, Actions::DELETE_WORD_FORWARD) => $this->deleteWordForward(),
             $bindings->matches($message, Actions::DELETE_CHAR_FORWARD) => $this->deleteCharForward(),
-            is_string($message->key) && !$message->ctrl && !$message->alt && self::graphemeLength($message->key) === 1 => $this->insertCharacter($message->key),
+            is_string($message->key) && !$message->ctrl && !$message->alt && LineText::length($message->key) === 1 => $this->insertCharacter($message->key),
             default => null,
         };
 
@@ -303,24 +302,8 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         $scrollOffset = $this->computeScrollOffset($area->width);
         $clickDisplayX = $message->x - $area->x + $scrollOffset;
         $displayText = $this->echoMode->mask($this->value);
-        $newCursor = self::isPlain($displayText)
-            ? min($clickDisplayX, strlen($displayText))
-            : GraphemeIndex::of($displayText)->lastUpTo($clickDisplayX);
 
-        return new UpdateResult($this->cloneWith(cursor: $newCursor));
-    }
-
-    private static function substringByDisplayWidth(string $text, int $offsetColumns, int $maxColumns): string
-    {
-        if (self::isPlain($text)) {
-            return substr($text, $offsetColumns, $maxColumns);
-        }
-
-        $index = GraphemeIndex::of($text);
-        $first = $index->firstFrom($offsetColumns);
-        $end = $index->lastUpTo($index->columnOf($first) + $maxColumns);
-
-        return substr($text, $index->byteOf($first), $index->byteOf($end) - $index->byteOf($first));
+        return new UpdateResult($this->cloneWith(cursor: LineText::graphemeAt($displayText, $clickDisplayX)));
     }
 
     private function moveCursorLeft(): ?self
@@ -330,7 +313,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
 
     private function moveCursorRight(): ?self
     {
-        return $this->cursor < self::graphemeLength($this->value) ? $this->cloneWith(cursor: $this->cursor + 1) : null;
+        return $this->cursor < LineText::length($this->value) ? $this->cloneWith(cursor: $this->cursor + 1) : null;
     }
 
     private function moveCursorTo(int $cursor): ?self
@@ -338,63 +321,16 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         return $cursor === $this->cursor ? null : $this->cloneWith(cursor: $cursor);
     }
 
-    /**
-     * @param list<string> $graphemes
-     */
-    private static function wordStartBefore(array $graphemes, int $cursor): int
-    {
-        while ($cursor > 0 && self::wordKindOf($graphemes[$cursor - 1]) === 'space') {
-            --$cursor;
-        }
-
-        $kind = $cursor > 0 ? self::wordKindOf($graphemes[$cursor - 1]) : null;
-        while ($cursor > 0 && self::wordKindOf($graphemes[$cursor - 1]) === $kind) {
-            --$cursor;
-        }
-
-        return $cursor;
-    }
-
-    /**
-     * @param list<string> $graphemes
-     */
-    private static function wordEndAfter(array $graphemes, int $cursor): int
-    {
-        $length = count($graphemes);
-        while ($cursor < $length && self::wordKindOf($graphemes[$cursor]) === 'space') {
-            ++$cursor;
-        }
-
-        $kind = $cursor < $length ? self::wordKindOf($graphemes[$cursor]) : null;
-        while ($cursor < $length && self::wordKindOf($graphemes[$cursor]) === $kind) {
-            ++$cursor;
-        }
-
-        return $cursor;
-    }
-
-    /**
-     * @return 'space'|'word'|'punctuation'
-     */
-    private static function wordKindOf(string $grapheme): string
-    {
-        return match (true) {
-            preg_match('/^\s/u', $grapheme) === 1 => 'space',
-            preg_match('/^[\p{L}\p{N}\p{M}_]/u', $grapheme) === 1 => 'word',
-            default => 'punctuation',
-        };
-    }
-
     private function insertCharacter(string $character): ?self
     {
-        if ($this->charLimit > 0 && self::graphemeLength($this->value) >= $this->charLimit) {
+        if ($this->charLimit > 0 && LineText::length($this->value) >= $this->charLimit) {
             return null;
         }
 
-        $before = self::graphemeSubstring($this->value, 0, $this->cursor);
-        $after = self::graphemeSubstring($this->value, $this->cursor);
+        $before = LineText::substring($this->value, 0, $this->cursor);
+        $after = LineText::substring($this->value, $this->cursor);
 
-        return $this->cloneWith(value: $before . $character . $after, cursor: self::graphemeLength($before . $character));
+        return $this->cloneWith(value: $before . $character . $after, cursor: LineText::length($before . $character));
     }
 
     private function pasted(string $content): ?self
@@ -403,21 +339,21 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         $content = preg_replace('/[\x00-\x1F\x7F-\x{9F}]+/u', ' ', $content) ?? '';
 
         if ($this->charLimit > 0) {
-            $room = $this->charLimit - self::graphemeLength($this->value);
+            $room = $this->charLimit - LineText::length($this->value);
 
             if ($room <= 0) {
                 return null;
             }
 
-            $content = self::graphemeSubstring($content, 0, $room);
+            $content = LineText::substring($content, 0, $room);
         }
 
-        $before = self::graphemeSubstring($this->value, 0, $this->cursor);
-        $after = self::graphemeSubstring($this->value, $this->cursor);
+        $before = LineText::substring($this->value, 0, $this->cursor);
+        $after = LineText::substring($this->value, $this->cursor);
 
         return $this->cloneWith(
             value: $before . $content . $after,
-            cursor: self::graphemeLength($before . $content),
+            cursor: LineText::length($before . $content),
         );
     }
 
@@ -427,20 +363,20 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
             return null;
         }
 
-        $before = self::graphemeSubstring($this->value, 0, $this->cursor - 1);
-        $after = self::graphemeSubstring($this->value, $this->cursor);
+        $before = LineText::substring($this->value, 0, $this->cursor - 1);
+        $after = LineText::substring($this->value, $this->cursor);
 
         return $this->cloneWith(value: $before . $after, cursor: $this->cursor - 1);
     }
 
     private function deleteCharForward(): ?self
     {
-        if ($this->cursor >= self::graphemeLength($this->value)) {
+        if ($this->cursor >= LineText::length($this->value)) {
             return null;
         }
 
-        $before = self::graphemeSubstring($this->value, 0, $this->cursor);
-        $after = self::graphemeSubstring($this->value, $this->cursor + 1);
+        $before = LineText::substring($this->value, 0, $this->cursor);
+        $after = LineText::substring($this->value, $this->cursor + 1);
 
         return $this->cloneWith(value: $before . $after);
     }
@@ -452,7 +388,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         }
 
         $graphemes = Grapheme::split($this->value);
-        $newCursor = self::wordStartBefore($graphemes, $this->cursor);
+        $newCursor = LineText::wordStartBefore($graphemes, $this->cursor);
 
         return $this->cloneWith(
             value: implode('', array_slice($graphemes, 0, $newCursor)) . implode('', array_slice($graphemes, $this->cursor)),
@@ -467,7 +403,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
             return null;
         }
 
-        $wordEnd = self::wordEndAfter($graphemes, $this->cursor);
+        $wordEnd = LineText::wordEndAfter($graphemes, $this->cursor);
 
         return $this->cloneWith(
             value: implode('', array_slice($graphemes, 0, $this->cursor)) . implode('', array_slice($graphemes, $wordEnd)),
@@ -481,84 +417,14 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
         }
 
         $displayText = $this->echoMode->mask($this->value);
-        $cursorDisplayWidth = self::prefixWidth($displayText, $this->cursor);
+        $cursorDisplayWidth = LineText::prefixWidth($displayText, $this->cursor);
 
-        return self::graphemeStartAtOrAfter($displayText, ScrollWindow::showing(
+        return LineText::columnAtOrAfter($displayText, ScrollWindow::showing(
             $this->scrollOffset,
             $cursorDisplayWidth,
             1,
             $availableWidth,
-            ScrollWindow::lastOffset(self::displayWidth($displayText), $availableWidth),
+            ScrollWindow::lastOffset(LineText::width($displayText), $availableWidth),
         ));
-    }
-
-    /**
-     * Drawing skips a wide character as a whole, so the caret and clicks must count from where it ends too.
-     */
-    private static function graphemeStartAtOrAfter(string $text, int $column): int
-    {
-        if (self::isPlain($text)) {
-            return min($column, strlen($text));
-        }
-
-        $index = GraphemeIndex::of($text);
-
-        return $index->columnOf($index->firstFrom($column));
-    }
-
-    private static function graphemeLength(string $value): int
-    {
-        return self::isPlain($value) ? strlen($value) : GraphemeIndex::of($value)->count;
-    }
-
-    private static function graphemeSubstring(string $value, int $offset, ?int $length = null): string
-    {
-        if (self::isPlain($value)) {
-            return substr($value, $offset, $length);
-        }
-
-        $index = GraphemeIndex::of($value);
-        $first = min($offset, $index->count);
-        $end = $length === null ? $index->count : min($first + $length, $index->count);
-
-        return substr($value, $index->byteOf($first), $index->byteOf($end) - $index->byteOf($first));
-    }
-
-    /**
-     * In printable ASCII every byte is one grapheme one column wide, so byte offsets are the answer.
-     *
-     * @infection-ignore-all a memo of the last answer: the same without it, only slower
-     */
-    private static function isPlain(string $text): bool
-    {
-        static $last = null;
-        static $answer = false;
-        if ($text !== $last) {
-            $last = $text;
-            $answer = self::holdsOnlyPrintableAscii($text);
-        }
-
-        return $answer;
-    }
-
-    private static function holdsOnlyPrintableAscii(string $text): bool
-    {
-        return preg_match('/[^\x20-\x7e]/', $text) !== 1;
-    }
-
-    private static function displayWidth(string $text): int
-    {
-        return self::isPlain($text) ? strlen($text) : GraphemeIndex::of($text)->width();
-    }
-
-    private static function prefixWidth(string $text, int $graphemes): int
-    {
-        if (self::isPlain($text)) {
-            return min($graphemes, strlen($text));
-        }
-
-        $index = GraphemeIndex::of($text);
-
-        return $index->columnOf(min($graphemes, $index->count));
     }
 }
