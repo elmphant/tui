@@ -28,6 +28,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
@@ -37,7 +38,7 @@ use InvalidArgumentException;
 /**
  * Keep divider positions in host-owned SplitState; expose children through WidgetContainer for layout and routing.
  */
-final readonly class Split implements Widget, WidgetContainer, Interactive, KeybindingsAware
+final readonly class Split implements Widget, WidgetContainer, Interactive, KeybindingsAware, CapturesThePointer
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -93,6 +94,21 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
     public function state(): SplitState
     {
         return $this->state;
+    }
+
+    public function capturesThePointer(): bool
+    {
+        if ($this->state->dragging !== null) {
+            return true;
+        }
+
+        foreach ($this->children as $child) {
+            if ($child instanceof CapturesThePointer && $child->capturesThePointer()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

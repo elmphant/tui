@@ -27,6 +27,7 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
@@ -37,7 +38,7 @@ use Elmphant\Tui\Widget\PublishesHints;
  *
  * @template-covariant TContent of DropdownContent
  */
-final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, CapturesKeys, TakesText, Committing
+final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAware, PublishesHints, CapturesKeys, CapturesThePointer, TakesText, Committing
 {
     use Cloneable;
     use DrawsFocus;
@@ -152,6 +153,11 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
     }
 
     public function capturesKeys(): bool
+    {
+        return $this->open;
+    }
+
+    public function capturesThePointer(): bool
     {
         return $this->open;
     }

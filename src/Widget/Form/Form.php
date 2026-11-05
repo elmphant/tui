@@ -29,6 +29,7 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Field\Button;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focus\Navigates;
@@ -48,7 +49,7 @@ use LogicException;
 /**
  * Derive values from the fields; each field has label, input and error children, followed by a pinned submit button.
  */
-final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Committing, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates
+final readonly class Form implements BindsForTheMoment, CapturesThePointer, ClipsItsChildren, Committing, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -176,6 +177,11 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Commit
         }
 
         return $form;
+    }
+
+    public function capturesThePointer(): bool
+    {
+        return $this->pane->capturesThePointer();
     }
 
     /**

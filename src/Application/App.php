@@ -37,6 +37,7 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\InputLayer;
 use Elmphant\Tui\Widget\Focusable;
@@ -835,6 +836,11 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             static fn (Component $component): bool => !isset($rects[$component->id->value])
                 || !$message->isIn($rects[$component->id->value])
                 || (isset($visible[$component->id->value]) && $message->isIn($visible[$component->id->value])),
+        ));
+        $components = array_values(array_filter(
+            $components,
+            static fn (Component $component): bool => (isset($visible[$component->id->value]) && $message->isIn($visible[$component->id->value]))
+                || ($component->widget instanceof CapturesThePointer && $component->widget->capturesThePointer()),
         ));
         [$updates, $childCommand, $outcome] = $current->dispatchComponents(
             $components,

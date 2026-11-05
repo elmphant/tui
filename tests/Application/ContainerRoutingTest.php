@@ -93,9 +93,9 @@ final class ContainerRoutingTest extends TestCase
         $seen = new ArrayObject();
         $harness = ModelHarness::for(new WrappedPaneApp(new RecordingPane($seen), $wrap), width: 40, height: 12);
         $harness->init();
-        $harness->renderFrame();
+        $drawn = $harness->screen()->findOrFail('F');
 
-        $harness->dispatch(new MouseMsg(20, 6, MouseAction::Press, MouseButton::Left));
+        $harness->dispatch(new MouseMsg($drawn['column'], $drawn['row'], MouseAction::Press, MouseButton::Left));
 
         $clicks = array_filter(
             iterator_to_array($seen),

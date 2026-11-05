@@ -51,6 +51,28 @@ If the wrapper passes input on to the widget inside a `Panel`, hand it
 `$panel->contentArea($area)`, the area the panel draws it in. Then clicks land
 on the rows the reader sees.
 
+## The mouse
+
+A bound widget hears a click, the wheel or a drag only inside its own area. To
+follow a drag past its edge, or to close when the reader clicks somewhere else,
+it implements `CapturesThePointer` and answers true while that matters:
+
+```php
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
+
+final readonly class Slider implements CapturesThePointer
+{
+    public function __construct(private bool $dragging = false)
+    {
+    }
+
+    public function capturesThePointer(): bool
+    {
+        return $this->dragging;   // or $this->open, as a dropdown does
+    }
+}
+```
+
 ## Animation
 
 A widget that animates reads the time from `$context->now()` and asks for the

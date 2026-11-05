@@ -28,6 +28,7 @@ use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
@@ -37,7 +38,7 @@ use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 
-final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKeyboard, GraftsItsChildren, WidgetContainer, KeybindingsAware, PublishesHints
+final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Focusable, FollowsTheKeyboard, GraftsItsChildren, WidgetContainer, KeybindingsAware, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -93,6 +94,11 @@ final readonly class TabBar implements ClipsItsChildren, Focusable, FollowsTheKe
     public function tabs(): array
     {
         return $this->tabs;
+    }
+
+    public function capturesThePointer(): bool
+    {
+        return $this->activePane()->capturesThePointer();
     }
 
     public function tabAt(MouseMsg $message, Rect $area): ?int

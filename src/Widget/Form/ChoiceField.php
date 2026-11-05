@@ -19,6 +19,7 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Choice\RadioRow;
 use Elmphant\Tui\Widget\Filter\FilterableList;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\Listing\SimpleListItem;
@@ -31,7 +32,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 /**
  * Show choices as a row if they fit, otherwise as a dropdown; resizing preserves the selection.
  */
-final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue, PublishesHints, TakesText, WidgetContainer
+final readonly class ChoiceField implements CapturesKeys, CapturesThePointer, Focusable, HoldsAValue, PublishesHints, TakesText, WidgetContainer
 {
     use Cloneable;
 
@@ -102,6 +103,11 @@ final readonly class ChoiceField implements CapturesKeys, Focusable, HoldsAValue
     public function capturesKeys(): bool
     {
         return $this->list->capturesKeys();
+    }
+
+    public function capturesThePointer(): bool
+    {
+        return $this->list->capturesThePointer();
     }
 
     public function takesText(): bool

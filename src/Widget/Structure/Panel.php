@@ -24,6 +24,7 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
@@ -35,7 +36,7 @@ use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
+final readonly class Panel implements CapturesThePointer, ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -159,6 +160,11 @@ final readonly class Panel implements ClipsItsChildren, FollowsTheKeyboard, Graf
     public function marked(): ?MarkedRange
     {
         return $this->pane->marked();
+    }
+
+    public function capturesThePointer(): bool
+    {
+        return $this->pane->capturesThePointer();
     }
 
     public function withMarked(?MarkedRange $marked): self

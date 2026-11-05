@@ -28,11 +28,12 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Committing;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\PublishesHints;
 
-final readonly class Button implements Focusable, KeybindingsAware, PublishesHints, Committing
+final readonly class Button implements Focusable, KeybindingsAware, PublishesHints, Committing, CapturesThePointer
 {
     use Cloneable;
     use DrawsFocus;
@@ -80,6 +81,11 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
     }
 
     public function isArmed(): bool
+    {
+        return $this->armed;
+    }
+
+    public function capturesThePointer(): bool
     {
         return $this->armed;
     }

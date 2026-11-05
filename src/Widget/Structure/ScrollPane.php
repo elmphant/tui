@@ -28,6 +28,7 @@ use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\CursorAware;
+use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
@@ -44,7 +45,7 @@ use Elmphant\Tui\Widget\SingleMount;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
+final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates, WidgetContainer, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -117,6 +118,11 @@ final readonly class ScrollPane implements ClipsItsChildren, FollowsTheKeyboard,
     public function marked(): ?MarkedRange
     {
         return $this->marked;
+    }
+
+    public function capturesThePointer(): bool
+    {
+        return $this->marked !== null;
     }
 
     public function withMarked(?MarkedRange $marked): self
