@@ -58,7 +58,7 @@ final readonly class FocusHints implements Widget
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $this->bar($context)->render($frame, $area, $context);
+        $context->draw($this->bar($context), $frame, $area);
     }
 
     private function bar(RenderContext $context): StatusBar

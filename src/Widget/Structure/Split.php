@@ -215,7 +215,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
 
         try {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $pane]) {
-                $child->render($frame, $pane, $context);
+                $context->draw($child, $frame, $pane);
 
                 if ($index < $last) {
                     $this->renderDivider($frame, $area, $pane, $index, $context);

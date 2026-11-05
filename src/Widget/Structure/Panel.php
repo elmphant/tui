@@ -264,7 +264,7 @@ final readonly class Panel implements CapturesThePointer, ClipsItsChildren, Foll
 
         foreach ([[$this->header?->widget, $headerArea], [$this->pane, $rowsArea], [$this->footer?->widget, $footerArea]] as [$part, $partArea]) {
             if ($part !== null && $partArea->width > 0 && $partArea->height > 0) {
-                $part->render($frame, $partArea, $context);
+                $context->draw($part, $frame, $partArea);
             }
         }
 

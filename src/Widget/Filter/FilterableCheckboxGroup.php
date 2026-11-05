@@ -282,12 +282,12 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
 
         if ($this->matching() === []) {
             $nothing = $this->options === [] ? $this->noDataText : $this->noMatchText;
-            Paragraph::fromLines([new Line([Span::token($nothing, StyleToken::Dim)])])->render($frame, $body, $context);
+            $context->draw(Paragraph::fromLines([new Line([Span::token($nothing, StyleToken::Dim)])]), $frame, $body);
 
             return;
         }
 
-        $this->boxes()->render($frame, $body, $context);
+        $context->draw($this->boxes(), $frame, $body);
     }
 
     /**

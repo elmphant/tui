@@ -575,7 +575,7 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
             return;
         }
 
-        $this->activePane()->render($frame, $contentArea, $context);
+        $context->draw($this->activePane(), $frame, $contentArea);
     }
 
     /**

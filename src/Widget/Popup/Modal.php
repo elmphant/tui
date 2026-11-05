@@ -280,7 +280,7 @@ final readonly class Modal implements Interactive, GraftsItsChildren, Committing
         if ($contentRect->width > 0 && $contentRect->height > 0) {
             $frame->clipped($contentRect, function () use ($frame, $area, $context): void {
                 foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-                    $context->withinChild(0, static fn () => $child->render($frame, $childArea, $context));
+                    $context->drawChild(0, $child, $frame, $childArea);
                 }
             });
         }

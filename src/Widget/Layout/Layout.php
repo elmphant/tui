@@ -176,8 +176,7 @@ final readonly class Layout implements Widget, GraftsItsChildren, MeasureHeight
     {
         foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
             $index = array_search($child, $this->children, true);
-            $draw = static fn () => $child->render($frame, $childArea, $context);
-            \is_int($index) ? $context->withinChild($index, $draw) : $draw();
+            $context->drawChild(\is_int($index) ? $index : null, $child, $frame, $childArea);
         }
     }
 

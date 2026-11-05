@@ -69,7 +69,7 @@ final readonly class Themed implements Widget, WidgetContainer, MeasureHeight
     {
         $themed = $context->withTheme(($this->adjust)($context->theme));
         foreach (PlacedChildren::of($this, $area, $themed) as [$child, $childArea]) {
-            $child->render($frame, $childArea, $themed);
+            $themed->draw($child, $frame, $childArea);
         }
     }
 }

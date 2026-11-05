@@ -66,7 +66,7 @@ final readonly class Mount implements Widget, WidgetContainer
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $context->withinMount($this->id, fn () => $this->content->render($frame, $area, $context));
+        $context->withinMount($this->id, fn () => $context->draw($this->content, $frame, $area));
     }
 
     /**

@@ -40,7 +40,7 @@ trait DecoratesOneChild
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $this->wrapped()->render($frame, $area, $context);
+        $context->draw($this->wrapped(), $frame, $area);
     }
 
     abstract protected function wrapped(): Widget;

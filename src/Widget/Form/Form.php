@@ -357,12 +357,11 @@ final readonly class Form implements BindsForTheMoment, CapturesThePointer, Clip
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $pane = $this->drawn();
-        $pane->render($frame, $area, $context);
+        $context->draw($pane, $frame, $area);
 
         $button = $this->buttonRect($area);
         if ($this->submit !== null && $button !== null) {
-            $submit = $this->submit;
-            $context->withinChild($this->submitChild(), static fn () => $submit->render($frame, $button, $context));
+            $context->drawChild($this->submitChild(), $this->submit, $frame, $button);
         }
 
         $this->renderBar($frame, $area, $pane, $context);

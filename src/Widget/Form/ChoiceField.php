@@ -170,7 +170,7 @@ final readonly class ChoiceField implements CapturesKeys, CapturesThePointer, Fo
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $this->shownIn($area)->render($frame, $area, $context);
+        $context->draw($this->shownIn($area), $frame, $area);
     }
 
     private function shownIn(Rect $area): Widget

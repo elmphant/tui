@@ -145,8 +145,7 @@ final readonly class Box implements Widget, GraftsItsChildren, MeasureHeight
         $frame->clipped($inset->inner($area), function () use ($frame, $area, $context): void {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
                 $index = array_search($child, $this->children, true);
-                $draw = static fn () => $child->render($frame, $childArea, $context);
-                \is_int($index) ? $context->withinChild($index, $draw) : $draw();
+                $context->drawChild(\is_int($index) ? $index : null, $child, $frame, $childArea);
             }
         });
 

@@ -47,7 +47,7 @@ final class FilterBar
         $fieldWidth = $area->width - ($trailing === 0 ? 0 : $trailing + self::GAP);
 
         if ($fieldWidth > 0) {
-            $field->render($frame, new Rect($area->x, $area->y, $fieldWidth, self::HEIGHT), $context);
+            $context->draw($field, $frame, new Rect($area->x, $area->y, $fieldWidth, self::HEIGHT));
         }
 
         $summaryX = $area->right() - $trailing;

@@ -211,8 +211,7 @@ final readonly class Flex implements Widget, GraftsItsChildren, MeasureHeight
         $children = [...$this->children()];
         foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
             $index = array_search($child, $children, true);
-            $draw = static fn () => $child->render($frame, $childArea, $context);
-            \is_int($index) ? $context->withinChild($index, $draw) : $draw();
+            $context->drawChild(\is_int($index) ? $index : null, $child, $frame, $childArea);
         }
     }
 

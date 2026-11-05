@@ -230,6 +230,6 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     private function renderContent(Frame $frame, Rect $body, RenderContext $context): void
     {
-        $this->table->render($frame, $body, $context);
+        $context->draw($this->table, $frame, $body);
     }
 }

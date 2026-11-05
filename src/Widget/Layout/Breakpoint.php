@@ -59,7 +59,7 @@ final readonly class Breakpoint implements MeasureHeight, Widget, WidgetContaine
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $this->for($area->width)->render($frame, $area, $context);
+        $context->draw($this->for($area->width), $frame, $area);
     }
 
     private function for(int $width): Widget

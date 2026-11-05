@@ -79,7 +79,7 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-            $child->render($frame, $childArea, $context);
+            $context->draw($child, $frame, $childArea);
         }
     }
 

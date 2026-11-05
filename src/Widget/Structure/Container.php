@@ -162,7 +162,7 @@ final readonly class Container implements Widget, GraftsItsChildren, MeasureHeig
     {
         $frame->clipped($this->contentArea($area), function () use ($frame, $area, $context): void {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-                $context->withinChild(0, static fn () => $child->render($frame, $childArea, $context));
+                $context->drawChild(0, $child, $frame, $childArea);
             }
         });
 

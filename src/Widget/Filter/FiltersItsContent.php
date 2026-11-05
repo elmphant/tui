@@ -153,7 +153,7 @@ trait FiltersItsContent
         }
 
         if ($this->matchingIndexes() === []) {
-            Paragraph::fromLines([new Line([Span::token($this->nothingToShow(), StyleToken::Dim)])])->render($frame, $body, $context);
+            $context->draw(Paragraph::fromLines([new Line([Span::token($this->nothingToShow(), StyleToken::Dim)])]), $frame, $body);
 
             return;
         }

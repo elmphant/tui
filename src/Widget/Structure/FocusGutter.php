@@ -163,11 +163,7 @@ final readonly class FocusGutter implements Interactive, HoldsTheKeyboard, Graft
         }
 
         foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-            $draw = static function () use ($child, $frame, $childArea, $context): void {
-                $child->render($frame, $childArea, $context);
-            };
-
-            $this->held === null ? $context->withinChild(0, $draw) : $draw();
+            $context->drawChild($this->held === null ? 0 : null, $child, $frame, $childArea);
         }
     }
 

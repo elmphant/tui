@@ -166,7 +166,7 @@ final class BarSlotRenderer
             return;
         }
 
-        $frame->clipped($rect, static fn () => $widget->render($frame, $rect, $context));
+        $frame->clipped($rect, static fn () => $context->draw($widget, $frame, $rect));
 
         self::keepBarBackground($frame, $rect, $barBackground, $context->theme->canvas->value ?? 0);
     }

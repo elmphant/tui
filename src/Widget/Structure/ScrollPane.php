@@ -271,15 +271,8 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
                 if ($y + $height > $area->y && $y < $area->bottom()) {
                     $childArea = new Rect($area->x, $y, $layout->childWidth, $height);
 
-                    $draw = static function () use ($child, $frame, $childArea, $context): void {
-                        $child->render($frame, $childArea, $context);
-                    };
-
-                    if (($child instanceof HoldsTheKeyboard && $child->isHeld()) || $index === $loose) {
-                        $draw();
-                    } else {
-                        $context->withinChild($index, $draw);
-                    }
+                    $drawnLoose = ($child instanceof HoldsTheKeyboard && $child->isHeld()) || $index === $loose;
+                    $context->drawChild($drawnLoose ? null : $index, $child, $frame, $childArea);
                 }
 
                 $y += $height;
@@ -432,7 +425,7 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
             $height = $layout->heights[$index];
 
             if ($top + $height > $first && $top <= $marked->lastRow()) {
-                $child->render($frame, new Rect(0, $top - $first, $layout->childWidth, $height), $context);
+                $context->draw($child, $frame, new Rect(0, $top - $first, $layout->childWidth, $height));
             }
 
             $top += $height;
