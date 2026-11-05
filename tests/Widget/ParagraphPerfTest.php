@@ -15,6 +15,47 @@ final class ParagraphPerfTest extends TestCase
     use PerformanceBudget;
 
     #[Test]
+    public function aLongTextAnswersItsSizeAgainAsQuicklyAsAShortOne(): void
+    {
+        self::skipUnderXdebug();
+
+        $short = Paragraph::fromText("one\ntwo");
+        $long = Paragraph::fromText(str_repeat("    \"uuid\": \"0123456789abcdef\",\n", 100_000));
+        $long->sizing();
+
+        self::assertRatioBelow(self::MAX_RATIO, static function () use ($short, $long): array {
+            $shortTime = self::medianMicroseconds(static fn () => $short->sizing(), 50);
+            $longTime = self::medianMicroseconds(static fn () => $long->sizing(), 50);
+            $ratio = $longTime / max(0.01, $shortTime);
+
+            return [$ratio, sprintf('Asking 100,000 lines for their size again cost %.0fx asking two (%.0fµs vs %.1fµs)', $ratio, $longTime, $shortTime)];
+        });
+    }
+
+    #[Test]
+    public function aLongTextNarrowerThanItsAreaMeasuresItsHeightAsQuicklyAsAShortOne(): void
+    {
+        self::skipUnderXdebug();
+
+        $short = Paragraph::fromText("one\ntwo");
+        $long = Paragraph::fromText(str_repeat("    \"uuid\": \"0123456789abcdef\",\n", 100_000));
+        $long->sizing();
+        $width = 100;
+
+        self::assertRatioBelow(self::MAX_RATIO, static function () use ($short, $long, &$width): array {
+            $shortTime = self::medianMicroseconds(static function () use ($short, &$width): void {
+                $short->measureHeight(++$width);
+            }, 50);
+            $longTime = self::medianMicroseconds(static function () use ($long, &$width): void {
+                $long->measureHeight(++$width);
+            }, 50);
+            $ratio = $longTime / max(0.01, $shortTime);
+
+            return [$ratio, sprintf('Measuring 100,000 short lines at a new width cost %.0fx measuring two (%.0fµs vs %.1fµs)', $ratio, $longTime, $shortTime)];
+        });
+    }
+
+    #[Test]
     public function aMegabyteOfPlainTextWrapsAtANewWidthWithinAFrame(): void
     {
         self::skipUnderXdebug();

@@ -176,7 +176,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
             return 0;
         }
 
-        if ($this->wrap === Wrap::NoWrap) {
+        if (!$this->wrapsAt($width)) {
             return count($this->lines);
         }
 
@@ -248,12 +248,29 @@ final readonly class Paragraph implements Widget, MeasureHeight
 
     private function widestLine(): int
     {
-        $width = 0;
-        foreach ($this->lines as $line) {
-            $width = max($width, $line->width());
-        }
+        return $this->rowIndex->measuredOnce('widest', function (): int {
+            $width = 0;
+            foreach ($this->lines as $line) {
+                $width = max($width, $line->width());
+            }
 
-        return $width;
+            return $width;
+        });
+    }
+
+    /**
+     * A cell holds at least one byte, so no line wraps when none has more bytes than the width.
+     */
+    private function wrapsAt(int $width): bool
+    {
+        return $this->wrap !== Wrap::NoWrap && $this->rowIndex->measuredOnce('longest', function (): int {
+            $bytes = 0;
+            foreach ($this->lines as $line) {
+                $bytes = max($bytes, strlen(self::textOf($line)));
+            }
+
+            return $bytes;
+        }) > $width;
     }
 
     /**
@@ -265,7 +282,7 @@ final readonly class Paragraph implements Widget, MeasureHeight
             return [0, 0];
         }
 
-        if ($this->wrap === Wrap::NoWrap) {
+        if (!$this->wrapsAt($width)) {
             return [$target, $target];
         }
 

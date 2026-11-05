@@ -24,6 +24,11 @@ final class RowIndex
 
     private bool $overflowAnswer = false;
 
+    /**
+     * @var array<string, int>
+     */
+    private array $measured = [];
+
     private function __construct(private readonly int $rowCount)
     {
         $this->byKey = self::newCache();
@@ -47,6 +52,16 @@ final class RowIndex
         $rowCount = $this->rowCount;
 
         return $this->byKey->at($key, static fn (): RowExtents => RowExtents::measure($rowCount, $heightOf));
+    }
+
+    /**
+     * A measurement of all the rows, such as the widest one, made once.
+     *
+     * @param Closure(): int $measure consulted only the first time $name is asked
+     */
+    public function measuredOnce(string $name, Closure $measure): int
+    {
+        return $this->measured[$name] ??= $measure();
     }
 
     /**
