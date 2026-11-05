@@ -99,6 +99,31 @@ and `selectedRow()`. Bound, a click or Enter answers `Chosen`, carrying the item
 or the row. `withNoMatchText()` sets what shows when nothing matches the
 query, and `withNoDataText()` what shows when there is nothing to filter.
 
+## Building a table
+
+A `Table` takes its columns, each with a title and a width, and its rows. A
+cell is text or a `Span`, so a status can take its colour from the theme:
+
+```php
+use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Rendering\Span;
+use Elmphant\Tui\Rendering\StyleToken;
+use Elmphant\Tui\Widget\Table\Column;
+use Elmphant\Tui\Widget\Table\Row;
+use Elmphant\Tui\Widget\Table\Table;
+
+$table = Table::new(
+    [Column::new('Method', Constraint::exact(7)), Column::new('URL', Constraint::flex()), Column::new('Status', Constraint::exact(6))],
+    [
+        Row::new('GET', '/users', Span::token('200', StyleToken::Success))->withKey('1'),
+        Row::new('POST', '/users', Span::token('401', StyleToken::Error))->withKey('2'),
+    ],
+);
+```
+
+`Table::fromCells($columns, [['GET', '/users', '200']])` takes plain text.
+`FilterableTable::new()` takes the same columns and rows.
+
 ## Lists keep their place
 
 When you hand a list new items, the cursor and the selection stay on the same
