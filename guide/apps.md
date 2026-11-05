@@ -86,7 +86,8 @@ is, and `?` lists them all.
 - **`withAction()` gives a key to one widget.** It works only while that widget
   holds the keyboard. In the field, Space is text.
 - **Start the App from a static factory.** A widget's constructor is private, so
-  `private TextInput $field = new TextInput()` does not compile.
+  `private TextInput $field = new TextInput()` does not compile. The App's own
+  constructor stays public: the framework builds the next App with it.
 - **The record is the item.** `Todo` implements `ListItem`, so the App keeps one
   `ListView` and no second array. `cursorItem()`, `withCursorItem()`,
   `withoutCursorItem()` and `withAddedItem()` edit it, and the cursor stays on

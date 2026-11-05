@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Support;
 
 use LogicException;
+use ReflectionMethod;
 
 /**
  * @internal framework keyed write-back primitive; expose typed withX() methods instead
@@ -56,6 +57,19 @@ trait Cloneable
      */
     private function rebuiltFrom(array $fields): static
     {
+        static $reachable = [];
+        $reachable[static::class] ??= self::constructorIsReachable();
+        if (!$reachable[static::class]) {
+            throw new LogicException(sprintf('%s needs a public constructor: the framework builds the next one with it when it stores a widget. Keep the static factory for the starting state, and make the constructor public.', static::class));
+        }
+
         return new static(...$fields);
+    }
+
+    private static function constructorIsReachable(): bool
+    {
+        $constructor = new ReflectionMethod(static::class, '__construct');
+
+        return !$constructor->isPrivate() || $constructor->getDeclaringClass()->getName() === self::class;
     }
 }
