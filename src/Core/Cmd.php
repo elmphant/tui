@@ -192,6 +192,15 @@ abstract readonly class Cmd
     }
 
     /**
+     * Without process control (Windows, the official Docker images and Alpine unless it is installed),
+     * Cmd::fork() runs its work in the program itself, and the screen holds still until it is done.
+     */
+    public static function canFork(): bool
+    {
+        return \PHP_SAPI === 'cli' && \function_exists('pcntl_fork');
+    }
+
+    /**
      * @param callable(Message):Message $wrap
      */
     public function map(callable $wrap): self

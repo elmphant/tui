@@ -20,11 +20,19 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class CmdTest extends TestCase
 {
+    #[Test]
+    #[RequiresPhpExtension('pcntl')]
+    public function aCommandLineProgramWithProcessControlCanFork(): void
+    {
+        self::assertTrue(Cmd::canFork());
+    }
+
     #[Test]
     public function quitReturnsCmd(): void
     {
