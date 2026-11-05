@@ -109,9 +109,12 @@ A widget that did something the reader meant hands on an outcome, and
 | `Pressed` | a `Button`, and a `Form` for its button or Enter in its last field | nothing: read the form's values on the stored App |
 | `Dismissed` | a `Modal`, on Escape or a click outside, and a `Form` given `withCancel()`, on Escape | nothing |
 
-All four live in `Elmphant\Tui\Message`. Moving a cursor is never an outcome. A
-widget is stored even when nothing in it changed, so choosing the same row twice
-is heard twice. Each outcome carries the key or click that caused it as `$trigger`.
+All four live in `Elmphant\Tui\Message`. Moving a cursor is never an outcome. To
+follow the cursor, such as a preview of the row under it, override
+`onComponentsChanged()`: it runs after a bound widget changed, and reads the
+cursor off the stored widget (`$this->files->cursorItem()`, a tree's
+`cursorNode()`). A widget is stored even when nothing in it changed, so choosing
+the same row twice is heard twice. Each outcome carries the key or click that caused it as `$trigger`.
 
 Rules for binding:
 
