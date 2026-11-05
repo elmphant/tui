@@ -16,6 +16,7 @@ Cmd::batch($cmd1, null, $cmd2)      // run several commands, skipping nulls (nul
 Cmd::message($message)              // send a message right away
 Cmd::call(fn() => $message)          // run a short piece of code
 Cmd::fiber(fn() => $message)         // run code that waits, without freezing the screen
+Cmd::fork(fn($send) => $message)     // run blocking code in a copy of the program
 Cmd::http('https://example.com')     // an HTTP request
 Cmd::listen($socket, fn($stream) => $messages) // read a stream whenever it has data
 Cmd::log('loaded', ['items' => 3])  // write a line to the trace (stdout is the screen)
@@ -34,8 +35,8 @@ Cmd::stream(['tail', '-f', 'log'])  // get the output while it runs
 ```
 
 - `Cmd::tick()` repeats by itself. Ask once, not on every tick.
-- `Cmd::call()` runs on the main loop. Keep it short, and use `exec()`, `process()`
-  or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
+- `Cmd::call()` runs on the main loop. Keep it short, and use `fork()`, `exec()`,
+  `process()` or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
 - `Cmd::listen()` stops at the end of the stream or on `Cmd::cancel()`. Cancel
   it before you close the stream yourself.
 - `Cmd::println()` prints only in an inline program, and the lines stay in the
@@ -70,6 +71,67 @@ Code that blocks instead (`curl`, `file_get_contents()`, a long loop) freezes
 the screen inside a fiber just as it does in `Cmd::call()`. Never wait on Amp in
 `update()` or in a `Cmd::call()`: the update pauses, and the program skips every
 turn until it resumes.
+
+## Forks
+
+`Cmd::fork()` runs blocking work in a copy of the program, made with
+`pcntl_fork()`. The copy has everything the program had in memory, so nothing
+is handed over. The screen keeps drawing while the work runs.
+
+| Command | For | The screen |
+|---|---|---|
+| `Cmd::call()` | short work | holds still until it returns |
+| `Cmd::fiber()` | I/O that suspends the fiber | keeps drawing |
+| `Cmd::fork()` | blocking work with a typed result | keeps drawing |
+| `Cmd::exec()` | another program | keeps drawing |
+
+The closure gets `$send`, which hands a message on at once, and returns its last
+message or `null`. Both arrive in `onMessage()`, in order:
+
+```php fragment
+return new UpdateResult($this, Cmd::fork(static function (Closure $send) use ($names): Message {
+    foreach ($names as $name) {
+        $send(new PackageLoaded(Package::fetch($name)));
+    }
+
+    return new AllLoaded();
+}, EffectId::named('packages')));
+```
+
+The messages travel back with `serialize()`, so they hold values, never a
+closure or an open connection. If the work throws, you get an `ErrorMsg` with
+`ErrorSource::Fork`. Its error is a `ForkedWorkFailed` that carries the thrown
+class, message and trace as text. If the copy dies without answering, you get
+an `ErrorMsg` too. Cancelling the effect, replacing it under the same
+`EffectId`, or quitting kills the copy and every program it started.
+
+The copy must leave the program's things alone:
+
+- It never draws or reads keys. Its standard output goes nowhere, and the
+  terminal stays the program's.
+- It ends without running shutdown functions or destructors, so it cannot
+  restore the terminal or close the program's connections.
+- Open your own database connections, sockets and curl handles inside the
+  work. One shared with the program breaks both.
+- Write plain blocking code. The work cannot wait on Amp or the event loop.
+
+Forking needs the `pcntl` extension, and it only runs on the command line.
+It is missing on Windows, in the official Docker images unless
+`docker-php-ext-install pcntl` ran, and on Alpine unless `php84-pcntl` is
+installed. `Cmd::fork()` then runs the work in the program itself. The answer is
+the same, but the screen holds still until the work is done, and anything the
+work prints lands on the screen. `Cmd::canFork()` tells you which one you get,
+so the app can say why it pauses:
+
+```php fragment
+protected function setup(): ?Cmd
+{
+    return Cmd::batch(
+        Cmd::fork(static fn (Closure $send): Message => new Loaded(Report::build()), EffectId::named('report')),
+        Cmd::canFork() ? null : Cmd::toast('Install the pcntl extension to keep the screen moving while this loads'),
+    );
+}
+```
 
 ## Toasts
 

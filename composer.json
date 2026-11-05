@@ -43,7 +43,7 @@
         "symfony/http-client": "^6.4.50 || ^7.4.23"
     },
     "suggest": {
-        "ext-pcntl": "Without it a program runs but cannot see signals: no SIGWINCH resize detection, no graceful quit on SIGINT/SIGTERM, no Ctrl-Z suspend",
+        "ext-pcntl": "Without it a program runs but cannot see signals: no SIGWINCH resize detection, no graceful quit on SIGINT/SIGTERM, no Ctrl-Z suspend. Cmd::fork() also needs it to keep the screen alive during blocking work",
         "ext-posix": "Needed alongside ext-pcntl for Ctrl-Z suspend and resume",
         "amphp/http-client": "^5 for Cmd::fiber() work whose HTTP requests suspend the fiber instead of blocking (through Symfony's AmpHttpClient)",
         "league/commonmark": "^2.9 for Paragraph::fromMarkdown(); earlier 2.x releases carry denial-of-service advisories",

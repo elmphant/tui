@@ -42,6 +42,10 @@ composer require league/commonmark     # Paragraph::fromMarkdown()
 composer require amphp/http-client:^5  # HTTP inside Cmd::fiber(), with symfony/http-client
 ```
 
+`Cmd::fork()` keeps the screen moving during blocking work only when PHP has the
+`pcntl` extension. Without it, the work runs in the program and the screen
+holds still until it is done.
+
 ## A counter
 
 ```php
