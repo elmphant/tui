@@ -4085,6 +4085,20 @@ final class TableTest extends TestCase
         self::assertStringContainsString('row1 alpha', implode("\n", $this->screenLines($moved, $area)));
     }
 
+    #[Test]
+    public function aContentColumnIsAsWideAsItsWidestCellOrTitle(): void
+    {
+        $table = Table\Table::new(
+            [Column::new('Package', Constraint::content()), Column::new('Version', Constraint::content())],
+            [Row::new('Direct (2)', '1.2.3'), Row::new('monolog/monolog', '3.5.0')],
+        );
+
+        self::assertSame(
+            ['Package         Version', 'Direct (2)      1.2.3', 'monolog/monolog 3.5.0'],
+            array_map(rtrim(...), $this->screenLines($table, new Rect(0, 0, 40, 3))),
+        );
+    }
+
     /**
      * @param list<string> $cells
      */

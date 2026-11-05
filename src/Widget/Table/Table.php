@@ -58,9 +58,17 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
     private KeyedCache $layoutMemo;
 
     /**
+     * A content column measures every cell, so its placement is kept until the rows or columns change.
+     *
+     * @var KeyedCache<AxisResult>
+     */
+    private KeyedCache $placementMemo;
+
+    /**
      * @param list<Column>            $columns
      * @param list<Row>               $rows
      * @param KeyedCache<TableLayout> $layoutMemo
+     * @param KeyedCache<AxisResult>  $placementMemo
      */
     private function __construct(
         private array $columns = [],
@@ -75,8 +83,10 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
         private ?Keybindings $globalKeybindings = null,
         ?KeyedCache $layoutMemo = null,
         private int $columnGap = 1,
+        ?KeyedCache $placementMemo = null,
     ) {
         $this->layoutMemo = $layoutMemo ?? self::newLayoutMemo();
+        $this->placementMemo = $placementMemo ?? self::newPlacementMemo();
     }
 
     /**
@@ -122,7 +132,7 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
      */
     public function withColumns(array $columns): self
     {
-        return $this->cloneWith(columns: $columns, layoutMemo: self::newLayoutMemo());
+        return $this->cloneWith(columns: $columns, layoutMemo: self::newLayoutMemo(), placementMemo: self::newPlacementMemo());
     }
 
     public function withColumnGap(int $gap): self
@@ -159,6 +169,7 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
             cursor: self::selectablePlaceNear(Places::cursorAfter(($this->rows[$this->cursor] ?? null)?->key(), $keys, $this->cursor), $rows),
             selected: Places::placeOf($this->selectedRow()?->key(), $keys, $this->selected ?? 0),
             layoutMemo: self::newLayoutMemo(),
+            placementMemo: self::newPlacementMemo(),
         );
     }
 
@@ -323,6 +334,17 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
     private static function newLayoutMemo(): KeyedCache
     {
         /** @var KeyedCache<TableLayout> $cache */
+        $cache = new KeyedCache();
+
+        return $cache;
+    }
+
+    /**
+     * @return KeyedCache<AxisResult>
+     */
+    private static function newPlacementMemo(): KeyedCache
+    {
+        /** @var KeyedCache<AxisResult> $cache */
         $cache = new KeyedCache();
 
         return $cache;
@@ -618,11 +640,30 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
 
     private function columnPlacement(int $totalWidth): AxisResult
     {
-        return Allocator::resolve(
-            array_map(static fn (Column $column): ItemPolicy => $column->width()->policy(), $this->columns),
-            $totalWidth,
-            new AxisSpecification(gap: $this->columnGap),
+        return $this->placementMemo->at(
+            $totalWidth . '|' . $this->columnGap . '|' . ($this->header ? 'header' : ''),
+            fn (): AxisResult => Allocator::resolve(
+                array_map($this->policyOf(...), $this->columns, array_keys($this->columns)),
+                $totalWidth,
+                new AxisSpecification(gap: $this->columnGap),
+            ),
         );
+    }
+
+    private function policyOf(Column $column, int $index): ItemPolicy
+    {
+        $width = $column->width();
+
+        if (!$width->measuresContent || $width->basis !== null) {
+            return $width->policy();
+        }
+
+        $widest = $this->header ? CharWidth::stringWidth($column->title()) : 0;
+        foreach ($this->rows as $row) {
+            $widest = max($widest, CharWidth::stringWidth($row->textAt($index)));
+        }
+
+        return $width->withBasis(max($width->min, $widest))->policy();
     }
 
     private function ensureCursorVisible(Rect $area): self
