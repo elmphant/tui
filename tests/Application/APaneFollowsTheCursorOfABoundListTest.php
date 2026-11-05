@@ -8,7 +8,11 @@ use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Testing\ModelHarness;
+use Elmphant\Tui\Widget\Field\TextInput;
+use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Listing\ListView;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Box;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Table\Column;
 use Elmphant\Tui\Widget\Table\Row;
@@ -56,6 +60,51 @@ final class APaneFollowsTheCursorOfABoundListTest extends TestCase
         self::assertStringContainsString('row20', $harness->screen()->plainText());
     }
 
+    #[Test]
+    public function aKeptPaneFollowsTheCursorOfAListInsideABox(): void
+    {
+        $harness = ModelHarness::for(new KeptPaneAroundAListApp(self::thirtyItems(), wrap: 'box'), 30, 10);
+
+        for ($step = 0; $step < 20; ++$step) {
+            $harness->press('down');
+        }
+
+        self::assertStringContainsString('item20', $harness->screen()->plainText());
+    }
+
+    #[Test]
+    public function aKeptPaneFollowsTheCursorOfAListBelowAHeadingInAColumn(): void
+    {
+        $harness = ModelHarness::for(new KeptPaneAroundAListApp(self::thirtyItems(), wrap: 'column'), 30, 10);
+
+        for ($step = 0; $step < 20; ++$step) {
+            $harness->press('down');
+        }
+
+        self::assertStringContainsString('item20', $harness->screen()->plainText());
+    }
+
+    #[Test]
+    public function aPaneBuiltInViewFollowsTheOneListAmongItsChildren(): void
+    {
+        $harness = ModelHarness::for(new UnboundPaneWithAHeadingAboveAListApp(self::thirtyItems()), 30, 8);
+
+        for ($step = 0; $step < 20; ++$step) {
+            $harness->press('down');
+        }
+
+        self::assertStringContainsString('item20', $harness->screen()->plainText());
+    }
+
+    #[Test]
+    public function aPaneBuiltInViewLeavesAListAloneWhileTheKeyboardIsOnAFieldAboveIt(): void
+    {
+        $harness = ModelHarness::for(new UnboundPaneWithAFieldAboveAListApp(TextInput::new()->withValue('typed'), self::thirtyItems()->withCursor(25)), 30, 8);
+
+        self::assertSame('field', $harness->focused()?->value);
+        self::assertStringContainsString('typed', $harness->screen()->plainText());
+    }
+
     private static function thirtyItems(): ListView
     {
         return ListView::fromStrings(array_map(static fn (int $item): string => 'item' . $item, range(0, 29)));
@@ -64,13 +113,44 @@ final class APaneFollowsTheCursorOfABoundListTest extends TestCase
 
 final readonly class KeptPaneAroundAListApp extends App
 {
-    public function __construct(private ListView $list, private Panel $pane = new Panel('List'))
+    public function __construct(private ListView $list, private string $wrap = '', private Panel $pane = new Panel('List'))
     {
     }
 
     public function view(): Widget
     {
-        return Component::bind('pane', $this->pane->withChildren([$this->bind('list')]), static fn (self $app, Panel $pane): self => $app->cloneWith(pane: $pane));
+        $list = $this->bind('list');
+        $child = match ($this->wrap) {
+            'box' => Box::new('Box')->add($list),
+            'column' => Layout::column(Text::new('heading'), $list),
+            default => $list,
+        };
+
+        return Component::bind('pane', $this->pane->withChildren([$child]), static fn (self $app, Panel $pane): self => $app->cloneWith(pane: $pane));
+    }
+}
+
+final readonly class UnboundPaneWithAFieldAboveAListApp extends App
+{
+    public function __construct(private TextInput $field, private ListView $list)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Panel::new('List')->add($this->bind('field'))->add($this->bind('list'));
+    }
+}
+
+final readonly class UnboundPaneWithAHeadingAboveAListApp extends App
+{
+    public function __construct(private ListView $list)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Panel::new('List')->add(Text::new('heading'))->add($this->bind('list'));
     }
 }
 

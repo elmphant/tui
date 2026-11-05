@@ -520,7 +520,7 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
     }
 
     /**
-     * A pane rebuilt in view() is never told where the keyboard is, so a lone child with a cursor is followed untold.
+     * A pane rebuilt in view() is never told where the keyboard is, so the one child with a cursor is followed untold.
      */
     private function followedChild(): ?int
     {
@@ -532,7 +532,13 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
             return $this->followChild;
         }
 
-        return !$this->followingTheEnd && \count($this->children) === 1 && self::cursorOf($this->children[0]) !== null ? 0 : null;
+        if ($this->followingTheEnd) {
+            return null;
+        }
+
+        $reachable = array_keys(array_filter($this->children, static fn (Widget $child): bool => self::holdsAFocusable([$child])));
+
+        return \count($reachable) === 1 && self::holdsTheOnlyCursor($this->children[$reachable[0]]) ? $reachable[0] : null;
     }
 
     private function resolvedOffset(VerticalStackLayout $layout, int $viewportHeight): int
@@ -557,11 +563,12 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
             $top += array_sum(array_slice($layout->heights, $first, $last - $first));
             $span = $layout->heights[$last] ?? 0;
         }
-        $cursor = self::cursorOf($this->children[$first] ?? null);
+        $child = $this->children[$first] ?? null;
+        $cursorLine = $child === null ? null : self::cursorLineIn($child, new Rect(0, 0, $layout->childWidth, $layout->heights[$first] ?? 0));
 
         // Follow the child's cursor rather than its top, or a tall child could leave the cursor off screen.
-        if ($this->followSpan === 1 && $cursor !== null) {
-            $top += max(0, min($cursor->cursorLine($layout->childWidth), $span - 1));
+        if ($this->followSpan === 1 && $cursorLine !== null) {
+            $top += max(0, min($cursorLine, $span - 1));
             $span = 1;
         }
 
@@ -575,17 +582,53 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
     }
 
     /**
-     * A bound widget sits inside its mount, which has no cursor of its own.
+     * Look through mounts and containers that do not scroll, to a cursor the keyboard can only be at:
+     * with anything else inside that takes the keyboard, the cursor may not be where the reader is.
      */
-    private static function cursorOf(?Widget $child): ?CursorAware
+    private static function holdsTheOnlyCursor(Widget $widget): bool
     {
-        if ($child instanceof SingleMount && $child instanceof WidgetContainer) {
-            foreach ($child->children() as $mounted) {
-                return self::cursorOf($mounted);
-            }
+        if ($widget instanceof CursorAware) {
+            return true;
         }
 
-        return $child instanceof CursorAware ? $child : null;
+        if (!$widget instanceof WidgetContainer || $widget instanceof ClipsItsChildren) {
+            return false;
+        }
+
+        $reachable = array_values(array_filter([...$widget->children()], static fn (Widget $child): bool => self::holdsAFocusable([$child])));
+
+        return \count($reachable) === 1 && self::holdsTheOnlyCursor($reachable[0]);
+    }
+
+    /**
+     * The cursor's row inside a widget drawn in $area, found the way holdsTheOnlyCursor() finds the cursor.
+     */
+    private static function cursorLineIn(Widget $widget, Rect $area): ?int
+    {
+        if ($widget instanceof CursorAware) {
+            return $widget->cursorLine($area->width);
+        }
+
+        if (!$widget instanceof WidgetContainer || $widget instanceof ClipsItsChildren) {
+            return null;
+        }
+
+        $line = null;
+        foreach ($widget->placedChildren($area) as [$child, $childArea]) {
+            if (!self::holdsAFocusable([$child])) {
+                continue;
+            }
+
+            $found = $line === null ? self::cursorLineIn($child, $childArea) : null;
+
+            if ($found === null) {
+                return null;
+            }
+
+            $line = $childArea->y - $area->y + $found;
+        }
+
+        return $line;
     }
 
     /**
