@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Application\AppActions;
+use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Listing\ListView;
@@ -47,6 +49,18 @@ final class BindAtAKeyTest extends TestCase
         self::assertSame(['done' => 1, 'todo' => 0], array_map(static fn (ListView $list): int => $list->cursor(), $model->columns));
         self::assertSame('columns.done', $harness->focused()?->value);
     }
+
+    #[Test]
+    public function theHandlerOfAKeyedWidgetSeesItStoredUnderItsKey(): void
+    {
+        $harness = ModelHarness::for(ColumnsApp::start(), 40, 6)->init();
+
+        $harness->press('tab', 'down', 'enter');
+
+        $model = $harness->model();
+        self::assertInstanceOf(ColumnsApp::class, $model);
+        self::assertSame('done: d at 1', $model->heard);
+    }
 }
 
 final readonly class ColumnsApp extends App
@@ -54,7 +68,7 @@ final readonly class ColumnsApp extends App
     /**
      * @param array<string, ListView> $columns
      */
-    public function __construct(public array $columns)
+    public function __construct(public array $columns, public string $heard = '')
     {
     }
 
@@ -65,10 +79,13 @@ final readonly class ColumnsApp extends App
 
     public function view(): Widget
     {
-        return Layout::row(...array_map(fn (string $key): Widget => $this->bind('columns', at: $key), array_keys($this->columns)));
+        return Layout::row(...array_map(fn (string $key): Widget => $this->bind('columns', at: $key)->on(
+            Chosen::class,
+            static fn (self $app, Chosen $chosen): self => new self($app->columns, sprintf('%s: %s at %d', $key, $app->columns[$key]->cursorItem()?->title(), $app->columns[$key]->cursor())),
+        ), array_keys($this->columns)));
     }
 
-    protected function actions(): \Elmphant\Tui\Application\AppActions
+    protected function actions(): AppActions
     {
         return parent::actions()->with('reverse', ['ctrl+r'], static fn (self $app): self => new self(array_reverse($app->columns, true)));
     }

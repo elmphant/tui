@@ -167,6 +167,8 @@ final readonly class Inbox extends App
   alike widgets (the columns of a board) each hear their own.
 - `onKey()` reads any key before the widgets do. Prefer an action, so the key
   shows in the footer and the help.
+- `onMouse()` hears what the pointer does, such as a drag from one list onto
+  another. `$input->componentAt($message)` names the bound widget under it.
 
 More in [Keys and focus](keys-and-focus.md).
 
@@ -182,7 +184,8 @@ once it asks for work:
   `new UpdateResult($this, $command)` for only a command.
 
 A command runs outside the App: a process, an HTTP request, a timer. Its answer
-arrives in `onMessage()`, matched by the command's `EffectId`. `onTick()` runs on
+arrives in `onMessage()`, matched by the command's `EffectId`. `setup()` returns
+the commands to start with, such as the first load. `onTick()` runs on
 the clock `Cmd::tick()` starts, and an animated widget needs neither. See
 [Effects](effects.md).
 
