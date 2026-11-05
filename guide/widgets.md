@@ -86,7 +86,7 @@ In a test, `$screen->styleAt($column, $row)->link` says which URL a cell opens.
 A `FilterableList` matches the query against each item's `filterValue()`, which
 `ListItemBehavior` answers with `title()`. Return more from it to make other
 fields searchable, an author's name beside the subject. `items()` answers every
-item you handed in, matching or not. While the reader types, the cursor jumps to
+item you handed in, matching or not, and `cursorItem()` the one under the cursor. While the reader types, the cursor jumps to
 the best match. `withItems()` and `withQuery()` from your code keep it on its
 item instead. For a list that follows new items, such as a log, put the cursor
 on the last match with `withCursorAtEnd()` after `withItems()`. A `FilterableTable` searches the text of a

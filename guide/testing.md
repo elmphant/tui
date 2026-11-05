@@ -10,6 +10,7 @@ for and answers it.
 `ModelHarness` drives your app like a reader would:
 
 ```php fragment
+use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Testing\ModelHarness;
 
 $app = ModelHarness::for(new Counter(), width: 40, height: 5)->press('k');
