@@ -454,12 +454,27 @@ final readonly class ComponentRegistry
             return [$component];
         }
 
-        $stops = [$component];
+        return [$component, ...self::publishedBelow($component, $widget, [])];
+    }
+
+    /**
+     * A passive container (a Layout, a Box) is no stop itself, so its interactive children are published through it.
+     *
+     * @param Component<Interactive> $component
+     * @param list<int>              $path
+     *
+     * @return list<Component<Interactive>>
+     */
+    private static function publishedBelow(Component $component, GraftsItsChildren $container, array $path): array
+    {
+        $stops = [];
         $index = 0;
 
-        foreach ($widget->children() as $child) {
+        foreach ($container->children() as $child) {
             if ($child instanceof Interactive) {
-                array_push($stops, ...self::published($component->childAt($index, $child)));
+                array_push($stops, ...self::published($component->childThrough([...$path, $index], $child)));
+            } elseif ($child instanceof GraftsItsChildren && !$child instanceof Component) {
+                array_push($stops, ...self::publishedBelow($component, $child, [...$path, $index]));
             }
 
             ++$index;

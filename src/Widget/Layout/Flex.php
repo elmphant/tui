@@ -16,17 +16,17 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
 
 /**
  * Size items on the main axis from their basis and limits; wrap as needed.
  * Cross-axis lines fill the area, and items fill their line unless cross alignment overrides it.
  */
-final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
+final readonly class Flex implements Widget, GraftsItsChildren, MeasureHeight
 {
     use Cloneable;
 
@@ -199,10 +199,20 @@ final readonly class Flex implements Widget, WidgetContainer, MeasureHeight
         }
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        $item = $this->items[$index] ?? null;
+
+        return $item === null ? $this : $this->cloneWith(items: array_replace($this->items, [$index => new FlexItem($child, $item->constraint)]));
+    }
+
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
+        $children = [...$this->children()];
         foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-            $child->render($frame, $childArea, $context);
+            $index = array_search($child, $children, true);
+            $draw = static fn () => $child->render($frame, $childArea, $context);
+            \is_int($index) ? $context->withinChild($index, $draw) : $draw();
         }
     }
 

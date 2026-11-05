@@ -281,7 +281,7 @@ final readonly class Modal implements Interactive, GraftsItsChildren, Committing
         if ($contentRect->width > 0 && $contentRect->height > 0) {
             $frame->clipped($contentRect, function () use ($frame, $area, $context): void {
                 foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-                    $child->render($frame, $childArea, $context);
+                    $context->withinChild(0, static fn () => $child->render($frame, $childArea, $context));
                 }
             });
         }
@@ -312,7 +312,9 @@ final readonly class Modal implements Interactive, GraftsItsChildren, Committing
                 return true;
             }
 
-            if ($widget instanceof WidgetContainer && self::mountsAFocusable($widget->children(), $mounted || $widget instanceof SingleMount)) {
+            // An unbound focusable is a stop only below grafting containers, the way the registry publishes it.
+            $reachable = ($mounted && $widget instanceof GraftsItsChildren) || $widget instanceof SingleMount;
+            if ($widget instanceof WidgetContainer && self::mountsAFocusable($widget->children(), $reachable)) {
                 return true;
             }
         }

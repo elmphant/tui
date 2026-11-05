@@ -17,14 +17,14 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Alignment;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\VerticalAlignment;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
 
-final readonly class Container implements Widget, WidgetContainer, MeasureHeight
+final readonly class Container implements Widget, GraftsItsChildren, MeasureHeight
 {
     use Cloneable;
 
@@ -71,6 +71,11 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
     public function withBorderStyle(Style $style): self
     {
         return $this->cloneWith(borderStyle: $style);
+    }
+
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return $index === 0 ? $this->cloneWith(child: $child) : $this;
     }
 
     public function withSizing(Sizing $sizing): self
@@ -157,7 +162,7 @@ final readonly class Container implements Widget, WidgetContainer, MeasureHeight
     {
         $frame->clipped($this->contentArea($area), function () use ($frame, $area, $context): void {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-                $child->render($frame, $childArea, $context);
+                $context->withinChild(0, static fn () => $child->render($frame, $childArea, $context));
             }
         });
 

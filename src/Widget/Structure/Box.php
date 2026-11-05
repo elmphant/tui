@@ -14,12 +14,12 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class Box implements Widget, WidgetContainer, MeasureHeight
+final readonly class Box implements Widget, GraftsItsChildren, MeasureHeight
 {
     use Cloneable;
 
@@ -56,6 +56,11 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
     public function add(Widget $child): self
     {
         return $this->cloneWith(children: [...$this->children, $child]);
+    }
+
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return isset($this->children[$index]) ? $this->cloneWith(children: array_replace($this->children, [$index => $child])) : $this;
     }
 
     public function withPadding(Spacing $padding): self
@@ -139,7 +144,9 @@ final readonly class Box implements Widget, WidgetContainer, MeasureHeight
 
         $frame->clipped($inset->inner($area), function () use ($frame, $area, $context): void {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-                $child->render($frame, $childArea, $context);
+                $index = array_search($child, $this->children, true);
+                $draw = static fn () => $child->render($frame, $childArea, $context);
+                \is_int($index) ? $context->withinChild($index, $draw) : $draw();
             }
         });
 

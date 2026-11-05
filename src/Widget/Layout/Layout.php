@@ -14,13 +14,13 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
 
-final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
+final readonly class Layout implements Widget, GraftsItsChildren, MeasureHeight
 {
     /**
      * @var list<Widget>
@@ -157,10 +157,21 @@ final readonly class Layout implements Widget, WidgetContainer, MeasureHeight
         return $this->children;
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        if (!isset($this->children[$index])) {
+            return $this;
+        }
+
+        return new self(direction: $this->direction, children: array_replace($this->children, [$index => $child]), slotConstraints: $this->slotConstraints, gap: $this->gap);
+    }
+
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-            $child->render($frame, $childArea, $context);
+            $index = array_search($child, $this->children, true);
+            $draw = static fn () => $child->render($frame, $childArea, $context);
+            \is_int($index) ? $context->withinChild($index, $draw) : $draw();
         }
     }
 

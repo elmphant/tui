@@ -16,11 +16,11 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class Card implements Widget, WidgetContainer
+final readonly class Card implements Widget, GraftsItsChildren
 {
     use Cloneable;
 
@@ -49,6 +49,11 @@ final readonly class Card implements Widget, WidgetContainer
     public function withContent(string|Widget $content): self
     {
         return $this->cloneWith(content: $content);
+    }
+
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return $index === 0 && $this->content instanceof Widget ? $this->cloneWith(content: $child) : $this;
     }
 
     public function withBorderStyle(Style $style): self
@@ -168,7 +173,7 @@ final readonly class Card implements Widget, WidgetContainer
 
         $frame->clipped($inner, function () use ($frame, $area, $context): void {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-                $child->render($frame, $childArea, $context);
+                $context->withinChild(0, static fn () => $child->render($frame, $childArea, $context));
             }
         });
     }

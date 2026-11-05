@@ -182,8 +182,11 @@ Footer::new()->withRight(
 
 - **At start**, the keyboard is on the first bound widget, top to bottom. Return
   `Cmd::focus('composer')` from `setup()` to start elsewhere.
-- **Tab and Shift+Tab** walk the bound widgets. Each field inside a `Panel`,
-  `TabBar` or `Form` is a stop of its own.
+- **Tab and Shift+Tab** walk the bound widgets. Each field or button inside a
+  bound `Panel`, `TabBar`, `Form` or `Modal` is a stop of its own, also when it
+  sits in a `Layout`, `Flex`, `Box`, `Container` or `Card` there: a dialog of
+  `Layout::column(Text::new('Delete?'), Button::new('Delete'))` needs no bind
+  for its button.
 - **A click** moves the keyboard to what was clicked.
 - **`Cmd::focus('id')`** moves it from code. A widget that is not on screen is
   refused, and the keyboard stays where it was.

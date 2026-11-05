@@ -209,7 +209,22 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function childAt(int $index, Interactive $child): self
     {
-        $id = ComponentId::named($this->id->value . '/' . $index);
+        return $this->childThrough([$index], $child);
+    }
+
+    /**
+     * A child inside passive grafting containers (a Layout, a Box): the first index is this widget's child,
+     * each further index the child of the container before it, and the write-back rebuilds them inside out.
+     *
+     * @internal
+     *
+     * @param non-empty-list<int> $path
+     *
+     * @return self<Interactive>
+     */
+    public function childThrough(array $path, Interactive $child): self
+    {
+        $id = ComponentId::named($this->id->value . '/' . implode('/', $path));
         $container = $this->widget;
 
         if ($this->writeBack === null || !$container instanceof GraftsItsChildren) {
@@ -221,8 +236,8 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         return self::wrapping(
             id: $id,
             widget: $child,
-            writeBack: static function (Reducer $owner, Interactive $updated, Message $message) use ($parent, $container, $index): UpdateResult {
-                $grafted = $container->withChildAt($index, $updated);
+            writeBack: static function (Reducer $owner, Interactive $updated, Message $message) use ($parent, $container, $path): UpdateResult {
+                $grafted = self::graftedInto($container, $path, $updated);
                 assert($grafted instanceof Interactive);
 
                 return $parent->answered($owner, $grafted, $message);
@@ -335,6 +350,24 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         }
 
         return $stored;
+    }
+
+    /**
+     * @param non-empty-list<int> $path
+     */
+    private static function graftedInto(GraftsItsChildren&Widget $container, array $path, Widget $updated): Widget
+    {
+        $index = array_shift($path);
+        if ($path === []) {
+            return $container->withChildAt($index, $updated);
+        }
+
+        $inner = iterator_to_array($container->children(), false)[$index] ?? null;
+        if (!$inner instanceof GraftsItsChildren) {
+            return $container;
+        }
+
+        return $container->withChildAt($index, self::graftedInto($inner, $path, $updated));
     }
 
     /**
