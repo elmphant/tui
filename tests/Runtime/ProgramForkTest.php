@@ -10,12 +10,27 @@ use Elmphant\Tui\Core\EffectId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Testing\VirtualTerminal;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 final class ProgramForkTest extends TestCase
 {
+    #[Test]
+    #[Group('fork')]
+    #[RequiresPhpExtension('pcntl')]
+    public function theWorkRunsInAProcessOfItsOwn(): void
+    {
+        $model = new ForkLoggingModel(Cmd::fork(static fn (Closure $send): Message => new ForkSaid((string)getmypid())));
+
+        Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+
+        self::assertCount(1, $model->log);
+        self::assertNotSame((string)getmypid(), $model->log[0]);
+    }
+
     #[Test]
     public function theMessageAForkAnswersWithArrives(): void
     {
