@@ -135,6 +135,9 @@ public function hints(): array
 }
 ```
 
+To show one key the way the footer does, in your own text, ask
+`KeyPattern::fromString('ctrl+q')->label()` for `Ctrl+Q`.
+
 `hints()` takes `description => action` (or a list of actions under one label)
 and returns `label => description`. It merges keys into short labels:
 
