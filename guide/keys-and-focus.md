@@ -64,11 +64,23 @@ while it is set, and declare the switch as an action:
 | `L` / `H`, `gt` / `gT` | next / previous tab |
 | `/` | search |
 
-A filter widget (`FilterableList`, `FilterableTable`, …) changes how it behaves
-when `/` is bound. Without vim mode, typing always goes to its search field.
-With vim mode, `j`/`k` move the list and `/` jumps into the search field.
-Escape or Enter jumps back out and keeps the query. Escape on the list clears
-the query. The footer always says which part has the keys.
+## Search fields
+
+A filter widget (`FilterableList`, `FilterableTable`, …) is a search field over
+a list, and works in one of two ways:
+
+- **Nothing binds `Actions::SEARCH`** (the default): typing always goes to the
+  field, and the arrows, Page Up/Down and Enter go to the list.
+- **Something binds it**, such as vim mode, or
+  `new Keybindings([Actions::SEARCH => ['/']])` from `globalKeybindings()`: the
+  list holds the keys, so letters can be shortcuts. `/` jumps into the field,
+  Escape or Enter jumps back out and keeps the query, and Escape on the list
+  clears the query.
+
+The footer always says which part has the keys. A `withAction()` key on the
+filter comes before the filter's own meaning of that key, in the field too. So
+`withAction('close', ['esc'], …)` closes your detail pane instead of leaving the
+field or clearing the query.
 
 ## Key help
 

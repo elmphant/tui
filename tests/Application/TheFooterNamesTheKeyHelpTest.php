@@ -72,6 +72,19 @@ final class TheFooterNamesTheKeyHelpTest extends TestCase
     }
 
     #[Test]
+    public function aComponentActionTakesItsKeyInTheSearchFieldToo(): void
+    {
+        $harness = ModelHarness::for(new EscapingFilterApp(FilterableList::new([new SimpleListItem('alpha')])), 60, 8)->init();
+
+        $harness->press('/')->type('al')->press('esc');
+
+        $model = $harness->model();
+        self::assertInstanceOf(EscapingFilterApp::class, $model);
+        self::assertSame(1, $model->closed);
+        self::assertSame('al', $model->list->query());
+    }
+
+    #[Test]
     public function anAppWithoutKeyHelpNamesNone(): void
     {
         $harness = ModelHarness::for(new WithoutKeyHelpApp(TextInput::new()), 60, 6)->init();
@@ -121,14 +134,14 @@ final readonly class DigitActionApp extends App
 
 final readonly class EscapingFilterApp extends App
 {
-    public function __construct(public FilterableList $list)
+    public function __construct(public FilterableList $list, public int $closed = 0)
     {
     }
 
     public function view(): Widget
     {
         return Layout::column(
-            $this->bind('list')->withAction('close', ['esc'], static fn (self $app): self => $app, 'close detail'),
+            $this->bind('list')->withAction('close', ['esc'], static fn (self $app): self => new self($app->list, $app->closed + 1), 'close detail'),
             Footer::new()->withLeft(FocusHints::new()),
         );
     }
