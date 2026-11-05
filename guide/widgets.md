@@ -357,7 +357,7 @@ $log = $log->add(Text::new('build finished'));
 
 A `Panel` lights its border while the keyboard is inside it, on a bound widget
 in it. The panel itself needs no binding for that, so `Panel::new('To Do')->add($boundList)`
-shows which column is active.
+shows which column is active. A `Box` lights its border the same way.
 
 ## Copying text
 

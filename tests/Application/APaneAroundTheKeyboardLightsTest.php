@@ -11,6 +11,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Listing\ListView;
+use Elmphant\Tui\Widget\Structure\Box;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,6 +26,16 @@ final class APaneAroundTheKeyboardLightsTest extends TestCase
         $lit = Theme::dark()->borderStyleFor(true)->foreground;
 
         self::assertEquals($lit, $screen->styleAt(0, 0)->foreground, 'the pane around the focused list');
+        self::assertNotEquals($lit, $screen->styleAt(15, 0)->foreground, 'and not the other one');
+    }
+
+    #[Test]
+    public function aBoxLightsWhileAListInsideItHoldsTheKeyboard(): void
+    {
+        $screen = ModelHarness::for(new BoxesApp(ListView::fromStrings(['one']), ListView::fromStrings(['two'])), 30, 4)->screen();
+        $lit = Theme::dark()->borderStyleFor(true)->foreground;
+
+        self::assertEquals($lit, $screen->styleAt(0, 0)->foreground, 'the box around the focused list');
         self::assertNotEquals($lit, $screen->styleAt(15, 0)->foreground, 'and not the other one');
     }
 
@@ -49,6 +60,21 @@ final readonly class UnboundPanesApp extends App
         return Layout::row(
             Panel::new('A')->add($this->bind('a')),
             Panel::new('B')->add($this->bind('b')),
+        );
+    }
+}
+
+final readonly class BoxesApp extends App
+{
+    public function __construct(private ListView $a, private ListView $b)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::row(
+            Box::new('A')->add($this->bind('a')),
+            Box::new('B')->add($this->bind('b')),
         );
     }
 }
