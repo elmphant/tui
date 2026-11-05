@@ -17,6 +17,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
+use Elmphant\Tui\Message\Dismissed;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\Pressed;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -74,6 +75,7 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Commit
         private ?string $keyboardIn = null,
         private ?Widget $intro = null,
         private ?string $disabledBecause = null,
+        private bool $cancels = false,
         private ?Message $cancel = null,
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
@@ -91,7 +93,7 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Commit
     public function momentaryKeybindings(): Keybindings
     {
         return new Keybindings([
-            ...($this->cancel === null ? [] : [Actions::CANCEL => ['esc']]),
+            ...($this->cancels ? [Actions::CANCEL => ['esc']] : []),
             ...($this->keyboardIn === null ? [] : [Actions::NEXT_FIELD => ['enter']]),
         ]);
     }
@@ -137,9 +139,12 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Commit
         return $this->cloneWith(submit: $this->submit?->withDisabled($because !== null), disabledBecause: $because);
     }
 
-    public function withCancel(?Message $message): self
+    /**
+     * A bound form answers `Dismissed` for an escape its fields leave alone. The message, when given, is sent as well.
+     */
+    public function withCancel(?Message $message = null): self
     {
-        return $this->cloneWith(cancel: $message);
+        return $this->cloneWith(cancels: true, cancel: $message);
     }
 
     public function withErrorsShown(ShowErrors $shown): self
@@ -242,8 +247,8 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Commit
 
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($this->cancel !== null && $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL)) {
-            return new UpdateResult($this, Cmd::message($this->cancel));
+        if ($this->cancelsWith($message)) {
+            return new UpdateResult($this, $this->cancel === null ? null : Cmd::message($this->cancel));
         }
 
         if ($this->keyboardIn !== null && $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::NEXT_FIELD)) {
@@ -258,6 +263,10 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Commit
 
     public function outcomeOf(Message $message, Rect $area): ?Message
     {
+        if ($this->cancelsWith($message)) {
+            return new Dismissed($message);
+        }
+
         $last = $this->fields === [] ? null : $this->fields[\count($this->fields) - 1]->name;
 
         return $message instanceof KeyMsg
@@ -351,6 +360,11 @@ final readonly class Form implements BindsForTheMoment, ClipsItsChildren, Commit
         }
 
         $this->renderBar($frame, $area, $pane, $context);
+    }
+
+    private function cancelsWith(Message $message): bool
+    {
+        return $this->cancels && $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL);
     }
 
     private function enteredIn(string $field): ?Cmd

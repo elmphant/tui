@@ -41,11 +41,11 @@ trait BindsProperties
     }
 
     /**
-     * Mount the sub-model a property holds (with `at:`, the one under that key of an array), drawn as $view and stored back there.
+     * Mount the sub-model a property holds (with `at:`, the one under that key of an array, named `property.key`), drawn as $view and stored back there.
      *
      * @return Mount<Reducer>
      */
-    protected function mount(string $property, Widget $view, int|string|null $at = null): Mount
+    protected function mount(string $property, Widget $view, ComponentId|string|null $id = null, int|string|null $at = null): Mount
     {
         $held = $this->valueOf($property);
         $model = $at === null ? $held : (is_array($held) ? $held[$at] ?? null : null);
@@ -55,11 +55,11 @@ trait BindsProperties
         }
 
         if ($at === null) {
-            return Mount::named($property, $model, $view, static fn (self $owner, Reducer $updated): self => $owner->cloneWith(...[$property => $updated]));
+            return Mount::named($id ?? $property, $model, $view, static fn (self $owner, Reducer $updated): self => $owner->cloneWith(...[$property => $updated]));
         }
 
         return Mount::named(
-            $property . '.' . $at,
+            $id ?? $property . '.' . $at,
             $model,
             $view,
             static fn (self $owner, Reducer $updated): self => $owner->cloneWith(...[$property => array_replace((array)$owner->valueOf($property), [$at => $updated])]),
