@@ -29,18 +29,20 @@ final class ListItemLayout
         }
 
         $rows = [];
+        $title = ltrim($item->title(), ' ');
+        $indent = min(\strlen($item->title()) - \strlen($title), $width - 1);
 
-        foreach (TextWrap::wrap($item->title(), $width) as $line) {
-            $rows[] = ['text' => $line, 'indent' => 0, 'isDescription' => false];
+        foreach (TextWrap::wrap($title, $width - $indent) as $line) {
+            $rows[] = ['text' => $line, 'indent' => $indent, 'isDescription' => false];
         }
 
         $description = $item->description();
 
         if ($description !== '') {
-            $descriptionWidth = max(1, $width - self::DESCRIPTION_INDENT);
+            $descriptionIndent = $indent + self::DESCRIPTION_INDENT;
 
-            foreach (TextWrap::wrap($description, $descriptionWidth) as $line) {
-                $rows[] = ['text' => $line, 'indent' => self::DESCRIPTION_INDENT, 'isDescription' => true];
+            foreach (TextWrap::wrap($description, max(1, $width - $descriptionIndent)) as $line) {
+                $rows[] = ['text' => $line, 'indent' => $descriptionIndent, 'isDescription' => true];
             }
         }
 

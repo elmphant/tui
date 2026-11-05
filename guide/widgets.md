@@ -45,7 +45,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 
 | Widget | In | What it is |
 | --- | --- | --- |
-| `ListView` | `Listing` | A scrolling list. Long items wrap. A record of yours can be the item: implement `ListItem` with `use ListItemBehavior`, then edit the row under the cursor with `withCursorItem()` and `withoutCursorItem()`. Its rows are plain text: for colour in a row, such as a log level, take a `Table`, whose cells take `Span::token()` |
+| `ListView` | `Listing` | A scrolling list. Long items wrap, and leading spaces indent a title on every row it wraps to. A record of yours can be the item: implement `ListItem` with `use ListItemBehavior`, then edit the row under the cursor with `withCursorItem()` and `withoutCursorItem()`. Its rows are plain text: for colour in a row, such as a log level, take a `Table`, whose cells take `Span::token()` |
 | `Table` | `Table` | Rows and columns with a cursor, selection, mouse and scrolling. Cells wrap. `withColumnGap(0)` packs columns, `withHeader(false)` hides the header |
 | `StaticTable` | `Table` | A bordered table that draws every row, with no cursor. For small data |
 | `FilterableList` | `Filter` | A search field over a `ListView`. Typing filters, and arrows and Enter pick |

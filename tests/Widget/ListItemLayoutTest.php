@@ -21,6 +21,17 @@ final class ListItemLayoutTest extends TestCase
     }
 
     #[Test]
+    public function aTitleKeepsItsIndentOnEveryWrappedRow(): void
+    {
+        $rows = ListItemLayout::rows(new SimpleListItem('    notes about the release'), 16);
+
+        self::assertSame([
+            ['text' => 'notes about', 'indent' => 4, 'isDescription' => false],
+            ['text' => 'the release', 'indent' => 4, 'isDescription' => false],
+        ], $rows);
+    }
+
+    #[Test]
     public function theHeightIsAlwaysTheNumberOfRowsDrawn(): void
     {
         $items = [
