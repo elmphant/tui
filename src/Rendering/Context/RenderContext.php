@@ -183,6 +183,28 @@ final class RenderContext
     }
 
     /**
+     * The one way a widget draws another, so drawing a child can change in one place.
+     */
+    public function draw(Drawable $part, Frame $frame, Rect $area): void
+    {
+        $part->render($frame, $area, $this);
+    }
+
+    /**
+     * Draw a published child inside withinChild(), or as it is where it has no index.
+     */
+    public function drawChild(?int $index, Drawable $child, Frame $frame, Rect $area): void
+    {
+        if ($index === null) {
+            $this->draw($child, $frame, $area);
+
+            return;
+        }
+
+        $this->withinChild($index, fn () => $this->draw($child, $frame, $area));
+    }
+
+    /**
      * Which child the keyboard is in, or null where it is on this container
      * itself or somewhere else entirely.
      */
