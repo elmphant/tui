@@ -33,7 +33,7 @@ $app->paste("two\nlines");   // pasted text
 $app->drag(30, 5, 40, 5);    // press at one cell, move, release at another
 
 // Answer the commands the app asked for:
-$app->issued(ExecCmd::class);                     // which commands were asked for
+$app->issued(ExecCmd::class);                     // the commands the last press() or typed letter asked for
 $app->answer('load', stdout: '{"items": []}');    // ProcessResultMsg for Cmd::exec()
 $app->answer('load', stderr: 'fatal: not a git repository', exitCode: 128);  // one that failed
 $app->stream('tail', "a line\n");                 // ProcessOutputMsg for Cmd::stream()
@@ -90,7 +90,7 @@ $screen->find('Run');     // ['row' => 1, 'column' => 4], in display columns
 $screen->find('Run', 1);  // the second match, or null
 $screen->find('Run', within: new Rect(10, 0, 10, 2));   // only matches starting in that area
 $screen->findOrFail('Run');   // like find(), but throws '"Run" is not on screen'
-$screen->rowOf('Run');    // 1
+$screen->rowOf('Run');    // 1, and throws like findOrFail() when it is not there
 $screen->lineAt(1);       // one row as text, the full width
 $screen->plainText();     // every row without trailing blanks, joined by newlines
 $screen->textAt(4, 1, 3);  // 'Run': column, then row, as the frame was written

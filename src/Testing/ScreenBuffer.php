@@ -146,9 +146,12 @@ final class ScreenBuffer
         return $this->find($text, $nth, $within) ?? throw new LogicException(sprintf('"%s" is not on screen', $text));
     }
 
-    public function rowOf(string $text, ?Rect $within = null): ?int
+    /**
+     * Fails when the text is not on screen, so a comparison of rows never passes on nothing. find() answers null instead.
+     */
+    public function rowOf(string $text, ?Rect $within = null): int
     {
-        return $this->find($text, within: $within)['row'] ?? null;
+        return $this->findOrFail($text, within: $within)['row'];
     }
 
     public function styleAt(int $column, int $row): Style

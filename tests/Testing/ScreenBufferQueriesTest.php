@@ -54,7 +54,15 @@ final class ScreenBufferQueriesTest extends TestCase
     public function textThatIsNotOnScreenIsNowhere(): void
     {
         self::assertNull(ScreenBuffer::fromFrame(new Frame(10, 2))->find('Run'));
-        self::assertNull(ScreenBuffer::fromFrame(new Frame(10, 2))->rowOf('Run'));
+    }
+
+    #[Test]
+    public function askingForTheRowOfTextThatIsNotOnScreenFails(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('"Run" is not on screen');
+
+        ScreenBuffer::fromFrame(new Frame(10, 2))->rowOf('Run');
     }
 
     #[Test]

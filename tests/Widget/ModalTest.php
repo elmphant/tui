@@ -422,7 +422,7 @@ final class ModalTest extends TestCase
 
         $screen = ScreenBuffer::fromFrame($frame);
 
-        self::assertSame(1, ($screen->rowOf('two') ?? 0) - ($screen->rowOf('one') ?? 0));
+        self::assertSame(1, $screen->rowOf('two') - $screen->rowOf('one'));
         self::assertSame(4, $screen->rowOf('one'));
     }
 
