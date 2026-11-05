@@ -93,6 +93,90 @@ final class ProgramForkTest extends TestCase
     }
 
     #[Test]
+    #[Group('fork')]
+    #[RequiresPhpExtension('pcntl')]
+    #[RequiresPhpExtension('posix')]
+    public function cancellingAForkEndsTheChildAndLeavesNoZombie(): void
+    {
+        $model = new ForkStoppingModel(cancels: true);
+
+        Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+
+        self::assertSame([(string)$model->childPid, 'quiet'], $model->log);
+        self::assertChildIsGone($model->childPid);
+    }
+
+    #[Test]
+    #[Group('fork')]
+    #[RequiresPhpExtension('pcntl')]
+    #[RequiresPhpExtension('posix')]
+    public function quittingEndsEveryForkedChild(): void
+    {
+        $model = new ForkStoppingModel(cancels: false);
+
+        Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+
+        self::assertChildIsGone($model->childPid);
+    }
+
+    #[Test]
+    #[Group('fork')]
+    #[RequiresPhpExtension('pcntl')]
+    public function theProgramKeepsTickingWhileTheChildBlocks(): void
+    {
+        $model = new FiberLoggingModel(Cmd::batch(
+            Cmd::fork(static function (Closure $send): Message {
+                usleep(200_000);
+
+                return new FiberDone('loaded');
+            }),
+            Cmd::tick(0.01),
+        ));
+
+        Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+
+        self::assertSame(['tick', 'loaded'], $model->log);
+    }
+
+    #[Test]
+    #[Group('fork')]
+    #[RequiresPhpExtension('pcntl')]
+    public function theChildForgetsTheProgramsSignalHandlers(): void
+    {
+        $model = new ForkLoggingModel(Cmd::fork(static fn (Closure $send): Message => new ForkSaid(
+            pcntl_signal_get_handler(\SIGTERM) === \SIG_DFL ? 'default' : 'inherited',
+        )));
+        pcntl_signal(\SIGTERM, static function (): void {
+        });
+
+        try {
+            Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+        } finally {
+            pcntl_signal(\SIGTERM, \SIG_DFL);
+        }
+
+        self::assertSame(['default'], $model->log);
+    }
+
+    #[Test]
+    #[Group('fork')]
+    #[RequiresPhpExtension('pcntl')]
+    public function whatTheChildPrintsGoesNowhere(): void
+    {
+        $model = new ForkLoggingModel(Cmd::fork(static function (Closure $send): Message {
+            $output = fopen('php://stdout', 'w');
+            $printsTo = $output === false ? false : fstat($output);
+            $nowhere = stat('/dev/null');
+
+            return new ForkSaid($printsTo !== false && $nowhere !== false && $printsTo['ino'] === $nowhere['ino'] ? 'nowhere' : 'the terminal');
+        }));
+
+        Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+
+        self::assertSame(['nowhere'], $model->log);
+    }
+
+    #[Test]
     public function theMessageAForkAnswersWithArrives(): void
     {
         $model = new ForkLoggingModel(Cmd::fork(static fn (Closure $send): Message => new ForkSaid('loaded'), EffectId::named('load')));
@@ -135,5 +219,12 @@ final class ProgramForkTest extends TestCase
         Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
 
         self::assertSame(['error: fork Cmd::fork() work must return a Message or null'], $model->log);
+    }
+
+    private static function assertChildIsGone(?int $pid): void
+    {
+        self::assertNotNull($pid);
+        self::assertSame(-1, pcntl_waitpid($pid, $status, \WNOHANG), 'the child was reaped, so it is no zombie');
+        self::assertFalse(posix_kill($pid, 0), 'and no process runs under its id');
     }
 }
