@@ -32,6 +32,7 @@ use Elmphant\Tui\Widget\Feedback\Alert;
 use Elmphant\Tui\Widget\Feedback\ProgressBar;
 use Elmphant\Tui\Widget\Feedback\Spinner;
 use Elmphant\Tui\Widget\Field\Button;
+use Elmphant\Tui\Widget\Field\TextArea;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableCheckboxGroup;
 use Elmphant\Tui\Widget\Filter\FilterableList;
@@ -193,6 +194,7 @@ final class IntrinsicWidthTest extends TestCase
     public static function rowTakers(): iterable
     {
         yield 'TextInput' => [TextInput::new()->withValue('typed')];
+        yield 'TextArea' => [TextArea::new("typed\nlines")];
         yield 'FormFoot' => [new FormFoot('run it', 7)];
         yield 'FocusGutter' => [FocusGutter::around(TextInput::new()->withValue('typed'))];
         yield 'Table' => [Table\Table::fromCells([Column::new('A', Constraint::flex())], [['x']])];

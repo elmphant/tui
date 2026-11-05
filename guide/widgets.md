@@ -35,6 +35,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | Widget | In | What it is |
 | --- | --- | --- |
 | `TextInput` | `Field` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead). `withSubmit()` makes Enter commit it, for the bind closure, and `withSubmit($message)` also sends a message |
+| `TextArea` | `Field` | A text editor of many lines: Enter starts a line, Backspace joins two, Up and Down keep the column, and it scrolls with the cursor. Wide characters count two columns. `value()` joins the lines with `\n`, and `cursor()` answers the line and the column |
 | `Button` | `Field` | A button, three rows with a border. `withBorder(false)` makes it one row, `[ Save ]`, and so does a slot of fewer rows |
 | `Checkbox` / `CheckboxGroup` | `Choice` | Yes/no choices |
 | `Radio` / `Select` | `Choice` | One choice out of a list. Take a `Radio` for a few options that all show, each with a mark, where one is always chosen (a setting with a default), unless `withClearable()` lets the reader put it back down. Take a `Select` for a longer list that scrolls in the rows it gets and starts with nothing chosen. Put either in a `Dropdown` to keep it on one row |

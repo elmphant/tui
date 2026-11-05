@@ -54,6 +54,7 @@ final class Actions
     public const DELETE_WORD_BACKWARD = 'delete_word_backward';
     public const CLEAR_LINE = 'clear_line';
     public const DELETE_WORD_FORWARD = 'delete_word_forward';
+    public const NEW_LINE = 'new_line';
 
     public static function description(string $action): string
     {
