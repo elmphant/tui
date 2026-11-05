@@ -51,6 +51,22 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
+    public function newColumnTitlesKeepTheQueryAndTheCursor(): void
+    {
+        $table = WidgetHarness::for(FilterableTable::new(
+            [Column::new('Name', Constraint::flex())],
+            [Row::new('symfony/config'), Row::new('symfony/console'), Row::new('psr/log')],
+        ), 40, 8)->type('symfony')->press('down')->widget();
+        self::assertInstanceOf(FilterableTable::class, $table);
+
+        $sorted = $table->withColumns([Column::new('Name ↑', Constraint::flex())]);
+
+        self::assertSame('2 of 3', $sorted->summary());
+        self::assertSame('symfony/console', $sorted->cursorRow()?->textAt(0));
+        self::assertStringContainsString('Name ↑', WidgetHarness::for($sorted, 40, 8)->screen()->plainText());
+    }
+
+    #[Test]
     public function theArrowsMoveTheTableCursor(): void
     {
         $table = $this->harness()->press('down', 'down')->widget();

@@ -49,7 +49,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `Table` | `Table` | Rows and columns with a cursor, selection, mouse and scrolling. Cells wrap. `withColumnGap(0)` packs columns, `withHeader(false)` hides the header |
 | `StaticTable` | `Table` | A bordered table that draws every row, with no cursor. For small data |
 | `FilterableList` | `Filter` | A search field over a `ListView`. Typing filters, and arrows and Enter pick |
-| `FilterableTable` | `Filter` | A search field over a `Table` |
+| `FilterableTable` | `Filter` | A search field over a `Table`. `withColumns()` changes the titles, such as a sort marker, and keeps the query and the cursor |
 | `FilterableStaticTable` | `Filter` | A search field over a `StaticTable` |
 | `TreeView` | `Tree` | A tree whose children load when opened |
 

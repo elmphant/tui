@@ -94,6 +94,16 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         )->reFiltered();
     }
 
+    /**
+     * New column titles or widths, keeping the query and the cursor, such as a sort marker in a title.
+     *
+     * @param list<Column> $columns
+     */
+    public function withColumns(array $columns): self
+    {
+        return $this->cloneWith(table: $this->table->withColumns($columns));
+    }
+
     public function summary(): string
     {
         return count($this->matchingIndexes()) . ' of ' . count($this->rows);
