@@ -125,6 +125,11 @@ $table = Table::new(
 `Table::fromCells($columns, [['GET', '/users', '200']])` takes plain text.
 `FilterableTable::new()` takes the same columns and rows.
 
+To edit a row, put a `TextInput` for each column below the table. `on(Chosen::class, …)`
+on the table fills them from `$chosen->choice` (the `Row`), `withSubmit()` on the last
+field answers `Submitted`, and its handler builds the rows again with the edited one,
+under the same key, so the cursor stays on it.
+
 ## Lists keep their place
 
 When you hand a list new items, the cursor and the selection stay on the same
