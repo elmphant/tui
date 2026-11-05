@@ -23,7 +23,6 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
-use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
@@ -344,18 +343,22 @@ final readonly class Modal implements Interactive, GraftsItsChildren, Committing
             return null;
         }
 
-        $title = $this->bordered ? CharWidth::stringWidth($this->title) + self::BORDERS : 0;
+        $title = $this->bordered ? Block::new()->withTitle($this->title)->titleWidth() : 0;
 
         return min($area->width, max($this->smallestSide(), $contentWidth + $this->borders(), $title));
     }
 
     private function fittedHeight(int $contentWidth): ?int
     {
-        if (!$this->sizedToContent || !$this->content instanceof MeasureHeight) {
+        if (!$this->sizedToContent) {
             return null;
         }
 
-        return max($this->smallestSide(), $this->content->measureHeight(max(1, $contentWidth)) + $this->borders());
+        $contentHeight = $this->content instanceof MeasureHeight
+            ? $this->content->measureHeight(max(1, $contentWidth))
+            : $this->content->sizing()->rows->intrinsic();
+
+        return $contentHeight === 0 ? null : max($this->smallestSide(), $contentHeight + $this->borders());
     }
 
     private function computeContentRect(Rect $area): Rect

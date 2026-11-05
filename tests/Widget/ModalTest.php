@@ -26,6 +26,7 @@ use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\WidgetHarness;
+use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\Interactive;
@@ -119,6 +120,27 @@ final class ModalTest extends TestCase
         Modal::new('T', $content)->withSizedToContent()->withSizedToContent(false)->render($toggled, Rect::fromSize(100, 50), $this->context);
 
         self::assertSame(ScreenBuffer::fromFrame($plain)->plainText(), ScreenBuffer::fromFrame($toggled)->plainText());
+    }
+
+    #[Test]
+    public function aModalFittedToItsContentShowsItsWholeTitle(): void
+    {
+        $frame = new Frame(60, 20);
+
+        Modal::new('Delete image.bin?', Text::new('Sure?'))->withSizedToContent()->render($frame, Rect::fromSize(60, 20), $this->context);
+
+        self::assertStringContainsString('╭ Delete image.bin? ╮', ScreenBuffer::fromFrame($frame)->plainText());
+    }
+
+    #[Test]
+    public function aModalFittedToAButtonIsAsTallAsTheButton(): void
+    {
+        $frame = new Frame(60, 20);
+
+        Modal::new('Delete?', Button::new('Delete'))->withSizedToContent()->render($frame, Rect::fromSize(60, 20), $this->context);
+
+        $drawn = array_filter(explode("\n", ScreenBuffer::fromFrame($frame)->plainText()), static fn (string $line): bool => trim($line) !== '');
+        self::assertCount(3 + 2, $drawn, 'the button plus both borders');
     }
 
     #[Test]

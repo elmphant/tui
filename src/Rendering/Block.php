@@ -49,6 +49,14 @@ final readonly class Block
         return $this->cloneWith(title: $title);
     }
 
+    /**
+     * The narrowest width that draws the whole title, with its corners and the space on each side.
+     */
+    public function titleWidth(): int
+    {
+        return $this->title === null || $this->title === '' ? 0 : CharWidth::stringWidth($this->title) + 4;
+    }
+
     public function withBorderStyle(Style $style): static
     {
         return $this->cloneWith(borderStyle: $style);
