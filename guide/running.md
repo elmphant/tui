@@ -204,7 +204,7 @@ The app owns its terminal, so debug from a second one:
 
 ## PHPStan rules for your app
 
-The package ships seven PHPStan rules. They catch mistakes that work today and
+The package ships eight PHPStan rules. They catch mistakes that work today and
 break later. Include them:
 
 ```neon
@@ -221,6 +221,7 @@ includes:
 | `ReachableChildrenRule` | A widget drawing a child it does not expose, so nothing inside can get the keyboard |
 | `KeyNameIsNotTextRule` | `$message->key === 'esc'`, which never matches |
 | `SplitIsBoundRule` | A `Split` that is not bound, so dragging its divider does nothing |
+| `ChildIsDrawnThroughTheContextRule` | A widget calling `render()` on another widget instead of `$context->draw()` |
 
 To allow an exception to `ReachableChildrenRule`:
 

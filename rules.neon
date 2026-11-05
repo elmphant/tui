@@ -33,6 +33,10 @@ services:
         tags:
             - phpstan.rules.rule
     -
+        class: Elmphant\Tui\Stan\ChildIsDrawnThroughTheContextRule
+        tags:
+            - phpstan.rules.rule
+    -
         class: Elmphant\Tui\Stan\ReachableChildrenRule
         arguments:
             allowList: %elmphant.reachableChildrenAllowList%

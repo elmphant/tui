@@ -16,6 +16,11 @@ A widget doesn't know where it is on screen: it is handed its `Rect` in both
 A widget never stores whether it has the keyboard. It asks while it draws:
 `$context->hasFocus()`.
 
+A widget draws another widget through the context, never by calling its
+`render()`: `$context->draw($child, $frame, $area)`, or
+`$context->drawChild($index, $child, $frame, $area)` for a child the keyboard
+can reach, so the child is drawn as focused only when the keyboard is in it.
+
 `sizing()` returns a `Sizing`, one `Constraint` per axis
 (see [Layout](layout.md)).
 
