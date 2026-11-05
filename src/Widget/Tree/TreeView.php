@@ -14,6 +14,7 @@ use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
@@ -23,12 +24,13 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Text\TextWrap;
+use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
 
-final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHeight, PublishesHints
+final readonly class TreeView implements Committing, Focusable, KeybindingsAware, MeasureHeight, PublishesHints
 {
     use Cloneable;
     use DrawsFocus;
@@ -142,6 +144,27 @@ final readonly class TreeView implements Focusable, KeybindingsAware, MeasureHei
             $area->height,
             ScrollWindow::lastOffset(count($this->visibleRows()), $area->height),
         ));
+    }
+
+    /**
+     * Enter or a click on a leaf chooses its node. On a branch they open or close it instead.
+     */
+    public function outcomeOf(Message $message, Rect $area): ?Message
+    {
+        $node = match (true) {
+            $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::TOGGLE) => $this->cursorNode(),
+            $message instanceof MouseMsg && $message->action === MouseAction::Press => $this->rowAt($message, $area)['node'] ?? null,
+            default => null,
+        };
+
+        return $node === null || $node->isExpandable() ? null : new Chosen($node, $message);
+    }
+
+    public function cursorNode(): ?TreeNode
+    {
+        $index = $this->rowIndexOf($this->shownCursor());
+
+        return $index === null ? null : $this->visibleRows()[$index]['node'];
     }
 
     /**

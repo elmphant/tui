@@ -105,7 +105,7 @@ A widget that did something the reader meant hands on an outcome, and
 | Outcome | From | Carries |
 |---|---|---|
 | `Submitted` | a `TextInput` with `withSubmit()`, on Enter | `$value` |
-| `Chosen` | `ListView`, `Table`, `Select`, `Radio`, `Dropdown`, the filterable ones, on Enter or a click on an item | `$choice`: the `ListItem`, `Row` or option |
+| `Chosen` | `ListView`, `Table`, `Select`, `Radio`, `Dropdown`, the filterable ones, on Enter or a click on an item, and `TreeView` on a leaf | `$choice`: the `ListItem`, `Row`, `TreeNode` or option |
 | `Pressed` | a `Button`, and a `Form` for its button or Enter in its last field | nothing: read the form's values on the stored App |
 | `Dismissed` | a `Modal`, on Escape or a click outside, and a `Form` given `withCancel()`, on Escape | nothing |
 

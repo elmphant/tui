@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Widget\Tree;
 
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
@@ -23,6 +24,38 @@ use PHPUnit\Framework\TestCase;
 
 final class TreeViewTest extends TestCase
 {
+    #[Test]
+    public function enterOnALeafChoosesItsNode(): void
+    {
+        $tree = TreeView::new([new SimpleTreeNode('total', 'total', '94.2')]);
+
+        $outcome = $tree->outcomeOf(new KeyMsg(Key::Enter), new Rect(0, 0, 30, 5));
+
+        self::assertInstanceOf(Chosen::class, $outcome);
+        self::assertSame('total', $outcome->choice instanceof SimpleTreeNode ? $outcome->choice->key() : null);
+    }
+
+    #[Test]
+    public function enterOnABranchOpensItAndChoosesNothing(): void
+    {
+        self::assertNull(self::orderTree()->outcomeOf(new KeyMsg(Key::Enter), new Rect(0, 0, 30, 5)));
+    }
+
+    #[Test]
+    public function aClickOnALeafChoosesItsNode(): void
+    {
+        $outcome = self::orderTree()->outcomeOf(new MouseMsg(1, 1, MouseAction::Press, MouseButton::Left), new Rect(0, 0, 30, 5));
+
+        self::assertInstanceOf(Chosen::class, $outcome);
+        self::assertSame('total', $outcome->choice instanceof SimpleTreeNode ? $outcome->choice->key() : null);
+    }
+
+    #[Test]
+    public function theCursorNamesTheNodeItIsOn(): void
+    {
+        self::assertSame('customer', self::orderTree()->expand(new TreePath('order'))->withCursor(new TreePath('order', 'customer'))->cursorNode()?->key());
+    }
+
     #[Test]
     public function rightOnALeafLeavesItAndTheCursorAlone(): void
     {
