@@ -45,6 +45,14 @@ final class FilterableListTest extends TestCase
     }
 
     #[Test]
+    public function theCursorGoesToTheLastMatchForAListThatFollowsItsEnd(): void
+    {
+        $list = FilterableList::new([new SimpleListItem('alpha'), new SimpleListItem('beta'), new SimpleListItem('alphabet')])->withQuery('alpha');
+
+        self::assertSame('alphabet', $list->withCursorAtEnd()->cursorItem()?->title());
+    }
+
+    #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
         self::assertSame(

@@ -119,11 +119,22 @@ final readonly class FilterableList implements Focusable, KeybindingsAware, Drop
         return $this->cloneWith(emptyCaption: $caption);
     }
 
+    /**
+     * Leaves the cursor where it is when that item does not match the query.
+     */
     public function withCursorSourceIndex(?int $index): self
     {
         $kept = array_search($index, $this->matchingIndexes(), true);
 
         return $kept === false ? $this : $this->cloneWith(list: $this->list->withCursor($kept));
+    }
+
+    /**
+     * On the last match, for a list that follows new items as they arrive.
+     */
+    public function withCursorAtEnd(): self
+    {
+        return $this->cloneWith(list: $this->list->withCursor(max(0, $this->list->itemCount() - 1)));
     }
 
     /**
