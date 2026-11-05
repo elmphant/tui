@@ -51,7 +51,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `FilterableList` | `Filter` | A search field over a `ListView`. Typing filters, and arrows and Enter pick |
 | `FilterableTable` | `Filter` | A search field over a `Table`. `withColumns()` changes the titles, such as a sort marker, and keeps the query and the cursor |
 | `FilterableStaticTable` | `Filter` | A search field over a `StaticTable` |
-| `TreeView` | `Tree` | A tree whose children load when opened |
+| `TreeView` | `Tree` | A tree whose children load when opened — see [Trees that load as they open](#trees-that-load-as-they-open) |
 
 **Bars and feedback**
 
@@ -106,6 +106,101 @@ item, found by its **key**. The key is the text shown, unless you give one:
 `new SimpleListItem($title, $description, key: $id)`, `Row::withKey($id)`,
 `new TabPage($label, key: $id)`. Give a key to rows whose text can repeat or
 change. When the cursor's item is gone, the cursor moves to a neighbour.
+
+## Trees that load as they open
+
+A `TreeView` shows `TreeNode`s. `SimpleTreeNode($key, $label)` is a leaf, and
+`children: null` makes a branch whose children are not loaded yet: the tree draws
+it with a `⋯` row once it is open. Right opens a branch, Left closes it, and Enter
+opens or closes it too. Enter or a click on a leaf answers `Chosen` with the
+`TreeNode`, and `cursorNode()` names the node under the cursor.
+
+To load a branch when the reader opens it, bind the tree with `Component::bind()`,
+whose closure sees the tree from before and after the key:
+`$tree->pendingSince($app->tree)` lists the branches that were just opened and
+are still unloaded. Start a command for each, and hand the tree the loaded nodes
+with `withRoots()`, which keeps the cursor and what is open:
+
+```php
+use Elmphant\Tui\Application\{App, Component, InputContext};
+use Elmphant\Tui\Core\{Cmd, EffectId, Message, UpdateResult};
+use Elmphant\Tui\Message\{Chosen, ProcessResultMsg};
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Tree\{SimpleTreeNode, TreeNode, TreePath, TreeView};
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Files extends App
+{
+    /**
+     * @param array<string, list<string>> $listings each loaded folder's entries, a folder's name ending in "/"
+     */
+    public function __construct(private string $root, private TreeView $tree, private array $listings = [], private string $chosen = '') {}
+
+    public static function in(string $root): self
+    {
+        return new self($root, TreeView::new([new SimpleTreeNode('.', $root, children: null)])->expand(new TreePath('.')));
+    }
+
+    public function view(): Widget
+    {
+        return Layout::column(
+            Component::bind('tree', $this->tree, static fn (self $app, TreeView $tree): self|UpdateResult => $app->opened($tree))
+                ->on(Chosen::class, static fn (self $app, Chosen $chosen): self => $app->cloneWith(chosen: $chosen->choice instanceof TreeNode ? $chosen->choice->key() : '')),
+            Text::new("chosen: {$this->chosen}"),
+        );
+    }
+
+    protected function setup(): ?Cmd
+    {
+        return $this->listingOf(new TreePath('.'));
+    }
+
+    protected function onMessage(Message $message, InputContext $input): self|UpdateResult
+    {
+        if (!$message instanceof ProcessResultMsg || !str_starts_with($message->effectId->value ?? '', 'ls:')) {
+            return $this;
+        }
+
+        $listings = [...$this->listings, substr($message->effectId->value ?? '', 3) => array_values(array_filter(explode("\n", $message->stdout)))];
+
+        return $this->cloneWith(listings: $listings, tree: $this->tree->withRoots([$this->folder('.', $this->root, $listings)]));
+    }
+
+    private function opened(TreeView $tree): self|UpdateResult
+    {
+        $loads = array_map($this->listingOf(...), $tree->pendingSince($this->tree));
+
+        return $loads === [] ? $this->cloneWith(tree: $tree) : new UpdateResult($this->cloneWith(tree: $tree), Cmd::batch(...$loads));
+    }
+
+    private function listingOf(TreePath $path): Cmd
+    {
+        $folder = implode('/', $path->keys);
+
+        return Cmd::exec(['ls', '-1Ap', "{$this->root}/{$folder}"], id: EffectId::named("ls:{$folder}"));
+    }
+
+    /**
+     * @param array<string, list<string>> $listings
+     */
+    private function folder(string $path, string $name, array $listings): TreeNode
+    {
+        $entries = $listings[$path] ?? null;
+        $children = $entries === null ? null : array_map(
+            fn (string $entry): TreeNode => str_ends_with($entry, '/')
+                ? $this->folder($path . '/' . rtrim($entry, '/'), rtrim($entry, '/'), $listings)
+                : new SimpleTreeNode($entry, $entry),
+            $entries,
+        );
+
+        return new SimpleTreeNode(basename($path), $name, children: $children, expandable: true);
+    }
+}
+```
+
+In a test, answer each listing by its name: `$harness->answer('ls:.', stdout: "src/\nREADME.md\n")`,
+then `press('down', 'right')` opens `src` and asks for `ls:./src`.
 
 ## Forms
 
