@@ -208,6 +208,8 @@ final class ModelHarness
      */
     public function issued(string $type = Cmd::class): array
     {
+        $this->startedLikeTheProgram();
+
         return array_values(array_filter($this->issued, static fn (Cmd $command): bool => $command instanceof $type));
     }
 
@@ -280,6 +282,7 @@ final class ModelHarness
      */
     public function runCalls(): self
     {
+        $this->startedLikeTheProgram();
         $calls = $this->calls;
         $this->calls = [];
         $this->issued = [];
@@ -303,6 +306,7 @@ final class ModelHarness
      */
     public function runFibers(): self
     {
+        $this->startedLikeTheProgram();
         $fibers = $this->fibers;
         $this->fibers = [];
         $this->issued = [];
@@ -549,7 +553,7 @@ final class ModelHarness
     }
 
     /**
-     * The program runs init() before the first frame or key, so a test that skips it still sees what setup() asked for.
+     * The program runs init() before anything else, so a test that skips it still sees what setup() asked for.
      */
     private function startedLikeTheProgram(): void
     {
@@ -714,6 +718,7 @@ final class ModelHarness
      */
     private function runningAs(EffectId|string $effect, string $type): array
     {
+        $this->startedLikeTheProgram();
         $matches = array_filter(
             $this->running,
             static fn (array $running): bool => $effect instanceof EffectId ? $running['id']->equals($effect) : $running['id']->value === $effect,
