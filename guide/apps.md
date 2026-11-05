@@ -95,7 +95,9 @@ is, and `?` lists them all.
 
 The App is immutable. Return a new one instead of changing a property: small
 typed `withX()` methods, or the protected `$this->cloneWith(list: $list)`, which
-returns `$this` when nothing changed. Never redeclare `cloneWith()`.
+returns `$this` when nothing changed. Never redeclare `cloneWith()`, and don't
+`use Cloneable` again: `App` already does. `cloneWith()` builds the next App with
+the constructor, so keep it public. A static factory can still build the first one.
 
 ## What a widget tells you
 
