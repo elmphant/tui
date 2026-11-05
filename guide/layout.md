@@ -8,7 +8,9 @@
 them side by side, the same words `Flex` and `Split` use. `->withGap(1)` leaves one cell between them.
 
 Each widget says how much room it wants. A text line wants one row, and a list
-takes what is left. You can change that with a `Constraint`:
+takes what is left. A layout inside a layout wants what its children want: a
+row of text lines is one row tall, and a row holding a list takes what is left.
+You can change that with a `Constraint`:
 
 | Constraint | Meaning |
 | --- | --- |

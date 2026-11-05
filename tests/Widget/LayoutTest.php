@@ -11,6 +11,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Listing\ListView;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
@@ -255,9 +256,22 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
-    public function layoutConstraintIsFlex(): void
+    public function aLayoutOfFixedRowsAsksForTheRowsItMeasures(): void
     {
         $layout = Layout::column(Text::new('test'));
+        self::assertTrue($layout->sizing()->rows->measuresContent);
+    }
+
+    #[Test]
+    public function anEmptyLayoutGrowsInRows(): void
+    {
+        self::assertSame(1, Layout::column()->sizing()->rows->flex);
+    }
+
+    #[Test]
+    public function aLayoutGrowsInRowsWhenAChildDoes(): void
+    {
+        $layout = Layout::column(Text::new('test'), ListView::fromStrings(['a']));
         self::assertSame(1, $layout->sizing()->rows->flex);
     }
 

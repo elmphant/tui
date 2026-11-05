@@ -80,7 +80,13 @@ final readonly class Layout implements Widget, GraftsItsChildren, MeasureHeight
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::flex());
+        foreach ($this->children as $child) {
+            if ($child->sizing()->rows->flex > 0) {
+                return Sizing::of(Constraint::flex(), Constraint::flex());
+            }
+        }
+
+        return Sizing::of(Constraint::flex(), $this->children === [] ? Constraint::flex() : Constraint::content());
     }
 
     public function measureHeight(int $width): int
