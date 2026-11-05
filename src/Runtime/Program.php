@@ -648,6 +648,12 @@ final class Program
             }));
         }
 
+        // Draw before the loop runs work that setup() queued: work that blocks would otherwise leave the screen empty.
+        $this->tick();
+        if (!$this->isRunning()) {
+            return;
+        }
+
         // Suspend this fiber instead of calling run(): a host may already run the shared loop, and quitting must not stop it.
         $this->runSuspension = EventLoop::getSuspension();
         $this->runSuspension->suspend();

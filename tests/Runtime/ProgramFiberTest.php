@@ -33,6 +33,16 @@ final class ProgramFiberTest extends TestCase
     }
 
     #[Test]
+    public function theFirstFrameIsDrawnBeforeWorkSetupAskedForRuns(): void
+    {
+        $model = new FrameOrderModel();
+
+        Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+
+        self::assertSame('frame', $model->log[0] ?? null);
+    }
+
+    #[Test]
     public function aMappedFibersMessageArrivesWrapped(): void
     {
         $model = new FiberLoggingModel(Cmd::fiber(self::waitingFor(0.01, new FiberDone('loaded')))->map(

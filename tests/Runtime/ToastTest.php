@@ -365,7 +365,9 @@ final class ToastTest extends TestCase
         EventLoop::defer(static function () use ($terminal, $program, &$screens): void {
             $terminal->simulateInput('s');
             $program->tick();
-            $screens[] = (new ScreenBuffer($terminal->output(), 40, 6))->plainText();
+            EventLoop::delay(0.05, static function () use ($terminal, &$screens): void {
+                $screens[] = (new ScreenBuffer($terminal->output(), 40, 6))->plainText();
+            });
             EventLoop::delay(0.5, static function () use ($terminal, $program, &$screens): void {
                 $screens[] = (new ScreenBuffer($terminal->output(), 40, 6))->plainText();
                 $terminal->closeInput();
