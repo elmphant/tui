@@ -44,7 +44,7 @@ final readonly class ForkHandler implements CommandHandler
             return self::listenTo($running, $command, $emit, $finished);
         }
 
-        EventLoop::queue(static function () use ($command, $emit, $finished): void {
+        $turn = EventLoop::defer(static function () use ($command, $emit, $finished): void {
             $answer = self::answerOf($command, $emit);
             if ($answer !== null) {
                 $emit($answer);
@@ -52,7 +52,8 @@ final readonly class ForkHandler implements CommandHandler
             $finished();
         });
 
-        return static function (): void {
+        return static function () use ($turn): void {
+            EventLoop::cancel($turn);
         };
     }
 

@@ -39,4 +39,28 @@ final class ForkHandlerTest extends TestCase
         self::assertSame(['sent', (string)getmypid()], $heard);
         self::assertTrue($finished);
     }
+
+    #[Test]
+    public function withoutForkingWorkCancelledBeforeItsTurnNeverRuns(): void
+    {
+        $ran = false;
+
+        $stop = (new ForkHandler(forks: false))->start(
+            new ForkCmd(static function (Closure $send) use (&$ran): null {
+                $ran = true;
+
+                return null;
+            }),
+            static function (Message $message): void {
+            },
+            static function (): void {
+            },
+        );
+        self::assertNotNull($stop);
+        $stop();
+        EventLoop::delay(0.01, ($suspension = EventLoop::getSuspension())->resume(...));
+        $suspension->suspend();
+
+        self::assertFalse($ran);
+    }
 }
