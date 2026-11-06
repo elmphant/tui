@@ -49,12 +49,15 @@ final class ForkChild
     }
 
     /**
-     * The program's handlers only queue work for a loop the child never runs again, so a SIGTERM would not end it.
+     * The program's handlers only queue work for a loop the child never runs again, so a SIGTERM would not end it,
+     * and an inherited SIGCHLD handler would reap the processes the work starts before the work reads their exit.
      */
     private static function forgetTheParentsSignals(): void
     {
-        foreach ([\SIGTERM, \SIGINT, \SIGHUP, \SIGWINCH, \SIGTSTP, \SIGCONT, \SIGQUIT, \SIGUSR1, \SIGUSR2] as $signal) {
-            pcntl_signal($signal, \SIG_DFL);
+        for ($signal = 1; $signal < 32; ++$signal) {
+            if ($signal !== \SIGKILL && $signal !== \SIGSTOP && pcntl_signal_get_handler($signal) !== \SIG_DFL) {
+                pcntl_signal($signal, \SIG_DFL);
+            }
         }
     }
 

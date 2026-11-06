@@ -161,6 +161,26 @@ final class ProgramForkTest extends TestCase
     #[Test]
     #[Group('fork')]
     #[RequiresPhpExtension('pcntl')]
+    public function theChildForgetsAHandlerForItsOwnChildren(): void
+    {
+        $model = new ForkLoggingModel(Cmd::fork(static fn (Closure $send): Message => new ForkSaid(
+            pcntl_signal_get_handler(\SIGCHLD) === \SIG_DFL ? 'default' : 'inherited',
+        )));
+        pcntl_signal(\SIGCHLD, static function (): void {
+        });
+
+        try {
+            Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+        } finally {
+            pcntl_signal(\SIGCHLD, \SIG_DFL);
+        }
+
+        self::assertSame(['default'], $model->log);
+    }
+
+    #[Test]
+    #[Group('fork')]
+    #[RequiresPhpExtension('pcntl')]
     public function whatTheChildPrintsGoesNowhere(): void
     {
         $model = new ForkLoggingModel(Cmd::fork(static function (Closure $send): Message {
