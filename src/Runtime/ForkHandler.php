@@ -92,7 +92,17 @@ final readonly class ForkHandler implements CommandHandler
                     return;
                 }
 
-                $emit(self::messageIn($frame, $payload, $command));
+                try {
+                    $message = self::messageIn($frame, $payload, $command);
+                } catch (Throwable $error) {
+                    $running->kill();
+                    $emit(new ErrorMsg($error, ErrorSource::Fork, $command->id));
+                    $finished();
+
+                    return;
+                }
+
+                $emit($message);
             }
 
             if ($running->endedWithoutItsLastFrame()) {

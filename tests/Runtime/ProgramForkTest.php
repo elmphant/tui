@@ -79,6 +79,20 @@ final class ProgramForkTest extends TestCase
     #[Group('fork')]
     #[RequiresPhpExtension('pcntl')]
     #[RequiresPhpExtension('posix')]
+    public function aMessageThatCannotBeRebuiltSendsAnErrorAndEndsTheChild(): void
+    {
+        $model = new ForkStoppingModel(cancels: false, sendsFirst: new ForkRefusingToArrive());
+
+        Program::new($model)->withTerminal(new VirtualTerminal(20, 2))->start();
+
+        self::assertSame(['error from slow: fork cannot be rebuilt'], $model->log);
+        self::assertChildIsGone($model->childPid);
+    }
+
+    #[Test]
+    #[Group('fork')]
+    #[RequiresPhpExtension('pcntl')]
+    #[RequiresPhpExtension('posix')]
     public function aChildThatDiesWithoutAnsweringSendsAnError(): void
     {
         $model = new ForkLoggingModel(Cmd::fork(static function (Closure $send): never {
