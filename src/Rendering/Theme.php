@@ -48,6 +48,7 @@ final readonly class Theme
         public BorderType $borderType = BorderType::Rounded,
         // Unicode has no heavy rounded corners; focus is carried by colour + bold.
         public BorderType $focusedBorderType = BorderType::Rounded,
+        public bool $raisedButtons = false,
     ) {
         $this->footerOverride = $footerStyle;
         $this->warningOverride = $warning;
@@ -178,6 +179,11 @@ final readonly class Theme
         return $this->rebuilt(focusedBorderType: $type);
     }
 
+    public function withRaisedButtons(bool $raised = true): self
+    {
+        return $this->rebuilt(raisedButtons: $raised);
+    }
+
     /**
      * Share focused and emphasized border styling across containers.
      */
@@ -216,6 +222,7 @@ final readonly class Theme
             info: $this->withoutColour($this->info),
             borderType: $this->borderType,
             focusedBorderType: $this->focusedBorderType,
+            raisedButtons: $this->raisedButtons,
         );
     }
 
@@ -463,6 +470,7 @@ final readonly class Theme
         ?Style $info = null,
         ?BorderType $borderType = null,
         ?BorderType $focusedBorderType = null,
+        ?bool $raisedButtons = null,
     ): self {
         return new self(
             base: $base ?? $this->base,
@@ -485,6 +493,7 @@ final readonly class Theme
             info: $info ?? $this->infoOverride,
             borderType: $borderType ?? $this->borderType,
             focusedBorderType: $focusedBorderType ?? $this->focusedBorderType,
+            raisedButtons: $raisedButtons ?? $this->raisedButtons,
         );
     }
 

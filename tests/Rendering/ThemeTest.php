@@ -10,6 +10,7 @@ use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Terminal\ColorProfile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -146,6 +147,17 @@ final class ThemeTest extends TestCase
         $focused = $original->withFocusedBorderType(BorderType::Thick);
         self::assertSame(BorderType::Thick, $focused->focusedBorderType);
         self::assertSame($original->borderType, $focused->borderType, 'And the reverse holds');
+    }
+
+    #[Test]
+    public function raisedButtonsStayRaisedThroughAnotherChangeAndATerminalWithoutColour(): void
+    {
+        $raised = Theme::dark()->withRaisedButtons();
+
+        self::assertFalse(Theme::dark()->raisedButtons, 'buttons start flat');
+        self::assertTrue($raised->withAccent(new Style(foreground: Color::hex('FF8800')))->raisedButtons);
+        self::assertTrue($raised->shownIn(ColorProfile::Ascii)->raisedButtons);
+        self::assertFalse($raised->withRaisedButtons(false)->raisedButtons);
     }
 
     #[Test]

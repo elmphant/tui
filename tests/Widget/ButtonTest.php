@@ -21,6 +21,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Terminal\ColorProfile;
 use Elmphant\Tui\Tests\Support\TestMessage;
 use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\ButtonTone;
@@ -221,6 +222,70 @@ final class ButtonTest extends TestCase
         self::assertSame('╮', $frame->characters[10], 'top-right');
         self::assertSame('╰', $frame->characters[22], 'bottom-left');
         self::assertSame('╯', $frame->characters[32], 'bottom-right');
+    }
+
+    #[Test]
+    public function aThemeWithRaisedButtonsDrawsTheRightAndBottomInAHeavierStroke(): void
+    {
+        $frame = new Frame(11, 3);
+
+        Button::new('Run', new TestMessage('run'))
+            ->render($frame, new Rect(0, 0, 11, 3), RenderContext::unfocused(Theme::dark()->withRaisedButtons()));
+
+        self::assertSame(['┌─────────┒', '│   Run   ┃', '┕━━━━━━━━━┛'], self::rowsOf($frame));
+    }
+
+    #[Test]
+    public function aRaisedButtonIsLitFromTheTopLeftWhereTheTerminalBlendsColours(): void
+    {
+        $frame = new Frame(11, 3);
+
+        Button::new('Run', new TestMessage('run'))
+            ->render($frame, new Rect(0, 0, 11, 3), RenderContext::unfocused(Theme::dark()->withRaisedButtons(), ColorProfile::TrueColor));
+
+        self::assertGreaterThan(
+            self::luminanceAt($frame, 32),
+            self::luminanceAt($frame, 0),
+            'the top-left corner is lighter than the bottom-right one',
+        );
+        self::assertSame($frame->foregrounds[0], $frame->foregrounds[5], 'the top takes the light colour');
+        self::assertSame($frame->foregrounds[32], $frame->foregrounds[10], 'the corner joining the heavy right side takes the dark one');
+    }
+
+    #[Test]
+    public function aFocusedRaisedButtonKeepsItsOutlineAndTakesTheFocusedBorderColour(): void
+    {
+        $frame = new Frame(11, 3);
+        $theme = Theme::dark()->withRaisedButtons();
+
+        Button::new('Run', new TestMessage('run'))
+            ->render($frame, new Rect(0, 0, 11, 3), RenderContext::focused($theme, ColorProfile::Ansi));
+
+        self::assertSame('┌─────────┒', self::rowsOf($frame)[0]);
+        self::assertSame($theme->focusedBorderStyle->foregroundValue(), $frame->foregrounds[0]);
+    }
+
+    #[Test]
+    public function aRaisedButtonInSixteenColoursKeepsOneBorderColour(): void
+    {
+        $frame = new Frame(11, 3);
+        $theme = Theme::dark()->withRaisedButtons();
+
+        Button::new('Run', new TestMessage('run'))
+            ->render($frame, new Rect(0, 0, 11, 3), RenderContext::unfocused($theme, ColorProfile::Ansi));
+
+        self::assertSame($frame->foregrounds[0], $frame->foregrounds[32]);
+    }
+
+    #[Test]
+    public function aRaisedButtonHeldDownSinksWithTheHeavierStrokeOnTheTopAndLeft(): void
+    {
+        $frame = new Frame(11, 3);
+
+        self::heldDown(Button::new('Run', new TestMessage('run')))
+            ->render($frame, new Rect(0, 0, 11, 3), RenderContext::unfocused(Theme::dark()->withRaisedButtons()));
+
+        self::assertSame(['┏━━━━━━━━━┑', '┃   Run   │', '┖─────────┘'], self::rowsOf($frame));
     }
 
     #[Test]
@@ -481,6 +546,22 @@ final class ButtonTest extends TestCase
 
         self::assertInstanceOf(MessageCmd::class, $command);
         self::assertSame($expected, $command->message);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function rowsOf(Frame $frame): array
+    {
+        return array_map(
+            static fn (array $row): string => implode('', $row),
+            array_chunk($frame->characters, $frame->width),
+        );
+    }
+
+    private static function luminanceAt(Frame $frame, int $cell): float
+    {
+        return Color::fromValue($frame->foregrounds[$cell])->relativeLuminance();
     }
 
     private static function heldDown(Button $button): Button

@@ -40,6 +40,8 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
     use DrawsFocus;
     use KeybindingsAwareBehavior;
 
+    private const BEVEL_DEPTH = 0.3;
+
     private function __construct(
         private string $label,
         private ?Message $message,
@@ -175,8 +177,14 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
             ->withBorderType($showsFocus ? BorderType::Thick : $theme->borderType)
             ->withBorderStyle($borderStyle)
             ->withPadding(Spacing::horizontal(1));
-        $block->render($frame, $area);
         $inner = $block->inner($area);
+
+        if ($theme->raisedButtons) {
+            [$lit, $shaded] = $context->colorProfile->blendsSmoothly() ? self::bevelOf($borderStyle) : [$borderStyle, $borderStyle];
+            self::drawRaised($frame, $area, $lit, $shaded, sunk: $this->armed && !$this->disabled);
+        } else {
+            $block->render($frame, $area);
+        }
 
         $labelStyle = $this->disabled ? $theme->dim : $theme->base;
 
@@ -202,6 +210,40 @@ final readonly class Button implements Focusable, KeybindingsAware, PublishesHin
             $label,
             $labelStyle,
         );
+    }
+
+    /**
+     * @return array{Style, Style}
+     */
+    private static function bevelOf(Style $style): array
+    {
+        $colour = $style->foreground ?? Color::none();
+
+        return [
+            $style->withForeground($colour->blend(Color::rgb(255, 255, 255), self::BEVEL_DEPTH)),
+            $style->withForeground($colour->blend(Color::rgb(0, 0, 0), self::BEVEL_DEPTH)),
+        ];
+    }
+
+    private static function drawRaised(Frame $frame, Rect $area, Style $lit, Style $shaded, bool $sunk): void
+    {
+        [$topLeft, $top, $left, $topRight, $right, $bottomLeft, $bottom, $bottomRight] = $sunk
+            ? ['┏', '━', '┃', '┑', '│', '┖', '─', '┘']
+            : ['┌', '─', '│', '┒', '┃', '┕', '━', '┛'];
+        [$topLeftStyle, $bottomRightStyle] = $sunk ? [$shaded, $lit] : [$lit, $shaded];
+        $rightColumn = $area->right() - 1;
+        $bottomRow = $area->bottom() - 1;
+        $width = $area->width - 2;
+        $height = $area->height - 2;
+
+        $frame->putStyled($area->x, $area->y, $topLeft, $topLeftStyle);
+        $frame->fillStyled(new Rect($area->x + 1, $area->y, $width, 1), $topLeftStyle, $top);
+        $frame->fillStyled(new Rect($area->x, $area->y + 1, 1, $height), $topLeftStyle, $left);
+        $frame->putStyled($rightColumn, $area->y, $topRight, $shaded);
+        $frame->fillStyled(new Rect($rightColumn, $area->y + 1, 1, $height), $bottomRightStyle, $right);
+        $frame->putStyled($area->x, $bottomRow, $bottomLeft, $shaded);
+        $frame->fillStyled(new Rect($area->x + 1, $bottomRow, $width, 1), $bottomRightStyle, $bottom);
+        $frame->putStyled($rightColumn, $bottomRow, $bottomRight, $bottomRightStyle);
     }
 
     private function toneStyle(Theme $theme): Style
