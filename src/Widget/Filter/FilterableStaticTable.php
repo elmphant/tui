@@ -18,6 +18,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Search\Matcher;
@@ -50,6 +51,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $searching = false,
+        private ?BorderType $border = null,
     ) {
     }
 
@@ -109,6 +111,11 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
     public function withMatcher(Matcher $matcher): self
     {
         return $this->cloneWith(matcher: $matcher);
+    }
+
+    public function withBorderType(BorderType $border): self
+    {
+        return $this->cloneWith(border: $border);
     }
 
     public function summary(): string
@@ -215,8 +222,10 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
      */
     private function tableOf(array $matching): StaticTable
     {
-        return StaticTable::new($this->headers, $matching)
+        $table = StaticTable::new($this->headers, $matching)
             ->withWidthsFrom($this->rows)
             ->withMinWidth(FilterBar::MIN_WIDTH);
+
+        return $this->border === null ? $table : $table->withBorderType($this->border);
     }
 }

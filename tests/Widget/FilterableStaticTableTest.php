@@ -14,6 +14,7 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Attr;
+use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
@@ -51,6 +52,15 @@ final class FilterableStaticTableTest extends TestCase
         $typed = $clicked->update(new KeyMsg('x'), $area)->model;
 
         self::assertSame('xzzz', $typed->query());
+    }
+
+    #[Test]
+    public function aBorderTypeIsKeptWhileFiltering(): void
+    {
+        $screen = implode("\n", $this->screen($this->routes()->withBorderType(BorderType::Double)->withQuery('ajax'), 60, 10));
+
+        self::assertStringContainsString('╔', $screen);
+        self::assertStringContainsString('╝', $screen);
     }
 
     #[Test]
