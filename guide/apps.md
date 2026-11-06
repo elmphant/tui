@@ -114,12 +114,13 @@ A widget that did something the reader meant hands on an outcome, and
 | `Pressed` | a `Button`, and a `Form` for its button or Enter in its last field | nothing: read the form's values on the stored App |
 | `Dismissed` | a `Modal`, on Escape or a click outside, and a `Form` given `withCancel()`, on Escape | nothing |
 
-All four live in `Elmphant\Tui\Message`. Moving a cursor is never an outcome. To
-follow the cursor, such as a preview of the row under it, override
-`onComponentsChanged()`: it runs after a bound widget changed, and reads the
-cursor off the stored widget (`$this->files->cursorItem()`, a tree's
-`cursorNode()`). A widget is stored even when nothing in it changed, so choosing
-the same row twice is heard twice. Each outcome carries the key or click that caused it as `$trigger`.
+All four live in `Elmphant\Tui\Message`. Each outcome carries the key or click
+that caused it as `$trigger`. A widget is stored even when nothing in it
+changed, so choosing the same row twice is heard twice.
+
+Moving a cursor is never an outcome, and no message says that the cursor moved.
+The cursor is state the widget holds, so read it there. See
+[Following the cursor](#following-the-cursor).
 
 Rules for binding:
 
@@ -138,6 +139,91 @@ Rules for binding:
 - **A widget built in `view()` instead of kept on the App** is bound with
   `Component::bind($id, $widget, static fn (self $app, Widget $updated): self => …)`,
   where the closure stores it wherever it belongs.
+
+## Following the cursor
+
+A details pane that shows the row under the cursor needs no message and no
+hook. A bound widget is stored back after every key, click, wheel turn and
+filter change, so `view()` reads the cursor off it each frame:
+
+```php
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Listing\ListView;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Files extends App
+{
+    public function __construct(public ListView $files) {}
+
+    public function view(): Widget
+    {
+        return Layout::row(
+            $this->bind('files'),
+            Text::new('details of ' . ($this->files->cursorItem()?->title() ?? 'nothing')),
+        );
+    }
+}
+
+// Program::run(new Files(ListView::fromStrings(['notes.txt', 'todo.txt'])));
+```
+
+The same works for every widget with a cursor: `cursorItem()` on a list,
+`cursorRow()` on a table, `cursorNode()` on a tree, `cursorSourceIndex()` on the
+filterable ones.
+
+When the details must be loaded first, start the work in
+`onComponentsChanged()`. It runs after a bound widget was stored. It also runs
+when the cursor stayed where it was, so remember the key you loaded and start
+work only when the key under the cursor is a different one:
+
+```php
+use Elmphant\Tui\Application\{App, InputContext};
+use Elmphant\Tui\Core\{Cmd, EffectId, Message, UpdateResult};
+use Elmphant\Tui\Message\ProcessResultMsg;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Listing\ListView;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Previews extends App
+{
+    public function __construct(public ListView $files, public string $loaded = '', public string $preview = '') {}
+
+    public function view(): Widget
+    {
+        return Layout::row($this->bind('files'), Text::new($this->preview));
+    }
+
+    protected function onComponentsChanged(array $ids): self|UpdateResult
+    {
+        $key = $this->files->cursorItem()?->key() ?? '';
+        if ($key === $this->loaded) {
+            return $this;
+        }
+
+        return new UpdateResult(
+            new self($this->files, $key, 'loading…'),
+            Cmd::exec(['head', '-n', '20', $key])->withId(EffectId::named('preview')),
+        );
+    }
+
+    protected function onMessage(Message $message, InputContext $input): self|UpdateResult
+    {
+        return $message instanceof ProcessResultMsg && $message->isFrom('preview')
+            ? new self($this->files, $this->loaded, $message->stdout)
+            : $this;
+    }
+}
+
+// Program::run(new Previews(ListView::fromStrings(['notes.txt', 'todo.txt'])));
+```
+
+The effect id does the rest. A new `preview` replaces the one still running,
+so holding ↓ never piles up work, and an old answer can't overwrite a newer
+one. When the App changes the widget from code (`withItems()`, `withRows()`),
+no hook runs. The App knows what it changed and reads the cursor there.
 
 ## Keys
 
