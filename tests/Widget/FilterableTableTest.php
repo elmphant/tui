@@ -97,6 +97,18 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
+    public function theCountLeavesOutHeadingRows(): void
+    {
+        $table = FilterableTable::new(
+            [Column::new('Name', Constraint::flex())],
+            [Row::header('Required'), Row::new('symfony/console'), Row::header('Dev'), Row::new('phpunit/phpunit')],
+        );
+
+        self::assertSame('2 of 2', $table->summary());
+        self::assertSame('1 of 2', $table->withQuery('phpunit')->summary());
+    }
+
+    #[Test]
     public function theArrowsMoveTheTableCursor(): void
     {
         $table = $this->harness()->press('down', 'down')->widget();

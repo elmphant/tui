@@ -116,7 +116,7 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
 
     public function summary(): string
     {
-        return count($this->matchingIndexes()) . ' of ' . count($this->rows);
+        return self::selectableIn($this->matchingRows()) . ' of ' . self::selectableIn($this->rows);
     }
 
     public function cursorRow(): ?Row
@@ -174,6 +174,14 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
             static fn (Row $row): string => $row->filterValue(),
             $rows,
         );
+    }
+
+    /**
+     * @param list<Row> $rows
+     */
+    private static function selectableIn(array $rows): int
+    {
+        return count(array_filter($rows, static fn (Row $row): bool => $row->selectable));
     }
 
     private function reFiltered(): self
