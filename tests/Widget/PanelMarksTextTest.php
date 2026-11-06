@@ -21,9 +21,11 @@ use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Testing\UserInput;
 use Elmphant\Tui\Widget\Alignment;
+use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
 use Elmphant\Tui\Widget\Focus\Navigation;
+use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Prose\Paragraph;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Panel;
@@ -151,6 +153,20 @@ final class PanelMarksTextTest extends TestCase
         $panel = Panel::new('log')->withChildren([Text::new('line0'), FilterableStaticTable::new(['Name'], [['a']])]);
 
         self::assertSame('line0', self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(9, 1), UserInput::release(9, 1)));
+    }
+
+    #[Test]
+    public function aPressOnAButtonInsideALayoutLeavesThePaneUnmarked(): void
+    {
+        $pressed = self::driven(self::panelWithAButtonInALayout(), UserInput::press(9, 3));
+
+        self::assertNull($pressed->marked());
+    }
+
+    #[Test]
+    public function theTextAboveAButtonInTheSameLayoutStaysMarkable(): void
+    {
+        self::assertSame('above', self::copiedBy(self::panelWithAButtonInALayout(), UserInput::press(1, 2), UserInput::drag(9, 2), UserInput::release(9, 2)));
     }
 
     #[Test]
@@ -388,6 +404,14 @@ final class PanelMarksTextTest extends TestCase
     private static function area(): Rect
     {
         return new Rect(0, 0, 20, 8);
+    }
+
+    private static function panelWithAButtonInALayout(): Panel
+    {
+        return Panel::new('log')->withChildren([
+            Text::new('line0'),
+            Layout::column(Text::new('above'), Button::new('Go')->withBorder(false)),
+        ]);
     }
 
     private static function panelOfLines(int $count): Panel

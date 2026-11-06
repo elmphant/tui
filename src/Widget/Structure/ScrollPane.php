@@ -332,7 +332,7 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
             $marks = $message->button === MouseButton::Left
                 && $message->isIn($area)
                 && $this->resolvedOffset($layout, $area->height) + $message->y - $area->y < $layout->totalHeight
-                && !$this->answersThePointer($this->childAtRow($row, $layout));
+                && !self::answersThePointer($this->placedChildren($area), $message);
 
             if (!$marks) {
                 return $marked === null ? null : new UpdateResult($this->cloneWith(marked: null));
@@ -382,22 +382,22 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
     /**
      * A press on a child that answers the pointer itself (a list, a field) is the child's, not a mark.
      */
-    private function childAtRow(int $row, VerticalStackLayout $layout): ?Widget
+    /**
+     * @param iterable<array{0: Widget, 1: Rect}> $placed
+     */
+    private static function answersThePointer(iterable $placed, MouseMsg $message): bool
     {
-        $top = 0;
-        foreach ($layout->heights as $index => $height) {
-            if ($row < $top + $height) {
-                return $this->children[$index] ?? null;
+        foreach ($placed as [$child, $rect]) {
+            if (!$message->isIn($rect)) {
+                continue;
             }
-            $top += $height;
+
+            return $child instanceof Interactive
+                || $child instanceof SingleMount
+                || ($child instanceof WidgetContainer && self::answersThePointer($child->placedChildren($rect), $message));
         }
 
-        return null;
-    }
-
-    private function answersThePointer(?Widget $child): bool
-    {
-        return $child instanceof Interactive || $child instanceof SingleMount;
+        return false;
     }
 
     /**
