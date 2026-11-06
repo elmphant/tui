@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Structure;
 
+use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Inset;
 use Elmphant\Tui\Layout\Rect;
@@ -118,16 +120,20 @@ final readonly class Box implements Widget, GraftsItsChildren, MeasureHeight
     {
         $contentArea = $this->contentArea($area);
         $childY = $contentArea->y;
+        $heights = $this->grownInto($contentArea->height, array_map(
+            // Measure at the available width; a row minimum does not account for wrapping.
+            static fn (Widget $child): int => $child instanceof MeasureHeight
+                ? max(1, $child->measureHeight($contentArea->width))
+                : max(1, $child->sizing()->rows->min),
+            $this->children,
+        ));
 
-        foreach ($this->children as $child) {
+        foreach ($this->children as $index => $child) {
             if ($childY >= $contentArea->bottom()) {
                 return;
             }
 
-            // Measure at the available width; a row minimum does not account for wrapping.
-            $childHeight = $child instanceof MeasureHeight
-                ? max(1, $child->measureHeight($contentArea->width))
-                : max(1, $child->sizing()->rows->min);
+            $childHeight = $heights[$index];
 
             yield [
                 $child,
@@ -162,6 +168,26 @@ final readonly class Box implements Widget, GraftsItsChildren, MeasureHeight
             ->withTitle($this->title);
 
         $block->render($frame, $area);
+    }
+
+    /**
+     * @param list<int> $heights
+     *
+     * @return list<int>
+     */
+    private function grownInto(int $available, array $heights): array
+    {
+        if (array_sum($heights) >= $available) {
+            return $heights;
+        }
+
+        $policies = [];
+        foreach ($this->children as $index => $child) {
+            $rows = $child->sizing()->rows;
+            $policies[] = new ItemPolicy(basis: $heights[$index], min: $heights[$index], max: max($heights[$index], $rows->max), grow: $rows->flex);
+        }
+
+        return Allocator::resolve($policies, $available)->sizes;
     }
 
     private function contentArea(Rect $area): Rect
