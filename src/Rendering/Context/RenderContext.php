@@ -19,7 +19,6 @@ final class RenderContext
     private const PULSE_DEPTH = 0.3;
     private const PULSE_FRAME_SECONDS = 0.05;
     private const PULSE_SECONDS = 1.2;
-    private const FLASH_DEPTH = 0.5;
 
     public readonly Theme $theme;
     private readonly FocusPath $focus;
@@ -312,7 +311,7 @@ final class RenderContext
             return $row->withAttributes($row->attributes | Attr::UNDERLINE);
         }
 
-        $background = ($row->background ?? Color::none())->blend($warning, $strength * self::FLASH_DEPTH);
+        $background = $warning->blend($row->background ?? $warning, 1.0 - $strength);
 
         return new Style(
             foreground: ($row->foreground ?? Color::none())->readableOn($background),

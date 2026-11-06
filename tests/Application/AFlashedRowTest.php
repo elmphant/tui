@@ -54,6 +54,20 @@ final class AFlashedRowTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('keyedWidgets')]
+    public function aFlashedRowUnderTheCursorStartsOnTheWarningColourAndFadesBackToTheCursor(Interactive $jobs): void
+    {
+        $harness = ModelHarness::for(new FlashingApp($jobs, 'build'), 30, 8)->init();
+        $theme = Theme::dark();
+
+        self::assertSame($theme->warning->foreground?->value, self::backgroundOf($harness, 'build'));
+
+        $harness->advance(2.0);
+
+        self::assertSame($theme->cursorStyle->background?->value, self::backgroundOf($harness, 'build'));
+    }
+
+    #[Test]
     public function aFlashFadesOnTheWay(): void
     {
         $harness = ModelHarness::for(new FlashingApp(Table::new([Column::new('Job', Constraint::flex())], [Row::new('build'), Row::new('deploy')])), 30, 8)->init();
@@ -78,7 +92,7 @@ final class AFlashedRowTest extends TestCase
 
 final readonly class FlashingApp extends App
 {
-    public function __construct(public Interactive $jobs)
+    public function __construct(public Interactive $jobs, private string $flashed = 'deploy')
     {
     }
 
@@ -89,6 +103,6 @@ final readonly class FlashingApp extends App
 
     protected function setup(): ?Cmd
     {
-        return Cmd::flash('jobs', 'deploy');
+        return Cmd::flash('jobs', $this->flashed);
     }
 }
