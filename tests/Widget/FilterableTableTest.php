@@ -82,6 +82,21 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
+    public function aHiddenHeaderStaysHiddenThroughAQueryAndNewRows(): void
+    {
+        $harness = WidgetHarness::for(FilterableTable::new([Column::new('Name', Constraint::flex())], [Row::new('config'), Row::new('finder')])->withHeader(false), 40, 8);
+        self::assertStringNotContainsString('Name', $harness->screen()->plainText());
+
+        $table = $harness->type('fin')->widget();
+        self::assertInstanceOf(FilterableTable::class, $table);
+        self::assertStringNotContainsString('Name', $harness->screen()->plainText());
+
+        $screen = WidgetHarness::for($table->withRows([Row::new('finder'), Row::new('filesystem')]), 40, 8)->screen()->plainText();
+        self::assertStringContainsString('finder', $screen);
+        self::assertStringNotContainsString('Name', $screen);
+    }
+
+    #[Test]
     public function theArrowsMoveTheTableCursor(): void
     {
         $table = $this->harness()->press('down', 'down')->widget();
