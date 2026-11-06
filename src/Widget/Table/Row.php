@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Widget\Table;
 
+use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Support\Cloneable;
@@ -13,7 +14,7 @@ final readonly class Row
     use Cloneable;
 
     /**
-     * @param list<string|Span> $cells
+     * @param list<string|Span|Line> $cells
      */
     private function __construct(
         public array $cells = [],
@@ -26,7 +27,7 @@ final readonly class Row
     ) {
     }
 
-    public static function new(string|Span ...$cells): self
+    public static function new(string|Span|Line ...$cells): self
     {
         return new self(cells: array_values($cells));
     }
@@ -50,7 +51,7 @@ final readonly class Row
     }
 
     /**
-     * @param list<string|Span> $cells
+     * @param list<string|Span|Line> $cells
      */
     public function withCells(array $cells): self
     {
@@ -101,8 +102,12 @@ final readonly class Row
         return self::textOf($this->cells[$column] ?? '');
     }
 
-    private static function textOf(string|Span $cell): string
+    private static function textOf(string|Span|Line $cell): string
     {
-        return $cell instanceof Span ? $cell->content : $cell;
+        return match (true) {
+            $cell instanceof Span => $cell->content,
+            $cell instanceof Line => implode('', array_map(static fn (Span $span): string => $span->content, $cell->spans)),
+            default => $cell,
+        };
     }
 }

@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Text;
 
 final class TextWrap
 {
-    private const ELLIPSIS = '…';
+    public const ELLIPSIS = '…';
 
     /**
      * Wrap at word boundaries; split oversized words so they cannot overflow the column.

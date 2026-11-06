@@ -122,6 +122,12 @@ $table = Table::new(
 );
 ```
 
+A cell can also be a `Line` of several spans, each in its own style, such as
+`new Line([Span::raw('7.4.0 '), Span::token('⚠', StyleToken::Error)])`. A cut keeps
+each span's style. On the cursor row each span keeps its colour, lifted until it
+reads on the band. `Row::textAt($column)` answers a cell's plain text, for
+working out widths yourself.
+
 `Table::fromCells($columns, [['GET', '/users', '200']])` takes plain text.
 `FilterableTable::new()` takes the same columns and rows.
 

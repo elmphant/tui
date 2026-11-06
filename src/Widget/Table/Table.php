@@ -24,12 +24,14 @@ use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\KeyedCache;
 use Elmphant\Tui\Support\Places;
 use Elmphant\Tui\Text\CharWidth;
+use Elmphant\Tui\Text\TextWrap;
 use Elmphant\Tui\Widget\Bar\Scrollbar;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\CursorAware;
@@ -582,6 +584,19 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
         foreach (array_keys($this->columns) as $columnIndex) {
             $cellX = $rowArea->x + $placement->offsets[$columnIndex];
             $cell = $row->cells[$columnIndex] ?? '';
+
+            if ($cell instanceof Line) {
+                $spans = $cell->resolvedIn($theme);
+                $spans = $filled ? $spans->readableOn($defaultStyle) : $spans;
+                $from = 0;
+
+                for ($line = 0; $line < $rowArea->height; ++$line) {
+                    $frame->putLine($cellX, $rowArea->y + $line, self::piecedOver($spans, $rowLines[$columnIndex][$line] ?? '', $from), $rowStyle);
+                }
+
+                continue;
+            }
+
             $cellStyle = $cell instanceof Span
                 ? $cell->resolvedIn($theme)->style
                 : null;
@@ -606,6 +621,58 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
             implode(',', $placement->sizes) . '|' . $spanWidth,
             fn (): TableLayout => TableLayout::forRows($placement->sizes, $this->rows, $this->wraps(), $spanWidth),
         );
+    }
+
+    /**
+     * The resolved spans under one wrapped or cut piece of a cell's text, read on from byte $from.
+     * A cut's ellipsis takes the style of the span the cut falls in.
+     */
+    private static function piecedOver(Line $cell, string $piece, int &$from): Line
+    {
+        $text = implode('', array_map(static fn (Span $span): string => $span->content, $cell->spans));
+        $start = $piece === '' ? false : strpos($text, $piece, $from);
+        $marker = '';
+
+        if ($start === false && str_ends_with($piece, TextWrap::ELLIPSIS)) {
+            $marker = TextWrap::ELLIPSIS;
+            $piece = substr($piece, 0, -strlen($marker));
+            $start = strpos($text, $piece, $from);
+        }
+
+        if ($start === false) {
+            return new Line([]);
+        }
+
+        $end = $start + strlen($piece);
+        $from = $end;
+        $pieced = [];
+        $atTheCut = null;
+        $offset = 0;
+
+        foreach ($cell->spans as $span) {
+            $length = strlen($span->content);
+            $low = max($start, $offset);
+            $high = min($end, $offset + $length);
+
+            if ($high > $low) {
+                $pieced[] = self::spanOf(substr($span->content, $low - $offset, $high - $low), $span);
+            }
+            if ($atTheCut === null && $end < $offset + $length) {
+                $atTheCut = $span;
+            }
+            $offset += $length;
+        }
+
+        if ($marker !== '') {
+            $pieced[] = self::spanOf($marker, $atTheCut ?? $cell->spans[array_key_last($cell->spans)] ?? Span::raw(''));
+        }
+
+        return new Line($pieced);
+    }
+
+    private static function spanOf(string $content, Span $resolved): Span
+    {
+        return $resolved->style === null ? Span::raw($content) : Span::styled($content, $resolved->style);
     }
 
     private static function spanWidthOf(AxisResult $placement): int
