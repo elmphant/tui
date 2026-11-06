@@ -7,12 +7,16 @@ namespace Elmphant\Tui\Rendering\Context;
 use Closure;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Terminal\ColorProfile;
 
 final class RenderContext
 {
+    private const PULSE_DEPTH = 0.3;
+    private const PULSE_FRAME_SECONDS = 0.05;
+
     public readonly Theme $theme;
     private readonly FocusPath $focus;
 
@@ -68,6 +72,22 @@ final class RenderContext
     public function now(): float
     {
         return $this->clock->now();
+    }
+
+    /**
+     * The fill a pulse shows at this frame, fading part of the way to $away and back.
+     * Where the terminal cannot blend smoothly the fill holds still and costs no frames.
+     */
+    public function pulsed(Color $fill, Color $away, float $periodSeconds): Color
+    {
+        if (!$this->colorProfile->blendsSmoothly()) {
+            return $fill;
+        }
+
+        $this->requestRepaint(self::PULSE_FRAME_SECONDS);
+        $phase = (1.0 - cos(2 * M_PI * $this->now() / $periodSeconds)) / 2;
+
+        return $fill->blend($away, $phase * self::PULSE_DEPTH);
     }
 
     public function requestRepaint(float $delay): void

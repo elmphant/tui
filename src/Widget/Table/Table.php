@@ -22,9 +22,12 @@ use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Rendering\Attr;
+use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Span;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\KeyedCache;
@@ -49,6 +52,8 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
     use Cloneable;
     use DrawsFocus;
     use KeybindingsAwareBehavior;
+
+    private const PULSE_SECONDS = 1.2;
 
     /**
      * Share row measurements across clones so cursor moves do not remeasure the table.
@@ -267,7 +272,7 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
             if ($this->header) {
                 $this->renderHeader($frame, $area, $placement, $theme);
             }
-            $this->renderRows($frame, $area, $placement, $theme, $this->drawsFocused($context));
+            $this->renderRows($frame, $area, $placement, $context, $this->drawsFocused($context));
 
             if ($showScrollbar) {
                 $layout = $this->layoutFor($placement);
@@ -508,7 +513,7 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
         }
     }
 
-    private function renderRows(Frame $frame, Rect $area, AxisResult $placement, Theme $theme, bool $focused): void
+    private function renderRows(Frame $frame, Rect $area, AxisResult $placement, RenderContext $context, bool $focused): void
     {
         $layout = $this->layoutFor($placement);
         $totalWidth = self::spanWidthOf($placement);
@@ -529,7 +534,7 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
                 }
 
                 $rowArea = new Rect($area->x, $renderY, $totalWidth, $layout->heightOf($rowIndex));
-                $this->renderRow($frame, $rowArea, $rowIndex, $placement, $theme, $focused);
+                $this->renderRow($frame, $rowArea, $rowIndex, $placement, $context, $focused);
 
                 $renderY += $rowArea->height;
             }
@@ -538,8 +543,9 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
         }
     }
 
-    private function renderRow(Frame $frame, Rect $rowArea, int $rowIndex, AxisResult $placement, Theme $theme, bool $focused): void
+    private function renderRow(Frame $frame, Rect $rowArea, int $rowIndex, AxisResult $placement, RenderContext $context, bool $focused): void
     {
+        $theme = $context->theme;
         $row = $this->rows[$rowIndex];
 
         if ($row->spansAllColumns) {
@@ -552,14 +558,19 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
 
         $isCursor = $rowIndex === $this->cursor;
         $isSelected = $rowIndex === $this->selected;
-        $filled = ($isCursor && $focused) || $isSelected;
+        $filled = ($isCursor && $focused) || $isSelected || $row->pulsing;
 
         $defaultStyle = match (true) {
             $isCursor && $focused => $theme->cursorStyle,
             $isSelected => $theme->selectedStyle,
+            $row->pulsing => self::bandIn($context),
             $focused => $theme->base,
             default => $theme->dim,
         };
+
+        if ($row->pulsing && (($isCursor && $focused) || $isSelected)) {
+            $defaultStyle = self::pulsedUnder($defaultStyle, $context);
+        }
 
         if ($filled) {
             $frame->fillStyled($rowArea, $defaultStyle);
@@ -589,6 +600,29 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
                 $frame->putStyled($cellX, $rowArea->y + $line, $rowLines[$columnIndex][$line] ?? '', $cellRenderStyle);
             }
         }
+    }
+
+    private static function bandIn(RenderContext $context): Style
+    {
+        $band = $context->theme->warning->foreground ?? Color::none();
+        $text = $band->contrastingText();
+
+        return new Style(foreground: $text, background: $context->pulsed($band, $text->contrastingText(), self::PULSE_SECONDS));
+    }
+
+    private static function pulsedUnder(Style $fill, RenderContext $context): Style
+    {
+        if (!$context->colorProfile->blendsSmoothly()) {
+            return $fill->withAttributes($fill->attributes | Attr::UNDERLINE);
+        }
+
+        $background = $context->pulsed($fill->background ?? Color::none(), $context->theme->warning->foreground ?? Color::none(), self::PULSE_SECONDS);
+
+        return new Style(
+            foreground: ($fill->foreground ?? Color::none())->readableOn($background),
+            background: $background,
+            attributes: $fill->attributes,
+        );
     }
 
     private function layoutFor(AxisResult $placement): TableLayout

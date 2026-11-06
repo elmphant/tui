@@ -22,10 +22,6 @@ final readonly class Alert implements Widget
 
     private const PADDING = 1;
 
-    private const PULSE_DEPTH = 0.3;
-
-    private const PULSE_FRAME_SECONDS = 0.05;
-
     private function __construct(
         private string $message,
         private StyleToken $severity,
@@ -83,14 +79,7 @@ final readonly class Alert implements Widget
 
     private function pulsed(Color $fill, Color $text, RenderContext $context): Color
     {
-        if ($this->pulsePeriod === null || !$context->colorProfile->blendsSmoothly()) {
-            return $fill;
-        }
-
-        $context->requestRepaint(self::PULSE_FRAME_SECONDS);
-        $phase = (1.0 - cos(2 * M_PI * $context->now() / $this->pulsePeriod)) / 2;
-
         // Fade away from the text colour so pulsing only increases contrast.
-        return $fill->blend($text->contrastingText(), $phase * self::PULSE_DEPTH);
+        return $this->pulsePeriod === null ? $fill : $context->pulsed($fill, $text->contrastingText(), $this->pulsePeriod);
     }
 }

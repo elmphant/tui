@@ -22,6 +22,7 @@ final readonly class Row
         public bool $spansAllColumns = false,
         private ?string $key = null,
         private ?string $filterValue = null,
+        public bool $pulsing = false,
     ) {
     }
 
@@ -38,6 +39,14 @@ final readonly class Row
     public function withStyle(Style $style): self
     {
         return $this->cloneWith(style: $style);
+    }
+
+    /**
+     * Draw the row on a pulsing band of the theme's warning colour until the host takes it away.
+     */
+    public function withPulsing(bool $pulsing = true): self
+    {
+        return $this->cloneWith(pulsing: $pulsing);
     }
 
     /**
