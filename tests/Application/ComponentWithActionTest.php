@@ -34,7 +34,7 @@ final class ComponentWithActionTest extends TestCase
     {
         $screen = ModelHarness::for(new ListWithActionsApp(ListView::fromStrings(['alpha', 'beta'])), 60, 6)->screen();
 
-        self::assertStringContainsString('d  remove', $screen->lineAt(5));
+        self::assertStringContainsString('d remove', $screen->lineAt(5));
     }
 
     #[Test]

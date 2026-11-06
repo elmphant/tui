@@ -908,7 +908,7 @@ final class FooterTest extends TestCase
             ->withLeft(StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three', 'd' => 'four']))
             ->withRight(Text::new('Support'));
 
-        self::assertSame(' a  one   b  two   c  three  …', $this->drawnAt($footer, 32));
+        self::assertSame(' a one   b two   c three  …', $this->drawnAt($footer, 32));
     }
 
     #[Test]
@@ -918,9 +918,9 @@ final class FooterTest extends TestCase
             ->withLeft(StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three', 'd' => 'four']))
             ->withRight(Text::new('Support · 0.1.0'), Text::new('Support'));
 
-        self::assertSame(' a  one   b  two   c  three   d  four  Support · 0.1.0', $this->drawnAt($footer, 54));
-        self::assertSame(' a  one   b  two   c  three   d  four         Support', $this->drawnAt($footer, 53));
-        self::assertSame(' a  one   b  two   c  three   d  four', $this->drawnAt($footer, 45));
+        self::assertSame(' a one   b two   c three   d four  Support · 0.1.0', $this->drawnAt($footer, 50));
+        self::assertSame(' a one   b two   c three   d four         Support', $this->drawnAt($footer, 49));
+        self::assertSame(' a one   b two   c three   d four', $this->drawnAt($footer, 41));
     }
 
     #[Test]
@@ -932,11 +932,11 @@ final class FooterTest extends TestCase
         $footer = Footer::new()
             ->withLeft(FocusHints::new()->withLeadingHints(['a' => 'one', 'b' => 'two']))
             ->withRight(Text::new('Support · 0.1.0'), Text::new('Support'));
-        $frame = new Frame(53, 1);
+        $frame = new Frame(49, 1);
 
-        $footer->render($frame, Rect::fromSize(53, 1), $pass->context);
+        $footer->render($frame, Rect::fromSize(49, 1), $pass->context);
 
-        self::assertSame(' a  one   b  two   c  three   d  four         Support', $this->extractText($frame, 0, 53));
+        self::assertSame(' a one   b two   c three   d four         Support', $this->extractText($frame, 0, 49));
     }
 
     #[Test]
@@ -945,10 +945,10 @@ final class FooterTest extends TestCase
         $footer = Footer::new()
             ->withLeft(FocusHints::new()->withLeadingHints(['a' => 'one', 'b' => 'two']))
             ->withRight(Text::new('Support · 0.1.0'), Text::new('Support'));
-        $area = Rect::fromSize(53, 1);
+        $area = Rect::fromSize(49, 1);
 
-        self::assertEquals(new Rect(38, 0, 15, 1), $footer->rightSlotArea($area));
-        self::assertEquals(new Rect(46, 0, 7, 1), $footer->rightSlotArea($area, ['c' => 'three', 'd' => 'four']));
+        self::assertEquals(new Rect(34, 0, 15, 1), $footer->rightSlotArea($area));
+        self::assertEquals(new Rect(42, 0, 7, 1), $footer->rightSlotArea($area, ['c' => 'three', 'd' => 'four']));
         self::assertNull($footer->rightSlotArea($area, ['c' => 'three', 'd' => 'four', 'e' => 'five']));
     }
 
@@ -958,7 +958,7 @@ final class FooterTest extends TestCase
         $footer = Footer::new()
             ->withLeft(StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three', 'd' => 'four']))
             ->withRight(Button::new('Support · 0.1.0', new TestMessage('support')), Button::new('Support', new TestMessage('support')));
-        $area = Rect::fromSize(45, 1);
+        $area = Rect::fromSize(41, 1);
 
         $pressed = $footer->update(UserInput::press(30, 0), $area)->model;
         self::assertInstanceOf(Footer::class, $pressed);
@@ -974,7 +974,7 @@ final class FooterTest extends TestCase
             ->withLeft($hints)
             ->withRight(Text::new('Support · 0.1.0'), Text::new('Support'));
 
-        self::assertEquals([[$hints, Rect::fromSize(45, 1)]], $footer->placedChildren(Rect::fromSize(45, 1)));
+        self::assertEquals([[$hints, Rect::fromSize(41, 1)]], $footer->placedChildren(Rect::fromSize(41, 1)));
     }
 
     protected function setUp(): void

@@ -60,7 +60,7 @@ final class ComponentActionsTest extends TestCase
         $harness = ModelHarness::for(ScopedActionsApp::start(), 60, 8);
         self::assertStringNotContainsString('toggle', $harness->screen()->plainText());
 
-        self::assertStringContainsString('Space  toggle', $harness->press('tab')->screen()->plainText());
+        self::assertStringContainsString('Space toggle', $harness->press('tab')->screen()->plainText());
     }
 
     #[Test]
@@ -68,7 +68,7 @@ final class ComponentActionsTest extends TestCase
     {
         $harness = ModelHarness::for(ScopedActionsApp::start(), 120, 8)->press('tab');
 
-        self::assertStringContainsString('←/→  column', $harness->screen()->plainText());
+        self::assertStringContainsString('←/→ column', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -76,9 +76,9 @@ final class ComponentActionsTest extends TestCase
     {
         $harness = ModelHarness::for(ScopedActionsApp::start(), 60, 8);
         self::assertStringNotContainsString('archive', $harness->screen()->plainText(), 'the field takes a as text');
-        self::assertStringContainsString('Ctrl+Q  quit', $harness->screen()->plainText());
+        self::assertStringContainsString('Ctrl+Q quit', $harness->screen()->plainText());
 
-        self::assertStringContainsString('a  archive', $harness->press('tab')->screen()->plainText());
+        self::assertStringContainsString('a archive', $harness->press('tab')->screen()->plainText());
     }
 
     /**

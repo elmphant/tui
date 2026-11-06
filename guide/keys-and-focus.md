@@ -93,7 +93,7 @@ is always correct. It closes with `?`, Ctrl+K or Escape, and scrolls when long.
   `withAction()`. The footer uses the same words.
 - Override `keyHelpKeybindings()` to use other keys, or return
   `Keybindings::empty()` to turn it off.
-- `FocusHints` ends with the key that opens it: `?  keys`, or `Ctrl+K  keys`
+- `FocusHints` ends with the key that opens it: `? keys`, or `Ctrl+K keys`
   while a field takes `?` as text. When the footer is too narrow, the other
   hints give way and this one stays.
 - A mounted sub-model that answers its own keys implements `NamesItsKeys`, so

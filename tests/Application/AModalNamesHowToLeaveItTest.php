@@ -27,8 +27,8 @@ final class AModalNamesHowToLeaveItTest extends TestCase
             ->screen()
             ->plainText();
 
-        self::assertStringContainsString('Enter  submit', $screen, 'the field holds the keyboard');
-        self::assertStringContainsString('Esc  dismiss', $screen, 'and the modal around it says how to leave');
+        self::assertStringContainsString('Enter submit', $screen, 'the field holds the keyboard');
+        self::assertStringContainsString('Esc dismiss', $screen, 'and the modal around it says how to leave');
     }
 }
 

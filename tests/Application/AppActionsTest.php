@@ -36,7 +36,7 @@ final class AppActionsTest extends TestCase
     {
         $screen = ModelHarness::for(new ArchivingApp(ListView::fromStrings(['alpha'])), 80, 6)->screen();
 
-        self::assertStringStartsWith(' Ctrl+Q  quit   a  archive all   ↑/↓  move', $screen->lineAt(5));
+        self::assertStringStartsWith(' Ctrl+Q quit   a archive all   ↑/↓ move', $screen->lineAt(5));
     }
 
     #[Test]
@@ -56,7 +56,7 @@ final class AppActionsTest extends TestCase
         $screen = ModelHarness::for(new ArchivingApp(ListView::fromStrings(['alpha']), field: TextInput::new()), 80, 6)->screen();
 
         self::assertStringNotContainsString('archive all', $screen->lineAt(5));
-        self::assertStringContainsString('Ctrl+Q  quit', $screen->lineAt(5));
+        self::assertStringContainsString('Ctrl+Q quit', $screen->lineAt(5));
     }
 }
 

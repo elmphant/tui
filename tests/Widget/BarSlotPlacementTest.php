@@ -72,7 +72,7 @@ final class BarSlotPlacementTest extends TestCase
     {
         $frame = $this->paint(Footer::new()->withRight(StatusBar::forHints(['q' => 'quit'])));
 
-        self::assertSame(str_repeat(' ', 16) . ' q  quit', $this->padded($frame));
+        self::assertSame(str_repeat(' ', 17) . ' q quit', $this->padded($frame));
     }
 
     #[Test]

@@ -31,11 +31,11 @@ final class StatusBarTest extends TestCase
     public function hintsThatDoNotAllFitEndInAnEllipsisWhereThereIsRoomForOne(): void
     {
         $lines = [
-            27 => ' a  one   b  two   c  three' . str_repeat('.', 13),
-            19 => ' a  one   b  two  …' . str_repeat('.', 21),
-            18 => ' a  one  …' . str_repeat(' ', 8) . str_repeat('.', 22),
-            10 => ' a  one  …' . str_repeat('.', 30),
-            9 => '…' . str_repeat(' ', 8) . str_repeat('.', 31),
+            24 => ' a one   b two   c three' . str_repeat('.', 16),
+            17 => ' a one   b two  …' . str_repeat('.', 23),
+            16 => ' a one  …' . str_repeat(' ', 7) . str_repeat('.', 24),
+            9 => ' a one  …' . str_repeat('.', 31),
+            8 => '…' . str_repeat(' ', 7) . str_repeat('.', 32),
         ];
 
         foreach ($lines as $width => $line) {
@@ -47,9 +47,9 @@ final class StatusBarTest extends TestCase
     public function aPinnedHintStaysWhenTheOthersAreCut(): void
     {
         $lines = [
-            37 => ' a  one   b  two   c  three   ?  keys' . str_repeat('.', 3),
-            29 => ' a  one   b  two  …   ?  keys' . str_repeat('.', 11),
-            8 => ' ?  keys' . str_repeat('.', 32),
+            33 => ' a one   b two   c three   ? keys' . str_repeat('.', 7),
+            26 => ' a one   b two  …   ? keys' . str_repeat('.', 14),
+            7 => ' ? keys' . str_repeat('.', 33),
         ];
 
         foreach ($lines as $width => $line) {
@@ -63,19 +63,19 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         StatusBar::forHints(['1' => 'errors'])->withPinned(['2' => 'warnings'])->render($frame, Rect::fromSize(30, 1), $this->context);
 
-        self::assertSame(' 1  errors   2  warnings', $this->extractText($frame, 0, 24));
+        self::assertSame(' 1 errors   2 warnings', $this->extractText($frame, 0, 22));
     }
 
     #[Test]
     public function aPinnedHintCountsInTheWidthTheBarAsksFor(): void
     {
-        self::assertSame(37, StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->withPinned(['?' => 'keys'])->sizing()->columns->basis);
+        self::assertSame(33, StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->withPinned(['?' => 'keys'])->sizing()->columns->basis);
     }
 
     #[Test]
     public function aBarOfHintsAsksForTheirWidthWithoutTheLastGap(): void
     {
-        self::assertSame(27, StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->sizing()->columns->basis);
+        self::assertSame(24, StatusBar::forHints(['a' => 'one', 'b' => 'two', 'c' => 'three'])->sizing()->columns->basis);
     }
 
     #[Test]
@@ -328,13 +328,12 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
-        // ' K ' = 3 chars at positions 0,1,2
-        // ' go  ' = 5 chars at positions 3,4,5,6,7
-        self::assertSame(' ', $frame->characters[3]);
-        self::assertSame('g', $frame->characters[4]);
-        self::assertSame('o', $frame->characters[5]);
+        // ' K' at 0,1 then ' go  ' at 2,3,4,5,6
+        self::assertSame(' ', $frame->characters[2]);
+        self::assertSame('g', $frame->characters[3]);
+        self::assertSame('o', $frame->characters[4]);
+        self::assertSame(' ', $frame->characters[5]);
         self::assertSame(' ', $frame->characters[6]);
-        self::assertSame(' ', $frame->characters[7]);
     }
 
     #[Test]
@@ -344,9 +343,9 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
-        // ' K ' at 0,1,2 then ' x  ' at 3,4,5,6
-        self::assertSame(' ', $frame->characters[3]);
-        self::assertSame('x', $frame->characters[4]);
+        // ' K' at 0,1 then ' x  ' at 2,3,4,5
+        self::assertSame(' ', $frame->characters[2]);
+        self::assertSame('x', $frame->characters[3]);
     }
 
     #[Test]
@@ -356,9 +355,9 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
-        // ' K ' at 0,1,2 then ' x  ' at 3,4,5,6
+        // ' K' at 0,1 then ' x  ' at 2,3,4,5
+        self::assertSame(' ', $frame->characters[4]);
         self::assertSame(' ', $frame->characters[5]);
-        self::assertSame(' ', $frame->characters[6]);
     }
 
     #[Test]
@@ -368,9 +367,7 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
-        $keyCharForeground = $frame->foregrounds[1];
-        self::assertSame($keyCharForeground, $frame->foregrounds[0]);
-        self::assertSame($keyCharForeground, $frame->foregrounds[2]);
+        self::assertSame($frame->foregrounds[1], $frame->foregrounds[0]);
     }
 
     #[Test]
@@ -380,11 +377,11 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
-        // description chars at 4,5; padding at 3,6,7
-        $descCharForeground = $frame->foregrounds[4];
-        self::assertSame($descCharForeground, $frame->foregrounds[3]);
+        // description chars at 3,4; padding at 2,5,6
+        $descCharForeground = $frame->foregrounds[3];
+        self::assertSame($descCharForeground, $frame->foregrounds[2]);
+        self::assertSame($descCharForeground, $frame->foregrounds[5]);
         self::assertSame($descCharForeground, $frame->foregrounds[6]);
-        self::assertSame($descCharForeground, $frame->foregrounds[7]);
     }
 
     #[Test]
@@ -394,11 +391,11 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(30, 1);
         $bar->render($frame, Rect::fromSize(30, 1), $this->context);
 
-        // ' A ' = 0,1,2  ' x  ' = 3,4,5,6  ' B ' = 7,8,9  ' y  ' = 10,11,12,13
+        // ' A' = 0,1  ' x  ' = 2,3,4,5  ' B' = 6,7  ' y  ' = 8,9,10,11
         self::assertSame('A', $frame->characters[1]);
-        self::assertSame('x', $frame->characters[4]);
-        self::assertSame('B', $frame->characters[8]);
-        self::assertSame('y', $frame->characters[11]);
+        self::assertSame('x', $frame->characters[3]);
+        self::assertSame('B', $frame->characters[7]);
+        self::assertSame('y', $frame->characters[9]);
     }
 
     #[Test]
@@ -428,17 +425,17 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(16, 1);
         $bar->render($frame, Rect::fromSize(16, 1), $this->context);
 
-        self::assertSame(' Tab  cycle  …', rtrim($this->extractText($frame, 0, 16)));
+        self::assertSame(' Tab cycle  …', rtrim($this->extractText($frame, 0, 16)));
     }
 
     #[Test]
     public function theLastHintNeedsNoRoomForTheGapAfterIt(): void
     {
         $bar = StatusBar::forHints(['Tab' => 'cycle', 'Esc' => 'quit']);
-        $frame = new Frame(23, 1);
-        $bar->render($frame, Rect::fromSize(23, 1), $this->context);
+        $frame = new Frame(21, 1);
+        $bar->render($frame, Rect::fromSize(21, 1), $this->context);
 
-        self::assertSame(' Tab  cycle   Esc  quit', $this->extractText($frame, 0, 23));
+        self::assertSame(' Tab cycle   Esc quit', $this->extractText($frame, 0, 21));
     }
 
     #[Test]

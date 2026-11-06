@@ -19,6 +19,7 @@ use Elmphant\Tui\Widget\Widget;
 final readonly class StatusBar implements Widget
 {
     private const ELLIPSIS = '…';
+    private const KEY_GAP = 1;
     private const HINT_GAP = 2;
 
     /**
@@ -114,10 +115,18 @@ final readonly class StatusBar implements Widget
     {
         $width = 0;
         foreach ($hints as [$key, $description]) {
-            $width += CharWidth::stringWidth(' ' . $key . '  ' . $description . '  ');
+            $width += CharWidth::stringWidth(implode('', self::piecesOf($key, $description)));
         }
 
         return $width;
+    }
+
+    /**
+     * @return array{string, string} the key as drawn in the key style, then the description after it
+     */
+    private static function piecesOf(string $key, string $description): array
+    {
+        return [' ' . $key, str_repeat(' ', self::KEY_GAP) . $description . str_repeat(' ', self::HINT_GAP)];
     }
 
     private function renderHints(Frame $frame, Rect $area, Style $barStyle, Theme $theme): void
@@ -153,8 +162,9 @@ final readonly class StatusBar implements Widget
 
     private function drawHint(Frame $frame, int $x, int $y, int $rightEdge, string $key, string $description, Style $keyStyle, Style $barStyle): int
     {
-        $x += $frame->putStyled($x, $y, ' ' . $key . ' ', $keyStyle);
+        [$keyPiece, $descriptionPiece] = self::piecesOf($key, $description);
+        $x += $frame->putStyled($x, $y, $keyPiece, $keyStyle);
 
-        return $x + $frame->putStyled($x, $y, CharWidth::truncateToWidth(' ' . $description . '  ', max(0, $rightEdge - $x)), $barStyle);
+        return $x + $frame->putStyled($x, $y, CharWidth::truncateToWidth($descriptionPiece, max(0, $rightEdge - $x)), $barStyle);
     }
 }

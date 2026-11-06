@@ -27,7 +27,7 @@ final class TheFooterNamesTheKeyHelpTest extends TestCase
     {
         $harness = ModelHarness::for(FieldAndListApp::start(), 60, 6)->init();
 
-        self::assertStringEndsWith('Ctrl+K  keys', rtrim($harness->screen()->lineAt(5)));
+        self::assertStringEndsWith('Ctrl+K keys', rtrim($harness->screen()->lineAt(5)));
     }
 
     #[Test]
@@ -37,7 +37,7 @@ final class TheFooterNamesTheKeyHelpTest extends TestCase
 
         $harness->press('tab');
 
-        self::assertStringEndsWith('?  keys', rtrim($harness->screen()->lineAt(5)));
+        self::assertStringEndsWith('? keys', rtrim($harness->screen()->lineAt(5)));
     }
 
     #[Test]
@@ -47,7 +47,7 @@ final class TheFooterNamesTheKeyHelpTest extends TestCase
 
         $harness->press('tab');
 
-        self::assertSame(' Ctrl+Q  quit  …   ?  keys', rtrim($harness->screen()->lineAt(5)));
+        self::assertSame(' Ctrl+Q quit  …   ? keys', rtrim($harness->screen()->lineAt(5)));
     }
 
     #[Test]
@@ -57,7 +57,7 @@ final class TheFooterNamesTheKeyHelpTest extends TestCase
 
         $harness->press('tab');
 
-        self::assertStringContainsString(' 1  errors ', $harness->screen()->lineAt(5));
+        self::assertStringContainsString(' 1 errors ', $harness->screen()->lineAt(5));
         self::assertSame('errors', $harness->focusedHints()['1'] ?? null);
     }
 
