@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Application\ComponentWriteBack;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
@@ -18,10 +19,16 @@ use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Widget\Field\Button;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -45,6 +52,74 @@ final class ComponentWriteBackTest extends TestCase
             $result->model->tally,
             'the keeper was never pressed, so nothing of its should land on top of the reset',
         );
+    }
+
+    #[Test]
+    public function aFoldCarriesAChildUpdateThroughALayoutIntoItsPane(): void
+    {
+        $folded = ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/1/0'));
+
+        self::assertCount(1, $folded);
+        $pane = $folded[0][1];
+        self::assertInstanceOf(Panel::class, $pane);
+        $layout = [...$pane->children()][1];
+        self::assertInstanceOf(Layout::class, $layout);
+        self::assertSame('Gone', self::labelOf([...$layout->children()][0]));
+    }
+
+    #[Test]
+    public function aFoldThroughAChildThePaneDoesNotHoldFails(): void
+    {
+        $this->expectException(LogicException::class);
+
+        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/5/0'));
+    }
+
+    #[Test]
+    public function aFoldThroughAWidgetWithoutChildrenFails(): void
+    {
+        $this->expectException(LogicException::class);
+
+        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/0/0'));
+    }
+
+    #[Test]
+    public function aFoldIntoALastChildThePaneDoesNotHoldFails(): void
+    {
+        $this->expectException(LogicException::class);
+
+        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/7'));
+    }
+
+    #[Test]
+    public function aFoldIntoALastChildTheLayoutDoesNotHoldFails(): void
+    {
+        $this->expectException(LogicException::class);
+
+        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/1/5'));
+    }
+
+    /**
+     * @return list<array{Component<Interactive>, Interactive}>
+     */
+    private static function paneAndChildUpdates(string $childId): array
+    {
+        $pane = Panel::new('pane')->withChildren([Text::new('note'), Layout::column(Button::new('Go'))]);
+        $keep = static fn (App $owner): App => $owner;
+
+        return [
+            [Component::bind('pane', $pane, $keep), $pane->withScrollOffset(1)],
+            [Component::bind($childId, Button::new('Go'), $keep), Button::new('Gone')],
+        ];
+    }
+
+    private static function labelOf(Widget $button): string
+    {
+        self::assertInstanceOf(Button::class, $button);
+        $frame = new Frame(12, 1);
+        $button->render($frame, new Rect(0, 0, 12, 1), RenderContext::unfocused(Theme::dark()));
+
+        return trim(implode('', $frame->characters), ' []');
     }
 }
 

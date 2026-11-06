@@ -74,7 +74,9 @@ final class ComponentWriteBack
 
             [$ancestorComponent, $ancestorWidget] = $byId[$ancestor];
             $path = $component->id->pathBelow($ancestorComponent->id);
-            $byId[$ancestor] = [$ancestorComponent, self::grafted($ancestorWidget, $path, $widget)];
+            $grafted = self::grafted($ancestorWidget, $path, $widget);
+            assert($grafted instanceof Interactive);
+            $byId[$ancestor] = [$ancestorComponent, $grafted];
             unset($byId[$id]);
         }
 
@@ -112,6 +114,29 @@ final class ComponentWriteBack
                 throw new LogicException(sprintf('Component "%s" changed, but view() still draws it as before. Store the widget where view() reads it. If view() builds it fresh each time, keep that state in the app, or answer an outcome from Committing::outcomeOf() and handle it with on()', $original->id->value));
             }
         }
+    }
+
+    /**
+     * @param list<int> $path
+     */
+    public static function grafted(Widget $container, array $path, Widget $child): Widget
+    {
+        if ($path === []) {
+            return $child;
+        }
+
+        if (!$container instanceof GraftsItsChildren) {
+            throw new LogicException(sprintf('%s published a child but does not graft one back', $container::class));
+        }
+
+        $index = $path[0];
+        $inner = [...$container->children()][$index] ?? null;
+
+        if ($inner === null) {
+            throw new LogicException(sprintf('%s has no child at %d to graft into', $container::class, $index));
+        }
+
+        return $container->withChildAt($index, self::grafted($inner, array_slice($path, 1), $child));
     }
 
     /**
@@ -176,30 +201,5 @@ final class ComponentWriteBack
         }
 
         return $container;
-    }
-
-    /**
-     * @param non-empty-list<int> $path
-     */
-    private static function grafted(Interactive $container, array $path, Interactive $child): Interactive
-    {
-        if (!$container instanceof GraftsItsChildren) {
-            throw new LogicException(sprintf('%s published a child but does not graft one back', $container::class));
-        }
-
-        $index = $path[0];
-        $rest = array_slice($path, 1);
-
-        if ($rest === []) {
-            return $container->withChildAt($index, $child);
-        }
-
-        $inner = [...$container->children()][$index] ?? null;
-
-        if (!$inner instanceof Interactive) {
-            throw new LogicException(sprintf('%s has no interactive child at %d to graft into', $container::class, $index));
-        }
-
-        return $container->withChildAt($index, self::grafted($inner, $rest, $child));
     }
 }

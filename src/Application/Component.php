@@ -235,7 +235,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
             id: $id,
             widget: $child,
             writeBack: static function (Reducer $owner, Interactive $updated, Message $message) use ($parent, $container, $path): UpdateResult {
-                $grafted = self::graftedInto($container, $path, $updated);
+                $grafted = ComponentWriteBack::grafted($container, $path, $updated);
                 assert($grafted instanceof Interactive);
 
                 return $parent->answered($owner, $grafted, $message);
@@ -348,24 +348,6 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         }
 
         return $stored;
-    }
-
-    /**
-     * @param non-empty-list<int> $path
-     */
-    private static function graftedInto(GraftsItsChildren&Widget $container, array $path, Widget $updated): Widget
-    {
-        $index = array_shift($path);
-        if ($path === []) {
-            return $container->withChildAt($index, $updated);
-        }
-
-        $inner = iterator_to_array($container->children(), false)[$index] ?? null;
-        if (!$inner instanceof GraftsItsChildren) {
-            return $container;
-        }
-
-        return $container->withChildAt($index, self::graftedInto($inner, $path, $updated));
     }
 
     /**
