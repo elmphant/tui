@@ -108,6 +108,7 @@ Which one to pick:
 - `Card` is a small titled block with one line of text or one widget, such as a
   number on a dashboard.
 - `Box` stacks several widgets inside a titled border and never scrolls. Use it
-  for a block whose content always fits.
+  for a block whose content always fits. A child that grows, such as a table or
+  a filterable list, takes the rows the others leave.
 - `Panel` is the box that scrolls, takes the keyboard and holds focusable
   children. Use it whenever the content might not fit.
