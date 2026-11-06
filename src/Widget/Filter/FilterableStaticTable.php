@@ -30,6 +30,7 @@ use Elmphant\Tui\Widget\Focus\DrawsFocus;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PublishesHints;
+use Elmphant\Tui\Widget\Table\Overflow;
 use Elmphant\Tui\Widget\Table\StaticTable;
 
 final readonly class FilterableStaticTable implements Focusable, MeasureHeight, KeybindingsAware, PublishesHints, TakesText, BindsForTheMoment
@@ -52,6 +53,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
         private ?Keybindings $globalKeybindings = null,
         private bool $searching = false,
         private ?BorderType $border = null,
+        private ?Overflow $overflow = null,
     ) {
     }
 
@@ -116,6 +118,11 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
     public function withBorderType(BorderType $border): self
     {
         return $this->cloneWith(border: $border);
+    }
+
+    public function withOverflow(Overflow $overflow): self
+    {
+        return $this->cloneWith(overflow: $overflow);
     }
 
     public function summary(): string
@@ -226,6 +233,8 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
             ->withWidthsFrom($this->rows)
             ->withMinWidth(FilterBar::MIN_WIDTH);
 
-        return $this->border === null ? $table : $table->withBorderType($this->border);
+        $table = $this->border === null ? $table : $table->withBorderType($this->border);
+
+        return $this->overflow === null ? $table : $table->withOverflow($this->overflow);
     }
 }

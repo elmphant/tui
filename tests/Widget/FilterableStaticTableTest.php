@@ -22,6 +22,7 @@ use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Search\Matcher;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Filter\FilterableStaticTable;
+use Elmphant\Tui\Widget\Table\Overflow;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -61,6 +62,19 @@ final class FilterableStaticTableTest extends TestCase
 
         self::assertStringContainsString('╔', $screen);
         self::assertStringContainsString('╝', $screen);
+    }
+
+    #[Test]
+    public function wrappingKeepsEveryColumnInItsPlaceWhileFiltering(): void
+    {
+        $table = FilterableStaticTable::new(
+            ['Name', 'Method', 'Target', 'Type'],
+            [['about', 'ANY', 'Acme\Controller\AboutController::handleRequest', 'Module'], ['help', 'GET', 'Acme\Controller\HelpController::show', 'Page']],
+        )->withOverflow(Overflow::Wrap)->withQuery('about');
+
+        $header = array_values(array_filter($this->screen($table, 32, 12), static fn (string $row): bool => str_contains($row, 'Name')));
+
+        self::assertSame(5, mb_substr_count($header[0] ?? '', '│'), 'four columns side by side, none stacked');
     }
 
     #[Test]
