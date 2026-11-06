@@ -289,7 +289,7 @@ final readonly class ListView implements Committing, CursorAware, Focusable, Key
                     $this->items[$index],
                     $index === $this->cursor,
                     $index === $this->selected,
-                    $theme,
+                    $context,
                     $this->drawsFocused($context),
                 );
 
@@ -321,8 +321,9 @@ final readonly class ListView implements Committing, CursorAware, Focusable, Key
         return $index === null ? null : $this->items[$index] ?? null;
     }
 
-    private function renderItem(Frame $frame, int $x, int $y, int $width, ListItem $item, bool $isCursor, bool $isSelected, Theme $theme, bool $focused): void
+    private function renderItem(Frame $frame, int $x, int $y, int $width, ListItem $item, bool $isCursor, bool $isSelected, RenderContext $context, bool $focused): void
     {
+        $theme = $context->theme;
         $style = match (true) {
             $isCursor && $focused => $theme->cursorStyle,
             $isCursor => self::unfocusedCursorStyle($theme),
@@ -330,14 +331,21 @@ final readonly class ListView implements Committing, CursorAware, Focusable, Key
             $focused => $theme->base,
             default => $theme->dim,
         };
+        $filled = $isCursor && $style->background !== null;
+
+        $highlighted = $context->highlighted($style, $filled, $item->pulsing(), $item->key());
+        if ($highlighted !== null) {
+            $style = $highlighted;
+            $filled = true;
+        }
 
         $rows = ListItemLayout::rows($item, $width);
 
-        if ($isCursor && $style->background !== null) {
+        if ($filled) {
             $frame->fillRect($x, $y, $width, count($rows), $style->foregroundValue(), $style->backgroundValue(), $style->attributes);
         }
 
-        $descriptionStyle = $this->descriptionStyle($theme, $style, $isCursor);
+        $descriptionStyle = $this->descriptionStyle($theme, $style, $filled);
 
         foreach ($rows as $offset => $row) {
             $frame->putStyled(
@@ -380,9 +388,9 @@ final readonly class ListView implements Committing, CursorAware, Focusable, Key
     /**
      * Derive description contrast from the highlighted row, whose background may be light or dark.
      */
-    private function descriptionStyle(Theme $theme, Style $rowStyle, bool $isCursor): Style
+    private function descriptionStyle(Theme $theme, Style $rowStyle, bool $filled): Style
     {
-        if (!$isCursor) {
+        if (!$filled) {
             return $theme->dim;
         }
 

@@ -12,6 +12,7 @@ final readonly class SimpleListItem implements ListItem
         private string $title,
         private string $description = '',
         private ?string $key = null,
+        private bool $pulsing = false,
     ) {
     }
 
@@ -28,5 +29,15 @@ final readonly class SimpleListItem implements ListItem
     public function key(): string
     {
         return $this->key ?? $this->title;
+    }
+
+    public function withPulsing(bool $pulsing = true): self
+    {
+        return new self(title: $this->title, description: $this->description, key: $this->key, pulsing: $pulsing);
+    }
+
+    public function pulsing(): bool
+    {
+        return $this->pulsing;
     }
 }

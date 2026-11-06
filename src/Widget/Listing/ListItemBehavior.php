@@ -23,4 +23,9 @@ trait ListItemBehavior
     {
         return ListItemLayout::height($this, $width);
     }
+
+    public function pulsing(): bool
+    {
+        return false;
+    }
 }

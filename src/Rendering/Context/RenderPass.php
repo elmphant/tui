@@ -41,7 +41,10 @@ final readonly class RenderPass
         return self::new($theme, $colorProfile, FocusPath::nowhere());
     }
 
-    public static function new(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor, ?FocusPath $focus = null): self
+    /**
+     * @param Flashes|null $flashes @internal the runtime's lit rows
+     */
+    public static function new(Theme $theme, ColorProfile $colorProfile = ColorProfile::TrueColor, ?FocusPath $focus = null, ?Flashes $flashes = null): self
     {
         $clock = new FrameClock();
         $focus ??= FocusPath::undecided();
@@ -49,7 +52,7 @@ final readonly class RenderPass
         $layout = new LayoutInForce();
 
         return new self(
-            new RenderContext($theme, $colorProfile, $clock, $focus, $floats, $layout),
+            new RenderContext($theme, $colorProfile, $clock, $focus, $floats, $layout, $flashes ?? new Flashes()),
             $clock,
             $focus,
             $floats,
@@ -60,7 +63,7 @@ final readonly class RenderPass
     public function withTheme(Theme $theme): self
     {
         return new self(
-            context: new RenderContext($theme, $this->context->colorProfile, $this->clock, $this->focus, $this->floats, $this->layout),
+            context: $this->context->withTheme($theme),
             clock: $this->clock,
             focus: $this->focus,
             floats: $this->floats,

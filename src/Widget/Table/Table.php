@@ -22,12 +22,9 @@ use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Rendering\Attr;
-use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Span;
-use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Support\KeyedCache;
@@ -52,8 +49,6 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
     use Cloneable;
     use DrawsFocus;
     use KeybindingsAwareBehavior;
-
-    private const PULSE_SECONDS = 1.2;
 
     /**
      * Share row measurements across clones so cursor moves do not remeasure the table.
@@ -558,18 +553,19 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
 
         $isCursor = $rowIndex === $this->cursor;
         $isSelected = $rowIndex === $this->selected;
-        $filled = ($isCursor && $focused) || $isSelected || $row->pulsing;
+        $filled = ($isCursor && $focused) || $isSelected;
 
         $defaultStyle = match (true) {
             $isCursor && $focused => $theme->cursorStyle,
             $isSelected => $theme->selectedStyle,
-            $row->pulsing => self::bandIn($context),
             $focused => $theme->base,
             default => $theme->dim,
         };
 
-        if ($row->pulsing && (($isCursor && $focused) || $isSelected)) {
-            $defaultStyle = self::pulsedUnder($defaultStyle, $context);
+        $highlighted = $context->highlighted($defaultStyle, $filled, $row->pulsing, $row->key());
+        if ($highlighted !== null) {
+            $defaultStyle = $highlighted;
+            $filled = true;
         }
 
         if ($filled) {
@@ -600,29 +596,6 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
                 $frame->putStyled($cellX, $rowArea->y + $line, $rowLines[$columnIndex][$line] ?? '', $cellRenderStyle);
             }
         }
-    }
-
-    private static function bandIn(RenderContext $context): Style
-    {
-        $band = $context->theme->warning->foreground ?? Color::none();
-        $text = $band->contrastingText();
-
-        return new Style(foreground: $text, background: $context->pulsed($band, $text->contrastingText(), self::PULSE_SECONDS));
-    }
-
-    private static function pulsedUnder(Style $fill, RenderContext $context): Style
-    {
-        if (!$context->colorProfile->blendsSmoothly()) {
-            return $fill->withAttributes($fill->attributes | Attr::UNDERLINE);
-        }
-
-        $background = $context->pulsed($fill->background ?? Color::none(), $context->theme->warning->foreground ?? Color::none(), self::PULSE_SECONDS);
-
-        return new Style(
-            foreground: ($fill->foreground ?? Color::none())->readableOn($background),
-            background: $background,
-            attributes: $fill->attributes,
-        );
     }
 
     private function layoutFor(AxisResult $placement): TableLayout

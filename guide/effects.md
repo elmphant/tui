@@ -22,6 +22,7 @@ Cmd::listen($socket, fn($stream) => $messages) // read a stream whenever it has 
 Cmd::log('loaded', ['items' => 3])  // write a line to the trace (stdout is the screen)
 Cmd::copy($text)                    // copy text to the clipboard
 Cmd::toast('Saved')                 // show a note for a few seconds
+Cmd::flash('jobs', $row->key())     // light a row of a bound table or list, fading out over 2 seconds
 Cmd::println('✓ Saved')             // print a line above an inline program
 
 // Focus

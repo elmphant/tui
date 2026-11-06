@@ -12,6 +12,7 @@ use Elmphant\Tui\Core\Cmd\CancelCmd;
 use Elmphant\Tui\Core\Cmd\ClipboardCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FiberCmd;
+use Elmphant\Tui\Core\Cmd\FlashCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\ForkCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
@@ -84,6 +85,15 @@ abstract readonly class Cmd
     public static function toast(string $text): ToastCmd
     {
         return new ToastCmd($text);
+    }
+
+    /**
+     * Light the row or item with this key in the bound component on the theme's warning colour,
+     * fading out over the seconds. The runtime holds it, so the model stores no time.
+     */
+    public static function flash(ComponentId|string $component, string $key, float $seconds = 2.0): self
+    {
+        return new FlashCmd(is_string($component) ? ComponentId::named($component) : $component, $key, $seconds);
     }
 
     /**

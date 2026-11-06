@@ -37,6 +37,8 @@ final class FocusPath
 
     private string $mount = '';
 
+    private ?string $drawing = null;
+
     /**
      * @var array<string, string>
      */
@@ -307,34 +309,22 @@ final class FocusPath
     public function withinComponent(ComponentId $id, Closure $render): void
     {
         $id = $this->qualified($id);
-
-        if ($this->focus->isUndecided()) {
-            throw new LogicException(sprintf('Component "%s" is being drawn before anything said where the keyboard is. Call focusOn() first — FocusState::nowhere() if the answer is nobody.', $id->value));
-        }
-
-        $focused = $this->focus->focused()->value ?? '';
-        $below = $this->focus->focused()?->below($id);
-        $holdsFocus = $focused === $id->value || $below !== null || in_array($id->value, $this->enclosure, true);
-        if (!$holdsFocus) {
-            $this->drawUnfocused($render);
-
-            return;
-        }
-
-        $path = $this->path;
-        $loose = $this->loose;
-        ++$this->depth;
-        $this->path = $below === null ? [] : explode('/', $below->value);
-        $this->loose = $focused === $id->value
-            && !in_array($id->value, $this->stopPublishers, true);
+        $outer = $this->drawing;
+        $this->drawing = $id->value;
 
         try {
-            $render();
+            $this->drawComponent($id, $render);
         } finally {
-            $this->path = $path;
-            $this->loose = $loose;
-            --$this->depth;
+            $this->drawing = $outer;
         }
+    }
+
+    /**
+     * @internal the bound component being drawn, named under its mount
+     */
+    public function drawnComponent(): ?string
+    {
+        return $this->drawing;
     }
 
     /**
@@ -368,6 +358,37 @@ final class FocusPath
         $segment = $this->path[0] ?? null;
 
         return $this->hasFocus() && $segment !== null && ctype_digit($segment) ? (int)$segment : null;
+    }
+
+    private function drawComponent(ComponentId $id, Closure $render): void
+    {
+        if ($this->focus->isUndecided()) {
+            throw new LogicException(sprintf('Component "%s" is being drawn before anything said where the keyboard is. Call focusOn() first — FocusState::nowhere() if the answer is nobody.', $id->value));
+        }
+
+        $focused = $this->focus->focused()->value ?? '';
+        $below = $this->focus->focused()?->below($id);
+        $holdsFocus = $focused === $id->value || $below !== null || in_array($id->value, $this->enclosure, true);
+        if (!$holdsFocus) {
+            $this->drawUnfocused($render);
+
+            return;
+        }
+
+        $path = $this->path;
+        $loose = $this->loose;
+        ++$this->depth;
+        $this->path = $below === null ? [] : explode('/', $below->value);
+        $this->loose = $focused === $id->value
+            && !in_array($id->value, $this->stopPublishers, true);
+
+        try {
+            $render();
+        } finally {
+            $this->path = $path;
+            $this->loose = $loose;
+            --$this->depth;
+        }
     }
 
     private function qualified(ComponentId $id): ComponentId

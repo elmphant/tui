@@ -13,6 +13,7 @@ use Elmphant\Tui\Core\Cmd\CancelCmd;
 use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\Cmd\ExecCmd;
 use Elmphant\Tui\Core\Cmd\FiberCmd;
+use Elmphant\Tui\Core\Cmd\FlashCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\ForkCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
@@ -43,6 +44,7 @@ use Elmphant\Tui\Message\ProcessResultMsg;
 use Elmphant\Tui\Message\ProcessStream;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Message\TickMsg;
+use Elmphant\Tui\Rendering\Context\Flashes;
 use Elmphant\Tui\Rendering\Context\FloatPlacement;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
@@ -82,6 +84,8 @@ final class ModelHarness
     private ChordTracker $chordTracker;
     private KeyHelpOverlay $keyHelp;
     private Toasts $toasts;
+
+    private Flashes $flashes;
     private float $now = 0.0;
 
     /**
@@ -125,7 +129,8 @@ final class ModelHarness
     ) {
         $this->area = Rect::fromSize($width, $height);
         $this->focus = FocusState::undecided();
-        $this->pass = RenderPass::new($theme);
+        $this->flashes = new Flashes();
+        $this->pass = RenderPass::new($theme, flashes: $this->flashes);
         $this->chordTracker = new ChordTracker();
         $this->keyHelp = new KeyHelpOverlay();
         $this->toasts = new Toasts();
@@ -507,6 +512,7 @@ final class ModelHarness
         $this->issued = [];
         $this->now += max(0.0, $seconds);
         $this->toasts->expire($this->now);
+        $this->flashes->expire($this->now);
         ++$this->depth;
 
         try {
@@ -704,6 +710,12 @@ final class ModelHarness
         }
         if ($command instanceof ToastCmd) {
             $this->toasts->show($command, $this->now);
+
+            return;
+        }
+        if ($command instanceof FlashCmd) {
+            $flash = $command->within($scope);
+            $this->flashes->show($flash->component->value, $flash->key, $flash->seconds, $this->now);
 
             return;
         }

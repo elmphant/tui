@@ -2259,4 +2259,9 @@ final readonly class CountingListItem implements ListItem
 
         return ListItemLayout::height($this, $width);
     }
+
+    public function pulsing(): bool
+    {
+        return false;
+    }
 }

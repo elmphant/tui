@@ -9,6 +9,7 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Cmd\BatchCmd;
 use Elmphant\Tui\Core\Cmd\CallCmd;
 use Elmphant\Tui\Core\Cmd\ClipboardCmd;
+use Elmphant\Tui\Core\Cmd\FlashCmd;
 use Elmphant\Tui\Core\Cmd\FocusCmd;
 use Elmphant\Tui\Core\Cmd\LogCmd;
 use Elmphant\Tui\Core\Cmd\MappedCmd;
@@ -37,6 +38,7 @@ use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Message\QuitMsg;
 use Elmphant\Tui\Message\ResizeMsg;
+use Elmphant\Tui\Rendering\Context\Flashes;
 use Elmphant\Tui\Rendering\Context\PendingChord;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
@@ -108,6 +110,7 @@ final class Program
     private ChordTracker $chordTracker;
     private KeyHelpOverlay $keyHelp;
     private Toasts $toasts;
+    private Flashes $flashes;
     /**
      * @var WeakMap<Message, true> keys the chord tracker already let through
      */
@@ -171,6 +174,7 @@ final class Program
         $this->chordTracker = new ChordTracker();
         $this->keyHelp = new KeyHelpOverlay();
         $this->toasts = new Toasts();
+        $this->flashes = new Flashes();
         $this->pastTheChords = new WeakMap();
     }
 
@@ -345,7 +349,7 @@ final class Program
             );
             $this->setup();
             $this->startTheme = $this->drawnTheme = $this->resolveTheme();
-            $this->renderPass = RenderPass::new($this->startTheme, $this->resolveColorProfile());
+            $this->renderPass = RenderPass::new($this->startTheme, $this->resolveColorProfile(), flashes: $this->flashes);
             $model = $this->model;
             $this->dispatchCommand($this->capturingOutput('init', static fn (): ?Cmd => $model->init()));
             if ($this->isRunning()) {
@@ -793,7 +797,9 @@ final class Program
         $readsEffectOutput = $this->messageQueue->isEmpty() && $this->inputQueue->isEmpty();
         $now = $this->clock->now();
         $this->effects?->fire($now);
-        if ($this->toasts->expire($now)) {
+        $toastsEnded = $this->toasts->expire($now);
+        $flashesEnded = $this->flashes->expire($now);
+        if ($toastsEnded || $flashesEnded) {
             $this->frames->markDirty();
         }
         $expired = $this->chordTracker->expired($now);
@@ -859,11 +865,13 @@ final class Program
         $now = $this->clock->now();
         $chordDeadline = $this->chordTracker->deadline();
         $toastDeadline = $this->toasts->nextDeadline();
+        $flashDeadline = $this->flashes->nextDeadline();
         $delays = array_filter(
             [
                 $this->effects?->nextDelay(),
                 $chordDeadline === null ? null : max(0.0, $chordDeadline - $now),
                 $toastDeadline === null ? null : max(0.0, $toastDeadline - $now),
+                $flashDeadline === null ? null : max(0.0, $flashDeadline - $now),
             ],
             static fn (?float $delay): bool => $delay !== null,
         );
@@ -1373,6 +1381,7 @@ final class Program
                 $command instanceof QuitCmd => $this->stopRunning(),
                 $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
                 $command instanceof ToastCmd => $this->showToast($command),
+                $command instanceof FlashCmd => $this->showFlash($command->within($scope)),
                 $command instanceof PrintlnCmd => $this->printAbove($command),
                 $command instanceof FocusCmd => $this->moveFocus($command->within($scope)),
                 $command instanceof MessageCmd => $this->messageQueue->enqueue(self::mapMessage($command->message, $wrap)),
@@ -1388,6 +1397,12 @@ final class Program
     private function showToast(ToastCmd $toast): void
     {
         $this->toasts->show($toast, $this->clock->now());
+        $this->frames->markDirty();
+    }
+
+    private function showFlash(FlashCmd $flash): void
+    {
+        $this->flashes->show($flash->component->value, $flash->key, $flash->seconds, $this->clock->now());
         $this->frames->markDirty();
     }
 

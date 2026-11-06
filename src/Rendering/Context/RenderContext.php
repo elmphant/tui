@@ -7,8 +7,10 @@ namespace Elmphant\Tui\Rendering\Context;
 use Closure;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Rendering\Attr;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Rendering\Style;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Terminal\ColorProfile;
 
@@ -16,6 +18,8 @@ final class RenderContext
 {
     private const PULSE_DEPTH = 0.3;
     private const PULSE_FRAME_SECONDS = 0.05;
+    private const PULSE_SECONDS = 1.2;
+    private const FLASH_DEPTH = 0.5;
 
     public readonly Theme $theme;
     private readonly FocusPath $focus;
@@ -30,6 +34,7 @@ final class RenderContext
         ?FocusPath $focus = null,
         private readonly FloatQueue $floats = new FloatQueue(),
         private readonly LayoutInForce $layout = new LayoutInForce(),
+        private readonly Flashes $flashes = new Flashes(),
     ) {
         $this->theme = $theme->shownIn($colorProfile);
         $this->focus = $focus ?? FocusPath::undecided();
@@ -63,6 +68,7 @@ final class RenderContext
             focus: $this->focus,
             floats: $this->floats,
             layout: $this->layout,
+            flashes: $this->flashes,
         );
     }
 
@@ -88,6 +94,44 @@ final class RenderContext
         $phase = (1.0 - cos(2 * M_PI * $this->now() / $periodSeconds)) / 2;
 
         return $fill->blend($away, $phase * self::PULSE_DEPTH);
+    }
+
+    /**
+     * The style a pulsing or flashed row of a list or table is drawn in: a band of the warning colour,
+     * or, on a cursor or selection fill, that fill shifting toward it. Null when neither.
+     */
+    public function highlighted(Style $row, bool $filled, bool $pulsing, string $key): ?Style
+    {
+        $component = $this->focus->drawnComponent();
+        $flash = $component === null ? 0.0 : $this->flashes->strengthOf($component, $key, $this->now());
+
+        if ($flash > 0.0) {
+            return $this->flashed($row, $filled, $flash);
+        }
+
+        if (!$pulsing) {
+            return null;
+        }
+
+        $warning = $this->theme->warning->foreground ?? Color::none();
+
+        if (!$filled) {
+            $text = $warning->contrastingText();
+
+            return new Style(foreground: $text, background: $this->pulsed($warning, $text->contrastingText(), self::PULSE_SECONDS));
+        }
+
+        if (!$this->colorProfile->blendsSmoothly()) {
+            return $row->withAttributes($row->attributes | Attr::UNDERLINE);
+        }
+
+        $background = $this->pulsed($row->background ?? Color::none(), $warning, self::PULSE_SECONDS);
+
+        return new Style(
+            foreground: ($row->foreground ?? Color::none())->readableOn($background),
+            background: $background,
+            attributes: $row->attributes,
+        );
     }
 
     public function requestRepaint(float $delay): void
@@ -246,5 +290,34 @@ final class RenderContext
     public function plannedChildrenOf(object $container, Rect $area): ?array
     {
         return $this->layout->childrenOf($container, $area);
+    }
+
+    private function flashed(Style $row, bool $filled, float $strength): Style
+    {
+        $warning = $this->theme->warning->foreground ?? Color::none();
+        $blends = $this->colorProfile->blendsSmoothly();
+
+        if ($blends) {
+            $this->requestRepaint(self::PULSE_FRAME_SECONDS);
+        }
+
+        if (!$filled) {
+            $faded = $this->theme->canvas ?? $this->theme->selectedStyle->background ?? $warning;
+            $background = $blends ? $warning->blend($faded, 1.0 - $strength) : $warning;
+
+            return new Style(foreground: $background->contrastingText(), background: $background);
+        }
+
+        if (!$blends) {
+            return $row->withAttributes($row->attributes | Attr::UNDERLINE);
+        }
+
+        $background = ($row->background ?? Color::none())->blend($warning, $strength * self::FLASH_DEPTH);
+
+        return new Style(
+            foreground: ($row->foreground ?? Color::none())->readableOn($background),
+            background: $background,
+            attributes: $row->attributes,
+        );
     }
 }

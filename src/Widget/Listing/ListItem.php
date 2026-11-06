@@ -21,4 +21,9 @@ interface ListItem
      * Delegate height measurement to ListItemLayout so wrapping matches rendering.
      */
     public function measureHeight(int $width): int;
+
+    /**
+     * Whether the item is drawn on a pulsing band of the theme's warning colour.
+     */
+    public function pulsing(): bool;
 }
