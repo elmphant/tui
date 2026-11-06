@@ -104,6 +104,11 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         return $this->cloneWith(table: $this->table->withColumns($columns));
     }
 
+    public function withColumnGap(int $gap): self
+    {
+        return $this->cloneWith(table: $this->table->withColumnGap($gap));
+    }
+
     public function summary(): string
     {
         return count($this->matchingIndexes()) . ' of ' . count($this->rows);

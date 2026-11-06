@@ -67,6 +67,21 @@ final class FilterableTableTest extends TestCase
     }
 
     #[Test]
+    public function aColumnGapIsKeptThroughAQueryNewColumnsAndNewRows(): void
+    {
+        $columns = [Column::new('Name', Constraint::exact(6)), Column::new('Kind', Constraint::exact(4))];
+        $harness = WidgetHarness::for(FilterableTable::new($columns, [Row::new('config', 'lib'), Row::new('finder', 'lib')])->withColumnGap(3), 40, 8);
+        self::assertStringContainsString('config   lib', $harness->screen()->plainText());
+
+        $table = $harness->type('fin')->widget();
+        self::assertInstanceOf(FilterableTable::class, $table);
+        self::assertStringContainsString('finder   lib', $harness->screen()->plainText());
+
+        $rebuilt = $table->withColumns($columns)->withRows([Row::new('finder', 'tool')]);
+        self::assertStringContainsString('finder   tool', WidgetHarness::for($rebuilt, 40, 8)->screen()->plainText());
+    }
+
+    #[Test]
     public function theArrowsMoveTheTableCursor(): void
     {
         $table = $this->harness()->press('down', 'down')->widget();
