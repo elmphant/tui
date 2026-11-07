@@ -754,7 +754,7 @@ final readonly class TallyingWidget implements Widget, MeasureHeight
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::min(1), Constraint::min(1));
+        return Sizing::of(Constraint::min(1), Constraint::content()->withMin(1));
     }
 
     public function measureHeight(int $width): int

@@ -168,7 +168,7 @@ final class FilterableStaticTableTest extends TestCase
     #[Test]
     public function itAsksForItsBarAndOneRowOfTable(): void
     {
-        self::assertEquals(Constraint::min(2), $this->routes()->sizing()->rows);
+        self::assertEquals(Constraint::content()->withMin(2), $this->routes()->sizing()->rows);
     }
 
     #[Test]

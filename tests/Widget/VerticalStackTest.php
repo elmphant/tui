@@ -129,7 +129,7 @@ final class VerticalStackTest extends TestCase
     public function widthAwareMeasurementCanExpandANonExactChild(): void
     {
         $calls = new VerticalStackCalls();
-        $child = new MeasuredStackWidget(Constraint::min(1), 4, $calls);
+        $child = new MeasuredStackWidget(Constraint::content()->withMin(1), 4, $calls);
         $memo = new KeyedCache();
 
         self::assertSame([4], VerticalStack::layoutUsing($memo, [$child], 20, 1)->heights);
@@ -142,7 +142,7 @@ final class VerticalStackTest extends TestCase
     {
         $calls = new VerticalStackCalls();
         $exact = new MeasuredStackWidget(Constraint::exact(1), 4, $calls);
-        $flex = new MeasuredStackWidget(Constraint::flex(), 4, $calls);
+        $flex = new MeasuredStackWidget(Constraint::content()->withFlex(), 4, $calls);
 
         self::assertSame([1, 1], $this->heightsOf([$exact, $flex], 0, 2));
         self::assertSame(0, $calls->measurements);
@@ -155,7 +155,7 @@ final class VerticalStackTest extends TestCase
     public function measurementNeverShrinksTheConstraintHeight(): void
     {
         $calls = new VerticalStackCalls();
-        $child = new MeasuredStackWidget(Constraint::min(3), 1, $calls);
+        $child = new MeasuredStackWidget(Constraint::content()->withMin(3), 1, $calls);
 
         self::assertSame([3], $this->heightsOf([$child], 20, 3));
     }
@@ -298,7 +298,7 @@ final class VerticalStackTest extends TestCase
     {
         $calls = new VerticalStackCalls();
         $children = [
-            new MeasuredStackWidget(Constraint::min(2), 6, $calls),
+            new MeasuredStackWidget(Constraint::content()->withMin(2), 6, $calls),
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
@@ -314,8 +314,8 @@ final class VerticalStackTest extends TestCase
     {
         $calls = new VerticalStackCalls();
         $children = [
-            new MeasuredStackWidget(Constraint::min(2), 6, $calls),
-            new MeasuredStackWidget(Constraint::flex(), 3, $calls),
+            new MeasuredStackWidget(Constraint::content()->withMin(2), 6, $calls),
+            new MeasuredStackWidget(Constraint::content()->withFlex(), 3, $calls),
         ];
 
         $layout = $this->layoutOf($children, 40, 23);
@@ -329,8 +329,8 @@ final class VerticalStackTest extends TestCase
     {
         $calls = new VerticalStackCalls();
         $children = [
-            new MeasuredStackWidget(Constraint::min(2), 15, $calls),
-            new MeasuredStackWidget(Constraint::min(2), 15, $calls),
+            new MeasuredStackWidget(Constraint::content()->withMin(2), 15, $calls),
+            new MeasuredStackWidget(Constraint::content()->withMin(2), 15, $calls),
         ];
 
         $layout = $this->layoutOf($children, 40, 23);
@@ -356,7 +356,7 @@ final class VerticalStackTest extends TestCase
     {
         $calls = new VerticalStackCalls();
         $children = [
-            new MeasuredStackWidget(Constraint::max(3), 9, $calls),
+            new MeasuredStackWidget(Constraint::content()->withMax(3), 9, $calls),
             new CountingStackWidget(Constraint::flex(), $calls),
         ];
 
@@ -509,7 +509,7 @@ final readonly class WidthMeasuredStackWidget implements Widget, MeasureHeight
     {
         ++$this->calls->constraints;
 
-        return Sizing::of(Constraint::min(1), Constraint::min(1));
+        return Sizing::of(Constraint::min(1), Constraint::content()->withMin(1));
     }
 
     public function measureHeight(int $width): int

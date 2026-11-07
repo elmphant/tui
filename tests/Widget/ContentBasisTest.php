@@ -12,6 +12,8 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Widget\Layout\ContentBasis;
 use Elmphant\Tui\Widget\MeasureHeight;
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,17 +34,35 @@ final class ContentBasisTest extends TestCase
     }
 
     #[Test]
-    public function aChildDeclaringNoBasisIsMeasuredAgainstTheOtherAxis(): void
+    public function aChildAskedForItsContentIsMeasuredAgainstTheOtherAxis(): void
     {
-        $basis = ContentBasis::of($this->measuring(9), Constraint::flex(), Direction::Vertical, 20);
+        $basis = ContentBasis::of($this->measuring(9), Constraint::content(), Direction::Vertical, 20);
 
         self::assertSame(9, $basis);
     }
 
     #[Test]
+    public function aFlexChildStartsAtItsFloorDownAColumnToo(): void
+    {
+        self::assertSame(2, ContentBasis::of($this->measuring(9), Constraint::min(2)->withFlex(), Direction::Vertical, 20));
+    }
+
+    #[Test]
+    public function aPaneThatScrollsItselfTakesTheRoomItIsGiven(): void
+    {
+        self::assertSame(0, ContentBasis::of(self::tallPane(), Constraint::flex(), Direction::Vertical, 20));
+    }
+
+    #[Test]
+    public function aPaneAskedForItsContentIsMeasured(): void
+    {
+        self::assertSame(self::tallPane()->measureHeight(20), ContentBasis::of(self::tallPane(), Constraint::content(), Direction::Vertical, 20));
+    }
+
+    #[Test]
     public function aSingleColumnIsStillRoomToMeasureIn(): void
     {
-        self::assertSame(9, ContentBasis::of($this->measuring(9), Constraint::flex(), Direction::Vertical, 1));
+        self::assertSame(9, ContentBasis::of($this->measuring(9), Constraint::content(), Direction::Vertical, 1));
     }
 
     #[Test]
@@ -75,6 +95,11 @@ final class ContentBasisTest extends TestCase
         $basis = ContentBasis::of($this->measuring(9), Constraint::min(2), Direction::Vertical, 0);
 
         self::assertSame(2, $basis);
+    }
+
+    private static function tallPane(): Panel
+    {
+        return Panel::new()->withChildren(array_map(static fn (int $row): Text => Text::new("row $row"), range(1, 30)));
     }
 
     private function wanting(int $columns): Widget

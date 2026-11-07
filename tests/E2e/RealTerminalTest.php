@@ -81,7 +81,7 @@ final class RealTerminalTest extends TestCase
     public function aListPagedDownAndBackUpShowsWhatItShowedBefore(): void
     {
         $screen = $this->started();
-        $screen->keys('Right', 'Tab');
+        $screen->keys('Right');
         $before = $screen->waitFor('item 000');
 
         $screen->keys('PageDown', 'PageDown');

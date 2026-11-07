@@ -21,7 +21,7 @@ final readonly class Constraint
         public ?int $basis = null,
         public int $shrink = 1,
         /**
-         * A null basis measures content only for Constraint::content(); otherwise it starts at the minimum.
+         * A null basis measures the child only for Constraint::content(); otherwise it starts at the minimum.
          */
         public bool $measuresContent = false,
     ) {
@@ -77,7 +77,7 @@ final readonly class Constraint
     }
 
     /**
-     * A null basis starts at the minimum, except content(), which measures child height or declared width.
+     * The size a child starts from before the room is shared out, in place of its minimum or its measured content.
      */
     public function withBasis(int $basis): self
     {

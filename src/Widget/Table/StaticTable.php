@@ -84,7 +84,7 @@ final readonly class StaticTable implements Widget, MeasureHeight
     {
         return Sizing::of(
             Constraint::flex()->withBasis(max($this->minWidth, self::widthOf($this->demands()))),
-            Constraint::min(1),
+            Constraint::content()->withMin(1),
         );
     }
 

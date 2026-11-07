@@ -132,7 +132,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
 
     public function sizing(): Sizing
     {
-        return Sizing::of(Constraint::flex(), Constraint::min(FilterBar::HEIGHT + 1));
+        return Sizing::of(Constraint::flex(), Constraint::content()->withMin(FilterBar::HEIGHT + 1));
     }
 
     public function measureHeight(int $width): int

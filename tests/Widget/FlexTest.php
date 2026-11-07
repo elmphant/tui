@@ -745,8 +745,8 @@ final class FlexTest extends TestCase
     {
         $column = Flex::column()
             ->withGap(1)
-            ->add($this->measuredWidget(static fn (int $width): int => 3), Constraint::min(0))
-            ->add($this->measuredWidget(static fn (int $width): int => $width), Constraint::min(0));
+            ->add($this->measuredWidget(static fn (int $width): int => 3), Constraint::content())
+            ->add($this->measuredWidget(static fn (int $width): int => $width), Constraint::content());
 
         self::assertSame(7, $column->measureHeight(3));
     }

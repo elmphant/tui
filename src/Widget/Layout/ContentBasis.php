@@ -22,11 +22,10 @@ final class ContentBasis
     ): int {
         return match (true) {
             null !== $constraint->basis => $constraint->basis,
-            $constraint->min === $constraint->max => $constraint->min,
+            $constraint->min === $constraint->max,
+            !$constraint->measuresContent => $constraint->min,
             // Across a row, use declared width; measureHeight() only answers height.
-            Direction::Horizontal === $direction => $constraint->measuresContent
-                ? max($constraint->min, $child->sizing()->columns->intrinsic())
-                : $constraint->min,
+            Direction::Horizontal === $direction => max($constraint->min, $child->sizing()->columns->intrinsic()),
             null === $acrossExtent || $acrossExtent < 1,
             !$child instanceof MeasureHeight => $constraint->min,
             default => max($constraint->min, $child->measureHeight($acrossExtent)),

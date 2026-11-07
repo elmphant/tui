@@ -19,8 +19,13 @@ You can change that with a `Constraint`:
 | `Constraint::min(5)->withFlex()` | at least 5, then a share of what is left |
 | `Constraint::max(30)` | grows to fill, but stops at 30 |
 | `Constraint::flex(2)` | a share of what is left, twice as big as `flex(1)` |
+| `Constraint::content()` | as big as its content, such as all the lines of a paragraph |
+| `Constraint::content()->withFlex()` | its content, then a share of what is left |
 
-Every minimum is given out first. The rest is shared by the flex weights.
+Every minimum is given out first. The rest is shared by the flex weights. Only
+`content()` measures what a widget holds. Under the others a table, a list or a
+pane takes the room it is given and scrolls itself, so a tall one inside a
+scrolling page never makes the page scroll instead.
 
 A widget answers how big it wants to be with a `Sizing`: one `Constraint` for
 the columns and one for the rows, `Sizing::of($columns, $rows)`.
