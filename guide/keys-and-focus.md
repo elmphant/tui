@@ -195,7 +195,9 @@ Footer::new()->withRight(
   for its button.
 - **A click** moves the keyboard to what was clicked.
 - **`Cmd::focus('id')`** moves it from code. A widget that is not on screen is
-  refused, and the keyboard stays where it was.
+  refused, and the keyboard stays where it was. To aim at a button inside a
+  bound dialog, wrap it in `Component::named('cancel', $button)`: it keeps that
+  name, and the dialog still hears it and stores its answer.
 - **When the focused widget disappears** (a modal closes, a tab closes), the
   keyboard goes back to the nearest sensible place — usually where it was before.
 - **A key the focused widget ignores** goes to the panes around it, so PageDown

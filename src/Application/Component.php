@@ -52,6 +52,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
 
     /**
      * A named widget participates in focus and rendering, but its host must route input and store updates.
+     * Inside a bound component, that component routes and stores it, and the name only addresses it.
      *
      * @template TNamedWidget of Widget
      *
@@ -216,32 +217,48 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      *
      * @internal
      *
-     * @param non-empty-list<int> $path
+     * A Component::named() child keeps its name, its actions and its handlers
+     * @internal
+     *
+     * @param non-empty-list<int>    $path
+     * @param self<Interactive>|null $named
      *
      * @return self<Interactive>
      */
-    public function childThrough(array $path, Interactive $child): self
+    public function childThrough(array $path, Interactive $child, ?self $named = null): self
     {
-        $id = ComponentId::named($this->id->value . '/' . implode('/', $path));
+        $id = $named->id ?? ComponentId::named($this->id->value . '/' . implode('/', $path));
         $container = $this->widget;
 
         if ($this->writeBack === null || !$container instanceof GraftsItsChildren) {
-            return self::wrapping(id: $id, widget: $child, writeBack: null, address: $this->address);
+            return self::wrapping($id, $child, null, $this->address, $named?->actions, $named->handlers ?? []);
         }
 
         $parent = $this;
 
         return self::wrapping(
-            id: $id,
-            widget: $child,
-            writeBack: static function (Reducer $owner, Interactive $updated, Message $message) use ($parent, $container, $path): UpdateResult {
+            $id,
+            $child,
+            static function (Reducer $owner, Interactive $updated, Message $message) use ($parent, $container, $path): UpdateResult {
                 $grafted = ComponentWriteBack::grafted($container, $path, $updated);
                 assert($grafted instanceof Interactive);
 
                 return $parent->answered($owner, $grafted, $message);
             },
-            address: $this->address,
+            $this->address,
+            $named?->actions,
+            $named->handlers ?? [],
         );
+    }
+
+    /**
+     * @internal
+     *
+     * @return self<Widget>
+     */
+    public function withWidget(Widget $widget): self
+    {
+        return self::wrapping($this->id, $widget, $this->writeBack, $this->address, $this->actions, $this->handlers);
     }
 
     /**

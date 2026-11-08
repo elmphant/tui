@@ -390,16 +390,19 @@ final readonly class ComponentRegistry
     private static function collectLayer(Widget $widget, bool $bound = false): array
     {
         $components = [];
+        $publishedIds = [];
 
         if ($widget instanceof Component) {
             /** @var Component<Interactive> $widget */
             array_push($components, ...self::published($widget));
+            $publishedIds = array_map(static fn (Component $component): string => $component->id->value, $components);
         }
 
         $layerComponents = null;
         if ($widget instanceof WidgetContainer) {
             foreach ($widget->children() as $child) {
                 [$childComponents, $childIsLayered] = self::collectLayer($child, $widget instanceof Component);
+                $childComponents = array_values(array_filter($childComponents, static fn (Component $component): bool => !in_array($component->id->value, $publishedIds, true)));
                 if ($childIsLayered) {
                     $layerComponents = $childComponents;
                 }
@@ -473,6 +476,9 @@ final readonly class ComponentRegistry
         foreach ($container->children() as $child) {
             if ($child instanceof Interactive) {
                 array_push($stops, ...self::published($component->childThrough([...$path, $index], $child)));
+            } elseif ($child instanceof Component && !$child->writesBack() && $child->widget instanceof Interactive) {
+                /** @var Component<Interactive> $child */
+                array_push($stops, ...self::published($component->childThrough([...$path, $index], $child->widget, $child)));
             } elseif ($child instanceof GraftsItsChildren && !$child instanceof Component) {
                 array_push($stops, ...self::publishedBelow($component, $child, [...$path, $index]));
             }

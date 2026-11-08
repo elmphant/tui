@@ -121,6 +121,10 @@ final class ComponentWriteBack
      */
     public static function grafted(Widget $container, array $path, Widget $child): Widget
     {
+        if ($container instanceof Component) {
+            return $container->withWidget(self::grafted($container->widget, $path, $child));
+        }
+
         if ($path === []) {
             return $child;
         }
