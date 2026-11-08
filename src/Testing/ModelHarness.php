@@ -8,6 +8,7 @@ use Closure;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\AfterCmd;
 use Elmphant\Tui\Core\Cmd\CallCmd;
 use Elmphant\Tui\Core\Cmd\CancelCmd;
 use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
@@ -102,6 +103,11 @@ final class ModelHarness
      * @var list<array{command: CallCmd, wrap: ?Closure, scope: ?string}> issued and not run yet
      */
     private array $calls = [];
+
+    /**
+     * @var list<array{command: AfterCmd, wrap: ?Closure, scope: ?string, due: float}> issued and not fired yet
+     */
+    private array $timers = [];
 
     /**
      * @var list<array{command: FiberCmd, wrap: ?Closure, id: ?EffectId}> issued and not run yet, by scoped id
@@ -502,8 +508,8 @@ final class ModelHarness
     }
 
     /**
-     * Moves the clock, so animations turn, toasts expire and a held chord key is
-     * handed on alone. Ticks and timers still wait for the test to answer them.
+     * Moves the clock, so animations turn, toasts expire, a held chord key is handed
+     * on alone and every Cmd::after() that comes due fires. Ticks still wait for tick().
      *
      * @return self<TModel>
      */
@@ -519,6 +525,7 @@ final class ModelHarness
             foreach ($this->chordTracker->expired($this->now) as $key) {
                 $this->handled($key);
             }
+            $this->firedTimers();
         } finally {
             --$this->depth;
         }
@@ -729,6 +736,9 @@ final class ModelHarness
 
             return;
         }
+        if ($command instanceof AfterCmd) {
+            $this->timers[] = ['command' => $command, 'wrap' => $wrap, 'scope' => $scope, 'due' => $this->now + $command->delay];
+        }
         if ($command instanceof CancelScopeCmd && $scope !== null) {
             $this->running = array_filter($this->running, static fn (array $running): bool => !$running['id']->isWithin($scope));
 
@@ -757,7 +767,32 @@ final class ModelHarness
      */
     private function answeredCall(CallCmd $call, ?Closure $wrap, ?string $scope): void
     {
-        $answer = CallbackAnswer::of($call->callback, ErrorSource::Call, 'Cmd::call()');
+        $this->answered(CallbackAnswer::of($call->callback, ErrorSource::Call, 'Cmd::call()'), $wrap, $scope);
+    }
+
+    private function firedTimers(): void
+    {
+        $due = array_filter($this->timers, fn (array $timer): bool => $timer['due'] <= $this->now);
+        usort($due, static fn (array $one, array $other): int => $one['due'] <=> $other['due']);
+        $this->timers = array_values(array_filter($this->timers, fn (array $timer): bool => $timer['due'] > $this->now));
+
+        foreach ($due as ['command' => $timer, 'wrap' => $wrap, 'scope' => $scope]) {
+            if ($timer->id !== null) {
+                $id = (string)($scope === null ? $timer->id : $timer->id->within($scope));
+                if (($this->running[$id]['command'] ?? null) !== $timer) {
+                    continue;
+                }
+                unset($this->running[$id]);
+            }
+            $this->answered(CallbackAnswer::of($timer->then, ErrorSource::Timer, 'Cmd::after()', $timer->id), $wrap, $scope);
+        }
+    }
+
+    /**
+     * @param (Closure(Message): Message)|null $wrap
+     */
+    private function answered(Message|Cmd|null $answer, ?Closure $wrap, ?string $scope): void
+    {
         if ($answer instanceof Cmd) {
             $this->record($answer, $wrap, $scope);
             $this->moveFocusFor($answer, $scope);

@@ -49,7 +49,7 @@ $app->emit('rows', new RowsLoaded([]));           // what your own handler would
 $app->runCalls();                                 // run the Cmd::call()s so far
 $app->runFibers();                                // run the Cmd::fiber()s still waiting
 $app->runForks();                                 // run the Cmd::fork()s still waiting, in the test's own process
-$app->advance(1.5);                               // spinners turn, toasts expire, a held chord key goes on alone
+$app->advance(1.5);                               // spinners turn, toasts expire, a held chord key goes on alone, Cmd::after()s due by then fire
 ```
 
 Answering a command the app never started throws, so a wrong guess in the test
