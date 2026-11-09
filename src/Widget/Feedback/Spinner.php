@@ -60,10 +60,15 @@ final readonly class Spinner implements Widget
         $frames = $this->style->frames();
         $index = (int)floor($context->now() / $this->interval) % count($frames);
         $character = $frames[$index];
-        $width = $frame->putStyled($area->x, $area->y, $character, $context->theme->accent);
+        $frame->pushClip($area);
+        try {
+            $width = $frame->putStyled($area->x, $area->y, $character, $context->theme->accent);
 
-        if ($this->label !== '') {
-            $frame->putStyled($area->x + $width + 1, $area->y, $this->label, $context->theme->base);
+            if ($this->label !== '') {
+                $frame->putStyled($area->x + $width + 1, $area->y, $this->label, $context->theme->base);
+            }
+        } finally {
+            $frame->popClip();
         }
     }
 

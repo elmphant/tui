@@ -68,7 +68,12 @@ final readonly class ActivityBar implements Widget
 
         if ($this->label !== '') {
             $labelWidth = CharWidth::stringWidth($this->label) + 1;
-            $frame->putString($x, $area->y, $this->label, $theme->dim->foregroundValue());
+            $frame->pushClip($area);
+            try {
+                $frame->putString($x, $area->y, $this->label, $theme->dim->foregroundValue());
+            } finally {
+                $frame->popClip();
+            }
             $x += $labelWidth;
         }
 

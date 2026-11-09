@@ -213,26 +213,11 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
             return;
         }
 
-        $theme = $context->theme;
-
-        if ($this->prefix !== '') {
-            $frame->putStyled($area->x, $area->y, $this->prefix, $theme->dim);
-        }
-
-        foreach (OptionRowLayout::placements($this->entries(), $this->optionsArea($area)) as $index => [$x, $y, $width]) {
-            if ($y >= $area->bottom()) {
-                return;
-            }
-
-            $isChecked = $this->checked[$index] ?? false;
-            $focused = $this->drawsFocused($context);
-
-            $frame->putStyled(
-                $x,
-                $y,
-                ($isChecked ? self::CHECKED_MARK : self::UNCHECKED_MARK) . $this->options[$index],
-                OptionStyle::of($theme, $focused && $index === $this->cursor, $isChecked, $focused),
-            );
+        $frame->pushClip($area);
+        try {
+            $this->renderOptions($frame, $area, $context);
+        } finally {
+            $frame->popClip();
         }
     }
 
@@ -301,6 +286,31 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
         }
 
         return $model;
+    }
+
+    private function renderOptions(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        $theme = $context->theme;
+
+        if ($this->prefix !== '') {
+            $frame->putStyled($area->x, $area->y, $this->prefix, $theme->dim);
+        }
+
+        foreach (OptionRowLayout::placements($this->entries(), $this->optionsArea($area)) as $index => [$x, $y]) {
+            if ($y >= $area->bottom()) {
+                return;
+            }
+
+            $isChecked = $this->checked[$index] ?? false;
+            $focused = $this->drawsFocused($context);
+
+            $frame->putStyled(
+                $x,
+                $y,
+                ($isChecked ? self::CHECKED_MARK : self::UNCHECKED_MARK) . $this->options[$index],
+                OptionStyle::of($theme, $focused && $index === $this->cursor, $isChecked, $focused),
+            );
+        }
     }
 
     /**

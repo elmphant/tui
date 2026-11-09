@@ -189,20 +189,25 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
             return;
         }
 
-        foreach (OptionRowLayout::placements($this->entries(), $area) as $index => [$x, $y, $width]) {
-            if ($y >= $area->bottom()) {
-                return;
+        $frame->pushClip($area);
+        try {
+            foreach (OptionRowLayout::placements($this->entries(), $area) as $index => [$x, $y]) {
+                if ($y >= $area->bottom()) {
+                    return;
+                }
+
+                $picked = $index === $this->selected;
+                $focused = $this->drawsFocused($context);
+
+                $frame->putStyled(
+                    $x,
+                    $y,
+                    ($picked ? self::SELECTED_MARK : self::UNSELECTED_MARK) . $this->options[$index],
+                    OptionStyle::of($context->theme, $focused && $index === $this->cursor, $picked, $focused),
+                );
             }
-
-            $picked = $index === $this->selected;
-            $focused = $this->drawsFocused($context);
-
-            $frame->putStyled(
-                $x,
-                $y,
-                ($picked ? self::SELECTED_MARK : self::UNSELECTED_MARK) . $this->options[$index],
-                OptionStyle::of($context->theme, $focused && $index === $this->cursor, $picked, $focused),
-            );
+        } finally {
+            $frame->popClip();
         }
     }
 

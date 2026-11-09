@@ -216,7 +216,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
 
     private function barWidth(int $available, StaticTable $table): int
     {
-        return max(FilterBar::MIN_WIDTH, min($available, $table->drawnWidth($available)));
+        return min($available, max(FilterBar::MIN_WIDTH, $table->drawnWidth($available)));
     }
 
     private function table(): StaticTable

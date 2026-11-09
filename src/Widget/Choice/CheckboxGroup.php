@@ -271,33 +271,11 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
 
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        $theme = $context->theme;
-        $count = count($this->options);
-        $scrollOffset = $this->cursorScrollOffset($area->height);
-
-        $y = $area->y;
-
-        if ($this->label !== '') {
-            $frame->putStyled($area->x, $y, $this->label, $theme->title);
-            $y += 2;
-        }
-
-        for ($index = $scrollOffset; $index < min($count, $scrollOffset + $area->bottom() - $y); ++$index) {
-            $rowY = $y + $index - $scrollOffset;
-            $isCursor = $index === $this->cursor && $this->drawsFocused($context);
-            $isChecked = $this->isChecked($index);
-
-            $mark = $isChecked ? OptionMarks::CHECKED : OptionMarks::UNCHECKED;
-
-            $style = OptionStyle::of($theme, $isCursor, $isChecked, $this->drawsFocused($context));
-
-            $frame->putStyled($area->x, $rowY, $mark, $style);
-            $frame->putStyled(
-                $area->x + CharWidth::stringWidth($mark),
-                $rowY,
-                CharWidth::truncateToWidth($this->options[$index], max(0, $area->width - CharWidth::stringWidth($mark))),
-                $style,
-            );
+        $frame->pushClip($area);
+        try {
+            $this->renderOptions($frame, $area, $context);
+        } finally {
+            $frame->popClip();
         }
     }
 
@@ -347,5 +325,37 @@ final readonly class CheckboxGroup implements Focusable, KeybindingsAware, Curso
         }
 
         return new UpdateResult($this->cloneWith(cursor: $optionIndex)->toggleCurrent());
+    }
+
+    private function renderOptions(Frame $frame, Rect $area, RenderContext $context): void
+    {
+        $theme = $context->theme;
+        $count = count($this->options);
+        $scrollOffset = $this->cursorScrollOffset($area->height);
+
+        $y = $area->y;
+
+        if ($this->label !== '') {
+            $frame->putStyled($area->x, $y, $this->label, $theme->title);
+            $y += 2;
+        }
+
+        for ($index = $scrollOffset; $index < min($count, $scrollOffset + $area->bottom() - $y); ++$index) {
+            $rowY = $y + $index - $scrollOffset;
+            $isCursor = $index === $this->cursor && $this->drawsFocused($context);
+            $isChecked = $this->isChecked($index);
+
+            $mark = $isChecked ? OptionMarks::CHECKED : OptionMarks::UNCHECKED;
+
+            $style = OptionStyle::of($theme, $isCursor, $isChecked, $this->drawsFocused($context));
+
+            $frame->putStyled($area->x, $rowY, $mark, $style);
+            $frame->putStyled(
+                $area->x + CharWidth::stringWidth($mark),
+                $rowY,
+                CharWidth::truncateToWidth($this->options[$index], max(0, $area->width - CharWidth::stringWidth($mark))),
+                $style,
+            );
+        }
     }
 }
