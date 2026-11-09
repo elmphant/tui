@@ -9,6 +9,7 @@ use Elmphant\Tui\Application\AppActions;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Gesture;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Direction;
@@ -232,7 +233,7 @@ final readonly class Board implements Focusable, PublishesHints, CapturesThePoin
     public function hints(): array
     {
         return $this->drag === null
-            ? self::keys()->hints(['column' => [Actions::CURSOR_LEFT, Actions::CURSOR_RIGHT], 'card' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN]])
+            ? self::keys()->hints(['column' => [Actions::CURSOR_LEFT, Actions::CURSOR_RIGHT], 'card' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN], 'move card' => Gesture::Drag])
             : self::keys()->hints(['cancel drag' => Actions::CANCEL]);
     }
 
@@ -333,8 +334,8 @@ final readonly class Board implements Focusable, PublishesHints, CapturesThePoin
     private function afterMouse(MouseMsg $message, Rect $area): self
     {
         return match (true) {
-            $message->isClick() => $this->pressedAt($message, $area),
-            $message->isDrag() && $this->drag !== null => $this->cloneWith(drag: $this->drag->movedTo($message->x, $message->y)),
+            Gesture::Click->matches($message) => $this->pressedAt($message, $area),
+            Gesture::Drag->matches($message) && $this->drag !== null => $this->cloneWith(drag: $this->drag->movedTo($message->x, $message->y)),
             $message->action === MouseAction::Release && $this->drag !== null => $this->droppedAt($message, $area),
             $message->action === MouseAction::WheelUp => $this->wheeledAt($message, $area, -$message->wheelSteps()),
             $message->action === MouseAction::WheelDown => $this->wheeledAt($message, $area, $message->wheelSteps()),

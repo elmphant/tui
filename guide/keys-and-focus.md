@@ -138,6 +138,11 @@ public function hints(): array
 To show one key the way the footer does, in your own text, ask
 `KeyPattern::fromString('ctrl+q')->label()` for `Ctrl+Q`.
 
+A mouse gesture is named the same way. Check it with the same value the hint
+names, so the two cannot drift apart: `Gesture::Drag->matches($message)` in
+`update()`, and `'move card' => Gesture::Drag` in `hints()`, shown as
+`Drag move card`.
+
 `hints()` takes `description => action` (or a list of actions under one label)
 and returns `label => description`. It merges keys into short labels:
 

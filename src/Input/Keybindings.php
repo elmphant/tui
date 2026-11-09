@@ -142,7 +142,7 @@ final readonly class Keybindings
     /**
      * Derive hints from bindings: merge actions with the same description, skip unbound actions and preserve order.
      *
-     * @param array<string, string|list<string>> $descriptions description => the action(s) it covers
+     * @param array<string, string|list<string>|Gesture> $descriptions description => the action(s) or gesture it covers
      *
      * @return array<string, string> key label => description
      */
@@ -150,6 +150,11 @@ final readonly class Keybindings
     {
         $hints = [];
         foreach ($descriptions as $description => $actions) {
+            if ($actions instanceof Gesture) {
+                $hints[$actions->label()] = $description;
+                continue;
+            }
+
             $patterns = [];
             foreach (\is_string($actions) ? [$actions] : $actions as $action) {
                 $pattern = $this->patterns[$action][0] ?? null;
