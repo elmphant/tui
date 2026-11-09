@@ -86,6 +86,7 @@ final class Program
      */
     private ?Closure $errorHandler = null;
     private ?Tracer $tracer = null;
+    private ?int $outputLevel = null;
 
     /**
      * @var list<CommandHandler>
@@ -332,6 +333,8 @@ final class Program
         }
 
         try {
+            $this->outputLevel = ob_get_level();
+            ob_start();
             $this->terminal = $this->injectedTerminal ?? new SystemTerminal();
             $this->surface = $this->screenMode->isInline()
                 ? new InlineSurface(new InlineScreen($this->terminal, $this->resolveColorProfile()))
@@ -391,6 +394,25 @@ final class Program
             $this->runTick();
         } finally {
             $this->ticking = false;
+            $this->traceStrayOutput();
+        }
+    }
+
+    /**
+     * A callback a command runs, a fiber or the error handler can echo too, and in raw mode that lands on the screen.
+     */
+    private function traceStrayOutput(): void
+    {
+        if ($this->outputLevel === null || ob_get_level() <= $this->outputLevel) {
+            return;
+        }
+
+        $output = ob_get_clean();
+        if (is_string($output) && $output !== '') {
+            $this->tracer?->record(TraceEvent::Output, ['during' => 'tick', 'text' => $output]);
+        }
+        if ($this->state !== ProgramState::Stopped) {
+            ob_start();
         }
     }
 
@@ -609,6 +631,7 @@ final class Program
             $this->effects?->shutdown();
         } finally {
             $this->terminalSession?->close();
+            $this->traceStrayOutput();
             $this->flushTrace();
         }
     }

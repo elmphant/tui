@@ -114,6 +114,24 @@ final class ProgramObservabilityTest extends TestCase
     }
 
     #[Test]
+    public function whatATimerCallbackEchoesGoesToTheTraceInsteadOfTheScreen(): void
+    {
+        $tracer = new InMemoryTracer();
+        $terminal = new VirtualTerminal(30, 4);
+        EventLoop::delay(0.05, static fn () => $terminal->simulateInput('q'));
+        $late = Cmd::after(0.01, static function (): ?Message {
+            echo 'late';
+
+            return null;
+        });
+
+        Program::new(new ScriptedModel(init: $late))->withTerminal($terminal)->withTracer($tracer)->start();
+
+        self::assertContains(['during' => 'tick', 'text' => 'late'], $tracer->fieldsOf(TraceEvent::Output));
+        self::assertStringNotContainsString('late', $terminal->output());
+    }
+
+    #[Test]
     public function aBufferedTraceIsWrittenWhenTheProgramStops(): void
     {
         $path = tempnam(sys_get_temp_dir(), 'trace');
