@@ -4,7 +4,8 @@
 
 Inspired by Go's [Bubbletea](https://github.com/charmbracelet/bubbletea) and
 Rust's [Ratatui](https://github.com/ratatui/ratatui). The name mixes the **PHP
-elephant** and **Elm**.
+elephant** and **Elm**, and you say it like "elephant" with an m: _ELM-fənt too-ee_
+(/ˈɛlm.fənt ˈtuː.i/).
 
 <img src="media/showcase.gif" width="880"
      alt="A full-screen app with a profile form, a task table, a file list, a tabbed settings panel and a package list. The reader fills in the form, ticks checkboxes, scrolls the table and the lists, switches tabs and opens the key help.">
