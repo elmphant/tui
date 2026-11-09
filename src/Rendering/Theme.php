@@ -185,14 +185,6 @@ final readonly class Theme
     }
 
     /**
-     * Share focused and emphasized border styling across containers.
-     */
-    public function borderTypeFor(bool $prominent): BorderType
-    {
-        return $prominent ? $this->focusedBorderType : $this->borderType;
-    }
-
-    /**
      * A terminal without colour drops every fill, so a filled row (cursor,
      * selection, input, bars) is drawn in reverse video instead.
      */
@@ -224,11 +216,6 @@ final readonly class Theme
             focusedBorderType: $this->focusedBorderType,
             raisedButtons: $this->raisedButtons,
         );
-    }
-
-    public function borderStyleFor(bool $prominent): Style
-    {
-        return $prominent ? $this->focusedBorderStyle : $this->borderStyle;
     }
 
     public static function dark(): self

@@ -23,7 +23,7 @@ final class APaneAroundTheKeyboardLightsTest extends TestCase
     public function aPaneThatIsNotBoundLightsWhileAListInsideItHoldsTheKeyboard(): void
     {
         $screen = ModelHarness::for(new UnboundPanesApp(ListView::fromStrings(['one']), ListView::fromStrings(['two'])), 30, 4)->screen();
-        $lit = Theme::dark()->borderStyleFor(true)->foreground;
+        $lit = Theme::dark()->focusedBorderStyle->foreground;
 
         self::assertEquals($lit, $screen->styleAt(0, 0)->foreground, 'the pane around the focused list');
         self::assertNotEquals($lit, $screen->styleAt(15, 0)->foreground, 'and not the other one');
@@ -33,7 +33,7 @@ final class APaneAroundTheKeyboardLightsTest extends TestCase
     public function aBoxLightsWhileAListInsideItHoldsTheKeyboard(): void
     {
         $screen = ModelHarness::for(new BoxesApp(ListView::fromStrings(['one']), ListView::fromStrings(['two'])), 30, 4)->screen();
-        $lit = Theme::dark()->borderStyleFor(true)->foreground;
+        $lit = Theme::dark()->focusedBorderStyle->foreground;
 
         self::assertEquals($lit, $screen->styleAt(0, 0)->foreground, 'the box around the focused list');
         self::assertNotEquals($lit, $screen->styleAt(15, 0)->foreground, 'and not the other one');

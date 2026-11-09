@@ -162,8 +162,8 @@ final readonly class Box implements Widget, GraftsItsChildren, MeasureHeight
         $theme = $context->theme;
         $lit = KeyboardInside::of($this, $context->focusedComponent());
         $block = Block::new()
-            ->withBorderType($theme->borderTypeFor($lit))
-            ->withBorderStyle($this->borderStyleOverride ?? $theme->borderStyleFor($lit))
+            ->withBorderType($lit ? $theme->focusedBorderType : $theme->borderType)
+            ->withBorderStyle($this->borderStyleOverride ?? ($lit ? $theme->focusedBorderStyle : $theme->borderStyle))
             ->withTitleStyle($this->titleStyleOverride ?? $theme->title)
             ->withTitle($this->title);
 

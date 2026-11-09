@@ -265,9 +265,10 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
         }
 
         $prominent = $this->drawsFocused($context) || $this->emphasizedBorder;
-        $glyphs = $theme->borderTypeFor($prominent)->glyphs();
-        $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
-        $borderStyle = $override ?? $theme->borderStyleFor($prominent);
+        $glyphs = ($prominent ? $theme->focusedBorderType : $theme->borderType)->glyphs();
+        $borderStyle = $prominent
+            ? ($this->focusedBorderStyleOverride ?? $theme->focusedBorderStyle)
+            : ($this->borderStyleOverride ?? $theme->borderStyle);
 
         $this->renderContent($frame, $area, $context);
         $this->renderTabStrip($frame, $area, $glyphs, $borderStyle, $theme, $this->drawsFocused($context));

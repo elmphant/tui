@@ -406,9 +406,11 @@ final readonly class Panel implements CapturesThePointer, ClipsItsChildren, Foll
     private function renderRule(Frame $frame, Rect $border, int $row, ?string $caption, RenderContext $context): void
     {
         $prominent = $this->isProminent($context);
-        $glyphs = $context->theme->borderTypeFor($prominent)->glyphs();
-        $quiet = $this->borderStyleOverride ?? $context->theme->borderStyleFor(false);
-        $joint = ($prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride) ?? $context->theme->borderStyleFor($prominent);
+        $glyphs = ($prominent ? $context->theme->focusedBorderType : $context->theme->borderType)->glyphs();
+        $quiet = $this->borderStyleOverride ?? $context->theme->borderStyle;
+        $joint = $prominent
+            ? ($this->focusedBorderStyleOverride ?? $context->theme->focusedBorderStyle)
+            : $quiet;
 
         $span = max(0, $border->width - 2);
         $label = $caption === null ? '' : ' ' . $caption . ' ';
@@ -433,11 +435,13 @@ final readonly class Panel implements CapturesThePointer, ClipsItsChildren, Foll
 
         $prominent = $this->isProminent($context);
 
-        $override = $prominent ? $this->focusedBorderStyleOverride : $this->borderStyleOverride;
+        $borderStyle = $prominent
+            ? ($this->focusedBorderStyleOverride ?? $theme->focusedBorderStyle)
+            : ($this->borderStyleOverride ?? $theme->borderStyle);
 
         $block = Block::new()
-            ->withBorderType($theme->borderTypeFor($prominent))
-            ->withBorderStyle($override ?? $theme->borderStyleFor($prominent))
+            ->withBorderType($prominent ? $theme->focusedBorderType : $theme->borderType)
+            ->withBorderStyle($borderStyle)
             ->withTitleStyle($this->titleStyleOverride ?? $theme->title)
             ->withTitle($this->title);
 

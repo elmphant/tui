@@ -25,7 +25,7 @@ final class BoundChildInsideAPaneTest extends TestCase
 
         self::assertSame('email', $harness->focused()?->value);
         self::assertSame(
-            Theme::dark()->borderStyleFor(true)->foregroundValue(),
+            Theme::dark()->focusedBorderStyle->foregroundValue(),
             $harness->renderFrame()->foregrounds[0],
         );
     }
