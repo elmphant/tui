@@ -11,6 +11,7 @@ use Elmphant\Tui\Message\Chosen;
 use Elmphant\Tui\Message\Submitted;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ScreenMode;
+use Elmphant\Tui\Widget\Bar\FocusHints;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -23,7 +24,7 @@ final readonly class ProjectQuestions extends App
      * @param array<string, TextInput|Select> $fields
      * @param array<string, string>           $answers
      */
-    public function __construct(public array $fields, public array $answers = [])
+    public function __construct(private array $fields, private array $answers = [])
     {
     }
 
@@ -36,7 +37,7 @@ final readonly class ProjectQuestions extends App
             $this->bind('fields', at: $question)
                 ->on(Submitted::class, static fn (self $app): self|UpdateResult => $app->answered())
                 ->on(Chosen::class, static fn (self $app): self|UpdateResult => $app->answered()),
-            Paragraph::fromText($this->fields[$question] instanceof Select ? '↑/↓ to move · Enter to choose' : 'Enter to confirm · Ctrl+C to cancel'),
+            FocusHints::new(),
         );
     }
 

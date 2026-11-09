@@ -63,11 +63,11 @@ final readonly class PackagesArrived implements Message
 final readonly class Showcase extends App
 {
     public function __construct(
-        public Panel $profile,
-        public Panel $project,
-        public TabBar $settings,
-        public ?ListView $packages = null,
-        public bool $vimMode = false,
+        private Panel $profile,
+        private Panel $project,
+        private TabBar $settings,
+        private ?ListView $packages = null,
+        private bool $vimMode = false,
     ) {
     }
 
