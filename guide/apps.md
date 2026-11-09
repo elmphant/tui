@@ -205,7 +205,7 @@ final readonly class Previews extends App
 
         return new UpdateResult(
             new self($this->files, $key, 'loading…'),
-            Cmd::exec(['head', '-n', '20', $key])->withId(EffectId::named('preview')),
+            Cmd::exec(['head', '-n', '20', $key], id: EffectId::named('preview')),
         );
     }
 
@@ -311,7 +311,7 @@ final readonly class Uptime implements Reducer, Initializes
 
     public function init(): ?Cmd
     {
-        return Cmd::exec(['uptime'])->withId(EffectId::named('uptime'));
+        return Cmd::exec(['uptime'], id: EffectId::named('uptime'));
     }
 
     public function update(Message $message, Rect $area): UpdateResult

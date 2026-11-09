@@ -249,8 +249,7 @@ Both take the same options:
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 
-Cmd::exec(['npm', 'install'])
-    ->withId(EffectId::named('npm-install'))
+Cmd::exec(['npm', 'install'], id: EffectId::named('npm-install'))
     ->withWorkingDirectory('/app')
     ->withTimeout(120)
     ->withEnv(['NODE_ENV' => 'production'])
@@ -262,8 +261,7 @@ Cmd::exec(['npm', 'install'])
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\EffectId;
 
-Cmd::stream(['npm', 'run', 'build'])
-    ->withId(EffectId::named('npm-build'))
+Cmd::stream(['npm', 'run', 'build'], id: EffectId::named('npm-build'))
     ->withWorkingDirectory('/app')
     ->withTimeout(120)
     ->withEnv(['NODE_ENV' => 'production'])
@@ -292,8 +290,7 @@ $packages = EffectId::named('packages');
 // Started by an action:
 new UpdateResult(
     $app->withLoading(true),
-    Cmd::http('https://packagist.org/search.json?q=markdown')
-        ->withId($packages)
+    Cmd::http('https://packagist.org/search.json?q=markdown', id: $packages)
         ->withMaxBodyBytes(4 * 1024 * 1024)
 );
 
