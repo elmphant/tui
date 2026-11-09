@@ -11,7 +11,10 @@
 | `Focusable` | nothing — a marker | anything that can hold the keyboard |
 
 A widget doesn't know where it is on screen: it is handed its `Rect` in both
-`update()` and `render()`.
+`update()` and `render()`. To lay out parts of its own, it cuts that `Rect` up:
+`$area->inset($spacing)` leaves a margin, and
+`$area->split(Direction::Horizontal, 3, gap: 1)` gives three equal columns,
+shared the way a `Layout::row()` shares the room.
 
 A widget never stores whether it has the keyboard. It asks while it draws:
 `$context->hasFocus()`.

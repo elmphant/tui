@@ -11,6 +11,7 @@ use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
+use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\Spacing;
@@ -267,13 +268,11 @@ final readonly class Board implements Focusable, PublishesHints, CapturesThePoin
      */
     private function layout(Rect $area): array
     {
-        $count = count($this->columns);
-        $width = intdiv($area->width, max(1, $count));
+        $frames = $area->split(Direction::Horizontal, count($this->columns));
         $layouts = [];
 
         foreach ($this->columns as $index => $column) {
-            $columnWidth = $index === $count - 1 ? $area->width - $index * $width : $width;
-            $frame = new Rect($area->x + $index * $width, $area->y, $columnWidth, $area->height);
+            $frame = $frames[$index];
             $content = $frame->inset(Spacing::only(top: 2, right: 2, bottom: 1, left: 2));
             $visibleCount = intdiv($content->height, self::CARD_HEIGHT);
             $anchor = $index === $this->cursorColumn ? $this->cursorTask : 0;

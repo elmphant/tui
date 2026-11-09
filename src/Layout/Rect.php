@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Elmphant\Tui\Layout\Axis\Allocator;
+use Elmphant\Tui\Layout\Axis\AxisSpecification;
+use Elmphant\Tui\Layout\Axis\ItemPolicy;
 use InvalidArgumentException;
 
 final readonly class Rect
@@ -71,6 +74,34 @@ final readonly class Rect
             $y,
             max(0, min($this->right(), $other->right()) - $x),
             max(0, min($this->bottom(), $other->bottom()) - $y),
+        );
+    }
+
+    /**
+     * Equal parts side by side (Horizontal) or stacked (Vertical), shared the way a Layout shares the room among
+     * children that all grow: the cells left over go to the rear parts.
+     *
+     * @return list<self>
+     */
+    public function split(Direction $direction, int $count, int $gap = 0): array
+    {
+        if ($count < 1) {
+            return [];
+        }
+
+        $across = $direction === Direction::Horizontal;
+        $shared = Allocator::resolve(
+            array_fill(0, $count, new ItemPolicy(grow: 1, shrink: 1)),
+            $across ? $this->width : $this->height,
+            new AxisSpecification(gap: $gap),
+        );
+
+        return array_map(
+            fn (int $size, int $offset): self => $across
+                ? new self($this->x + $offset, $this->y, $size, $this->height)
+                : new self($this->x, $this->y + $offset, $this->width, $size),
+            $shared->sizes,
+            $shared->offsets,
         );
     }
 }
