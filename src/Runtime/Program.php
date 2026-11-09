@@ -932,7 +932,12 @@ final class Program
     private function drainMessageQueue(): void
     {
         $consecutiveErrors = 0;
-        $screenRect = $this->drawnRect();
+        try {
+            $screenRect = $this->drawnRect();
+        } catch (Throwable) {
+            // renderFrame() reports the failing wantedHeight(), and the error handler still needs an area to run under.
+            $screenRect = $this->screenRect;
+        }
         // A resize re-drain continues the tick's budget, so one tick cannot spend it twice.
         $this->drainDeadline ??= $this->clock->now() + self::MAX_DRAIN_SECONDS;
         $deadline = $this->drainDeadline;
@@ -1210,7 +1215,6 @@ final class Program
             throw new LogicException('Program renderer is not initialized');
         }
 
-        $drawn = $this->drawnRect();
         if ($frame->width !== $this->screenRect->width || $frame->height !== $this->screenRect->height) {
             $frame = $this->backBuffer = new Frame($this->screenRect->width, $this->screenRect->height);
         }
@@ -1218,6 +1222,7 @@ final class Program
         $pass->begin($this->clock->now());
 
         try {
+            $drawn = $this->drawnRect();
             $pass = $this->inChosenTheme($pass)->withArea($drawn);
             $frame->clear($pass->context->theme->base->background);
             $this->settleFocusBeforeDrawing();

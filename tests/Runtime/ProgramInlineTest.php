@@ -8,6 +8,8 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Message\ErrorMsg;
+use Elmphant\Tui\Message\ErrorSource;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
@@ -16,6 +18,7 @@ use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Runtime\SizesItsRegion;
 use Elmphant\Tui\Terminal\Ansi;
+use Elmphant\Tui\Testing\TestClock;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Application\Support\FieldAboveALineApp;
 use Elmphant\Tui\Tests\Application\Support\OpenDropdownApp;
@@ -25,9 +28,37 @@ use Elmphant\Tui\Tests\Application\Support\TwoLineApp;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Revolt\EventLoop;
+use RuntimeException;
 
 final class ProgramInlineTest extends TestCase
 {
+    #[Test]
+    public function aRegionHeightThatThrowsIsARenderFailureTheErrorHandlerHears(): void
+    {
+        $terminal = new VirtualTerminal(40, 10);
+        $clock = new TestClock(1000.0);
+        $sources = [];
+        $program = Program::new(new RegionHeightThatThrowsModel())
+            ->withTerminal($terminal)
+            ->withClock($clock)
+            ->withScreenMode(ScreenMode::inline())
+            ->onError(static function (ErrorMsg $error) use (&$sources): Cmd {
+                $sources[] = $error->source;
+
+                return Cmd::quit();
+            });
+
+        EventLoop::defer(static function () use ($clock, $program): void {
+            $clock->advance(1);
+            $program->tick();
+            $clock->advance(1);
+            $program->tick();
+        });
+        $program->start();
+
+        self::assertSame([ErrorSource::Render], $sources);
+    }
+
     #[Test]
     public function anInlineRunDrawsOnlyTheRowsItsContentWantsWithRelativeMoves(): void
     {
@@ -139,6 +170,28 @@ final class ProgramInlineTest extends TestCase
         Program::new(new FieldAboveALineApp())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
         self::assertStringEndsWith("\x1b[1B\r\n", $terminal->output());
+    }
+}
+
+final readonly class RegionHeightThatThrowsModel implements Model, SizesItsRegion
+{
+    public function init(): ?Cmd
+    {
+        return null;
+    }
+
+    public function wantedHeight(int $width): int
+    {
+        throw new RuntimeException('no height');
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        return new UpdateResult($this);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
     }
 }
 
