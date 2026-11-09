@@ -79,6 +79,10 @@ final class Program
      */
     private const MAX_DRAIN_SECONDS = 0.05;
 
+    // 48 bytes a cell for both frames: 1000x500 is 48 MB.
+    private const MAX_COLUMNS = 1_000;
+    private const MAX_ROWS = 500;
+
     private ScreenMode $screenMode;
     private FrameScheduler $frames;
     /**
@@ -548,7 +552,7 @@ final class Program
 
             // Recheck size after the first loop tick, when Revolt installs its signal handlers.
             $this->watch(EventLoopWatcher::SizeRecheck, EventLoop::defer(function (): void {
-                if ($this->state === ProgramState::Running && $this->terminal->size() !== [$this->screenRect->width, $this->screenRect->height]) {
+                if ($this->state === ProgramState::Running && $this->terminalSize() !== [$this->screenRect->width, $this->screenRect->height]) {
                     $this->resizePending = true;
                     $this->tick();
                 }
@@ -588,11 +592,21 @@ final class Program
 
     private function adoptTerminalSize(): void
     {
-        [$width, $height] = $this->terminal->size();
+        [$width, $height] = $this->terminalSize();
         $this->screenRect = Rect::fromSize($width, $height);
         $this->backBuffer = new Frame($width, $height);
         $this->inputQueue->enqueue(new ResizeMsg($width, $height));
         $this->frames->markDirty();
+    }
+
+    /**
+     * @return array{int, int}
+     */
+    private function terminalSize(): array
+    {
+        [$width, $height] = $this->terminal->size();
+
+        return [max(1, min($width, self::MAX_COLUMNS)), max(1, min($height, self::MAX_ROWS))];
     }
 
     private function watch(EventLoopWatcher $watcher, string $id): void
