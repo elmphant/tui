@@ -104,7 +104,7 @@ trait FiltersItsContent
         return $this->searchHints([
             'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
             'choose' => Actions::SELECT,
-            ...$this->clearFilterHint($this->query()),
+            ...$this->clearFilterHint(),
         ]);
     }
 

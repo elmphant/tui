@@ -44,7 +44,7 @@ final class DropdownTest extends TestCase
     }
 
     #[Test]
-    public function anOpenDropdownNamesTheKeyThatShutsIt(): void
+    public function anOpenDropdownNamesTheKeysOfItsListAndTheKeyThatShutsIt(): void
     {
         $open = Dropdown::new(Select::new(['a']))
                         ->update(new KeyMsg(Key::Enter), Rect::fromSize(20, 1))
@@ -52,7 +52,23 @@ final class DropdownTest extends TestCase
 
         self::assertInstanceOf(Dropdown::class, $open);
         self::assertTrue($open->isOpen(), 'Enter must have opened it');
-        self::assertSame(['Esc' => 'close'], $open->hints());
+        self::assertSame(['↑/↓' => 'move', 'Enter' => 'choose', 'Esc' => 'close'], $open->hints());
+    }
+
+    #[Test]
+    public function anOpenDropdownOfCheckboxesNamesTheKeyThatTicks(): void
+    {
+        $open = Dropdown::new(CheckboxGroup::new(['a', 'b']))->withOpen();
+
+        self::assertSame(['↑/↓' => 'move', 'Enter' => 'toggle', 'Esc' => 'close'], $open->hints());
+    }
+
+    #[Test]
+    public function escapeIsNamedForWhatTheListDoesWithItFirst(): void
+    {
+        $open = Dropdown::new(FilterableList::new([new SimpleListItem('alpha')])->withQuery('al'))->withOpen();
+
+        self::assertNotContains('close', $open->hints(), 'Esc clears the filter first, so it does not close yet');
     }
 
     #[Test]

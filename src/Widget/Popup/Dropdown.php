@@ -8,6 +8,7 @@ use Closure;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
@@ -195,11 +196,17 @@ final readonly class Dropdown implements Focusable, HoldsAValue, KeybindingsAwar
 
     public function hints(): array
     {
-        return $this->effectiveKeybindings()->hints(
-            $this->open
-                ? ['close' => Actions::CANCEL]
-                : ['open' => Actions::TOGGLE],
-        );
+        if (!$this->open) {
+            return $this->effectiveKeybindings()->hints(['open' => Actions::TOGGLE]);
+        }
+
+        $closing = $this->content instanceof BindsForTheMoment && $this->content instanceof KeybindingsAware
+            ? $this->effectiveKeybindings()->except(
+                $this->content->effectiveKeybindings()->restrictedTo(...$this->content->momentaryKeybindings()->actions()),
+            )
+            : $this->effectiveKeybindings();
+
+        return $this->content->hints() + $closing->hints(['close' => Actions::CANCEL]);
     }
 
     public function update(Message $message, Rect $area): UpdateResult

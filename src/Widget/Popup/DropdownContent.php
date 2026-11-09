@@ -8,12 +8,13 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\MouseMsg;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
+use Elmphant\Tui\Widget\PublishesHints;
 
 /**
- * Dropdown content supplies focus, caption, size and click lookup against the drawn frame.
- * Content without Committing supports multiple choice.
+ * Dropdown content supplies focus, caption, size, click lookup against the drawn frame, and the hints for its keys
+ * while the dropdown is open. Content without Committing supports multiple choice.
  */
-interface DropdownContent extends Focusable, HoldsAValue
+interface DropdownContent extends Focusable, HoldsAValue, PublishesHints
 {
     public function caption(): string;
 

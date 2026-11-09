@@ -73,7 +73,7 @@ final readonly class FilterableCheckboxGroup implements DropdownContent, Keybind
         return $this->searchHints([
             'move' => [Actions::CURSOR_UP, Actions::CURSOR_DOWN],
             'toggle' => Actions::TOGGLE,
-            ...$this->clearFilterHint($this->field->value()),
+            ...$this->clearFilterHint(),
         ]);
     }
 

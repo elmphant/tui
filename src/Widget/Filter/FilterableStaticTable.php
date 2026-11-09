@@ -64,7 +64,7 @@ final readonly class FilterableStaticTable implements Focusable, MeasureHeight, 
 
     public function hints(): array
     {
-        return $this->searchHints($this->clearFilterHint($this->query()));
+        return $this->searchHints($this->clearFilterHint());
     }
 
     public function query(): string

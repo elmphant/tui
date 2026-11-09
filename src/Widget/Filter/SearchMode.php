@@ -14,7 +14,7 @@ use Elmphant\Tui\Rendering\Context\RenderContext;
 
 /**
  * With Actions::SEARCH bound, content receives keys until search starts; Esc or Enter returns focus and keeps the query.
- * Use with Cloneable and KeybindingsAwareBehavior, and declare `private bool $searching = false`.
+ * Use with Cloneable and KeybindingsAwareBehavior, declare `private bool $searching = false`, and answer query().
  *
  * @phpstan-require-implements TakesText
  * @phpstan-require-implements BindsForTheMoment
@@ -31,16 +31,21 @@ trait SearchMode
         return $this->searching && $this->searchIsBound();
     }
 
+    abstract public function query(): string;
+
     /**
-     * Bind Esc and Enter to leave search only while searching; otherwise bind the search action on the content.
+     * Bind Esc and Enter to leave search only while searching; otherwise the search action on the content, and the
+     * keys that clear the filter while there is a query.
      */
     public function momentaryKeybindings(): Keybindings
     {
-        return match (true) {
-            $this->isSearching() => FilterBar::backKeybindings(),
-            $this->searchIsBound() => new Keybindings([Actions::SEARCH => []]),
-            default => Keybindings::empty(),
-        };
+        if ($this->isSearching()) {
+            return FilterBar::backKeybindings();
+        }
+
+        $live = $this->searchIsBound() ? [Actions::SEARCH, ...$this->clearFilterActions()] : $this->clearFilterActions();
+
+        return new Keybindings(array_fill_keys($live, []));
     }
 
     private function searchIsBound(): bool
@@ -82,11 +87,25 @@ trait SearchMode
     }
 
     /**
-     * @return array<string, string|list<string>>
+     * @return array<string, list<string>>
      */
-    private function clearFilterHint(string $query): array
+    private function clearFilterHint(): array
     {
-        return $query === '' ? [] : ['clear filter' => $this->searchIsBound() ? Actions::CANCEL : [Actions::CLEAR_LINE, Actions::CANCEL]];
+        $actions = $this->clearFilterActions();
+
+        return $actions === [] ? [] : ['clear filter' => $actions];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function clearFilterActions(): array
+    {
+        return match (true) {
+            $this->query() === '' => [],
+            $this->searchIsBound() => [Actions::CANCEL],
+            default => [Actions::CLEAR_LINE, Actions::CANCEL],
+        };
     }
 
     private function fieldHoldsTheKeys(RenderContext $context): bool
