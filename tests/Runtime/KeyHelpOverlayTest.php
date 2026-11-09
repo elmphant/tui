@@ -11,6 +11,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
@@ -87,9 +88,20 @@ final class KeyHelpOverlayTest extends TestCase
 
         self::assertFalse($overlay->takes(new KeyMsg('x'), self::model([]), FocusState::nowhere()));
         self::assertFalse($overlay->takes(self::mouse(MouseAction::Press), self::model([]), FocusState::nowhere()));
+        self::assertFalse($overlay->takes(new PasteMsg('pasted'), self::model([]), FocusState::nowhere()));
         self::assertFalse($overlay->takes(new KeyMsg('?'), new stdClass(), FocusState::nowhere()), 'a model with no keys to describe has no help');
         self::assertFalse($overlay->isOpen());
         self::assertTrue($overlay->takes(new KeyMsg('?'), self::model([]), FocusState::nowhere()));
+        self::assertTrue($overlay->isOpen());
+    }
+
+    #[Test]
+    public function anOpenHelpTakesAPasteSoNothingBehindItHearsIt(): void
+    {
+        $overlay = new KeyHelpOverlay();
+        $overlay->takes(new KeyMsg('?'), self::model([]), FocusState::nowhere());
+
+        self::assertTrue($overlay->takes(new PasteMsg('pasted'), self::model([]), FocusState::nowhere()));
         self::assertTrue($overlay->isOpen());
     }
 

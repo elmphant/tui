@@ -10,6 +10,7 @@ use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseMsg;
+use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Block;
 use Elmphant\Tui\Rendering\BorderType;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -41,7 +42,7 @@ final class KeyHelpOverlay
      */
     public function takes(object $message, object $model, FocusState $focus): bool
     {
-        if (!$model instanceof DescribesKeys || (!$message instanceof KeyMsg && !$message instanceof MouseMsg)) {
+        if (!$model instanceof DescribesKeys || (!$message instanceof KeyMsg && !$message instanceof MouseMsg && !$message instanceof PasteMsg)) {
             return false;
         }
 
@@ -54,6 +55,10 @@ final class KeyHelpOverlay
             }
 
             return false;
+        }
+
+        if ($message instanceof PasteMsg) {
+            return true;
         }
 
         if ($message instanceof MouseMsg) {
