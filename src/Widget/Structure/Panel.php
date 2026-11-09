@@ -155,6 +155,16 @@ final readonly class Panel implements CapturesThePointer, ClipsItsChildren, Foll
         return $this->pane->scrollOffset($this->contentArea($area));
     }
 
+    public function isScrolledToTheTop(Rect $area): bool
+    {
+        return $this->pane->isScrolledToTheTop($this->contentArea($area));
+    }
+
+    public function isScrolledToTheEnd(Rect $area): bool
+    {
+        return $this->pane->isScrolledToTheEnd($this->contentArea($area));
+    }
+
     public function marked(): ?MarkedRange
     {
         return $this->pane->marked();

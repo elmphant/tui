@@ -107,6 +107,18 @@ final readonly class ScrollPane implements CapturesThePointer, ClipsItsChildren,
         return $this->resolvedOffset($layout, $area->height);
     }
 
+    public function isScrolledToTheTop(Rect $area): bool
+    {
+        return $this->scrollOffset($area) === 0;
+    }
+
+    public function isScrolledToTheEnd(Rect $area): bool
+    {
+        $layout = VerticalStack::layoutUsing($this->layoutMemo, $this->children, $area->width, $area->height);
+
+        return $this->resolvedOffset($layout, $area->height) >= $layout->maxScrollOffset($area->height);
+    }
+
     /**
      * Scrolling by hand ends any follow: the reader has taken over.
      */

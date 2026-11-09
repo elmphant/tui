@@ -361,6 +361,10 @@ $log = Panel::new('Log')->withFollowingTheEnd();
 $log = $log->add(Text::new('build finished'));
 ```
 
+`isScrolledToTheTop($area)` and `isScrolledToTheEnd($area)` say where a panel
+is, for example to load older rows once the reader reaches the top. A panel whose
+content fits is at both.
+
 A `ListView`, `Table` or `TreeView` scrolls once the cursor reaches the edge of
 the view. `withScrollPadding(2)` scrolls two rows earlier, so the reader always
 sees two rows past the cursor. In a view too short for that, the padding gets
