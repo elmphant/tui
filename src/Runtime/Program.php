@@ -505,6 +505,12 @@ final class Program
             return;
         }
 
+        $logErrors = strtolower((string)ini_get('log_errors'));
+        $loggedToStderr = in_array($logErrors, ['1', 'on', 'true', 'yes'], true) && (string)ini_get('error_log') === '';
+        if ($loggedToStderr || strtolower((string)ini_get('display_errors')) === 'stderr') {
+            return;
+        }
+
         fwrite(STDERR, sprintf("PHP Fatal error:  %s in %s on line %d\n", TerminalText::singleLine($error['message']), TerminalText::singleLine($error['file']), $error['line']));
     }
 
