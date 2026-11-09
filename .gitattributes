@@ -1,0 +1,11 @@
+/.gitattributes    export-ignore
+/.github           export-ignore
+/.gitignore        export-ignore
+/.php-cs-fixer.php export-ignore
+/deptrac.php       export-ignore
+/diagrams          export-ignore
+/infection.json5   export-ignore
+/media             export-ignore
+/phpstan.neon      export-ignore
+/phpunit.xml       export-ignore
+/tests             export-ignore
