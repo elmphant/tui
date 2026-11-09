@@ -5,8 +5,6 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use Elmphant\Tui\Application\App;
-use Elmphant\Tui\Core\Cmd;
-use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Message\Pressed;
 use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Span;
@@ -51,24 +49,11 @@ final readonly class CreateAccount extends App
     public function view(): Widget
     {
         return Layout::column(
-            $this->bind('form')->on(Pressed::class, static fn (self $app): self|UpdateResult => $app->submitted()),
+            $this->bind('form')->on(Pressed::class, static fn (self $app): self => $app->cloneWith(sent: array_diff_key($app->form->values(), ['password' => true]))),
             $this->sent === null
                 ? Footer::new()->withLeft(FocusHints::new())
                 : Paragraph::fromLines([new Line([Span::token('Sent: ' . json_encode($this->sent, JSON_UNESCAPED_SLASHES), StyleToken::Success)])]),
         );
-    }
-
-    /**
-     * @return self|UpdateResult<self>
-     */
-    private function submitted(): self|UpdateResult
-    {
-        $tried = $this->form->withSubmitAttempted();
-        $firstProblem = array_key_first($tried->problems());
-
-        return $firstProblem === null
-            ? $this->cloneWith(form: $tried, sent: array_diff_key($tried->values(), ['password' => true]))
-            : new UpdateResult($this->cloneWith(form: $tried), Cmd::focus($tried->stopOf($firstProblem, 'form')));
     }
 }
 

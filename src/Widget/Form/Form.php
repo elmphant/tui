@@ -29,9 +29,10 @@ use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\ClipsItsChildren;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Field\Button;
+use Elmphant\Tui\Widget\Focus\AnswersForItsChildren;
 use Elmphant\Tui\Widget\Focus\CapturesThePointer;
+use Elmphant\Tui\Widget\Focus\ChildAnswer;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
-use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Focus\Navigates;
 use Elmphant\Tui\Widget\Focus\Navigation;
 use Elmphant\Tui\Widget\Focusable;
@@ -49,7 +50,7 @@ use LogicException;
 /**
  * Derive values from the fields; each field has label, input and error children, followed by a pinned submit button.
  */
-final readonly class Form implements BindsForTheMoment, CapturesThePointer, ClipsItsChildren, Committing, FollowsTheKeyboard, GraftsItsChildren, KeybindingsAware, MeasureHeight, Navigates
+final readonly class Form implements AnswersForItsChildren, BindsForTheMoment, CapturesThePointer, ClipsItsChildren, Committing, FollowsTheKeyboard, KeybindingsAware, MeasureHeight, Navigates
 {
     use Cloneable;
     use KeybindingsAwareBehavior;
@@ -69,6 +70,7 @@ final readonly class Form implements BindsForTheMoment, CapturesThePointer, Clip
         private Panel $pane,
         private array $fields = [],
         private ?Button $submit = null,
+        private ?Message $submitMessage = null,
         private string $foot = '',
         private bool $attempted = false,
         private ShowErrors $errorsShown = ShowErrors::AfterSubmit,
@@ -123,11 +125,12 @@ final readonly class Form implements BindsForTheMoment, CapturesThePointer, Clip
     }
 
     /**
-     * A bound form answers `Pressed` for its button and for Enter in its last field. The message, when given, is sent as well.
+     * A bound form answers `Pressed` for its button and for Enter in its last field, and sends the message when given.
+     * While a field has a problem it does neither: it shows the problems and sends the keyboard to the first one.
      */
     public function withSubmit(string $label, ?Message $message = null): self
     {
-        return $this->cloneWith(submit: Button::new($label, $message)->withDisabled($this->disabledBecause !== null));
+        return $this->cloneWith(submit: Button::new($label)->withDisabled($this->disabledBecause !== null), submitMessage: $message);
     }
 
     public function withFoot(string $foot): self
@@ -258,7 +261,7 @@ final readonly class Form implements BindsForTheMoment, CapturesThePointer, Clip
         }
 
         if ($this->keyboardIn !== null && $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::NEXT_FIELD)) {
-            return new UpdateResult($this, $this->enteredIn($this->keyboardIn));
+            return $this->enteredIn($this->keyboardIn);
         }
 
         $drawn = $this->drawn();
@@ -281,8 +284,22 @@ final readonly class Form implements BindsForTheMoment, CapturesThePointer, Clip
             && $this->keyboardIn !== null
             && $this->keyboardIn === $last
             && $this->effectiveKeybindings()->matches($message, Actions::NEXT_FIELD)
+            && $this->refusedSubmit() === null
             ? new Pressed($message)
             : null;
+    }
+
+    public function answeredFor(int $child, Message $answered): ChildAnswer
+    {
+        if ($child !== $this->submitChild() || !$answered instanceof Pressed) {
+            return new ChildAnswer($this, $answered);
+        }
+
+        $refused = $this->refusedSubmit();
+
+        return $refused === null
+            ? new ChildAnswer($this, $answered, $this->sentMessage())
+            : new ChildAnswer($refused->model, null, $refused->command);
     }
 
     /**
@@ -372,11 +389,37 @@ final readonly class Form implements BindsForTheMoment, CapturesThePointer, Clip
         return $this->cancels && $message instanceof KeyMsg && $this->effectiveKeybindings()->matches($message, Actions::CANCEL);
     }
 
-    private function enteredIn(string $field): ?Cmd
+    /**
+     * @return UpdateResult<self>
+     */
+    private function enteredIn(string $field): UpdateResult
     {
-        $last = $this->fields[\count($this->fields) - 1]->name;
+        if ($field !== $this->fields[\count($this->fields) - 1]->name || $this->submit === null) {
+            return new UpdateResult($this, Cmd::focusNext());
+        }
 
-        return $field === $last && $this->submit !== null ? $this->submit->press() : Cmd::focusNext();
+        return $this->refusedSubmit() ?? new UpdateResult($this, $this->sentMessage());
+    }
+
+    private function sentMessage(): ?Cmd
+    {
+        return $this->submitMessage === null ? null : Cmd::message($this->submitMessage);
+    }
+
+    /**
+     * Null when the form may be submitted.
+     *
+     * @return UpdateResult<self>|null
+     */
+    private function refusedSubmit(): ?UpdateResult
+    {
+        foreach ($this->fields as $at => $field) {
+            if ($field->problem() !== null) {
+                return new UpdateResult($this->withSubmitAttempted(), Cmd::focusChild($this->widgetChild($at)));
+            }
+        }
+
+        return null;
     }
 
     private function drawn(int $gapAboveTheFoot = 1): Panel

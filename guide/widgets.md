@@ -246,7 +246,6 @@ field is a real widget, so tab and the mouse reach it. The form asks the fields
 for their values, so you keep no copy:
 
 ```php
-use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Widget\Form\{Field, Form, ShowErrors};
 
 $form = Form::new('Create backend user')
@@ -257,9 +256,7 @@ $form = Form::new('Create backend user')
     ->withFoot('❯ backend:user:create')
     ->withSubmit('Run');
 
-$tried = $form->withSubmitAttempted();                         // from now on, problems show under their fields
-$tried->missing();                                    // ['username']
-$tried->stopOf('username', ComponentId::named('form')); // where Cmd::focus() sends the keyboard
+$form->problems();                                    // ['username' => 'Username is required']
 $form->values();                                      // ['username' => '', 'password' => '', 'site' => null, 'admin' => false]
 $form->withErrorsShown(ShowErrors::AfterLeaving);     // or show a field's problem as soon as the reader leaves it
 ```
@@ -269,7 +266,9 @@ Bind it and react to the submit:
 The handler runs with the form already stored, so it reads the values there.
 
 - Enter moves to the next field, and in the last field presses submit. Both
-  that and a click on the button answer `Pressed`.
+  that and a click on the button answer `Pressed`, but only once no field has a
+  problem. Until then the form shows the problems under their fields and sends
+  the keyboard to the first one, so a handler never sees an invalid form.
 - `withSubmit('Run', $message)` also sends a message, for a form inside a
   mounted model that must reach its host through `Mount::toHost()`. A `Button`
   works the same: `Button::new('Save')` answers `Pressed` when bound.

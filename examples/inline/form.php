@@ -37,22 +37,8 @@ final readonly class DatabaseForm extends App
     public function view(): Widget
     {
         return $this->bind('form')
-            ->on(Pressed::class, static fn (self $app): UpdateResult => $app->submitted())
+            ->on(Pressed::class, static fn (self $app): UpdateResult => new UpdateResult($app->cloneWith(saved: true), Cmd::quit()))
             ->on(Dismissed::class, static fn (self $app): UpdateResult => new UpdateResult($app, Cmd::quit()));
-    }
-
-    /**
-     * @return UpdateResult<self>
-     */
-    private function submitted(): UpdateResult
-    {
-        $form = $this->form->withSubmitAttempted();
-        $firstProblem = array_key_first($form->problems());
-        if ($firstProblem !== null) {
-            return new UpdateResult($this->cloneWith(form: $form), Cmd::focus($form->stopOf($firstProblem, 'form')));
-        }
-
-        return new UpdateResult($this->cloneWith(saved: true), Cmd::quit());
     }
 }
 

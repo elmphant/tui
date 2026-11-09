@@ -233,7 +233,7 @@ final class FormTest extends TestCase
     #[Test]
     public function theSubmitButtonIsTheLastStopAndSendsItsMessage(): void
     {
-        $form = WidgetHarness::for(self::userForm(), 70, 24)->press('tab', 'tab', 'tab', 'tab', 'enter');
+        $form = WidgetHarness::for(self::userForm(), 70, 24)->type('ada')->press('tab', 'tab', 'tab', 'tab', 'enter');
 
         self::assertEquals([new MessageCmd(new TestMessage('run'))], $form->issued(MessageCmd::class));
     }
@@ -241,7 +241,7 @@ final class FormTest extends TestCase
     #[Test]
     public function theSubmitButtonInThePinnedFootAnswersAClick(): void
     {
-        $form = WidgetHarness::for(self::userForm(), 70, 24)->click('Run', offset: 1);
+        $form = WidgetHarness::for(self::userForm(), 70, 24)->type('ada')->click('Run', offset: 1);
 
         self::assertEquals([new MessageCmd(new TestMessage('run'))], $form->issued(MessageCmd::class));
     }
