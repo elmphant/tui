@@ -169,7 +169,7 @@ final class ProgramInlineTest extends TestCase
 
         Program::new(new FieldAboveALineApp())->withTerminal($terminal)->withScreenMode(ScreenMode::inline())->start();
 
-        self::assertStringEndsWith("\x1b[1B\r\n", $terminal->output());
+        self::assertStringEndsWith("\x1b[1B\r\n\x1b[?25h", $terminal->output());
     }
 }
 

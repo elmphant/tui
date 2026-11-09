@@ -110,6 +110,30 @@ final class RealTerminalTest extends TestCase
     }
 
     #[Test]
+    public function quittingTheAlternateScreenGivesTheShellItsCursorBack(): void
+    {
+        $this->screen = TmuxScreen::running(sprintf('echo before; %s tests/E2e/Fixtures/e2e-app.php', escapeshellarg(PHP_BINARY)));
+        $this->screen->waitFor('E2E app');
+
+        $this->screen->keys('C-c');
+        $this->screen->waitFor('E2E-EXITED 0');
+
+        self::assertSame("before\nE2E-EXITED 0", $this->screen->withHistory());
+    }
+
+    #[Test]
+    public function quittingWhereTheAlternateScreenIsIgnoredContinuesBelowTheLastFrame(): void
+    {
+        $this->screen = TmuxScreen::running(sprintf('tmux set -w alternate-screen off; %s tests/E2e/Fixtures/e2e-app.php', escapeshellarg(PHP_BINARY)));
+        $before = $this->screen->waitFor('E2E app');
+
+        $this->screen->keys('C-c');
+        $this->screen->waitFor('E2E-EXITED 0');
+
+        self::assertSame($before . "\nE2E-EXITED 0", $this->screen->withHistory());
+    }
+
+    #[Test]
     public function quittingWhileAProcessRunsStopsIt(): void
     {
         $marker = sprintf('4242.%d', random_int(100000, 999999));

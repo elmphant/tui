@@ -1004,7 +1004,7 @@ final class ProgramTest extends TestCase
 
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal)));
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $reflection->getProperty('terminalSession')->setValue($program, $session);
 
@@ -1043,7 +1043,7 @@ final class ProgramTest extends TestCase
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
         $screen = new Screen($terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, $screen, false));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, $screen));
         $reflection->getProperty('frames')->getValue($program)->drawn(0.0, null);
         $reflection->getProperty('messageQueue')->setValue($program, new SplQueue());
         $queue = new SplQueue();
@@ -1279,7 +1279,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal)));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());
@@ -1334,7 +1334,7 @@ final class ProgramTest extends TestCase
         $program = Program::new($this->createMockModel());
         $reflection = new ReflectionClass($program);
         $reflection->getProperty('terminal')->setValue($program, $terminal);
-        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
+        $reflection->getProperty('surface')->setValue($program, new FullScreenSurface($terminal, new Screen($terminal)));
         $reflection->getProperty('screenRect')->setValue($program, Rect::fromSize(80, 24));
         $reflection->getProperty('backBuffer')->setValue($program, new Frame(80, 24));
         $reflection->getProperty('model')->setValue($program, $this->createMockModel());

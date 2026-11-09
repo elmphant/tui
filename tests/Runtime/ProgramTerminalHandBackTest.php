@@ -9,7 +9,6 @@ use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Message\ResizeMsg;
 use Elmphant\Tui\Runtime\Program;
-use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Testing\VirtualTerminal;
 use Elmphant\Tui\Tests\Support\ScriptedModel;
@@ -49,18 +48,7 @@ final class ProgramTerminalHandBackTest extends TestCase
         self::assertTrue($terminal->isCursorVisible());
         self::assertFalse($terminal->isBracketedPasteEnabled());
         self::assertStringContainsString(Ansi::RESET_STYLE, $terminal->output());
-        self::assertStringEndsWith(Ansi::cursorToRowStart(29) . "\n", $terminal->output(), 'the shell goes on below the last row');
-    }
-
-    #[Test]
-    public function aFinishedProgramOnTheAlternateScreenLeavesTheCursorWhereTheShellHadIt(): void
-    {
-        $terminal = new VirtualTerminal(80, 30);
-
-        Program::new(self::quitting())->withTerminal($terminal)->withScreenMode(ScreenMode::alternate())->start();
-
-        self::assertFalse($terminal->isAltScreenEnabled());
-        self::assertStringNotContainsString(Ansi::cursorToRowStart(29), $terminal->output());
+        self::assertStringEndsWith(Ansi::cursorToRowStart(29) . "\n" . Ansi::SHOW_CURSOR, $terminal->output(), 'the shell goes on below the last row');
     }
 
     #[Test]

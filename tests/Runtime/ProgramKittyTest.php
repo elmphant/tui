@@ -367,7 +367,7 @@ final class ProgramKittyTest extends TestCase
 
         $terminalProperty = new ReflectionProperty(Program::class, 'terminal');
         $terminalProperty->setValue($program, $terminal);
-        (new ReflectionProperty(Program::class, 'surface'))->setValue($program, new FullScreenSurface($terminal, new Screen($terminal), false));
+        (new ReflectionProperty(Program::class, 'surface'))->setValue($program, new FullScreenSurface($terminal, new Screen($terminal)));
         $messageQueueProperty = new ReflectionProperty(Program::class, 'messageQueue');
         $messageQueueProperty->setValue($program, new SplQueue());
         (new ReflectionProperty(Program::class, 'terminalSession'))->setValue($program, $session);

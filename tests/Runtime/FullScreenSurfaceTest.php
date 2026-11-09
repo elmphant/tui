@@ -17,7 +17,7 @@ final class FullScreenSurfaceTest extends TestCase
     public function leavingPutsTheShellOnTheLineBelowTheLastRowOfTheTerminalAsItIsNow(): void
     {
         $terminal = new VirtualTerminal(80, 24);
-        $surface = new FullScreenSurface($terminal, new Screen($terminal), false);
+        $surface = new FullScreenSurface($terminal, new Screen($terminal));
         $terminal->resizeTo(80, 7);
 
         self::assertSame(Ansi::cursorToRowStart(6) . "\n", $surface->leave());
@@ -28,14 +28,6 @@ final class FullScreenSurfaceTest extends TestCase
     {
         $terminal = new VirtualTerminal(80, 0);
 
-        self::assertSame(Ansi::cursorToRowStart(0) . "\n", (new FullScreenSurface($terminal, new Screen($terminal), false))->leave());
-    }
-
-    #[Test]
-    public function theAlternateScreenIsLeftWithoutMovingTheCursor(): void
-    {
-        $terminal = new VirtualTerminal(80, 24);
-
-        self::assertSame('', (new FullScreenSurface($terminal, new Screen($terminal), true))->leave());
+        self::assertSame(Ansi::cursorToRowStart(0) . "\n", (new FullScreenSurface($terminal, new Screen($terminal)))->leave());
     }
 }

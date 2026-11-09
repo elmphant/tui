@@ -195,7 +195,7 @@ final class TerminalSessionTest extends TestCase
     public function closeIsIdempotentAndLeavesTheCursorWhereTheSurfaceSays(): void
     {
         $terminal = new VirtualTerminal(80, 42);
-        $surface = new FullScreenSurface($terminal, new Screen($terminal), false);
+        $surface = new FullScreenSurface($terminal, new Screen($terminal));
         $session = new TerminalSession($terminal, false, false, $surface);
         $session->start();
 
@@ -336,7 +336,7 @@ final class TerminalSessionTest extends TestCase
     public function suspendDoesNotMoveTheCursorToTheBottomOfTheScreen(): void
     {
         $terminal = new VirtualTerminal(80, 7);
-        $surface = new FullScreenSurface($terminal, new Screen($terminal), false);
+        $surface = new FullScreenSurface($terminal, new Screen($terminal));
         $session = new TerminalSession($terminal, false, false, $surface);
         $session->start();
         $terminal->clearOutput();

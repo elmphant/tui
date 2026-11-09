@@ -153,6 +153,14 @@ final class TerminalSession
         if ($this->modifyOtherKeysActive) {
             $this->modifyOtherKeysActive = !$this->attempt(fn () => $this->terminal->write(Ansi::RESET_MODIFY_OTHER_KEYS));
         }
+        if ($hadActiveModes) {
+            $this->attempt(fn () => $this->terminal->write(Ansi::RESET_STYLE . Ansi::DEFAULT_CURSOR_SHAPE));
+            // Before leaving the alternate screen, for a terminal that ignores it.
+            if ($this->surface !== null) {
+                $surface = $this->surface;
+                $this->attempt(fn () => $this->terminal->write($final ? $surface->leave() : $surface->pause()));
+            }
+        }
         if ($this->altScreenActive) {
             $this->altScreenActive = !$this->attempt($this->terminal->leaveAltScreen(...));
         }
@@ -164,11 +172,6 @@ final class TerminalSession
         }
 
         if ($hadActiveModes) {
-            $this->attempt(fn () => $this->terminal->write(Ansi::RESET_STYLE . Ansi::DEFAULT_CURSOR_SHAPE));
-            if ($this->surface !== null) {
-                $surface = $this->surface;
-                $this->attempt(fn () => $this->terminal->write($final ? $surface->leave() : $surface->pause()));
-            }
             $this->attempt($this->terminal->flush(...));
         }
 

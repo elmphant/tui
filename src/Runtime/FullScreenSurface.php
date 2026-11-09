@@ -21,7 +21,6 @@ final readonly class FullScreenSurface implements Surface
     public function __construct(
         private Terminal $terminal,
         private Screen $screen,
-        private bool $altScreen,
         private ?Tracer $tracer = null,
     ) {
     }
@@ -57,10 +56,6 @@ final readonly class FullScreenSurface implements Surface
 
     public function leave(): string
     {
-        if ($this->altScreen) {
-            return '';
-        }
-
         [, $height] = $this->terminal->size();
 
         return Ansi::cursorToRowStart(max(1, $height) - 1) . "\n";

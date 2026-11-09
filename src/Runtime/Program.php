@@ -342,7 +342,7 @@ final class Program
             $this->terminal = $this->injectedTerminal ?? new SystemTerminal();
             $this->surface = $this->screenMode->isInline()
                 ? new InlineSurface(new InlineScreen($this->terminal, $this->resolveColorProfile()))
-                : new FullScreenSurface($this->terminal, new Screen($this->terminal, $this->resolveColorProfile()), $this->screenMode->isAlternate(), $this->tracer);
+                : new FullScreenSurface($this->terminal, new Screen($this->terminal, $this->resolveColorProfile()), $this->tracer);
             $this->messageQueue = new SplQueue();
             $this->inputQueue = new SplQueue();
             $this->pendingWheel = new PendingWheel();
