@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="media/logo-dark.svg">
+    <img src="media/logo-light.svg" width="870" alt="elmphant/tui">
+  </picture>
+</p>
+
 # Elmphant TUI
 
 **Terminal user interfaces in PHP, built with The Elm Architecture.**

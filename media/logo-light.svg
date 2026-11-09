@@ -1,0 +1,210 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 870 80" width="870" height="80" role="img" aria-label="elmphant/tui" shape-rendering="crispEdges">
+<defs>
+<pattern id="dense" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 0h4v4h-4z M2 2h2v2h-2z" fill-rule="evenodd" fill="#1f2328"/></pattern>
+<pattern id="sparse" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="#1f2328"/></pattern>
+<pattern id="dense-php" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 0h4v4h-4z M2 2h2v2h-2z" fill-rule="evenodd" fill="#777bb4"/></pattern>
+<pattern id="sparse-php" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="#777bb4"/></pattern>
+</defs>
+<g fill="#777bb4">
+<rect x="30" y="0" width="90" height="10"/>
+<rect x="10" y="10" width="70" height="10"/>
+<rect x="90" y="10" width="20" height="10"/>
+<rect x="120" y="10" width="10" height="10"/>
+<rect x="0" y="20" width="80" height="10"/>
+<rect x="90" y="20" width="40" height="10"/>
+<rect x="10" y="30" width="90" height="10"/>
+<rect x="110" y="30" width="20" height="10"/>
+<rect x="10" y="40" width="90" height="10"/>
+<rect x="120" y="40" width="10" height="10"/>
+<rect x="10" y="50" width="20" height="10"/>
+<rect x="70" y="50" width="20" height="10"/>
+<rect x="120" y="50" width="20" height="10"/>
+<rect x="10" y="60" width="20" height="10"/>
+<rect x="70" y="60" width="20" height="10"/>
+<rect x="360" y="0" width="50" height="10"/>
+<rect x="420" y="0" width="20" height="10"/>
+<rect x="450" y="0" width="20" height="10"/>
+<rect x="480" y="0" width="50" height="10"/>
+<rect x="540" y="0" width="30" height="10"/>
+<rect x="580" y="0" width="20" height="10"/>
+<rect x="610" y="0" width="40" height="10"/>
+<rect x="360" y="10" width="20" height="10"/>
+<rect x="390" y="10" width="20" height="10"/>
+<rect x="420" y="10" width="20" height="10"/>
+<rect x="450" y="10" width="20" height="10"/>
+<rect x="480" y="10" width="20" height="10"/>
+<rect x="510" y="10" width="20" height="10"/>
+<rect x="540" y="10" width="60" height="10"/>
+<rect x="620" y="10" width="20" height="10"/>
+<rect x="360" y="20" width="20" height="10"/>
+<rect x="390" y="20" width="20" height="10"/>
+<rect x="420" y="20" width="20" height="10"/>
+<rect x="450" y="20" width="20" height="10"/>
+<rect x="480" y="20" width="20" height="10"/>
+<rect x="510" y="20" width="20" height="10"/>
+<rect x="540" y="20" width="20" height="10"/>
+<rect x="570" y="20" width="30" height="10"/>
+<rect x="620" y="20" width="20" height="10"/>
+<rect x="360" y="30" width="40" height="10"/>
+<rect x="420" y="30" width="50" height="10"/>
+<rect x="480" y="30" width="50" height="10"/>
+<rect x="540" y="30" width="20" height="10"/>
+<rect x="580" y="30" width="20" height="10"/>
+<rect x="620" y="30" width="20" height="10"/>
+<rect x="360" y="40" width="10" height="10"/>
+<rect x="370" y="40" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="380" y="40" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="420" y="40" width="10" height="10"/>
+<rect x="430" y="40" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="440" y="40" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="450" y="40" width="10" height="10"/>
+<rect x="460" y="40" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="480" y="40" width="10" height="10"/>
+<rect x="490" y="40" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="500" y="40" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="510" y="40" width="10" height="10"/>
+<rect x="520" y="40" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="540" y="40" width="10" height="10"/>
+<rect x="550" y="40" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="560" y="40" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="580" y="40" width="10" height="10"/>
+<rect x="590" y="40" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="620" y="40" width="10" height="10"/>
+<rect x="630" y="40" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="640" y="40" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="360" y="50" width="10" height="10"/>
+<rect x="370" y="50" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="380" y="50" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="420" y="50" width="10" height="10"/>
+<rect x="430" y="50" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="440" y="50" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="450" y="50" width="10" height="10"/>
+<rect x="460" y="50" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="480" y="50" width="10" height="10"/>
+<rect x="490" y="50" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="500" y="50" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="510" y="50" width="10" height="10"/>
+<rect x="520" y="50" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="540" y="50" width="10" height="10"/>
+<rect x="550" y="50" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="560" y="50" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="580" y="50" width="10" height="10"/>
+<rect x="590" y="50" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="620" y="50" width="10" height="10"/>
+<rect x="630" y="50" width="10" height="10" fill="url(#dense-php)"/>
+<rect x="640" y="50" width="10" height="10" fill="url(#sparse-php)"/>
+<rect x="360" y="60" width="20" height="10"/>
+<rect x="420" y="60" width="20" height="10"/>
+<rect x="450" y="60" width="20" height="10"/>
+<rect x="480" y="60" width="20" height="10"/>
+<rect x="510" y="60" width="20" height="10"/>
+<rect x="540" y="60" width="20" height="10"/>
+<rect x="580" y="60" width="20" height="10"/>
+<rect x="620" y="60" width="20" height="10"/>
+</g>
+<g fill="#1f2328">
+<rect x="170" y="0" width="50" height="10"/>
+<rect x="230" y="0" width="20" height="10"/>
+<rect x="280" y="0" width="70" height="10"/>
+<rect x="690" y="0" width="20" height="10"/>
+<rect x="720" y="0" width="40" height="10"/>
+<rect x="770" y="0" width="20" height="10"/>
+<rect x="800" y="0" width="20" height="10"/>
+<rect x="830" y="0" width="40" height="10"/>
+<rect x="170" y="10" width="20" height="10"/>
+<rect x="200" y="10" width="20" height="10"/>
+<rect x="230" y="10" width="20" height="10"/>
+<rect x="280" y="10" width="20" height="10"/>
+<rect x="310" y="10" width="10" height="10"/>
+<rect x="330" y="10" width="20" height="10"/>
+<rect x="690" y="10" width="20" height="10"/>
+<rect x="730" y="10" width="20" height="10"/>
+<rect x="770" y="10" width="20" height="10"/>
+<rect x="800" y="10" width="20" height="10"/>
+<rect x="840" y="10" width="20" height="10"/>
+<rect x="170" y="20" width="20" height="10"/>
+<rect x="230" y="20" width="20" height="10"/>
+<rect x="280" y="20" width="20" height="10"/>
+<rect x="310" y="20" width="10" height="10"/>
+<rect x="330" y="20" width="20" height="10"/>
+<rect x="680" y="20" width="20" height="10"/>
+<rect x="730" y="20" width="20" height="10"/>
+<rect x="770" y="20" width="20" height="10"/>
+<rect x="800" y="20" width="20" height="10"/>
+<rect x="840" y="20" width="20" height="10"/>
+<rect x="170" y="30" width="30" height="10"/>
+<rect x="230" y="30" width="20" height="10"/>
+<rect x="280" y="30" width="20" height="10"/>
+<rect x="310" y="30" width="10" height="10"/>
+<rect x="330" y="30" width="20" height="10"/>
+<rect x="680" y="30" width="20" height="10"/>
+<rect x="730" y="30" width="20" height="10"/>
+<rect x="770" y="30" width="20" height="10"/>
+<rect x="800" y="30" width="20" height="10"/>
+<rect x="840" y="30" width="20" height="10"/>
+<rect x="170" y="40" width="10" height="10"/>
+<rect x="180" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="190" y="40" width="10" height="10" fill="url(#sparse)"/>
+<rect x="230" y="40" width="10" height="10"/>
+<rect x="240" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="250" y="40" width="10" height="10" fill="url(#sparse)"/>
+<rect x="280" y="40" width="10" height="10"/>
+<rect x="290" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="300" y="40" width="10" height="10" fill="url(#sparse)"/>
+<rect x="310" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="320" y="40" width="10" height="10" fill="url(#sparse)"/>
+<rect x="330" y="40" width="10" height="10"/>
+<rect x="340" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="670" y="40" width="10" height="10"/>
+<rect x="680" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="690" y="40" width="10" height="10" fill="url(#sparse)"/>
+<rect x="730" y="40" width="10" height="10"/>
+<rect x="740" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="750" y="40" width="10" height="10" fill="url(#sparse)"/>
+<rect x="770" y="40" width="10" height="10"/>
+<rect x="780" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="790" y="40" width="10" height="10" fill="url(#sparse)"/>
+<rect x="800" y="40" width="10" height="10"/>
+<rect x="810" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="840" y="40" width="10" height="10"/>
+<rect x="850" y="40" width="10" height="10" fill="url(#dense)"/>
+<rect x="860" y="40" width="10" height="10" fill="url(#sparse)"/>
+<rect x="170" y="50" width="10" height="10"/>
+<rect x="180" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="190" y="50" width="10" height="10" fill="url(#sparse)"/>
+<rect x="200" y="50" width="20" height="10"/>
+<rect x="230" y="50" width="10" height="10"/>
+<rect x="240" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="250" y="50" width="10" height="10" fill="url(#sparse)"/>
+<rect x="260" y="50" width="10" height="10"/>
+<rect x="280" y="50" width="10" height="10"/>
+<rect x="290" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="300" y="50" width="10" height="10" fill="url(#sparse)"/>
+<rect x="310" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="320" y="50" width="10" height="10" fill="url(#sparse)"/>
+<rect x="330" y="50" width="10" height="10"/>
+<rect x="340" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="670" y="50" width="10" height="10"/>
+<rect x="680" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="690" y="50" width="10" height="10" fill="url(#sparse)"/>
+<rect x="730" y="50" width="10" height="10"/>
+<rect x="740" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="750" y="50" width="10" height="10" fill="url(#sparse)"/>
+<rect x="770" y="50" width="10" height="10"/>
+<rect x="780" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="790" y="50" width="10" height="10" fill="url(#sparse)"/>
+<rect x="800" y="50" width="10" height="10"/>
+<rect x="810" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="840" y="50" width="10" height="10"/>
+<rect x="850" y="50" width="10" height="10" fill="url(#dense)"/>
+<rect x="860" y="50" width="10" height="10" fill="url(#sparse)"/>
+<rect x="170" y="60" width="50" height="10"/>
+<rect x="230" y="60" width="40" height="10"/>
+<rect x="280" y="60" width="20" height="10"/>
+<rect x="330" y="60" width="20" height="10"/>
+<rect x="660" y="60" width="20" height="10"/>
+<rect x="730" y="60" width="20" height="10"/>
+<rect x="770" y="60" width="50" height="10"/>
+<rect x="830" y="60" width="40" height="10"/>
+</g>
+</svg>
