@@ -121,8 +121,10 @@ The program asks the terminal for features and works without them:
 
 - **Frames** are sent as one update (synchronized output), so a terminal that
   supports it never shows half a frame. Others ignore the request.
-- **Keys:** where the kitty keyboard protocol is supported, keys that send the
-  same bytes elsewhere, such as Ctrl+I and Tab, can be told apart.
+- **Keys:** where the kitty keyboard protocol or xterm's modifyOtherKeys is
+  supported, keys that send the same bytes elsewhere, such as Ctrl+I and Tab or
+  Shift+Enter and Enter, can be told apart. Inside tmux, add
+  `set -g extended-keys on`, or tmux sends them as the plain keys.
 - **Colours** follow `COLORTERM`, `TERM` and `NO_COLOR`. See
   [Styling](styling.md).
 - **Links** need OSC 8 and **copying** needs OSC 52. See

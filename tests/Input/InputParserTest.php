@@ -2211,6 +2211,15 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function modifyOtherKeysShiftedCharacterIsThatCharacter(): void
+    {
+        self::assertEquals(new KeyMsg('?'), InputParser::parseSequence("\x1b[27;2;63~"));
+        self::assertEquals(new KeyMsg('G'), InputParser::parseSequence("\x1b[27;2;71~"));
+        self::assertEquals(new KeyMsg(' ', shift: true), InputParser::parseSequence("\x1b[27;2;32~"));
+        self::assertEquals(new KeyMsg('G', ctrl: true, shift: true), InputParser::parseSequence("\x1b[27;6;71~"));
+    }
+
+    #[Test]
     public function altOAndAltBracketHeldUntilATimeoutArriveAsAltCombos(): void
     {
         self::assertEquals(new KeyMsg('O', alt: true), InputParser::parseSequence("\x1bO"));

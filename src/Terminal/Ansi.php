@@ -34,6 +34,9 @@ final class Ansi
     public const ENABLE_KITTY_KEYBOARD = "\x1b[>1u";
     public const DISABLE_KITTY_KEYBOARD = "\x1b[<u";
 
+    public const ENABLE_MODIFY_OTHER_KEYS = "\x1b[>4;2m";
+    public const RESET_MODIFY_OTHER_KEYS = "\x1b[>4m";
+
     public const ENABLE_BRACKETED_PASTE = "\x1b[?2004h";
     public const DISABLE_BRACKETED_PASTE = "\x1b[?2004l";
 

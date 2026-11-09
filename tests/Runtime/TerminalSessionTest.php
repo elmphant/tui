@@ -118,6 +118,29 @@ final class TerminalSessionTest extends TestCase
     }
 
     #[Test]
+    public function modifiedKeysAreAskedForWhileTheSessionIsActive(): void
+    {
+        $terminal = new VirtualTerminal(80, 24);
+        $session = new TerminalSession($terminal, true, false);
+
+        $session->start();
+        self::assertStringContainsString(Ansi::ENABLE_MODIFY_OTHER_KEYS, $terminal->output());
+
+        $terminal->clearOutput();
+        $session->suspend();
+        self::assertStringContainsString(Ansi::RESET_MODIFY_OTHER_KEYS, $terminal->output());
+
+        $terminal->clearOutput();
+        $session->resume();
+        self::assertStringContainsString(Ansi::ENABLE_MODIFY_OTHER_KEYS, $terminal->output());
+
+        $terminal->clearOutput();
+        $session->close();
+        $session->close();
+        self::assertSame(1, substr_count($terminal->output(), Ansi::RESET_MODIFY_OTHER_KEYS));
+    }
+
+    #[Test]
     public function failedActivationRestoresOnlyModesThatWereEnabled(): void
     {
         $terminal = $this->createMock(Terminal::class);

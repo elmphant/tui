@@ -23,6 +23,7 @@ final class TerminalSession
     private bool $mouseTrackingActive = false;
     private bool $kittySupported = false;
     private bool $kittyProtocolActive = false;
+    private bool $modifyOtherKeysActive = false;
 
     public function __construct(
         private readonly Terminal $terminal,
@@ -130,6 +131,10 @@ final class TerminalSession
             $this->terminal->enableMouseTracking();
             $this->mouseTrackingActive = true;
         }
+        if (!$this->modifyOtherKeysActive) {
+            $this->terminal->write(Ansi::ENABLE_MODIFY_OTHER_KEYS);
+            $this->modifyOtherKeysActive = true;
+        }
     }
 
     private function restoreActiveModes(bool $final): void
@@ -144,6 +149,9 @@ final class TerminalSession
         }
         if ($this->kittyProtocolActive) {
             $this->kittyProtocolActive = !$this->attempt($this->terminal->disableKittyProtocol(...));
+        }
+        if ($this->modifyOtherKeysActive) {
+            $this->modifyOtherKeysActive = !$this->attempt(fn () => $this->terminal->write(Ansi::RESET_MODIFY_OTHER_KEYS));
         }
         if ($this->altScreenActive) {
             $this->altScreenActive = !$this->attempt($this->terminal->leaveAltScreen(...));
@@ -176,7 +184,8 @@ final class TerminalSession
             || $this->cursorHidden
             || $this->altScreenActive
             || $this->mouseTrackingActive
-            || $this->kittyProtocolActive;
+            || $this->kittyProtocolActive
+            || $this->modifyOtherKeysActive;
     }
 
     /**

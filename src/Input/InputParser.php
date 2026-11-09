@@ -215,7 +215,13 @@ final class InputParser
         }
 
         if (preg_match('/^27;(\d+);(\d+)~$/', $body, $modifyOtherKeys) === 1) {
-            return self::parseKittyCsiU("{$modifyOtherKeys[2]};{$modifyOtherKeys[1]}u");
+            $codepoint = (int)$modifyOtherKeys[2];
+            // xterm's mode 2 adds Shift to a typed character that already carries it.
+            if ($modifyOtherKeys[1] === '2' && $codepoint > 32 && self::isPrintable($codepoint)) {
+                return new KeyMsg(mb_chr($codepoint, 'UTF-8'));
+            }
+
+            return self::parseKittyCsiU("{$codepoint};{$modifyOtherKeys[1]}u");
         }
 
         // `?`, `>` and `=` introduce device reports; `<` introduces mouse input.
