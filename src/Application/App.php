@@ -34,6 +34,7 @@ use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\DescribesKeys;
 use Elmphant\Tui\Runtime\RoutesFocus;
 use Elmphant\Tui\Runtime\SizesItsRegion;
+use Elmphant\Tui\Runtime\WantsTicks;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
@@ -53,7 +54,7 @@ use Elmphant\Tui\Widget\WidgetContainer;
 use LogicException;
 use WeakMap;
 
-abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme, BindsChords, DescribesKeys, SizesItsRegion
+abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme, BindsChords, DescribesKeys, SizesItsRegion, WantsTicks
 {
     use BindsProperties;
     use Cloneable;
@@ -75,6 +76,14 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     {
         return Cmd::batch($this->setup(), ...array_map(
             static fn (Mount $mount): ?Cmd => $mount->model instanceof Initializes ? $mount->addressed($mount->model->init()) : null,
+            $this->allMounts(),
+        ));
+    }
+
+    final public function wantedTicks(): ?Cmd
+    {
+        return Cmd::batch($this->ticks(), ...array_map(
+            static fn (Mount $mount): ?Cmd => $mount->model instanceof WantsTicks ? $mount->addressed($mount->model->wantedTicks()) : null,
             $this->allMounts(),
         ));
     }
@@ -243,6 +252,14 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      * Starts commands only. The starting state comes from the constructor or a factory.
      */
     protected function setup(): ?Cmd
+    {
+        return null;
+    }
+
+    /**
+     * Asked whenever the app changes. A tick left out stops.
+     */
+    protected function ticks(): ?Cmd
     {
         return null;
     }

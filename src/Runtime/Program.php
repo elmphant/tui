@@ -162,6 +162,8 @@ final class Program
     private float $paintedAt = 0.0;
     private Clock $clock;
     private FocusState $focus;
+    private WantedTicks $wantedTicks;
+    private ?Model $ticksAskedOf = null;
 
     /**
      * @param TModel $initialModel
@@ -357,6 +359,8 @@ final class Program
             $this->setup();
             $this->startTheme = $this->drawnTheme = $this->resolveTheme();
             $this->renderPass = RenderPass::new($this->startTheme, $this->resolveColorProfile(), flashes: $this->flashes);
+            $this->wantedTicks = new WantedTicks();
+            $this->ticksAskedOf = null;
             $model = $this->model;
             $this->dispatchCommand($this->capturingOutput('init', static fn (): ?Cmd => $model->init()));
             if ($this->isRunning()) {
@@ -1295,8 +1299,33 @@ final class Program
         $pass->floats->commit();
 
         $this->frames->drawn($this->clock->now(), $pass->clock->repaintDelay());
+        $this->keepTheWantedTicks();
 
         return true;
+    }
+
+    /**
+     * After drawing, so a view that throws stays a render failure.
+     */
+    private function keepTheWantedTicks(): void
+    {
+        $model = $this->model;
+        if (!$model instanceof WantsTicks || $model === $this->ticksAskedOf) {
+            return;
+        }
+        $this->ticksAskedOf = $model;
+
+        try {
+            $changes = $this->wantedTicks->follow($this->capturingOutput('wantedTicks', static fn (): ?Cmd => $model->wantedTicks()));
+        } catch (Throwable $error) {
+            $this->messageQueue->enqueue(new ErrorMsg($error, ErrorSource::Command));
+
+            return;
+        }
+
+        foreach ($changes as $change) {
+            $this->dispatchCommand($change->command, $change->wrap, $change->scope);
+        }
     }
 
     private function pendingChord(): ?PendingChord

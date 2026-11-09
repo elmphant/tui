@@ -287,7 +287,7 @@ arrives in `onMessage()`, matched by the command's `EffectId`. `setup()` returns
 the commands to start with, such as the first load. It only starts commands and
 cannot change the App, so build the starting state in the constructor or a
 static factory. `onTick()` runs on
-the clock `Cmd::tick()` starts, and an animated widget needs neither. See
+the clock that `ticks()` or `Cmd::tick()` starts, and an animated widget needs neither. See
 [Effects](effects.md).
 
 ## Mounting a sub-model
@@ -403,6 +403,7 @@ abstract readonly class App
     public function theme(): ?Theme { return null; }          // asked every frame; null keeps the start theme
 
     protected function setup(): ?Cmd { return null; }         // commands to run at start; the starting state comes from the constructor
+    protected function ticks(): ?Cmd { return null; }         // the named ticks that should run now; a tick left out stops
     protected function onKey(KeyMsg $message, InputContext $input): self|UpdateResult { return $this; }  // $input: screen(), focused(), hints(), componentAt($mouse)
     protected function onMouse(MouseMsg $message, InputContext $input): self|UpdateResult { return $this; }
     protected function onTick(TickMsg $message, InputContext $input): self|UpdateResult { return $this; }

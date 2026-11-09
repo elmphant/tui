@@ -36,13 +36,48 @@ Cmd::exec(['git', 'status'])        // run, then get the whole result
 Cmd::stream(['tail', '-f', 'log'])  // get the output while it runs
 ```
 
-- `Cmd::tick()` repeats by itself. Ask once, not on every tick.
+- `Cmd::tick()` repeats by itself. Ask once, not on every tick. When the pace
+  depends on the state, use [ticks that follow the state](#ticks-that-follow-the-state).
 - `Cmd::call()` runs on the main loop. Keep it short, and use `fork()`, `exec()`,
   `stream()` or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
 - `Cmd::listen()` stops at the end of the stream or on `Cmd::cancel()`. Cancel
   it before you close the stream yourself.
 - `Cmd::println()` prints only in an inline program, and the lines stay in the
   scrollback. See [Drawing inline](running.md#drawing-inline).
+
+## Ticks that follow the state
+
+A clock that runs only while something happens, or at another pace, does not
+need a `Cmd::tick()` and a `Cmd::cancel()` at every change. Say which ticks
+should run now, and the framework starts, replaces and stops them to match:
+
+```php
+use Elmphant\Tui\Application\App;
+use Elmphant\Tui\Core\{Cmd, EffectId};
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Stopwatch extends App
+{
+    public function __construct(public bool $running = false)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Text::new($this->running ? 'running' : 'stopped');
+    }
+
+    protected function ticks(): ?Cmd
+    {
+        return $this->running ? Cmd::tick(1.0, EffectId::named('clock')) : null;
+    }
+}
+```
+
+`ticks()` is asked whenever the App changes. Each tick needs a name. A mounted
+model implements `WantsTicks::wantedTicks()` and its ticks run under the
+mount's name. The `TickMsg` arrives in `onTick()` as before.
 
 ## Fibers
 

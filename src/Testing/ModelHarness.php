@@ -60,6 +60,8 @@ use Elmphant\Tui\Runtime\KeyHelpOverlay;
 use Elmphant\Tui\Runtime\Model;
 use Elmphant\Tui\Runtime\RoutesFocus;
 use Elmphant\Tui\Runtime\Toasts;
+use Elmphant\Tui\Runtime\WantedTicks;
+use Elmphant\Tui\Runtime\WantsTicks;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
@@ -85,6 +87,7 @@ final class ModelHarness
     private ChordTracker $chordTracker;
     private KeyHelpOverlay $keyHelp;
     private Toasts $toasts;
+    private WantedTicks $wantedTicks;
 
     private Flashes $flashes;
     private float $now = 0.0;
@@ -140,6 +143,7 @@ final class ModelHarness
         $this->chordTracker = new ChordTracker();
         $this->keyHelp = new KeyHelpOverlay();
         $this->toasts = new Toasts();
+        $this->wantedTicks = new WantedTicks();
     }
 
     /**
@@ -674,6 +678,7 @@ final class ModelHarness
             /** @var TModel $next */
             $next = self::requireModel($result->model);
             $this->model = $next;
+            $this->keepTheWantedTicks();
             $this->lastCommand = $result->command;
             $this->record($this->lastCommand);
             $this->moveFocusFor($this->lastCommand);
@@ -689,6 +694,17 @@ final class ModelHarness
         }
 
         return $this;
+    }
+
+    private function keepTheWantedTicks(): void
+    {
+        if (!$this->model instanceof WantsTicks) {
+            return;
+        }
+
+        foreach ($this->wantedTicks->follow($this->model->wantedTicks()) as $change) {
+            $this->recordOne($change->command, $change->wrap, $change->scope);
+        }
     }
 
     /**
