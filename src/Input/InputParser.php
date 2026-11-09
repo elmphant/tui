@@ -24,6 +24,14 @@ final class InputParser
             return new KeyMsg($sequence[1], alt: true);
         }
 
+        if (str_starts_with($sequence, "\x1b\x1b[") || str_starts_with($sequence, "\x1b\x1bO")) {
+            $key = self::parseSequence(substr($sequence, 1));
+
+            return $key instanceof KeyMsg
+                ? new KeyMsg($key->key, ctrl: $key->ctrl, alt: true, shift: $key->shift, eventType: $key->eventType)
+                : $key;
+        }
+
         if (str_starts_with($sequence, "\x1b[")) {
             return self::parseSequenceCsi($sequence);
         }

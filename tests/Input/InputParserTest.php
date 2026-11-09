@@ -323,6 +323,20 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function anEscapeBeforeAnArrowOrFunctionKeySequenceIsAlt(): void
+    {
+        $arrow = InputParser::parseSequence("\x1b\x1b[A");
+        $functionKey = InputParser::parseSequence("\x1b\x1bOP");
+
+        self::assertInstanceOf(KeyMsg::class, $arrow);
+        self::assertSame(Key::Up, $arrow->key);
+        self::assertTrue($arrow->alt);
+        self::assertInstanceOf(KeyMsg::class, $functionKey);
+        self::assertSame(Key::F1, $functionKey->key);
+        self::assertTrue($functionKey->alt);
+    }
+
+    #[Test]
     public function parseAltKey(): void
     {
         $messages = InputParser::parse("\x1bx")->messages;

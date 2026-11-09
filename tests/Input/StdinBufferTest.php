@@ -184,14 +184,27 @@ final class StdinBufferTest extends TestCase
     }
 
     #[Test]
-    public function escEscFollowedByCsiSplitsCorrectly(): void
+    public function escEscBeforeACsiIsOneSequenceWithTheEscapeKept(): void
     {
         $sequences = [];
         $buffer = new StdinBuffer(
             onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
         );
         $buffer->process("\x1b\x1b[A");
-        $this->assertSame(["\x1b", "\x1b[A"], $sequences);
+        $this->assertSame(["\x1b\x1b[A"], $sequences);
+    }
+
+    #[Test]
+    public function escEscBeforeAnIncompleteCsiWaitsForTheRest(): void
+    {
+        $sequences = [];
+        $buffer = new StdinBuffer(
+            onSequence: function (string $seq) use (&$sequences) { $sequences[] = $seq; },
+        );
+        $buffer->process("\x1b\x1b[1;");
+        $this->assertSame([], $sequences);
+        $buffer->process('5A');
+        $this->assertSame(["\x1b\x1b[1;5A"], $sequences);
     }
 
     #[Test]
@@ -1189,7 +1202,7 @@ final class StdinBufferTest extends TestCase
      */
     public static function escFollowedByOpenerProvider(): iterable
     {
-        yield 'SS3' => ["\x1b\x1bOP", ["\x1b", "\x1bOP"]];
+        yield 'SS3' => ["\x1b\x1bOP", ["\x1b\x1bOP"]];
         yield 'DCS reply' => ["\x1b\x1bP1\$r\x1b\\x", ["\x1b", 'x']];
         yield 'APC reply' => ["\x1b\x1b_Gi=1;OK\x1b\\y", ["\x1b", 'y']];
     }

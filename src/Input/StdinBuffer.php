@@ -226,7 +226,10 @@ final class StdinBuffer
                 return null;
             }
             $third = $this->buffer[2];
-            if ($third === '[' || $third === 'O' || $third === ']' || $third === 'P' || $third === '_') {
+            if ($third === '[' || $third === 'O') {
+                return $this->extractAltPrefixedSequence($third === '[');
+            }
+            if ($third === ']' || $third === 'P' || $third === '_') {
                 $this->buffer = substr($this->buffer, 1);
 
                 return "\x1b";
@@ -245,6 +248,22 @@ final class StdinBuffer
         }
 
         return null;
+    }
+
+    /**
+     * A terminal with Option or Alt as Meta sends ESC before the whole sequence, so Alt+Up arrives as ESC ESC [ A.
+     */
+    private function extractAltPrefixedSequence(bool $csi): ?string
+    {
+        $this->buffer = substr($this->buffer, 1);
+        $sequence = $csi ? $this->extractCsiSequence() : $this->extractSs3Sequence();
+        if ($sequence === null) {
+            $this->buffer = "\x1b" . $this->buffer;
+
+            return null;
+        }
+
+        return "\x1b" . $sequence;
     }
 
     /**
