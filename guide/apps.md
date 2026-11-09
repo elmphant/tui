@@ -420,6 +420,10 @@ abstract readonly class App
 }
 ```
 
+If your `setup()` always answers a command, declare it as `setup(): Cmd`, and
+a `theme()` that always answers one as `theme(): Theme`. PHPStan's strict rules
+otherwise report `return.unusedType` for the `null` the method never returns.
+
 `App`, `AppActions` and `InputContext` live in `Elmphant\Tui\Application`,
 `Cmd`, `Message` and `UpdateResult` in `Elmphant\Tui\Core`, and the messages
 (`KeyMsg`, `ProcessResultMsg`, the outcomes) in `Elmphant\Tui\Message`.
