@@ -239,17 +239,6 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function aTruncatedX10MouseReportWaitsForTheRestOfItself(): void
-    {
-        $raw = "\x1b[M" . chr(32) . chr(33);
-
-        $result = InputParser::parse($raw);
-
-        self::assertSame([], $result->messages, 'a coordinate byte may look like a final byte, so the count is what ends it');
-        self::assertSame($raw, $result->remainder);
-    }
-
-    #[Test]
     public function parseX10MouseReportWithHighCoordinates(): void
     {
         $raw = "\x1b[M" . chr(32) . chr(32 + 200) . chr(32 + 100);
@@ -463,14 +452,6 @@ final class InputParserTest extends TestCase
         $result = InputParser::parse('');
         self::assertIsArray($result->messages);
         self::assertCount(0, $result->messages);
-    }
-
-    #[Test]
-    public function parserRecognizesEscapeAtEndOfInputAsRemainder(): void
-    {
-        $result = InputParser::parse("\x1b");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b", $result->remainder);
     }
 
     #[Test]
@@ -777,12 +758,9 @@ final class InputParserTest extends TestCase
     #[Test]
     public function parserCsiParameterCollectionStopsAtFinalByte0x40(): void
     {
-        // '@' is 0x40, the lowest final byte. A byte below it would still
-        // be a parameter, leaving the sequence unfinished and held as a remainder.
         $result = InputParser::parse("\x1b[@");
 
-        self::assertSame([], $result->messages);
-        self::assertSame('', $result->remainder, "'@' ends the sequence rather than continuing it");
+        self::assertSame([], $result->messages, "'@' ends the sequence rather than continuing it");
     }
 
     #[Test]
@@ -802,27 +780,11 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function parserCsiIncompleteWithParameterOnlyReturnsRemainder(): void
-    {
-        $result = InputParser::parse("\x1b[1");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b[1", $result->remainder);
-    }
-
-    #[Test]
     public function parserCsiExcessiveLengthBreaksLoop(): void
     {
         $longParams = str_repeat('1', 30);
         $result = InputParser::parse("\x1b[" . $longParams . 'A');
         self::assertIsArray($result->messages);
-    }
-
-    #[Test]
-    public function parserCsiEmptyReturnsRemainder(): void
-    {
-        $result = InputParser::parse("\x1b[");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b[", $result->remainder);
     }
 
     #[Test]
@@ -1291,14 +1253,6 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function parserSgrMouseIncompleteSequenceReturnsRemainder(): void
-    {
-        $result = InputParser::parse("\x1b[<0;5;3");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b[<0;5;3", $result->remainder);
-    }
-
-    #[Test]
     public function anSgrMouseReportWithTooFewPartsIsDropped(): void
     {
         self::assertSame([], InputParser::parse("\x1b[<0;5M")->messages);
@@ -1404,14 +1358,6 @@ final class InputParserTest extends TestCase
     // ===================================================================
     // SS3 sequence boundary: position + 2 < length
     // ===================================================================
-
-    #[Test]
-    public function parserEscOAtEndOfInputReturnsRemainder(): void
-    {
-        $result = InputParser::parse("\x1bO");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1bO", $result->remainder);
-    }
 
     #[Test]
     public function parserReturnsArrayFromNonEmptyInput(): void
@@ -1532,15 +1478,6 @@ final class InputParserTest extends TestCase
     // ===================================================================
     // Bare escape edge cases
     // ===================================================================
-
-    #[Test]
-    public function parserEscapeFollowedByEscapeProducesEscapeAndRemainder(): void
-    {
-        $result = InputParser::parse("\x1b\x1b");
-        self::assertCount(1, $result->messages);
-        self::assertSame(Key::Escape, $result->messages[0]->key);
-        self::assertSame("\x1b", $result->remainder);
-    }
 
     // ===================================================================
     // Mouse button match default arm (buttonBase=3)
@@ -1840,14 +1777,6 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function parserEscAtEndOfBufferIsRemainder(): void
-    {
-        $result = InputParser::parse("\x1b");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b", $result->remainder);
-    }
-
-    #[Test]
     public function parserEscNotAtEndChecksNextByte(): void
     {
         // position + 1 < length => checks next byte
@@ -1940,10 +1869,6 @@ final class InputParserTest extends TestCase
         self::assertSame('A', $messages[0]->key);
     }
 
-    // ===================================================================
-    // InputParseResult return type and remainder handling
-    // ===================================================================
-
     #[Test]
     public function parseReturnsInputParseResult(): void
     {
@@ -1952,260 +1877,72 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
-    public function completeInputHasEmptyRemainder(): void
-    {
-        $result = InputParser::parse('hello');
-        self::assertCount(5, $result->messages);
-        self::assertSame('', $result->remainder);
-    }
-
-    #[Test]
-    public function splitEscapeReturnsRemainder(): void
-    {
-        $result = InputParser::parse("a\x1b");
-        self::assertCount(1, $result->messages);
-        self::assertSame('a', $result->messages[0]->key);
-        self::assertSame("\x1b", $result->remainder);
-    }
-
-    #[Test]
-    public function splitCsiSequenceReturnsRemainder(): void
-    {
-        $result = InputParser::parse("\x1b[");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b[", $result->remainder);
-    }
-
-    #[Test]
-    public function splitCsiWithPartialParamsReturnsRemainder(): void
-    {
-        $result = InputParser::parse("\x1b[1;5");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b[1;5", $result->remainder);
-    }
-
-    #[Test]
-    public function splitUtf8TwoByteReturnsRemainder(): void
-    {
-        $result = InputParser::parse("a\xc3");
-        self::assertCount(1, $result->messages);
-        self::assertSame('a', $result->messages[0]->key);
-        self::assertSame("\xc3", $result->remainder);
-    }
-
-    #[Test]
-    public function splitUtf8ThreeByteReturnsRemainder(): void
-    {
-        $result = InputParser::parse("a\xE4\xBD");
-        self::assertCount(1, $result->messages);
-        self::assertSame('a', $result->messages[0]->key);
-        self::assertSame("\xE4\xBD", $result->remainder);
-    }
-
-    #[Test]
-    public function splitUtf8FourByteReturnsRemainder(): void
-    {
-        $result = InputParser::parse("a\xf0\x9f\x98");
-        self::assertCount(1, $result->messages);
-        self::assertSame('a', $result->messages[0]->key);
-        self::assertSame("\xf0\x9f\x98", $result->remainder);
-    }
-
-    #[Test]
-    public function remainderCompletedInNextParseCsi(): void
-    {
-        $first = InputParser::parse("\x1b[");
-        self::assertSame([], $first->messages);
-
-        $second = InputParser::parse($first->remainder . 'A');
-        self::assertCount(1, $second->messages);
-        self::assertSame(Key::Up, $second->messages[0]->key);
-        self::assertSame('', $second->remainder);
-    }
-
-    #[Test]
-    public function remainderCompletedInNextParseUtf8(): void
-    {
-        $first = InputParser::parse("\xE4\xBD");
-        self::assertSame([], $first->messages);
-
-        $second = InputParser::parse($first->remainder . "\xA0");
-        self::assertCount(1, $second->messages);
-        self::assertSame("\xE4\xBD\xA0", $second->messages[0]->key);
-        self::assertSame('', $second->remainder);
-    }
-
-    #[Test]
-    public function remainderCompletedInNextParseEscape(): void
-    {
-        $first = InputParser::parse("\x1b");
-        self::assertSame([], $first->messages);
-
-        $second = InputParser::parse($first->remainder . '[B');
-        self::assertCount(1, $second->messages);
-        self::assertSame(Key::Down, $second->messages[0]->key);
-        self::assertSame('', $second->remainder);
-    }
-
-    #[Test]
-    public function splitSgrMouseReturnsRemainder(): void
-    {
-        $result = InputParser::parse("\x1b[<0;5;3");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b[<0;5;3", $result->remainder);
-    }
-
-    #[Test]
-    public function splitSgrMouseCompletedInNextParse(): void
-    {
-        $first = InputParser::parse("\x1b[<0;5;3");
-        self::assertSame([], $first->messages);
-
-        $second = InputParser::parse($first->remainder . 'M');
-        self::assertCount(1, $second->messages);
-        self::assertInstanceOf(MouseMsg::class, $second->messages[0]);
-        self::assertSame(MouseAction::Press, $second->messages[0]->action);
-        self::assertSame('', $second->remainder);
-    }
-
-    #[Test]
-    public function bareEscapeAtEndIsRemainder(): void
+    public function aLoneEscapeAtTheEndIsTheEscapeKey(): void
     {
         $result = InputParser::parse("\x1b");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b", $result->remainder);
-    }
-
-    #[Test]
-    public function splitSsThreeReturnsRemainder(): void
-    {
-        $result = InputParser::parse("\x1bO");
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1bO", $result->remainder);
-    }
-
-    #[Test]
-    public function splitSsThreeCompletedInNextParse(): void
-    {
-        $first = InputParser::parse("\x1bO");
-        self::assertSame([], $first->messages);
-
-        $second = InputParser::parse($first->remainder . 'P');
-        self::assertCount(1, $second->messages);
-        self::assertSame(Key::F1, $second->messages[0]->key);
-        self::assertSame('', $second->remainder);
-    }
-
-    #[Test]
-    public function remainderExcludesParsedBytesBeforeIncompleteCsi(): void
-    {
-        $result = InputParser::parse("ab\x1b[1;5");
-        self::assertCount(2, $result->messages);
-        self::assertSame('a', $result->messages[0]->key);
-        self::assertSame('b', $result->messages[1]->key);
-        self::assertSame("\x1b[1;5", $result->remainder);
-    }
-
-    #[Test]
-    public function remainderExcludesParsedBytesBeforeIncompleteSsThree(): void
-    {
-        $result = InputParser::parse("x\x1bO");
-        self::assertCount(1, $result->messages);
-        self::assertSame('x', $result->messages[0]->key);
-        self::assertSame("\x1bO", $result->remainder);
-    }
-
-    #[Test]
-    public function flushBareEscapeEmitsKeyEscape(): void
-    {
-        $result = InputParser::parse("\x1b", flush: true);
         self::assertCount(1, $result->messages);
         self::assertSame(Key::Escape, $result->messages[0]->key);
-        self::assertSame('', $result->remainder);
     }
 
     #[Test]
-    public function flushBareEscapeAfterParsedCharsEmitsKeyEscape(): void
+    public function anEscapeAfterTypedCharactersIsTheEscapeKey(): void
     {
-        $result = InputParser::parse("a\x1b", flush: true);
+        $result = InputParser::parse("a\x1b");
         self::assertCount(2, $result->messages);
         self::assertSame('a', $result->messages[0]->key);
         self::assertSame(Key::Escape, $result->messages[1]->key);
-        self::assertSame('', $result->remainder);
     }
 
     #[Test]
-    public function flushIncompleteCsiEmitsEscapeAndLiteralChars(): void
+    public function anUnfinishedCsiIsEscapeAndItsCharacters(): void
     {
-        $result = InputParser::parse("\x1b[1;5", flush: true);
+        $result = InputParser::parse("\x1b[1;5");
         self::assertCount(5, $result->messages);
         self::assertSame(Key::Escape, $result->messages[0]->key);
         self::assertSame('[', $result->messages[1]->key);
         self::assertSame('1', $result->messages[2]->key);
         self::assertSame(';', $result->messages[3]->key);
         self::assertSame('5', $result->messages[4]->key);
-        self::assertSame('', $result->remainder);
     }
 
     #[Test]
-    public function flushIncompleteSsThreeEmitsEscapeAndLiteral(): void
+    public function anUnfinishedSsThreeIsEscapeAndItsLetter(): void
     {
-        $result = InputParser::parse("\x1bO", flush: true);
+        $result = InputParser::parse("\x1bO");
         self::assertCount(2, $result->messages);
         self::assertSame(Key::Escape, $result->messages[0]->key);
         self::assertSame('O', $result->messages[1]->key);
-        self::assertSame('', $result->remainder);
     }
 
     #[Test]
-    public function flushTruncatedUtf8EmitsReplacementPerByte(): void
+    public function aCutOffUtf8CharacterIsAReplacementCharacter(): void
     {
-        $result = InputParser::parse("\xc3", flush: true);
+        $result = InputParser::parse("\xc3");
         self::assertCount(1, $result->messages);
         self::assertSame("\u{FFFD}", $result->messages[0]->key);
-        self::assertSame('', $result->remainder);
     }
 
     #[Test]
-    public function flushIncompleteSgrMouseEmitsLiteralChars(): void
+    public function anUnfinishedSgrMouseReportIsEscapeAndItsCharacters(): void
     {
-        $result = InputParser::parse("\x1b[<0;5;3", flush: true);
+        $result = InputParser::parse("\x1b[<0;5;3");
         self::assertCount(8, $result->messages);
         self::assertSame(Key::Escape, $result->messages[0]->key);
-        self::assertSame('', $result->remainder);
     }
 
     #[Test]
-    public function flushFalsePreservesRemainderBehavior(): void
+    public function twoEscapesAtTheEndAreTwoEscapeKeys(): void
     {
-        $result = InputParser::parse("\x1b", flush: false);
-        self::assertSame([], $result->messages);
-        self::assertSame("\x1b", $result->remainder);
-    }
-
-    #[Test]
-    public function flushCompleteInputHasNoEffect(): void
-    {
-        $normal = InputParser::parse('abc');
-        $flushed = InputParser::parse('abc', flush: true);
-        self::assertCount(3, $flushed->messages);
-        self::assertSame('', $flushed->remainder);
-        self::assertEquals($normal->messages, $flushed->messages);
-    }
-
-    #[Test]
-    public function flushMultipleConsecutiveEscapesEmitsAll(): void
-    {
-        $result = InputParser::parse("\x1b\x1b", flush: true);
+        $result = InputParser::parse("\x1b\x1b");
         self::assertCount(2, $result->messages);
         self::assertSame(Key::Escape, $result->messages[0]->key);
         self::assertSame(Key::Escape, $result->messages[1]->key);
     }
 
     #[Test]
-    public function flushIncompleteCsiWithByte0x80EmitsReplacementChar(): void
+    public function aHighByteInAnUnfinishedCsiIsAReplacementCharacter(): void
     {
-        $result = InputParser::parse("\x1b[\x80", flush: true);
+        $result = InputParser::parse("\x1b[\x80");
         self::assertCount(3, $result->messages);
         self::assertSame(Key::Escape, $result->messages[0]->key);
         self::assertSame('[', $result->messages[1]->key);

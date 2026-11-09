@@ -8,7 +8,7 @@ use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseMsg;
 
 /**
- * @internal input framing result consumed by Program
+ * @internal
  */
 final readonly class InputParseResult
 {
@@ -17,7 +17,6 @@ final readonly class InputParseResult
      */
     public function __construct(
         public array $messages,
-        public string $remainder = '',
     ) {
     }
 }

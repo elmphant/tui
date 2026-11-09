@@ -15,7 +15,7 @@ final class ShiftTabPreflightTest extends TestCase
     #[Test]
     public function asciiBackTabCsiZYieldsShiftTab(): void
     {
-        $result = InputParser::parse("\x1b[Z", flush: true);
+        $result = InputParser::parse("\x1b[Z");
 
         self::assertCount(1, $result->messages);
         $msg = $result->messages[0];

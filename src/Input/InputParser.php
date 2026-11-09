@@ -36,7 +36,7 @@ final class InputParser
             return self::parseSequenceCsi($sequence);
         }
 
-        $result = self::parse($sequence, flush: true);
+        $result = self::parse($sequence);
 
         return $result->messages[0] ?? null;
     }
@@ -46,7 +46,10 @@ final class InputParser
         return str_starts_with($sequence, "\x1b[?") && str_ends_with($sequence, 'u');
     }
 
-    public static function parse(string $raw, bool $flush = false): InputParseResult
+    /**
+     * StdinBuffer hands over whole sequences. Anything unfinished here arrives as plain characters.
+     */
+    public static function parse(string $raw): InputParseResult
     {
         $messages = [];
         $length = strlen($raw);
@@ -54,11 +57,13 @@ final class InputParser
 
         while ($position < $length) {
             $step = $raw[$position] === "\x1b"
-                ? self::escapeAt($raw, $position, $length, $flush)
+                ? self::escapeAt($raw, $position, $length)
                 : self::byteAt($raw, $position, $length);
 
             if ($step === null) {
-                return self::incomplete($raw, $position, $length, $messages, $flush);
+                self::emitRemainderAsLiterals($raw, $position, $length, $messages);
+
+                return new InputParseResult($messages);
             }
 
             [$message, $position] = $step;
@@ -75,10 +80,10 @@ final class InputParser
      *
      * @return array{KeyMsg|MouseMsg|null, int}|null
      */
-    private static function escapeAt(string $raw, int $position, int $length, bool $flush): ?array
+    private static function escapeAt(string $raw, int $position, int $length): ?array
     {
         if ($position + 1 >= $length) {
-            return $flush ? [new KeyMsg(Key::Escape), $position + 1] : null;
+            return null;
         }
 
         $next = $raw[$position + 1];
@@ -189,20 +194,6 @@ final class InputParser
         };
 
         return [$key, $position + 1];
-    }
-
-    /**
-     * @param list<KeyMsg|MouseMsg> $messages
-     */
-    private static function incomplete(string $raw, int $position, int $length, array $messages, bool $flush): InputParseResult
-    {
-        if (!$flush) {
-            return new InputParseResult($messages, substr($raw, $position));
-        }
-
-        self::emitRemainderAsLiterals($raw, $position, $length, $messages);
-
-        return new InputParseResult($messages);
     }
 
     private static function parseSequenceCsi(string $sequence): ?Message
