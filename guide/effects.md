@@ -102,8 +102,8 @@ return new UpdateResult($this, Cmd::fork(static function (Closure $send) use ($n
 
 The messages travel back with `serialize()`, so they hold values, never a
 closure or an open connection. If the work throws, you get an `ErrorMsg` with
-`ErrorSource::Fork`. Its error is a `ForkedWorkFailed` that carries the thrown
-class, message and trace as text. If the copy dies without answering, you get
+`ErrorSource::Fork`. Its error is an `Elmphant\Tui\Message\ForkedWorkFailed`
+that carries the thrown class, message and trace as text. If the copy dies without answering, you get
 an `ErrorMsg` too. Cancelling the effect, replacing it under the same
 `EffectId`, or quitting kills the copy and every program it started.
 
