@@ -139,6 +139,10 @@ Rules for binding:
 - **A widget built in `view()` instead of kept on the App** is bound with
   `Component::bind($id, $widget, static fn (self $app, Widget $updated): self => …)`,
   where the closure stores it wherever it belongs.
+- **`view()` reads the App and nothing else.** The framework keeps the result
+  for each App value and draws it again until the App changes. A `view()` that
+  reads the clock, a file or a global shows old content until something else
+  changes the App.
 
 ## Following the cursor
 
