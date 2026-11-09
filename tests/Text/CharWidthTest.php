@@ -187,6 +187,14 @@ final class CharWidthTest extends TestCase
     }
 
     #[Test]
+    public function aHalfwidthSoundMarkTakesACellOfItsOwnAfterTheKanaItJoins(): void
+    {
+        self::assertSame(2, CharWidth::graphemeWidth("\u{FF76}\u{FF9E}"));
+        self::assertSame(4, CharWidth::stringWidth("\u{FF76}\u{FF9E}\u{FF8B}\u{FF9F}"));
+        self::assertSame(2, CharWidth::graphemeWidth("\u{FF9E}\u{FF9E}"));
+    }
+
+    #[Test]
     public function stringWidthWithMixedContent(): void
     {
         self::assertSame(5, CharWidth::stringWidth('Hello'));

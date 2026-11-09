@@ -420,7 +420,12 @@ final class CharWidth
             return 2;
         }
 
-        return $skinTone ? self::codepointWidth(mb_chr($firstCodepoint)) + 2 : 1;
+        if ($skinTone) {
+            return self::codepointWidth(mb_chr($firstCodepoint)) + 2;
+        }
+
+        // Unicode joins U+FF9E and U+FF9F to the kana before them. Terminals give each a cell.
+        return 1 + (int)preg_match_all('/[\x{FF9E}\x{FF9F}]/u', mb_substr($grapheme, 1));
     }
 
     /**
