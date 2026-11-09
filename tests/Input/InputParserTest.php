@@ -1026,6 +1026,17 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function aModifiedF3IsF3AndACursorPositionReportIsNothing(): void
+    {
+        self::assertEquals([new KeyMsg(Key::F3, shift: true)], InputParser::parse("\x1b[1;2R")->messages);
+        self::assertEquals([new KeyMsg(Key::F3, ctrl: true)], InputParser::parse("\x1b[1;5R")->messages);
+        self::assertEquals(new KeyMsg(Key::F3, ctrl: true, alt: true, shift: true), InputParser::parseSequence("\x1b[1;8R"));
+
+        self::assertSame([], InputParser::parse("\x1b[1;80R")->messages, 'the first row, column 80');
+        self::assertSame([], InputParser::parse("\x1b[3;2R")->messages, 'the third row, column 2');
+    }
+
+    #[Test]
     public function parserCsiF4(): void
     {
         $messages = InputParser::parse("\x1b[S")->messages;

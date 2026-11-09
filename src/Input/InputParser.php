@@ -372,8 +372,8 @@ final class InputParser
         $finalCharacter = $raw[$position];
         ++$position;
 
-        // F3 has no parameters here; a cursor-position report uses the same final byte.
-        if ($finalCharacter === 'R' && str_contains($parameters, ';')) {
+        // A cursor position report shares F3's final byte. Modified F3 is 1;2 … 1;16, and a report there is rarer than the key.
+        if ($finalCharacter === 'R' && str_contains($parameters, ';') && preg_match('/^1;([2-9]|1[0-6])$/', $parameters) !== 1) {
             return null;
         }
 
