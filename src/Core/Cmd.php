@@ -70,8 +70,8 @@ abstract readonly class Cmd
     }
 
     /**
-     * From a widget's update(): the keyboard goes to its own child stop, counted as children() counts it. The
-     * component holding the widget names the stop in full. Sent from anywhere else, nothing names it and it is refused.
+     * From a widget's update(): the keyboard goes to the widget's own child, counted the way children() counts them.
+     * Sent from anywhere else, it is refused.
      */
     public static function focusChild(int $child): self
     {

@@ -68,8 +68,7 @@ final readonly class FocusCmd extends Cmd
     }
 
     /**
-     * A child of the widget that asked is a stop under the component holding that widget. The component's id is
-     * already its full id, inside a mount too, so no scope names it again.
+     * The component's id is already the full id, also inside a mount, so no scope may add to it.
      *
      * @internal
      */

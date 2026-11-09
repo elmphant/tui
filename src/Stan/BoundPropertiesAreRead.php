@@ -17,7 +17,7 @@ use PHPStan\Reflection\ExtendedPropertyReflection;
 use PHPStan\Rules\Properties\ReadWritePropertiesExtension;
 
 /**
- * App::bind('name') and App::mount('name') read the property they name, so a property an App only binds or
+ * App::bind('name') and App::mount('name') read the property they name. So a property an App only binds or
  * mounts is not reported as never read.
  */
 final class BoundPropertiesAreRead implements ReadWritePropertiesExtension

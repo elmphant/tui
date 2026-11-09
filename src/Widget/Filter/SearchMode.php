@@ -34,8 +34,8 @@ trait SearchMode
     abstract public function query(): string;
 
     /**
-     * Bind Esc and Enter to leave search only while searching; otherwise the search action on the content, and the
-     * keys that clear the filter while there is a query.
+     * While searching, Esc and Enter leave search. Otherwise the search action is live, and the keys that clear the
+     * filter while there is a query.
      */
     public function momentaryKeybindings(): Keybindings
     {

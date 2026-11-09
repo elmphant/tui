@@ -78,8 +78,8 @@ final readonly class Rect
     }
 
     /**
-     * Equal parts side by side (Horizontal) or stacked (Vertical), shared the way a Layout shares the room among
-     * children that all grow: the cells left over go to the rear parts.
+     * Equal parts side by side (Horizontal) or stacked (Vertical). The room is shared the way a Layout shares it
+     * among children that grow, so the cells left over go to the last parts.
      *
      * @return list<self>
      */

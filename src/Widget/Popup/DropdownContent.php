@@ -11,8 +11,8 @@ use Elmphant\Tui\Widget\HoldsAValue;
 use Elmphant\Tui\Widget\PublishesHints;
 
 /**
- * Dropdown content supplies focus, caption, size, click lookup against the drawn frame, and the hints for its keys
- * while the dropdown is open. Content without Committing supports multiple choice.
+ * Dropdown content supplies focus, caption, size and click lookup against the drawn frame. Its hints show while the
+ * dropdown is open. Content without Committing supports multiple choice.
  */
 interface DropdownContent extends Focusable, HoldsAValue, PublishesHints
 {

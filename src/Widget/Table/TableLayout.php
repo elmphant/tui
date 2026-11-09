@@ -129,8 +129,6 @@ final readonly class TableLayout
     }
 
     /**
-     * Leading spaces are an indent every wrapped line keeps, as a list title keeps it.
-     *
      * @return list<string>
      */
     private static function wrappedKeepingTheIndent(string $line, int $width): array
