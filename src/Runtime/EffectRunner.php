@@ -112,7 +112,7 @@ final class EffectRunner
         match (true) {
             $command instanceof TickCmd => $this->registerTicker($command->interval, $id, $wrap, $scope),
             $command instanceof AfterCmd => $this->registerTimer($command->delay, $command->then, $id, $wrap, $scope),
-            $command instanceof CancelCmd => $this->cancel($scope === null ? $command->id : $command->id->within($scope), $wrap, dropsWaitingResults: false),
+            $command instanceof CancelCmd => $this->cancelWhere(self::named($scope === null ? $command->id : $command->id->within($scope)), $wrap),
             $command instanceof CancelScopeCmd => $this->cancelWithin($scope ?? throw new LogicException('A scope can only be cancelled from inside it'), $wrap),
             $command instanceof HttpCmd => $this->keep(
                 fn (): RunningProcess => $this->requestStarter->start($command->withId($id), $wrap),
@@ -335,17 +335,23 @@ final class EffectRunner
      */
     private function makeRoomFor(?EffectId $id, ?Closure $wrap): void
     {
-        if ($id !== null && $this->cancel($id, $wrap, dropsWaitingResults: true)) {
+        if ($id === null) {
+            return;
+        }
+
+        $named = self::named($id);
+        $this->dropQueuedResultsOf($named);
+        if ($this->cancelWhere($named, $wrap)) {
             $this->tracer?->record(TraceEvent::EffectReplaced, ['effect' => (string)$id]);
         }
     }
 
     /**
-     * @param Closure(Message):Message|null $wrap
+     * @return Closure(?EffectId): bool
      */
-    private function cancel(EffectId $id, ?Closure $wrap, bool $dropsWaitingResults): bool
+    private static function named(EffectId $id): Closure
     {
-        return $this->cancelWhere(static fn (?EffectId $running): bool => $running !== null && $running->equals($id), $wrap, $dropsWaitingResults);
+        return static fn (?EffectId $running): bool => $running !== null && $running->equals($id);
     }
 
     /**
@@ -353,26 +359,22 @@ final class EffectRunner
      */
     private function cancelWithin(string $scope, ?Closure $wrap): void
     {
-        $this->cancelWhere(
-            static fn (?EffectId $running, ?string $startedIn): bool => $startedIn !== null && ($startedIn === $scope || str_starts_with($startedIn, $scope . '/')),
-            $wrap,
-            dropsWaitingResults: true,
-        );
+        $within = static fn (?EffectId $running, ?string $startedIn): bool => $startedIn !== null && ($startedIn === $scope || str_starts_with($startedIn, $scope . '/'));
+
+        $this->dropQueuedResultsOf($within);
+        $this->cancelWhere($within, $wrap);
     }
 
     /**
-     * Replacement drops queued results from the old run; cancellation alone still delivers results already queued.
+     * A plain cancel still delivers the results already queued.
      *
      * @param Closure(?EffectId, ?string): bool $matches the effect's name and the scope it was started in
      * @param Closure(Message):Message|null     $wrap
      *
      * @return bool whether anything was still running
      */
-    private function cancelWhere(Closure $matches, ?Closure $wrap, bool $dropsWaitingResults): bool
+    private function cancelWhere(Closure $matches, ?Closure $wrap): bool
     {
-        if ($dropsWaitingResults) {
-            $this->dropQueuedResultsOf($matches);
-        }
         $runningBefore = $this->runningCount();
 
         $this->tickers = array_values(array_filter(

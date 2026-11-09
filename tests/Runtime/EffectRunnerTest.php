@@ -1198,6 +1198,19 @@ final class EffectRunnerTest extends TestCase
         self::assertEquals([new TestMessage('feedback')], iterator_to_array($this->results, false));
     }
 
+    #[Test]
+    public function cancellingAScopeDropsWhatItsEffectsLeftWaiting(): void
+    {
+        $runner = $this->runner();
+        $runner->run(Cmd::after(0.5, static fn (): Message => new TestMessage('feed')), null, 'feed');
+        $runner->run(Cmd::after(0.5, static fn (): Message => new TestMessage('feedback')), null, 'feedback');
+        $runner->fire(101.0);
+
+        $runner->run(new CancelScopeCmd(), null, 'feed');
+
+        self::assertEquals([new TestMessage('feedback')], iterator_to_array($this->results, false));
+    }
+
     protected function setUp(): void
     {
         /** @var SplQueue<Message> $results */
