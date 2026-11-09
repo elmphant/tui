@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout\Axis;
 
+use InvalidArgumentException;
+
 /**
  * @internal
  */
@@ -16,5 +18,8 @@ final readonly class AxisSpecification
         public Remainder $remainder = Remainder::RearmostFirst,
         public Distribution $distribution = Distribution::AfterReservingFloors,
     ) {
+        if ($gap < 0) {
+            throw new InvalidArgumentException(sprintf('A gap must be non-negative, got %d', $gap));
+        }
     }
 }

@@ -9,6 +9,7 @@ use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Prose\Text;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -30,6 +31,15 @@ final class RectSplitTest extends TestCase
             [new Rect(0, 0, 2, 4), new Rect(3, 0, 3, 4), new Rect(7, 0, 3, 4)],
             Rect::fromSize(10, 4)->split(Direction::Horizontal, 3, gap: 1),
         );
+    }
+
+    #[Test]
+    public function aNegativeGapIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A gap must be non-negative, got -1');
+
+        Rect::fromSize(20, 1)->split(Direction::Horizontal, 3, gap: -1);
     }
 
     #[Test]
