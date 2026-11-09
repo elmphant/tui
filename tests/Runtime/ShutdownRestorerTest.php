@@ -70,4 +70,34 @@ final class ShutdownRestorerTest extends TestCase
             ShutdownRestorer::unregister($second);
         }
     }
+
+    #[Test]
+    public function aForkedChildLeavesTheParentsSessionsAlone(): void
+    {
+        if (!\function_exists('pcntl_fork')) {
+            self::markTestSkipped('needs pcntl');
+        }
+
+        $session = new TerminalSession(new VirtualTerminal(80, 24), false, false);
+        ShutdownRestorer::register($session);
+        $sockets = stream_socket_pair(STREAM_PF_UNIX, STREAM_SOCK_STREAM, STREAM_IPPROTO_IP);
+        self::assertNotFalse($sockets);
+        [$parentEnd, $childEnd] = $sockets;
+
+        try {
+            $child = pcntl_fork();
+            if ($child === 0) {
+                ShutdownRestorer::restoreAll();
+                fwrite($childEnd, $session->state()->name);
+                posix_kill(posix_getpid(), SIGKILL);
+            }
+
+            pcntl_waitpid($child, $status);
+            fclose($childEnd);
+
+            self::assertSame(TerminalSessionState::New->name, stream_get_contents($parentEnd));
+        } finally {
+            ShutdownRestorer::unregister($session);
+        }
+    }
 }

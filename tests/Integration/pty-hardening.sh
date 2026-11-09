@@ -153,3 +153,12 @@ await_exit "$pid" "same-size resize"
 wait "$pid"
 test "$(cat "$result")" = "same-size-resize-rendered"
 assert_restored
+
+echo "PTY: a fork that exits leaves its siblings alone" >&2
+result="$workdir/fork-result"
+ELMPHANT_PTY_RESULT="$result" php "$scenario" fork-siblings </dev/tty
+if [ "$(cat "$result" 2>/dev/null)" != "older-fork-answered" ]; then
+    echo "the older fork's answer never arrived after a sibling called exit()" >&2
+    exit 1
+fi
+assert_restored

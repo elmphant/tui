@@ -17,6 +17,10 @@ use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ScreenMode;
 use Revolt\EventLoop;
 
+final readonly class OlderForkDone implements Message
+{
+}
+
 $scenario = $argv[1] ?? 'normal';
 $readyFile = getenv('ELMPHANT_PTY_READY');
 $resultFile = getenv('ELMPHANT_PTY_RESULT');
@@ -49,6 +53,20 @@ $model = new class($scenario, $readyFile, $resultFile) implements Model {
             throw new RuntimeException('intentional PTY scenario failure');
         }
 
+        if ($this->scenario === 'fork-siblings') {
+            return Cmd::batch(
+                Cmd::fork(static function (): Message {
+                    usleep(1_000_000);
+
+                    return new OlderForkDone();
+                }),
+                Cmd::after(0.2, static fn (): Cmd => Cmd::fork(static function (): never {
+                    exit(0);
+                })),
+                Cmd::after(3.0, static fn (): Cmd => Cmd::quit()),
+            );
+        }
+
         return in_array($this->scenario, ['normal', 'blocking'], true)
             ? Cmd::quit()
             : null;
@@ -56,6 +74,14 @@ $model = new class($scenario, $readyFile, $resultFile) implements Model {
 
     public function update(Message $message, Rect $area): UpdateResult
     {
+        if ($message instanceof OlderForkDone) {
+            if ($this->resultFile !== false) {
+                file_put_contents($this->resultFile, 'older-fork-answered');
+            }
+
+            return new UpdateResult($this, Cmd::quit());
+        }
+
         if ($message instanceof ResizeMsg) {
             $next = new self(
                 $this->scenario,

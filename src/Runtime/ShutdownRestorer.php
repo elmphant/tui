@@ -17,6 +17,7 @@ final class ShutdownRestorer
      */
     private static ?SplObjectStorage $sessions = null;
     private static bool $hookRegistered = false;
+    private static int|false $owner = false;
     /**
      * @var Closure(Closure(): void): void|null
      */
@@ -26,6 +27,7 @@ final class ShutdownRestorer
     {
         self::$sessions ??= new SplObjectStorage();
         self::$sessions->offsetSet($session, null);
+        self::$owner = getmypid();
 
         if (!self::$hookRegistered) {
             $registerHook = self::$hookRegistrar ?? register_shutdown_function(...);
@@ -53,7 +55,7 @@ final class ShutdownRestorer
 
     public static function restoreAll(): void
     {
-        if (self::$sessions === null) {
+        if (self::$sessions === null || getmypid() !== self::$owner) {
             return;
         }
 

@@ -432,7 +432,8 @@ final class Program
     {
         // A fatal error skips the finally in start(), and the processes this program started would outlive it.
         $program = WeakReference::create($this);
-        register_shutdown_function(static fn () => self::restoreAfterAFatalError($program));
+        $parent = getmypid();
+        register_shutdown_function(static fn () => self::restoreAfterAFatalError($program, $parent));
 
         $this->terminalSession = new TerminalSession(
             $this->terminal,
@@ -453,8 +454,13 @@ final class Program
      *
      * @param WeakReference<self<TModel>> $program
      */
-    private static function restoreAfterAFatalError(WeakReference $program): void
+    private static function restoreAfterAFatalError(WeakReference $program, int|false $parent): void
     {
+        // A forked child that exits runs this too, and its teardown would kill the parent's other forks.
+        if (getmypid() !== $parent) {
+            return;
+        }
+
         $running = $program->get();
         if ($running === null || $running->state === ProgramState::Stopped) {
             return;
