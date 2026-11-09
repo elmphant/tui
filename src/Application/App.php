@@ -36,6 +36,7 @@ use Elmphant\Tui\Runtime\SizesItsRegion;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Committing;
 use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
+use Elmphant\Tui\Widget\Focus\AnswersForItsChildren;
 use Elmphant\Tui\Widget\Focus\CapturesKeys;
 use Elmphant\Tui\Widget\Focus\CapturesThePointer;
 use Elmphant\Tui\Widget\Focus\FollowsTheKeyboard;
@@ -742,7 +743,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $outcome = $widget instanceof Committing ? $widget->outcomeOf($message, $rect) : null;
 
         if ($dispatch->changed || $outcome !== null) {
-            return $this->writtenBack($focused, $this->focusedUpdate($focused, $dispatch->child), $dispatch->command, $outcome ?? $message);
+            return $this->writtenBackOnceAnswered($focused, $this->focusedUpdate($focused, $dispatch->child), $dispatch->command, $outcome, $message);
         }
 
         if ($dispatch->command !== null) {
@@ -792,7 +793,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $dispatch = $this->childDispatcher()->dispatchOne($candidate->widget, $message, $rect);
 
             if ($dispatch->changed || $outcome !== null) {
-                return $this->writtenBack($candidate, [[$candidate, $dispatch->child]], $dispatch->command, $outcome ?? $message);
+                return $this->writtenBackOnceAnswered($candidate, [[$candidate, $dispatch->child]], $dispatch->command, $outcome, $message);
             }
 
             if ($dispatch->command !== null) {
@@ -842,13 +843,15 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             static fn (Component $component): bool => (isset($visible[$component->id->value]) && $message->isIn($visible[$component->id->value]))
                 || ($component->widget instanceof CapturesThePointer && $component->widget->capturesThePointer()),
         ));
-        [$updates, $childCommand, $outcome] = $current->dispatchComponents(
+        [$updates, $childCommand, $outcome, $answering] = $current->dispatchComponents(
             $components,
             $rects,
             $message,
             $current->childDispatcher(),
             $holder,
         );
+        [$outcome, $updates, $answered] = $current->answeredByWhatEncloses($answering, $outcome, $updates);
+        $childCommand = Cmd::batch($childCommand, $answered);
 
         // Moving focus must not write back an untouched component and overwrite the clicked component's changes.
         $landedOn = null;
@@ -956,12 +959,14 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         $current = $this->appModel($appResult);
         $rects = $current->findComponentRects($screenRect, $components);
-        [$updates, $childCommand, $outcome] = $current->dispatchComponents(
+        [$updates, $childCommand, $outcome, $answering] = $current->dispatchComponents(
             $components,
             $rects,
             $message,
             $current->childDispatcher(),
         );
+        [$outcome, $updates, $answered] = $current->answeredByWhatEncloses($answering, $outcome, $updates);
+        $childCommand = Cmd::batch($childCommand, $answered);
 
         [$next, $hookCommand] = $this->applyComponentUpdatesAndNotify($current, $updates, $outcome ?? $message);
 
@@ -975,7 +980,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      * @param list<Component<Interactive>> $components
      * @param array<string, Rect>          $rects
      *
-     * @return array{array<string, array{Component<Interactive>, Interactive}>, ?Cmd, ?Message} the updates, their commands, and the outcome to hand on in place of the message
+     * @return array{array<string, array{Component<Interactive>, Interactive}>, ?Cmd, ?Message, ?Component<Interactive>} the updates, their commands, the outcome to hand on in place of the message, and the component that answered it
      */
     private function dispatchComponents(
         array $components,
@@ -987,6 +992,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         $updates = [];
         $commands = [];
         $outcome = null;
+        $answering = null;
 
         // Address each command to the component that produced it before combining commands.
         foreach ($components as $component) {
@@ -1008,7 +1014,9 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
                 : $message;
 
             $answer = $widget instanceof Committing ? $widget->outcomeOf($addressed, $rect) : null;
-            $outcome ??= $answer;
+            if ($outcome === null && $answer !== null) {
+                [$outcome, $answering] = [$answer, $component];
+            }
             $dispatch = $dispatcher->dispatchOne($widget, $addressed, $rect);
 
             if ($dispatch->changed || $answer !== null) {
@@ -1018,7 +1026,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $commands[] = $component->addressed($dispatch->command);
         }
 
-        return [$updates, Cmd::batch(...$commands), $outcome];
+        return [$updates, Cmd::batch(...$commands), $outcome, $answering];
     }
 
     /**
@@ -1339,6 +1347,79 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         [$current, $hookCommand] = $this->applyComponentUpdatesAndNotify($this, $updates, $message);
 
         return new UpdateResult($current, Cmd::batch($answering->addressed($command), $hookCommand));
+    }
+
+    /**
+     * @param Component<Interactive>                                       $answering
+     * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
+     *
+     * @return UpdateResult<static>
+     */
+    private function writtenBackOnceAnswered(Component $answering, array $updates, ?Cmd $command, ?Message $outcome, Message $message): UpdateResult
+    {
+        [$outcome, $updates, $answered] = $this->answeredByWhatEncloses($answering, $outcome, $updates);
+        $written = $this->writtenBack($answering, $updates, $command, $outcome ?? $message);
+
+        return new UpdateResult($written->model, Cmd::batch($written->command, $answered));
+    }
+
+    /**
+     * An outcome passes the containers around the component that answered it, nearest first, before any handler hears
+     * it. A held back outcome leaves the write-back with the input, as for a widget that changed without an outcome.
+     *
+     * @param Component<Interactive>|null                                  $answering
+     * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
+     *
+     * @return array{?Message, array<array-key, array{Component<Interactive>, Interactive}>, ?Cmd}
+     */
+    private function answeredByWhatEncloses(?Component $answering, ?Message $outcome, array $updates): array
+    {
+        if ($answering === null || $outcome === null) {
+            return [$outcome, $updates, null];
+        }
+
+        $commands = [];
+
+        foreach (array_reverse($this->componentRegistry()->enclosing($answering->id)) as $container) {
+            $widget = self::latestWidgetOf($container, $updates);
+            if (!$container->writesBack() || !$widget instanceof AnswersForItsChildren) {
+                continue;
+            }
+
+            $child = $answering->id->isUnder($container->id)
+                ? $answering->id->pathBelow($container->id)[0]
+                : ComponentRegistry::childHolding($widget, $answering->id);
+            if ($child === null) {
+                continue;
+            }
+
+            $answer = $widget->answeredFor($child, $outcome);
+            $updates[] = [$container, $answer->container];
+            $commands[] = $container->addressed($answer->command);
+
+            if ($answer->answered === null) {
+                return [null, $updates, Cmd::batch(...$commands)];
+            }
+            $outcome = $answer->answered;
+        }
+
+        return [$outcome, $updates, Cmd::batch(...$commands)];
+    }
+
+    /**
+     * @param Component<Interactive>                                       $component
+     * @param array<array-key, array{Component<Interactive>, Interactive}> $updates
+     */
+    private static function latestWidgetOf(Component $component, array $updates): Interactive
+    {
+        $latest = $component->widget;
+        foreach ($updates as [$updated, $widget]) {
+            if ($updated->id->equals($component->id)) {
+                $latest = $widget;
+            }
+        }
+
+        return $latest;
     }
 
     /**

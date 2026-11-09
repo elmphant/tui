@@ -13,7 +13,8 @@ use Elmphant\Tui\Core\Message;
 interface AnswersForItsChildren extends GraftsItsChildren
 {
     /**
-     * Asked after the child is stored, with what the child answered: its outcome, or the input it took.
+     * Asked when a child answers an outcome, before any handler hears it. The child's change is stored with the
+     * container this answers.
      */
     public function answeredFor(int $child, Message $answered): ChildAnswer;
 }
