@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Application;
 
+use Closure;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
@@ -476,7 +477,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         $updates = $this->keyboardAnnouncements($focused);
         $command = null;
-        $rect = $this->findComponentRects($screenRect, [$focused])[$focused->id->value] ?? null;
+        $rect = $this->geometry($screenRect)->rectOf($focused->id);
 
         if ($focused->writesBack() && $rect !== null) {
             /** @var Interactive $widget */
@@ -633,7 +634,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         if ($focused !== null && $focused->writesBack()) {
             /** @var Focusable $widget */
             $widget = $focused->widget;
-            $rect = $this->findComponentRects($screenRect, [$focused])[$focused->id->value] ?? null;
+            $rect = $this->geometry($screenRect)->rectOf($focused->id);
 
             if ($rect === null) {
                 return new UpdateResult($this, $reverse ? Cmd::focusPrevious() : Cmd::focusNext());
@@ -703,16 +704,16 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
     /**
      * @param list<Component<Interactive>> $components
+     * @param Closure(ComponentId): ?Rect  $rectOf
      *
      * @return array<string, Rect>
      */
-    private function findComponentRects(Rect $screenRect, array $components, bool $visible = false): array
+    private static function rectsOf(array $components, Closure $rectOf): array
     {
-        $geometry = $this->geometry($screenRect);
         $result = [];
 
         foreach ($components as $component) {
-            $rect = $visible ? $geometry->visibleRectOf($component->id) : $geometry->rectOf($component->id);
+            $rect = $rectOf($component->id);
 
             if ($rect !== null) {
                 $result[$component->id->value] = $rect;
@@ -735,7 +736,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
 
         /** @var Focusable $widget */
         $widget = $focused->widget;
-        $rect = $this->findComponentRects($screenRect, [$focused])[$focused->id->value] ?? null;
+        $rect = $this->geometry($screenRect)->rectOf($focused->id);
 
         if ($rect === null) {
             return $this->offeredToWhatEncloses($message, $screenRect, $focused);
@@ -786,7 +787,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $this->componentRegistry()->enclosing($focused->id),
             static fn (Component $candidate): bool => $candidate->writesBack(),
         ));
-        $rects = $this->findComponentRects($screenRect, $enclosing);
+        $rects = self::rectsOf($enclosing, $this->geometry($screenRect)->rectOf(...));
 
         // Reverse pre-order so the innermost container gets the key first.
         foreach (array_reverse($enclosing) as $candidate) {
@@ -830,8 +831,9 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
                 static fn (Component $component): bool => isset($before[$component->id->value]),
             ));
         }
-        $rects = $current->findComponentRects($screenRect, $components);
-        $visible = $current->findComponentRects($screenRect, $components, visible: true);
+        $geometry = $current->geometry($screenRect);
+        $rects = self::rectsOf($components, $geometry->rectOf(...));
+        $visible = self::rectsOf($components, $geometry->visibleRectOf(...));
 
         // Scrolled-out children still have rectangles but must not receive clicks.
         $components = array_values(array_filter(
@@ -960,7 +962,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         }
 
         $current = $this->appModel($appResult);
-        $rects = $current->findComponentRects($screenRect, $components);
+        $rects = self::rectsOf($components, $current->geometry($screenRect)->rectOf(...));
         [$updates, $childCommand, $outcome, $answering] = $current->dispatchComponents(
             $components,
             $rects,
@@ -1302,7 +1304,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     private function componentAt(MouseMsg $message, Rect $screen): ?ComponentId
     {
         $under = null;
-        foreach ($this->findComponentRects($screen, $this->componentRegistry()->all(), visible: true) as $id => $rect) {
+        foreach (self::rectsOf($this->componentRegistry()->all(), $this->geometry($screen)->visibleRectOf(...)) as $id => $rect) {
             if ($message->isIn($rect)) {
                 $under = $id;
             }
