@@ -6,6 +6,12 @@ Inspired by Go's [Bubbletea](https://github.com/charmbracelet/bubbletea) and
 Rust's [Ratatui](https://github.com/ratatui/ratatui). The name mixes the **PHP
 elephant** and **Elm**.
 
+<img src="media/showcase.gif" width="880"
+     alt="A full-screen app with a profile form, a task table, a file list, a tabbed settings panel and a package list. The reader fills in the form, ticks checkboxes, scrolls the table and the lists, switches tabs and opens the key help.">
+
+More recordings — a kanban board, dropdowns, forms, and apps that draw below the
+prompt — are in the [showcase](guide/showcase.md).
+
 - **Simple model.** Your app is an immutable value. A key press gives you a new
   value, and the framework draws it.
 - **Widgets included.** Lists, tables, forms, tabs, trees, modals, dropdowns,
@@ -108,6 +114,7 @@ to test: a test checks which command was asked for, and nothing runs.
 
 | Guide | What you learn |
 | --- | --- |
+| [Showcase](guide/showcase.md) | Recordings of real apps: a kanban board, dropdowns, forms, and inline apps |
 | [Building an app](guide/apps.md) | The `App` class, its hooks, and how interactive widgets keep their state |
 | [Widgets](guide/widgets.md) | Every built-in widget, plus forms, modals, tables and scrolling |
 | [Layout](guide/layout.md) | Placing widgets side by side or stacked, and making them reflow |
