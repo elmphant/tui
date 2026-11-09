@@ -20,6 +20,7 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\ActionMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Widget\Focus\AnswersForItsChildren;
 use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\MeasureHeight;
@@ -56,7 +57,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
 
     /**
      * A named widget participates in focus and rendering, but its host must route input and store updates.
-     * Inside a bound component, that component routes and stores it, and the name only addresses it.
+     * Inside a bound component, that component routes and stores it. The name only gives it an id.
      *
      * @template TNamedWidget of Widget
      *
@@ -221,9 +222,6 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      *
      * @internal
      *
-     * A Component::named() child keeps its name, its actions and its handlers
-     * @internal
-     *
      * @param non-empty-list<int>    $path
      * @param self<Interactive>|null $named
      *
@@ -247,7 +245,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
                 $grafted = ComponentWriteBack::grafted($container, $path, $updated);
                 assert($grafted instanceof Interactive);
 
-                return $parent->answered($owner, $grafted, $message);
+                return $parent->answeredByItsChild($owner, $grafted, $path[0], $message);
             },
             $this->address,
             $named?->actions,
@@ -350,17 +348,30 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     }
 
     /**
+     * @return UpdateResult<Reducer>
+     */
+    private function answeredByItsChild(Reducer $owner, Interactive $container, int $child, Message $message): UpdateResult
+    {
+        if (!$container instanceof AnswersForItsChildren) {
+            return $this->answered($owner, $container, $message);
+        }
+
+        $answer = $container->answeredFor($child, $message);
+        $result = $answer->answered === null
+            ? $this->stored($owner, $answer->container, $message)
+            : $this->answered($owner, $answer->container, $answer->answered);
+
+        return new UpdateResult($result->model, Cmd::batch($result->command, $this->addressed($answer->command)));
+    }
+
+    /**
      * The write-back stores the widget, then the first handler for the message answers on the stored owner.
      *
      * @return UpdateResult<Reducer>
      */
     private function answered(Reducer $owner, Interactive $widget, Message $message): UpdateResult
     {
-        if ($this->writeBack === null) {
-            throw new LogicException(sprintf('Component "%s" was named, not bound: its host drives it, so nothing can be written back', $this->id->value));
-        }
-
-        $stored = self::asResult(($this->writeBack)($owner, $widget, $message));
+        $stored = $this->stored($owner, $widget, $message);
 
         foreach ($this->handlers as [$messageClass, $handler, $action]) {
             if (!$message instanceof $messageClass || ($action !== null && (!$message instanceof ActionMsg || $message->action !== $action))) {
@@ -373,6 +384,18 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         }
 
         return $stored;
+    }
+
+    /**
+     * @return UpdateResult<Reducer>
+     */
+    private function stored(Reducer $owner, Interactive $widget, Message $message): UpdateResult
+    {
+        if ($this->writeBack === null) {
+            throw new LogicException(sprintf('Component "%s" was named, not bound: its host drives it, so nothing can be written back', $this->id->value));
+        }
+
+        return self::asResult(($this->writeBack)($owner, $widget, $message));
     }
 
     /**

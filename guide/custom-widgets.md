@@ -267,3 +267,7 @@ What each piece does:
   `withChildAt()` stores what the child did. From `update()`,
   `Cmd::focusChild(2)` sends the keyboard to the widget's own child 2, counted
   the way `children()` counts them.
+- `AnswersForItsChildren`: `answeredFor()` hears what a child answered before
+  the handlers bound to the container do. It returns a `ChildAnswer`: the
+  container as it is now, the answer the handlers hear (`null` holds it back),
+  and a command, such as `Cmd::focusChild()`.
