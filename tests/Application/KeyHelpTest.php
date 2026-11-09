@@ -103,6 +103,20 @@ final class KeyHelpTest extends TestCase
     }
 
     #[Test]
+    public function tabIsListedOnlyWhereASecondStopCanBeReached(): void
+    {
+        $none = ModelHarness::for(new TextOnlyKeyHelpApp(), 60, 20)->init()->press('?')->screen()->plainText();
+        $one = ModelHarness::for(new OneFieldKeyHelpApp(TextInput::new()), 60, 20)->init()->press('ctrl+k')->screen()->plainText();
+        $two = self::harness()->press('?')->screen()->plainText();
+
+        self::assertStringContainsString('Keys', $none);
+        self::assertStringNotContainsString('Tab', $none);
+        self::assertStringContainsString('Keys', $one);
+        self::assertStringNotContainsString('Tab', $one);
+        self::assertStringContainsString('Tab', $two);
+    }
+
+    #[Test]
     public function aFieldTakesTheQuestionMarkAsText(): void
     {
         $harness = self::harness()->press('tab')->type('?');
@@ -252,6 +266,26 @@ final class KeyHelpTest extends TestCase
     private static function harness(): ModelHarness
     {
         return ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new()), 60, 30)->init();
+    }
+}
+
+final readonly class TextOnlyKeyHelpApp extends CopyableTestApp
+{
+    public function view(): Widget
+    {
+        return Text::new('hello');
+    }
+}
+
+final readonly class OneFieldKeyHelpApp extends CopyableTestApp
+{
+    public function __construct(public TextInput $field)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return $this->bind('field');
     }
 }
 

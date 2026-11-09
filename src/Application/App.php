@@ -217,10 +217,12 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             }
         }
 
+        $anywhere = $this->declaredActions()->keybindings();
+        if (count($this->componentRegistry()->ring($focus->focused())) > 1) {
+            $anywhere = $anywhere->plus($this->focusCycleKeybindings());
+        }
         $groups['Anywhere'] = $this->described(
-            $this->declaredActions()->keybindings()
-                ->plus($this->focusCycleKeybindings())
-                ->plus($this->keyHelpKeybindings()),
+            $anywhere->plus($this->keyHelpKeybindings()),
             $listed,
             $this->appActionHints($this->declaredActions()->keybindings()),
         );
