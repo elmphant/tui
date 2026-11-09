@@ -6,7 +6,6 @@ namespace Elmphant\Tui\Tests\Testing;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -21,20 +20,7 @@ final class HarnessFocusOrderTest extends TestCase
     {
         $frame = ModelHarness::for(new RenamedFieldsApp(TextInput::new(), TextInput::new()), 40, 2)->renderFrame();
 
-        self::assertNotSame(
-            self::row($frame, 1, 40),
-            self::row($frame, 0, 40),
-            'the harness reads the component order from the model, so any pair of names works',
-        );
-    }
-
-    private static function row(Frame $frame, int $y, int $width): string
-    {
-        $offset = $y * $width;
-
-        return implode('|', array_slice($frame->foregrounds, $offset, $width))
-            . '#' . implode('|', array_slice($frame->backgrounds, $offset, $width))
-            . '#' . implode('|', array_slice($frame->attributes, $offset, $width));
+        self::assertSame(0, $frame->cursorPosition()?->y, 'the harness reads the component order from the model, so any pair of names works');
     }
 }
 

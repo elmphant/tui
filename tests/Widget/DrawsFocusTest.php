@@ -76,8 +76,11 @@ final class DrawsFocusTest extends TestCase
 
     private static function snapshot(Frame $frame): string
     {
+        $caret = $frame->cursorPosition();
+
         return implode('|', $frame->characters)
             . '#' . implode('|', $frame->foregrounds)
-            . '#' . implode('|', $frame->backgrounds);
+            . '#' . implode('|', $frame->backgrounds)
+            . '#' . ($caret === null ? 'no caret' : "caret {$caret->x},{$caret->y}");
     }
 }

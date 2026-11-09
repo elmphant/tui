@@ -10,7 +10,6 @@ use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Message\KeyMsg;
-use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Layout\Layout;
@@ -25,20 +24,7 @@ final class HarnessFocusTest extends TestCase
     {
         $frame = ModelHarness::for(new TwoFieldApp(TextInput::new(), TextInput::new()), 40, 2)->renderFrame();
 
-        self::assertNotSame(
-            self::row($frame, 1, 40),
-            self::row($frame, 0, 40),
-            'the keyboard lands on the first component, so its row must not look like the second',
-        );
-    }
-
-    private static function row(Frame $frame, int $y, int $width): string
-    {
-        $offset = $y * $width;
-
-        return implode('|', array_slice($frame->foregrounds, $offset, $width))
-            . '#' . implode('|', array_slice($frame->backgrounds, $offset, $width))
-            . '#' . implode('|', array_slice($frame->attributes, $offset, $width));
+        self::assertSame(0, $frame->cursorPosition()?->y, 'the keyboard lands on the first component, so its caret is on the first row');
     }
 }
 

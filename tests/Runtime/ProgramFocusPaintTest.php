@@ -20,15 +20,13 @@ use PHPUnit\Framework\TestCase;
 final class ProgramFocusPaintTest extends TestCase
 {
     #[Test]
-    public function whereTheRuntimePutsTheKeyboardIsWhereTheHighlightIsDrawn(): void
+    public function whereTheRuntimePutsTheKeyboardIsWhereTheCaretIsDrawn(): void
     {
-        self::assertNotSame(
-            self::paintWithFocusOn('first'),
-            self::paintWithFocusOn('second'),
-        );
+        self::assertSame(0, self::caretRowWithFocusOn('first'));
+        self::assertSame(1, self::caretRowWithFocusOn('second'));
     }
 
-    private static function paintWithFocusOn(string $target): string
+    private static function caretRowWithFocusOn(string $target): ?int
     {
         $frame = new Frame(40, 6);
         $pass = RenderPass::new(Theme::dark());
@@ -37,9 +35,7 @@ final class ProgramFocusPaintTest extends TestCase
 
         (new FocusPaintApp(TextInput::new(), TextInput::new()))->render($frame, $pass);
 
-        return implode('|', $frame->characters)
-            . '#' . implode('|', $frame->foregrounds)
-            . '#' . implode('|', $frame->backgrounds);
+        return $frame->cursorPosition()?->y;
     }
 }
 

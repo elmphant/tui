@@ -41,7 +41,7 @@ final class HostMarkedRowsTest extends TestCase
 
         (new MarkedRowsApp())->render($frame, $pass);
 
-        self::assertSame(Theme::dark()->dim->foregroundValue(), $frame->foregrounds[1 * 30 + 3], 'the unmarked first field is drawn idle');
+        self::assertSame(2, $frame->cursorPosition()?->y, 'the caret is in the marked second field, not the first');
     }
 }
 

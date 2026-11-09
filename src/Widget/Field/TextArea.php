@@ -155,7 +155,7 @@ final readonly class TextArea implements Focusable, HoldsAValue, KeybindingsAwar
         }
 
         $focused = $this->drawsFocused($context);
-        $style = $this->fieldStyle($context, $focused ? $context->theme->base : $context->theme->dim);
+        $style = $this->fieldStyle($context, $context->theme->base);
         $frame->fillStyled($area, $style);
 
         if ($this->lines === [''] && $this->placeholder !== '') {

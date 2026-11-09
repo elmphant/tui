@@ -245,7 +245,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
     private function fieldStyle(RenderContext $context, bool $showPlaceholder): Style
     {
         $theme = $context->theme;
-        $tone = $showPlaceholder || !$this->drawsFocused($context) ? $theme->dim : $theme->base;
+        $tone = $showPlaceholder ? $theme->dim : $theme->base;
 
         return match ($this->decoration) {
             InputDecoration::Underline => $tone->underline(),

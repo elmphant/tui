@@ -1387,9 +1387,21 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
-    public function renderUnfocusedUsesDimStyle(): void
+    public function anUnfocusedValueReadsAsTextNotAsAPlaceholder(): void
     {
         $input = TextInput::new()->withValue('ab');
+        $frame = new Frame(10, 1);
+        $area = new Rect(0, 0, 10, 1);
+        $theme = Theme::dark();
+        $input->render($frame, $area, new RenderContext($theme));
+
+        self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[0]);
+    }
+
+    #[Test]
+    public function anUnfocusedPlaceholderStaysDim(): void
+    {
+        $input = TextInput::new()->withPlaceholder('name');
         $frame = new Frame(10, 1);
         $area = new Rect(0, 0, 10, 1);
         $theme = Theme::dark();

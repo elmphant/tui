@@ -129,6 +129,17 @@ final class TextAreaTest extends TestCase
     }
 
     #[Test]
+    public function anUnfocusedTextReadsAsTextNotAsAPlaceholder(): void
+    {
+        $frame = new Frame(10, 2);
+        $theme = Theme::dark();
+
+        TextArea::new('ab')->render($frame, new Rect(0, 0, 10, 2), new RenderContext($theme));
+
+        self::assertSame($theme->base->foregroundValue(), $frame->foregrounds[0]);
+    }
+
+    #[Test]
     public function anEmptyAreaShowsItsPlaceholder(): void
     {
         $area = WidgetHarness::for(TextArea::new()->withPlaceholder('request body'), width: 20, height: 4);
