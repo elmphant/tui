@@ -5,7 +5,6 @@
         "excludes": [
             "Testing",
             "Message",
-            "Input/Terminal.php",
             "Rendering/Theme.php",
             "Runtime/MonotonicClock.php",
             "Runtime/ShutdownRestorer.php"
