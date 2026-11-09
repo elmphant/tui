@@ -411,8 +411,8 @@ abstract readonly class App
     protected function focusCycleKeybindings(): Keybindings {}  // tab / shift+tab
     protected function keyHelpKeybindings(): Keybindings {}     // ? opens the key help; empty turns it off
     protected function mounts(): array { return []; }           // mounts kept alive but not drawn now
-    protected function bind(string $property, ?string $id = null, int|string|null $at = null): Component {} // the widget a property holds (at: a key of an array), stored by the framework
-    protected function mount(string $property, Widget $view, ?string $id = null, int|string|null $at = null): Mount {} // the sub-model a property holds, stored by the framework
+    protected function bind(string $property, ComponentId|string|null $id = null, int|string|null $at = null): Component {} // the widget a property holds (at: a key of an array), stored by the framework
+    protected function mount(string $property, Widget $view, ComponentId|string|null $id = null, int|string|null $at = null): Mount {} // the sub-model a property holds, stored by the framework
 }
 ```
 
