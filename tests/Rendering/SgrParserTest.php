@@ -206,6 +206,72 @@ final class SgrParserTest extends TestCase
     }
 
     #[Test]
+    public function aStyledUnderlineIsAnUnderlineAndItsZeroStyleEndsIt(): void
+    {
+        $parser = new SgrParser();
+
+        $parser->parse('1;4:3');
+        self::assertSame(Attr::BOLD | Attr::UNDERLINE, $parser->attributes, 'a curly underline');
+
+        $parser->parse('4:0');
+        self::assertSame(Attr::BOLD, $parser->attributes, 'no underline');
+
+        $parser->parse('4:5');
+        self::assertSame(Attr::BOLD | Attr::UNDERLINE, $parser->attributes, 'a dashed underline');
+    }
+
+    #[Test]
+    public function aColourWrittenWithColonsIsReadAndTheNextParameterStillCounts(): void
+    {
+        $parser = new SgrParser();
+
+        $parser->parse('38:2::255:0:0;1');
+        self::assertSame(Color::rgb(255, 0, 0)->value, $parser->foreground, 'with an empty colour space');
+        self::assertSame(Attr::BOLD, $parser->attributes);
+
+        $parser->parse('48:2:0:128:255;3');
+        self::assertSame(Color::rgb(0, 128, 255)->value, $parser->background, 'without a colour space');
+        self::assertSame(Attr::BOLD | Attr::ITALIC, $parser->attributes);
+
+        $parser->parse('38:2:1:10:20:30');
+        self::assertSame(Color::rgb(10, 20, 30)->value, $parser->foreground, 'with a colour space id');
+
+        $parser->parse('48:5:42;7');
+        self::assertSame(Color::COLOR_256 + 42, $parser->background);
+        self::assertSame(Attr::BOLD | Attr::ITALIC | Attr::REVERSE, $parser->attributes);
+    }
+
+    #[Test]
+    public function anUnderlineColourChangesNothingAndTheNextParameterStillCounts(): void
+    {
+        $parser = new SgrParser();
+
+        $parser->parse('58;2;255;0;0;1');
+        $parser->parse('58;5;9;3');
+        $parser->parse('58:2::255:0:0;4');
+        $parser->parse('58:5:9;59');
+
+        self::assertSame(Attr::BOLD | Attr::ITALIC | Attr::UNDERLINE, $parser->attributes);
+        self::assertSame(0, $parser->foreground);
+        self::assertSame(0, $parser->background);
+    }
+
+    #[Test]
+    public function aColonGroupThatIsCutShortChangesNothing(): void
+    {
+        $parser = new SgrParser();
+        $parser->parse('3;31;42');
+
+        foreach ([':', '38:', '38:2', '38:2::1:2', '48:5', '38:9:1:2:3', '1:2', '7:'] as $group) {
+            $parser->parse($group);
+        }
+
+        self::assertSame(Attr::ITALIC, $parser->attributes);
+        self::assertSame(Color::ANSI + 1, $parser->foreground);
+        self::assertSame(Color::ANSI + 2, $parser->background);
+    }
+
+    #[Test]
     public function sgrRemovesBlink(): void
     {
         $parser = new SgrParser();

@@ -24,6 +24,12 @@ final class SgrParser
         $index = 0;
 
         while ($index < $partCount) {
+            if (str_contains($parts[$index], ':')) {
+                $this->parseSubparameters(explode(':', $parts[$index]));
+                ++$index;
+                continue;
+            }
+
             $parameter = (int)$parts[$index];
 
             match (true) {
@@ -37,7 +43,7 @@ final class SgrParser
                 $parameter === 49 => $this->background = 0,
                 $parameter >= 90 && $parameter <= 97 => $this->foreground = Color::BRIGHT + $parameter - 90,
                 $parameter >= 100 && $parameter <= 107 => $this->background = Color::BRIGHT + $parameter - 100,
-                $parameter === 38 || $parameter === 48 => $index = $this->parseExtendedColor($parts, $partCount, $index, $parameter === 48),
+                $parameter === 38 || $parameter === 48 || $parameter === 58 => $index = $this->parseExtendedColor($parts, $partCount, $index, $parameter),
                 default => null,
             };
 
@@ -46,39 +52,79 @@ final class SgrParser
     }
 
     /**
+     * @param non-empty-list<string> $subparameters
+     */
+    private function parseSubparameters(array $subparameters): void
+    {
+        $code = (int)$subparameters[0];
+
+        if ($code === 4) {
+            $this->attributes = (int)($subparameters[1] ?? '1') === 0
+                ? $this->attributes & ~Attr::UNDERLINE
+                : $this->attributes | Attr::UNDERLINE;
+
+            return;
+        }
+
+        if ($code === 38 || $code === 48) {
+            $mode = (int)($subparameters[1] ?? '');
+            // T.416 puts a colour space id, often empty, before the channels. Many programs leave it out.
+            $skipsColourSpace = $mode === 2 && (count($subparameters) >= 6 || ($subparameters[2] ?? '') === '');
+            $color = self::color($mode, array_slice($subparameters, $skipsColourSpace ? 3 : 2));
+            if ($color !== null) {
+                $this->paint($color, $code === 48);
+            }
+        }
+    }
+
+    /**
      * @param list<string> $parts
      */
-    private function parseExtendedColor(array $parts, int $partCount, int $index, bool $isBackground): int
+    private function parseExtendedColor(array $parts, int $partCount, int $index, int $code): int
     {
         if ($index + 1 >= $partCount) {
             return $index;
         }
 
         $mode = (int)$parts[$index + 1];
+        $length = match (true) {
+            $mode === 5 && $index + 2 < $partCount => 2,
+            $mode === 2 && $index + 4 < $partCount => 4,
+            default => 1,
+        };
 
-        if ($mode === 5 && $index + 2 < $partCount) {
-            $colorValue = Color::COLOR_256 + ((int)$parts[$index + 2] & 0xFF);
-            if ($isBackground) {
-                $this->background = $colorValue;
-            } else {
-                $this->foreground = $colorValue;
-            }
-
-            return $index + 2;
+        $color = self::color($mode, array_slice($parts, $index + 2, $length - 1));
+        if ($color !== null && $code !== 58) {
+            $this->paint($color, $code === 48);
         }
 
-        if ($mode === 2 && $index + 4 < $partCount) {
-            $colorValue = Color::TRUE_COLOR
-                | (((int)$parts[$index + 2] & 0xFF) << 16) | (((int)$parts[$index + 3] & 0xFF) << 8) | ((int)$parts[$index + 4] & 0xFF);
-            if ($isBackground) {
-                $this->background = $colorValue;
-            } else {
-                $this->foreground = $colorValue;
-            }
+        return $index + $length;
+    }
 
-            return $index + 4;
+    /**
+     * @param list<string> $arguments a palette index for mode 5, the red, green and blue channels for mode 2
+     */
+    private static function color(int $mode, array $arguments): ?int
+    {
+        if ($mode === 5 && count($arguments) >= 1) {
+            return Color::COLOR_256 + ((int)$arguments[0] & 0xFF);
         }
 
-        return $index + 1;
+        if ($mode !== 2 || count($arguments) < 3) {
+            return null;
+        }
+
+        [$red, $green, $blue] = $arguments;
+
+        return Color::TRUE_COLOR | (((int)$red & 0xFF) << 16) | (((int)$green & 0xFF) << 8) | ((int)$blue & 0xFF);
+    }
+
+    private function paint(int $color, bool $isBackground): void
+    {
+        if ($isBackground) {
+            $this->background = $color;
+        } else {
+            $this->foreground = $color;
+        }
     }
 }
