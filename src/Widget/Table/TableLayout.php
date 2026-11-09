@@ -58,7 +58,7 @@ final readonly class TableLayout
                 continue;
             }
 
-            array_push($lines, ...TextWrap::wrap($line, $width));
+            array_push($lines, ...self::wrappedKeepingTheIndent($line, $width));
         }
 
         return $lines;
@@ -126,6 +126,19 @@ final readonly class TableLayout
         }
 
         return min($offset, max(0, count($this->heights) - 1));
+    }
+
+    /**
+     * Leading spaces are an indent every wrapped line keeps, as a list title keeps it.
+     *
+     * @return list<string>
+     */
+    private static function wrappedKeepingTheIndent(string $line, int $width): array
+    {
+        $text = ltrim($line, ' ');
+        $indent = str_repeat(' ', max(0, min(\strlen($line) - \strlen($text), $width - 1)));
+
+        return array_map(static fn (string $wrapped): string => $indent . $wrapped, TextWrap::wrap($text, $width - \strlen($indent)));
     }
 
     /**

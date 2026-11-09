@@ -632,6 +632,8 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
     private static function piecedOver(Line $cell, string $piece, int &$from): Line
     {
         $text = implode('', array_map(static fn (Span $span): string => $span->content, $cell->spans));
+        $indent = $from === 0 ? '' : str_repeat(' ', min(strspn($piece, ' '), strspn($text, ' ')));
+        $piece = substr($piece, \strlen($indent));
         $start = $piece === '' ? false : strpos($text, $piece, $from);
         $marker = '';
 
@@ -669,7 +671,7 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
             $pieced[] = self::spanOf($marker, $atTheCut ?? $cell->spans[array_key_last($cell->spans)] ?? Span::raw(''));
         }
 
-        return new Line($pieced);
+        return new Line($indent === '' ? $pieced : [Span::raw($indent), ...$pieced]);
     }
 
     private static function spanOf(string $content, Span $resolved): Span
