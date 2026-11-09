@@ -20,7 +20,7 @@ use ReflectionUnionType;
 use SplFileInfo;
 
 /**
- * Public APIs must not expose internal types, or callers could not follow API.md.
+ * Public APIs must not expose internal types, or a caller could not name what it receives.
  * Exclude signatures marked @internal, including those on internal classes.
  */
 final class InternalTypeExposureTest extends TestCase
