@@ -28,6 +28,13 @@ prompt — are in the [showcase](guide/showcase.md).
 
 PHP 8.2+ · MIT License
 
+## Status
+
+0.1.0 is the first release. The runtime and the widgets are covered by tests
+and run in Linux and macOS terminals. Until 1.0 a minor version may change the
+API, and each change is listed in the [changelog](CHANGELOG.md). Apps do not
+run on Windows outside WSL.
+
 ## Install
 
 ```bash
