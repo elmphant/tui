@@ -263,3 +263,7 @@ What each piece does:
   `Modal` is one.
 - `FocusScope`: chrome such as a toolbar, which tab skips until the keyboard is
   inside it.
+- `GraftsItsChildren`: each interactive child is a stop of its own, and
+  `withChildAt()` stores what the child did. From `update()`,
+  `Cmd::focusChild(2)` sends the keyboard to the widget's own child 2, counted
+  the way `children()` counts them.

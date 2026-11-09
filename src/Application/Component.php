@@ -6,6 +6,10 @@ namespace Elmphant\Tui\Application;
 
 use Closure;
 use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Core\Cmd\BatchCmd;
+use Elmphant\Tui\Core\Cmd\FocusCmd;
+use Elmphant\Tui\Core\Cmd\MappedCmd;
+use Elmphant\Tui\Core\Cmd\ScopedCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
@@ -301,9 +305,13 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public function addressed(?Cmd $command): ?Cmd
     {
-        $address = $this->address;
+        if ($command === null) {
+            return null;
+        }
 
-        return $command === null || $address === null ? $command : $address($command);
+        $resolved = $this->withChildFocusResolved($command);
+
+        return $this->address === null ? $resolved : ($this->address)($resolved);
     }
 
     /**
@@ -380,6 +388,17 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         }
 
         return new UpdateResult($answered);
+    }
+
+    private function withChildFocusResolved(Cmd $command): Cmd
+    {
+        return match (true) {
+            $command instanceof FocusCmd => $command->resolvedUnder($this->id),
+            $command instanceof BatchCmd => new BatchCmd(array_map($this->withChildFocusResolved(...), $command->commands)),
+            $command instanceof MappedCmd => new MappedCmd($this->withChildFocusResolved($command->inner), $command->wrap),
+            $command instanceof ScopedCmd => new ScopedCmd($this->withChildFocusResolved($command->inner), $command->scope),
+            default => $command,
+        };
     }
 
     /**

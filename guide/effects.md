@@ -29,6 +29,7 @@ Cmd::println('✓ Saved')             // print a line above an inline program
 Cmd::focus('search')                      // move the keyboard to a widget
 Cmd::focusNext() / Cmd::focusPrevious()   // like tab / shift+tab
 Cmd::focusFirst() / Cmd::focusNowhere()   // the first stop, or keep the keyboard for the App
+Cmd::focusChild(2)                        // from a widget's update(): to its own child 2
 
 // Processes (uses symfony/process)
 Cmd::exec(['git', 'status'])        // run, then get the whole result

@@ -69,6 +69,15 @@ abstract readonly class Cmd
         return FocusCmd::nowhere();
     }
 
+    /**
+     * From a widget's update(): the keyboard goes to its own child stop, counted as children() counts it. The
+     * component holding the widget names the stop in full. Sent from anywhere else, nothing names it and it is refused.
+     */
+    public static function focusChild(int $child): self
+    {
+        return FocusCmd::toChild($child);
+    }
+
     public static function focusNext(): self
     {
         return FocusCmd::next();

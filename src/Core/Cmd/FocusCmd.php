@@ -14,6 +14,8 @@ final readonly class FocusCmd extends Cmd
     private function __construct(
         public ?ComponentId $target,
         public FocusMove $move,
+        private ?int $child = null,
+        private bool $targetIsFull = false,
     ) {
     }
 
@@ -23,6 +25,14 @@ final readonly class FocusCmd extends Cmd
     public static function to(ComponentId $target): self
     {
         return new self($target, FocusMove::To);
+    }
+
+    /**
+     * @internal build one with Cmd::focusChild()
+     */
+    public static function toChild(int $child): self
+    {
+        return new self(null, FocusMove::To, $child);
     }
 
     /**
@@ -58,13 +68,24 @@ final readonly class FocusCmd extends Cmd
     }
 
     /**
+     * A child of the widget that asked is a stop under the component holding that widget. The component's id is
+     * already its full id, inside a mount too, so no scope names it again.
+     *
+     * @internal
+     */
+    public function resolvedUnder(ComponentId $owner): self
+    {
+        return $this->child === null ? $this : new self(ComponentId::named($owner->value . '/' . $this->child), FocusMove::To, targetIsFull: true);
+    }
+
+    /**
      * A target named inside a scope is one of that scope's own components.
      *
      * @internal
      */
     public function within(?string $scope): self
     {
-        return $scope === null || $this->target === null
+        return $scope === null || $this->target === null || $this->targetIsFull
             ? $this
             : self::to(ComponentId::named($scope . '/' . $this->target->value));
     }
@@ -77,6 +98,10 @@ final readonly class FocusCmd extends Cmd
      */
     public function applyTo(FocusState $focus, array $focusables, ?array $reachable): ?FocusState
     {
+        if ($this->child !== null) {
+            return null;
+        }
+
         return match ($this->move) {
             FocusMove::To => $reachable === null || $this->isOnScreen([...$focusables, ...$reachable]) ? $focus->movedTo($this->target) : null,
             // Leave focus undecided until the new tree has components to focus.
