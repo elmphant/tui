@@ -85,6 +85,7 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
         private ?Keybindings $globalKeybindings = null,
         ?KeyedCache $layoutMemo = null,
         private int $columnGap = 1,
+        private int $scrollPadding = 0,
         ?KeyedCache $placementMemo = null,
     ) {
         $this->layoutMemo = $layoutMemo ?? self::newLayoutMemo();
@@ -186,6 +187,14 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
     public function withScrollOffset(int $scrollOffset): self
     {
         return $this->cloneWith(scrollOffset: $scrollOffset, lineOffset: 0, followCursor: false);
+    }
+
+    /**
+     * Fewer where the view is too short.
+     */
+    public function withScrollPadding(int $rows): self
+    {
+        return $this->cloneWith(scrollPadding: max(0, $rows));
     }
 
     public function cursor(): int
@@ -823,9 +832,13 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
     {
         $viewportHeight = max(1, $area->height - $this->headerHeight());
         $layout = $this->layoutFor($this->placementFor($area));
-        $linesOfTheCursorInView = min($layout->heightOf($this->cursor), $viewportHeight);
-        $firstRowShowingTheCursor = $layout->firstRowAtOrAfter($layout->lineOf($this->cursor) + $linesOfTheCursorInView - $viewportHeight);
-        $offset = max(min($this->scrollOffset, $this->cursor), $firstRowShowingTheCursor);
+        $lastRow = max(0, $this->rowCount() - 1);
+        $span = fn (int $rows): array => [max(0, $this->cursor - $rows), min($lastRow, $this->cursor + $rows)];
+        $lines = static fn (array $rows): int => $layout->lineOf($rows[1]) + $layout->heightOf($rows[1]) - $layout->lineOf($rows[0]);
+        [$first, $last] = $span(ScrollWindow::paddingThatFits($this->scrollPadding, static fn (int $rows): int => $lines($span($rows)), $viewportHeight));
+        $linesInView = min($lines([$first, $last]), $viewportHeight);
+        $firstRowShowingThem = $layout->firstRowAtOrAfter($layout->lineOf($first) + $linesInView - $viewportHeight);
+        $offset = max(min($this->scrollOffset, $first), $firstRowShowingThem);
 
         return min($offset, $layout->maxOffset($viewportHeight));
     }

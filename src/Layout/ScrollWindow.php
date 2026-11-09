@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Layout;
 
+use Closure;
+
 /**
  * @internal
  */
@@ -24,6 +26,18 @@ final class ScrollWindow
     public static function clamped(int $offset, int $maxOffset): int
     {
         return max(0, min($offset, $maxOffset));
+    }
+
+    /**
+     * @param Closure(int): int $spanHeight lines taken with this much padding
+     */
+    public static function paddingThatFits(int $padding, Closure $spanHeight, int $viewportHeight): int
+    {
+        while ($padding > 0 && $spanHeight($padding) > $viewportHeight) {
+            --$padding;
+        }
+
+        return $padding;
     }
 
     public static function showing(int $offset, int $top, int $height, int $viewportHeight, int $maxOffset): int

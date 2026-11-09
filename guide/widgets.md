@@ -361,6 +361,11 @@ $log = Panel::new('Log')->withFollowingTheEnd();
 $log = $log->add(Text::new('build finished'));
 ```
 
+A `ListView`, `Table` or `TreeView` scrolls once the cursor reaches the edge of
+the view. `withScrollPadding(2)` scrolls two rows earlier, so the reader always
+sees two rows past the cursor. In a view too short for that, the padding gets
+smaller and the cursor stays in view.
+
 A `Panel` lights its border while the keyboard is inside it, on a bound widget
 in it. The panel itself needs no binding for that, so `Panel::new('To Do')->add($boundList)`
 shows which column is active. A `Box` lights its border the same way.

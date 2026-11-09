@@ -107,14 +107,21 @@ final readonly class RowExtents
         return ScrollWindow::lastOffset($this->totalHeight(), $viewportHeight);
     }
 
-    public function offsetShowing(int $index, int $viewportHeight, int $currentOffset): int
+    public function offsetShowing(int $index, int $viewportHeight, int $currentOffset, int $padding = 0): int
     {
-        return ScrollWindow::showing(
-            $currentOffset,
-            $this->startOf($index),
-            $this->heightOf($index),
-            $viewportHeight,
-            $this->maxOffset($viewportHeight),
-        );
+        $padding = ScrollWindow::paddingThatFits($padding, fn (int $rows): int => $this->spanAround($index, $rows)[1], $viewportHeight);
+        [$top, $height] = $this->spanAround($index, $padding);
+
+        return ScrollWindow::showing($currentOffset, $top, $height, $viewportHeight, $this->maxOffset($viewportHeight));
+    }
+
+    /**
+     * @return array{int, int} first line and height
+     */
+    private function spanAround(int $index, int $rows): array
+    {
+        $top = $this->startOf(max(0, $index - $rows));
+
+        return [$top, $this->startOf(min($this->rowCount(), $index + $rows + 1)) - $top];
     }
 }

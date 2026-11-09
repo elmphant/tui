@@ -12,6 +12,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
+use Elmphant\Tui\Layout\RowExtents;
 use Elmphant\Tui\Layout\ScrollWindow;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Message\Chosen;
@@ -60,6 +61,7 @@ final readonly class TreeView implements Committing, Focusable, KeybindingsAware
         private ?Keybindings $globalKeybindings = null,
         private int $scrollOffset = 0,
         private TreeGuides $guides = TreeGuides::Square,
+        private int $scrollPadding = 0,
         ?KeyedCache $rowsMemo = null,
     ) {
         $this->rowsMemo = $rowsMemo ?? self::newRowsMemo();
@@ -137,13 +139,8 @@ final readonly class TreeView implements Committing, Focusable, KeybindingsAware
             return $this;
         }
 
-        return $this->cloneWith(scrollOffset: ScrollWindow::showing(
-            $this->scrollOffset,
-            $index,
-            1,
-            $area->height,
-            ScrollWindow::lastOffset(count($this->visibleRows()), $area->height),
-        ));
+        return $this->cloneWith(scrollOffset: RowExtents::measure(count($this->visibleRows()), static fn (): int => 1)
+            ->offsetShowing($index, $area->height, $this->scrollOffset, $this->scrollPadding));
     }
 
     /**
@@ -284,6 +281,14 @@ final readonly class TreeView implements Committing, Focusable, KeybindingsAware
     public function withCursor(TreePath $path): self
     {
         return $this->cloneWith(cursor: $path);
+    }
+
+    /**
+     * Fewer where the view is too short.
+     */
+    public function withScrollPadding(int $rows): self
+    {
+        return $this->cloneWith(scrollPadding: max(0, $rows));
     }
 
     /**

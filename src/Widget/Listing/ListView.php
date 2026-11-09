@@ -60,6 +60,7 @@ final readonly class ListView implements Committing, CursorAware, Focusable, Key
         private ?Keybindings $customKeybindings = null,
         private ?Keybindings $globalKeybindings = null,
         private bool $followCursor = true,
+        private int $scrollPadding = 0,
         ?RowIndex $rowIndex = null,
     ) {
         $this->rowIndex = $rowIndex ?? RowIndex::of(count($items));
@@ -215,6 +216,14 @@ final readonly class ListView implements Committing, CursorAware, Focusable, Key
     public function withScrollOffset(int $scrollOffset): self
     {
         return $this->cloneWith(scrollOffset: $scrollOffset, followCursor: false);
+    }
+
+    /**
+     * Fewer where the view is too short.
+     */
+    public function withScrollPadding(int $rows): self
+    {
+        return $this->cloneWith(scrollPadding: max(0, $rows));
     }
 
     public function itemCount(): int
@@ -532,6 +541,6 @@ final readonly class ListView implements Committing, CursorAware, Focusable, Key
     {
         $cursor = min(max(0, $this->cursor), count($this->items) - 1);
 
-        return $this->extents($area)->offsetShowing($cursor, $area->height, $this->scrollOffset);
+        return $this->extents($area)->offsetShowing($cursor, $area->height, $this->scrollOffset, $this->scrollPadding);
     }
 }
