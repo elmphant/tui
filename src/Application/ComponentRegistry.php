@@ -201,7 +201,8 @@ final readonly class ComponentRegistry
     {
         return array_values(array_filter(
             $this->components,
-            static fn (Component $candidate): bool => !$candidate->id->equals($id) && self::holdsComponent($candidate, $id),
+            fn (Component $candidate): bool => !$candidate->id->equals($id)
+                && (self::holdsComponent($candidate, $id) || $this->holdsMountedComponent($candidate, $id)),
         ));
     }
 
@@ -505,6 +506,24 @@ final readonly class ComponentRegistry
     private static function navigationOf(Widget $widget): Navigation
     {
         return $widget instanceof Navigates ? $widget->navigation() : Navigation::Regular;
+    }
+
+    /**
+     * A mount qualifies the ids of the components it registers, but the widgets inside them still
+     * carry the ids their model gave them. So a component inside a mount looks for the local id.
+     *
+     * @param Component<Interactive> $candidate
+     */
+    private function holdsMountedComponent(Component $candidate, ComponentId $id): bool
+    {
+        $mount = null;
+        foreach ($this->mounts as $each) {
+            if ($candidate->id->isUnder($each->id) && $id->isUnder($each->id) && \strlen($each->id->value) > \strlen($mount->id->value ?? '')) {
+                $mount = $each;
+            }
+        }
+
+        return $mount !== null && self::holdsComponent($candidate->widget, ComponentId::named(substr($id->value, \strlen($mount->id->value) + 1)));
     }
 
     private static function holdsComponent(Widget $widget, ComponentId $id): bool
