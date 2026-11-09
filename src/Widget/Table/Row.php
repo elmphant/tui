@@ -7,6 +7,8 @@ namespace Elmphant\Tui\Widget\Table;
 use Elmphant\Tui\Rendering\Line;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Rendering\StyleToken;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Support\Cloneable;
 
 final readonly class Row
@@ -18,7 +20,7 @@ final readonly class Row
      */
     private function __construct(
         public array $cells = [],
-        public ?Style $style = null,
+        private Style|StyleToken|null $style = null,
         public bool $selectable = true,
         public bool $spansAllColumns = false,
         private ?string $key = null,
@@ -37,9 +39,17 @@ final readonly class Row
         return new self(cells: [$label], selectable: false, spansAllColumns: true);
     }
 
-    public function withStyle(Style $style): self
+    /**
+     * A token follows the theme, a literal Style survives a theme switch.
+     */
+    public function withStyle(Style|StyleToken $style): self
     {
         return $this->cloneWith(style: $style);
+    }
+
+    public function resolvedStyleIn(Theme $theme): ?Style
+    {
+        return $this->style instanceof StyleToken ? $this->style->resolve($theme) : $this->style;
     }
 
     /**

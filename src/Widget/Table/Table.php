@@ -574,10 +574,12 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
             $frame->fillStyled($rowArea, $defaultStyle);
         }
 
-        $rowStyle = $row->style ?? $defaultStyle;
-        if ($filled && $row->style !== null) {
-            $rowStyle = $rowStyle->readableOn($defaultStyle);
-        }
+        $ownStyle = $row->resolvedStyleIn($theme);
+        $rowStyle = match (true) {
+            $ownStyle === null => $defaultStyle,
+            $filled => $ownStyle->readableOn($defaultStyle),
+            default => $ownStyle,
+        };
 
         $rowLines = TableLayout::linesOfRow($placement->sizes, $row, $this->wraps());
 

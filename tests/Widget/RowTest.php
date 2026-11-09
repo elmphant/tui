@@ -8,6 +8,7 @@ use Elmphant\Tui\Rendering\AnsiColor;
 use Elmphant\Tui\Rendering\Color;
 use Elmphant\Tui\Rendering\Span;
 use Elmphant\Tui\Rendering\Style;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Widget\Table\Row;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -59,7 +60,7 @@ final class RowTest extends TestCase
         $row = Row::new('Alice', 'Active');
         self::assertCount(2, $row->cells);
         self::assertTrue($row->selectable);
-        self::assertNull($row->style);
+        self::assertNull($row->resolvedStyleIn(Theme::dark()));
     }
 
     #[Test]
@@ -88,6 +89,6 @@ final class RowTest extends TestCase
     {
         $style = new Style(foreground: Color::ansi(AnsiColor::Green));
         $row = Row::new('cell')->withStyle($style);
-        self::assertSame($style, $row->style);
+        self::assertSame($style, $row->resolvedStyleIn(Theme::dark()));
     }
 }
