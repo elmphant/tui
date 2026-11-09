@@ -17,7 +17,7 @@ final class TabBarDrawsTreeFocusTest extends TestCase
     #[Test]
     public function aBarTheTreeFocusesAdvertisesTheKeysItAnswers(): void
     {
-        $bar = TabBar::new()->addTab('One')->addTab('Two');
+        $bar = TabBar::new()->add('One')->add('Two');
         $area = new Rect(0, 0, 60, 8);
 
         $focused = new Frame(60, 8);

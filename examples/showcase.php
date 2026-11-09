@@ -255,10 +255,10 @@ final readonly class Showcase extends App
 
         return TabBar::new()
             ->withPadding(Spacing::horizontal(1))
-            ->addTab('About', $about, Spacer::new(), Paragraph::fromText('— Built with love in PHP —')->withAlignment(Alignment::Center))
-            ->addTab('Theme', Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rosé Pine'], 'Theme'))
-            ->addTab('Alerts', Text::token('Channel', StyleToken::Title), Spacer::new(), Select::new(['Email', 'Chat', 'SMS', 'None']))
-            ->addTab(
+            ->add('About', $about, Spacer::new(), Paragraph::fromText('— Built with love in PHP —')->withAlignment(Alignment::Center))
+            ->add('Theme', Radio::new(['Dark', 'Light', 'Dracula', 'Solarized', 'Rosé Pine'], 'Theme'))
+            ->add('Alerts', Text::token('Channel', StyleToken::Title), Spacer::new(), Select::new(['Email', 'Chat', 'SMS', 'None']))
+            ->add(
                 'Resources',
                 ProgressBar::new(0.82)->withLabel('Score'),
                 Spacer::new(),

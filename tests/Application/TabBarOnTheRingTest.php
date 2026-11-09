@@ -95,14 +95,14 @@ final readonly class TabbedFormApp extends App
     {
         return new self(
             TabBar::new()
-                ->addTab('Alpha', TextInput::new())
-                ->addTab('Beta', TextInput::new()),
+                ->add('Alpha', TextInput::new())
+                ->add('Beta', TextInput::new()),
         );
     }
 
     public function bar(): TabBar
     {
-        return $this->bar ?? TabBar::new()->addTab('Form', TextInput::new(), TextInput::new());
+        return $this->bar ?? TabBar::new()->add('Form', TextInput::new(), TextInput::new());
     }
 
     /**

@@ -143,7 +143,7 @@ final class WidgetTreeTest extends TestCase
     public function descendsIntoTabBarActiveTabChildren(): void
     {
         $checkbox = Checkbox::new('Accept');
-        $tabBar = TabBar::new()->addTab('Tab1', $checkbox);
+        $tabBar = TabBar::new()->add('Tab1', $checkbox);
         $layout = Layout::column($tabBar);
 
         $map = WidgetTree::resolveRects($layout, new Rect(0, 0, 40, 20));
@@ -156,7 +156,7 @@ final class WidgetTreeTest extends TestCase
     {
         $first = Text::new('A');
         $second = Text::new('B');
-        $tabBar = TabBar::new()->addTab('Tab1', $first, $second);
+        $tabBar = TabBar::new()->add('Tab1', $first, $second);
 
         $map = WidgetTree::resolveRects($tabBar, new Rect(0, 0, 40, 20));
 

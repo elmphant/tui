@@ -77,7 +77,7 @@ final readonly class TabBar implements CapturesThePointer, ClipsItsChildren, Foc
         ]))->overriddenBy(ScrollPane::defaultKeybindings());
     }
 
-    public function addTab(string $label, Widget ...$children): self
+    public function add(string $label, Widget ...$children): self
     {
         return $this->cloneWith(tabs: [...$this->tabs, new TabPage($label, ScrollPane::of(...$children))]);
     }

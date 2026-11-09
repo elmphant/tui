@@ -53,7 +53,7 @@ final readonly class E2eApp extends App
             ->add(Text::new('Under the dropdown ascii'));
 
         return new self(
-            TabBar::new()->addTab('Form', $form)->addTab('List', ListView::new($items)),
+            TabBar::new()->add('Form', $form)->add('List', ListView::new($items)),
             $processMarker,
         );
     }

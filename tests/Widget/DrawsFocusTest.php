@@ -69,7 +69,7 @@ final class DrawsFocusTest extends TestCase
         yield 'Table' => [Table\Table::fromCells([Column::new('A', Constraint::exact(8))], [['one'], ['two']])];
         yield 'Dropdown' => [Dropdown::new(Select::new(['one', 'two']))];
         yield 'Panel' => [Panel::new('Title')];
-        yield 'TabBar' => [TabBar::new()->addTab('One')->addTab('Two')];
+        yield 'TabBar' => [TabBar::new()->add('One')->add('Two')];
         yield 'CheckboxRow' => [CheckboxRow::new(['one', 'two'])];
         yield 'RadioRow' => [RadioRow::new(['one', 'two'])];
     }

@@ -43,7 +43,7 @@ final class TabStripOverflowTest extends TestCase
     #[Test]
     public function aSelectedTabWiderThanTheStripIsCutShortWithAnEllipsis(): void
     {
-        $bar = TabBar::new()->addTab('One')->addTab('A label far wider than the strip')->addTab('Three');
+        $bar = TabBar::new()->add('One')->add('A label far wider than the strip')->add('Three');
 
         $strip = WidgetHarness::for($bar, width: 20, height: 8)->press('right')->screen()->lineAt(1);
 
@@ -62,7 +62,7 @@ final class TabStripOverflowTest extends TestCase
     {
         $bar = TabBar::new();
         foreach (['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'] as $label) {
-            $bar = $bar->addTab($label);
+            $bar = $bar->add($label);
         }
 
         return $bar;

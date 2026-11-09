@@ -51,7 +51,7 @@ final readonly class TabbedAppWithAModal extends App
 
     public static function new(): self
     {
-        return new self(TabBar::new()->addTab('One', TextInput::new())->addTab('Two', TextInput::new()), TextInput::new());
+        return new self(TabBar::new()->add('One', TextInput::new())->add('Two', TextInput::new()), TextInput::new());
     }
 
     public function view(): Widget

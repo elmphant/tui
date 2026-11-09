@@ -163,7 +163,7 @@ final readonly class VimTabsApp extends App
     {
         return Component::bind(
             'bar',
-            $this->bar ?? TabBar::new()->addTab('A')->addTab('B'),
+            $this->bar ?? TabBar::new()->add('A')->add('B'),
             static fn (self $app, TabBar $bar): self => $app->cloneWith(bar: $bar),
         );
     }

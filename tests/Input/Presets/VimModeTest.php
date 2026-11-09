@@ -288,9 +288,9 @@ final readonly class VimTabbedTreeApp extends CopyableTestApp
     public function __construct(?TabBar $bar = null)
     {
         $this->bar = $bar ?? TabBar::new()
-            ->addTab('Files', TreeView::new([new SimpleTreeNode('dir', 'dir', '', [new SimpleTreeNode('file', 'file')])]))
-            ->addTab('Logs', TreeView::new([new SimpleTreeNode('log', 'log')]))
-            ->addTab('Notes', TextInput::new());
+            ->add('Files', TreeView::new([new SimpleTreeNode('dir', 'dir', '', [new SimpleTreeNode('file', 'file')])]))
+            ->add('Logs', TreeView::new([new SimpleTreeNode('log', 'log')]))
+            ->add('Notes', TextInput::new());
     }
 
     public function tree(): TreeView
