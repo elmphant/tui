@@ -206,6 +206,14 @@ final readonly class Table implements Committing, CursorAware, Focusable, Keybin
         return $this->selected;
     }
 
+    /**
+     * @return list<Row>
+     */
+    public function rows(): array
+    {
+        return $this->rows;
+    }
+
     public function cursorRow(): ?Row
     {
         return $this->rows[$this->cursor] ?? null;

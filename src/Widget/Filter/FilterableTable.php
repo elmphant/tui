@@ -119,6 +119,14 @@ final readonly class FilterableTable implements Focusable, KeybindingsAware, Com
         return self::selectableIn($this->matchingRows()) . ' of ' . self::selectableIn($this->rows);
     }
 
+    /**
+     * @return list<Row>
+     */
+    public function rows(): array
+    {
+        return $this->rows;
+    }
+
     public function cursorRow(): ?Row
     {
         $index = $this->cursorSourceIndex();

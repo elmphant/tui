@@ -29,6 +29,16 @@ use PHPUnit\Framework\TestCase;
 final class FilterableTableTest extends TestCase
 {
     #[Test]
+    public function rowsAnswersEveryRowHandedInWhileTheQueryNarrowsTheMatches(): void
+    {
+        $table = $this->harness()->type('coffee')->widget();
+
+        self::assertInstanceOf(FilterableTable::class, $table);
+        self::assertCount(3, $table->rows());
+        self::assertCount(1, $table->matchingRows());
+    }
+
+    #[Test]
     public function typingNarrowsTheRowsAndTheCursorNamesTheRowHandedIn(): void
     {
         $table = $this->harness()->type('coffee')->widget();

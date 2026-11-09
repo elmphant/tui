@@ -39,6 +39,14 @@ use PHPUnit\Framework\TestCase;
 final class TableTest extends TestCase
 {
     #[Test]
+    public function rowsAnswersTheRowsHandedIn(): void
+    {
+        $rows = [Row::new('Alice'), Row::new('Bob')];
+
+        self::assertSame($rows, Table\Table::new([Column::new('Name', Constraint::flex())], $rows)->rows());
+    }
+
+    #[Test]
     public function itNamesTheKeysItAnswers(): void
     {
         self::assertSame(

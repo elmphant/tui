@@ -26,6 +26,12 @@ use PHPUnit\Framework\TestCase;
 final class SelectTest extends TestCase
 {
     #[Test]
+    public function optionsAnswersTheOptionsHandedIn(): void
+    {
+        self::assertSame(['a', 'b'], Select::new(['a', 'b'])->options());
+    }
+
+    #[Test]
     public function aLabelTooWideForTheListEndsWithAnEllipsis(): void
     {
         $screen = WidgetHarness::for(Select::new(['A very long option label', 'short']), 12, 2)->screen();

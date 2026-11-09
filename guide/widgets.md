@@ -96,7 +96,8 @@ as a description the table does not show.
 
 The filter widgets tell you what the reader picked in terms of the rows you
 handed in, not the filtered ones: `cursorSourceIndex()`, and on a table `cursorRow()`
-and `selectedRow()`. Bound, a click or Enter answers `Chosen`, carrying the item
+and `selectedRow()`. `rows()` answers every row you handed in, like `items()` on
+a list, so you need no copy of your own. Bound, a click or Enter answers `Chosen`, carrying the item
 or the row. `withNoMatchText()` sets what shows when nothing matches the
 query, and `withNoDataText()` what shows when there is nothing to filter.
 

@@ -88,6 +88,14 @@ final readonly class Select implements Focusable, KeybindingsAware, CursorAware,
         return $this->cloneWith(emptyCaption: $caption);
     }
 
+    /**
+     * @return list<string>
+     */
+    public function options(): array
+    {
+        return $this->options;
+    }
+
     public function cursor(): int
     {
         return $this->cursor;
