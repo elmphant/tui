@@ -53,7 +53,7 @@ rows their own background.
 | `inputStyle` | `TextInput` |
 | `headerStyle` | `Header`, the header row of `Table` |
 | `footerStyle` | `Footer`, `StatusBar` |
-| `title` | the titles of `Panel`, `Box`, `Modal`, `TabBar`, `Radio`, `CheckboxGroup` |
+| `title` | the titles of `Panel`, `Box`, `Modal` and `TabBar`, and the labels of `Radio` and `CheckboxGroup` |
 | `borderStyle` / `focusedBorderStyle` | borders, and the border of the part that holds the keyboard |
 | `fillStyle` / `emptyStyle` | the two parts of `ProgressBar` |
 | `raisedButtons` | `Button`: `withRaisedButtons()` draws the right and bottom side heavier, so a button stands out, and swaps the sides while it is held down. Where the terminal blends colours, the top and left are also lighter and the right and bottom darker. Focus shows in the border colour only |
