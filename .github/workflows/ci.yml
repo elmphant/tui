@@ -18,7 +18,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: intl, mbstring, pcntl, posix
+          extensions: mbstring, pcntl, posix
           coverage: none
       - uses: ramsey/composer-install@v3
         with:
@@ -46,7 +46,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: intl, mbstring, pcntl, posix
+          extensions: mbstring, pcntl, posix
           coverage: none
       - uses: ramsey/composer-install@v3
         with:
@@ -70,7 +70,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: intl, mbstring, pcntl, posix
+          extensions: mbstring, pcntl, posix
           coverage: none
       - uses: ramsey/composer-install@v3
       - name: Linux PTY hardening scenarios
@@ -106,7 +106,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: intl, mbstring, pcntl, posix
+          extensions: mbstring, pcntl, posix
           coverage: xdebug
       - uses: ramsey/composer-install@v3
       - name: Changed lines only
