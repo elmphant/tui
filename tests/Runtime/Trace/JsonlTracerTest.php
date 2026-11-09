@@ -154,6 +154,13 @@ final class JsonlTracerTest extends TestCase
     }
 
     #[Test]
+    public function aLiveTraceToAPathThatCannotBeWrittenFailsBeforeTheProgramStarts(): void
+    {
+        $this->expectException(RuntimeException::class);
+        JsonlTracer::live($this->path . '/no/such/directory/trace.jsonl');
+    }
+
+    #[Test]
     public function aTraceThatCannotBeWrittenSaysSoRatherThanVanishing(): void
     {
         $tracer = JsonlTracer::toFile($this->path . '/no/such/directory/trace.jsonl');

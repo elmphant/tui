@@ -43,6 +43,10 @@ final class JsonlTracer implements Tracer
      */
     public static function live(string $path, Clock $clock = new MonotonicClock()): self
     {
+        if (@file_put_contents($path, '', FILE_APPEND) === false) {
+            throw new RuntimeException(sprintf('Unable to write the trace to %s', $path));
+        }
+
         return new self($path, $clock, live: true);
     }
 
