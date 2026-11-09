@@ -18,6 +18,11 @@ parameters:
     paths:
         - src
         - tests/Stan
+        - examples/kanban.php
+        - examples/showcase.php
+        - examples/select.php
+        - examples/form.php
+        - examples/inline
     excludePaths:
         # Deliberate violations: they are the input to the rule's own tests.
         - tests/Stan/Fixtures
