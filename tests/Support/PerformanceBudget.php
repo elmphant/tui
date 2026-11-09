@@ -20,9 +20,9 @@ trait PerformanceBudget
         }
     }
 
-    protected static function medianMicroseconds(Closure $operation, int $iterations = 200): float
+    protected static function medianMicroseconds(Closure $operation, int $iterations = 200, int $warmups = 20): float
     {
-        for ($index = 0; $index < 20; ++$index) {
+        for ($index = 0; $index < $warmups; ++$index) {
             $operation();
         }
 
