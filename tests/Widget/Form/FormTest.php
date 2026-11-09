@@ -324,6 +324,14 @@ final class FormTest extends TestCase
     }
 
     #[Test]
+    public function aFieldWithoutANameIsRefusedBecauseNothingCouldAskForItsValue(): void
+    {
+        $this->expectException(LogicException::class);
+
+        Field::text(' ', 'Name');
+    }
+
+    #[Test]
     public function anIntroThatTakesInputIsRefusedBecauseNothingWouldKeepWhatItTook(): void
     {
         $this->expectException(LogicException::class);

@@ -12,6 +12,7 @@ use Elmphant\Tui\Widget\Field\InputDecoration;
 use Elmphant\Tui\Widget\Field\TextInput;
 use Elmphant\Tui\Widget\Focusable;
 use Elmphant\Tui\Widget\HoldsAValue;
+use LogicException;
 
 final readonly class Field
 {
@@ -31,6 +32,9 @@ final readonly class Field
         public bool $labelledByItsWidget = false,
         private array $rules = [],
     ) {
+        if (trim($name) === '') {
+            throw new LogicException(sprintf('A field needs a name, "%s" has none', $label));
+        }
     }
 
     public static function text(string $name, string $label, string $description = ''): self
