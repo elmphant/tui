@@ -322,6 +322,30 @@ final class ProgressBarTest extends TestCase
     }
 
     #[Test]
+    public function thePercentOverTheEmptyPartKeepsTheEmptyBackground(): void
+    {
+        $theme = Theme::dark();
+        $frame = new Frame(10, 1);
+
+        ProgressBar::new(0.51)->withPercentShown()->render($frame, new Rect(0, 0, 10, 1), RenderContext::unfocused($theme));
+
+        self::assertSame(' 51%', implode('', array_slice($frame->characters, 6, 4)));
+        self::assertSame(array_fill(0, 4, $theme->base->backgroundValue()), array_slice($frame->backgrounds, 6, 4));
+    }
+
+    #[Test]
+    public function thePercentOverTheFilledPartTakesTheFillBackground(): void
+    {
+        $theme = Theme::dark();
+        $frame = new Frame(10, 1);
+
+        ProgressBar::new(1.0)->withPercentShown()->render($frame, new Rect(0, 0, 10, 1), RenderContext::unfocused($theme));
+
+        self::assertSame(array_fill(0, 4, $theme->fillStyle->foregroundValue()), array_slice($frame->backgrounds, 6, 4));
+        self::assertSame(array_fill(0, 4, Color::ansi(AnsiColor::Black)->value), array_slice($frame->foregrounds, 6, 4));
+    }
+
+    #[Test]
     public function withProgressClampsAboveOne(): void
     {
         $bar = ProgressBar::new()->withProgress(1.5);
@@ -698,45 +722,6 @@ final class ProgressBarTest extends TestCase
 
         $row = $this->extractRow($frame, 0, 4);
         self::assertStringContainsString('50%', $row);
-    }
-
-    /**
-     * When display > 0.5, percent sits on the fill and takes the ink that fill
-     * contrasts with — ansi(0) for this theme. When display <= 0.5, it uses
-     * labelColor foreground and baseBackground.
-     */
-    #[Test]
-    public function percentColorChangesAboveHalfProgress(): void
-    {
-        $theme = Theme::dark();
-        $fillColor = $theme->fillStyle->foregroundValue();
-        $labelColor = $theme->base->foregroundValue();
-        $baseBackground = $theme->base->backgroundValue();
-        $ansi0Color = Color::ansi(AnsiColor::Black)->value;
-
-        // display = 0.6 (> 0.5) => dark text on fill background
-        $barAboveHalf = ProgressBar::new(0.6)->withDisplay(0.6)->withPercentShown(true);
-
-        $frame = new Frame(20, 1);
-        $area = new Rect(0, 0, 20, 1);
-        $barAboveHalf->render($frame, $area, $this->context);
-
-        // Percent text is at the right end. Find the '%' character.
-        $percentIndex = $this->findCharIndex($frame, '%', 20);
-        self::assertNotNull($percentIndex, 'Should find % character');
-        self::assertSame($ansi0Color, $frame->foregrounds[$percentIndex]);
-        self::assertSame($fillColor, $frame->backgrounds[$percentIndex]);
-
-        // display = 0.4 (<= 0.5) => labelColor text on baseBackground
-        $barBelowHalf = ProgressBar::new(0.4)->withDisplay(0.4)->withPercentShown(true);
-
-        $buffer2 = new Frame(20, 1);
-        $barBelowHalf->render($buffer2, $area, $this->context);
-
-        $percentIndex2 = $this->findCharIndex($buffer2, '%', 20);
-        self::assertNotNull($percentIndex2, 'Should find % character');
-        self::assertSame($labelColor, $buffer2->foregrounds[$percentIndex2]);
-        self::assertSame($baseBackground, $buffer2->backgrounds[$percentIndex2]);
     }
 
     #[Test]
