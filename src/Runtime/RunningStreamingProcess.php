@@ -32,21 +32,23 @@ final class RunningStreamingProcess implements RunningProcess
      * @var list<Message>
      */
     private array $heldBack = [];
-    private string $pendingStdout = '';
-    private string $pendingStderr = '';
+    private readonly OutputFramer $stdout;
+    private readonly OutputFramer $stderr;
     private readonly ?float $startedAt;
 
     public function __construct(
         private readonly Process $process,
         private readonly ?EffectId $effectId,
-        private readonly int $outputChunkBytes = 65_536,
+        int $outputChunkBytes = 65_536,
         /**
          * @var Closure(Message): Message|null
          */
         private readonly ?Closure $wrap = null,
-        private readonly bool $framesLines = false,
+        bool $framesLines = false,
         private readonly ?Clock $clock = null,
     ) {
+        $this->stdout = new OutputFramer($outputChunkBytes, $framesLines);
+        $this->stderr = new OutputFramer($outputChunkBytes, $framesLines);
         $this->startedAt = $clock?->now();
     }
 
@@ -62,7 +64,7 @@ final class RunningStreamingProcess implements RunningProcess
             $this->finished = true;
 
             return $this->nextBatch([
-                ...$this->drainOutput(ending: true),
+                ...$this->finishOutput(),
                 $this->map(new ErrorMsg($timeout, ErrorSource::Process, $this->effectId)),
                 $this->finishedMessage(),
             ]);
@@ -70,7 +72,7 @@ final class RunningStreamingProcess implements RunningProcess
         if ($this->heldBack !== []) {
             return $this->nextBatch([]);
         }
-        $messages = $this->drainOutput(ending: false);
+        $messages = $this->messagesFor($this->stdout->push($this->readStdout()), $this->stderr->push($this->readStderr()));
 
         if ($this->process->isRunning()) {
             return $this->nextBatch($messages);
@@ -79,7 +81,7 @@ final class RunningStreamingProcess implements RunningProcess
         $this->finished = true;
 
         // isRunning() also reads pipes, so it may have buffered output after the drain above.
-        return $this->nextBatch([...$messages, ...$this->drainOutput(ending: true), $this->finishedMessage()]);
+        return $this->nextBatch([...$messages, ...$this->finishOutput(), $this->finishedMessage()]);
     }
 
     public function isRunning(): bool
@@ -100,6 +102,44 @@ final class RunningStreamingProcess implements RunningProcess
         return array_slice($waiting, 0, self::MESSAGES_PER_TURN);
     }
 
+    /**
+     * @return list<Message>
+     */
+    private function finishOutput(): array
+    {
+        return $this->messagesFor($this->stdout->finish($this->readStdout()), $this->stderr->finish($this->readStderr()));
+    }
+
+    private function readStdout(): string
+    {
+        $bytes = $this->process->getIncrementalOutput();
+        $this->process->clearOutput();
+
+        return $bytes;
+    }
+
+    private function readStderr(): string
+    {
+        $bytes = $this->process->getIncrementalErrorOutput();
+        $this->process->clearErrorOutput();
+
+        return $bytes;
+    }
+
+    /**
+     * @param list<string> $stdout
+     * @param list<string> $stderr
+     *
+     * @return list<Message>
+     */
+    private function messagesFor(array $stdout, array $stderr): array
+    {
+        return [
+            ...array_map(fn (string $chunk): Message => $this->map(new ProcessOutputMsg($chunk, ProcessStream::Stdout, $this->effectId)), $stdout),
+            ...array_map(fn (string $chunk): Message => $this->map(new ProcessOutputMsg($chunk, ProcessStream::Stderr, $this->effectId)), $stderr),
+        ];
+    }
+
     private function finishedMessage(): Message
     {
         return $this->map(new ProcessFinishedMsg(
@@ -107,132 +147,5 @@ final class RunningStreamingProcess implements RunningProcess
             $this->effectId,
             $this->clock === null || $this->startedAt === null ? null : new ProcessTiming($this->startedAt, $this->clock->now()),
         ));
-    }
-
-    /**
-     * @return list<Message>
-     */
-    private function drainOutput(bool $ending): array
-    {
-        $stdout = $this->pendingStdout . $this->process->getIncrementalOutput();
-        $this->process->clearOutput();
-        $stderr = $this->pendingStderr . $this->process->getIncrementalErrorOutput();
-        $this->process->clearErrorOutput();
-
-        [$stdout, $this->pendingStdout] = $ending ? [$stdout, ''] : $this->readyAndPending($stdout);
-        [$stderr, $this->pendingStderr] = $ending ? [$stderr, ''] : $this->readyAndPending($stderr);
-
-        return [...$this->messagesFor($stdout, ProcessStream::Stdout), ...$this->messagesFor($stderr, ProcessStream::Stderr)];
-    }
-
-    /**
-     * @return array{string, string}
-     */
-    private function readyAndPending(string $text): array
-    {
-        $ready = $this->framesLines ? self::wholeLinesLength($text) : 0;
-        if (!$this->framesLines || \strlen($text) - $ready >= $this->outputChunkBytes) {
-            $ready = self::wholeCharactersLength($text);
-        }
-
-        return [substr($text, 0, $ready), substr($text, $ready)];
-    }
-
-    private static function wholeLinesLength(string $text): int
-    {
-        return \strlen($text) - strcspn(strrev($text), "\r\n");
-    }
-
-    private static function wholeCharactersLength(string $text): int
-    {
-        $length = \strlen($text);
-        $start = $length - 1;
-        while ($start >= 0 && $start > $length - 4 && self::isContinuationByte($text[$start])) {
-            --$start;
-        }
-        if ($start < 0) {
-            return $length;
-        }
-
-        $lead = \ord($text[$start]);
-        $sequenceLength = match (true) {
-            $lead >= 0xF0 => 4,
-            $lead >= 0xE0 => 3,
-            $lead >= 0xC0 => 2,
-            default => 1,
-        };
-
-        return $start + $sequenceLength > $length ? $start : $length;
-    }
-
-    /**
-     * @return list<Message>
-     */
-    private function messagesFor(string $text, ProcessStream $stream): array
-    {
-        if ($text === '') {
-            return [];
-        }
-
-        $size = max(1, $this->outputChunkBytes);
-        $chunks = $this->framesLines ? self::lineChunksOf($text, $size) : self::chunksOf($text, $size);
-
-        return array_map(
-            fn (string $chunk): Message => $this->map(new ProcessOutputMsg($chunk, $stream, $this->effectId)),
-            $chunks,
-        );
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function chunksOf(string $text, int $size): array
-    {
-        $chunks = [];
-        while ($text !== '') {
-            $length = \strlen($text);
-            $cut = min($size, $length);
-            while ($cut > 0 && $cut < $length && self::isContinuationByte($text[$cut])) {
-                --$cut;
-            }
-            if ($cut === 0) {
-                $cut = $size;
-                while ($cut < $length && self::isContinuationByte($text[$cut])) {
-                    ++$cut;
-                }
-            }
-            $chunks[] = substr($text, 0, $cut);
-            $text = substr($text, $cut);
-        }
-
-        return $chunks;
-    }
-
-    /**
-     * Whole lines up to the size each; a longer line is cut between characters.
-     *
-     * @return list<string>
-     */
-    private static function lineChunksOf(string $text, int $size): array
-    {
-        $chunks = [];
-        while (\strlen($text) > $size) {
-            $cut = self::wholeLinesLength(substr($text, 0, $size));
-            if ($cut === 0) {
-                $cut = \strlen(self::chunksOf(substr($text, 0, $size + 3), $size)[0]);
-            }
-            $chunks[] = substr($text, 0, $cut);
-            $text = substr($text, $cut);
-        }
-        if ($text !== '') {
-            $chunks[] = $text;
-        }
-
-        return $chunks;
-    }
-
-    private static function isContinuationByte(string $byte): bool
-    {
-        return (\ord($byte) & 0xC0) === 0x80;
     }
 }
