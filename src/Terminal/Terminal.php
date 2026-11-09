@@ -51,7 +51,7 @@ interface Terminal extends TerminalOutput
     public function flush(): void;
 
     /**
-     * @return resource|null Stream for EventLoop::onReadable(), or null if polling needed
+     * @return resource|null the stream the loop watches for input, or null for a terminal with no input to watch
      */
     public function inputStream(): mixed;
 }
