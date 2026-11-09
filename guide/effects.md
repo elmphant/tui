@@ -38,7 +38,7 @@ Cmd::stream(['tail', '-f', 'log'])  // get the output while it runs
 
 - `Cmd::tick()` repeats by itself. Ask once, not on every tick.
 - `Cmd::call()` runs on the main loop. Keep it short, and use `fork()`, `exec()`,
-  `process()` or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
+  `stream()` or `http()` for anything slow. If it throws, you get an `ErrorMsg`.
 - `Cmd::listen()` stops at the end of the stream or on `Cmd::cancel()`. Cancel
   it before you close the stream yourself.
 - `Cmd::println()` prints only in an inline program, and the lines stay in the
@@ -169,7 +169,7 @@ use Elmphant\Tui\Core\{Cmd, EffectId};
 $download = EffectId::named('download');
 
 Cmd::http('https://example.com/archive', id: $download);
-Cmd::cancel($download); // also works for tick(), after(), exec(), and process()
+Cmd::cancel($download); // also works for tick(), after(), exec(), and stream()
 ```
 
 The result then answers `$message->isFrom('download')`. Starting a new command
