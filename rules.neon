@@ -9,6 +9,12 @@ parametersSchema:
 
 services:
     -
+        class: Elmphant\Tui\Stan\BoundPropertiesAreRead
+        arguments:
+            parser: @defaultAnalysisParser
+        tags:
+            - phpstan.properties.readWriteExtension
+    -
         class: Elmphant\Tui\Stan\CompleteRebuildRule
         tags:
             - phpstan.rules.rule

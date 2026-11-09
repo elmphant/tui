@@ -223,6 +223,10 @@ includes:
 | `SplitIsBoundRule` | A `Split` that is not bound, so dragging its divider does nothing |
 | `ChildIsDrawnThroughTheContextRule` | A widget calling `render()` on another widget instead of `$context->draw()` |
 
+The include also tells PHPStan that `$this->bind('name')` and `$this->mount('name')`
+read the property they name, so a private property an App only binds is not
+reported as never read.
+
 To allow an exception to `ReachableChildrenRule`:
 
 ```neon
