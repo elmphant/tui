@@ -18,6 +18,8 @@ use Elmphant\Tui\Text\Grapheme;
  */
 final class InputParser
 {
+    private const LAST_MOUSE_CELL = 65535;
+
     public static function parseSequence(string $sequence): ?Message
     {
         if ($sequence === "\x1b[" || $sequence === "\x1bO") {
@@ -545,8 +547,8 @@ final class InputParser
         $shift = ($buttonCode & 4) !== 0;
         $alt = ($buttonCode & 8) !== 0;
         $ctrl = ($buttonCode & 16) !== 0;
-        $column = max(0, (int)$fields[2] - 1);
-        $row = max(0, (int)$fields[3] - 1);
+        $column = max(0, min(self::LAST_MOUSE_CELL, (int)$fields[2]) - 1);
+        $row = max(0, min(self::LAST_MOUSE_CELL, (int)$fields[3]) - 1);
         $hasMotion = (bool)($buttonCode & 32);
         $buttonBase = $buttonCode & 3;
 

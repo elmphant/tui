@@ -385,6 +385,15 @@ final class InputParserTest extends TestCase
     }
 
     #[Test]
+    public function aMouseReportWithHugeCoordinatesStaysOnTheLastCellATerminalCanName(): void
+    {
+        $message = InputParser::parseSequence("\x1b[<0;99999999999999999999;99999999999999999999M");
+
+        self::assertInstanceOf(MouseMsg::class, $message);
+        self::assertSame([65534, 65534], [$message->x, $message->y]);
+    }
+
+    #[Test]
     public function theBackAndForwardMouseButtonsClickNothing(): void
     {
         self::assertSame([[], []], [
