@@ -119,8 +119,11 @@ works right now, read from those declarations.
 3. The framework draws `view()` of the new model and runs the command. When the
    command finishes, its result is the next message.
 
-`update()` and `view()` never do the work themselves. That is why an app is easy
-to test: a test checks which command was asked for, and nothing runs.
+An `App` has no `update()` for you to write. The framework calls its actions,
+its `on()` handlers and hooks such as `onMessage()`, and each answers with the
+new App and maybe a command. None of them, and not `view()`, does the work
+itself. That is why an app is easy to test: a test checks which command was
+asked for, and nothing runs.
 [How it works](guide/how-it-works.md) follows one key press through the framework.
 
 ## Guides
