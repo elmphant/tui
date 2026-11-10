@@ -346,6 +346,26 @@ final class ProgressBarTest extends TestCase
     }
 
     #[Test]
+    public function thePercentOverTheFilledPartIsNotBoldSoATerminalCannotBrightenItsBlack(): void
+    {
+        $frame = new Frame(10, 1);
+
+        ProgressBar::new(1.0)->withPercentShown()->render($frame, new Rect(0, 0, 10, 1), RenderContext::unfocused(Theme::dark()));
+
+        self::assertSame([0, 0, 0, 0], array_slice($frame->attributes, 6, 4));
+    }
+
+    #[Test]
+    public function thePercentOverTheEmptyPartStaysBold(): void
+    {
+        $frame = new Frame(10, 1);
+
+        ProgressBar::new(0.0)->withPercentShown()->render($frame, new Rect(0, 0, 10, 1), RenderContext::unfocused(Theme::dark()));
+
+        self::assertSame(array_fill(0, 4, Attr::BOLD), array_slice($frame->attributes, 6, 4));
+    }
+
+    #[Test]
     public function withProgressClampsAboveOne(): void
     {
         $bar = ProgressBar::new()->withProgress(1.5);

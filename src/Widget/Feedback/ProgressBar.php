@@ -173,7 +173,7 @@ final readonly class ProgressBar implements Interactive
                 $onFill = Color::fromValue($fillColor)->contrastingText()->value;
                 foreach (str_split($percentText) as $offset => $character) {
                     $filled = $percentX + $offset < $filledUntil;
-                    $frame->putChar($percentX + $offset, $rowY, $character, $filled ? $onFill : $labelColor, $filled ? $fillColor : $baseBackground, Attr::BOLD);
+                    $frame->putChar($percentX + $offset, $rowY, $character, $filled ? $onFill : $labelColor, $filled ? $fillColor : $baseBackground, $filled ? 0 : Attr::BOLD);
                 }
             }
         }
