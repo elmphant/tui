@@ -100,7 +100,7 @@ final class PrimitivesTest extends TestCase
         $context = new RenderContext(Theme::dark());
         $statusBar = StatusBar::new('q:quit');
         $statusBar->render($frame, new Rect(0, 2, 20, 1), $context);
-        self::assertSame('q', $frame->characters[2 * 20 + 0]);
+        self::assertSame('q', $frame->characters[2 * 20 + 1]);
     }
 
     #[Test]

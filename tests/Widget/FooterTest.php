@@ -50,10 +50,10 @@ final class FooterTest extends TestCase
             ->withLeft(StatusBar::new('left side'))
             ->withRight(Text::new('the long right'), Text::new('short'));
 
-        self::assertSame('left side  the long right', $this->drawnAt($footer, 25));
-        self::assertSame('left side          short', $this->drawnAt($footer, 24));
-        self::assertSame('left side  short', $this->drawnAt($footer, 16));
-        self::assertSame('left side', $this->drawnAt($footer, 15));
+        self::assertSame(' left side  the long right', $this->drawnAt($footer, 26));
+        self::assertSame(' left side          short', $this->drawnAt($footer, 25));
+        self::assertSame(' left side  short', $this->drawnAt($footer, 17));
+        self::assertSame(' left side', $this->drawnAt($footer, 16));
     }
 
     #[Test]

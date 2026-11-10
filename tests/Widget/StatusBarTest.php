@@ -85,8 +85,20 @@ final class StatusBarTest extends TestCase
         $frame = new Frame(40, 1);
         $bar->render($frame, Rect::fromSize(40, 1), $this->context);
 
-        $text = $this->extractText($frame, 0, 11);
-        self::assertSame('hello world', $text);
+        $text = $this->extractText($frame, 0, 12);
+        self::assertSame(' hello world', $text);
+    }
+
+    #[Test]
+    public function plainTextStartsInTheColumnTheFirstHintKeyStartsIn(): void
+    {
+        $content = new Frame(20, 1);
+        StatusBar::new('ready')->render($content, Rect::fromSize(20, 1), $this->context);
+        $hints = new Frame(20, 1);
+        StatusBar::forHints(['q' => 'quit'])->render($hints, Rect::fromSize(20, 1), $this->context);
+
+        self::assertSame(1, strpos(implode('', $content->characters), 'r'));
+        self::assertSame(1, strpos(implode('', $hints->characters), 'q'));
     }
 
     #[Test]
@@ -203,10 +215,10 @@ final class StatusBarTest extends TestCase
         $area = new Rect(3, 2, 10, 1);
         $bar->render($frame, $area, $this->context);
 
-        self::assertSame('A', $frame->characters[2 * 20 + 3]);
-        self::assertSame('B', $frame->characters[2 * 20 + 4]);
+        self::assertSame('A', $frame->characters[2 * 20 + 4]);
+        self::assertSame('B', $frame->characters[2 * 20 + 5]);
 
-        self::assertSame(' ', $frame->characters[2 * 20 + 2]);
+        self::assertSame(0, $frame->backgrounds[2 * 20 + 2]);
     }
 
     #[Test]

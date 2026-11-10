@@ -73,7 +73,7 @@ final readonly class StatusBar implements Widget
             return;
         }
 
-        $frame->putStyled($area->x, $area->y, CharWidth::truncateToWidth($this->content, $area->width), $barStyle);
+        $frame->putStyled($area->x, $area->y, CharWidth::truncateToWidth($this->shownContent(), $area->width), $barStyle);
     }
 
     /**
@@ -102,10 +102,15 @@ final readonly class StatusBar implements Widget
     private function inkWidth(): int
     {
         if ($this->hints === [] && $this->pinned === []) {
-            return CharWidth::stringWidth($this->content);
+            return CharWidth::stringWidth($this->shownContent());
         }
 
         return self::widthOf([...$this->hints, ...$this->pinned]) - self::HINT_GAP;
+    }
+
+    private function shownContent(): string
+    {
+        return $this->content === '' ? '' : ' ' . $this->content;
     }
 
     /**
