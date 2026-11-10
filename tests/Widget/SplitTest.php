@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Widget;
 
-use Elmphant\Tui\Input\Actions;
-use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
@@ -20,9 +18,6 @@ use Elmphant\Tui\Rendering\Context\RenderPass;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Tests\Support\RootPass;
-use Elmphant\Tui\Widget\Field\TextInput;
-use Elmphant\Tui\Widget\Listing\ListView;
-use Elmphant\Tui\Widget\Listing\SimpleListItem;
 use Elmphant\Tui\Widget\Plan\LayoutPlan;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Split;
@@ -44,37 +39,6 @@ final class SplitTest extends TestCase
 
         self::assertSame('    ', implode('', array_slice($frame->characters, 0, 4)));
         self::assertSame('     ', implode('', array_slice($frame->characters, 5, 5)));
-    }
-
-    #[Test]
-    public function aGlobalRebindingReachesTheKeysAPaneAnswers(): void
-    {
-        $area = new Rect(0, 0, 40, 6);
-        $list = ListView::new([new SimpleListItem('a'), new SimpleListItem('b')]);
-        $split = Split::row(SplitState::even(2), $list, Text::new('right'))
-            ->withMarkedPane(0)
-            ->withGlobalKeybindings(new Keybindings([Actions::CURSOR_DOWN => ['j']]));
-
-        $updated = $split->update(new KeyMsg('j'), $area)->model;
-
-        self::assertInstanceOf(Split::class, $updated);
-        $first = [...$updated->placedChildren($area)][0][0];
-        self::assertInstanceOf(ListView::class, $first);
-        self::assertSame(1, $first->cursor(), 'a split must hand its panes the bindings the app made active');
-    }
-
-    #[Test]
-    public function aPaneReceivesTheKeysTypedIntoIt(): void
-    {
-        $area = new Rect(0, 0, 40, 6);
-        $split = Split::row(SplitState::even(2), TextInput::new(), Text::new('right'))->withMarkedPane(0);
-
-        $updated = $split->update(new KeyMsg('h'), $area)->model;
-
-        self::assertInstanceOf(Split::class, $updated);
-        $first = [...$updated->placedChildren($area)][0][0];
-        self::assertInstanceOf(TextInput::class, $first);
-        self::assertSame('h', $first->value(), 'A split that swallows input is a dead end for anything interactive');
     }
 
     #[Test]
@@ -522,32 +486,6 @@ final class SplitTest extends TestCase
             SplitState::even(2)->dividePairAt(0, 15, 20)->shares,
             $this->drag($split, $area, from: 10, to: 20)->state()->shares,
         );
-    }
-
-    #[Test]
-    public function aClickReachesTheWidgetInThePaneUnderIt(): void
-    {
-        $area = Rect::fromSize(21, 6);
-        $list = ListView::new(array_map(static fn (string $label) => new SimpleListItem($label), ['a', 'b', 'c', 'd']));
-        $split = Split::row(SplitState::even(2), $list, Text::new('right'));
-
-        $clicked = $split->update(new MouseMsg(1, 2, MouseAction::Press, MouseButton::Left), $area)->model;
-
-        $panes = $clicked->placedChildren($area);
-        self::assertInstanceOf(ListView::class, $panes[0][0]);
-        self::assertSame(2, $panes[0][0]->cursor());
-    }
-
-    #[Test]
-    public function theWheelReachesThePaneUnderItThoughNoPaneIsMarked(): void
-    {
-        $area = Rect::fromSize(21, 3);
-        $list = ListView::new(array_map(static fn (int $row) => new SimpleListItem("row $row"), range(1, 20)));
-        $split = Split::row(SplitState::even(2), $list, Text::new('right'));
-
-        $scrolled = $split->update(new MouseMsg(1, 1, MouseAction::WheelDown, MouseButton::None), $area)->model;
-
-        self::assertNotSame($list, $scrolled->placedChildren($area)[0][0]);
     }
 
     #[Test]

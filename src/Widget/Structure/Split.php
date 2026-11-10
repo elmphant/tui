@@ -6,9 +6,6 @@ namespace Elmphant\Tui\Widget\Structure;
 
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Input\Keybindings;
-use Elmphant\Tui\Input\KeybindingsAware;
-use Elmphant\Tui\Input\KeybindingsAwareBehavior;
 use Elmphant\Tui\Layout\Axis\Allocator;
 use Elmphant\Tui\Layout\Axis\AxisSpecification;
 use Elmphant\Tui\Layout\Axis\Distribution;
@@ -19,29 +16,25 @@ use Elmphant\Tui\Layout\Direction;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Layout\SplitState;
-use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
-use Elmphant\Tui\Message\PasteMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
-use Elmphant\Tui\Widget\Dispatch\ChildDispatcher;
 use Elmphant\Tui\Widget\Focus\CapturesThePointer;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 use InvalidArgumentException;
 
 /**
- * Keep divider positions in host-owned SplitState; expose children through WidgetContainer for layout and routing.
+ * Keep divider positions in host-owned SplitState. The panes are published as stops, so the runtime routes to them.
  */
-final readonly class Split implements Widget, WidgetContainer, Interactive, KeybindingsAware, CapturesThePointer
+final readonly class Split implements Widget, GraftsItsChildren, Interactive, CapturesThePointer
 {
     use Cloneable;
-    use KeybindingsAwareBehavior;
 
     private const GAP = 1;
 
@@ -54,9 +47,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         private array $children,
         private Direction $direction = Direction::Horizontal,
         private array $minimums = [],
-        private ?int $markedPane = null,
-        private ?Keybindings $customKeybindings = null,
-        private ?Keybindings $globalKeybindings = null,
     ) {
         $childCount = count($this->children);
         $shareCount = count($this->state->shares);
@@ -64,16 +54,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         if ($childCount !== $shareCount) {
             throw new InvalidArgumentException(sprintf('Split needs as many shares as children, got %d children and %d shares', $childCount, $shareCount));
         }
-    }
-
-    public function withMarkedPane(?int $pane): self
-    {
-        return $this->cloneWith(markedPane: $pane);
-    }
-
-    public static function defaultKeybindings(): Keybindings
-    {
-        return Keybindings::empty();
     }
 
     public static function row(SplitState $state, Widget ...$children): self
@@ -98,17 +78,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
 
     public function capturesThePointer(): bool
     {
-        if ($this->state->dragging !== null) {
-            return true;
-        }
-
-        foreach ($this->children as $child) {
-            if ($child instanceof CapturesThePointer && $child->capturesThePointer()) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->state->dragging !== null;
     }
 
     /**
@@ -116,38 +86,24 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
      */
     public function update(Message $message, Rect $area): UpdateResult
     {
-        if ($message instanceof MouseMsg && $message->button === MouseButton::Left) {
-            if ($message->action === MouseAction::Release) {
-                return $this->state->dragging === null
-                    ? $this->toPanes($message, $area)
-                    : new UpdateResult($this->with($this->state->withDragging(null)));
-            }
-
-            if ($message->action === MouseAction::Press) {
-                $divider = $this->dividerAt($message, $area);
-
-                if ($divider !== null) {
-                    return new UpdateResult($this->with($this->state->withDragging($divider)));
-                }
-
-                // A new press clears any previous drag; an overlaid input layer may have consumed its release.
-                $letGo = $this->state->dragging === null
-                    ? $this
-                    : $this->with($this->state->withDragging(null));
-
-                return $letGo->toPanes($message, $area);
-            }
-
-            if ($message->action === MouseAction::Motion && $this->state->dragging !== null) {
-                return new UpdateResult($this->with($this->dragged($message, $area)));
-            }
+        if (!$message instanceof MouseMsg || $message->button !== MouseButton::Left) {
+            return new UpdateResult($this);
         }
 
-        if ($message instanceof KeyMsg || $message instanceof PasteMsg) {
-            return $this->toMarkedPane($message, $area);
+        if ($message->action === MouseAction::Release) {
+            return new UpdateResult($this->state->dragging === null ? $this : $this->with($this->state->withDragging(null)));
         }
 
-        return $this->toPanes($message, $area);
+        if ($message->action === MouseAction::Press) {
+            // A new press clears any previous drag; an overlaid input layer may have consumed its release.
+            return new UpdateResult($this->with($this->state->withDragging($this->dividerAt($message, $area))));
+        }
+
+        if ($message->action === MouseAction::Motion && $this->state->dragging !== null) {
+            return new UpdateResult($this->with($this->dragged($message, $area)));
+        }
+
+        return new UpdateResult($this);
     }
 
     /**
@@ -190,6 +146,15 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         return $this->children;
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        if (!isset($this->children[$index])) {
+            return $this;
+        }
+
+        return $this->cloneWith(children: array_replace($this->children, [$index => $child]));
+    }
+
     /**
      * @return list<array{0: Widget, 1: Rect}>
      */
@@ -215,7 +180,7 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
 
         try {
             foreach (PlacedChildren::of($this, $area, $context) as [$child, $pane]) {
-                $context->draw($child, $frame, $pane);
+                $context->drawChild($index, $child, $frame, $pane);
 
                 if ($index < $last) {
                     $this->renderDivider($frame, $area, $pane, $index, $context);
@@ -226,58 +191,6 @@ final readonly class Split implements Widget, WidgetContainer, Interactive, Keyb
         } finally {
             $frame->popClip();
         }
-    }
-
-    /**
-     * Send keys only to the host-marked pane; Split does not cycle focus itself.
-     *
-     * @return UpdateResult<static>
-     */
-    private function toMarkedPane(Message $message, Rect $area): UpdateResult
-    {
-        foreach ($this->placedChildren($area) as $index => [$child, $rect]) {
-            if ($index !== $this->markedPane || !$child instanceof Interactive) {
-                continue;
-            }
-
-            $result = (new ChildDispatcher($this->globalKeybindings))->dispatchOne($child, $message, $rect);
-
-            return new UpdateResult(
-                $result->changed
-                    ? $this->cloneWith(children: array_values(array_replace($this->children, [$index => $result->child])))
-                    : $this,
-                $result->command,
-            );
-        }
-
-        return new UpdateResult($this);
-    }
-
-    /**
-     * @return UpdateResult<static>
-     */
-    private function toPanes(Message $message, Rect $area): UpdateResult
-    {
-        $panes = [];
-        $rects = [];
-
-        foreach ($this->placedChildren($area) as $index => [$child, $rect]) {
-            if ($child instanceof Interactive) {
-                $panes[$index] = $child;
-                $rects[$index] = $rect;
-            }
-        }
-
-        $batch = (new ChildDispatcher($this->globalKeybindings))->dispatchList($panes, $rects, $message);
-
-        if ($batch->overrides === []) {
-            return new UpdateResult($this, $batch->command);
-        }
-
-        return new UpdateResult(
-            $this->cloneWith(children: array_values(array_replace($this->children, $batch->overrides))),
-            $batch->command,
-        );
     }
 
     private function dragged(MouseMsg $message, Rect $area): SplitState
