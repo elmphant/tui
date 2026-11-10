@@ -330,7 +330,7 @@ new UpdateResult(
 );
 
 // In onMessage(), inside a match (true):
-$message instanceof HttpResultMsg && $message->effectId?->equals($packages)
+$message instanceof HttpResultMsg && $message->isFrom($packages)
     => $this->withPackages(
         json_decode($message->body, true)['results'] ?? [],
     ),
