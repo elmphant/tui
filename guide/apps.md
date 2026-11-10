@@ -300,7 +300,17 @@ widgets and commands. Mount it under a name:
   names, also in `Cmd::focus('field')`.
 - It hears a key before its widgets do, like an App.
 - Results of its commands come back to it.
-- If it implements `Initializes`, it starts with the App.
+- It is a `Reducer`: one `update()` hears every message that reaches it, where
+  an App has a hook for each kind.
+
+It can implement these too:
+
+| Interface | What it adds |
+| --- | --- |
+| `Application\Initializes` | `init()` starts it with the App |
+| `Runtime\WantsTicks` | `wantedTicks()` names the ticks it wants, see [Effects](effects.md) |
+| `Application\NamesItsKeys` | `ownKeys()` lists its keys in the key help |
+| `Runtime\BindsChords` | `chords()` names the key sequences it waits for |
 
 ```php
 use Elmphant\Tui\Application\{App, Initializes};
