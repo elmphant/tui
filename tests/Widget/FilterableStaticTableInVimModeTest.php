@@ -43,7 +43,7 @@ final class FilterableStaticTableInVimModeTest extends TestCase
         );
 
         self::assertSame('search', $help['Here']['/'] ?? null, 'the table answers / itself');
-        self::assertSame('scroll down', $help['Around it']['j/↓'] ?? null, 'the pane around it scrolls on j');
+        self::assertSame('scroll', $help['Around it']['j/k/↑/↓'] ?? null, 'the pane around it scrolls on j');
         self::assertSame([], $help['In every pane'] ?? [], 'nothing here moves left or right, or switches tabs');
     }
 

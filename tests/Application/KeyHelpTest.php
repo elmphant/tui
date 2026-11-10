@@ -52,7 +52,7 @@ final class KeyHelpTest extends TestCase
         $screen = $harness->screen()->plainText();
 
         self::assertStringContainsString('Keys', $screen);
-        self::assertMatchesRegularExpression('/down\s+↓/u', $screen);
+        self::assertMatchesRegularExpression('/move\s+↑\/↓/u', $screen);
         self::assertMatchesRegularExpression('/bottom\s+End/u', $screen, 'a key the footer leaves out');
         self::assertMatchesRegularExpression('/quit\s+Ctrl\+Q\/Ctrl\+C/u', $screen);
 
@@ -91,7 +91,7 @@ final class KeyHelpTest extends TestCase
     {
         $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->init()->press('?', 'j');
 
-        self::assertSame(['/ search', '', 'Here', 'down  j/↓', '› up  k/↑'], \array_slice(self::keyHelpRows($harness), 0, 5));
+        self::assertSame(['/ search', '', 'Here', 'move  j/k/↓/↑', '› page up  Ctrl+U/Shift+↑/PgUp'], \array_slice(self::keyHelpRows($harness), 0, 5));
 
         $harness->press('/')->type('quit');
         self::assertSame('/ quit', self::keyHelpRows($harness)[0]);
@@ -139,7 +139,7 @@ final class KeyHelpTest extends TestCase
     {
         $screen = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->init()->press('?')->screen()->plainText();
 
-        self::assertMatchesRegularExpression('/down\s+j\/↓/u', $screen);
+        self::assertMatchesRegularExpression('/move\s+j\/k\/↓\/↑/u', $screen);
         self::assertMatchesRegularExpression('/top\s+gg\/Home/u', $screen);
         self::assertDoesNotMatchRegularExpression('/left\s+h │/u', $screen, 'nothing here moves left');
     }
@@ -164,7 +164,7 @@ final class KeyHelpTest extends TestCase
         }
 
         self::assertNotContains('In the footer', $rows);
-        self::assertContains('› down  j/↓', $rows);
+        self::assertContains('› move  j/k/↓/↑', $rows);
         self::assertSame(array_values(array_unique($keys)), $keys);
     }
 

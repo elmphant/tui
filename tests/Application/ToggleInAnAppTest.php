@@ -25,6 +25,15 @@ final class ToggleInAnAppTest extends TestCase
     }
 
     #[Test]
+    public function theKeyHelpNamesBothArrowsOnOneRowInTheWordsOfTheFooter(): void
+    {
+        $screen = ModelHarness::for(new ToggleApp(Toggle::new()), 60, 30)->init()->press('?')->screen()->plainText();
+
+        self::assertMatchesRegularExpression('/choose\s+←\/→/u', $screen);
+        self::assertDoesNotMatchRegularExpression('/left\s+←/u', $screen);
+    }
+
+    #[Test]
     public function anAppActionOnTheSameLetterRunsInsteadOfTheToggle(): void
     {
         $harness = ModelHarness::for(new ToggleApp(Toggle::new()->withOn(true), withNextAction: true), 60, 30)->init()->press('n');

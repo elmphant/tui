@@ -1177,28 +1177,63 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     private function described(Keybindings $bindings, array &$listed, array $wording, bool $withoutText): array
     {
         $bindings = $withoutText ? $bindings->withoutText() : $bindings;
-        $described = [];
+        $rows = [];
 
         foreach ($bindings->actions() as $action) {
             $leading = ($bindings->patternsOf($action)[0] ?? null)?->label();
-            $description = $leading !== null && isset($wording[$leading]) ? $wording[$leading] : Actions::description($action);
-            $labels = [];
-            $first = null;
+            $hint = $leading === null ? null : self::hintNaming($leading, $wording);
+            $description = $hint === null ? Actions::description($action) : $wording[$hint];
             foreach ($bindings->patternsOf($action) as $pattern) {
                 $label = $pattern->label();
                 if (!isset($listed[$label])) {
                     $listed[$label] = true;
-                    $labels[] = $label;
-                    $first ??= $pattern;
+                    $rows[$description] ??= ['hint' => $hint, 'labels' => [], 'first' => $pattern];
+                    $rows[$description]['labels'][] = $label;
                 }
-            }
-
-            if ($labels !== []) {
-                $described[] = new KeyHint(implode('/', $labels), $description, $first);
             }
         }
 
-        return $described;
+        return array_map(
+            static fn (string $description, array $row): KeyHint => new KeyHint(implode('/', self::inHintOrder($row['labels'], $row['hint'])), $description, $row['first']),
+            array_keys($rows),
+            $rows,
+        );
+    }
+
+    /**
+     * A hint that joins keys, as `←/→ choose`, words each of them.
+     *
+     * @param array<string, string> $wording
+     */
+    private static function hintNaming(string $label, array $wording): ?string
+    {
+        if (isset($wording[$label])) {
+            return $label;
+        }
+
+        foreach (array_keys($wording) as $hint) {
+            if ($hint !== '/' && in_array($label, explode('/', $hint), true)) {
+                return $hint;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<string> $labels
+     *
+     * @return list<string> the keys the hint names first, as it names them, then the others
+     */
+    private static function inHintOrder(array $labels, ?string $hint): array
+    {
+        if ($hint === null || $hint === '/') {
+            return $labels;
+        }
+
+        $named = array_values(array_intersect(explode('/', $hint), $labels));
+
+        return [...$named, ...array_values(array_diff($labels, $named))];
     }
 
     private function resolvedGlobalKeybindings(): Keybindings
