@@ -30,6 +30,7 @@ Until 1.0, a minor version may break the API. Each break is listed here.
 - A mouse report with coordinates past 65535 lands on cell 65535, where it gave a position near `PHP_INT_MAX`.
 - `Frame::pushClip()` with a rect larger than the frame no longer lets `toggleAttribute()` or `underlay()` write past its edge.
 - A key outside ASCII, such as `é`, `ü` or `€`, can be bound. `KeyPattern` refused it.
+- A character three cells wide, such as a letter with a skin tone, covers all three cells, and writing over any of them clears all of it. It left a stale cell behind.
 
 ## 0.1.0 (2026-11-10)
 

@@ -1331,6 +1331,54 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function aGraphemeThreeCellsWideCoversEveryCellItTakes(): void
+    {
+        $frame = new Frame(6, 1);
+        $frame->putStyled(0, 0, '######', new Style());
+
+        $frame->putStyled(0, 0, "a\u{1F3FB}b", new Style());
+
+        self::assertSame(["a\u{1F3FB}", '', '', 'b', '#', '#'], $frame->characters);
+        self::assertSame([3, 0, 0, 1, 1, 1], $frame->widths);
+    }
+
+    #[Test]
+    public function writingOverTheLastCellOfAGraphemeThreeCellsWideClearsAllOfIt(): void
+    {
+        $frame = new Frame(4, 1);
+        $frame->putStyled(0, 0, "a\u{1F3FB}#", new Style());
+
+        $frame->putStyled(2, 0, 'x', new Style());
+
+        self::assertSame([' ', ' ', 'x', '#'], $frame->characters);
+        self::assertSame([1, 1, 1, 1], $frame->widths);
+    }
+
+    #[Test]
+    public function writingOverTheLeadOfAGraphemeThreeCellsWideClearsAllOfIt(): void
+    {
+        $frame = new Frame(4, 1);
+        $frame->putStyled(0, 0, "a\u{1F3FB}#", new Style());
+
+        $frame->putStyled(0, 0, 'x', new Style());
+
+        self::assertSame(['x', ' ', ' ', '#'], $frame->characters);
+        self::assertSame([1, 1, 1, 1], $frame->widths);
+    }
+
+    #[Test]
+    public function aGraphemeThreeCellsWideThatTheClipCutsIsLeftOut(): void
+    {
+        $frame = new Frame(6, 1);
+        $frame->putStyled(0, 0, '######', new Style());
+        $frame->pushClip(new Rect(0, 0, 2, 1));
+
+        $frame->putStyled(0, 0, "a\u{1F3FB}", new Style());
+
+        self::assertSame(['#', '#', '#', '#', '#', '#'], $frame->characters);
+    }
+
+    #[Test]
     public function aClipLargerThanTheFrameStillEndsAtItsEdge(): void
     {
         $frame = new Frame(10, 3);

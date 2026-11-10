@@ -577,7 +577,7 @@ final class Frame
     }
 
     /**
-     * Clear both halves of any wide character cut by the write; preserve their styles.
+     * Clear every cell of any wide character cut by the write; preserve their styles.
      * An orphaned lead would overdraw new cells, and an orphaned continuation would shift the row.
      */
     private function repairOverwriteEdges(int $rowBase, int $startColumn, int $endColumn): void
@@ -587,15 +587,20 @@ final class Frame
         }
 
         if ($startColumn > 0 && $this->widths[$rowBase + $startColumn] === 0) {
-            $leadIndex = $rowBase + $startColumn - 1;
-            $this->characters[$leadIndex] = ' ';
-            $this->widths[$leadIndex] = 1;
+            for ($column = $startColumn - 1; $column >= 0; --$column) {
+                $isLead = $this->widths[$rowBase + $column] !== 0;
+                $this->characters[$rowBase + $column] = ' ';
+                $this->widths[$rowBase + $column] = 1;
+
+                if ($isLead) {
+                    break;
+                }
+            }
         }
 
-        if ($endColumn < $this->width && $this->widths[$rowBase + $endColumn] === 0) {
-            $continuationIndex = $rowBase + $endColumn;
-            $this->characters[$continuationIndex] = ' ';
-            $this->widths[$continuationIndex] = 1;
+        for ($column = $endColumn; $column < $this->width && $this->widths[$rowBase + $column] === 0; ++$column) {
+            $this->characters[$rowBase + $column] = ' ';
+            $this->widths[$rowBase + $column] = 1;
         }
     }
 
@@ -626,14 +631,14 @@ final class Frame
     }
 
     /**
-     * A wide character needs both columns inside the clip, or the terminal and buffer would disagree.
+     * A wide character needs every column it takes inside the clip, or the terminal and buffer would disagree.
      */
     private function placeGrapheme(int $column, int $y, string $character, int $characterWidth, int $foreground, int $background, int $attributes): bool
     {
         if ($column < 0 || $column >= $this->width || $this->clipRejects($column, $y)) {
             return false;
         }
-        if ($characterWidth > 1 && ($column + $characterWidth > $this->width || $this->clipRejects($column + 1, $y))) {
+        if ($characterWidth > 1 && ($column + $characterWidth > $this->width || $this->clipRejects($column + $characterWidth - 1, $y))) {
             return false;
         }
 
@@ -647,8 +652,7 @@ final class Frame
         $this->attributes[$index] = $attributes;
         $this->widths[$index] = $characterWidth;
 
-        if ($characterWidth > 1) {
-            $continuation = $index + 1;
+        for ($continuation = $index + 1; $continuation < $index + $characterWidth; ++$continuation) {
             $this->characters[$continuation] = '';
             $this->foregrounds[$continuation] = $foreground;
             $this->backgrounds[$continuation] = $background;
