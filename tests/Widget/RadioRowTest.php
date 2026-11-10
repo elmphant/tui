@@ -15,6 +15,8 @@ use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ScreenBuffer;
 use Elmphant\Tui\Widget\Choice\RadioRow;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Prose\Text;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -71,6 +73,19 @@ final class RadioRowTest extends TestCase
         self::assertSame(RadioRow::UNSELECTED_MARK . 'system', trim($screen->lineAt(0)));
         self::assertSame(RadioRow::SELECTED_MARK . 'pages', trim($screen->lineAt(1)), 'the mark stays with the value it belongs to');
         self::assertSame(RadioRow::UNSELECTED_MARK . 'all', trim($screen->lineAt(2)));
+    }
+
+    #[Test]
+    public function aColumnGivesAWrappingRowTheRowsItsOptionsNeed(): void
+    {
+        $column = Layout::column(RadioRow::new(['system', 'pages', 'all']), Text::new('below'));
+
+        $frame = new Frame(10, 6);
+        $column->render($frame, Rect::fromSize(10, 6), RenderContext::unfocused(Theme::dark()));
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame(RadioRow::UNSELECTED_MARK . 'all', trim($screen->lineAt(2)));
+        self::assertSame('below', trim($screen->lineAt(3)));
     }
 
     #[Test]

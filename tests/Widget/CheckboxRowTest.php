@@ -20,6 +20,8 @@ use Elmphant\Tui\Text\CharWidth;
 use Elmphant\Tui\Widget\Choice\CheckboxRow;
 use Elmphant\Tui\Widget\Choice\OptionRowLayout;
 use Elmphant\Tui\Widget\Focusable;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Prose\Text;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -52,6 +54,19 @@ final class CheckboxRowTest extends TestCase
         $this->expectExceptionMessage('CheckboxRow options must read differently; "a" is at 0 and 2.');
 
         CheckboxRow::new(['a', 'b'])->withOptions(['a', 'b', 'a']);
+    }
+
+    #[Test]
+    public function aColumnGivesAWrappingRowTheRowsItsOptionsNeed(): void
+    {
+        $column = Layout::column(CheckboxRow::new(['system', 'pages', 'all']), Text::new('below'));
+
+        $frame = new Frame(10, 6);
+        $column->render($frame, Rect::fromSize(10, 6), RenderContext::unfocused(Theme::dark()));
+        $screen = ScreenBuffer::fromFrame($frame);
+
+        self::assertSame(CheckboxRow::UNCHECKED_MARK . 'all', trim($screen->lineAt(2)));
+        self::assertSame('below', trim($screen->lineAt(3)));
     }
 
     #[Test]

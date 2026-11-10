@@ -20,6 +20,7 @@ Until 1.0, a minor version may break the API. Each break is listed here.
 ### Fixed
 
 - A `Paragraph` or other content-sized child inside a `Container` keeps its rows in a column, where it got none.
+- A `RadioRow` or `CheckboxRow` whose options wrap gets the rows they need in a column, where it was cut to one row.
 
 ## 0.1.0 (2026-11-10)
 

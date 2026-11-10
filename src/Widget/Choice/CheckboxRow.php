@@ -189,7 +189,7 @@ final readonly class CheckboxRow implements HoldsAValue, OptionRow, PublishesHin
             Constraint::flex()->withBasis(
                 CharWidth::stringWidth($this->prefix) + OptionRowLayout::width($this->entries()),
             ),
-            Constraint::min(1),
+            Constraint::content()->withMin(1),
         );
     }
 

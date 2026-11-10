@@ -143,7 +143,7 @@ final readonly class RadioRow implements HoldsAValue, OptionRow, PublishesHints
     {
         return Sizing::of(
             Constraint::flex()->withBasis(OptionRowLayout::width($this->entries())),
-            Constraint::min(1),
+            Constraint::content()->withMin(1),
         );
     }
 
