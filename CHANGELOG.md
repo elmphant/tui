@@ -26,6 +26,7 @@ Until 1.0, a minor version may break the API. Each break is listed here.
 - `ModelHarness` delivers the messages a model sends in the order they were sent, as `Program` does, and nothing after a `Cmd::quit()`. It delivered a message sent while handling another before the rest of the batch, and kept going after a quit.
 - Ctrl+C, SIGTERM, SIGHUP and the end of stdin stop the program at once, ahead of the messages already queued. They waited for the whole backlog.
 - A mouse report with coordinates past 65535 lands on cell 65535, where it gave a position near `PHP_INT_MAX`.
+- `Frame::pushClip()` with a rect larger than the frame no longer lets `toggleAttribute()` or `underlay()` write past its edge.
 
 ## 0.1.0 (2026-11-10)
 

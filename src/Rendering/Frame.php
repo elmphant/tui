@@ -135,13 +135,11 @@ final class Frame
     }
 
     /**
-     * Intersect with the existing clip so nested children cannot undo their parent's clipping.
+     * Intersect with the clip in force, the frame's own area at first, so no clip reaches past it.
      */
     public function pushClip(Rect $clip): void
     {
-        $this->clipStack[] = $this->clipStack === []
-            ? $clip
-            : $clip->intersect($this->clipStack[count($this->clipStack) - 1]);
+        $this->clipStack[] = $clip->intersect($this->clip());
     }
 
     public function popClip(): void

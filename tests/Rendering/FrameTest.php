@@ -1331,6 +1331,22 @@ final class FrameTest extends TestCase
     }
 
     #[Test]
+    public function aClipLargerThanTheFrameStillEndsAtItsEdge(): void
+    {
+        $frame = new Frame(10, 3);
+        $frame->pushClip(new Rect(0, 0, 50, 50));
+
+        $frame->toggleAttribute(5, 0, 20, Attr::REVERSE);
+        $frame->toggleAttribute(0, 7, 4, Attr::REVERSE);
+
+        self::assertSame(
+            ['0000011111', '0000000000', '0000000000'],
+            array_map(static fn (array $row): string => implode('', array_map(static fn (int $attributes): string => (string)($attributes / Attr::REVERSE), $row)), array_chunk($frame->attributes, 10)),
+        );
+        self::assertSame(1, $frame->drawnHeight());
+    }
+
+    #[Test]
     public function toggledAttributesStayInsideTheClip(): void
     {
         $frame = new Frame(5, 4);
