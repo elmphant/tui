@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Terminal;
 
+use Symfony\Component\Process\Process;
 use Throwable;
 use ValueError;
 
@@ -346,6 +347,24 @@ final class SystemTerminal implements Terminal, ReportsOutputStats
     {
         if (!@fflush($this->stdout)) {
             throw new TerminalException('Unable to flush terminal output');
+        }
+    }
+
+    /**
+     * tmux drops an app's OSC 52 unless `set-clipboard` is on, but `load-buffer -w` (tmux 3.2) reaches the
+     * clipboard with its defaults. It answers in milliseconds, and the timeout bounds a tmux that hangs.
+     */
+    public function copy(string $text): void
+    {
+        $this->write(Ansi::clipboard($text));
+
+        if ((string)getenv('TMUX') === '') {
+            return;
+        }
+
+        try {
+            (new Process(['tmux', 'load-buffer', '-w', '-'], null, null, $text, 1.0))->run();
+        } catch (Throwable) {
         }
     }
 

@@ -104,6 +104,24 @@ final class TmuxScreen
         return trim($this->tmux(sprintf('display -p -t e2e %s', escapeshellarg("#{{$name}}"))));
     }
 
+    /**
+     * The newest paste buffer, once one exists.
+     */
+    public function waitForBuffer(): string
+    {
+        $deadline = microtime(true) + self::TIMEOUT_SECONDS;
+
+        while (microtime(true) < $deadline) {
+            exec(sprintf('tmux -L %s show-buffer 2>/dev/null', escapeshellarg($this->socket)), $output, $status);
+            if ($status === 0) {
+                return implode("\n", $output);
+            }
+            usleep(50_000);
+        }
+
+        throw new RuntimeException('No paste buffer appeared');
+    }
+
     public function close(): void
     {
         exec(sprintf('tmux -L %s kill-server 2>/dev/null', escapeshellarg($this->socket)));

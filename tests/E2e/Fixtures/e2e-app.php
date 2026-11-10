@@ -78,6 +78,7 @@ final readonly class E2eApp extends App
             Key::F2 => new UpdateResult($this->cloneWith(modal: Modal::new('Modal 漢字', Text::new('Modal body 😀 漢字'))->withWidthPercent(50)->withHeightPercent(40))),
             Key::F5 => new UpdateResult($this->cloneWith(emoji: !$this->emoji)),
             Key::F6 => new UpdateResult($this, Cmd::exec(['sleep', $this->processMarker])),
+            Key::F7 => new UpdateResult($this, Cmd::copy('copied in tmux 漢字')),
             default => new UpdateResult($this),
         };
     }

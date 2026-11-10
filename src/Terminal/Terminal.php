@@ -51,6 +51,11 @@ interface Terminal extends TerminalOutput
     public function flush(): void;
 
     /**
+     * Put text on the clipboard. No terminal says whether it worked.
+     */
+    public function copy(string $text): void;
+
+    /**
      * @return resource|null the stream the loop watches for input, or null for a terminal with no input to watch
      */
     public function inputStream(): mixed;

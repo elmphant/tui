@@ -147,6 +147,16 @@ final class RealTerminalTest extends TestCase
         self::assertSame([], self::processesSleeping($marker, expected: false));
     }
 
+    #[Test]
+    public function aCopyInsideTmuxWithItsDefaultSettingsReachesTmux(): void
+    {
+        $screen = $this->started();
+
+        $screen->keys('F7');
+
+        self::assertSame('copied in tmux 漢字', $screen->waitForBuffer());
+    }
+
     protected function setUp(): void
     {
         if (!TmuxScreen::available()) {

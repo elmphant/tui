@@ -48,7 +48,6 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\Trace\JsonlTracer;
 use Elmphant\Tui\Runtime\Trace\TraceEvent;
 use Elmphant\Tui\Runtime\Trace\Tracer;
-use Elmphant\Tui\Terminal\Ansi;
 use Elmphant\Tui\Terminal\ColorProfile;
 use Elmphant\Tui\Terminal\ColorScheme;
 use Elmphant\Tui\Terminal\ReportsOutputStats;
@@ -1464,7 +1463,7 @@ final class Program
         try {
             match (true) {
                 $command instanceof QuitCmd => $this->stopRunning(),
-                $command instanceof ClipboardCmd => $this->terminal->write(Ansi::clipboard($command->text)),
+                $command instanceof ClipboardCmd => $this->terminal->copy($command->text),
                 $command instanceof ToastCmd => $this->showToast($command),
                 $command instanceof FlashCmd => $this->showFlash($command->within($scope)),
                 $command instanceof PrintlnCmd => $this->printAbove($command),

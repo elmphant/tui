@@ -640,7 +640,7 @@ final class EffectRunnerTest extends TestCase
 
         $message = $this->results->dequeue();
         self::assertInstanceOf(ProcessResultMsg::class, $message);
-        self::assertStringContainsString('piped-in', $message->stdout);
+        self::assertStringContainsString('piped-in', $message->stdout, sprintf('exit %s, stderr "%s"', var_export($message->exitCode, true), $message->stderr));
     }
 
     #[Test]

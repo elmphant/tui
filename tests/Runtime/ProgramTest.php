@@ -1456,6 +1456,10 @@ final class ProgramTest extends TestCase
             {
             }
 
+            public function copy(string $text): void
+            {
+            }
+
             public function inputStream(): mixed
             {
                 return null;

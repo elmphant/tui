@@ -201,6 +201,11 @@ final class VirtualTerminal implements Terminal
     {
     }
 
+    public function copy(string $text): void
+    {
+        $this->write(Ansi::clipboard($text));
+    }
+
     public function inputStream(): mixed
     {
         return $this->readPipe;

@@ -417,8 +417,16 @@ reader can still copy from it.
 
 `Cmd::copy()` uses OSC 52, so the terminal must allow it: kitty, WezTerm,
 Ghostty and Alacritty do. iTerm2 needs "Applications in terminal may access
-clipboard". GNOME Terminal and macOS Terminal.app don't support it. Inside tmux, add `set -g set-clipboard on`. No terminal says whether
-the copy worked.
+clipboard". GNOME Terminal and macOS Terminal.app don't support it. No
+terminal says whether the copy worked.
+
+tmux drops OSC 52 from an app with its default settings. When the app runs
+inside tmux, `Cmd::copy()` also hands the text to tmux itself with
+`tmux load-buffer -w` (tmux 3.2 or newer), so the copy works without any
+setup and the text is in tmux's paste buffer too. That needs the app on the
+same machine as tmux. Inside a container or over SSH, under a tmux on your own
+machine, the app cannot reach that tmux. Add `set -g set-clipboard on` to its
+`~/.tmux.conf` there.
 
 ## Example: two panels
 
