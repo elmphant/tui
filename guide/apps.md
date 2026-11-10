@@ -89,8 +89,7 @@ is, and `?` lists them all.
 - **`withAction()` gives a key to one widget.** It works only while that widget
   holds the keyboard. In the field, Space is text.
 - **Start the App from a static factory.** A widget's constructor is private, so
-  `private TextInput $field = new TextInput()` does not compile. The App's own
-  constructor stays public: the framework builds the next App with it.
+  `private TextInput $field = new TextInput()` does not compile.
 - **The record is the item.** `Todo` implements `ListItem`, so the App keeps one
   `ListView` and no second array. `cursorItem()`, `withCursorItem()`,
   `withoutCursorItem()` and `withAddedItem()` edit it, and the cursor stays on
@@ -100,7 +99,8 @@ The App is immutable. Return a new one instead of changing a property: small
 typed `withX()` methods, or the protected `$this->cloneWith(list: $list)`, which
 returns `$this` when nothing changed. Never redeclare `cloneWith()`, and don't
 `use Cloneable` again: `App` already does. `cloneWith()` builds the next App with
-the constructor, so keep it public. A static factory can still build the first one.
+the constructor, so keep it public: a private one throws the first time the App
+changes. A static factory can still build the first one.
 
 ## What a widget tells you
 
