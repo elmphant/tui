@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Input;
 
+use Elmphant\Tui\Input\InputParser;
 use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyEventType;
@@ -43,6 +44,27 @@ final class KeyPatternTest extends TestCase
         self::assertFalse($pattern->ctrl);
         self::assertFalse($pattern->alt);
         self::assertFalse($pattern->shift);
+    }
+
+    #[Test]
+    public function aKeyOutsideAsciiCanBeBoundAndMatchesWhatIsTyped(): void
+    {
+        $typed = InputParser::parse('é€ü')->messages;
+        self::assertCount(3, $typed);
+
+        foreach (['é', '€', 'ü'] as $index => $key) {
+            self::assertInstanceOf(KeyMsg::class, $typed[$index]);
+            self::assertTrue(KeyPattern::fromString($key)->matches($typed[$index]), $key);
+            self::assertFalse(KeyPattern::fromString($key)->matches(new KeyMsg('e')), $key);
+        }
+    }
+
+    #[Test]
+    public function aKeyOfTwoCharactersIsStillRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        KeyPattern::fromString('éé');
     }
 
     public static function namedKeyProvider(): iterable

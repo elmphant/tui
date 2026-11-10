@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Input;
 
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Text\Grapheme;
 use InvalidArgumentException;
 use Stringable;
 
@@ -290,7 +291,7 @@ final readonly class KeyPattern implements Stringable
 
         if (isset(self::NAMED_KEYS[$keyToken])) {
             $key = self::NAMED_KEYS[$keyToken];
-        } elseif (strlen($keyToken) === 1) {
+        } elseif (count(Grapheme::split($keyToken)) === 1) {
             $key = $keyToken;
         } elseif (ctype_alpha($keyToken) && strlen($keyToken) >= 4) {
             throw new InvalidArgumentException("Unknown key '{$keyToken}' in pattern '{$pattern}'" . self::nearest($keyToken, array_keys(self::NAMED_KEYS)));
