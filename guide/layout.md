@@ -15,7 +15,7 @@ You can change that with a `Constraint`:
 | Constraint | Meaning |
 | --- | --- |
 | `Constraint::exact(10)` | exactly 10 cells |
-| `Constraint::min(5)` | at least 5 cells, and no more (it does not grow) |
+| `Constraint::min(5)` | 5 cells, and it does not grow. Unlike `exact(5)`, it is only a floor: add `withFlex()` and it grows from there |
 | `Constraint::min(5)->withFlex()` | at least 5, then a share of what is left |
 | `Constraint::max(30)` | grows to fill, but stops at 30 |
 | `Constraint::flex(2)` | a share of what is left, twice as big as `flex(1)` |

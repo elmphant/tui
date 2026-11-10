@@ -158,6 +158,26 @@ final class LayoutTest extends TestCase
     }
 
     #[Test]
+    public function aMinimumGrowsWithAFlexWhileAnExactSizeStaysPut(): void
+    {
+        $row = Layout::row()
+            ->add($this->createFlexWidget('a'), Constraint::min(5)->withFlex())
+            ->add($this->createFlexWidget('b'), Constraint::exact(5)->withFlex());
+
+        self::assertSame([15, 5], $row->sizesFor(20));
+    }
+
+    #[Test]
+    public function aMinimumAloneDoesNotGrowIntoTheRoomLeft(): void
+    {
+        $row = Layout::row()
+            ->add($this->createFlexWidget('a'), Constraint::min(5))
+            ->add($this->createFlexWidget('b'), Constraint::exact(5));
+
+        self::assertSame([5, 5], $row->sizesFor(20));
+    }
+
+    #[Test]
     public function aMeasuredChildIsNoTallerThanTheRowsItPinnedItselfTo(): void
     {
         $pinned = new class implements Widget, MeasureHeight {
