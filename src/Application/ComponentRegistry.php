@@ -509,8 +509,7 @@ final readonly class ComponentRegistry
     }
 
     /**
-     * A mount qualifies the ids of the components it registers, but the widgets inside them still
-     * carry the ids their model gave them. So a component inside a mount looks for the local id.
+     * The registry holds mounted ids, but the widgets inside a mount still carry their local ids.
      *
      * @param Component<Interactive> $candidate
      */

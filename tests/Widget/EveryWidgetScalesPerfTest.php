@@ -186,9 +186,9 @@ final class EveryWidgetScalesPerfTest extends TestCase
     }
 
     /**
-     * Each widget is built at a size its content grows with, and drawn on an 80x24 screen. A filter
-     * keystroke matches every item, a stacker lays out every child, a form derives every row of its
-     * pane again and a choice field measures every option, so those cost the content, never more.
+     * Each widget is drawn on an 80x24 screen with more and more content. A filter checks every item,
+     * a stacker lays out every child, a form rebuilds every row and a choice field measures every
+     * option. Those may cost the content, never more.
      *
      * @return array<string, array{build: Closure(int): Widget, screenBound: array<string, Message>, contentBound: array<string, Message>, framesCostTheContent: bool}>
      */
