@@ -18,6 +18,7 @@ Until 1.0, a minor version may break the API. Each break is listed here.
 - A bound `Split` publishes its panes as stops, so Tab reaches them and the runtime routes to them. `Split::withMarkedPane()` and its keybindings are gone.
 - `DecoratesOneChild` requires the class that uses it to implement `Widget` too. From level 2, PHPStan reports a wrapper that forgot it, which no view could return.
 - An id given to `bind()`, `mount()`, `Component::bind()`, `Component::named()` or `Mount::named()` may not hold a `/`, and throws. The framework writes a `/` between a container and its child, so such an id was taken for a child and addressed the wrong component. A `/` in an `at:` key is written `%2F` in the id.
+- `Mount::named()` throws for a write-back that is not static or captures an object, as `Component::bind()` does. The write-back may also answer an `UpdateResult`.
 
 ### Fixed
 

@@ -10,6 +10,7 @@ use Elmphant\Tui\Core\Cmd\CancelScopeCmd;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
+use Elmphant\Tui\Core\UpdateResult;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
@@ -41,13 +42,15 @@ final readonly class Mount implements Widget, WidgetContainer
      * @template TBoundApp of App
      * @template TBoundModel of Reducer
      *
-     * @param TBoundModel                                $model
-     * @param Closure(TBoundApp, TBoundModel): TBoundApp $writeBack
+     * @param TBoundModel                                                          $model
+     * @param Closure(TBoundApp, TBoundModel): (TBoundApp|UpdateResult<TBoundApp>) $writeBack
      *
      * @return self<TBoundModel>
      */
     public static function named(ComponentId|string $id, Reducer $model, Widget $view, Closure $writeBack): self
     {
+        Component::assertSafeReplacement($writeBack);
+
         return new self(Component::givenId($id), $model, $view, $writeBack);
     }
 
@@ -96,7 +99,7 @@ final readonly class Mount implements Widget, WidgetContainer
      */
     public function own(Component $component): Component
     {
-        return $component->nestedIn($this->model, $this->writeBack, $this->addressed(...))->under($this->id);
+        return $component->nestedIn($this->model, $this->writtenBack(...), $this->addressed(...))->under($this->id);
     }
 
     /**
@@ -119,13 +122,19 @@ final readonly class Mount implements Widget, WidgetContainer
 
     /**
      * @internal the App and the model are the ones this was mounted with; App checks the class it gets back
+     *
+     * @return UpdateResult<App>
      */
-    public function writtenBack(App $app, Reducer $model): App
+    public function writtenBack(App $app, Reducer $model): UpdateResult
     {
         $updated = ($this->writeBack)($app, $model);
+        $result = $updated instanceof UpdateResult ? $updated : new UpdateResult($updated);
 
-        return $updated instanceof App
-            ? $updated
-            : throw new LogicException(sprintf('Mount "%s" must write back an App, got %s', $this->id->value, get_debug_type($updated)));
+        if (!$result->model instanceof App) {
+            throw new LogicException(sprintf('Mount "%s" must write back an App or an UpdateResult of one, got %s', $this->id->value, get_debug_type($result->model)));
+        }
+
+        /** @var UpdateResult<App> $result */
+        return $result;
     }
 }

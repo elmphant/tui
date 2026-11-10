@@ -628,12 +628,13 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             return new UpdateResult($this, $command);
         }
 
-        $app = $mount->writtenBack($this, $result->model);
+        $written = $mount->writtenBack($this, $result->model);
+        $app = $written->model;
         if (!$app instanceof static) {
             throw new LogicException(sprintf('Mount "%s" must write back a %s, got %s', $mount->id->value, static::class, $app::class));
         }
 
-        return new UpdateResult($app, $command);
+        return new UpdateResult($app, Cmd::batch($command, $written->command));
     }
 
     /**

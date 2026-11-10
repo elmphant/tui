@@ -6,7 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Core\Cmd;
+use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Core\Message;
 use Elmphant\Tui\Core\Reducer;
 use Elmphant\Tui\Core\UpdateResult;
@@ -28,15 +28,16 @@ final class NestedComponentOwnershipTest extends TestCase
         $panel = new OwningPanel(TextInput::new()->withValue('before'));
         $app = new HostingApp($panel);
 
-        $bound = Component::bind(
+        $bound = Mount::named(
+            'panel',
+            $panel,
+            $panel->field,
+            static fn (HostingApp $host, OwningPanel $owner): HostingApp => $host->withPanel($owner),
+        )->own(Component::bind(
             'field',
             $panel->field,
             static fn (OwningPanel $owner, TextInput $field): OwningPanel => $owner->withField($field),
-        )->nestedIn(
-            $panel,
-            static fn (HostingApp $host, OwningPanel $owner): HostingApp => $host->withPanel($owner),
-            static fn (?Cmd $command): ?Cmd => $command,
-        );
+        ));
 
         $updated = $bound->replaceIn($app, TextInput::new()->withValue('after'), new KeyMsg('x'))->model;
 

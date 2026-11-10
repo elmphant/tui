@@ -273,8 +273,8 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     /**
      * @internal
      *
-     * @param Closure             $mountWriteBack validated by Mount::named()
-     * @param Closure(?Cmd): ?Cmd $address
+     * @param Closure(App, Reducer): UpdateResult<App> $mountWriteBack
+     * @param Closure(?Cmd): ?Cmd                      $address
      *
      * @return self<TWidget>
      */
@@ -287,8 +287,9 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
             widget: $this->widget,
             writeBack: $this->writeBack === null ? null : static function (App $app, Interactive $widget, Message $message) use ($owner, $mountWriteBack, $inner, $address): UpdateResult {
                 $answered = $inner->answered($owner, $widget, $message);
+                $written = $mountWriteBack($app, $answered->model);
 
-                return new UpdateResult($mountWriteBack($app, $answered->model), $address($answered->command));
+                return new UpdateResult($written->model, Cmd::batch($address($answered->command), $written->command));
             },
             address: $address,
             actions: $this->actions,

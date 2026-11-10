@@ -32,6 +32,8 @@ use Elmphant\Tui\Widget\Popup\Modal;
 use Elmphant\Tui\Widget\Popup\Overlay;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Widget;
+use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -178,6 +180,43 @@ final class NamedMountTest extends TestCase
     }
 
     #[Test]
+    public function aWriteBackThatIsNotStaticIsRefused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Mount::named('quiet', new QuietModel(), Text::new('quiet'), fn (App $host): App => $host);
+    }
+
+    #[Test]
+    public function aWriteBackThatAnswersNoAppIsNamed(): void
+    {
+        $mount = Mount::named('quiet', new QuietModel(), Text::new('quiet'), static fn (App $host, QuietModel $quiet): QuietModel => $quiet);
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Mount "quiet" must write back an App or an UpdateResult of one, got ' . QuietModel::class);
+
+        $mount->writtenBack(new HostThatHearsItsWriteBack(), new QuietModel());
+    }
+
+    #[Test]
+    public function aWriteBackMayAskForWorkWhenTheMountedModelHearsAKey(): void
+    {
+        $harness = ModelHarness::for(new HostThatHearsItsWriteBack(), 40, 6)->init()->press('r');
+
+        self::assertSame(1, $harness->model()->quiet->refreshed);
+        self::assertSame(['stored quiet'], $harness->model()->heard);
+    }
+
+    #[Test]
+    public function aWriteBackMayAskForWorkWhenAComponentInTheMountAnswers(): void
+    {
+        $harness = ModelHarness::for(new HostThatHearsItsWriteBack(withNotes: true), 40, 6)->init()->type('a');
+
+        self::assertSame('a', $harness->model()->notes->field?->value());
+        self::assertSame(['stored notes'], $harness->model()->heard);
+    }
+
+    #[Test]
     public function aMountedModelTellsItsHostAndOnlyItsHost(): void
     {
         $harness = ModelHarness::for(new HostOfATellingMount(), 40, 6)->init()->press('t');
@@ -222,6 +261,36 @@ final readonly class HostOfATellingMount extends App
     public function view(): Widget
     {
         return Mount::named('teller', $this->teller, Text::new('teller'), static fn (self $host, TellingModel $teller): self => $host->cloneWith(teller: $teller));
+    }
+
+    protected function onMessage(Message $message, InputContext $input): UpdateResult
+    {
+        return $message instanceof Heard
+            ? new UpdateResult($this->cloneWith(heard: [...$this->heard, $message->what]))
+            : new UpdateResult($this);
+    }
+}
+
+final readonly class HostThatHearsItsWriteBack extends App
+{
+    use Cloneable;
+
+    /**
+     * @param list<string> $heard
+     */
+    public function __construct(
+        public QuietModel $quiet = new QuietModel(),
+        public NotesModel $notes = new NotesModel(),
+        public bool $withNotes = false,
+        public array $heard = [],
+    ) {
+    }
+
+    public function view(): Widget
+    {
+        return $this->withNotes
+            ? Mount::named('notes', $this->notes, $this->notes->view(), static fn (self $host, NotesModel $notes): UpdateResult => new UpdateResult($host->cloneWith(notes: $notes), Cmd::message(new Heard('stored notes'))))
+            : Mount::named('quiet', $this->quiet, Text::new('quiet'), static fn (self $host, QuietModel $quiet): UpdateResult => new UpdateResult($host->cloneWith(quiet: $quiet), Cmd::message(new Heard('stored quiet'))));
     }
 
     protected function onMessage(Message $message, InputContext $input): UpdateResult

@@ -360,7 +360,9 @@ name and stores the changed model back there. With several, keyed in an array,
 `$this->mount('modules', $view, at: $key)` mounts the one under that key as
 `modules.$key`. Give `id:` to name it yourself, as `bind()` takes one.
 `Mount::named($name, $model, $view, $writeBack)` is the long form
-for a model kept anywhere else. To send a message to the App instead of to the
+for a model kept anywhere else. Its `$writeBack` is a static closure that gets
+the App and the changed model, and answers the App, or an `UpdateResult` of it
+when storing the model also asks for work. To send a message to the App instead of to the
 sub-model, return the command `Mount::toHost($message)`. It arrives in the App's
 `onMessage()`.
 
