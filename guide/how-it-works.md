@@ -14,7 +14,9 @@ press and the screen, for when you want to know.
 </picture>
 
 Every message makes one trip around the ring. `update()` is the only step that
-makes a new model. If it returns the same model, nothing is redrawn.
+makes a new model. If it returns the same model and nothing else on screen
+changed, nothing is redrawn. A focus move, a toast or a spinner's next frame
+still draws one.
 
 ## Your app and the framework
 
@@ -33,12 +35,12 @@ message. See [Commands and effects](effects.md).
 <picture>
   <source media="(max-width: 700px)" srcset="../diagrams/keystroke-narrow.svg">
   <img width="720" src="../diagrams/keystroke.svg"
-       alt="Program reads the bytes of the up arrow from the terminal, InputParser turns them into a KeyMsg, and your app's update returns a new model and a command. Only if the model changed, your app's view draws the widgets and Screen sends the changed cells to the terminal.">
+       alt="Program reads the bytes of the up arrow from the terminal, InputParser turns them into a KeyMsg, and your app's update returns a new model and a command. Only if something on screen changed, your app's view draws the widgets and Screen sends the changed cells to the terminal.">
 </picture>
 
 The terminal sends ↑ as three bytes, `ESC [ A`. `InputParser` turns them into a
-`KeyMsg`, and your `update()` answers it. A frame is drawn only when the model
-changed, so a key nothing reacts to costs nothing.
+`KeyMsg`, and your `update()` answers it. A frame is drawn only when something on
+screen changed, so a key nothing reacts to costs nothing.
 
 ## One turn of the event loop
 

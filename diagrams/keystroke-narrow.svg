@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="344" height="552" viewBox="0 0 344 552" role="img" aria-labelledby="keystroke-narrow-title keystroke-narrow-desc" xmlns="http://www.w3.org/2000/svg">
 <title id="keystroke-narrow-title">One key press, start to finish</title>
-<desc id="keystroke-narrow-desc">Program reads the bytes of the up arrow from the terminal, InputParser turns them into a KeyMsg, and your app's update returns a new model and a command. Only if the model changed, your app's view draws the widgets and Screen sends the changed cells to the terminal.</desc>
+<desc id="keystroke-narrow-desc">Program reads the bytes of the up arrow from the terminal, InputParser turns them into a KeyMsg, and your app's update returns a new model and a command. Only if something on screen changed, your app's view draws the widgets and Screen sends the changed cells to the terminal.</desc>
 <defs>
     <marker id="ksn-arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0, 10 4, 0 8" fill="#4f5d75"/></marker>
 </defs>
