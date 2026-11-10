@@ -57,7 +57,7 @@ final class ComponentWriteBackTest extends TestCase
     #[Test]
     public function aFoldCarriesAChildUpdateThroughALayoutIntoItsPane(): void
     {
-        $folded = ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/1/0'));
+        $folded = ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates([1, 0]));
 
         self::assertCount(1, $folded);
         $pane = $folded[0][1];
@@ -72,7 +72,7 @@ final class ComponentWriteBackTest extends TestCase
     {
         $this->expectException(LogicException::class);
 
-        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/5/0'));
+        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates([5, 0]));
     }
 
     #[Test]
@@ -80,7 +80,7 @@ final class ComponentWriteBackTest extends TestCase
     {
         $this->expectException(LogicException::class);
 
-        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/0/0'));
+        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates([0, 0]));
     }
 
     #[Test]
@@ -88,7 +88,7 @@ final class ComponentWriteBackTest extends TestCase
     {
         $this->expectException(LogicException::class);
 
-        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/7'));
+        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates([7]));
     }
 
     #[Test]
@@ -96,20 +96,22 @@ final class ComponentWriteBackTest extends TestCase
     {
         $this->expectException(LogicException::class);
 
-        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates('pane/1/5'));
+        ComponentWriteBack::foldedIntoAncestors(self::paneAndChildUpdates([1, 5]));
     }
 
     /**
+     * @param non-empty-list<int> $path
+     *
      * @return list<array{Component<Interactive>, Interactive}>
      */
-    private static function paneAndChildUpdates(string $childId): array
+    private static function paneAndChildUpdates(array $path): array
     {
         $pane = Panel::new('pane')->withChildren([Text::new('note'), Layout::column(Button::new('Go'))]);
-        $keep = static fn (App $owner): App => $owner;
+        $bound = Component::bind('pane', $pane, static fn (App $owner): App => $owner);
 
         return [
-            [Component::bind('pane', $pane, $keep), $pane->withScrollOffset(1)],
-            [Component::bind($childId, Button::new('Go'), $keep), Button::new('Gone')],
+            [$bound, $pane->withScrollOffset(1)],
+            [$bound->childThrough($path, Button::new('Go')), Button::new('Gone')],
         ];
     }
 

@@ -136,7 +136,9 @@ Rules for binding:
 - **A property may hold several widgets, keyed.** `$this->bind('columns', at: $key)`
   binds `$this->columns[$key]`, stores it back under that key, and names it
   `columns.$key`. Reordering or removing entries keeps each widget, and the
-  keyboard, with its key.
+  keyboard, with its key. An id never holds a `/`: the framework writes one
+  between a container and its child. So a `/` in a key becomes `%2F`, and an
+  id you give with a `/` throws.
 - **A widget built in `view()` instead of kept on the App** is bound with
   `Component::bind($id, $widget, static fn (self $app, Widget $updated): self => …)`,
   where the closure stores it wherever it belongs.

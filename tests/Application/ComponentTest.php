@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Tests\Application;
 
+use Closure;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
 use Elmphant\Tui\Application\ComponentRegistry;
+use Elmphant\Tui\Application\Mount;
 use Elmphant\Tui\Core\ComponentId;
 use Elmphant\Tui\Core\FocusState;
 use Elmphant\Tui\Core\Message;
@@ -23,6 +25,7 @@ use Elmphant\Tui\Widget\Interactive;
 use Elmphant\Tui\Widget\Widget;
 use InvalidArgumentException;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -77,6 +80,35 @@ final class ComponentTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         ComponentId::named('');
+    }
+
+    /**
+     * @return iterable<string, array{Closure(): mixed}>
+     */
+    public static function idsGivenByHand(): iterable
+    {
+        yield 'Component::bind()' => [static fn (): Component => Component::bind('sidebar/list', TextInput::new(), static fn (App $app): App => $app)];
+        yield 'Component::named()' => [static fn (): Component => Component::named('sidebar/list', TextInput::new())];
+        yield 'Mount::named()' => [static fn (): Mount => Mount::named('sidebar/list', new ComponentContractApp(TextInput::new()), TextInput::new(), static fn (App $app): App => $app)];
+        yield 'bind() with an id' => [static fn (): Component => (new KeyedInputsApp(['name' => TextInput::new()]))->boundAs('sidebar/list')];
+    }
+
+    #[Test]
+    #[DataProvider('idsGivenByHand')]
+    public function anIdGivenByHandMayNotHoldASlash(Closure $build): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"sidebar/list"');
+
+        $build();
+    }
+
+    #[Test]
+    public function aKeyWithASlashNamesNoParent(): void
+    {
+        $component = (new KeyedInputsApp(['src/App.php' => TextInput::new()]))->boundAt('src/App.php');
+
+        self::assertNull($component->id->parent());
     }
 
     #[Test]
@@ -293,6 +325,31 @@ final readonly class ComponentContractApp extends App
     public function view(): Widget
     {
         return $this->binding();
+    }
+}
+
+final readonly class KeyedInputsApp extends App
+{
+    /**
+     * @param array<string, TextInput> $inputs
+     */
+    public function __construct(public array $inputs)
+    {
+    }
+
+    public function boundAs(string $id): Component
+    {
+        return $this->bind('inputs', id: $id, at: array_key_first($this->inputs));
+    }
+
+    public function boundAt(string $key): Component
+    {
+        return $this->bind('inputs', at: $key);
+    }
+
+    public function view(): Widget
+    {
+        return $this->boundAt((string)array_key_first($this->inputs));
     }
 }
 

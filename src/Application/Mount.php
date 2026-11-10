@@ -48,7 +48,7 @@ final readonly class Mount implements Widget, WidgetContainer
      */
     public static function named(ComponentId|string $id, Reducer $model, Widget $view, Closure $writeBack): self
     {
-        return new self(\is_string($id) ? ComponentId::named($id) : $id, $model, $view, $writeBack);
+        return new self(Component::givenId($id), $model, $view, $writeBack);
     }
 
     /**

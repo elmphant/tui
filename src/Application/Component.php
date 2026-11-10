@@ -66,11 +66,23 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
      */
     public static function named(ComponentId|string $id, Widget $widget): self
     {
-        return self::wrapping(
-            is_string($id) ? ComponentId::named($id) : $id,
-            $widget,
-            null,
-        );
+        return self::wrapping(self::givenId($id), $widget, null);
+    }
+
+    /**
+     * A slash in an id is where the framework puts a child's place, so an id given by hand may not hold one.
+     *
+     * @internal
+     */
+    public static function givenId(ComponentId|string $id): ComponentId
+    {
+        $id = is_string($id) ? ComponentId::named($id) : $id;
+
+        if (str_contains($id->value, '/')) {
+            throw new InvalidArgumentException(sprintf('The id "%s" holds a "/", which only the framework writes, between a container and its child. Name it without one', $id->value));
+        }
+
+        return $id;
     }
 
     /**
@@ -97,11 +109,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     {
         self::assertSafeReplacement($writeBack);
 
-        return self::wrapping(
-            is_string($id) ? ComponentId::named($id) : $id,
-            $widget,
-            $writeBack,
-        );
+        return self::wrapping(self::givenId($id), $widget, $writeBack);
     }
 
     /**

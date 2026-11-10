@@ -34,7 +34,7 @@ trait BindsProperties
         }
 
         return Component::bind(
-            $id ?? $property . '.' . $at,
+            $id ?? self::keyedId($property, $at),
             $widget,
             static fn (self $owner, Interactive $updated): self => $owner->cloneWith(...[$property => array_replace((array)$owner->valueOf($property), [$at => $updated])]),
         );
@@ -59,10 +59,15 @@ trait BindsProperties
         }
 
         return Mount::named(
-            $id ?? $property . '.' . $at,
+            $id ?? self::keyedId($property, $at),
             $model,
             $view,
             static fn (self $owner, Reducer $updated): self => $owner->cloneWith(...[$property => array_replace((array)$owner->valueOf($property), [$at => $updated])]),
         );
+    }
+
+    private static function keyedId(string $property, int|string $at): string
+    {
+        return $property . '.' . str_replace('/', '%2F', (string)$at);
     }
 }
