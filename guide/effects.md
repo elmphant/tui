@@ -78,7 +78,8 @@ final readonly class Stopwatch extends App
 
 `ticks()` is asked whenever the App changes. Each tick needs a name. A mounted
 model implements `WantsTicks::wantedTicks()` and its ticks run under the
-mount's name. The `TickMsg` arrives in `onTick()` as before.
+mount's name. The App hears its own `TickMsg` in `onTick()`, and a mounted
+model hears its own in `update()`.
 
 ## Fibers
 
