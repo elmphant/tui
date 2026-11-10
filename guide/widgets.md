@@ -64,6 +64,9 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `FilterableStaticTable` | `Filter` | A search field over a `StaticTable`. `withBorderType()` and `withOverflow()` work as on a `StaticTable` |
 | `TreeView` | `Tree` | A tree whose children load when opened — see [Trees that load as they open](#trees-that-load-as-they-open) |
 
+<img src="../media/widgets-lists.gif" width="720"
+     alt="A star atlas with a tree of star systems, a filterable table of moons and a small static table of trips. The reader opens two systems in the tree, then types jup and tiny into the table's search field, and the rows narrow to the matches.">
+
 **Bars and feedback**
 
 | Widget | In | What it is |
