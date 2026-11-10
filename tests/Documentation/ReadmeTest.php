@@ -85,6 +85,42 @@ final class ReadmeTest extends TestCase
         );
     }
 
+    #[Test]
+    public function theDocumentedToolbarIsSkippedByTabUntilACommandTakesTheKeyboardIn(): void
+    {
+        [$output, $ran] = self::runExample(
+            self::blockContaining('final readonly class Toolbar') . <<<'PHP'
+
+                $harness = \Elmphant\Tui\Testing\ModelHarness::for(Editor::new())->init();
+                $path = [$harness->focused()?->value];
+                foreach (['tab', 'ctrl+t', 'tab', 'tab', 'esc'] as $key) {
+                    $path[] = $harness->press($key)->focused()?->value;
+                }
+                echo json_encode($path);
+                PHP,
+        );
+
+        self::assertTrue($ran, "The guide's toolbar example does not run:\n" . $output);
+        self::assertSame(['notes', 'notes', 'save', 'quit', 'save', 'notes'], json_decode($output, true), $output);
+    }
+
+    #[Test]
+    public function theDocumentedToolbarKeepsEscapeToItsOwnButtons(): void
+    {
+        [$output, $ran] = self::runExample(
+            self::blockContaining('final readonly class Toolbar') . <<<'PHP'
+
+                $harness = \Elmphant\Tui\Testing\ModelHarness::for(Editor::new())->init();
+                $inTheNotes = $harness->focusedHints();
+                $onSave = $harness->press('ctrl+t')->focusedHints();
+                echo json_encode([$inTheNotes['Esc'] ?? null, $onSave['Esc'] ?? null]);
+                PHP,
+        );
+
+        self::assertTrue($ran, "The guide's toolbar example does not run:\n" . $output);
+        self::assertSame([null, 'notes'], json_decode($output, true), $output);
+    }
+
     /**
      * Track fragment count so marking a broken example as a fragment cannot silently bypass execution.
      */

@@ -214,6 +214,64 @@ Footer::new()->withRight(
 - **A key the focused widget ignores** goes to the panes around it, so PageDown
   in a field still scrolls the form.
 
-A toolbar or filter row that a reader steps into only now and then can be
-wrapped in a `FocusScope`: tab then skips it, and `Cmd::focus()` takes the
-keyboard in and out.
+A toolbar or filter row that a reader steps into only now and then goes in a
+`FocusScope`. Tab then skips it, and `Cmd::focus()` takes the keyboard in and
+out. Once the keyboard is inside, tab stays there. `FocusScope` is a marker, so
+you put it on a small wrapper of your own:
+
+```php
+use Elmphant\Tui\Application\{App, AppActions};
+use Elmphant\Tui\Core\{Cmd, UpdateResult};
+use Elmphant\Tui\Widget\DecoratesOneChild;
+use Elmphant\Tui\Widget\Field\{Button, TextArea};
+use Elmphant\Tui\Widget\Focus\FocusScope;
+use Elmphant\Tui\Widget\Layout\Layout;
+use Elmphant\Tui\Widget\Widget;
+use Elmphant\Tui\Widget\WidgetContainer;
+
+final readonly class Toolbar implements Widget, WidgetContainer, FocusScope
+{
+    use DecoratesOneChild;
+
+    public function __construct(private Widget $row) {}
+
+    protected function wrapped(): Widget
+    {
+        return $this->row;
+    }
+}
+
+final readonly class Editor extends App
+{
+    public function __construct(private TextArea $notes, private Button $save, private Button $quit) {}
+
+    public static function new(): self
+    {
+        return new self(TextArea::new(), Button::new('Save'), Button::new('Quit'));
+    }
+
+    public function view(): Widget
+    {
+        $back = static fn (self $app): UpdateResult => new UpdateResult($app, Cmd::focus('notes'));
+
+        return Layout::column(
+            new Toolbar(Layout::row(
+                $this->bind('save')->withAction('back', ['esc'], $back, 'notes'),
+                $this->bind('quit')->withAction('back', ['esc'], $back, 'notes'),
+            )),
+            $this->bind('notes'),
+        );
+    }
+
+    protected function actions(): AppActions
+    {
+        return parent::actions()
+            ->with('toolbar', ['ctrl+t'], static fn (self $app): UpdateResult => new UpdateResult($app, Cmd::focus('save')), 'toolbar');
+    }
+}
+```
+
+Ctrl+T takes the keyboard to Save, tab walks Save and Quit, and Esc takes it
+back to the notes. Esc sits on the two buttons with `withAction()`, so it
+works only in the toolbar. An app action answers before any widget, so Esc
+there would take the key from a dialog or a search field.
