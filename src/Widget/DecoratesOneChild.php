@@ -13,6 +13,7 @@ use Elmphant\Tui\Rendering\Frame;
  * For a widget that wraps one child and is sized, placed and drawn as that child:
  * implement wrapped() and override only what differs.
  *
+ * @phpstan-require-implements Widget
  * @phpstan-require-implements WidgetContainer
  */
 trait DecoratesOneChild
