@@ -26,9 +26,8 @@ Program::new($model)
   as it was. Both take `mouse: true` for clicks, the wheel and drags.
   `ScreenMode::inline()` draws below the prompt, see
   [Drawing inline](#drawing-inline).
-- Themes: `dark`, `light`, `dracula`, `solarizedDark`, `solarizedLight`,
-  `rosePine`, `atomOneDark`, `gruvboxDark`, `gruvboxLight`. To switch while
-  running, return one from `App::theme()`.
+- The presets are listed in [Choosing a theme](styling.md#choosing-a-theme). To
+  switch while running, return one from `App::theme()`.
 - `start()` returns the final model, so you can read what the reader chose.
 - A `Program` runs once. Create a new one to run again.
 - The terminal backend needs a POSIX TTY. It fails clearly on Windows, or when
