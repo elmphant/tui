@@ -9,11 +9,11 @@ use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class Overlay implements Widget, WidgetContainer
+final readonly class Overlay implements Widget, GraftsItsChildren
 {
     private function __construct(
         private Widget $base,
@@ -50,10 +50,19 @@ final readonly class Overlay implements Widget, WidgetContainer
         ];
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return match ($index) {
+            0 => new self(base: $child, overlay: $this->overlay),
+            1 => new self(base: $this->base, overlay: $child),
+            default => $this,
+        };
+    }
+
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-            $context->draw($child, $frame, $childArea);
+        foreach (PlacedChildren::of($this, $area, $context) as $index => [$child, $childArea]) {
+            $context->drawChild(\is_int($index) ? $index : null, $child, $frame, $childArea);
         }
     }
 }

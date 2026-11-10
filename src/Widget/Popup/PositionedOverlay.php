@@ -10,14 +10,14 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Support\Cloneable;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
  * Draw content at a fixed (x, y) within the area, such as a tooltip or drag preview.
  */
-final readonly class PositionedOverlay implements Widget, WidgetContainer
+final readonly class PositionedOverlay implements Widget, GraftsItsChildren
 {
     use Cloneable;
 
@@ -76,10 +76,15 @@ final readonly class PositionedOverlay implements Widget, WidgetContainer
         }
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return $index === 0 && $this->widget !== null ? $this->cloneWith(widget: $child) : $this;
+    }
+
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
-        foreach (PlacedChildren::of($this, $area, $context) as [$child, $childArea]) {
-            $context->draw($child, $frame, $childArea);
+        foreach (PlacedChildren::of($this, $area, $context) as $index => [$child, $childArea]) {
+            $context->drawChild(\is_int($index) ? $index : null, $child, $frame, $childArea);
         }
     }
 

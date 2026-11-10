@@ -25,7 +25,6 @@ use Elmphant\Tui\Tests\Support\RootPass;
 use Elmphant\Tui\Widget\Choice\Select;
 use Elmphant\Tui\Widget\Popup\Dropdown;
 use Elmphant\Tui\Widget\Popup\DropdownPopup;
-use Elmphant\Tui\Widget\Popup\Overlay;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -382,17 +381,11 @@ final class DropdownMouseTest extends TestCase
     {
         $anchor = self::anchor();
         $mine = self::opened();
-        $foreign = self::listOf(['json', 'yaml']);
+        $foreignPopup = self::drawnFloat(self::listOf(['json', 'yaml']));
+        self::assertEquals(self::drawnPlacement($mine), $foreignPopup->placement, 'both popups are drawn at the same rect');
 
-        $frame = new Frame(40, 18);
-        $pass = self::renderFocused(Overlay::new($mine, $foreign), $frame, $anchor);
-
-        $placements = $pass->floats->placements();
-        self::assertCount(2, $placements, 'Overlay hands both dropdowns the same rect, so both popups are drawn');
-
-        $foreignPopup = $placements[1];
         $routed = new FloatMouseMsg(
-            new MouseMsg(2, $foreignPopup->placement->y + 3, MouseAction::Press, MouseButton::Left, screen: $frame->area()),
+            new MouseMsg(2, $foreignPopup->placement->y + 3, MouseAction::Press, MouseButton::Left, screen: self::viewport()),
             $foreignPopup,
         );
 

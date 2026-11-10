@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Tests\Application;
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Message\Dismissed;
 use Elmphant\Tui\Message\Pressed;
+use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Bar\Header;
 use Elmphant\Tui\Widget\Field\Button;
@@ -14,10 +15,13 @@ use Elmphant\Tui\Widget\Layout\Flex;
 use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\Popup\Modal;
 use Elmphant\Tui\Widget\Popup\Overlay;
+use Elmphant\Tui\Widget\Popup\PositionedOverlay;
 use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Box;
 use Elmphant\Tui\Widget\Structure\Card;
 use Elmphant\Tui\Widget\Structure\Container;
+use Elmphant\Tui\Widget\Structure\Panel;
+use Elmphant\Tui\Widget\Structure\Themed;
 use Elmphant\Tui\Widget\Widget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -72,6 +76,8 @@ final class AButtonInALayoutInADialogTest extends TestCase
             'box' => Box::new('Confirm')->withChildren([Text::new('Delete?'), Button::new('Delete')]),
             'container' => Container::around(Button::new('Delete')),
             'card' => Card::new('Confirm')->withContent(Button::new('Delete')),
+            'overlay' => Overlay::new(Text::new('Delete?'), Button::new('Delete')),
+            'themed' => Themed::around(Button::new('Delete'), static fn (Theme $theme): Theme => $theme),
         ];
 
         foreach ($containers as $name => $content) {
@@ -82,6 +88,19 @@ final class AButtonInALayoutInADialogTest extends TestCase
             $harness->press('enter');
             self::assertSame('pressed', self::heardBy($harness), "a button in a $name");
         }
+    }
+
+    #[Test]
+    public function aButtonInAPositionedOverlayInAPaneHoldsTheKeyboard(): void
+    {
+        $pane = Panel::new('Pane')->withChildren([PositionedOverlay::at(3, 3)->withContent(Button::new('Delete'))]);
+        $harness = ModelHarness::for(new PaneApp($pane), 40, 10)->init();
+
+        self::assertSame('pane/0/0', $harness->focused()?->value);
+        $harness->press('enter');
+        $model = $harness->model();
+        self::assertInstanceOf(PaneApp::class, $model);
+        self::assertSame('pressed', $model->heard);
     }
 
     #[Test]
@@ -97,7 +116,7 @@ final class AButtonInALayoutInADialogTest extends TestCase
     #[Test]
     public function aDialogWhoseButtonNothingCanReachStillClosesOnEscape(): void
     {
-        $harness = ModelHarness::for(new ConfirmingApp(Modal::new('Note', Overlay::new(Text::new('Saved.'), Button::new('OK')))), 60, 14)->init();
+        $harness = ModelHarness::for(new ConfirmingApp(Modal::new('Note', Header::new('Saved.')->withRight(Button::new('OK')))), 60, 14)->init();
 
         $harness->press('esc');
 
@@ -113,6 +132,18 @@ final class AButtonInALayoutInADialogTest extends TestCase
         self::assertInstanceOf(ConfirmingApp::class, $model);
 
         return $model->heard;
+    }
+}
+
+final readonly class PaneApp extends App
+{
+    public function __construct(public Panel $pane, public string $heard = '')
+    {
+    }
+
+    public function view(): Widget
+    {
+        return $this->bind('pane')->on(Pressed::class, static fn (self $app): self => new self($app->pane, 'pressed'));
     }
 }
 

@@ -32,6 +32,7 @@ Until 1.0, a minor version may break the API. Each break is listed here.
 - A key outside ASCII, such as `é`, `ü` or `€`, can be bound. `KeyPattern` refused it.
 - A character three cells wide, such as a letter with a skin tone, covers all three cells, and writing over any of them clears all of it. It left a stale cell behind.
 - `TextInput::new()`, `withValue()` and `withCharacterLimit()` keep the value to one line and to the limit, as typing and a paste do.
+- A `Button` or other interactive widget inside an `Overlay`, `PositionedOverlay` or `Themed` gets the keyboard and the mouse, as it does inside a `Layout` or a `Box`.
 
 ## 0.1.0 (2026-11-10)
 

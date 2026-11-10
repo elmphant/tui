@@ -10,15 +10,15 @@ use Elmphant\Tui\Layout\Sizing;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Rendering\Theme;
+use Elmphant\Tui\Widget\Focus\GraftsItsChildren;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\PlacedChildren;
 use Elmphant\Tui\Widget\Widget;
-use Elmphant\Tui\Widget\WidgetContainer;
 
 /**
  * The change is a function of the theme in force, so a theme switch still reaches the child.
  */
-final readonly class Themed implements Widget, WidgetContainer, MeasureHeight
+final readonly class Themed implements Widget, GraftsItsChildren, MeasureHeight
 {
     /**
      * @param Closure(Theme): Theme $adjust
@@ -65,11 +65,16 @@ final readonly class Themed implements Widget, WidgetContainer, MeasureHeight
         yield [$this->child, $area];
     }
 
+    public function withChildAt(int $index, Widget $child): static
+    {
+        return $index === 0 ? new self(child: $child, adjust: $this->adjust) : $this;
+    }
+
     public function render(Frame $frame, Rect $area, RenderContext $context): void
     {
         $themed = $context->withTheme(($this->adjust)($context->theme));
-        foreach (PlacedChildren::of($this, $area, $themed) as [$child, $childArea]) {
-            $themed->draw($child, $frame, $childArea);
+        foreach (PlacedChildren::of($this, $area, $themed) as $index => [$child, $childArea]) {
+            $themed->drawChild(\is_int($index) ? $index : null, $child, $frame, $childArea);
         }
     }
 }
