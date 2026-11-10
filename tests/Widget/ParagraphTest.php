@@ -417,7 +417,8 @@ final class ParagraphTest extends TestCase
         $paragraph->render($frame, new Rect(0, 0, 20, 3), $context);
 
         self::assertSame('F', $frame->characters[0]);
-        self::assertSame('S', $frame->characters[20]);
+        self::assertSame(' ', $frame->characters[20]);
+        self::assertSame('S', $frame->characters[40]);
     }
 
     #[Test]

@@ -60,7 +60,11 @@ final class SpanRenderer
         $lines = [];
 
         foreach ($document->children() as $block) {
-            array_push($lines, ...self::linesOf($block));
+            $blockLines = self::linesOf($block);
+            if ($lines !== [] && $blockLines !== []) {
+                $lines[] = new Line([]);
+            }
+            array_push($lines, ...$blockLines);
         }
 
         return $lines === [] ? [new Line([])] : $lines;

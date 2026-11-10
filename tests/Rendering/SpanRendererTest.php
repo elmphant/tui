@@ -78,13 +78,22 @@ final class SpanRendererTest extends TestCase
     }
 
     #[Test]
-    public function newlinesProduceSeparateLines(): void
+    public function twoParagraphsHaveABlankLineBetweenThem(): void
     {
         $lines = SpanRenderer::fromMarkdown("Line one\n\nLine two");
 
-        self::assertCount(2, $lines);
+        self::assertCount(3, $lines);
         self::assertSame('Line one', $lines[0]->spans[0]->content);
-        self::assertSame('Line two', $lines[1]->spans[0]->content);
+        self::assertSame([], $lines[1]->spans);
+        self::assertSame('Line two', $lines[2]->spans[0]->content);
+    }
+
+    #[Test]
+    public function aParagraphAndTheListAfterItHaveABlankLineBetweenThemButTheItemsDoNot(): void
+    {
+        $lines = SpanRenderer::fromMarkdown("Packed:\n\n- one\n- two");
+
+        self::assertSame(['Packed:', '', '• one', '• two'], array_map(static fn (Line $line): string => implode('', array_map(static fn (Span $span): string => $span->content, $line->spans)), $lines));
     }
 
     #[Test]
@@ -119,6 +128,7 @@ final class SpanRendererTest extends TestCase
         self::assertEquals(
             [
                 new Line([Span::token('Heading', StyleToken::Title)->bold()]),
+                new Line([]),
                 new Line([Span::raw('Paragraph body')]),
             ],
             $lines,
@@ -228,7 +238,9 @@ final class SpanRendererTest extends TestCase
         self::assertEquals(
             [
                 new Line([Span::raw('above')]),
+                new Line([]),
                 new Line([Span::token('───', StyleToken::Dim)]),
+                new Line([]),
                 new Line([Span::raw('below')]),
             ],
             $lines,
