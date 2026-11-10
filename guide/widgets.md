@@ -409,7 +409,7 @@ A panel only hears the mouse when it is bound, so bind every panel a reader
 should copy from, and keep it on the App:
 
 ```php
-use Elmphant\Tui\Application\{App, Component};
+use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 
@@ -419,7 +419,7 @@ final readonly class Report extends App
 
     public function view(): Widget
     {
-        return Component::bind('output', $this->output, static fn (self $app, Panel $output): self => new self($output));
+        return $this->bind('output');
     }
 }
 ```

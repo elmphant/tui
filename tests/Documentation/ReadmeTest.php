@@ -103,6 +103,24 @@ final class ReadmeTest extends TestCase
     }
 
     #[Test]
+    public function theDocumentedReportCopiesTheTextDraggedOverInItsPanel(): void
+    {
+        [$output, $ran] = self::runExample(
+            self::blockContaining('final readonly class Report') . <<<'PHP'
+
+                $panel = (new \Elmphant\Tui\Widget\Structure\Panel('Output'))->add(\Elmphant\Tui\Widget\Prose\Text::new('hello world'));
+                $harness = \Elmphant\Tui\Testing\ModelHarness::for(new Report($panel), 30, 6)->init();
+                $start = $harness->screen()->findOrFail('hello');
+                $harness->drag($start['column'], $start['row'], $start['column'] + 4, $start['row']);
+                echo json_encode(array_map(static fn ($copy): string => $copy->text, $harness->issued(\Elmphant\Tui\Core\Cmd\ClipboardCmd::class)));
+                PHP,
+        );
+
+        self::assertTrue($ran, "The guide's copy example does not run:\n" . $output);
+        self::assertSame(['hello'], json_decode($output, true), $output);
+    }
+
+    #[Test]
     public function theDocumentedWrapperIsDrawnAsTheWidgetItWraps(): void
     {
         [$output, $ran] = self::runExample(
