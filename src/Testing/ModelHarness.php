@@ -20,6 +20,7 @@ use Elmphant\Tui\Core\Cmd\ForkCmd;
 use Elmphant\Tui\Core\Cmd\HttpCmd;
 use Elmphant\Tui\Core\Cmd\MessageCmd;
 use Elmphant\Tui\Core\Cmd\PrintlnCmd;
+use Elmphant\Tui\Core\Cmd\QuitCmd;
 use Elmphant\Tui\Core\Cmd\StreamCmd;
 use Elmphant\Tui\Core\Cmd\TickCmd;
 use Elmphant\Tui\Core\Cmd\ToastCmd;
@@ -128,6 +129,15 @@ final class ModelHarness
     private array $printed = [];
 
     /**
+     * @var list<Message> sent by the model and not delivered yet, first in first out, as Program's queue
+     */
+    private array $queue = [];
+
+    private bool $draining = false;
+
+    private bool $quitting = false;
+
+    /**
      * @param TModel $model
      */
     private function __construct(
@@ -171,16 +181,14 @@ final class ModelHarness
     {
         $this->started = true;
         $this->issued = [];
+        $this->quitting = false;
         ++$this->depth;
 
         try {
             $initCommand = $this->model->init();
             $this->record($initCommand);
             $this->moveFocusFor($initCommand);
-
-            foreach ([new ResizeMsg($this->area->width, $this->area->height), ...self::messagesIn($initCommand)] as $sent) {
-                $this->dispatch($sent);
-            }
+            $this->deliverInOrder([new ResizeMsg($this->area->width, $this->area->height), ...self::messagesIn($initCommand)]);
             $this->lastCommand = $initCommand;
         } finally {
             --$this->depth;
@@ -661,6 +669,7 @@ final class ModelHarness
     {
         if ($this->depth === 0) {
             $this->issued = [];
+            $this->quitting = false;
         }
         ++$this->depth;
 
@@ -684,10 +693,7 @@ final class ModelHarness
             $this->lastCommand = $result->command;
             $this->record($this->lastCommand);
             $this->moveFocusFor($this->lastCommand);
-
-            foreach (self::messagesIn($this->lastCommand) as $sent) {
-                $this->dispatch($sent);
-            }
+            $this->deliverInOrder(self::messagesIn($this->lastCommand));
 
             // Keep the original action's result when processing its follow-up commands.
             $this->lastCommand = $result->command;
@@ -696,6 +702,27 @@ final class ModelHarness
         }
 
         return $this;
+    }
+
+    /**
+     * @param list<Message> $messages
+     */
+    private function deliverInOrder(array $messages): void
+    {
+        array_push($this->queue, ...$messages);
+        if ($this->draining) {
+            return;
+        }
+
+        $this->draining = true;
+        try {
+            while (!$this->quitting && $this->queue !== []) {
+                $this->dispatch(array_shift($this->queue));
+            }
+        } finally {
+            $this->queue = [];
+            $this->draining = false;
+        }
     }
 
     private function keepTheWantedTicks(): void
@@ -727,6 +754,9 @@ final class ModelHarness
     private function recordOne(Cmd $command, ?Closure $wrap, ?string $scope): void
     {
         $this->issued[] = $command;
+        if ($command instanceof QuitCmd) {
+            $this->quitting = true;
+        }
         if ($command instanceof FiberCmd) {
             $this->fibers[] = ['command' => $command, 'wrap' => $wrap, 'id' => $command->id === null ? null : ($scope === null ? $command->id : $command->id->within($scope))];
         }
@@ -819,9 +849,7 @@ final class ModelHarness
             $sent = $answer === null ? [] : [$answer];
         }
 
-        foreach ($sent as $message) {
-            $this->dispatch($wrap === null ? $message : $wrap($message));
-        }
+        $this->deliverInOrder(array_map(static fn (Message $message): Message => $wrap === null ? $message : $wrap($message), $sent));
     }
 
     /**

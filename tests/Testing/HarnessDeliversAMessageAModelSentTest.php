@@ -44,10 +44,37 @@ final class HarnessDeliversAMessageAModelSentTest extends TestCase
             'a batch is how an update says two things at once',
         );
     }
+
+    #[Test]
+    public function messagesArriveInTheOrderTheyWereSent(): void
+    {
+        $driven = ModelHarness::for(new SpeaksToItselfApp(), 20, 2)->init();
+
+        $driven->dispatch(new KeyMsg('o'));
+
+        self::assertSame(['o', 'A', 'B', 'C'], $driven->model()->seen);
+    }
+
+    #[Test]
+    public function nothingArrivesAfterAQuit(): void
+    {
+        $driven = ModelHarness::for(new SpeaksToItselfApp(), 20, 2)->init();
+
+        $driven->dispatch(new KeyMsg('q'));
+
+        self::assertSame(['q'], $driven->model()->seen);
+    }
 }
 
 final readonly class TheErrand implements Message
 {
+}
+
+final readonly class Said implements Message
+{
+    public function __construct(public string $word)
+    {
+    }
 }
 
 final readonly class SpeaksToItselfApp extends App
@@ -70,14 +97,24 @@ final readonly class SpeaksToItselfApp extends App
 
         return new UpdateResult(
             $this->cloneWith(seen: [...$this->seen, $message->key]),
-            $message->key === 'b' ? Cmd::batch(Cmd::focusNowhere(), $errand) : $errand,
+            match ($message->key) {
+                'b' => Cmd::batch(Cmd::focusNowhere(), $errand),
+                'o' => Cmd::batch(Cmd::message(new Said('A')), Cmd::message(new Said('B'))),
+                'q' => Cmd::batch(Cmd::message(new Said('A')), Cmd::quit(), Cmd::message(new Said('B'))),
+                default => $errand,
+            },
         );
     }
 
     protected function onMessage(Message $message, InputContext $input): UpdateResult
     {
-        return $message instanceof TheErrand
-            ? new UpdateResult($this->cloneWith(seen: [...$this->seen, 'the-errand']))
-            : new UpdateResult($this);
+        return match (true) {
+            $message instanceof TheErrand => new UpdateResult($this->cloneWith(seen: [...$this->seen, 'the-errand'])),
+            $message instanceof Said => new UpdateResult(
+                $this->cloneWith(seen: [...$this->seen, $message->word]),
+                $message->word === 'A' ? Cmd::message(new Said('C')) : null,
+            ),
+            default => new UpdateResult($this),
+        };
     }
 }
