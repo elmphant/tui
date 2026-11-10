@@ -186,10 +186,9 @@ final readonly class Container implements Widget, GraftsItsChildren, MeasureHeig
 
         $child = $this->child->sizing()->on($direction);
 
-        $grown = Constraint::min($child->min + $overhead)
+        $grown = $child
             ->withMax(self::grownBy($child->max, $overhead))
-            ->withFlex($child->flex)
-            ->withShrink($child->shrink);
+            ->withMin($child->min + $overhead);
 
         return $child->basis === null ? $grown : $grown->withBasis(self::grownBy($child->basis, $overhead));
     }

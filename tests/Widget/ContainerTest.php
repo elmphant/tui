@@ -27,6 +27,7 @@ use Elmphant\Tui\Widget\Layout\Layout;
 use Elmphant\Tui\Widget\MeasureHeight;
 use Elmphant\Tui\Widget\Plan\WidgetTree;
 use Elmphant\Tui\Widget\Prose\Paragraph;
+use Elmphant\Tui\Widget\Prose\Text;
 use Elmphant\Tui\Widget\Structure\Container;
 use Elmphant\Tui\Widget\VerticalAlignment;
 use Elmphant\Tui\Widget\Widget;
@@ -51,6 +52,23 @@ final class ContainerTest extends TestCase
         self::assertStringContainsString('X', $screen->lineAt(1), 'Precondition: the child did draw inside the container');
         self::assertSame('', trim($screen->textAt(12, 1, 28)), 'nothing of it reached past the border');
         self::assertStringContainsString('╰', $screen->lineAt(5), 'and the border ring is intact');
+    }
+
+    #[Test]
+    public function aParagraphAroundWhichItSitsKeepsItsRowsInAColumn(): void
+    {
+        $frame = new Frame(22, 8);
+        $column = Layout::column(
+            Container::around(Paragraph::fromText("first line\nsecond line")),
+            Text::new('below'),
+        );
+
+        $column->render($frame, Rect::fromSize(22, 8), RenderContext::unfocused(Theme::dark()));
+
+        $screen = ScreenBuffer::fromFrame($frame);
+        self::assertSame('first line', trim($screen->lineAt(0)));
+        self::assertSame('second line', trim($screen->lineAt(1)));
+        self::assertSame('below', trim($screen->lineAt(2)));
     }
 
     #[Test]

@@ -17,6 +17,10 @@ Until 1.0, a minor version may break the API. Each break is listed here.
 - `Panel` and `Box` pad their content one column from the left and right border by default, as a `Card` does, so every app with a pane shifts its content one column in. `withPadding(Spacing::none())` puts it back against the border.
 - A bound `Split` publishes its panes as stops, so Tab reaches them and the runtime routes to them. `Split::withMarkedPane()` and its keybindings are gone.
 
+### Fixed
+
+- A `Paragraph` or other content-sized child inside a `Container` keeps its rows in a column, where it got none.
+
 ## 0.1.0 (2026-11-10)
 
 The first release.
