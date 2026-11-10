@@ -77,7 +77,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `Scrollbar` | `Bar` | A vertical scroll indicator |
 | `Alert` | `Feedback` | One coloured row: `Alert::warning($text)`, `error()`, `success()`, `info()` |
 | `ProgressBar` | `Feedback` | A bar that fills up smoothly: `ProgressBar::new(0.4)` |
-| `Spinner` / `ActivityBar` | `Feedback` | Loading animations with a label: `Spinner::new('loading…')`. They animate by themselves, no timer needed |
+| `Spinner` / `ActivityBar` | `Feedback` | Loading animations with a label: `Spinner::new('loading…')`. They animate by themselves, no timer needed. The spinner draws Braille dots, which some fonts lack, and `withStyle(SpinnerStyle::Line)` draws `- \ \| /` instead |
 
 <img src="../media/widgets-feedback.gif" width="720"
      alt="A launch pad screen with a header, coloured alert rows, a fuel progress bar, a status bar and a footer. The reader presses l, the bar fills while a spinner and an activity bar run, the alert turns from error to warning to success, and the header says in orbit.">
