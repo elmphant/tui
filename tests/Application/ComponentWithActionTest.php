@@ -40,6 +40,26 @@ final class ComponentWithActionTest extends TestCase
     }
 
     #[Test]
+    public function aMountedBindKeepsItsLabelInTheFooter(): void
+    {
+        $screen = ModelHarness::for(new MountingListApp(new MountedListApp(ListView::fromStrings(['alpha', 'beta']))), 60, 6)->screen();
+
+        self::assertStringContainsString('d remove', $screen->lineAt(5));
+    }
+
+    #[Test]
+    public function aMountedBindRunsItsHandlerOnce(): void
+    {
+        $harness = ModelHarness::for(new MountingListApp(new MountedListApp(ListView::fromStrings(['alpha', 'beta', 'gamma']))), 60, 6);
+
+        $harness->press('d');
+
+        $model = $harness->model();
+        self::assertInstanceOf(MountingListApp::class, $model);
+        self::assertSame(['beta', 'gamma'], array_map(static fn ($item): string => $item->title(), $model->inner->list->items()));
+    }
+
+    #[Test]
     public function theKeyHelpListsTheActionHereByTheSameLabel(): void
     {
         $harness = ModelHarness::for(new ListWithActionsApp(ListView::fromStrings(['alpha', 'beta'])), 60, 6);
@@ -66,6 +86,34 @@ final readonly class ListWithActionsApp extends App
         return Layout::column(
             $this->bind('list')
                 ->withAction('delete', ['d'], static fn (self $app): self => new self($app->list->withoutCursorItem()), 'remove'),
+            Footer::new()->withLeft(FocusHints::new()),
+        );
+    }
+}
+
+final readonly class MountedListApp extends App
+{
+    public function __construct(public ListView $list)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return $this->bind('list')
+            ->withAction('delete', ['d'], static fn (self $app): self => new self($app->list->withoutCursorItem()), 'remove');
+    }
+}
+
+final readonly class MountingListApp extends App
+{
+    public function __construct(public MountedListApp $inner)
+    {
+    }
+
+    public function view(): Widget
+    {
+        return Layout::column(
+            $this->mount('inner', $this->inner->view()),
             Footer::new()->withLeft(FocusHints::new()),
         );
     }

@@ -39,10 +39,10 @@ use UnitEnum;
 readonly class Component implements Widget, WidgetContainer, SingleMount
 {
     /**
-     * @param TWidget                                              $widget
-     * @param Closure|null                                         $writeBack validated by bind(); null when named()
-     * @param (Closure(?Cmd): ?Cmd)|null                           $address   set by the Mount that owns this, if any
-     * @param list<array{class-string, Closure, ?string, ?string}> $handlers  validated by on() and withAction(): the message class, the handler, the action it answers and its label
+     * @param TWidget                                               $widget
+     * @param Closure|null                                          $writeBack validated by bind(); null when named()
+     * @param (Closure(?Cmd): ?Cmd)|null                            $address   set by the Mount that owns this, if any
+     * @param list<array{class-string, ?Closure, ?string, ?string}> $handlers  validated by on() and withAction(): the message class, the handler (null inside a mount, whose own write-back runs it), the action it answers and its label
      */
     private function __construct(
         public ComponentId $id,
@@ -284,6 +284,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
             },
             address: $address,
             actions: $this->actions,
+            handlers: array_map(static fn (array $entry): array => [$entry[0], null, $entry[2], $entry[3]], $this->handlers),
         );
     }
 
@@ -360,7 +361,7 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
         $stored = self::asResult(($this->writeBack)($owner, $widget, $message));
 
         foreach ($this->handlers as [$messageClass, $handler, $action]) {
-            if (!$message instanceof $messageClass || ($action !== null && (!$message instanceof ActionMsg || $message->action !== $action))) {
+            if ($handler === null || !$message instanceof $messageClass || ($action !== null && (!$message instanceof ActionMsg || $message->action !== $action))) {
                 continue;
             }
 
@@ -401,8 +402,8 @@ readonly class Component implements Widget, WidgetContainer, SingleMount
     /**
      * @template TWrapped of Widget
      *
-     * @param TWrapped                                             $widget
-     * @param list<array{class-string, Closure, ?string, ?string}> $handlers
+     * @param TWrapped                                              $widget
+     * @param list<array{class-string, ?Closure, ?string, ?string}> $handlers
      *
      * @return self<TWrapped>
      */
