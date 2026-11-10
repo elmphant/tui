@@ -537,7 +537,7 @@ final class Program
             // Catch SIGHUP so closing the terminal still runs shutdown and restores terminal state.
             foreach ([[EventLoopWatcher::Interrupt, SIGINT], [EventLoopWatcher::Terminate, SIGTERM], [EventLoopWatcher::Hangup, SIGHUP]] as [$watcher, $signal]) {
                 $this->watch($watcher, EventLoop::onSignal($signal, function (): void {
-                    $this->messageQueue->enqueue(QuitMsg::Quit);
+                    $this->messageQueue->unshift(QuitMsg::Quit);
                     EventLoop::defer(fn () => $this->tick());
                 }));
             }
@@ -834,7 +834,7 @@ final class Program
         $this->cancelWatcher(EventLoopWatcher::Input);
         $this->cancelWatcher(EventLoopWatcher::EscapeFlush);
         $this->stdinBuffer->flush();
-        $this->messageQueue->enqueue(QuitMsg::Quit);
+        $this->messageQueue->unshift(QuitMsg::Quit);
     }
 
     private function runTick(): void

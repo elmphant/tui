@@ -91,6 +91,63 @@ final class ProgramQuitTest extends TestCase
         self::assertLessThan(1.0, microtime(true) - $started, 'the interrupt, not the guard, ended the program');
         self::assertNotContains(QuitMsg::Quit, $seen->getArrayCopy());
     }
+
+    #[Test]
+    public function theEndOfInputStopsTheProgramAheadOfTheBacklog(): void
+    {
+        $seen = new ArrayObject();
+        $terminal = new VirtualTerminal(40, 10);
+        EventLoop::delay(0.02, $terminal->closeInput(...));
+
+        Program::new(new LongBacklogModel($seen))->withTerminal($terminal)->start();
+
+        self::assertLessThan(LongBacklogModel::BACKLOG / 2, \count($seen));
+    }
+
+    #[Test]
+    #[RequiresFunction('posix_kill')]
+    public function anInterruptStopsTheProgramAheadOfTheBacklog(): void
+    {
+        $seen = new ArrayObject();
+        EventLoop::delay(0.02, static function (): void {
+            posix_kill(posix_getpid(), SIGTERM);
+        });
+
+        Program::new(new LongBacklogModel($seen))->withTerminal(new VirtualTerminal(40, 10))->start();
+
+        self::assertLessThan(LongBacklogModel::BACKLOG / 2, \count($seen));
+    }
+}
+
+final readonly class LongBacklogModel implements Model
+{
+    public const BACKLOG = 400;
+
+    /**
+     * @param ArrayObject<int, Message> $seen
+     */
+    public function __construct(private ArrayObject $seen)
+    {
+    }
+
+    public function init(): ?Cmd
+    {
+        return Cmd::batch(...array_map(static fn (int $index): Cmd => Cmd::message(new TestMessage((string)$index)), range(1, self::BACKLOG)));
+    }
+
+    public function update(Message $message, Rect $area): UpdateResult
+    {
+        if ($message instanceof TestMessage) {
+            $this->seen->append($message);
+            usleep(1000);
+        }
+
+        return new UpdateResult($this);
+    }
+
+    public function render(Frame $frame, RenderPass $pass): void
+    {
+    }
 }
 
 final readonly class MessageRecordingModel implements Model

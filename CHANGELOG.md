@@ -24,6 +24,7 @@ Until 1.0, a minor version may break the API. Each break is listed here.
 - A `RadioRow` or `CheckboxRow` whose options wrap gets the rows they need in a column, where it was cut to one row.
 - The footer and the key help name a `withAction()` key by its label inside a mount too, where they showed the action name.
 - `ModelHarness` delivers the messages a model sends in the order they were sent, as `Program` does, and nothing after a `Cmd::quit()`. It delivered a message sent while handling another before the rest of the batch, and kept going after a quit.
+- Ctrl+C, SIGTERM, SIGHUP and the end of stdin stop the program at once, ahead of the messages already queued. They waited for the whole backlog.
 
 ## 0.1.0 (2026-11-10)
 
