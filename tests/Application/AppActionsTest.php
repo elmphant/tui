@@ -47,7 +47,7 @@ final class AppActionsTest extends TestCase
         self::assertNotNull($focused);
 
         self::assertStringNotContainsString('archive all', $harness->screen()->lineAt(5));
-        self::assertSame('archive all', $harness->model()->keyHelp(FocusState::on($focused))['Anywhere']['a'] ?? null);
+        self::assertSame('archive all', array_column($harness->model()->keyHelp(FocusState::on($focused))['Anywhere'], 'description', 'label')['a'] ?? null);
     }
 
     #[Test]
@@ -57,6 +57,28 @@ final class AppActionsTest extends TestCase
 
         self::assertStringNotContainsString('archive all', $screen->lineAt(5));
         self::assertStringContainsString('Ctrl+Q quit', $screen->lineAt(5));
+    }
+
+    #[Test]
+    public function theKeyHelpLeavesOutAnActionKeyAFocusedFieldTakesAsText(): void
+    {
+        $harness = ModelHarness::for(new ArchivingApp(ListView::fromStrings(['alpha']), field: TextInput::new()), 80, 6)->init();
+        $focused = $harness->focused();
+        self::assertNotNull($focused);
+
+        $anywhere = array_column($harness->model()->keyHelp(FocusState::on($focused))['Anywhere'], 'description', 'label');
+
+        self::assertNotContains('archive all', $anywhere);
+        self::assertSame('keys', $anywhere['Ctrl+K'] ?? null, 'the ? a field would type is left out too');
+    }
+
+    #[Test]
+    public function runningAnEntryFromAFocusedFieldTypesNothingIntoIt(): void
+    {
+        $harness = ModelHarness::for(new ArchivingApp(ListView::fromStrings(['alpha']), field: TextInput::new()), 80, 20)->init()
+            ->press('ctrl+k')->type('keys')->press('enter');
+
+        self::assertSame('', $harness->model()->field?->value());
     }
 }
 

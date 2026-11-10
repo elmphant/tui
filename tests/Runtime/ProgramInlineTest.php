@@ -158,7 +158,7 @@ final class ProgramInlineTest extends TestCase
 
         $frames = explode(Ansi::SYNC_START, $terminal->output());
         $rows = explode("\r\n", $frames[\count($frames) - 2]);
-        self::assertStringContainsString('Keys · Esc to close', $rows[1], 'the help starts one row in, as it would centred in a region its own height');
+        self::assertStringContainsString('Keys', $rows[1], 'the help starts one row in, as it would centred in a region its own height');
     }
 
     #[Test]

@@ -1125,7 +1125,7 @@ final class Program
 
         $this->focus = $resolved;
 
-        if ($stamped instanceof KeyMsg && $this->model instanceof BindsChords && !isset($this->pastTheChords[$message])) {
+        if ($stamped instanceof KeyMsg && $this->model instanceof BindsChords && !isset($this->pastTheChords[$message]) && !$this->keyHelp->isOpen()) {
             $keys = $this->chordTracker->feed($stamped, $this->model->chords($this->focus), $this->clock->now());
 
             if ($keys !== [$stamped]) {
@@ -1136,11 +1136,13 @@ final class Program
         }
 
         $keyHelpWasOpen = $this->keyHelp->isOpen();
-        if ($this->keyHelp->takes($stamped, $this->model, $this->focus)) {
+        $handedOn = $this->keyHelp->handOn($stamped, $this->model, $this->focus);
+        if ($handedOn === null) {
             $this->frames->markDirty();
 
             return false;
         }
+        $stamped = $handedOn;
         if ($keyHelpWasOpen) {
             $this->frames->markDirty();
         }

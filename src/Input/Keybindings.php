@@ -148,10 +148,22 @@ final readonly class Keybindings
      */
     public function hints(array $descriptions): array
     {
+        return array_column($this->keyHints($descriptions), 'description', 'label');
+    }
+
+    /**
+     * Each hint with the key it leads with.
+     *
+     * @param array<string, string|list<string>|Gesture> $descriptions description => the action(s) or gesture it covers
+     *
+     * @return list<KeyHint>
+     */
+    public function keyHints(array $descriptions): array
+    {
         $hints = [];
         foreach ($descriptions as $description => $actions) {
             if ($actions instanceof Gesture) {
-                $hints[$actions->label()] = $description;
+                $hints[] = new KeyHint($actions->label(), $description);
                 continue;
             }
 
@@ -164,7 +176,7 @@ final readonly class Keybindings
             }
 
             if ($patterns !== []) {
-                $hints[KeyPattern::joinedLabel(...$patterns)] = $description;
+                $hints[] = new KeyHint(KeyPattern::joinedLabel(...$patterns), $description, $patterns[0]);
             }
         }
 

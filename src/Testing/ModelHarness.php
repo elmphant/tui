@@ -203,7 +203,7 @@ final class ModelHarness
         }
 
         $model = $this->model;
-        if ($routed instanceof KeyMsg && $model instanceof BindsChords) {
+        if ($routed instanceof KeyMsg && $model instanceof BindsChords && !$this->keyHelp->isOpen()) {
             $this->settleFocus();
             $keys = $this->chordTracker->feed($routed, $model->chords($this->focus), $this->now);
 
@@ -667,9 +667,11 @@ final class ModelHarness
         try {
             $this->settleFocus();
 
-            if ($this->keyHelp->takes($routed, $this->model, $this->focus) || $this->toasts->takes($routed, $this->area)) {
+            $handedOn = $this->keyHelp->handOn($routed, $this->model, $this->focus);
+            if ($handedOn === null || $this->toasts->takes($handedOn, $this->area)) {
                 return $this;
             }
+            $routed = $handedOn;
 
             $result = $this->model instanceof RoutesFocus
                 ? $this->model->update($routed, $this->area, $this->focus)

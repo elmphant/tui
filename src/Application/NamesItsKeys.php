@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace Elmphant\Tui\Application;
 
+use Elmphant\Tui\Input\KeyHint;
+
 /**
  * Include a mounted model's own key bindings in help while it receives keys.
  */
 interface NamesItsKeys
 {
     /**
-     * Derive labels from active bindings; PHP converts numeric string keys such as `1` to integers.
+     * Derive them from active bindings with `Keybindings::keyHints()`.
      *
-     * @return array<array-key, string> key label => what it does
+     * @return list<KeyHint>
      */
     public function ownKeys(): array;
 }

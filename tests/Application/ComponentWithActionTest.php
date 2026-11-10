@@ -6,6 +6,8 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Core\FocusState;
+use Elmphant\Tui\Input\KeyHint;
+use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Testing\ModelHarness;
 use Elmphant\Tui\Widget\Bar\FocusHints;
 use Elmphant\Tui\Widget\Bar\Footer;
@@ -46,7 +48,10 @@ final class ComponentWithActionTest extends TestCase
 
         $help = $harness->model()->keyHelp(FocusState::on($focused));
 
-        self::assertSame('remove', $help['Here']['d'] ?? null);
+        self::assertEquals([new KeyHint('d', 'remove', KeyPattern::fromString('d'))], array_values(array_filter(
+            $help['Here'],
+            static fn (KeyHint $entry): bool => $entry->label === 'd',
+        )));
     }
 }
 

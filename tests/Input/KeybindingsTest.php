@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Elmphant\Tui\Tests\Input;
 
 use Elmphant\Tui\Input\Actions;
+use Elmphant\Tui\Input\Gesture;
 use Elmphant\Tui\Input\Keybindings;
+use Elmphant\Tui\Input\KeyHint;
 use Elmphant\Tui\Input\KeyPattern;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
@@ -379,5 +381,20 @@ final class KeybindingsTest extends TestCase
         $bindings = new Keybindings([Actions::TAB_NEXT => ['shift+right']]);
 
         self::assertNull($bindings->label(Actions::TAB_PREVIOUS, Actions::TAB_NEXT));
+    }
+
+    #[Test]
+    public function aKeyHintCarriesTheKeyItsActionLeadsWithAndAGestureCarriesNone(): void
+    {
+        $bindings = new Keybindings(['refresh' => ['r', 'x'], 'reload' => ['ctrl+r'], 'unbound' => []]);
+
+        self::assertEquals(
+            [
+                new KeyHint('r/Ctrl+R', 'refresh', KeyPattern::fromString('r')),
+                new KeyHint('Click', 'open'),
+            ],
+            $bindings->keyHints(['refresh' => ['refresh', 'reload'], 'open' => Gesture::Click, 'nothing' => 'unbound']),
+        );
+        self::assertSame(['r/Ctrl+R' => 'refresh', 'Click' => 'open'], $bindings->hints(['refresh' => ['refresh', 'reload'], 'open' => Gesture::Click, 'nothing' => 'unbound']));
     }
 }

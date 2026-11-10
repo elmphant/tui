@@ -559,4 +559,19 @@ final class KeyPatternTest extends TestCase
         self::assertSame('gt/gT', KeyPattern::joinedLabel(KeyPattern::fromString('g t'), KeyPattern::fromString('g T')));
         self::assertSame('H/L', KeyPattern::joinedLabel(KeyPattern::fromString('H'), KeyPattern::fromString('L')));
     }
+
+    #[Test]
+    public function aPatternPressedIsAKeyItMatches(): void
+    {
+        foreach (['ctrl+r', 'G', 'enter', 'g g', 'ctrl+x ctrl+s', 'shift+up'] as $pattern) {
+            self::assertTrue(KeyPattern::fromString($pattern)->matches(KeyPattern::fromString($pattern)->pressed()), $pattern);
+        }
+    }
+
+    #[Test]
+    public function aCapitalLetterIsPressedAsATerminalSendsIt(): void
+    {
+        self::assertEquals(new KeyMsg('G'), KeyPattern::fromString('G')->pressed());
+        self::assertEquals(new KeyMsg('a', ctrl: true, shift: true), KeyPattern::fromString('ctrl+shift+a')->pressed());
+    }
 }

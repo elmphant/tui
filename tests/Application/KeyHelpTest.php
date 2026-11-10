@@ -21,6 +21,7 @@ use Elmphant\Tui\Input\Presets\VimMode;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Rendering\Context\RenderContext;
 use Elmphant\Tui\Rendering\Frame;
 use Elmphant\Tui\Runtime\Program;
@@ -51,9 +52,9 @@ final class KeyHelpTest extends TestCase
         $screen = $harness->screen()->plainText();
 
         self::assertStringContainsString('Keys', $screen);
-        self::assertMatchesRegularExpression('/↓\s+down/u', $screen);
-        self::assertMatchesRegularExpression('/End\s+bottom/u', $screen, 'a key the footer leaves out');
-        self::assertMatchesRegularExpression('/Ctrl\+Q\/Ctrl\+C\s+quit/u', $screen);
+        self::assertMatchesRegularExpression('/down\s+↓/u', $screen);
+        self::assertMatchesRegularExpression('/bottom\s+End/u', $screen, 'a key the footer leaves out');
+        self::assertMatchesRegularExpression('/quit\s+Ctrl\+Q\/Ctrl\+C/u', $screen);
 
         $harness->press('esc');
 
@@ -61,11 +62,76 @@ final class KeyHelpTest extends TestCase
     }
 
     #[Test]
-    public function questionMarkClosesItToo(): void
+    public function typingFiltersTheKeysAndEnterRunsTheOneUnderTheCursor(): void
+    {
+        $harness = self::harness()->press('?')->type('bott');
+
+        self::assertSame(['> bott', '', 'Here', '› bottom  End'], \array_slice(self::keyHelpRows($harness), 0, 4));
+
+        $harness->press('enter');
+
+        self::assertStringNotContainsString('Keys', $harness->screen()->plainText());
+        self::assertSame('two', $harness->model()->list->cursorItem()?->title());
+    }
+
+    #[Test]
+    public function ctrlKClosesItWhileTheQuestionMarkIsTyped(): void
     {
         $harness = self::harness()->press('?', '?');
 
+        self::assertSame('> ?', self::keyHelpRows($harness)[0]);
+
+        $harness->press('ctrl+k');
+
         self::assertStringNotContainsString('Keys', $harness->screen()->plainText());
+    }
+
+    #[Test]
+    public function inVimModeTheSlashHandsTheKeysToTheFilterAndTheQuestionMarkCloses(): void
+    {
+        $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->init()->press('?', 'j');
+
+        self::assertSame(['/ search', '', 'Here', 'down  j/↓', '› up  k/↑'], \array_slice(self::keyHelpRows($harness), 0, 5));
+
+        $harness->press('/')->type('quit');
+        self::assertSame('/ quit', self::keyHelpRows($harness)[0]);
+
+        $harness->press('enter', '?');
+        self::assertStringNotContainsString('Keys', $harness->screen()->plainText());
+    }
+
+    #[Test]
+    public function lettersThatStartAChordAreTypedIntoTheFilterAtOnce(): void
+    {
+        $harness = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->init()->press('?', '/')->type('eg');
+
+        self::assertSame('/ eg', self::keyHelpRows($harness)[0]);
+
+        $harness->type('g');
+
+        self::assertSame('/ egg', self::keyHelpRows($harness)[0]);
+    }
+
+    #[Test]
+    public function aRunningProgramTypesALetterThatStartsAChordIntoTheFilterAtOnce(): void
+    {
+        $terminal = new VirtualTerminal(60, 40);
+        $clock = new TestClock(1000.0);
+        $program = Program::new(new KeyHelpApp(self::list(), TextInput::new(), vim: true))->withTerminal($terminal)->withClock($clock);
+        $screen = '';
+
+        EventLoop::defer(static function () use ($terminal, $clock, $program, &$screen): void {
+            foreach (['?', '/', 'e', 'g'] as $input) {
+                $terminal->simulateInput($input);
+                $clock->advance(0.01);
+                $program->tick();
+            }
+            $screen = (new ScreenBuffer($terminal->output(), 60, 40))->plainText();
+            $terminal->simulateInput("\x11");
+        });
+        $program->start();
+
+        self::assertStringContainsString('/ eg ', $screen);
     }
 
     #[Test]
@@ -73,9 +139,9 @@ final class KeyHelpTest extends TestCase
     {
         $screen = ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 60, 40)->init()->press('?')->screen()->plainText();
 
-        self::assertMatchesRegularExpression('/j\/↓\s+down/u', $screen);
-        self::assertMatchesRegularExpression('/gg\/Home\s+top/u', $screen);
-        self::assertDoesNotMatchRegularExpression('/│ h\s+left/u', $screen, 'nothing here moves left');
+        self::assertMatchesRegularExpression('/down\s+j\/↓/u', $screen);
+        self::assertMatchesRegularExpression('/top\s+gg\/Home/u', $screen);
+        self::assertDoesNotMatchRegularExpression('/left\s+h │/u', $screen, 'nothing here moves left');
     }
 
     #[Test]
@@ -83,7 +149,7 @@ final class KeyHelpTest extends TestCase
     {
         $rows = self::keyHelpRows(ModelHarness::for(new WordedApp(new WordedWidget()), 60, 30)->init()->press('?'));
 
-        self::assertContains('Enter  fill in', array_map(static fn (string $row): string => preg_replace('/\s{2,}/u', '  ', $row) ?? $row, $rows));
+        self::assertContains('› fill in  Enter', $rows);
     }
 
     #[Test]
@@ -92,13 +158,13 @@ final class KeyHelpTest extends TestCase
         $rows = self::keyHelpRows(ModelHarness::for(new KeyHelpApp(self::list(), TextInput::new(), vim: true), 70, 60)->init()->press('?'));
         $keys = [];
         foreach ($rows as $row) {
-            if (preg_match('/^(\S+)\s{2,}\S/u', $row, $match) === 1) {
+            if (preg_match('/\S  (\S+)$/u', $row, $match) === 1) {
                 array_push($keys, ...($match[1] === '/' ? ['/'] : explode('/', $match[1])));
             }
         }
 
         self::assertNotContains('In the footer', $rows);
-        self::assertContains('j/↓                  down', $rows);
+        self::assertContains('› down  j/↓', $rows);
         self::assertSame(array_values(array_unique($keys)), $keys);
     }
 
@@ -138,7 +204,7 @@ final class KeyHelpTest extends TestCase
                 $terminal->simulateInput($input);
                 $clock->advance(1);
                 $program->tick();
-                $shown[] = str_contains((new ScreenBuffer($terminal->output(), 60, 30))->plainText(), 'Esc to close');
+                $shown[] = str_contains((new ScreenBuffer($terminal->output(), 60, 30))->plainText(), 'Esc close');
             }
             $terminal->simulateInput("\x11");
         });
@@ -153,7 +219,7 @@ final class KeyHelpTest extends TestCase
         $harness = self::harness()->press('?', 'ctrl+q');
 
         self::assertInstanceOf(QuitCmd::class, $harness->lastCommand());
-        self::assertStringNotContainsString('Esc to close', $harness->screen()->plainText());
+        self::assertStringNotContainsString('Esc close', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -161,7 +227,7 @@ final class KeyHelpTest extends TestCase
     {
         $harness = self::harness()->press('tab', 'ctrl+k');
 
-        self::assertStringContainsString('Esc to close', $harness->screen()->plainText());
+        self::assertStringContainsString('Esc close', $harness->screen()->plainText());
         self::assertSame('', $harness->model()->field->value());
     }
 
@@ -175,7 +241,7 @@ final class KeyHelpTest extends TestCase
         $harness->press('end');
 
         self::assertStringNotContainsString('Here', $harness->screen()->plainText());
-        self::assertMatchesRegularExpression('/\?\/Ctrl\+K\s+keys/u', $harness->screen()->plainText());
+        self::assertMatchesRegularExpression('/keys\s+\?\/Ctrl\+K/u', $harness->screen()->plainText());
     }
 
     #[Test]
@@ -195,21 +261,17 @@ final class KeyHelpTest extends TestCase
         $shown = [];
 
         EventLoop::defer(static function () use ($terminal, $clock, $program, &$shown): void {
-            foreach (['', '?', "\r"] as $input) {
+            foreach (['', '?', 'x', "\x0b"] as $input) {
                 $terminal->simulateInput($input);
                 $clock->advance(1);
                 $program->tick();
-                $shown[] = str_contains((new ScreenBuffer($terminal->output(), 60, 30))->plainText(), 'Esc to close');
+                $shown[] = str_contains((new ScreenBuffer($terminal->output(), 60, 30))->plainText(), 'Keys');
             }
-            $terminal->simulateInput('?');
-            $clock->advance(1);
-            $program->tick();
-            $shown[] = str_contains((new ScreenBuffer($terminal->output(), 60, 30))->plainText(), 'Esc to close');
             $terminal->simulateInput("\x11");
         });
         $program->start();
 
-        self::assertSame([false, true, true, false], $shown, 'opens on ?, swallows Enter, closes on ?');
+        self::assertSame([false, true, true, false], $shown, 'opens on ?, takes a typed key, closes on Ctrl+K');
     }
 
     #[Test]
@@ -218,7 +280,15 @@ final class KeyHelpTest extends TestCase
         $screen = ModelHarness::for(new ReportMountingApp(new ReportModel()), 60, 30)->init()->press('?')->screen()->plainText();
 
         self::assertStringContainsString('Report', $screen);
-        self::assertMatchesRegularExpression('/r\s+refresh/u', $screen);
+        self::assertMatchesRegularExpression('/refresh\s+r/u', $screen);
+    }
+
+    #[Test]
+    public function enterRunsAKeyAMountedModelNames(): void
+    {
+        $harness = ModelHarness::for(new ReportMountingApp(new ReportModel()), 60, 30)->init()->press('?')->type('refr')->press('enter');
+
+        self::assertSame(1, $harness->model()->report->refreshed);
     }
 
     #[Test]
@@ -229,12 +299,12 @@ final class KeyHelpTest extends TestCase
         $focused = $harness->focused();
         $help = $harness->model()->keyHelp($focused === null ? FocusState::nowhere() : FocusState::on($focused));
 
-        self::assertSame(['r/x' => 'refresh', '/' => 'search', 7 => 'seven'], $help['Report']);
-        self::assertSame(['Ctrl+Q/Ctrl+C', 'e', 's'], \array_slice(array_map(strval(...), array_keys($help['Anywhere'])), 0, 3));
+        self::assertSame(['r/x' => 'refresh', '/' => 'search', 7 => 'seven'], array_column($help['Report'], 'description', 'label'));
+        self::assertSame(['Ctrl+Q/Ctrl+C', 'e', 's'], \array_slice(array_column($help['Anywhere'], 'label'), 0, 3));
     }
 
     /**
-     * @return list<string> the rows inside the key help's box, trimmed
+     * @return list<string> the rows inside the box, runs of spaces as two
      */
     private static function keyHelpRows(ModelHarness $harness): array
     {
@@ -252,7 +322,7 @@ final class KeyHelpTest extends TestCase
                 break;
             }
 
-            $rows[] = trim(mb_substr($cell, 1, (int)mb_strpos($cell, '│', 1) - 1));
+            $rows[] = (string)preg_replace('/\s{2,}/u', '  ', trim(mb_substr($cell, 1, (int)mb_strpos($cell, '│', 1) - 1)));
         }
 
         return $rows;
@@ -291,14 +361,23 @@ final readonly class OneFieldKeyHelpApp extends CopyableTestApp
 
 final readonly class ReportModel implements Reducer, NamesItsKeys
 {
+    public function __construct(public int $refreshed = 0)
+    {
+    }
+
     public function update(Message $message, Rect $area): UpdateResult
     {
-        return new UpdateResult($this);
+        return new UpdateResult($message instanceof KeyMsg && self::keys()->matches($message, 'refresh') ? new self($this->refreshed + 1) : $this);
     }
 
     public function ownKeys(): array
     {
-        return (new Keybindings(['refresh' => ['r']]))->hints(['refresh' => 'refresh']);
+        return self::keys()->keyHints(['refresh' => 'refresh']);
+    }
+
+    private static function keys(): Keybindings
+    {
+        return new Keybindings(['refresh' => ['r']]);
     }
 }
 
@@ -311,7 +390,8 @@ final readonly class OverlappingKeysModel implements Reducer, NamesItsKeys
 
     public function ownKeys(): array
     {
-        return ['r/x' => 'refresh', '/' => 'search', '7' => 'seven'];
+        return (new Keybindings(['refresh' => ['r'], 'reload' => ['x'], 'search' => ['/'], 'seven' => ['7']]))
+            ->keyHints(['refresh' => ['refresh', 'reload'], 'search' => 'search', 'seven' => 'seven']);
     }
 }
 

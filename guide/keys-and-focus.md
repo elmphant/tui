@@ -87,7 +87,13 @@ field or clearing the query.
 `?` (or Ctrl+K, which also works while a field takes `?` as text) opens a list
 of every key that works right now: the focused widget's keys, those of the
 panes around it, and the app's own. It is read from the real bindings, so it
-is always correct. It closes with `?`, Ctrl+K or Escape, and scrolls when long.
+is always correct.
+
+It is also a way to run a key you do not remember. Type to filter the list,
+move with ↑/↓ and press Enter: the help closes and the key runs as if it was
+pressed. Escape clears the filter, then closes the help. Ctrl+K always closes it.
+In vim mode the list holds the keys first, as a filter does: `/` starts typing,
+Enter or Escape stops, and `?` closes.
 
 - An action's label is its fourth argument, in `actions()` and in
   `withAction()`. The footer uses the same words.

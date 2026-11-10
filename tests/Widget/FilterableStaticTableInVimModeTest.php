@@ -37,7 +37,10 @@ final class FilterableStaticTableInVimModeTest extends TestCase
     {
         $harness = self::harness();
         $app = $harness->model();
-        $help = $app->keyHelp(self::stateOf($harness));
+        $help = array_map(
+            static fn (array $entries): array => array_column($entries, 'description', 'label'),
+            $app->keyHelp(self::stateOf($harness)),
+        );
 
         self::assertSame('search', $help['Here']['/'] ?? null, 'the table answers / itself');
         self::assertSame('scroll down', $help['Around it']['j/↓'] ?? null, 'the pane around it scrolls on j');
@@ -124,7 +127,7 @@ final class FilterableStaticTableInVimModeTest extends TestCase
         $app = $harness->model();
         self::assertInstanceOf(VimOutputApp::class, $app);
 
-        return $app->keyHelp(self::stateOf($harness))['Here'] ?? [];
+        return array_column($app->keyHelp(self::stateOf($harness))['Here'] ?? [], 'description', 'label');
     }
 
     private static function stateOf(ModelHarness $harness): FocusState

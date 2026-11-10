@@ -167,6 +167,17 @@ final readonly class KeyPattern implements Stringable
         return new self(key: $key, ctrl: $message->ctrl, alt: $message->alt, shift: $shift, preceding: array_map(self::fromKeyMsg(...), $message->preceding));
     }
 
+    public function pressed(): KeyMsg
+    {
+        $preceding = array_map(static fn (self $step): KeyMsg => $step->pressed(), $this->preceding);
+
+        if ($this->shift && !$this->ctrl && !$this->alt && \is_string($this->key) && strlen($this->key) === 1 && ctype_lower($this->key)) {
+            return new KeyMsg(strtoupper($this->key), preceding: $preceding);
+        }
+
+        return new KeyMsg($this->key, $this->ctrl, $this->alt, $this->shift, preceding: $preceding);
+    }
+
     public function matches(KeyMsg $message): bool
     {
         // Handle repeat events so holding a key continues actions such as list navigation.

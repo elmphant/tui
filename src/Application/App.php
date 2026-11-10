@@ -16,6 +16,7 @@ use Elmphant\Tui\Input\Actions;
 use Elmphant\Tui\Input\BindsForTheMoment;
 use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Input\KeybindingsAware;
+use Elmphant\Tui\Input\KeyHint;
 use Elmphant\Tui\Input\TakesText;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Message\ActionMsg;
@@ -32,6 +33,7 @@ use Elmphant\Tui\Rendering\Theme;
 use Elmphant\Tui\Runtime\BindsChords;
 use Elmphant\Tui\Runtime\ChoosesItsTheme;
 use Elmphant\Tui\Runtime\DescribesKeys;
+use Elmphant\Tui\Runtime\KeyHelpOverlay;
 use Elmphant\Tui\Runtime\RoutesFocus;
 use Elmphant\Tui\Runtime\SizesItsRegion;
 use Elmphant\Tui\Runtime\WantsTicks;
@@ -192,8 +194,10 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
     {
         // List each key once, under the closest group that handles it.
         // List global keys only when a visible component handles their action.
+        // A text key reaches only the focused field, so only its own keys may be text.
         $globals = $this->resolvedGlobalKeybindings();
         $focused = $this->componentRegistry()->focusable($focus->focused());
+        $textTaken = $this->takesText($focus->focused());
         $listed = [];
         $groups = [];
 
@@ -201,25 +205,27 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             $wording = $this->hintsOfFocused($focused->id);
             $groups['Here'] = [];
             foreach ($this->componentsWithActionsAround($focused->id) as $component) {
-                $groups['Here'] += $this->described($component->actions(), $listed, $wording);
+                $groups['Here'] = [...$groups['Here'], ...$this->described($component->actions(), $listed, $wording, $textTaken)];
             }
-            $groups['Here'] += $this->keysOf($focused->widget, $globals, $listed, $wording);
+            $groups['Here'] = [...$groups['Here'], ...$this->keysOf($focused->widget, $globals, $listed, $wording, false)];
             $groups['Around it'] = [];
             foreach (array_reverse($this->componentRegistry()->enclosing($focused->id)) as $component) {
                 $widget = $component->widget;
                 $wording = $widget instanceof PublishesHints && $widget instanceof KeybindingsAware
                     ? $widget->withGlobalKeybindings($globals)->hints()
                     : [];
-                $groups['Around it'] += $this->keysOf($widget, $globals, $listed, $wording);
+                $groups['Around it'] = [...$groups['Around it'], ...$this->keysOf($widget, $globals, $listed, $wording, $textTaken)];
             }
         }
 
         foreach ($this->mountsHearingKeys($focus->focused()) as $mount) {
             if ($mount->model instanceof NamesItsKeys) {
-                $own = $mount->model->ownKeys();
-                foreach (array_keys($own) as $label) {
-                    $label = (string)$label;
-                    foreach ($label === '/' ? ['/'] : explode('/', $label) as $key) {
+                $own = array_values(array_filter(
+                    $mount->model->ownKeys(),
+                    static fn (KeyHint $hint): bool => !$textTaken || $hint->key === null || !$hint->key->pressed()->isText(),
+                ));
+                foreach ($own as $hint) {
+                    foreach ($hint->label === '/' ? ['/'] : explode('/', $hint->label) as $key) {
                         $listed[$key] = true;
                     }
                 }
@@ -231,13 +237,20 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
         if (count($this->componentRegistry()->ring($focus->focused())) > 1) {
             $anywhere = $anywhere->plus($this->focusCycleKeybindings());
         }
-        $groups['Anywhere'] = $this->described(
-            $anywhere->plus($this->keyHelpKeybindings()),
-            $listed,
-            $this->appActionHints($this->declaredActions()->keybindings()),
-        );
+        $groups['Anywhere'] = [
+            ...$this->described($anywhere, $listed, $this->appActionHints($this->declaredActions()->keybindings()), $textTaken),
+            ...array_map(
+                static fn (KeyHint $hint): KeyHint => new KeyHint($hint->label, $hint->description),
+                $this->described($this->keyHelpKeybindings(), $listed, [], $textTaken),
+            ),
+        ];
 
         return $groups;
+    }
+
+    final public function keyHelpKeys(): Keybindings
+    {
+        return $this->resolvedGlobalKeybindings()->restrictedTo(Actions::SEARCH, ...KeyHelpOverlay::MOVES);
     }
 
     /**
@@ -1136,9 +1149,9 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      * @param array<string, true>   $listed
      * @param array<string, string> $wording
      *
-     * @return array<string, string>
+     * @return list<KeyHint>
      */
-    private function keysOf(Widget $widget, Keybindings $globals, array &$listed, array $wording): array
+    private function keysOf(Widget $widget, Keybindings $globals, array &$listed, array $wording, bool $withoutText): array
     {
         if (!$widget instanceof KeybindingsAware) {
             return [];
@@ -1150,7 +1163,7 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             ...($bound instanceof BindsForTheMoment ? $bound->momentaryKeybindings()->actions() : []),
         ];
 
-        return $this->described($bound->effectiveKeybindings()->restrictedTo(...$own), $listed, $wording);
+        return $this->described($bound->effectiveKeybindings()->restrictedTo(...$own), $listed, $wording, $withoutText);
     }
 
     /**
@@ -1159,26 +1172,29 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
      * @param array<string, true>   $listed  the key labels already listed, added to as this lists more
      * @param array<string, string> $wording key label => description, as hints are
      *
-     * @return array<string, string> key label => what it does
+     * @return list<KeyHint>
      */
-    private function described(Keybindings $bindings, array &$listed, array $wording = []): array
+    private function described(Keybindings $bindings, array &$listed, array $wording, bool $withoutText): array
     {
+        $bindings = $withoutText ? $bindings->withoutText() : $bindings;
         $described = [];
 
         foreach ($bindings->actions() as $action) {
             $leading = ($bindings->patternsOf($action)[0] ?? null)?->label();
             $description = $leading !== null && isset($wording[$leading]) ? $wording[$leading] : Actions::description($action);
             $labels = [];
+            $first = null;
             foreach ($bindings->patternsOf($action) as $pattern) {
                 $label = $pattern->label();
                 if (!isset($listed[$label])) {
                     $listed[$label] = true;
                     $labels[] = $label;
+                    $first ??= $pattern;
                 }
             }
 
             if ($labels !== []) {
-                $described[implode('/', $labels)] = $description;
+                $described[] = new KeyHint(implode('/', $labels), $description, $first);
             }
         }
 
