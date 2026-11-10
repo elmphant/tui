@@ -53,3 +53,22 @@ screen changed, so a key nothing reacts to costs nothing.
 Everything that happened since the last turn becomes a message first. Only then
 does your app see them, in order. At most one frame is drawn per turn, and never
 more often than the frame rate allows (`Program::withFps()`).
+
+## Words the guide uses
+
+- **Message**: something that happened, such as a key, a click, a tick or the
+  result of a command. `update()` and the App's hooks hear it.
+- **Widget**: a part of the screen: a list, a field, a pane.
+- **Component**: a widget the framework keeps and stores back for you, under
+  an id. `bind()` makes one. A "bound widget" is the same thing.
+- **Stop**: a place tab can move the keyboard to. Most components are one. A
+  bound pane, form or dialog is not: each field inside it is a stop instead.
+- **Outcome**: the message a widget answers with when the reader meant
+  something, such as `Submitted` or `Chosen`. `on()` hears it.
+- **Command**: a `Cmd` value that asks for work, such as running a process.
+  Your code returns it, and `Program` runs it.
+- **Effect**: the work a command started while it runs, such as a timer or a
+  process. An `EffectId` names it, so you can match its results and cancel it.
+- **Sub-model**: a part of the app with its own model, widgets and commands,
+  mounted into the App under a name. A "mount" is the place it is drawn, and a
+  "mounted model" is the same thing.

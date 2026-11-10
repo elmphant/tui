@@ -25,8 +25,7 @@ A key goes down this list and stops at the first step that answers it:
 5. **The App's `actions()`**, the quit keys included.
 6. **Tab and Shift+Tab** move the keyboard.
 7. **`onKey()`.** Return the App unchanged and with no command to pass the key on.
-8. **Mounted models**: the one that holds the keyboard, else every mount on
-   screen.
+8. **Sub-models**: the one that holds the keyboard, else every one on screen.
 9. **The focused widget**, with its own keys and your `globalKeybindings()`.
 10. **The panes around it**, nearest first, so PageDown in a field still scrolls
     the form.
