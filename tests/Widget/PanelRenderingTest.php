@@ -94,10 +94,10 @@ final class PanelRenderingTest extends TestCase
         $unfocusedBuffer = new Frame(30, 15);
         $panel->render($unfocusedBuffer, $area, RenderContext::unfocused($theme));
 
-        self::assertSame('H', $focusedBuffer->characters[1 * 30 + 1], 'Header at row 1');
-        self::assertSame('A', $focusedBuffer->characters[3 * 30 + 1], 'Alpha at row 3');
-        self::assertSame('─', $focusedBuffer->characters[7 * 30 + 1], 'Separator at row 7');
-        self::assertSame('F', $focusedBuffer->characters[9 * 30 + 1], 'Footer at row 9');
+        self::assertSame('H', $focusedBuffer->characters[1 * 30 + 2], 'Header at row 1');
+        self::assertSame('A', $focusedBuffer->characters[3 * 30 + 2], 'Alpha at row 3');
+        self::assertSame('─', $focusedBuffer->characters[7 * 30 + 2], 'Separator at row 7');
+        self::assertSame('F', $focusedBuffer->characters[9 * 30 + 2], 'Footer at row 9');
         self::assertSame($focusedBuffer->characters, $unfocusedBuffer->characters, 'Focus decides colour, never placement');
     }
 

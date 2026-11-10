@@ -32,7 +32,7 @@ final class APaneInsideAPaneTest extends TestCase
         $screen = ScreenBuffer::fromFrame($frame);
 
         self::assertSame(1, $screen->rowOf('title'));
-        self::assertStringStartsWith('│╰', $screen->lineAt(10), 'the details pane ends on screen, one row above the page');
+        self::assertStringStartsWith('│ ╰', $screen->lineAt(10), 'the details pane ends on screen, one row above the page');
     }
 
     #[Test]

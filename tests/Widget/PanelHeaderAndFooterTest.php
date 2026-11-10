@@ -51,7 +51,7 @@ final class PanelHeaderAndFooterTest extends TestCase
             ->withHeader(PinnedRows::of(Text::new('FILTER')))
             ->withFooter(PinnedRows::of(Paragraph::fromText("one\ntwo")));
 
-        self::assertEquals(new Rect(1, 2, 18, 3), $panel->contentArea(Rect::fromSize(20, 8)));
+        self::assertEquals(new Rect(2, 2, 16, 3), $panel->contentArea(Rect::fromSize(20, 8)));
     }
 
     #[Test]
@@ -127,7 +127,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     {
         $panel = self::rows(2)->withFooter(PinnedRows::of(Text::new('RUN'))->withRule()->withGap(1));
 
-        self::assertEquals(new Rect(1, 1, 18, 3), $panel->contentArea(Rect::fromSize(20, 8)));
+        self::assertEquals(new Rect(2, 1, 16, 3), $panel->contentArea(Rect::fromSize(20, 8)));
         self::assertSame(str_repeat(' ', 18), mb_substr(self::drawn($panel, 20, 8)->lineAt(4), 1, 18));
     }
 
@@ -136,7 +136,7 @@ final class PanelHeaderAndFooterTest extends TestCase
     {
         $panel = self::tenRows()->withFooter(PinnedRows::of(Text::new('RUN'))->withRule()->withGap(1));
 
-        self::assertEquals(new Rect(1, 1, 18, 4), $panel->contentArea(Rect::fromSize(20, 8)));
+        self::assertEquals(new Rect(2, 1, 16, 4), $panel->contentArea(Rect::fromSize(20, 8)));
     }
 
     #[Test]
@@ -176,8 +176,8 @@ final class PanelHeaderAndFooterTest extends TestCase
         $fits = self::rows(2)->withHeader(PinnedRows::of(Text::new('HEAD'))->withRule()->withGap(1));
         $overflows = self::tenRows()->withHeader(PinnedRows::of(Text::new('HEAD'))->withRule()->withGap(1));
 
-        self::assertEquals(new Rect(1, 4, 18, 3), $fits->contentArea(Rect::fromSize(20, 8)));
-        self::assertEquals(new Rect(1, 3, 18, 4), $overflows->contentArea(Rect::fromSize(20, 8)));
+        self::assertEquals(new Rect(2, 4, 16, 3), $fits->contentArea(Rect::fromSize(20, 8)));
+        self::assertEquals(new Rect(2, 3, 16, 4), $overflows->contentArea(Rect::fromSize(20, 8)));
     }
 
     private static function tenRows(): Panel

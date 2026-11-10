@@ -399,9 +399,9 @@ final class PanelTest extends TestCase
 
         $panel->render($frame, new Rect(0, 0, 20, 10), new RenderContext(Theme::dark()));
 
-        self::assertSame('H', $frame->characters[1 * 20 + 1]);
-        self::assertSame('e', $frame->characters[1 * 20 + 2]);
-        self::assertSame('l', $frame->characters[1 * 20 + 3]);
+        self::assertSame('H', $frame->characters[1 * 20 + 2]);
+        self::assertSame('e', $frame->characters[1 * 20 + 3]);
+        self::assertSame('l', $frame->characters[1 * 20 + 4]);
     }
 
     #[Test]
@@ -483,8 +483,8 @@ final class PanelTest extends TestCase
 
         $panel->render($frame, new Rect(0, 0, 20, 10), new RenderContext(Theme::dark()));
 
-        self::assertSame('F', $frame->characters[1 * 20 + 1]);
-        self::assertSame('S', $frame->characters[2 * 20 + 1]);
+        self::assertSame('F', $frame->characters[1 * 20 + 2]);
+        self::assertSame('S', $frame->characters[2 * 20 + 2]);
     }
 
     #[Test]
@@ -601,7 +601,7 @@ final class PanelTest extends TestCase
     #[Test]
     public function rendersScrollbarWhenContentOverflows(): void
     {
-        $panel = Panel::new('');
+        $panel = Panel::new('')->withPadding(Spacing::none());
         for ($index = 0; $index < 20; ++$index) {
             $panel = $panel->add(Text::new("Line $index"));
         }
@@ -796,8 +796,8 @@ final class PanelTest extends TestCase
         $panel->render($buffer1, $area, new RenderContext(Theme::dark()));
         $buffer2 = new Frame(20, 5);
         $result->model->render($buffer2, $area, new RenderContext(Theme::dark()));
-        self::assertSame('A', $buffer1->characters[1 * 20 + 1], 'Before scroll: Alpha at row 1');
-        self::assertSame('B', $buffer2->characters[1 * 20 + 1], 'After scroll: Bravo at row 1');
+        self::assertSame('A', $buffer1->characters[1 * 20 + 2], 'Before scroll: Alpha at row 1');
+        self::assertSame('B', $buffer2->characters[1 * 20 + 2], 'After scroll: Bravo at row 1');
     }
 
     #[Test]
@@ -891,12 +891,12 @@ final class PanelTest extends TestCase
 
         $frame = new Frame(20, 5);
         $result->render($frame, $area, new RenderContext(Theme::dark()));
-        self::assertSame('A', $frame->characters[1 * 20 + 1], 'Alpha still at top after wheel up at offset 0');
+        self::assertSame('A', $frame->characters[1 * 20 + 2], 'Alpha still at top after wheel up at offset 0');
 
         $result2 = $result->update($wheelUp, $area)->model;
         $buffer2 = new Frame(20, 5);
         $result2->render($buffer2, $area, new RenderContext(Theme::dark()));
-        self::assertSame('A', $buffer2->characters[1 * 20 + 1], 'Alpha still at top after multiple wheel ups');
+        self::assertSame('A', $buffer2->characters[1 * 20 + 2], 'Alpha still at top after multiple wheel ups');
     }
 
     #[Test]
@@ -925,8 +925,8 @@ final class PanelTest extends TestCase
         $afterExtra->render($buffer2, $area, new RenderContext(Theme::dark()));
 
         self::assertSame(
-            $buffer1->characters[1 * 20 + 1],
-            $buffer2->characters[1 * 20 + 1],
+            $buffer1->characters[1 * 20 + 2],
+            $buffer2->characters[1 * 20 + 2],
             'Content should be identical at max scroll'
         );
     }
@@ -983,9 +983,9 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 10);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('L', $frame->characters[1 * 20 + 1]);
-        self::assertSame('L', $frame->characters[2 * 20 + 1]);
-        self::assertSame('L', $frame->characters[3 * 20 + 1]);
+        self::assertSame('L', $frame->characters[1 * 20 + 2]);
+        self::assertSame('L', $frame->characters[2 * 20 + 2]);
+        self::assertSame('L', $frame->characters[3 * 20 + 2]);
     }
 
     #[Test]
@@ -1000,8 +1000,8 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 10);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('F', $frame->characters[1 * 20 + 1], 'Fixed at row 1');
-        self::assertSame('B', $frame->characters[8 * 20 + 1], 'Bottom pushed to last content row by flex child');
+        self::assertSame('F', $frame->characters[1 * 20 + 2], 'Fixed at row 1');
+        self::assertSame('B', $frame->characters[8 * 20 + 2], 'Bottom pushed to last content row by flex child');
     }
 
     #[Test]
@@ -1109,13 +1109,13 @@ final class PanelTest extends TestCase
         $frame = new Frame(20, 5);
         $scrolled->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('D', $frame->characters[1 * 20 + 1], 'After 3 scrolls, Delta should be at first content row');
+        self::assertSame('D', $frame->characters[1 * 20 + 2], 'After 3 scrolls, Delta should be at first content row');
     }
 
     #[Test]
     public function scrollbarReducesChildWidth(): void
     {
-        $panel = Panel::new('');
+        $panel = Panel::new('')->withPadding(Spacing::none());
         for ($index = 0; $index < 20; ++$index) {
             $longLine = str_repeat('X', 50);
             $panel = $panel->add(Text::new($longLine));
@@ -1158,29 +1158,22 @@ final class PanelTest extends TestCase
         $frame = new Frame(20, 5);
         $current->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertNotSame(' ', $frame->characters[1 * 20 + 1], 'Some content should remain visible at max scroll');
+        self::assertNotSame(' ', $frame->characters[1 * 20 + 2], 'Some content should remain visible at max scroll');
     }
 
     #[Test]
-    public function effectivePaddingDefaultsToNone(): void
+    public function aPanelPadsItsContentOneColumnFromEachSideByDefault(): void
     {
-        $panelDefault = Panel::new('');
-        $panelExplicitNone = Panel::new('')
-            ->withPadding(Spacing::none());
-
-        $buffer1 = new Frame(20, 10);
-        $buffer2 = new Frame(20, 10);
-        $area = new Rect(0, 0, 20, 10);
+        $padded = new Frame(20, 4);
+        $againstTheBorder = new Frame(20, 4);
+        $area = new Rect(0, 0, 20, 4);
         $context = new RenderContext(Theme::dark());
 
-        $panelDefault->add(Text::new('X'))->render($buffer1, $area, $context);
-        $panelExplicitNone->add(Text::new('X'))->render($buffer2, $area, $context);
+        Panel::new('')->add(Text::new('X'))->render($padded, $area, $context);
+        Panel::new('')->withPadding(Spacing::none())->add(Text::new('X'))->render($againstTheBorder, $area, $context);
 
-        self::assertSame(
-            $buffer1->characters[1 * 20 + 1],
-            $buffer2->characters[1 * 20 + 1],
-            'Default padding should equal Spacing::none()'
-        );
+        self::assertSame(' X', ScreenBuffer::fromFrame($padded)->textAt(1, 1, 2));
+        self::assertSame('X', ScreenBuffer::fromFrame($againstTheBorder)->textAt(1, 1, 1));
     }
 
     #[Test]
@@ -1264,8 +1257,8 @@ final class PanelTest extends TestCase
         $buffer2 = new Frame(20, 5);
         $result->model->render($buffer2, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('C', $buffer1->characters[1 * 20 + 1], 'Before wheel up: Charlie at first content row');
-        self::assertSame('B', $buffer2->characters[1 * 20 + 1], 'After wheel up: Bravo at first content row');
+        self::assertSame('C', $buffer1->characters[1 * 20 + 2], 'Before wheel up: Charlie at first content row');
+        self::assertSame('B', $buffer2->characters[1 * 20 + 2], 'After wheel up: Bravo at first content row');
     }
 
     #[Test]
@@ -1293,8 +1286,8 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 30, 20);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('B', $frame->characters[1 * 30 + 1], 'Before text preserved');
-        self::assertSame('A', $frame->characters[9 * 30 + 1], 'After text preserved');
+        self::assertSame('B', $frame->characters[1 * 30 + 2], 'Before text preserved');
+        self::assertSame('A', $frame->characters[9 * 30 + 2], 'After text preserved');
     }
 
     #[Test]
@@ -1309,8 +1302,8 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 12);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('T', $frame->characters[1 * 20 + 1], 'Top at row 1');
-        self::assertSame('B', $frame->characters[10 * 20 + 1], 'Bottom at last content row');
+        self::assertSame('T', $frame->characters[1 * 20 + 2], 'Top at row 1');
+        self::assertSame('B', $frame->characters[10 * 20 + 2], 'Bottom at last content row');
     }
 
     #[Test]
@@ -1325,9 +1318,9 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 6);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('A', $frame->characters[1 * 20 + 1]);
-        self::assertSame('B', $frame->characters[2 * 20 + 1]);
-        self::assertSame('C', $frame->characters[3 * 20 + 1]);
+        self::assertSame('A', $frame->characters[1 * 20 + 2]);
+        self::assertSame('B', $frame->characters[2 * 20 + 2]);
+        self::assertSame('C', $frame->characters[3 * 20 + 2]);
     }
 
     #[Test]
@@ -1352,7 +1345,7 @@ final class PanelTest extends TestCase
         $frame = new Frame(20, 25);
         $current->render($frame, $largeArea, new RenderContext(Theme::dark()));
 
-        self::assertSame('L', $frame->characters[1 * 20 + 1], 'Clamped offset: content should show at top when area grows');
+        self::assertSame('L', $frame->characters[1 * 20 + 2], 'Clamped offset: content should show at top when area grows');
     }
 
     #[Test]
@@ -1379,8 +1372,8 @@ final class PanelTest extends TestCase
         $panel->render($darkBuffer, $area, new RenderContext(Theme::dark()));
         $panel->render($lightBuffer, $area, new RenderContext(Theme::light()));
 
-        $darkFg = $darkBuffer->foregrounds[1 * 20 + 1];
-        $lightFg = $lightBuffer->foregrounds[1 * 20 + 1];
+        $darkFg = $darkBuffer->foregrounds[1 * 20 + 2];
+        $lightFg = $lightBuffer->foregrounds[1 * 20 + 2];
         self::assertNotSame($darkFg, $lightFg, 'Different themes produce different foreground colors');
     }
 
@@ -1411,10 +1404,10 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 8);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('A', $frame->characters[1 * 20 + 1], 'Select option Alpha');
-        self::assertSame('B', $frame->characters[2 * 20 + 1], 'Select option Bravo');
-        self::assertSame('C', $frame->characters[3 * 20 + 1], 'Select option Charlie');
-        self::assertSame('F', $frame->characters[4 * 20 + 1], 'Footer at row 4');
+        self::assertSame('A', $frame->characters[1 * 20 + 2], 'Select option Alpha');
+        self::assertSame('B', $frame->characters[2 * 20 + 2], 'Select option Bravo');
+        self::assertSame('C', $frame->characters[3 * 20 + 2], 'Select option Charlie');
+        self::assertSame('F', $frame->characters[4 * 20 + 2], 'Footer at row 4');
     }
 
     #[Test]
@@ -1442,7 +1435,7 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 10);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('F', $frame->characters[1 * 20 + 1], 'Fixed at row 1');
+        self::assertSame('F', $frame->characters[1 * 20 + 2], 'Fixed at row 1');
     }
 
     #[Test]
@@ -1485,8 +1478,8 @@ final class PanelTest extends TestCase
         $bufferAfter = new Frame(20, 5);
         $scrolled->render($bufferAfter, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('A', $bufferBefore->characters[1 * 20 + 1], 'Before: Alpha at first row');
-        self::assertSame('B', $bufferAfter->characters[1 * 20 + 1], 'After: Bravo at first row (shifted by 1)');
+        self::assertSame('A', $bufferBefore->characters[1 * 20 + 2], 'Before: Alpha at first row');
+        self::assertSame('B', $bufferAfter->characters[1 * 20 + 2], 'After: Bravo at first row (shifted by 1)');
     }
 
     #[Test]
@@ -1508,14 +1501,14 @@ final class PanelTest extends TestCase
         $bufferAfter = new Frame(20, 5);
         $scrolled->render($bufferAfter, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('A', $bufferBefore->characters[1 * 20 + 1], 'Before: Alpha at first row');
-        self::assertSame('B', $bufferAfter->characters[1 * 20 + 1], 'After: Bravo at first row (shifted by 1)');
+        self::assertSame('A', $bufferBefore->characters[1 * 20 + 2], 'Before: Alpha at first row');
+        self::assertSame('B', $bufferAfter->characters[1 * 20 + 2], 'After: Bravo at first row (shifted by 1)');
     }
 
     #[Test]
     public function childrenRenderedWithCorrectWidthWhenScrollbarPresent(): void
     {
-        $panel = Panel::new('');
+        $panel = Panel::new('')->withPadding(Spacing::none());
         for ($index = 0; $index < 20; ++$index) {
             $panel = $panel->add(Text::new(str_repeat('X', 30)));
         }
@@ -1560,8 +1553,8 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 4);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('A', $frame->characters[1 * 20 + 1], 'Alpha visible at row 1');
-        self::assertSame('B', $frame->characters[2 * 20 + 1], 'Bravo visible at row 2');
+        self::assertSame('A', $frame->characters[1 * 20 + 2], 'Alpha visible at row 1');
+        self::assertSame('B', $frame->characters[2 * 20 + 2], 'Bravo visible at row 2');
         self::assertSame('╰', $frame->characters[3 * 20 + 0], 'Row 3 is bottom border, Charlie not rendered');
     }
 
@@ -1581,7 +1574,7 @@ final class PanelTest extends TestCase
 
         $frame = new Frame(20, 5);
         $scrolled->render($frame, $area, new RenderContext(Theme::dark()));
-        self::assertSame('L', $frame->characters[1 * 20 + 1]);
+        self::assertSame('L', $frame->characters[1 * 20 + 2]);
     }
 
     #[Test]
@@ -1616,7 +1609,7 @@ final class PanelTest extends TestCase
 
         $frame = new Frame(20, 5);
         $result->model->render($frame, $area, new RenderContext(Theme::dark()));
-        self::assertSame('B', $frame->characters[1 * 20 + 1], 'After scroll up, Bravo at top');
+        self::assertSame('B', $frame->characters[1 * 20 + 2], 'After scroll up, Bravo at top');
     }
 
     #[Test]
@@ -1712,7 +1705,7 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 12);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('A', $frame->characters[1 * 20 + 1], 'First child renders');
+        self::assertSame('A', $frame->characters[1 * 20 + 2], 'First child renders');
     }
 
     #[Test]
@@ -1828,7 +1821,7 @@ final class PanelTest extends TestCase
 
         $frame = new Frame(20, 10);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
-        self::assertSame('T', $frame->characters[1 * 20 + 1], 'Content visible at correct position');
+        self::assertSame('T', $frame->characters[1 * 20 + 2], 'Content visible at correct position');
     }
 
     #[Test]
@@ -1952,8 +1945,8 @@ final class PanelTest extends TestCase
         $area = new Rect(0, 0, 20, 8);
         $panel->render($frame, $area, new RenderContext(Theme::dark()));
 
-        self::assertSame('A', $frame->characters[1 * 20 + 1], 'A at row 1');
-        self::assertSame('B', $frame->characters[2 * 20 + 1], 'B at row 2');
+        self::assertSame('A', $frame->characters[1 * 20 + 2], 'A at row 1');
+        self::assertSame('B', $frame->characters[2 * 20 + 2], 'B at row 2');
     }
 
     #[Test]
@@ -1973,7 +1966,7 @@ final class PanelTest extends TestCase
     #[Test]
     public function scrollbarTotalIncludesBottomPadding(): void
     {
-        $panel = Panel::new('');
+        $panel = Panel::new('')->withPadding(Spacing::none());
         for ($index = 0; $index < 20; ++$index) {
             $panel = $panel->add(Text::new("Item $index"));
         }

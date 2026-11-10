@@ -17,6 +17,7 @@ use Elmphant\Tui\Input\Keybindings;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\MouseAction;
 use Elmphant\Tui\Message\MouseButton;
 use Elmphant\Tui\Message\MouseMsg;
@@ -363,6 +364,7 @@ final readonly class ClippedRowsApp extends CopyableTestApp
     public function view(): Widget
     {
         return Box::new('Clipped')
+            ->withPadding(Spacing::none())
             ->add(Component::bind(
                 ComponentId::named('first'),
                 $this->first,

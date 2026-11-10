@@ -6,6 +6,7 @@ namespace Elmphant\Tui\Tests\Application;
 
 use Elmphant\Tui\Application\App;
 use Elmphant\Tui\Application\Component;
+use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
@@ -27,7 +28,7 @@ final class AppGraftAfterPageSwitchTest extends TestCase
     public function aClickOnAnotherTabWhileADropdownIsOpenSwitchesTabs(): void
     {
         $harness = ModelHarness::for(new PageSwitchingApp(TabBar::new()
-            ->add('Form', Panel::new('Form')->add(Dropdown::new(Select::new(['a', 'b', 'c']))))
+            ->add('Form', Panel::new('Form')->withPadding(Spacing::none())->add(Dropdown::new(Select::new(['a', 'b', 'c']))))
             ->add('About', Paragraph::fromText('prose'))), 60, 12)->init();
         $harness->renderFrame();
         $harness->dispatch(new KeyMsg(Key::Enter));

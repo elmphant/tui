@@ -90,9 +90,9 @@ final readonly class Box implements Widget, GraftsItsChildren, MeasureHeight
 
     public function measureHeight(int $width): int
     {
-        $padding = $this->padding;
-        $sides = $padding === null ? 0 : $padding->left + $padding->right;
-        $ends = $padding === null ? 0 : $padding->top + $padding->bottom;
+        $padding = $this->padding();
+        $sides = $padding->left + $padding->right;
+        $ends = $padding->top + $padding->bottom;
         $inner = max(0, $width - 2 - $sides);
         $childHeight = 0;
 
@@ -197,6 +197,11 @@ final readonly class Box implements Widget, GraftsItsChildren, MeasureHeight
 
     private function insetIn(Rect $area): Inset
     {
-        return (new Inset(border: true, padding: $this->padding))->fitting($area);
+        return (new Inset(border: true, padding: $this->padding()))->fitting($area);
+    }
+
+    private function padding(): Spacing
+    {
+        return $this->padding ?? Spacing::horizontal(1);
     }
 }

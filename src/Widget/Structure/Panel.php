@@ -355,7 +355,7 @@ final readonly class Panel implements CapturesThePointer, ClipsItsChildren, Foll
 
     private function inset(): Inset
     {
-        return new Inset($this->margin, border: true, padding: $this->padding);
+        return new Inset($this->margin, border: true, padding: $this->padding());
     }
 
     private function insetIn(Rect $area): Inset
@@ -459,11 +459,12 @@ final readonly class Panel implements CapturesThePointer, ClipsItsChildren, Foll
             $block = $block->withMargin($this->margin);
         }
 
-        if ($this->padding !== null) {
-            $block = $block->withPadding($this->padding);
-        }
+        return $block->withPadding($this->padding());
+    }
 
-        return $block;
+    private function padding(): Spacing
+    {
+        return $this->padding ?? Spacing::horizontal(1);
     }
 
     private function withPane(ScrollPane $pane): self

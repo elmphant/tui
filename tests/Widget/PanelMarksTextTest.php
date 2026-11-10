@@ -245,7 +245,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function draggingPastTheRightEdgeEndsAtTheLastColumn(): void
     {
-        $panel = Panel::new('log')->withChildren([Text::new('abcdefghijklmnopqr'), Text::new('stuvwxyz')]);
+        $panel = Panel::new('log')->withPadding(Spacing::none())->withChildren([Text::new('abcdefghijklmnopqr'), Text::new('stuvwxyz')]);
 
         self::assertSame("abcdefghijklmnopqr\nstuvwxyz", self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(40, 2), UserInput::release(40, 2)));
         self::assertSame('abcdefghijklmnopqr', self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(40, 1), UserInput::release(40, 1)));
@@ -359,7 +359,7 @@ final class PanelMarksTextTest extends TestCase
     #[Test]
     public function wideCharactersCopyWhole(): void
     {
-        $panel = Panel::new('log')->withChildren([Text::new('日本語 ok')]);
+        $panel = Panel::new('log')->withPadding(Spacing::none())->withChildren([Text::new('日本語 ok')]);
 
         self::assertSame('日本語 ok', self::copiedBy($panel, UserInput::press(1, 1), UserInput::drag(9, 1), UserInput::release(9, 1)));
     }
@@ -416,7 +416,7 @@ final class PanelMarksTextTest extends TestCase
 
     private static function panelOfLines(int $count): Panel
     {
-        return Panel::new('log')->withChildren(array_map(
+        return Panel::new('log')->withPadding(Spacing::none())->withChildren(array_map(
             static fn (int $index): Text => Text::new("line{$index}"),
             range(0, $count - 1),
         ));

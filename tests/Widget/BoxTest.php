@@ -43,8 +43,16 @@ final class BoxTest extends TestCase
         $placements = iterator_to_array(Box::new('Held')->add($first)->add($second)->placedChildren(new Rect(0, 0, 12, 6)));
 
         self::assertSame([$first, $second], [$placements[0][0], $placements[1][0]]);
+        self::assertTrue((new Rect(2, 1, 8, 1))->equals($placements[0][1]), 'one column from each side of the border');
+        self::assertTrue((new Rect(2, 2, 8, 1))->equals($placements[1][1]));
+    }
+
+    #[Test]
+    public function noPaddingPutsTheContentAgainstTheBorder(): void
+    {
+        $placements = iterator_to_array(Box::new('Held')->withPadding(Spacing::none())->add(Text::new('one'))->placedChildren(new Rect(0, 0, 12, 6)));
+
         self::assertTrue((new Rect(1, 1, 10, 1))->equals($placements[0][1]));
-        self::assertTrue((new Rect(1, 2, 10, 1))->equals($placements[1][1]));
     }
 
     #[Test]
@@ -52,7 +60,7 @@ final class BoxTest extends TestCase
     {
         $wrapping = Paragraph::fromText('one two three four five six seven eight nine ten');
 
-        $placements = iterator_to_array(Box::new('Held')->add($wrapping)->placedChildren(new Rect(0, 0, 14, 12)));
+        $placements = iterator_to_array(Box::new('Held')->add($wrapping)->placedChildren(new Rect(0, 0, 16, 12)));
 
         self::assertSame(
             5,
@@ -66,7 +74,7 @@ final class BoxTest extends TestCase
     {
         $box = Box::new('Held')->add(Paragraph::fromText('one two three four five six seven eight nine ten'));
 
-        self::assertSame(7, $box->measureHeight(14), 'five wrapped lines, and the border above and below them');
+        self::assertSame(7, $box->measureHeight(16), 'five wrapped lines, and the border above and below them');
     }
 
     #[Test]
@@ -163,8 +171,8 @@ final class BoxTest extends TestCase
 
         $box->render($frame, new Rect(0, 0, 20, 3), $context);
 
-        self::assertSame('H', $frame->characters[20 + 1]);
-        self::assertSame('e', $frame->characters[20 + 2]);
+        self::assertSame('H', $frame->characters[20 + 2]);
+        self::assertSame('e', $frame->characters[20 + 3]);
     }
 
     #[Test]
@@ -205,8 +213,8 @@ final class BoxTest extends TestCase
 
         $box->render($frame, new Rect(0, 0, 20, 4), $context);
 
-        self::assertSame('L', $frame->characters[20 + 1]);
-        self::assertSame('L', $frame->characters[40 + 1]);
+        self::assertSame('L', $frame->characters[20 + 2]);
+        self::assertSame('L', $frame->characters[40 + 2]);
     }
 
     #[Test]
@@ -221,8 +229,8 @@ final class BoxTest extends TestCase
 
         $box->render($frame, new Rect(0, 0, 20, 4), $context);
 
-        self::assertSame('L', $frame->characters[20 + 1]);
-        self::assertSame('L', $frame->characters[40 + 1]);
+        self::assertSame('L', $frame->characters[20 + 2]);
+        self::assertSame('L', $frame->characters[40 + 2]);
         $bottomBorder = $frame->characters[60];
         self::assertNotSame('L', $bottomBorder);
     }
@@ -339,7 +347,7 @@ final class BoxTest extends TestCase
 
         $box->render($frame, new Rect(0, 0, 10, 4), $context);
 
-        self::assertSame('X', $frame->characters[10 + 1], 'Zero-min child must still get 1 row for rendering');
+        self::assertSame('X', $frame->characters[10 + 2], 'Zero-min child must still get 1 row for rendering');
     }
 
     #[Test]

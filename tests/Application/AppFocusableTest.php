@@ -22,6 +22,7 @@ use Elmphant\Tui\Input\KeybindingsAware;
 use Elmphant\Tui\Layout\Constraint;
 use Elmphant\Tui\Layout\Rect;
 use Elmphant\Tui\Layout\Sizing;
+use Elmphant\Tui\Layout\Spacing;
 use Elmphant\Tui\Message\Key;
 use Elmphant\Tui\Message\KeyMsg;
 use Elmphant\Tui\Message\MouseAction;
@@ -741,6 +742,7 @@ final readonly class SkippedThenReachedApp extends CopyableTestApp
     public function view(): Widget
     {
         return Box::new('Rows')
+            ->withPadding(Spacing::none())
             ->add(Component::named('read-only', Text::new('chrome')))
             ->add($this->bind('reached', 'reached'));
     }
