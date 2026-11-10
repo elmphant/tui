@@ -22,6 +22,9 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `Card` / `Box` / `Container` | `Structure` | Borders, padding and margins around any widget — see [Layout](layout.md#decoration) |
 | `Themed` | `Structure` | Draws one part of the screen with a changed theme: `Themed::around($list, fn (Theme $theme) => $theme->withSelectedStyle($style))` |
 
+<img src="../media/widgets-structure.gif" width="720"
+     alt="A mission control screen with a crew list in a panel and a tab bar beside it. The reader moves down the list, switches to the Ship tab of cards and a box, back to Notes, then opens a modal over the dimmed screen and sends a message.">
+
 **Text**
 
 | Widget | In | What it is |
