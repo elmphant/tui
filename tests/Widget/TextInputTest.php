@@ -413,6 +413,34 @@ final class TextInputTest extends TestCase
     }
 
     #[Test]
+    public function aValueHandedInKeepsToOneLineAsAPasteDoes(): void
+    {
+        $input = TextInput::new("ab\ncd\tef");
+
+        self::assertSame('ab cd ef', $input->value());
+        self::assertSame(8, $input->cursor());
+        self::assertSame('ab cd ef', TextInput::new()->withValue("ab\ncd\tef")->value());
+    }
+
+    #[Test]
+    public function aValueHandedInKeepsToTheCharacterLimit(): void
+    {
+        $input = TextInput::new()->withCharacterLimit(2)->withValue('abcdef');
+
+        self::assertSame('ab', $input->value());
+        self::assertSame(2, $input->cursor());
+    }
+
+    #[Test]
+    public function aLimitSetAfterTheValueCutsItToTheLimit(): void
+    {
+        $input = TextInput::new('abcdef')->withCharacterLimit(2);
+
+        self::assertSame('ab', $input->value());
+        self::assertSame(2, $input->cursor());
+    }
+
+    #[Test]
     public function charLimitPreventsExcessInput(): void
     {
         $input = TextInput::new()->withCharacterLimit(3);

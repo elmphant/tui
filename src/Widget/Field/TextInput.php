@@ -139,17 +139,20 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
     public function withValue(string|bool|array|null $value): static
     {
         $text = match (true) {
-            \is_string($value) => $value,
+            \is_string($value) => self::oneLine($value),
             $value === null => '',
             default => throw ValueItCannotHold::given($this, $value),
         };
+        $text = $this->charLimit > 0 ? LineText::substring($text, 0, $this->charLimit) : $text;
 
         return $this->cloneWith(value: $text, cursor: LineText::length($text));
     }
 
     public function withCharacterLimit(int $limit): self
     {
-        return $this->cloneWith(charLimit: $limit);
+        $value = $limit > 0 ? LineText::substring($this->value, 0, $limit) : $this->value;
+
+        return $this->cloneWith(value: $value, cursor: min($this->cursor, LineText::length($value)), charLimit: $limit);
     }
 
     public function withEchoMode(EchoMode $echoMode): self
@@ -335,8 +338,7 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
 
     private function pasted(string $content): ?self
     {
-        // Replace pasted line breaks and tabs with spaces because this is a single-line field.
-        $content = preg_replace('/[\x00-\x1F\x7F-\x{9F}]+/u', ' ', $content) ?? '';
+        $content = self::oneLine($content);
 
         if ($this->charLimit > 0) {
             $room = $this->charLimit - LineText::length($this->value);
@@ -355,6 +357,17 @@ final readonly class TextInput implements BindsForTheMoment, Committing, Focusab
             value: $before . $content . $after,
             cursor: LineText::length($before . $content),
         );
+    }
+
+    /**
+     * Line breaks, tabs and other control characters become one space, since the field holds one line.
+     */
+    private static function oneLine(string $text): string
+    {
+        // The UTF-8 pattern fails on malformed text, which the field keeps, so bytes are cleaned instead.
+        return preg_replace('/[\x00-\x1F\x7F-\x{9F}]+/u', ' ', $text)
+            ?? preg_replace('/[\x00-\x1F\x7F]+/', ' ', $text)
+            ?? $text;
     }
 
     private function deleteCharBackward(): ?self
