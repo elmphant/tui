@@ -253,7 +253,9 @@ final readonly class Files extends App
 }
 ```
 
-In a test, answer each listing by its name: `$harness->answer('ls:.', stdout: "src/\nREADME.md\n")`,
+Each listing is named `ls:` and its folder, so `onMessage()` matches the start of
+the name with `str_starts_with()` instead of `isFrom()`, which compares the whole
+name. In a test, answer each listing by its name: `$harness->answer('ls:.', stdout: "src/\nREADME.md\n")`,
 then `press('down', 'right')` opens `src` and asks for `ls:./src`.
 
 ## Forms
