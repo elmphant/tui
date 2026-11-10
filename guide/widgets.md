@@ -43,6 +43,9 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `Dropdown` | `Popup` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))`. To load new options, hand it `withContent($dropdown->content()->withItems($items))`, so an open list stays open with its query |
 | `Form` | `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
 
+<img src="../media/widgets-input.gif" width="720"
+     alt="A booking screen for a trip to the Moon. The reader types a name, flips a Yes/No toggle for a window seat, picks a meal from a radio list, opens a dropdown to choose a cabin, ticks a travel insurance checkbox and presses Book.">
+
 **Lists and tables**
 
 | Widget | In | What it is |
