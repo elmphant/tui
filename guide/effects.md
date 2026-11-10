@@ -12,6 +12,7 @@ message.
 Cmd::quit()                         // stop the program
 Cmd::tick(0.05)                     // send a TickMsg every 50 ms
 Cmd::after(2.0, fn() => $msg)       // send one message later
+Cmd::cancel($id)                    // stop the command started under that EffectId
 Cmd::batch($cmd1, null, $cmd2)      // run several commands, skipping nulls (null if all are)
 Cmd::message($message)              // send a message right away
 Cmd::call(fn() => $message)          // run a short piece of code
@@ -204,13 +205,14 @@ use Elmphant\Tui\Core\{Cmd, EffectId};
 $download = EffectId::named('download');
 
 Cmd::http('https://example.com/archive', id: $download);
-Cmd::cancel($download); // also works for tick(), after(), exec(), and stream()
+Cmd::cancel($download); // works for every command that takes an id
 ```
 
 The result then answers `$message->isFrom('download')`. Starting a new command
 under the same name replaces the old one, and no late result of the old one
 arrives after that. A cancel stops the command. What it had already sent still
-arrives, but nothing more.
+arrives, but nothing more. A fiber is the exception: it runs on, and its answer
+is dropped.
 
 Two parts of an app can use the same name without clashing, when the parent
 scopes its children's commands:
