@@ -40,7 +40,7 @@ use Elmphant\Tui\Widget\Structure\Panel;
 use Elmphant\Tui\Widget\Widget;
 use Elmphant\Tui\Widget\WidgetContainer;
 
-final readonly class NotesPane implements WidgetContainer
+final readonly class NotesPane implements Widget, WidgetContainer
 {
     use DecoratesOneChild;
 

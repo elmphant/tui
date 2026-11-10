@@ -86,6 +86,28 @@ final class ReadmeTest extends TestCase
     }
 
     #[Test]
+    public function theDocumentedWrapperIsDrawnAsTheWidgetItWraps(): void
+    {
+        [$output, $ran] = self::runExample(
+            self::blockContaining('final readonly class NotesPane') . <<<'PHP'
+
+                final readonly class NotesApp extends \Elmphant\Tui\Application\App
+                {
+                    public function view(): \Elmphant\Tui\Widget\Widget
+                    {
+                        return new NotesPane('buy milk');
+                    }
+                }
+                echo \Elmphant\Tui\Testing\ModelHarness::for(new NotesApp(), 30, 5)->screen()->plainText();
+                PHP,
+        );
+
+        self::assertTrue($ran, "The guide's wrapper example does not run:\n" . $output);
+        self::assertStringContainsString('Notes', $output);
+        self::assertStringContainsString('buy milk', $output);
+    }
+
+    #[Test]
     public function theDocumentedToolbarIsSkippedByTabUntilACommandTakesTheKeyboardIn(): void
     {
         [$output, $ran] = self::runExample(
