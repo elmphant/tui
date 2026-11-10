@@ -11,6 +11,26 @@ PHPStan rule `KeyNameIsNotTextRule` catches this mistake.
 
 Bindings write keys as text patterns: `'enter'`, `'ctrl+r'`, `'shift+tab'`.
 
+## Who hears a key
+
+A key goes down this list and stops at the first step that answers it:
+
+1. **An open key sequence** holds its keys until it is complete (see
+   [Key sequences](#key-sequences)).
+2. **The key help** takes every key while it is open. `?` or Ctrl+K opens it.
+3. **A text field.** While the focused widget takes text, a printable key
+   without Ctrl or Alt goes to that widget alone. The steps below never see it.
+4. **`withAction()` keys**, first of the focused component, then of each
+   component around it, nearest first.
+5. **The App's `actions()`**, the quit keys included.
+6. **Tab and Shift+Tab** move the keyboard.
+7. **`onKey()`.** Return the App unchanged and with no command to pass the key on.
+8. **Mounted models**: the one that holds the keyboard, else every mount on
+   screen.
+9. **The focused widget**, with its own keys and your `globalKeybindings()`.
+10. **The panes around it**, nearest first, so PageDown in a field still scrolls
+    the form.
+
 ## Typing beats shortcuts
 
 While a text field has the keyboard, a plain letter is **typed**. Your `onKey()`,
