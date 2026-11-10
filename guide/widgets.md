@@ -38,6 +38,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `TextArea` | `Field` | A text editor of many lines: Enter starts a line, Backspace joins two, Up and Down keep the column, and it scrolls with the cursor. Wide characters count two columns. `value()` joins the lines with `\n`, and `cursor()` answers the line and the column |
 | `Button` | `Field` | A button, three rows with a border. `withBorder(false)` makes it one row, `[ Save ]`, and so does a slot of fewer rows |
 | `Checkbox` / `CheckboxGroup` | `Choice` | Yes/no choices |
+| `Toggle` | `Choice` | A question with two answers on one row, `● Yes / ○ No`, and one is always picked. The arrows pick a side, Space flips, and the first letter of a label picks it (`y`, `n`), unless both labels start with the same letter or another key already uses it. An app action on the same letter runs first. `Toggle::new('Public', 'Private')` names the sides, `isOn()` asks for the left one, and `withSubmit()` makes Enter answer `Submitted` |
 | `Radio` / `Select` | `Choice` | One choice out of a list. Take a `Radio` for a few options that all show, each with a mark, where one is always chosen (a setting with a default), unless `withClearable()` lets the reader put it back down. Take a `Select` for a longer list that scrolls in the rows it gets and starts with nothing chosen. Put either in a `Dropdown` to keep it on one row |
 | `Dropdown` | `Popup` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))`. To load new options, hand it `withContent($dropdown->content()->withItems($items))`, so an open list stays open with its query |
 | `Form` | `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
@@ -279,6 +280,13 @@ The handler runs with the form already stored, so it reads the values there.
 - `withCancel()` makes Escape answer `Dismissed`, unless a field uses the key
   itself. `withCancel($message)` also sends a message.
 - `Field::secret()` is a text field that hides what is typed.
+- `Field::flag()` is a checkbox, for "tick it if it applies".
+  `Field::toggle('newsletter', 'Newsletter')` is a `Toggle`, for a question that
+  needs an answer. Its answers come next, `'Public', 'Private'`, and then the
+  description, so name it when you keep the answers:
+  `Field::toggle('newsletter', 'Newsletter', description: 'Send me the monthly news')`.
+  A toggle always has an answer, so `withRequired()` on it throws. Use
+  `addRule()` to demand "Yes".
 - `Field::choice()` shows a row of options where they fit and a filterable list
   where they don't. `Field::of()` takes any widget that implements `HoldsAValue`.
   `value()` is the one question a form asks every field. The choice widgets also

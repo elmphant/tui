@@ -27,6 +27,7 @@ use Elmphant\Tui\Widget\Choice\CheckboxRow;
 use Elmphant\Tui\Widget\Choice\Radio;
 use Elmphant\Tui\Widget\Choice\RadioRow;
 use Elmphant\Tui\Widget\Choice\Select;
+use Elmphant\Tui\Widget\Choice\Toggle;
 use Elmphant\Tui\Widget\Feedback\ActivityBar;
 use Elmphant\Tui\Widget\Feedback\Alert;
 use Elmphant\Tui\Widget\Feedback\ProgressBar;
@@ -285,6 +286,7 @@ final class IntrinsicWidthTest extends TestCase
         yield 'CheckboxGroup' => [CheckboxGroup::new(['short', 'a much longer option'])];
         yield 'CheckboxRow' => [CheckboxRow::new(['yes', 'no'])];
         yield 'RadioRow' => [RadioRow::new(['yes', 'no'])];
+        yield 'Toggle' => [Toggle::new('Public', 'Private')];
         yield 'ChoiceField' => [ChoiceField::new(['a' => 'Alpha', 'b' => 'Beta'])];
         yield 'Dropdown' => [Dropdown::new(Select::new(['short', 'a much longer option']))];
         yield 'Dropdown showing a selection' => [Dropdown::new(Select::new(['short', 'a much longer option'])->withSelectedIndex(1))];

@@ -7,6 +7,7 @@ namespace Elmphant\Tui\Widget\Form;
 use Closure;
 use Elmphant\Tui\Support\Cloneable;
 use Elmphant\Tui\Widget\Choice\Checkbox;
+use Elmphant\Tui\Widget\Choice\Toggle;
 use Elmphant\Tui\Widget\Field\EchoMode;
 use Elmphant\Tui\Widget\Field\InputDecoration;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -35,6 +36,9 @@ final readonly class Field
         if (trim($name) === '') {
             throw new LogicException(sprintf('A field needs a name, "%s" has none', $label));
         }
+        if ($required && $widget instanceof Toggle) {
+            throw new LogicException(sprintf('"%s" holds a Toggle, which always has an answer. Use addRule() to demand Yes.', $name));
+        }
     }
 
     public static function text(string $name, string $label, string $description = ''): self
@@ -58,6 +62,11 @@ final readonly class Field
     public static function flag(string $name, string $label, string $description = ''): self
     {
         return new self($name, $label, $description, Checkbox::new($label), labelledByItsWidget: true);
+    }
+
+    public static function toggle(string $name, string $label, string $on = 'Yes', string $off = 'No', string $description = ''): self
+    {
+        return new self($name, $label, $description, Toggle::new($on, $off));
     }
 
     public static function of(string $name, string $label, Focusable&HoldsAValue $widget, string $description = ''): self
@@ -89,13 +98,13 @@ final readonly class Field
     {
         $value = $this->widget->value();
 
-        return $value === null || self::isBlank($value);
+        return !$this->widget instanceof Toggle && ($value === null || self::isBlank($value));
     }
 
     public function problem(): ?string
     {
         $value = $this->widget->value();
-        if ($value === null || self::isBlank($value)) {
+        if ($value === null || $this->isEmpty()) {
             return $this->required ? $this->label . ' is required' : null;
         }
 
