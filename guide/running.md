@@ -45,12 +45,9 @@ questions, one program each, and leaves the answers in the scrollback:
 
 ```php
 use Elmphant\Tui\Application\App;
-use Elmphant\Tui\Application\Component;
-use Elmphant\Tui\Application\InputContext;
 use Elmphant\Tui\Core\Cmd;
 use Elmphant\Tui\Core\UpdateResult;
-use Elmphant\Tui\Message\Key;
-use Elmphant\Tui\Message\KeyMsg;
+use Elmphant\Tui\Message\Submitted;
 use Elmphant\Tui\Runtime\Program;
 use Elmphant\Tui\Runtime\ScreenMode;
 use Elmphant\Tui\Widget\Field\TextInput;
@@ -64,27 +61,18 @@ final readonly class Question extends App
 
     public function __construct(public string $question, ?TextInput $field = null)
     {
-        $this->field = $field ?? TextInput::new();
+        $this->field = $field ?? TextInput::new()->withSubmit();
     }
 
     public function view(): Widget
     {
         return Layout::column(
             Paragraph::fromText($this->question),
-            Component::bind('answer', $this->field, static fn (self $app, TextInput $field): self => new self($app->question, $field)),
+            $this->bind('field')->on(Submitted::class, static fn (self $app, Submitted $submitted): UpdateResult => new UpdateResult($app, Cmd::batch(
+                Cmd::println(sprintf('✓ %s  %s', $app->question, $submitted->value)),
+                Cmd::quit(),
+            ))),
         );
-    }
-
-    protected function onKey(KeyMsg $message, InputContext $input): UpdateResult
-    {
-        if ($message->key !== Key::Enter) {
-            return new UpdateResult($this);
-        }
-
-        return new UpdateResult($this, Cmd::batch(
-            Cmd::println(sprintf('✓ %s  %s', $this->question, $this->field->value())),
-            Cmd::quit(),
-        ));
     }
 }
 

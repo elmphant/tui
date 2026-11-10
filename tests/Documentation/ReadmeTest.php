@@ -86,6 +86,23 @@ final class ReadmeTest extends TestCase
     }
 
     #[Test]
+    public function theDocumentedInlineQuestionPrintsTheAnswerAndQuitsOnEnter(): void
+    {
+        $block = self::blockContaining('final readonly class Question');
+
+        [$output, $ran] = self::runExample(
+            substr($block, 0, (int)strpos($block, '$answers = [];')) . <<<'PHP'
+
+                $harness = \Elmphant\Tui\Testing\ModelHarness::for(new Question('Project name'))->init()->type('acme')->press('enter');
+                echo json_encode([$harness->printed(), count($harness->issued(\Elmphant\Tui\Core\Cmd\QuitCmd::class)), $harness->model()->field->value()]);
+                PHP,
+        );
+
+        self::assertTrue($ran, "The guide's inline example does not run:\n" . $output);
+        self::assertSame([['✓ Project name  acme'], 1, 'acme'], json_decode($output, true), $output);
+    }
+
+    #[Test]
     public function theDocumentedWrapperIsDrawnAsTheWidgetItWraps(): void
     {
         [$output, $ran] = self::runExample(
