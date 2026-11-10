@@ -79,6 +79,9 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `ProgressBar` | `Feedback` | A bar that fills up smoothly: `ProgressBar::new(0.4)` |
 | `Spinner` / `ActivityBar` | `Feedback` | Loading animations with a label: `Spinner::new('loading…')`. They animate by themselves, no timer needed |
 
+<img src="../media/widgets-feedback.gif" width="720"
+     alt="A launch pad screen with a header, coloured alert rows, a fuel progress bar, a status bar and a footer. The reader presses l, the bar fills while a spinner and an activity bar run, the alert turns from error to warning to success, and the header says in orbit.">
+
 ## Links
 
 A `Span::link()` is text the reader can open with a click (or Cmd/Ctrl+click), in
