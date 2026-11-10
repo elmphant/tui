@@ -33,6 +33,9 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `Paragraph` | `Prose` | Wrapped text, named by what you hand it: `Paragraph::fromText()`, `fromLines()`, `fromMarkdown()`, `fromAnsi()` |
 | `Separator` / `Spacer` | `Prose` | A line, or empty space |
 
+<img src="../media/widgets-text.gif" width="720"
+     alt="A ship's log in a scrolling panel. Each day has a title, a Markdown paragraph with bold, italic, code, strikethrough, a list or a quote, and a line under it. The reader scrolls down to the end of the log and back up.">
+
 **Input**
 
 | Widget | In | What it is |
