@@ -103,6 +103,24 @@ final class ReadmeTest extends TestCase
     }
 
     #[Test]
+    public function theDocumentedSplitKeepsTheDividerWhereTheReaderDraggedIt(): void
+    {
+        [$output, $ran] = self::runExample(
+            self::blockContaining('final readonly class Browser') . <<<'PHP'
+
+                $harness = \Elmphant\Tui\Testing\ModelHarness::for(Browser::new(), 60, 6)->init();
+                $before = $harness->screen()->findOrFail('Preview')['column'];
+                $divider = $before - 3;
+                $harness->drag($divider, 2, $divider + 5, 2)->press('down');
+                echo json_encode([$harness->screen()->findOrFail('Preview')['column'] - $before, $harness->screen()->find('composer.json', 1) !== null]);
+                PHP,
+        );
+
+        self::assertTrue($ran, "The guide's split example does not run:\n" . $output);
+        self::assertSame([5, true], json_decode($output, true), $output);
+    }
+
+    #[Test]
     public function theDocumentedReportCopiesTheTextDraggedOverInItsPanel(): void
     {
         [$output, $ran] = self::runExample(

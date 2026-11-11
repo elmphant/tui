@@ -16,7 +16,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | --- | --- | --- |
 | `Panel` | `Structure` | A scrolling box of widgets, with border and title — see [Scrolling](#scrolling) |
 | `TabBar` | `Structure` | Tabs, switched by keyboard or mouse. `withBorder(false)` puts the tabs on one row with the page right below |
-| `Split` | `Structure` | Two panes with a divider you can drag |
+| `Split` | `Structure` | Panes side by side, with a divider the reader drags — see [Panes side by side](#panes-side-by-side) |
 | `Modal` | `Popup` | A box over the screen that dims what is behind it — see [Modals](#modals) |
 | `Overlay` / `PositionedOverlay` | `Popup` | One widget on top of another |
 | `Card` / `Box` / `Container` | `Structure` | Borders, padding and margins around any widget — see [Layout](layout.md#decoration) |
@@ -368,6 +368,51 @@ When the modal closes, the keyboard goes back to where it was.
 `withBorder(false)` drops the frame when the content has its own, and
 `withOutsideClickDismissal(false)` keeps a half-filled form open after a stray
 click.
+
+## Panes side by side
+
+A `Split` puts panes next to each other, with a divider the reader drags with
+the mouse. Where the divider sits is a `SplitState`, which you keep on the App.
+Build the split in `view()` and bind it with `Component::bind()`, so the
+write-back can store the state:
+
+```php
+use Elmphant\Tui\Application\{App, Component};
+use Elmphant\Tui\Layout\SplitState;
+use Elmphant\Tui\Widget\Listing\{ListView, SimpleListItem};
+use Elmphant\Tui\Widget\Prose\Text;
+use Elmphant\Tui\Widget\Structure\{Panel, Split};
+use Elmphant\Tui\Widget\Widget;
+
+final readonly class Browser extends App
+{
+    public function __construct(private ListView $files, private SplitState $columns) {}
+
+    public static function new(): self
+    {
+        return new self(ListView::new([new SimpleListItem('README.md'), new SimpleListItem('composer.json')]), SplitState::even(2));
+    }
+
+    public function view(): Widget
+    {
+        $preview = Panel::new('Preview')->add(Text::new($this->files->cursorItem()?->title() ?? ''));
+
+        return Component::bind(
+            'columns',
+            Split::row($this->columns, $this->bind('files'), $preview)->withMinimums(20, 20),
+            static fn (self $app, Split $split): self => $app->cloneWith(columns: $split->state()),
+        );
+    }
+}
+```
+
+- Each pane the reader can use is a stop of its own, so tab walks the panes.
+- `withMinimums(20, 20)` keeps each pane at least 20 cells wide while the
+  reader drags.
+- `Split::column()` stacks the panes, with a divider between rows.
+- A split that is not bound drops every drag. The shipped PHPStan rule
+  `SplitIsBoundRule` reports one. For panes that never move, take a
+  `Layout::row()`.
 
 ## Scrolling
 
