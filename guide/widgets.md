@@ -18,7 +18,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `TabBar` | `Structure` | Tabs, switched by keyboard or mouse. `withBorder(false)` puts the tabs on one row with the page right below |
 | `Split` | `Structure` | Panes side by side, with a divider the reader drags — see [Panes side by side](#panes-side-by-side) |
 | `Modal` | `Popup` | A box over the screen that dims what is behind it — see [Modals](#modals) |
-| `Overlay` / `PositionedOverlay` | `Popup` | One widget on top of another |
+| `Overlay` / `PositionedOverlay` | `Popup` | One widget drawn over another: `Overlay::new($page, $dialog)`, as in [Modals](#modals). For a tooltip, make the top one `PositionedOverlay::at($x, $y)->withContent($tip)`, which draws it at that cell of the screen. `withSize()` gives it a size |
 | `Card` / `Box` / `Container` | `Structure` | Borders, padding and margins around any widget — see [Layout](layout.md#decoration) |
 | `Themed` | `Structure` | Draws one part of the screen with a changed theme: `Themed::around($list, fn (Theme $theme) => $theme->withSelectedStyle($style))` |
 
@@ -73,7 +73,7 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | --- | --- | --- |
 | `Header` / `Footer` | `Bar` | Top and bottom bars with left, center and right slots. The centre gives way to the sides |
 | `FocusHints` | `Bar` | The keys that work right now — see [Keys](keys-and-focus.md#footer-hints) |
-| `StatusBar` | `Bar` | A line of key hints |
+| `StatusBar` | `Bar` | One line of text, `StatusBar::new($text)`, or of key hints, `StatusBar::forHints(['Enter' => 'open'])`. `FocusHints` draws its hints with one |
 | `Scrollbar` | `Bar` | A vertical scroll indicator |
 | `Alert` | `Feedback` | One coloured row: `Alert::warning($text)`, `error()`, `success()`, `info()` |
 | `ProgressBar` | `Feedback` | A bar that fills up smoothly: `ProgressBar::new(0.4)` |
