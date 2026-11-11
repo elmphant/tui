@@ -103,6 +103,26 @@ final class ReadmeTest extends TestCase
     }
 
     #[Test]
+    public function theDocumentedYesOrNoWidgetsAnswerTheKeysThePageNames(): void
+    {
+        [$output, $ran] = self::runExample(
+            self::blockContaining("Toggle::new('Light', 'Dark')") . <<<'PHP'
+
+                $harness = \Elmphant\Tui\Testing\WidgetHarness::class;
+                echo json_encode([
+                    $harness::for($news)->press('space')->widget()->isChecked(),
+                    $theme->isOn(),
+                    $harness::for($theme)->type('l')->widget()->isOn(),
+                    $harness::for($channels)->press('down', 'space')->widget()->checkedValues(),
+                ]);
+                PHP,
+        );
+
+        self::assertTrue($ran, "The guide's yes-or-no example does not run:\n" . $output);
+        self::assertSame([true, false, true, ['SMS']], json_decode($output, true), $output);
+    }
+
+    #[Test]
     public function theDocumentedSplitKeepsTheDividerWhereTheReaderDraggedIt(): void
     {
         [$output, $ran] = self::runExample(

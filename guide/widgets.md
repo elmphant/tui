@@ -43,8 +43,8 @@ names: `use Elmphant\Tui\Widget\Structure\Panel;`.
 | `TextInput` | `Field` | A one-line text field. Underlined by default (`withDecoration(InputDecoration::Filled)` fills it instead). `withSubmit()` makes Enter commit it, for the bind closure, and `withSubmit($message)` also sends a message |
 | `TextArea` | `Field` | A text editor of many lines: Enter starts a line, Backspace joins two, Up and Down keep the column, and it scrolls with the cursor. Wide characters count two columns. `value()` joins the lines with `\n`, and `cursor()` answers the line and the column |
 | `Button` | `Field` | A button, three rows with a border. `withBorder(false)` makes it one row, `[ Save ]`, and so does a slot of fewer rows |
-| `Checkbox` / `CheckboxGroup` | `Choice` | Yes/no choices |
-| `Toggle` | `Choice` | A question with two answers on one row, `● Yes / ○ No`, and one is always picked. The arrows pick a side, Space flips, and the first letter of a label picks it (`y`, `n`), unless both labels start with the same letter or another key already uses it. An app action on the same letter runs first. `Toggle::new('Public', 'Private')` names the sides, `isOn()` asks for the left one, and `withSubmit()` makes Enter answer `Submitted` |
+| `Checkbox` / `CheckboxGroup` | `Choice` | A box to tick, or a list of them — see [Yes or no](#yes-or-no) |
+| `Toggle` | `Choice` | A question with two answers on one row, `● Yes / ○ No` — see [Yes or no](#yes-or-no) |
 | `Radio` / `Select` | `Choice` | One choice out of a list. Take a `Radio` for a few options that all show, each with a mark, where one is always chosen (a setting with a default), unless `withClearable()` lets the reader put it back down. Take a `Select` for a longer list that scrolls in the rows it gets and starts with nothing chosen. Put either in a `Dropdown` to keep it on one row |
 | `Dropdown` | `Popup` | One row that opens a list over the screen. It filters when its content filters: `Dropdown::new(FilterableList::new($items))`. To load new options, hand it `withContent($dropdown->content()->withItems($items))`, so an open list stays open with its query |
 | `Form` | `Form` | Named fields with labels, checks and a submit button — see [Forms](#forms) |
@@ -257,6 +257,27 @@ Each listing is named `ls:` and its folder, so `onMessage()` matches the start o
 the name with `str_starts_with()` instead of `isFrom()`, which compares the whole
 name. In a test, answer each listing by its name: `$harness->answer('ls:.', stdout: "src/\nREADME.md\n")`,
 then `press('down', 'right')` opens `src` and asks for `ls:./src`.
+
+## Yes or no
+
+```php
+use Elmphant\Tui\Widget\Choice\{Checkbox, CheckboxGroup, Toggle};
+
+$news = Checkbox::new('Send me the news');
+$theme = Toggle::new('Light', 'Dark');
+$channels = CheckboxGroup::new(['Mail', 'SMS', 'Push'], 'Notify me by');
+```
+
+- **`Checkbox`** is for "tick it if it applies". Space or Enter ticks it, and
+  `isChecked()` says whether it is ticked.
+- **`Toggle`** is for a question that needs an answer: one side is always
+  picked, at first the right one. `Toggle::new()` asks Yes or No. The arrows
+  pick a side, Space flips it, and the first letter of a label picks that side
+  (`l` or `d` here). When both labels start with the same letter, or another
+  key already uses it, the letters do nothing. `isOn()` says whether the left
+  side is picked, and `withSubmit()` makes Enter answer `Submitted`.
+- **`CheckboxGroup`** is several boxes under one label. The arrows move,
+  Space ticks, and `checkedValues()` lists the ticked labels.
 
 ## Forms
 
