@@ -403,17 +403,19 @@ final readonly class ComponentRegistry
         if ($widget instanceof WidgetContainer) {
             foreach ($widget->children() as $child) {
                 [$childComponents, $childIsLayered] = self::collectLayer($child, $widget instanceof Component);
-                $childComponents = array_values(array_filter($childComponents, static fn (Component $component): bool => !in_array($component->id->value, $publishedIds, true)));
                 if ($childIsLayered) {
                     $layerComponents = $childComponents;
                 }
 
-                array_push($components, ...$childComponents);
+                array_push($components, ...array_filter($childComponents, static fn (Component $component): bool => !in_array($component->id->value, $publishedIds, true)));
             }
         }
 
         if ($layerComponents !== null) {
-            return [self::reowned($widget, [...self::ownComponent($widget), ...$layerComponents]), true];
+            $own = self::ownComponent($widget);
+            $ownIds = array_map(static fn (Component $component): string => $component->id->value, $own);
+
+            return [self::reowned($widget, [...$own, ...array_filter($layerComponents, static fn (Component $component): bool => !in_array($component->id->value, $ownIds, true))]), true];
         }
 
         $claims = $widget instanceof InputLayer && $widget->claimsInput();
@@ -480,6 +482,8 @@ final readonly class ComponentRegistry
             } elseif ($child instanceof Component && !$child->writesBack() && $child->widget instanceof Interactive) {
                 /** @var Component<Interactive> $child */
                 array_push($stops, ...self::published($component->childThrough([...$path, $index], $child->widget, $child)));
+            } elseif ($child instanceof Component && $child->writesBack()) {
+                array_push($stops, ...self::collect($child));
             } elseif ($child instanceof GraftsItsChildren && !$child instanceof Component) {
                 array_push($stops, ...self::publishedBelow($component, $child, [...$path, $index]));
             }
