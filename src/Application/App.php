@@ -960,9 +960,16 @@ abstract readonly class App implements Initializes, RoutesFocus, ChoosesItsTheme
             }
         }
 
-        return $entered === null || ($holder !== null && ($holder->equals($entered) || $holder->isUnder($entered)))
-            ? null
-            : $entered;
+        if ($entered === null || $holder === null) {
+            return $entered;
+        }
+
+        $inside = $holder->equals($entered) || $holder->isUnder($entered) || array_filter(
+            $this->componentRegistry()->enclosing($holder),
+            static fn (Component $component): bool => $component->id->equals($entered),
+        ) !== [];
+
+        return $inside ? null : $entered;
     }
 
     /**

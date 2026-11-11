@@ -34,6 +34,7 @@ Until 1.0, a minor version may break the API. Each break is listed here.
 - `TextInput::new()`, `withValue()` and `withCharacterLimit()` keep the value to one line and to the limit, as typing and a paste do.
 - A `Button` or other interactive widget inside an `Overlay`, `PositionedOverlay` or `Themed` gets the keyboard and the mouse, as it does inside a `Layout` or a `Box`.
 - Tab walks a bound widget inside a bound `Panel` or `Split` in its place on screen. It came after the unbound fields beside it, so the keyboard could start in the wrong pane.
+- A press on the border of a bound `Panel` or the divider of a bound `Split` leaves the keyboard on a bound widget inside it. It moved the keyboard to the first unbound field.
 
 ## 0.1.0 (2026-11-10)
 
